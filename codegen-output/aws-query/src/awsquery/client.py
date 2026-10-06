@@ -150,6 +150,10 @@ class AsyncQueryProtocolClient(AsyncClient):
     async def _ensure_setup(self) -> AsyncQueryProtocolConfig:
         if not self._setup_done:
             async with self._derive_lock:
+                if self._closed:
+                    raise RuntimeError(
+                        "Cannot invoke an operation on a client that has been closed."
+                    )
                 if not self._setup_done:
                     if self._config is None:
                         config = await AsyncQueryProtocolConfig.resolve()
@@ -161,14 +165,19 @@ class AsyncQueryProtocolClient(AsyncClient):
                     if self._plugins:
                         for plugin in self._plugins:
                             plugin(config)
-                    self._config = config
+                    # Publish state only after setup fully succeeds, so a
+                    # failed _post_setup leaves the caller's config untouched
+                    # (no re-applied plugins) and the transport closeable.
                     await self._post_setup(config)
                     self._transport = config.transport
+                    self._config = config
                     self._setup_done = True
         assert self._config is not None
         return self._config
 
     async def _post_setup(self, config: AsyncQueryProtocolConfig) -> None:
+        pass
+
         if config.aws_credentials_identity_resolver is None:
             config_context = config.resolution_context()
             config_file = None
@@ -186,18 +195,25 @@ class AsyncQueryProtocolClient(AsyncClient):
             )
 
     async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
-        self, input: I, operation: APIOperation[I, O], plugins: list[Plugin] | None
+        self,
+        input: I,
+        operation: APIOperation[I, O],
+        default_plugins: list[Plugin],
+        plugins: list[Plugin] | None,
     ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
             )
         config = await self._ensure_setup()
-        if plugins:
+        if default_plugins or plugins:
             # Keep operation-plugin mutations scoped to this call.
             config = deepcopy(config)
-            for plugin in plugins:
+            for plugin in default_plugins:
                 plugin(config)
+            if plugins:
+                for plugin in plugins:
+                    plugin(config)
         if (
             config.protocol is None
             or config.transport is None
@@ -215,16 +231,7 @@ class AsyncQueryProtocolClient(AsyncClient):
             max_attempts=config.max_attempts,
         )
         return self._build_call(
-            input,
-            operation,
-            config=config,
-            protocol=config.protocol,
-            transport=config.transport,
-            endpoint_resolver=config.endpoint_resolver,
-            auth_scheme_resolver=config.auth_scheme_resolver,
-            auth_schemes=config.auth_schemes,
-            interceptors=config.interceptors,
-            retry_strategy=retry_strategy,
+            input, operation, config=config, retry_strategy=retry_strategy
         )
 
     async def datetime_offsets(
@@ -245,12 +252,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, DATETIME_OFFSETS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, DATETIME_OFFSETS, [], plugins)
         return await pipeline(call)
 
     async def empty_input_and_empty_output(
@@ -273,11 +275,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, EMPTY_INPUT_AND_EMPTY_OUTPUT, operation_plugins
+            input, EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -299,11 +298,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_OPERATION, operation_plugins
+            input, ENDPOINT_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -327,11 +323,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, operation_plugins
+            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -353,12 +346,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `FlattenedXmlMapOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, FLATTENED_XML_MAP, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, FLATTENED_XML_MAP, [], plugins)
         return await pipeline(call)
 
     async def flattened_xml_map_with_xml_name(
@@ -381,11 +369,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, FLATTENED_XML_MAP_WITH_XML_NAME, operation_plugins
+            input, FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
@@ -409,11 +394,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, FLATTENED_XML_MAP_WITH_XML_NAMESPACE, operation_plugins
+            input, FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
         )
         return await pipeline(call)
 
@@ -435,11 +417,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, FRACTIONAL_SECONDS, operation_plugins
+            input, FRACTIONAL_SECONDS, [], plugins
         )
         return await pipeline(call)
 
@@ -463,11 +442,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, operation_plugins
+            input, GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
@@ -489,11 +465,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HOST_WITH_PATH_OPERATION, operation_plugins
+            input, HOST_WITH_PATH_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -517,11 +490,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `IgnoresWrappingXmlNameOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, IGNORES_WRAPPING_XML_NAME, operation_plugins
+            input, IGNORES_WRAPPING_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
@@ -543,12 +513,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `NestedStructuresOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, NESTED_STRUCTURES, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, NESTED_STRUCTURES, [], plugins)
         return await pipeline(call)
 
     async def no_input_and_no_output(
@@ -572,11 +537,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_NO_OUTPUT, operation_plugins
+            input, NO_INPUT_AND_NO_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -600,11 +562,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_OUTPUT, operation_plugins
+            input, NO_INPUT_AND_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -626,11 +585,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, PUT_WITH_CONTENT_ENCODING, operation_plugins
+            input, PUT_WITH_CONTENT_ENCODING, [], plugins
         )
         return await pipeline(call)
 
@@ -654,11 +610,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, operation_plugins
+            input, QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
         return await pipeline(call)
 
@@ -680,10 +633,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryListsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, QUERY_LISTS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, QUERY_LISTS, [], plugins)
         return await pipeline(call)
 
     async def query_maps(
@@ -704,10 +654,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryMapsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, QUERY_MAPS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, QUERY_MAPS, [], plugins)
         return await pipeline(call)
 
     async def query_timestamps(
@@ -731,12 +678,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryTimestampsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, QUERY_TIMESTAMPS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, QUERY_TIMESTAMPS, [], plugins)
         return await pipeline(call)
 
     async def recursive_xml_shapes(
@@ -757,11 +699,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `RecursiveXmlShapesOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, RECURSIVE_XML_SHAPES, operation_plugins
+            input, RECURSIVE_XML_SHAPES, [], plugins
         )
         return await pipeline(call)
 
@@ -783,11 +722,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `SimpleInputParamsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_INPUT_PARAMS, operation_plugins
+            input, SIMPLE_INPUT_PARAMS, [], plugins
         )
         return await pipeline(call)
 
@@ -809,11 +745,8 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `SimpleScalarXmlPropertiesOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_XML_PROPERTIES, operation_plugins
+            input, SIMPLE_SCALAR_XML_PROPERTIES, [], plugins
         )
         return await pipeline(call)
 
@@ -835,10 +768,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlBlobsOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, XML_BLOBS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, XML_BLOBS, [], plugins)
         return await pipeline(call)
 
     async def xml_empty_blobs(
@@ -859,12 +789,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, XML_EMPTY_BLOBS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, XML_EMPTY_BLOBS, [], plugins)
         return await pipeline(call)
 
     async def xml_empty_lists(
@@ -885,12 +810,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, XML_EMPTY_LISTS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, XML_EMPTY_LISTS, [], plugins)
         return await pipeline(call)
 
     async def xml_empty_maps(
@@ -911,12 +831,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyMapsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, XML_EMPTY_MAPS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, XML_EMPTY_MAPS, [], plugins)
         return await pipeline(call)
 
     async def xml_enums(
@@ -938,10 +853,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, XML_ENUMS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, XML_ENUMS, [], plugins)
         return await pipeline(call)
 
     async def xml_int_enums(
@@ -963,12 +875,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, XML_INT_ENUMS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, XML_INT_ENUMS, [], plugins)
         return await pipeline(call)
 
     async def xml_lists(
@@ -992,10 +899,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlListsOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, XML_LISTS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, XML_LISTS, [], plugins)
         return await pipeline(call)
 
     async def xml_maps(
@@ -1016,10 +920,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlMapsOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, XML_MAPS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, XML_MAPS, [], plugins)
         return await pipeline(call)
 
     async def xml_maps_xml_name(
@@ -1040,12 +941,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlMapsXmlNameOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, XML_MAPS_XML_NAME, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, XML_MAPS_XML_NAME, [], plugins)
         return await pipeline(call)
 
     async def xml_namespaces(
@@ -1066,12 +962,7 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, XML_NAMESPACES, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, XML_NAMESPACES, [], plugins)
         return await pipeline(call)
 
     async def xml_timestamps(
@@ -1093,10 +984,5 @@ class AsyncQueryProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, XML_TIMESTAMPS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, XML_TIMESTAMPS, [], plugins)
         return await pipeline(call)

@@ -672,28 +672,18 @@ class AsyncClient:
         operation: APIOperation[I, O],
         *,
         config: Any,
-        protocol: ClientProtocol[Any, Any],
-        transport: ClientTransport[Any, Any],
-        endpoint_resolver: EndpointResolver,
-        auth_scheme_resolver: AuthSchemeResolver,
-        auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]],
-        interceptors: list[Interceptor[Any, Any, Any, Any]],
         retry_strategy: RetryStrategy,
     ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
-        """Build the pipeline and call from already-resolved pieces."""
-        if self._closed:
-            raise RuntimeError(
-                "Cannot invoke an operation on a client that has been closed."
-            )
-        pipeline = RequestPipeline(protocol=protocol, transport=transport)
+        """Build the pipeline and call from a resolved config and retry strategy."""
+        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
         call = ClientCall(
             input=input,
             operation=operation,
             context=_TypedProperties({"config": config}),
-            interceptor=InterceptorChain(interceptors),
-            auth_scheme_resolver=auth_scheme_resolver,
-            supported_auth_schemes=auth_schemes,
-            endpoint_resolver=endpoint_resolver,
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
             retry_strategy=retry_strategy,
         )
         return pipeline, call

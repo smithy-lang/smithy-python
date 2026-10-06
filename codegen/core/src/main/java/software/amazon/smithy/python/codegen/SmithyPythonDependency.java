@@ -22,7 +22,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_CORE = new PythonDependency(
             "smithy_core",
-            "~=0.8.0",
+            "~=0.8.1",
             Type.DEPENDENCY,
             false);
 

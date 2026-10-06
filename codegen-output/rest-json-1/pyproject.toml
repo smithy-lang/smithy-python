@@ -24,7 +24,7 @@ classifiers = [
 
 dependencies = [
     "smithy_aws_core[eventstream, json]~=0.11.0",
-    "smithy_core~=0.8.0",
+    "smithy_core~=0.8.1",
     "smithy_http[aiohttp]~=0.5.0"
 ]
 

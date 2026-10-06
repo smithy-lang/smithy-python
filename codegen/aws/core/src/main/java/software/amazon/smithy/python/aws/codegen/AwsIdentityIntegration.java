@@ -46,6 +46,7 @@ public class AwsIdentityIntegration implements PythonIntegration {
 
         @Override
         public void write(PythonWriter writer, String previousText, ClientSetupSection section) {
+            writer.write(previousText);
             writer.addStdlibImport("typing", "cast");
             writer.write("""
                     if config.aws_credentials_identity_resolver is None:

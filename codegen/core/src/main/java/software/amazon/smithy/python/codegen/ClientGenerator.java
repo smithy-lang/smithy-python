@@ -104,6 +104,10 @@ final class ClientGenerator implements Runnable {
                             async def _ensure_setup(self) -> $1T:
                                 if not self._setup_done:
                                     async with self._derive_lock:
+                                        if self._closed:
+                                            raise RuntimeError(
+                                                "Cannot invoke an operation on a client that has been closed."
+                                            )
                                         if not self._setup_done:
                                             if self._config is None:
                                                 ${5C|}
@@ -115,9 +119,12 @@ final class ClientGenerator implements Runnable {
                                             if self._plugins:
                                                 for plugin in self._plugins:
                                                     plugin(config)
-                                            self._config = config
+                                            # Publish state only after setup fully succeeds, so a
+                                            # failed _post_setup leaves the caller's config untouched
+                                            # (no re-applied plugins) and the transport closeable.
                                             await self._post_setup(config)
                                             self._transport = config.transport
+                                            self._config = config
                                             self._setup_done = True
                                 assert self._config is not None
                                 return self._config
@@ -131,6 +138,7 @@ final class ClientGenerator implements Runnable {
                                 self,
                                 input: I,
                                 operation: $8T[I, O],
+                                default_plugins: list[$2T],
                                 plugins: list[$2T] | None,
                             ) -> tuple[$9T[Any, Any], $10T[I, O]]:
                                 if self._closed:
@@ -138,11 +146,14 @@ final class ClientGenerator implements Runnable {
                                         "Cannot invoke an operation on a client that has been closed."
                                     )
                                 config = await self._ensure_setup()
-                                if plugins:
+                                if default_plugins or plugins:
                                     # Keep operation-plugin mutations scoped to this call.
                                     config = deepcopy(config)
-                                    for plugin in plugins:
+                                    for plugin in default_plugins:
                                         plugin(config)
+                                    if plugins:
+                                        for plugin in plugins:
+                                            plugin(config)
                                 if (
                                     config.protocol is None
                                     or config.transport is None
@@ -162,12 +173,6 @@ final class ClientGenerator implements Runnable {
                                     input,
                                     operation,
                                     config=config,
-                                    protocol=config.protocol,
-                                    transport=config.transport,
-                                    endpoint_resolver=config.endpoint_resolver,
-                                    auth_scheme_resolver=config.auth_scheme_resolver,
-                                    auth_schemes=config.auth_schemes,
-                                    interceptors=config.interceptors,
                                     retry_strategy=retry_strategy,
                                 )
                             """,
@@ -262,13 +267,13 @@ final class ClientGenerator implements Runnable {
                     plugins: list[${plugin:T}] | None = None
                 ) -> ${output:T}:
                     ${C|}
-                    operation_plugins: list[${plugin:T}] = [
-                        ${C|}
-                    ]
-                    if plugins:
-                        operation_plugins.extend(plugins)
                     pipeline, call = await self._prepare_call(
-                        input, ${operation:T}, operation_plugins
+                        input,
+                        ${operation:T},
+                        [
+                            ${C|}
+                        ],
+                        plugins,
                     )
                     return await pipeline(call)
                 """,
@@ -380,13 +385,13 @@ final class ClientGenerator implements Runnable {
                             plugins: list[${plugin:T}] | None = None
                         ) -> ${duplexEventStream:T}[${inputStream:T}, ${outputStream:T}, ${output:T}]:
                             ${C|}
-                            operation_plugins: list[${plugin:T}] = [
-                                ${C|}
-                            ]
-                            if plugins:
-                                operation_plugins.extend(plugins)
                             pipeline, call = await self._prepare_call(
-                                input, ${operation:T}, operation_plugins
+                                input,
+                                ${operation:T},
+                                [
+                                    ${C|}
+                                ],
+                                plugins,
                             )
                             return await pipeline.duplex_stream(
                                 call,
@@ -407,13 +412,13 @@ final class ClientGenerator implements Runnable {
                             plugins: list[${plugin:T}] | None = None
                         ) -> ${inputEventStream:T}[${inputStream:T}, ${output:T}]:
                             ${C|}
-                            operation_plugins: list[${plugin:T}] = [
-                                ${C|}
-                            ]
-                            if plugins:
-                                operation_plugins.extend(plugins)
                             pipeline, call = await self._prepare_call(
-                                input, ${operation:T}, operation_plugins
+                                input,
+                                ${operation:T},
+                                [
+                                    ${C|}
+                                ],
+                                plugins,
                             )
                             return await pipeline.input_stream(
                                 call,
@@ -433,13 +438,13 @@ final class ClientGenerator implements Runnable {
                         plugins: list[${plugin:T}] | None = None
                     ) -> ${outputEventStream:T}[${outputStream:T}, ${output:T}]:
                         ${C|}
-                        operation_plugins: list[${plugin:T}] = [
-                            ${C|}
-                        ]
-                        if plugins:
-                            operation_plugins.extend(plugins)
                         pipeline, call = await self._prepare_call(
-                            input, ${operation:T}, operation_plugins
+                            input,
+                            ${operation:T},
+                            [
+                                ${C|}
+                            ],
+                            plugins,
                         )
                         return await pipeline.output_stream(
                             call,

@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from dataclasses import replace
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.eventstream import DuplexEventStream, InputEventStream
+from smithy_core.aio.interfaces import ClientTransport
 from smithy_core.auth import AuthOption
 from smithy_core.exceptions import CallError, UnsupportedTransportError
 from smithy_core.response import EMPTY_RESPONSE_METADATA
@@ -168,3 +170,63 @@ async def test_auth_option_signer_properties_override_scheme_defaults() -> None:
         "region": "us-west-2",
         "service": "override",
     }
+
+
+class _CountingTransport:
+    def __init__(self) -> None:
+        self.close_calls = 0
+
+    async def close(self) -> None:
+        self.close_calls += 1
+
+
+class _StubClient(AsyncClient):
+    """Simulates a generated client's post-setup state via the public ctor."""
+
+    def __init__(self, *, setup: bool = True) -> None:
+        super().__init__()
+        self.transport = _CountingTransport()
+        if setup:
+            self._transport = cast(ClientTransport[Any, Any], self.transport)
+            self._setup_done = True
+
+    @property
+    def closed(self) -> bool:
+        return self._closed
+
+
+async def test_close_is_idempotent() -> None:
+    client = _StubClient()
+
+    await client.close()
+    await client.close()
+
+    assert client.closed is True
+    assert client.transport.close_calls == 1
+
+
+async def test_close_without_setup_does_not_touch_transport() -> None:
+    client = _StubClient(setup=False)
+
+    await client.close()
+
+    assert client.closed is True
+    assert client.transport.close_calls == 0
+
+
+async def test_aenter_raises_on_closed_client() -> None:
+    client = _StubClient()
+    await client.close()
+
+    with pytest.raises(RuntimeError):
+        await client.__aenter__()
+
+
+async def test_aexit_closes_client() -> None:
+    client = _StubClient()
+
+    async with client:
+        pass
+
+    assert client.closed is True
+    assert client.transport.close_calls == 1

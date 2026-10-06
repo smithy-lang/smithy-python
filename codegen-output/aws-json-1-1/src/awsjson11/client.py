@@ -105,6 +105,10 @@ class AsyncJsonProtocolClient(AsyncClient):
     async def _ensure_setup(self) -> AsyncJsonProtocolConfig:
         if not self._setup_done:
             async with self._derive_lock:
+                if self._closed:
+                    raise RuntimeError(
+                        "Cannot invoke an operation on a client that has been closed."
+                    )
                 if not self._setup_done:
                     if self._config is None:
                         config = await AsyncJsonProtocolConfig.resolve()
@@ -116,14 +120,19 @@ class AsyncJsonProtocolClient(AsyncClient):
                     if self._plugins:
                         for plugin in self._plugins:
                             plugin(config)
-                    self._config = config
+                    # Publish state only after setup fully succeeds, so a
+                    # failed _post_setup leaves the caller's config untouched
+                    # (no re-applied plugins) and the transport closeable.
                     await self._post_setup(config)
                     self._transport = config.transport
+                    self._config = config
                     self._setup_done = True
         assert self._config is not None
         return self._config
 
     async def _post_setup(self, config: AsyncJsonProtocolConfig) -> None:
+        pass
+
         if config.aws_credentials_identity_resolver is None:
             config_context = config.resolution_context()
             config_file = None
@@ -141,18 +150,25 @@ class AsyncJsonProtocolClient(AsyncClient):
             )
 
     async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
-        self, input: I, operation: APIOperation[I, O], plugins: list[Plugin] | None
+        self,
+        input: I,
+        operation: APIOperation[I, O],
+        default_plugins: list[Plugin],
+        plugins: list[Plugin] | None,
     ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
             )
         config = await self._ensure_setup()
-        if plugins:
+        if default_plugins or plugins:
             # Keep operation-plugin mutations scoped to this call.
             config = deepcopy(config)
-            for plugin in plugins:
+            for plugin in default_plugins:
                 plugin(config)
+            if plugins:
+                for plugin in plugins:
+                    plugin(config)
         if (
             config.protocol is None
             or config.transport is None
@@ -170,16 +186,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             max_attempts=config.max_attempts,
         )
         return self._build_call(
-            input,
-            operation,
-            config=config,
-            protocol=config.protocol,
-            transport=config.transport,
-            endpoint_resolver=config.endpoint_resolver,
-            auth_scheme_resolver=config.auth_scheme_resolver,
-            auth_schemes=config.auth_schemes,
-            interceptors=config.interceptors,
-            retry_strategy=retry_strategy,
+            input, operation, config=config, retry_strategy=retry_strategy
         )
 
     async def content_type_parameters(
@@ -201,11 +208,8 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, CONTENT_TYPE_PARAMETERS, operation_plugins
+            input, CONTENT_TYPE_PARAMETERS, [], plugins
         )
         return await pipeline(call)
 
@@ -227,12 +231,7 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, DATETIME_OFFSETS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, DATETIME_OFFSETS, [], plugins)
         return await pipeline(call)
 
     async def empty_operation(
@@ -253,12 +252,7 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `EmptyOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, EMPTY_OPERATION, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, EMPTY_OPERATION, [], plugins)
         return await pipeline(call)
 
     async def endpoint_operation(
@@ -279,11 +273,8 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_OPERATION, operation_plugins
+            input, ENDPOINT_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -307,11 +298,8 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, operation_plugins
+            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -333,11 +321,8 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, FRACTIONAL_SECONDS, operation_plugins
+            input, FRACTIONAL_SECONDS, [], plugins
         )
         return await pipeline(call)
 
@@ -363,11 +348,8 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, operation_plugins
+            input, GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
@@ -389,11 +371,8 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HOST_WITH_PATH_OPERATION, operation_plugins
+            input, HOST_WITH_PATH_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -416,10 +395,7 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonEnumsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, JSON_ENUMS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, JSON_ENUMS, [], plugins)
         return await pipeline(call)
 
     async def json_int_enums(
@@ -441,12 +417,7 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonIntEnumsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, JSON_INT_ENUMS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, JSON_INT_ENUMS, [], plugins)
         return await pipeline(call)
 
     async def json_unions(
@@ -467,10 +438,7 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, JSON_UNIONS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, JSON_UNIONS, [], plugins)
         return await pipeline(call)
 
     async def kitchen_sink_operation(
@@ -491,11 +459,8 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `KitchenSinkOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, KITCHEN_SINK_OPERATION, operation_plugins
+            input, KITCHEN_SINK_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -517,12 +482,7 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `NullOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, NULL_OPERATION, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, NULL_OPERATION, [], plugins)
         return await pipeline(call)
 
     async def operation_with_optional_input_output(
@@ -545,11 +505,8 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `OperationWithOptionalInputOutputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_OPTIONAL_INPUT_OUTPUT, operation_plugins
+            input, OPERATION_WITH_OPTIONAL_INPUT_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -571,11 +528,8 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `PutAndGetInlineDocumentsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, PUT_AND_GET_INLINE_DOCUMENTS, operation_plugins
+            input, PUT_AND_GET_INLINE_DOCUMENTS, [], plugins
         )
         return await pipeline(call)
 
@@ -597,11 +551,8 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, PUT_WITH_CONTENT_ENCODING, operation_plugins
+            input, PUT_WITH_CONTENT_ENCODING, [], plugins
         )
         return await pipeline(call)
 
@@ -623,11 +574,8 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, operation_plugins
+            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
 
@@ -649,10 +597,7 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `SparseNullsOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, SPARSE_NULLS_OPERATION, operation_plugins
+            input, SPARSE_NULLS_OPERATION, [], plugins
         )
         return await pipeline(call)

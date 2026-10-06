@@ -397,6 +397,10 @@ class AsyncRestJsonProtocolClient(AsyncClient):
     async def _ensure_setup(self) -> AsyncRestJsonProtocolConfig:
         if not self._setup_done:
             async with self._derive_lock:
+                if self._closed:
+                    raise RuntimeError(
+                        "Cannot invoke an operation on a client that has been closed."
+                    )
                 if not self._setup_done:
                     if self._config is None:
                         config = await AsyncRestJsonProtocolConfig.resolve()
@@ -408,14 +412,19 @@ class AsyncRestJsonProtocolClient(AsyncClient):
                     if self._plugins:
                         for plugin in self._plugins:
                             plugin(config)
-                    self._config = config
+                    # Publish state only after setup fully succeeds, so a
+                    # failed _post_setup leaves the caller's config untouched
+                    # (no re-applied plugins) and the transport closeable.
                     await self._post_setup(config)
                     self._transport = config.transport
+                    self._config = config
                     self._setup_done = True
         assert self._config is not None
         return self._config
 
     async def _post_setup(self, config: AsyncRestJsonProtocolConfig) -> None:
+        pass
+
         if config.aws_credentials_identity_resolver is None:
             config_context = config.resolution_context()
             config_file = None
@@ -433,18 +442,25 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             )
 
     async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
-        self, input: I, operation: APIOperation[I, O], plugins: list[Plugin] | None
+        self,
+        input: I,
+        operation: APIOperation[I, O],
+        default_plugins: list[Plugin],
+        plugins: list[Plugin] | None,
     ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
             )
         config = await self._ensure_setup()
-        if plugins:
+        if default_plugins or plugins:
             # Keep operation-plugin mutations scoped to this call.
             config = deepcopy(config)
-            for plugin in plugins:
+            for plugin in default_plugins:
                 plugin(config)
+            if plugins:
+                for plugin in plugins:
+                    plugin(config)
         if (
             config.protocol is None
             or config.transport is None
@@ -462,16 +478,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             max_attempts=config.max_attempts,
         )
         return self._build_call(
-            input,
-            operation,
-            config=config,
-            protocol=config.protocol,
-            transport=config.transport,
-            endpoint_resolver=config.endpoint_resolver,
-            auth_scheme_resolver=config.auth_scheme_resolver,
-            auth_schemes=config.auth_schemes,
-            interceptors=config.interceptors,
-            retry_strategy=retry_strategy,
+            input, operation, config=config, retry_strategy=retry_strategy
         )
 
     async def all_query_string_types(
@@ -492,11 +499,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `AllQueryStringTypesOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, ALL_QUERY_STRING_TYPES, operation_plugins
+            input, ALL_QUERY_STRING_TYPES, [], plugins
         )
         return await pipeline(call)
 
@@ -522,11 +526,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `ConstantAndVariableQueryStringOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, CONSTANT_AND_VARIABLE_QUERY_STRING, operation_plugins
+            input, CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -551,11 +552,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `ConstantQueryStringOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, CONSTANT_QUERY_STRING, operation_plugins
+            input, CONSTANT_QUERY_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -578,11 +576,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, CONTENT_TYPE_PARAMETERS, operation_plugins
+            input, CONTENT_TYPE_PARAMETERS, [], plugins
         )
         return await pipeline(call)
 
@@ -604,12 +599,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, DATETIME_OFFSETS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, DATETIME_OFFSETS, [], plugins)
         return await pipeline(call)
 
     async def document_type(
@@ -630,12 +620,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `DocumentTypeOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, DOCUMENT_TYPE, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, DOCUMENT_TYPE, [], plugins)
         return await pipeline(call)
 
     async def document_type_as_map_value(
@@ -656,11 +641,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `DocumentTypeAsMapValueOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, DOCUMENT_TYPE_AS_MAP_VALUE, operation_plugins
+            input, DOCUMENT_TYPE_AS_MAP_VALUE, [], plugins
         )
         return await pipeline(call)
 
@@ -682,11 +664,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `DocumentTypeAsPayloadOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, DOCUMENT_TYPE_AS_PAYLOAD, operation_plugins
+            input, DOCUMENT_TYPE_AS_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -708,12 +687,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             A `DuplexEventStream` for bidirectional streaming.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, DUPLEX_STREAM, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, DUPLEX_STREAM, [], plugins)
         return await pipeline.duplex_stream(
             call, EventStream, EventStream, _EventStreamDeserializer().deserialize
         )
@@ -738,11 +712,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An `InputEventStream` for client-to-server streaming.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, DUPLEX_STREAM_WITH_DISTINCT_STREAMS, operation_plugins
+            input, DUPLEX_STREAM_WITH_DISTINCT_STREAMS, [], plugins
         )
         return await pipeline.input_stream(call, EventStream)
 
@@ -768,11 +739,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             A `DuplexEventStream` for bidirectional streaming.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, DUPLEX_STREAM_WITH_INITIAL_MESSAGES, operation_plugins
+            input, DUPLEX_STREAM_WITH_INITIAL_MESSAGES, [], plugins
         )
         return await pipeline.duplex_stream(
             call, EventStream, EventStream, _EventStreamDeserializer().deserialize
@@ -799,11 +767,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, EMPTY_INPUT_AND_EMPTY_OUTPUT, operation_plugins
+            input, EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -825,11 +790,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_OPERATION, operation_plugins
+            input, ENDPOINT_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -853,11 +815,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, operation_plugins
+            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -879,11 +838,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, FRACTIONAL_SECONDS, operation_plugins
+            input, FRACTIONAL_SECONDS, [], plugins
         )
         return await pipeline(call)
 
@@ -909,11 +865,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, operation_plugins
+            input, GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
@@ -935,11 +888,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HOST_WITH_PATH_OPERATION, operation_plugins
+            input, HOST_WITH_PATH_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -961,11 +911,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpChecksumRequiredOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_CHECKSUM_REQUIRED, operation_plugins
+            input, HTTP_CHECKSUM_REQUIRED, [], plugins
         )
         return await pipeline(call)
 
@@ -987,11 +934,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpEmptyPrefixHeadersOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_EMPTY_PREFIX_HEADERS, operation_plugins
+            input, HTTP_EMPTY_PREFIX_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -1013,12 +957,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpEnumPayloadOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, HTTP_ENUM_PAYLOAD, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, HTTP_ENUM_PAYLOAD, [], plugins)
         return await pipeline(call)
 
     async def http_payload_traits(
@@ -1041,11 +980,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadTraitsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_TRAITS, operation_plugins
+            input, HTTP_PAYLOAD_TRAITS, [], plugins
         )
         return await pipeline(call)
 
@@ -1070,11 +1006,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, operation_plugins
+            input, HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
         )
         return await pipeline(call)
 
@@ -1098,11 +1031,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadWithStructureOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_STRUCTURE, operation_plugins
+            input, HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
@@ -1124,11 +1054,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadWithUnionOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_UNION, operation_plugins
+            input, HTTP_PAYLOAD_WITH_UNION, [], plugins
         )
         return await pipeline(call)
 
@@ -1151,11 +1078,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPrefixHeadersOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_PREFIX_HEADERS, operation_plugins
+            input, HTTP_PREFIX_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -1179,11 +1103,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPrefixHeadersInResponseOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_PREFIX_HEADERS_IN_RESPONSE, operation_plugins
+            input, HTTP_PREFIX_HEADERS_IN_RESPONSE, [], plugins
         )
         return await pipeline(call)
 
@@ -1207,11 +1128,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpQueryParamsOnlyOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_QUERY_PARAMS_ONLY_OPERATION, operation_plugins
+            input, HTTP_QUERY_PARAMS_ONLY_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -1235,11 +1153,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpRequestWithFloatLabelsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_FLOAT_LABELS, operation_plugins
+            input, HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins
         )
         return await pipeline(call)
 
@@ -1263,11 +1178,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, operation_plugins
+            input, HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
         )
         return await pipeline(call)
 
@@ -1290,11 +1202,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpRequestWithLabelsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_LABELS, operation_plugins
+            input, HTTP_REQUEST_WITH_LABELS, [], plugins
         )
         return await pipeline(call)
 
@@ -1319,11 +1228,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, operation_plugins
+            input, HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
         )
         return await pipeline(call)
 
@@ -1347,11 +1253,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpRequestWithRegexLiteralOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_REGEX_LITERAL, operation_plugins
+            input, HTTP_REQUEST_WITH_REGEX_LITERAL, [], plugins
         )
         return await pipeline(call)
 
@@ -1373,11 +1276,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpResponseCodeOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_RESPONSE_CODE, operation_plugins
+            input, HTTP_RESPONSE_CODE, [], plugins
         )
         return await pipeline(call)
 
@@ -1399,11 +1299,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpStringPayloadOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, HTTP_STRING_PAYLOAD, operation_plugins
+            input, HTTP_STRING_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -1429,11 +1326,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `IgnoreQueryParamsInResponseOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, IGNORE_QUERY_PARAMS_IN_RESPONSE, operation_plugins
+            input, IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
         )
         return await pipeline(call)
 
@@ -1456,11 +1350,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `InputAndOutputWithHeadersOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, INPUT_AND_OUTPUT_WITH_HEADERS, operation_plugins
+            input, INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -1482,12 +1373,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An `InputEventStream` for client-to-server streaming.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, INPUT_STREAM, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, INPUT_STREAM, [], plugins)
         return await pipeline.input_stream(call, EventStream)
 
     async def input_stream_with_initial_request(
@@ -1510,11 +1396,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An `InputEventStream` for client-to-server streaming.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, INPUT_STREAM_WITH_INITIAL_REQUEST, operation_plugins
+            input, INPUT_STREAM_WITH_INITIAL_REQUEST, [], plugins
         )
         return await pipeline.input_stream(call, EventStream)
 
@@ -1536,10 +1419,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonBlobsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, JSON_BLOBS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, JSON_BLOBS, [], plugins)
         return await pipeline(call)
 
     async def json_enums(
@@ -1561,10 +1441,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonEnumsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, JSON_ENUMS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, JSON_ENUMS, [], plugins)
         return await pipeline(call)
 
     async def json_int_enums(
@@ -1586,12 +1463,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonIntEnumsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, JSON_INT_ENUMS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, JSON_INT_ENUMS, [], plugins)
         return await pipeline(call)
 
     async def json_lists(
@@ -1614,10 +1486,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonListsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, JSON_LISTS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, JSON_LISTS, [], plugins)
         return await pipeline(call)
 
     async def json_maps(
@@ -1638,10 +1507,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonMapsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, JSON_MAPS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, JSON_MAPS, [], plugins)
         return await pipeline(call)
 
     async def json_timestamps(
@@ -1663,12 +1529,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonTimestampsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, JSON_TIMESTAMPS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, JSON_TIMESTAMPS, [], plugins)
         return await pipeline(call)
 
     async def json_unions(
@@ -1689,10 +1550,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, JSON_UNIONS, operation_plugins)
+        pipeline, call = await self._prepare_call(input, JSON_UNIONS, [], plugins)
         return await pipeline(call)
 
     async def malformed_accept_with_body(
@@ -1713,11 +1571,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedAcceptWithBodyOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_ACCEPT_WITH_BODY, operation_plugins
+            input, MALFORMED_ACCEPT_WITH_BODY, [], plugins
         )
         return await pipeline(call)
 
@@ -1741,11 +1596,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedAcceptWithGenericStringOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_ACCEPT_WITH_GENERIC_STRING, operation_plugins
+            input, MALFORMED_ACCEPT_WITH_GENERIC_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -1769,11 +1621,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedAcceptWithPayloadOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_ACCEPT_WITH_PAYLOAD, operation_plugins
+            input, MALFORMED_ACCEPT_WITH_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -1795,12 +1644,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedBlobOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_BLOB, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_BLOB, [], plugins)
         return await pipeline(call)
 
     async def malformed_boolean(
@@ -1821,12 +1665,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedBooleanOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_BOOLEAN, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_BOOLEAN, [], plugins)
         return await pipeline(call)
 
     async def malformed_byte(
@@ -1847,12 +1686,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedByteOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_BYTE, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_BYTE, [], plugins)
         return await pipeline(call)
 
     async def malformed_content_type_with_body(
@@ -1875,11 +1709,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedContentTypeWithBodyOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_CONTENT_TYPE_WITH_BODY, operation_plugins
+            input, MALFORMED_CONTENT_TYPE_WITH_BODY, [], plugins
         )
         return await pipeline(call)
 
@@ -1903,11 +1734,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedContentTypeWithGenericStringOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING, operation_plugins
+            input, MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -1931,11 +1759,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedContentTypeWithoutBodyOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_CONTENT_TYPE_WITHOUT_BODY, operation_plugins
+            input, MALFORMED_CONTENT_TYPE_WITHOUT_BODY, [], plugins
         )
         return await pipeline(call)
 
@@ -1959,11 +1784,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedContentTypeWithoutBodyEmptyInputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT, operation_plugins
+            input, MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -1987,11 +1809,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedContentTypeWithPayloadOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_CONTENT_TYPE_WITH_PAYLOAD, operation_plugins
+            input, MALFORMED_CONTENT_TYPE_WITH_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -2013,12 +1832,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedDoubleOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_DOUBLE, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_DOUBLE, [], plugins)
         return await pipeline(call)
 
     async def malformed_float(
@@ -2039,12 +1853,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedFloatOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_FLOAT, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_FLOAT, [], plugins)
         return await pipeline(call)
 
     async def malformed_integer(
@@ -2065,12 +1874,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedIntegerOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_INTEGER, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_INTEGER, [], plugins)
         return await pipeline(call)
 
     async def malformed_list(
@@ -2091,12 +1895,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedListOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_LIST, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_LIST, [], plugins)
         return await pipeline(call)
 
     async def malformed_long(
@@ -2117,12 +1916,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedLongOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_LONG, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_LONG, [], plugins)
         return await pipeline(call)
 
     async def malformed_map(
@@ -2143,12 +1937,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedMapOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_MAP, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_MAP, [], plugins)
         return await pipeline(call)
 
     async def malformed_request_body(
@@ -2169,11 +1958,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedRequestBodyOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_REQUEST_BODY, operation_plugins
+            input, MALFORMED_REQUEST_BODY, [], plugins
         )
         return await pipeline(call)
 
@@ -2195,12 +1981,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedShortOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_SHORT, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_SHORT, [], plugins)
         return await pipeline(call)
 
     async def malformed_string(
@@ -2221,12 +2002,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedStringOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_STRING, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_STRING, [], plugins)
         return await pipeline(call)
 
     async def malformed_timestamp_body_date_time(
@@ -2249,11 +2025,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampBodyDateTimeOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_BODY_DATE_TIME, operation_plugins
+            input, MALFORMED_TIMESTAMP_BODY_DATE_TIME, [], plugins
         )
         return await pipeline(call)
 
@@ -2277,11 +2050,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampBodyDefaultOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_BODY_DEFAULT, operation_plugins
+            input, MALFORMED_TIMESTAMP_BODY_DEFAULT, [], plugins
         )
         return await pipeline(call)
 
@@ -2305,11 +2075,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampBodyHttpDateOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_BODY_HTTP_DATE, operation_plugins
+            input, MALFORMED_TIMESTAMP_BODY_HTTP_DATE, [], plugins
         )
         return await pipeline(call)
 
@@ -2333,11 +2100,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampHeaderDateTimeOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_HEADER_DATE_TIME, operation_plugins
+            input, MALFORMED_TIMESTAMP_HEADER_DATE_TIME, [], plugins
         )
         return await pipeline(call)
 
@@ -2361,11 +2125,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampHeaderDefaultOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_HEADER_DEFAULT, operation_plugins
+            input, MALFORMED_TIMESTAMP_HEADER_DEFAULT, [], plugins
         )
         return await pipeline(call)
 
@@ -2389,11 +2150,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampHeaderEpochOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_HEADER_EPOCH, operation_plugins
+            input, MALFORMED_TIMESTAMP_HEADER_EPOCH, [], plugins
         )
         return await pipeline(call)
 
@@ -2417,11 +2175,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampPathDefaultOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_PATH_DEFAULT, operation_plugins
+            input, MALFORMED_TIMESTAMP_PATH_DEFAULT, [], plugins
         )
         return await pipeline(call)
 
@@ -2445,11 +2200,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampPathEpochOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_PATH_EPOCH, operation_plugins
+            input, MALFORMED_TIMESTAMP_PATH_EPOCH, [], plugins
         )
         return await pipeline(call)
 
@@ -2473,11 +2225,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampPathHttpDateOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_PATH_HTTP_DATE, operation_plugins
+            input, MALFORMED_TIMESTAMP_PATH_HTTP_DATE, [], plugins
         )
         return await pipeline(call)
 
@@ -2501,11 +2250,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampQueryDefaultOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_QUERY_DEFAULT, operation_plugins
+            input, MALFORMED_TIMESTAMP_QUERY_DEFAULT, [], plugins
         )
         return await pipeline(call)
 
@@ -2529,11 +2275,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampQueryEpochOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_QUERY_EPOCH, operation_plugins
+            input, MALFORMED_TIMESTAMP_QUERY_EPOCH, [], plugins
         )
         return await pipeline(call)
 
@@ -2557,11 +2300,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedTimestampQueryHttpDateOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_QUERY_HTTP_DATE, operation_plugins
+            input, MALFORMED_TIMESTAMP_QUERY_HTTP_DATE, [], plugins
         )
         return await pipeline(call)
 
@@ -2583,12 +2323,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedUnionOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MALFORMED_UNION, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MALFORMED_UNION, [], plugins)
         return await pipeline(call)
 
     async def media_type_header(
@@ -2610,12 +2345,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MediaTypeHeaderOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, MEDIA_TYPE_HEADER, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, MEDIA_TYPE_HEADER, [], plugins)
         return await pipeline(call)
 
     async def no_input_and_no_output(
@@ -2639,11 +2369,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_NO_OUTPUT, operation_plugins
+            input, NO_INPUT_AND_NO_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -2668,11 +2395,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_OUTPUT, operation_plugins
+            input, NO_INPUT_AND_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -2695,11 +2419,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `NullAndEmptyHeadersClientOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, NULL_AND_EMPTY_HEADERS_CLIENT, operation_plugins
+            input, NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
         )
         return await pipeline(call)
 
@@ -2722,11 +2443,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `NullAndEmptyHeadersServerOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, NULL_AND_EMPTY_HEADERS_SERVER, operation_plugins
+            input, NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
         )
         return await pipeline(call)
 
@@ -2750,11 +2468,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, OMITS_NULL_SERIALIZES_EMPTY_STRING, operation_plugins
+            input, OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -2780,11 +2495,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `OmitsSerializingEmptyListsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, OMITS_SERIALIZING_EMPTY_LISTS, operation_plugins
+            input, OMITS_SERIALIZING_EMPTY_LISTS, [], plugins
         )
         return await pipeline(call)
 
@@ -2806,11 +2518,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `OperationWithDefaultsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_DEFAULTS, operation_plugins
+            input, OPERATION_WITH_DEFAULTS, [], plugins
         )
         return await pipeline(call)
 
@@ -2834,11 +2543,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `OperationWithNestedStructureOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_NESTED_STRUCTURE, operation_plugins
+            input, OPERATION_WITH_NESTED_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
@@ -2860,12 +2566,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An `OutputEventStream` for server-to-client streaming.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, OUTPUT_STREAM, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, OUTPUT_STREAM, [], plugins)
         return await pipeline.output_stream(
             call, EventStream, _EventStreamDeserializer().deserialize
         )
@@ -2890,11 +2591,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An `OutputEventStream` for server-to-client streaming.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, OUTPUT_STREAM_WITH_INITIAL_RESPONSE, operation_plugins
+            input, OUTPUT_STREAM_WITH_INITIAL_RESPONSE, [], plugins
         )
         return await pipeline.output_stream(
             call, EventStream, _EventStreamDeserializer().deserialize
@@ -2918,11 +2616,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `PostPlayerActionOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, POST_PLAYER_ACTION, operation_plugins
+            input, POST_PLAYER_ACTION, [], plugins
         )
         return await pipeline(call)
 
@@ -2944,11 +2639,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `PostUnionWithJsonNameOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, POST_UNION_WITH_JSON_NAME, operation_plugins
+            input, POST_UNION_WITH_JSON_NAME, [], plugins
         )
         return await pipeline(call)
 
@@ -2970,11 +2662,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, PUT_WITH_CONTENT_ENCODING, operation_plugins
+            input, PUT_WITH_CONTENT_ENCODING, [], plugins
         )
         return await pipeline(call)
 
@@ -2998,11 +2687,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, operation_plugins
+            input, QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
         return await pipeline(call)
 
@@ -3026,11 +2712,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryParamsAsStringListMapOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, QUERY_PARAMS_AS_STRING_LIST_MAP, operation_plugins
+            input, QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins
         )
         return await pipeline(call)
 
@@ -3052,12 +2735,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryPrecedenceOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, QUERY_PRECEDENCE, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, QUERY_PRECEDENCE, [], plugins)
         return await pipeline(call)
 
     async def recursive_shapes(
@@ -3078,12 +2756,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, RECURSIVE_SHAPES, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, RECURSIVE_SHAPES, [], plugins)
         return await pipeline(call)
 
     async def response_code_http_fallback(
@@ -3104,11 +2777,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `ResponseCodeHttpFallbackOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, RESPONSE_CODE_HTTP_FALLBACK, operation_plugins
+            input, RESPONSE_CODE_HTTP_FALLBACK, [], plugins
         )
         return await pipeline(call)
 
@@ -3130,11 +2800,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `ResponseCodeRequiredOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, RESPONSE_CODE_REQUIRED, operation_plugins
+            input, RESPONSE_CODE_REQUIRED, [], plugins
         )
         return await pipeline(call)
 
@@ -3156,11 +2823,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, operation_plugins
+            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
 
@@ -3182,12 +2846,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `SparseJsonListsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, SPARSE_JSON_LISTS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, SPARSE_JSON_LISTS, [], plugins)
         return await pipeline(call)
 
     async def sparse_json_maps(
@@ -3208,12 +2867,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `SparseJsonMapsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, SPARSE_JSON_MAPS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, SPARSE_JSON_MAPS, [], plugins)
         return await pipeline(call)
 
     async def streaming_traits(
@@ -3236,12 +2890,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `StreamingTraitsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, STREAMING_TRAITS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, STREAMING_TRAITS, [], plugins)
         return await pipeline(call)
 
     async def streaming_traits_require_length(
@@ -3266,11 +2915,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `StreamingTraitsRequireLengthOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, STREAMING_TRAITS_REQUIRE_LENGTH, operation_plugins
+            input, STREAMING_TRAITS_REQUIRE_LENGTH, [], plugins
         )
         return await pipeline(call)
 
@@ -3296,11 +2942,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `StreamingTraitsWithMediaTypeOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, STREAMING_TRAITS_WITH_MEDIA_TYPE, operation_plugins
+            input, STREAMING_TRAITS_WITH_MEDIA_TYPE, [], plugins
         )
         return await pipeline(call)
 
@@ -3324,11 +2967,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `TestBodyStructureOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, TEST_BODY_STRUCTURE, operation_plugins
+            input, TEST_BODY_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
@@ -3353,11 +2993,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `TestGetNoInputNoPayloadOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, TEST_GET_NO_INPUT_NO_PAYLOAD, operation_plugins
+            input, TEST_GET_NO_INPUT_NO_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -3382,11 +3019,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `TestGetNoPayloadOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, TEST_GET_NO_PAYLOAD, operation_plugins
+            input, TEST_GET_NO_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -3412,12 +3046,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `TestPayloadBlobOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, TEST_PAYLOAD_BLOB, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, TEST_PAYLOAD_BLOB, [], plugins)
         return await pipeline(call)
 
     async def test_payload_structure(
@@ -3440,11 +3069,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `TestPayloadStructureOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, TEST_PAYLOAD_STRUCTURE, operation_plugins
+            input, TEST_PAYLOAD_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
@@ -3469,11 +3095,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `TestPostNoInputNoPayloadOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, TEST_POST_NO_INPUT_NO_PAYLOAD, operation_plugins
+            input, TEST_POST_NO_INPUT_NO_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -3497,11 +3120,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `TestPostNoPayloadOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, TEST_POST_NO_PAYLOAD, operation_plugins
+            input, TEST_POST_NO_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -3524,11 +3144,8 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `TimestampFormatHeadersOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, TIMESTAMP_FORMAT_HEADERS, operation_plugins
+            input, TIMESTAMP_FORMAT_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -3551,10 +3168,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `UnitInputAndOutputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, UNIT_INPUT_AND_OUTPUT, operation_plugins
+            input, UNIT_INPUT_AND_OUTPUT, [], plugins
         )
         return await pipeline(call)

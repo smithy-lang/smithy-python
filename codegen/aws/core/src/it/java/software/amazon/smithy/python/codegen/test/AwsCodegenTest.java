@@ -64,10 +64,10 @@ public class AwsCodegenTest {
                 "config = await AsyncRESTJSONConfig.resolve()",
                 "for plugin in self._client_plugins:",
                 "for plugin in self._plugins:",
-                "self._config = config",
-                "await self._post_setup(config)");
+                "await self._post_setup(config)",
+                "self._config = config");
         assertTrue(client.contains("async def _post_setup(self, config:"));
-        assertTrue(client.contains("operation_plugins.extend(plugins)"));
+        assertTrue(client.contains("for plugin in default_plugins:"));
         assertTrue(client.contains("await self._prepare_call("));
         assertTrue(client.contains("self._build_call("));
         assertFalse(client.contains("plugin(self._config)"));

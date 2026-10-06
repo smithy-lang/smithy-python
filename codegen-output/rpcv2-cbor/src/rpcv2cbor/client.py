@@ -87,6 +87,10 @@ class RpcV2Protocol(AsyncClient):
     async def _ensure_setup(self) -> Config:
         if not self._setup_done:
             async with self._derive_lock:
+                if self._closed:
+                    raise RuntimeError(
+                        "Cannot invoke an operation on a client that has been closed."
+                    )
                 if not self._setup_done:
                     if self._config is None:
                         config = Config()
@@ -98,9 +102,12 @@ class RpcV2Protocol(AsyncClient):
                     if self._plugins:
                         for plugin in self._plugins:
                             plugin(config)
-                    self._config = config
+                    # Publish state only after setup fully succeeds, so a
+                    # failed _post_setup leaves the caller's config untouched
+                    # (no re-applied plugins) and the transport closeable.
                     await self._post_setup(config)
                     self._transport = config.transport
+                    self._config = config
                     self._setup_done = True
         assert self._config is not None
         return self._config
@@ -109,18 +116,25 @@ class RpcV2Protocol(AsyncClient):
         pass
 
     async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
-        self, input: I, operation: APIOperation[I, O], plugins: list[Plugin] | None
+        self,
+        input: I,
+        operation: APIOperation[I, O],
+        default_plugins: list[Plugin],
+        plugins: list[Plugin] | None,
     ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
             )
         config = await self._ensure_setup()
-        if plugins:
+        if default_plugins or plugins:
             # Keep operation-plugin mutations scoped to this call.
             config = deepcopy(config)
-            for plugin in plugins:
+            for plugin in default_plugins:
                 plugin(config)
+            if plugins:
+                for plugin in plugins:
+                    plugin(config)
         if (
             config.protocol is None
             or config.transport is None
@@ -136,16 +150,7 @@ class RpcV2Protocol(AsyncClient):
             retry_strategy=config.retry_strategy
         )
         return self._build_call(
-            input,
-            operation,
-            config=config,
-            protocol=config.protocol,
-            transport=config.transport,
-            endpoint_resolver=config.endpoint_resolver,
-            auth_scheme_resolver=config.auth_scheme_resolver,
-            auth_schemes=config.auth_schemes,
-            interceptors=config.interceptors,
-            retry_strategy=retry_strategy,
+            input, operation, config=config, retry_strategy=retry_strategy
         )
 
     async def empty_input_output(
@@ -166,11 +171,8 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `EmptyInputOutputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, EMPTY_INPUT_OUTPUT, operation_plugins
+            input, EMPTY_INPUT_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -192,10 +194,7 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `Float16Output`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(input, FLOAT16, operation_plugins)
+        pipeline, call = await self._prepare_call(input, FLOAT16, [], plugins)
         return await pipeline(call)
 
     async def fractional_seconds(
@@ -216,11 +215,8 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, FRACTIONAL_SECONDS, operation_plugins
+            input, FRACTIONAL_SECONDS, [], plugins
         )
         return await pipeline(call)
 
@@ -249,11 +245,8 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, operation_plugins
+            input, GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
@@ -275,12 +268,7 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `NoInputOutputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, NO_INPUT_OUTPUT, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, NO_INPUT_OUTPUT, [], plugins)
         return await pipeline(call)
 
     async def operation_with_defaults(
@@ -301,11 +289,8 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `OperationWithDefaultsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_DEFAULTS, operation_plugins
+            input, OPERATION_WITH_DEFAULTS, [], plugins
         )
         return await pipeline(call)
 
@@ -327,11 +312,8 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `OptionalInputOutputOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, OPTIONAL_INPUT_OUTPUT, operation_plugins
+            input, OPTIONAL_INPUT_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -353,12 +335,7 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, RECURSIVE_SHAPES, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, RECURSIVE_SHAPES, [], plugins)
         return await pipeline(call)
 
     async def rpc_v2_cbor_dense_maps(
@@ -379,11 +356,8 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RpcV2CborDenseMapsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, RPC_V2_CBOR_DENSE_MAPS, operation_plugins
+            input, RPC_V2_CBOR_DENSE_MAPS, [], plugins
         )
         return await pipeline(call)
 
@@ -411,12 +385,7 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RpcV2CborListsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
-        pipeline, call = await self._prepare_call(
-            input, RPC_V2_CBOR_LISTS, operation_plugins
-        )
+        pipeline, call = await self._prepare_call(input, RPC_V2_CBOR_LISTS, [], plugins)
         return await pipeline(call)
 
     async def rpc_v2_cbor_sparse_maps(
@@ -437,11 +406,8 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RpcV2CborSparseMapsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, RPC_V2_CBOR_SPARSE_MAPS, operation_plugins
+            input, RPC_V2_CBOR_SPARSE_MAPS, [], plugins
         )
         return await pipeline(call)
 
@@ -463,11 +429,8 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RpcV2CborUnionsOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, RPC_V2_CBOR_UNIONS, operation_plugins
+            input, RPC_V2_CBOR_UNIONS, [], plugins
         )
         return await pipeline(call)
 
@@ -489,11 +452,8 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, operation_plugins
+            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
 
@@ -515,10 +475,7 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `SparseNullsOperationOutput`.
         """
-        operation_plugins: list[Plugin] = []
-        if plugins:
-            operation_plugins.extend(plugins)
         pipeline, call = await self._prepare_call(
-            input, SPARSE_NULLS_OPERATION, operation_plugins
+            input, SPARSE_NULLS_OPERATION, [], plugins
         )
         return await pipeline(call)
