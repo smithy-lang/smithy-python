@@ -16,8 +16,6 @@ from smithy_core.interfaces import is_bytes_reader, is_streaming_blob
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeType
 from smithy_core.traits import (
-    HTTPHeaderTrait,
-    HTTPPrefixHeadersTrait,
     HTTPTrait,
     MediaTypeTrait,
     TimestampFormatTrait,
@@ -26,8 +24,9 @@ from smithy_core.types import TimestampFormat
 from smithy_core.utils import ensure_utc, strict_parse_bool, strict_parse_float
 
 from .aio.interfaces import HTTPResponse
-from .bindings import Binding, ResponseBindingMatcher
+from .bindings import Binding
 from .interfaces import Field, Fields
+from .schema_extensions import HTTP_BINDING_SCHEMA_EXTENSION, HTTPPayloadMetadata
 from .utils import split_header
 
 if TYPE_CHECKING:
@@ -37,9 +36,80 @@ if TYPE_CHECKING:
 
 __all__ = ["HTTPResponseDeserializer"]
 
+_PREFIX_HEADER_OMISSIONS = frozenset(
+    {
+        "authorization",
+        "connection",
+        "content-length",
+        "expect",
+        "host",
+        "max-forwards",
+        "proxy-authenticate",
+        "server",
+        "te",
+        "trailer",
+        "transfer-encoding",
+        "upgrade",
+        "user-agent",
+        "www-authenticate",
+        "x-forwarded-for",
+    }
+)
+
+
+def _discard_value(schema: Schema, deserializer: ShapeDeserializer) -> None:
+    """Consume a value that belongs to a non-document HTTP binding."""
+    if deserializer.is_null():
+        deserializer.read_null()
+        return
+
+    match schema.shape_type:
+        case ShapeType.STRUCTURE | ShapeType.UNION:
+            deserializer.read_struct(schema, _discard_value)
+        case ShapeType.LIST:
+            value_schema = schema.members["member"]
+            deserializer.read_list(
+                schema,
+                lambda value: _discard_value(value_schema, value),
+            )
+        case ShapeType.MAP:
+            value_schema = schema.members["value"]
+            deserializer.read_map(
+                schema,
+                lambda _, value: _discard_value(value_schema, value),
+            )
+        case ShapeType.BOOLEAN:
+            deserializer.read_boolean(schema)
+        case ShapeType.BLOB:
+            deserializer.read_blob(schema)
+        case ShapeType.BYTE:
+            deserializer.read_byte(schema)
+        case ShapeType.SHORT:
+            deserializer.read_short(schema)
+        case ShapeType.INTEGER | ShapeType.INT_ENUM:
+            deserializer.read_integer(schema)
+        case ShapeType.LONG:
+            deserializer.read_long(schema)
+        case ShapeType.BIG_INTEGER:
+            deserializer.read_big_integer(schema)
+        case ShapeType.FLOAT:
+            deserializer.read_float(schema)
+        case ShapeType.DOUBLE:
+            deserializer.read_double(schema)
+        case ShapeType.BIG_DECIMAL:
+            deserializer.read_big_decimal(schema)
+        case ShapeType.STRING | ShapeType.ENUM:
+            deserializer.read_string(schema)
+        case ShapeType.TIMESTAMP:
+            deserializer.read_timestamp(schema)
+        case ShapeType.DOCUMENT:
+            deserializer.read_document(schema)
+        case _:
+            raise TypeError(f"Unsupported document member type: {schema.shape_type}")
+
 
 class HTTPResponseDeserializer(SpecificShapeDeserializer):
-    """Binds :py:class:`HTTPResponse` properties to a DeserializableShape."""
+    """Deserialize HTTP response bindings through the shape deserializer contract."""
 
     # Note: caller will have to read the body if it's async and not streaming
     def __init__(
@@ -66,52 +136,88 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
     def read_struct(
         self, schema: Schema, consumer: Callable[[Schema, ShapeDeserializer], None]
     ) -> None:
-        binding_matcher = ResponseBindingMatcher(schema)
+        binding_metadata = schema.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
+        response_metadata = binding_metadata.response
+        response = self._response
+        fields = response.fields
+        field_entries = fields.entries
+        payload_metadata = response_metadata.payload
+        event_stream_member = response_metadata.event_stream_member
 
-        for member in schema.members.values():
-            match binding_matcher.match(member):
+        for (
+            member,
+            binding,
+            name,
+            is_list,
+            timestamp_format,
+            value_shape_type,
+            has_media_type,
+        ) in response_metadata.dispatch:
+            match binding:
                 case Binding.HEADER:
-                    trait = member.expect_trait(HTTPHeaderTrait)
-                    header = self._response.fields.entries.get(trait.key.lower())
+                    assert name is not None  # noqa: S101
+                    header = field_entries.get(name)
                     if header is not None:
-                        if member.shape_type is ShapeType.LIST:
-                            consumer(member, HTTPHeaderListDeserializer(header))
+                        if is_list:
+                            consumer(
+                                member,
+                                HTTPHeaderListDeserializer(
+                                    header,
+                                    timestamp_format,
+                                    value_shape_type,
+                                    has_media_type,
+                                ),
+                            )
                         else:
-                            consumer(member, HTTPHeaderDeserializer(header.as_string()))
+                            consumer(
+                                member,
+                                HTTPHeaderDeserializer(
+                                    header.as_string(),
+                                    timestamp_format,
+                                    has_media_type,
+                                ),
+                            )
                 case Binding.PREFIX_HEADERS:
-                    trait = member.expect_trait(HTTPPrefixHeadersTrait)
+                    assert name is not None  # noqa: S101
                     consumer(
                         member,
-                        HTTPHeaderMapDeserializer(self._response.fields, trait.prefix),
+                        HTTPHeaderMapDeserializer(fields, name),
                     )
                 case Binding.STATUS:
                     consumer(
-                        member, HTTPResponseCodeDeserializer(self._response.status)
+                        member,
+                        HTTPResponseCodeDeserializer(response.status),
                     )
                 case Binding.PAYLOAD:
-                    if binding_matcher.event_stream_member is None:
-                        assert binding_matcher.payload_member is not None  # noqa: S101
-                        if self._should_read_payload(binding_matcher.payload_member):
-                            deserializer = self._create_payload_deserializer(
-                                binding_matcher.payload_member
-                            )
-                            consumer(binding_matcher.payload_member, deserializer)
+                    assert payload_metadata is not None  # noqa: S101
+                    if event_stream_member is None and self._should_read_payload(
+                        payload_metadata
+                    ):
+                        deserializer = self._create_payload_deserializer(
+                            payload_metadata
+                        )
+                        consumer(member, deserializer)
                 case _:
                     pass
 
-        if binding_matcher.has_body and not self._has_empty_body(
-            self._response, self._body
+        if response_metadata.has_body and not self._has_empty_body(
+            response, self._body
         ):
             deserializer = self._create_body_deserializer()
-            deserializer.read_struct(schema, consumer)
+            body_members = response_metadata.body_members
 
-    def _should_read_payload(self, schema: Schema) -> bool:
-        if schema.shape_type not in (
-            ShapeType.LIST,
-            ShapeType.MAP,
-            ShapeType.UNION,
-            ShapeType.STRUCTURE,
-        ):
+            def consume_body(
+                member: Schema, member_deserializer: ShapeDeserializer
+            ) -> None:
+                if body_members[member.expect_member_index()]:
+                    consumer(member, member_deserializer)
+                else:
+                    _discard_value(member, member_deserializer)
+
+            deserializer.read_struct(schema, consume_body)
+
+    def _should_read_payload(self, payload: HTTPPayloadMetadata) -> bool:
+        if payload.is_raw:
             return True
         return not self._has_empty_body(self._response, self._body)
 
@@ -129,12 +235,10 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
             seek(0, 0)
         return False
 
-    def _create_payload_deserializer(self, payload_member: Schema) -> ShapeDeserializer:
-        if payload_member.shape_type in (
-            ShapeType.BLOB,
-            ShapeType.STRING,
-            ShapeType.ENUM,
-        ):
+    def _create_payload_deserializer(
+        self, payload: HTTPPayloadMetadata
+    ) -> ShapeDeserializer:
+        if payload.is_raw:
             body = self._body if self._body is not None else self._response.body
             return RawPayloadDeserializer(body)
         return self._create_body_deserializer()
@@ -159,12 +263,19 @@ class HTTPHeaderDeserializer(SpecificShapeDeserializer):
     For headers with list values, see :py:class:`HTTPHeaderListDeserializer`.
     """
 
-    def __init__(self, value: str) -> None:
+    def __init__(
+        self,
+        value: str,
+        timestamp_format: TimestampFormat | None = None,
+        has_media_type: bool | None = None,
+    ) -> None:
         """Initialize an HTTPHeaderDeserializer.
 
         :param value: The string value of the header.
         """
         self._value = value
+        self._timestamp_format = timestamp_format
+        self._has_media_type = has_media_type
 
     def is_null(self) -> bool:
         return False
@@ -197,42 +308,66 @@ class HTTPHeaderDeserializer(SpecificShapeDeserializer):
         return Decimal(self._value).canonical()
 
     def read_string(self, schema: Schema) -> str:
-        if MediaTypeTrait in schema:
+        has_media_type = self._has_media_type
+        if has_media_type is None:
+            has_media_type = MediaTypeTrait in schema
+        if has_media_type:
             return b64decode(self._value).decode("utf-8")
         return self._value
 
     def read_timestamp(self, schema: Schema) -> datetime.datetime:
-        format = TimestampFormat.HTTP_DATE
-        if (trait := schema.get_trait(TimestampFormatTrait)) is not None:
-            format = trait.format
+        format = self._timestamp_format
+        if format is None:
+            format = TimestampFormat.HTTP_DATE
+            if (trait := schema.get_trait(TimestampFormatTrait)) is not None:
+                format = trait.format
         return ensure_utc(format.deserialize(self._value))
 
 
 class HTTPHeaderListDeserializer(SpecificShapeDeserializer):
     """Binds HTTP header lists to a deserializable shape."""
 
-    def __init__(self, field: Field) -> None:
+    def __init__(
+        self,
+        field: Field,
+        timestamp_format: TimestampFormat | None = None,
+        value_shape_type: ShapeType | None = None,
+        has_media_type: bool | None = None,
+    ) -> None:
         """Initialize an HTTPHeaderListDeserializer.
 
         :param field: The field to deserialize.
         """
         self._field = field
+        self._timestamp_format = timestamp_format
+        self._value_shape_type = value_shape_type
+        self._has_media_type = has_media_type
 
     def read_list(
         self, schema: Schema, consumer: Callable[["ShapeDeserializer"], None]
     ) -> None:
         values = self._field.values
         if len(values) == 1:
-            is_http_date_list = False
-            value_schema = schema.members["member"]
-            if value_schema.shape_type is ShapeType.TIMESTAMP:
-                trait = value_schema.get_trait(TimestampFormatTrait)
-                is_http_date_list = (
-                    trait is None or trait.format is TimestampFormat.HTTP_DATE
-                )
+            value_shape_type = self._value_shape_type
+            timestamp_format = self._timestamp_format
+            if value_shape_type is None:
+                value_schema = schema.members["member"]
+                value_shape_type = value_schema.shape_type
+                if (trait := value_schema.get_trait(TimestampFormatTrait)) is not None:
+                    timestamp_format = trait.format
+            is_http_date_list = (
+                value_shape_type is ShapeType.TIMESTAMP
+                and timestamp_format in (None, TimestampFormat.HTTP_DATE)
+            )
             values = split_header(values[0], is_http_date_list)
         for value in values:
-            consumer(HTTPHeaderDeserializer(value))
+            consumer(
+                HTTPHeaderDeserializer(
+                    value,
+                    self._timestamp_format,
+                    self._has_media_type,
+                )
+            )
 
 
 class HTTPHeaderMapDeserializer(SpecificShapeDeserializer):
@@ -243,8 +378,8 @@ class HTTPHeaderMapDeserializer(SpecificShapeDeserializer):
 
         :param fields: The collection of headers to search for map values.
         :param prefix: An optional prefix to limit which headers are pulled in to the
-            map. By default, all headers are pulled in, including headers that are bound
-            to other properties on the shape.
+            map. By default, all non-restricted headers are pulled in, including headers
+            that are bound to other properties on the shape.
         """
         self._prefix = prefix.lower()
         self._fields = fields
@@ -256,7 +391,8 @@ class HTTPHeaderMapDeserializer(SpecificShapeDeserializer):
     ) -> None:
         trim = len(self._prefix)
         for field in self._fields:
-            if field.name.lower().startswith(self._prefix):
+            name = field.name.lower()
+            if name.startswith(self._prefix) and name not in _PREFIX_HEADER_OMISSIONS:
                 consumer(field.name[trim:], HTTPHeaderDeserializer(field.as_string()))
 
 

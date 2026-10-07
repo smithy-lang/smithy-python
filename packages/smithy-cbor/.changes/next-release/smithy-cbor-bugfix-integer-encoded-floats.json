@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Allow CBOR integer tokens within the signed 64-bit range to deserialize into Smithy float and double shapes."
+}

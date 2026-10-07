@@ -5,7 +5,7 @@
 # mypy: allow-incomplete-defs
 
 import pytest
-from smithy_http import Field, Fields
+from smithy_http import Field, Fields, tuples_to_fields
 
 
 def test_field_single_valued_basics() -> None:
@@ -321,3 +321,23 @@ def test_fields_delitem_missing() -> None:
 def test_field_invalid_kind() -> None:
     with pytest.raises(ValueError, match="Unknown field kind"):
         Field(name="fname", kind="metadata")  # type: ignore
+
+
+def test_tuples_to_fields_preserves_order_case_values_and_kind() -> None:
+    fields = tuples_to_fields(
+        (
+            item
+            for item in [
+                ("X-First", "one"),
+                ("x-second", "two"),
+                ("x-FIRST", "three"),
+            ]
+        ),
+        kind="trailer",
+    )
+
+    assert list(fields.entries) == ["x-first", "x-second"]
+    assert [field.name for field in fields] == ["X-First", "x-second"]
+    assert fields["X-FIRST"].values == ["one", "three"]
+    assert fields["x-second"].values == ["two"]
+    assert all(field.kind == "trailer" for field in fields)
