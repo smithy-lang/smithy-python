@@ -176,8 +176,6 @@ class AsyncQueryProtocolClient(AsyncClient):
         return self._config
 
     async def _post_setup(self, config: AsyncQueryProtocolConfig) -> None:
-        pass
-
         if config.aws_credentials_identity_resolver is None:
             config_context = config.resolution_context()
             config_file = None

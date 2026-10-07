@@ -46,7 +46,11 @@ public class AwsIdentityIntegration implements PythonIntegration {
 
         @Override
         public void write(PythonWriter writer, String previousText, ClientSetupSection section) {
-            writer.write(previousText);
+            // Drop the bare "pass" placeholder; this block is a real body. Preserve any
+            // real content an earlier contributor wrote.
+            if (!previousText.strip().equals("pass")) {
+                writer.write(previousText);
+            }
             writer.addStdlibImport("typing", "cast");
             writer.write("""
                     if config.aws_credentials_identity_resolver is None:
