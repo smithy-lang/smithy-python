@@ -2,9 +2,9 @@
 
 `SymbolProvider` answers three questions for the Python generator:
 
-* What should a generated class or enum be called?
-* What should a field or enum constant be called?
-* What Python type represents a value?
+- What should a generated class or enum be called?
+- What should a field or enum constant be called?
+- What Python type represents a value?
 
 Pass a loaded model, a selection made from that model, and the destination package:
 `SymbolProvider(model, selection, *, package)`. The provider does not select more
@@ -17,11 +17,11 @@ Use full Smithy IDs, such as `example#Response`, or equivalent `ShapeId` objects
 A `$` identifies a member inside a shape: `example#Response$statusCode` is the
 `statusCode` field of `Response`.
 
-| Method | Question | Example result |
-| --- | --- | --- |
-| `declaration_name("example#Response")` | What do we call the generated definition? | `"Response"` |
-| `member_name("example#Response$statusCode")` | What do we call this field? | `"status_code"` |
-| `type_reference("smithy.api#Integer")` | What type of value does it hold? | `TypeReference("int", "builtins")` |
+| Method                                       | Question                                  | Example result                     |
+| -------------------------------------------- | ----------------------------------------- | ---------------------------------- |
+| `declaration_name("example#Response")`       | What do we call the generated definition? | `"Response"`                       |
+| `member_name("example#Response$statusCode")` | What do we call this field?               | `"status_code"`                    |
+| `type_reference("smithy.api#Integer")`       | What type of value does it hold?          | `TypeReference("int", "builtins")` |
 
 `declaration_name` names structures, unions, enums and integer enums. Their
 future definitions belong in `<package>.models`. Primitive aliases, lists and
@@ -69,18 +69,18 @@ of each nonempty part, preserving its remaining capitals. Fields use snake_case;
 enum constants use UPPER_SNAKE_CASE. Split words at lowercase-or-digit to uppercase
 boundaries, and before the last capital of an uppercase run followed by lowercase.
 
-| Input | Class or enum | Field | Enum constant |
-| --- | --- | --- | --- |
-| HTTPServer | HTTPServer | http_server | HTTP_SERVER |
-| http_server | HttpServer | http_server | HTTP_SERVER |
-| getURL | GetURL | get_url | GET_URL |
-| HTTP2Server | HTTP2Server | http2_server | HTTP2_SERVER |
-| getURL2Value | GetURL2Value | get_url2_value | GET_URL2_VALUE |
-| __some__name__ | SomeName | some_name | SOME_NAME |
-| __init__ | Init | init | INIT |
-| class | Class | class_ | CLASS |
-| None | None_ | none | NONE |
-| match | Match | match | MATCH |
+| Input          | Class or enum | Field          | Enum constant  |
+| -------------- | ------------- | -------------- | -------------- |
+| HTTPServer     | HTTPServer    | http_server    | HTTP_SERVER    |
+| http_server    | HttpServer    | http_server    | HTTP_SERVER    |
+| getURL         | GetURL        | get_url        | GET_URL        |
+| HTTP2Server    | HTTP2Server   | http2_server   | HTTP2_SERVER   |
+| getURL2Value   | GetURL2Value  | get_url2_value | GET_URL2_VALUE |
+| **some__name** | SomeName      | some_name      | SOME_NAME      |
+| **init**       | Init          | init           | INIT           |
+| class          | Class         | class_         | CLASS          |
+| None           | None_         | none           | NONE           |
+| match          | Match         | match          | MATCH          |
 
 Discard empty underscore-separated parts, including leading/trailing underscores.
 This avoids Python's special treatment of names such as `__init__` and `__private`.
@@ -117,20 +117,20 @@ For example, `list[str]` is represented as:
 TypeReference("list", "builtins", (TypeReference("str", "builtins"),))
 ```
 
-| Smithy type | Python value type |
-| --- | --- |
-| boolean | bool |
-| string, enum | str |
-| byte, short, integer, long, bigInteger, intEnum | int |
-| float, double | float |
-| ordinary blob | bytes |
-| bigDecimal | decimal.Decimal |
-| timestamp | datetime.datetime |
-| document | smithy_core.documents.Document |
-| structure, union | `<package>.models.<Declaration>` |
-| list | list[T] |
-| map | dict[K, V] |
-| smithy.api#Unit | None |
+| Smithy type                                     | Python value type                |
+| ----------------------------------------------- | -------------------------------- |
+| boolean                                         | bool                             |
+| string, enum                                    | str                              |
+| byte, short, integer, long, bigInteger, intEnum | int                              |
+| float, double                                   | float                            |
+| ordinary blob                                   | bytes                            |
+| bigDecimal                                      | decimal.Decimal                  |
+| timestamp                                       | datetime.datetime                |
+| document                                        | smithy_core.documents.Document   |
+| structure, union                                | `<package>.models.<Declaration>` |
+| list                                            | list[T]                          |
+| map                                             | dict[K, V]                       |
+| smithy.api#Unit                                 | None                             |
 
 `T`, `K` and `V` stand for element, key and value types. References to Python's
 built-in types record `"builtins"` as their module; generated annotations can
@@ -173,9 +173,9 @@ check this precondition. Requests for shapes outside the selection fail rather
 than silently adding them. Smithy's built-in types, such as `String`, `Integer`
 and `Unit`, remain available without selecting them for generation.
 
-* Malformed or incomplete IDs raise `InvalidShapeIdError`.
-* IDs absent from the model raise `ShapeNotFoundError`.
-* Unsupported or unselected shapes and invalid method requests raise `ModelError`.
+- Malformed or incomplete IDs raise `InvalidShapeIdError`.
+- IDs absent from the model raise `ShapeNotFoundError`.
+- Unsupported or unselected shapes and invalid method requests raise `ModelError`.
   For example, `type_reference` requires a shape ID, not a member ID;
   `member_name` requires a supported field or constant; `declaration_name`
   requires a generated definition. Services, operations, resources, mixins and
