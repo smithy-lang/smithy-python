@@ -7,7 +7,7 @@ import hmac
 import io
 from binascii import hexlify
 from collections.abc import AsyncIterable, Iterable
-from copy import deepcopy
+from copy import copy, deepcopy
 from hashlib import sha256
 from inspect import iscoroutinefunction
 from typing import TYPE_CHECKING, Required, TypedDict, TypeGuard
@@ -196,7 +196,7 @@ class SigV4Signer:
         return new_signing_properties
 
     def _generate_new_request(self, *, request: AWSRequest) -> AWSRequest:
-        return deepcopy(request)
+        return _copy_request(request)
 
     def _apply_required_fields(
         self,
@@ -570,7 +570,7 @@ class AsyncSigV4Signer:
         return new_signing_properties
 
     async def _generate_new_request(self, *, request: AWSRequest) -> AWSRequest:
-        return deepcopy(request)
+        return _copy_request(request)
 
     async def _apply_required_fields(
         self,
@@ -984,6 +984,17 @@ class AsyncEventSigner:
         service = signing_properties["service"]
         # Scope format: <YYYYMMDD>/<AWS Region>/<AWS Service>/aws4_request
         return f"{formatted_date}/{region}/{service}/aws4_request"
+
+
+def _copy_request(request: AWSRequest) -> AWSRequest:
+    """Copies a request for signing, deep-copying only the fields signing modifies.
+
+    The body is shared since streams generally can't be copied, so signing may
+    consume a non-seekable one.
+    """
+    new_request = copy(request)
+    new_request.fields = deepcopy(request.fields)
+    return new_request
 
 
 def _remove_dot_segments(path: str, remove_consecutive_slashes: bool = True) -> str:

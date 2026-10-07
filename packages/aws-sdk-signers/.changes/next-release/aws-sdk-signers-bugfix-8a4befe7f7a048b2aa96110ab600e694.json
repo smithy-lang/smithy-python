@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed signing requests whose body can't be deep-copied, such as files and async generators. The signers now share the body with the signed request instead of copying it, so signing reads the original body directly."
+}
