@@ -56,126 +56,166 @@ final class ClientGenerator implements Runnable {
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         writer.addLogger();
 
-        writer.openBlock("class $L:", "", serviceSymbol.getName(), () -> {
-            var docs = service.getTrait(DocumentationTrait.class)
-                    .map(StringTrait::getValue)
-                    .orElse("Client for " + service.getId().getName());
-            writer.writeDocs(docs, context);
+        // Services with a generated async config resolve lazily on first use;
+        // the rest keep the synchronous constructor with old Config.
+        var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
+        var isAsyncConfig = asyncConfigSymbol.isPresent();
+        var configSym = asyncConfigSymbol.orElse(configSymbol);
 
-            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            // Services with a generated async config resolve lazily on first use;
-            // the rest keep the synchronous constructor with old Config.
-            var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
+        writer.openBlock("class $L($T):",
+                "",
+                serviceSymbol.getName(),
+                RuntimeTypes.ASYNC_CLIENT,
+                () -> {
+                    var docs = service.getTrait(DocumentationTrait.class)
+                            .map(StringTrait::getValue)
+                            .orElse("Client for " + service.getId().getName());
+                    writer.writeDocs(docs, context);
 
-            // Collect service-scoped plugins applied once during setup.
-            var servicePlugins = new LinkedHashSet<SymbolReference>();
-            for (PythonIntegration integration : context.integrations()) {
-                for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
-                    if (runtimeClientPlugin.matchesService(model, service)) {
-                        runtimeClientPlugin.getPythonPlugin().ifPresent(servicePlugins::add);
-                    }
-                }
-            }
+                    writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                    writer.addStdlibImport("typing", "Any");
 
-            // Resolve or construct the config lazily before applying plugins once.
-            var isAsyncConfig = asyncConfigSymbol.isPresent();
-            var configSym = asyncConfigSymbol.orElse(configSymbol);
-            writer.addStdlibImport("asyncio");
-            writer.addStdlibImport("copy", "deepcopy");
-
-            writer.write("""
-                    def __init__(
-                        self,
-                        config: $1T | None = None,
-                        plugins: list[$2T] | None = None,
-                    ):
-                        ${3C|}
-                        self._config = config
-                        self._plugins = plugins
-                        self._derive_lock = asyncio.Lock()
-                        self._setup_done = False
-                        self._closed = False
-                        self._retry_strategy_resolver = $4T()
-                        self._client_plugins: list[$2T] = [
-                            ${5C|}
-                        ]
-
-                    async def _ensure_setup(self) -> None:
-                        if not self._setup_done:
-                            async with self._derive_lock:
-                                if not self._setup_done:
-                                    if self._config is None:
-                                        ${6C|}
-                                    else:
-                                        # Copy so plugins don't mutate the caller's config.
-                                        config = deepcopy(self._config)
-                                    for plugin in self._client_plugins:
-                                        plugin(config)
-                                    if self._plugins:
-                                        for plugin in self._plugins:
-                                            plugin(config)
-                                    self._config = config
-                                    ${7C|}
-                                    self._setup_done = True
-                    """,
-                    configSym,
-                    pluginSymbol,
-                    writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
-                    RuntimeTypes.RETRY_STRATEGY_RESOLVER,
-                    writer.consumer(w -> writeDefaultPlugins(w, servicePlugins)),
-                    writer.consumer(w -> {
-                        if (isAsyncConfig) {
-                            w.write("config = await $T.resolve()", configSym);
-                        } else {
-                            w.write("config = $T()", configSym);
+                    // Collect service-scoped plugins applied once during setup.
+                    var servicePlugins = new LinkedHashSet<SymbolReference>();
+                    for (PythonIntegration integration : context.integrations()) {
+                        for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
+                            if (runtimeClientPlugin.matchesService(model, service)) {
+                                runtimeClientPlugin.getPythonPlugin().ifPresent(servicePlugins::add);
+                            }
                         }
-                    }),
-                    writer.consumer(w -> {
-                        w.pushState(new ClientSetupSection());
-                        w.popState();
-                    }));
+                    }
 
-            writer.addStdlibImport("typing", "Any");
-            writer.addStdlibImport("typing", "Self");
-            writer.write("""
+                    writer.addStdlibImport("copy", "deepcopy");
 
-                    async def close(self) -> None:
-                        \"\"\"Close this client and any resources held by its transport.\"\"\"
-                        if self._closed:
-                            return
-                        async with self._derive_lock:
-                            if self._closed:
-                                return
-                            self._closed = True
-                            if self._setup_done and self._config is not None:
-                                await $1T(self._config.transport)
+                    writer.write("""
+                            def __init__(
+                                self,
+                                config: $1T | None = None,
+                                plugins: list[$2T] | None = None,
+                            ):
+                                ${3C|}
+                                super().__init__()
+                                self._config = config
+                                self._plugins = plugins
+                                self._client_plugins: list[$2T] = [
+                                    ${4C|}
+                                ]
 
-                    async def __aenter__(self) -> Self:
-                        if self._closed:
-                            raise RuntimeError("Cannot enter a client that has been closed.")
-                        return self
+                            async def _ensure_setup(self) -> $1T:
+                                if not self._setup_done:
+                                    async with self._derive_lock:
+                                        if self._closed:
+                                            raise RuntimeError(
+                                                "Cannot invoke an operation on a client that has been closed."
+                                            )
+                                        if not self._setup_done:
+                                            if self._config is None:
+                                                ${5C|}
+                                            else:
+                                                # Copy so plugins don't mutate the caller's config.
+                                                config = deepcopy(self._config)
+                                            for plugin in self._client_plugins:
+                                                plugin(config)
+                                            if self._plugins:
+                                                for plugin in self._plugins:
+                                                    plugin(config)
+                                            # Publish state only after setup fully succeeds, so a
+                                            # failed _post_setup leaves the caller's config untouched
+                                            # (no re-applied plugins) and the transport closeable.
+                                            await self._post_setup(config)
+                                            self._transport = config.transport
+                                            self._config = config
+                                            self._setup_done = True
+                                assert self._config is not None
+                                return self._config
 
-                    async def __aexit__(
-                        self,
-                        exc_type: Any,
-                        exc_value: Any,
-                        traceback: Any,
-                    ) -> None:
-                        await self.close()
-                    """,
-                    RuntimeTypes.ASYNC_CLOSE);
+                            async def _post_setup(self, config: $1T) -> None:
+                                ${6C|}
 
-            var topDownIndex = TopDownIndex.of(model);
-            var eventStreamIndex = EventStreamIndex.of(model);
-            for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
-                if (eventStreamIndex.getInputInfo(operation).isPresent()
-                        || eventStreamIndex.getOutputInfo(operation).isPresent()) {
-                    generateEventStreamOperation(writer, operation);
-                } else {
-                    generateOperation(writer, operation);
-                }
-            }
-        });
+                            async def _prepare_call[
+                                I: $12T, O: $13T
+                            ](
+                                self,
+                                input: I,
+                                operation: $8T[I, O],
+                                default_plugins: list[$2T],
+                                plugins: list[$2T] | None,
+                            ) -> tuple[$9T[Any, Any], $10T[I, O]]:
+                                if self._closed:
+                                    raise RuntimeError(
+                                        "Cannot invoke an operation on a client that has been closed."
+                                    )
+                                config = await self._ensure_setup()
+                                if default_plugins or plugins:
+                                    # Keep operation-plugin mutations scoped to this call.
+                                    config = deepcopy(config)
+                                    for plugin in default_plugins:
+                                        plugin(config)
+                                    if plugins:
+                                        for plugin in plugins:
+                                            plugin(config)
+                                if (
+                                    config.protocol is None
+                                    or config.transport is None
+                                    or config.endpoint_resolver is None
+                                    or config.auth_scheme_resolver is None
+                                    or config.auth_schemes is None
+                                ):
+                                    raise $7T(
+                                        "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                                        " and auth_schemes MUST be set on the config to make calls."
+                                    )
+                                retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+                                    retry_strategy=config.retry_strategy,
+                                    ${11C|}
+                                )
+                                return self._build_call(
+                                    input,
+                                    operation,
+                                    config=config,
+                                    retry_strategy=retry_strategy,
+                                )
+                            """,
+                            configSym,
+                            pluginSymbol,
+                            writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
+                            writer.consumer(w -> writeDefaultPlugins(w, servicePlugins)),
+                            writer.consumer(w -> {
+                                if (isAsyncConfig) {
+                                    w.write("config = await $T.resolve()", configSym);
+                                } else {
+                                    w.write("config = $T()", configSym);
+                                }
+                            }),
+                            writer.consumer(w -> {
+                                w.pushState(new ClientSetupSection());
+                                w.write("pass");
+                                w.popState();
+                            }),
+                            RuntimeTypes.EXPECTATION_NOT_MET_ERROR,
+                            RuntimeTypes.API_OPERATION,
+                            RuntimeTypes.REQUEST_PIPELINE,
+                            RuntimeTypes.CLIENT_CALL,
+                            writer.consumer(w -> {
+                                if (isAsyncConfig) {
+                                    w.write("retry_mode=config.retry_mode,");
+                                    w.write("max_attempts=config.max_attempts,");
+                                }
+                            }),
+                            RuntimeTypes.SERIALIZEABLE_SHAPE,
+                            RuntimeTypes.DESERIALIZEABLE_SHAPE);
+
+                    var topDownIndex = TopDownIndex.of(model);
+                    var eventStreamIndex = EventStreamIndex.of(model);
+                    for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
+                        if (eventStreamIndex.getInputInfo(operation).isPresent()
+                                || eventStreamIndex.getOutputInfo(operation).isPresent()) {
+                            generateEventStreamOperation(writer, operation);
+                        } else {
+                            generateOperation(writer, operation);
+                        }
+                    }
+                });
 
     }
 
@@ -219,6 +259,7 @@ final class ClientGenerator implements Runnable {
         writer.putContext("output", outputSymbol);
         writer.putContext("plugin", pluginSymbol);
         writer.putContext("operationName", operationMethodSymbol.getName());
+        writer.putContext("operation", symbolProvider.toSymbol(operation));
         writer.write("""
                 async def ${operationName:L}(
                     self,
@@ -226,16 +267,25 @@ final class ClientGenerator implements Runnable {
                     plugins: list[${plugin:T}] | None = None
                 ) -> ${output:T}:
                     ${C|}
+                    pipeline, call = await self._prepare_call(
+                        input,
+                        ${operation:T},
+                        [
+                            ${C|}
+                        ],
+                        plugins,
+                    )
                     return await pipeline(call)
                 """,
-                writer.consumer(w -> writeSharedOperationInit(w, operation, input, output)));
+                writer.consumer(w -> writeOperationDocs(w, operation, input, output)),
+                writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
     }
 
-    private void writeSharedOperationInit(PythonWriter writer, OperationShape operation, Shape input, Shape output) {
-        writeSharedOperationInit(writer, operation, input, output, null);
+    private void writeOperationDocs(PythonWriter writer, OperationShape operation, Shape input, Shape output) {
+        writeOperationDocs(writer, operation, input, output, null);
     }
 
-    private void writeSharedOperationInit(
+    private void writeOperationDocs(
             PythonWriter writer,
             OperationShape operation,
             Shape input,
@@ -271,9 +321,11 @@ final class ClientGenerator implements Runnable {
                         ${L|}
                     """, operationDocs, inputDocs, outputDocs);
         });
+    }
 
-        // Operation-scoped plugins are collected per-operation. Service-scoped plugins
-        // are stored in self._client_plugins (built once in __init__).
+    // Operation-scoped default plugins, prepended to the caller's plugins for a
+    // single call. Service-scoped plugins live in self._client_plugins instead.
+    private void writeDefaultOperationPlugins(PythonWriter writer, OperationShape operation) {
         var defaultPlugins = new LinkedHashSet<SymbolReference>();
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
@@ -282,76 +334,7 @@ final class ClientGenerator implements Runnable {
                 }
             }
         }
-
-        writer.putContext("operation", symbolProvider.toSymbol(operation));
-        writer.addStdlibImport("copy", "deepcopy");
-
-        writer.write(
-                """
-                        if self._closed:
-                            raise RuntimeError(
-                                "Cannot invoke an operation on a client that has been closed."
-                            )
-
-                        operation_plugins: list[Plugin] = [
-                            $1C
-                        ]
-                        if plugins:
-                            operation_plugins.extend(plugins)
-                        await self._ensure_setup()
-                        assert self._config is not None
-                        if operation_plugins:
-                            # Keep operation-plugin mutations scoped to this call.
-                            config = deepcopy(self._config)
-                            for plugin in operation_plugins:
-                                plugin(config)
-                        else:
-                            config = self._config
-                        if (
-                            config.protocol is None
-                            or config.transport is None
-                            or config.endpoint_resolver is None
-                            or config.auth_scheme_resolver is None
-                            or config.auth_schemes is None
-                        ):
-                            raise $2T(
-                                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
-                                " and auth_schemes MUST be set on the config to make calls."
-                            )
-
-                        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-                            retry_strategy=config.retry_strategy,
-                            ${7C|}
-                        )
-
-                        pipeline = $3T(
-                            protocol=config.protocol,
-                            transport=config.transport
-                        )
-                        call = $4T(
-                            input=input,
-                            operation=${operation:T},
-                            context=$5T({"config": config}),
-                            interceptor=$6T(config.interceptors),
-                            auth_scheme_resolver=config.auth_scheme_resolver,
-                            supported_auth_schemes=config.auth_schemes,
-                            endpoint_resolver=config.endpoint_resolver,
-                            retry_strategy=retry_strategy,
-                        )
-                        """,
-                writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
-                RuntimeTypes.EXPECTATION_NOT_MET_ERROR,
-                RuntimeTypes.REQUEST_PIPELINE,
-                RuntimeTypes.CLIENT_CALL,
-                RuntimeTypes.TYPED_PROPERTIES,
-                RuntimeTypes.INTERCEPTOR_CHAIN,
-                writer.consumer(w -> {
-                    if (CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model()).isPresent()) {
-                        w.write("retry_mode=config.retry_mode,");
-                        w.write("max_attempts=config.max_attempts,");
-                    }
-                }));
-
+        writeDefaultPlugins(writer, defaultPlugins);
     }
 
     private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
@@ -402,6 +385,14 @@ final class ClientGenerator implements Runnable {
                             plugins: list[${plugin:T}] | None = None
                         ) -> ${duplexEventStream:T}[${inputStream:T}, ${outputStream:T}, ${output:T}]:
                             ${C|}
+                            pipeline, call = await self._prepare_call(
+                                input,
+                                ${operation:T},
+                                [
+                                    ${C|}
+                                ],
+                                plugins,
+                            )
                             return await pipeline.duplex_stream(
                                 call,
                                 ${inputStream:T},
@@ -409,7 +400,8 @@ final class ClientGenerator implements Runnable {
                                 ${outputStreamDeserializer:T}().deserialize
                             )
                         """,
-                        writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
+                        writer.consumer(w -> writeOperationDocs(w, operation, input, output, outputDocs)),
+                        writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
             } else {
                 writer.putContext("inputEventStream", RuntimeTypes.INPUT_EVENT_STREAM);
                 var outputDocs = "An `InputEventStream` for client-to-server streaming.";
@@ -420,12 +412,21 @@ final class ClientGenerator implements Runnable {
                             plugins: list[${plugin:T}] | None = None
                         ) -> ${inputEventStream:T}[${inputStream:T}, ${output:T}]:
                             ${C|}
+                            pipeline, call = await self._prepare_call(
+                                input,
+                                ${operation:T},
+                                [
+                                    ${C|}
+                                ],
+                                plugins,
+                            )
                             return await pipeline.input_stream(
                                 call,
                                 ${inputStream:T}
                             )
                         """,
-                        writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
+                        writer.consumer(w -> writeOperationDocs(w, operation, input, output, outputDocs)),
+                        writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
             }
         } else {
             writer.putContext("outputEventStream", RuntimeTypes.OUTPUT_EVENT_STREAM);
@@ -437,13 +438,22 @@ final class ClientGenerator implements Runnable {
                         plugins: list[${plugin:T}] | None = None
                     ) -> ${outputEventStream:T}[${outputStream:T}, ${output:T}]:
                         ${C|}
+                        pipeline, call = await self._prepare_call(
+                            input,
+                            ${operation:T},
+                            [
+                                ${C|}
+                            ],
+                            plugins,
+                        )
                         return await pipeline.output_stream(
                             call,
                             ${outputStream:T},
                             ${outputStreamDeserializer:T}().deserialize
                         )
                     """,
-                    writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
+                    writer.consumer(w -> writeOperationDocs(w, operation, input, output, outputDocs)),
+                    writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
         }
     }
 }

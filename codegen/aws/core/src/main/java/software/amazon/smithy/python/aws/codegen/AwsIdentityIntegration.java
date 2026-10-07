@@ -46,23 +46,27 @@ public class AwsIdentityIntegration implements PythonIntegration {
 
         @Override
         public void write(PythonWriter writer, String previousText, ClientSetupSection section) {
-            writer.write(previousText);
+            // Drop the bare "pass" placeholder; this block is a real body. Preserve any
+            // real content an earlier contributor wrote.
+            if (!previousText.strip().equals("pass")) {
+                writer.write(previousText);
+            }
             writer.addStdlibImport("typing", "cast");
             writer.write("""
-                    if self._config.aws_credentials_identity_resolver is None:
-                        config_context = self._config.resolution_context()
+                    if config.aws_credentials_identity_resolver is None:
+                        config_context = config.resolution_context()
                         config_file = None
                         profile_name = None
                         if config_context is not None:
                             config_file = await config_context.parsed_profiles()
                             if config_context.profile_source is $4T.OVERRIDE:
                                 profile_name = config_context.profile_name
-                        self._config.aws_credentials_identity_resolver = await $1T.create(
+                        config.aws_credentials_identity_resolver = await $1T.create(
                             $2T,
                             config_file=config_file,
                             profile_name=profile_name,
-                            region_override=self._config.region,
-                            http_client=cast($3T | None, self._config.transport),
+                            region_override=config.region,
+                            http_client=cast($3T | None, config.transport),
                         )""",
                     Symbol.builder()
                             .name("IdentityChain")
