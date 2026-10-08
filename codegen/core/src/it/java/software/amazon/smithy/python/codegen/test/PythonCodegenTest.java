@@ -47,11 +47,28 @@ public class PythonCodegenTest {
         var client = Files.readString(tempDir.resolve("src/weather/client.py"));
         assertFalse(client.contains("retry_mode="));
         assertFalse(client.contains("max_attempts="));
-        assertTrue(client.contains("async def close(self) -> None:"));
-        assertTrue(client.contains("if self._closed:"));
+        assertTrue(client.contains("(AsyncClient):"));
+        assertTrue(client.contains("await self._prepare_call("));
 
         var config = Files.readString(tempDir.resolve("src/weather/config.py"));
         assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
         assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));
+
+        // An output that models a "responseMetadata" member gets both the SDK-reserved
+        // response_metadata attribute and the escaped modeled member, so neither shadows
+        // the other.
+        var models = Files.readString(tempDir.resolve("src/weather/models.py"));
+        assertTrue(models.contains("response_metadata: ResponseMetadata"));
+        assertTrue(models.contains("response_metadata_:"));
+
+        var schemas = Files.readString(tempDir.resolve("src/weather/_private/schemas.py"));
+        assertTrue(schemas.contains("example.weather#fakeProtocol"));
+        assertTrue(schemas.contains("aws.protocols#restJson1"));
+        assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
+        assertTrue(schemas.contains("\"name\": \"weather-auth\""));
+        assertTrue(schemas.contains("smithy.rules#endpointBdd"));
+        assertTrue(schemas.contains("(default endpointRuleSet) endpoint is not set"));
+        assertTrue(schemas.contains("smithy.api#longPoll"));
+        assertTrue(schemas.contains("\"timeoutMillis\": 20000"));
     }
 }

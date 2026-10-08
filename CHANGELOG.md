@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.6.0
+
+### Breaking Changes
+
+* Generated operation outputs and modeled errors now reserve a
+  `response_metadata` attribute, carrying the request ID, extended request ID,
+  and HTTP status code of the response that produced them. A modeled member
+  named `responseMetadata` on an output or error is now generated as
+  `response_metadata_` to avoid the collision; only the Python attribute name
+  changes, not the wire representation.
+
 ## v0.5.0
 
 ### Breaking Changes

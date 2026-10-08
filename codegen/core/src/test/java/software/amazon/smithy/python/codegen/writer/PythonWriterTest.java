@@ -4,13 +4,19 @@
  */
 package software.amazon.smithy.python.codegen.writer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.shapes.ServiceShape;
+import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 
 public class PythonWriterTest {
@@ -81,6 +87,33 @@ public class PythonWriterTest {
         assertFalse(out.contains("import MyStruct"));
         assertFalse(out.contains("_MyStruct"));
         assertTrue(out.contains("value: MyStruct"));
+    }
+
+    @Test
+    public void testWriteDocsKeepsTripleQuotesInsideDocstring() {
+        // S3 documents QuoteEscapeCharacter with the example """ a , b """, which
+        // must not close the generated docstring early.
+        PythonWriter writer = createWriter(CURRENT_PACKAGE);
+        writer.writeDocs("<p>The value <code>\"\"\" a , b \"\"\"</code> is parsed.</p>", createAwsContext());
+        String out = writer.toString();
+
+        assertEquals("\"\"\"The value `\\\"\\\"\\\" a , b \\\"\\\"\\\"` is parsed.\"\"\"",
+                out.substring(out.indexOf("\"\"\"")).trim());
+    }
+
+    private static GenerationContext createAwsContext() {
+        GenerationContext context = mock(GenerationContext.class);
+        Model model = mock(Model.class);
+        PythonSettings settings = mock(PythonSettings.class);
+        ShapeId serviceId = ShapeId.from("test.service#TestService");
+        ServiceShape serviceShape = mock(ServiceShape.class);
+
+        when(context.model()).thenReturn(model);
+        when(context.settings()).thenReturn(settings);
+        when(settings.service()).thenReturn(serviceId);
+        when(model.expectShape(serviceId)).thenReturn(serviceShape);
+        when(serviceShape.hasTrait(ServiceTrait.class)).thenReturn(true);
+        return context;
     }
 
     private static PythonWriter createWriter(String fullPackageName) {

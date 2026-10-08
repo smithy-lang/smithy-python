@@ -23,6 +23,50 @@
                 }
             }
         },
+        "rest-xml": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.restxml#RestXml"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.restxml#RestXml",
+                    "module": "restxml",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
+        "rest-xml-with-namespace": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.restxml.xmlns#RestXmlWithNamespace"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.restxml.xmlns#RestXmlWithNamespace",
+                    "module": "restxmlwithnamespace",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
         "aws-json-1-0": {
             "transforms": [
                 {
@@ -85,6 +129,50 @@
                 "python-client-codegen": {
                     "service": "aws.protocoltests.query#AwsQuery",
                     "module": "awsquery",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
+        "ec2-query": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.ec2#AwsEc2"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.ec2#AwsEc2",
+                    "module": "ec2query",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
+        "rpcv2-cbor": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "smithy.protocoltests.rpcv2Cbor#RpcV2Protocol"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "smithy.protocoltests.rpcv2Cbor#RpcV2Protocol",
+                    "module": "rpcv2cbor",
                     "moduleVersion": "0.0.1"
                 }
             }

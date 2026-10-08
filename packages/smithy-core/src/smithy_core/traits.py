@@ -7,7 +7,7 @@
 # they're correct regardless, so it's okay if the checks are stripped out.
 # ruff: noqa: S101
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, ClassVar
@@ -32,6 +32,10 @@ class DynamicTrait:
 
     document_value: "DocumentValue" = None
     """The value of the trait."""
+
+
+ORIGINAL_SHAPE_ID = ShapeID("smithy.synthetic#originalShapeId")
+"""A DynamicTrait id that indicates a structure was originally something else, usually Unit."""
 
 
 @dataclass(init=False, frozen=True)
@@ -93,7 +97,7 @@ class Trait:
 
 
 @dataclass(init=False, frozen=True)
-class DefaultTrait(Trait, id=ShapeID("smithy.appi#default")):
+class DefaultTrait(Trait, id=ShapeID("smithy.api#default")):
     @property
     def value(self) -> "DocumentValue":
         return self.document_value
@@ -161,7 +165,7 @@ class RequiresLengthTrait(Trait, id=ShapeID("smithy.api#requiresLength")):
 
 
 @dataclass(init=False, frozen=True)
-class UnitTypeTrait(Trait, id=ShapeID("smithy.api#UnitTypeTrait")):
+class UnitTypeTrait(Trait, id=ShapeID("smithy.api#unitType")):
     def __post_init__(self):
         assert self.document_value is None
 
@@ -203,7 +207,7 @@ class JSONNameTrait(Trait, id=ShapeID("smithy.api#jsonName")):
 
 
 @dataclass(init=False, frozen=True)
-class IdempotencyTokenTrait(Trait, id=ShapeID("smithy.api#IdempotencyToken")):
+class IdempotencyTokenTrait(Trait, id=ShapeID("smithy.api#idempotencyToken")):
     def __post_init__(self):
         assert self.document_value is None
 
@@ -365,6 +369,53 @@ class HTTPAPIKeyAuthTrait(Trait, id=ShapeID("smithy.api#httpApiKeyAuth")):
     @property
     def scheme(self) -> str | None:
         return self.document_value.get("scheme")  # type: ignore
+
+
+def _parse_http_protocol_values(
+    value: "DocumentValue | DynamicTrait | None",
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Parse ``{"http": [...], "eventStreamHttp": [...]}`` into (http, eventStreamHttp).
+
+    A missing ``eventStreamHttp`` defaults to the ``http`` versions; a missing ``http``
+    defaults to ``("http/1.1",)``.
+    """
+    document_value = value or {}
+    assert isinstance(document_value, Mapping)
+
+    http_raw = document_value.get("http", ["http/1.1"])
+    assert isinstance(http_raw, Sequence)
+    http: list[str] = []
+    for entry in http_raw:
+        assert isinstance(entry, str)
+        http.append(entry)
+
+    event_stream_http_raw = document_value.get("eventStreamHttp")
+    if not event_stream_http_raw:
+        return tuple(http), tuple(http)
+
+    assert isinstance(event_stream_http_raw, Sequence)
+    event_stream_http: list[str] = []
+    for entry in event_stream_http_raw:
+        assert isinstance(entry, str)
+        event_stream_http.append(entry)
+
+    return tuple(http), tuple(event_stream_http)
+
+
+@dataclass(init=False, frozen=True)
+class RpcV2CborTrait(Trait, id=ShapeID("smithy.protocols#rpcv2Cbor")):
+    http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    event_stream_http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        http, event_stream_http = _parse_http_protocol_values(value)
+        object.__setattr__(self, "http", http)
+        object.__setattr__(self, "event_stream_http", event_stream_http)
 
 
 @dataclass(init=False, frozen=True)

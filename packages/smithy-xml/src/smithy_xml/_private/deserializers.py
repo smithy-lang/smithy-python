@@ -11,16 +11,16 @@ from smithy_core.deserializers import ShapeDeserializer, SpecificShapeDeserializ
 from smithy_core.documents import Document
 from smithy_core.exceptions import SmithyError
 from smithy_core.schemas import Schema
-from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.shapes import ShapeID
 from smithy_core.traits import (
     TimestampFormatTrait,
     XMLAttributeTrait,
     XMLFlattenedTrait,
-    XMLNameTrait,
 )
 
 from ..settings import XMLSettings
 from .readers import XMLEvent, XMLEventReader
+from .traits import member_xml_name
 
 
 def _local_name(tag: str) -> str:
@@ -30,13 +30,9 @@ def _local_name(tag: str) -> str:
     return tag
 
 
-def _expected_root_name(schema: Schema) -> str | None:
-    """Get the expected root element name for root validation."""
-    if schema.shape_type not in (ShapeType.STRUCTURE, ShapeType.UNION):
-        return None
-    if xml_name := schema.get_trait(XMLNameTrait):
-        return xml_name.value
-    return schema.id.name
+def _local_attr_name(name: str) -> str:
+    """Strip a namespace prefix from a modeled attribute name: prefix:local -> local."""
+    return name.rpartition(":")[2]
 
 
 def _validate_element_name(expected: str, elem: Element) -> None:
@@ -44,13 +40,6 @@ def _validate_element_name(expected: str, elem: Element) -> None:
     found = _local_name(elem.tag)
     if found != expected:
         raise XMLParseError(f"Expected element '{expected}', got '{found}'")
-
-
-def _xml_member_name(member_schema: Schema) -> str:
-    """Get the XML element name for a member, respecting @xmlName."""
-    if xml_name := member_schema.get_trait(XMLNameTrait):
-        return xml_name.value
-    return member_schema.expect_member_name()
 
 
 def _parse_xml_float(text: str) -> float:
@@ -82,7 +71,6 @@ class XMLShapeDeserializer(ShapeDeserializer):
     ) -> None:
         self._settings = settings
         self._reader = reader
-        self._is_root = not bool(wrapper_elements)
         self._xml_names: dict[ShapeID, dict[str, Schema]] = {}
         self._preconsumed_start: Element | None = None
 
@@ -147,11 +135,6 @@ class XMLShapeDeserializer(ShapeDeserializer):
         xml_names = self._get_xml_names(schema)
         start_from_wrapper = self._preconsumed_start is not None
         start_elem = self._consume_start_event()
-        if self._is_root:
-            self._is_root = False
-            expected = _expected_root_name(schema)
-            if expected is not None:
-                _validate_element_name(expected, start_elem)
 
         # Wrapper elements are protocol transport containers, not modeled structs,
         # so their attributes cannot be deserialized as struct members.
@@ -159,7 +142,9 @@ class XMLShapeDeserializer(ShapeDeserializer):
             for member_schema in schema.members.values():
                 if member_schema.get_trait(XMLAttributeTrait) is None:
                     continue
-                expected_attr_name = _xml_member_name(member_schema)
+                # Prefixed names (e.g. ``xsi:name``) are parsed into a
+                # namespace-qualified key, so only the local parts are compared.
+                expected_attr_name = _local_attr_name(member_xml_name(member_schema))
                 for attr_name, attr_value in start_elem.attrib.items():
                     attr_local_name = _local_name(attr_name)
                     if attr_local_name == expected_attr_name:
@@ -226,8 +211,8 @@ class XMLShapeDeserializer(ShapeDeserializer):
         is_flattened = schema.get_trait(XMLFlattenedTrait) is not None
         key_schema = schema.members["key"]
         value_schema = schema.members["value"]
-        key_tag = _xml_member_name(key_schema)
-        value_tag = _xml_member_name(value_schema)
+        key_tag = member_xml_name(key_schema)
+        value_tag = member_xml_name(value_schema)
 
         if not is_flattened:
             self._consume_start_event()
@@ -295,7 +280,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
         for member_schema in schema.members.values():
             if member_schema.get_trait(XMLAttributeTrait) is not None:
                 continue
-            xml_name = _xml_member_name(member_schema)
+            xml_name = member_xml_name(member_schema)
             result[xml_name] = member_schema
         self._xml_names[schema.id] = result
         return result

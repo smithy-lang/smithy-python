@@ -9,10 +9,13 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
+import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.traits.XmlNamespaceTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -126,9 +129,27 @@ public final class ConfigGenerator implements Runnable {
                                 .namespace("smithy_core.aio.interfaces", ".")
                                 .build())
                         .build())
-                .documentation("The protocol to serialize and deserialize requests with.")
+                .inputType(Symbol.builder()
+                        .name("ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]]")
+                        .addReference(Symbol.builder()
+                                .name("ClientProtocol")
+                                .namespace("smithy_core.aio.interfaces", ".")
+                                .build())
+                        .addReference(Symbol.builder()
+                                .name("ProtocolConstructor")
+                                .namespace("smithy_core.aio.interfaces", ".")
+                                .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                .build())
+                        .build())
+                .documentation("Pass a protocol class reference from smithy_aws_core.aio.protocols "
+                        + "to select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom "
+                        + "protocols a protocol instance may also be passed.")
                 .initialize(w -> {
-                    w.write("self.protocol = protocol or ${C|}",
+                    w.addStdlibImport("typing", "cast");
+                    w.write("""
+                            if isinstance(protocol, type):
+                                protocol = protocol(_PROTOCOL_SETTINGS)
+                            self.protocol = cast("ClientProtocol[Any, Any]", protocol) or ${C|}""",
                             w.consumer(writer -> context.protocolGenerator().initializeProtocol(context, writer)));
                 });
 
@@ -163,7 +184,27 @@ public final class ConfigGenerator implements Runnable {
         return properties;
     }
 
-    private static List<ConfigProperty> getAuthProperties(GenerationContext context) {
+    private static List<ConfigProperty> getAuthProperties(GenerationContext context, boolean hasAuth) {
+        Consumer<PythonWriter> authSchemesInit = hasAuth
+                ? writer -> writeDefaultAuthSchemes(context, writer)
+                : writer -> writer.write("self.auth_schemes = auth_schemes or {}");
+
+        Symbol defaultResolver = hasAuth
+                ? CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings())
+                : Symbol.builder()
+                        .name("DefaultAuthResolver")
+                        .namespace("smithy_core.auth", ".")
+                        .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                        .build();
+        Symbol resolverType = Symbol.builder()
+                .name("AuthSchemeResolver")
+                .namespace("smithy_core.interfaces.auth", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                .build();
+        Consumer<PythonWriter> resolverInit = writer -> writer.write(
+                "self.auth_scheme_resolver = auth_scheme_resolver or $T()",
+                defaultResolver);
+
         return List.of(
                 ConfigProperty.builder()
                         .name("auth_schemes")
@@ -187,16 +228,15 @@ public final class ConfigGenerator implements Runnable {
                                 .build())
                         .documentation("A map of auth scheme ids to auth schemes.")
                         .nullable(false)
-                        .initialize(writer -> writeDefaultAuthSchemes(context, writer))
+                        .initialize(authSchemesInit)
                         .build(),
                 ConfigProperty.builder()
                         .name("auth_scheme_resolver")
-                        .type(CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings()))
+                        .type(resolverType)
                         .documentation(
                                 "An auth scheme resolver that determines the auth scheme for each operation.")
                         .nullable(false)
-                        .initialize(writer -> writer.write(
-                                "self.auth_scheme_resolver = auth_scheme_resolver or HTTPAuthSchemeResolver()"))
+                        .initialize(resolverInit)
                         .build());
     }
 
@@ -227,6 +267,8 @@ public final class ConfigGenerator implements Runnable {
 
         context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
             writeInterceptorsType(writer);
+
+            stageProtocolSettings(context, writer);
 
             // AWS services generate only the async config subclass.
             if (asyncConfigForPlugin.isEmpty()) {
@@ -260,6 +302,53 @@ public final class ConfigGenerator implements Runnable {
                     Operation-level plugins apply only to a single operation invocation.
                     """, context);
         });
+    }
+
+    // Emit the shared _PROTOCOL_SETTINGS bag as the union of the fields every protocol
+    // the service resolves needs.
+    private void stageProtocolSettings(GenerationContext context, PythonWriter writer) {
+        var generator = context.protocolGenerator();
+        if (generator == null) {
+            return;
+        }
+
+        // Map every generator any integration supplies to its protocol trait id, then
+        // ask each protocol the service resolves what extra fields it needs.
+        var generators = new java.util.HashMap<ShapeId, ProtocolGenerator>();
+        for (var integration : context.integrations()) {
+            for (var g : integration.getProtocolGenerators()) {
+                generators.put(g.getProtocol(), g);
+            }
+        }
+
+        var required = java.util.EnumSet.of(
+                ProtocolSettingsField.NAMESPACE,
+                ProtocolSettingsField.SERVICE_TARGET);
+        var service = context.settings().service(context.model());
+        var resolved = ServiceIndex.of(context.model()).getProtocols(service).keySet();
+        for (var protocolId : resolved) {
+            var g = generators.get(protocolId);
+            if (g != null) {
+                required.addAll(g.requiredProtocolSettings(context));
+            }
+        }
+
+        var args = new ArrayList<Object>();
+        var params = new StringBuilder("namespace=$S, service_target=$S");
+        args.add(service.getId().getNamespace());
+        args.add(service.getId().getName());
+        if (required.contains(ProtocolSettingsField.VERSION)) {
+            params.append(", version=$S");
+            args.add(service.getVersion());
+        }
+        var xmlNamespace = service.getTrait(XmlNamespaceTrait.class);
+        if (required.contains(ProtocolSettingsField.XML_NAMESPACE) && xmlNamespace.isPresent()) {
+            params.append(", xml_namespace=$S");
+            args.add(xmlNamespace.get().getUri());
+        }
+
+        args.add(0, RuntimeTypes.PROTOCOL_SETTINGS);
+        writer.write("_PROTOCOL_SETTINGS = $T(" + params + ")", args.toArray());
     }
 
     private void writeInterceptorsType(PythonWriter writer) {
@@ -297,10 +386,10 @@ public final class ConfigGenerator implements Runnable {
         properties.addAll(BASE_PROPERTIES);
         properties.addAll(getProtocolProperties(context));
 
-        // Add in auth configuration if the service supports auth.
         var serviceIndex = ServiceIndex.of(context.model());
-        if (!serviceIndex.getAuthSchemes(settings.service()).isEmpty()) {
-            properties.addAll(getAuthProperties(context));
+        boolean hasAuth = !serviceIndex.getAuthSchemes(settings.service()).isEmpty();
+        properties.addAll(getAuthProperties(context, hasAuth));
+        if (hasAuth) {
             writer.onSection(new AddAuthHelper());
         }
 
@@ -361,7 +450,7 @@ public final class ConfigGenerator implements Runnable {
 
     private void writeInitParams(PythonWriter writer, Collection<ConfigProperty> properties) {
         for (ConfigProperty property : properties) {
-            writer.write("$L: $T | None = None,", property.name(), property.type());
+            writer.write("$L: $T | None = None,", property.name(), property.inputType());
         }
     }
 

@@ -305,7 +305,7 @@ public final class SetupGenerator {
                         ### Documentation
 
                         $L
-                        """, writer.formatDocs(documentation, context));
+                        """, writer.formatMarkdown(documentation, context));
             });
             writer.popState();
         });

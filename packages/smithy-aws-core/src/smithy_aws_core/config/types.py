@@ -57,6 +57,12 @@ class FieldSpec:
     validator: Callable[[Any], None] | None = None
     """Function that validates the resolved value. Raises on invalid input."""
 
+    converter: Callable[[Any], Any] | None = None
+    """Normalizes an explicit override value before it is set.
+
+    Applied only to ``overrides`` values, not to resolver or default values.
+    """
+
     def __post_init__(self) -> None:
         has_default = self.default is not UNSET
         has_factory = self.default_factory is not None

@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
+import software.amazon.smithy.model.knowledge.OperationIndex;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
@@ -105,6 +106,7 @@ public final class StructureGenerator implements Runnable {
                     ${C|}
 
                     ${C|}
+                    ${C|}
 
                     ${C|}
 
@@ -116,6 +118,7 @@ public final class StructureGenerator implements Runnable {
                 symbol.getName(),
                 writer.consumer(w -> writeClassDocs()),
                 writer.consumer(w -> writeProperties()),
+                writer.consumer(w -> writeResponseMetadataProperty()),
                 writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()),
                 writer.consumer(w -> generateSmithyDefaultMethod()));
@@ -175,6 +178,38 @@ public final class StructureGenerator implements Runnable {
                 .map(DocumentationTrait::getValue)
                 .orElse("Dataclass for " + shape.getId().getName() + " structure.");
         writer.writeDocs(docs, context);
+    }
+
+    /**
+     * Writes the response metadata attribute onto operation outputs.
+     *
+     * <p>The attribute is not part of the service's modeled data, so it is excluded
+     * from equality and from the generated repr. Excluding it from equality also
+     * keeps generated protocol tests comparing shapes by their modeled members
+     * alone.
+     *
+     * <p>Errors receive the same attribute by inheriting it from the service error
+     * base class rather than having it written here.
+     */
+    private void writeResponseMetadataProperty() {
+        if (!OperationIndex.of(model).isOutputStructure(shape)) {
+            return;
+        }
+
+        writer.addStdlibImport("dataclasses", "field");
+        writer.write("""
+                $L: $T = field(default=$T, repr=False, compare=False)
+                $C
+                """,
+                CodegenUtils.RESPONSE_METADATA_MEMBER,
+                RuntimeTypes.RESPONSE_METADATA,
+                RuntimeTypes.EMPTY_RESPONSE_METADATA,
+                writer.consumer(w -> w.writeDocs("""
+                        Metadata about the response that produced this output.
+
+                        Use this to recover the request identifiers a service's support team \
+                        needs in order to investigate a call. Members of the metadata are \
+                        individually optional.""", context)));
     }
 
     private void writeProperties() {
@@ -297,15 +332,18 @@ public final class StructureGenerator implements Runnable {
             ZonedDateTime value = CodegenUtils.parseTimestampNode(model, member, defaultNode);
             return CodegenUtils.getDatetimeConstructor(writer, value);
         } else if (target.isBlobShape()) {
-            return String.format("b'%s'", defaultNode.expectStringNode().getValue());
+            writer.addStdlibImport("base64", "b64decode");
+            return String.format("b64decode(\"%s\")", defaultNode.expectStringNode().getValue());
         } else if (target.isEnumShape()) {
             // Wrap rather than emit a bare string so the value matches the field type.
-            var enumSymbol = symbolProvider.toSymbol(target);
+            var enumSymbol = symbolProvider.toSymbol(target)
+                    .expectProperty(SymbolProperties.ENUM_SYMBOL);
             return String.format("%s(\"%s\")",
                     writer.format("$T", enumSymbol),
                     defaultNode.expectStringNode().getValue());
         } else if (target.isIntEnumShape()) {
-            var enumSymbol = symbolProvider.toSymbol(target);
+            var enumSymbol = symbolProvider.toSymbol(target)
+                    .expectProperty(SymbolProperties.ENUM_SYMBOL);
             return String.format("%s(%s)",
                     writer.format("$T", enumSymbol),
                     defaultNode.expectNumberNode().getValue());

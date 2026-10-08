@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.9.0
+
+### Breaking Changes
+* Added `extract_response_metadata()` to the `ClientProtocol`. Implementations that extend `HttpClientProtocol` inherit a working one and need no change. Protocols that implement `ClientProtocol` directly must add it.
+* A modeled `responseMetadata` member on an operation output or error is now generated as `response_metadata_`, since `response_metadata` is reserved for SDK response metadata.
+
+### Features
+* Added `AsyncClient` to `smithy_core.aio.client`, a base class that generated clients inherit for client lifecycle (setup gating, `close`, async context management) and operation dispatch.
+* Added schema extensions and cached metadata support.
+* Added `ResponseMetadata`, exposing the request ID, extended request ID, and HTTP status code of the response that produced a result. It is attached to operation outputs and to modeled errors via a `response_metadata` attribute.
+* Added the `RpcV2CborTrait` protocol trait and the `ORIGINAL_SHAPE_ID` synthetic-trait id to `smithy_core.traits`.
+* Added schema extensions and lazily cached schema metadata support.
+* Added `ProtocolSettings` and `ProtocolConstructor` to `smithy_core.aio.interfaces`, letting a consumer select a protocol by class alone without importing a private schema module.
+* Added `xml_namespace` to `ProtocolSettings`, used by restXml as the default namespace of request payloads.
+
+### Bug fixes
+* Fixed the request pipeline merging an auth option's identity properties into the signer properties instead of its signer properties.
+* Fixed the registered Smithy IDs for `DefaultTrait`, `IdempotencyTokenTrait`, and `UnitTypeTrait` so schemas resolve these traits correctly.
+
 ## v0.8.1
 
 ### Enhancements

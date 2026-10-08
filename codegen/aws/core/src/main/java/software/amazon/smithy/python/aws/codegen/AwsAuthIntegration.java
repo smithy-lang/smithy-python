@@ -29,6 +29,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public class AwsAuthIntegration implements PythonIntegration {
     private static final String SIGV4_OPTION_GENERATOR_NAME = "_generate_sigv4_option";
+    // S3 and S3 Control share this signing name and its signing requirements.
+    private static final String S3_SIGNING_NAME = "s3";
 
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
@@ -105,7 +107,7 @@ public class AwsAuthIntegration implements PythonIntegration {
                         return $4T(
                             scheme_id=$5T($6S),
                             identity_properties={},  # type: ignore
-                            signer_properties={}  # type: ignore
+                            signer_properties=${7C|}  # type: ignore
                         )
                     """,
                     SIGV4_OPTION_GENERATOR_NAME,
@@ -113,9 +115,32 @@ public class AwsAuthIntegration implements PythonIntegration {
                     RuntimeTypes.AUTH_OPTION_INTERFACE,
                     RuntimeTypes.AUTH_OPTION,
                     RuntimeTypes.SHAPE_ID,
-                    SigV4Trait.ID.toString());
+                    SigV4Trait.ID.toString(),
+                    writer.consumer(w -> writeSignerProperties(context, w)));
             writer.popState();
         });
+    }
+
+    private void writeSignerProperties(GenerationContext context, PythonWriter writer) {
+        if (!usesS3Signing(context.settings().service(context.model()))) {
+            writer.writeInline("{}");
+            return;
+        }
+        // S3 signs the URI path exactly as it's sent, so it must not be encoded a
+        // second time or normalized. S3 also requires the payload hash to be sent
+        // in the X-Amz-Content-SHA256 header.
+        writer.writeInline("""
+                {
+                    "uri_encode_path": False,
+                    "normalize_path": False,
+                    "content_checksum_enabled": True,
+                }""");
+    }
+
+    static boolean usesS3Signing(ServiceShape service) {
+        return service.getTrait(SigV4Trait.class)
+                .map(trait -> S3_SIGNING_NAME.equals(trait.getName()))
+                .orElse(false);
     }
 
     private boolean hasSigV4Auth(GenerationContext context) {

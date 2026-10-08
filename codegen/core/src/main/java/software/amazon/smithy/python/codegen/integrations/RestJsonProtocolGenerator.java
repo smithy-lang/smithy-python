@@ -15,7 +15,6 @@ import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
-import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyUnstableApi;
@@ -32,12 +31,6 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 public class RestJsonProtocolGenerator implements ProtocolGenerator {
 
     private static final Set<String> TESTS_TO_SKIP = Set.of(
-            // These two tests essentially try to assert nan == nan,
-            // which is never true. We should update the generator to
-            // make specific assertions for these.
-            "RestJsonSupportsNaNFloatHeaderOutputs",
-            "RestJsonSupportsNaNFloatInputs",
-
             // This requires support of idempotency autofill
             "RestJsonQueryIdempotencyTokenAutoFill",
 
@@ -63,7 +56,6 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
             "RestJsonClientSkipsTopLevelDefaultValuesInInput",
             "RestJsonClientUsesExplicitlyProvidedMemberValuesOverDefaults",
             "RestJsonClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
-            "RestJsonClientPopulatesDefaultsValuesWhenMissingInResponse",
             "HttpPrefixEmptyHeaders");
 
     @Override
@@ -85,9 +77,7 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
     @Override
     public void initializeProtocol(GenerationContext context, PythonWriter writer) {
         writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("json"));
-        var serviceSymbol = context.symbolProvider().toSymbol(context.settings().service(context.model()));
-        var serviceSchema = serviceSymbol.expectProperty(SymbolProperties.SCHEMA);
-        writer.write("$1T($2T)", RuntimeTypes.REST_JSON_CLIENT_PROTOCOL, serviceSchema);
+        writer.write("$T(_PROTOCOL_SETTINGS)", RuntimeTypes.REST_JSON_CLIENT_PROTOCOL);
     }
 
     // This is here rather than in HttpBindingProtocolGenerator because eventually

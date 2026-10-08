@@ -1,0 +1,119 @@
+---
+name: "🐛 Bug Report"
+description: Report a bug
+title: "(short issue description)"
+labels: [bug, needs-triage]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Note:** all interfaces in this repository are unstable and subject to
+        change. Please make sure you are on the latest release before filing.
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: What is the problem? A clear and concise description of the bug.
+    validations:
+      required: true
+  - type: checkboxes
+    id: regression
+    attributes:
+      label: Regression Issue
+      description: What is a regression? If it worked in a previous version but doesn't in the latest version, it's considered a regression. In this case, please provide specific version numbers in the report.
+      options:
+        - label: Select this option if this issue appears to be a regression.
+          required: false
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: |
+        What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Behavior
+      description: |
+        What actually happened?
+
+        Please include full errors, uncaught exceptions, tracebacks, and relevant logs.
+        If service responses are relevant, please include the HTTP request and
+        response (with any credentials or sensitive data redacted).
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: |
+        Provide a self-contained, concise snippet of code that can be used to reproduce the issue.
+        If the bug is in code generation, please include the relevant portion of the Smithy model.
+        For more complex issues, provide a repo with the smallest sample that reproduces the bug.
+
+        Avoid including business logic or unrelated code, it makes diagnosis more difficult.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Possible Solution
+      description: |
+        Suggest a fix/reason for the bug
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Information/Context
+      description: |
+        Anything else that might be relevant for troubleshooting this bug. Providing context helps us come up with a solution that is most useful in the real world.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component
+      description: Which part of the project is affected? Select all that apply.
+      multiple: true
+      options:
+        - codegen (Java code generator)
+        - aws-sdk-signers
+        - smithy-aws-core
+        - smithy-aws-event-stream
+        - smithy-core
+        - smithy-http
+        - smithy-json
+        - smithy-python
+        - smithy-xml
+        - generated client code
+        - other / not sure
+    validations:
+      required: true
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Version used
+      description: Version of the affected package(s), or the commit SHA if running from source.
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version used
+      description: Output of `python --version`
+    validations:
+      required: true
+
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating System and version
+    validations:
+      required: true

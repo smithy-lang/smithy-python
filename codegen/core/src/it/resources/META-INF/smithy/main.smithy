@@ -49,6 +49,9 @@ operation TestUnionListOperation {
     }
     output := {
         response: String
+        // A member named responseMetadata collides with the SDK-reserved
+        // response_metadata attribute and must be escaped on the generated output.
+        responseMetadata: String
     }
 }
 
@@ -630,6 +633,7 @@ structure CitySummary {
 }
 
 @readonly
+@longPoll(timeoutMillis: 20000)
 @http(method: "GET", uri: "/current-time")
 operation GetCurrentTime {
     output := {

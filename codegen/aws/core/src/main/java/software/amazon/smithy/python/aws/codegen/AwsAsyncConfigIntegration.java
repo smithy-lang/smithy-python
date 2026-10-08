@@ -135,6 +135,21 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                             .addDependency(SmithyPythonDependency.SMITHY_CORE)
                             .build())
                     .build();
+            // The override accepts a protocol class in addition to an instance; the
+            // resolved dataclass field is always an instance, so it uses protocolSymbol.
+            var protocolInputSymbol = Symbol.builder()
+                    .name("ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]]")
+                    .addReference(Symbol.builder()
+                            .name("ClientProtocol")
+                            .namespace("smithy_core.aio.interfaces", ".")
+                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                            .build())
+                    .addReference(Symbol.builder()
+                            .name("ProtocolConstructor")
+                            .namespace("smithy_core.aio.interfaces", ".")
+                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                            .build())
+                    .build();
             var authSchemeSymbol = Symbol.builder()
                     .name("AuthScheme[Any, Any, Any, Any]")
                     .addReference(Symbol.builder()
@@ -143,7 +158,13 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                             .addDependency(SmithyPythonDependency.SMITHY_CORE)
                             .build())
                     .build();
-            var authSchemeResolverSymbol = CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings());
+            // The declared field/override type is the protocol so any conforming resolver
+            // is accepted without subclassing the generated default.
+            var authSchemeResolverInterfaceSymbol = Symbol.builder()
+                    .name("AuthSchemeResolver")
+                    .namespace("smithy_core.interfaces.auth", ".")
+                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                    .build();
             var overridesTypeName = "_" + asyncConfigSymbol.getName() + "Overrides";
 
             writer.addStdlibImport("typing", "ClassVar");
@@ -157,12 +178,12 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.write("");
             writer.openBlock("class $L($T, total=False):", overridesTypeName, awsConfigOverridesSymbol);
             writer.write("endpoint_resolver: $T | None", RuntimeTypes.ENDPOINT_RESOLVER);
-            writer.write("protocol: $T | None", protocolSymbol);
+            writer.write("protocol: $T | None", protocolInputSymbol);
             if (hasAuth) {
                 writer.write("auth_schemes: dict[$T, $T] | None",
                         RuntimeTypes.SHAPE_ID,
                         authSchemeSymbol);
-                writer.write("auth_scheme_resolver: $T | None", authSchemeResolverSymbol);
+                writer.write("auth_scheme_resolver: $T | None", authSchemeResolverInterfaceSymbol);
             }
             for (ConfigProperty property : pluginProperties.values()) {
                 if (!PREDEFINED_CONFIG_FIELDS.contains(property.name())) {
@@ -188,7 +209,9 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.write("");
 
             writer.write("protocol: $T | None = None", protocolSymbol);
-            writer.writeDocs("The protocol to serialize and deserialize requests with.", context);
+            writer.writeDocs("Pass a protocol class reference from smithy_aws_core.aio.protocols "
+                    + "to select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom "
+                    + "protocols a protocol instance may also be passed.", context);
             writer.write("");
 
             writer.write("interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])");
@@ -204,7 +227,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                 writer.writeDocs("A map of auth scheme ids to auth schemes.", context);
                 writer.write("");
 
-                writer.write("auth_scheme_resolver: $T | None = None", authSchemeResolverSymbol);
+                writer.write("auth_scheme_resolver: $T | None = None", authSchemeResolverInterfaceSymbol);
                 writer.writeDocs("An auth scheme resolver that determines the auth scheme "
                         + "for each operation.", context);
                 writer.write("");
@@ -265,6 +288,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.indent();
             writer.write("default_factory=lambda: ${C|},",
                     writer.consumer(w -> context.protocolGenerator().initializeProtocol(context, w)));
+            writer.write("converter=lambda p: p(_PROTOCOL_SETTINGS) if isinstance(p, type) else p,");
             writer.dedent();
             writer.write("),");
 

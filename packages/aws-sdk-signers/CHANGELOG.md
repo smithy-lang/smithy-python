@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.0
+
+### Features
+* Added a `normalize_path` option to `SigV4SigningProperties`. Set it to `False`, along with `uri_encode_path`, to sign the URI path exactly as sent, as S3 requires.
+
+### Bug fixes
+* Excluded hop-by-hop and proxy headers (`Keep-Alive`, `Proxy-Authenticate`, `Proxy-Authorization`, `TE`, `Trailer`, `Transfer-Encoding`, and `Upgrade`) from SigV4 signing, so signatures stay valid when a proxy or the HTTP layer modifies them.
+
 ## v0.3.1
 
 ### Enhancements

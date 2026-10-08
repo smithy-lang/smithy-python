@@ -66,6 +66,11 @@ class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
 
 
 @dataclass(init=False, frozen=True)
+class RestXmlTrait(Trait, id=ShapeID("aws.protocols#restXml")):
+    pass
+
+
+@dataclass(init=False, frozen=True)
 class AwsJson1_0Trait(Trait, id=ShapeID("aws.protocols#awsJson1_0")):
     http: Sequence[str] = field(
         repr=False, hash=False, compare=False, default_factory=tuple
@@ -117,6 +122,24 @@ class AwsQueryErrorTrait(Trait, id=ShapeID("aws.protocols#awsQueryError")):
     @property
     def http_response_code(self) -> int:
         return self.document_value["httpResponseCode"]  # type: ignore
+
+
+@dataclass(frozen=True)
+class Ec2QueryTrait(Trait, id=ShapeID("aws.protocols#ec2Query")):
+    def __post_init__(self):
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class Ec2QueryNameTrait(Trait, id=ShapeID("aws.protocols#ec2QueryName")):
+    document_value: str | None = None
+
+    def __post_init__(self):
+        assert isinstance(self.document_value, str)
+
+    @property
+    def value(self) -> str:
+        return self.document_value  # type: ignore
 
 
 @dataclass(init=False, frozen=True)

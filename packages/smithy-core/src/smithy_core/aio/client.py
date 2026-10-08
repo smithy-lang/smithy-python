@@ -6,7 +6,7 @@ from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable, Sequence
 from copy import copy
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 from .. import URI
 from ..auth import AuthParams
@@ -21,6 +21,7 @@ from ..exceptions import (
 from ..interceptors import (
     InputContext,
     Interceptor,
+    InterceptorChain,
     OutputContext,
     RequestContext,
     ResponseContext,
@@ -31,6 +32,7 @@ from ..schemas import APIOperation
 from ..serializers import SerializeableShape
 from ..shapes import ShapeID
 from ..types import PropertyKey
+from ..types import TypedProperties as _TypedProperties
 from .eventstream import DuplexEventStream, InputEventStream, OutputEventStream
 from .interfaces import (
     ClientProtocol,
@@ -42,7 +44,8 @@ from .interfaces import (
 from .interfaces.auth import AuthScheme
 from .interfaces.eventstream import EventReceiver
 from .interfaces.retries import RetryStrategy
-from .utils import seek
+from .retries import RetryStrategyResolver
+from .utils import close, seek
 
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
@@ -269,6 +272,8 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         output_context = await self._handle_execution(call, request_future)
         output_context = self._finalize_execution(call, output_context)
 
+        self._attach_response_metadata(output_context)
+
         if isinstance(output_context.response, Exception):
             e = output_context.response
             if not isinstance(e, SmithyError):
@@ -276,6 +281,41 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             raise e
 
         return output_context.response, output_context  # type: ignore
+
+    def _attach_response_metadata[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        output_context: OutputContext[I, O, TRequest | None, TResponse | None],
+    ) -> None:
+        """Attach metadata about the transport response to the result or error.
+
+        This runs for successes and failures alike, so that request identifiers
+        stay available to callers for debugging. Results that do not carry the
+        attribute are left untouched, as are cases where no response was received
+        at all.
+        """
+        result = output_context.response
+        transport_response = output_context.transport_response
+
+        # Only reachable for errors raised before a response arrived, such as a
+        # connection timeout. The default empty metadata is left in place, where
+        # a null status code records that nothing came back.
+        if transport_response is None:
+            return
+
+        if not hasattr(result, "response_metadata"):
+            return
+
+        try:
+            metadata = self.protocol.extract_response_metadata(
+                response=transport_response,
+                context=output_context.properties,
+            )
+            setattr(result, "response_metadata", metadata)
+        except Exception as e:
+            # Metadata is diagnostic and must never fail a call. Both statements
+            # above can raise: a broken protocol, or the assignment itself if the
+            # output shape is frozen.
+            _LOGGER.debug("Unable to attach response metadata: %s", e)
 
     async def _handle_execution[I: SerializeableShape, O: DeserializeableShape](
         self,
@@ -378,7 +418,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                         and retry_error.retry_after is not None
                     ):
                         await sleep(retry_error.retry_after)
-                    raise output_context.response
+                    # Keeps the final attempt's response, so throttling and 5xx
+                    # failures still carry a request ID when _execute_request raises.
+                    return output_context
 
                 _LOGGER.debug(
                     "Retry needed. Attempting request #%s in %.4f seconds.",
@@ -398,6 +440,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest, TResponse | None]:
         output_context: OutputContext[I, O, TRequest, TResponse | None]
+        # A modeled error arrives after the response does, so the response is kept
+        # here to report alongside it. Stays None if nothing came back.
+        transport_response: TResponse | None = None
         try:
             interceptor = call.interceptor
             interceptor.read_before_attempt(request_context)
@@ -449,7 +494,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 signer_properties = scheme.signer_properties(
                     context=request_context.properties
                 )
-                signer_properties.update(option.identity_properties)
+                signer_properties.update(option.signer_properties)
                 _LOGGER.debug("Request to sign: %s", request_context.transport_request)
                 _LOGGER.debug("Signer properties: %s", signer_properties)
 
@@ -513,6 +558,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                     response_context
                 ),
             )
+            transport_response = response_context.transport_response
 
             interceptor.read_before_deserialization(response_context)
 
@@ -544,7 +590,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 request=request_context.request,
                 response=e,
                 transport_request=request_context.transport_request,
-                transport_response=None,
+                transport_response=transport_response,
                 properties=request_context.properties,
             )
 
@@ -608,3 +654,55 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             output_context = replace(output_context, response=e)
 
         return output_context
+
+
+class AsyncClient:
+    """Shared async client machinery: lifecycle, setup gating, and call dispatch."""
+
+    def __init__(self) -> None:
+        self._derive_lock = asyncio.Lock()
+        self._setup_done = False
+        self._closed = False
+        self._transport: ClientTransport[Any, Any] | None = None
+        self._retry_strategy_resolver = RetryStrategyResolver()
+
+    def _build_call[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        input: I,
+        operation: APIOperation[I, O],
+        *,
+        config: Any,
+        retry_strategy: RetryStrategy,
+    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+        """Build the pipeline and call from a resolved config and retry strategy."""
+        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        call = ClientCall(
+            input=input,
+            operation=operation,
+            context=_TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+        return pipeline, call
+
+    async def close(self) -> None:
+        """Close this client and any resources held by its transport."""
+        if self._closed:
+            return
+        async with self._derive_lock:
+            if self._closed:
+                return
+            self._closed = True
+            if self._setup_done and self._transport is not None:
+                await close(self._transport)
+
+    async def __aenter__(self) -> Self:
+        if self._closed:
+            raise RuntimeError("Cannot enter a client that has been closed.")
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        await self.close()

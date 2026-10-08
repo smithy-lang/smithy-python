@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.12.0
+
+### Breaking Changes
+* Make runtime protocol configuration user-friendly by not requiring protocol metadata
+
+### Features
+* Added `RestXmlClientProtocol`, an implementation of the `aws.protocols#restXml` protocol.
+* Added client support for the aws.protocols#ec2Query protocol, including request serialization and modeled response and error deserialization.
+* AWS protocols now report request identifiers on operation outputs and errors, read from the `x-amzn-requestid`, `x-amz-request-id`, and `x-amz-id-2` headers. awsQuery reads them from the response body.
+
+### Enhancements
+* Update identity chain validation to use case-insensitive comparisons for provider names.
+* restXml errors fall back to the `<Message>` element when the modeled message member is empty, since some models name it `message` while services send `Message`.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.8.0` to `~=0.9.0`.
+* Bump `smithy-http` from `~=0.5.0` to `~=0.6.0`.
+* Bump `aws-sdk-signers` from `~=0.3.0` to `~=0.4.0`.
+* Bump `smithy-xml` from `~=0.1.0` to `~=0.2.0`.
+
 ## v0.11.0
 
 ### Enhancements

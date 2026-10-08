@@ -5,7 +5,9 @@ from io import BytesIO
 from typing import Any, cast
 from unittest.mock import Mock
 
+import pytest
 from smithy_aws_core._private.query.errors import create_aws_query_error
+from smithy_aws_core._private.query.metadata import parse_aws_query_request_id
 from smithy_aws_core._private.query.serializers import QueryShapeSerializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.prelude import STRING
@@ -321,3 +323,37 @@ def test_aws_query_error_retry_after_none_by_default() -> None:
         context=TypedProperties(),
     )
     assert error.retry_after is None
+
+
+@pytest.mark.parametrize(
+    "body, expected",
+    [
+        # Successful responses nest the identifier under ResponseMetadata.
+        (
+            b"<NoInputAndNoOutputResponse><ResponseMetadata>"
+            b"<RequestId>abc-123</RequestId>"
+            b"</ResponseMetadata></NoInputAndNoOutputResponse>",
+            "abc-123",
+        ),
+        # Error responses put it directly under the root element instead.
+        (
+            b"<ErrorResponse><Error><Code>InvalidGreeting</Code></Error>"
+            b"<RequestId>foo-id</RequestId></ErrorResponse>",
+            "foo-id",
+        ),
+        # An empty element is treated as absent rather than as an empty ID.
+        (b"<Response><RequestId></RequestId></Response>", None),
+        # An empty nested element falls through to the root rather than giving up.
+        (
+            b"<Response><ResponseMetadata><RequestId></RequestId></ResponseMetadata>"
+            b"<RequestId>root-id</RequestId></Response>",
+            "root-id",
+        ),
+        (b"<Response><Other>x</Other></Response>", None),
+        # A body that is not XML at all must not raise.
+        (b"not xml", None),
+        (b"", None),
+    ],
+)
+def test_parse_aws_query_request_id(body: bytes, expected: str | None) -> None:
+    assert parse_aws_query_request_id(body) == expected

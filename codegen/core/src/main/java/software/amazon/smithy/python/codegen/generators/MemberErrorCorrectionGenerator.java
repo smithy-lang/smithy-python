@@ -146,13 +146,17 @@ public final class MemberErrorCorrectionGenerator extends ShapeVisitor.DataShape
 
     @Override
     public Consumer<PythonWriter> enumShape(EnumShape shape) {
-        var enumSymbol = context.symbolProvider().toSymbol(shape);
+        var enumSymbol = context.symbolProvider()
+                .toSymbol(shape)
+                .expectProperty(SymbolProperties.ENUM_SYMBOL);
         return writer -> writer.writeInline("$T._corrected(\"\")", enumSymbol);
     }
 
     @Override
     public Consumer<PythonWriter> intEnumShape(IntEnumShape shape) {
-        var enumSymbol = context.symbolProvider().toSymbol(shape);
+        var enumSymbol = context.symbolProvider()
+                .toSymbol(shape)
+                .expectProperty(SymbolProperties.ENUM_SYMBOL);
         // -1 is used (rather than 0) as the placeholder because it is least likely to
         // collide with a real member value.
         return writer -> writer.writeInline("$T._corrected(-1)", enumSymbol);

@@ -60,19 +60,32 @@ public class AwsCodegenTest {
         var client = Files.readString(tempDir.resolve("src/restjson/client.py"));
         assertInOrder(
                 client,
+                "(AsyncClient):",
                 "config = await AsyncRESTJSONConfig.resolve()",
                 "for plugin in self._client_plugins:",
                 "for plugin in self._plugins:",
-                "self._config = config",
-                "if operation_plugins:",
-                "config = deepcopy(self._config)",
-                "for plugin in operation_plugins:",
-                "config = self._config");
+                "await self._post_setup(config)",
+                "self._config = config");
+        assertTrue(client.contains("async def _post_setup(self, config:"));
+        assertTrue(client.contains("for plugin in default_plugins:"));
+        assertTrue(client.contains("await self._prepare_call("));
+        assertTrue(client.contains("self._build_call("));
         assertFalse(client.contains("plugin(self._config)"));
         assertTrue(client.contains("retry_mode=config.retry_mode"));
         assertTrue(client.contains("max_attempts=config.max_attempts"));
-        assertFalse(client.contains("getattr(config, \"retry_mode\""));
-        assertFalse(client.contains("getattr(config, \"max_attempts\""));
+
+        var schemas = Files.readString(tempDir.resolve("src/restjson/_private/schemas.py"));
+        assertTrue(schemas.contains("aws.protocols#restJson1"));
+        assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
+        assertTrue(schemas.contains("\"name\": \"weather-auth\""));
+        assertTrue(schemas.contains("aws.api#service"));
+        assertTrue(schemas.contains("\"sdkId\": \"REST JSON\""));
+        assertTrue(schemas.contains("\"endpointPrefix\": \"rest-json-1\""));
+        assertTrue(schemas.contains("\"arnNamespace\": \"rest-json\""));
+        assertTrue(schemas.contains("\"cloudFormationName\": \"RestJson\""));
+        assertTrue(schemas.contains("\"cloudTrailEventSource\": \"rest-json.amazonaws.com\""));
+        assertTrue(schemas.contains("smithy.rules#endpointBdd"));
+        assertTrue(schemas.contains("rest-json-1.{Region}.{PartitionResult#dnsSuffix}"));
     }
 
     private static void assertInOrder(String value, String... fragments) {

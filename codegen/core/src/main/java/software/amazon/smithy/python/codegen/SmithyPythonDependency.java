@@ -22,7 +22,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_CORE = new PythonDependency(
             "smithy_core",
-            "~=0.8.0",
+            "~=0.9.0",
             Type.DEPENDENCY,
             false);
 
@@ -33,7 +33,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_HTTP = new PythonDependency(
             "smithy_http",
-            "~=0.5.0",
+            "~=0.6.0",
             Type.DEPENDENCY,
             false);
 
@@ -65,6 +65,24 @@ public final class SmithyPythonDependency {
             false);
 
     /**
+     * The core smithy-cbor python package.
+     */
+    public static final PythonDependency SMITHY_CBOR = new PythonDependency(
+            "smithy_cbor",
+            "~=0.1.0",
+            Type.DEPENDENCY,
+            false);
+
+    /**
+     * Test-support helpers shared by generated clients (e.g. deep_equal).
+     */
+    public static final PythonDependency SMITHY_TEST = new PythonDependency(
+            "smithy_test",
+            "~=0.1.0",
+            Type.TEST_DEPENDENCY,
+            false);
+
+    /**
      * EventStream implementations for application/vnd.amazon.eventstream.
      */
     public static final PythonDependency SMITHY_AWS_EVENT_STREAM = new PythonDependency(
@@ -78,7 +96,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_AWS_CORE = new PythonDependency(
             "smithy_aws_core",
-            "~=0.11.0",
+            "~=0.12.0",
             Type.DEPENDENCY,
             false);
 

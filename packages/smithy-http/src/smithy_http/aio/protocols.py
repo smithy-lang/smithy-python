@@ -3,31 +3,46 @@
 import os
 from collections.abc import AsyncIterable
 from inspect import iscoroutinefunction
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from smithy_core import URI as _URI
-from smithy_core.aio.interfaces import AsyncByteStream, ClientProtocol
+from smithy_core.aio.interfaces import AsyncByteStream, ClientProtocol, ProtocolSettings
 from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
+from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape
 from smithy_core.documents import TypeRegistry
-from smithy_core.exceptions import CallError, ExpectationNotMetError, ModeledError
+from smithy_core.exceptions import (
+    CallError,
+    ExpectationNotMetError,
+    MissingDependencyError,
+    ModeledError,
+)
 from smithy_core.interfaces import (
     Endpoint,
     SeekableBytesReader,
     TypedProperties,
     URI,
-    is_streaming_blob,
 )
 from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
-from smithy_core.prelude import DOCUMENT
-from smithy_core.schemas import APIOperation
-from smithy_core.serializers import SerializeableShape
+from smithy_core.prelude import DOCUMENT, UNIT
+from smithy_core.response import ResponseMetadata
+from smithy_core.schemas import APIOperation, Schema
+from smithy_core.serializers import SerializeableShape, SerializeableStruct
 from smithy_core.shapes import ShapeID
-from smithy_core.traits import EndpointTrait, HTTPTrait
+from smithy_core.traits import (
+    ORIGINAL_SHAPE_ID,
+    RpcV2CborTrait,
+)
 
+from .. import tuples_to_fields
 from ..deserializers import HTTPResponseDeserializer
-from ..serializers import HTTPRequestSerializer
+from ..schema_extensions import (
+    HTTP_BINDING_SCHEMA_EXTENSION,
+    HTTP_OPERATION_SCHEMA_EXTENSION,
+)
+from ..serializers import HTTPBindingSerializer, HTTPRequestSerializer
+from . import HTTPRequest as _HTTPRequest
 from .interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 
 
@@ -67,6 +82,19 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
 
         return request
 
+    def extract_response_metadata(
+        self,
+        *,
+        response: HTTPResponse,
+        context: TypedProperties,
+    ) -> ResponseMetadata:
+        """Extract the status code from an HTTP response.
+
+        Identifiers such as request IDs are not part of HTTP itself, so protocols
+        that define them are expected to override this and add them.
+        """
+        return ResponseMetadata(http_status_code=response.status)
+
 
 class HttpBindingClientProtocol(HttpClientProtocol):
     """An HTTP-based protocol that uses HTTP binding traits."""
@@ -98,22 +126,34 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
-        # TODO(optimization): request binding cache like done in SJ
+        operation_metadata = operation.schema.get_extension(
+            HTTP_OPERATION_SCHEMA_EXTENSION
+        )
+        if isinstance(input, SerializeableStruct):
+            serializer = HTTPBindingSerializer(
+                payload_codec=self.payload_codec,
+                schema=operation.input_schema,
+                http_trait=operation_metadata.http_trait,
+                operation_metadata=operation_metadata,
+            )
+            try:
+                input.serialize_members(serializer)
+            except BaseException as error:
+                serializer.abort(type(error), error, error.__traceback__)
+                raise
+            return serializer.build_request()
+
         serializer = HTTPRequestSerializer(
             payload_codec=self.payload_codec,
-            http_trait=operation.schema.expect_trait(HTTPTrait),
-            endpoint_trait=operation.schema.get_trait(EndpointTrait),
+            http_trait=operation_metadata.http_trait,
+            operation_metadata=operation_metadata,
         )
-
-        input.serialize(serializer=serializer)
-        request = serializer.result
-
-        if request is None:
+        input.serialize(serializer)
+        if serializer.result is None:
             raise ExpectationNotMetError(
                 "Expected request to be serialized, but was None"
             )
-
-        return request
+        return serializer.result
 
     async def deserialize_response[
         OperationInput: "SerializeableShape",
@@ -139,13 +179,14 @@ class HttpBindingClientProtocol(HttpClientProtocol):
 
         # if body is not streaming and is async, we have to buffer it
         body: SyncStreamingBlob | None = None
-        if not operation.output_stream_member and not is_streaming_blob(body):
+        response_metadata = operation.output_schema.get_extension(
+            HTTP_BINDING_SCHEMA_EXTENSION
+        ).response
+        if response_metadata.streaming_member is None:
             body = await self._buffer_async_body(response.body)
 
-        # TODO(optimization): response binding cache like done in SJ
         deserializer = HTTPResponseDeserializer(
             payload_codec=self.payload_codec,
-            http_trait=operation.schema.expect_trait(HTTPTrait),
             response=response,
             body=body,
         )
@@ -153,6 +194,9 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         return operation.output.deserialize(deserializer)
 
     async def _buffer_async_body(self, stream: AsyncStreamingBlob) -> SyncStreamingBlob:
+        if isinstance(stream, bytes | bytearray):
+            return stream
+
         match stream:
             case AsyncByteStream():
                 if not iscoroutinefunction(stream.read):
@@ -223,7 +267,6 @@ class HttpBindingClientProtocol(HttpClientProtocol):
 
             deserializer = HTTPResponseDeserializer(
                 payload_codec=self.payload_codec,
-                http_trait=operation.schema.expect_trait(HTTPTrait),
                 response=response,
                 body=response_body,
             )
@@ -271,3 +314,205 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         if "content-type" not in response.fields:
             return False
         return response.fields["content-type"].as_string() == self.content_type
+
+
+try:
+    from smithy_cbor import CBORCodec
+    from smithy_cbor import loads as _cbor_loads
+
+    _HAS_CBOR = True
+except ImportError:
+    _HAS_CBOR = False  # type: ignore
+
+if TYPE_CHECKING:
+    from smithy_cbor import CBORCodec
+    from smithy_cbor import loads as _cbor_loads
+
+
+def _assert_cbor() -> None:
+    if not _HAS_CBOR:
+        raise MissingDependencyError(
+            "Attempted to use CBOR codec, but smithy-cbor is not installed."
+        )
+
+
+def _is_unit(schema: Schema | None) -> bool:
+    """rpcv2Cbor treats an operation with unit input as having no body, and unit output
+    as an empty response. Codegen synthesizes a wrapper struct for a unit member but
+    tags it with ``smithy.synthetic#originalShapeId = smithy.api#Unit``.
+    """
+    if schema is None:
+        return False
+    if schema.id == UNIT.id:
+        return True
+    original = schema.traits.get(ORIGINAL_SHAPE_ID)
+    return original is not None and original.document_value == str(UNIT.id)
+
+
+class _RpcV2ClientProtocol(HttpClientProtocol):
+    """Shared framing for the Smithy RPC v2 protocol family (rpcv2Cbor, rpcv2Json).
+
+    Subclasses supply the codec-specific pieces: the protocol id, content type,
+    ``Smithy-Protocol`` header value, the empty-document sentinel, codec construction,
+    and error ``__type`` decoding. All HTTP/RPC framing lives here.
+    """
+
+    _id: ShapeID
+    _content_type: str
+    _smithy_protocol: str
+    # Serialized empty document (e.g. CBOR `{}` or JSON `{}`) used when a response body
+    # is absent so absent members take their defaults.
+    _empty_document: bytes
+    _codec: Codec
+    _service_name: str
+
+    @property
+    def id(self) -> ShapeID:
+        return self._id
+
+    @property
+    def payload_codec(self) -> Codec:
+        return self._codec
+
+    @property
+    def content_type(self) -> str:
+        return self._content_type
+
+    def _decode_document(self, body: bytes) -> object:
+        """Decode a serialized document to a Python object, for reading the error
+        ``__type`` discriminator.
+        """
+        raise NotImplementedError
+
+    def serialize_request[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self,
+        *,
+        operation: APIOperation[OperationInput, OperationOutput],
+        input: OperationInput,
+        endpoint: URI,
+        context: TypedProperties,
+    ) -> HTTPRequest:
+        operation_name = operation.schema.id.name
+        path = f"/service/{self._service_name}/operation/{operation_name}"
+
+        # The protocol omits the body AND the Content-Type header for operations whose
+        # input is the unit type (no modeled input). Every other operation serializes
+        # the input shape, even when it has no members.
+        fields: list[tuple[str, str]] = [
+            ("Smithy-Protocol", self._smithy_protocol),
+            ("Accept", self._content_type),
+        ]
+        if _is_unit(operation.input_schema):
+            payload = b""
+        else:
+            payload = self._codec.serialize(shape=input)
+            fields.append(("Content-Type", self._content_type))
+            fields.append(("Content-Length", str(len(payload))))
+
+        return _HTTPRequest(
+            method="POST",
+            destination=_URI(host="", path=path),
+            fields=tuples_to_fields(fields),
+            body=AsyncBytesReader(payload),
+        )
+
+    async def deserialize_response[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self,
+        *,
+        operation: APIOperation[OperationInput, OperationOutput],
+        request: HTTPRequest,
+        response: HTTPResponse,
+        error_registry: TypeRegistry,
+        context: TypedProperties,
+    ) -> OperationOutput:
+        body = await response.consume_body_async()
+        if response.status != 200:
+            raise self._create_error(
+                operation=operation,
+                response=response,
+                body=body,
+                error_registry=error_registry,
+                context=context,
+            )
+        # An empty body (unit output, or a server that elides the empty document) is a
+        # valid response: deserialize an empty document so absent members take defaults.
+        if not body or _is_unit(operation.output_schema):
+            body = self._empty_document
+        return self._codec.deserialize(source=body, shape=operation.output)
+
+    def _create_error(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        response: HTTPResponse,
+        body: bytes,
+        error_registry: TypeRegistry,
+        context: TypedProperties,
+    ) -> Exception:
+        # The protocol discriminates errors by a top-level `__type` member in the body
+        # holding the absolute error shape id (no error header). Resolve it against the
+        # registry, then deserialize the same body into the modeled error shape.
+        error_id: ShapeID | None = None
+        if body:
+            decoded = self._decode_document(body)
+            if isinstance(decoded, dict):
+                raw_type = cast("dict[str, object]", decoded).get("__type")
+                if isinstance(raw_type, str):
+                    error_id = self._normalize_error_id(raw_type, operation)
+
+        if error_id is not None and error_id in error_registry:
+            error_shape = error_registry.get(error_id)
+            if not issubclass(error_shape, ModeledError):
+                raise ExpectationNotMetError(
+                    f"Modeled errors must derive from 'ModeledError', got {error_shape}"
+                )
+            deserializer = self._codec.create_deserializer(body or self._empty_document)
+            return error_shape.deserialize(deserializer)
+
+        message = (
+            f"Unknown error for operation {operation.schema.id} "
+            f"- status: {response.status}"
+        )
+        if error_id is not None:
+            message += f" - id: {error_id}"
+        return CallError(
+            message=message,
+            fault="client" if response.status < 500 else "server",
+        )
+
+    @staticmethod
+    def _normalize_error_id(
+        raw_type: str, operation: APIOperation[Any, Any]
+    ) -> ShapeID:
+        # `__type` may carry a full shape id, or (per spec) a name that may include a
+        # trailing "#"-qualified suffix. Match on the shape name against the operation's
+        # modeled errors so a bare or oddly-qualified name still resolves.
+        candidate = ShapeID(raw_type)
+        for error_schema in operation.error_schemas:
+            if error_schema.id == candidate or error_schema.id.name == candidate.name:
+                return error_schema.id
+        return candidate
+
+
+class RpcV2CborClientProtocol(_RpcV2ClientProtocol):
+    """An implementation of the smithy.protocols#rpcv2Cbor protocol."""
+
+    _id: ShapeID = RpcV2CborTrait.id
+    _content_type: str = "application/cbor"
+    _smithy_protocol: str = "rpc-v2-cbor"
+    # CBOR encoding of an empty indefinite-length map (0xBF 0xFF), i.e. `{}`.
+    _empty_document: bytes = b"\xbf\xff"
+
+    def __init__(self, settings: ProtocolSettings) -> None:
+        _assert_cbor()
+        self._service_name = settings.service_target
+        self._codec = CBORCodec(default_namespace=settings.namespace)
+
+    def _decode_document(self, body: bytes) -> object:
+        return _cbor_loads(body)  # type: ignore[possibly-unbound]

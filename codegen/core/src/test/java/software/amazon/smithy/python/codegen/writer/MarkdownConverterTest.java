@@ -177,6 +177,34 @@ public class MarkdownConverterTest {
     }
 
     @Test
+    public void testConvertEscapesTripleQuotes() {
+        // S3 documents QuoteEscapeCharacter with the example """ a , b """. Left
+        // unescaped it would end the surrounding docstring early. Shorter quote
+        // runs are left alone.
+        String html = "<p>The value <code>\"\"\" a , b \"\"\"</code> is parsed as <code>\" a , b \"</code>.</p>";
+        String result = MarkdownConverter.convertForDocstring(html, createMockContext(true)).trim();
+        assertEquals("The value `\\\"\\\"\\\" a , b \\\"\\\"\\\"` is parsed as `\" a , b \"`.", result);
+    }
+
+    @Test
+    public void testConvertEscapesQuoteRunsNextToBackslashes() {
+        // Only unescaped quotes count toward a run: an already-escaped quote is
+        // not escaped twice, while a literal "\\" does not escape the next quote.
+        String html = "<code>\"\"\"\"</code> <code>\\\"\"\"\"</code> <code>\\\\\"\"\"</code>";
+        String result = MarkdownConverter.convertForDocstring(html, createMockContext(true)).trim();
+        assertEquals("`\\\"\\\"\\\"\\\"` `\\\"\\\"\\\"\\\"` `\\\\\\\"\\\"\\\"`", result);
+    }
+
+    @Test
+    public void testConvertEscapesTrailingQuote() {
+        // A quote at the very end would run into the closing quotes of a
+        // single-line docstring.
+        String html = "<pre>x = \"a\"</pre>";
+        String result = MarkdownConverter.convertForDocstring(html, createMockContext(true)).trim();
+        assertEquals("x = \"a\\\"", result);
+    }
+
+    @Test
     public void testConvertMixedElements() {
         String html = "<h1>Title</h1><p>Paragraph</p><ul><li>Item 1</li><li>Item 2</li></ul>";
         String result = MarkdownConverter.convert(html, createMockContext(true));

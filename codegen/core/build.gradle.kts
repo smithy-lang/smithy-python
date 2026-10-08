@@ -13,6 +13,8 @@ dependencies {
     api(libs.smithy.codegen)
     implementation(libs.smithy.waiters)
     implementation(libs.smithy.protocol.test.traits)
+    implementation(libs.smithy.protocol.traits)
     // We have this because we're using RestJson1 as a 'generic' protocol.
     implementation(libs.smithy.aws.traits)
+    implementation(libs.smithy.rules.engine)
 }

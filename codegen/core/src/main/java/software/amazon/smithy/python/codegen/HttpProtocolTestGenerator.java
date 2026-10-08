@@ -405,8 +405,22 @@ public final class HttpProtocolTestGenerator implements Runnable {
         }
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.write("actual_body_content = await $T(actual.body or b'').read()", RuntimeTypes.ASYNC_BYTES_READER);
-        writer.write("expected_body_content = b$S", testCase.getBody().get());
+        writer.write("expected_body_content = $C", (Runnable) () -> writeTestBody(testCase, writer));
         compareMediaBlob(testCase, writer);
+    }
+
+    private void writeTestBody(HttpMessageTestCase testCase, PythonWriter writer) {
+        String body = testCase.getBody().orElse("");
+        if (isBinaryMediaType(testCase.getBodyMediaType().orElse(""))) {
+            writer.addStdlibImport("base64");
+            writer.writeInline("base64.b64decode(b$S)", body);
+        } else {
+            writer.writeInline("b$S", body);
+        }
+    }
+
+    private boolean isBinaryMediaType(String mediaType) {
+        return mediaType.equals("application/cbor");
     }
 
     private void compareMediaBlob(HttpMessageTestCase testCase, PythonWriter writer) {
@@ -419,6 +433,35 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     assert actual_body == expected_body
 
                     """);
+            return;
+        }
+        if (contentType.equals("application/cbor")) {
+            // CBOR admits several encodings of the same value (definite vs indefinite
+            // length, map key order, integer width), so compare the decoded structures
+            // rather than the raw bytes.
+            writer.addDependency(SmithyPythonDependency.SMITHY_CBOR.asTestDependency());
+            writer.addImport("smithy_cbor", "loads", "_cbor_loads");
+            writer.addDependency(SmithyPythonDependency.SMITHY_TEST);
+            writer.addImport(SmithyPythonDependency.SMITHY_TEST.packageName(), "deep_equal");
+            writer.addStdlibImport("typing", "Any");
+            writer.write("""
+                    actual_body: Any = (
+                        _cbor_loads(actual_body_content) if actual_body_content else {}
+                    )
+                    expected_body: Any = (
+                        _cbor_loads(expected_body_content) if expected_body_content else {}
+                    )
+                    assert deep_equal(actual_body, expected_body)
+
+                    """);
+            return;
+        }
+        if (contentType.equals("application/xml") || contentType.endsWith("+xml")) {
+            // Compare the parsed documents so formatting whitespace and attribute order
+            // don't matter.
+            writer.addDependency(SmithyPythonDependency.SMITHY_TEST);
+            writer.addImport(SmithyPythonDependency.SMITHY_TEST.packageName(), "xml_equal");
+            writer.write("assert xml_equal(actual_body_content, expected_body_content)\n");
             return;
         }
         if (contentType.equals("application/x-www-form-urlencoded")) {
@@ -449,7 +492,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                     transport = $T(
                                         status=$L,
                                         headers=$J,
-                                        body=b$S,
+                                        body=$C,
                                     ),
                                     ${C|}
                                 )
@@ -458,7 +501,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
-                                testCase.getBody().filter(body -> !body.isEmpty()).orElse(""),
+                                (Runnable) () -> writeTestBody(testCase, writer),
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
                     // Create an empty input object to pass
@@ -505,7 +548,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                     transport = $T(
                                         status=$L,
                                         headers=$J,
-                                        body=b$S,
+                                        body=$C,
                                     ),
                                     ${C|}
                                 )
@@ -514,7 +557,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
-                                testCase.getBody().orElse(""),
+                                (Runnable) () -> writeTestBody(testCase, writer),
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
                     // Create an empty input object to pass
@@ -550,7 +593,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 .findAny();
 
         if (streamBinding.isEmpty()) {
-            writer.write("assert actual == expected\n");
+            writeDeepEqualAssertion(writer, "actual", "expected");
             return;
         }
 
@@ -573,8 +616,14 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 compareMediaBlob(testCase, writer);
                 continue;
             }
-            writer.write("assert actual.$1L == expected.$1L\n", memberName);
+            writeDeepEqualAssertion(writer, "actual." + memberName, "expected." + memberName);
         }
+    }
+
+    private void writeDeepEqualAssertion(PythonWriter writer, String actual, String expected) {
+        writer.addDependency(SmithyPythonDependency.SMITHY_TEST);
+        writer.addImport(SmithyPythonDependency.SMITHY_TEST.packageName(), "deep_equal");
+        writer.write("assert deep_equal($L, $L)", actual, expected);
     }
 
     // Only generate test cases when protocol matches the target protocol.
@@ -785,10 +834,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 writer.writeInline(CodegenUtils.getDatetimeConstructor(writer, parsed));
             } else if (inputShape.isFloatShape() || inputShape.isDoubleShape()) {
                 writer.writeInline("float($L)", node.getValue());
-            } else if (inputShape.isIntEnumShape()) {
-                var enumSymbol =
-                        context.symbolProvider().toSymbol(inputShape);
-                writer.writeInline("$T($L)", enumSymbol, node.getValue());
             } else {
                 writer.writeInline("$L", node.getValue());
             }
@@ -820,10 +865,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 };
 
                 writer.writeInline("float($S)", value);
-            } else if (inputShape.isEnumShape()) {
-                var enumSymbol =
-                        context.symbolProvider().toSymbol(inputShape);
-                writer.writeInline("$T($S)", enumSymbol, node.getValue());
             } else {
                 writer.writeInline("$S", node.getValue());
             }

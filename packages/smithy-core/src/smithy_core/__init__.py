@@ -8,7 +8,7 @@ from urllib.parse import urlunparse
 from . import interfaces, rfc3986
 from .exceptions import SmithyError
 
-__version__ = "0.8.1"
+__version__ = "0.9.0"
 
 
 class HostType(Enum):

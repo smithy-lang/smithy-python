@@ -4,9 +4,9 @@ smithy = "1.73.0"
 mockito = "5.23.0"
 test-logger-plugin = "4.0.0"
 spotbugs = "6.0.22"
-spotless = "8.9.0"
+spotless = "8.10.2"
 smithy-gradle-plugins = "1.5.0"
-dep-analysis = "3.18.0"
+dep-analysis = "3.19.2"
 jsoup = "1.22.1"
 commonmark = "0.17.0"
 
@@ -15,8 +15,12 @@ smithy-model = { module = "software.amazon.smithy:smithy-model", version.ref = "
 smithy-codegen = { module = "software.amazon.smithy:smithy-codegen-core", version.ref = "smithy" }
 smithy-aws-traits = { module = "software.amazon.smithy:smithy-aws-traits", version.ref = "smithy" }
 smithy-aws-protocol-tests = { module = "software.amazon.smithy:smithy-aws-protocol-tests", version.ref = "smithy" }
+smithy-protocol-tests = { module = "software.amazon.smithy:smithy-protocol-tests", version.ref = "smithy" }
+smithy-protocol-traits = { module = "software.amazon.smithy:smithy-protocol-traits", version.ref = "smithy" }
 smithy-protocol-test-traits = { module = "software.amazon.smithy:smithy-protocol-test-traits", version.ref = "smithy"}
 smithy-waiters = { module = "software.amazon.smithy:smithy-waiters", version.ref = "smithy" }
+smithy-rules-engine = { module = "software.amazon.smithy:smithy-rules-engine", version.ref = "smithy" }
+smithy-aws-endpoints = { module = "software.amazon.smithy:smithy-aws-endpoints", version.ref = "smithy" }
 
 # Test dependencies
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit5" }

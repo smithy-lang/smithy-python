@@ -1,21 +1,35 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
-from typing import Any
+from typing import Any, Self
 
 import pytest
 from smithy_core import URI
+from smithy_core.codecs import Codec
+from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.endpoints import Endpoint
-from smithy_core.interfaces import TypedProperties
+from smithy_core.interfaces import TypedProperties as TypedPropertiesInterface
 from smithy_core.interfaces import URI as URIInterface
-from smithy_core.schemas import APIOperation
-from smithy_core.shapes import ShapeID
-from smithy_http import Fields
-from smithy_http.aio import HTTPRequest
-from smithy_http.aio.interfaces import HTTPRequest as HTTPRequestInterface
-from smithy_http.aio.interfaces import HTTPResponse as HTTPResponseInterface
-from smithy_http.aio.protocols import HttpClientProtocol
+from smithy_core.schemas import APIOperation, Schema
+from smithy_core.serializers import ShapeSerializer
+from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.traits import HTTPPayloadTrait, HTTPTrait, StreamingTrait
+from smithy_core.types import TypedProperties
+from smithy_http import Field, Fields
+from smithy_http.aio import HTTPRequest, HTTPResponse
+from smithy_http.aio import protocols as protocols_module
+from smithy_http.aio.interfaces import (
+    HTTPErrorIdentifier,
+)
+from smithy_http.aio.interfaces import (
+    HTTPRequest as HTTPRequestInterface,
+)
+from smithy_http.aio.interfaces import (
+    HTTPResponse as HTTPResponseInterface,
+)
+from smithy_http.aio.protocols import HttpBindingClientProtocol, HttpClientProtocol
+from smithy_json import JSONCodec
 
 
 class MockProtocol(HttpClientProtocol):
@@ -31,7 +45,7 @@ class MockProtocol(HttpClientProtocol):
         operation: APIOperation[Any, Any],
         input: Any,
         endpoint: URIInterface,
-        context: TypedProperties,
+        context: TypedPropertiesInterface,
     ) -> HTTPRequestInterface:
         raise Exception("This is only for tests.")
 
@@ -42,9 +56,225 @@ class MockProtocol(HttpClientProtocol):
         request: HTTPRequestInterface,
         response: HTTPResponseInterface,
         error_registry: TypeRegistry,
-        context: TypedProperties,
+        context: TypedPropertiesInterface,
     ) -> Any:
         raise Exception("This is only for tests.")
+
+
+class MockBindingProtocol(HttpBindingClientProtocol):
+    _id = ShapeID("ns.foo#binding")
+    _codec = JSONCodec()
+    _error_identifier = HTTPErrorIdentifier()
+
+    @property
+    def id(self) -> ShapeID:
+        return self._id
+
+    @property
+    def payload_codec(self) -> Codec:
+        return self._codec
+
+    @property
+    def content_type(self) -> str:
+        return "application/json"
+
+    @property
+    def error_identifier(self) -> HTTPErrorIdentifier:
+        return self._error_identifier
+
+    async def buffer_body(self, stream: Any) -> Any:
+        return await self._buffer_async_body(stream)
+
+
+class BufferTrackingBindingProtocol(MockBindingProtocol):
+    def __init__(self) -> None:
+        self.buffer_calls = 0
+
+    async def _buffer_async_body(self, stream: Any) -> Any:
+        self.buffer_calls += 1
+        return await super()._buffer_async_body(stream)
+
+
+class LegacyInput:
+    SCHEMA = Schema.collection(id=ShapeID("ns.foo#LegacyInput"))
+
+    def __init__(self) -> None:
+        self.serialize_called = False
+
+    def serialize(self, serializer: ShapeSerializer) -> None:
+        self.serialize_called = True
+        with serializer.begin_struct(self.SCHEMA):
+            pass
+
+
+class StructInput:
+    SCHEMA = Schema.collection(id=ShapeID("ns.foo#StructInput"))
+
+    def __init__(self) -> None:
+        self.serialize_members_called = False
+
+    def serialize(self, serializer: ShapeSerializer) -> None:
+        raise AssertionError("The structure fast path must not call serialize().")
+
+    def serialize_members(self, serializer: ShapeSerializer) -> None:
+        self.serialize_members_called = True
+
+
+class MockOutput:
+    SCHEMA = Schema.collection(id=ShapeID("ns.foo#MockOutput"))
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+        return cls()
+
+
+class StreamingOutput(MockOutput):
+    SCHEMA = Schema.collection(
+        id=ShapeID("ns.foo#StreamingOutput"),
+        members={
+            "payload": {
+                "target": Schema(
+                    id=ShapeID("ns.foo#StreamingBlob"),
+                    shape_type=ShapeType.BLOB,
+                    traits=[StreamingTrait()],
+                ),
+                "traits": [HTTPPayloadTrait()],
+            }
+        },
+    )
+
+
+class AsyncBody:
+    async def read(self, size: int = -1) -> bytes:
+        return b"{}"
+
+
+@pytest.mark.parametrize("body", [b"{}", bytearray(b"{}")])
+async def test_buffer_async_body_fast_paths_synchronous_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+    body: bytes | bytearray,
+) -> None:
+    class FailOnInstanceCheck(type):
+        def __instancecheck__(cls, instance: object) -> bool:
+            pytest.fail("Synchronous byte bodies must not use protocol checks")
+
+    class ProtocolCheck(metaclass=FailOnInstanceCheck):
+        pass
+
+    monkeypatch.setattr(protocols_module, "AsyncByteStream", ProtocolCheck)
+    monkeypatch.setattr(protocols_module, "AsyncIterable", ProtocolCheck)
+
+    result = await MockBindingProtocol().buffer_body(body)
+
+    assert result is body
+
+
+def test_http_binding_protocol_falls_back_to_legacy_serialize() -> None:
+    operation = APIOperation(
+        input=LegacyInput,
+        output=MockOutput,
+        schema=Schema(
+            id=ShapeID("ns.foo#LegacyOperation"),
+            shape_type=ShapeType.OPERATION,
+            traits=[HTTPTrait({"method": "POST", "code": 200, "uri": "/legacy"})],
+        ),
+        input_schema=LegacyInput.SCHEMA,
+        output_schema=MockOutput.SCHEMA,
+        error_registry=TypeRegistry({}),
+        effective_auth_schemes=[],
+        error_schemas=[],
+    )
+    input = LegacyInput()
+
+    request = MockBindingProtocol().serialize_request(
+        operation=operation,
+        input=input,
+        endpoint=URI(host="example.com"),
+        context=TypedProperties(),
+    )
+
+    assert input.serialize_called
+    assert request.method == "POST"
+    assert request.destination.path == "/legacy"
+
+
+def test_http_binding_protocol_uses_structure_fast_path() -> None:
+    operation = APIOperation(
+        input=StructInput,
+        output=MockOutput,
+        schema=Schema(
+            id=ShapeID("ns.foo#StructOperation"),
+            shape_type=ShapeType.OPERATION,
+            traits=[HTTPTrait({"method": "POST", "code": 200, "uri": "/structure"})],
+        ),
+        input_schema=StructInput.SCHEMA,
+        output_schema=MockOutput.SCHEMA,
+        error_registry=TypeRegistry({}),
+        effective_auth_schemes=[],
+        error_schemas=[],
+    )
+    input = StructInput()
+
+    request = MockBindingProtocol().serialize_request(
+        operation=operation,
+        input=input,
+        endpoint=URI(host="example.com"),
+        context=TypedProperties(),
+    )
+
+    assert input.serialize_members_called
+    assert request.method == "POST"
+    assert request.destination.path == "/structure"
+
+
+@pytest.mark.parametrize(
+    ("output", "expected_buffer_calls"),
+    [(MockOutput, 1), (StreamingOutput, 0)],
+)
+async def test_deserialize_response_uses_cached_streaming_member(
+    monkeypatch: pytest.MonkeyPatch,
+    output: type[MockOutput],
+    expected_buffer_calls: int,
+) -> None:
+    def fail_if_scanned(_: APIOperation[Any, Any]) -> None:
+        pytest.fail("output_stream_member should not be scanned")
+
+    monkeypatch.setattr(
+        APIOperation,
+        "output_stream_member",
+        property(fail_if_scanned),
+    )
+    operation = APIOperation(
+        input=LegacyInput,
+        output=output,
+        schema=Schema(
+            id=ShapeID("ns.foo#DeserializeOperation"),
+            shape_type=ShapeType.OPERATION,
+            traits=[HTTPTrait({"method": "GET", "code": 200, "uri": "/"})],
+        ),
+        input_schema=LegacyInput.SCHEMA,
+        output_schema=output.SCHEMA,
+        error_registry=TypeRegistry({}),
+        effective_auth_schemes=[],
+        error_schemas=[],
+    )
+    request = HTTPRequest(
+        destination=URI(host="example.com"),
+        method="GET",
+        fields=Fields(),
+    )
+    response = HTTPResponse(body=AsyncBody(), status=200, fields=Fields())
+    protocol = BufferTrackingBindingProtocol()
+
+    await protocol.deserialize_response(
+        operation=operation,
+        request=request,
+        response=response,
+        error_registry=TypeRegistry({}),
+        context=TypedProperties(),
+    )
+
+    assert protocol.buffer_calls == expected_buffer_calls
 
 
 @pytest.mark.parametrize(
@@ -145,3 +375,21 @@ def test_http_protocol_joins_uris(
     updated_request = protocol.set_service_endpoint(request=request, endpoint=endpoint)
     actual = updated_request.destination
     assert actual == expected
+
+
+def test_extract_response_metadata_reports_only_the_status_code() -> None:
+    # Request Ids are not an HTTP concept. The base HTTP layer must not read
+    # request IDs even when an AWS-style header is present; that knowledge
+    # belongs in smithy-aws-core.
+    response = HTTPResponse(
+        status=429,
+        fields=Fields([Field(name="x-amzn-requestid", values=["rid"])]),
+    )
+
+    metadata = MockProtocol().extract_response_metadata(
+        response=response, context=TypedProperties()
+    )
+
+    assert metadata.http_status_code == 429
+    assert metadata.request_id is None
+    assert metadata.extended_request_id is None

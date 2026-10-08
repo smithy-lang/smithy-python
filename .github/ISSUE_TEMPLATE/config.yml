@@ -1,0 +1,9 @@
+---
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 General Question
+    url: https://github.com/smithy-lang/smithy-python/discussions/categories/q-a
+    about: Please ask and answer questions as a discussion thread
+  - name: 💡 Idea or Design Discussion
+    url: https://github.com/smithy-lang/smithy-python/discussions/categories/ideas
+    about: For open-ended ideas and design discussions that aren't yet a concrete feature request
