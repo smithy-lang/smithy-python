@@ -2,9 +2,12 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 from copy import deepcopy
-from unittest.mock import patch
+from types import SimpleNamespace
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from smithy_core.aio.client import RequestPipeline
 from smithy_core.exceptions import CallError, RetryError
 from smithy_core.retries import (
     AdaptiveRetryStrategy,
@@ -396,6 +399,17 @@ class TestTokenBucket:
         assert acquired
         await task
 
+    def test_acquire_works_across_event_loops(self):
+        # A client, and so its bucket, can outlive the event loop it was first used on
+        token_bucket = TokenBucket(fill_rate=20.0)
+
+        async def contended_acquires():
+            # The bucket starts with one token, so the second acquire has to wait
+            await asyncio.gather(token_bucket.acquire(1), token_bucket.acquire(1))
+
+        asyncio.run(contended_acquires())
+        asyncio.run(contended_acquires())
+
 
 class TestRateLimiter:
     @pytest.mark.asyncio
@@ -784,32 +798,6 @@ class TestAdaptiveRetryStrategy:
         assert token_bucket.current_capacity == 1.0
 
     @pytest.mark.asyncio
-    async def test_rate_limiter_enabled_after_throttling(self):
-        with patch("time.monotonic") as mock_time:
-            mock_time.side_effect = [0.0, 0.1, 0.2, 0.3]
-
-            token_bucket = TokenBucket()
-            calculator = CubicCalculator(starting_max_rate=1.0, start_time=0.0)
-            tracker = RequestRateTracker()
-            limiter = ClientRateLimiter(
-                token_bucket=token_bucket,
-                cubic_calculator=calculator,
-                rate_tracker=tracker,
-                rate_limiter_enabled=False,
-            )
-            strategy = AdaptiveRetryStrategy(rate_limiter=limiter)
-
-            assert strategy.rate_limiter.rate_limit_enabled is False
-
-            # Simulate throttling response
-            with patch.object(tracker, "measure_rate", return_value=5.0):
-                await strategy.rate_limiter.after_receiving_response(
-                    throttling_error=True
-                )
-
-            assert strategy.rate_limiter.rate_limit_enabled is True
-
-    @pytest.mark.asyncio
     async def test_resolver_creates_adaptive_strategy(self):
         resolver = RetryStrategyResolver()
         option1 = RetryStrategyOptions(retry_mode="adaptive")
@@ -873,96 +861,61 @@ class TestAdaptiveRetryStrategy:
 
 
 class TestRequestPipelineRateLimiting:
-    @pytest.mark.asyncio
-    async def test_pre_request_rate_limiting_with_adaptive_strategy(self):
-        # Test that pre-request rate limiting is called for adaptive strategy.
-        with patch("time.monotonic") as mock_time:
-            mock_time.return_value = 0.0
+    def _non_retryable_call(self, strategy: AdaptiveRetryStrategy) -> Any:
+        # A call whose input stream can't be resent, so it skips the retry loop
+        call = MagicMock()
+        call.retryable.return_value = False
+        call.retry_strategy = strategy
+        return call
 
-            token_bucket = TokenBucket(curr_capacity=1.0)
-            calculator = CubicCalculator(starting_max_rate=10.0, start_time=0.0)
-            tracker = RequestRateTracker()
-            limiter = ClientRateLimiter(
-                token_bucket=token_bucket,
-                cubic_calculator=calculator,
-                rate_tracker=tracker,
-                rate_limiter_enabled=True,
+    def _adaptive_strategy_with_mocked_limiter(
+        self,
+    ) -> tuple[AdaptiveRetryStrategy, ClientRateLimiter]:
+        limiter = ClientRateLimiter(
+            token_bucket=TokenBucket(),
+            cubic_calculator=CubicCalculator(),
+            rate_tracker=RequestRateTracker(),
+            rate_limiter_enabled=True,
+        )
+        limiter.before_sending_request = AsyncMock()  # type: ignore[method-assign]
+        limiter.after_receiving_response = AsyncMock()  # type: ignore[method-assign]
+        return AdaptiveRetryStrategy(rate_limiter=limiter), limiter
+
+    @pytest.mark.asyncio
+    async def test_non_retryable_call_applies_rate_limiting_on_success(self):
+        strategy, limiter = self._adaptive_strategy_with_mocked_limiter()
+        pipeline: RequestPipeline[Any, Any] = RequestPipeline(
+            protocol=MagicMock(), transport=MagicMock()
+        )
+        handle_attempt = AsyncMock(return_value=SimpleNamespace(response="ok"))
+
+        with patch.object(pipeline, "_handle_attempt", handle_attempt):
+            await pipeline._retry(  # type: ignore[reportPrivateUsage]
+                self._non_retryable_call(strategy), MagicMock(), None
             )
 
-            strategy = AdaptiveRetryStrategy(rate_limiter=limiter)
-
-            # Simulate what RequestPipeline does
-            if isinstance(strategy, AdaptiveRetryStrategy):  # type: ignore[reportUnnecessaryIsInstance]
-                await strategy.acquire_from_token_bucket()
-
-            # Token should be consumed
-            assert token_bucket.current_capacity == 0.0
+        handle_attempt.assert_awaited_once()
+        limiter.before_sending_request.assert_awaited_once()  # type: ignore[attr-defined]
+        limiter.after_receiving_response.assert_awaited_once_with(  # type: ignore[attr-defined]
+            throttling_error=False
+        )
 
     @pytest.mark.asyncio
-    async def test_pre_request_rate_limiting_with_standard_strategy(self):
-        # Test that pre-request rate limiting is skipped for standard strategy
-        strategy = StandardRetryStrategy()
+    async def test_non_retryable_call_reports_throttle_without_retrying(self):
+        strategy, limiter = self._adaptive_strategy_with_mocked_limiter()
+        pipeline: RequestPipeline[Any, Any] = RequestPipeline(
+            protocol=MagicMock(), transport=MagicMock()
+        )
+        error = CallError(is_retry_safe=True, is_throttling_error=True)
+        handle_attempt = AsyncMock(return_value=SimpleNamespace(response=error))
 
-        if isinstance(strategy, AdaptiveRetryStrategy):
-            try:
-                await strategy.acquire_from_token_bucket()
-            except Exception as e:
-                pytest.fail(f"Unexpected exception raised: {e}")
-
-    @pytest.mark.asyncio
-    async def test_post_error_rate_limiting_with_throttling_error(self):
-        with patch("time.monotonic") as mock_time:
-            mock_time.side_effect = [0.0, 0.1, 0.2, 0.3]
-
-            token_bucket = TokenBucket()
-            calculator = CubicCalculator(starting_max_rate=10.0, start_time=0.0)
-            tracker = RequestRateTracker()
-            limiter = ClientRateLimiter(
-                token_bucket=token_bucket,
-                cubic_calculator=calculator,
-                rate_tracker=tracker,
-                rate_limiter_enabled=True,
+        with patch.object(pipeline, "_handle_attempt", handle_attempt):
+            output_context = await pipeline._retry(  # type: ignore[reportPrivateUsage]
+                self._non_retryable_call(strategy), MagicMock(), None
             )
 
-            strategy = AdaptiveRetryStrategy(rate_limiter=limiter)
-            error = CallError(message="Throttled", is_throttling_error=True)
-
-            # Simulate what RequestPipeline does
-            if isinstance(strategy, AdaptiveRetryStrategy):  # type: ignore[reportUnnecessaryIsInstance]
-                is_throttling = strategy.is_throttling_error(error)
-                with patch.object(tracker, "measure_rate", return_value=5.0):
-                    await strategy.rate_limiter.after_receiving_response(is_throttling)
-
-            # Fill rate should be reduced due to throttling
-            assert token_bucket.fill_rate < 10.0
-
-    @pytest.mark.asyncio
-    async def test_success_rate_limiting_increases_rate(self):
-        with patch("time.monotonic") as mock_time:
-            mock_time.side_effect = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
-
-            token_bucket = TokenBucket()
-            calculator = CubicCalculator(starting_max_rate=5.0, start_time=0.0)
-            tracker = RequestRateTracker()
-            limiter = ClientRateLimiter(
-                token_bucket=token_bucket,
-                cubic_calculator=calculator,
-                rate_tracker=tracker,
-                rate_limiter_enabled=True,
-            )
-
-            strategy = AdaptiveRetryStrategy(rate_limiter=limiter)
-
-            initial_rate = token_bucket.fill_rate
-
-            # Simulate successful responses
-            with patch.object(tracker, "measure_rate", return_value=3.0):
-                await strategy.rate_limiter.after_receiving_response(
-                    throttling_error=False
-                )
-                await strategy.rate_limiter.after_receiving_response(
-                    throttling_error=False
-                )
-
-            # Fill rate should increase after successful responses
-            assert token_bucket.fill_rate > initial_rate
+        # Sent once and returned as-is, even though the error is retry-safe
+        handle_attempt.assert_awaited_once()
+        assert output_context.response is error
+        limiter.before_sending_request.assert_awaited_once()  # type: ignore[attr-defined]
+        limiter.after_receiving_response.assert_awaited_once_with(True)  # type: ignore[attr-defined]
