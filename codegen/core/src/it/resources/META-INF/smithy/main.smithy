@@ -633,6 +633,7 @@ structure CitySummary {
 }
 
 @readonly
+@longPoll(timeoutMillis: 20000)
 @http(method: "GET", uri: "/current-time")
 operation GetCurrentTime {
     output := {

@@ -13,6 +13,9 @@ use aws.api#service
 @service(
     sdkId: "REST JSON",
     endpointPrefix: "rest-json-1"
+    arnNamespace: "rest-json"
+    cloudFormationName: "RestJson"
+    cloudTrailEventSource: "rest-json.amazonaws.com"
 )
 @title("AWS REST JSON Service")
 @paginated(inputToken: "nextToken", outputToken: "nextToken", pageSize: "pageSize")

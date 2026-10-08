@@ -73,6 +73,19 @@ public class AwsCodegenTest {
         assertFalse(client.contains("plugin(self._config)"));
         assertTrue(client.contains("retry_mode=config.retry_mode"));
         assertTrue(client.contains("max_attempts=config.max_attempts"));
+
+        var schemas = Files.readString(tempDir.resolve("src/restjson/_private/schemas.py"));
+        assertTrue(schemas.contains("aws.protocols#restJson1"));
+        assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
+        assertTrue(schemas.contains("\"name\": \"weather-auth\""));
+        assertTrue(schemas.contains("aws.api#service"));
+        assertTrue(schemas.contains("\"sdkId\": \"REST JSON\""));
+        assertTrue(schemas.contains("\"endpointPrefix\": \"rest-json-1\""));
+        assertTrue(schemas.contains("\"arnNamespace\": \"rest-json\""));
+        assertTrue(schemas.contains("\"cloudFormationName\": \"RestJson\""));
+        assertTrue(schemas.contains("\"cloudTrailEventSource\": \"rest-json.amazonaws.com\""));
+        assertTrue(schemas.contains("smithy.rules#endpointBdd"));
+        assertTrue(schemas.contains("rest-json-1.{Region}.{PartitionResult#dnsSuffix}"));
     }
 
     private static void assertInOrder(String value, String... fragments) {

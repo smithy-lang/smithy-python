@@ -60,5 +60,15 @@ public class PythonCodegenTest {
         var models = Files.readString(tempDir.resolve("src/weather/models.py"));
         assertTrue(models.contains("response_metadata: ResponseMetadata"));
         assertTrue(models.contains("response_metadata_:"));
+
+        var schemas = Files.readString(tempDir.resolve("src/weather/_private/schemas.py"));
+        assertTrue(schemas.contains("example.weather#fakeProtocol"));
+        assertTrue(schemas.contains("aws.protocols#restJson1"));
+        assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
+        assertTrue(schemas.contains("\"name\": \"weather-auth\""));
+        assertTrue(schemas.contains("smithy.rules#endpointBdd"));
+        assertTrue(schemas.contains("(default endpointRuleSet) endpoint is not set"));
+        assertTrue(schemas.contains("smithy.api#longPoll"));
+        assertTrue(schemas.contains("\"timeoutMillis\": 20000"));
     }
 }

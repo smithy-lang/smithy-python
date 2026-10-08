@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.KnowledgeIndex;
 import software.amazon.smithy.model.shapes.Shape;
@@ -33,6 +34,7 @@ import software.amazon.smithy.model.traits.HttpTrait;
 import software.amazon.smithy.model.traits.IdempotencyTokenTrait;
 import software.amazon.smithy.model.traits.JsonNameTrait;
 import software.amazon.smithy.model.traits.LengthTrait;
+import software.amazon.smithy.model.traits.LongPollTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
 import software.amazon.smithy.model.traits.PatternTrait;
 import software.amazon.smithy.model.traits.ProtocolDefinitionTrait;
@@ -50,6 +52,7 @@ import software.amazon.smithy.model.traits.XmlAttributeTrait;
 import software.amazon.smithy.model.traits.XmlFlattenedTrait;
 import software.amazon.smithy.model.traits.XmlNameTrait;
 import software.amazon.smithy.model.traits.XmlNamespaceTrait;
+import software.amazon.smithy.rulesengine.traits.EndpointBddTrait;
 import software.amazon.smithy.utils.SetUtils;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -85,6 +88,9 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     RequiredTrait.ID, // runtime enforcement
                     TimestampFormatTrait.ID, // read per-member by smithy_http / smithy_aws_core serde
                     ORIGINAL_SHAPE_ID, // rpcv2Cbor unit detection
+                    ServiceTrait.ID, // service metadata, including sdkId used by package docs
+                    EndpointBddTrait.ID, // endpoint resolution data prepared by EndpointBddIntegration
+                    LongPollTrait.ID, // retry backoff when a long-polling operation exhausts its quota
                     RequestCompressionTrait.ID, // read at runtime
                     JsonNameTrait.ID,
                     MediaTypeTrait.ID,
@@ -118,6 +124,8 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
         definitionTraits.addAll(model.getShapesWithTrait(AuthDefinitionTrait.class));
 
         for (Shape shape : definitionTraits) {
+            // Keep protocol/auth configuration values as well as their referenced traits.
+            addReferencedTraits(List.of(shape.getId()));
             shape.getTrait(ProtocolDefinitionTrait.class)
                     .ifPresent(definition -> addReferencedTraits(definition.getTraits()));
             shape.getTrait(AuthDefinitionTrait.class)
