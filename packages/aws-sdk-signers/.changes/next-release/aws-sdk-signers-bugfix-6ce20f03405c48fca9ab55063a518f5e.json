@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Excluded hop-by-hop and proxy headers (`Keep-Alive`, `Proxy-Authenticate`, `Proxy-Authorization`, `TE`, `Trailer`, `Transfer-Encoding`, and `Upgrade`) from SigV4 signing, so signatures stay valid when a proxy or the HTTP layer modifies them."
-}

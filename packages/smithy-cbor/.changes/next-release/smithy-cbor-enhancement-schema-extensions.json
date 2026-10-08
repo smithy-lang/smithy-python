@@ -1,4 +1,0 @@
-{
-  "type": "enhancement",
-  "description": "Cache CBOR member encodings and structure member lookup metadata using schema extensions."
-}

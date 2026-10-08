@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Fixed the registered Smithy IDs for `DefaultTrait`, `IdempotencyTokenTrait`, and `UnitTypeTrait` so schemas resolve these traits correctly."
-}

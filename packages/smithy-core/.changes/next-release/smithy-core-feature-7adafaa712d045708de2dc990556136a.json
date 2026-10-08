@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added `AsyncClient` to `smithy_core.aio.client`, a base class that generated clients inherit for client lifecycle (setup gating, `close`, async context management) and operation dispatch."
-}

@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.6.0
+
+### Features
+* `HttpClientProtocol` implements `extract_response_metadata()`, reporting the HTTP status code.
+* Added a naive `RpcV2CborClientProtocol` for the `smithy.protocols#rpcv2Cbor` protocol (optional `cbor` extra).
+* Added schema-cached HTTP binding plans for members, operations, payloads, and request and response dispatch.
+
+### Dependencies
+* Bump `smithy-cbor` from `~=0.0.0` to `~=0.1.0`.
+
 ## v0.5.0
 
 ### Features

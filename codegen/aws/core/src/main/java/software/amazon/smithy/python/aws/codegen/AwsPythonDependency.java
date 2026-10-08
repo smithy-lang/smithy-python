@@ -22,7 +22,7 @@ public class AwsPythonDependency {
      */
     public static final PythonDependency SMITHY_AWS_CORE = new PythonDependency(
             "smithy_aws_core",
-            "~=0.11.0",
+            "~=0.12.0",
             PythonDependency.Type.DEPENDENCY,
             false);
 }

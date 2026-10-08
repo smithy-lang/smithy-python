@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added `xml_equal` for comparing XML documents in protocol tests."
-}

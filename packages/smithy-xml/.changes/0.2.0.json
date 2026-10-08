@@ -1,0 +1,12 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added XML serialization support to `XMLCodec`."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed deserialization of `@xmlFlattened` structure lists and of prefixed `@xmlAttribute` names. The root element name is no longer validated, and a structure's `@xmlName` no longer renames members that target it."
+    }
+  ]
+}

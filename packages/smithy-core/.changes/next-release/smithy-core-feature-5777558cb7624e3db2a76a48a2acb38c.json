@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added the `RpcV2CborTrait` protocol trait and the `ORIGINAL_SHAPE_ID` synthetic-trait id to `smithy_core.traits`."
-}

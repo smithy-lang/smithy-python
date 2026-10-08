@@ -27,9 +27,9 @@ classifiers = [
   "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
-    "smithy-core~=0.8.0",
-    "smithy-http~=0.5.0",
-    "aws-sdk-signers~=0.3.0"
+    "smithy-core~=0.9.0",
+    "smithy-http~=0.6.0",
+    "aws-sdk-signers~=0.4.0"
 ]
 
 [project.urls]
@@ -59,7 +59,7 @@ json = [
     "smithy-json~=0.3.0"
 ]
 xml = [
-    "smithy-xml~=0.1.0"
+    "smithy-xml~=0.2.0"
 ]
 
 [tool.hatch.build]

@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added client support for the aws.protocols#ec2Query protocol, including request serialization and modeled response and error deserialization."
-}

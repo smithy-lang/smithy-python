@@ -1,4 +1,0 @@
-{
-  "type": "enhancement",
-  "description": "restXml errors fall back to the `<Message>` element when the modeled message member is empty, since some models name it `message` while services send `Message`."
-}

@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added XML serialization support to `XMLCodec`."
-}

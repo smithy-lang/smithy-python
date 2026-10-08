@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added schema extensions and lazily cached schema metadata support."
-}
