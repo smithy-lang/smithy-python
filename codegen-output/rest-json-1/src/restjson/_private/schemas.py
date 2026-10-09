@@ -3955,16 +3955,19 @@ UNIT_INPUT_AND_OUTPUT = (
     (),
 )
 
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1 = (
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1 = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n1,
     _RSION,
     0,
     (_fo, _ne),
-    ((3, 0), (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0)),
+    (
+        (3, 0),
+        (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0),  # pyright: ignore[reportUnknownLambdaType]
+    ),
 )
 
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n1,
     _RSIONe,
@@ -3973,7 +3976,7 @@ RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (
     ((3, 0), (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0)),
 )
 
-RECURSIVE_SHAPES_INPUT = (
+RECURSIVE_SHAPES_INPUT = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n1,
     _RSI,
@@ -3982,7 +3985,7 @@ RECURSIVE_SHAPES_INPUT = (
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-RECURSIVE_SHAPES_OUTPUT = (
+RECURSIVE_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n1,
     _RSO,
@@ -3991,7 +3994,7 @@ RECURSIVE_SHAPES_OUTPUT = (
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-RECURSIVE_SHAPES = (
+RECURSIVE_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
     23,
     n1,
     _RS,

@@ -763,27 +763,41 @@ XML_TIMESTAMPS_OUTPUT = (
 
 XML_TIMESTAMPS = (23, n0, _XT, 0, XML_TIMESTAMPS_INPUT, XML_TIMESTAMPS_OUTPUT, ())
 
-STRUCT_ARG = (
+STRUCT_ARG = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n0,
     _SA,
     0,
     (_SAt, _OA, _RA),
-    ((3, 0), (2, 0), (lambda: STRUCT_ARG, 0)),
+    (
+        (3, 0),
+        (2, 0),
+        (lambda: STRUCT_ARG, 0),  # pyright: ignore[reportUnknownLambdaType]
+    ),
 )
 
-NESTED_STRUCTURES_INPUT = (18, n0, _NSI, 0, (_N,), ((STRUCT_ARG, 0),))
+NESTED_STRUCTURES_INPUT = (  # pyright: ignore[reportUnknownVariableType]
+    18,
+    n0,
+    _NSI,
+    0,
+    (_N,),
+    ((STRUCT_ARG, 0),),
+)
 
-RECURSIVE_XML_SHAPES_OUTPUT_NESTED1 = (
+RECURSIVE_XML_SHAPES_OUTPUT_NESTED1 = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n0,
     _RXSON,
     0,
     (_f, _n),
-    ((3, 0), (lambda: RECURSIVE_XML_SHAPES_OUTPUT_NESTED2, 0)),
+    (
+        (3, 0),
+        (lambda: RECURSIVE_XML_SHAPES_OUTPUT_NESTED2, 0),  # pyright: ignore[reportUnknownLambdaType]
+    ),
 )
 
-RECURSIVE_XML_SHAPES_OUTPUT_NESTED2 = (
+RECURSIVE_XML_SHAPES_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n0,
     _RXSONe,
@@ -792,7 +806,7 @@ RECURSIVE_XML_SHAPES_OUTPUT_NESTED2 = (
     ((3, 0), (RECURSIVE_XML_SHAPES_OUTPUT_NESTED1, 0)),
 )
 
-NESTED_STRUCTURES = (
+NESTED_STRUCTURES = (  # pyright: ignore[reportUnknownVariableType]
     23,
     n0,
     _NS,
@@ -802,7 +816,7 @@ NESTED_STRUCTURES = (
     (),
 )
 
-RECURSIVE_XML_SHAPES_OUTPUT = (
+RECURSIVE_XML_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n0,
     _RXSO,
@@ -811,7 +825,7 @@ RECURSIVE_XML_SHAPES_OUTPUT = (
     ((RECURSIVE_XML_SHAPES_OUTPUT_NESTED1, 0),),
 )
 
-RECURSIVE_XML_SHAPES = (
+RECURSIVE_XML_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
     23,
     n0,
     _RXS,

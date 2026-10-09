@@ -100,6 +100,11 @@ public final class SchemaGenerator implements Consumer<Shape> {
     // initialism and preferred-prefix allocation paths.
     private final Set<String> allocated = new HashSet<>();
 
+    // Shapes whose emitted tuple holds an unknown-typed value (a lambda, or a
+    // reference to another tainted shape). Their assignment lines get an inline
+    // reportUnknownVariableType ignore; nothing else does.
+    private final Set<ShapeId> tainted = new HashSet<>();
+
     public SchemaGenerator(GenerationContext context) {
         this.context = context;
     }
@@ -249,7 +254,17 @@ public final class SchemaGenerator implements Consumer<Shape> {
         int typeInt = typeInt(shape);
         var key = schemaName(shape);
 
-        writer.writeInline("$L = ($L, $L, $L, ", key, Integer.toString(typeInt), nsConst, nameConst);
+        boolean shapeTainted = computeTaint(shape);
+        if (shapeTainted) {
+            tainted.add(shape.getId());
+        }
+        // The ignore rides the opening line as a trailing comment; the tuple continues
+        // across the following lines unaffected.
+        var opener = shapeTainted
+                ? "$L = (  # pyright: ignore[reportUnknownVariableType]"
+                : "$L = (";
+        writer.write(opener, key);
+        writer.writeInline("$L, $L, $L, ", Integer.toString(typeInt), nsConst, nameConst);
         writeTraits(writer, traits);
 
         if (shape.isOperationShape()) {
@@ -275,23 +290,53 @@ public final class SchemaGenerator implements Consumer<Shape> {
         written.add(shape.getId());
     }
 
+    // A shape is unknown-tainted if any of its references is a lambda (forward or
+    // recursive) or points at an already-tainted shape; operations also consider their
+    // input, output, and error refs. Computed before emission so the opening line can
+    // carry the inline ignore.
+    private boolean computeTaint(Shape shape) {
+        if (shape.isOperationShape()) {
+            var op = shape.asOperationShape().get();
+            var refs = new ArrayList<ShapeId>();
+            refs.add(op.getInputShape());
+            refs.add(op.getOutputShape());
+            refs.addAll(op.getErrors());
+            return refs.stream().anyMatch(this::refTainted);
+        }
+        return shape.members().stream().anyMatch(m -> refTainted(m.getTarget()));
+    }
+
+    private boolean refTainted(ShapeId target) {
+        return isLambdaTarget(target) || tainted.contains(target);
+    }
+
     // Operation tuple trailing slots: input_ref, output_ref, (error_refs...). Matches
     // _schema_compact._OP_INPUT / _OP_OUTPUT / _OP_ERRORS.
     private void writeOperationRefs(PythonWriter writer, OperationShape op) {
         writer.write(",");
-        writer.writeInline("");
-        writeSchemaRef(writer, op.getInputShape());
-        writer.write(",");
-        writer.writeInline("");
-        writeSchemaRef(writer, op.getOutputShape());
-        writer.write(",");
+        writeOperationRef(writer, op.getInputShape());
+        writeOperationRef(writer, op.getOutputShape());
         writer.openBlock("(", ")", () -> {
             for (var error : op.getErrors()) {
                 writer.writeInline("");
                 writeSchemaRef(writer, error);
-                writer.write(",");
+                writer.write(errorRefSuffix(error));
             }
         });
+    }
+
+    private void writeOperationRef(PythonWriter writer, ShapeId target) {
+        writer.writeInline("");
+        writeSchemaRef(writer, target);
+        writer.write(isLambdaTarget(target)
+                ? ",  # pyright: ignore[reportUnknownLambdaType]"
+                : ",");
+    }
+
+    private String errorRefSuffix(ShapeId target) {
+        return isLambdaTarget(target)
+                ? ",  # pyright: ignore[reportUnknownLambdaType]"
+                : ",";
     }
 
     private String schemaName(Shape shape) {
@@ -314,8 +359,22 @@ public final class SchemaGenerator implements Consumer<Shape> {
         for (var member : shape.members()) {
             writer.writeInline("");
             writeMemberTarget(writer, member);
-            writer.write(",");
+            // Only an actual lambda line carries a lambda-return type pyright can't
+            // resolve; a tainted bare sibling is handled by the shape's opener ignore.
+            if (isLambdaTarget(member.getTarget())) {
+                writer.write(",  # pyright: ignore[reportUnknownLambdaType]");
+            } else {
+                writer.write(",");
+            }
         }
+    }
+
+    // A member target emits a lambda when it is a non-prelude shape not yet defined in
+    // file order (a forward or recursive reference).
+    private boolean isLambdaTarget(ShapeId target) {
+        return !target.equals(UnitTypeTrait.UNIT)
+                && !PRELUDE_INTS.containsKey(target.toString())
+                && !written.contains(target);
     }
 
     private void writeMemberTarget(PythonWriter writer, MemberShape member) {
@@ -327,21 +386,23 @@ public final class SchemaGenerator implements Consumer<Shape> {
         writer.writeInline(")");
     }
 
-    // Emits a reference to another shape's schema: a prelude int / UNIT sentinel for
-    // prelude targets, a bare sibling symbol when already defined above (folds as a
-    // constant), else a lambda for a forward or recursive reference.
+    // Emits a reference to another shape's schema: a prelude int / UNIT sentinel, a
+    // bare sibling symbol when already defined above (folds as a constant), else a
+    // lambda for a forward or recursive reference.
     private void writeSchemaRef(PythonWriter writer, ShapeId target) {
         if (target.equals(UnitTypeTrait.UNIT)) {
             writer.writeInline("$L", Integer.toString(UNIT_INT));
-        } else if (PRELUDE_INTS.containsKey(target.toString())) {
+            return;
+        }
+        if (PRELUDE_INTS.containsKey(target.toString())) {
             writer.writeInline("$L", Integer.toString(PRELUDE_INTS.get(target.toString())));
+            return;
+        }
+        var targetName = schemaName(context.model().expectShape(target));
+        if (written.contains(target)) {
+            writer.writeInline("$L", targetName);
         } else {
-            var targetName = schemaName(context.model().expectShape(target));
-            if (written.contains(target)) {
-                writer.writeInline("$L", targetName);
-            } else {
-                writer.writeInline("lambda: $L", targetName);
-            }
+            writer.writeInline("lambda: $L", targetName);
         }
     }
 

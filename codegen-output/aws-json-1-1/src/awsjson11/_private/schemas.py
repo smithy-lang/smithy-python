@@ -603,7 +603,7 @@ SPARSE_NULLS_OPERATION = (
     (),
 )
 
-KITCHEN_SINK = (
+KITCHEN_SINK = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n0,
     _KS,
@@ -655,9 +655,9 @@ KITCHEN_SINK = (
         (MAP_OF_MAP_OF_STRINGS, 0),
         (MAP_OF_STRINGS, 0),
         (MAP_OF_STRUCTS, 0),
-        (lambda: LIST_OF_KITCHEN_SINKS, 0),
-        (lambda: MAP_OF_KITCHEN_SINKS, 0),
-        (lambda: KITCHEN_SINK, 0),
+        (lambda: LIST_OF_KITCHEN_SINKS, 0),  # pyright: ignore[reportUnknownLambdaType]
+        (lambda: MAP_OF_KITCHEN_SINKS, 0),  # pyright: ignore[reportUnknownLambdaType]
+        (lambda: KITCHEN_SINK, 0),  # pyright: ignore[reportUnknownLambdaType]
         (SIMPLE_STRUCT, 0),
         (3, 0),
         (STRUCT_WITH_JSON_NAME, 0),
@@ -666,11 +666,25 @@ KITCHEN_SINK = (
     ),
 )
 
-LIST_OF_KITCHEN_SINKS = (16, n0, _LOKS, 0, (_m,), ((KITCHEN_SINK, 0),))
+LIST_OF_KITCHEN_SINKS = (  # pyright: ignore[reportUnknownVariableType]
+    16,
+    n0,
+    _LOKS,
+    0,
+    (_m,),
+    ((KITCHEN_SINK, 0),),
+)
 
-MAP_OF_KITCHEN_SINKS = (17, n0, _MOKS, 0, (_k, _v), ((3, 0), (KITCHEN_SINK, 0)))
+MAP_OF_KITCHEN_SINKS = (  # pyright: ignore[reportUnknownVariableType]
+    17,
+    n0,
+    _MOKS,
+    0,
+    (_k, _v),
+    ((3, 0), (KITCHEN_SINK, 0)),
+)
 
-ERROR_WITH_MEMBERS = (
+ERROR_WITH_MEMBERS = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n0,
     _EWMr,
@@ -687,7 +701,7 @@ ERROR_WITH_MEMBERS = (
     ),
 )
 
-KITCHEN_SINK_OPERATION_INPUT = (
+KITCHEN_SINK_OPERATION_INPUT = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n0,
     _KSOI,
@@ -750,7 +764,7 @@ KITCHEN_SINK_OPERATION_INPUT = (
     ),
 )
 
-KITCHEN_SINK_OPERATION_OUTPUT = (
+KITCHEN_SINK_OPERATION_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n0,
     _KSOO,
@@ -813,7 +827,7 @@ KITCHEN_SINK_OPERATION_OUTPUT = (
     ),
 )
 
-KITCHEN_SINK_OPERATION = (
+KITCHEN_SINK_OPERATION = (  # pyright: ignore[reportUnknownVariableType]
     23,
     n0,
     _KSO,
