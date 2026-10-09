@@ -2,6123 +2,4270 @@
 
 from types import MappingProxyType
 
-from smithy_core.prelude import (
-    BLOB,
-    BOOLEAN,
-    BYTE,
-    DOUBLE,
-    FLOAT,
-    INTEGER,
-    LONG,
-    SHORT,
-    STRING,
-    TIMESTAMP,
-    UNIT,
-)
-from smithy_core.schemas import Schema
-from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import Trait
-
-
-BOOLEAN_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#BooleanList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": BOOLEAN}},
-)
-
-DOUBLE_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#DoubleList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": DOUBLE}},
-)
-
-FOO_ENUM = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#FooEnum"),
-    shape_type=ShapeType.ENUM,
-    members={
-        "FOO": {"target": UNIT},
-        "BAZ": {"target": UNIT},
-        "BAR": {"target": UNIT},
-        "ONE": {"target": UNIT},
-        "ZERO": {"target": UNIT},
-    },
-)
-
-FOO_ENUM_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#FooEnumList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": FOO_ENUM}},
-)
-
-INTEGER_ENUM = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#IntegerEnum"),
-    shape_type=ShapeType.INT_ENUM,
-    members={"A": {"target": UNIT}, "B": {"target": UNIT}, "C": {"target": UNIT}},
-)
-
-INTEGER_ENUM_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#IntegerEnumList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": INTEGER_ENUM}},
-)
-
-INTEGER_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#IntegerList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": INTEGER}},
-)
-
-INTEGER_SET = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#IntegerSet"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": INTEGER}},
-)
-
-STRING_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#StringList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING}},
-)
-
-STRING_LIST_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#StringListMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING_LIST}},
-)
-
-STRING_SET = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#StringSet"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING}},
-)
-
-TIMESTAMP_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#TimestampList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": TIMESTAMP}},
-)
-
-ALL_QUERY_STRING_TYPES_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#AllQueryStringTypesInput"),
-    members={
-        "queryString": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="String")],
-        },
-        "queryStringList": {
-            "target": STRING_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="StringList")
-            ],
-        },
-        "queryStringSet": {
-            "target": STRING_SET,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="StringSet")
-            ],
-        },
-        "queryByte": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="Byte")],
-        },
-        "queryShort": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="Short")],
-        },
-        "queryInteger": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="Integer")],
-        },
-        "queryIntegerList": {
-            "target": INTEGER_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="IntegerList")
-            ],
-        },
-        "queryIntegerSet": {
-            "target": INTEGER_SET,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="IntegerSet")
-            ],
-        },
-        "queryLong": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="Long")],
-        },
-        "queryFloat": {
-            "target": FLOAT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="Float")],
-        },
-        "queryDouble": {
-            "target": DOUBLE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="Double")],
-        },
-        "queryDoubleList": {
-            "target": DOUBLE_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="DoubleList")
-            ],
-        },
-        "queryBoolean": {
-            "target": BOOLEAN,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="Boolean")],
-        },
-        "queryBooleanList": {
-            "target": BOOLEAN_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="BooleanList")
-            ],
-        },
-        "queryTimestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="Timestamp")
-            ],
-        },
-        "queryTimestampList": {
-            "target": TIMESTAMP_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="TimestampList")
-            ],
-        },
-        "queryEnum": {
-            "target": FOO_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="Enum")],
-        },
-        "queryEnumList": {
-            "target": FOO_ENUM_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="EnumList")],
-        },
-        "queryIntegerEnum": {
-            "target": INTEGER_ENUM,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="IntegerEnum")
-            ],
-        },
-        "queryIntegerEnumList": {
-            "target": INTEGER_ENUM_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="IntegerEnumList")
-            ],
-        },
-        "queryParamsMapOfStringList": {
-            "target": STRING_LIST_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQueryParams"))],
-        },
-    },
-)
-
-ALL_QUERY_STRING_TYPES_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#AllQueryStringTypesOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-ALL_QUERY_STRING_TYPES = Schema(
-    id=ShapeID("aws.protocoltests.restjson#AllQueryStringTypes"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/AllQueryStringTypesInput", "method": "GET"}
-            ),
-        )
-    ],
-)
-
-BLOB_PAYLOAD_EVENT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#BlobPayloadEvent"),
-    members={
-        "payload": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventPayload"))],
-        }
-    },
-)
-
-CLIENT_OPTIONAL_DEFAULTS = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ClientOptionalDefaults"),
-    members={
-        "member": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        }
-    },
-)
-
-COMPLEX_NESTED_ERROR_DATA = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ComplexNestedErrorData"),
-    members={
-        "Foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#jsonName"), value="Fooooo")],
-        }
-    },
-)
-
-COMPLEX_ERROR = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ComplexError"),
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#error"), value="client"),
-        Trait.new(id=ShapeID("smithy.api#httpError"), value=403),
-    ],
-    members={
-        "Header": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Header")
-            ],
-        },
-        "TopLevel": {"target": STRING},
-        "Nested": {"target": COMPLEX_NESTED_ERROR_DATA},
-    },
-)
-
-CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ConstantAndVariableQueryStringInput"),
-    members={
-        "baz": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="baz")],
-        },
-        "maybeSet": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="maybeSet")],
-        },
-    },
-)
-
-CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ConstantAndVariableQueryStringOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-CONSTANT_AND_VARIABLE_QUERY_STRING = Schema(
-    id=ShapeID("aws.protocoltests.restjson#ConstantAndVariableQueryString"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/ConstantAndVariableQueryString?foo=bar", "method": "GET"}
-            ),
-        )
-    ],
-)
-
-CONSTANT_QUERY_STRING_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ConstantQueryStringInput"),
-    members={
-        "hello": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        }
-    },
-)
-
-CONSTANT_QUERY_STRING_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ConstantQueryStringOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-CONSTANT_QUERY_STRING = Schema(
-    id=ShapeID("aws.protocoltests.restjson#ConstantQueryString"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/ConstantQueryString/{hello}?foo=bar&hello", "method": "GET"}
-            ),
-        )
-    ],
-)
-
-CONTENT_TYPE_PARAMETERS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ContentTypeParametersInput"),
-    members={"value": {"target": INTEGER}},
-)
-
-CONTENT_TYPE_PARAMETERS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ContentTypeParametersOutput")
-)
-
-CONTENT_TYPE_PARAMETERS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#ContentTypeParameters"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/ContentTypeParameters", "method": "POST"}),
-        )
-    ],
-)
-
-DATETIME_OFFSETS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DatetimeOffsetsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-DATE_TIME = Schema(
-    id=ShapeID("aws.protocoltests.shared#DateTime"),
-    shape_type=ShapeType.TIMESTAMP,
-    traits=[Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time")],
-)
-
-DATETIME_OFFSETS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DatetimeOffsetsOutput"),
-    members={"datetime": {"target": DATE_TIME}},
-)
-
-DATETIME_OFFSETS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#DatetimeOffsets"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/DatetimeOffsets", "method": "POST"}),
-        )
-    ],
-)
-
-DOCUMENT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#Document"), shape_type=ShapeType.DOCUMENT
-)
-
-TEST_ENUM = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestEnum"),
-    shape_type=ShapeType.ENUM,
-    members={"FOO": {"target": UNIT}, "BAR": {"target": UNIT}, "BAZ": {"target": UNIT}},
-)
-
-TEST_INT_ENUM = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestIntEnum"),
-    shape_type=ShapeType.INT_ENUM,
-    members={"ONE": {"target": UNIT}, "TWO": {"target": UNIT}},
-)
-
-TEST_STRING_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestStringList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING}},
-)
-
-TEST_STRING_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestStringMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
-)
-
-DEFAULTS = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#Defaults"),
-    members={
-        "defaultString": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="hi")],
-        },
-        "defaultBoolean": {
-            "target": BOOLEAN,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=True)],
-        },
-        "defaultList": {
-            "target": TEST_STRING_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=())],
-        },
-        "defaultDocumentMap": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"))],
-        },
-        "defaultDocumentString": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="hi")],
-        },
-        "defaultDocumentBoolean": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=True)],
-        },
-        "defaultDocumentList": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=())],
-        },
-        "defaultNullDocument": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=None)],
-        },
-        "defaultTimestamp": {
-            "target": TIMESTAMP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "defaultBlob": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="YWJj")],
-        },
-        "defaultByte": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "defaultShort": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "defaultInteger": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=10)],
-        },
-        "defaultLong": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=100)],
-        },
-        "defaultFloat": {
-            "target": FLOAT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1.0)],
-        },
-        "defaultDouble": {
-            "target": DOUBLE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1.0)],
-        },
-        "defaultMap": {
-            "target": TEST_STRING_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"))],
-        },
-        "defaultEnum": {
-            "target": TEST_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="FOO")],
-        },
-        "defaultIntEnum": {
-            "target": TEST_INT_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "emptyString": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="")],
-        },
-        "falseBoolean": {
-            "target": BOOLEAN,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=False)],
-        },
-        "emptyBlob": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="")],
-        },
-        "zeroByte": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroShort": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroInteger": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroLong": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroFloat": {
-            "target": FLOAT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0.0)],
-        },
-        "zeroDouble": {
-            "target": DOUBLE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0.0)],
-        },
-    },
-)
-
-DENSE_BOOLEAN_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DenseBooleanMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": BOOLEAN}},
-)
-
-DENSE_NUMBER_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DenseNumberMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": INTEGER}},
-)
-
-DENSE_SET_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DenseSetMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING_SET}},
-)
-
-DENSE_STRING_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DenseStringMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
-)
-
-GREETING_STRUCT = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#GreetingStruct"),
-    members={"hi": {"target": STRING}},
-)
-
-DENSE_STRUCT_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DenseStructMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": GREETING_STRUCT}},
-)
-
-FAREWELL = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#Farewell"),
-    members={
-        "phrase": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="bye")],
-        }
-    },
-)
-
-DIALOG = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#Dialog"),
-    members={
-        "language": {"target": STRING},
-        "greeting": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="hi")],
-        },
-        "farewell": {"target": FAREWELL},
-    },
-)
-
-DIALOG_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DialogList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": DIALOG}},
-)
-
-DIALOG_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DialogMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": DIALOG}},
-)
-
-DOCUMENT_TYPE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DocumentTypeInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#DocumentTypeInputOutput",
-        )
-    ],
-    members={"stringValue": {"target": STRING}, "documentValue": {"target": DOCUMENT}},
-)
-
-DOCUMENT_TYPE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DocumentTypeOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#DocumentTypeInputOutput",
-        )
-    ],
-    members={"stringValue": {"target": STRING}, "documentValue": {"target": DOCUMENT}},
-)
-
-DOCUMENT_TYPE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#DocumentType"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/DocumentType", "method": "PUT"}),
-        )
-    ],
-)
-
-DOCUMENT_VALUED_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DocumentValuedMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": DOCUMENT}},
-)
-
-DOCUMENT_TYPE_AS_MAP_VALUE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DocumentTypeAsMapValueInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#DocumentTypeAsMapValueInputOutput",
-        )
-    ],
-    members={"docValuedMap": {"target": DOCUMENT_VALUED_MAP}},
-)
-
-DOCUMENT_TYPE_AS_MAP_VALUE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DocumentTypeAsMapValueOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#DocumentTypeAsMapValueInputOutput",
-        )
-    ],
-    members={"docValuedMap": {"target": DOCUMENT_VALUED_MAP}},
-)
-
-DOCUMENT_TYPE_AS_MAP_VALUE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#DocumentTypeAsMapValue"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/DocumentTypeAsMapValue", "method": "PUT"}),
-        )
-    ],
-)
-
-DOCUMENT_TYPE_AS_PAYLOAD_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DocumentTypeAsPayloadInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#DocumentTypeAsPayloadInputOutput",
-        )
-    ],
-    members={
-        "documentValue": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-DOCUMENT_TYPE_AS_PAYLOAD_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DocumentTypeAsPayloadOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#DocumentTypeAsPayloadInputOutput",
-        )
-    ],
-    members={
-        "documentValue": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-DOCUMENT_TYPE_AS_PAYLOAD = Schema(
-    id=ShapeID("aws.protocoltests.restjson#DocumentTypeAsPayload"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/DocumentTypeAsPayload", "method": "PUT"}),
-        )
-    ],
-)
-
-ERROR_EVENT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ErrorEvent"),
-    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
-    members={"message": {"target": STRING}},
-)
-
-HEADERS_EVENT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HeadersEvent"),
-    members={
-        "booleanHeader": {
-            "target": BOOLEAN,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventHeader"))],
-        },
-        "byteHeader": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventHeader"))],
-        },
-        "shortHeader": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventHeader"))],
-        },
-        "intHeader": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventHeader"))],
-        },
-        "longHeader": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventHeader"))],
-        },
-        "blobHeader": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventHeader"))],
-        },
-        "stringHeader": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventHeader"))],
-        },
-        "timestampHeader": {
-            "target": DATE_TIME,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventHeader"))],
-        },
-    },
-)
-
-PAYLOAD_STRUCTURE = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#PayloadStructure"),
-    members={"structureMember": {"target": STRING}},
-)
-
-HEADERS_AND_EXPLICIT_PAYLOAD_EVENT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HeadersAndExplicitPayloadEvent"),
-    members={
-        "header": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventHeader"))],
-        },
-        "payload": {
-            "target": PAYLOAD_STRUCTURE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventPayload"))],
-        },
-    },
-)
-
-HEADERS_AND_IMPLICIT_PAYLOAD_EVENT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HeadersAndImplicitPayloadEvent"),
-    members={
-        "header": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventHeader"))],
-        },
-        "payload": {"target": STRING},
-    },
-)
-
-STRING_PAYLOAD_EVENT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#StringPayloadEvent"),
-    members={
-        "payload": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventPayload"))],
-        }
-    },
-)
-
-STRUCTURE_PAYLOAD_EVENT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#StructurePayloadEvent"),
-    members={
-        "payload": {
-            "target": PAYLOAD_STRUCTURE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventPayload"))],
-        }
-    },
-)
-
-PAYLOAD_UNION = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#PayloadUnion"),
-    shape_type=ShapeType.UNION,
-    members={"unionMember": {"target": STRING}},
-)
-
-UNION_PAYLOAD_EVENT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#UnionPayloadEvent"),
-    members={
-        "payload": {
-            "target": PAYLOAD_UNION,
-            "traits": [Trait.new(id=ShapeID("smithy.api#eventPayload"))],
-        }
-    },
-)
-
-EVENT_STREAM = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#EventStream"),
-    shape_type=ShapeType.UNION,
-    traits=[Trait.new(id=ShapeID("smithy.api#streaming"))],
-    members={
-        "headers": {"target": HEADERS_EVENT},
-        "blobPayload": {"target": BLOB_PAYLOAD_EVENT},
-        "stringPayload": {"target": STRING_PAYLOAD_EVENT},
-        "structurePayload": {"target": STRUCTURE_PAYLOAD_EVENT},
-        "unionPayload": {"target": UNION_PAYLOAD_EVENT},
-        "headersAndExplicitPayload": {"target": HEADERS_AND_EXPLICIT_PAYLOAD_EVENT},
-        "headersAndImplicitPayload": {"target": HEADERS_AND_IMPLICIT_PAYLOAD_EVENT},
-        "error": {"target": ERROR_EVENT},
-    },
-)
-
-DUPLEX_STREAM_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DuplexStreamInput"),
-    members={
-        "stream": {
-            "target": EVENT_STREAM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-DUPLEX_STREAM_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DuplexStreamOutput"),
-    members={
-        "stream": {
-            "target": EVENT_STREAM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-DUPLEX_STREAM = Schema(
-    id=ShapeID("aws.protocoltests.restjson#DuplexStream"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"method": "POST", "uri": "/DuplexStream"}),
-        )
-    ],
-)
-
-DUPLEX_STREAM_WITH_DISTINCT_STREAMS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DuplexStreamWithDistinctStreamsInput"),
-    members={
-        "stream": {
-            "target": EVENT_STREAM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-SINGLETON_EVENT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SingletonEvent"),
-    members={"value": {"target": STRING}},
-)
-
-SINGLETON_EVENT_STREAM = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SingletonEventStream"),
-    shape_type=ShapeType.UNION,
-    members={"singleton": {"target": SINGLETON_EVENT}},
-)
-
-DUPLEX_STREAM_WITH_DISTINCT_STREAMS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DuplexStreamWithDistinctStreamsOutput"),
-    members={
-        "stream": {
-            "target": SINGLETON_EVENT_STREAM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-DUPLEX_STREAM_WITH_DISTINCT_STREAMS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#DuplexStreamWithDistinctStreams"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/DuplexStreamWithDistinctStreams"}
-            ),
-        )
-    ],
-)
-
-DUPLEX_STREAM_WITH_INITIAL_MESSAGES_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DuplexStreamWithInitialMessagesInput"),
-    members={
-        "initialRequestMember": {
-            "target": STRING,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="initial-request-member"
-                ),
-                Trait.new(id=ShapeID("smithy.api#required")),
-            ],
-        },
-        "stream": {
-            "target": EVENT_STREAM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-DUPLEX_STREAM_WITH_INITIAL_MESSAGES_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#DuplexStreamWithInitialMessagesOutput"),
-    members={
-        "initialResponseMember": {
-            "target": STRING,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="initial-response-member"
-                ),
-                Trait.new(id=ShapeID("smithy.api#required")),
-            ],
-        },
-        "stream": {
-            "target": EVENT_STREAM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-SERVICE_UNAVAILABLE_ERROR = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ServiceUnavailableError"),
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#error"), value="server"),
-        Trait.new(id=ShapeID("smithy.api#httpError"), value=500),
-    ],
-    members={"message": {"target": STRING}},
-)
-
-DUPLEX_STREAM_WITH_INITIAL_MESSAGES = Schema(
-    id=ShapeID("aws.protocoltests.restjson#DuplexStreamWithInitialMessages"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/DuplexStreamWithInitialMessages"}
-            ),
-        )
-    ],
-)
-
-EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#EmptyInputAndEmptyOutputInput")
-)
-
-EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#EmptyInputAndEmptyOutputOutput")
-)
-
-EMPTY_INPUT_AND_EMPTY_OUTPUT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#EmptyInputAndEmptyOutput"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/EmptyInputAndEmptyOutput", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-ENDPOINT_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#EndpointOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-ENDPOINT_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#EndpointOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-ENDPOINT_OPERATION = Schema(
-    id=ShapeID("aws.protocoltests.restjson#EndpointOperation"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#endpoint"),
-            value=MappingProxyType({"hostPrefix": "foo."}),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/EndpointOperation", "method": "POST"}),
-        ),
-    ],
-)
-
-ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#EndpointWithHostLabelOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HostLabelInput",
-        )
-    ],
-    members={
-        "label": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#hostLabel")),
-                Trait.new(id=ShapeID("smithy.api#required")),
-            ],
-        }
-    },
-)
-
-ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#EndpointWithHostLabelOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-ENDPOINT_WITH_HOST_LABEL_OPERATION = Schema(
-    id=ShapeID("aws.protocoltests.restjson#EndpointWithHostLabelOperation"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#endpoint"),
-            value=MappingProxyType({"hostPrefix": "foo.{label}."}),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/EndpointWithHostLabelOperation", "method": "POST"}
-            ),
-        ),
-    ],
-)
-
-FINITE_STREAMING_BLOB = Schema(
-    id=ShapeID("aws.protocoltests.restjson#FiniteStreamingBlob"),
-    shape_type=ShapeType.BLOB,
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#streaming")),
-        Trait.new(id=ShapeID("smithy.api#requiresLength")),
-    ],
-)
-
-FOO_ERROR = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#FooError"),
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#error"), value="server"),
-        Trait.new(id=ShapeID("smithy.api#httpError"), value=500),
-    ],
-)
-
-FRACTIONAL_SECONDS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#FractionalSecondsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-FRACTIONAL_SECONDS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#FractionalSecondsOutput"),
-    members={"datetime": {"target": DATE_TIME}},
-)
-
-FRACTIONAL_SECONDS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#FractionalSeconds"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/FractionalSeconds", "method": "POST"}),
-        )
-    ],
-)
-
-GREETING_WITH_ERRORS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#GreetingWithErrorsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-GREETING_WITH_ERRORS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#GreetingWithErrorsOutput"),
-    members={
-        "greeting": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Greeting")
-            ],
-        }
-    },
-)
-
-INVALID_GREETING = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#InvalidGreeting"),
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#error"), value="client"),
-        Trait.new(id=ShapeID("smithy.api#httpError"), value=400),
-    ],
-    members={"Message": {"target": STRING}},
-)
-
-GREETING_WITH_ERRORS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#GreetingWithErrors"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/GreetingWithErrors", "method": "PUT"}),
-        )
-    ],
-)
-
-HOST_WITH_PATH_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HostWithPathOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-HOST_WITH_PATH_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HostWithPathOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-HOST_WITH_PATH_OPERATION = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HostWithPathOperation"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/HostWithPathOperation", "method": "GET"}),
-        )
-    ],
-)
-
-HTTP_CHECKSUM_REQUIRED_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpChecksumRequiredInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HttpChecksumRequiredInputOutput",
-        )
-    ],
-    members={"foo": {"target": STRING}},
-)
-
-HTTP_CHECKSUM_REQUIRED_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpChecksumRequiredOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HttpChecksumRequiredInputOutput",
-        )
-    ],
-    members={"foo": {"target": STRING}},
-)
-
-HTTP_CHECKSUM_REQUIRED = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpChecksumRequired"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/HttpChecksumRequired", "method": "POST"}),
-        ),
-        Trait.new(id=ShapeID("smithy.api#httpChecksumRequired")),
-    ],
-)
-
-STRING_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#StringMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
-)
-
-HTTP_EMPTY_PREFIX_HEADERS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpEmptyPrefixHeadersInput"),
-    members={
-        "prefixHeaders": {
-            "target": STRING_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPrefixHeaders"), value="")],
-        },
-        "specificHeader": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="hello")],
-        },
-    },
-)
-
-HTTP_EMPTY_PREFIX_HEADERS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpEmptyPrefixHeadersOutput"),
-    members={
-        "prefixHeaders": {
-            "target": STRING_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPrefixHeaders"), value="")],
-        },
-        "specificHeader": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="hello")],
-        },
-    },
-)
-
-HTTP_EMPTY_PREFIX_HEADERS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpEmptyPrefixHeaders"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/HttpEmptyPrefixHeaders", "method": "GET"}),
-        )
-    ],
-)
-
-STRING_ENUM = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#StringEnum"),
-    shape_type=ShapeType.ENUM,
-    members={"V": {"target": UNIT}},
-)
-
-HTTP_ENUM_PAYLOAD_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpEnumPayloadInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#EnumPayloadInput",
-        )
-    ],
-    members={
-        "payload": {
-            "target": STRING_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-HTTP_ENUM_PAYLOAD_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpEnumPayloadOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#EnumPayloadInput",
-        )
-    ],
-    members={
-        "payload": {
-            "target": STRING_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-HTTP_ENUM_PAYLOAD = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpEnumPayload"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/EnumPayload", "method": "POST"}),
-        )
-    ],
-)
-
-HTTP_PAYLOAD_TRAITS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadTraitsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HttpPayloadTraitsInputOutput",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "blob": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-HTTP_PAYLOAD_TRAITS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadTraitsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HttpPayloadTraitsInputOutput",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "blob": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-HTTP_PAYLOAD_TRAITS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadTraits"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/HttpPayloadTraits", "method": "POST"}),
-        )
-    ],
-)
-
-TEXT_PLAIN_BLOB = Schema(
-    id=ShapeID("aws.protocoltests.shared#TextPlainBlob"),
-    shape_type=ShapeType.BLOB,
-    traits=[Trait.new(id=ShapeID("smithy.api#mediaType"), value="text/plain")],
-)
-
-HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadTraitsWithMediaTypeInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HttpPayloadTraitsWithMediaTypeInputOutput",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "blob": {
-            "target": TEXT_PLAIN_BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadTraitsWithMediaTypeOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HttpPayloadTraitsWithMediaTypeInputOutput",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "blob": {
-            "target": TEXT_PLAIN_BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadTraitsWithMediaType"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/HttpPayloadTraitsWithMediaType", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-NESTED_PAYLOAD = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#NestedPayload"),
-    members={"greeting": {"target": STRING}, "name": {"target": STRING}},
-)
-
-HTTP_PAYLOAD_WITH_STRUCTURE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadWithStructureInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HttpPayloadWithStructureInputOutput",
-        )
-    ],
-    members={
-        "nested": {
-            "target": NESTED_PAYLOAD,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadWithStructureOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HttpPayloadWithStructureInputOutput",
-        )
-    ],
-    members={
-        "nested": {
-            "target": NESTED_PAYLOAD,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-HTTP_PAYLOAD_WITH_STRUCTURE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadWithStructure"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/HttpPayloadWithStructure", "method": "PUT"}
-            ),
-        )
-    ],
-)
-
-UNION_PAYLOAD = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#UnionPayload"),
-    shape_type=ShapeType.UNION,
-    members={"greeting": {"target": STRING}},
-)
-
-HTTP_PAYLOAD_WITH_UNION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadWithUnionInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HttpPayloadWithUnionInputOutput",
-        )
-    ],
-    members={
-        "nested": {
-            "target": UNION_PAYLOAD,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-HTTP_PAYLOAD_WITH_UNION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadWithUnionOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HttpPayloadWithUnionInputOutput",
-        )
-    ],
-    members={
-        "nested": {
-            "target": UNION_PAYLOAD,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-HTTP_PAYLOAD_WITH_UNION = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpPayloadWithUnion"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/HttpPayloadWithUnion", "method": "PUT"}),
-        )
-    ],
-)
-
-HTTP_PREFIX_HEADERS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPrefixHeadersInput"),
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="x-foo")],
-        },
-        "fooMap": {
-            "target": STRING_MAP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpPrefixHeaders"), value="x-foo-")
-            ],
-        },
-    },
-)
-
-HTTP_PREFIX_HEADERS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPrefixHeadersOutput"),
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="x-foo")],
-        },
-        "fooMap": {
-            "target": STRING_MAP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpPrefixHeaders"), value="x-foo-")
-            ],
-        },
-    },
-)
-
-HTTP_PREFIX_HEADERS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpPrefixHeaders"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/HttpPrefixHeaders", "method": "GET"}),
-        )
-    ],
-)
-
-HTTP_PREFIX_HEADERS_IN_RESPONSE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPrefixHeadersInResponseInput")
-)
-
-HTTP_PREFIX_HEADERS_IN_RESPONSE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPrefixHeadersInResponseOutput"),
-    members={
-        "prefixHeaders": {
-            "target": STRING_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPrefixHeaders"), value="")],
-        }
-    },
-)
-
-HTTP_PREFIX_HEADERS_IN_RESPONSE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpPrefixHeadersInResponse"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/HttpPrefixHeadersResponse", "method": "GET"}
-            ),
-        )
-    ],
-)
-
-QUERY_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#QueryMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
-)
-
-HTTP_QUERY_PARAMS_ONLY_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpQueryParamsOnlyOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#HttpQueryParamsOnlyInput",
-        )
-    ],
-    members={
-        "queryMap": {
-            "target": QUERY_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQueryParams"))],
-        }
-    },
-)
-
-HTTP_QUERY_PARAMS_ONLY_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpQueryParamsOnlyOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-HTTP_QUERY_PARAMS_ONLY_OPERATION = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpQueryParamsOnlyOperation"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/http-query-params-only", "method": "GET"}),
-        )
-    ],
-)
-
-HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithFloatLabelsInput"),
-    members={
-        "float": {
-            "target": FLOAT,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "double": {
-            "target": DOUBLE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-    },
-)
-
-HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithFloatLabelsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-HTTP_REQUEST_WITH_FLOAT_LABELS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithFloatLabels"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "GET", "uri": "/FloatHttpLabels/{float}/{double}"}
-            ),
-        )
-    ],
-)
-
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithGreedyLabelInPathInput"),
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "baz": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-    },
-)
-
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithGreedyLabelInPathOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithGreedyLabelInPath"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {
-                    "method": "GET",
-                    "uri": "/HttpRequestWithGreedyLabelInPath/foo/{foo}/baz/{baz+}",
-                }
-            ),
-        )
-    ],
-)
-
-HTTP_REQUEST_WITH_LABELS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithLabelsInput"),
-    members={
-        "string": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "short": {
-            "target": SHORT,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "integer": {
-            "target": INTEGER,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "long": {
-            "target": LONG,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "float": {
-            "target": FLOAT,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "double": {
-            "target": DOUBLE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "boolean": {
-            "target": BOOLEAN,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-    },
-)
-
-HTTP_REQUEST_WITH_LABELS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithLabelsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-HTTP_REQUEST_WITH_LABELS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithLabels"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {
-                    "method": "GET",
-                    "uri": "/HttpRequestWithLabels/{string}/{short}/{integer}/{long}/{float}/{double}/{boolean}/{timestamp}",
-                }
-            ),
-        )
-    ],
-)
-
-EPOCH_SECONDS = Schema(
-    id=ShapeID("aws.protocoltests.shared#EpochSeconds"),
-    shape_type=ShapeType.TIMESTAMP,
-    traits=[Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds")],
-)
-
-HTTP_DATE = Schema(
-    id=ShapeID("aws.protocoltests.shared#HttpDate"),
-    shape_type=ShapeType.TIMESTAMP,
-    traits=[Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date")],
-)
 
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT = Schema.collection(
-    id=ShapeID(
-        "aws.protocoltests.restjson#HttpRequestWithLabelsAndTimestampFormatInput"
+n0 = "aws.protocoltests.shared"
+_BL = "BooleanList"
+_m = "member"
+_DL = "DoubleList"
+_FE = "FooEnum"
+_FOO = "FOO"
+_BAZ = "BAZ"
+_BAR = "BAR"
+_ONE = "ONE"
+_ZERO = "ZERO"
+_FEL = "FooEnumList"
+_IE = "IntegerEnum"
+_A = "A"
+_B = "B"
+_C = "C"
+_IEL = "IntegerEnumList"
+_IL = "IntegerList"
+_IS = "IntegerSet"
+_SL = "StringList"
+_SLM = "StringListMap"
+_k = "key"
+_v = "value"
+_SS = "StringSet"
+_TL = "TimestampList"
+n1 = "aws.protocoltests.restjson"
+_AQSTI = "AllQueryStringTypesInput"
+_qS = "queryString"
+_sQ = "smithy.api#httpQuery"
+_S = "String"
+_qSL = "queryStringList"
+_qSS = "queryStringSet"
+_qB = "queryByte"
+_By = "Byte"
+_qSu = "queryShort"
+_Sh = "Short"
+_qI = "queryInteger"
+_I = "Integer"
+_qIL = "queryIntegerList"
+_qIS = "queryIntegerSet"
+_qL = "queryLong"
+_L = "Long"
+_qF = "queryFloat"
+_F = "Float"
+_qD = "queryDouble"
+_D = "Double"
+_qDL = "queryDoubleList"
+_qBu = "queryBoolean"
+_Bo = "Boolean"
+_qBL = "queryBooleanList"
+_qT = "queryTimestamp"
+_T = "Timestamp"
+_qTL = "queryTimestampList"
+_qE = "queryEnum"
+_E = "Enum"
+_qEL = "queryEnumList"
+_EL = "EnumList"
+_qIE = "queryIntegerEnum"
+_qIEL = "queryIntegerEnumList"
+_qPMOSL = "queryParamsMapOfStringList"
+_sQP = "smithy.api#httpQueryParams"
+_AQSTO = "AllQueryStringTypesOutput"
+_sSI = "smithy.synthetic#originalShapeId"
+_sU = "smithy.api#Unit"
+_AQST = "AllQueryStringTypes"
+_s = "smithy.api#http"
+_BPE = "BlobPayloadEvent"
+_p = "payload"
+_sP = "smithy.api#eventPayload"
+_COD = "ClientOptionalDefaults"
+_sm = "smithy.api#default"
+_CNED = "ComplexNestedErrorData"
+_Fo = "Foo"
+_sN = "smithy.api#jsonName"
+_Foo = "Fooooo"
+_CE = "ComplexError"
+_smi = "smithy.api#error"
+_c = "client"
+_sE = "smithy.api#httpError"
+_H = "Header"
+_sH = "smithy.api#httpHeader"
+_XH = "X-Header"
+_TLo = "TopLevel"
+_N = "Nested"
+_CAVQSI = "ConstantAndVariableQueryStringInput"
+_b = "baz"
+_mS = "maybeSet"
+_CAVQSO = "ConstantAndVariableQueryStringOutput"
+_CAVQS = "ConstantAndVariableQueryString"
+_CQSI = "ConstantQueryStringInput"
+_h = "hello"
+_smit = "smithy.api#required"
+_sL = "smithy.api#httpLabel"
+_CQSO = "ConstantQueryStringOutput"
+_CQS = "ConstantQueryString"
+_CTPI = "ContentTypeParametersInput"
+_CTPO = "ContentTypeParametersOutput"
+_CTP = "ContentTypeParameters"
+_DOI = "DatetimeOffsetsInput"
+_DT = "DateTime"
+_sF = "smithy.api#timestampFormat"
+_dt = "date-time"
+_DOO = "DatetimeOffsetsOutput"
+_d = "datetime"
+_DO = "DatetimeOffsets"
+_Do = "Document"
+_TE = "TestEnum"
+_TIE = "TestIntEnum"
+_TWO = "TWO"
+_TSL = "TestStringList"
+_TSM = "TestStringMap"
+_De = "Defaults"
+_dS = "defaultString"
+_hi = "hi"
+_dB = "defaultBoolean"
+_dL = "defaultList"
+_dDM = "defaultDocumentMap"
+_dDS = "defaultDocumentString"
+_dDB = "defaultDocumentBoolean"
+_dDL = "defaultDocumentList"
+_dND = "defaultNullDocument"
+_dT = "defaultTimestamp"
+_dBe = "defaultBlob"
+_YWJ = "YWJj"
+_dBef = "defaultByte"
+_dSe = "defaultShort"
+_dI = "defaultInteger"
+_dLe = "defaultLong"
+_dF = "defaultFloat"
+_dD = "defaultDouble"
+_dM = "defaultMap"
+_dE = "defaultEnum"
+_dIE = "defaultIntEnum"
+_eS = "emptyString"
+_v_ = ""
+_fB = "falseBoolean"
+_eB = "emptyBlob"
+_zB = "zeroByte"
+_zS = "zeroShort"
+_zI = "zeroInteger"
+_zL = "zeroLong"
+_zF = "zeroFloat"
+_zD = "zeroDouble"
+_DBM = "DenseBooleanMap"
+_DNM = "DenseNumberMap"
+_DSM = "DenseSetMap"
+_DSMe = "DenseStringMap"
+_GS = "GreetingStruct"
+_DSMen = "DenseStructMap"
+_Fa = "Farewell"
+_ph = "phrase"
+_by = "bye"
+_Di = "Dialog"
+_l = "language"
+_g = "greeting"
+_f = "farewell"
+_DLi = "DialogList"
+_DM = "DialogMap"
+_DTI = "DocumentTypeInput"
+_aDTIO = "aws.protocoltests.restjson#DocumentTypeInputOutput"
+_sV = "stringValue"
+_dV = "documentValue"
+_DTO = "DocumentTypeOutput"
+_DTo = "DocumentType"
+_DVM = "DocumentValuedMap"
+_DTAMVI = "DocumentTypeAsMapValueInput"
+_aDTAMVIO = "aws.protocoltests.restjson#DocumentTypeAsMapValueInputOutput"
+_dVM = "docValuedMap"
+_DTAMVO = "DocumentTypeAsMapValueOutput"
+_DTAMV = "DocumentTypeAsMapValue"
+_DTAPI = "DocumentTypeAsPayloadInput"
+_aDTAPIO = "aws.protocoltests.restjson#DocumentTypeAsPayloadInputOutput"
+_sPm = "smithy.api#httpPayload"
+_DTAPO = "DocumentTypeAsPayloadOutput"
+_DTAP = "DocumentTypeAsPayload"
+_EE = "ErrorEvent"
+_me = "message"
+_HE = "HeadersEvent"
+_bH = "booleanHeader"
+_sHm = "smithy.api#eventHeader"
+_bHy = "byteHeader"
+_sHh = "shortHeader"
+_iH = "intHeader"
+_lH = "longHeader"
+_bHl = "blobHeader"
+_sHt = "stringHeader"
+_tH = "timestampHeader"
+_PS = "PayloadStructure"
+_sM = "structureMember"
+_HAEPE = "HeadersAndExplicitPayloadEvent"
+_he = "header"
+_HAIPE = "HeadersAndImplicitPayloadEvent"
+_SPE = "StringPayloadEvent"
+_SPEt = "StructurePayloadEvent"
+_PU = "PayloadUnion"
+_uM = "unionMember"
+_UPE = "UnionPayloadEvent"
+_ES = "EventStream"
+_smith = "smithy.api#streaming"
+_hea = "headers"
+_bP = "blobPayload"
+_sPt = "stringPayload"
+_sPtr = "structurePayload"
+_uP = "unionPayload"
+_hAEP = "headersAndExplicitPayload"
+_hAIP = "headersAndImplicitPayload"
+_e = "error"
+_DSI = "DuplexStreamInput"
+_st = "stream"
+_DSO = "DuplexStreamOutput"
+_DS = "DuplexStream"
+_DSWDSI = "DuplexStreamWithDistinctStreamsInput"
+_SE = "SingletonEvent"
+_SES = "SingletonEventStream"
+_si = "singleton"
+_DSWDSO = "DuplexStreamWithDistinctStreamsOutput"
+_DSWDS = "DuplexStreamWithDistinctStreams"
+_DSWIMI = "DuplexStreamWithInitialMessagesInput"
+_iRM = "initialRequestMember"
+_irm = "initial-request-member"
+_DSWIMO = "DuplexStreamWithInitialMessagesOutput"
+_iRMn = "initialResponseMember"
+_irm_ = "initial-response-member"
+_SUE = "ServiceUnavailableError"
+_se = "server"
+_DSWIM = "DuplexStreamWithInitialMessages"
+_EIAEOI = "EmptyInputAndEmptyOutputInput"
+_EIAEOO = "EmptyInputAndEmptyOutputOutput"
+_EIAEO = "EmptyInputAndEmptyOutput"
+_EOI = "EndpointOperationInput"
+_EOO = "EndpointOperationOutput"
+_EO = "EndpointOperation"
+_smithy = "smithy.api#endpoint"
+_EWHLOI = "EndpointWithHostLabelOperationInput"
+_aHLI = "aws.protocoltests.restjson#HostLabelInput"
+_la = "label"
+_sLm = "smithy.api#hostLabel"
+_EWHLOO = "EndpointWithHostLabelOperationOutput"
+_EWHLO = "EndpointWithHostLabelOperation"
+_FSB = "FiniteStreamingBlob"
+_sLmi = "smithy.api#requiresLength"
+_FEo = "FooError"
+_FSI = "FractionalSecondsInput"
+_FSO = "FractionalSecondsOutput"
+_FS = "FractionalSeconds"
+_GWEI = "GreetingWithErrorsInput"
+_GWEO = "GreetingWithErrorsOutput"
+_XG = "X-Greeting"
+_IG = "InvalidGreeting"
+_M = "Message"
+_GWE = "GreetingWithErrors"
+_HWPOI = "HostWithPathOperationInput"
+_HWPOO = "HostWithPathOperationOutput"
+_HWPO = "HostWithPathOperation"
+_HCRI = "HttpChecksumRequiredInput"
+_aHCRIO = "aws.protocoltests.restjson#HttpChecksumRequiredInputOutput"
+_fo = "foo"
+_HCRO = "HttpChecksumRequiredOutput"
+_HCR = "HttpChecksumRequired"
+_sCR = "smithy.api#httpChecksumRequired"
+_SM = "StringMap"
+_HEPHI = "HttpEmptyPrefixHeadersInput"
+_pH = "prefixHeaders"
+_sPH = "smithy.api#httpPrefixHeaders"
+_sHp = "specificHeader"
+_HEPHO = "HttpEmptyPrefixHeadersOutput"
+_HEPH = "HttpEmptyPrefixHeaders"
+_SEt = "StringEnum"
+_V = "V"
+_HEPI = "HttpEnumPayloadInput"
+_aEPI = "aws.protocoltests.restjson#EnumPayloadInput"
+_HEPO = "HttpEnumPayloadOutput"
+_HEP = "HttpEnumPayload"
+_HPTI = "HttpPayloadTraitsInput"
+_aHPTIO = "aws.protocoltests.restjson#HttpPayloadTraitsInputOutput"
+_XF = "X-Foo"
+_bl = "blob"
+_HPTO = "HttpPayloadTraitsOutput"
+_HPT = "HttpPayloadTraits"
+_TPB = "TextPlainBlob"
+_sT = "smithy.api#mediaType"
+_t = "text/plain"
+_HPTWMTI = "HttpPayloadTraitsWithMediaTypeInput"
+_aHPTWMTIO = "aws.protocoltests.restjson#HttpPayloadTraitsWithMediaTypeInputOutput"
+_HPTWMTO = "HttpPayloadTraitsWithMediaTypeOutput"
+_HPTWMT = "HttpPayloadTraitsWithMediaType"
+_NP = "NestedPayload"
+_n = "name"
+_HPWSI = "HttpPayloadWithStructureInput"
+_aHPWSIO = "aws.protocoltests.restjson#HttpPayloadWithStructureInputOutput"
+_ne = "nested"
+_HPWSO = "HttpPayloadWithStructureOutput"
+_HPWS = "HttpPayloadWithStructure"
+_UP = "UnionPayload"
+_HPWUI = "HttpPayloadWithUnionInput"
+_aHPWUIO = "aws.protocoltests.restjson#HttpPayloadWithUnionInputOutput"
+_HPWUO = "HttpPayloadWithUnionOutput"
+_HPWU = "HttpPayloadWithUnion"
+_HPHI = "HttpPrefixHeadersInput"
+_xf = "x-foo"
+_fM = "fooMap"
+_xf_ = "x-foo-"
+_HPHO = "HttpPrefixHeadersOutput"
+_HPH = "HttpPrefixHeaders"
+_HPHIRI = "HttpPrefixHeadersInResponseInput"
+_HPHIRO = "HttpPrefixHeadersInResponseOutput"
+_HPHIR = "HttpPrefixHeadersInResponse"
+_QM = "QueryMap"
+_HQPOOI = "HttpQueryParamsOnlyOperationInput"
+_aHQPOI = "aws.protocoltests.restjson#HttpQueryParamsOnlyInput"
+_qM = "queryMap"
+_HQPOOO = "HttpQueryParamsOnlyOperationOutput"
+_HQPOO = "HttpQueryParamsOnlyOperation"
+_HRWFLI = "HttpRequestWithFloatLabelsInput"
+_fl = "float"
+_do = "double"
+_HRWFLO = "HttpRequestWithFloatLabelsOutput"
+_HRWFL = "HttpRequestWithFloatLabels"
+_HRWGLIPI = "HttpRequestWithGreedyLabelInPathInput"
+_HRWGLIPO = "HttpRequestWithGreedyLabelInPathOutput"
+_HRWGLIP = "HttpRequestWithGreedyLabelInPath"
+_HRWLI = "HttpRequestWithLabelsInput"
+_str = "string"
+_sh = "short"
+_i = "integer"
+_lo = "long"
+_bo = "boolean"
+_ti = "timestamp"
+_HRWLO = "HttpRequestWithLabelsOutput"
+_HRWL = "HttpRequestWithLabels"
+_ESp = "EpochSeconds"
+_es = "epoch-seconds"
+_HD = "HttpDate"
+_hd = "http-date"
+_HRWLATFI = "HttpRequestWithLabelsAndTimestampFormatInput"
+_mES = "memberEpochSeconds"
+_mHD = "memberHttpDate"
+_mDT = "memberDateTime"
+_dFe = "defaultFormat"
+_tES = "targetEpochSeconds"
+_tHD = "targetHttpDate"
+_tDT = "targetDateTime"
+_HRWLATFO = "HttpRequestWithLabelsAndTimestampFormatOutput"
+_HRWLATF = "HttpRequestWithLabelsAndTimestampFormat"
+_HRWRLI = "HttpRequestWithRegexLiteralInput"
+_str_ = "str"
+_HRWRLO = "HttpRequestWithRegexLiteralOutput"
+_HRWRL = "HttpRequestWithRegexLiteral"
+_HRCI = "HttpResponseCodeInput"
+_HRCO = "HttpResponseCodeOutput"
+_St = "Status"
+_sRC = "smithy.api#httpResponseCode"
+_HRC = "HttpResponseCode"
+_HSPI = "HttpStringPayloadInput"
+_aSPI = "aws.protocoltests.restjson#StringPayloadInput"
+_HSPO = "HttpStringPayloadOutput"
+_HSP = "HttpStringPayload"
+_IQPIRI = "IgnoreQueryParamsInResponseInput"
+_IQPIRO = "IgnoreQueryParamsInResponseOutput"
+_IQPIR = "IgnoreQueryParamsInResponse"
+_IAOWHI = "InputAndOutputWithHeadersInput"
+_aIAOWHIO = "aws.protocoltests.restjson#InputAndOutputWithHeadersIO"
+_hS = "headerString"
+_XS = "X-String"
+_hB = "headerByte"
+_XB = "X-Byte"
+_hSe = "headerShort"
+_XS_ = "X-Short"
+_hI = "headerInteger"
+_XI = "X-Integer"
+_hL = "headerLong"
+_XL = "X-Long"
+_hF = "headerFloat"
+_XF_ = "X-Float"
+_hD = "headerDouble"
+_XD = "X-Double"
+_hTB = "headerTrueBool"
+_XB_ = "X-Boolean1"
+_hFB = "headerFalseBool"
+_XB__ = "X-Boolean2"
+_hSL = "headerStringList"
+_XS__ = "X-StringList"
+_hSS = "headerStringSet"
+_XS___ = "X-StringSet"
+_hIL = "headerIntegerList"
+_XI_ = "X-IntegerList"
+_hBL = "headerBooleanList"
+_XB___ = "X-BooleanList"
+_hTL = "headerTimestampList"
+_XT = "X-TimestampList"
+_hE = "headerEnum"
+_XE = "X-Enum"
+_hEL = "headerEnumList"
+_XE_ = "X-EnumList"
+_hIE = "headerIntegerEnum"
+_XI__ = "X-IntegerEnum"
+_hIEL = "headerIntegerEnumList"
+_XI___ = "X-IntegerEnumList"
+_IAOWHO = "InputAndOutputWithHeadersOutput"
+_IAOWH = "InputAndOutputWithHeaders"
+_ISI = "InputStreamInput"
+_ISO = "InputStreamOutput"
+_ISn = "InputStream"
+_ISWIRI = "InputStreamWithInitialRequestInput"
+_ISWIRO = "InputStreamWithInitialRequestOutput"
+_ISWIR = "InputStreamWithInitialRequest"
+_JBI = "JsonBlobsInput"
+_aJBIO = "aws.protocoltests.restjson#JsonBlobsInputOutput"
+_da = "data"
+_JBO = "JsonBlobsOutput"
+_JB = "JsonBlobs"
+_FEM = "FooEnumMap"
+_FES = "FooEnumSet"
+_JEI = "JsonEnumsInput"
+_aJEIO = "aws.protocoltests.restjson#JsonEnumsInputOutput"
+_fE = "fooEnum1"
+_fEo = "fooEnum2"
+_fEoo = "fooEnum3"
+_fEL = "fooEnumList"
+_fES = "fooEnumSet"
+_fEM = "fooEnumMap"
+_JEO = "JsonEnumsOutput"
+_JE = "JsonEnums"
+_JHS = "JsonHeaderString"
+_a = "application/json"
+_IEM = "IntegerEnumMap"
+_IES = "IntegerEnumSet"
+_JIEI = "JsonIntEnumsInput"
+_aJIEIO = "aws.protocoltests.restjson#JsonIntEnumsInputOutput"
+_iE = "integerEnum1"
+_iEn = "integerEnum2"
+_iEnt = "integerEnum3"
+_iEL = "integerEnumList"
+_iES = "integerEnumSet"
+_iEM = "integerEnumMap"
+_JIEO = "JsonIntEnumsOutput"
+_JIE = "JsonIntEnums"
+_NSL = "NestedStringList"
+_SLMt = "StructureListMember"
+_a_ = "a"
+_b_ = "b"
+_o = "other"
+_SLt = "StructureList"
+_JLI = "JsonListsInput"
+_aJLIO = "aws.protocoltests.restjson#JsonListsInputOutput"
+_sLt = "stringList"
+_sS = "stringSet"
+_iL = "integerList"
+_bL = "booleanList"
+_tL = "timestampList"
+_eL = "enumList"
+_iELn = "intEnumList"
+_nSL = "nestedStringList"
+_sLtr = "structureList"
+_mSL = "myStructureList"
+_JLO = "JsonListsOutput"
+_JL = "JsonLists"
+_JMI = "JsonMapsInput"
+_aJMIO = "aws.protocoltests.restjson#JsonMapsInputOutput"
+_dSM = "denseStructMap"
+_dNM = "denseNumberMap"
+_dBM = "denseBooleanMap"
+_dSMe = "denseStringMap"
+_dSMen = "denseSetMap"
+_JMO = "JsonMapsOutput"
+_JM = "JsonMaps"
+_JTI = "JsonTimestampsInput"
+_aJTIO = "aws.protocoltests.restjson#JsonTimestampsInputOutput"
+_no = "normal"
+_dTa = "dateTime"
+_dTOT = "dateTimeOnTarget"
+_eSp = "epochSeconds"
+_eSOT = "epochSecondsOnTarget"
+_hDt = "httpDate"
+_hDOT = "httpDateOnTarget"
+_JTO = "JsonTimestampsOutput"
+_JT = "JsonTimestamps"
+n2 = "aws.protocoltests.restjson.nested"
+_sa = "salutation"
+_NU = "NestedUnion"
+_MU = "MyUnion"
+_bV = "booleanValue"
+_nV = "numberValue"
+_bVl = "blobValue"
+_tV = "timestampValue"
+_eV = "enumValue"
+_lV = "listValue"
+_mV = "mapValue"
+_sVt = "structureValue"
+_rSV = "renamedStructureValue"
+_uV = "unionValue"
+_JUI = "JsonUnionsInput"
+_aUIO = "aws.protocoltests.restjson#UnionInputOutput"
+_co = "contents"
+_JUO = "JsonUnionsOutput"
+_JU = "JsonUnions"
+_JV = "JsonValue"
+_MAWBI = "MalformedAcceptWithBodyInput"
+_MAWBO = "MalformedAcceptWithBodyOutput"
+_aGS = "aws.protocoltests.shared#GreetingStruct"
+_MAWB = "MalformedAcceptWithBody"
+_MAWGSI = "MalformedAcceptWithGenericStringInput"
+_MAWGSO = "MalformedAcceptWithGenericStringOutput"
+_MAWGS = "MalformedAcceptWithGenericString"
+_MAWPI = "MalformedAcceptWithPayloadInput"
+_JBp = "JpegBlob"
+_im = "image/jpeg"
+_MAWPO = "MalformedAcceptWithPayloadOutput"
+_MAWP = "MalformedAcceptWithPayload"
+_MBI = "MalformedBlobInput"
+_MBO = "MalformedBlobOutput"
+_MB = "MalformedBlob"
+_MBIa = "MalformedBooleanInput"
+_bIB = "booleanInBody"
+_bIP = "booleanInPath"
+_bIQ = "booleanInQuery"
+_bIH = "booleanInHeader"
+_MBOa = "MalformedBooleanOutput"
+_MBa = "MalformedBoolean"
+_MBIal = "MalformedByteInput"
+_bIBy = "byteInBody"
+_bIPy = "byteInPath"
+_bIQy = "byteInQuery"
+_bIHy = "byteInHeader"
+_MBOal = "MalformedByteOutput"
+_MBal = "MalformedByte"
+_MCTWBI = "MalformedContentTypeWithBodyInput"
+_MCTWBO = "MalformedContentTypeWithBodyOutput"
+_MCTWB = "MalformedContentTypeWithBody"
+_MCTWGSI = "MalformedContentTypeWithGenericStringInput"
+_MCTWGSO = "MalformedContentTypeWithGenericStringOutput"
+_MCTWGS = "MalformedContentTypeWithGenericString"
+_MCTWBIa = "MalformedContentTypeWithoutBodyInput"
+_MCTWBOa = "MalformedContentTypeWithoutBodyOutput"
+_MCTWBa = "MalformedContentTypeWithoutBody"
+_MCTWBEII = "MalformedContentTypeWithoutBodyEmptyInputInput"
+_MCTWBEIO = "MalformedContentTypeWithoutBodyEmptyInputOutput"
+_MCTWBEI = "MalformedContentTypeWithoutBodyEmptyInput"
+_MCTWPI = "MalformedContentTypeWithPayloadInput"
+_MCTWPO = "MalformedContentTypeWithPayloadOutput"
+_MCTWP = "MalformedContentTypeWithPayload"
+_MDI = "MalformedDoubleInput"
+_dIB = "doubleInBody"
+_dIP = "doubleInPath"
+_dIQ = "doubleInQuery"
+_dIH = "doubleInHeader"
+_MDO = "MalformedDoubleOutput"
+_MD = "MalformedDouble"
+_MFI = "MalformedFloatInput"
+_fIB = "floatInBody"
+_fIP = "floatInPath"
+_fIQ = "floatInQuery"
+_fIH = "floatInHeader"
+_MFO = "MalformedFloatOutput"
+_MF = "MalformedFloat"
+_MII = "MalformedIntegerInput"
+_iIB = "integerInBody"
+_iIP = "integerInPath"
+_iIQ = "integerInQuery"
+_iIH = "integerInHeader"
+_MIO = "MalformedIntegerOutput"
+_MI = "MalformedInteger"
+_SLi = "SimpleList"
+_MLI = "MalformedListInput"
+_bLo = "bodyList"
+_MLO = "MalformedListOutput"
+_ML = "MalformedList"
+_MLIa = "MalformedLongInput"
+_lIB = "longInBody"
+_lIP = "longInPath"
+_lIQ = "longInQuery"
+_lIH = "longInHeader"
+_MLOa = "MalformedLongOutput"
+_MLa = "MalformedLong"
+_SMi = "SimpleMap"
+_MMI = "MalformedMapInput"
+_bM = "bodyMap"
+_MMO = "MalformedMapOutput"
+_MM = "MalformedMap"
+_MRBI = "MalformedRequestBodyInput"
+_in = "int"
+_MRBO = "MalformedRequestBodyOutput"
+_MRB = "MalformedRequestBody"
+_MSI = "MalformedShortInput"
+_sIB = "shortInBody"
+_sIP = "shortInPath"
+_sIQ = "shortInQuery"
+_sIH = "shortInHeader"
+_MSO = "MalformedShortOutput"
+_MS = "MalformedShort"
+_MSIa = "MalformedStringInput"
+_amth = "amz-media-typed-header"
+_MSOa = "MalformedStringOutput"
+_MSa = "MalformedString"
+_MTBDTI = "MalformedTimestampBodyDateTimeInput"
+_MTBDTO = "MalformedTimestampBodyDateTimeOutput"
+_MTBDT = "MalformedTimestampBodyDateTime"
+_MTBDI = "MalformedTimestampBodyDefaultInput"
+_MTBDO = "MalformedTimestampBodyDefaultOutput"
+_MTBD = "MalformedTimestampBodyDefault"
+_MTBHDI = "MalformedTimestampBodyHttpDateInput"
+_MTBHDO = "MalformedTimestampBodyHttpDateOutput"
+_MTBHD = "MalformedTimestampBodyHttpDate"
+_MTHDTI = "MalformedTimestampHeaderDateTimeInput"
+_MTHDTO = "MalformedTimestampHeaderDateTimeOutput"
+_MTHDT = "MalformedTimestampHeaderDateTime"
+_MTHDI = "MalformedTimestampHeaderDefaultInput"
+_MTHDO = "MalformedTimestampHeaderDefaultOutput"
+_MTHD = "MalformedTimestampHeaderDefault"
+_MTHEI = "MalformedTimestampHeaderEpochInput"
+_MTHEO = "MalformedTimestampHeaderEpochOutput"
+_MTHE = "MalformedTimestampHeaderEpoch"
+_MTPDI = "MalformedTimestampPathDefaultInput"
+_MTPDO = "MalformedTimestampPathDefaultOutput"
+_MTPD = "MalformedTimestampPathDefault"
+_MTPEI = "MalformedTimestampPathEpochInput"
+_MTPEO = "MalformedTimestampPathEpochOutput"
+_MTPE = "MalformedTimestampPathEpoch"
+_MTPHDI = "MalformedTimestampPathHttpDateInput"
+_MTPHDO = "MalformedTimestampPathHttpDateOutput"
+_MTPHD = "MalformedTimestampPathHttpDate"
+_MTQDI = "MalformedTimestampQueryDefaultInput"
+_MTQDO = "MalformedTimestampQueryDefaultOutput"
+_MTQD = "MalformedTimestampQueryDefault"
+_MTQEI = "MalformedTimestampQueryEpochInput"
+_MTQEO = "MalformedTimestampQueryEpochOutput"
+_MTQE = "MalformedTimestampQueryEpoch"
+_MTQHDI = "MalformedTimestampQueryHttpDateInput"
+_MTQHDO = "MalformedTimestampQueryHttpDateOutput"
+_MTQHD = "MalformedTimestampQueryHttpDate"
+_SU = "SimpleUnion"
+_MUI = "MalformedUnionInput"
+_u = "union"
+_MUO = "MalformedUnionOutput"
+_MUa = "MalformedUnion"
+_MTHI = "MediaTypeHeaderInput"
+_j = "json"
+_XJ = "X-Json"
+_MTHO = "MediaTypeHeaderOutput"
+_MTH = "MediaTypeHeader"
+_NIANOI = "NoInputAndNoOutputInput"
+_NIANOO = "NoInputAndNoOutputOutput"
+_NIANO = "NoInputAndNoOutput"
+_NIAOI = "NoInputAndOutputInput"
+_NIAOO = "NoInputAndOutputOutput"
+_NIAO = "NoInputAndOutput"
+_NAEHCI = "NullAndEmptyHeadersClientInput"
+_aNAEHIO = "aws.protocoltests.restjson#NullAndEmptyHeadersIO"
+_XA = "X-A"
+_XB____ = "X-B"
+_c_ = "c"
+_XC = "X-C"
+_NAEHCO = "NullAndEmptyHeadersClientOutput"
+_NAEHC = "NullAndEmptyHeadersClient"
+_NAEHSI = "NullAndEmptyHeadersServerInput"
+_NAEHSO = "NullAndEmptyHeadersServerOutput"
+_NAEHS = "NullAndEmptyHeadersServer"
+_ONSESI = "OmitsNullSerializesEmptyStringInput"
+_nVu = "nullValue"
+_Nu = "Null"
+_Em = "Empty"
+_ONSESO = "OmitsNullSerializesEmptyStringOutput"
+_ONSES = "OmitsNullSerializesEmptyString"
+_OSELI = "OmitsSerializingEmptyListsInput"
+_OSELO = "OmitsSerializingEmptyListsOutput"
+_OSEL = "OmitsSerializingEmptyLists"
+_OWDI = "OperationWithDefaultsInput"
+_de = "defaults"
+_cOD = "clientOptionalDefaults"
+_tLD = "topLevelDefault"
+_oTLD = "otherTopLevelDefault"
+_OWDO = "OperationWithDefaultsOutput"
+_OWD = "OperationWithDefaults"
+_di = "dialog"
+_dLi = "dialogList"
+_dMi = "dialogMap"
+_OWNSI = "OperationWithNestedStructureInput"
+_tLo = "topLevel"
+_OWNSO = "OperationWithNestedStructureOutput"
+_OWNS = "OperationWithNestedStructure"
+_OSI = "OutputStreamInput"
+_OSO = "OutputStreamOutput"
+_OS = "OutputStream"
+_OSWIRI = "OutputStreamWithInitialResponseInput"
+_OSWIRO = "OutputStreamWithInitialResponseOutput"
+_OSWIR = "OutputStreamWithInitialResponse"
+_PC = "PayloadConfig"
+_PA = "PlayerAction"
+_q = "quit"
+_PPAI = "PostPlayerActionInput"
+_ac = "action"
+_PPAO = "PostPlayerActionOutput"
+_PPA = "PostPlayerAction"
+_UWJN = "UnionWithJsonName"
+_ba = "bar"
+_baz = "_baz"
+_PUWJNI = "PostUnionWithJsonNameInput"
+_PUWJNO = "PostUnionWithJsonNameOutput"
+_PUWJN = "PostUnionWithJsonName"
+_PWCEI = "PutWithContentEncodingInput"
+_en = "encoding"
+_CE_ = "Content-Encoding"
+_PWCEO = "PutWithContentEncodingOutput"
+_PWCE = "PutWithContentEncoding"
+_sC = "smithy.api#requestCompression"
+_QITAFI = "QueryIdempotencyTokenAutoFillInput"
+_to = "token"
+_sTm = "smithy.api#idempotencyToken"
+_QITAFO = "QueryIdempotencyTokenAutoFillOutput"
+_QITAF = "QueryIdempotencyTokenAutoFill"
+_QPASLMI = "QueryParamsAsStringListMapInput"
+_qu = "qux"
+_cor = "corge"
+_QPASLMO = "QueryParamsAsStringListMapOutput"
+_QPASLM = "QueryParamsAsStringListMap"
+_QPI = "QueryPrecedenceInput"
+_QPO = "QueryPrecedenceOutput"
+_QP = "QueryPrecedence"
+_RCHFI = "ResponseCodeHttpFallbackInput"
+_aRCHFIO = "aws.protocoltests.restjson#ResponseCodeHttpFallbackInputOutput"
+_RCHFO = "ResponseCodeHttpFallbackOutput"
+_RCHF = "ResponseCodeHttpFallback"
+_RCRI = "ResponseCodeRequiredInput"
+_RCRO = "ResponseCodeRequiredOutput"
+_rC = "responseCode"
+_RCR = "ResponseCodeRequired"
+_SSPI = "SimpleScalarPropertiesInput"
+_aSSPIO = "aws.protocoltests.restjson#SimpleScalarPropertiesInputOutput"
+_tBV = "trueBooleanValue"
+_fBV = "falseBooleanValue"
+_bVy = "byteValue"
+_sVh = "shortValue"
+_iV = "integerValue"
+_lVo = "longValue"
+_fV = "floatValue"
+_dVo = "doubleValue"
+_DD = "DoubleDribble"
+_SSPO = "SimpleScalarPropertiesOutput"
+_SSP = "SimpleScalarProperties"
+_SSL = "SparseShortList"
+_smithya = "smithy.api#sparse"
+_SSLp = "SparseStringList"
+_SJLI = "SparseJsonListsInput"
+_aSJLIO = "aws.protocoltests.restjson#SparseJsonListsInputOutput"
+_sSL = "sparseStringList"
+_sSLp = "sparseShortList"
+_SJLO = "SparseJsonListsOutput"
+_SJL = "SparseJsonLists"
+_SBM = "SparseBooleanMap"
+_SNM = "SparseNumberMap"
+_SSM = "SparseSetMap"
+_SSMp = "SparseStringMap"
+_SSMpa = "SparseStructMap"
+_SJMI = "SparseJsonMapsInput"
+_aSJMIO = "aws.protocoltests.restjson#SparseJsonMapsInputOutput"
+_sSM = "sparseStructMap"
+_sNM = "sparseNumberMap"
+_sBM = "sparseBooleanMap"
+_sSMp = "sparseStringMap"
+_sSMpa = "sparseSetMap"
+_SJMO = "SparseJsonMapsOutput"
+_SJM = "SparseJsonMaps"
+_SB = "StreamingBlob"
+_STI = "StreamingTraitsInput"
+_aSTIO = "aws.protocoltests.restjson#StreamingTraitsInputOutput"
+_STO = "StreamingTraitsOutput"
+_ST = "StreamingTraits"
+_STRLI = "StreamingTraitsRequireLengthInput"
+_STRLO = "StreamingTraitsRequireLengthOutput"
+_STRL = "StreamingTraitsRequireLength"
+_STPB = "StreamingTextPlainBlob"
+_STWMTI = "StreamingTraitsWithMediaTypeInput"
+_aSTWMTIO = "aws.protocoltests.restjson#StreamingTraitsWithMediaTypeInputOutput"
+_STWMTO = "StreamingTraitsWithMediaTypeOutput"
+_STWMT = "StreamingTraitsWithMediaType"
+_TC = "TestConfig"
+_tim = "timeout"
+_TBSI = "TestBodyStructureInput"
+_aTBSIO = "aws.protocoltests.restjson#TestBodyStructureInputOutput"
+_tI = "testId"
+_xati = "x-amz-test-id"
+_tC = "testConfig"
+_TBSO = "TestBodyStructureOutput"
+_TBS = "TestBodyStructure"
+_TGNINPI = "TestGetNoInputNoPayloadInput"
+_TGNINPO = "TestGetNoInputNoPayloadOutput"
+_aTNPIO = "aws.protocoltests.restjson#TestNoPayloadInputOutput"
+_XATI = "X-Amz-Test-Id"
+_TGNINP = "TestGetNoInputNoPayload"
+_TGNPI = "TestGetNoPayloadInput"
+_TGNPO = "TestGetNoPayloadOutput"
+_TGNP = "TestGetNoPayload"
+_TPBI = "TestPayloadBlobInput"
+_aTPBIO = "aws.protocoltests.restjson#TestPayloadBlobInputOutput"
+_cT = "contentType"
+_CT = "Content-Type"
+_TPBO = "TestPayloadBlobOutput"
+_TPBe = "TestPayloadBlob"
+_TPSI = "TestPayloadStructureInput"
+_aTPSIO = "aws.protocoltests.restjson#TestPayloadStructureInputOutput"
+_pC = "payloadConfig"
+_TPSO = "TestPayloadStructureOutput"
+_TPS = "TestPayloadStructure"
+_TPNINPI = "TestPostNoInputNoPayloadInput"
+_TPNINPO = "TestPostNoInputNoPayloadOutput"
+_TPNINP = "TestPostNoInputNoPayload"
+_TPNPI = "TestPostNoPayloadInput"
+_TPNPO = "TestPostNoPayloadOutput"
+_TPNP = "TestPostNoPayload"
+_TFHI = "TimestampFormatHeadersInput"
+_aTFHIO = "aws.protocoltests.restjson#TimestampFormatHeadersIO"
+_Xm = "X-memberEpochSeconds"
+_Xm_ = "X-memberHttpDate"
+_Xm__ = "X-memberDateTime"
+_Xd = "X-defaultFormat"
+_Xt = "X-targetEpochSeconds"
+_Xt_ = "X-targetHttpDate"
+_Xt__ = "X-targetDateTime"
+_TFHO = "TimestampFormatHeadersOutput"
+_TFH = "TimestampFormatHeaders"
+_UIAOI = "UnitInputAndOutputInput"
+_UIAOO = "UnitInputAndOutputOutput"
+_UIAO = "UnitInputAndOutput"
+_RSION = "RecursiveShapesInputOutputNested1"
+_RSIONe = "RecursiveShapesInputOutputNested2"
+_rM = "recursiveMember"
+_RSI = "RecursiveShapesInput"
+_aRSIO = "aws.protocoltests.restjson#RecursiveShapesInputOutput"
+_RSO = "RecursiveShapesOutput"
+_RS = "RecursiveShapes"
+_RJ = "RestJson"
+_aw = "aws.auth#sigv4"
+_sB = "smithy.rules#endpointBdd"
+_aws = "aws.api#service"
+_aJ = "aws.protocols#restJson1"
+
+BOOLEAN_LIST = (16, n0, _BL, 0, (_m,), ((2, 0),))
+
+DOUBLE_LIST = (16, n0, _DL, 0, (_m,), ((10, 0),))
+
+FOO_ENUM = (
+    14,
+    n0,
+    _FE,
+    0,
+    (_FOO, _BAZ, _BAR, _ONE, _ZERO),
+    ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
+)
+
+FOO_ENUM_LIST = (16, n0, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
+
+INTEGER_ENUM = (15, n0, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+
+INTEGER_ENUM_LIST = (16, n0, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
+
+INTEGER_LIST = (16, n0, _IL, 0, (_m,), ((7, 0),))
+
+INTEGER_SET = (16, n0, _IS, 0, (_m,), ((7, 0),))
+
+STRING_LIST = (16, n0, _SL, 0, (_m,), ((3, 0),))
+
+STRING_LIST_MAP = (17, n0, _SLM, 0, (_k, _v), ((3, 0), (STRING_LIST, 0)))
+
+STRING_SET = (16, n0, _SS, 0, (_m,), ((3, 0),))
+
+TIMESTAMP_LIST = (16, n0, _TL, 0, (_m,), ((4, 0),))
+
+ALL_QUERY_STRING_TYPES_INPUT = (
+    18,
+    n1,
+    _AQSTI,
+    0,
+    (
+        _qS,
+        _qSL,
+        _qSS,
+        _qB,
+        _qSu,
+        _qI,
+        _qIL,
+        _qIS,
+        _qL,
+        _qF,
+        _qD,
+        _qDL,
+        _qBu,
+        _qBL,
+        _qT,
+        _qTL,
+        _qE,
+        _qEL,
+        _qIE,
+        _qIEL,
+        _qPMOSL,
     ),
-    members={
-        "memberEpochSeconds": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds"
-                ),
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "memberHttpDate": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date"),
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "memberDateTime": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time"),
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "defaultFormat": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "targetEpochSeconds": {
-            "target": EPOCH_SECONDS,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "targetHttpDate": {
-            "target": HTTP_DATE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "targetDateTime": {
-            "target": DATE_TIME,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-    },
-)
-
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT = Schema.collection(
-    id=ShapeID(
-        "aws.protocoltests.restjson#HttpRequestWithLabelsAndTimestampFormatOutput"
+    (
+        (3, {_sQ: _S}),
+        (STRING_LIST, {_sQ: _SL}),
+        (STRING_SET, {_sQ: _SS}),
+        (5, {_sQ: _By}),
+        (6, {_sQ: _Sh}),
+        (7, {_sQ: _I}),
+        (INTEGER_LIST, {_sQ: _IL}),
+        (INTEGER_SET, {_sQ: _IS}),
+        (8, {_sQ: _L}),
+        (9, {_sQ: _F}),
+        (10, {_sQ: _D}),
+        (DOUBLE_LIST, {_sQ: _DL}),
+        (2, {_sQ: _Bo}),
+        (BOOLEAN_LIST, {_sQ: _BL}),
+        (4, {_sQ: _T}),
+        (TIMESTAMP_LIST, {_sQ: _TL}),
+        (FOO_ENUM, {_sQ: _E}),
+        (FOO_ENUM_LIST, {_sQ: _EL}),
+        (INTEGER_ENUM, {_sQ: _IE}),
+        (INTEGER_ENUM_LIST, {_sQ: _IEL}),
+        (STRING_LIST_MAP, 1024),
     ),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
 )
 
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithLabelsAndTimestampFormat"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {
-                    "method": "GET",
-                    "uri": "/HttpRequestWithLabelsAndTimestampFormat/{memberEpochSeconds}/{memberHttpDate}/{memberDateTime}/{defaultFormat}/{targetEpochSeconds}/{targetHttpDate}/{targetDateTime}",
-                }
-            ),
-        )
-    ],
+ALL_QUERY_STRING_TYPES_OUTPUT = (18, n1, _AQSTO, {_sSI: _sU})
+
+ALL_QUERY_STRING_TYPES = (
+    23,
+    n1,
+    _AQST,
+    {_s: MappingProxyType({"uri": "/AllQueryStringTypesInput", "method": "GET"})},
+    ALL_QUERY_STRING_TYPES_INPUT,
+    ALL_QUERY_STRING_TYPES_OUTPUT,
+    (),
 )
 
-HTTP_REQUEST_WITH_REGEX_LITERAL_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithRegexLiteralInput"),
-    members={
-        "str": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        }
+BLOB_PAYLOAD_EVENT = (18, n1, _BPE, 0, (_p,), ((1, {_sP: None}),))
+
+CLIENT_OPTIONAL_DEFAULTS = (18, n1, _COD, 0, (_m,), ((7, {_sm: 0}),))
+
+COMPLEX_NESTED_ERROR_DATA = (18, n1, _CNED, 0, (_Fo,), ((3, {_sN: _Foo}),))
+
+COMPLEX_ERROR = (
+    18,
+    n1,
+    _CE,
+    {_smi: _c, _sE: 403},
+    (_H, _TLo, _N),
+    ((3, {_sH: _XH}), (3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
+)
+
+CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT = (
+    18,
+    n1,
+    _CAVQSI,
+    0,
+    (_b, _mS),
+    ((3, {_sQ: _b}), (3, {_sQ: _mS})),
+)
+
+CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT = (18, n1, _CAVQSO, {_sSI: _sU})
+
+CONSTANT_AND_VARIABLE_QUERY_STRING = (
+    23,
+    n1,
+    _CAVQS,
+    {
+        _s: MappingProxyType(
+            {"uri": "/ConstantAndVariableQueryString?foo=bar", "method": "GET"}
+        )
     },
+    CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT,
+    CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT,
+    (),
 )
 
-HTTP_REQUEST_WITH_REGEX_LITERAL_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithRegexLiteralOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
+CONSTANT_QUERY_STRING_INPUT = (18, n1, _CQSI, 0, (_h,), ((3, 9),))
+
+CONSTANT_QUERY_STRING_OUTPUT = (18, n1, _CQSO, {_sSI: _sU})
+
+CONSTANT_QUERY_STRING = (
+    23,
+    n1,
+    _CQS,
+    {
+        _s: MappingProxyType(
+            {"uri": "/ConstantQueryString/{hello}?foo=bar&hello", "method": "GET"}
         )
-    ],
-)
-
-HTTP_REQUEST_WITH_REGEX_LITERAL = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpRequestWithRegexLiteral"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "GET", "uri": "/ReDosLiteral/{str}/(a+)+"}
-            ),
-        )
-    ],
-)
-
-HTTP_RESPONSE_CODE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpResponseCodeInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-HTTP_RESPONSE_CODE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpResponseCodeOutput"),
-    members={
-        "Status": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpResponseCode"))],
-        }
     },
-)
-
-HTTP_RESPONSE_CODE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpResponseCode"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/HttpResponseCode", "method": "PUT"}),
-        )
-    ],
-)
-
-HTTP_STRING_PAYLOAD_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpStringPayloadInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#StringPayloadInput",
-        )
-    ],
-    members={
-        "payload": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-HTTP_STRING_PAYLOAD_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpStringPayloadOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#StringPayloadInput",
-        )
-    ],
-    members={
-        "payload": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-HTTP_STRING_PAYLOAD = Schema(
-    id=ShapeID("aws.protocoltests.restjson#HttpStringPayload"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/StringPayload", "method": "POST"}),
-        )
-    ],
-)
-
-IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#IgnoreQueryParamsInResponseInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#IgnoreQueryParamsInResponseOutput"),
-    members={
-        "baz": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="baz")],
-        }
-    },
-)
-
-IGNORE_QUERY_PARAMS_IN_RESPONSE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#IgnoreQueryParamsInResponse"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/IgnoreQueryParamsInResponse", "method": "GET"}
-            ),
-        )
-    ],
-)
-
-INPUT_AND_OUTPUT_WITH_HEADERS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#InputAndOutputWithHeadersInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#InputAndOutputWithHeadersIO",
-        )
-    ],
-    members={
-        "headerString": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-String")
-            ],
-        },
-        "headerByte": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Byte")],
-        },
-        "headerShort": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Short")],
-        },
-        "headerInteger": {
-            "target": INTEGER,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Integer")
-            ],
-        },
-        "headerLong": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Long")],
-        },
-        "headerFloat": {
-            "target": FLOAT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Float")],
-        },
-        "headerDouble": {
-            "target": DOUBLE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Double")
-            ],
-        },
-        "headerTrueBool": {
-            "target": BOOLEAN,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Boolean1")
-            ],
-        },
-        "headerFalseBool": {
-            "target": BOOLEAN,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Boolean2")
-            ],
-        },
-        "headerStringList": {
-            "target": STRING_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-StringList")
-            ],
-        },
-        "headerStringSet": {
-            "target": STRING_SET,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-StringSet")
-            ],
-        },
-        "headerIntegerList": {
-            "target": INTEGER_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-IntegerList")
-            ],
-        },
-        "headerBooleanList": {
-            "target": BOOLEAN_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-BooleanList")
-            ],
-        },
-        "headerTimestampList": {
-            "target": TIMESTAMP_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-TimestampList")
-            ],
-        },
-        "headerEnum": {
-            "target": FOO_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Enum")],
-        },
-        "headerEnumList": {
-            "target": FOO_ENUM_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-EnumList")
-            ],
-        },
-        "headerIntegerEnum": {
-            "target": INTEGER_ENUM,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-IntegerEnum")
-            ],
-        },
-        "headerIntegerEnumList": {
-            "target": INTEGER_ENUM_LIST,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="X-IntegerEnumList"
-                )
-            ],
-        },
-    },
-)
-
-INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#InputAndOutputWithHeadersOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#InputAndOutputWithHeadersIO",
-        )
-    ],
-    members={
-        "headerString": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-String")
-            ],
-        },
-        "headerByte": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Byte")],
-        },
-        "headerShort": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Short")],
-        },
-        "headerInteger": {
-            "target": INTEGER,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Integer")
-            ],
-        },
-        "headerLong": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Long")],
-        },
-        "headerFloat": {
-            "target": FLOAT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Float")],
-        },
-        "headerDouble": {
-            "target": DOUBLE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Double")
-            ],
-        },
-        "headerTrueBool": {
-            "target": BOOLEAN,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Boolean1")
-            ],
-        },
-        "headerFalseBool": {
-            "target": BOOLEAN,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Boolean2")
-            ],
-        },
-        "headerStringList": {
-            "target": STRING_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-StringList")
-            ],
-        },
-        "headerStringSet": {
-            "target": STRING_SET,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-StringSet")
-            ],
-        },
-        "headerIntegerList": {
-            "target": INTEGER_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-IntegerList")
-            ],
-        },
-        "headerBooleanList": {
-            "target": BOOLEAN_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-BooleanList")
-            ],
-        },
-        "headerTimestampList": {
-            "target": TIMESTAMP_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-TimestampList")
-            ],
-        },
-        "headerEnum": {
-            "target": FOO_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Enum")],
-        },
-        "headerEnumList": {
-            "target": FOO_ENUM_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-EnumList")
-            ],
-        },
-        "headerIntegerEnum": {
-            "target": INTEGER_ENUM,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-IntegerEnum")
-            ],
-        },
-        "headerIntegerEnumList": {
-            "target": INTEGER_ENUM_LIST,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="X-IntegerEnumList"
-                )
-            ],
-        },
-    },
-)
-
-INPUT_AND_OUTPUT_WITH_HEADERS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#InputAndOutputWithHeaders"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/InputAndOutputWithHeaders", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-INPUT_STREAM_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#InputStreamInput"),
-    members={
-        "stream": {
-            "target": EVENT_STREAM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-INPUT_STREAM_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#InputStreamOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-INPUT_STREAM = Schema(
-    id=ShapeID("aws.protocoltests.restjson#InputStream"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"method": "POST", "uri": "/InputStream"}),
-        )
-    ],
-)
-
-INPUT_STREAM_WITH_INITIAL_REQUEST_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#InputStreamWithInitialRequestInput"),
-    members={
-        "initialRequestMember": {
-            "target": STRING,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="initial-request-member"
-                ),
-                Trait.new(id=ShapeID("smithy.api#required")),
-            ],
-        },
-        "stream": {
-            "target": EVENT_STREAM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-INPUT_STREAM_WITH_INITIAL_REQUEST_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#InputStreamWithInitialRequestOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-INPUT_STREAM_WITH_INITIAL_REQUEST = Schema(
-    id=ShapeID("aws.protocoltests.restjson#InputStreamWithInitialRequest"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/InputStreamWithInitialRequest"}
-            ),
-        )
-    ],
-)
-
-JSON_BLOBS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonBlobsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonBlobsInputOutput",
-        )
-    ],
-    members={"data": {"target": BLOB}},
-)
-
-JSON_BLOBS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonBlobsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonBlobsInputOutput",
-        )
-    ],
-    members={"data": {"target": BLOB}},
-)
-
-JSON_BLOBS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#JsonBlobs"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/JsonBlobs", "method": "POST"}),
-        )
-    ],
-)
-
-FOO_ENUM_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#FooEnumMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": FOO_ENUM}},
-)
-
-FOO_ENUM_SET = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#FooEnumSet"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": FOO_ENUM}},
-)
-
-JSON_ENUMS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonEnumsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonEnumsInputOutput",
-        )
-    ],
-    members={
-        "fooEnum1": {"target": FOO_ENUM},
-        "fooEnum2": {"target": FOO_ENUM},
-        "fooEnum3": {"target": FOO_ENUM},
-        "fooEnumList": {"target": FOO_ENUM_LIST},
-        "fooEnumSet": {"target": FOO_ENUM_SET},
-        "fooEnumMap": {"target": FOO_ENUM_MAP},
-    },
-)
-
-JSON_ENUMS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonEnumsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonEnumsInputOutput",
-        )
-    ],
-    members={
-        "fooEnum1": {"target": FOO_ENUM},
-        "fooEnum2": {"target": FOO_ENUM},
-        "fooEnum3": {"target": FOO_ENUM},
-        "fooEnumList": {"target": FOO_ENUM_LIST},
-        "fooEnumSet": {"target": FOO_ENUM_SET},
-        "fooEnumMap": {"target": FOO_ENUM_MAP},
-    },
-)
-
-JSON_ENUMS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#JsonEnums"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/JsonEnums", "method": "PUT"}),
-        )
-    ],
-)
-
-JSON_HEADER_STRING = Schema(
-    id=ShapeID("aws.protocoltests.restjson#JsonHeaderString"),
-    shape_type=ShapeType.STRING,
-    traits=[Trait.new(id=ShapeID("smithy.api#mediaType"), value="application/json")],
-)
-
-INTEGER_ENUM_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#IntegerEnumMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": INTEGER_ENUM}},
-)
-
-INTEGER_ENUM_SET = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#IntegerEnumSet"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": INTEGER_ENUM}},
-)
-
-JSON_INT_ENUMS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonIntEnumsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonIntEnumsInputOutput",
-        )
-    ],
-    members={
-        "integerEnum1": {"target": INTEGER_ENUM},
-        "integerEnum2": {"target": INTEGER_ENUM},
-        "integerEnum3": {"target": INTEGER_ENUM},
-        "integerEnumList": {"target": INTEGER_ENUM_LIST},
-        "integerEnumSet": {"target": INTEGER_ENUM_SET},
-        "integerEnumMap": {"target": INTEGER_ENUM_MAP},
-    },
-)
-
-JSON_INT_ENUMS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonIntEnumsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonIntEnumsInputOutput",
-        )
-    ],
-    members={
-        "integerEnum1": {"target": INTEGER_ENUM},
-        "integerEnum2": {"target": INTEGER_ENUM},
-        "integerEnum3": {"target": INTEGER_ENUM},
-        "integerEnumList": {"target": INTEGER_ENUM_LIST},
-        "integerEnumSet": {"target": INTEGER_ENUM_SET},
-        "integerEnumMap": {"target": INTEGER_ENUM_MAP},
-    },
-)
-
-JSON_INT_ENUMS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#JsonIntEnums"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/JsonIntEnums", "method": "PUT"}),
-        )
-    ],
-)
-
-NESTED_STRING_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#NestedStringList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING_LIST}},
-)
-
-STRUCTURE_LIST_MEMBER = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#StructureListMember"),
-    members={
-        "a": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#jsonName"), value="value")],
-        },
-        "b": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#jsonName"), value="other")],
-        },
-    },
-)
-
-STRUCTURE_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#StructureList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRUCTURE_LIST_MEMBER}},
-)
-
-JSON_LISTS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonListsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonListsInputOutput",
-        )
-    ],
-    members={
-        "stringList": {"target": STRING_LIST},
-        "stringSet": {"target": STRING_SET},
-        "integerList": {"target": INTEGER_LIST},
-        "booleanList": {"target": BOOLEAN_LIST},
-        "timestampList": {"target": TIMESTAMP_LIST},
-        "enumList": {"target": FOO_ENUM_LIST},
-        "intEnumList": {"target": INTEGER_ENUM_LIST},
-        "nestedStringList": {"target": NESTED_STRING_LIST},
-        "structureList": {
-            "target": STRUCTURE_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#jsonName"), value="myStructureList")
-            ],
-        },
-    },
-)
-
-JSON_LISTS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonListsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonListsInputOutput",
-        )
-    ],
-    members={
-        "stringList": {"target": STRING_LIST},
-        "stringSet": {"target": STRING_SET},
-        "integerList": {"target": INTEGER_LIST},
-        "booleanList": {"target": BOOLEAN_LIST},
-        "timestampList": {"target": TIMESTAMP_LIST},
-        "enumList": {"target": FOO_ENUM_LIST},
-        "intEnumList": {"target": INTEGER_ENUM_LIST},
-        "nestedStringList": {"target": NESTED_STRING_LIST},
-        "structureList": {
-            "target": STRUCTURE_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#jsonName"), value="myStructureList")
-            ],
-        },
-    },
-)
-
-JSON_LISTS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#JsonLists"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/JsonLists", "method": "PUT"}),
-        )
-    ],
-)
-
-JSON_MAPS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonMapsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonMapsInputOutput",
-        )
-    ],
-    members={
-        "denseStructMap": {"target": DENSE_STRUCT_MAP},
-        "denseNumberMap": {"target": DENSE_NUMBER_MAP},
-        "denseBooleanMap": {"target": DENSE_BOOLEAN_MAP},
-        "denseStringMap": {"target": DENSE_STRING_MAP},
-        "denseSetMap": {"target": DENSE_SET_MAP},
-    },
-)
-
-JSON_MAPS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonMapsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonMapsInputOutput",
-        )
-    ],
-    members={
-        "denseStructMap": {"target": DENSE_STRUCT_MAP},
-        "denseNumberMap": {"target": DENSE_NUMBER_MAP},
-        "denseBooleanMap": {"target": DENSE_BOOLEAN_MAP},
-        "denseStringMap": {"target": DENSE_STRING_MAP},
-        "denseSetMap": {"target": DENSE_SET_MAP},
-    },
-)
-
-JSON_MAPS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#JsonMaps"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/JsonMaps", "method": "POST"}),
-        )
-    ],
-)
-
-JSON_TIMESTAMPS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonTimestampsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonTimestampsInputOutput",
-        )
-    ],
-    members={
-        "normal": {"target": TIMESTAMP},
-        "dateTime": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time")
-            ],
-        },
-        "dateTimeOnTarget": {"target": DATE_TIME},
-        "epochSeconds": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds"
-                )
-            ],
-        },
-        "epochSecondsOnTarget": {"target": EPOCH_SECONDS},
-        "httpDate": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date")
-            ],
-        },
-        "httpDateOnTarget": {"target": HTTP_DATE},
-    },
-)
-
-JSON_TIMESTAMPS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonTimestampsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#JsonTimestampsInputOutput",
-        )
-    ],
-    members={
-        "normal": {"target": TIMESTAMP},
-        "dateTime": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time")
-            ],
-        },
-        "dateTimeOnTarget": {"target": DATE_TIME},
-        "epochSeconds": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds"
-                )
-            ],
-        },
-        "epochSecondsOnTarget": {"target": EPOCH_SECONDS},
-        "httpDate": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date")
-            ],
-        },
-        "httpDateOnTarget": {"target": HTTP_DATE},
-    },
-)
-
-JSON_TIMESTAMPS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#JsonTimestamps"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/JsonTimestamps", "method": "POST"}),
-        )
-    ],
-)
-
-RENAMED_GREETING = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson.nested#GreetingStruct"),
-    members={"salutation": {"target": STRING}},
-)
-
-NESTED_UNION = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#NestedUnion"),
-    shape_type=ShapeType.UNION,
-    members={"stringValue": {"target": STRING}},
-)
-
-MY_UNION = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MyUnion"),
-    shape_type=ShapeType.UNION,
-    members={
-        "stringValue": {"target": STRING},
-        "booleanValue": {"target": BOOLEAN},
-        "numberValue": {"target": INTEGER},
-        "blobValue": {"target": BLOB},
-        "timestampValue": {"target": TIMESTAMP},
-        "enumValue": {"target": FOO_ENUM},
-        "listValue": {"target": STRING_LIST},
-        "mapValue": {"target": STRING_MAP},
-        "structureValue": {"target": GREETING_STRUCT},
-        "renamedStructureValue": {"target": RENAMED_GREETING},
-        "unionValue": {"target": NESTED_UNION},
-    },
-)
-
-JSON_UNIONS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonUnionsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#UnionInputOutput",
-        )
-    ],
-    members={"contents": {"target": MY_UNION}},
-)
-
-JSON_UNIONS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#JsonUnionsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#UnionInputOutput",
-        )
-    ],
-    members={"contents": {"target": MY_UNION}},
-)
-
-JSON_UNIONS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#JsonUnions"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/JsonUnions", "method": "PUT"}),
-        )
-    ],
-)
-
-JSON_VALUE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#JsonValue"),
-    shape_type=ShapeType.STRING,
-    traits=[Trait.new(id=ShapeID("smithy.api#mediaType"), value="application/json")],
-)
-
-MALFORMED_ACCEPT_WITH_BODY_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithBodyInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_ACCEPT_WITH_BODY_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithBodyOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.shared#GreetingStruct",
-        )
-    ],
-    members={"hi": {"target": STRING}},
-)
-
-MALFORMED_ACCEPT_WITH_BODY = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithBody"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/MalformedAcceptWithBody"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_ACCEPT_WITH_GENERIC_STRING_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithGenericStringInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_ACCEPT_WITH_GENERIC_STRING_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithGenericStringOutput"),
-    members={
-        "payload": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-MALFORMED_ACCEPT_WITH_GENERIC_STRING = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithGenericString"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/MalformedAcceptWithGenericString"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_ACCEPT_WITH_PAYLOAD_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithPayloadInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-JPEG_BLOB = Schema(
-    id=ShapeID("aws.protocoltests.shared#JpegBlob"),
-    shape_type=ShapeType.BLOB,
-    traits=[Trait.new(id=ShapeID("smithy.api#mediaType"), value="image/jpeg")],
-)
-
-MALFORMED_ACCEPT_WITH_PAYLOAD_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithPayloadOutput"),
-    members={
-        "payload": {
-            "target": JPEG_BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-MALFORMED_ACCEPT_WITH_PAYLOAD = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithPayload"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/MalformedAcceptWithPayload"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_BLOB_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedBlobInput"),
-    members={"blob": {"target": BLOB}},
-)
-
-MALFORMED_BLOB_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedBlobOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_BLOB = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedBlob"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/MalformedBlob", "method": "POST"}),
-        )
-    ],
-)
-
-MALFORMED_BOOLEAN_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedBooleanInput"),
-    members={
-        "booleanInBody": {"target": BOOLEAN},
-        "booleanInPath": {
-            "target": BOOLEAN,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "booleanInQuery": {
-            "target": BOOLEAN,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="booleanInQuery")
-            ],
-        },
-        "booleanInHeader": {
-            "target": BOOLEAN,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="booleanInHeader")
-            ],
-        },
-    },
-)
-
-MALFORMED_BOOLEAN_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedBooleanOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_BOOLEAN = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedBoolean"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedBoolean/{booleanInPath}", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_BYTE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedByteInput"),
-    members={
-        "byteInBody": {"target": BYTE},
-        "byteInPath": {
-            "target": BYTE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "byteInQuery": {
-            "target": BYTE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="byteInQuery")
-            ],
-        },
-        "byteInHeader": {
-            "target": BYTE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="byteInHeader")
-            ],
-        },
-    },
-)
-
-MALFORMED_BYTE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedByteOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_BYTE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedByte"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedByte/{byteInPath}", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_CONTENT_TYPE_WITH_BODY_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithBodyInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.shared#GreetingStruct",
-        )
-    ],
-    members={"hi": {"target": STRING}},
-)
-
-MALFORMED_CONTENT_TYPE_WITH_BODY_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithBodyOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_CONTENT_TYPE_WITH_BODY = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithBody"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/MalformedContentTypeWithBody"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithGenericStringInput"),
-    members={
-        "payload": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_OUTPUT = Schema.collection(
-    id=ShapeID(
-        "aws.protocoltests.restjson#MalformedContentTypeWithGenericStringOutput"
+    CONSTANT_QUERY_STRING_INPUT,
+    CONSTANT_QUERY_STRING_OUTPUT,
+    (),
+)
+
+CONTENT_TYPE_PARAMETERS_INPUT = (18, n1, _CTPI, 0, (_v,), ((7, 0),))
+
+CONTENT_TYPE_PARAMETERS_OUTPUT = (18, n1, _CTPO, 0)
+
+CONTENT_TYPE_PARAMETERS = (
+    23,
+    n1,
+    _CTP,
+    {_s: MappingProxyType({"uri": "/ContentTypeParameters", "method": "POST"})},
+    CONTENT_TYPE_PARAMETERS_INPUT,
+    CONTENT_TYPE_PARAMETERS_OUTPUT,
+    (),
+)
+
+DATETIME_OFFSETS_INPUT = (18, n1, _DOI, {_sSI: _sU})
+
+DATE_TIME = (4, n0, _DT, {_sF: _dt})
+
+DATETIME_OFFSETS_OUTPUT = (18, n1, _DOO, 0, (_d,), ((DATE_TIME, 0),))
+
+DATETIME_OFFSETS = (
+    23,
+    n1,
+    _DO,
+    {_s: MappingProxyType({"uri": "/DatetimeOffsets", "method": "POST"})},
+    DATETIME_OFFSETS_INPUT,
+    DATETIME_OFFSETS_OUTPUT,
+    (),
+)
+
+DOCUMENT = (13, n1, _Do, 0)
+
+TEST_ENUM = (14, n1, _TE, 0, (_FOO, _BAR, _BAZ), ((-1, 0), (-1, 0), (-1, 0)))
+
+TEST_INT_ENUM = (15, n1, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+
+TEST_STRING_LIST = (16, n1, _TSL, 0, (_m,), ((3, 0),))
+
+TEST_STRING_MAP = (17, n1, _TSM, 0, (_k, _v), ((3, 0), (3, 0)))
+
+DEFAULTS = (
+    18,
+    n1,
+    _De,
+    0,
+    (
+        _dS,
+        _dB,
+        _dL,
+        _dDM,
+        _dDS,
+        _dDB,
+        _dDL,
+        _dND,
+        _dT,
+        _dBe,
+        _dBef,
+        _dSe,
+        _dI,
+        _dLe,
+        _dF,
+        _dD,
+        _dM,
+        _dE,
+        _dIE,
+        _eS,
+        _fB,
+        _eB,
+        _zB,
+        _zS,
+        _zI,
+        _zL,
+        _zF,
+        _zD,
     ),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithGenericString"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/MalformedContentTypeWithGenericString"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithoutBodyInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithoutBodyOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithoutBody"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/MalformedContentTypeWithoutBody"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_INPUT = Schema.collection(
-    id=ShapeID(
-        "aws.protocoltests.restjson#MalformedContentTypeWithoutBodyEmptyInputInput"
+    (
+        (3, {_sm: _hi}),
+        (2, {_sm: True}),
+        (TEST_STRING_LIST, {_sm: ()}),
+        (DOCUMENT, {_sm: None}),
+        (DOCUMENT, {_sm: _hi}),
+        (DOCUMENT, {_sm: True}),
+        (DOCUMENT, {_sm: ()}),
+        (DOCUMENT, {_sm: None}),
+        (4, {_sm: 0}),
+        (1, {_sm: _YWJ}),
+        (5, {_sm: 1}),
+        (6, {_sm: 1}),
+        (7, {_sm: 10}),
+        (8, {_sm: 100}),
+        (9, {_sm: 1.0}),
+        (10, {_sm: 1.0}),
+        (TEST_STRING_MAP, {_sm: None}),
+        (TEST_ENUM, {_sm: _FOO}),
+        (TEST_INT_ENUM, {_sm: 1}),
+        (3, {_sm: _v_}),
+        (2, {_sm: False}),
+        (1, {_sm: _v_}),
+        (5, {_sm: 0}),
+        (6, {_sm: 0}),
+        (7, {_sm: 0}),
+        (8, {_sm: 0}),
+        (9, {_sm: 0.0}),
+        (10, {_sm: 0.0}),
     ),
-    members={
-        "header": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="header")],
-        }
-    },
 )
 
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_OUTPUT = Schema.collection(
-    id=ShapeID(
-        "aws.protocoltests.restjson#MalformedContentTypeWithoutBodyEmptyInputOutput"
+DENSE_BOOLEAN_MAP = (17, n1, _DBM, 0, (_k, _v), ((3, 0), (2, 0)))
+
+DENSE_NUMBER_MAP = (17, n1, _DNM, 0, (_k, _v), ((3, 0), (7, 0)))
+
+DENSE_SET_MAP = (17, n1, _DSM, 0, (_k, _v), ((3, 0), (STRING_SET, 0)))
+
+DENSE_STRING_MAP = (17, n1, _DSMe, 0, (_k, _v), ((3, 0), (3, 0)))
+
+GREETING_STRUCT = (18, n0, _GS, 0, (_hi,), ((3, 0),))
+
+DENSE_STRUCT_MAP = (17, n1, _DSMen, 0, (_k, _v), ((3, 0), (GREETING_STRUCT, 0)))
+
+FAREWELL = (18, n1, _Fa, 0, (_ph,), ((3, {_sm: _by}),))
+
+DIALOG = (18, n1, _Di, 0, (_l, _g, _f), ((3, 0), (3, {_sm: _hi}), (FAREWELL, 0)))
+
+DIALOG_LIST = (16, n1, _DLi, 0, (_m,), ((DIALOG, 0),))
+
+DIALOG_MAP = (17, n1, _DM, 0, (_k, _v), ((3, 0), (DIALOG, 0)))
+
+DOCUMENT_TYPE_INPUT = (
+    18,
+    n1,
+    _DTI,
+    {_sSI: _aDTIO},
+    (_sV, _dV),
+    ((3, 0), (DOCUMENT, 0)),
+)
+
+DOCUMENT_TYPE_OUTPUT = (
+    18,
+    n1,
+    _DTO,
+    {_sSI: _aDTIO},
+    (_sV, _dV),
+    ((3, 0), (DOCUMENT, 0)),
+)
+
+DOCUMENT_TYPE = (
+    23,
+    n1,
+    _DTo,
+    {_s: MappingProxyType({"uri": "/DocumentType", "method": "PUT"})},
+    DOCUMENT_TYPE_INPUT,
+    DOCUMENT_TYPE_OUTPUT,
+    (),
+)
+
+DOCUMENT_VALUED_MAP = (17, n1, _DVM, 0, (_k, _v), ((3, 0), (DOCUMENT, 0)))
+
+DOCUMENT_TYPE_AS_MAP_VALUE_INPUT = (
+    18,
+    n1,
+    _DTAMVI,
+    {_sSI: _aDTAMVIO},
+    (_dVM,),
+    ((DOCUMENT_VALUED_MAP, 0),),
+)
+
+DOCUMENT_TYPE_AS_MAP_VALUE_OUTPUT = (
+    18,
+    n1,
+    _DTAMVO,
+    {_sSI: _aDTAMVIO},
+    (_dVM,),
+    ((DOCUMENT_VALUED_MAP, 0),),
+)
+
+DOCUMENT_TYPE_AS_MAP_VALUE = (
+    23,
+    n1,
+    _DTAMV,
+    {_s: MappingProxyType({"uri": "/DocumentTypeAsMapValue", "method": "PUT"})},
+    DOCUMENT_TYPE_AS_MAP_VALUE_INPUT,
+    DOCUMENT_TYPE_AS_MAP_VALUE_OUTPUT,
+    (),
+)
+
+DOCUMENT_TYPE_AS_PAYLOAD_INPUT = (
+    18,
+    n1,
+    _DTAPI,
+    {_sSI: _aDTAPIO},
+    (_dV,),
+    ((DOCUMENT, 16),),
+)
+
+DOCUMENT_TYPE_AS_PAYLOAD_OUTPUT = (
+    18,
+    n1,
+    _DTAPO,
+    {_sSI: _aDTAPIO},
+    (_dV,),
+    ((DOCUMENT, 16),),
+)
+
+DOCUMENT_TYPE_AS_PAYLOAD = (
+    23,
+    n1,
+    _DTAP,
+    {_s: MappingProxyType({"uri": "/DocumentTypeAsPayload", "method": "PUT"})},
+    DOCUMENT_TYPE_AS_PAYLOAD_INPUT,
+    DOCUMENT_TYPE_AS_PAYLOAD_OUTPUT,
+    (),
+)
+
+ERROR_EVENT = (18, n1, _EE, {_smi: _c}, (_me,), ((3, 0),))
+
+HEADERS_EVENT = (
+    18,
+    n1,
+    _HE,
+    0,
+    (_bH, _bHy, _sHh, _iH, _lH, _bHl, _sHt, _tH),
+    (
+        (2, {_sHm: None}),
+        (5, {_sHm: None}),
+        (6, {_sHm: None}),
+        (7, {_sHm: None}),
+        (8, {_sHm: None}),
+        (1, {_sHm: None}),
+        (3, {_sHm: None}),
+        (DATE_TIME, {_sHm: None}),
     ),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
 )
 
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithoutBodyEmptyInput"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/MalformedContentTypeWithoutBodyEmptyInput"}
-            ),
-        )
-    ],
+PAYLOAD_STRUCTURE = (18, n1, _PS, 0, (_sM,), ((3, 0),))
+
+HEADERS_AND_EXPLICIT_PAYLOAD_EVENT = (
+    18,
+    n1,
+    _HAEPE,
+    0,
+    (_he, _p),
+    ((3, {_sHm: None}), (PAYLOAD_STRUCTURE, {_sP: None})),
 )
 
-MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithPayloadInput"),
-    members={
-        "payload": {
-            "target": JPEG_BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
+HEADERS_AND_IMPLICIT_PAYLOAD_EVENT = (
+    18,
+    n1,
+    _HAIPE,
+    0,
+    (_he, _p),
+    ((3, {_sHm: None}), (3, 0)),
+)
+
+STRING_PAYLOAD_EVENT = (18, n1, _SPE, 0, (_p,), ((3, {_sP: None}),))
+
+STRUCTURE_PAYLOAD_EVENT = (18, n1, _SPEt, 0, (_p,), ((PAYLOAD_STRUCTURE, {_sP: None}),))
+
+PAYLOAD_UNION = (19, n1, _PU, 0, (_uM,), ((3, 0),))
+
+UNION_PAYLOAD_EVENT = (18, n1, _UPE, 0, (_p,), ((PAYLOAD_UNION, {_sP: None}),))
+
+EVENT_STREAM = (
+    19,
+    n1,
+    _ES,
+    {_smith: None},
+    (_hea, _bP, _sPt, _sPtr, _uP, _hAEP, _hAIP, _e),
+    (
+        (HEADERS_EVENT, 0),
+        (BLOB_PAYLOAD_EVENT, 0),
+        (STRING_PAYLOAD_EVENT, 0),
+        (STRUCTURE_PAYLOAD_EVENT, 0),
+        (UNION_PAYLOAD_EVENT, 0),
+        (HEADERS_AND_EXPLICIT_PAYLOAD_EVENT, 0),
+        (HEADERS_AND_IMPLICIT_PAYLOAD_EVENT, 0),
+        (ERROR_EVENT, 0),
+    ),
+)
+
+DUPLEX_STREAM_INPUT = (18, n1, _DSI, 0, (_st,), ((EVENT_STREAM, 16),))
+
+DUPLEX_STREAM_OUTPUT = (18, n1, _DSO, 0, (_st,), ((EVENT_STREAM, 16),))
+
+DUPLEX_STREAM = (
+    23,
+    n1,
+    _DS,
+    {_s: MappingProxyType({"method": "POST", "uri": "/DuplexStream"})},
+    DUPLEX_STREAM_INPUT,
+    DUPLEX_STREAM_OUTPUT,
+    (),
+)
+
+DUPLEX_STREAM_WITH_DISTINCT_STREAMS_INPUT = (
+    18,
+    n1,
+    _DSWDSI,
+    0,
+    (_st,),
+    ((EVENT_STREAM, 16),),
+)
+
+SINGLETON_EVENT = (18, n1, _SE, 0, (_v,), ((3, 0),))
+
+SINGLETON_EVENT_STREAM = (19, n1, _SES, 0, (_si,), ((SINGLETON_EVENT, 0),))
+
+DUPLEX_STREAM_WITH_DISTINCT_STREAMS_OUTPUT = (
+    18,
+    n1,
+    _DSWDSO,
+    0,
+    (_st,),
+    ((SINGLETON_EVENT_STREAM, 16),),
+)
+
+DUPLEX_STREAM_WITH_DISTINCT_STREAMS = (
+    23,
+    n1,
+    _DSWDS,
+    {
+        _s: MappingProxyType(
+            {"method": "POST", "uri": "/DuplexStreamWithDistinctStreams"}
+        )
     },
+    DUPLEX_STREAM_WITH_DISTINCT_STREAMS_INPUT,
+    DUPLEX_STREAM_WITH_DISTINCT_STREAMS_OUTPUT,
+    (),
 )
 
-MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithPayloadOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
+DUPLEX_STREAM_WITH_INITIAL_MESSAGES_INPUT = (
+    18,
+    n1,
+    _DSWIMI,
+    0,
+    (_iRM, _st),
+    ((3, {_sH: _irm, _smit: None}), (EVENT_STREAM, 16)),
+)
+
+DUPLEX_STREAM_WITH_INITIAL_MESSAGES_OUTPUT = (
+    18,
+    n1,
+    _DSWIMO,
+    0,
+    (_iRMn, _st),
+    ((3, {_sH: _irm_, _smit: None}), (EVENT_STREAM, 16)),
+)
+
+SERVICE_UNAVAILABLE_ERROR = (18, n1, _SUE, {_smi: _se, _sE: 500}, (_me,), ((3, 0),))
+
+DUPLEX_STREAM_WITH_INITIAL_MESSAGES = (
+    23,
+    n1,
+    _DSWIM,
+    {
+        _s: MappingProxyType(
+            {"method": "POST", "uri": "/DuplexStreamWithInitialMessages"}
         )
-    ],
-)
-
-MALFORMED_CONTENT_TYPE_WITH_PAYLOAD = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithPayload"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/MalformedContentTypeWithPayload"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_DOUBLE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedDoubleInput"),
-    members={
-        "doubleInBody": {"target": DOUBLE},
-        "doubleInPath": {
-            "target": DOUBLE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "doubleInQuery": {
-            "target": DOUBLE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="doubleInQuery")
-            ],
-        },
-        "doubleInHeader": {
-            "target": DOUBLE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="doubleInHeader")
-            ],
-        },
     },
+    DUPLEX_STREAM_WITH_INITIAL_MESSAGES_INPUT,
+    DUPLEX_STREAM_WITH_INITIAL_MESSAGES_OUTPUT,
+    (SERVICE_UNAVAILABLE_ERROR,),
 )
 
-MALFORMED_DOUBLE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedDoubleOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
+EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT = (18, n1, _EIAEOI, 0)
+
+EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT = (18, n1, _EIAEOO, 0)
+
+EMPTY_INPUT_AND_EMPTY_OUTPUT = (
+    23,
+    n1,
+    _EIAEO,
+    {_s: MappingProxyType({"uri": "/EmptyInputAndEmptyOutput", "method": "POST"})},
+    EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT,
+    EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT,
+    (),
 )
 
-MALFORMED_DOUBLE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedDouble"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedDouble/{doubleInPath}", "method": "POST"}
-            ),
-        )
-    ],
-)
+ENDPOINT_OPERATION_INPUT = (18, n1, _EOI, {_sSI: _sU})
 
-MALFORMED_FLOAT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedFloatInput"),
-    members={
-        "floatInBody": {"target": FLOAT},
-        "floatInPath": {
-            "target": FLOAT,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "floatInQuery": {
-            "target": FLOAT,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="floatInQuery")
-            ],
-        },
-        "floatInHeader": {
-            "target": FLOAT,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="floatInHeader")
-            ],
-        },
+ENDPOINT_OPERATION_OUTPUT = (18, n1, _EOO, {_sSI: _sU})
+
+ENDPOINT_OPERATION = (
+    23,
+    n1,
+    _EO,
+    {
+        _smithy: MappingProxyType({"hostPrefix": "foo."}),
+        _s: MappingProxyType({"uri": "/EndpointOperation", "method": "POST"}),
     },
-)
-
-MALFORMED_FLOAT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedFloatOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_FLOAT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedFloat"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedFloat/{floatInPath}", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_INTEGER_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedIntegerInput"),
-    members={
-        "integerInBody": {"target": INTEGER},
-        "integerInPath": {
-            "target": INTEGER,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "integerInQuery": {
-            "target": INTEGER,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="integerInQuery")
-            ],
-        },
-        "integerInHeader": {
-            "target": INTEGER,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="integerInHeader")
-            ],
-        },
-    },
-)
-
-MALFORMED_INTEGER_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedIntegerOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_INTEGER = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedInteger"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedInteger/{integerInPath}", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-SIMPLE_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SimpleList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING}},
-)
-
-MALFORMED_LIST_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedListInput"),
-    members={"bodyList": {"target": SIMPLE_LIST}},
-)
-
-MALFORMED_LIST_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedListOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_LIST = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedList"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/MalformedList", "method": "POST"}),
-        )
-    ],
-)
-
-MALFORMED_LONG_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedLongInput"),
-    members={
-        "longInBody": {"target": LONG},
-        "longInPath": {
-            "target": LONG,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "longInQuery": {
-            "target": LONG,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="longInQuery")
-            ],
-        },
-        "longInHeader": {
-            "target": LONG,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="longInHeader")
-            ],
-        },
-    },
-)
-
-MALFORMED_LONG_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedLongOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_LONG = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedLong"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedLong/{longInPath}", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-SIMPLE_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SimpleMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
-)
-
-MALFORMED_MAP_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedMapInput"),
-    members={"bodyMap": {"target": SIMPLE_MAP}},
-)
-
-MALFORMED_MAP_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedMapOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_MAP = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedMap"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/MalformedMap", "method": "POST"}),
-        )
-    ],
-)
-
-MALFORMED_REQUEST_BODY_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedRequestBodyInput"),
-    members={"int": {"target": INTEGER}, "float": {"target": FLOAT}},
-)
-
-MALFORMED_REQUEST_BODY_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedRequestBodyOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_REQUEST_BODY = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedRequestBody"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/MalformedRequestBody", "method": "POST"}),
-        )
-    ],
-)
-
-MALFORMED_SHORT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedShortInput"),
-    members={
-        "shortInBody": {"target": SHORT},
-        "shortInPath": {
-            "target": SHORT,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        },
-        "shortInQuery": {
-            "target": SHORT,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="shortInQuery")
-            ],
-        },
-        "shortInHeader": {
-            "target": SHORT,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="shortInHeader")
-            ],
-        },
-    },
-)
-
-MALFORMED_SHORT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedShortOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_SHORT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedShort"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedShort/{shortInPath}", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_STRING_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedStringInput"),
-    members={
-        "blob": {
-            "target": JSON_HEADER_STRING,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="amz-media-typed-header"
-                )
-            ],
-        }
-    },
-)
-
-MALFORMED_STRING_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedStringOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_STRING = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedString"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/MalformedString", "method": "POST"}),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_BODY_DATE_TIME_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyDateTimeInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time"),
-                Trait.new(id=ShapeID("smithy.api#required")),
-            ],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_BODY_DATE_TIME_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyDateTimeOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_BODY_DATE_TIME = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyDateTime"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampBodyDateTime", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_BODY_DEFAULT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyDefaultInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#required"))],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_BODY_DEFAULT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyDefaultOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_BODY_DEFAULT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyDefault"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampBodyDefault", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_BODY_HTTP_DATE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyHttpDateInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date"),
-                Trait.new(id=ShapeID("smithy.api#required")),
-            ],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_BODY_HTTP_DATE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyHttpDateOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_BODY_HTTP_DATE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyHttpDate"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampBodyHttpDate", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_HEADER_DATE_TIME_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderDateTimeInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time"),
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="timestamp"),
-                Trait.new(id=ShapeID("smithy.api#required")),
-            ],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_HEADER_DATE_TIME_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderDateTimeOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_HEADER_DATE_TIME = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderDateTime"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampHeaderDateTime", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_HEADER_DEFAULT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderDefaultInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="timestamp"),
-                Trait.new(id=ShapeID("smithy.api#required")),
-            ],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_HEADER_DEFAULT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderDefaultOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_HEADER_DEFAULT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderDefault"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampHeaderDefault", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_HEADER_EPOCH_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderEpochInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds"
-                ),
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="timestamp"),
-                Trait.new(id=ShapeID("smithy.api#required")),
-            ],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_HEADER_EPOCH_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderEpochOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_HEADER_EPOCH = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderEpoch"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampHeaderEpoch", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_PATH_DEFAULT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathDefaultInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_PATH_DEFAULT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathDefaultOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_PATH_DEFAULT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathDefault"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampPathDefault/{timestamp}", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_PATH_EPOCH_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathEpochInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds"
-                ),
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_PATH_EPOCH_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathEpochOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_PATH_EPOCH = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathEpoch"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampPathEpoch/{timestamp}", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_PATH_HTTP_DATE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathHttpDateInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date"),
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpLabel")),
-            ],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_PATH_HTTP_DATE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathHttpDateOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_PATH_HTTP_DATE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathHttpDate"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampPathHttpDate/{timestamp}", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_QUERY_DEFAULT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryDefaultInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="timestamp"),
-            ],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_QUERY_DEFAULT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryDefaultOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_QUERY_DEFAULT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryDefault"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampQueryDefault", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_QUERY_EPOCH_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryEpochInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds"
-                ),
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="timestamp"),
-            ],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_QUERY_EPOCH_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryEpochOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_QUERY_EPOCH = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryEpoch"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampQueryEpoch", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryHttpDateInput"),
-    members={
-        "timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date"),
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="timestamp"),
-            ],
-        }
-    },
-)
-
-MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryHttpDateOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_TIMESTAMP_QUERY_HTTP_DATE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryHttpDate"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/MalformedTimestampQueryHttpDate", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-SIMPLE_UNION = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SimpleUnion"),
-    shape_type=ShapeType.UNION,
-    members={"int": {"target": INTEGER}, "string": {"target": STRING}},
-)
-
-MALFORMED_UNION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedUnionInput"),
-    members={"union": {"target": SIMPLE_UNION}},
-)
-
-MALFORMED_UNION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MalformedUnionOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-MALFORMED_UNION = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MalformedUnion"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/MalformedUnion", "method": "POST"}),
-        )
-    ],
-)
-
-MEDIA_TYPE_HEADER_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MediaTypeHeaderInput"),
-    members={
-        "json": {
-            "target": JSON_VALUE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Json")],
-        }
-    },
-)
-
-MEDIA_TYPE_HEADER_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#MediaTypeHeaderOutput"),
-    members={
-        "json": {
-            "target": JSON_VALUE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Json")],
-        }
-    },
-)
-
-MEDIA_TYPE_HEADER = Schema(
-    id=ShapeID("aws.protocoltests.restjson#MediaTypeHeader"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/MediaTypeHeader", "method": "GET"}),
-        )
-    ],
-)
-
-NO_INPUT_AND_NO_OUTPUT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#NoInputAndNoOutputInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-NO_INPUT_AND_NO_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#NoInputAndNoOutputOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-NO_INPUT_AND_NO_OUTPUT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#NoInputAndNoOutput"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/NoInputAndNoOutput", "method": "POST"}),
-        )
-    ],
-)
-
-NO_INPUT_AND_OUTPUT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#NoInputAndOutputInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-NO_INPUT_AND_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#NoInputAndOutputOutput")
-)
-
-NO_INPUT_AND_OUTPUT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#NoInputAndOutput"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/NoInputAndOutputOutput", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-NULL_AND_EMPTY_HEADERS_CLIENT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#NullAndEmptyHeadersClientInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#NullAndEmptyHeadersIO",
-        )
-    ],
-    members={
-        "a": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-A")],
-        },
-        "b": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-B")],
-        },
-        "c": {
-            "target": STRING_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-C")],
-        },
-    },
-)
-
-NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#NullAndEmptyHeadersClientOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#NullAndEmptyHeadersIO",
-        )
-    ],
-    members={
-        "a": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-A")],
-        },
-        "b": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-B")],
-        },
-        "c": {
-            "target": STRING_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-C")],
-        },
-    },
-)
-
-NULL_AND_EMPTY_HEADERS_CLIENT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#NullAndEmptyHeadersClient"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/NullAndEmptyHeadersClient", "method": "GET"}
-            ),
-        )
-    ],
-)
-
-NULL_AND_EMPTY_HEADERS_SERVER_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#NullAndEmptyHeadersServerInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#NullAndEmptyHeadersIO",
-        )
-    ],
-    members={
-        "a": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-A")],
-        },
-        "b": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-B")],
-        },
-        "c": {
-            "target": STRING_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-C")],
-        },
-    },
-)
-
-NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#NullAndEmptyHeadersServerOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#NullAndEmptyHeadersIO",
-        )
-    ],
-    members={
-        "a": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-A")],
-        },
-        "b": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-B")],
-        },
-        "c": {
-            "target": STRING_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-C")],
-        },
-    },
-)
-
-NULL_AND_EMPTY_HEADERS_SERVER = Schema(
-    id=ShapeID("aws.protocoltests.restjson#NullAndEmptyHeadersServer"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/NullAndEmptyHeadersServer", "method": "GET"}
-            ),
-        )
-    ],
-)
-
-OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OmitsNullSerializesEmptyStringInput"),
-    members={
-        "nullValue": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="Null")],
-        },
-        "emptyString": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="Empty")],
-        },
-    },
-)
-
-OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OmitsNullSerializesEmptyStringOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-OMITS_NULL_SERIALIZES_EMPTY_STRING = Schema(
-    id=ShapeID("aws.protocoltests.restjson#OmitsNullSerializesEmptyString"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/OmitsNullSerializesEmptyString", "method": "GET"}
-            ),
-        )
-    ],
-)
-
-OMITS_SERIALIZING_EMPTY_LISTS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OmitsSerializingEmptyListsInput"),
-    members={
-        "queryStringList": {
-            "target": STRING_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="StringList")
-            ],
-        },
-        "queryIntegerList": {
-            "target": INTEGER_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="IntegerList")
-            ],
-        },
-        "queryDoubleList": {
-            "target": DOUBLE_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="DoubleList")
-            ],
-        },
-        "queryBooleanList": {
-            "target": BOOLEAN_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="BooleanList")
-            ],
-        },
-        "queryTimestampList": {
-            "target": TIMESTAMP_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="TimestampList")
-            ],
-        },
-        "queryEnumList": {
-            "target": FOO_ENUM_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="EnumList")],
-        },
-        "queryIntegerEnumList": {
-            "target": INTEGER_ENUM_LIST,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="IntegerEnumList")
-            ],
-        },
-    },
-)
-
-OMITS_SERIALIZING_EMPTY_LISTS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OmitsSerializingEmptyListsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-OMITS_SERIALIZING_EMPTY_LISTS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#OmitsSerializingEmptyLists"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/OmitsSerializingEmptyLists", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-OPERATION_WITH_DEFAULTS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OperationWithDefaultsInput"),
-    members={
-        "defaults": {"target": DEFAULTS},
-        "clientOptionalDefaults": {"target": CLIENT_OPTIONAL_DEFAULTS},
-        "topLevelDefault": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="hi")],
-        },
-        "otherTopLevelDefault": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-    },
-)
-
-OPERATION_WITH_DEFAULTS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OperationWithDefaultsOutput"),
-    members={
-        "defaultString": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="hi")],
-        },
-        "defaultBoolean": {
-            "target": BOOLEAN,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=True)],
-        },
-        "defaultList": {
-            "target": TEST_STRING_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=())],
-        },
-        "defaultDocumentMap": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"))],
-        },
-        "defaultDocumentString": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="hi")],
-        },
-        "defaultDocumentBoolean": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=True)],
-        },
-        "defaultDocumentList": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=())],
-        },
-        "defaultNullDocument": {
-            "target": DOCUMENT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=None)],
-        },
-        "defaultTimestamp": {
-            "target": TIMESTAMP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "defaultBlob": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="YWJj")],
-        },
-        "defaultByte": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "defaultShort": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "defaultInteger": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=10)],
-        },
-        "defaultLong": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=100)],
-        },
-        "defaultFloat": {
-            "target": FLOAT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1.0)],
-        },
-        "defaultDouble": {
-            "target": DOUBLE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1.0)],
-        },
-        "defaultMap": {
-            "target": TEST_STRING_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"))],
-        },
-        "defaultEnum": {
-            "target": TEST_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="FOO")],
-        },
-        "defaultIntEnum": {
-            "target": TEST_INT_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "emptyString": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="")],
-        },
-        "falseBoolean": {
-            "target": BOOLEAN,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=False)],
-        },
-        "emptyBlob": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="")],
-        },
-        "zeroByte": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroShort": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroInteger": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroLong": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroFloat": {
-            "target": FLOAT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0.0)],
-        },
-        "zeroDouble": {
-            "target": DOUBLE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0.0)],
-        },
-    },
-)
-
-OPERATION_WITH_DEFAULTS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#OperationWithDefaults"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/OperationWithDefaults", "method": "POST"}),
-        )
-    ],
-)
-
-TOP_LEVEL = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TopLevel"),
-    members={
-        "dialog": {
-            "target": DIALOG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#required"))],
-        },
-        "dialogList": {
-            "target": DIALOG_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=())],
-        },
-        "dialogMap": {
-            "target": DIALOG_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"))],
-        },
-    },
-)
-
-OPERATION_WITH_NESTED_STRUCTURE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OperationWithNestedStructureInput"),
-    members={
-        "topLevel": {
-            "target": TOP_LEVEL,
-            "traits": [Trait.new(id=ShapeID("smithy.api#required"))],
-        }
-    },
-)
-
-OPERATION_WITH_NESTED_STRUCTURE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OperationWithNestedStructureOutput"),
-    members={
-        "dialog": {
-            "target": DIALOG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#required"))],
-        },
-        "dialogList": {
-            "target": DIALOG_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=())],
-        },
-        "dialogMap": {
-            "target": DIALOG_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"))],
-        },
-    },
-)
-
-OPERATION_WITH_NESTED_STRUCTURE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#OperationWithNestedStructure"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/OperationWithNestedStructure", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-OUTPUT_STREAM_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OutputStreamInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-OUTPUT_STREAM_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OutputStreamOutput"),
-    members={
-        "stream": {
-            "target": EVENT_STREAM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        }
-    },
-)
-
-OUTPUT_STREAM = Schema(
-    id=ShapeID("aws.protocoltests.restjson#OutputStream"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"method": "POST", "uri": "/OutputStream"}),
-        )
-    ],
-)
-
-OUTPUT_STREAM_WITH_INITIAL_RESPONSE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OutputStreamWithInitialResponseInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-OUTPUT_STREAM_WITH_INITIAL_RESPONSE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#OutputStreamWithInitialResponseOutput"),
-    members={
-        "initialResponseMember": {
-            "target": STRING,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="initial-response-member"
-                ),
-                Trait.new(id=ShapeID("smithy.api#required")),
-            ],
-        },
-        "stream": {
-            "target": EVENT_STREAM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-OUTPUT_STREAM_WITH_INITIAL_RESPONSE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#OutputStreamWithInitialResponse"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/OutputStreamWithInitialResponse"}
-            ),
-        )
-    ],
-)
-
-PAYLOAD_CONFIG = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#PayloadConfig"),
-    members={"data": {"target": INTEGER}},
-)
-
-PLAYER_ACTION = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#PlayerAction"),
-    shape_type=ShapeType.UNION,
-    members={"quit": {"target": UNIT}},
-)
-
-POST_PLAYER_ACTION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#PostPlayerActionInput"),
-    members={"action": {"target": PLAYER_ACTION}},
-)
-
-POST_PLAYER_ACTION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#PostPlayerActionOutput"),
-    members={
-        "action": {
-            "target": PLAYER_ACTION,
-            "traits": [Trait.new(id=ShapeID("smithy.api#required"))],
-        }
-    },
-)
-
-POST_PLAYER_ACTION = Schema(
-    id=ShapeID("aws.protocoltests.restjson#PostPlayerAction"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/PostPlayerAction", "method": "POST"}),
-        )
-    ],
-)
-
-UNION_WITH_JSON_NAME = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#UnionWithJsonName"),
-    shape_type=ShapeType.UNION,
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#jsonName"), value="FOO")],
-        },
-        "bar": {"target": STRING},
-        "baz": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#jsonName"), value="_baz")],
-        },
-    },
-)
-
-POST_UNION_WITH_JSON_NAME_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#PostUnionWithJsonNameInput"),
-    members={"value": {"target": UNION_WITH_JSON_NAME}},
-)
-
-POST_UNION_WITH_JSON_NAME_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#PostUnionWithJsonNameOutput"),
-    members={
-        "value": {
-            "target": UNION_WITH_JSON_NAME,
-            "traits": [Trait.new(id=ShapeID("smithy.api#required"))],
-        }
-    },
-)
-
-POST_UNION_WITH_JSON_NAME = Schema(
-    id=ShapeID("aws.protocoltests.restjson#PostUnionWithJsonName"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/PostUnionWithJsonName", "method": "POST"}),
-        )
-    ],
-)
-
-PUT_WITH_CONTENT_ENCODING_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#PutWithContentEncodingInput"),
-    members={
-        "encoding": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="Content-Encoding")
-            ],
-        },
-        "data": {"target": STRING},
-    },
-)
-
-PUT_WITH_CONTENT_ENCODING_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#PutWithContentEncodingOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-PUT_WITH_CONTENT_ENCODING = Schema(
-    id=ShapeID("aws.protocoltests.restjson#PutWithContentEncoding"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#requestCompression"),
-            value=MappingProxyType({"encodings": ("gzip",)}),
+    ENDPOINT_OPERATION_INPUT,
+    ENDPOINT_OPERATION_OUTPUT,
+    (),
+)
+
+ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = (
+    18,
+    n1,
+    _EWHLOI,
+    {_sSI: _aHLI},
+    (_la,),
+    ((3, 257),),
+)
+
+ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = (18, n1, _EWHLOO, {_sSI: _sU})
+
+ENDPOINT_WITH_HOST_LABEL_OPERATION = (
+    23,
+    n1,
+    _EWHLO,
+    {
+        _smithy: MappingProxyType({"hostPrefix": "foo.{label}."}),
+        _s: MappingProxyType(
+            {"uri": "/EndpointWithHostLabelOperation", "method": "POST"}
         ),
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "POST", "uri": "/requestcompression/putcontentwithencoding"}
-            ),
+    },
+    ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT,
+    ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT,
+    (),
+)
+
+FINITE_STREAMING_BLOB = (1, n1, _FSB, {_smith: None, _sLmi: None})
+
+FOO_ERROR = (18, n1, _FEo, {_smi: _se, _sE: 500})
+
+FRACTIONAL_SECONDS_INPUT = (18, n1, _FSI, {_sSI: _sU})
+
+FRACTIONAL_SECONDS_OUTPUT = (18, n1, _FSO, 0, (_d,), ((DATE_TIME, 0),))
+
+FRACTIONAL_SECONDS = (
+    23,
+    n1,
+    _FS,
+    {_s: MappingProxyType({"uri": "/FractionalSeconds", "method": "POST"})},
+    FRACTIONAL_SECONDS_INPUT,
+    FRACTIONAL_SECONDS_OUTPUT,
+    (),
+)
+
+GREETING_WITH_ERRORS_INPUT = (18, n1, _GWEI, {_sSI: _sU})
+
+GREETING_WITH_ERRORS_OUTPUT = (18, n1, _GWEO, 0, (_g,), ((3, {_sH: _XG}),))
+
+INVALID_GREETING = (18, n1, _IG, {_smi: _c, _sE: 400}, (_M,), ((3, 0),))
+
+GREETING_WITH_ERRORS = (
+    23,
+    n1,
+    _GWE,
+    {_s: MappingProxyType({"uri": "/GreetingWithErrors", "method": "PUT"})},
+    GREETING_WITH_ERRORS_INPUT,
+    GREETING_WITH_ERRORS_OUTPUT,
+    (INVALID_GREETING, COMPLEX_ERROR, FOO_ERROR),
+)
+
+HOST_WITH_PATH_OPERATION_INPUT = (18, n1, _HWPOI, {_sSI: _sU})
+
+HOST_WITH_PATH_OPERATION_OUTPUT = (18, n1, _HWPOO, {_sSI: _sU})
+
+HOST_WITH_PATH_OPERATION = (
+    23,
+    n1,
+    _HWPO,
+    {_s: MappingProxyType({"uri": "/HostWithPathOperation", "method": "GET"})},
+    HOST_WITH_PATH_OPERATION_INPUT,
+    HOST_WITH_PATH_OPERATION_OUTPUT,
+    (),
+)
+
+HTTP_CHECKSUM_REQUIRED_INPUT = (18, n1, _HCRI, {_sSI: _aHCRIO}, (_fo,), ((3, 0),))
+
+HTTP_CHECKSUM_REQUIRED_OUTPUT = (18, n1, _HCRO, {_sSI: _aHCRIO}, (_fo,), ((3, 0),))
+
+HTTP_CHECKSUM_REQUIRED = (
+    23,
+    n1,
+    _HCR,
+    {
+        _s: MappingProxyType({"uri": "/HttpChecksumRequired", "method": "POST"}),
+        _sCR: None,
+    },
+    HTTP_CHECKSUM_REQUIRED_INPUT,
+    HTTP_CHECKSUM_REQUIRED_OUTPUT,
+    (),
+)
+
+STRING_MAP = (17, n0, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
+
+HTTP_EMPTY_PREFIX_HEADERS_INPUT = (
+    18,
+    n1,
+    _HEPHI,
+    0,
+    (_pH, _sHp),
+    ((STRING_MAP, {_sPH: _v_}), (3, {_sH: _h})),
+)
+
+HTTP_EMPTY_PREFIX_HEADERS_OUTPUT = (
+    18,
+    n1,
+    _HEPHO,
+    0,
+    (_pH, _sHp),
+    ((STRING_MAP, {_sPH: _v_}), (3, {_sH: _h})),
+)
+
+HTTP_EMPTY_PREFIX_HEADERS = (
+    23,
+    n1,
+    _HEPH,
+    {_s: MappingProxyType({"uri": "/HttpEmptyPrefixHeaders", "method": "GET"})},
+    HTTP_EMPTY_PREFIX_HEADERS_INPUT,
+    HTTP_EMPTY_PREFIX_HEADERS_OUTPUT,
+    (),
+)
+
+STRING_ENUM = (14, n1, _SEt, 0, (_V,), ((-1, 0),))
+
+HTTP_ENUM_PAYLOAD_INPUT = (18, n1, _HEPI, {_sSI: _aEPI}, (_p,), ((STRING_ENUM, 16),))
+
+HTTP_ENUM_PAYLOAD_OUTPUT = (18, n1, _HEPO, {_sSI: _aEPI}, (_p,), ((STRING_ENUM, 16),))
+
+HTTP_ENUM_PAYLOAD = (
+    23,
+    n1,
+    _HEP,
+    {_s: MappingProxyType({"uri": "/EnumPayload", "method": "POST"})},
+    HTTP_ENUM_PAYLOAD_INPUT,
+    HTTP_ENUM_PAYLOAD_OUTPUT,
+    (),
+)
+
+HTTP_PAYLOAD_TRAITS_INPUT = (
+    18,
+    n1,
+    _HPTI,
+    {_sSI: _aHPTIO},
+    (_fo, _bl),
+    ((3, {_sH: _XF}), (1, 16)),
+)
+
+HTTP_PAYLOAD_TRAITS_OUTPUT = (
+    18,
+    n1,
+    _HPTO,
+    {_sSI: _aHPTIO},
+    (_fo, _bl),
+    ((3, {_sH: _XF}), (1, 16)),
+)
+
+HTTP_PAYLOAD_TRAITS = (
+    23,
+    n1,
+    _HPT,
+    {_s: MappingProxyType({"uri": "/HttpPayloadTraits", "method": "POST"})},
+    HTTP_PAYLOAD_TRAITS_INPUT,
+    HTTP_PAYLOAD_TRAITS_OUTPUT,
+    (),
+)
+
+TEXT_PLAIN_BLOB = (1, n0, _TPB, {_sT: _t})
+
+HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT = (
+    18,
+    n1,
+    _HPTWMTI,
+    {_sSI: _aHPTWMTIO},
+    (_fo, _bl),
+    ((3, {_sH: _XF}), (TEXT_PLAIN_BLOB, 16)),
+)
+
+HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT = (
+    18,
+    n1,
+    _HPTWMTO,
+    {_sSI: _aHPTWMTIO},
+    (_fo, _bl),
+    ((3, {_sH: _XF}), (TEXT_PLAIN_BLOB, 16)),
+)
+
+HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE = (
+    23,
+    n1,
+    _HPTWMT,
+    {
+        _s: MappingProxyType(
+            {"uri": "/HttpPayloadTraitsWithMediaType", "method": "POST"}
+        )
+    },
+    HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT,
+    HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT,
+    (),
+)
+
+NESTED_PAYLOAD = (18, n1, _NP, 0, (_g, _n), ((3, 0), (3, 0)))
+
+HTTP_PAYLOAD_WITH_STRUCTURE_INPUT = (
+    18,
+    n1,
+    _HPWSI,
+    {_sSI: _aHPWSIO},
+    (_ne,),
+    ((NESTED_PAYLOAD, 16),),
+)
+
+HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT = (
+    18,
+    n1,
+    _HPWSO,
+    {_sSI: _aHPWSIO},
+    (_ne,),
+    ((NESTED_PAYLOAD, 16),),
+)
+
+HTTP_PAYLOAD_WITH_STRUCTURE = (
+    23,
+    n1,
+    _HPWS,
+    {_s: MappingProxyType({"uri": "/HttpPayloadWithStructure", "method": "PUT"})},
+    HTTP_PAYLOAD_WITH_STRUCTURE_INPUT,
+    HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT,
+    (),
+)
+
+UNION_PAYLOAD = (19, n1, _UP, 0, (_g,), ((3, 0),))
+
+HTTP_PAYLOAD_WITH_UNION_INPUT = (
+    18,
+    n1,
+    _HPWUI,
+    {_sSI: _aHPWUIO},
+    (_ne,),
+    ((UNION_PAYLOAD, 16),),
+)
+
+HTTP_PAYLOAD_WITH_UNION_OUTPUT = (
+    18,
+    n1,
+    _HPWUO,
+    {_sSI: _aHPWUIO},
+    (_ne,),
+    ((UNION_PAYLOAD, 16),),
+)
+
+HTTP_PAYLOAD_WITH_UNION = (
+    23,
+    n1,
+    _HPWU,
+    {_s: MappingProxyType({"uri": "/HttpPayloadWithUnion", "method": "PUT"})},
+    HTTP_PAYLOAD_WITH_UNION_INPUT,
+    HTTP_PAYLOAD_WITH_UNION_OUTPUT,
+    (),
+)
+
+HTTP_PREFIX_HEADERS_INPUT = (
+    18,
+    n1,
+    _HPHI,
+    0,
+    (_fo, _fM),
+    ((3, {_sH: _xf}), (STRING_MAP, {_sPH: _xf_})),
+)
+
+HTTP_PREFIX_HEADERS_OUTPUT = (
+    18,
+    n1,
+    _HPHO,
+    0,
+    (_fo, _fM),
+    ((3, {_sH: _xf}), (STRING_MAP, {_sPH: _xf_})),
+)
+
+HTTP_PREFIX_HEADERS = (
+    23,
+    n1,
+    _HPH,
+    {_s: MappingProxyType({"uri": "/HttpPrefixHeaders", "method": "GET"})},
+    HTTP_PREFIX_HEADERS_INPUT,
+    HTTP_PREFIX_HEADERS_OUTPUT,
+    (),
+)
+
+HTTP_PREFIX_HEADERS_IN_RESPONSE_INPUT = (18, n1, _HPHIRI, 0)
+
+HTTP_PREFIX_HEADERS_IN_RESPONSE_OUTPUT = (
+    18,
+    n1,
+    _HPHIRO,
+    0,
+    (_pH,),
+    ((STRING_MAP, {_sPH: _v_}),),
+)
+
+HTTP_PREFIX_HEADERS_IN_RESPONSE = (
+    23,
+    n1,
+    _HPHIR,
+    {_s: MappingProxyType({"uri": "/HttpPrefixHeadersResponse", "method": "GET"})},
+    HTTP_PREFIX_HEADERS_IN_RESPONSE_INPUT,
+    HTTP_PREFIX_HEADERS_IN_RESPONSE_OUTPUT,
+    (),
+)
+
+QUERY_MAP = (17, n1, _QM, 0, (_k, _v), ((3, 0), (3, 0)))
+
+HTTP_QUERY_PARAMS_ONLY_OPERATION_INPUT = (
+    18,
+    n1,
+    _HQPOOI,
+    {_sSI: _aHQPOI},
+    (_qM,),
+    ((QUERY_MAP, 1024),),
+)
+
+HTTP_QUERY_PARAMS_ONLY_OPERATION_OUTPUT = (18, n1, _HQPOOO, {_sSI: _sU})
+
+HTTP_QUERY_PARAMS_ONLY_OPERATION = (
+    23,
+    n1,
+    _HQPOO,
+    {_s: MappingProxyType({"uri": "/http-query-params-only", "method": "GET"})},
+    HTTP_QUERY_PARAMS_ONLY_OPERATION_INPUT,
+    HTTP_QUERY_PARAMS_ONLY_OPERATION_OUTPUT,
+    (),
+)
+
+HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT = (
+    18,
+    n1,
+    _HRWFLI,
+    0,
+    (_fl, _do),
+    ((9, 9), (10, 9)),
+)
+
+HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT = (18, n1, _HRWFLO, {_sSI: _sU})
+
+HTTP_REQUEST_WITH_FLOAT_LABELS = (
+    23,
+    n1,
+    _HRWFL,
+    {
+        _s: MappingProxyType(
+            {"method": "GET", "uri": "/FloatHttpLabels/{float}/{double}"}
+        )
+    },
+    HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT,
+    HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT,
+    (),
+)
+
+HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT = (
+    18,
+    n1,
+    _HRWGLIPI,
+    0,
+    (_fo, _b),
+    ((3, 9), (3, 9)),
+)
+
+HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT = (18, n1, _HRWGLIPO, {_sSI: _sU})
+
+HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = (
+    23,
+    n1,
+    _HRWGLIP,
+    {
+        _s: MappingProxyType(
+            {
+                "method": "GET",
+                "uri": "/HttpRequestWithGreedyLabelInPath/foo/{foo}/baz/{baz+}",
+            }
+        )
+    },
+    HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT,
+    HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT,
+    (),
+)
+
+HTTP_REQUEST_WITH_LABELS_INPUT = (
+    18,
+    n1,
+    _HRWLI,
+    0,
+    (_str, _sh, _i, _lo, _fl, _do, _bo, _ti),
+    ((3, 9), (6, 9), (7, 9), (8, 9), (9, 9), (10, 9), (2, 9), (4, 9)),
+)
+
+HTTP_REQUEST_WITH_LABELS_OUTPUT = (18, n1, _HRWLO, {_sSI: _sU})
+
+HTTP_REQUEST_WITH_LABELS = (
+    23,
+    n1,
+    _HRWL,
+    {
+        _s: MappingProxyType(
+            {
+                "method": "GET",
+                "uri": "/HttpRequestWithLabels/{string}/{short}/{integer}/{long}/{float}/{double}/{boolean}/{timestamp}",
+            }
+        )
+    },
+    HTTP_REQUEST_WITH_LABELS_INPUT,
+    HTTP_REQUEST_WITH_LABELS_OUTPUT,
+    (),
+)
+
+EPOCH_SECONDS = (4, n0, _ESp, {_sF: _es})
+
+HTTP_DATE = (4, n0, _HD, {_sF: _hd})
+
+HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT = (
+    18,
+    n1,
+    _HRWLATFI,
+    0,
+    (_mES, _mHD, _mDT, _dFe, _tES, _tHD, _tDT),
+    (
+        (4, {_sF: _es, _smit: None, _sL: None}),
+        (4, {_sF: _hd, _smit: None, _sL: None}),
+        (4, {_sF: _dt, _smit: None, _sL: None}),
+        (4, 9),
+        (EPOCH_SECONDS, 9),
+        (HTTP_DATE, 9),
+        (DATE_TIME, 9),
+    ),
+)
+
+HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT = (18, n1, _HRWLATFO, {_sSI: _sU})
+
+HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = (
+    23,
+    n1,
+    _HRWLATF,
+    {
+        _s: MappingProxyType(
+            {
+                "method": "GET",
+                "uri": "/HttpRequestWithLabelsAndTimestampFormat/{memberEpochSeconds}/{memberHttpDate}/{memberDateTime}/{defaultFormat}/{targetEpochSeconds}/{targetHttpDate}/{targetDateTime}",
+            }
+        )
+    },
+    HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT,
+    HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT,
+    (),
+)
+
+HTTP_REQUEST_WITH_REGEX_LITERAL_INPUT = (18, n1, _HRWRLI, 0, (_str_,), ((3, 9),))
+
+HTTP_REQUEST_WITH_REGEX_LITERAL_OUTPUT = (18, n1, _HRWRLO, {_sSI: _sU})
+
+HTTP_REQUEST_WITH_REGEX_LITERAL = (
+    23,
+    n1,
+    _HRWRL,
+    {_s: MappingProxyType({"method": "GET", "uri": "/ReDosLiteral/{str}/(a+)+"})},
+    HTTP_REQUEST_WITH_REGEX_LITERAL_INPUT,
+    HTTP_REQUEST_WITH_REGEX_LITERAL_OUTPUT,
+    (),
+)
+
+HTTP_RESPONSE_CODE_INPUT = (18, n1, _HRCI, {_sSI: _sU})
+
+HTTP_RESPONSE_CODE_OUTPUT = (18, n1, _HRCO, 0, (_St,), ((7, 128),))
+
+HTTP_RESPONSE_CODE = (
+    23,
+    n1,
+    _HRC,
+    {_s: MappingProxyType({"uri": "/HttpResponseCode", "method": "PUT"})},
+    HTTP_RESPONSE_CODE_INPUT,
+    HTTP_RESPONSE_CODE_OUTPUT,
+    (),
+)
+
+HTTP_STRING_PAYLOAD_INPUT = (18, n1, _HSPI, {_sSI: _aSPI}, (_p,), ((3, 16),))
+
+HTTP_STRING_PAYLOAD_OUTPUT = (18, n1, _HSPO, {_sSI: _aSPI}, (_p,), ((3, 16),))
+
+HTTP_STRING_PAYLOAD = (
+    23,
+    n1,
+    _HSP,
+    {_s: MappingProxyType({"uri": "/StringPayload", "method": "POST"})},
+    HTTP_STRING_PAYLOAD_INPUT,
+    HTTP_STRING_PAYLOAD_OUTPUT,
+    (),
+)
+
+IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT = (18, n1, _IQPIRI, {_sSI: _sU})
+
+IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT = (18, n1, _IQPIRO, 0, (_b,), ((3, {_sQ: _b}),))
+
+IGNORE_QUERY_PARAMS_IN_RESPONSE = (
+    23,
+    n1,
+    _IQPIR,
+    {_s: MappingProxyType({"uri": "/IgnoreQueryParamsInResponse", "method": "GET"})},
+    IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT,
+    IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT,
+    (),
+)
+
+INPUT_AND_OUTPUT_WITH_HEADERS_INPUT = (
+    18,
+    n1,
+    _IAOWHI,
+    {_sSI: _aIAOWHIO},
+    (
+        _hS,
+        _hB,
+        _hSe,
+        _hI,
+        _hL,
+        _hF,
+        _hD,
+        _hTB,
+        _hFB,
+        _hSL,
+        _hSS,
+        _hIL,
+        _hBL,
+        _hTL,
+        _hE,
+        _hEL,
+        _hIE,
+        _hIEL,
+    ),
+    (
+        (3, {_sH: _XS}),
+        (5, {_sH: _XB}),
+        (6, {_sH: _XS_}),
+        (7, {_sH: _XI}),
+        (8, {_sH: _XL}),
+        (9, {_sH: _XF_}),
+        (10, {_sH: _XD}),
+        (2, {_sH: _XB_}),
+        (2, {_sH: _XB__}),
+        (STRING_LIST, {_sH: _XS__}),
+        (STRING_SET, {_sH: _XS___}),
+        (INTEGER_LIST, {_sH: _XI_}),
+        (BOOLEAN_LIST, {_sH: _XB___}),
+        (TIMESTAMP_LIST, {_sH: _XT}),
+        (FOO_ENUM, {_sH: _XE}),
+        (FOO_ENUM_LIST, {_sH: _XE_}),
+        (INTEGER_ENUM, {_sH: _XI__}),
+        (INTEGER_ENUM_LIST, {_sH: _XI___}),
+    ),
+)
+
+INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT = (
+    18,
+    n1,
+    _IAOWHO,
+    {_sSI: _aIAOWHIO},
+    (
+        _hS,
+        _hB,
+        _hSe,
+        _hI,
+        _hL,
+        _hF,
+        _hD,
+        _hTB,
+        _hFB,
+        _hSL,
+        _hSS,
+        _hIL,
+        _hBL,
+        _hTL,
+        _hE,
+        _hEL,
+        _hIE,
+        _hIEL,
+    ),
+    (
+        (3, {_sH: _XS}),
+        (5, {_sH: _XB}),
+        (6, {_sH: _XS_}),
+        (7, {_sH: _XI}),
+        (8, {_sH: _XL}),
+        (9, {_sH: _XF_}),
+        (10, {_sH: _XD}),
+        (2, {_sH: _XB_}),
+        (2, {_sH: _XB__}),
+        (STRING_LIST, {_sH: _XS__}),
+        (STRING_SET, {_sH: _XS___}),
+        (INTEGER_LIST, {_sH: _XI_}),
+        (BOOLEAN_LIST, {_sH: _XB___}),
+        (TIMESTAMP_LIST, {_sH: _XT}),
+        (FOO_ENUM, {_sH: _XE}),
+        (FOO_ENUM_LIST, {_sH: _XE_}),
+        (INTEGER_ENUM, {_sH: _XI__}),
+        (INTEGER_ENUM_LIST, {_sH: _XI___}),
+    ),
+)
+
+INPUT_AND_OUTPUT_WITH_HEADERS = (
+    23,
+    n1,
+    _IAOWH,
+    {_s: MappingProxyType({"uri": "/InputAndOutputWithHeaders", "method": "POST"})},
+    INPUT_AND_OUTPUT_WITH_HEADERS_INPUT,
+    INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT,
+    (),
+)
+
+INPUT_STREAM_INPUT = (18, n1, _ISI, 0, (_st,), ((EVENT_STREAM, 16),))
+
+INPUT_STREAM_OUTPUT = (18, n1, _ISO, {_sSI: _sU})
+
+INPUT_STREAM = (
+    23,
+    n1,
+    _ISn,
+    {_s: MappingProxyType({"method": "POST", "uri": "/InputStream"})},
+    INPUT_STREAM_INPUT,
+    INPUT_STREAM_OUTPUT,
+    (),
+)
+
+INPUT_STREAM_WITH_INITIAL_REQUEST_INPUT = (
+    18,
+    n1,
+    _ISWIRI,
+    0,
+    (_iRM, _st),
+    ((3, {_sH: _irm, _smit: None}), (EVENT_STREAM, 16)),
+)
+
+INPUT_STREAM_WITH_INITIAL_REQUEST_OUTPUT = (18, n1, _ISWIRO, {_sSI: _sU})
+
+INPUT_STREAM_WITH_INITIAL_REQUEST = (
+    23,
+    n1,
+    _ISWIR,
+    {_s: MappingProxyType({"method": "POST", "uri": "/InputStreamWithInitialRequest"})},
+    INPUT_STREAM_WITH_INITIAL_REQUEST_INPUT,
+    INPUT_STREAM_WITH_INITIAL_REQUEST_OUTPUT,
+    (),
+)
+
+JSON_BLOBS_INPUT = (18, n1, _JBI, {_sSI: _aJBIO}, (_da,), ((1, 0),))
+
+JSON_BLOBS_OUTPUT = (18, n1, _JBO, {_sSI: _aJBIO}, (_da,), ((1, 0),))
+
+JSON_BLOBS = (
+    23,
+    n1,
+    _JB,
+    {_s: MappingProxyType({"uri": "/JsonBlobs", "method": "POST"})},
+    JSON_BLOBS_INPUT,
+    JSON_BLOBS_OUTPUT,
+    (),
+)
+
+FOO_ENUM_MAP = (17, n0, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
+
+FOO_ENUM_SET = (16, n0, _FES, 0, (_m,), ((FOO_ENUM, 0),))
+
+JSON_ENUMS_INPUT = (
+    18,
+    n1,
+    _JEI,
+    {_sSI: _aJEIO},
+    (_fE, _fEo, _fEoo, _fEL, _fES, _fEM),
+    (
+        (FOO_ENUM, 0),
+        (FOO_ENUM, 0),
+        (FOO_ENUM, 0),
+        (FOO_ENUM_LIST, 0),
+        (FOO_ENUM_SET, 0),
+        (FOO_ENUM_MAP, 0),
+    ),
+)
+
+JSON_ENUMS_OUTPUT = (
+    18,
+    n1,
+    _JEO,
+    {_sSI: _aJEIO},
+    (_fE, _fEo, _fEoo, _fEL, _fES, _fEM),
+    (
+        (FOO_ENUM, 0),
+        (FOO_ENUM, 0),
+        (FOO_ENUM, 0),
+        (FOO_ENUM_LIST, 0),
+        (FOO_ENUM_SET, 0),
+        (FOO_ENUM_MAP, 0),
+    ),
+)
+
+JSON_ENUMS = (
+    23,
+    n1,
+    _JE,
+    {_s: MappingProxyType({"uri": "/JsonEnums", "method": "PUT"})},
+    JSON_ENUMS_INPUT,
+    JSON_ENUMS_OUTPUT,
+    (),
+)
+
+JSON_HEADER_STRING = (3, n1, _JHS, {_sT: _a})
+
+INTEGER_ENUM_MAP = (17, n0, _IEM, 0, (_k, _v), ((3, 0), (INTEGER_ENUM, 0)))
+
+INTEGER_ENUM_SET = (16, n0, _IES, 0, (_m,), ((INTEGER_ENUM, 0),))
+
+JSON_INT_ENUMS_INPUT = (
+    18,
+    n1,
+    _JIEI,
+    {_sSI: _aJIEIO},
+    (_iE, _iEn, _iEnt, _iEL, _iES, _iEM),
+    (
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM_LIST, 0),
+        (INTEGER_ENUM_SET, 0),
+        (INTEGER_ENUM_MAP, 0),
+    ),
+)
+
+JSON_INT_ENUMS_OUTPUT = (
+    18,
+    n1,
+    _JIEO,
+    {_sSI: _aJIEIO},
+    (_iE, _iEn, _iEnt, _iEL, _iES, _iEM),
+    (
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM_LIST, 0),
+        (INTEGER_ENUM_SET, 0),
+        (INTEGER_ENUM_MAP, 0),
+    ),
+)
+
+JSON_INT_ENUMS = (
+    23,
+    n1,
+    _JIE,
+    {_s: MappingProxyType({"uri": "/JsonIntEnums", "method": "PUT"})},
+    JSON_INT_ENUMS_INPUT,
+    JSON_INT_ENUMS_OUTPUT,
+    (),
+)
+
+NESTED_STRING_LIST = (16, n0, _NSL, 0, (_m,), ((STRING_LIST, 0),))
+
+STRUCTURE_LIST_MEMBER = (18, n1, _SLMt, 0, (_a_, _b_), ((3, {_sN: _v}), (3, {_sN: _o})))
+
+STRUCTURE_LIST = (16, n1, _SLt, 0, (_m,), ((STRUCTURE_LIST_MEMBER, 0),))
+
+JSON_LISTS_INPUT = (
+    18,
+    n1,
+    _JLI,
+    {_sSI: _aJLIO},
+    (_sLt, _sS, _iL, _bL, _tL, _eL, _iELn, _nSL, _sLtr),
+    (
+        (STRING_LIST, 0),
+        (STRING_SET, 0),
+        (INTEGER_LIST, 0),
+        (BOOLEAN_LIST, 0),
+        (TIMESTAMP_LIST, 0),
+        (FOO_ENUM_LIST, 0),
+        (INTEGER_ENUM_LIST, 0),
+        (NESTED_STRING_LIST, 0),
+        (STRUCTURE_LIST, {_sN: _mSL}),
+    ),
+)
+
+JSON_LISTS_OUTPUT = (
+    18,
+    n1,
+    _JLO,
+    {_sSI: _aJLIO},
+    (_sLt, _sS, _iL, _bL, _tL, _eL, _iELn, _nSL, _sLtr),
+    (
+        (STRING_LIST, 0),
+        (STRING_SET, 0),
+        (INTEGER_LIST, 0),
+        (BOOLEAN_LIST, 0),
+        (TIMESTAMP_LIST, 0),
+        (FOO_ENUM_LIST, 0),
+        (INTEGER_ENUM_LIST, 0),
+        (NESTED_STRING_LIST, 0),
+        (STRUCTURE_LIST, {_sN: _mSL}),
+    ),
+)
+
+JSON_LISTS = (
+    23,
+    n1,
+    _JL,
+    {_s: MappingProxyType({"uri": "/JsonLists", "method": "PUT"})},
+    JSON_LISTS_INPUT,
+    JSON_LISTS_OUTPUT,
+    (),
+)
+
+JSON_MAPS_INPUT = (
+    18,
+    n1,
+    _JMI,
+    {_sSI: _aJMIO},
+    (_dSM, _dNM, _dBM, _dSMe, _dSMen),
+    (
+        (DENSE_STRUCT_MAP, 0),
+        (DENSE_NUMBER_MAP, 0),
+        (DENSE_BOOLEAN_MAP, 0),
+        (DENSE_STRING_MAP, 0),
+        (DENSE_SET_MAP, 0),
+    ),
+)
+
+JSON_MAPS_OUTPUT = (
+    18,
+    n1,
+    _JMO,
+    {_sSI: _aJMIO},
+    (_dSM, _dNM, _dBM, _dSMe, _dSMen),
+    (
+        (DENSE_STRUCT_MAP, 0),
+        (DENSE_NUMBER_MAP, 0),
+        (DENSE_BOOLEAN_MAP, 0),
+        (DENSE_STRING_MAP, 0),
+        (DENSE_SET_MAP, 0),
+    ),
+)
+
+JSON_MAPS = (
+    23,
+    n1,
+    _JM,
+    {_s: MappingProxyType({"uri": "/JsonMaps", "method": "POST"})},
+    JSON_MAPS_INPUT,
+    JSON_MAPS_OUTPUT,
+    (),
+)
+
+JSON_TIMESTAMPS_INPUT = (
+    18,
+    n1,
+    _JTI,
+    {_sSI: _aJTIO},
+    (_no, _dTa, _dTOT, _eSp, _eSOT, _hDt, _hDOT),
+    (
+        (4, 0),
+        (4, {_sF: _dt}),
+        (DATE_TIME, 0),
+        (4, {_sF: _es}),
+        (EPOCH_SECONDS, 0),
+        (4, {_sF: _hd}),
+        (HTTP_DATE, 0),
+    ),
+)
+
+JSON_TIMESTAMPS_OUTPUT = (
+    18,
+    n1,
+    _JTO,
+    {_sSI: _aJTIO},
+    (_no, _dTa, _dTOT, _eSp, _eSOT, _hDt, _hDOT),
+    (
+        (4, 0),
+        (4, {_sF: _dt}),
+        (DATE_TIME, 0),
+        (4, {_sF: _es}),
+        (EPOCH_SECONDS, 0),
+        (4, {_sF: _hd}),
+        (HTTP_DATE, 0),
+    ),
+)
+
+JSON_TIMESTAMPS = (
+    23,
+    n1,
+    _JT,
+    {_s: MappingProxyType({"uri": "/JsonTimestamps", "method": "POST"})},
+    JSON_TIMESTAMPS_INPUT,
+    JSON_TIMESTAMPS_OUTPUT,
+    (),
+)
+
+RENAMED_GREETING = (18, n2, _GS, 0, (_sa,), ((3, 0),))
+
+NESTED_UNION = (19, n1, _NU, 0, (_sV,), ((3, 0),))
+
+MY_UNION = (
+    19,
+    n1,
+    _MU,
+    0,
+    (_sV, _bV, _nV, _bVl, _tV, _eV, _lV, _mV, _sVt, _rSV, _uV),
+    (
+        (3, 0),
+        (2, 0),
+        (7, 0),
+        (1, 0),
+        (4, 0),
+        (FOO_ENUM, 0),
+        (STRING_LIST, 0),
+        (STRING_MAP, 0),
+        (GREETING_STRUCT, 0),
+        (RENAMED_GREETING, 0),
+        (NESTED_UNION, 0),
+    ),
+)
+
+JSON_UNIONS_INPUT = (18, n1, _JUI, {_sSI: _aUIO}, (_co,), ((MY_UNION, 0),))
+
+JSON_UNIONS_OUTPUT = (18, n1, _JUO, {_sSI: _aUIO}, (_co,), ((MY_UNION, 0),))
+
+JSON_UNIONS = (
+    23,
+    n1,
+    _JU,
+    {_s: MappingProxyType({"uri": "/JsonUnions", "method": "PUT"})},
+    JSON_UNIONS_INPUT,
+    JSON_UNIONS_OUTPUT,
+    (),
+)
+
+JSON_VALUE = (3, n1, _JV, {_sT: _a})
+
+MALFORMED_ACCEPT_WITH_BODY_INPUT = (18, n1, _MAWBI, {_sSI: _sU})
+
+MALFORMED_ACCEPT_WITH_BODY_OUTPUT = (18, n1, _MAWBO, {_sSI: _aGS}, (_hi,), ((3, 0),))
+
+MALFORMED_ACCEPT_WITH_BODY = (
+    23,
+    n1,
+    _MAWB,
+    {_s: MappingProxyType({"method": "POST", "uri": "/MalformedAcceptWithBody"})},
+    MALFORMED_ACCEPT_WITH_BODY_INPUT,
+    MALFORMED_ACCEPT_WITH_BODY_OUTPUT,
+    (),
+)
+
+MALFORMED_ACCEPT_WITH_GENERIC_STRING_INPUT = (18, n1, _MAWGSI, {_sSI: _sU})
+
+MALFORMED_ACCEPT_WITH_GENERIC_STRING_OUTPUT = (18, n1, _MAWGSO, 0, (_p,), ((3, 16),))
+
+MALFORMED_ACCEPT_WITH_GENERIC_STRING = (
+    23,
+    n1,
+    _MAWGS,
+    {
+        _s: MappingProxyType(
+            {"method": "POST", "uri": "/MalformedAcceptWithGenericString"}
+        )
+    },
+    MALFORMED_ACCEPT_WITH_GENERIC_STRING_INPUT,
+    MALFORMED_ACCEPT_WITH_GENERIC_STRING_OUTPUT,
+    (),
+)
+
+MALFORMED_ACCEPT_WITH_PAYLOAD_INPUT = (18, n1, _MAWPI, {_sSI: _sU})
+
+JPEG_BLOB = (1, n0, _JBp, {_sT: _im})
+
+MALFORMED_ACCEPT_WITH_PAYLOAD_OUTPUT = (18, n1, _MAWPO, 0, (_p,), ((JPEG_BLOB, 16),))
+
+MALFORMED_ACCEPT_WITH_PAYLOAD = (
+    23,
+    n1,
+    _MAWP,
+    {_s: MappingProxyType({"method": "POST", "uri": "/MalformedAcceptWithPayload"})},
+    MALFORMED_ACCEPT_WITH_PAYLOAD_INPUT,
+    MALFORMED_ACCEPT_WITH_PAYLOAD_OUTPUT,
+    (),
+)
+
+MALFORMED_BLOB_INPUT = (18, n1, _MBI, 0, (_bl,), ((1, 0),))
+
+MALFORMED_BLOB_OUTPUT = (18, n1, _MBO, {_sSI: _sU})
+
+MALFORMED_BLOB = (
+    23,
+    n1,
+    _MB,
+    {_s: MappingProxyType({"uri": "/MalformedBlob", "method": "POST"})},
+    MALFORMED_BLOB_INPUT,
+    MALFORMED_BLOB_OUTPUT,
+    (),
+)
+
+MALFORMED_BOOLEAN_INPUT = (
+    18,
+    n1,
+    _MBIa,
+    0,
+    (_bIB, _bIP, _bIQ, _bIH),
+    ((2, 0), (2, 9), (2, {_sQ: _bIQ}), (2, {_sH: _bIH})),
+)
+
+MALFORMED_BOOLEAN_OUTPUT = (18, n1, _MBOa, {_sSI: _sU})
+
+MALFORMED_BOOLEAN = (
+    23,
+    n1,
+    _MBa,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedBoolean/{booleanInPath}", "method": "POST"}
+        )
+    },
+    MALFORMED_BOOLEAN_INPUT,
+    MALFORMED_BOOLEAN_OUTPUT,
+    (),
+)
+
+MALFORMED_BYTE_INPUT = (
+    18,
+    n1,
+    _MBIal,
+    0,
+    (_bIBy, _bIPy, _bIQy, _bIHy),
+    ((5, 0), (5, 9), (5, {_sQ: _bIQy}), (5, {_sH: _bIHy})),
+)
+
+MALFORMED_BYTE_OUTPUT = (18, n1, _MBOal, {_sSI: _sU})
+
+MALFORMED_BYTE = (
+    23,
+    n1,
+    _MBal,
+    {_s: MappingProxyType({"uri": "/MalformedByte/{byteInPath}", "method": "POST"})},
+    MALFORMED_BYTE_INPUT,
+    MALFORMED_BYTE_OUTPUT,
+    (),
+)
+
+MALFORMED_CONTENT_TYPE_WITH_BODY_INPUT = (
+    18,
+    n1,
+    _MCTWBI,
+    {_sSI: _aGS},
+    (_hi,),
+    ((3, 0),),
+)
+
+MALFORMED_CONTENT_TYPE_WITH_BODY_OUTPUT = (18, n1, _MCTWBO, {_sSI: _sU})
+
+MALFORMED_CONTENT_TYPE_WITH_BODY = (
+    23,
+    n1,
+    _MCTWB,
+    {_s: MappingProxyType({"method": "POST", "uri": "/MalformedContentTypeWithBody"})},
+    MALFORMED_CONTENT_TYPE_WITH_BODY_INPUT,
+    MALFORMED_CONTENT_TYPE_WITH_BODY_OUTPUT,
+    (),
+)
+
+MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_INPUT = (
+    18,
+    n1,
+    _MCTWGSI,
+    0,
+    (_p,),
+    ((3, 16),),
+)
+
+MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_OUTPUT = (18, n1, _MCTWGSO, {_sSI: _sU})
+
+MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING = (
+    23,
+    n1,
+    _MCTWGS,
+    {
+        _s: MappingProxyType(
+            {"method": "POST", "uri": "/MalformedContentTypeWithGenericString"}
+        )
+    },
+    MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_INPUT,
+    MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_OUTPUT,
+    (),
+)
+
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY_INPUT = (18, n1, _MCTWBIa, {_sSI: _sU})
+
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY_OUTPUT = (18, n1, _MCTWBOa, {_sSI: _sU})
+
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY = (
+    23,
+    n1,
+    _MCTWBa,
+    {
+        _s: MappingProxyType(
+            {"method": "POST", "uri": "/MalformedContentTypeWithoutBody"}
+        )
+    },
+    MALFORMED_CONTENT_TYPE_WITHOUT_BODY_INPUT,
+    MALFORMED_CONTENT_TYPE_WITHOUT_BODY_OUTPUT,
+    (),
+)
+
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_INPUT = (
+    18,
+    n1,
+    _MCTWBEII,
+    0,
+    (_he,),
+    ((3, {_sH: _he}),),
+)
+
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_OUTPUT = (
+    18,
+    n1,
+    _MCTWBEIO,
+    {_sSI: _sU},
+)
+
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT = (
+    23,
+    n1,
+    _MCTWBEI,
+    {
+        _s: MappingProxyType(
+            {"method": "POST", "uri": "/MalformedContentTypeWithoutBodyEmptyInput"}
+        )
+    },
+    MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_INPUT,
+    MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_OUTPUT,
+    (),
+)
+
+MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_INPUT = (
+    18,
+    n1,
+    _MCTWPI,
+    0,
+    (_p,),
+    ((JPEG_BLOB, 16),),
+)
+
+MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_OUTPUT = (18, n1, _MCTWPO, {_sSI: _sU})
+
+MALFORMED_CONTENT_TYPE_WITH_PAYLOAD = (
+    23,
+    n1,
+    _MCTWP,
+    {
+        _s: MappingProxyType(
+            {"method": "POST", "uri": "/MalformedContentTypeWithPayload"}
+        )
+    },
+    MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_INPUT,
+    MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_OUTPUT,
+    (),
+)
+
+MALFORMED_DOUBLE_INPUT = (
+    18,
+    n1,
+    _MDI,
+    0,
+    (_dIB, _dIP, _dIQ, _dIH),
+    ((10, 0), (10, 9), (10, {_sQ: _dIQ}), (10, {_sH: _dIH})),
+)
+
+MALFORMED_DOUBLE_OUTPUT = (18, n1, _MDO, {_sSI: _sU})
+
+MALFORMED_DOUBLE = (
+    23,
+    n1,
+    _MD,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedDouble/{doubleInPath}", "method": "POST"}
+        )
+    },
+    MALFORMED_DOUBLE_INPUT,
+    MALFORMED_DOUBLE_OUTPUT,
+    (),
+)
+
+MALFORMED_FLOAT_INPUT = (
+    18,
+    n1,
+    _MFI,
+    0,
+    (_fIB, _fIP, _fIQ, _fIH),
+    ((9, 0), (9, 9), (9, {_sQ: _fIQ}), (9, {_sH: _fIH})),
+)
+
+MALFORMED_FLOAT_OUTPUT = (18, n1, _MFO, {_sSI: _sU})
+
+MALFORMED_FLOAT = (
+    23,
+    n1,
+    _MF,
+    {_s: MappingProxyType({"uri": "/MalformedFloat/{floatInPath}", "method": "POST"})},
+    MALFORMED_FLOAT_INPUT,
+    MALFORMED_FLOAT_OUTPUT,
+    (),
+)
+
+MALFORMED_INTEGER_INPUT = (
+    18,
+    n1,
+    _MII,
+    0,
+    (_iIB, _iIP, _iIQ, _iIH),
+    ((7, 0), (7, 9), (7, {_sQ: _iIQ}), (7, {_sH: _iIH})),
+)
+
+MALFORMED_INTEGER_OUTPUT = (18, n1, _MIO, {_sSI: _sU})
+
+MALFORMED_INTEGER = (
+    23,
+    n1,
+    _MI,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedInteger/{integerInPath}", "method": "POST"}
+        )
+    },
+    MALFORMED_INTEGER_INPUT,
+    MALFORMED_INTEGER_OUTPUT,
+    (),
+)
+
+SIMPLE_LIST = (16, n1, _SLi, 0, (_m,), ((3, 0),))
+
+MALFORMED_LIST_INPUT = (18, n1, _MLI, 0, (_bLo,), ((SIMPLE_LIST, 0),))
+
+MALFORMED_LIST_OUTPUT = (18, n1, _MLO, {_sSI: _sU})
+
+MALFORMED_LIST = (
+    23,
+    n1,
+    _ML,
+    {_s: MappingProxyType({"uri": "/MalformedList", "method": "POST"})},
+    MALFORMED_LIST_INPUT,
+    MALFORMED_LIST_OUTPUT,
+    (),
+)
+
+MALFORMED_LONG_INPUT = (
+    18,
+    n1,
+    _MLIa,
+    0,
+    (_lIB, _lIP, _lIQ, _lIH),
+    ((8, 0), (8, 9), (8, {_sQ: _lIQ}), (8, {_sH: _lIH})),
+)
+
+MALFORMED_LONG_OUTPUT = (18, n1, _MLOa, {_sSI: _sU})
+
+MALFORMED_LONG = (
+    23,
+    n1,
+    _MLa,
+    {_s: MappingProxyType({"uri": "/MalformedLong/{longInPath}", "method": "POST"})},
+    MALFORMED_LONG_INPUT,
+    MALFORMED_LONG_OUTPUT,
+    (),
+)
+
+SIMPLE_MAP = (17, n1, _SMi, 0, (_k, _v), ((3, 0), (3, 0)))
+
+MALFORMED_MAP_INPUT = (18, n1, _MMI, 0, (_bM,), ((SIMPLE_MAP, 0),))
+
+MALFORMED_MAP_OUTPUT = (18, n1, _MMO, {_sSI: _sU})
+
+MALFORMED_MAP = (
+    23,
+    n1,
+    _MM,
+    {_s: MappingProxyType({"uri": "/MalformedMap", "method": "POST"})},
+    MALFORMED_MAP_INPUT,
+    MALFORMED_MAP_OUTPUT,
+    (),
+)
+
+MALFORMED_REQUEST_BODY_INPUT = (18, n1, _MRBI, 0, (_in, _fl), ((7, 0), (9, 0)))
+
+MALFORMED_REQUEST_BODY_OUTPUT = (18, n1, _MRBO, {_sSI: _sU})
+
+MALFORMED_REQUEST_BODY = (
+    23,
+    n1,
+    _MRB,
+    {_s: MappingProxyType({"uri": "/MalformedRequestBody", "method": "POST"})},
+    MALFORMED_REQUEST_BODY_INPUT,
+    MALFORMED_REQUEST_BODY_OUTPUT,
+    (),
+)
+
+MALFORMED_SHORT_INPUT = (
+    18,
+    n1,
+    _MSI,
+    0,
+    (_sIB, _sIP, _sIQ, _sIH),
+    ((6, 0), (6, 9), (6, {_sQ: _sIQ}), (6, {_sH: _sIH})),
+)
+
+MALFORMED_SHORT_OUTPUT = (18, n1, _MSO, {_sSI: _sU})
+
+MALFORMED_SHORT = (
+    23,
+    n1,
+    _MS,
+    {_s: MappingProxyType({"uri": "/MalformedShort/{shortInPath}", "method": "POST"})},
+    MALFORMED_SHORT_INPUT,
+    MALFORMED_SHORT_OUTPUT,
+    (),
+)
+
+MALFORMED_STRING_INPUT = (
+    18,
+    n1,
+    _MSIa,
+    0,
+    (_bl,),
+    ((JSON_HEADER_STRING, {_sH: _amth}),),
+)
+
+MALFORMED_STRING_OUTPUT = (18, n1, _MSOa, {_sSI: _sU})
+
+MALFORMED_STRING = (
+    23,
+    n1,
+    _MSa,
+    {_s: MappingProxyType({"uri": "/MalformedString", "method": "POST"})},
+    MALFORMED_STRING_INPUT,
+    MALFORMED_STRING_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_BODY_DATE_TIME_INPUT = (
+    18,
+    n1,
+    _MTBDTI,
+    0,
+    (_ti,),
+    ((4, {_sF: _dt, _smit: None}),),
+)
+
+MALFORMED_TIMESTAMP_BODY_DATE_TIME_OUTPUT = (18, n1, _MTBDTO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_BODY_DATE_TIME = (
+    23,
+    n1,
+    _MTBDT,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedTimestampBodyDateTime", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_BODY_DATE_TIME_INPUT,
+    MALFORMED_TIMESTAMP_BODY_DATE_TIME_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_BODY_DEFAULT_INPUT = (18, n1, _MTBDI, 0, (_ti,), ((4, 1),))
+
+MALFORMED_TIMESTAMP_BODY_DEFAULT_OUTPUT = (18, n1, _MTBDO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_BODY_DEFAULT = (
+    23,
+    n1,
+    _MTBD,
+    {_s: MappingProxyType({"uri": "/MalformedTimestampBodyDefault", "method": "POST"})},
+    MALFORMED_TIMESTAMP_BODY_DEFAULT_INPUT,
+    MALFORMED_TIMESTAMP_BODY_DEFAULT_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_BODY_HTTP_DATE_INPUT = (
+    18,
+    n1,
+    _MTBHDI,
+    0,
+    (_ti,),
+    ((4, {_sF: _hd, _smit: None}),),
+)
+
+MALFORMED_TIMESTAMP_BODY_HTTP_DATE_OUTPUT = (18, n1, _MTBHDO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_BODY_HTTP_DATE = (
+    23,
+    n1,
+    _MTBHD,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedTimestampBodyHttpDate", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_BODY_HTTP_DATE_INPUT,
+    MALFORMED_TIMESTAMP_BODY_HTTP_DATE_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_HEADER_DATE_TIME_INPUT = (
+    18,
+    n1,
+    _MTHDTI,
+    0,
+    (_ti,),
+    ((4, {_sF: _dt, _sH: _ti, _smit: None}),),
+)
+
+MALFORMED_TIMESTAMP_HEADER_DATE_TIME_OUTPUT = (18, n1, _MTHDTO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_HEADER_DATE_TIME = (
+    23,
+    n1,
+    _MTHDT,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedTimestampHeaderDateTime", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_HEADER_DATE_TIME_INPUT,
+    MALFORMED_TIMESTAMP_HEADER_DATE_TIME_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_HEADER_DEFAULT_INPUT = (
+    18,
+    n1,
+    _MTHDI,
+    0,
+    (_ti,),
+    ((4, {_sH: _ti, _smit: None}),),
+)
+
+MALFORMED_TIMESTAMP_HEADER_DEFAULT_OUTPUT = (18, n1, _MTHDO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_HEADER_DEFAULT = (
+    23,
+    n1,
+    _MTHD,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedTimestampHeaderDefault", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_HEADER_DEFAULT_INPUT,
+    MALFORMED_TIMESTAMP_HEADER_DEFAULT_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_HEADER_EPOCH_INPUT = (
+    18,
+    n1,
+    _MTHEI,
+    0,
+    (_ti,),
+    ((4, {_sF: _es, _sH: _ti, _smit: None}),),
+)
+
+MALFORMED_TIMESTAMP_HEADER_EPOCH_OUTPUT = (18, n1, _MTHEO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_HEADER_EPOCH = (
+    23,
+    n1,
+    _MTHE,
+    {_s: MappingProxyType({"uri": "/MalformedTimestampHeaderEpoch", "method": "POST"})},
+    MALFORMED_TIMESTAMP_HEADER_EPOCH_INPUT,
+    MALFORMED_TIMESTAMP_HEADER_EPOCH_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_PATH_DEFAULT_INPUT = (18, n1, _MTPDI, 0, (_ti,), ((4, 9),))
+
+MALFORMED_TIMESTAMP_PATH_DEFAULT_OUTPUT = (18, n1, _MTPDO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_PATH_DEFAULT = (
+    23,
+    n1,
+    _MTPD,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedTimestampPathDefault/{timestamp}", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_PATH_DEFAULT_INPUT,
+    MALFORMED_TIMESTAMP_PATH_DEFAULT_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_PATH_EPOCH_INPUT = (
+    18,
+    n1,
+    _MTPEI,
+    0,
+    (_ti,),
+    ((4, {_sF: _es, _smit: None, _sL: None}),),
+)
+
+MALFORMED_TIMESTAMP_PATH_EPOCH_OUTPUT = (18, n1, _MTPEO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_PATH_EPOCH = (
+    23,
+    n1,
+    _MTPE,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedTimestampPathEpoch/{timestamp}", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_PATH_EPOCH_INPUT,
+    MALFORMED_TIMESTAMP_PATH_EPOCH_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_PATH_HTTP_DATE_INPUT = (
+    18,
+    n1,
+    _MTPHDI,
+    0,
+    (_ti,),
+    ((4, {_sF: _hd, _smit: None, _sL: None}),),
+)
+
+MALFORMED_TIMESTAMP_PATH_HTTP_DATE_OUTPUT = (18, n1, _MTPHDO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_PATH_HTTP_DATE = (
+    23,
+    n1,
+    _MTPHD,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedTimestampPathHttpDate/{timestamp}", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_PATH_HTTP_DATE_INPUT,
+    MALFORMED_TIMESTAMP_PATH_HTTP_DATE_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_QUERY_DEFAULT_INPUT = (
+    18,
+    n1,
+    _MTQDI,
+    0,
+    (_ti,),
+    ((4, {_sQ: _ti, _smit: None}),),
+)
+
+MALFORMED_TIMESTAMP_QUERY_DEFAULT_OUTPUT = (18, n1, _MTQDO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_QUERY_DEFAULT = (
+    23,
+    n1,
+    _MTQD,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedTimestampQueryDefault", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_QUERY_DEFAULT_INPUT,
+    MALFORMED_TIMESTAMP_QUERY_DEFAULT_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_QUERY_EPOCH_INPUT = (
+    18,
+    n1,
+    _MTQEI,
+    0,
+    (_ti,),
+    ((4, {_sF: _es, _sQ: _ti, _smit: None}),),
+)
+
+MALFORMED_TIMESTAMP_QUERY_EPOCH_OUTPUT = (18, n1, _MTQEO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_QUERY_EPOCH = (
+    23,
+    n1,
+    _MTQE,
+    {_s: MappingProxyType({"uri": "/MalformedTimestampQueryEpoch", "method": "POST"})},
+    MALFORMED_TIMESTAMP_QUERY_EPOCH_INPUT,
+    MALFORMED_TIMESTAMP_QUERY_EPOCH_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_INPUT = (
+    18,
+    n1,
+    _MTQHDI,
+    0,
+    (_ti,),
+    ((4, {_sF: _hd, _sQ: _ti, _smit: None}),),
+)
+
+MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_OUTPUT = (18, n1, _MTQHDO, {_sSI: _sU})
+
+MALFORMED_TIMESTAMP_QUERY_HTTP_DATE = (
+    23,
+    n1,
+    _MTQHD,
+    {
+        _s: MappingProxyType(
+            {"uri": "/MalformedTimestampQueryHttpDate", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_INPUT,
+    MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_OUTPUT,
+    (),
+)
+
+SIMPLE_UNION = (19, n1, _SU, 0, (_in, _str), ((7, 0), (3, 0)))
+
+MALFORMED_UNION_INPUT = (18, n1, _MUI, 0, (_u,), ((SIMPLE_UNION, 0),))
+
+MALFORMED_UNION_OUTPUT = (18, n1, _MUO, {_sSI: _sU})
+
+MALFORMED_UNION = (
+    23,
+    n1,
+    _MUa,
+    {_s: MappingProxyType({"uri": "/MalformedUnion", "method": "POST"})},
+    MALFORMED_UNION_INPUT,
+    MALFORMED_UNION_OUTPUT,
+    (),
+)
+
+MEDIA_TYPE_HEADER_INPUT = (18, n1, _MTHI, 0, (_j,), ((JSON_VALUE, {_sH: _XJ}),))
+
+MEDIA_TYPE_HEADER_OUTPUT = (18, n1, _MTHO, 0, (_j,), ((JSON_VALUE, {_sH: _XJ}),))
+
+MEDIA_TYPE_HEADER = (
+    23,
+    n1,
+    _MTH,
+    {_s: MappingProxyType({"uri": "/MediaTypeHeader", "method": "GET"})},
+    MEDIA_TYPE_HEADER_INPUT,
+    MEDIA_TYPE_HEADER_OUTPUT,
+    (),
+)
+
+NO_INPUT_AND_NO_OUTPUT_INPUT = (18, n1, _NIANOI, {_sSI: _sU})
+
+NO_INPUT_AND_NO_OUTPUT_OUTPUT = (18, n1, _NIANOO, {_sSI: _sU})
+
+NO_INPUT_AND_NO_OUTPUT = (
+    23,
+    n1,
+    _NIANO,
+    {_s: MappingProxyType({"uri": "/NoInputAndNoOutput", "method": "POST"})},
+    NO_INPUT_AND_NO_OUTPUT_INPUT,
+    NO_INPUT_AND_NO_OUTPUT_OUTPUT,
+    (),
+)
+
+NO_INPUT_AND_OUTPUT_INPUT = (18, n1, _NIAOI, {_sSI: _sU})
+
+NO_INPUT_AND_OUTPUT_OUTPUT = (18, n1, _NIAOO, 0)
+
+NO_INPUT_AND_OUTPUT = (
+    23,
+    n1,
+    _NIAO,
+    {_s: MappingProxyType({"uri": "/NoInputAndOutputOutput", "method": "POST"})},
+    NO_INPUT_AND_OUTPUT_INPUT,
+    NO_INPUT_AND_OUTPUT_OUTPUT,
+    (),
+)
+
+NULL_AND_EMPTY_HEADERS_CLIENT_INPUT = (
+    18,
+    n1,
+    _NAEHCI,
+    {_sSI: _aNAEHIO},
+    (_a_, _b_, _c_),
+    ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
+)
+
+NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT = (
+    18,
+    n1,
+    _NAEHCO,
+    {_sSI: _aNAEHIO},
+    (_a_, _b_, _c_),
+    ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
+)
+
+NULL_AND_EMPTY_HEADERS_CLIENT = (
+    23,
+    n1,
+    _NAEHC,
+    {_s: MappingProxyType({"uri": "/NullAndEmptyHeadersClient", "method": "GET"})},
+    NULL_AND_EMPTY_HEADERS_CLIENT_INPUT,
+    NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT,
+    (),
+)
+
+NULL_AND_EMPTY_HEADERS_SERVER_INPUT = (
+    18,
+    n1,
+    _NAEHSI,
+    {_sSI: _aNAEHIO},
+    (_a_, _b_, _c_),
+    ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
+)
+
+NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT = (
+    18,
+    n1,
+    _NAEHSO,
+    {_sSI: _aNAEHIO},
+    (_a_, _b_, _c_),
+    ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
+)
+
+NULL_AND_EMPTY_HEADERS_SERVER = (
+    23,
+    n1,
+    _NAEHS,
+    {_s: MappingProxyType({"uri": "/NullAndEmptyHeadersServer", "method": "GET"})},
+    NULL_AND_EMPTY_HEADERS_SERVER_INPUT,
+    NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT,
+    (),
+)
+
+OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT = (
+    18,
+    n1,
+    _ONSESI,
+    0,
+    (_nVu, _eS),
+    ((3, {_sQ: _Nu}), (3, {_sQ: _Em})),
+)
+
+OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT = (18, n1, _ONSESO, {_sSI: _sU})
+
+OMITS_NULL_SERIALIZES_EMPTY_STRING = (
+    23,
+    n1,
+    _ONSES,
+    {_s: MappingProxyType({"uri": "/OmitsNullSerializesEmptyString", "method": "GET"})},
+    OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT,
+    OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT,
+    (),
+)
+
+OMITS_SERIALIZING_EMPTY_LISTS_INPUT = (
+    18,
+    n1,
+    _OSELI,
+    0,
+    (_qSL, _qIL, _qDL, _qBL, _qTL, _qEL, _qIEL),
+    (
+        (STRING_LIST, {_sQ: _SL}),
+        (INTEGER_LIST, {_sQ: _IL}),
+        (DOUBLE_LIST, {_sQ: _DL}),
+        (BOOLEAN_LIST, {_sQ: _BL}),
+        (TIMESTAMP_LIST, {_sQ: _TL}),
+        (FOO_ENUM_LIST, {_sQ: _EL}),
+        (INTEGER_ENUM_LIST, {_sQ: _IEL}),
+    ),
+)
+
+OMITS_SERIALIZING_EMPTY_LISTS_OUTPUT = (18, n1, _OSELO, {_sSI: _sU})
+
+OMITS_SERIALIZING_EMPTY_LISTS = (
+    23,
+    n1,
+    _OSEL,
+    {_s: MappingProxyType({"uri": "/OmitsSerializingEmptyLists", "method": "POST"})},
+    OMITS_SERIALIZING_EMPTY_LISTS_INPUT,
+    OMITS_SERIALIZING_EMPTY_LISTS_OUTPUT,
+    (),
+)
+
+OPERATION_WITH_DEFAULTS_INPUT = (
+    18,
+    n1,
+    _OWDI,
+    0,
+    (_de, _cOD, _tLD, _oTLD),
+    ((DEFAULTS, 0), (CLIENT_OPTIONAL_DEFAULTS, 0), (3, {_sm: _hi}), (7, {_sm: 0})),
+)
+
+OPERATION_WITH_DEFAULTS_OUTPUT = (
+    18,
+    n1,
+    _OWDO,
+    0,
+    (
+        _dS,
+        _dB,
+        _dL,
+        _dDM,
+        _dDS,
+        _dDB,
+        _dDL,
+        _dND,
+        _dT,
+        _dBe,
+        _dBef,
+        _dSe,
+        _dI,
+        _dLe,
+        _dF,
+        _dD,
+        _dM,
+        _dE,
+        _dIE,
+        _eS,
+        _fB,
+        _eB,
+        _zB,
+        _zS,
+        _zI,
+        _zL,
+        _zF,
+        _zD,
+    ),
+    (
+        (3, {_sm: _hi}),
+        (2, {_sm: True}),
+        (TEST_STRING_LIST, {_sm: ()}),
+        (DOCUMENT, {_sm: None}),
+        (DOCUMENT, {_sm: _hi}),
+        (DOCUMENT, {_sm: True}),
+        (DOCUMENT, {_sm: ()}),
+        (DOCUMENT, {_sm: None}),
+        (4, {_sm: 0}),
+        (1, {_sm: _YWJ}),
+        (5, {_sm: 1}),
+        (6, {_sm: 1}),
+        (7, {_sm: 10}),
+        (8, {_sm: 100}),
+        (9, {_sm: 1.0}),
+        (10, {_sm: 1.0}),
+        (TEST_STRING_MAP, {_sm: None}),
+        (TEST_ENUM, {_sm: _FOO}),
+        (TEST_INT_ENUM, {_sm: 1}),
+        (3, {_sm: _v_}),
+        (2, {_sm: False}),
+        (1, {_sm: _v_}),
+        (5, {_sm: 0}),
+        (6, {_sm: 0}),
+        (7, {_sm: 0}),
+        (8, {_sm: 0}),
+        (9, {_sm: 0.0}),
+        (10, {_sm: 0.0}),
+    ),
+)
+
+OPERATION_WITH_DEFAULTS = (
+    23,
+    n1,
+    _OWD,
+    {_s: MappingProxyType({"uri": "/OperationWithDefaults", "method": "POST"})},
+    OPERATION_WITH_DEFAULTS_INPUT,
+    OPERATION_WITH_DEFAULTS_OUTPUT,
+    (),
+)
+
+TOP_LEVEL = (
+    18,
+    n1,
+    _TLo,
+    0,
+    (_di, _dLi, _dMi),
+    ((DIALOG, 1), (DIALOG_LIST, {_sm: ()}), (DIALOG_MAP, {_sm: None})),
+)
+
+OPERATION_WITH_NESTED_STRUCTURE_INPUT = (18, n1, _OWNSI, 0, (_tLo,), ((TOP_LEVEL, 1),))
+
+OPERATION_WITH_NESTED_STRUCTURE_OUTPUT = (
+    18,
+    n1,
+    _OWNSO,
+    0,
+    (_di, _dLi, _dMi),
+    ((DIALOG, 1), (DIALOG_LIST, {_sm: ()}), (DIALOG_MAP, {_sm: None})),
+)
+
+OPERATION_WITH_NESTED_STRUCTURE = (
+    23,
+    n1,
+    _OWNS,
+    {_s: MappingProxyType({"uri": "/OperationWithNestedStructure", "method": "POST"})},
+    OPERATION_WITH_NESTED_STRUCTURE_INPUT,
+    OPERATION_WITH_NESTED_STRUCTURE_OUTPUT,
+    (),
+)
+
+OUTPUT_STREAM_INPUT = (18, n1, _OSI, {_sSI: _sU})
+
+OUTPUT_STREAM_OUTPUT = (18, n1, _OSO, 0, (_st,), ((EVENT_STREAM, 16),))
+
+OUTPUT_STREAM = (
+    23,
+    n1,
+    _OS,
+    {_s: MappingProxyType({"method": "POST", "uri": "/OutputStream"})},
+    OUTPUT_STREAM_INPUT,
+    OUTPUT_STREAM_OUTPUT,
+    (SERVICE_UNAVAILABLE_ERROR,),
+)
+
+OUTPUT_STREAM_WITH_INITIAL_RESPONSE_INPUT = (18, n1, _OSWIRI, {_sSI: _sU})
+
+OUTPUT_STREAM_WITH_INITIAL_RESPONSE_OUTPUT = (
+    18,
+    n1,
+    _OSWIRO,
+    0,
+    (_iRMn, _st),
+    ((3, {_sH: _irm_, _smit: None}), (EVENT_STREAM, 16)),
+)
+
+OUTPUT_STREAM_WITH_INITIAL_RESPONSE = (
+    23,
+    n1,
+    _OSWIR,
+    {
+        _s: MappingProxyType(
+            {"method": "POST", "uri": "/OutputStreamWithInitialResponse"}
+        )
+    },
+    OUTPUT_STREAM_WITH_INITIAL_RESPONSE_INPUT,
+    OUTPUT_STREAM_WITH_INITIAL_RESPONSE_OUTPUT,
+    (),
+)
+
+PAYLOAD_CONFIG = (18, n1, _PC, 0, (_da,), ((7, 0),))
+
+PLAYER_ACTION = (19, n1, _PA, 0, (_q,), ((-1, 0),))
+
+POST_PLAYER_ACTION_INPUT = (18, n1, _PPAI, 0, (_ac,), ((PLAYER_ACTION, 0),))
+
+POST_PLAYER_ACTION_OUTPUT = (18, n1, _PPAO, 0, (_ac,), ((PLAYER_ACTION, 1),))
+
+POST_PLAYER_ACTION = (
+    23,
+    n1,
+    _PPA,
+    {_s: MappingProxyType({"uri": "/PostPlayerAction", "method": "POST"})},
+    POST_PLAYER_ACTION_INPUT,
+    POST_PLAYER_ACTION_OUTPUT,
+    (),
+)
+
+UNION_WITH_JSON_NAME = (
+    19,
+    n1,
+    _UWJN,
+    0,
+    (_fo, _ba, _b),
+    ((3, {_sN: _FOO}), (3, 0), (3, {_sN: _baz})),
+)
+
+POST_UNION_WITH_JSON_NAME_INPUT = (
+    18,
+    n1,
+    _PUWJNI,
+    0,
+    (_v,),
+    ((UNION_WITH_JSON_NAME, 0),),
+)
+
+POST_UNION_WITH_JSON_NAME_OUTPUT = (
+    18,
+    n1,
+    _PUWJNO,
+    0,
+    (_v,),
+    ((UNION_WITH_JSON_NAME, 1),),
+)
+
+POST_UNION_WITH_JSON_NAME = (
+    23,
+    n1,
+    _PUWJN,
+    {_s: MappingProxyType({"uri": "/PostUnionWithJsonName", "method": "POST"})},
+    POST_UNION_WITH_JSON_NAME_INPUT,
+    POST_UNION_WITH_JSON_NAME_OUTPUT,
+    (),
+)
+
+PUT_WITH_CONTENT_ENCODING_INPUT = (
+    18,
+    n1,
+    _PWCEI,
+    0,
+    (_en, _da),
+    ((3, {_sH: _CE_}), (3, 0)),
+)
+
+PUT_WITH_CONTENT_ENCODING_OUTPUT = (18, n1, _PWCEO, {_sSI: _sU})
+
+PUT_WITH_CONTENT_ENCODING = (
+    23,
+    n1,
+    _PWCE,
+    {
+        _sC: MappingProxyType({"encodings": ("gzip",)}),
+        _s: MappingProxyType(
+            {"method": "POST", "uri": "/requestcompression/putcontentwithencoding"}
         ),
-    ],
-)
-
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#QueryIdempotencyTokenAutoFillInput"),
-    members={
-        "token": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#idempotencyToken")),
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="token"),
-            ],
-        }
     },
+    PUT_WITH_CONTENT_ENCODING_INPUT,
+    PUT_WITH_CONTENT_ENCODING_OUTPUT,
+    (),
 )
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#QueryIdempotencyTokenAutoFillOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT = (
+    18,
+    n1,
+    _QITAFI,
+    0,
+    (_to,),
+    ((3, {_sQ: _to, _sTm: None}),),
+)
+
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT = (18, n1, _QITAFO, {_sSI: _sU})
+
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = (
+    23,
+    n1,
+    _QITAF,
+    {_s: MappingProxyType({"uri": "/QueryIdempotencyTokenAutoFill", "method": "POST"})},
+    QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT,
+    QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT,
+    (),
+)
+
+QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT = (
+    18,
+    n1,
+    _QPASLMI,
+    0,
+    (_qu, _fo),
+    ((3, {_sQ: _cor}), (STRING_LIST_MAP, 1024)),
+)
+
+QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT = (18, n1, _QPASLMO, {_sSI: _sU})
+
+QUERY_PARAMS_AS_STRING_LIST_MAP = (
+    23,
+    n1,
+    _QPASLM,
+    {_s: MappingProxyType({"uri": "/StringListMap", "method": "POST"})},
+    QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT,
+    QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT,
+    (),
+)
+
+QUERY_PRECEDENCE_INPUT = (
+    18,
+    n1,
+    _QPI,
+    0,
+    (_fo, _b),
+    ((3, {_sQ: _ba}), (STRING_MAP, 1024)),
+)
+
+QUERY_PRECEDENCE_OUTPUT = (18, n1, _QPO, {_sSI: _sU})
+
+QUERY_PRECEDENCE = (
+    23,
+    n1,
+    _QP,
+    {_s: MappingProxyType({"uri": "/Precedence", "method": "POST"})},
+    QUERY_PRECEDENCE_INPUT,
+    QUERY_PRECEDENCE_OUTPUT,
+    (),
+)
+
+RESPONSE_CODE_HTTP_FALLBACK_INPUT = (18, n1, _RCHFI, {_sSI: _aRCHFIO})
+
+RESPONSE_CODE_HTTP_FALLBACK_OUTPUT = (18, n1, _RCHFO, {_sSI: _aRCHFIO})
+
+RESPONSE_CODE_HTTP_FALLBACK = (
+    23,
+    n1,
+    _RCHF,
+    {
+        _s: MappingProxyType(
+            {"method": "GET", "uri": "/responseCodeHttpFallback", "code": 201}
         )
-    ],
-)
-
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = Schema(
-    id=ShapeID("aws.protocoltests.restjson#QueryIdempotencyTokenAutoFill"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/QueryIdempotencyTokenAutoFill", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#QueryParamsAsStringListMapInput"),
-    members={
-        "qux": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="corge")],
-        },
-        "foo": {
-            "target": STRING_LIST_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQueryParams"))],
-        },
     },
+    RESPONSE_CODE_HTTP_FALLBACK_INPUT,
+    RESPONSE_CODE_HTTP_FALLBACK_OUTPUT,
+    (),
 )
 
-QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#QueryParamsAsStringListMapOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
+RESPONSE_CODE_REQUIRED_INPUT = (18, n1, _RCRI, {_sSI: _sU})
+
+RESPONSE_CODE_REQUIRED_OUTPUT = (18, n1, _RCRO, 0, (_rC,), ((7, 129),))
+
+RESPONSE_CODE_REQUIRED = (
+    23,
+    n1,
+    _RCR,
+    {
+        _s: MappingProxyType(
+            {"method": "GET", "uri": "/responseCodeRequired", "code": 200}
         )
-    ],
-)
-
-QUERY_PARAMS_AS_STRING_LIST_MAP = Schema(
-    id=ShapeID("aws.protocoltests.restjson#QueryParamsAsStringListMap"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/StringListMap", "method": "POST"}),
-        )
-    ],
-)
-
-QUERY_PRECEDENCE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#QueryPrecedenceInput"),
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="bar")],
-        },
-        "baz": {
-            "target": STRING_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpQueryParams"))],
-        },
     },
+    RESPONSE_CODE_REQUIRED_INPUT,
+    RESPONSE_CODE_REQUIRED_OUTPUT,
+    (),
 )
 
-QUERY_PRECEDENCE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#QueryPrecedenceOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
+SIMPLE_SCALAR_PROPERTIES_INPUT = (
+    18,
+    n1,
+    _SSPI,
+    {_sSI: _aSSPIO},
+    (_fo, _sV, _tBV, _fBV, _bVy, _sVh, _iV, _lVo, _fV, _dVo),
+    (
+        (3, {_sH: _XF}),
+        (3, 0),
+        (2, 0),
+        (2, 0),
+        (5, 0),
+        (6, 0),
+        (7, 0),
+        (8, 0),
+        (9, 0),
+        (10, {_sN: _DD}),
+    ),
 )
 
-QUERY_PRECEDENCE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#QueryPrecedence"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/Precedence", "method": "POST"}),
-        )
-    ],
+SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
+    18,
+    n1,
+    _SSPO,
+    {_sSI: _aSSPIO},
+    (_fo, _sV, _tBV, _fBV, _bVy, _sVh, _iV, _lVo, _fV, _dVo),
+    (
+        (3, {_sH: _XF}),
+        (3, 0),
+        (2, 0),
+        (2, 0),
+        (5, 0),
+        (6, 0),
+        (7, 0),
+        (8, 0),
+        (9, 0),
+        (10, {_sN: _DD}),
+    ),
 )
 
-RESPONSE_CODE_HTTP_FALLBACK_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ResponseCodeHttpFallbackInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#ResponseCodeHttpFallbackInputOutput",
-        )
-    ],
+SIMPLE_SCALAR_PROPERTIES = (
+    23,
+    n1,
+    _SSP,
+    {_s: MappingProxyType({"uri": "/SimpleScalarProperties", "method": "PUT"})},
+    SIMPLE_SCALAR_PROPERTIES_INPUT,
+    SIMPLE_SCALAR_PROPERTIES_OUTPUT,
+    (),
 )
 
-RESPONSE_CODE_HTTP_FALLBACK_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ResponseCodeHttpFallbackOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#ResponseCodeHttpFallbackInputOutput",
-        )
-    ],
+SPARSE_SHORT_LIST = (16, n0, _SSL, 64, (_m,), ((6, 0),))
+
+SPARSE_STRING_LIST = (16, n0, _SSLp, 64, (_m,), ((3, 0),))
+
+SPARSE_JSON_LISTS_INPUT = (
+    18,
+    n1,
+    _SJLI,
+    {_sSI: _aSJLIO},
+    (_sSL, _sSLp),
+    ((SPARSE_STRING_LIST, 0), (SPARSE_SHORT_LIST, 0)),
 )
 
-RESPONSE_CODE_HTTP_FALLBACK = Schema(
-    id=ShapeID("aws.protocoltests.restjson#ResponseCodeHttpFallback"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "GET", "uri": "/responseCodeHttpFallback", "code": 201}
-            ),
-        )
-    ],
+SPARSE_JSON_LISTS_OUTPUT = (
+    18,
+    n1,
+    _SJLO,
+    {_sSI: _aSJLIO},
+    (_sSL, _sSLp),
+    ((SPARSE_STRING_LIST, 0), (SPARSE_SHORT_LIST, 0)),
 )
 
-RESPONSE_CODE_REQUIRED_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ResponseCodeRequiredInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
+SPARSE_JSON_LISTS = (
+    23,
+    n1,
+    _SJL,
+    {_s: MappingProxyType({"uri": "/SparseJsonLists", "method": "PUT"})},
+    SPARSE_JSON_LISTS_INPUT,
+    SPARSE_JSON_LISTS_OUTPUT,
+    (),
 )
 
-RESPONSE_CODE_REQUIRED_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ResponseCodeRequiredOutput"),
-    members={
-        "responseCode": {
-            "target": INTEGER,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#required")),
-                Trait.new(id=ShapeID("smithy.api#httpResponseCode")),
-            ],
-        }
-    },
+SPARSE_BOOLEAN_MAP = (17, n1, _SBM, 64, (_k, _v), ((3, 0), (2, 0)))
+
+SPARSE_NUMBER_MAP = (17, n1, _SNM, 64, (_k, _v), ((3, 0), (7, 0)))
+
+SPARSE_SET_MAP = (17, n1, _SSM, 64, (_k, _v), ((3, 0), (STRING_SET, 0)))
+
+SPARSE_STRING_MAP = (17, n0, _SSMp, 64, (_k, _v), ((3, 0), (3, 0)))
+
+SPARSE_STRUCT_MAP = (17, n1, _SSMpa, 64, (_k, _v), ((3, 0), (GREETING_STRUCT, 0)))
+
+SPARSE_JSON_MAPS_INPUT = (
+    18,
+    n1,
+    _SJMI,
+    {_sSI: _aSJMIO},
+    (_sSM, _sNM, _sBM, _sSMp, _sSMpa),
+    (
+        (SPARSE_STRUCT_MAP, 0),
+        (SPARSE_NUMBER_MAP, 0),
+        (SPARSE_BOOLEAN_MAP, 0),
+        (SPARSE_STRING_MAP, 0),
+        (SPARSE_SET_MAP, 0),
+    ),
 )
 
-RESPONSE_CODE_REQUIRED = Schema(
-    id=ShapeID("aws.protocoltests.restjson#ResponseCodeRequired"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"method": "GET", "uri": "/responseCodeRequired", "code": 200}
-            ),
-        )
-    ],
+SPARSE_JSON_MAPS_OUTPUT = (
+    18,
+    n1,
+    _SJMO,
+    {_sSI: _aSJMIO},
+    (_sSM, _sNM, _sBM, _sSMp, _sSMpa),
+    (
+        (SPARSE_STRUCT_MAP, 0),
+        (SPARSE_NUMBER_MAP, 0),
+        (SPARSE_BOOLEAN_MAP, 0),
+        (SPARSE_STRING_MAP, 0),
+        (SPARSE_SET_MAP, 0),
+    ),
 )
 
-SIMPLE_SCALAR_PROPERTIES_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SimpleScalarPropertiesInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#SimpleScalarPropertiesInputOutput",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "stringValue": {"target": STRING},
-        "trueBooleanValue": {"target": BOOLEAN},
-        "falseBooleanValue": {"target": BOOLEAN},
-        "byteValue": {"target": BYTE},
-        "shortValue": {"target": SHORT},
-        "integerValue": {"target": INTEGER},
-        "longValue": {"target": LONG},
-        "floatValue": {"target": FLOAT},
-        "doubleValue": {
-            "target": DOUBLE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#jsonName"), value="DoubleDribble")
-            ],
-        },
-    },
+SPARSE_JSON_MAPS = (
+    23,
+    n1,
+    _SJM,
+    {_s: MappingProxyType({"uri": "/SparseJsonMaps", "method": "POST"})},
+    SPARSE_JSON_MAPS_INPUT,
+    SPARSE_JSON_MAPS_OUTPUT,
+    (),
 )
 
-SIMPLE_SCALAR_PROPERTIES_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SimpleScalarPropertiesOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#SimpleScalarPropertiesInputOutput",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "stringValue": {"target": STRING},
-        "trueBooleanValue": {"target": BOOLEAN},
-        "falseBooleanValue": {"target": BOOLEAN},
-        "byteValue": {"target": BYTE},
-        "shortValue": {"target": SHORT},
-        "integerValue": {"target": INTEGER},
-        "longValue": {"target": LONG},
-        "floatValue": {"target": FLOAT},
-        "doubleValue": {
-            "target": DOUBLE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#jsonName"), value="DoubleDribble")
-            ],
-        },
-    },
+STREAMING_BLOB = (1, n1, _SB, {_smith: None})
+
+STREAMING_TRAITS_INPUT = (
+    18,
+    n1,
+    _STI,
+    {_sSI: _aSTIO},
+    (_fo, _bl),
+    ((3, {_sH: _XF}), (STREAMING_BLOB, {_sm: _v_, _sPm: None})),
 )
 
-SIMPLE_SCALAR_PROPERTIES = Schema(
-    id=ShapeID("aws.protocoltests.restjson#SimpleScalarProperties"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/SimpleScalarProperties", "method": "PUT"}),
-        )
-    ],
+STREAMING_TRAITS_OUTPUT = (
+    18,
+    n1,
+    _STO,
+    {_sSI: _aSTIO},
+    (_fo, _bl),
+    ((3, {_sH: _XF}), (STREAMING_BLOB, {_sm: _v_, _sPm: None})),
 )
 
-SPARSE_SHORT_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#SparseShortList"),
-    shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"member": {"target": SHORT}},
+STREAMING_TRAITS = (
+    23,
+    n1,
+    _ST,
+    {_s: MappingProxyType({"uri": "/StreamingTraits", "method": "POST"})},
+    STREAMING_TRAITS_INPUT,
+    STREAMING_TRAITS_OUTPUT,
+    (),
 )
 
-SPARSE_STRING_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#SparseStringList"),
-    shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"member": {"target": STRING}},
+STREAMING_TRAITS_REQUIRE_LENGTH_INPUT = (
+    18,
+    n1,
+    _STRLI,
+    0,
+    (_fo, _bl),
+    ((3, {_sH: _XF}), (FINITE_STREAMING_BLOB, {_sm: _v_, _sPm: None})),
 )
 
-SPARSE_JSON_LISTS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SparseJsonListsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#SparseJsonListsInputOutput",
-        )
-    ],
-    members={
-        "sparseStringList": {"target": SPARSE_STRING_LIST},
-        "sparseShortList": {"target": SPARSE_SHORT_LIST},
-    },
+STREAMING_TRAITS_REQUIRE_LENGTH_OUTPUT = (18, n1, _STRLO, {_sSI: _sU})
+
+STREAMING_TRAITS_REQUIRE_LENGTH = (
+    23,
+    n1,
+    _STRL,
+    {_s: MappingProxyType({"uri": "/StreamingTraitsRequireLength", "method": "POST"})},
+    STREAMING_TRAITS_REQUIRE_LENGTH_INPUT,
+    STREAMING_TRAITS_REQUIRE_LENGTH_OUTPUT,
+    (),
 )
 
-SPARSE_JSON_LISTS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SparseJsonListsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#SparseJsonListsInputOutput",
-        )
-    ],
-    members={
-        "sparseStringList": {"target": SPARSE_STRING_LIST},
-        "sparseShortList": {"target": SPARSE_SHORT_LIST},
-    },
+STREAMING_TEXT_PLAIN_BLOB = (1, n1, _STPB, {_smith: None, _sT: _t})
+
+STREAMING_TRAITS_WITH_MEDIA_TYPE_INPUT = (
+    18,
+    n1,
+    _STWMTI,
+    {_sSI: _aSTWMTIO},
+    (_fo, _bl),
+    ((3, {_sH: _XF}), (STREAMING_TEXT_PLAIN_BLOB, {_sm: _v_, _sPm: None})),
 )
 
-SPARSE_JSON_LISTS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#SparseJsonLists"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/SparseJsonLists", "method": "PUT"}),
-        )
-    ],
+STREAMING_TRAITS_WITH_MEDIA_TYPE_OUTPUT = (
+    18,
+    n1,
+    _STWMTO,
+    {_sSI: _aSTWMTIO},
+    (_fo, _bl),
+    ((3, {_sH: _XF}), (STREAMING_TEXT_PLAIN_BLOB, {_sm: _v_, _sPm: None})),
 )
 
-SPARSE_BOOLEAN_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SparseBooleanMap"),
-    shape_type=ShapeType.MAP,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"key": {"target": STRING}, "value": {"target": BOOLEAN}},
+STREAMING_TRAITS_WITH_MEDIA_TYPE = (
+    23,
+    n1,
+    _STWMT,
+    {_s: MappingProxyType({"uri": "/StreamingTraitsWithMediaType", "method": "POST"})},
+    STREAMING_TRAITS_WITH_MEDIA_TYPE_INPUT,
+    STREAMING_TRAITS_WITH_MEDIA_TYPE_OUTPUT,
+    (),
 )
 
-SPARSE_NUMBER_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SparseNumberMap"),
-    shape_type=ShapeType.MAP,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"key": {"target": STRING}, "value": {"target": INTEGER}},
+TEST_CONFIG = (18, n1, _TC, 0, (_tim,), ((7, 0),))
+
+TEST_BODY_STRUCTURE_INPUT = (
+    18,
+    n1,
+    _TBSI,
+    {_sSI: _aTBSIO},
+    (_tI, _tC),
+    ((3, {_sH: _xati}), (TEST_CONFIG, 0)),
 )
 
-SPARSE_SET_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SparseSetMap"),
-    shape_type=ShapeType.MAP,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"key": {"target": STRING}, "value": {"target": STRING_SET}},
+TEST_BODY_STRUCTURE_OUTPUT = (
+    18,
+    n1,
+    _TBSO,
+    {_sSI: _aTBSIO},
+    (_tI, _tC),
+    ((3, {_sH: _xati}), (TEST_CONFIG, 0)),
 )
 
-SPARSE_STRING_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#SparseStringMap"),
-    shape_type=ShapeType.MAP,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
+TEST_BODY_STRUCTURE = (
+    23,
+    n1,
+    _TBS,
+    {_s: MappingProxyType({"uri": "/body", "method": "POST"})},
+    TEST_BODY_STRUCTURE_INPUT,
+    TEST_BODY_STRUCTURE_OUTPUT,
+    (),
 )
 
-SPARSE_STRUCT_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SparseStructMap"),
-    shape_type=ShapeType.MAP,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"key": {"target": STRING}, "value": {"target": GREETING_STRUCT}},
+TEST_GET_NO_INPUT_NO_PAYLOAD_INPUT = (18, n1, _TGNINPI, {_sSI: _sU})
+
+TEST_GET_NO_INPUT_NO_PAYLOAD_OUTPUT = (
+    18,
+    n1,
+    _TGNINPO,
+    {_sSI: _aTNPIO},
+    (_tI,),
+    ((3, {_sH: _XATI}),),
 )
 
-SPARSE_JSON_MAPS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SparseJsonMapsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#SparseJsonMapsInputOutput",
-        )
-    ],
-    members={
-        "sparseStructMap": {"target": SPARSE_STRUCT_MAP},
-        "sparseNumberMap": {"target": SPARSE_NUMBER_MAP},
-        "sparseBooleanMap": {"target": SPARSE_BOOLEAN_MAP},
-        "sparseStringMap": {"target": SPARSE_STRING_MAP},
-        "sparseSetMap": {"target": SPARSE_SET_MAP},
-    },
+TEST_GET_NO_INPUT_NO_PAYLOAD = (
+    23,
+    n1,
+    _TGNINP,
+    {_s: MappingProxyType({"uri": "/no_input_no_payload", "method": "GET"})},
+    TEST_GET_NO_INPUT_NO_PAYLOAD_INPUT,
+    TEST_GET_NO_INPUT_NO_PAYLOAD_OUTPUT,
+    (),
 )
 
-SPARSE_JSON_MAPS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#SparseJsonMapsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#SparseJsonMapsInputOutput",
-        )
-    ],
-    members={
-        "sparseStructMap": {"target": SPARSE_STRUCT_MAP},
-        "sparseNumberMap": {"target": SPARSE_NUMBER_MAP},
-        "sparseBooleanMap": {"target": SPARSE_BOOLEAN_MAP},
-        "sparseStringMap": {"target": SPARSE_STRING_MAP},
-        "sparseSetMap": {"target": SPARSE_SET_MAP},
-    },
+TEST_GET_NO_PAYLOAD_INPUT = (
+    18,
+    n1,
+    _TGNPI,
+    {_sSI: _aTNPIO},
+    (_tI,),
+    ((3, {_sH: _XATI}),),
 )
 
-SPARSE_JSON_MAPS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#SparseJsonMaps"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/SparseJsonMaps", "method": "POST"}),
-        )
-    ],
+TEST_GET_NO_PAYLOAD_OUTPUT = (
+    18,
+    n1,
+    _TGNPO,
+    {_sSI: _aTNPIO},
+    (_tI,),
+    ((3, {_sH: _XATI}),),
 )
 
-STREAMING_BLOB = Schema(
-    id=ShapeID("aws.protocoltests.restjson#StreamingBlob"),
-    shape_type=ShapeType.BLOB,
-    traits=[Trait.new(id=ShapeID("smithy.api#streaming"))],
+TEST_GET_NO_PAYLOAD = (
+    23,
+    n1,
+    _TGNP,
+    {_s: MappingProxyType({"uri": "/no_payload", "method": "GET"})},
+    TEST_GET_NO_PAYLOAD_INPUT,
+    TEST_GET_NO_PAYLOAD_OUTPUT,
+    (),
 )
 
-STREAMING_TRAITS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#StreamingTraitsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#StreamingTraitsInputOutput",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "blob": {
-            "target": STREAMING_BLOB,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#default"), value=""),
-                Trait.new(id=ShapeID("smithy.api#httpPayload")),
-            ],
-        },
-    },
+TEST_PAYLOAD_BLOB_INPUT = (
+    18,
+    n1,
+    _TPBI,
+    {_sSI: _aTPBIO},
+    (_cT, _da),
+    ((3, {_sH: _CT}), (1, 16)),
 )
 
-STREAMING_TRAITS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#StreamingTraitsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#StreamingTraitsInputOutput",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "blob": {
-            "target": STREAMING_BLOB,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#default"), value=""),
-                Trait.new(id=ShapeID("smithy.api#httpPayload")),
-            ],
-        },
-    },
+TEST_PAYLOAD_BLOB_OUTPUT = (
+    18,
+    n1,
+    _TPBO,
+    {_sSI: _aTPBIO},
+    (_cT, _da),
+    ((3, {_sH: _CT}), (1, 16)),
 )
 
-STREAMING_TRAITS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#StreamingTraits"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/StreamingTraits", "method": "POST"}),
-        )
-    ],
+TEST_PAYLOAD_BLOB = (
+    23,
+    n1,
+    _TPBe,
+    {_s: MappingProxyType({"uri": "/blob_payload", "method": "POST"})},
+    TEST_PAYLOAD_BLOB_INPUT,
+    TEST_PAYLOAD_BLOB_OUTPUT,
+    (),
 )
 
-STREAMING_TRAITS_REQUIRE_LENGTH_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#StreamingTraitsRequireLengthInput"),
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "blob": {
-            "target": FINITE_STREAMING_BLOB,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#default"), value=""),
-                Trait.new(id=ShapeID("smithy.api#httpPayload")),
-            ],
-        },
-    },
+TEST_PAYLOAD_STRUCTURE_INPUT = (
+    18,
+    n1,
+    _TPSI,
+    {_sSI: _aTPSIO},
+    (_tI, _pC),
+    ((3, {_sH: _xati}), (PAYLOAD_CONFIG, 16)),
 )
 
-STREAMING_TRAITS_REQUIRE_LENGTH_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#StreamingTraitsRequireLengthOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
+TEST_PAYLOAD_STRUCTURE_OUTPUT = (
+    18,
+    n1,
+    _TPSO,
+    {_sSI: _aTPSIO},
+    (_tI, _pC),
+    ((3, {_sH: _xati}), (PAYLOAD_CONFIG, 16)),
 )
 
-STREAMING_TRAITS_REQUIRE_LENGTH = Schema(
-    id=ShapeID("aws.protocoltests.restjson#StreamingTraitsRequireLength"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/StreamingTraitsRequireLength", "method": "POST"}
-            ),
-        )
-    ],
+TEST_PAYLOAD_STRUCTURE = (
+    23,
+    n1,
+    _TPS,
+    {_s: MappingProxyType({"uri": "/payload", "method": "POST"})},
+    TEST_PAYLOAD_STRUCTURE_INPUT,
+    TEST_PAYLOAD_STRUCTURE_OUTPUT,
+    (),
 )
 
-STREAMING_TEXT_PLAIN_BLOB = Schema(
-    id=ShapeID("aws.protocoltests.restjson#StreamingTextPlainBlob"),
-    shape_type=ShapeType.BLOB,
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#streaming")),
-        Trait.new(id=ShapeID("smithy.api#mediaType"), value="text/plain"),
-    ],
+TEST_POST_NO_INPUT_NO_PAYLOAD_INPUT = (18, n1, _TPNINPI, {_sSI: _sU})
+
+TEST_POST_NO_INPUT_NO_PAYLOAD_OUTPUT = (
+    18,
+    n1,
+    _TPNINPO,
+    {_sSI: _aTNPIO},
+    (_tI,),
+    ((3, {_sH: _XATI}),),
 )
 
-STREAMING_TRAITS_WITH_MEDIA_TYPE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#StreamingTraitsWithMediaTypeInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#StreamingTraitsWithMediaTypeInputOutput",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "blob": {
-            "target": STREAMING_TEXT_PLAIN_BLOB,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#default"), value=""),
-                Trait.new(id=ShapeID("smithy.api#httpPayload")),
-            ],
-        },
-    },
+TEST_POST_NO_INPUT_NO_PAYLOAD = (
+    23,
+    n1,
+    _TPNINP,
+    {_s: MappingProxyType({"uri": "/no_input_no_payload", "method": "POST"})},
+    TEST_POST_NO_INPUT_NO_PAYLOAD_INPUT,
+    TEST_POST_NO_INPUT_NO_PAYLOAD_OUTPUT,
+    (),
 )
 
-STREAMING_TRAITS_WITH_MEDIA_TYPE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#StreamingTraitsWithMediaTypeOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#StreamingTraitsWithMediaTypeInputOutput",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "blob": {
-            "target": STREAMING_TEXT_PLAIN_BLOB,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#default"), value=""),
-                Trait.new(id=ShapeID("smithy.api#httpPayload")),
-            ],
-        },
-    },
+TEST_POST_NO_PAYLOAD_INPUT = (
+    18,
+    n1,
+    _TPNPI,
+    {_sSI: _aTNPIO},
+    (_tI,),
+    ((3, {_sH: _XATI}),),
 )
 
-STREAMING_TRAITS_WITH_MEDIA_TYPE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#StreamingTraitsWithMediaType"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/StreamingTraitsWithMediaType", "method": "POST"}
-            ),
-        )
-    ],
+TEST_POST_NO_PAYLOAD_OUTPUT = (
+    18,
+    n1,
+    _TPNPO,
+    {_sSI: _aTNPIO},
+    (_tI,),
+    ((3, {_sH: _XATI}),),
 )
 
-TEST_CONFIG = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestConfig"),
-    members={"timeout": {"target": INTEGER}},
+TEST_POST_NO_PAYLOAD = (
+    23,
+    n1,
+    _TPNP,
+    {_s: MappingProxyType({"uri": "/no_payload", "method": "POST"})},
+    TEST_POST_NO_PAYLOAD_INPUT,
+    TEST_POST_NO_PAYLOAD_OUTPUT,
+    (),
 )
 
-TEST_BODY_STRUCTURE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestBodyStructureInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestBodyStructureInputOutput",
-        )
-    ],
-    members={
-        "testId": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="x-amz-test-id")
-            ],
-        },
-        "testConfig": {"target": TEST_CONFIG},
-    },
+TIMESTAMP_FORMAT_HEADERS_INPUT = (
+    18,
+    n1,
+    _TFHI,
+    {_sSI: _aTFHIO},
+    (_mES, _mHD, _mDT, _dFe, _tES, _tHD, _tDT),
+    (
+        (4, {_sF: _es, _sH: _Xm}),
+        (4, {_sF: _hd, _sH: _Xm_}),
+        (4, {_sF: _dt, _sH: _Xm__}),
+        (4, {_sH: _Xd}),
+        (EPOCH_SECONDS, {_sH: _Xt}),
+        (HTTP_DATE, {_sH: _Xt_}),
+        (DATE_TIME, {_sH: _Xt__}),
+    ),
 )
 
-TEST_BODY_STRUCTURE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestBodyStructureOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestBodyStructureInputOutput",
-        )
-    ],
-    members={
-        "testId": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="x-amz-test-id")
-            ],
-        },
-        "testConfig": {"target": TEST_CONFIG},
-    },
+TIMESTAMP_FORMAT_HEADERS_OUTPUT = (
+    18,
+    n1,
+    _TFHO,
+    {_sSI: _aTFHIO},
+    (_mES, _mHD, _mDT, _dFe, _tES, _tHD, _tDT),
+    (
+        (4, {_sF: _es, _sH: _Xm}),
+        (4, {_sF: _hd, _sH: _Xm_}),
+        (4, {_sF: _dt, _sH: _Xm__}),
+        (4, {_sH: _Xd}),
+        (EPOCH_SECONDS, {_sH: _Xt}),
+        (HTTP_DATE, {_sH: _Xt_}),
+        (DATE_TIME, {_sH: _Xt__}),
+    ),
 )
 
-TEST_BODY_STRUCTURE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#TestBodyStructure"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/body", "method": "POST"}),
-        )
-    ],
+TIMESTAMP_FORMAT_HEADERS = (
+    23,
+    n1,
+    _TFH,
+    {_s: MappingProxyType({"uri": "/TimestampFormatHeaders", "method": "POST"})},
+    TIMESTAMP_FORMAT_HEADERS_INPUT,
+    TIMESTAMP_FORMAT_HEADERS_OUTPUT,
+    (),
 )
 
-TEST_GET_NO_INPUT_NO_PAYLOAD_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestGetNoInputNoPayloadInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
+UNIT_INPUT_AND_OUTPUT_INPUT = (18, n1, _UIAOI, {_sSI: _sU})
+
+UNIT_INPUT_AND_OUTPUT_OUTPUT = (18, n1, _UIAOO, {_sSI: _sU})
+
+UNIT_INPUT_AND_OUTPUT = (
+    23,
+    n1,
+    _UIAO,
+    {_s: MappingProxyType({"uri": "/UnitInputAndOutput", "method": "POST"})},
+    UNIT_INPUT_AND_OUTPUT_INPUT,
+    UNIT_INPUT_AND_OUTPUT_OUTPUT,
+    (),
 )
 
-TEST_GET_NO_INPUT_NO_PAYLOAD_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestGetNoInputNoPayloadOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        )
-    ],
-    members={
-        "testId": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Amz-Test-Id")
-            ],
-        }
-    },
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1 = (  # pyright: ignore[reportUnknownVariableType]
+    18,
+    n1,
+    _RSION,
+    0,
+    (_fo, _ne),
+    (
+        (3, 0),
+        (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0),  # pyright: ignore[reportUnknownLambdaType]
+    ),
 )
 
-TEST_GET_NO_INPUT_NO_PAYLOAD = Schema(
-    id=ShapeID("aws.protocoltests.restjson#TestGetNoInputNoPayload"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/no_input_no_payload", "method": "GET"}),
-        )
-    ],
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariableType]
+    18,
+    n1,
+    _RSIONe,
+    0,
+    (_ba, _rM),
+    ((3, 0), (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0)),
 )
 
-TEST_GET_NO_PAYLOAD_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestGetNoPayloadInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        )
-    ],
-    members={
-        "testId": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Amz-Test-Id")
-            ],
-        }
-    },
+RECURSIVE_SHAPES_INPUT = (  # pyright: ignore[reportUnknownVariableType]
+    18,
+    n1,
+    _RSI,
+    {_sSI: _aRSIO},
+    (_ne,),
+    ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-TEST_GET_NO_PAYLOAD_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestGetNoPayloadOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        )
-    ],
-    members={
-        "testId": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Amz-Test-Id")
-            ],
-        }
-    },
+RECURSIVE_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
+    18,
+    n1,
+    _RSO,
+    {_sSI: _aRSIO},
+    (_ne,),
+    ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-TEST_GET_NO_PAYLOAD = Schema(
-    id=ShapeID("aws.protocoltests.restjson#TestGetNoPayload"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/no_payload", "method": "GET"}),
-        )
-    ],
+RECURSIVE_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
+    23,
+    n1,
+    _RS,
+    {_s: MappingProxyType({"uri": "/RecursiveShapes", "method": "PUT"})},
+    RECURSIVE_SHAPES_INPUT,
+    RECURSIVE_SHAPES_OUTPUT,
+    (),
 )
 
-TEST_PAYLOAD_BLOB_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestPayloadBlobInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestPayloadBlobInputOutput",
-        )
-    ],
-    members={
-        "contentType": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="Content-Type")
-            ],
-        },
-        "data": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-TEST_PAYLOAD_BLOB_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestPayloadBlobOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestPayloadBlobInputOutput",
-        )
-    ],
-    members={
-        "contentType": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="Content-Type")
-            ],
-        },
-        "data": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-TEST_PAYLOAD_BLOB = Schema(
-    id=ShapeID("aws.protocoltests.restjson#TestPayloadBlob"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/blob_payload", "method": "POST"}),
-        )
-    ],
-)
-
-TEST_PAYLOAD_STRUCTURE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestPayloadStructureInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestPayloadStructureInputOutput",
-        )
-    ],
-    members={
-        "testId": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="x-amz-test-id")
-            ],
-        },
-        "payloadConfig": {
-            "target": PAYLOAD_CONFIG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-TEST_PAYLOAD_STRUCTURE_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestPayloadStructureOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestPayloadStructureInputOutput",
-        )
-    ],
-    members={
-        "testId": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="x-amz-test-id")
-            ],
-        },
-        "payloadConfig": {
-            "target": PAYLOAD_CONFIG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpPayload"))],
-        },
-    },
-)
-
-TEST_PAYLOAD_STRUCTURE = Schema(
-    id=ShapeID("aws.protocoltests.restjson#TestPayloadStructure"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/payload", "method": "POST"}),
-        )
-    ],
-)
-
-TEST_POST_NO_INPUT_NO_PAYLOAD_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestPostNoInputNoPayloadInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-TEST_POST_NO_INPUT_NO_PAYLOAD_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestPostNoInputNoPayloadOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        )
-    ],
-    members={
-        "testId": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Amz-Test-Id")
-            ],
-        }
-    },
-)
-
-TEST_POST_NO_INPUT_NO_PAYLOAD = Schema(
-    id=ShapeID("aws.protocoltests.restjson#TestPostNoInputNoPayload"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/no_input_no_payload", "method": "POST"}),
-        )
-    ],
-)
-
-TEST_POST_NO_PAYLOAD_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestPostNoPayloadInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        )
-    ],
-    members={
-        "testId": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Amz-Test-Id")
-            ],
-        }
-    },
-)
-
-TEST_POST_NO_PAYLOAD_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TestPostNoPayloadOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        )
-    ],
-    members={
-        "testId": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Amz-Test-Id")
-            ],
-        }
-    },
-)
-
-TEST_POST_NO_PAYLOAD = Schema(
-    id=ShapeID("aws.protocoltests.restjson#TestPostNoPayload"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/no_payload", "method": "POST"}),
-        )
-    ],
-)
-
-TIMESTAMP_FORMAT_HEADERS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TimestampFormatHeadersInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TimestampFormatHeadersIO",
-        )
-    ],
-    members={
-        "memberEpochSeconds": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds"
+REST_JSON = (
+    21,
+    n1,
+    _RJ,
+    {
+        _aw: MappingProxyType({"name": "restjson"}),
+        _sB: MappingProxyType(
+            {
+                "version": "1.1",
+                "parameters": MappingProxyType(
+                    {
+                        "Region": MappingProxyType(
+                            {
+                                "builtIn": "AWS::Region",
+                                "required": False,
+                                "documentation": "The AWS Region. This is a default regional AWS endpointRuleSet.",
+                                "type": "string",
+                            }
+                        ),
+                        "UseDualStack": MappingProxyType(
+                            {
+                                "builtIn": "AWS::UseDualStack",
+                                "required": True,
+                                "default": False,
+                                "documentation": "Whether to use dual-stack.",
+                                "type": "boolean",
+                            }
+                        ),
+                        "UseFIPS": MappingProxyType(
+                            {
+                                "builtIn": "AWS::UseFIPS",
+                                "required": True,
+                                "default": False,
+                                "documentation": "Whether to use FIPS-compliant regional endpoint.",
+                                "type": "boolean",
+                            }
+                        ),
+                        "Endpoint": MappingProxyType(
+                            {
+                                "builtIn": "SDK::Endpoint",
+                                "required": False,
+                                "documentation": "Override the endpoint.",
+                                "type": "string",
+                            }
+                        ),
+                    }
                 ),
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="X-memberEpochSeconds"
-                ),
-            ],
-        },
-        "memberHttpDate": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date"),
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="X-memberHttpDate"
-                ),
-            ],
-        },
-        "memberDateTime": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time"),
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="X-memberDateTime"
-                ),
-            ],
-        },
-        "defaultFormat": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-defaultFormat")
-            ],
-        },
-        "targetEpochSeconds": {
-            "target": EPOCH_SECONDS,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="X-targetEpochSeconds"
-                )
-            ],
-        },
-        "targetHttpDate": {
-            "target": HTTP_DATE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-targetHttpDate")
-            ],
-        },
-        "targetDateTime": {
-            "target": DATE_TIME,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-targetDateTime")
-            ],
-        },
-    },
-)
-
-TIMESTAMP_FORMAT_HEADERS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#TimestampFormatHeadersOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#TimestampFormatHeadersIO",
-        )
-    ],
-    members={
-        "memberEpochSeconds": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds"
-                ),
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="X-memberEpochSeconds"
-                ),
-            ],
-        },
-        "memberHttpDate": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date"),
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="X-memberHttpDate"
-                ),
-            ],
-        },
-        "memberDateTime": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time"),
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="X-memberDateTime"
-                ),
-            ],
-        },
-        "defaultFormat": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-defaultFormat")
-            ],
-        },
-        "targetEpochSeconds": {
-            "target": EPOCH_SECONDS,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#httpHeader"), value="X-targetEpochSeconds"
-                )
-            ],
-        },
-        "targetHttpDate": {
-            "target": HTTP_DATE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-targetHttpDate")
-            ],
-        },
-        "targetDateTime": {
-            "target": DATE_TIME,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-targetDateTime")
-            ],
-        },
-    },
-)
-
-TIMESTAMP_FORMAT_HEADERS = Schema(
-    id=ShapeID("aws.protocoltests.restjson#TimestampFormatHeaders"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType(
-                {"uri": "/TimestampFormatHeaders", "method": "POST"}
-            ),
-        )
-    ],
-)
-
-UNIT_INPUT_AND_OUTPUT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#UnitInputAndOutputInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-UNIT_INPUT_AND_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#UnitInputAndOutputOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-UNIT_INPUT_AND_OUTPUT = Schema(
-    id=ShapeID("aws.protocoltests.restjson#UnitInputAndOutput"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/UnitInputAndOutput", "method": "POST"}),
-        )
-    ],
-)
-
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1 = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#RecursiveShapesInputOutputNested1"),
-    members={
-        "foo": {"target": STRING},
-        # This needs to reference a schema that isn't defined yet.
-        # It will be populated with a non-null value at the end of the file.
-        "nested": None,
-    },
-)
-
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#RecursiveShapesInputOutputNested2"),
-    members={
-        "bar": {"target": STRING},
-        "recursiveMember": {"target": RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1},
-    },
-)
-
-RECURSIVE_SHAPES_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#RecursiveShapesInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#RecursiveShapesInputOutput",
-        )
-    ],
-    members={"nested": {"target": RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1}},
-)
-
-RECURSIVE_SHAPES_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#RecursiveShapesOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restjson#RecursiveShapesInputOutput",
-        )
-    ],
-    members={"nested": {"target": RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1}},
-)
-
-RECURSIVE_SHAPES = Schema(
-    id=ShapeID("aws.protocoltests.restjson#RecursiveShapes"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/RecursiveShapes", "method": "PUT"}),
-        )
-    ],
-)
-
-REST_JSON = Schema(
-    id=ShapeID("aws.protocoltests.restjson#RestJson"),
-    shape_type=ShapeType.SERVICE,
-    traits=[
-        Trait.new(
-            id=ShapeID("aws.auth#sigv4"), value=MappingProxyType({"name": "restjson"})
-        ),
-        Trait.new(
-            id=ShapeID("smithy.rules#endpointBdd"),
-            value=MappingProxyType(
-                {
-                    "version": "1.1",
-                    "parameters": MappingProxyType(
+                "conditions": (
+                    MappingProxyType(
                         {
-                            "Region": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::Region",
-                                    "required": False,
-                                    "documentation": "The AWS Region. This is a default regional AWS endpointRuleSet.",
-                                    "type": "string",
-                                }
-                            ),
-                            "UseDualStack": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseDualStack",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use dual-stack.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "UseFIPS": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseFIPS",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use FIPS-compliant regional endpoint.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "Endpoint": MappingProxyType(
-                                {
-                                    "builtIn": "SDK::Endpoint",
-                                    "required": False,
-                                    "documentation": "Override the endpoint.",
-                                    "type": "string",
-                                }
+                            "fn": "isSet",
+                            "argv": (MappingProxyType({"ref": "Endpoint"}),),
+                        }
+                    ),
+                    MappingProxyType(
+                        {"fn": "isSet", "argv": (MappingProxyType({"ref": "Region"}),)}
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "aws.partition",
+                            "argv": (MappingProxyType({"ref": "Region"}),),
+                            "assign": "PartitionResult",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (MappingProxyType({"ref": "UseFIPS"}), True),
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (MappingProxyType({"ref": "UseDualStack"}), True),
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (
+                                MappingProxyType(
+                                    {
+                                        "fn": "getAttr",
+                                        "argv": (
+                                            MappingProxyType(
+                                                {"ref": "PartitionResult"}
+                                            ),
+                                            "supportsDualStack",
+                                        ),
+                                    }
+                                ),
+                                True,
                             ),
                         }
                     ),
-                    "conditions": (
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Endpoint"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "aws.partition",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                                "assign": "PartitionResult",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (MappingProxyType({"ref": "UseFIPS"}), True),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType({"ref": "UseDualStack"}),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsDualStack",
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (
+                                MappingProxyType(
+                                    {
+                                        "fn": "getAttr",
+                                        "argv": (
+                                            MappingProxyType(
+                                                {"ref": "PartitionResult"}
                                             ),
-                                        }
-                                    ),
-                                    True,
+                                            "supportsFIPS",
+                                        ),
+                                    }
                                 ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsFIPS",
-                                            ),
-                                        }
-                                    ),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "stringEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "name",
-                                            ),
-                                        }
-                                    ),
-                                    "aws-us-gov",
-                                ),
-                            }
-                        ),
+                                True,
+                            ),
+                        }
                     ),
-                    "results": (
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: FIPS and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Dualstack and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
+                    MappingProxyType(
+                        {
+                            "fn": "stringEquals",
+                            "argv": (
+                                MappingProxyType(
                                     {
-                                        "url": MappingProxyType({"ref": "Endpoint"}),
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
+                                        "fn": "getAttr",
+                                        "argv": (
+                                            MappingProxyType(
+                                                {"ref": "PartitionResult"}
+                                            ),
+                                            "name",
+                                        ),
                                     }
                                 ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restjson-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS and DualStack are enabled, but this partition does not support one or both",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restjson.{Region}.amazonaws.com",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restjson-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS is enabled but this partition does not support FIPS",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restjson.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "DualStack is enabled but this partition does not support DualStack",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restjson.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Missing Region",
-                                "type": "error",
-                            }
-                        ),
+                                "aws-us-gov",
+                            ),
+                        }
                     ),
-                    "root": 2,
-                    "nodeCount": 14,
-                    "nodes": "/////wAAAAH/////AAAAAAAAAA0AAAADAAAAAQAAAAQF9eEMAAAAAgAAAAUF9eEMAAAAAwAAAAgAAAAGAAAABAAAAAcF9eELAAAABQX14QkF9eEKAAAABAAAAAsAAAAJAAAABgAAAAoF9eEIAAAABwX14QYF9eEHAAAABQAAAAwF9eEFAAAABgX14QQF9eEFAAAAAwX14QEAAAAOAAAABAX14QIF9eED",
-                }
-            ),
+                ),
+                "results": (
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "Invalid Configuration: FIPS and custom endpoint are not supported",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "Invalid Configuration: Dualstack and custom endpoint are not supported",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": MappingProxyType({"ref": "Endpoint"}),
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://restjson-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "FIPS and DualStack are enabled, but this partition does not support one or both",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://restjson.{Region}.amazonaws.com",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://restjson-fips.{Region}.{PartitionResult#dnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "FIPS is enabled but this partition does not support FIPS",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://restjson.{Region}.{PartitionResult#dualStackDnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "DualStack is enabled but this partition does not support DualStack",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://restjson.{Region}.{PartitionResult#dnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "Invalid Configuration: Missing Region",
+                            "type": "error",
+                        }
+                    ),
+                ),
+                "root": 2,
+                "nodeCount": 14,
+                "nodes": "/////wAAAAH/////AAAAAAAAAA0AAAADAAAAAQAAAAQF9eEMAAAAAgAAAAUF9eEMAAAAAwAAAAgAAAAGAAAABAAAAAcF9eELAAAABQX14QkF9eEKAAAABAAAAAsAAAAJAAAABgAAAAoF9eEIAAAABwX14QYF9eEHAAAABQAAAAwF9eEFAAAABgX14QQF9eEFAAAAAwX14QEAAAAOAAAABAX14QIF9eED",
+            }
         ),
-        Trait.new(
-            id=ShapeID("aws.api#service"),
-            value=MappingProxyType({"sdkId": "Rest Json Protocol"}),
-        ),
-        Trait.new(id=ShapeID("aws.protocols#restJson1")),
-    ],
-)
-
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1.members["nested"] = Schema.member(
-    id=RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1.id.with_member("nested"),
-    target=RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2,
-    index=1,
+        _aws: MappingProxyType({"sdkId": "Rest Json Protocol"}),
+        _aJ: None,
+    },
 )

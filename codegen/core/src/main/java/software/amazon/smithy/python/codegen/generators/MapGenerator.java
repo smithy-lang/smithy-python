@@ -46,7 +46,7 @@ public final class MapGenerator implements Runnable {
         writer.write("""
                 def $1L(serializer: $2T, schema: $3T, value: $4T) -> None:
                     with serializer.begin_map(schema, len(value)) as m:
-                        value_schema = schema.members["value"]
+                        value_schema = schema.members_by_index[1]
                         for k, v in value.items():
                             ${?sparse}
                             if v is None:
@@ -80,7 +80,7 @@ public final class MapGenerator implements Runnable {
         writer.write("""
                 def $1L(deserializer: $2T, schema: $3T) -> $4T:
                     result: $4T = {}
-                    value_schema = schema.members["value"]
+                    value_schema = schema.members_by_index[1]
                     def _read_value(k: str, d: $2T):
                         if d.is_null():
                             d.read_null()

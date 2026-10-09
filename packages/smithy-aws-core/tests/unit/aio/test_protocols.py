@@ -25,7 +25,7 @@ from smithy_core.prelude import INTEGER, STRING
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import HTTPTrait, Trait
+from smithy_core.traits import Trait
 from smithy_core.types import TypedProperties
 from smithy_http import Fields, tuples_to_fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
@@ -787,16 +787,17 @@ def _rest_xml_operation() -> APIOperation[Any, Any]:
     return APIOperation(
         input=_EmptyInput,
         output=_EmptyOutput,
-        schema=Schema(
-            id=ShapeID("com.test#GetThing"),
-            shape_type=ShapeType.OPERATION,
-            traits=[HTTPTrait({"method": "GET", "code": 200, "uri": "/"})],
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "com.test",
+            "GetThing",
+            {"smithy.api#http": {"method": "GET", "code": 200, "uri": "/"}},
+            _EMPTY_INPUT_SCHEMA,
+            _EMPTY_OUTPUT_SCHEMA,
+            (_NO_SUCH_BUCKET_SCHEMA,),
         ),
-        input_schema=_EMPTY_INPUT_SCHEMA,
-        output_schema=_EMPTY_OUTPUT_SCHEMA,
         error_registry=TypeRegistry({}),
         effective_auth_schemes=[],
-        error_schemas=[_NO_SUCH_BUCKET_SCHEMA],
     )
 
 
