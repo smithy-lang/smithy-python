@@ -23,6 +23,7 @@ from ..interceptors import (
 from ..interfaces import Endpoint, TypedProperties
 from ..interfaces.auth import AuthOption, AuthSchemeResolver
 from ..interfaces.retries import RetryStrategy
+from ..retries import AdaptiveRetryStrategy
 from ..schemas import APIOperation
 from ..serializers import SerializeableShape
 from ..shapes import ShapeID
@@ -327,27 +328,38 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
         if not call.retryable():
-            return await self._handle_attempt(call, request_context, request_future)
+            return await self._send_with_rate_limiting(
+                call, request_context, request_future
+            )
 
         retry_strategy = call.retry_strategy
         retry_token = retry_strategy.acquire_initial_retry_token(
             token_scope=call.retry_scope
         )
 
+        last_error: Exception | None = None
         while True:
             if retry_token.retry_delay:
                 await sleep(retry_token.retry_delay)
 
-            output_context = await self._handle_attempt(
-                call,
-                replace(
-                    request_context,
-                    transport_request=copy(request_context.transport_request),
-                ),
-                request_future,
-            )
+            try:
+                output_context = await self._send_with_rate_limiting(
+                    call,
+                    replace(
+                        request_context,
+                        transport_request=copy(request_context.transport_request),
+                    ),
+                    request_future,
+                )
+            except TimeoutError as e:
+                # Only raised when an adaptive retry times out waiting for a send
+                # token. On a retry, surface the error that caused it instead.
+                if last_error is None:
+                    raise
+                raise last_error from e
 
             if isinstance(output_context.response, Exception):
+                last_error = output_context.response
                 try:
                     retry_token = retry_strategy.refresh_retry_token_for_retry(
                         token_to_renew=retry_token,
@@ -366,6 +378,64 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             else:
                 retry_strategy.record_success(token=retry_token)
                 return output_context
+
+    async def _send_with_rate_limiting[
+        I: SerializeableShape,
+        O: DeserializeableShape,
+    ](
+        self,
+        call: ClientCall[I, O],
+        request_context: RequestContext[I, TRequest],
+        request_future: Future[RequestContext[I, TRequest]] | None,
+    ) -> OutputContext[I, O, TRequest, TResponse | None]:
+        """Send a single attempt, applying client-side rate limiting (adaptive only).
+
+        Every attempt, retryable or not, acquires a send token before it is sent and
+        updates the rate limiter with its result.
+        """
+        retry_strategy = call.retry_strategy
+        try:
+            await self._handle_pre_request_rate_limiting(retry_strategy)
+        except Exception as e:
+            if request_future is not None and not request_future.done():
+                request_future.set_exception(e)
+            raise
+
+        output_context = await self._handle_attempt(
+            call, request_context, request_future
+        )
+
+        if isinstance(output_context.response, Exception):
+            await self._handle_post_error_response_rate_limiting(
+                retry_strategy, output_context.response
+            )
+        else:
+            await self._handle_success_rate_limiting(retry_strategy)
+        return output_context
+
+    async def _handle_pre_request_rate_limiting(
+        self, retry_strategy: RetryStrategy
+    ) -> None:
+        """Handle rate limiting before sending request."""
+        if isinstance(retry_strategy, AdaptiveRetryStrategy):
+            await retry_strategy.acquire_from_token_bucket()
+
+    async def _handle_post_error_response_rate_limiting(
+        self, retry_strategy: RetryStrategy, error: Exception
+    ) -> None:
+        """Handle rate limiting after failed response."""
+        if isinstance(retry_strategy, AdaptiveRetryStrategy):
+            is_throttling = retry_strategy.is_throttling_error(error)
+            await retry_strategy.rate_limiter.after_receiving_response(is_throttling)
+
+    async def _handle_success_rate_limiting(
+        self, retry_strategy: RetryStrategy
+    ) -> None:
+        """Handle rate limiting after successful response."""
+        if isinstance(retry_strategy, AdaptiveRetryStrategy):
+            await retry_strategy.rate_limiter.after_receiving_response(
+                throttling_error=False
+            )
 
     async def _handle_attempt[I: SerializeableShape, O: DeserializeableShape](
         self,
