@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Changed generated schemas to a compact tuple encoding hydrated on first use, and reworked `APIOperation` to accept a single `static_schema` tuple with lazily-hydrated `schema`, `input_schema`, `output_schema`, and `error_schemas` properties."
+}
