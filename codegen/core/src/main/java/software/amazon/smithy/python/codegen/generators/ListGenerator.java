@@ -42,7 +42,7 @@ public final class ListGenerator implements Runnable {
         var memberTarget = context.model().expectShape(shape.getMember().getTarget());
         writer.write("""
                 def $1L(serializer: $2T, schema: $3T, value: $4T) -> None:
-                    member_schema = schema.members["member"]
+                    member_schema = schema.members_by_index[0]
                     with serializer.begin_list(schema, len(value)) as ls:
                         for e in value:
                             ${?sparse}
@@ -79,7 +79,7 @@ public final class ListGenerator implements Runnable {
                 def $1L(deserializer: $2T, schema: $3T) -> $4T:
                     result: $4T = []
                     ${?includeSchema}
-                    member_schema = schema.members["member"]
+                    member_schema = schema.members_by_index[0]
                     ${/includeSchema}
                     def _read_value(d: $2T):
                         if d.is_null():

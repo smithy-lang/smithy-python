@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
+from functools import cached_property
 from itertools import count
 from typing import (
     TYPE_CHECKING,
@@ -24,6 +25,7 @@ from .traits import (
 )
 
 if TYPE_CHECKING:
+    from ._schema_compact import StaticOperationSchema
     from .deserializers import DeserializeableShape
     from .documents import TypeRegistry
     from .serializers import SerializeableShape
@@ -388,14 +390,13 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
     output: type[O]
     """The output type of the operation."""
 
-    schema: Schema = field(repr=False)
-    """The schema of the operation."""
+    static_schema: "StaticOperationSchema" = field(repr=False)
+    """The operation's compact schema tuple.
 
-    input_schema: Schema = field(repr=False)
-    """The schema of the operation's input shape."""
-
-    output_schema: Schema = field(repr=False)
-    """The schema of the operation's output shape."""
+    An operation tuple carries its input, output, and error schema references in its
+    trailing slots, so this single symbol is the whole operation. The schema
+    properties hydrate from it and cache in place on first access.
+    """
 
     error_registry: "TypeRegistry"
     """A TypeRegistry used to create errors."""
@@ -403,8 +404,33 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
     effective_auth_schemes: Sequence[ShapeID]
     """A list of effective auth schemes for the operation."""
 
-    error_schemas: Sequence[Schema] = field(repr=False)
-    """A list of modeled error schemas for the operation."""
+    @cached_property
+    def schema(self) -> Schema:
+        """The schema of the operation."""
+        from ._schema_compact import hydrate
+
+        return hydrate(self.static_schema)
+
+    @cached_property
+    def input_schema(self) -> Schema:
+        """The schema of the operation's input shape."""
+        from ._schema_compact import operation_input_schema
+
+        return operation_input_schema(self.static_schema)
+
+    @cached_property
+    def output_schema(self) -> Schema:
+        """The schema of the operation's output shape."""
+        from ._schema_compact import operation_output_schema
+
+        return operation_output_schema(self.static_schema)
+
+    @cached_property
+    def error_schemas(self) -> Sequence[Schema]:
+        """The operation's modeled error schemas."""
+        from ._schema_compact import operation_error_schemas
+
+        return operation_error_schemas(self.static_schema)
 
     @property
     def idempotency_token_member(self) -> Schema | None:

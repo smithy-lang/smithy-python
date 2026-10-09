@@ -59,6 +59,7 @@ public final class UnionGenerator implements Runnable {
         writer.putContext("serializationError", RuntimeTypes.SERIALIZATION_ERROR);
         var schemaSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA);
         writer.putContext("schema", schemaSymbol);
+        writer.putContext("hydrate", RuntimeTypes.HYDRATE);
 
         var memberNames = new ArrayList<String>();
         for (MemberShape member : shape.members()) {
@@ -70,6 +71,9 @@ public final class UnionGenerator implements Runnable {
             var targetSymbol = symbolProvider.toSymbol(target);
             writer.pushState();
             writer.putContext("quote", recursiveShapes.contains(target) ? "'" : "");
+            // struct/union variant targets deserialize via their own classmethod and
+            // never touch the member schema, so hoisting it would be an unused local.
+            writer.putContext("deserUsesSchema", !target.isStructureShape() && !target.isUnionShape());
             writer.write("""
                     @dataclass
                     class $1L:
@@ -78,14 +82,18 @@ public final class UnionGenerator implements Runnable {
                         value: ${quote:L}$3T${quote:L}
 
                         def serialize(self, serializer: ${shapeSerializer:T}):
-                            serializer.write_struct($4T, self)
+                            serializer.write_struct(${hydrate:T}(${schema:T}), self)
 
                         def serialize_members(self, serializer: ${shapeSerializer:T}):
-                            ${5C|}
+                            members = ${hydrate:T}(${schema:T}).members_by_index
+                            ${4C|}
 
                         @classmethod
                         def deserialize(cls, deserializer: ${shapeDeserializer:T}) -> Self:
-                            return cls(value=${6C|})
+                            ${?deserUsesSchema}
+                            members = ${hydrate:T}(${schema:T}).members_by_index
+                            ${/deserUsesSchema}
+                            return cls(value=${5C|})
 
                     """,
                     memberSymbol.getName(),
@@ -93,7 +101,6 @@ public final class UnionGenerator implements Runnable {
                             .map(StringTrait::getValue)
                             .ifPresent(docs -> w.writeDocs(docs, context))),
                     targetSymbol,
-                    schemaSymbol,
                     writer.consumer(w -> target.accept(
                             new MemberSerializerGenerator(context, w, member, "serializer"))),
                     writer.consumer(w -> target.accept(
@@ -157,6 +164,7 @@ public final class UnionGenerator implements Runnable {
         var schemaSymbol = symbol.expectProperty(SymbolProperties.SCHEMA);
         var unknownSymbol = symbol.expectProperty(SymbolProperties.UNION_UNKNOWN);
         writer.putContext("schema", schemaSymbol);
+        writer.putContext("hydrate", RuntimeTypes.HYDRATE);
         writer.write(
                 """
                         class $1L:
@@ -164,7 +172,7 @@ public final class UnionGenerator implements Runnable {
 
                             def deserialize(self, deserializer: ${shapeDeserializer:T}) -> $2T:
                                 self._result = None
-                                deserializer.read_struct($3T, self._consumer)
+                                deserializer.read_struct(${hydrate:T}($3T), self._consumer)
 
                                 if self._result is None:
                                     raise ${serializationError:T}("Unions must have exactly one value, but found none.")
