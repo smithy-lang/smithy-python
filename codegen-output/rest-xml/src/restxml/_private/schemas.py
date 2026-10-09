@@ -2689,7 +2689,7 @@ XML_NESTED_UNION_STRUCT = (
     ((3, 0), (2, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (10, 0)),
 )
 
-XML_UNION_SHAPE = (
+XML_UNION_SHAPE = (  # pyright: ignore[reportUnknownVariableType]
     19,
     n1,
     _XUS,
@@ -2704,21 +2704,24 @@ XML_UNION_SHAPE = (
         (8, 0),
         (9, 0),
         (10, 0),
-        (lambda: XML_UNION_SHAPE, 0),
+        (lambda: XML_UNION_SHAPE, 0),  # pyright: ignore[reportUnknownLambdaType]
         (XML_NESTED_UNION_STRUCT, 0),
     ),
 )
 
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1 = (
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1 = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n1,
     _RSION,
     0,
     (_f, _ne),
-    ((3, 0), (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0)),
+    (
+        (3, 0),
+        (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0),  # pyright: ignore[reportUnknownLambdaType]
+    ),
 )
 
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n1,
     _RSIONe,
@@ -2727,11 +2730,25 @@ RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (
     ((3, 0), (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0)),
 )
 
-XML_UNIONS_INPUT = (18, n1, _XUI, {_sSI: _aXUR}, (_uV,), ((XML_UNION_SHAPE, 0),))
+XML_UNIONS_INPUT = (  # pyright: ignore[reportUnknownVariableType]
+    18,
+    n1,
+    _XUI,
+    {_sSI: _aXUR},
+    (_uV,),
+    ((XML_UNION_SHAPE, 0),),
+)
 
-XML_UNIONS_OUTPUT = (18, n1, _XUO, {_sSI: _aXURw}, (_uV,), ((XML_UNION_SHAPE, 0),))
+XML_UNIONS_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
+    18,
+    n1,
+    _XUO,
+    {_sSI: _aXURw},
+    (_uV,),
+    ((XML_UNION_SHAPE, 0),),
+)
 
-RECURSIVE_SHAPES_INPUT = (
+RECURSIVE_SHAPES_INPUT = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n1,
     _RSI,
@@ -2740,7 +2757,7 @@ RECURSIVE_SHAPES_INPUT = (
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-RECURSIVE_SHAPES_OUTPUT = (
+RECURSIVE_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
     18,
     n1,
     _RSO,
@@ -2749,7 +2766,7 @@ RECURSIVE_SHAPES_OUTPUT = (
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-XML_UNIONS = (
+XML_UNIONS = (  # pyright: ignore[reportUnknownVariableType]
     23,
     n1,
     _XU,
@@ -2759,7 +2776,7 @@ XML_UNIONS = (
     (),
 )
 
-RECURSIVE_SHAPES = (
+RECURSIVE_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
     23,
     n1,
     _RS,

@@ -170,10 +170,6 @@ public final class SetupGenerator {
                     reportUnusedVariable = false
                     reportUnnecessaryComparison = false
                     reportUnusedClass = false
-                    reportUnknownVariableType = false
-                    reportUnknownMemberType = false
-                    reportUnknownArgumentType = false
-                    reportUnknownLambdaType = false
                     enableExperimentalFeatures = true
 
                     [tool.ruff]
