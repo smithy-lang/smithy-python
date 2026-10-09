@@ -37,18 +37,13 @@ from .traits import DynamicTrait, Trait
 if TYPE_CHECKING:
     from .documents import DocumentValue
 
-# A compact schema is a positional tuple led by its ShapeType int.
 type StaticSchema = tuple[Any, ...]
 # A member target: a prelude int, a sibling tuple, or a lambda returning one. A built
 # Schema is also accepted so an operation can be hand-initialized with real schemas.
 type StaticSchemaRef = int | StaticSchema | Schema | Callable[[], "StaticSchemaRef"]
 type StaticSchemaTraits = int | dict[str, "DocumentValue"]
-# An operation's compact schema. The leading four slots are its own shape definition
-# (type int, namespace, name, traits); the trailing three carry references to the
-# input, output, and error schemas, so one value describes the whole operation. A ref
-# may be a compact tuple, a built Schema, a prelude int, or a lambda returning one.
-# Kept permissive (not a fixed-arity tuple) so a generated literal -- whose nested
-# refs and valued-trait dicts have precise, partially-inferred element types -- still
+# Permissive (not a fixed-arity tuple) so a generated operation literal -- whose
+# nested refs and valued-trait dicts have partially-inferred element types -- still
 # assigns under strict type checking.
 type StaticOperationSchema = tuple[Any, ...]
 
@@ -75,8 +70,8 @@ _PRELUDE: dict[int, Schema] = {
 UNIT = -1
 _PRELUDE[UNIT] = prelude.UNIT
 
-# Bit index -> trait id for valueless two-state traits. OR of bits encodes any
-# combination; the width here allows well over 255 distinct combinations.
+# Bit index -> trait id for valueless two-state traits; OR of bits encodes any
+# combination.
 _TRAIT_BITS: tuple[str, ...] = (
     "smithy.api#required",
     "smithy.api#idempotencyToken",
@@ -206,11 +201,7 @@ def hydrate(data: "StaticSchema | Schema") -> Schema:
     return schema
 
 
-# An operation tuple embeds its referenced schemas after its own schema definition:
-# (type, ns, name, traits, input_ref, output_ref, error_refs). The op's own schema is
-# built from slots 0-3 (operations have no members, so hydrate ignores the rest); the
-# input, output, and error refs follow. Each ref is a shape tuple, a built Schema, a
-# prelude int, or a lambda returning one.
+# Operation tuple slots after the shape definition (0-3): input, output, error refs.
 _OP_INPUT = 4
 _OP_OUTPUT = 5
 _OP_ERRORS = 6
