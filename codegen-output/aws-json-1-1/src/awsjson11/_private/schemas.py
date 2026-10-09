@@ -2,1186 +2,1096 @@
 
 from types import MappingProxyType
 
-from smithy_core.prelude import (
-    BLOB,
-    BOOLEAN,
-    DOUBLE,
-    FLOAT,
-    INTEGER,
-    LONG,
-    STRING,
-    TIMESTAMP,
-    UNIT,
-)
-from smithy_core.schemas import Schema
-from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import Trait
-
-
-COMPLEX_NESTED_ERROR_DATA = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#ComplexNestedErrorData"),
-    members={
-        "Foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#jsonName"), value="Fooooo")],
-        }
-    },
-)
-
-COMPLEX_ERROR = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#ComplexError"),
-    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
-    members={
-        "TopLevel": {"target": STRING},
-        "Nested": {"target": COMPLEX_NESTED_ERROR_DATA},
-    },
-)
-
-CONTENT_TYPE_PARAMETERS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#ContentTypeParametersInput"),
-    members={"value": {"target": INTEGER}},
-)
-
-CONTENT_TYPE_PARAMETERS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#ContentTypeParametersOutput")
-)
-
-CONTENT_TYPE_PARAMETERS = Schema(
-    id=ShapeID("aws.protocoltests.json#ContentTypeParameters"),
-    shape_type=ShapeType.OPERATION,
-)
-
-DATETIME_OFFSETS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#DatetimeOffsetsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-DATE_TIME = Schema(
-    id=ShapeID("aws.protocoltests.shared#DateTime"),
-    shape_type=ShapeType.TIMESTAMP,
-    traits=[Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time")],
-)
-
-DATETIME_OFFSETS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#DatetimeOffsetsOutput"),
-    members={"datetime": {"target": DATE_TIME}},
-)
-
-DATETIME_OFFSETS = Schema(
-    id=ShapeID("aws.protocoltests.json#DatetimeOffsets"), shape_type=ShapeType.OPERATION
-)
-
-DOCUMENT = Schema(
-    id=ShapeID("aws.protocoltests.json#Document"), shape_type=ShapeType.DOCUMENT
-)
-
-EMPTY_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#EmptyOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-EMPTY_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#EmptyOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-EMPTY_OPERATION = Schema(
-    id=ShapeID("aws.protocoltests.json#EmptyOperation"), shape_type=ShapeType.OPERATION
-)
-
-EMPTY_STRUCT = Schema.collection(id=ShapeID("aws.protocoltests.json#EmptyStruct"))
-
-ENDPOINT_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#EndpointOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-ENDPOINT_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#EndpointOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-ENDPOINT_OPERATION = Schema(
-    id=ShapeID("aws.protocoltests.json#EndpointOperation"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#endpoint"),
-            value=MappingProxyType({"hostPrefix": "foo."}),
-        )
-    ],
-)
-
-ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#EndpointWithHostLabelOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#HostLabelInput",
-        )
-    ],
-    members={
-        "label": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#hostLabel")),
-                Trait.new(id=ShapeID("smithy.api#required")),
-            ],
-        }
-    },
-)
-
-ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#EndpointWithHostLabelOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-ENDPOINT_WITH_HOST_LABEL_OPERATION = Schema(
-    id=ShapeID("aws.protocoltests.json#EndpointWithHostLabelOperation"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#endpoint"),
-            value=MappingProxyType({"hostPrefix": "foo.{label}."}),
-        )
-    ],
-)
-
-JSON_VALUE = Schema(
-    id=ShapeID("aws.protocoltests.json#JsonValue"),
-    shape_type=ShapeType.STRING,
-    traits=[Trait.new(id=ShapeID("smithy.api#mediaType"), value="application/json")],
-)
-
-LIST_OF_STRINGS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#ListOfStrings"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING}},
-)
-
-LIST_OF_LIST_OF_STRINGS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#ListOfListOfStrings"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": LIST_OF_STRINGS}},
-)
-
-MAP_OF_STRINGS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#MapOfStrings"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
-)
-
-LIST_OF_MAPS_OF_STRINGS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#ListOfMapsOfStrings"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": MAP_OF_STRINGS}},
-)
-
-SIMPLE_STRUCT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#SimpleStruct"),
-    members={"Value": {"target": STRING}},
-)
-
-LIST_OF_STRUCTS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#ListOfStructs"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": SIMPLE_STRUCT}},
-)
-
-MAP_OF_LISTS_OF_STRINGS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#MapOfListsOfStrings"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": LIST_OF_STRINGS}},
-)
-
-MAP_OF_MAP_OF_STRINGS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#MapOfMapOfStrings"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": MAP_OF_STRINGS}},
-)
-
-MAP_OF_STRUCTS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#MapOfStructs"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": SIMPLE_STRUCT}},
-)
-
-STRUCT_WITH_JSON_NAME = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#StructWithJsonName"),
-    members={
-        "Value": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#jsonName"), value="RenamedMember")
-            ],
-        }
-    },
-)
-
-ERROR_WITHOUT_MEMBERS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#ErrorWithoutMembers"),
-    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="server")],
-)
-
-FOO_ERROR = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#FooError"),
-    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="server")],
-)
-
-FRACTIONAL_SECONDS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#FractionalSecondsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-FRACTIONAL_SECONDS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#FractionalSecondsOutput"),
-    members={"datetime": {"target": DATE_TIME}},
-)
-
-FRACTIONAL_SECONDS = Schema(
-    id=ShapeID("aws.protocoltests.json#FractionalSeconds"),
-    shape_type=ShapeType.OPERATION,
-)
-
-GREETING_WITH_ERRORS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#GreetingWithErrorsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-GREETING_WITH_ERRORS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#GreetingWithErrorsOutput"),
-    members={"greeting": {"target": STRING}},
-)
-
-INVALID_GREETING = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#InvalidGreeting"),
-    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
-    members={"Message": {"target": STRING}},
-)
-
-GREETING_WITH_ERRORS = Schema(
-    id=ShapeID("aws.protocoltests.json#GreetingWithErrors"),
-    shape_type=ShapeType.OPERATION,
-)
-
-HOST_WITH_PATH_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#HostWithPathOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-HOST_WITH_PATH_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#HostWithPathOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-HOST_WITH_PATH_OPERATION = Schema(
-    id=ShapeID("aws.protocoltests.json#HostWithPathOperation"),
-    shape_type=ShapeType.OPERATION,
-)
-
-FOO_ENUM = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#FooEnum"),
-    shape_type=ShapeType.ENUM,
-    members={
-        "FOO": {"target": UNIT},
-        "BAZ": {"target": UNIT},
-        "BAR": {"target": UNIT},
-        "ONE": {"target": UNIT},
-        "ZERO": {"target": UNIT},
-    },
-)
-
-FOO_ENUM_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#FooEnumList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": FOO_ENUM}},
-)
-
-FOO_ENUM_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#FooEnumMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": FOO_ENUM}},
-)
-
-FOO_ENUM_SET = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#FooEnumSet"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": FOO_ENUM}},
-)
-
-JSON_ENUMS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#JsonEnumsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#JsonEnumsInputOutput",
-        )
-    ],
-    members={
-        "fooEnum1": {"target": FOO_ENUM},
-        "fooEnum2": {"target": FOO_ENUM},
-        "fooEnum3": {"target": FOO_ENUM},
-        "fooEnumList": {"target": FOO_ENUM_LIST},
-        "fooEnumSet": {"target": FOO_ENUM_SET},
-        "fooEnumMap": {"target": FOO_ENUM_MAP},
-    },
-)
-
-JSON_ENUMS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#JsonEnumsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#JsonEnumsInputOutput",
-        )
-    ],
-    members={
-        "fooEnum1": {"target": FOO_ENUM},
-        "fooEnum2": {"target": FOO_ENUM},
-        "fooEnum3": {"target": FOO_ENUM},
-        "fooEnumList": {"target": FOO_ENUM_LIST},
-        "fooEnumSet": {"target": FOO_ENUM_SET},
-        "fooEnumMap": {"target": FOO_ENUM_MAP},
-    },
-)
-
-JSON_ENUMS = Schema(
-    id=ShapeID("aws.protocoltests.json#JsonEnums"), shape_type=ShapeType.OPERATION
-)
-
-INTEGER_ENUM = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#IntegerEnum"),
-    shape_type=ShapeType.INT_ENUM,
-    members={"A": {"target": UNIT}, "B": {"target": UNIT}, "C": {"target": UNIT}},
-)
-
-INTEGER_ENUM_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#IntegerEnumList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": INTEGER_ENUM}},
-)
-
-INTEGER_ENUM_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#IntegerEnumMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": INTEGER_ENUM}},
-)
-
-INTEGER_ENUM_SET = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#IntegerEnumSet"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": INTEGER_ENUM}},
-)
-
-JSON_INT_ENUMS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#JsonIntEnumsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#JsonIntEnumsInputOutput",
-        )
-    ],
-    members={
-        "intEnum1": {"target": INTEGER_ENUM},
-        "intEnum2": {"target": INTEGER_ENUM},
-        "intEnum3": {"target": INTEGER_ENUM},
-        "intEnumList": {"target": INTEGER_ENUM_LIST},
-        "intEnumSet": {"target": INTEGER_ENUM_SET},
-        "intEnumMap": {"target": INTEGER_ENUM_MAP},
-    },
-)
-
-JSON_INT_ENUMS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#JsonIntEnumsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#JsonIntEnumsInputOutput",
-        )
-    ],
-    members={
-        "intEnum1": {"target": INTEGER_ENUM},
-        "intEnum2": {"target": INTEGER_ENUM},
-        "intEnum3": {"target": INTEGER_ENUM},
-        "intEnumList": {"target": INTEGER_ENUM_LIST},
-        "intEnumSet": {"target": INTEGER_ENUM_SET},
-        "intEnumMap": {"target": INTEGER_ENUM_MAP},
-    },
-)
-
-JSON_INT_ENUMS = Schema(
-    id=ShapeID("aws.protocoltests.json#JsonIntEnums"), shape_type=ShapeType.OPERATION
-)
-
-STRING_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#StringList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING}},
-)
-
-STRING_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#StringMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
-)
-
-GREETING_STRUCT = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#GreetingStruct"),
-    members={"hi": {"target": STRING}},
-)
-
-MY_UNION = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#MyUnion"),
-    shape_type=ShapeType.UNION,
-    members={
-        "stringValue": {"target": STRING},
-        "booleanValue": {"target": BOOLEAN},
-        "numberValue": {"target": INTEGER},
-        "blobValue": {"target": BLOB},
-        "timestampValue": {"target": TIMESTAMP},
-        "enumValue": {"target": FOO_ENUM},
-        "listValue": {"target": STRING_LIST},
-        "mapValue": {"target": STRING_MAP},
-        "structureValue": {"target": GREETING_STRUCT},
-    },
-)
-
-JSON_UNIONS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#JsonUnionsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#UnionInputOutput",
-        )
-    ],
-    members={"contents": {"target": MY_UNION}},
-)
-
-JSON_UNIONS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#JsonUnionsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#UnionInputOutput",
-        )
-    ],
-    members={"contents": {"target": MY_UNION}},
-)
-
-JSON_UNIONS = Schema(
-    id=ShapeID("aws.protocoltests.json#JsonUnions"), shape_type=ShapeType.OPERATION
-)
-
-NULL_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#NullOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#NullOperationInputOutput",
-        )
-    ],
-    members={"string": {"target": STRING}},
-)
-
-NULL_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#NullOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#NullOperationInputOutput",
-        )
-    ],
-    members={"string": {"target": STRING}},
-)
-
-NULL_OPERATION = Schema(
-    id=ShapeID("aws.protocoltests.json#NullOperation"), shape_type=ShapeType.OPERATION
-)
-
-OPERATION_WITH_OPTIONAL_INPUT_OUTPUT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#OperationWithOptionalInputOutputInput"),
-    members={"Value": {"target": STRING}},
-)
-
-OPERATION_WITH_OPTIONAL_INPUT_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#OperationWithOptionalInputOutputOutput"),
-    members={"Value": {"target": STRING}},
-)
-
-OPERATION_WITH_OPTIONAL_INPUT_OUTPUT = Schema(
-    id=ShapeID("aws.protocoltests.json#OperationWithOptionalInputOutput"),
-    shape_type=ShapeType.OPERATION,
-)
-
-PUT_AND_GET_INLINE_DOCUMENTS_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#PutAndGetInlineDocumentsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#PutAndGetInlineDocumentsInputOutput",
-        )
-    ],
-    members={"inlineDocument": {"target": DOCUMENT}},
-)
-
-PUT_AND_GET_INLINE_DOCUMENTS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#PutAndGetInlineDocumentsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#PutAndGetInlineDocumentsInputOutput",
-        )
-    ],
-    members={"inlineDocument": {"target": DOCUMENT}},
-)
-
-PUT_AND_GET_INLINE_DOCUMENTS = Schema(
-    id=ShapeID("aws.protocoltests.json#PutAndGetInlineDocuments"),
-    shape_type=ShapeType.OPERATION,
-)
-
-PUT_WITH_CONTENT_ENCODING_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#PutWithContentEncodingInput"),
-    members={
-        "encoding": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="Content-Encoding")
-            ],
-        },
-        "data": {"target": STRING},
-    },
-)
-
-PUT_WITH_CONTENT_ENCODING_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#PutWithContentEncodingOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-PUT_WITH_CONTENT_ENCODING = Schema(
-    id=ShapeID("aws.protocoltests.json#PutWithContentEncoding"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#requestCompression"),
-            value=MappingProxyType({"encodings": ("gzip",)}),
-        )
-    ],
-)
-
-SIMPLE_SCALAR_PROPERTIES_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#SimpleScalarPropertiesInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#SimpleScalarPropertiesInputOutput",
-        )
-    ],
-    members={"floatValue": {"target": FLOAT}, "doubleValue": {"target": DOUBLE}},
-)
-
-SIMPLE_SCALAR_PROPERTIES_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#SimpleScalarPropertiesOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#SimpleScalarPropertiesInputOutput",
-        )
-    ],
-    members={"floatValue": {"target": FLOAT}, "doubleValue": {"target": DOUBLE}},
-)
-
-SIMPLE_SCALAR_PROPERTIES = Schema(
-    id=ShapeID("aws.protocoltests.json#SimpleScalarProperties"),
-    shape_type=ShapeType.OPERATION,
-)
-
-SPARSE_STRING_LIST = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#SparseStringList"),
-    shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"member": {"target": STRING}},
-)
-
-SPARSE_STRING_MAP = Schema.collection(
-    id=ShapeID("aws.protocoltests.shared#SparseStringMap"),
-    shape_type=ShapeType.MAP,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
-)
-
-SPARSE_NULLS_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#SparseNullsOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#SparseNullsOperationInputOutput",
-        )
-    ],
-    members={
-        "sparseStringList": {"target": SPARSE_STRING_LIST},
-        "sparseStringMap": {"target": SPARSE_STRING_MAP},
-    },
-)
-
-SPARSE_NULLS_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#SparseNullsOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#SparseNullsOperationInputOutput",
-        )
-    ],
-    members={
-        "sparseStringList": {"target": SPARSE_STRING_LIST},
-        "sparseStringMap": {"target": SPARSE_STRING_MAP},
-    },
-)
-
-SPARSE_NULLS_OPERATION = Schema(
-    id=ShapeID("aws.protocoltests.json#SparseNullsOperation"),
-    shape_type=ShapeType.OPERATION,
-)
-
-KITCHEN_SINK = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#KitchenSink"),
-    members={
-        "Blob": {"target": BLOB},
-        "Boolean": {"target": BOOLEAN},
-        "Double": {"target": DOUBLE},
-        "EmptyStruct": {"target": EMPTY_STRUCT},
-        "Float": {"target": FLOAT},
-        "HttpdateTimestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date")
-            ],
-        },
-        "Integer": {"target": INTEGER},
-        "Iso8601Timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time")
-            ],
-        },
-        "JsonValue": {"target": JSON_VALUE},
-        "ListOfLists": {"target": LIST_OF_LIST_OF_STRINGS},
-        "ListOfMapsOfStrings": {"target": LIST_OF_MAPS_OF_STRINGS},
-        "ListOfStrings": {"target": LIST_OF_STRINGS},
-        "ListOfStructs": {"target": LIST_OF_STRUCTS},
-        "Long": {"target": LONG},
-        "MapOfListsOfStrings": {"target": MAP_OF_LISTS_OF_STRINGS},
-        "MapOfMaps": {"target": MAP_OF_MAP_OF_STRINGS},
-        "MapOfStrings": {"target": MAP_OF_STRINGS},
-        "MapOfStructs": {"target": MAP_OF_STRUCTS},
-        # This needs to reference a schema that isn't defined yet.
-        # It will be populated with a non-null value at the end of the file.
-        "RecursiveList": None,
-        # This needs to reference a schema that isn't defined yet.
-        # It will be populated with a non-null value at the end of the file.
-        "RecursiveMap": None,
-        # This needs to reference a schema that isn't defined yet.
-        # It will be populated with a non-null value at the end of the file.
-        "RecursiveStruct": None,
-        "SimpleStruct": {"target": SIMPLE_STRUCT},
-        "String": {"target": STRING},
-        "StructWithJsonName": {"target": STRUCT_WITH_JSON_NAME},
-        "Timestamp": {"target": TIMESTAMP},
-        "UnixTimestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds"
-                )
-            ],
-        },
-    },
-)
-
-LIST_OF_KITCHEN_SINKS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#ListOfKitchenSinks"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": KITCHEN_SINK}},
-)
-
-MAP_OF_KITCHEN_SINKS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#MapOfKitchenSinks"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": KITCHEN_SINK}},
-)
-
-ERROR_WITH_MEMBERS = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#ErrorWithMembers"),
-    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
-    members={
-        "Code": {"target": STRING},
-        "ComplexData": {"target": KITCHEN_SINK},
-        "IntegerField": {"target": INTEGER},
-        "ListField": {"target": LIST_OF_STRINGS},
-        "MapField": {"target": MAP_OF_STRINGS},
-        "Message": {"target": STRING},
-        "StringField": {"target": STRING},
-    },
-)
-
-KITCHEN_SINK_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#KitchenSinkOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#KitchenSink",
-        )
-    ],
-    members={
-        "Blob": {"target": BLOB},
-        "Boolean": {"target": BOOLEAN},
-        "Double": {"target": DOUBLE},
-        "EmptyStruct": {"target": EMPTY_STRUCT},
-        "Float": {"target": FLOAT},
-        "HttpdateTimestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date")
-            ],
-        },
-        "Integer": {"target": INTEGER},
-        "Iso8601Timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time")
-            ],
-        },
-        "JsonValue": {"target": JSON_VALUE},
-        "ListOfLists": {"target": LIST_OF_LIST_OF_STRINGS},
-        "ListOfMapsOfStrings": {"target": LIST_OF_MAPS_OF_STRINGS},
-        "ListOfStrings": {"target": LIST_OF_STRINGS},
-        "ListOfStructs": {"target": LIST_OF_STRUCTS},
-        "Long": {"target": LONG},
-        "MapOfListsOfStrings": {"target": MAP_OF_LISTS_OF_STRINGS},
-        "MapOfMaps": {"target": MAP_OF_MAP_OF_STRINGS},
-        "MapOfStrings": {"target": MAP_OF_STRINGS},
-        "MapOfStructs": {"target": MAP_OF_STRUCTS},
-        "RecursiveList": {"target": LIST_OF_KITCHEN_SINKS},
-        "RecursiveMap": {"target": MAP_OF_KITCHEN_SINKS},
-        "RecursiveStruct": {"target": KITCHEN_SINK},
-        "SimpleStruct": {"target": SIMPLE_STRUCT},
-        "String": {"target": STRING},
-        "StructWithJsonName": {"target": STRUCT_WITH_JSON_NAME},
-        "Timestamp": {"target": TIMESTAMP},
-        "UnixTimestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds"
-                )
-            ],
-        },
-    },
-)
-
-KITCHEN_SINK_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.json#KitchenSinkOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.json#KitchenSink",
-        )
-    ],
-    members={
-        "Blob": {"target": BLOB},
-        "Boolean": {"target": BOOLEAN},
-        "Double": {"target": DOUBLE},
-        "EmptyStruct": {"target": EMPTY_STRUCT},
-        "Float": {"target": FLOAT},
-        "HttpdateTimestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="http-date")
-            ],
-        },
-        "Integer": {"target": INTEGER},
-        "Iso8601Timestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time")
-            ],
-        },
-        "JsonValue": {"target": JSON_VALUE},
-        "ListOfLists": {"target": LIST_OF_LIST_OF_STRINGS},
-        "ListOfMapsOfStrings": {"target": LIST_OF_MAPS_OF_STRINGS},
-        "ListOfStrings": {"target": LIST_OF_STRINGS},
-        "ListOfStructs": {"target": LIST_OF_STRUCTS},
-        "Long": {"target": LONG},
-        "MapOfListsOfStrings": {"target": MAP_OF_LISTS_OF_STRINGS},
-        "MapOfMaps": {"target": MAP_OF_MAP_OF_STRINGS},
-        "MapOfStrings": {"target": MAP_OF_STRINGS},
-        "MapOfStructs": {"target": MAP_OF_STRUCTS},
-        "RecursiveList": {"target": LIST_OF_KITCHEN_SINKS},
-        "RecursiveMap": {"target": MAP_OF_KITCHEN_SINKS},
-        "RecursiveStruct": {"target": KITCHEN_SINK},
-        "SimpleStruct": {"target": SIMPLE_STRUCT},
-        "String": {"target": STRING},
-        "StructWithJsonName": {"target": STRUCT_WITH_JSON_NAME},
-        "Timestamp": {"target": TIMESTAMP},
-        "UnixTimestamp": {
-            "target": TIMESTAMP,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#timestampFormat"), value="epoch-seconds"
-                )
-            ],
-        },
-    },
-)
-
-KITCHEN_SINK_OPERATION = Schema(
-    id=ShapeID("aws.protocoltests.json#KitchenSinkOperation"),
-    shape_type=ShapeType.OPERATION,
-)
 
-JSON_PROTOCOL = Schema(
-    id=ShapeID("aws.protocoltests.json#JsonProtocol"),
-    shape_type=ShapeType.SERVICE,
-    traits=[
-        Trait.new(
-            id=ShapeID("aws.auth#sigv4"),
-            value=MappingProxyType({"name": "jsonprotocol"}),
-        ),
-        Trait.new(id=ShapeID("aws.protocols#awsJson1_1")),
-        Trait.new(
-            id=ShapeID("smithy.rules#endpointBdd"),
-            value=MappingProxyType(
-                {
-                    "version": "1.1",
-                    "parameters": MappingProxyType(
+n0 = "aws.protocoltests.json"
+_CNED = "ComplexNestedErrorData"
+_F = "Foo"
+_sN = "smithy.api#jsonName"
+_Fo = "Fooooo"
+_CE = "ComplexError"
+_s = "smithy.api#error"
+_c = "client"
+_TL = "TopLevel"
+_N = "Nested"
+_CTPI = "ContentTypeParametersInput"
+_v = "value"
+_CTPO = "ContentTypeParametersOutput"
+_CTP = "ContentTypeParameters"
+_DOI = "DatetimeOffsetsInput"
+_sSI = "smithy.synthetic#originalShapeId"
+_sU = "smithy.api#Unit"
+n1 = "aws.protocoltests.shared"
+_DT = "DateTime"
+_sF = "smithy.api#timestampFormat"
+_dt = "date-time"
+_DOO = "DatetimeOffsetsOutput"
+_d = "datetime"
+_DO = "DatetimeOffsets"
+_D = "Document"
+_EOI = "EmptyOperationInput"
+_EOO = "EmptyOperationOutput"
+_EO = "EmptyOperation"
+_ES = "EmptyStruct"
+_EOIn = "EndpointOperationInput"
+_EOOn = "EndpointOperationOutput"
+_EOn = "EndpointOperation"
+_sm = "smithy.api#endpoint"
+_EWHLOI = "EndpointWithHostLabelOperationInput"
+_aHLI = "aws.protocoltests.json#HostLabelInput"
+_l = "label"
+_sL = "smithy.api#hostLabel"
+_smi = "smithy.api#required"
+_EWHLOO = "EndpointWithHostLabelOperationOutput"
+_EWHLO = "EndpointWithHostLabelOperation"
+_JV = "JsonValue"
+_sT = "smithy.api#mediaType"
+_a = "application/json"
+_LOS = "ListOfStrings"
+_m = "member"
+_LOLOS = "ListOfListOfStrings"
+_MOS = "MapOfStrings"
+_k = "key"
+_LOMOS = "ListOfMapsOfStrings"
+_SS = "SimpleStruct"
+_V = "Value"
+_LOSi = "ListOfStructs"
+_MOLOS = "MapOfListsOfStrings"
+_MOMOS = "MapOfMapOfStrings"
+_MOSa = "MapOfStructs"
+_SWJN = "StructWithJsonName"
+_RM = "RenamedMember"
+_EWM = "ErrorWithoutMembers"
+_se = "server"
+_FE = "FooError"
+_FSI = "FractionalSecondsInput"
+_FSO = "FractionalSecondsOutput"
+_FS = "FractionalSeconds"
+_GWEI = "GreetingWithErrorsInput"
+_GWEO = "GreetingWithErrorsOutput"
+_g = "greeting"
+_IG = "InvalidGreeting"
+_M = "Message"
+_GWE = "GreetingWithErrors"
+_HWPOI = "HostWithPathOperationInput"
+_HWPOO = "HostWithPathOperationOutput"
+_HWPO = "HostWithPathOperation"
+_FEo = "FooEnum"
+_FOO = "FOO"
+_BAZ = "BAZ"
+_BAR = "BAR"
+_ONE = "ONE"
+_ZERO = "ZERO"
+_FEL = "FooEnumList"
+_FEM = "FooEnumMap"
+_FES = "FooEnumSet"
+_JEI = "JsonEnumsInput"
+_aJEIO = "aws.protocoltests.json#JsonEnumsInputOutput"
+_fE = "fooEnum1"
+_fEo = "fooEnum2"
+_fEoo = "fooEnum3"
+_fEL = "fooEnumList"
+_fES = "fooEnumSet"
+_fEM = "fooEnumMap"
+_JEO = "JsonEnumsOutput"
+_JE = "JsonEnums"
+_IE = "IntegerEnum"
+_A = "A"
+_B = "B"
+_C = "C"
+_IEL = "IntegerEnumList"
+_IEM = "IntegerEnumMap"
+_IES = "IntegerEnumSet"
+_JIEI = "JsonIntEnumsInput"
+_aJIEIO = "aws.protocoltests.json#JsonIntEnumsInputOutput"
+_iE = "intEnum1"
+_iEn = "intEnum2"
+_iEnt = "intEnum3"
+_iEL = "intEnumList"
+_iES = "intEnumSet"
+_iEM = "intEnumMap"
+_JIEO = "JsonIntEnumsOutput"
+_JIE = "JsonIntEnums"
+_SL = "StringList"
+_SM = "StringMap"
+_GS = "GreetingStruct"
+_h = "hi"
+_MU = "MyUnion"
+_sV = "stringValue"
+_bV = "booleanValue"
+_nV = "numberValue"
+_bVl = "blobValue"
+_tV = "timestampValue"
+_eV = "enumValue"
+_lV = "listValue"
+_mV = "mapValue"
+_sVt = "structureValue"
+_JUI = "JsonUnionsInput"
+_aUIO = "aws.protocoltests.json#UnionInputOutput"
+_co = "contents"
+_JUO = "JsonUnionsOutput"
+_JU = "JsonUnions"
+_NOI = "NullOperationInput"
+_aNOIO = "aws.protocoltests.json#NullOperationInputOutput"
+_st = "string"
+_NOO = "NullOperationOutput"
+_NO = "NullOperation"
+_OWOIOI = "OperationWithOptionalInputOutputInput"
+_OWOIOO = "OperationWithOptionalInputOutputOutput"
+_OWOIO = "OperationWithOptionalInputOutput"
+_PAGIDI = "PutAndGetInlineDocumentsInput"
+_aPAGIDIO = "aws.protocoltests.json#PutAndGetInlineDocumentsInputOutput"
+_iD = "inlineDocument"
+_PAGIDO = "PutAndGetInlineDocumentsOutput"
+_PAGID = "PutAndGetInlineDocuments"
+_PWCEI = "PutWithContentEncodingInput"
+_e = "encoding"
+_sH = "smithy.api#httpHeader"
+_CE_ = "Content-Encoding"
+_da = "data"
+_PWCEO = "PutWithContentEncodingOutput"
+_PWCE = "PutWithContentEncoding"
+_sC = "smithy.api#requestCompression"
+_SSPI = "SimpleScalarPropertiesInput"
+_aSSPIO = "aws.protocoltests.json#SimpleScalarPropertiesInputOutput"
+_fV = "floatValue"
+_dV = "doubleValue"
+_SSPO = "SimpleScalarPropertiesOutput"
+_SSP = "SimpleScalarProperties"
+_SSL = "SparseStringList"
+_smit = "smithy.api#sparse"
+_SSM = "SparseStringMap"
+_SNOI = "SparseNullsOperationInput"
+_aSNOIO = "aws.protocoltests.json#SparseNullsOperationInputOutput"
+_sSL = "sparseStringList"
+_sSM = "sparseStringMap"
+_SNOO = "SparseNullsOperationOutput"
+_SNO = "SparseNullsOperation"
+_KS = "KitchenSink"
+_Bl = "Blob"
+_Bo = "Boolean"
+_Do = "Double"
+_Fl = "Float"
+_HT = "HttpdateTimestamp"
+_hd = "http-date"
+_I = "Integer"
+_IT = "Iso8601Timestamp"
+_LOL = "ListOfLists"
+_L = "Long"
+_MOM = "MapOfMaps"
+_RL = "RecursiveList"
+_RMe = "RecursiveMap"
+_RS = "RecursiveStruct"
+_S = "String"
+_T = "Timestamp"
+_UT = "UnixTimestamp"
+_es = "epoch-seconds"
+_LOKS = "ListOfKitchenSinks"
+_MOKS = "MapOfKitchenSinks"
+_EWMr = "ErrorWithMembers"
+_Co = "Code"
+_CD = "ComplexData"
+_IF = "IntegerField"
+_LF = "ListField"
+_MF = "MapField"
+_SF = "StringField"
+_KSOI = "KitchenSinkOperationInput"
+_aKS = "aws.protocoltests.json#KitchenSink"
+_KSOO = "KitchenSinkOperationOutput"
+_KSO = "KitchenSinkOperation"
+_JP = "JsonProtocol"
+_aw = "aws.auth#sigv4"
+_a_ = "aws.protocols#awsJson1_1"
+_sB = "smithy.rules#endpointBdd"
+_aws = "aws.api#service"
+
+COMPLEX_NESTED_ERROR_DATA = (18, n0, _CNED, 0, (_F,), ((3, {_sN: _Fo}),))
+
+COMPLEX_ERROR = (
+    18,
+    n0,
+    _CE,
+    {_s: _c},
+    (_TL, _N),
+    ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
+)
+
+CONTENT_TYPE_PARAMETERS_INPUT = (18, n0, _CTPI, 0, (_v,), ((7, 0),))
+
+CONTENT_TYPE_PARAMETERS_OUTPUT = (18, n0, _CTPO, 0)
+
+CONTENT_TYPE_PARAMETERS = (
+    23,
+    n0,
+    _CTP,
+    0,
+    CONTENT_TYPE_PARAMETERS_INPUT,
+    CONTENT_TYPE_PARAMETERS_OUTPUT,
+    (),
+)
+
+DATETIME_OFFSETS_INPUT = (18, n0, _DOI, {_sSI: _sU})
+
+DATE_TIME = (4, n1, _DT, {_sF: _dt})
+
+DATETIME_OFFSETS_OUTPUT = (18, n0, _DOO, 0, (_d,), ((DATE_TIME, 0),))
+
+DATETIME_OFFSETS = (23, n0, _DO, 0, DATETIME_OFFSETS_INPUT, DATETIME_OFFSETS_OUTPUT, ())
+
+DOCUMENT = (13, n0, _D, 0)
+
+EMPTY_OPERATION_INPUT = (18, n0, _EOI, {_sSI: _sU})
+
+EMPTY_OPERATION_OUTPUT = (18, n0, _EOO, {_sSI: _sU})
+
+EMPTY_OPERATION = (23, n0, _EO, 0, EMPTY_OPERATION_INPUT, EMPTY_OPERATION_OUTPUT, ())
+
+EMPTY_STRUCT = (18, n0, _ES, 0)
+
+ENDPOINT_OPERATION_INPUT = (18, n0, _EOIn, {_sSI: _sU})
+
+ENDPOINT_OPERATION_OUTPUT = (18, n0, _EOOn, {_sSI: _sU})
+
+ENDPOINT_OPERATION = (
+    23,
+    n0,
+    _EOn,
+    {_sm: MappingProxyType({"hostPrefix": "foo."})},
+    ENDPOINT_OPERATION_INPUT,
+    ENDPOINT_OPERATION_OUTPUT,
+    (),
+)
+
+ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = (
+    18,
+    n0,
+    _EWHLOI,
+    {_sSI: _aHLI},
+    (_l,),
+    ((3, 257),),
+)
+
+ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = (18, n0, _EWHLOO, {_sSI: _sU})
+
+ENDPOINT_WITH_HOST_LABEL_OPERATION = (
+    23,
+    n0,
+    _EWHLO,
+    {_sm: MappingProxyType({"hostPrefix": "foo.{label}."})},
+    ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT,
+    ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT,
+    (),
+)
+
+JSON_VALUE = (3, n0, _JV, {_sT: _a})
+
+LIST_OF_STRINGS = (16, n0, _LOS, 0, (_m,), ((3, 0),))
+
+LIST_OF_LIST_OF_STRINGS = (16, n0, _LOLOS, 0, (_m,), ((LIST_OF_STRINGS, 0),))
+
+MAP_OF_STRINGS = (17, n0, _MOS, 0, (_k, _v), ((3, 0), (3, 0)))
+
+LIST_OF_MAPS_OF_STRINGS = (16, n0, _LOMOS, 0, (_m,), ((MAP_OF_STRINGS, 0),))
+
+SIMPLE_STRUCT = (18, n0, _SS, 0, (_V,), ((3, 0),))
+
+LIST_OF_STRUCTS = (16, n0, _LOSi, 0, (_m,), ((SIMPLE_STRUCT, 0),))
+
+MAP_OF_LISTS_OF_STRINGS = (17, n0, _MOLOS, 0, (_k, _v), ((3, 0), (LIST_OF_STRINGS, 0)))
+
+MAP_OF_MAP_OF_STRINGS = (17, n0, _MOMOS, 0, (_k, _v), ((3, 0), (MAP_OF_STRINGS, 0)))
+
+MAP_OF_STRUCTS = (17, n0, _MOSa, 0, (_k, _v), ((3, 0), (SIMPLE_STRUCT, 0)))
+
+STRUCT_WITH_JSON_NAME = (18, n0, _SWJN, 0, (_V,), ((3, {_sN: _RM}),))
+
+ERROR_WITHOUT_MEMBERS = (18, n0, _EWM, {_s: _se})
+
+FOO_ERROR = (18, n0, _FE, {_s: _se})
+
+FRACTIONAL_SECONDS_INPUT = (18, n0, _FSI, {_sSI: _sU})
+
+FRACTIONAL_SECONDS_OUTPUT = (18, n0, _FSO, 0, (_d,), ((DATE_TIME, 0),))
+
+FRACTIONAL_SECONDS = (
+    23,
+    n0,
+    _FS,
+    0,
+    FRACTIONAL_SECONDS_INPUT,
+    FRACTIONAL_SECONDS_OUTPUT,
+    (),
+)
+
+GREETING_WITH_ERRORS_INPUT = (18, n0, _GWEI, {_sSI: _sU})
+
+GREETING_WITH_ERRORS_OUTPUT = (18, n0, _GWEO, 0, (_g,), ((3, 0),))
+
+INVALID_GREETING = (18, n0, _IG, {_s: _c}, (_M,), ((3, 0),))
+
+GREETING_WITH_ERRORS = (
+    23,
+    n0,
+    _GWE,
+    0,
+    GREETING_WITH_ERRORS_INPUT,
+    GREETING_WITH_ERRORS_OUTPUT,
+    (INVALID_GREETING, COMPLEX_ERROR, FOO_ERROR),
+)
+
+HOST_WITH_PATH_OPERATION_INPUT = (18, n0, _HWPOI, {_sSI: _sU})
+
+HOST_WITH_PATH_OPERATION_OUTPUT = (18, n0, _HWPOO, {_sSI: _sU})
+
+HOST_WITH_PATH_OPERATION = (
+    23,
+    n0,
+    _HWPO,
+    0,
+    HOST_WITH_PATH_OPERATION_INPUT,
+    HOST_WITH_PATH_OPERATION_OUTPUT,
+    (),
+)
+
+FOO_ENUM = (
+    14,
+    n1,
+    _FEo,
+    0,
+    (_FOO, _BAZ, _BAR, _ONE, _ZERO),
+    ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
+)
+
+FOO_ENUM_LIST = (16, n1, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
+
+FOO_ENUM_MAP = (17, n1, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
+
+FOO_ENUM_SET = (16, n1, _FES, 0, (_m,), ((FOO_ENUM, 0),))
+
+JSON_ENUMS_INPUT = (
+    18,
+    n0,
+    _JEI,
+    {_sSI: _aJEIO},
+    (_fE, _fEo, _fEoo, _fEL, _fES, _fEM),
+    (
+        (FOO_ENUM, 0),
+        (FOO_ENUM, 0),
+        (FOO_ENUM, 0),
+        (FOO_ENUM_LIST, 0),
+        (FOO_ENUM_SET, 0),
+        (FOO_ENUM_MAP, 0),
+    ),
+)
+
+JSON_ENUMS_OUTPUT = (
+    18,
+    n0,
+    _JEO,
+    {_sSI: _aJEIO},
+    (_fE, _fEo, _fEoo, _fEL, _fES, _fEM),
+    (
+        (FOO_ENUM, 0),
+        (FOO_ENUM, 0),
+        (FOO_ENUM, 0),
+        (FOO_ENUM_LIST, 0),
+        (FOO_ENUM_SET, 0),
+        (FOO_ENUM_MAP, 0),
+    ),
+)
+
+JSON_ENUMS = (23, n0, _JE, 0, JSON_ENUMS_INPUT, JSON_ENUMS_OUTPUT, ())
+
+INTEGER_ENUM = (15, n1, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+
+INTEGER_ENUM_LIST = (16, n1, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
+
+INTEGER_ENUM_MAP = (17, n1, _IEM, 0, (_k, _v), ((3, 0), (INTEGER_ENUM, 0)))
+
+INTEGER_ENUM_SET = (16, n1, _IES, 0, (_m,), ((INTEGER_ENUM, 0),))
+
+JSON_INT_ENUMS_INPUT = (
+    18,
+    n0,
+    _JIEI,
+    {_sSI: _aJIEIO},
+    (_iE, _iEn, _iEnt, _iEL, _iES, _iEM),
+    (
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM_LIST, 0),
+        (INTEGER_ENUM_SET, 0),
+        (INTEGER_ENUM_MAP, 0),
+    ),
+)
+
+JSON_INT_ENUMS_OUTPUT = (
+    18,
+    n0,
+    _JIEO,
+    {_sSI: _aJIEIO},
+    (_iE, _iEn, _iEnt, _iEL, _iES, _iEM),
+    (
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM, 0),
+        (INTEGER_ENUM_LIST, 0),
+        (INTEGER_ENUM_SET, 0),
+        (INTEGER_ENUM_MAP, 0),
+    ),
+)
+
+JSON_INT_ENUMS = (23, n0, _JIE, 0, JSON_INT_ENUMS_INPUT, JSON_INT_ENUMS_OUTPUT, ())
+
+STRING_LIST = (16, n1, _SL, 0, (_m,), ((3, 0),))
+
+STRING_MAP = (17, n1, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
+
+GREETING_STRUCT = (18, n1, _GS, 0, (_h,), ((3, 0),))
+
+MY_UNION = (
+    19,
+    n0,
+    _MU,
+    0,
+    (_sV, _bV, _nV, _bVl, _tV, _eV, _lV, _mV, _sVt),
+    (
+        (3, 0),
+        (2, 0),
+        (7, 0),
+        (1, 0),
+        (4, 0),
+        (FOO_ENUM, 0),
+        (STRING_LIST, 0),
+        (STRING_MAP, 0),
+        (GREETING_STRUCT, 0),
+    ),
+)
+
+JSON_UNIONS_INPUT = (18, n0, _JUI, {_sSI: _aUIO}, (_co,), ((MY_UNION, 0),))
+
+JSON_UNIONS_OUTPUT = (18, n0, _JUO, {_sSI: _aUIO}, (_co,), ((MY_UNION, 0),))
+
+JSON_UNIONS = (23, n0, _JU, 0, JSON_UNIONS_INPUT, JSON_UNIONS_OUTPUT, ())
+
+NULL_OPERATION_INPUT = (18, n0, _NOI, {_sSI: _aNOIO}, (_st,), ((3, 0),))
+
+NULL_OPERATION_OUTPUT = (18, n0, _NOO, {_sSI: _aNOIO}, (_st,), ((3, 0),))
+
+NULL_OPERATION = (23, n0, _NO, 0, NULL_OPERATION_INPUT, NULL_OPERATION_OUTPUT, ())
+
+OPERATION_WITH_OPTIONAL_INPUT_OUTPUT_INPUT = (18, n0, _OWOIOI, 0, (_V,), ((3, 0),))
+
+OPERATION_WITH_OPTIONAL_INPUT_OUTPUT_OUTPUT = (18, n0, _OWOIOO, 0, (_V,), ((3, 0),))
+
+OPERATION_WITH_OPTIONAL_INPUT_OUTPUT = (
+    23,
+    n0,
+    _OWOIO,
+    0,
+    OPERATION_WITH_OPTIONAL_INPUT_OUTPUT_INPUT,
+    OPERATION_WITH_OPTIONAL_INPUT_OUTPUT_OUTPUT,
+    (),
+)
+
+PUT_AND_GET_INLINE_DOCUMENTS_INPUT = (
+    18,
+    n0,
+    _PAGIDI,
+    {_sSI: _aPAGIDIO},
+    (_iD,),
+    ((DOCUMENT, 0),),
+)
+
+PUT_AND_GET_INLINE_DOCUMENTS_OUTPUT = (
+    18,
+    n0,
+    _PAGIDO,
+    {_sSI: _aPAGIDIO},
+    (_iD,),
+    ((DOCUMENT, 0),),
+)
+
+PUT_AND_GET_INLINE_DOCUMENTS = (
+    23,
+    n0,
+    _PAGID,
+    0,
+    PUT_AND_GET_INLINE_DOCUMENTS_INPUT,
+    PUT_AND_GET_INLINE_DOCUMENTS_OUTPUT,
+    (),
+)
+
+PUT_WITH_CONTENT_ENCODING_INPUT = (
+    18,
+    n0,
+    _PWCEI,
+    0,
+    (_e, _da),
+    ((3, {_sH: _CE_}), (3, 0)),
+)
+
+PUT_WITH_CONTENT_ENCODING_OUTPUT = (18, n0, _PWCEO, {_sSI: _sU})
+
+PUT_WITH_CONTENT_ENCODING = (
+    23,
+    n0,
+    _PWCE,
+    {_sC: MappingProxyType({"encodings": ("gzip",)})},
+    PUT_WITH_CONTENT_ENCODING_INPUT,
+    PUT_WITH_CONTENT_ENCODING_OUTPUT,
+    (),
+)
+
+SIMPLE_SCALAR_PROPERTIES_INPUT = (
+    18,
+    n0,
+    _SSPI,
+    {_sSI: _aSSPIO},
+    (_fV, _dV),
+    ((9, 0), (10, 0)),
+)
+
+SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
+    18,
+    n0,
+    _SSPO,
+    {_sSI: _aSSPIO},
+    (_fV, _dV),
+    ((9, 0), (10, 0)),
+)
+
+SIMPLE_SCALAR_PROPERTIES = (
+    23,
+    n0,
+    _SSP,
+    0,
+    SIMPLE_SCALAR_PROPERTIES_INPUT,
+    SIMPLE_SCALAR_PROPERTIES_OUTPUT,
+    (),
+)
+
+SPARSE_STRING_LIST = (16, n1, _SSL, 64, (_m,), ((3, 0),))
+
+SPARSE_STRING_MAP = (17, n1, _SSM, 64, (_k, _v), ((3, 0), (3, 0)))
+
+SPARSE_NULLS_OPERATION_INPUT = (
+    18,
+    n0,
+    _SNOI,
+    {_sSI: _aSNOIO},
+    (_sSL, _sSM),
+    ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
+)
+
+SPARSE_NULLS_OPERATION_OUTPUT = (
+    18,
+    n0,
+    _SNOO,
+    {_sSI: _aSNOIO},
+    (_sSL, _sSM),
+    ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
+)
+
+SPARSE_NULLS_OPERATION = (
+    23,
+    n0,
+    _SNO,
+    0,
+    SPARSE_NULLS_OPERATION_INPUT,
+    SPARSE_NULLS_OPERATION_OUTPUT,
+    (),
+)
+
+KITCHEN_SINK = (
+    18,
+    n0,
+    _KS,
+    0,
+    (
+        _Bl,
+        _Bo,
+        _Do,
+        _ES,
+        _Fl,
+        _HT,
+        _I,
+        _IT,
+        _JV,
+        _LOL,
+        _LOMOS,
+        _LOS,
+        _LOSi,
+        _L,
+        _MOLOS,
+        _MOM,
+        _MOS,
+        _MOSa,
+        _RL,
+        _RMe,
+        _RS,
+        _SS,
+        _S,
+        _SWJN,
+        _T,
+        _UT,
+    ),
+    (
+        (1, 0),
+        (2, 0),
+        (10, 0),
+        (EMPTY_STRUCT, 0),
+        (9, 0),
+        (4, {_sF: _hd}),
+        (7, 0),
+        (4, {_sF: _dt}),
+        (JSON_VALUE, 0),
+        (LIST_OF_LIST_OF_STRINGS, 0),
+        (LIST_OF_MAPS_OF_STRINGS, 0),
+        (LIST_OF_STRINGS, 0),
+        (LIST_OF_STRUCTS, 0),
+        (8, 0),
+        (MAP_OF_LISTS_OF_STRINGS, 0),
+        (MAP_OF_MAP_OF_STRINGS, 0),
+        (MAP_OF_STRINGS, 0),
+        (MAP_OF_STRUCTS, 0),
+        (lambda: LIST_OF_KITCHEN_SINKS, 0),
+        (lambda: MAP_OF_KITCHEN_SINKS, 0),
+        (lambda: KITCHEN_SINK, 0),
+        (SIMPLE_STRUCT, 0),
+        (3, 0),
+        (STRUCT_WITH_JSON_NAME, 0),
+        (4, 0),
+        (4, {_sF: _es}),
+    ),
+)
+
+LIST_OF_KITCHEN_SINKS = (16, n0, _LOKS, 0, (_m,), ((KITCHEN_SINK, 0),))
+
+MAP_OF_KITCHEN_SINKS = (17, n0, _MOKS, 0, (_k, _v), ((3, 0), (KITCHEN_SINK, 0)))
+
+ERROR_WITH_MEMBERS = (
+    18,
+    n0,
+    _EWMr,
+    {_s: _c},
+    (_Co, _CD, _IF, _LF, _MF, _M, _SF),
+    (
+        (3, 0),
+        (KITCHEN_SINK, 0),
+        (7, 0),
+        (LIST_OF_STRINGS, 0),
+        (MAP_OF_STRINGS, 0),
+        (3, 0),
+        (3, 0),
+    ),
+)
+
+KITCHEN_SINK_OPERATION_INPUT = (
+    18,
+    n0,
+    _KSOI,
+    {_sSI: _aKS},
+    (
+        _Bl,
+        _Bo,
+        _Do,
+        _ES,
+        _Fl,
+        _HT,
+        _I,
+        _IT,
+        _JV,
+        _LOL,
+        _LOMOS,
+        _LOS,
+        _LOSi,
+        _L,
+        _MOLOS,
+        _MOM,
+        _MOS,
+        _MOSa,
+        _RL,
+        _RMe,
+        _RS,
+        _SS,
+        _S,
+        _SWJN,
+        _T,
+        _UT,
+    ),
+    (
+        (1, 0),
+        (2, 0),
+        (10, 0),
+        (EMPTY_STRUCT, 0),
+        (9, 0),
+        (4, {_sF: _hd}),
+        (7, 0),
+        (4, {_sF: _dt}),
+        (JSON_VALUE, 0),
+        (LIST_OF_LIST_OF_STRINGS, 0),
+        (LIST_OF_MAPS_OF_STRINGS, 0),
+        (LIST_OF_STRINGS, 0),
+        (LIST_OF_STRUCTS, 0),
+        (8, 0),
+        (MAP_OF_LISTS_OF_STRINGS, 0),
+        (MAP_OF_MAP_OF_STRINGS, 0),
+        (MAP_OF_STRINGS, 0),
+        (MAP_OF_STRUCTS, 0),
+        (LIST_OF_KITCHEN_SINKS, 0),
+        (MAP_OF_KITCHEN_SINKS, 0),
+        (KITCHEN_SINK, 0),
+        (SIMPLE_STRUCT, 0),
+        (3, 0),
+        (STRUCT_WITH_JSON_NAME, 0),
+        (4, 0),
+        (4, {_sF: _es}),
+    ),
+)
+
+KITCHEN_SINK_OPERATION_OUTPUT = (
+    18,
+    n0,
+    _KSOO,
+    {_sSI: _aKS},
+    (
+        _Bl,
+        _Bo,
+        _Do,
+        _ES,
+        _Fl,
+        _HT,
+        _I,
+        _IT,
+        _JV,
+        _LOL,
+        _LOMOS,
+        _LOS,
+        _LOSi,
+        _L,
+        _MOLOS,
+        _MOM,
+        _MOS,
+        _MOSa,
+        _RL,
+        _RMe,
+        _RS,
+        _SS,
+        _S,
+        _SWJN,
+        _T,
+        _UT,
+    ),
+    (
+        (1, 0),
+        (2, 0),
+        (10, 0),
+        (EMPTY_STRUCT, 0),
+        (9, 0),
+        (4, {_sF: _hd}),
+        (7, 0),
+        (4, {_sF: _dt}),
+        (JSON_VALUE, 0),
+        (LIST_OF_LIST_OF_STRINGS, 0),
+        (LIST_OF_MAPS_OF_STRINGS, 0),
+        (LIST_OF_STRINGS, 0),
+        (LIST_OF_STRUCTS, 0),
+        (8, 0),
+        (MAP_OF_LISTS_OF_STRINGS, 0),
+        (MAP_OF_MAP_OF_STRINGS, 0),
+        (MAP_OF_STRINGS, 0),
+        (MAP_OF_STRUCTS, 0),
+        (LIST_OF_KITCHEN_SINKS, 0),
+        (MAP_OF_KITCHEN_SINKS, 0),
+        (KITCHEN_SINK, 0),
+        (SIMPLE_STRUCT, 0),
+        (3, 0),
+        (STRUCT_WITH_JSON_NAME, 0),
+        (4, 0),
+        (4, {_sF: _es}),
+    ),
+)
+
+KITCHEN_SINK_OPERATION = (
+    23,
+    n0,
+    _KSO,
+    0,
+    KITCHEN_SINK_OPERATION_INPUT,
+    KITCHEN_SINK_OPERATION_OUTPUT,
+    (ERROR_WITH_MEMBERS, ERROR_WITHOUT_MEMBERS),
+)
+
+JSON_PROTOCOL = (
+    21,
+    n0,
+    _JP,
+    {
+        _aw: MappingProxyType({"name": "jsonprotocol"}),
+        _a_: None,
+        _sB: MappingProxyType(
+            {
+                "version": "1.1",
+                "parameters": MappingProxyType(
+                    {
+                        "Region": MappingProxyType(
+                            {
+                                "builtIn": "AWS::Region",
+                                "required": False,
+                                "documentation": "The AWS Region. This is a default regional AWS endpointRuleSet.",
+                                "type": "string",
+                            }
+                        ),
+                        "UseDualStack": MappingProxyType(
+                            {
+                                "builtIn": "AWS::UseDualStack",
+                                "required": True,
+                                "default": False,
+                                "documentation": "Whether to use dual-stack.",
+                                "type": "boolean",
+                            }
+                        ),
+                        "UseFIPS": MappingProxyType(
+                            {
+                                "builtIn": "AWS::UseFIPS",
+                                "required": True,
+                                "default": False,
+                                "documentation": "Whether to use FIPS-compliant regional endpoint.",
+                                "type": "boolean",
+                            }
+                        ),
+                        "Endpoint": MappingProxyType(
+                            {
+                                "builtIn": "SDK::Endpoint",
+                                "required": False,
+                                "documentation": "Override the endpoint.",
+                                "type": "string",
+                            }
+                        ),
+                    }
+                ),
+                "conditions": (
+                    MappingProxyType(
                         {
-                            "Region": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::Region",
-                                    "required": False,
-                                    "documentation": "The AWS Region. This is a default regional AWS endpointRuleSet.",
-                                    "type": "string",
-                                }
-                            ),
-                            "UseDualStack": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseDualStack",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use dual-stack.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "UseFIPS": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseFIPS",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use FIPS-compliant regional endpoint.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "Endpoint": MappingProxyType(
-                                {
-                                    "builtIn": "SDK::Endpoint",
-                                    "required": False,
-                                    "documentation": "Override the endpoint.",
-                                    "type": "string",
-                                }
+                            "fn": "isSet",
+                            "argv": (MappingProxyType({"ref": "Endpoint"}),),
+                        }
+                    ),
+                    MappingProxyType(
+                        {"fn": "isSet", "argv": (MappingProxyType({"ref": "Region"}),)}
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "aws.partition",
+                            "argv": (MappingProxyType({"ref": "Region"}),),
+                            "assign": "PartitionResult",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (MappingProxyType({"ref": "UseFIPS"}), True),
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (MappingProxyType({"ref": "UseDualStack"}), True),
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (
+                                MappingProxyType(
+                                    {
+                                        "fn": "getAttr",
+                                        "argv": (
+                                            MappingProxyType(
+                                                {"ref": "PartitionResult"}
+                                            ),
+                                            "supportsDualStack",
+                                        ),
+                                    }
+                                ),
+                                True,
                             ),
                         }
                     ),
-                    "conditions": (
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Endpoint"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "aws.partition",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                                "assign": "PartitionResult",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (MappingProxyType({"ref": "UseFIPS"}), True),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType({"ref": "UseDualStack"}),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsDualStack",
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (
+                                MappingProxyType(
+                                    {
+                                        "fn": "getAttr",
+                                        "argv": (
+                                            MappingProxyType(
+                                                {"ref": "PartitionResult"}
                                             ),
-                                        }
-                                    ),
-                                    True,
+                                            "supportsFIPS",
+                                        ),
+                                    }
                                 ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsFIPS",
-                                            ),
-                                        }
-                                    ),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "stringEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "name",
-                                            ),
-                                        }
-                                    ),
-                                    "aws-us-gov",
-                                ),
-                            }
-                        ),
+                                True,
+                            ),
+                        }
                     ),
-                    "results": (
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: FIPS and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Dualstack and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
+                    MappingProxyType(
+                        {
+                            "fn": "stringEquals",
+                            "argv": (
+                                MappingProxyType(
                                     {
-                                        "url": MappingProxyType({"ref": "Endpoint"}),
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
+                                        "fn": "getAttr",
+                                        "argv": (
+                                            MappingProxyType(
+                                                {"ref": "PartitionResult"}
+                                            ),
+                                            "name",
+                                        ),
                                     }
                                 ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://jsonprotocol-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS and DualStack are enabled, but this partition does not support one or both",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://jsonprotocol.{Region}.amazonaws.com",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://jsonprotocol-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS is enabled but this partition does not support FIPS",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://jsonprotocol.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "DualStack is enabled but this partition does not support DualStack",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://jsonprotocol.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Missing Region",
-                                "type": "error",
-                            }
-                        ),
+                                "aws-us-gov",
+                            ),
+                        }
                     ),
-                    "root": 2,
-                    "nodeCount": 14,
-                    "nodes": "/////wAAAAH/////AAAAAAAAAA0AAAADAAAAAQAAAAQF9eEMAAAAAgAAAAUF9eEMAAAAAwAAAAgAAAAGAAAABAAAAAcF9eELAAAABQX14QkF9eEKAAAABAAAAAsAAAAJAAAABgAAAAoF9eEIAAAABwX14QYF9eEHAAAABQAAAAwF9eEFAAAABgX14QQF9eEFAAAAAwX14QEAAAAOAAAABAX14QIF9eED",
-                }
-            ),
+                ),
+                "results": (
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "Invalid Configuration: FIPS and custom endpoint are not supported",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "Invalid Configuration: Dualstack and custom endpoint are not supported",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": MappingProxyType({"ref": "Endpoint"}),
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://jsonprotocol-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "FIPS and DualStack are enabled, but this partition does not support one or both",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://jsonprotocol.{Region}.amazonaws.com",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://jsonprotocol-fips.{Region}.{PartitionResult#dnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "FIPS is enabled but this partition does not support FIPS",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://jsonprotocol.{Region}.{PartitionResult#dualStackDnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "DualStack is enabled but this partition does not support DualStack",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://jsonprotocol.{Region}.{PartitionResult#dnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "Invalid Configuration: Missing Region",
+                            "type": "error",
+                        }
+                    ),
+                ),
+                "root": 2,
+                "nodeCount": 14,
+                "nodes": "/////wAAAAH/////AAAAAAAAAA0AAAADAAAAAQAAAAQF9eEMAAAAAgAAAAUF9eEMAAAAAwAAAAgAAAAGAAAABAAAAAcF9eELAAAABQX14QkF9eEKAAAABAAAAAsAAAAJAAAABgAAAAoF9eEIAAAABwX14QYF9eEHAAAABQAAAAwF9eEFAAAABgX14QQF9eEFAAAAAwX14QEAAAAOAAAABAX14QIF9eED",
+            }
         ),
-        Trait.new(
-            id=ShapeID("aws.api#service"),
-            value=MappingProxyType(
-                {
-                    "sdkId": "Json Protocol",
-                    "arnNamespace": "jsonprotocol",
-                    "cloudFormationName": "JsonProtocol",
-                    "cloudTrailEventSource": "jsonprotocol.amazonaws.com",
-                }
-            ),
+        _aws: MappingProxyType(
+            {
+                "sdkId": "Json Protocol",
+                "arnNamespace": "jsonprotocol",
+                "cloudFormationName": "JsonProtocol",
+                "cloudTrailEventSource": "jsonprotocol.amazonaws.com",
+            }
         ),
-    ],
-)
-
-KITCHEN_SINK.members["RecursiveList"] = Schema.member(
-    id=KITCHEN_SINK.id.with_member("RecursiveList"),
-    target=LIST_OF_KITCHEN_SINKS,
-    index=18,
-)
-
-KITCHEN_SINK.members["RecursiveMap"] = Schema.member(
-    id=KITCHEN_SINK.id.with_member("RecursiveMap"),
-    target=MAP_OF_KITCHEN_SINKS,
-    index=19,
-)
-
-KITCHEN_SINK.members["RecursiveStruct"] = Schema.member(
-    id=KITCHEN_SINK.id.with_member("RecursiveStruct"), target=KITCHEN_SINK, index=20
+    },
 )

@@ -6,6 +6,7 @@ from enum import IntEnum, StrEnum
 import logging
 from typing import Any, Literal, Self, Union
 
+from smithy_core._schema_compact import hydrate
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import ModeledError, SerializationError
@@ -248,7 +249,7 @@ class ServiceError(ModeledError):
 def _serialize_boolean_list(
     serializer: ShapeSerializer, schema: Schema, value: list[bool]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_boolean(member_schema, e)
@@ -258,7 +259,7 @@ def _deserialize_boolean_list(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[bool]:
     result: list[bool] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -274,7 +275,7 @@ def _deserialize_boolean_list(
 def _serialize_double_list(
     serializer: ShapeSerializer, schema: Schema, value: list[float]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_double(member_schema, e)
@@ -284,7 +285,7 @@ def _deserialize_double_list(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[float]:
     result: list[float] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -308,7 +309,7 @@ class FooEnum(UnknownEnumMixin, StrEnum):
 def _serialize_foo_enum_list(
     serializer: ShapeSerializer, schema: Schema, value: list[str]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_string(member_schema, e)
@@ -318,7 +319,7 @@ def _deserialize_foo_enum_list(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[str]:
     result: list[str] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -340,7 +341,7 @@ class IntegerEnum(UnknownEnumMixin, IntEnum):
 def _serialize_integer_enum_list(
     serializer: ShapeSerializer, schema: Schema, value: list[int]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_integer(member_schema, e)
@@ -350,7 +351,7 @@ def _deserialize_integer_enum_list(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[int]:
     result: list[int] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -366,7 +367,7 @@ def _deserialize_integer_enum_list(
 def _serialize_integer_list(
     serializer: ShapeSerializer, schema: Schema, value: list[int]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_integer(member_schema, e)
@@ -376,7 +377,7 @@ def _deserialize_integer_list(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[int]:
     result: list[int] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -392,7 +393,7 @@ def _deserialize_integer_list(
 def _serialize_integer_set(
     serializer: ShapeSerializer, schema: Schema, value: list[int]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_integer(member_schema, e)
@@ -402,7 +403,7 @@ def _deserialize_integer_set(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[int]:
     result: list[int] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -419,7 +420,7 @@ def _serialize_string_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, str]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: vs.write_string(value_schema, v))
 
@@ -428,7 +429,7 @@ def _deserialize_string_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, str]:
     result: dict[str, str] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -444,7 +445,7 @@ def _deserialize_string_map(
 def _serialize_string_list(
     serializer: ShapeSerializer, schema: Schema, value: list[str]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_string(member_schema, e)
@@ -454,7 +455,7 @@ def _deserialize_string_list(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[str]:
     result: list[str] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -470,7 +471,7 @@ def _deserialize_string_list(
 def _serialize_string_set(
     serializer: ShapeSerializer, schema: Schema, value: list[str]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_string(member_schema, e)
@@ -480,7 +481,7 @@ def _deserialize_string_set(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[str]:
     result: list[str] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -496,7 +497,7 @@ def _deserialize_string_set(
 def _serialize_timestamp_list(
     serializer: ShapeSerializer, schema: Schema, value: list[datetime]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_timestamp(member_schema, e)
@@ -506,7 +507,7 @@ def _deserialize_timestamp_list(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[datetime]:
     result: list[datetime] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -566,143 +567,77 @@ class AllQueryStringTypesInput:
     query_params_map_of_strings: dict[str, str] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_ALL_QUERY_STRING_TYPES_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_ALL_QUERY_STRING_TYPES_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_ALL_QUERY_STRING_TYPES_INPUT).members_by_index
         if self.query_string is not None:
-            serializer.write_string(
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryString"],
-                self.query_string,
-            )
+            serializer.write_string(members[0], self.query_string)
 
         if self.query_string_list is not None:
-            _serialize_string_list(
-                serializer,
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryStringList"],
-                self.query_string_list,
-            )
+            _serialize_string_list(serializer, members[1], self.query_string_list)
 
         if self.query_string_set is not None:
-            _serialize_string_set(
-                serializer,
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryStringSet"],
-                self.query_string_set,
-            )
+            _serialize_string_set(serializer, members[2], self.query_string_set)
 
         if self.query_byte is not None:
-            serializer.write_byte(
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryByte"],
-                self.query_byte,
-            )
+            serializer.write_byte(members[3], self.query_byte)
 
         if self.query_short is not None:
-            serializer.write_short(
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryShort"],
-                self.query_short,
-            )
+            serializer.write_short(members[4], self.query_short)
 
         if self.query_integer is not None:
-            serializer.write_integer(
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryInteger"],
-                self.query_integer,
-            )
+            serializer.write_integer(members[5], self.query_integer)
 
         if self.query_integer_list is not None:
-            _serialize_integer_list(
-                serializer,
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryIntegerList"],
-                self.query_integer_list,
-            )
+            _serialize_integer_list(serializer, members[6], self.query_integer_list)
 
         if self.query_integer_set is not None:
-            _serialize_integer_set(
-                serializer,
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryIntegerSet"],
-                self.query_integer_set,
-            )
+            _serialize_integer_set(serializer, members[7], self.query_integer_set)
 
         if self.query_long is not None:
-            serializer.write_long(
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryLong"],
-                self.query_long,
-            )
+            serializer.write_long(members[8], self.query_long)
 
         if self.query_float is not None:
-            serializer.write_float(
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryFloat"],
-                self.query_float,
-            )
+            serializer.write_float(members[9], self.query_float)
 
         if self.query_double is not None:
-            serializer.write_double(
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryDouble"],
-                self.query_double,
-            )
+            serializer.write_double(members[10], self.query_double)
 
         if self.query_double_list is not None:
-            _serialize_double_list(
-                serializer,
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryDoubleList"],
-                self.query_double_list,
-            )
+            _serialize_double_list(serializer, members[11], self.query_double_list)
 
         if self.query_boolean is not None:
-            serializer.write_boolean(
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryBoolean"],
-                self.query_boolean,
-            )
+            serializer.write_boolean(members[12], self.query_boolean)
 
         if self.query_boolean_list is not None:
-            _serialize_boolean_list(
-                serializer,
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryBooleanList"],
-                self.query_boolean_list,
-            )
+            _serialize_boolean_list(serializer, members[13], self.query_boolean_list)
 
         if self.query_timestamp is not None:
-            serializer.write_timestamp(
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryTimestamp"],
-                self.query_timestamp,
-            )
+            serializer.write_timestamp(members[14], self.query_timestamp)
 
         if self.query_timestamp_list is not None:
             _serialize_timestamp_list(
-                serializer,
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryTimestampList"],
-                self.query_timestamp_list,
+                serializer, members[15], self.query_timestamp_list
             )
 
         if self.query_enum is not None:
-            serializer.write_string(
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryEnum"],
-                self.query_enum,
-            )
+            serializer.write_string(members[16], self.query_enum)
 
         if self.query_enum_list is not None:
-            _serialize_foo_enum_list(
-                serializer,
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryEnumList"],
-                self.query_enum_list,
-            )
+            _serialize_foo_enum_list(serializer, members[17], self.query_enum_list)
 
         if self.query_integer_enum is not None:
-            serializer.write_integer(
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryIntegerEnum"],
-                self.query_integer_enum,
-            )
+            serializer.write_integer(members[18], self.query_integer_enum)
 
         if self.query_integer_enum_list is not None:
             _serialize_integer_enum_list(
-                serializer,
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryIntegerEnumList"],
-                self.query_integer_enum_list,
+                serializer, members[19], self.query_integer_enum_list
             )
 
         if self.query_params_map_of_strings is not None:
             _serialize_string_map(
-                serializer,
-                _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryParamsMapOfStrings"],
-                self.query_params_map_of_strings,
+                serializer, members[20], self.query_params_map_of_strings
             )
 
     @classmethod
@@ -712,146 +647,98 @@ class AllQueryStringTypesInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_ALL_QUERY_STRING_TYPES_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["query_string"] = de.read_string(
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryString"]
-                    )
+                    kwargs["query_string"] = de.read_string(members[0])
 
                 case 1:
                     kwargs["query_string_list"] = _deserialize_string_list(
-                        de,
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryStringList"],
+                        de, members[1]
                     )
 
                 case 2:
-                    kwargs["query_string_set"] = _deserialize_string_set(
-                        de,
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryStringSet"],
-                    )
+                    kwargs["query_string_set"] = _deserialize_string_set(de, members[2])
 
                 case 3:
-                    kwargs["query_byte"] = de.read_byte(
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryByte"]
-                    )
+                    kwargs["query_byte"] = de.read_byte(members[3])
 
                 case 4:
-                    kwargs["query_short"] = de.read_short(
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryShort"]
-                    )
+                    kwargs["query_short"] = de.read_short(members[4])
 
                 case 5:
-                    kwargs["query_integer"] = de.read_integer(
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryInteger"]
-                    )
+                    kwargs["query_integer"] = de.read_integer(members[5])
 
                 case 6:
                     kwargs["query_integer_list"] = _deserialize_integer_list(
-                        de,
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members[
-                            "queryIntegerList"
-                        ],
+                        de, members[6]
                     )
 
                 case 7:
                     kwargs["query_integer_set"] = _deserialize_integer_set(
-                        de,
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryIntegerSet"],
+                        de, members[7]
                     )
 
                 case 8:
-                    kwargs["query_long"] = de.read_long(
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryLong"]
-                    )
+                    kwargs["query_long"] = de.read_long(members[8])
 
                 case 9:
-                    kwargs["query_float"] = de.read_float(
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryFloat"]
-                    )
+                    kwargs["query_float"] = de.read_float(members[9])
 
                 case 10:
-                    kwargs["query_double"] = de.read_double(
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryDouble"]
-                    )
+                    kwargs["query_double"] = de.read_double(members[10])
 
                 case 11:
                     kwargs["query_double_list"] = _deserialize_double_list(
-                        de,
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryDoubleList"],
+                        de, members[11]
                     )
 
                 case 12:
-                    kwargs["query_boolean"] = de.read_boolean(
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryBoolean"]
-                    )
+                    kwargs["query_boolean"] = de.read_boolean(members[12])
 
                 case 13:
                     kwargs["query_boolean_list"] = _deserialize_boolean_list(
-                        de,
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members[
-                            "queryBooleanList"
-                        ],
+                        de, members[13]
                     )
 
                 case 14:
-                    kwargs["query_timestamp"] = de.read_timestamp(
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryTimestamp"]
-                    )
+                    kwargs["query_timestamp"] = de.read_timestamp(members[14])
 
                 case 15:
                     kwargs["query_timestamp_list"] = _deserialize_timestamp_list(
-                        de,
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members[
-                            "queryTimestampList"
-                        ],
+                        de, members[15]
                     )
 
                 case 16:
-                    kwargs["query_enum"] = FooEnum(
-                        de.read_string(
-                            _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryEnum"]
-                        )
-                    )
+                    kwargs["query_enum"] = FooEnum(de.read_string(members[16]))
 
                 case 17:
                     kwargs["query_enum_list"] = _deserialize_foo_enum_list(
-                        de,
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members["queryEnumList"],
+                        de, members[17]
                     )
 
                 case 18:
                     kwargs["query_integer_enum"] = IntegerEnum(
-                        de.read_integer(
-                            _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members[
-                                "queryIntegerEnum"
-                            ]
-                        )
+                        de.read_integer(members[18])
                     )
 
                 case 19:
                     kwargs["query_integer_enum_list"] = _deserialize_integer_enum_list(
-                        de,
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members[
-                            "queryIntegerEnumList"
-                        ],
+                        de, members[19]
                     )
 
                 case 20:
                     kwargs["query_params_map_of_strings"] = _deserialize_string_map(
-                        de,
-                        _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT.members[
-                            "queryParamsMapOfStrings"
-                        ],
+                        de, members[20]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_ALL_QUERY_STRING_TYPES_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -870,7 +757,7 @@ class AllQueryStringTypesOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_ALL_QUERY_STRING_TYPES_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_ALL_QUERY_STRING_TYPES_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -882,27 +769,23 @@ class AllQueryStringTypesOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_ALL_QUERY_STRING_TYPES_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_ALL_QUERY_STRING_TYPES_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 ALL_QUERY_STRING_TYPES = APIOperation(
     input=AllQueryStringTypesInput,
     output=AllQueryStringTypesOutput,
-    schema=_SCHEMA_ALL_QUERY_STRING_TYPES,
-    input_schema=_SCHEMA_ALL_QUERY_STRING_TYPES_INPUT,
-    output_schema=_SCHEMA_ALL_QUERY_STRING_TYPES_OUTPUT,
+    static_schema=_SCHEMA_ALL_QUERY_STRING_TYPES,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -913,13 +796,12 @@ class PayloadWithXmlName:
     name: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_PAYLOAD_WITH_XML_NAME, self)
+        serializer.write_struct(hydrate(_SCHEMA_PAYLOAD_WITH_XML_NAME), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_PAYLOAD_WITH_XML_NAME).members_by_index
         if self.name is not None:
-            serializer.write_string(
-                _SCHEMA_PAYLOAD_WITH_XML_NAME.members["name"], self.name
-            )
+            serializer.write_string(members[0], self.name)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -928,18 +810,18 @@ class PayloadWithXmlName:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_PAYLOAD_WITH_XML_NAME)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["name"] = de.read_string(
-                        _SCHEMA_PAYLOAD_WITH_XML_NAME.members["name"]
-                    )
+                    kwargs["name"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_PAYLOAD_WITH_XML_NAME, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -950,13 +832,12 @@ class BodyWithXmlNameInput:
     nested: PayloadWithXmlName | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_BODY_WITH_XML_NAME_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_BODY_WITH_XML_NAME_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_BODY_WITH_XML_NAME_INPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_BODY_WITH_XML_NAME_INPUT.members["nested"], self.nested
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -965,16 +846,18 @@ class BodyWithXmlNameInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_BODY_WITH_XML_NAME_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = PayloadWithXmlName.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_BODY_WITH_XML_NAME_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -995,13 +878,12 @@ class BodyWithXmlNameOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_BODY_WITH_XML_NAME_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_BODY_WITH_XML_NAME_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_BODY_WITH_XML_NAME_OUTPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_BODY_WITH_XML_NAME_OUTPUT.members["nested"], self.nested
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1010,28 +892,27 @@ class BodyWithXmlNameOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_BODY_WITH_XML_NAME_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = PayloadWithXmlName.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_BODY_WITH_XML_NAME_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 BODY_WITH_XML_NAME = APIOperation(
     input=BodyWithXmlNameInput,
     output=BodyWithXmlNameOutput,
-    schema=_SCHEMA_BODY_WITH_XML_NAME,
-    input_schema=_SCHEMA_BODY_WITH_XML_NAME_INPUT,
-    output_schema=_SCHEMA_BODY_WITH_XML_NAME_OUTPUT,
+    static_schema=_SCHEMA_BODY_WITH_XML_NAME,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -1042,13 +923,12 @@ class ComplexNestedErrorData:
     foo: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_COMPLEX_NESTED_ERROR_DATA, self)
+        serializer.write_struct(hydrate(_SCHEMA_COMPLEX_NESTED_ERROR_DATA), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_COMPLEX_NESTED_ERROR_DATA).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_COMPLEX_NESTED_ERROR_DATA.members["Foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1057,18 +937,18 @@ class ComplexNestedErrorData:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_COMPLEX_NESTED_ERROR_DATA)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_COMPLEX_NESTED_ERROR_DATA.members["Foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_COMPLEX_NESTED_ERROR_DATA, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -1085,23 +965,18 @@ class ComplexError(ServiceError):
     nested: ComplexNestedErrorData | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_COMPLEX_ERROR, self)
+        serializer.write_struct(hydrate(_SCHEMA_COMPLEX_ERROR), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_COMPLEX_ERROR).members_by_index
         if self.header is not None:
-            serializer.write_string(
-                _SCHEMA_COMPLEX_ERROR.members["Header"], self.header
-            )
+            serializer.write_string(members[0], self.header)
 
         if self.top_level is not None:
-            serializer.write_string(
-                _SCHEMA_COMPLEX_ERROR.members["TopLevel"], self.top_level
-            )
+            serializer.write_string(members[1], self.top_level)
 
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_COMPLEX_ERROR.members["Nested"], self.nested
-            )
+            serializer.write_struct(members[2], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1110,26 +985,24 @@ class ComplexError(ServiceError):
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_COMPLEX_ERROR)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["header"] = de.read_string(
-                        _SCHEMA_COMPLEX_ERROR.members["Header"]
-                    )
+                    kwargs["header"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["top_level"] = de.read_string(
-                        _SCHEMA_COMPLEX_ERROR.members["TopLevel"]
-                    )
+                    kwargs["top_level"] = de.read_string(members[1])
 
                 case 2:
                     kwargs["nested"] = ComplexNestedErrorData.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_COMPLEX_ERROR, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -1142,20 +1015,19 @@ class ConstantAndVariableQueryStringInput:
     maybe_set: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT
+        ).members_by_index
         if self.baz is not None:
-            serializer.write_string(
-                _SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT.members["baz"],
-                self.baz,
-            )
+            serializer.write_string(members[0], self.baz)
 
         if self.maybe_set is not None:
-            serializer.write_string(
-                _SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT.members["maybeSet"],
-                self.maybe_set,
-            )
+            serializer.write_string(members[1], self.maybe_set)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1164,27 +1036,21 @@ class ConstantAndVariableQueryStringInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["baz"] = de.read_string(
-                        _SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT.members["baz"]
-                    )
+                    kwargs["baz"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["maybe_set"] = de.read_string(
-                        _SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT.members[
-                            "maybeSet"
-                        ]
-                    )
+                    kwargs["maybe_set"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -1203,7 +1069,9 @@ class ConstantAndVariableQueryStringOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -1215,27 +1083,23 @@ class ConstantAndVariableQueryStringOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 CONSTANT_AND_VARIABLE_QUERY_STRING = APIOperation(
     input=ConstantAndVariableQueryStringInput,
     output=ConstantAndVariableQueryStringOutput,
-    schema=_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING,
-    input_schema=_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT,
-    output_schema=_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT,
+    static_schema=_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -1246,13 +1110,12 @@ class ConstantQueryStringInput:
     hello: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_CONSTANT_QUERY_STRING_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_CONSTANT_QUERY_STRING_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_CONSTANT_QUERY_STRING_INPUT).members_by_index
         if self.hello is not None:
-            serializer.write_string(
-                _SCHEMA_CONSTANT_QUERY_STRING_INPUT.members["hello"], self.hello
-            )
+            serializer.write_string(members[0], self.hello)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1261,20 +1124,18 @@ class ConstantQueryStringInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_CONSTANT_QUERY_STRING_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["hello"] = de.read_string(
-                        _SCHEMA_CONSTANT_QUERY_STRING_INPUT.members["hello"]
-                    )
+                    kwargs["hello"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_CONSTANT_QUERY_STRING_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -1293,7 +1154,7 @@ class ConstantQueryStringOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_CONSTANT_QUERY_STRING_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_CONSTANT_QUERY_STRING_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -1305,27 +1166,23 @@ class ConstantQueryStringOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_CONSTANT_QUERY_STRING_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_CONSTANT_QUERY_STRING_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 CONSTANT_QUERY_STRING = APIOperation(
     input=ConstantQueryStringInput,
     output=ConstantQueryStringOutput,
-    schema=_SCHEMA_CONSTANT_QUERY_STRING,
-    input_schema=_SCHEMA_CONSTANT_QUERY_STRING_INPUT,
-    output_schema=_SCHEMA_CONSTANT_QUERY_STRING_OUTPUT,
+    static_schema=_SCHEMA_CONSTANT_QUERY_STRING,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -1336,13 +1193,12 @@ class ContentTypeParametersInput:
     value: int | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_CONTENT_TYPE_PARAMETERS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_CONTENT_TYPE_PARAMETERS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_CONTENT_TYPE_PARAMETERS_INPUT).members_by_index
         if self.value is not None:
-            serializer.write_integer(
-                _SCHEMA_CONTENT_TYPE_PARAMETERS_INPUT.members["value"], self.value
-            )
+            serializer.write_integer(members[0], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1351,20 +1207,18 @@ class ContentTypeParametersInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_CONTENT_TYPE_PARAMETERS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["value"] = de.read_integer(
-                        _SCHEMA_CONTENT_TYPE_PARAMETERS_INPUT.members["value"]
-                    )
+                    kwargs["value"] = de.read_integer(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_CONTENT_TYPE_PARAMETERS_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -1383,7 +1237,7 @@ class ContentTypeParametersOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_CONTENT_TYPE_PARAMETERS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_CONTENT_TYPE_PARAMETERS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -1395,27 +1249,23 @@ class ContentTypeParametersOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_CONTENT_TYPE_PARAMETERS_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_CONTENT_TYPE_PARAMETERS_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 CONTENT_TYPE_PARAMETERS = APIOperation(
     input=ContentTypeParametersInput,
     output=ContentTypeParametersOutput,
-    schema=_SCHEMA_CONTENT_TYPE_PARAMETERS,
-    input_schema=_SCHEMA_CONTENT_TYPE_PARAMETERS_INPUT,
-    output_schema=_SCHEMA_CONTENT_TYPE_PARAMETERS_OUTPUT,
+    static_schema=_SCHEMA_CONTENT_TYPE_PARAMETERS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -1424,7 +1274,7 @@ class DatetimeOffsetsInput:
     """Dataclass for DatetimeOffsetsInput structure."""
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_DATETIME_OFFSETS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_DATETIME_OFFSETS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -1436,13 +1286,14 @@ class DatetimeOffsetsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_DATETIME_OFFSETS_INPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_DATETIME_OFFSETS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -1463,13 +1314,12 @@ class DatetimeOffsetsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_DATETIME_OFFSETS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_DATETIME_OFFSETS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_DATETIME_OFFSETS_OUTPUT).members_by_index
         if self.datetime_ is not None:
-            serializer.write_timestamp(
-                _SCHEMA_DATETIME_OFFSETS_OUTPUT.members["datetime"], self.datetime_
-            )
+            serializer.write_timestamp(members[0], self.datetime_)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1478,30 +1328,27 @@ class DatetimeOffsetsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_DATETIME_OFFSETS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["datetime_"] = de.read_timestamp(
-                        _SCHEMA_DATETIME_OFFSETS_OUTPUT.members["datetime"]
-                    )
+                    kwargs["datetime_"] = de.read_timestamp(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_DATETIME_OFFSETS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 DATETIME_OFFSETS = APIOperation(
     input=DatetimeOffsetsInput,
     output=DatetimeOffsetsOutput,
-    schema=_SCHEMA_DATETIME_OFFSETS,
-    input_schema=_SCHEMA_DATETIME_OFFSETS_INPUT,
-    output_schema=_SCHEMA_DATETIME_OFFSETS_OUTPUT,
+    static_schema=_SCHEMA_DATETIME_OFFSETS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -1510,7 +1357,9 @@ class EmptyInputAndEmptyOutputInput:
     """Dataclass for EmptyInputAndEmptyOutputInput structure."""
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -1522,15 +1371,14 @@ class EmptyInputAndEmptyOutputInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -1549,7 +1397,9 @@ class EmptyInputAndEmptyOutputOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -1561,27 +1411,23 @@ class EmptyInputAndEmptyOutputOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT = APIOperation(
     input=EmptyInputAndEmptyOutputInput,
     output=EmptyInputAndEmptyOutputOutput,
-    schema=_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT,
-    input_schema=_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT,
-    output_schema=_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT,
+    static_schema=_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -1590,7 +1436,7 @@ class EndpointOperationInput:
     """Dataclass for EndpointOperationInput structure."""
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_ENDPOINT_OPERATION_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_ENDPOINT_OPERATION_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -1602,13 +1448,14 @@ class EndpointOperationInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_ENDPOINT_OPERATION_INPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_ENDPOINT_OPERATION_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -1627,7 +1474,7 @@ class EndpointOperationOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_ENDPOINT_OPERATION_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_ENDPOINT_OPERATION_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -1639,25 +1486,23 @@ class EndpointOperationOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_ENDPOINT_OPERATION_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_ENDPOINT_OPERATION_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 ENDPOINT_OPERATION = APIOperation(
     input=EndpointOperationInput,
     output=EndpointOperationOutput,
-    schema=_SCHEMA_ENDPOINT_OPERATION,
-    input_schema=_SCHEMA_ENDPOINT_OPERATION_INPUT,
-    output_schema=_SCHEMA_ENDPOINT_OPERATION_OUTPUT,
+    static_schema=_SCHEMA_ENDPOINT_OPERATION,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -1669,17 +1514,15 @@ class EndpointWithHostLabelHeaderOperationInput:
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(
-            _SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT, self
+            hydrate(_SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT), self
         )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT
+        ).members_by_index
         if self.account_id is not None:
-            serializer.write_string(
-                _SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT.members[
-                    "accountId"
-                ],
-                self.account_id,
-            )
+            serializer.write_string(members[0], self.account_id)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1688,22 +1531,18 @@ class EndpointWithHostLabelHeaderOperationInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["account_id"] = de.read_string(
-                        _SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT.members[
-                            "accountId"
-                        ]
-                    )
+                    kwargs["account_id"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -1723,7 +1562,7 @@ class EndpointWithHostLabelHeaderOperationOutput:
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(
-            _SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_OUTPUT, self
+            hydrate(_SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_OUTPUT), self
         )
 
     def serialize_members(self, serializer: ShapeSerializer):
@@ -1736,27 +1575,23 @@ class EndpointWithHostLabelHeaderOperationOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION = APIOperation(
     input=EndpointWithHostLabelHeaderOperationInput,
     output=EndpointWithHostLabelHeaderOperationOutput,
-    schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION,
-    input_schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT,
-    output_schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_OUTPUT,
+    static_schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -1767,14 +1602,16 @@ class EndpointWithHostLabelOperationInput:
     label: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT
+        ).members_by_index
         if self.label is not None:
-            serializer.write_string(
-                _SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT.members["label"],
-                self.label,
-            )
+            serializer.write_string(members[0], self.label)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1783,22 +1620,18 @@ class EndpointWithHostLabelOperationInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["label"] = de.read_string(
-                        _SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT.members[
-                            "label"
-                        ]
-                    )
+                    kwargs["label"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -1817,7 +1650,9 @@ class EndpointWithHostLabelOperationOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -1829,27 +1664,23 @@ class EndpointWithHostLabelOperationOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 ENDPOINT_WITH_HOST_LABEL_OPERATION = APIOperation(
     input=EndpointWithHostLabelOperationInput,
     output=EndpointWithHostLabelOperationOutput,
-    schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION,
-    input_schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT,
-    output_schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT,
+    static_schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -1857,7 +1688,7 @@ def _serialize_foo_enum_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, str]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: vs.write_string(value_schema, v))
 
@@ -1866,7 +1697,7 @@ def _deserialize_foo_enum_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, str]:
     result: dict[str, str] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -1886,15 +1717,12 @@ class FlattenedXmlMapInput:
     my_map: dict[str, str] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_FLATTENED_XML_MAP_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_FLATTENED_XML_MAP_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_FLATTENED_XML_MAP_INPUT).members_by_index
         if self.my_map is not None:
-            _serialize_foo_enum_map(
-                serializer,
-                _SCHEMA_FLATTENED_XML_MAP_INPUT.members["myMap"],
-                self.my_map,
-            )
+            _serialize_foo_enum_map(serializer, members[0], self.my_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1903,18 +1731,18 @@ class FlattenedXmlMapInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_FLATTENED_XML_MAP_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["my_map"] = _deserialize_foo_enum_map(
-                        de, _SCHEMA_FLATTENED_XML_MAP_INPUT.members["myMap"]
-                    )
+                    kwargs["my_map"] = _deserialize_foo_enum_map(de, members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_FLATTENED_XML_MAP_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -1935,15 +1763,12 @@ class FlattenedXmlMapOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_FLATTENED_XML_MAP_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_FLATTENED_XML_MAP_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_FLATTENED_XML_MAP_OUTPUT).members_by_index
         if self.my_map is not None:
-            _serialize_foo_enum_map(
-                serializer,
-                _SCHEMA_FLATTENED_XML_MAP_OUTPUT.members["myMap"],
-                self.my_map,
-            )
+            _serialize_foo_enum_map(serializer, members[0], self.my_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1952,30 +1777,27 @@ class FlattenedXmlMapOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_FLATTENED_XML_MAP_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["my_map"] = _deserialize_foo_enum_map(
-                        de, _SCHEMA_FLATTENED_XML_MAP_OUTPUT.members["myMap"]
-                    )
+                    kwargs["my_map"] = _deserialize_foo_enum_map(de, members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_FLATTENED_XML_MAP_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 FLATTENED_XML_MAP = APIOperation(
     input=FlattenedXmlMapInput,
     output=FlattenedXmlMapOutput,
-    schema=_SCHEMA_FLATTENED_XML_MAP,
-    input_schema=_SCHEMA_FLATTENED_XML_MAP_INPUT,
-    output_schema=_SCHEMA_FLATTENED_XML_MAP_OUTPUT,
+    static_schema=_SCHEMA_FLATTENED_XML_MAP,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -1983,7 +1805,7 @@ def _serialize_flattened_xml_map_with_xml_name_input_output_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, str]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: vs.write_string(value_schema, v))
 
@@ -1992,7 +1814,7 @@ def _deserialize_flattened_xml_map_with_xml_name_input_output_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, str]:
     result: dict[str, str] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -2012,14 +1834,17 @@ class FlattenedXmlMapWithXmlNameInput:
     my_map: dict[str, str] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_INPUT
+        ).members_by_index
         if self.my_map is not None:
             _serialize_flattened_xml_map_with_xml_name_input_output_map(
-                serializer,
-                _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_INPUT.members["myMap"],
-                self.my_map,
+                serializer, members[0], self.my_map
             )
 
     @classmethod
@@ -2029,25 +1854,22 @@ class FlattenedXmlMapWithXmlNameInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["my_map"] = (
                         _deserialize_flattened_xml_map_with_xml_name_input_output_map(
-                            de,
-                            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_INPUT.members[
-                                "myMap"
-                            ],
+                            de, members[0]
                         )
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -2068,14 +1890,17 @@ class FlattenedXmlMapWithXmlNameOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT
+        ).members_by_index
         if self.my_map is not None:
             _serialize_flattened_xml_map_with_xml_name_input_output_map(
-                serializer,
-                _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT.members["myMap"],
-                self.my_map,
+                serializer, members[0], self.my_map
             )
 
     @classmethod
@@ -2085,37 +1910,31 @@ class FlattenedXmlMapWithXmlNameOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["my_map"] = (
                         _deserialize_flattened_xml_map_with_xml_name_input_output_map(
-                            de,
-                            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT.members[
-                                "myMap"
-                            ],
+                            de, members[0]
                         )
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 FLATTENED_XML_MAP_WITH_XML_NAME = APIOperation(
     input=FlattenedXmlMapWithXmlNameInput,
     output=FlattenedXmlMapWithXmlNameOutput,
-    schema=_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME,
-    input_schema=_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_INPUT,
-    output_schema=_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT,
+    static_schema=_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -2125,7 +1944,7 @@ class FlattenedXmlMapWithXmlNamespaceInput:
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(
-            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_INPUT, self
+            hydrate(_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_INPUT), self
         )
 
     def serialize_members(self, serializer: ShapeSerializer):
@@ -2138,15 +1957,14 @@ class FlattenedXmlMapWithXmlNamespaceInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_INPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -2154,7 +1972,7 @@ def _serialize_flattened_xml_map_with_xml_namespace_output_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, str]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: vs.write_string(value_schema, v))
 
@@ -2163,7 +1981,7 @@ def _deserialize_flattened_xml_map_with_xml_namespace_output_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, str]:
     result: dict[str, str] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -2194,15 +2012,16 @@ class FlattenedXmlMapWithXmlNamespaceOutput:
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(
-            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT, self
+            hydrate(_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT), self
         )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT
+        ).members_by_index
         if self.my_map is not None:
             _serialize_flattened_xml_map_with_xml_namespace_output_map(
-                serializer,
-                _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT.members["myMap"],
-                self.my_map,
+                serializer, members[0], self.my_map
             )
 
     @classmethod
@@ -2212,37 +2031,31 @@ class FlattenedXmlMapWithXmlNamespaceOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["my_map"] = (
                         _deserialize_flattened_xml_map_with_xml_namespace_output_map(
-                            de,
-                            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT.members[
-                                "myMap"
-                            ],
+                            de, members[0]
                         )
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 FLATTENED_XML_MAP_WITH_XML_NAMESPACE = APIOperation(
     input=FlattenedXmlMapWithXmlNamespaceInput,
     output=FlattenedXmlMapWithXmlNamespaceOutput,
-    schema=_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
-    input_schema=_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_INPUT,
-    output_schema=_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT,
+    static_schema=_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -2250,7 +2063,7 @@ def _serialize_foo_prefix_headers(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, str]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: vs.write_string(value_schema, v))
 
@@ -2259,7 +2072,7 @@ def _deserialize_foo_prefix_headers(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, str]:
     result: dict[str, str] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -2277,7 +2090,7 @@ class FractionalSecondsInput:
     """Dataclass for FractionalSecondsInput structure."""
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_FRACTIONAL_SECONDS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_FRACTIONAL_SECONDS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -2289,13 +2102,14 @@ class FractionalSecondsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_FRACTIONAL_SECONDS_INPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_FRACTIONAL_SECONDS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -2316,13 +2130,12 @@ class FractionalSecondsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_FRACTIONAL_SECONDS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_FRACTIONAL_SECONDS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_FRACTIONAL_SECONDS_OUTPUT).members_by_index
         if self.datetime_ is not None:
-            serializer.write_timestamp(
-                _SCHEMA_FRACTIONAL_SECONDS_OUTPUT.members["datetime"], self.datetime_
-            )
+            serializer.write_timestamp(members[0], self.datetime_)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -2331,30 +2144,27 @@ class FractionalSecondsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_FRACTIONAL_SECONDS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["datetime_"] = de.read_timestamp(
-                        _SCHEMA_FRACTIONAL_SECONDS_OUTPUT.members["datetime"]
-                    )
+                    kwargs["datetime_"] = de.read_timestamp(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_FRACTIONAL_SECONDS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 FRACTIONAL_SECONDS = APIOperation(
     input=FractionalSecondsInput,
     output=FractionalSecondsOutput,
-    schema=_SCHEMA_FRACTIONAL_SECONDS,
-    input_schema=_SCHEMA_FRACTIONAL_SECONDS_INPUT,
-    output_schema=_SCHEMA_FRACTIONAL_SECONDS_OUTPUT,
+    static_schema=_SCHEMA_FRACTIONAL_SECONDS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -2363,7 +2173,7 @@ class GreetingWithErrorsInput:
     """Dataclass for GreetingWithErrorsInput structure."""
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_GREETING_WITH_ERRORS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_GREETING_WITH_ERRORS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -2375,13 +2185,14 @@ class GreetingWithErrorsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_GREETING_WITH_ERRORS_INPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_GREETING_WITH_ERRORS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -2402,13 +2213,12 @@ class GreetingWithErrorsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_GREETING_WITH_ERRORS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_GREETING_WITH_ERRORS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_GREETING_WITH_ERRORS_OUTPUT).members_by_index
         if self.greeting is not None:
-            serializer.write_string(
-                _SCHEMA_GREETING_WITH_ERRORS_OUTPUT.members["greeting"], self.greeting
-            )
+            serializer.write_string(members[0], self.greeting)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -2417,20 +2227,18 @@ class GreetingWithErrorsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_GREETING_WITH_ERRORS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["greeting"] = de.read_string(
-                        _SCHEMA_GREETING_WITH_ERRORS_OUTPUT.members["greeting"]
-                    )
+                    kwargs["greeting"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_GREETING_WITH_ERRORS_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -2441,13 +2249,12 @@ class InvalidGreeting(ServiceError):
     fault: Literal["client", "server"] | None = "client"
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_INVALID_GREETING, self)
+        serializer.write_struct(hydrate(_SCHEMA_INVALID_GREETING), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_INVALID_GREETING).members_by_index
         if self.message is not None:
-            serializer.write_string(
-                _SCHEMA_INVALID_GREETING.members["Message"], self.message
-            )
+            serializer.write_string(members[0], self.message)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -2456,27 +2263,25 @@ class InvalidGreeting(ServiceError):
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_INVALID_GREETING)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["message"] = de.read_string(
-                        _SCHEMA_INVALID_GREETING.members["Message"]
-                    )
+                    kwargs["message"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_INVALID_GREETING, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 GREETING_WITH_ERRORS = APIOperation(
     input=GreetingWithErrorsInput,
     output=GreetingWithErrorsOutput,
-    schema=_SCHEMA_GREETING_WITH_ERRORS,
-    input_schema=_SCHEMA_GREETING_WITH_ERRORS_INPUT,
-    output_schema=_SCHEMA_GREETING_WITH_ERRORS_OUTPUT,
+    static_schema=_SCHEMA_GREETING_WITH_ERRORS,
     error_registry=TypeRegistry(
         {
             ShapeID("aws.protocoltests.restxml#InvalidGreeting"): InvalidGreeting,
@@ -2484,7 +2289,6 @@ GREETING_WITH_ERRORS = APIOperation(
         }
     ),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[_SCHEMA_INVALID_GREETING, _SCHEMA_COMPLEX_ERROR],
 )
 
 
@@ -2497,21 +2301,15 @@ class HttpEmptyPrefixHeadersInput:
     specific_header: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_INPUT).members_by_index
         if self.prefix_headers is not None:
-            _serialize_string_map(
-                serializer,
-                _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_INPUT.members["prefixHeaders"],
-                self.prefix_headers,
-            )
+            _serialize_string_map(serializer, members[0], self.prefix_headers)
 
         if self.specific_header is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_INPUT.members["specificHeader"],
-                self.specific_header,
-            )
+            serializer.write_string(members[1], self.specific_header)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -2520,30 +2318,21 @@ class HttpEmptyPrefixHeadersInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["prefix_headers"] = _deserialize_string_map(
-                        de,
-                        _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_INPUT.members[
-                            "prefixHeaders"
-                        ],
-                    )
+                    kwargs["prefix_headers"] = _deserialize_string_map(de, members[0])
 
                 case 1:
-                    kwargs["specific_header"] = de.read_string(
-                        _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_INPUT.members[
-                            "specificHeader"
-                        ]
-                    )
+                    kwargs["specific_header"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -2566,21 +2355,15 @@ class HttpEmptyPrefixHeadersOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_OUTPUT).members_by_index
         if self.prefix_headers is not None:
-            _serialize_string_map(
-                serializer,
-                _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_OUTPUT.members["prefixHeaders"],
-                self.prefix_headers,
-            )
+            _serialize_string_map(serializer, members[0], self.prefix_headers)
 
         if self.specific_header is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_OUTPUT.members["specificHeader"],
-                self.specific_header,
-            )
+            serializer.write_string(members[1], self.specific_header)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -2589,42 +2372,30 @@ class HttpEmptyPrefixHeadersOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["prefix_headers"] = _deserialize_string_map(
-                        de,
-                        _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_OUTPUT.members[
-                            "prefixHeaders"
-                        ],
-                    )
+                    kwargs["prefix_headers"] = _deserialize_string_map(de, members[0])
 
                 case 1:
-                    kwargs["specific_header"] = de.read_string(
-                        _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_OUTPUT.members[
-                            "specificHeader"
-                        ]
-                    )
+                    kwargs["specific_header"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_EMPTY_PREFIX_HEADERS = APIOperation(
     input=HttpEmptyPrefixHeadersInput,
     output=HttpEmptyPrefixHeadersOutput,
-    schema=_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS,
-    input_schema=_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_INPUT,
-    output_schema=_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS_OUTPUT,
+    static_schema=_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -2639,13 +2410,12 @@ class HttpEnumPayloadInput:
     payload: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_ENUM_PAYLOAD_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_ENUM_PAYLOAD_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_ENUM_PAYLOAD_INPUT).members_by_index
         if self.payload is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_ENUM_PAYLOAD_INPUT.members["payload"], self.payload
-            )
+            serializer.write_string(members[0], self.payload)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -2654,20 +2424,18 @@ class HttpEnumPayloadInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_ENUM_PAYLOAD_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["payload"] = StringEnum(
-                        de.read_string(
-                            _SCHEMA_HTTP_ENUM_PAYLOAD_INPUT.members["payload"]
-                        )
-                    )
+                    kwargs["payload"] = StringEnum(de.read_string(members[0]))
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_HTTP_ENUM_PAYLOAD_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -2688,13 +2456,12 @@ class HttpEnumPayloadOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_ENUM_PAYLOAD_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_ENUM_PAYLOAD_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_ENUM_PAYLOAD_OUTPUT).members_by_index
         if self.payload is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_ENUM_PAYLOAD_OUTPUT.members["payload"], self.payload
-            )
+            serializer.write_string(members[0], self.payload)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -2703,32 +2470,27 @@ class HttpEnumPayloadOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_ENUM_PAYLOAD_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["payload"] = StringEnum(
-                        de.read_string(
-                            _SCHEMA_HTTP_ENUM_PAYLOAD_OUTPUT.members["payload"]
-                        )
-                    )
+                    kwargs["payload"] = StringEnum(de.read_string(members[0]))
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_HTTP_ENUM_PAYLOAD_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_ENUM_PAYLOAD = APIOperation(
     input=HttpEnumPayloadInput,
     output=HttpEnumPayloadOutput,
-    schema=_SCHEMA_HTTP_ENUM_PAYLOAD,
-    input_schema=_SCHEMA_HTTP_ENUM_PAYLOAD_INPUT,
-    output_schema=_SCHEMA_HTTP_ENUM_PAYLOAD_OUTPUT,
+    static_schema=_SCHEMA_HTTP_ENUM_PAYLOAD,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -2741,18 +2503,15 @@ class HttpPayloadTraitsInput:
     blob: bytes | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_TRAITS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_PAYLOAD_TRAITS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_PAYLOAD_TRAITS_INPUT).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_PAYLOAD_TRAITS_INPUT.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.blob is not None:
-            serializer.write_blob(
-                _SCHEMA_HTTP_PAYLOAD_TRAITS_INPUT.members["blob"], self.blob
-            )
+            serializer.write_blob(members[1], self.blob)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -2761,23 +2520,21 @@ class HttpPayloadTraitsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_TRAITS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_HTTP_PAYLOAD_TRAITS_INPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["blob"] = de.read_blob(
-                        _SCHEMA_HTTP_PAYLOAD_TRAITS_INPUT.members["blob"]
-                    )
+                    kwargs["blob"] = de.read_blob(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_HTTP_PAYLOAD_TRAITS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -2800,18 +2557,15 @@ class HttpPayloadTraitsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_TRAITS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_PAYLOAD_TRAITS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_PAYLOAD_TRAITS_OUTPUT).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_PAYLOAD_TRAITS_OUTPUT.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.blob is not None:
-            serializer.write_blob(
-                _SCHEMA_HTTP_PAYLOAD_TRAITS_OUTPUT.members["blob"], self.blob
-            )
+            serializer.write_blob(members[1], self.blob)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -2820,35 +2574,30 @@ class HttpPayloadTraitsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_TRAITS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_HTTP_PAYLOAD_TRAITS_OUTPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["blob"] = de.read_blob(
-                        _SCHEMA_HTTP_PAYLOAD_TRAITS_OUTPUT.members["blob"]
-                    )
+                    kwargs["blob"] = de.read_blob(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_HTTP_PAYLOAD_TRAITS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_PAYLOAD_TRAITS = APIOperation(
     input=HttpPayloadTraitsInput,
     output=HttpPayloadTraitsOutput,
-    schema=_SCHEMA_HTTP_PAYLOAD_TRAITS,
-    input_schema=_SCHEMA_HTTP_PAYLOAD_TRAITS_INPUT,
-    output_schema=_SCHEMA_HTTP_PAYLOAD_TRAITS_OUTPUT,
+    static_schema=_SCHEMA_HTTP_PAYLOAD_TRAITS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -2861,20 +2610,19 @@ class HttpPayloadTraitsWithMediaTypeInput:
     blob: bytes | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT
+        ).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT.members["foo"],
-                self.foo,
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.blob is not None:
-            serializer.write_blob(
-                _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT.members["blob"],
-                self.blob,
-            )
+            serializer.write_blob(members[1], self.blob)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -2883,27 +2631,21 @@ class HttpPayloadTraitsWithMediaTypeInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["blob"] = de.read_blob(
-                        _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT.members[
-                            "blob"
-                        ]
-                    )
+                    kwargs["blob"] = de.read_blob(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -2927,21 +2669,18 @@ class HttpPayloadTraitsWithMediaTypeOutput:
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(
-            _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT, self
+            hydrate(_SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT), self
         )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT
+        ).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT.members["foo"],
-                self.foo,
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.blob is not None:
-            serializer.write_blob(
-                _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT.members["blob"],
-                self.blob,
-            )
+            serializer.write_blob(members[1], self.blob)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -2950,41 +2689,30 @@ class HttpPayloadTraitsWithMediaTypeOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT.members[
-                            "foo"
-                        ]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["blob"] = de.read_blob(
-                        _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT.members[
-                            "blob"
-                        ]
-                    )
+                    kwargs["blob"] = de.read_blob(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE = APIOperation(
     input=HttpPayloadTraitsWithMediaTypeInput,
     output=HttpPayloadTraitsWithMediaTypeOutput,
-    schema=_SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
-    input_schema=_SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT,
-    output_schema=_SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT,
+    static_schema=_SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -2995,14 +2723,16 @@ class HttpPayloadWithMemberXmlNameInput:
     nested: PayloadWithXmlName | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT
+        ).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT.members["nested"],
-                self.nested,
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3011,18 +2741,18 @@ class HttpPayloadWithMemberXmlNameInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = PayloadWithXmlName.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -3043,14 +2773,16 @@ class HttpPayloadWithMemberXmlNameOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_OUTPUT
+        ).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_OUTPUT.members["nested"],
-                self.nested,
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3059,30 +2791,27 @@ class HttpPayloadWithMemberXmlNameOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = PayloadWithXmlName.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_PAYLOAD_WITH_MEMBER_XML_NAME = APIOperation(
     input=HttpPayloadWithMemberXmlNameInput,
     output=HttpPayloadWithMemberXmlNameOutput,
-    schema=_SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME,
-    input_schema=_SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT,
-    output_schema=_SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_OUTPUT,
+    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -3095,16 +2824,15 @@ class NestedPayload:
     name: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NESTED_PAYLOAD, self)
+        serializer.write_struct(hydrate(_SCHEMA_NESTED_PAYLOAD), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_NESTED_PAYLOAD).members_by_index
         if self.greeting is not None:
-            serializer.write_string(
-                _SCHEMA_NESTED_PAYLOAD.members["greeting"], self.greeting
-            )
+            serializer.write_string(members[0], self.greeting)
 
         if self.name is not None:
-            serializer.write_string(_SCHEMA_NESTED_PAYLOAD.members["name"], self.name)
+            serializer.write_string(members[1], self.name)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3113,23 +2841,21 @@ class NestedPayload:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NESTED_PAYLOAD)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["greeting"] = de.read_string(
-                        _SCHEMA_NESTED_PAYLOAD.members["greeting"]
-                    )
+                    kwargs["greeting"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["name"] = de.read_string(
-                        _SCHEMA_NESTED_PAYLOAD.members["name"]
-                    )
+                    kwargs["name"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_NESTED_PAYLOAD, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -3140,13 +2866,14 @@ class HttpPayloadWithStructureInput:
     nested: NestedPayload | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_INPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_INPUT.members["nested"], self.nested
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3155,18 +2882,18 @@ class HttpPayloadWithStructureInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = NestedPayload.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -3187,14 +2914,14 @@ class HttpPayloadWithStructureOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT.members["nested"],
-                self.nested,
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3203,30 +2930,27 @@ class HttpPayloadWithStructureOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = NestedPayload.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_PAYLOAD_WITH_STRUCTURE = APIOperation(
     input=HttpPayloadWithStructureInput,
     output=HttpPayloadWithStructureOutput,
-    schema=_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE,
-    input_schema=_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_INPUT,
-    output_schema=_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT,
+    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -3235,16 +2959,16 @@ class UnionPayloadGreeting:
     value: str
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_UNION_PAYLOAD, self)
+        serializer.write_struct(hydrate(_SCHEMA_UNION_PAYLOAD), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_string(_SCHEMA_UNION_PAYLOAD.members["greeting"], self.value)
+        members = hydrate(_SCHEMA_UNION_PAYLOAD).members_by_index
+        serializer.write_string(members[0], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
-        return cls(
-            value=deserializer.read_string(_SCHEMA_UNION_PAYLOAD.members["greeting"])
-        )
+        members = hydrate(_SCHEMA_UNION_PAYLOAD).members_by_index
+        return cls(value=deserializer.read_string(members[0]))
 
 
 @dataclass
@@ -3279,7 +3003,7 @@ class _UnionPayloadDeserializer:
 
     def deserialize(self, deserializer: ShapeDeserializer) -> UnionPayload:
         self._result = None
-        deserializer.read_struct(_SCHEMA_UNION_PAYLOAD, self._consumer)
+        deserializer.read_struct(hydrate(_SCHEMA_UNION_PAYLOAD), self._consumer)
 
         if self._result is None:
             raise SerializationError(
@@ -3311,13 +3035,12 @@ class HttpPayloadWithUnionInput:
     nested: UnionPayload | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_WITH_UNION_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_UNION_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_UNION_INPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_UNION_INPUT.members["nested"], self.nested
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3326,18 +3049,18 @@ class HttpPayloadWithUnionInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_UNION_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = _UnionPayloadDeserializer().deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_UNION_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -3358,13 +3081,12 @@ class HttpPayloadWithUnionOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_WITH_UNION_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_UNION_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_UNION_OUTPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_UNION_OUTPUT.members["nested"], self.nested
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3373,30 +3095,27 @@ class HttpPayloadWithUnionOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_UNION_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = _UnionPayloadDeserializer().deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_UNION_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_PAYLOAD_WITH_UNION = APIOperation(
     input=HttpPayloadWithUnionInput,
     output=HttpPayloadWithUnionOutput,
-    schema=_SCHEMA_HTTP_PAYLOAD_WITH_UNION,
-    input_schema=_SCHEMA_HTTP_PAYLOAD_WITH_UNION_INPUT,
-    output_schema=_SCHEMA_HTTP_PAYLOAD_WITH_UNION_OUTPUT,
+    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_UNION,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -3407,13 +3126,12 @@ class HttpPayloadWithXmlNameInput:
     nested: PayloadWithXmlName | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_INPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_INPUT.members["nested"], self.nested
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3422,18 +3140,18 @@ class HttpPayloadWithXmlNameInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = PayloadWithXmlName.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -3454,13 +3172,14 @@ class HttpPayloadWithXmlNameOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_OUTPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_OUTPUT.members["nested"], self.nested
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3469,30 +3188,27 @@ class HttpPayloadWithXmlNameOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = PayloadWithXmlName.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_PAYLOAD_WITH_XML_NAME = APIOperation(
     input=HttpPayloadWithXmlNameInput,
     output=HttpPayloadWithXmlNameOutput,
-    schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME,
-    input_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_INPUT,
-    output_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME_OUTPUT,
+    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -3503,13 +3219,12 @@ class PayloadWithXmlNamespace:
     name: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_PAYLOAD_WITH_XML_NAMESPACE, self)
+        serializer.write_struct(hydrate(_SCHEMA_PAYLOAD_WITH_XML_NAMESPACE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_PAYLOAD_WITH_XML_NAMESPACE).members_by_index
         if self.name is not None:
-            serializer.write_string(
-                _SCHEMA_PAYLOAD_WITH_XML_NAMESPACE.members["name"], self.name
-            )
+            serializer.write_string(members[0], self.name)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3518,18 +3233,18 @@ class PayloadWithXmlNamespace:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_PAYLOAD_WITH_XML_NAMESPACE)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["name"] = de.read_string(
-                        _SCHEMA_PAYLOAD_WITH_XML_NAMESPACE.members["name"]
-                    )
+                    kwargs["name"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_PAYLOAD_WITH_XML_NAMESPACE, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -3540,14 +3255,16 @@ class HttpPayloadWithXmlNamespaceInput:
     nested: PayloadWithXmlNamespace | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_INPUT
+        ).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_INPUT.members["nested"],
-                self.nested,
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3556,18 +3273,18 @@ class HttpPayloadWithXmlNamespaceInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = PayloadWithXmlNamespace.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -3588,14 +3305,16 @@ class HttpPayloadWithXmlNamespaceOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_OUTPUT
+        ).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_OUTPUT.members["nested"],
-                self.nested,
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3604,30 +3323,27 @@ class HttpPayloadWithXmlNamespaceOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = PayloadWithXmlNamespace.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_PAYLOAD_WITH_XML_NAMESPACE = APIOperation(
     input=HttpPayloadWithXmlNamespaceInput,
     output=HttpPayloadWithXmlNamespaceOutput,
-    schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE,
-    input_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_INPUT,
-    output_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_OUTPUT,
+    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -3638,13 +3354,16 @@ class PayloadWithXmlNamespaceAndPrefix:
     name: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX
+        ).members_by_index
         if self.name is not None:
-            serializer.write_string(
-                _SCHEMA_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX.members["name"], self.name
-            )
+            serializer.write_string(members[0], self.name)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3653,20 +3372,18 @@ class PayloadWithXmlNamespaceAndPrefix:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["name"] = de.read_string(
-                        _SCHEMA_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX.members["name"]
-                    )
+                    kwargs["name"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -3678,17 +3395,15 @@ class HttpPayloadWithXmlNamespaceAndPrefixInput:
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT, self
+            hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT), self
         )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT
+        ).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT.members[
-                    "nested"
-                ],
-                self.nested,
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3697,18 +3412,18 @@ class HttpPayloadWithXmlNamespaceAndPrefixInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = PayloadWithXmlNamespaceAndPrefix.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -3730,17 +3445,15 @@ class HttpPayloadWithXmlNamespaceAndPrefixOutput:
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT, self
+            hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT), self
         )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT
+        ).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT.members[
-                    "nested"
-                ],
-                self.nested,
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3749,31 +3462,27 @@ class HttpPayloadWithXmlNamespaceAndPrefixOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = PayloadWithXmlNamespaceAndPrefix.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT,
-            consumer=_consumer,
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX = APIOperation(
     input=HttpPayloadWithXmlNamespaceAndPrefixInput,
     output=HttpPayloadWithXmlNamespaceAndPrefixOutput,
-    schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX,
-    input_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT,
-    output_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT,
+    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -3786,20 +3495,15 @@ class HttpPrefixHeadersInput:
     foo_map: dict[str, str] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PREFIX_HEADERS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_PREFIX_HEADERS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_PREFIX_HEADERS_INPUT).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_PREFIX_HEADERS_INPUT.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.foo_map is not None:
-            _serialize_foo_prefix_headers(
-                serializer,
-                _SCHEMA_HTTP_PREFIX_HEADERS_INPUT.members["fooMap"],
-                self.foo_map,
-            )
+            _serialize_foo_prefix_headers(serializer, members[1], self.foo_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3808,23 +3512,21 @@ class HttpPrefixHeadersInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PREFIX_HEADERS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_HTTP_PREFIX_HEADERS_INPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["foo_map"] = _deserialize_foo_prefix_headers(
-                        de, _SCHEMA_HTTP_PREFIX_HEADERS_INPUT.members["fooMap"]
-                    )
+                    kwargs["foo_map"] = _deserialize_foo_prefix_headers(de, members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_HTTP_PREFIX_HEADERS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -3847,20 +3549,15 @@ class HttpPrefixHeadersOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_PREFIX_HEADERS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_PREFIX_HEADERS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_PREFIX_HEADERS_OUTPUT).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_PREFIX_HEADERS_OUTPUT.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.foo_map is not None:
-            _serialize_foo_prefix_headers(
-                serializer,
-                _SCHEMA_HTTP_PREFIX_HEADERS_OUTPUT.members["fooMap"],
-                self.foo_map,
-            )
+            _serialize_foo_prefix_headers(serializer, members[1], self.foo_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3869,35 +3566,30 @@ class HttpPrefixHeadersOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_PREFIX_HEADERS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_HTTP_PREFIX_HEADERS_OUTPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["foo_map"] = _deserialize_foo_prefix_headers(
-                        de, _SCHEMA_HTTP_PREFIX_HEADERS_OUTPUT.members["fooMap"]
-                    )
+                    kwargs["foo_map"] = _deserialize_foo_prefix_headers(de, members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_HTTP_PREFIX_HEADERS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_PREFIX_HEADERS = APIOperation(
     input=HttpPrefixHeadersInput,
     output=HttpPrefixHeadersOutput,
-    schema=_SCHEMA_HTTP_PREFIX_HEADERS,
-    input_schema=_SCHEMA_HTTP_PREFIX_HEADERS_INPUT,
-    output_schema=_SCHEMA_HTTP_PREFIX_HEADERS_OUTPUT,
+    static_schema=_SCHEMA_HTTP_PREFIX_HEADERS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -3910,20 +3602,17 @@ class HttpRequestWithFloatLabelsInput:
     double: float | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT).members_by_index
         if self.float_ is not None:
-            serializer.write_float(
-                _SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT.members["float"],
-                self.float_,
-            )
+            serializer.write_float(members[0], self.float_)
 
         if self.double is not None:
-            serializer.write_double(
-                _SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT.members["double"],
-                self.double,
-            )
+            serializer.write_double(members[1], self.double)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -3932,25 +3621,21 @@ class HttpRequestWithFloatLabelsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["float_"] = de.read_float(
-                        _SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT.members["float"]
-                    )
+                    kwargs["float_"] = de.read_float(members[0])
 
                 case 1:
-                    kwargs["double"] = de.read_double(
-                        _SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT.members["double"]
-                    )
+                    kwargs["double"] = de.read_double(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -3969,7 +3654,9 @@ class HttpRequestWithFloatLabelsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -3981,27 +3668,23 @@ class HttpRequestWithFloatLabelsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_REQUEST_WITH_FLOAT_LABELS = APIOperation(
     input=HttpRequestWithFloatLabelsInput,
     output=HttpRequestWithFloatLabelsOutput,
-    schema=_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS,
-    input_schema=_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT,
-    output_schema=_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT,
+    static_schema=_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -4015,21 +3698,18 @@ class HttpRequestWithGreedyLabelInPathInput:
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT, self
+            hydrate(_SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT), self
         )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT
+        ).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT.members["foo"],
-                self.foo,
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.baz is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT.members["baz"],
-                self.baz,
-            )
+            serializer.write_string(members[1], self.baz)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -4038,29 +3718,21 @@ class HttpRequestWithGreedyLabelInPathInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT.members[
-                            "foo"
-                        ]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["baz"] = de.read_string(
-                        _SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT.members[
-                            "baz"
-                        ]
-                    )
+                    kwargs["baz"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -4080,7 +3752,7 @@ class HttpRequestWithGreedyLabelInPathOutput:
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT, self
+            hydrate(_SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT), self
         )
 
     def serialize_members(self, serializer: ShapeSerializer):
@@ -4093,27 +3765,23 @@ class HttpRequestWithGreedyLabelInPathOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = APIOperation(
     input=HttpRequestWithGreedyLabelInPathInput,
     output=HttpRequestWithGreedyLabelInPathOutput,
-    schema=_SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
-    input_schema=_SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT,
-    output_schema=_SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT,
+    static_schema=_SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -4143,49 +3811,33 @@ class HttpRequestWithLabelsInput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT).members_by_index
         if self.string is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["string"], self.string
-            )
+            serializer.write_string(members[0], self.string)
 
         if self.short is not None:
-            serializer.write_short(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["short"], self.short
-            )
+            serializer.write_short(members[1], self.short)
 
         if self.integer is not None:
-            serializer.write_integer(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["integer"], self.integer
-            )
+            serializer.write_integer(members[2], self.integer)
 
         if self.long is not None:
-            serializer.write_long(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["long"], self.long
-            )
+            serializer.write_long(members[3], self.long)
 
         if self.float_ is not None:
-            serializer.write_float(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["float"], self.float_
-            )
+            serializer.write_float(members[4], self.float_)
 
         if self.double is not None:
-            serializer.write_double(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["double"], self.double
-            )
+            serializer.write_double(members[5], self.double)
 
         if self.boolean is not None:
-            serializer.write_boolean(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["boolean"], self.boolean
-            )
+            serializer.write_boolean(members[6], self.boolean)
 
         if self.timestamp is not None:
-            serializer.write_timestamp(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["timestamp"],
-                self.timestamp,
-            )
+            serializer.write_timestamp(members[7], self.timestamp)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -4194,55 +3846,39 @@ class HttpRequestWithLabelsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["string"] = de.read_string(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["string"]
-                    )
+                    kwargs["string"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["short"] = de.read_short(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["short"]
-                    )
+                    kwargs["short"] = de.read_short(members[1])
 
                 case 2:
-                    kwargs["integer"] = de.read_integer(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["integer"]
-                    )
+                    kwargs["integer"] = de.read_integer(members[2])
 
                 case 3:
-                    kwargs["long"] = de.read_long(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["long"]
-                    )
+                    kwargs["long"] = de.read_long(members[3])
 
                 case 4:
-                    kwargs["float_"] = de.read_float(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["float"]
-                    )
+                    kwargs["float_"] = de.read_float(members[4])
 
                 case 5:
-                    kwargs["double"] = de.read_double(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["double"]
-                    )
+                    kwargs["double"] = de.read_double(members[5])
 
                 case 6:
-                    kwargs["boolean"] = de.read_boolean(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["boolean"]
-                    )
+                    kwargs["boolean"] = de.read_boolean(members[6])
 
                 case 7:
-                    kwargs["timestamp"] = de.read_timestamp(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT.members["timestamp"]
-                    )
+                    kwargs["timestamp"] = de.read_timestamp(members[7])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -4261,7 +3897,7 @@ class HttpRequestWithLabelsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_REQUEST_WITH_LABELS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_REQUEST_WITH_LABELS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -4273,27 +3909,23 @@ class HttpRequestWithLabelsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_REQUEST_WITH_LABELS_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_LABELS_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_REQUEST_WITH_LABELS = APIOperation(
     input=HttpRequestWithLabelsInput,
     output=HttpRequestWithLabelsOutput,
-    schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS,
-    input_schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS_INPUT,
-    output_schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS_OUTPUT,
+    static_schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -4317,65 +3949,33 @@ class HttpRequestWithLabelsAndTimestampFormatInput:
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT, self
+            hydrate(_SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT), self
         )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT
+        ).members_by_index
         if self.member_epoch_seconds is not None:
-            serializer.write_timestamp(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                    "memberEpochSeconds"
-                ],
-                self.member_epoch_seconds,
-            )
+            serializer.write_timestamp(members[0], self.member_epoch_seconds)
 
         if self.member_http_date is not None:
-            serializer.write_timestamp(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                    "memberHttpDate"
-                ],
-                self.member_http_date,
-            )
+            serializer.write_timestamp(members[1], self.member_http_date)
 
         if self.member_date_time is not None:
-            serializer.write_timestamp(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                    "memberDateTime"
-                ],
-                self.member_date_time,
-            )
+            serializer.write_timestamp(members[2], self.member_date_time)
 
         if self.default_format is not None:
-            serializer.write_timestamp(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                    "defaultFormat"
-                ],
-                self.default_format,
-            )
+            serializer.write_timestamp(members[3], self.default_format)
 
         if self.target_epoch_seconds is not None:
-            serializer.write_timestamp(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                    "targetEpochSeconds"
-                ],
-                self.target_epoch_seconds,
-            )
+            serializer.write_timestamp(members[4], self.target_epoch_seconds)
 
         if self.target_http_date is not None:
-            serializer.write_timestamp(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                    "targetHttpDate"
-                ],
-                self.target_http_date,
-            )
+            serializer.write_timestamp(members[5], self.target_http_date)
 
         if self.target_date_time is not None:
-            serializer.write_timestamp(
-                _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                    "targetDateTime"
-                ],
-                self.target_date_time,
-            )
+            serializer.write_timestamp(members[6], self.target_date_time)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -4384,65 +3984,36 @@ class HttpRequestWithLabelsAndTimestampFormatInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["member_epoch_seconds"] = de.read_timestamp(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                            "memberEpochSeconds"
-                        ]
-                    )
+                    kwargs["member_epoch_seconds"] = de.read_timestamp(members[0])
 
                 case 1:
-                    kwargs["member_http_date"] = de.read_timestamp(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                            "memberHttpDate"
-                        ]
-                    )
+                    kwargs["member_http_date"] = de.read_timestamp(members[1])
 
                 case 2:
-                    kwargs["member_date_time"] = de.read_timestamp(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                            "memberDateTime"
-                        ]
-                    )
+                    kwargs["member_date_time"] = de.read_timestamp(members[2])
 
                 case 3:
-                    kwargs["default_format"] = de.read_timestamp(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                            "defaultFormat"
-                        ]
-                    )
+                    kwargs["default_format"] = de.read_timestamp(members[3])
 
                 case 4:
-                    kwargs["target_epoch_seconds"] = de.read_timestamp(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                            "targetEpochSeconds"
-                        ]
-                    )
+                    kwargs["target_epoch_seconds"] = de.read_timestamp(members[4])
 
                 case 5:
-                    kwargs["target_http_date"] = de.read_timestamp(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                            "targetHttpDate"
-                        ]
-                    )
+                    kwargs["target_http_date"] = de.read_timestamp(members[5])
 
                 case 6:
-                    kwargs["target_date_time"] = de.read_timestamp(
-                        _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT.members[
-                            "targetDateTime"
-                        ]
-                    )
+                    kwargs["target_date_time"] = de.read_timestamp(members[6])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT,
-            consumer=_consumer,
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -4462,7 +4033,7 @@ class HttpRequestWithLabelsAndTimestampFormatOutput:
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT, self
+            hydrate(_SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT), self
         )
 
     def serialize_members(self, serializer: ShapeSerializer):
@@ -4475,28 +4046,23 @@ class HttpRequestWithLabelsAndTimestampFormatOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT,
-            consumer=_consumer,
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = APIOperation(
     input=HttpRequestWithLabelsAndTimestampFormatInput,
     output=HttpRequestWithLabelsAndTimestampFormatOutput,
-    schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
-    input_schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT,
-    output_schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT,
+    static_schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -4505,7 +4071,7 @@ class HttpResponseCodeInput:
     """Dataclass for HttpResponseCodeInput structure."""
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_RESPONSE_CODE_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_RESPONSE_CODE_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -4517,13 +4083,14 @@ class HttpResponseCodeInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_RESPONSE_CODE_INPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_HTTP_RESPONSE_CODE_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -4544,13 +4111,12 @@ class HttpResponseCodeOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_RESPONSE_CODE_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_RESPONSE_CODE_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_RESPONSE_CODE_OUTPUT).members_by_index
         if self.status is not None:
-            serializer.write_integer(
-                _SCHEMA_HTTP_RESPONSE_CODE_OUTPUT.members["Status"], self.status
-            )
+            serializer.write_integer(members[0], self.status)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -4559,30 +4125,27 @@ class HttpResponseCodeOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_RESPONSE_CODE_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["status"] = de.read_integer(
-                        _SCHEMA_HTTP_RESPONSE_CODE_OUTPUT.members["Status"]
-                    )
+                    kwargs["status"] = de.read_integer(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_HTTP_RESPONSE_CODE_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_RESPONSE_CODE = APIOperation(
     input=HttpResponseCodeInput,
     output=HttpResponseCodeOutput,
-    schema=_SCHEMA_HTTP_RESPONSE_CODE,
-    input_schema=_SCHEMA_HTTP_RESPONSE_CODE_INPUT,
-    output_schema=_SCHEMA_HTTP_RESPONSE_CODE_OUTPUT,
+    static_schema=_SCHEMA_HTTP_RESPONSE_CODE,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -4593,13 +4156,12 @@ class HttpStringPayloadInput:
     payload: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_STRING_PAYLOAD_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_STRING_PAYLOAD_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_STRING_PAYLOAD_INPUT).members_by_index
         if self.payload is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_STRING_PAYLOAD_INPUT.members["payload"], self.payload
-            )
+            serializer.write_string(members[0], self.payload)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -4608,18 +4170,18 @@ class HttpStringPayloadInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_STRING_PAYLOAD_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["payload"] = de.read_string(
-                        _SCHEMA_HTTP_STRING_PAYLOAD_INPUT.members["payload"]
-                    )
+                    kwargs["payload"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_HTTP_STRING_PAYLOAD_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -4640,13 +4202,12 @@ class HttpStringPayloadOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_HTTP_STRING_PAYLOAD_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_HTTP_STRING_PAYLOAD_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_HTTP_STRING_PAYLOAD_OUTPUT).members_by_index
         if self.payload is not None:
-            serializer.write_string(
-                _SCHEMA_HTTP_STRING_PAYLOAD_OUTPUT.members["payload"], self.payload
-            )
+            serializer.write_string(members[0], self.payload)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -4655,30 +4216,27 @@ class HttpStringPayloadOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_HTTP_STRING_PAYLOAD_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["payload"] = de.read_string(
-                        _SCHEMA_HTTP_STRING_PAYLOAD_OUTPUT.members["payload"]
-                    )
+                    kwargs["payload"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_HTTP_STRING_PAYLOAD_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 HTTP_STRING_PAYLOAD = APIOperation(
     input=HttpStringPayloadInput,
     output=HttpStringPayloadOutput,
-    schema=_SCHEMA_HTTP_STRING_PAYLOAD,
-    input_schema=_SCHEMA_HTTP_STRING_PAYLOAD_INPUT,
-    output_schema=_SCHEMA_HTTP_STRING_PAYLOAD_OUTPUT,
+    static_schema=_SCHEMA_HTTP_STRING_PAYLOAD,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -4687,7 +4245,9 @@ class IgnoreQueryParamsInResponseInput:
     """Dataclass for IgnoreQueryParamsInResponseInput structure."""
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -4699,15 +4259,14 @@ class IgnoreQueryParamsInResponseInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -4728,13 +4287,16 @@ class IgnoreQueryParamsInResponseOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT
+        ).members_by_index
         if self.baz is not None:
-            serializer.write_string(
-                _SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT.members["baz"], self.baz
-            )
+            serializer.write_string(members[0], self.baz)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -4743,32 +4305,27 @@ class IgnoreQueryParamsInResponseOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["baz"] = de.read_string(
-                        _SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT.members["baz"]
-                    )
+                    kwargs["baz"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 IGNORE_QUERY_PARAMS_IN_RESPONSE = APIOperation(
     input=IgnoreQueryParamsInResponseInput,
     output=IgnoreQueryParamsInResponseOutput,
-    schema=_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE,
-    input_schema=_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT,
-    output_schema=_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT,
+    static_schema=_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -4809,116 +4366,61 @@ class InputAndOutputWithHeadersInput:
     header_enum_list: list[str] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT).members_by_index
         if self.header_string is not None:
-            serializer.write_string(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerString"],
-                self.header_string,
-            )
+            serializer.write_string(members[0], self.header_string)
 
         if self.header_byte is not None:
-            serializer.write_byte(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerByte"],
-                self.header_byte,
-            )
+            serializer.write_byte(members[1], self.header_byte)
 
         if self.header_short is not None:
-            serializer.write_short(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerShort"],
-                self.header_short,
-            )
+            serializer.write_short(members[2], self.header_short)
 
         if self.header_integer is not None:
-            serializer.write_integer(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerInteger"],
-                self.header_integer,
-            )
+            serializer.write_integer(members[3], self.header_integer)
 
         if self.header_long is not None:
-            serializer.write_long(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerLong"],
-                self.header_long,
-            )
+            serializer.write_long(members[4], self.header_long)
 
         if self.header_float is not None:
-            serializer.write_float(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerFloat"],
-                self.header_float,
-            )
+            serializer.write_float(members[5], self.header_float)
 
         if self.header_double is not None:
-            serializer.write_double(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerDouble"],
-                self.header_double,
-            )
+            serializer.write_double(members[6], self.header_double)
 
         if self.header_true_bool is not None:
-            serializer.write_boolean(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerTrueBool"],
-                self.header_true_bool,
-            )
+            serializer.write_boolean(members[7], self.header_true_bool)
 
         if self.header_false_bool is not None:
-            serializer.write_boolean(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerFalseBool"],
-                self.header_false_bool,
-            )
+            serializer.write_boolean(members[8], self.header_false_bool)
 
         if self.header_string_list is not None:
-            _serialize_string_list(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerStringList"],
-                self.header_string_list,
-            )
+            _serialize_string_list(serializer, members[9], self.header_string_list)
 
         if self.header_string_set is not None:
-            _serialize_string_set(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerStringSet"],
-                self.header_string_set,
-            )
+            _serialize_string_set(serializer, members[10], self.header_string_set)
 
         if self.header_integer_list is not None:
-            _serialize_integer_list(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                    "headerIntegerList"
-                ],
-                self.header_integer_list,
-            )
+            _serialize_integer_list(serializer, members[11], self.header_integer_list)
 
         if self.header_boolean_list is not None:
-            _serialize_boolean_list(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                    "headerBooleanList"
-                ],
-                self.header_boolean_list,
-            )
+            _serialize_boolean_list(serializer, members[12], self.header_boolean_list)
 
         if self.header_timestamp_list is not None:
             _serialize_timestamp_list(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                    "headerTimestampList"
-                ],
-                self.header_timestamp_list,
+                serializer, members[13], self.header_timestamp_list
             )
 
         if self.header_enum is not None:
-            serializer.write_string(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerEnum"],
-                self.header_enum,
-            )
+            serializer.write_string(members[14], self.header_enum)
 
         if self.header_enum_list is not None:
-            _serialize_foo_enum_list(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members["headerEnumList"],
-                self.header_enum_list,
-            )
+            _serialize_foo_enum_list(serializer, members[15], self.header_enum_list)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -4927,135 +4429,75 @@ class InputAndOutputWithHeadersInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["header_string"] = de.read_string(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerString"
-                        ]
-                    )
+                    kwargs["header_string"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["header_byte"] = de.read_byte(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerByte"
-                        ]
-                    )
+                    kwargs["header_byte"] = de.read_byte(members[1])
 
                 case 2:
-                    kwargs["header_short"] = de.read_short(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerShort"
-                        ]
-                    )
+                    kwargs["header_short"] = de.read_short(members[2])
 
                 case 3:
-                    kwargs["header_integer"] = de.read_integer(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerInteger"
-                        ]
-                    )
+                    kwargs["header_integer"] = de.read_integer(members[3])
 
                 case 4:
-                    kwargs["header_long"] = de.read_long(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerLong"
-                        ]
-                    )
+                    kwargs["header_long"] = de.read_long(members[4])
 
                 case 5:
-                    kwargs["header_float"] = de.read_float(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerFloat"
-                        ]
-                    )
+                    kwargs["header_float"] = de.read_float(members[5])
 
                 case 6:
-                    kwargs["header_double"] = de.read_double(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerDouble"
-                        ]
-                    )
+                    kwargs["header_double"] = de.read_double(members[6])
 
                 case 7:
-                    kwargs["header_true_bool"] = de.read_boolean(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerTrueBool"
-                        ]
-                    )
+                    kwargs["header_true_bool"] = de.read_boolean(members[7])
 
                 case 8:
-                    kwargs["header_false_bool"] = de.read_boolean(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerFalseBool"
-                        ]
-                    )
+                    kwargs["header_false_bool"] = de.read_boolean(members[8])
 
                 case 9:
                     kwargs["header_string_list"] = _deserialize_string_list(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerStringList"
-                        ],
+                        de, members[9]
                     )
 
                 case 10:
                     kwargs["header_string_set"] = _deserialize_string_set(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerStringSet"
-                        ],
+                        de, members[10]
                     )
 
                 case 11:
                     kwargs["header_integer_list"] = _deserialize_integer_list(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerIntegerList"
-                        ],
+                        de, members[11]
                     )
 
                 case 12:
                     kwargs["header_boolean_list"] = _deserialize_boolean_list(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerBooleanList"
-                        ],
+                        de, members[12]
                     )
 
                 case 13:
                     kwargs["header_timestamp_list"] = _deserialize_timestamp_list(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerTimestampList"
-                        ],
+                        de, members[13]
                     )
 
                 case 14:
-                    kwargs["header_enum"] = FooEnum(
-                        de.read_string(
-                            _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                                "headerEnum"
-                            ]
-                        )
-                    )
+                    kwargs["header_enum"] = FooEnum(de.read_string(members[14]))
 
                 case 15:
                     kwargs["header_enum_list"] = _deserialize_foo_enum_list(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT.members[
-                            "headerEnumList"
-                        ],
+                        de, members[15]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -5106,118 +4548,61 @@ class InputAndOutputWithHeadersOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT).members_by_index
         if self.header_string is not None:
-            serializer.write_string(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerString"],
-                self.header_string,
-            )
+            serializer.write_string(members[0], self.header_string)
 
         if self.header_byte is not None:
-            serializer.write_byte(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerByte"],
-                self.header_byte,
-            )
+            serializer.write_byte(members[1], self.header_byte)
 
         if self.header_short is not None:
-            serializer.write_short(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerShort"],
-                self.header_short,
-            )
+            serializer.write_short(members[2], self.header_short)
 
         if self.header_integer is not None:
-            serializer.write_integer(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerInteger"],
-                self.header_integer,
-            )
+            serializer.write_integer(members[3], self.header_integer)
 
         if self.header_long is not None:
-            serializer.write_long(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerLong"],
-                self.header_long,
-            )
+            serializer.write_long(members[4], self.header_long)
 
         if self.header_float is not None:
-            serializer.write_float(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerFloat"],
-                self.header_float,
-            )
+            serializer.write_float(members[5], self.header_float)
 
         if self.header_double is not None:
-            serializer.write_double(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerDouble"],
-                self.header_double,
-            )
+            serializer.write_double(members[6], self.header_double)
 
         if self.header_true_bool is not None:
-            serializer.write_boolean(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerTrueBool"],
-                self.header_true_bool,
-            )
+            serializer.write_boolean(members[7], self.header_true_bool)
 
         if self.header_false_bool is not None:
-            serializer.write_boolean(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerFalseBool"],
-                self.header_false_bool,
-            )
+            serializer.write_boolean(members[8], self.header_false_bool)
 
         if self.header_string_list is not None:
-            _serialize_string_list(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                    "headerStringList"
-                ],
-                self.header_string_list,
-            )
+            _serialize_string_list(serializer, members[9], self.header_string_list)
 
         if self.header_string_set is not None:
-            _serialize_string_set(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerStringSet"],
-                self.header_string_set,
-            )
+            _serialize_string_set(serializer, members[10], self.header_string_set)
 
         if self.header_integer_list is not None:
-            _serialize_integer_list(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                    "headerIntegerList"
-                ],
-                self.header_integer_list,
-            )
+            _serialize_integer_list(serializer, members[11], self.header_integer_list)
 
         if self.header_boolean_list is not None:
-            _serialize_boolean_list(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                    "headerBooleanList"
-                ],
-                self.header_boolean_list,
-            )
+            _serialize_boolean_list(serializer, members[12], self.header_boolean_list)
 
         if self.header_timestamp_list is not None:
             _serialize_timestamp_list(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                    "headerTimestampList"
-                ],
-                self.header_timestamp_list,
+                serializer, members[13], self.header_timestamp_list
             )
 
         if self.header_enum is not None:
-            serializer.write_string(
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerEnum"],
-                self.header_enum,
-            )
+            serializer.write_string(members[14], self.header_enum)
 
         if self.header_enum_list is not None:
-            _serialize_foo_enum_list(
-                serializer,
-                _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members["headerEnumList"],
-                self.header_enum_list,
-            )
+            _serialize_foo_enum_list(serializer, members[15], self.header_enum_list)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -5226,154 +4611,91 @@ class InputAndOutputWithHeadersOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["header_string"] = de.read_string(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerString"
-                        ]
-                    )
+                    kwargs["header_string"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["header_byte"] = de.read_byte(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerByte"
-                        ]
-                    )
+                    kwargs["header_byte"] = de.read_byte(members[1])
 
                 case 2:
-                    kwargs["header_short"] = de.read_short(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerShort"
-                        ]
-                    )
+                    kwargs["header_short"] = de.read_short(members[2])
 
                 case 3:
-                    kwargs["header_integer"] = de.read_integer(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerInteger"
-                        ]
-                    )
+                    kwargs["header_integer"] = de.read_integer(members[3])
 
                 case 4:
-                    kwargs["header_long"] = de.read_long(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerLong"
-                        ]
-                    )
+                    kwargs["header_long"] = de.read_long(members[4])
 
                 case 5:
-                    kwargs["header_float"] = de.read_float(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerFloat"
-                        ]
-                    )
+                    kwargs["header_float"] = de.read_float(members[5])
 
                 case 6:
-                    kwargs["header_double"] = de.read_double(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerDouble"
-                        ]
-                    )
+                    kwargs["header_double"] = de.read_double(members[6])
 
                 case 7:
-                    kwargs["header_true_bool"] = de.read_boolean(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerTrueBool"
-                        ]
-                    )
+                    kwargs["header_true_bool"] = de.read_boolean(members[7])
 
                 case 8:
-                    kwargs["header_false_bool"] = de.read_boolean(
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerFalseBool"
-                        ]
-                    )
+                    kwargs["header_false_bool"] = de.read_boolean(members[8])
 
                 case 9:
                     kwargs["header_string_list"] = _deserialize_string_list(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerStringList"
-                        ],
+                        de, members[9]
                     )
 
                 case 10:
                     kwargs["header_string_set"] = _deserialize_string_set(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerStringSet"
-                        ],
+                        de, members[10]
                     )
 
                 case 11:
                     kwargs["header_integer_list"] = _deserialize_integer_list(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerIntegerList"
-                        ],
+                        de, members[11]
                     )
 
                 case 12:
                     kwargs["header_boolean_list"] = _deserialize_boolean_list(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerBooleanList"
-                        ],
+                        de, members[12]
                     )
 
                 case 13:
                     kwargs["header_timestamp_list"] = _deserialize_timestamp_list(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerTimestampList"
-                        ],
+                        de, members[13]
                     )
 
                 case 14:
-                    kwargs["header_enum"] = FooEnum(
-                        de.read_string(
-                            _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                                "headerEnum"
-                            ]
-                        )
-                    )
+                    kwargs["header_enum"] = FooEnum(de.read_string(members[14]))
 
                 case 15:
                     kwargs["header_enum_list"] = _deserialize_foo_enum_list(
-                        de,
-                        _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT.members[
-                            "headerEnumList"
-                        ],
+                        de, members[15]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 INPUT_AND_OUTPUT_WITH_HEADERS = APIOperation(
     input=InputAndOutputWithHeadersInput,
     output=InputAndOutputWithHeadersOutput,
-    schema=_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS,
-    input_schema=_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_INPUT,
-    output_schema=_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT,
+    static_schema=_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
 def _serialize_list_with_member_namespace(
     serializer: ShapeSerializer, schema: Schema, value: list[str]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_string(member_schema, e)
@@ -5383,7 +4705,7 @@ def _deserialize_list_with_member_namespace(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[str]:
     result: list[str] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -5399,7 +4721,7 @@ def _deserialize_list_with_member_namespace(
 def _serialize_list_with_namespace(
     serializer: ShapeSerializer, schema: Schema, value: list[str]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_string(member_schema, e)
@@ -5409,7 +4731,7 @@ def _deserialize_list_with_namespace(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[str]:
     result: list[str] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -5426,7 +4748,7 @@ def _serialize_nested_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, dict[str, str]]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: _serialize_foo_enum_map(vs, value_schema, v))
 
@@ -5435,7 +4757,7 @@ def _deserialize_nested_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, dict[str, str]]:
     result: dict[str, dict[str, str]] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -5457,22 +4779,15 @@ class NestedXmlMapsInput:
     flat_nested_map: dict[str, dict[str, str]] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NESTED_XML_MAPS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_NESTED_XML_MAPS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_NESTED_XML_MAPS_INPUT).members_by_index
         if self.nested_map is not None:
-            _serialize_nested_map(
-                serializer,
-                _SCHEMA_NESTED_XML_MAPS_INPUT.members["nestedMap"],
-                self.nested_map,
-            )
+            _serialize_nested_map(serializer, members[0], self.nested_map)
 
         if self.flat_nested_map is not None:
-            _serialize_nested_map(
-                serializer,
-                _SCHEMA_NESTED_XML_MAPS_INPUT.members["flatNestedMap"],
-                self.flat_nested_map,
-            )
+            _serialize_nested_map(serializer, members[1], self.flat_nested_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -5481,23 +4796,21 @@ class NestedXmlMapsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NESTED_XML_MAPS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["nested_map"] = _deserialize_nested_map(
-                        de, _SCHEMA_NESTED_XML_MAPS_INPUT.members["nestedMap"]
-                    )
+                    kwargs["nested_map"] = _deserialize_nested_map(de, members[0])
 
                 case 1:
-                    kwargs["flat_nested_map"] = _deserialize_nested_map(
-                        de, _SCHEMA_NESTED_XML_MAPS_INPUT.members["flatNestedMap"]
-                    )
+                    kwargs["flat_nested_map"] = _deserialize_nested_map(de, members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_NESTED_XML_MAPS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -5520,22 +4833,15 @@ class NestedXmlMapsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NESTED_XML_MAPS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_NESTED_XML_MAPS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_NESTED_XML_MAPS_OUTPUT).members_by_index
         if self.nested_map is not None:
-            _serialize_nested_map(
-                serializer,
-                _SCHEMA_NESTED_XML_MAPS_OUTPUT.members["nestedMap"],
-                self.nested_map,
-            )
+            _serialize_nested_map(serializer, members[0], self.nested_map)
 
         if self.flat_nested_map is not None:
-            _serialize_nested_map(
-                serializer,
-                _SCHEMA_NESTED_XML_MAPS_OUTPUT.members["flatNestedMap"],
-                self.flat_nested_map,
-            )
+            _serialize_nested_map(serializer, members[1], self.flat_nested_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -5544,35 +4850,30 @@ class NestedXmlMapsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NESTED_XML_MAPS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["nested_map"] = _deserialize_nested_map(
-                        de, _SCHEMA_NESTED_XML_MAPS_OUTPUT.members["nestedMap"]
-                    )
+                    kwargs["nested_map"] = _deserialize_nested_map(de, members[0])
 
                 case 1:
-                    kwargs["flat_nested_map"] = _deserialize_nested_map(
-                        de, _SCHEMA_NESTED_XML_MAPS_OUTPUT.members["flatNestedMap"]
-                    )
+                    kwargs["flat_nested_map"] = _deserialize_nested_map(de, members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_NESTED_XML_MAPS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 NESTED_XML_MAPS = APIOperation(
     input=NestedXmlMapsInput,
     output=NestedXmlMapsOutput,
-    schema=_SCHEMA_NESTED_XML_MAPS,
-    input_schema=_SCHEMA_NESTED_XML_MAPS_INPUT,
-    output_schema=_SCHEMA_NESTED_XML_MAPS_OUTPUT,
+    static_schema=_SCHEMA_NESTED_XML_MAPS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -5580,7 +4881,7 @@ def _serialize_nested_xml_map_with_xml_name_inner_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, str]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: vs.write_string(value_schema, v))
 
@@ -5589,7 +4890,7 @@ def _deserialize_nested_xml_map_with_xml_name_inner_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, str]:
     result: dict[str, str] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -5606,7 +4907,7 @@ def _serialize_nested_xml_map_with_xml_name_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, dict[str, str]]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(
                 k,
@@ -5620,7 +4921,7 @@ def _deserialize_nested_xml_map_with_xml_name_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, dict[str, str]]:
     result: dict[str, dict[str, str]] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -5642,16 +4943,15 @@ class NestedXmlMapWithXmlNameInput:
     nested_xml_map_with_xml_name_map: dict[str, dict[str, str]] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_INPUT).members_by_index
         if self.nested_xml_map_with_xml_name_map is not None:
             _serialize_nested_xml_map_with_xml_name_map(
-                serializer,
-                _SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_INPUT.members[
-                    "nestedXmlMapWithXmlNameMap"
-                ],
-                self.nested_xml_map_with_xml_name_map,
+                serializer, members[0], self.nested_xml_map_with_xml_name_map
             )
 
     @classmethod
@@ -5661,25 +4961,20 @@ class NestedXmlMapWithXmlNameInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested_xml_map_with_xml_name_map"] = (
-                        _deserialize_nested_xml_map_with_xml_name_map(
-                            de,
-                            _SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_INPUT.members[
-                                "nestedXmlMapWithXmlNameMap"
-                            ],
-                        )
+                        _deserialize_nested_xml_map_with_xml_name_map(de, members[0])
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -5700,16 +4995,15 @@ class NestedXmlMapWithXmlNameOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_OUTPUT).members_by_index
         if self.nested_xml_map_with_xml_name_map is not None:
             _serialize_nested_xml_map_with_xml_name_map(
-                serializer,
-                _SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_OUTPUT.members[
-                    "nestedXmlMapWithXmlNameMap"
-                ],
-                self.nested_xml_map_with_xml_name_map,
+                serializer, members[0], self.nested_xml_map_with_xml_name_map
             )
 
     @classmethod
@@ -5719,37 +5013,29 @@ class NestedXmlMapWithXmlNameOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested_xml_map_with_xml_name_map"] = (
-                        _deserialize_nested_xml_map_with_xml_name_map(
-                            de,
-                            _SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_OUTPUT.members[
-                                "nestedXmlMapWithXmlNameMap"
-                            ],
-                        )
+                        _deserialize_nested_xml_map_with_xml_name_map(de, members[0])
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 NESTED_XML_MAP_WITH_XML_NAME = APIOperation(
     input=NestedXmlMapWithXmlNameInput,
     output=NestedXmlMapWithXmlNameOutput,
-    schema=_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME,
-    input_schema=_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_INPUT,
-    output_schema=_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME_OUTPUT,
+    static_schema=_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -5758,7 +5044,7 @@ class NoInputAndNoOutputInput:
     """Dataclass for NoInputAndNoOutputInput structure."""
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NO_INPUT_AND_NO_OUTPUT_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_NO_INPUT_AND_NO_OUTPUT_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -5770,15 +5056,14 @@ class NoInputAndNoOutputInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NO_INPUT_AND_NO_OUTPUT_INPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_NO_INPUT_AND_NO_OUTPUT_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -5797,7 +5082,7 @@ class NoInputAndNoOutputOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NO_INPUT_AND_NO_OUTPUT_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_NO_INPUT_AND_NO_OUTPUT_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -5809,27 +5094,23 @@ class NoInputAndNoOutputOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NO_INPUT_AND_NO_OUTPUT_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_NO_INPUT_AND_NO_OUTPUT_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 NO_INPUT_AND_NO_OUTPUT = APIOperation(
     input=NoInputAndNoOutputInput,
     output=NoInputAndNoOutputOutput,
-    schema=_SCHEMA_NO_INPUT_AND_NO_OUTPUT,
-    input_schema=_SCHEMA_NO_INPUT_AND_NO_OUTPUT_INPUT,
-    output_schema=_SCHEMA_NO_INPUT_AND_NO_OUTPUT_OUTPUT,
+    static_schema=_SCHEMA_NO_INPUT_AND_NO_OUTPUT,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -5838,7 +5119,7 @@ class NoInputAndOutputInput:
     """Dataclass for NoInputAndOutputInput structure."""
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NO_INPUT_AND_OUTPUT_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_NO_INPUT_AND_OUTPUT_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -5850,13 +5131,14 @@ class NoInputAndOutputInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NO_INPUT_AND_OUTPUT_INPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_NO_INPUT_AND_OUTPUT_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -5875,7 +5157,7 @@ class NoInputAndOutputOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NO_INPUT_AND_OUTPUT_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_NO_INPUT_AND_OUTPUT_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -5887,25 +5169,23 @@ class NoInputAndOutputOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NO_INPUT_AND_OUTPUT_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_NO_INPUT_AND_OUTPUT_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 NO_INPUT_AND_OUTPUT = APIOperation(
     input=NoInputAndOutputInput,
     output=NoInputAndOutputOutput,
-    schema=_SCHEMA_NO_INPUT_AND_OUTPUT,
-    input_schema=_SCHEMA_NO_INPUT_AND_OUTPUT_INPUT,
-    output_schema=_SCHEMA_NO_INPUT_AND_OUTPUT_OUTPUT,
+    static_schema=_SCHEMA_NO_INPUT_AND_OUTPUT,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -5920,25 +5200,20 @@ class NullAndEmptyHeadersClientInput:
     c: list[str] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT).members_by_index
         if self.a is not None:
-            serializer.write_string(
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT.members["a"], self.a
-            )
+            serializer.write_string(members[0], self.a)
 
         if self.b is not None:
-            serializer.write_string(
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT.members["b"], self.b
-            )
+            serializer.write_string(members[1], self.b)
 
         if self.c is not None:
-            _serialize_string_list(
-                serializer,
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT.members["c"],
-                self.c,
-            )
+            _serialize_string_list(serializer, members[2], self.c)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -5947,30 +5222,24 @@ class NullAndEmptyHeadersClientInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["a"] = de.read_string(
-                        _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT.members["a"]
-                    )
+                    kwargs["a"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["b"] = de.read_string(
-                        _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT.members["b"]
-                    )
+                    kwargs["b"] = de.read_string(members[1])
 
                 case 2:
-                    kwargs["c"] = _deserialize_string_list(
-                        de, _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT.members["c"]
-                    )
+                    kwargs["c"] = _deserialize_string_list(de, members[2])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -5995,25 +5264,20 @@ class NullAndEmptyHeadersClientOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT).members_by_index
         if self.a is not None:
-            serializer.write_string(
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT.members["a"], self.a
-            )
+            serializer.write_string(members[0], self.a)
 
         if self.b is not None:
-            serializer.write_string(
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT.members["b"], self.b
-            )
+            serializer.write_string(members[1], self.b)
 
         if self.c is not None:
-            _serialize_string_list(
-                serializer,
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT.members["c"],
-                self.c,
-            )
+            _serialize_string_list(serializer, members[2], self.c)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -6022,42 +5286,33 @@ class NullAndEmptyHeadersClientOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["a"] = de.read_string(
-                        _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT.members["a"]
-                    )
+                    kwargs["a"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["b"] = de.read_string(
-                        _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT.members["b"]
-                    )
+                    kwargs["b"] = de.read_string(members[1])
 
                 case 2:
-                    kwargs["c"] = _deserialize_string_list(
-                        de, _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT.members["c"]
-                    )
+                    kwargs["c"] = _deserialize_string_list(de, members[2])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 NULL_AND_EMPTY_HEADERS_CLIENT = APIOperation(
     input=NullAndEmptyHeadersClientInput,
     output=NullAndEmptyHeadersClientOutput,
-    schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT,
-    input_schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_INPUT,
-    output_schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT,
+    static_schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -6072,25 +5327,20 @@ class NullAndEmptyHeadersServerInput:
     c: list[str] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT).members_by_index
         if self.a is not None:
-            serializer.write_string(
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT.members["a"], self.a
-            )
+            serializer.write_string(members[0], self.a)
 
         if self.b is not None:
-            serializer.write_string(
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT.members["b"], self.b
-            )
+            serializer.write_string(members[1], self.b)
 
         if self.c is not None:
-            _serialize_string_list(
-                serializer,
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT.members["c"],
-                self.c,
-            )
+            _serialize_string_list(serializer, members[2], self.c)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -6099,30 +5349,24 @@ class NullAndEmptyHeadersServerInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["a"] = de.read_string(
-                        _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT.members["a"]
-                    )
+                    kwargs["a"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["b"] = de.read_string(
-                        _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT.members["b"]
-                    )
+                    kwargs["b"] = de.read_string(members[1])
 
                 case 2:
-                    kwargs["c"] = _deserialize_string_list(
-                        de, _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT.members["c"]
-                    )
+                    kwargs["c"] = _deserialize_string_list(de, members[2])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -6147,25 +5391,20 @@ class NullAndEmptyHeadersServerOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT).members_by_index
         if self.a is not None:
-            serializer.write_string(
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT.members["a"], self.a
-            )
+            serializer.write_string(members[0], self.a)
 
         if self.b is not None:
-            serializer.write_string(
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT.members["b"], self.b
-            )
+            serializer.write_string(members[1], self.b)
 
         if self.c is not None:
-            _serialize_string_list(
-                serializer,
-                _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT.members["c"],
-                self.c,
-            )
+            _serialize_string_list(serializer, members[2], self.c)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -6174,42 +5413,33 @@ class NullAndEmptyHeadersServerOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["a"] = de.read_string(
-                        _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT.members["a"]
-                    )
+                    kwargs["a"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["b"] = de.read_string(
-                        _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT.members["b"]
-                    )
+                    kwargs["b"] = de.read_string(members[1])
 
                 case 2:
-                    kwargs["c"] = _deserialize_string_list(
-                        de, _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT.members["c"]
-                    )
+                    kwargs["c"] = _deserialize_string_list(de, members[2])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 NULL_AND_EMPTY_HEADERS_SERVER = APIOperation(
     input=NullAndEmptyHeadersServerInput,
     output=NullAndEmptyHeadersServerOutput,
-    schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER,
-    input_schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_INPUT,
-    output_schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT,
+    static_schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -6222,20 +5452,19 @@ class OmitsNullSerializesEmptyStringInput:
     empty_string: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT
+        ).members_by_index
         if self.null_value is not None:
-            serializer.write_string(
-                _SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT.members["nullValue"],
-                self.null_value,
-            )
+            serializer.write_string(members[0], self.null_value)
 
         if self.empty_string is not None:
-            serializer.write_string(
-                _SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT.members["emptyString"],
-                self.empty_string,
-            )
+            serializer.write_string(members[1], self.empty_string)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -6244,29 +5473,21 @@ class OmitsNullSerializesEmptyStringInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["null_value"] = de.read_string(
-                        _SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT.members[
-                            "nullValue"
-                        ]
-                    )
+                    kwargs["null_value"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["empty_string"] = de.read_string(
-                        _SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT.members[
-                            "emptyString"
-                        ]
-                    )
+                    kwargs["empty_string"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -6285,7 +5506,9 @@ class OmitsNullSerializesEmptyStringOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -6297,27 +5520,23 @@ class OmitsNullSerializesEmptyStringOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 OMITS_NULL_SERIALIZES_EMPTY_STRING = APIOperation(
     input=OmitsNullSerializesEmptyStringInput,
     output=OmitsNullSerializesEmptyStringOutput,
-    schema=_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING,
-    input_schema=_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT,
-    output_schema=_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT,
+    static_schema=_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -6330,19 +5549,15 @@ class PutWithContentEncodingInput:
     data: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_PUT_WITH_CONTENT_ENCODING_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_PUT_WITH_CONTENT_ENCODING_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_PUT_WITH_CONTENT_ENCODING_INPUT).members_by_index
         if self.encoding is not None:
-            serializer.write_string(
-                _SCHEMA_PUT_WITH_CONTENT_ENCODING_INPUT.members["encoding"],
-                self.encoding,
-            )
+            serializer.write_string(members[0], self.encoding)
 
         if self.data is not None:
-            serializer.write_string(
-                _SCHEMA_PUT_WITH_CONTENT_ENCODING_INPUT.members["data"], self.data
-            )
+            serializer.write_string(members[1], self.data)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -6351,25 +5566,21 @@ class PutWithContentEncodingInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_PUT_WITH_CONTENT_ENCODING_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["encoding"] = de.read_string(
-                        _SCHEMA_PUT_WITH_CONTENT_ENCODING_INPUT.members["encoding"]
-                    )
+                    kwargs["encoding"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["data"] = de.read_string(
-                        _SCHEMA_PUT_WITH_CONTENT_ENCODING_INPUT.members["data"]
-                    )
+                    kwargs["data"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_PUT_WITH_CONTENT_ENCODING_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -6388,7 +5599,7 @@ class PutWithContentEncodingOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_PUT_WITH_CONTENT_ENCODING_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_PUT_WITH_CONTENT_ENCODING_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -6400,27 +5611,23 @@ class PutWithContentEncodingOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_PUT_WITH_CONTENT_ENCODING_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_PUT_WITH_CONTENT_ENCODING_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 PUT_WITH_CONTENT_ENCODING = APIOperation(
     input=PutWithContentEncodingInput,
     output=PutWithContentEncodingOutput,
-    schema=_SCHEMA_PUT_WITH_CONTENT_ENCODING,
-    input_schema=_SCHEMA_PUT_WITH_CONTENT_ENCODING_INPUT,
-    output_schema=_SCHEMA_PUT_WITH_CONTENT_ENCODING_OUTPUT,
+    static_schema=_SCHEMA_PUT_WITH_CONTENT_ENCODING,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -6431,14 +5638,16 @@ class QueryIdempotencyTokenAutoFillInput:
     token: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT
+        ).members_by_index
         if self.token is not None:
-            serializer.write_string(
-                _SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT.members["token"],
-                self.token,
-            )
+            serializer.write_string(members[0], self.token)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -6447,20 +5656,18 @@ class QueryIdempotencyTokenAutoFillInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["token"] = de.read_string(
-                        _SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT.members["token"]
-                    )
+                    kwargs["token"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -6479,7 +5686,9 @@ class QueryIdempotencyTokenAutoFillOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -6491,27 +5700,23 @@ class QueryIdempotencyTokenAutoFillOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = APIOperation(
     input=QueryIdempotencyTokenAutoFillInput,
     output=QueryIdempotencyTokenAutoFillOutput,
-    schema=_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
-    input_schema=_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT,
-    output_schema=_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT,
+    static_schema=_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -6519,7 +5724,7 @@ def _serialize_string_list_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, list[str]]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: _serialize_string_list(vs, value_schema, v))
 
@@ -6528,7 +5733,7 @@ def _deserialize_string_list_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, list[str]]:
     result: dict[str, list[str]] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -6550,20 +5755,19 @@ class QueryParamsAsStringListMapInput:
     foo: dict[str, list[str]] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT
+        ).members_by_index
         if self.qux is not None:
-            serializer.write_string(
-                _SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT.members["qux"], self.qux
-            )
+            serializer.write_string(members[0], self.qux)
 
         if self.foo is not None:
-            _serialize_string_list_map(
-                serializer,
-                _SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT.members["foo"],
-                self.foo,
-            )
+            _serialize_string_list_map(serializer, members[1], self.foo)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -6572,25 +5776,21 @@ class QueryParamsAsStringListMapInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["qux"] = de.read_string(
-                        _SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT.members["qux"]
-                    )
+                    kwargs["qux"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["foo"] = _deserialize_string_list_map(
-                        de, _SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT.members["foo"]
-                    )
+                    kwargs["foo"] = _deserialize_string_list_map(de, members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -6609,7 +5809,9 @@ class QueryParamsAsStringListMapOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -6621,27 +5823,23 @@ class QueryParamsAsStringListMapOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 QUERY_PARAMS_AS_STRING_LIST_MAP = APIOperation(
     input=QueryParamsAsStringListMapInput,
     output=QueryParamsAsStringListMapOutput,
-    schema=_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP,
-    input_schema=_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT,
-    output_schema=_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT,
+    static_schema=_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -6654,18 +5852,15 @@ class QueryPrecedenceInput:
     baz: dict[str, str] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_QUERY_PRECEDENCE_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_QUERY_PRECEDENCE_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_QUERY_PRECEDENCE_INPUT).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_QUERY_PRECEDENCE_INPUT.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.baz is not None:
-            _serialize_string_map(
-                serializer, _SCHEMA_QUERY_PRECEDENCE_INPUT.members["baz"], self.baz
-            )
+            _serialize_string_map(serializer, members[1], self.baz)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -6674,23 +5869,21 @@ class QueryPrecedenceInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_QUERY_PRECEDENCE_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_QUERY_PRECEDENCE_INPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["baz"] = _deserialize_string_map(
-                        de, _SCHEMA_QUERY_PRECEDENCE_INPUT.members["baz"]
-                    )
+                    kwargs["baz"] = _deserialize_string_map(de, members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_QUERY_PRECEDENCE_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -6709,7 +5902,7 @@ class QueryPrecedenceOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_QUERY_PRECEDENCE_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_QUERY_PRECEDENCE_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
         pass
@@ -6721,32 +5914,30 @@ class QueryPrecedenceOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_QUERY_PRECEDENCE_OUTPUT)
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_QUERY_PRECEDENCE_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 QUERY_PRECEDENCE = APIOperation(
     input=QueryPrecedenceInput,
     output=QueryPrecedenceOutput,
-    schema=_SCHEMA_QUERY_PRECEDENCE,
-    input_schema=_SCHEMA_QUERY_PRECEDENCE_INPUT,
-    output_schema=_SCHEMA_QUERY_PRECEDENCE_OUTPUT,
+    static_schema=_SCHEMA_QUERY_PRECEDENCE,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
 def _serialize_renamed_list_members(
     serializer: ShapeSerializer, schema: Schema, value: list[str]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_string(member_schema, e)
@@ -6756,7 +5947,7 @@ def _deserialize_renamed_list_members(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[str]:
     result: list[str] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -6794,67 +5985,39 @@ class SimpleScalarPropertiesInput:
     double_value: float | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.string_value is not None:
-            serializer.write_string(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["stringValue"],
-                self.string_value,
-            )
+            serializer.write_string(members[1], self.string_value)
 
         if self.true_boolean_value is not None:
-            serializer.write_boolean(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["trueBooleanValue"],
-                self.true_boolean_value,
-            )
+            serializer.write_boolean(members[2], self.true_boolean_value)
 
         if self.false_boolean_value is not None:
-            serializer.write_boolean(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["falseBooleanValue"],
-                self.false_boolean_value,
-            )
+            serializer.write_boolean(members[3], self.false_boolean_value)
 
         if self.byte_value is not None:
-            serializer.write_byte(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["byteValue"],
-                self.byte_value,
-            )
+            serializer.write_byte(members[4], self.byte_value)
 
         if self.short_value is not None:
-            serializer.write_short(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["shortValue"],
-                self.short_value,
-            )
+            serializer.write_short(members[5], self.short_value)
 
         if self.integer_value is not None:
-            serializer.write_integer(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["integerValue"],
-                self.integer_value,
-            )
+            serializer.write_integer(members[6], self.integer_value)
 
         if self.long_value is not None:
-            serializer.write_long(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["longValue"],
-                self.long_value,
-            )
+            serializer.write_long(members[7], self.long_value)
 
         if self.float_value is not None:
-            serializer.write_float(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["floatValue"],
-                self.float_value,
-            )
+            serializer.write_float(members[8], self.float_value)
 
         if self.double_value is not None:
-            serializer.write_double(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["doubleValue"],
-                self.double_value,
-            )
+            serializer.write_double(members[9], self.double_value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -6863,69 +6026,45 @@ class SimpleScalarPropertiesInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["string_value"] = de.read_string(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["stringValue"]
-                    )
+                    kwargs["string_value"] = de.read_string(members[1])
 
                 case 2:
-                    kwargs["true_boolean_value"] = de.read_boolean(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members[
-                            "trueBooleanValue"
-                        ]
-                    )
+                    kwargs["true_boolean_value"] = de.read_boolean(members[2])
 
                 case 3:
-                    kwargs["false_boolean_value"] = de.read_boolean(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members[
-                            "falseBooleanValue"
-                        ]
-                    )
+                    kwargs["false_boolean_value"] = de.read_boolean(members[3])
 
                 case 4:
-                    kwargs["byte_value"] = de.read_byte(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["byteValue"]
-                    )
+                    kwargs["byte_value"] = de.read_byte(members[4])
 
                 case 5:
-                    kwargs["short_value"] = de.read_short(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["shortValue"]
-                    )
+                    kwargs["short_value"] = de.read_short(members[5])
 
                 case 6:
-                    kwargs["integer_value"] = de.read_integer(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["integerValue"]
-                    )
+                    kwargs["integer_value"] = de.read_integer(members[6])
 
                 case 7:
-                    kwargs["long_value"] = de.read_long(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["longValue"]
-                    )
+                    kwargs["long_value"] = de.read_long(members[7])
 
                 case 8:
-                    kwargs["float_value"] = de.read_float(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["floatValue"]
-                    )
+                    kwargs["float_value"] = de.read_float(members[8])
 
                 case 9:
-                    kwargs["double_value"] = de.read_double(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["doubleValue"]
-                    )
+                    kwargs["double_value"] = de.read_double(members[9])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -6964,67 +6103,39 @@ class SimpleScalarPropertiesOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.string_value is not None:
-            serializer.write_string(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["stringValue"],
-                self.string_value,
-            )
+            serializer.write_string(members[1], self.string_value)
 
         if self.true_boolean_value is not None:
-            serializer.write_boolean(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["trueBooleanValue"],
-                self.true_boolean_value,
-            )
+            serializer.write_boolean(members[2], self.true_boolean_value)
 
         if self.false_boolean_value is not None:
-            serializer.write_boolean(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["falseBooleanValue"],
-                self.false_boolean_value,
-            )
+            serializer.write_boolean(members[3], self.false_boolean_value)
 
         if self.byte_value is not None:
-            serializer.write_byte(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["byteValue"],
-                self.byte_value,
-            )
+            serializer.write_byte(members[4], self.byte_value)
 
         if self.short_value is not None:
-            serializer.write_short(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["shortValue"],
-                self.short_value,
-            )
+            serializer.write_short(members[5], self.short_value)
 
         if self.integer_value is not None:
-            serializer.write_integer(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["integerValue"],
-                self.integer_value,
-            )
+            serializer.write_integer(members[6], self.integer_value)
 
         if self.long_value is not None:
-            serializer.write_long(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["longValue"],
-                self.long_value,
-            )
+            serializer.write_long(members[7], self.long_value)
 
         if self.float_value is not None:
-            serializer.write_float(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["floatValue"],
-                self.float_value,
-            )
+            serializer.write_float(members[8], self.float_value)
 
         if self.double_value is not None:
-            serializer.write_double(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["doubleValue"],
-                self.double_value,
-            )
+            serializer.write_double(members[9], self.double_value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7033,81 +6144,54 @@ class SimpleScalarPropertiesOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["string_value"] = de.read_string(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["stringValue"]
-                    )
+                    kwargs["string_value"] = de.read_string(members[1])
 
                 case 2:
-                    kwargs["true_boolean_value"] = de.read_boolean(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members[
-                            "trueBooleanValue"
-                        ]
-                    )
+                    kwargs["true_boolean_value"] = de.read_boolean(members[2])
 
                 case 3:
-                    kwargs["false_boolean_value"] = de.read_boolean(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members[
-                            "falseBooleanValue"
-                        ]
-                    )
+                    kwargs["false_boolean_value"] = de.read_boolean(members[3])
 
                 case 4:
-                    kwargs["byte_value"] = de.read_byte(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["byteValue"]
-                    )
+                    kwargs["byte_value"] = de.read_byte(members[4])
 
                 case 5:
-                    kwargs["short_value"] = de.read_short(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["shortValue"]
-                    )
+                    kwargs["short_value"] = de.read_short(members[5])
 
                 case 6:
-                    kwargs["integer_value"] = de.read_integer(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["integerValue"]
-                    )
+                    kwargs["integer_value"] = de.read_integer(members[6])
 
                 case 7:
-                    kwargs["long_value"] = de.read_long(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["longValue"]
-                    )
+                    kwargs["long_value"] = de.read_long(members[7])
 
                 case 8:
-                    kwargs["float_value"] = de.read_float(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["floatValue"]
-                    )
+                    kwargs["float_value"] = de.read_float(members[8])
 
                 case 9:
-                    kwargs["double_value"] = de.read_double(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["doubleValue"]
-                    )
+                    kwargs["double_value"] = de.read_double(members[9])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 SIMPLE_SCALAR_PROPERTIES = APIOperation(
     input=SimpleScalarPropertiesInput,
     output=SimpleScalarPropertiesOutput,
-    schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES,
-    input_schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT,
-    output_schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT,
+    static_schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -7130,50 +6214,30 @@ class TimestampFormatHeadersInput:
     target_date_time: datetime | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT).members_by_index
         if self.member_epoch_seconds is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["memberEpochSeconds"],
-                self.member_epoch_seconds,
-            )
+            serializer.write_timestamp(members[0], self.member_epoch_seconds)
 
         if self.member_http_date is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["memberHttpDate"],
-                self.member_http_date,
-            )
+            serializer.write_timestamp(members[1], self.member_http_date)
 
         if self.member_date_time is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["memberDateTime"],
-                self.member_date_time,
-            )
+            serializer.write_timestamp(members[2], self.member_date_time)
 
         if self.default_format is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["defaultFormat"],
-                self.default_format,
-            )
+            serializer.write_timestamp(members[3], self.default_format)
 
         if self.target_epoch_seconds is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["targetEpochSeconds"],
-                self.target_epoch_seconds,
-            )
+            serializer.write_timestamp(members[4], self.target_epoch_seconds)
 
         if self.target_http_date is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["targetHttpDate"],
-                self.target_http_date,
-            )
+            serializer.write_timestamp(members[5], self.target_http_date)
 
         if self.target_date_time is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["targetDateTime"],
-                self.target_date_time,
-            )
+            serializer.write_timestamp(members[6], self.target_date_time)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7182,54 +6246,36 @@ class TimestampFormatHeadersInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["member_epoch_seconds"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members[
-                            "memberEpochSeconds"
-                        ]
-                    )
+                    kwargs["member_epoch_seconds"] = de.read_timestamp(members[0])
 
                 case 1:
-                    kwargs["member_http_date"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["memberHttpDate"]
-                    )
+                    kwargs["member_http_date"] = de.read_timestamp(members[1])
 
                 case 2:
-                    kwargs["member_date_time"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["memberDateTime"]
-                    )
+                    kwargs["member_date_time"] = de.read_timestamp(members[2])
 
                 case 3:
-                    kwargs["default_format"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["defaultFormat"]
-                    )
+                    kwargs["default_format"] = de.read_timestamp(members[3])
 
                 case 4:
-                    kwargs["target_epoch_seconds"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members[
-                            "targetEpochSeconds"
-                        ]
-                    )
+                    kwargs["target_epoch_seconds"] = de.read_timestamp(members[4])
 
                 case 5:
-                    kwargs["target_http_date"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["targetHttpDate"]
-                    )
+                    kwargs["target_http_date"] = de.read_timestamp(members[5])
 
                 case 6:
-                    kwargs["target_date_time"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT.members["targetDateTime"]
-                    )
+                    kwargs["target_date_time"] = de.read_timestamp(members[6])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -7262,50 +6308,30 @@ class TimestampFormatHeadersOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT).members_by_index
         if self.member_epoch_seconds is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members["memberEpochSeconds"],
-                self.member_epoch_seconds,
-            )
+            serializer.write_timestamp(members[0], self.member_epoch_seconds)
 
         if self.member_http_date is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members["memberHttpDate"],
-                self.member_http_date,
-            )
+            serializer.write_timestamp(members[1], self.member_http_date)
 
         if self.member_date_time is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members["memberDateTime"],
-                self.member_date_time,
-            )
+            serializer.write_timestamp(members[2], self.member_date_time)
 
         if self.default_format is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members["defaultFormat"],
-                self.default_format,
-            )
+            serializer.write_timestamp(members[3], self.default_format)
 
         if self.target_epoch_seconds is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members["targetEpochSeconds"],
-                self.target_epoch_seconds,
-            )
+            serializer.write_timestamp(members[4], self.target_epoch_seconds)
 
         if self.target_http_date is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members["targetHttpDate"],
-                self.target_http_date,
-            )
+            serializer.write_timestamp(members[5], self.target_http_date)
 
         if self.target_date_time is not None:
-            serializer.write_timestamp(
-                _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members["targetDateTime"],
-                self.target_date_time,
-            )
+            serializer.write_timestamp(members[6], self.target_date_time)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7314,74 +6340,45 @@ class TimestampFormatHeadersOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["member_epoch_seconds"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members[
-                            "memberEpochSeconds"
-                        ]
-                    )
+                    kwargs["member_epoch_seconds"] = de.read_timestamp(members[0])
 
                 case 1:
-                    kwargs["member_http_date"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members[
-                            "memberHttpDate"
-                        ]
-                    )
+                    kwargs["member_http_date"] = de.read_timestamp(members[1])
 
                 case 2:
-                    kwargs["member_date_time"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members[
-                            "memberDateTime"
-                        ]
-                    )
+                    kwargs["member_date_time"] = de.read_timestamp(members[2])
 
                 case 3:
-                    kwargs["default_format"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members["defaultFormat"]
-                    )
+                    kwargs["default_format"] = de.read_timestamp(members[3])
 
                 case 4:
-                    kwargs["target_epoch_seconds"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members[
-                            "targetEpochSeconds"
-                        ]
-                    )
+                    kwargs["target_epoch_seconds"] = de.read_timestamp(members[4])
 
                 case 5:
-                    kwargs["target_http_date"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members[
-                            "targetHttpDate"
-                        ]
-                    )
+                    kwargs["target_http_date"] = de.read_timestamp(members[5])
 
                 case 6:
-                    kwargs["target_date_time"] = de.read_timestamp(
-                        _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT.members[
-                            "targetDateTime"
-                        ]
-                    )
+                    kwargs["target_date_time"] = de.read_timestamp(members[6])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 TIMESTAMP_FORMAT_HEADERS = APIOperation(
     input=TimestampFormatHeadersInput,
     output=TimestampFormatHeadersOutput,
-    schema=_SCHEMA_TIMESTAMP_FORMAT_HEADERS,
-    input_schema=_SCHEMA_TIMESTAMP_FORMAT_HEADERS_INPUT,
-    output_schema=_SCHEMA_TIMESTAMP_FORMAT_HEADERS_OUTPUT,
+    static_schema=_SCHEMA_TIMESTAMP_FORMAT_HEADERS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -7394,18 +6391,15 @@ class XmlAttributesInput:
     attr: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ATTRIBUTES_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_ATTRIBUTES_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_ATTRIBUTES_INPUT).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_INPUT.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.attr is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_INPUT.members["attr"], self.attr
-            )
+            serializer.write_string(members[1], self.attr)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7414,23 +6408,21 @@ class XmlAttributesInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ATTRIBUTES_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_INPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["attr"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_INPUT.members["attr"]
-                    )
+                    kwargs["attr"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_ATTRIBUTES_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -7453,18 +6445,15 @@ class XmlAttributesOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ATTRIBUTES_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_ATTRIBUTES_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_ATTRIBUTES_OUTPUT).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_OUTPUT.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.attr is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_OUTPUT.members["attr"], self.attr
-            )
+            serializer.write_string(members[1], self.attr)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7473,35 +6462,30 @@ class XmlAttributesOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ATTRIBUTES_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_OUTPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["attr"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_OUTPUT.members["attr"]
-                    )
+                    kwargs["attr"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_ATTRIBUTES_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_ATTRIBUTES = APIOperation(
     input=XmlAttributesInput,
     output=XmlAttributesOutput,
-    schema=_SCHEMA_XML_ATTRIBUTES,
-    input_schema=_SCHEMA_XML_ATTRIBUTES_INPUT,
-    output_schema=_SCHEMA_XML_ATTRIBUTES_OUTPUT,
+    static_schema=_SCHEMA_XML_ATTRIBUTES,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -7516,26 +6500,22 @@ class XmlAttributesInMiddlePayloadRequest:
     baz: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST
+        ).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST.members["foo"],
-                self.foo,
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.attr is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST.members["attr"],
-                self.attr,
-            )
+            serializer.write_string(members[1], self.attr)
 
         if self.baz is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST.members["baz"],
-                self.baz,
-            )
+            serializer.write_string(members[2], self.baz)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7544,30 +6524,24 @@ class XmlAttributesInMiddlePayloadRequest:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["attr"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST.members["attr"]
-                    )
+                    kwargs["attr"] = de.read_string(members[1])
 
                 case 2:
-                    kwargs["baz"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST.members["baz"]
-                    )
+                    kwargs["baz"] = de.read_string(members[2])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -7578,13 +6552,12 @@ class XmlAttributesInMiddleInput:
     payload: XmlAttributesInMiddlePayloadRequest | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_INPUT).members_by_index
         if self.payload is not None:
-            serializer.write_struct(
-                _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_INPUT.members["payload"], self.payload
-            )
+            serializer.write_struct(members[0], self.payload)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7593,20 +6566,20 @@ class XmlAttributesInMiddleInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["payload"] = XmlAttributesInMiddlePayloadRequest.deserialize(
                         de
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -7621,26 +6594,22 @@ class XmlAttributesInMiddlePayloadResponse:
     baz: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE
+        ).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE.members["foo"],
-                self.foo,
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.attr is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE.members["attr"],
-                self.attr,
-            )
+            serializer.write_string(members[1], self.attr)
 
         if self.baz is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE.members["baz"],
-                self.baz,
-            )
+            serializer.write_string(members[2], self.baz)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7649,32 +6618,24 @@ class XmlAttributesInMiddlePayloadResponse:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["attr"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE.members[
-                            "attr"
-                        ]
-                    )
+                    kwargs["attr"] = de.read_string(members[1])
 
                 case 2:
-                    kwargs["baz"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE.members["baz"]
-                    )
+                    kwargs["baz"] = de.read_string(members[2])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -7695,13 +6656,12 @@ class XmlAttributesInMiddleOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_OUTPUT).members_by_index
         if self.payload is not None:
-            serializer.write_struct(
-                _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_OUTPUT.members["payload"], self.payload
-            )
+            serializer.write_struct(members[0], self.payload)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7710,32 +6670,29 @@ class XmlAttributesInMiddleOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["payload"] = (
                         XmlAttributesInMiddlePayloadResponse.deserialize(de)
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_ATTRIBUTES_IN_MIDDLE = APIOperation(
     input=XmlAttributesInMiddleInput,
     output=XmlAttributesInMiddleOutput,
-    schema=_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE,
-    input_schema=_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_INPUT,
-    output_schema=_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE_OUTPUT,
+    static_schema=_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -7748,18 +6705,15 @@ class XmlAttributesPayloadRequest:
     attr: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ATTRIBUTES_PAYLOAD_REQUEST, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_ATTRIBUTES_PAYLOAD_REQUEST), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_ATTRIBUTES_PAYLOAD_REQUEST).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_PAYLOAD_REQUEST.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.attr is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_PAYLOAD_REQUEST.members["attr"], self.attr
-            )
+            serializer.write_string(members[1], self.attr)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7768,25 +6722,21 @@ class XmlAttributesPayloadRequest:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ATTRIBUTES_PAYLOAD_REQUEST)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_PAYLOAD_REQUEST.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["attr"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_PAYLOAD_REQUEST.members["attr"]
-                    )
+                    kwargs["attr"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_XML_ATTRIBUTES_PAYLOAD_REQUEST, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -7797,13 +6747,12 @@ class XmlAttributesOnPayloadInput:
     payload: XmlAttributesPayloadRequest | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_INPUT).members_by_index
         if self.payload is not None:
-            serializer.write_struct(
-                _SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_INPUT.members["payload"], self.payload
-            )
+            serializer.write_struct(members[0], self.payload)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7812,18 +6761,18 @@ class XmlAttributesOnPayloadInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["payload"] = XmlAttributesPayloadRequest.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -7836,18 +6785,15 @@ class XmlAttributesPayloadResponse:
     attr: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ATTRIBUTES_PAYLOAD_RESPONSE, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_ATTRIBUTES_PAYLOAD_RESPONSE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_ATTRIBUTES_PAYLOAD_RESPONSE).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_PAYLOAD_RESPONSE.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.attr is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ATTRIBUTES_PAYLOAD_RESPONSE.members["attr"], self.attr
-            )
+            serializer.write_string(members[1], self.attr)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7856,25 +6802,21 @@ class XmlAttributesPayloadResponse:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ATTRIBUTES_PAYLOAD_RESPONSE)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_PAYLOAD_RESPONSE.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["attr"] = de.read_string(
-                        _SCHEMA_XML_ATTRIBUTES_PAYLOAD_RESPONSE.members["attr"]
-                    )
+                    kwargs["attr"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_XML_ATTRIBUTES_PAYLOAD_RESPONSE, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -7895,14 +6837,12 @@ class XmlAttributesOnPayloadOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT).members_by_index
         if self.payload is not None:
-            serializer.write_struct(
-                _SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT.members["payload"],
-                self.payload,
-            )
+            serializer.write_struct(members[0], self.payload)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7911,30 +6851,27 @@ class XmlAttributesOnPayloadOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["payload"] = XmlAttributesPayloadResponse.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_ATTRIBUTES_ON_PAYLOAD = APIOperation(
     input=XmlAttributesOnPayloadInput,
     output=XmlAttributesOnPayloadOutput,
-    schema=_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD,
-    input_schema=_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_INPUT,
-    output_schema=_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT,
+    static_schema=_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -7945,11 +6882,12 @@ class XmlBlobsInput:
     data: bytes | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_BLOBS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_BLOBS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_BLOBS_INPUT).members_by_index
         if self.data is not None:
-            serializer.write_blob(_SCHEMA_XML_BLOBS_INPUT.members["data"], self.data)
+            serializer.write_blob(members[0], self.data)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -7958,18 +6896,18 @@ class XmlBlobsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_BLOBS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["data"] = de.read_blob(
-                        _SCHEMA_XML_BLOBS_INPUT.members["data"]
-                    )
+                    kwargs["data"] = de.read_blob(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_BLOBS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -7990,11 +6928,12 @@ class XmlBlobsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_BLOBS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_BLOBS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_BLOBS_OUTPUT).members_by_index
         if self.data is not None:
-            serializer.write_blob(_SCHEMA_XML_BLOBS_OUTPUT.members["data"], self.data)
+            serializer.write_blob(members[0], self.data)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -8003,30 +6942,27 @@ class XmlBlobsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_BLOBS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["data"] = de.read_blob(
-                        _SCHEMA_XML_BLOBS_OUTPUT.members["data"]
-                    )
+                    kwargs["data"] = de.read_blob(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_BLOBS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_BLOBS = APIOperation(
     input=XmlBlobsInput,
     output=XmlBlobsOutput,
-    schema=_SCHEMA_XML_BLOBS,
-    input_schema=_SCHEMA_XML_BLOBS_INPUT,
-    output_schema=_SCHEMA_XML_BLOBS_OUTPUT,
+    static_schema=_SCHEMA_XML_BLOBS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -8037,13 +6973,12 @@ class XmlEmptyBlobsInput:
     data: bytes | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_EMPTY_BLOBS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_EMPTY_BLOBS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_EMPTY_BLOBS_INPUT).members_by_index
         if self.data is not None:
-            serializer.write_blob(
-                _SCHEMA_XML_EMPTY_BLOBS_INPUT.members["data"], self.data
-            )
+            serializer.write_blob(members[0], self.data)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -8052,18 +6987,18 @@ class XmlEmptyBlobsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_EMPTY_BLOBS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["data"] = de.read_blob(
-                        _SCHEMA_XML_EMPTY_BLOBS_INPUT.members["data"]
-                    )
+                    kwargs["data"] = de.read_blob(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_EMPTY_BLOBS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -8084,13 +7019,12 @@ class XmlEmptyBlobsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_EMPTY_BLOBS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_EMPTY_BLOBS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_EMPTY_BLOBS_OUTPUT).members_by_index
         if self.data is not None:
-            serializer.write_blob(
-                _SCHEMA_XML_EMPTY_BLOBS_OUTPUT.members["data"], self.data
-            )
+            serializer.write_blob(members[0], self.data)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -8099,30 +7033,27 @@ class XmlEmptyBlobsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_EMPTY_BLOBS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["data"] = de.read_blob(
-                        _SCHEMA_XML_EMPTY_BLOBS_OUTPUT.members["data"]
-                    )
+                    kwargs["data"] = de.read_blob(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_EMPTY_BLOBS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_EMPTY_BLOBS = APIOperation(
     input=XmlEmptyBlobsInput,
     output=XmlEmptyBlobsOutput,
-    schema=_SCHEMA_XML_EMPTY_BLOBS,
-    input_schema=_SCHEMA_XML_EMPTY_BLOBS_INPUT,
-    output_schema=_SCHEMA_XML_EMPTY_BLOBS_OUTPUT,
+    static_schema=_SCHEMA_XML_EMPTY_BLOBS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -8135,14 +7066,15 @@ class StructureListMember:
     b: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_STRUCTURE_LIST_MEMBER, self)
+        serializer.write_struct(hydrate(_SCHEMA_STRUCTURE_LIST_MEMBER), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_STRUCTURE_LIST_MEMBER).members_by_index
         if self.a is not None:
-            serializer.write_string(_SCHEMA_STRUCTURE_LIST_MEMBER.members["a"], self.a)
+            serializer.write_string(members[0], self.a)
 
         if self.b is not None:
-            serializer.write_string(_SCHEMA_STRUCTURE_LIST_MEMBER.members["b"], self.b)
+            serializer.write_string(members[1], self.b)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -8151,30 +7083,28 @@ class StructureListMember:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_STRUCTURE_LIST_MEMBER)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["a"] = de.read_string(
-                        _SCHEMA_STRUCTURE_LIST_MEMBER.members["a"]
-                    )
+                    kwargs["a"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["b"] = de.read_string(
-                        _SCHEMA_STRUCTURE_LIST_MEMBER.members["b"]
-                    )
+                    kwargs["b"] = de.read_string(members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_STRUCTURE_LIST_MEMBER, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 def _serialize_structure_list(
     serializer: ShapeSerializer, schema: Schema, value: list[StructureListMember]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_struct(member_schema, e)
@@ -8199,7 +7129,7 @@ def _deserialize_structure_list(
 def _serialize_nested_string_list(
     serializer: ShapeSerializer, schema: Schema, value: list[list[str]]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             _serialize_string_list(ls, member_schema, e)
@@ -8209,7 +7139,7 @@ def _deserialize_nested_string_list(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[list[str]]:
     result: list[list[str]] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -8258,114 +7188,65 @@ class XmlEmptyListsInput:
     flattened_structure_list: list[StructureListMember] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_EMPTY_LISTS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_EMPTY_LISTS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_EMPTY_LISTS_INPUT).members_by_index
         if self.string_list is not None:
-            _serialize_string_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["stringList"],
-                self.string_list,
-            )
+            _serialize_string_list(serializer, members[0], self.string_list)
 
         if self.string_set is not None:
-            _serialize_string_set(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["stringSet"],
-                self.string_set,
-            )
+            _serialize_string_set(serializer, members[1], self.string_set)
 
         if self.integer_list is not None:
-            _serialize_integer_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["integerList"],
-                self.integer_list,
-            )
+            _serialize_integer_list(serializer, members[2], self.integer_list)
 
         if self.boolean_list is not None:
-            _serialize_boolean_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["booleanList"],
-                self.boolean_list,
-            )
+            _serialize_boolean_list(serializer, members[3], self.boolean_list)
 
         if self.timestamp_list is not None:
-            _serialize_timestamp_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["timestampList"],
-                self.timestamp_list,
-            )
+            _serialize_timestamp_list(serializer, members[4], self.timestamp_list)
 
         if self.enum_list is not None:
-            _serialize_foo_enum_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["enumList"],
-                self.enum_list,
-            )
+            _serialize_foo_enum_list(serializer, members[5], self.enum_list)
 
         if self.int_enum_list is not None:
-            _serialize_integer_enum_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["intEnumList"],
-                self.int_enum_list,
-            )
+            _serialize_integer_enum_list(serializer, members[6], self.int_enum_list)
 
         if self.nested_string_list is not None:
             _serialize_nested_string_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["nestedStringList"],
-                self.nested_string_list,
+                serializer, members[7], self.nested_string_list
             )
 
         if self.renamed_list_members is not None:
             _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["renamedListMembers"],
-                self.renamed_list_members,
+                serializer, members[8], self.renamed_list_members
             )
 
         if self.flattened_list is not None:
-            _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["flattenedList"],
-                self.flattened_list,
-            )
+            _serialize_renamed_list_members(serializer, members[9], self.flattened_list)
 
         if self.flattened_list2 is not None:
             _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["flattenedList2"],
-                self.flattened_list2,
+                serializer, members[10], self.flattened_list2
             )
 
         if self.flattened_list_with_member_namespace is not None:
             _serialize_list_with_member_namespace(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members[
-                    "flattenedListWithMemberNamespace"
-                ],
-                self.flattened_list_with_member_namespace,
+                serializer, members[11], self.flattened_list_with_member_namespace
             )
 
         if self.flattened_list_with_namespace is not None:
             _serialize_list_with_namespace(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["flattenedListWithNamespace"],
-                self.flattened_list_with_namespace,
+                serializer, members[12], self.flattened_list_with_namespace
             )
 
         if self.structure_list is not None:
-            _serialize_structure_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["structureList"],
-                self.structure_list,
-            )
+            _serialize_structure_list(serializer, members[13], self.structure_list)
 
         if self.flattened_structure_list is not None:
             _serialize_structure_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_INPUT.members["flattenedStructureList"],
-                self.flattened_structure_list,
+                serializer, members[14], self.flattened_structure_list
             )
 
     @classmethod
@@ -8375,99 +7256,80 @@ class XmlEmptyListsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_EMPTY_LISTS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["string_list"] = _deserialize_string_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["stringList"]
-                    )
+                    kwargs["string_list"] = _deserialize_string_list(de, members[0])
 
                 case 1:
-                    kwargs["string_set"] = _deserialize_string_set(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["stringSet"]
-                    )
+                    kwargs["string_set"] = _deserialize_string_set(de, members[1])
 
                 case 2:
-                    kwargs["integer_list"] = _deserialize_integer_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["integerList"]
-                    )
+                    kwargs["integer_list"] = _deserialize_integer_list(de, members[2])
 
                 case 3:
-                    kwargs["boolean_list"] = _deserialize_boolean_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["booleanList"]
-                    )
+                    kwargs["boolean_list"] = _deserialize_boolean_list(de, members[3])
 
                 case 4:
                     kwargs["timestamp_list"] = _deserialize_timestamp_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["timestampList"]
+                        de, members[4]
                     )
 
                 case 5:
-                    kwargs["enum_list"] = _deserialize_foo_enum_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["enumList"]
-                    )
+                    kwargs["enum_list"] = _deserialize_foo_enum_list(de, members[5])
 
                 case 6:
                     kwargs["int_enum_list"] = _deserialize_integer_enum_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["intEnumList"]
+                        de, members[6]
                     )
 
                 case 7:
                     kwargs["nested_string_list"] = _deserialize_nested_string_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["nestedStringList"]
+                        de, members[7]
                     )
 
                 case 8:
                     kwargs["renamed_list_members"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["renamedListMembers"]
+                        de, members[8]
                     )
 
                 case 9:
                     kwargs["flattened_list"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["flattenedList"]
+                        de, members[9]
                     )
 
                 case 10:
                     kwargs["flattened_list2"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["flattenedList2"]
+                        de, members[10]
                     )
 
                 case 11:
                     kwargs["flattened_list_with_member_namespace"] = (
-                        _deserialize_list_with_member_namespace(
-                            de,
-                            _SCHEMA_XML_EMPTY_LISTS_INPUT.members[
-                                "flattenedListWithMemberNamespace"
-                            ],
-                        )
+                        _deserialize_list_with_member_namespace(de, members[11])
                     )
 
                 case 12:
                     kwargs["flattened_list_with_namespace"] = (
-                        _deserialize_list_with_namespace(
-                            de,
-                            _SCHEMA_XML_EMPTY_LISTS_INPUT.members[
-                                "flattenedListWithNamespace"
-                            ],
-                        )
+                        _deserialize_list_with_namespace(de, members[12])
                     )
 
                 case 13:
                     kwargs["structure_list"] = _deserialize_structure_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_INPUT.members["structureList"]
+                        de, members[13]
                     )
 
                 case 14:
                     kwargs["flattened_structure_list"] = _deserialize_structure_list(
-                        de,
-                        _SCHEMA_XML_EMPTY_LISTS_INPUT.members["flattenedStructureList"],
+                        de, members[14]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_EMPTY_LISTS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -8517,114 +7379,65 @@ class XmlEmptyListsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_EMPTY_LISTS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_EMPTY_LISTS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_EMPTY_LISTS_OUTPUT).members_by_index
         if self.string_list is not None:
-            _serialize_string_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["stringList"],
-                self.string_list,
-            )
+            _serialize_string_list(serializer, members[0], self.string_list)
 
         if self.string_set is not None:
-            _serialize_string_set(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["stringSet"],
-                self.string_set,
-            )
+            _serialize_string_set(serializer, members[1], self.string_set)
 
         if self.integer_list is not None:
-            _serialize_integer_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["integerList"],
-                self.integer_list,
-            )
+            _serialize_integer_list(serializer, members[2], self.integer_list)
 
         if self.boolean_list is not None:
-            _serialize_boolean_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["booleanList"],
-                self.boolean_list,
-            )
+            _serialize_boolean_list(serializer, members[3], self.boolean_list)
 
         if self.timestamp_list is not None:
-            _serialize_timestamp_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["timestampList"],
-                self.timestamp_list,
-            )
+            _serialize_timestamp_list(serializer, members[4], self.timestamp_list)
 
         if self.enum_list is not None:
-            _serialize_foo_enum_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["enumList"],
-                self.enum_list,
-            )
+            _serialize_foo_enum_list(serializer, members[5], self.enum_list)
 
         if self.int_enum_list is not None:
-            _serialize_integer_enum_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["intEnumList"],
-                self.int_enum_list,
-            )
+            _serialize_integer_enum_list(serializer, members[6], self.int_enum_list)
 
         if self.nested_string_list is not None:
             _serialize_nested_string_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["nestedStringList"],
-                self.nested_string_list,
+                serializer, members[7], self.nested_string_list
             )
 
         if self.renamed_list_members is not None:
             _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["renamedListMembers"],
-                self.renamed_list_members,
+                serializer, members[8], self.renamed_list_members
             )
 
         if self.flattened_list is not None:
-            _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["flattenedList"],
-                self.flattened_list,
-            )
+            _serialize_renamed_list_members(serializer, members[9], self.flattened_list)
 
         if self.flattened_list2 is not None:
             _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["flattenedList2"],
-                self.flattened_list2,
+                serializer, members[10], self.flattened_list2
             )
 
         if self.flattened_list_with_member_namespace is not None:
             _serialize_list_with_member_namespace(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members[
-                    "flattenedListWithMemberNamespace"
-                ],
-                self.flattened_list_with_member_namespace,
+                serializer, members[11], self.flattened_list_with_member_namespace
             )
 
         if self.flattened_list_with_namespace is not None:
             _serialize_list_with_namespace(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["flattenedListWithNamespace"],
-                self.flattened_list_with_namespace,
+                serializer, members[12], self.flattened_list_with_namespace
             )
 
         if self.structure_list is not None:
-            _serialize_structure_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["structureList"],
-                self.structure_list,
-            )
+            _serialize_structure_list(serializer, members[13], self.structure_list)
 
         if self.flattened_structure_list is not None:
             _serialize_structure_list(
-                serializer,
-                _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["flattenedStructureList"],
-                self.flattened_structure_list,
+                serializer, members[14], self.flattened_structure_list
             )
 
     @classmethod
@@ -8634,113 +7447,89 @@ class XmlEmptyListsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_EMPTY_LISTS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["string_list"] = _deserialize_string_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["stringList"]
-                    )
+                    kwargs["string_list"] = _deserialize_string_list(de, members[0])
 
                 case 1:
-                    kwargs["string_set"] = _deserialize_string_set(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["stringSet"]
-                    )
+                    kwargs["string_set"] = _deserialize_string_set(de, members[1])
 
                 case 2:
-                    kwargs["integer_list"] = _deserialize_integer_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["integerList"]
-                    )
+                    kwargs["integer_list"] = _deserialize_integer_list(de, members[2])
 
                 case 3:
-                    kwargs["boolean_list"] = _deserialize_boolean_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["booleanList"]
-                    )
+                    kwargs["boolean_list"] = _deserialize_boolean_list(de, members[3])
 
                 case 4:
                     kwargs["timestamp_list"] = _deserialize_timestamp_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["timestampList"]
+                        de, members[4]
                     )
 
                 case 5:
-                    kwargs["enum_list"] = _deserialize_foo_enum_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["enumList"]
-                    )
+                    kwargs["enum_list"] = _deserialize_foo_enum_list(de, members[5])
 
                 case 6:
                     kwargs["int_enum_list"] = _deserialize_integer_enum_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["intEnumList"]
+                        de, members[6]
                     )
 
                 case 7:
                     kwargs["nested_string_list"] = _deserialize_nested_string_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["nestedStringList"]
+                        de, members[7]
                     )
 
                 case 8:
                     kwargs["renamed_list_members"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["renamedListMembers"]
+                        de, members[8]
                     )
 
                 case 9:
                     kwargs["flattened_list"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["flattenedList"]
+                        de, members[9]
                     )
 
                 case 10:
                     kwargs["flattened_list2"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["flattenedList2"]
+                        de, members[10]
                     )
 
                 case 11:
                     kwargs["flattened_list_with_member_namespace"] = (
-                        _deserialize_list_with_member_namespace(
-                            de,
-                            _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members[
-                                "flattenedListWithMemberNamespace"
-                            ],
-                        )
+                        _deserialize_list_with_member_namespace(de, members[11])
                     )
 
                 case 12:
                     kwargs["flattened_list_with_namespace"] = (
-                        _deserialize_list_with_namespace(
-                            de,
-                            _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members[
-                                "flattenedListWithNamespace"
-                            ],
-                        )
+                        _deserialize_list_with_namespace(de, members[12])
                     )
 
                 case 13:
                     kwargs["structure_list"] = _deserialize_structure_list(
-                        de, _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members["structureList"]
+                        de, members[13]
                     )
 
                 case 14:
                     kwargs["flattened_structure_list"] = _deserialize_structure_list(
-                        de,
-                        _SCHEMA_XML_EMPTY_LISTS_OUTPUT.members[
-                            "flattenedStructureList"
-                        ],
+                        de, members[14]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_EMPTY_LISTS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_EMPTY_LISTS = APIOperation(
     input=XmlEmptyListsInput,
     output=XmlEmptyListsOutput,
-    schema=_SCHEMA_XML_EMPTY_LISTS,
-    input_schema=_SCHEMA_XML_EMPTY_LISTS_INPUT,
-    output_schema=_SCHEMA_XML_EMPTY_LISTS_OUTPUT,
+    static_schema=_SCHEMA_XML_EMPTY_LISTS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -8751,11 +7540,12 @@ class GreetingStruct:
     hi: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_GREETING_STRUCT, self)
+        serializer.write_struct(hydrate(_SCHEMA_GREETING_STRUCT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_GREETING_STRUCT).members_by_index
         if self.hi is not None:
-            serializer.write_string(_SCHEMA_GREETING_STRUCT.members["hi"], self.hi)
+            serializer.write_string(members[0], self.hi)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -8764,16 +7554,18 @@ class GreetingStruct:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_GREETING_STRUCT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["hi"] = de.read_string(_SCHEMA_GREETING_STRUCT.members["hi"])
+                    kwargs["hi"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_GREETING_STRUCT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -8781,7 +7573,7 @@ def _serialize_xml_maps_input_output_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, GreetingStruct]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: vs.write_struct(value_schema, v))
 
@@ -8790,7 +7582,7 @@ def _deserialize_xml_maps_input_output_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, GreetingStruct]:
     result: dict[str, GreetingStruct] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -8810,13 +7602,12 @@ class XmlEmptyMapsInput:
     my_map: dict[str, GreetingStruct] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_EMPTY_MAPS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_EMPTY_MAPS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_EMPTY_MAPS_INPUT).members_by_index
         if self.my_map is not None:
-            _serialize_xml_maps_input_output_map(
-                serializer, _SCHEMA_XML_EMPTY_MAPS_INPUT.members["myMap"], self.my_map
-            )
+            _serialize_xml_maps_input_output_map(serializer, members[0], self.my_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -8825,18 +7616,20 @@ class XmlEmptyMapsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_EMPTY_MAPS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["my_map"] = _deserialize_xml_maps_input_output_map(
-                        de, _SCHEMA_XML_EMPTY_MAPS_INPUT.members["myMap"]
+                        de, members[0]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_EMPTY_MAPS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -8857,13 +7650,12 @@ class XmlEmptyMapsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_EMPTY_MAPS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_EMPTY_MAPS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_EMPTY_MAPS_OUTPUT).members_by_index
         if self.my_map is not None:
-            _serialize_xml_maps_input_output_map(
-                serializer, _SCHEMA_XML_EMPTY_MAPS_OUTPUT.members["myMap"], self.my_map
-            )
+            _serialize_xml_maps_input_output_map(serializer, members[0], self.my_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -8872,30 +7664,29 @@ class XmlEmptyMapsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_EMPTY_MAPS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["my_map"] = _deserialize_xml_maps_input_output_map(
-                        de, _SCHEMA_XML_EMPTY_MAPS_OUTPUT.members["myMap"]
+                        de, members[0]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_EMPTY_MAPS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_EMPTY_MAPS = APIOperation(
     input=XmlEmptyMapsInput,
     output=XmlEmptyMapsOutput,
-    schema=_SCHEMA_XML_EMPTY_MAPS,
-    input_schema=_SCHEMA_XML_EMPTY_MAPS_INPUT,
-    output_schema=_SCHEMA_XML_EMPTY_MAPS_OUTPUT,
+    static_schema=_SCHEMA_XML_EMPTY_MAPS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -8906,14 +7697,12 @@ class XmlEmptyStringsInput:
     empty_string: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_EMPTY_STRINGS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_EMPTY_STRINGS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_EMPTY_STRINGS_INPUT).members_by_index
         if self.empty_string is not None:
-            serializer.write_string(
-                _SCHEMA_XML_EMPTY_STRINGS_INPUT.members["emptyString"],
-                self.empty_string,
-            )
+            serializer.write_string(members[0], self.empty_string)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -8922,18 +7711,18 @@ class XmlEmptyStringsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_EMPTY_STRINGS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["empty_string"] = de.read_string(
-                        _SCHEMA_XML_EMPTY_STRINGS_INPUT.members["emptyString"]
-                    )
+                    kwargs["empty_string"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_EMPTY_STRINGS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -8954,14 +7743,12 @@ class XmlEmptyStringsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_EMPTY_STRINGS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_EMPTY_STRINGS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_EMPTY_STRINGS_OUTPUT).members_by_index
         if self.empty_string is not None:
-            serializer.write_string(
-                _SCHEMA_XML_EMPTY_STRINGS_OUTPUT.members["emptyString"],
-                self.empty_string,
-            )
+            serializer.write_string(members[0], self.empty_string)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -8970,37 +7757,34 @@ class XmlEmptyStringsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_EMPTY_STRINGS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["empty_string"] = de.read_string(
-                        _SCHEMA_XML_EMPTY_STRINGS_OUTPUT.members["emptyString"]
-                    )
+                    kwargs["empty_string"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_EMPTY_STRINGS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_EMPTY_STRINGS = APIOperation(
     input=XmlEmptyStringsInput,
     output=XmlEmptyStringsOutput,
-    schema=_SCHEMA_XML_EMPTY_STRINGS,
-    input_schema=_SCHEMA_XML_EMPTY_STRINGS_INPUT,
-    output_schema=_SCHEMA_XML_EMPTY_STRINGS_OUTPUT,
+    static_schema=_SCHEMA_XML_EMPTY_STRINGS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
 def _serialize_foo_enum_set(
     serializer: ShapeSerializer, schema: Schema, value: list[str]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_string(member_schema, e)
@@ -9010,7 +7794,7 @@ def _deserialize_foo_enum_set(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[str]:
     result: list[str] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -9040,44 +7824,27 @@ class XmlEnumsInput:
     foo_enum_map: dict[str, str] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ENUMS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_ENUMS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_ENUMS_INPUT).members_by_index
         if self.foo_enum1 is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ENUMS_INPUT.members["fooEnum1"], self.foo_enum1
-            )
+            serializer.write_string(members[0], self.foo_enum1)
 
         if self.foo_enum2 is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ENUMS_INPUT.members["fooEnum2"], self.foo_enum2
-            )
+            serializer.write_string(members[1], self.foo_enum2)
 
         if self.foo_enum3 is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ENUMS_INPUT.members["fooEnum3"], self.foo_enum3
-            )
+            serializer.write_string(members[2], self.foo_enum3)
 
         if self.foo_enum_list is not None:
-            _serialize_foo_enum_list(
-                serializer,
-                _SCHEMA_XML_ENUMS_INPUT.members["fooEnumList"],
-                self.foo_enum_list,
-            )
+            _serialize_foo_enum_list(serializer, members[3], self.foo_enum_list)
 
         if self.foo_enum_set is not None:
-            _serialize_foo_enum_set(
-                serializer,
-                _SCHEMA_XML_ENUMS_INPUT.members["fooEnumSet"],
-                self.foo_enum_set,
-            )
+            _serialize_foo_enum_set(serializer, members[4], self.foo_enum_set)
 
         if self.foo_enum_map is not None:
-            _serialize_foo_enum_map(
-                serializer,
-                _SCHEMA_XML_ENUMS_INPUT.members["fooEnumMap"],
-                self.foo_enum_map,
-            )
+            _serialize_foo_enum_map(serializer, members[5], self.foo_enum_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -9086,43 +7853,33 @@ class XmlEnumsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ENUMS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo_enum1"] = FooEnum(
-                        de.read_string(_SCHEMA_XML_ENUMS_INPUT.members["fooEnum1"])
-                    )
+                    kwargs["foo_enum1"] = FooEnum(de.read_string(members[0]))
 
                 case 1:
-                    kwargs["foo_enum2"] = FooEnum(
-                        de.read_string(_SCHEMA_XML_ENUMS_INPUT.members["fooEnum2"])
-                    )
+                    kwargs["foo_enum2"] = FooEnum(de.read_string(members[1]))
 
                 case 2:
-                    kwargs["foo_enum3"] = FooEnum(
-                        de.read_string(_SCHEMA_XML_ENUMS_INPUT.members["fooEnum3"])
-                    )
+                    kwargs["foo_enum3"] = FooEnum(de.read_string(members[2]))
 
                 case 3:
-                    kwargs["foo_enum_list"] = _deserialize_foo_enum_list(
-                        de, _SCHEMA_XML_ENUMS_INPUT.members["fooEnumList"]
-                    )
+                    kwargs["foo_enum_list"] = _deserialize_foo_enum_list(de, members[3])
 
                 case 4:
-                    kwargs["foo_enum_set"] = _deserialize_foo_enum_set(
-                        de, _SCHEMA_XML_ENUMS_INPUT.members["fooEnumSet"]
-                    )
+                    kwargs["foo_enum_set"] = _deserialize_foo_enum_set(de, members[4])
 
                 case 5:
-                    kwargs["foo_enum_map"] = _deserialize_foo_enum_map(
-                        de, _SCHEMA_XML_ENUMS_INPUT.members["fooEnumMap"]
-                    )
+                    kwargs["foo_enum_map"] = _deserialize_foo_enum_map(de, members[5])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_ENUMS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -9153,44 +7910,27 @@ class XmlEnumsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_ENUMS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_ENUMS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_ENUMS_OUTPUT).members_by_index
         if self.foo_enum1 is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ENUMS_OUTPUT.members["fooEnum1"], self.foo_enum1
-            )
+            serializer.write_string(members[0], self.foo_enum1)
 
         if self.foo_enum2 is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ENUMS_OUTPUT.members["fooEnum2"], self.foo_enum2
-            )
+            serializer.write_string(members[1], self.foo_enum2)
 
         if self.foo_enum3 is not None:
-            serializer.write_string(
-                _SCHEMA_XML_ENUMS_OUTPUT.members["fooEnum3"], self.foo_enum3
-            )
+            serializer.write_string(members[2], self.foo_enum3)
 
         if self.foo_enum_list is not None:
-            _serialize_foo_enum_list(
-                serializer,
-                _SCHEMA_XML_ENUMS_OUTPUT.members["fooEnumList"],
-                self.foo_enum_list,
-            )
+            _serialize_foo_enum_list(serializer, members[3], self.foo_enum_list)
 
         if self.foo_enum_set is not None:
-            _serialize_foo_enum_set(
-                serializer,
-                _SCHEMA_XML_ENUMS_OUTPUT.members["fooEnumSet"],
-                self.foo_enum_set,
-            )
+            _serialize_foo_enum_set(serializer, members[4], self.foo_enum_set)
 
         if self.foo_enum_map is not None:
-            _serialize_foo_enum_map(
-                serializer,
-                _SCHEMA_XML_ENUMS_OUTPUT.members["fooEnumMap"],
-                self.foo_enum_map,
-            )
+            _serialize_foo_enum_map(serializer, members[5], self.foo_enum_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -9199,55 +7939,42 @@ class XmlEnumsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_ENUMS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo_enum1"] = FooEnum(
-                        de.read_string(_SCHEMA_XML_ENUMS_OUTPUT.members["fooEnum1"])
-                    )
+                    kwargs["foo_enum1"] = FooEnum(de.read_string(members[0]))
 
                 case 1:
-                    kwargs["foo_enum2"] = FooEnum(
-                        de.read_string(_SCHEMA_XML_ENUMS_OUTPUT.members["fooEnum2"])
-                    )
+                    kwargs["foo_enum2"] = FooEnum(de.read_string(members[1]))
 
                 case 2:
-                    kwargs["foo_enum3"] = FooEnum(
-                        de.read_string(_SCHEMA_XML_ENUMS_OUTPUT.members["fooEnum3"])
-                    )
+                    kwargs["foo_enum3"] = FooEnum(de.read_string(members[2]))
 
                 case 3:
-                    kwargs["foo_enum_list"] = _deserialize_foo_enum_list(
-                        de, _SCHEMA_XML_ENUMS_OUTPUT.members["fooEnumList"]
-                    )
+                    kwargs["foo_enum_list"] = _deserialize_foo_enum_list(de, members[3])
 
                 case 4:
-                    kwargs["foo_enum_set"] = _deserialize_foo_enum_set(
-                        de, _SCHEMA_XML_ENUMS_OUTPUT.members["fooEnumSet"]
-                    )
+                    kwargs["foo_enum_set"] = _deserialize_foo_enum_set(de, members[4])
 
                 case 5:
-                    kwargs["foo_enum_map"] = _deserialize_foo_enum_map(
-                        de, _SCHEMA_XML_ENUMS_OUTPUT.members["fooEnumMap"]
-                    )
+                    kwargs["foo_enum_map"] = _deserialize_foo_enum_map(de, members[5])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_ENUMS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_ENUMS = APIOperation(
     input=XmlEnumsInput,
     output=XmlEnumsOutput,
-    schema=_SCHEMA_XML_ENUMS,
-    input_schema=_SCHEMA_XML_ENUMS_INPUT,
-    output_schema=_SCHEMA_XML_ENUMS_OUTPUT,
+    static_schema=_SCHEMA_XML_ENUMS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -9255,7 +7982,7 @@ def _serialize_integer_enum_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, int]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: vs.write_integer(value_schema, v))
 
@@ -9264,7 +7991,7 @@ def _deserialize_integer_enum_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, int]:
     result: dict[str, int] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -9280,7 +8007,7 @@ def _deserialize_integer_enum_map(
 def _serialize_integer_enum_set(
     serializer: ShapeSerializer, schema: Schema, value: list[int]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_integer(member_schema, e)
@@ -9290,7 +8017,7 @@ def _deserialize_integer_enum_set(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[int]:
     result: list[int] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -9320,44 +8047,27 @@ class XmlIntEnumsInput:
     int_enum_map: dict[str, int] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_INT_ENUMS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_INT_ENUMS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_INT_ENUMS_INPUT).members_by_index
         if self.int_enum1 is not None:
-            serializer.write_integer(
-                _SCHEMA_XML_INT_ENUMS_INPUT.members["intEnum1"], self.int_enum1
-            )
+            serializer.write_integer(members[0], self.int_enum1)
 
         if self.int_enum2 is not None:
-            serializer.write_integer(
-                _SCHEMA_XML_INT_ENUMS_INPUT.members["intEnum2"], self.int_enum2
-            )
+            serializer.write_integer(members[1], self.int_enum2)
 
         if self.int_enum3 is not None:
-            serializer.write_integer(
-                _SCHEMA_XML_INT_ENUMS_INPUT.members["intEnum3"], self.int_enum3
-            )
+            serializer.write_integer(members[2], self.int_enum3)
 
         if self.int_enum_list is not None:
-            _serialize_integer_enum_list(
-                serializer,
-                _SCHEMA_XML_INT_ENUMS_INPUT.members["intEnumList"],
-                self.int_enum_list,
-            )
+            _serialize_integer_enum_list(serializer, members[3], self.int_enum_list)
 
         if self.int_enum_set is not None:
-            _serialize_integer_enum_set(
-                serializer,
-                _SCHEMA_XML_INT_ENUMS_INPUT.members["intEnumSet"],
-                self.int_enum_set,
-            )
+            _serialize_integer_enum_set(serializer, members[4], self.int_enum_set)
 
         if self.int_enum_map is not None:
-            _serialize_integer_enum_map(
-                serializer,
-                _SCHEMA_XML_INT_ENUMS_INPUT.members["intEnumMap"],
-                self.int_enum_map,
-            )
+            _serialize_integer_enum_map(serializer, members[5], self.int_enum_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -9366,43 +8076,39 @@ class XmlIntEnumsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_INT_ENUMS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["int_enum1"] = IntegerEnum(
-                        de.read_integer(_SCHEMA_XML_INT_ENUMS_INPUT.members["intEnum1"])
-                    )
+                    kwargs["int_enum1"] = IntegerEnum(de.read_integer(members[0]))
 
                 case 1:
-                    kwargs["int_enum2"] = IntegerEnum(
-                        de.read_integer(_SCHEMA_XML_INT_ENUMS_INPUT.members["intEnum2"])
-                    )
+                    kwargs["int_enum2"] = IntegerEnum(de.read_integer(members[1]))
 
                 case 2:
-                    kwargs["int_enum3"] = IntegerEnum(
-                        de.read_integer(_SCHEMA_XML_INT_ENUMS_INPUT.members["intEnum3"])
-                    )
+                    kwargs["int_enum3"] = IntegerEnum(de.read_integer(members[2]))
 
                 case 3:
                     kwargs["int_enum_list"] = _deserialize_integer_enum_list(
-                        de, _SCHEMA_XML_INT_ENUMS_INPUT.members["intEnumList"]
+                        de, members[3]
                     )
 
                 case 4:
                     kwargs["int_enum_set"] = _deserialize_integer_enum_set(
-                        de, _SCHEMA_XML_INT_ENUMS_INPUT.members["intEnumSet"]
+                        de, members[4]
                     )
 
                 case 5:
                     kwargs["int_enum_map"] = _deserialize_integer_enum_map(
-                        de, _SCHEMA_XML_INT_ENUMS_INPUT.members["intEnumMap"]
+                        de, members[5]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_INT_ENUMS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -9433,44 +8139,27 @@ class XmlIntEnumsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_INT_ENUMS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_INT_ENUMS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_INT_ENUMS_OUTPUT).members_by_index
         if self.int_enum1 is not None:
-            serializer.write_integer(
-                _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnum1"], self.int_enum1
-            )
+            serializer.write_integer(members[0], self.int_enum1)
 
         if self.int_enum2 is not None:
-            serializer.write_integer(
-                _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnum2"], self.int_enum2
-            )
+            serializer.write_integer(members[1], self.int_enum2)
 
         if self.int_enum3 is not None:
-            serializer.write_integer(
-                _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnum3"], self.int_enum3
-            )
+            serializer.write_integer(members[2], self.int_enum3)
 
         if self.int_enum_list is not None:
-            _serialize_integer_enum_list(
-                serializer,
-                _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnumList"],
-                self.int_enum_list,
-            )
+            _serialize_integer_enum_list(serializer, members[3], self.int_enum_list)
 
         if self.int_enum_set is not None:
-            _serialize_integer_enum_set(
-                serializer,
-                _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnumSet"],
-                self.int_enum_set,
-            )
+            _serialize_integer_enum_set(serializer, members[4], self.int_enum_set)
 
         if self.int_enum_map is not None:
-            _serialize_integer_enum_map(
-                serializer,
-                _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnumMap"],
-                self.int_enum_map,
-            )
+            _serialize_integer_enum_map(serializer, members[5], self.int_enum_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -9479,61 +8168,48 @@ class XmlIntEnumsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_INT_ENUMS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["int_enum1"] = IntegerEnum(
-                        de.read_integer(
-                            _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnum1"]
-                        )
-                    )
+                    kwargs["int_enum1"] = IntegerEnum(de.read_integer(members[0]))
 
                 case 1:
-                    kwargs["int_enum2"] = IntegerEnum(
-                        de.read_integer(
-                            _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnum2"]
-                        )
-                    )
+                    kwargs["int_enum2"] = IntegerEnum(de.read_integer(members[1]))
 
                 case 2:
-                    kwargs["int_enum3"] = IntegerEnum(
-                        de.read_integer(
-                            _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnum3"]
-                        )
-                    )
+                    kwargs["int_enum3"] = IntegerEnum(de.read_integer(members[2]))
 
                 case 3:
                     kwargs["int_enum_list"] = _deserialize_integer_enum_list(
-                        de, _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnumList"]
+                        de, members[3]
                     )
 
                 case 4:
                     kwargs["int_enum_set"] = _deserialize_integer_enum_set(
-                        de, _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnumSet"]
+                        de, members[4]
                     )
 
                 case 5:
                     kwargs["int_enum_map"] = _deserialize_integer_enum_map(
-                        de, _SCHEMA_XML_INT_ENUMS_OUTPUT.members["intEnumMap"]
+                        de, members[5]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_INT_ENUMS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_INT_ENUMS = APIOperation(
     input=XmlIntEnumsInput,
     output=XmlIntEnumsOutput,
-    schema=_SCHEMA_XML_INT_ENUMS,
-    input_schema=_SCHEMA_XML_INT_ENUMS_INPUT,
-    output_schema=_SCHEMA_XML_INT_ENUMS_OUTPUT,
+    static_schema=_SCHEMA_XML_INT_ENUMS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -9573,110 +8249,65 @@ class XmlListsInput:
     flattened_structure_list: list[StructureListMember] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_LISTS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_LISTS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_LISTS_INPUT).members_by_index
         if self.string_list is not None:
-            _serialize_string_list(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["stringList"],
-                self.string_list,
-            )
+            _serialize_string_list(serializer, members[0], self.string_list)
 
         if self.string_set is not None:
-            _serialize_string_set(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["stringSet"],
-                self.string_set,
-            )
+            _serialize_string_set(serializer, members[1], self.string_set)
 
         if self.integer_list is not None:
-            _serialize_integer_list(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["integerList"],
-                self.integer_list,
-            )
+            _serialize_integer_list(serializer, members[2], self.integer_list)
 
         if self.boolean_list is not None:
-            _serialize_boolean_list(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["booleanList"],
-                self.boolean_list,
-            )
+            _serialize_boolean_list(serializer, members[3], self.boolean_list)
 
         if self.timestamp_list is not None:
-            _serialize_timestamp_list(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["timestampList"],
-                self.timestamp_list,
-            )
+            _serialize_timestamp_list(serializer, members[4], self.timestamp_list)
 
         if self.enum_list is not None:
-            _serialize_foo_enum_list(
-                serializer, _SCHEMA_XML_LISTS_INPUT.members["enumList"], self.enum_list
-            )
+            _serialize_foo_enum_list(serializer, members[5], self.enum_list)
 
         if self.int_enum_list is not None:
-            _serialize_integer_enum_list(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["intEnumList"],
-                self.int_enum_list,
-            )
+            _serialize_integer_enum_list(serializer, members[6], self.int_enum_list)
 
         if self.nested_string_list is not None:
             _serialize_nested_string_list(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["nestedStringList"],
-                self.nested_string_list,
+                serializer, members[7], self.nested_string_list
             )
 
         if self.renamed_list_members is not None:
             _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["renamedListMembers"],
-                self.renamed_list_members,
+                serializer, members[8], self.renamed_list_members
             )
 
         if self.flattened_list is not None:
-            _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["flattenedList"],
-                self.flattened_list,
-            )
+            _serialize_renamed_list_members(serializer, members[9], self.flattened_list)
 
         if self.flattened_list2 is not None:
             _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["flattenedList2"],
-                self.flattened_list2,
+                serializer, members[10], self.flattened_list2
             )
 
         if self.flattened_list_with_member_namespace is not None:
             _serialize_list_with_member_namespace(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["flattenedListWithMemberNamespace"],
-                self.flattened_list_with_member_namespace,
+                serializer, members[11], self.flattened_list_with_member_namespace
             )
 
         if self.flattened_list_with_namespace is not None:
             _serialize_list_with_namespace(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["flattenedListWithNamespace"],
-                self.flattened_list_with_namespace,
+                serializer, members[12], self.flattened_list_with_namespace
             )
 
         if self.structure_list is not None:
-            _serialize_structure_list(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["structureList"],
-                self.structure_list,
-            )
+            _serialize_structure_list(serializer, members[13], self.structure_list)
 
         if self.flattened_structure_list is not None:
             _serialize_structure_list(
-                serializer,
-                _SCHEMA_XML_LISTS_INPUT.members["flattenedStructureList"],
-                self.flattened_structure_list,
+                serializer, members[14], self.flattened_structure_list
             )
 
     @classmethod
@@ -9686,98 +8317,80 @@ class XmlListsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_LISTS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["string_list"] = _deserialize_string_list(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["stringList"]
-                    )
+                    kwargs["string_list"] = _deserialize_string_list(de, members[0])
 
                 case 1:
-                    kwargs["string_set"] = _deserialize_string_set(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["stringSet"]
-                    )
+                    kwargs["string_set"] = _deserialize_string_set(de, members[1])
 
                 case 2:
-                    kwargs["integer_list"] = _deserialize_integer_list(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["integerList"]
-                    )
+                    kwargs["integer_list"] = _deserialize_integer_list(de, members[2])
 
                 case 3:
-                    kwargs["boolean_list"] = _deserialize_boolean_list(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["booleanList"]
-                    )
+                    kwargs["boolean_list"] = _deserialize_boolean_list(de, members[3])
 
                 case 4:
                     kwargs["timestamp_list"] = _deserialize_timestamp_list(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["timestampList"]
+                        de, members[4]
                     )
 
                 case 5:
-                    kwargs["enum_list"] = _deserialize_foo_enum_list(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["enumList"]
-                    )
+                    kwargs["enum_list"] = _deserialize_foo_enum_list(de, members[5])
 
                 case 6:
                     kwargs["int_enum_list"] = _deserialize_integer_enum_list(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["intEnumList"]
+                        de, members[6]
                     )
 
                 case 7:
                     kwargs["nested_string_list"] = _deserialize_nested_string_list(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["nestedStringList"]
+                        de, members[7]
                     )
 
                 case 8:
                     kwargs["renamed_list_members"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["renamedListMembers"]
+                        de, members[8]
                     )
 
                 case 9:
                     kwargs["flattened_list"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["flattenedList"]
+                        de, members[9]
                     )
 
                 case 10:
                     kwargs["flattened_list2"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["flattenedList2"]
+                        de, members[10]
                     )
 
                 case 11:
                     kwargs["flattened_list_with_member_namespace"] = (
-                        _deserialize_list_with_member_namespace(
-                            de,
-                            _SCHEMA_XML_LISTS_INPUT.members[
-                                "flattenedListWithMemberNamespace"
-                            ],
-                        )
+                        _deserialize_list_with_member_namespace(de, members[11])
                     )
 
                 case 12:
                     kwargs["flattened_list_with_namespace"] = (
-                        _deserialize_list_with_namespace(
-                            de,
-                            _SCHEMA_XML_LISTS_INPUT.members[
-                                "flattenedListWithNamespace"
-                            ],
-                        )
+                        _deserialize_list_with_namespace(de, members[12])
                     )
 
                 case 13:
                     kwargs["structure_list"] = _deserialize_structure_list(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["structureList"]
+                        de, members[13]
                     )
 
                 case 14:
                     kwargs["flattened_structure_list"] = _deserialize_structure_list(
-                        de, _SCHEMA_XML_LISTS_INPUT.members["flattenedStructureList"]
+                        de, members[14]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_LISTS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -9827,110 +8440,65 @@ class XmlListsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_LISTS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_LISTS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_LISTS_OUTPUT).members_by_index
         if self.string_list is not None:
-            _serialize_string_list(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["stringList"],
-                self.string_list,
-            )
+            _serialize_string_list(serializer, members[0], self.string_list)
 
         if self.string_set is not None:
-            _serialize_string_set(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["stringSet"],
-                self.string_set,
-            )
+            _serialize_string_set(serializer, members[1], self.string_set)
 
         if self.integer_list is not None:
-            _serialize_integer_list(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["integerList"],
-                self.integer_list,
-            )
+            _serialize_integer_list(serializer, members[2], self.integer_list)
 
         if self.boolean_list is not None:
-            _serialize_boolean_list(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["booleanList"],
-                self.boolean_list,
-            )
+            _serialize_boolean_list(serializer, members[3], self.boolean_list)
 
         if self.timestamp_list is not None:
-            _serialize_timestamp_list(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["timestampList"],
-                self.timestamp_list,
-            )
+            _serialize_timestamp_list(serializer, members[4], self.timestamp_list)
 
         if self.enum_list is not None:
-            _serialize_foo_enum_list(
-                serializer, _SCHEMA_XML_LISTS_OUTPUT.members["enumList"], self.enum_list
-            )
+            _serialize_foo_enum_list(serializer, members[5], self.enum_list)
 
         if self.int_enum_list is not None:
-            _serialize_integer_enum_list(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["intEnumList"],
-                self.int_enum_list,
-            )
+            _serialize_integer_enum_list(serializer, members[6], self.int_enum_list)
 
         if self.nested_string_list is not None:
             _serialize_nested_string_list(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["nestedStringList"],
-                self.nested_string_list,
+                serializer, members[7], self.nested_string_list
             )
 
         if self.renamed_list_members is not None:
             _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["renamedListMembers"],
-                self.renamed_list_members,
+                serializer, members[8], self.renamed_list_members
             )
 
         if self.flattened_list is not None:
-            _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["flattenedList"],
-                self.flattened_list,
-            )
+            _serialize_renamed_list_members(serializer, members[9], self.flattened_list)
 
         if self.flattened_list2 is not None:
             _serialize_renamed_list_members(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["flattenedList2"],
-                self.flattened_list2,
+                serializer, members[10], self.flattened_list2
             )
 
         if self.flattened_list_with_member_namespace is not None:
             _serialize_list_with_member_namespace(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["flattenedListWithMemberNamespace"],
-                self.flattened_list_with_member_namespace,
+                serializer, members[11], self.flattened_list_with_member_namespace
             )
 
         if self.flattened_list_with_namespace is not None:
             _serialize_list_with_namespace(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["flattenedListWithNamespace"],
-                self.flattened_list_with_namespace,
+                serializer, members[12], self.flattened_list_with_namespace
             )
 
         if self.structure_list is not None:
-            _serialize_structure_list(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["structureList"],
-                self.structure_list,
-            )
+            _serialize_structure_list(serializer, members[13], self.structure_list)
 
         if self.flattened_structure_list is not None:
             _serialize_structure_list(
-                serializer,
-                _SCHEMA_XML_LISTS_OUTPUT.members["flattenedStructureList"],
-                self.flattened_structure_list,
+                serializer, members[14], self.flattened_structure_list
             )
 
     @classmethod
@@ -9940,110 +8508,89 @@ class XmlListsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_LISTS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["string_list"] = _deserialize_string_list(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["stringList"]
-                    )
+                    kwargs["string_list"] = _deserialize_string_list(de, members[0])
 
                 case 1:
-                    kwargs["string_set"] = _deserialize_string_set(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["stringSet"]
-                    )
+                    kwargs["string_set"] = _deserialize_string_set(de, members[1])
 
                 case 2:
-                    kwargs["integer_list"] = _deserialize_integer_list(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["integerList"]
-                    )
+                    kwargs["integer_list"] = _deserialize_integer_list(de, members[2])
 
                 case 3:
-                    kwargs["boolean_list"] = _deserialize_boolean_list(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["booleanList"]
-                    )
+                    kwargs["boolean_list"] = _deserialize_boolean_list(de, members[3])
 
                 case 4:
                     kwargs["timestamp_list"] = _deserialize_timestamp_list(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["timestampList"]
+                        de, members[4]
                     )
 
                 case 5:
-                    kwargs["enum_list"] = _deserialize_foo_enum_list(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["enumList"]
-                    )
+                    kwargs["enum_list"] = _deserialize_foo_enum_list(de, members[5])
 
                 case 6:
                     kwargs["int_enum_list"] = _deserialize_integer_enum_list(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["intEnumList"]
+                        de, members[6]
                     )
 
                 case 7:
                     kwargs["nested_string_list"] = _deserialize_nested_string_list(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["nestedStringList"]
+                        de, members[7]
                     )
 
                 case 8:
                     kwargs["renamed_list_members"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["renamedListMembers"]
+                        de, members[8]
                     )
 
                 case 9:
                     kwargs["flattened_list"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["flattenedList"]
+                        de, members[9]
                     )
 
                 case 10:
                     kwargs["flattened_list2"] = _deserialize_renamed_list_members(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["flattenedList2"]
+                        de, members[10]
                     )
 
                 case 11:
                     kwargs["flattened_list_with_member_namespace"] = (
-                        _deserialize_list_with_member_namespace(
-                            de,
-                            _SCHEMA_XML_LISTS_OUTPUT.members[
-                                "flattenedListWithMemberNamespace"
-                            ],
-                        )
+                        _deserialize_list_with_member_namespace(de, members[11])
                     )
 
                 case 12:
                     kwargs["flattened_list_with_namespace"] = (
-                        _deserialize_list_with_namespace(
-                            de,
-                            _SCHEMA_XML_LISTS_OUTPUT.members[
-                                "flattenedListWithNamespace"
-                            ],
-                        )
+                        _deserialize_list_with_namespace(de, members[12])
                     )
 
                 case 13:
                     kwargs["structure_list"] = _deserialize_structure_list(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["structureList"]
+                        de, members[13]
                     )
 
                 case 14:
                     kwargs["flattened_structure_list"] = _deserialize_structure_list(
-                        de, _SCHEMA_XML_LISTS_OUTPUT.members["flattenedStructureList"]
+                        de, members[14]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_LISTS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_LISTS = APIOperation(
     input=XmlListsInput,
     output=XmlListsOutput,
-    schema=_SCHEMA_XML_LISTS,
-    input_schema=_SCHEMA_XML_LISTS_INPUT,
-    output_schema=_SCHEMA_XML_LISTS_OUTPUT,
+    static_schema=_SCHEMA_XML_LISTS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -10054,13 +8601,12 @@ class XmlMapsInput:
     my_map: dict[str, GreetingStruct] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_MAPS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_MAPS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_MAPS_INPUT).members_by_index
         if self.my_map is not None:
-            _serialize_xml_maps_input_output_map(
-                serializer, _SCHEMA_XML_MAPS_INPUT.members["myMap"], self.my_map
-            )
+            _serialize_xml_maps_input_output_map(serializer, members[0], self.my_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -10069,18 +8615,20 @@ class XmlMapsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_MAPS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["my_map"] = _deserialize_xml_maps_input_output_map(
-                        de, _SCHEMA_XML_MAPS_INPUT.members["myMap"]
+                        de, members[0]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_MAPS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -10101,13 +8649,12 @@ class XmlMapsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_MAPS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_MAPS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_MAPS_OUTPUT).members_by_index
         if self.my_map is not None:
-            _serialize_xml_maps_input_output_map(
-                serializer, _SCHEMA_XML_MAPS_OUTPUT.members["myMap"], self.my_map
-            )
+            _serialize_xml_maps_input_output_map(serializer, members[0], self.my_map)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -10116,30 +8663,29 @@ class XmlMapsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_MAPS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["my_map"] = _deserialize_xml_maps_input_output_map(
-                        de, _SCHEMA_XML_MAPS_OUTPUT.members["myMap"]
+                        de, members[0]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_MAPS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_MAPS = APIOperation(
     input=XmlMapsInput,
     output=XmlMapsOutput,
-    schema=_SCHEMA_XML_MAPS,
-    input_schema=_SCHEMA_XML_MAPS_INPUT,
-    output_schema=_SCHEMA_XML_MAPS_OUTPUT,
+    static_schema=_SCHEMA_XML_MAPS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -10147,7 +8693,7 @@ def _serialize_xml_maps_xml_name_input_output_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, GreetingStruct]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: vs.write_struct(value_schema, v))
 
@@ -10156,7 +8702,7 @@ def _deserialize_xml_maps_xml_name_input_output_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, GreetingStruct]:
     result: dict[str, GreetingStruct] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -10176,14 +8722,13 @@ class XmlMapsXmlNameInput:
     my_map: dict[str, GreetingStruct] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_MAPS_XML_NAME_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_MAPS_XML_NAME_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_MAPS_XML_NAME_INPUT).members_by_index
         if self.my_map is not None:
             _serialize_xml_maps_xml_name_input_output_map(
-                serializer,
-                _SCHEMA_XML_MAPS_XML_NAME_INPUT.members["myMap"],
-                self.my_map,
+                serializer, members[0], self.my_map
             )
 
     @classmethod
@@ -10193,18 +8738,20 @@ class XmlMapsXmlNameInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_MAPS_XML_NAME_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["my_map"] = _deserialize_xml_maps_xml_name_input_output_map(
-                        de, _SCHEMA_XML_MAPS_XML_NAME_INPUT.members["myMap"]
+                        de, members[0]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_MAPS_XML_NAME_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -10225,14 +8772,13 @@ class XmlMapsXmlNameOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_MAPS_XML_NAME_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_MAPS_XML_NAME_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_MAPS_XML_NAME_OUTPUT).members_by_index
         if self.my_map is not None:
             _serialize_xml_maps_xml_name_input_output_map(
-                serializer,
-                _SCHEMA_XML_MAPS_XML_NAME_OUTPUT.members["myMap"],
-                self.my_map,
+                serializer, members[0], self.my_map
             )
 
     @classmethod
@@ -10242,30 +8788,29 @@ class XmlMapsXmlNameOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_MAPS_XML_NAME_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["my_map"] = _deserialize_xml_maps_xml_name_input_output_map(
-                        de, _SCHEMA_XML_MAPS_XML_NAME_OUTPUT.members["myMap"]
+                        de, members[0]
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_MAPS_XML_NAME_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_MAPS_XML_NAME = APIOperation(
     input=XmlMapsXmlNameInput,
     output=XmlMapsXmlNameOutput,
-    schema=_SCHEMA_XML_MAPS_XML_NAME,
-    input_schema=_SCHEMA_XML_MAPS_XML_NAME_INPUT,
-    output_schema=_SCHEMA_XML_MAPS_XML_NAME_OUTPUT,
+    static_schema=_SCHEMA_XML_MAPS_XML_NAME,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -10273,7 +8818,7 @@ def _serialize_xml_map_with_xml_namespace_input_output_map(
     serializer: ShapeSerializer, schema: Schema, value: dict[str, str]
 ) -> None:
     with serializer.begin_map(schema, len(value)) as m:
-        value_schema = schema.members["value"]
+        value_schema = schema.members_by_index[1]
         for k, v in value.items():
             m.entry(k, lambda vs: vs.write_string(value_schema, v))
 
@@ -10282,7 +8827,7 @@ def _deserialize_xml_map_with_xml_namespace_input_output_map(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> dict[str, str]:
     result: dict[str, str] = {}
-    value_schema = schema.members["value"]
+    value_schema = schema.members_by_index[1]
 
     def _read_value(k: str, d: ShapeDeserializer):
         if d.is_null():
@@ -10302,14 +8847,13 @@ class XmlMapWithXmlNamespaceInput:
     my_map: dict[str, str] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_MAP_WITH_XML_NAMESPACE_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_MAP_WITH_XML_NAMESPACE_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_MAP_WITH_XML_NAMESPACE_INPUT).members_by_index
         if self.my_map is not None:
             _serialize_xml_map_with_xml_namespace_input_output_map(
-                serializer,
-                _SCHEMA_XML_MAP_WITH_XML_NAMESPACE_INPUT.members["myMap"],
-                self.my_map,
+                serializer, members[0], self.my_map
             )
 
     @classmethod
@@ -10319,23 +8863,22 @@ class XmlMapWithXmlNamespaceInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_MAP_WITH_XML_NAMESPACE_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["my_map"] = (
                         _deserialize_xml_map_with_xml_namespace_input_output_map(
-                            de,
-                            _SCHEMA_XML_MAP_WITH_XML_NAMESPACE_INPUT.members["myMap"],
+                            de, members[0]
                         )
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_XML_MAP_WITH_XML_NAMESPACE_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -10356,14 +8899,15 @@ class XmlMapWithXmlNamespaceOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_MAP_WITH_XML_NAMESPACE_OUTPUT, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_XML_MAP_WITH_XML_NAMESPACE_OUTPUT), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_MAP_WITH_XML_NAMESPACE_OUTPUT).members_by_index
         if self.my_map is not None:
             _serialize_xml_map_with_xml_namespace_input_output_map(
-                serializer,
-                _SCHEMA_XML_MAP_WITH_XML_NAMESPACE_OUTPUT.members["myMap"],
-                self.my_map,
+                serializer, members[0], self.my_map
             )
 
     @classmethod
@@ -10373,42 +8917,38 @@ class XmlMapWithXmlNamespaceOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_MAP_WITH_XML_NAMESPACE_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["my_map"] = (
                         _deserialize_xml_map_with_xml_namespace_input_output_map(
-                            de,
-                            _SCHEMA_XML_MAP_WITH_XML_NAMESPACE_OUTPUT.members["myMap"],
+                            de, members[0]
                         )
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_XML_MAP_WITH_XML_NAMESPACE_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_MAP_WITH_XML_NAMESPACE = APIOperation(
     input=XmlMapWithXmlNamespaceInput,
     output=XmlMapWithXmlNamespaceOutput,
-    schema=_SCHEMA_XML_MAP_WITH_XML_NAMESPACE,
-    input_schema=_SCHEMA_XML_MAP_WITH_XML_NAMESPACE_INPUT,
-    output_schema=_SCHEMA_XML_MAP_WITH_XML_NAMESPACE_OUTPUT,
+    static_schema=_SCHEMA_XML_MAP_WITH_XML_NAMESPACE,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
 def _serialize_xml_namespaced_list(
     serializer: ShapeSerializer, schema: Schema, value: list[str]
 ) -> None:
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
     with serializer.begin_list(schema, len(value)) as ls:
         for e in value:
             ls.write_string(member_schema, e)
@@ -10418,7 +8958,7 @@ def _deserialize_xml_namespaced_list(
     deserializer: ShapeDeserializer, schema: Schema
 ) -> list[str]:
     result: list[str] = []
-    member_schema = schema.members["member"]
+    member_schema = schema.members_by_index[0]
 
     def _read_value(d: ShapeDeserializer):
         if d.is_null():
@@ -10440,18 +8980,15 @@ class XmlNamespaceNested:
     values: list[str] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_NAMESPACE_NESTED, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_NAMESPACE_NESTED), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_NAMESPACE_NESTED).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_XML_NAMESPACE_NESTED.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.values is not None:
-            _serialize_xml_namespaced_list(
-                serializer, _SCHEMA_XML_NAMESPACE_NESTED.members["values"], self.values
-            )
+            _serialize_xml_namespaced_list(serializer, members[1], self.values)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -10460,23 +8997,21 @@ class XmlNamespaceNested:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_NAMESPACE_NESTED)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_XML_NAMESPACE_NESTED.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["values"] = _deserialize_xml_namespaced_list(
-                        de, _SCHEMA_XML_NAMESPACE_NESTED.members["values"]
-                    )
+                    kwargs["values"] = _deserialize_xml_namespaced_list(de, members[1])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_NAMESPACE_NESTED, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -10487,13 +9022,12 @@ class XmlNamespacesInput:
     nested: XmlNamespaceNested | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_NAMESPACES_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_NAMESPACES_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_NAMESPACES_INPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_XML_NAMESPACES_INPUT.members["nested"], self.nested
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -10502,16 +9036,18 @@ class XmlNamespacesInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_NAMESPACES_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = XmlNamespaceNested.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_NAMESPACES_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -10532,13 +9068,12 @@ class XmlNamespacesOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_NAMESPACES_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_NAMESPACES_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_NAMESPACES_OUTPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_XML_NAMESPACES_OUTPUT.members["nested"], self.nested
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -10547,28 +9082,27 @@ class XmlNamespacesOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_NAMESPACES_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = XmlNamespaceNested.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_NAMESPACES_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_NAMESPACES = APIOperation(
     input=XmlNamespacesInput,
     output=XmlNamespacesOutput,
-    schema=_SCHEMA_XML_NAMESPACES,
-    input_schema=_SCHEMA_XML_NAMESPACES_INPUT,
-    output_schema=_SCHEMA_XML_NAMESPACES_OUTPUT,
+    static_schema=_SCHEMA_XML_NAMESPACES,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -10591,46 +9125,30 @@ class XmlTimestampsInput:
     http_date_on_target: datetime | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_TIMESTAMPS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_TIMESTAMPS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_TIMESTAMPS_INPUT).members_by_index
         if self.normal is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_INPUT.members["normal"], self.normal
-            )
+            serializer.write_timestamp(members[0], self.normal)
 
         if self.date_time is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_INPUT.members["dateTime"], self.date_time
-            )
+            serializer.write_timestamp(members[1], self.date_time)
 
         if self.date_time_on_target is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_INPUT.members["dateTimeOnTarget"],
-                self.date_time_on_target,
-            )
+            serializer.write_timestamp(members[2], self.date_time_on_target)
 
         if self.epoch_seconds is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_INPUT.members["epochSeconds"], self.epoch_seconds
-            )
+            serializer.write_timestamp(members[3], self.epoch_seconds)
 
         if self.epoch_seconds_on_target is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_INPUT.members["epochSecondsOnTarget"],
-                self.epoch_seconds_on_target,
-            )
+            serializer.write_timestamp(members[4], self.epoch_seconds_on_target)
 
         if self.http_date is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_INPUT.members["httpDate"], self.http_date
-            )
+            serializer.write_timestamp(members[5], self.http_date)
 
         if self.http_date_on_target is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_INPUT.members["httpDateOnTarget"],
-                self.http_date_on_target,
-            )
+            serializer.write_timestamp(members[6], self.http_date_on_target)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -10639,48 +9157,36 @@ class XmlTimestampsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_TIMESTAMPS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["normal"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_INPUT.members["normal"]
-                    )
+                    kwargs["normal"] = de.read_timestamp(members[0])
 
                 case 1:
-                    kwargs["date_time"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_INPUT.members["dateTime"]
-                    )
+                    kwargs["date_time"] = de.read_timestamp(members[1])
 
                 case 2:
-                    kwargs["date_time_on_target"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_INPUT.members["dateTimeOnTarget"]
-                    )
+                    kwargs["date_time_on_target"] = de.read_timestamp(members[2])
 
                 case 3:
-                    kwargs["epoch_seconds"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_INPUT.members["epochSeconds"]
-                    )
+                    kwargs["epoch_seconds"] = de.read_timestamp(members[3])
 
                 case 4:
-                    kwargs["epoch_seconds_on_target"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_INPUT.members["epochSecondsOnTarget"]
-                    )
+                    kwargs["epoch_seconds_on_target"] = de.read_timestamp(members[4])
 
                 case 5:
-                    kwargs["http_date"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_INPUT.members["httpDate"]
-                    )
+                    kwargs["http_date"] = de.read_timestamp(members[5])
 
                 case 6:
-                    kwargs["http_date_on_target"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_INPUT.members["httpDateOnTarget"]
-                    )
+                    kwargs["http_date_on_target"] = de.read_timestamp(members[6])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_TIMESTAMPS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -10713,47 +9219,30 @@ class XmlTimestampsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_TIMESTAMPS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_TIMESTAMPS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_TIMESTAMPS_OUTPUT).members_by_index
         if self.normal is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["normal"], self.normal
-            )
+            serializer.write_timestamp(members[0], self.normal)
 
         if self.date_time is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["dateTime"], self.date_time
-            )
+            serializer.write_timestamp(members[1], self.date_time)
 
         if self.date_time_on_target is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["dateTimeOnTarget"],
-                self.date_time_on_target,
-            )
+            serializer.write_timestamp(members[2], self.date_time_on_target)
 
         if self.epoch_seconds is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["epochSeconds"],
-                self.epoch_seconds,
-            )
+            serializer.write_timestamp(members[3], self.epoch_seconds)
 
         if self.epoch_seconds_on_target is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["epochSecondsOnTarget"],
-                self.epoch_seconds_on_target,
-            )
+            serializer.write_timestamp(members[4], self.epoch_seconds_on_target)
 
         if self.http_date is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["httpDate"], self.http_date
-            )
+            serializer.write_timestamp(members[5], self.http_date)
 
         if self.http_date_on_target is not None:
-            serializer.write_timestamp(
-                _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["httpDateOnTarget"],
-                self.http_date_on_target,
-            )
+            serializer.write_timestamp(members[6], self.http_date_on_target)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -10762,60 +9251,45 @@ class XmlTimestampsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_TIMESTAMPS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["normal"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["normal"]
-                    )
+                    kwargs["normal"] = de.read_timestamp(members[0])
 
                 case 1:
-                    kwargs["date_time"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["dateTime"]
-                    )
+                    kwargs["date_time"] = de.read_timestamp(members[1])
 
                 case 2:
-                    kwargs["date_time_on_target"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["dateTimeOnTarget"]
-                    )
+                    kwargs["date_time_on_target"] = de.read_timestamp(members[2])
 
                 case 3:
-                    kwargs["epoch_seconds"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["epochSeconds"]
-                    )
+                    kwargs["epoch_seconds"] = de.read_timestamp(members[3])
 
                 case 4:
-                    kwargs["epoch_seconds_on_target"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["epochSecondsOnTarget"]
-                    )
+                    kwargs["epoch_seconds_on_target"] = de.read_timestamp(members[4])
 
                 case 5:
-                    kwargs["http_date"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["httpDate"]
-                    )
+                    kwargs["http_date"] = de.read_timestamp(members[5])
 
                 case 6:
-                    kwargs["http_date_on_target"] = de.read_timestamp(
-                        _SCHEMA_XML_TIMESTAMPS_OUTPUT.members["httpDateOnTarget"]
-                    )
+                    kwargs["http_date_on_target"] = de.read_timestamp(members[6])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_TIMESTAMPS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_TIMESTAMPS = APIOperation(
     input=XmlTimestampsInput,
     output=XmlTimestampsOutput,
-    schema=_SCHEMA_XML_TIMESTAMPS,
-    input_schema=_SCHEMA_XML_TIMESTAMPS_INPUT,
-    output_schema=_SCHEMA_XML_TIMESTAMPS_OUTPUT,
+    static_schema=_SCHEMA_XML_TIMESTAMPS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 
@@ -10840,52 +9314,33 @@ class XmlNestedUnionStruct:
     double_value: float | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_NESTED_UNION_STRUCT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_NESTED_UNION_STRUCT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_NESTED_UNION_STRUCT).members_by_index
         if self.string_value is not None:
-            serializer.write_string(
-                _SCHEMA_XML_NESTED_UNION_STRUCT.members["stringValue"],
-                self.string_value,
-            )
+            serializer.write_string(members[0], self.string_value)
 
         if self.boolean_value is not None:
-            serializer.write_boolean(
-                _SCHEMA_XML_NESTED_UNION_STRUCT.members["booleanValue"],
-                self.boolean_value,
-            )
+            serializer.write_boolean(members[1], self.boolean_value)
 
         if self.byte_value is not None:
-            serializer.write_byte(
-                _SCHEMA_XML_NESTED_UNION_STRUCT.members["byteValue"], self.byte_value
-            )
+            serializer.write_byte(members[2], self.byte_value)
 
         if self.short_value is not None:
-            serializer.write_short(
-                _SCHEMA_XML_NESTED_UNION_STRUCT.members["shortValue"], self.short_value
-            )
+            serializer.write_short(members[3], self.short_value)
 
         if self.integer_value is not None:
-            serializer.write_integer(
-                _SCHEMA_XML_NESTED_UNION_STRUCT.members["integerValue"],
-                self.integer_value,
-            )
+            serializer.write_integer(members[4], self.integer_value)
 
         if self.long_value is not None:
-            serializer.write_long(
-                _SCHEMA_XML_NESTED_UNION_STRUCT.members["longValue"], self.long_value
-            )
+            serializer.write_long(members[5], self.long_value)
 
         if self.float_value is not None:
-            serializer.write_float(
-                _SCHEMA_XML_NESTED_UNION_STRUCT.members["floatValue"], self.float_value
-            )
+            serializer.write_float(members[6], self.float_value)
 
         if self.double_value is not None:
-            serializer.write_double(
-                _SCHEMA_XML_NESTED_UNION_STRUCT.members["doubleValue"],
-                self.double_value,
-            )
+            serializer.write_double(members[7], self.double_value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -10894,53 +9349,39 @@ class XmlNestedUnionStruct:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_NESTED_UNION_STRUCT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["string_value"] = de.read_string(
-                        _SCHEMA_XML_NESTED_UNION_STRUCT.members["stringValue"]
-                    )
+                    kwargs["string_value"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["boolean_value"] = de.read_boolean(
-                        _SCHEMA_XML_NESTED_UNION_STRUCT.members["booleanValue"]
-                    )
+                    kwargs["boolean_value"] = de.read_boolean(members[1])
 
                 case 2:
-                    kwargs["byte_value"] = de.read_byte(
-                        _SCHEMA_XML_NESTED_UNION_STRUCT.members["byteValue"]
-                    )
+                    kwargs["byte_value"] = de.read_byte(members[2])
 
                 case 3:
-                    kwargs["short_value"] = de.read_short(
-                        _SCHEMA_XML_NESTED_UNION_STRUCT.members["shortValue"]
-                    )
+                    kwargs["short_value"] = de.read_short(members[3])
 
                 case 4:
-                    kwargs["integer_value"] = de.read_integer(
-                        _SCHEMA_XML_NESTED_UNION_STRUCT.members["integerValue"]
-                    )
+                    kwargs["integer_value"] = de.read_integer(members[4])
 
                 case 5:
-                    kwargs["long_value"] = de.read_long(
-                        _SCHEMA_XML_NESTED_UNION_STRUCT.members["longValue"]
-                    )
+                    kwargs["long_value"] = de.read_long(members[5])
 
                 case 6:
-                    kwargs["float_value"] = de.read_float(
-                        _SCHEMA_XML_NESTED_UNION_STRUCT.members["floatValue"]
-                    )
+                    kwargs["float_value"] = de.read_float(members[6])
 
                 case 7:
-                    kwargs["double_value"] = de.read_double(
-                        _SCHEMA_XML_NESTED_UNION_STRUCT.members["doubleValue"]
-                    )
+                    kwargs["double_value"] = de.read_double(members[7])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_NESTED_UNION_STRUCT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -10949,20 +9390,16 @@ class XmlUnionShapeStringValue:
     value: str
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNION_SHAPE, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNION_SHAPE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_string(
-            _SCHEMA_XML_UNION_SHAPE.members["stringValue"], self.value
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        serializer.write_string(members[0], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
-        return cls(
-            value=deserializer.read_string(
-                _SCHEMA_XML_UNION_SHAPE.members["stringValue"]
-            )
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        return cls(value=deserializer.read_string(members[0]))
 
 
 @dataclass
@@ -10970,20 +9407,16 @@ class XmlUnionShapeBooleanValue:
     value: bool
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNION_SHAPE, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNION_SHAPE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_boolean(
-            _SCHEMA_XML_UNION_SHAPE.members["booleanValue"], self.value
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        serializer.write_boolean(members[1], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
-        return cls(
-            value=deserializer.read_boolean(
-                _SCHEMA_XML_UNION_SHAPE.members["booleanValue"]
-            )
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        return cls(value=deserializer.read_boolean(members[1]))
 
 
 @dataclass
@@ -10991,16 +9424,16 @@ class XmlUnionShapeByteValue:
     value: int
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNION_SHAPE, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNION_SHAPE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_byte(_SCHEMA_XML_UNION_SHAPE.members["byteValue"], self.value)
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        serializer.write_byte(members[2], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
-        return cls(
-            value=deserializer.read_byte(_SCHEMA_XML_UNION_SHAPE.members["byteValue"])
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        return cls(value=deserializer.read_byte(members[2]))
 
 
 @dataclass
@@ -11008,18 +9441,16 @@ class XmlUnionShapeShortValue:
     value: int
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNION_SHAPE, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNION_SHAPE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_short(
-            _SCHEMA_XML_UNION_SHAPE.members["shortValue"], self.value
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        serializer.write_short(members[3], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
-        return cls(
-            value=deserializer.read_short(_SCHEMA_XML_UNION_SHAPE.members["shortValue"])
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        return cls(value=deserializer.read_short(members[3]))
 
 
 @dataclass
@@ -11027,20 +9458,16 @@ class XmlUnionShapeIntegerValue:
     value: int
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNION_SHAPE, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNION_SHAPE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_integer(
-            _SCHEMA_XML_UNION_SHAPE.members["integerValue"], self.value
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        serializer.write_integer(members[4], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
-        return cls(
-            value=deserializer.read_integer(
-                _SCHEMA_XML_UNION_SHAPE.members["integerValue"]
-            )
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        return cls(value=deserializer.read_integer(members[4]))
 
 
 @dataclass
@@ -11048,16 +9475,16 @@ class XmlUnionShapeLongValue:
     value: int
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNION_SHAPE, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNION_SHAPE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_long(_SCHEMA_XML_UNION_SHAPE.members["longValue"], self.value)
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        serializer.write_long(members[5], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
-        return cls(
-            value=deserializer.read_long(_SCHEMA_XML_UNION_SHAPE.members["longValue"])
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        return cls(value=deserializer.read_long(members[5]))
 
 
 @dataclass
@@ -11065,18 +9492,16 @@ class XmlUnionShapeFloatValue:
     value: float
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNION_SHAPE, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNION_SHAPE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_float(
-            _SCHEMA_XML_UNION_SHAPE.members["floatValue"], self.value
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        serializer.write_float(members[6], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
-        return cls(
-            value=deserializer.read_float(_SCHEMA_XML_UNION_SHAPE.members["floatValue"])
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        return cls(value=deserializer.read_float(members[6]))
 
 
 @dataclass
@@ -11084,20 +9509,16 @@ class XmlUnionShapeDoubleValue:
     value: float
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNION_SHAPE, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNION_SHAPE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_double(
-            _SCHEMA_XML_UNION_SHAPE.members["doubleValue"], self.value
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        serializer.write_double(members[7], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
-        return cls(
-            value=deserializer.read_double(
-                _SCHEMA_XML_UNION_SHAPE.members["doubleValue"]
-            )
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        return cls(value=deserializer.read_double(members[7]))
 
 
 @dataclass
@@ -11105,12 +9526,11 @@ class XmlUnionShapeUnionValue:
     value: "XmlUnionShape"
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNION_SHAPE, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNION_SHAPE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_struct(
-            _SCHEMA_XML_UNION_SHAPE.members["unionValue"], self.value
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        serializer.write_struct(members[8], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -11122,12 +9542,11 @@ class XmlUnionShapeStructValue:
     value: XmlNestedUnionStruct
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNION_SHAPE, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNION_SHAPE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_struct(
-            _SCHEMA_XML_UNION_SHAPE.members["structValue"], self.value
-        )
+        members = hydrate(_SCHEMA_XML_UNION_SHAPE).members_by_index
+        serializer.write_struct(members[9], self.value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -11178,7 +9597,7 @@ class _XmlUnionShapeDeserializer:
 
     def deserialize(self, deserializer: ShapeDeserializer) -> XmlUnionShape:
         self._result = None
-        deserializer.read_struct(_SCHEMA_XML_UNION_SHAPE, self._consumer)
+        deserializer.read_struct(hydrate(_SCHEMA_XML_UNION_SHAPE), self._consumer)
 
         if self._result is None:
             raise SerializationError(
@@ -11239,19 +9658,19 @@ class RecursiveShapesInputOutputNested1:
     nested: "RecursiveShapesInputOutputNested2 | None" = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1
+        ).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1.members["nested"],
-                self.nested,
-            )
+            serializer.write_struct(members[1], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -11260,23 +9679,21 @@ class RecursiveShapesInputOutputNested1:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
                     kwargs["nested"] = RecursiveShapesInputOutputNested2.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -11289,21 +9706,19 @@ class RecursiveShapesInputOutputNested2:
     recursive_member: "RecursiveShapesInputOutputNested1 | None" = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, self)
+        serializer.write_struct(
+            hydrate(_SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2), self
+        )
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(
+            _SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2
+        ).members_by_index
         if self.bar is not None:
-            serializer.write_string(
-                _SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2.members["bar"], self.bar
-            )
+            serializer.write_string(members[0], self.bar)
 
         if self.recursive_member is not None:
-            serializer.write_struct(
-                _SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2.members[
-                    "recursiveMember"
-                ],
-                self.recursive_member,
-            )
+            serializer.write_struct(members[1], self.recursive_member)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -11312,13 +9727,13 @@ class RecursiveShapesInputOutputNested2:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["bar"] = de.read_string(
-                        _SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2.members["bar"]
-                    )
+                    kwargs["bar"] = de.read_string(members[0])
 
                 case 1:
                     kwargs["recursive_member"] = (
@@ -11326,11 +9741,9 @@ class RecursiveShapesInputOutputNested2:
                     )
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -11341,13 +9754,12 @@ class XmlUnionsInput:
     union_value: "XmlUnionShape | None" = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNIONS_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNIONS_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_UNIONS_INPUT).members_by_index
         if self.union_value is not None:
-            serializer.write_struct(
-                _SCHEMA_XML_UNIONS_INPUT.members["unionValue"], self.union_value
-            )
+            serializer.write_struct(members[0], self.union_value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -11356,16 +9768,18 @@ class XmlUnionsInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_UNIONS_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["union_value"] = _XmlUnionShapeDeserializer().deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_UNIONS_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -11386,13 +9800,12 @@ class XmlUnionsOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_XML_UNIONS_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_XML_UNIONS_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_XML_UNIONS_OUTPUT).members_by_index
         if self.union_value is not None:
-            serializer.write_struct(
-                _SCHEMA_XML_UNIONS_OUTPUT.members["unionValue"], self.union_value
-            )
+            serializer.write_struct(members[0], self.union_value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -11401,16 +9814,18 @@ class XmlUnionsOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_XML_UNIONS_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["union_value"] = _XmlUnionShapeDeserializer().deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_XML_UNIONS_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -11421,13 +9836,12 @@ class RecursiveShapesInput:
     nested: "RecursiveShapesInputOutputNested1 | None" = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_RECURSIVE_SHAPES_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_RECURSIVE_SHAPES_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_RECURSIVE_SHAPES_INPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_RECURSIVE_SHAPES_INPUT.members["nested"], self.nested
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -11436,16 +9850,18 @@ class RecursiveShapesInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_RECURSIVE_SHAPES_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = RecursiveShapesInputOutputNested1.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_RECURSIVE_SHAPES_INPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -11466,13 +9882,12 @@ class RecursiveShapesOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_RECURSIVE_SHAPES_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_RECURSIVE_SHAPES_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_RECURSIVE_SHAPES_OUTPUT).members_by_index
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_RECURSIVE_SHAPES_OUTPUT.members["nested"], self.nested
-            )
+            serializer.write_struct(members[0], self.nested)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -11481,37 +9896,33 @@ class RecursiveShapesOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_RECURSIVE_SHAPES_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
                     kwargs["nested"] = RecursiveShapesInputOutputNested1.deserialize(de)
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_RECURSIVE_SHAPES_OUTPUT, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 XML_UNIONS = APIOperation(
     input=XmlUnionsInput,
     output=XmlUnionsOutput,
-    schema=_SCHEMA_XML_UNIONS,
-    input_schema=_SCHEMA_XML_UNIONS_INPUT,
-    output_schema=_SCHEMA_XML_UNIONS_OUTPUT,
+    static_schema=_SCHEMA_XML_UNIONS,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )
 
 RECURSIVE_SHAPES = APIOperation(
     input=RecursiveShapesInput,
     output=RecursiveShapesOutput,
-    schema=_SCHEMA_RECURSIVE_SHAPES,
-    input_schema=_SCHEMA_RECURSIVE_SHAPES_INPUT,
-    output_schema=_SCHEMA_RECURSIVE_SHAPES_OUTPUT,
+    static_schema=_SCHEMA_RECURSIVE_SHAPES,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )

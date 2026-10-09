@@ -102,8 +102,19 @@ public final class MemberSerializerGenerator extends ShapeVisitor.DataShapeVisit
         } else if (parent.isMapShape()) {
             writer.writeInline("value_schema");
         } else {
-            writer.writeInline("${schema:T}.members[${member:S}]");
+            writer.writeInline("members[$L]", Integer.toString(memberIndex(parent)));
         }
+    }
+
+    private int memberIndex(Shape parent) {
+        int index = 0;
+        for (var m : parent.members()) {
+            if (m.getMemberName().equals(member.getMemberName())) {
+                return index;
+            }
+            index++;
+        }
+        throw new CodegenException("Member not found in container: " + member.getId());
     }
 
     @Override

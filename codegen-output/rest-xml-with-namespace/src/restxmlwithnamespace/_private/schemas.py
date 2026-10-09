@@ -2,407 +2,364 @@
 
 from types import MappingProxyType
 
-from smithy_core.prelude import (
-    BOOLEAN,
-    BYTE,
-    DOUBLE,
-    FLOAT,
-    INTEGER,
-    LONG,
-    SHORT,
-    STRING,
-)
-from smithy_core.schemas import Schema
-from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import Trait
 
+n0 = "aws.protocoltests.restxml.xmlns"
+_NWN = "NestedWithNamespace"
+_aF = "attrField"
+_sN = "smithy.api#xmlName"
+_xN = "xsi:someName"
+_sA = "smithy.api#xmlAttribute"
+_SSPI = "SimpleScalarPropertiesInput"
+_sSI = "smithy.synthetic#originalShapeId"
+_aSSPR = "aws.protocoltests.restxml.xmlns#SimpleScalarPropertiesRequest"
+_f = "foo"
+_sH = "smithy.api#httpHeader"
+_XF = "X-Foo"
+_sV = "stringValue"
+_tBV = "trueBooleanValue"
+_fBV = "falseBooleanValue"
+_bV = "byteValue"
+_sVh = "shortValue"
+_iV = "integerValue"
+_lV = "longValue"
+_fV = "floatValue"
+_N = "Nested"
+_sNm = "smithy.api#xmlNamespace"
+_dV = "doubleValue"
+_DD = "DoubleDribble"
+_SSPO = "SimpleScalarPropertiesOutput"
+_aSSPRw = "aws.protocoltests.restxml.xmlns#SimpleScalarPropertiesResponse"
+_SSP = "SimpleScalarProperties"
+_s = "smithy.api#http"
+_RXWN = "RestXmlWithNamespace"
+_a = "aws.auth#sigv4"
+_aX = "aws.protocols#restXml"
+_sB = "smithy.rules#endpointBdd"
+_aw = "aws.api#service"
 
-NESTED_WITH_NAMESPACE = Schema.collection(
-    id=ShapeID("aws.protocoltests.restxml.xmlns#NestedWithNamespace"),
-    members={
-        "attrField": {
-            "target": STRING,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#xmlName"), value="xsi:someName"),
-                Trait.new(id=ShapeID("smithy.api#xmlAttribute")),
-            ],
-        }
-    },
-)
+NESTED_WITH_NAMESPACE = (18, n0, _NWN, 0, (_aF,), ((3, {_sN: _xN, _sA: None}),))
 
-SIMPLE_SCALAR_PROPERTIES_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restxml.xmlns#SimpleScalarPropertiesInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restxml.xmlns#SimpleScalarPropertiesRequest",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "stringValue": {"target": STRING},
-        "trueBooleanValue": {"target": BOOLEAN},
-        "falseBooleanValue": {"target": BOOLEAN},
-        "byteValue": {"target": BYTE},
-        "shortValue": {"target": SHORT},
-        "integerValue": {"target": INTEGER},
-        "longValue": {"target": LONG},
-        "floatValue": {"target": FLOAT},
-        "Nested": {
-            "target": NESTED_WITH_NAMESPACE,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#xmlNamespace"),
-                    value=MappingProxyType(
-                        {"prefix": "xsi", "uri": "https://example.com"}
-                    ),
-                )
-            ],
-        },
-        "doubleValue": {
-            "target": DOUBLE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#xmlName"), value="DoubleDribble")
-            ],
-        },
-    },
-)
-
-SIMPLE_SCALAR_PROPERTIES_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restxml.xmlns#SimpleScalarPropertiesOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="aws.protocoltests.restxml.xmlns#SimpleScalarPropertiesResponse",
-        )
-    ],
-    members={
-        "foo": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Foo")],
-        },
-        "stringValue": {"target": STRING},
-        "trueBooleanValue": {"target": BOOLEAN},
-        "falseBooleanValue": {"target": BOOLEAN},
-        "byteValue": {"target": BYTE},
-        "shortValue": {"target": SHORT},
-        "integerValue": {"target": INTEGER},
-        "longValue": {"target": LONG},
-        "floatValue": {"target": FLOAT},
-        "Nested": {
-            "target": NESTED_WITH_NAMESPACE,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#xmlNamespace"),
-                    value=MappingProxyType(
-                        {"prefix": "xsi", "uri": "https://example.com"}
-                    ),
-                )
-            ],
-        },
-        "doubleValue": {
-            "target": DOUBLE,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#xmlName"), value="DoubleDribble")
-            ],
-        },
-    },
-)
-
-SIMPLE_SCALAR_PROPERTIES = Schema(
-    id=ShapeID("aws.protocoltests.restxml.xmlns#SimpleScalarProperties"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.api#http"),
-            value=MappingProxyType({"uri": "/SimpleScalarProperties", "method": "PUT"}),
-        )
-    ],
-)
-
-REST_XML_WITH_NAMESPACE = Schema(
-    id=ShapeID("aws.protocoltests.restxml.xmlns#RestXmlWithNamespace"),
-    shape_type=ShapeType.SERVICE,
-    traits=[
-        Trait.new(
-            id=ShapeID("aws.auth#sigv4"),
-            value=MappingProxyType({"name": "restxmlwithnamespace"}),
+SIMPLE_SCALAR_PROPERTIES_INPUT = (
+    18,
+    n0,
+    _SSPI,
+    {_sSI: _aSSPR},
+    (_f, _sV, _tBV, _fBV, _bV, _sVh, _iV, _lV, _fV, _N, _dV),
+    (
+        (3, {_sH: _XF}),
+        (3, 0),
+        (2, 0),
+        (2, 0),
+        (5, 0),
+        (6, 0),
+        (7, 0),
+        (8, 0),
+        (9, 0),
+        (
+            NESTED_WITH_NAMESPACE,
+            {_sNm: MappingProxyType({"prefix": "xsi", "uri": "https://example.com"})},
         ),
-        Trait.new(id=ShapeID("aws.protocols#restXml")),
-        Trait.new(
-            id=ShapeID("smithy.rules#endpointBdd"),
-            value=MappingProxyType(
-                {
-                    "version": "1.1",
-                    "parameters": MappingProxyType(
+        (10, {_sN: _DD}),
+    ),
+)
+
+SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
+    18,
+    n0,
+    _SSPO,
+    {_sSI: _aSSPRw},
+    (_f, _sV, _tBV, _fBV, _bV, _sVh, _iV, _lV, _fV, _N, _dV),
+    (
+        (3, {_sH: _XF}),
+        (3, 0),
+        (2, 0),
+        (2, 0),
+        (5, 0),
+        (6, 0),
+        (7, 0),
+        (8, 0),
+        (9, 0),
+        (
+            NESTED_WITH_NAMESPACE,
+            {_sNm: MappingProxyType({"prefix": "xsi", "uri": "https://example.com"})},
+        ),
+        (10, {_sN: _DD}),
+    ),
+)
+
+SIMPLE_SCALAR_PROPERTIES = (
+    23,
+    n0,
+    _SSP,
+    {_s: MappingProxyType({"uri": "/SimpleScalarProperties", "method": "PUT"})},
+    SIMPLE_SCALAR_PROPERTIES_INPUT,
+    SIMPLE_SCALAR_PROPERTIES_OUTPUT,
+    (),
+)
+
+REST_XML_WITH_NAMESPACE = (
+    21,
+    n0,
+    _RXWN,
+    {
+        _a: MappingProxyType({"name": "restxmlwithnamespace"}),
+        _aX: None,
+        _sB: MappingProxyType(
+            {
+                "version": "1.1",
+                "parameters": MappingProxyType(
+                    {
+                        "Region": MappingProxyType(
+                            {
+                                "builtIn": "AWS::Region",
+                                "required": False,
+                                "documentation": "The AWS Region. This is a default regional AWS endpointRuleSet.",
+                                "type": "string",
+                            }
+                        ),
+                        "UseDualStack": MappingProxyType(
+                            {
+                                "builtIn": "AWS::UseDualStack",
+                                "required": True,
+                                "default": False,
+                                "documentation": "Whether to use dual-stack.",
+                                "type": "boolean",
+                            }
+                        ),
+                        "UseFIPS": MappingProxyType(
+                            {
+                                "builtIn": "AWS::UseFIPS",
+                                "required": True,
+                                "default": False,
+                                "documentation": "Whether to use FIPS-compliant regional endpoint.",
+                                "type": "boolean",
+                            }
+                        ),
+                        "Endpoint": MappingProxyType(
+                            {
+                                "builtIn": "SDK::Endpoint",
+                                "required": False,
+                                "documentation": "Override the endpoint.",
+                                "type": "string",
+                            }
+                        ),
+                    }
+                ),
+                "conditions": (
+                    MappingProxyType(
                         {
-                            "Region": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::Region",
-                                    "required": False,
-                                    "documentation": "The AWS Region. This is a default regional AWS endpointRuleSet.",
-                                    "type": "string",
-                                }
-                            ),
-                            "UseDualStack": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseDualStack",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use dual-stack.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "UseFIPS": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseFIPS",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use FIPS-compliant regional endpoint.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "Endpoint": MappingProxyType(
-                                {
-                                    "builtIn": "SDK::Endpoint",
-                                    "required": False,
-                                    "documentation": "Override the endpoint.",
-                                    "type": "string",
-                                }
+                            "fn": "isSet",
+                            "argv": (MappingProxyType({"ref": "Endpoint"}),),
+                        }
+                    ),
+                    MappingProxyType(
+                        {"fn": "isSet", "argv": (MappingProxyType({"ref": "Region"}),)}
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "aws.partition",
+                            "argv": (MappingProxyType({"ref": "Region"}),),
+                            "assign": "PartitionResult",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (MappingProxyType({"ref": "UseFIPS"}), True),
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (MappingProxyType({"ref": "UseDualStack"}), True),
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (
+                                MappingProxyType(
+                                    {
+                                        "fn": "getAttr",
+                                        "argv": (
+                                            MappingProxyType(
+                                                {"ref": "PartitionResult"}
+                                            ),
+                                            "supportsDualStack",
+                                        ),
+                                    }
+                                ),
+                                True,
                             ),
                         }
                     ),
-                    "conditions": (
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Endpoint"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "aws.partition",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                                "assign": "PartitionResult",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (MappingProxyType({"ref": "UseFIPS"}), True),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType({"ref": "UseDualStack"}),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsDualStack",
+                    MappingProxyType(
+                        {
+                            "fn": "booleanEquals",
+                            "argv": (
+                                MappingProxyType(
+                                    {
+                                        "fn": "getAttr",
+                                        "argv": (
+                                            MappingProxyType(
+                                                {"ref": "PartitionResult"}
                                             ),
-                                        }
-                                    ),
-                                    True,
+                                            "supportsFIPS",
+                                        ),
+                                    }
                                 ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsFIPS",
-                                            ),
-                                        }
-                                    ),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "stringEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "name",
-                                            ),
-                                        }
-                                    ),
-                                    "aws-us-gov",
-                                ),
-                            }
-                        ),
+                                True,
+                            ),
+                        }
                     ),
-                    "results": (
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: FIPS and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Dualstack and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
+                    MappingProxyType(
+                        {
+                            "fn": "stringEquals",
+                            "argv": (
+                                MappingProxyType(
                                     {
-                                        "url": MappingProxyType({"ref": "Endpoint"}),
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
+                                        "fn": "getAttr",
+                                        "argv": (
+                                            MappingProxyType(
+                                                {"ref": "PartitionResult"}
+                                            ),
+                                            "name",
+                                        ),
                                     }
                                 ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restxmlwithnamespace-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS and DualStack are enabled, but this partition does not support one or both",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restxmlwithnamespace.{Region}.amazonaws.com",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restxmlwithnamespace-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS is enabled but this partition does not support FIPS",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restxmlwithnamespace.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "DualStack is enabled but this partition does not support DualStack",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restxmlwithnamespace.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Missing Region",
-                                "type": "error",
-                            }
-                        ),
+                                "aws-us-gov",
+                            ),
+                        }
                     ),
-                    "root": 2,
-                    "nodeCount": 14,
-                    "nodes": "/////wAAAAH/////AAAAAAAAAA0AAAADAAAAAQAAAAQF9eEMAAAAAgAAAAUF9eEMAAAAAwAAAAgAAAAGAAAABAAAAAcF9eELAAAABQX14QkF9eEKAAAABAAAAAsAAAAJAAAABgAAAAoF9eEIAAAABwX14QYF9eEHAAAABQAAAAwF9eEFAAAABgX14QQF9eEFAAAAAwX14QEAAAAOAAAABAX14QIF9eED",
-                }
-            ),
+                ),
+                "results": (
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "Invalid Configuration: FIPS and custom endpoint are not supported",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "Invalid Configuration: Dualstack and custom endpoint are not supported",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": MappingProxyType({"ref": "Endpoint"}),
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://restxmlwithnamespace-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "FIPS and DualStack are enabled, but this partition does not support one or both",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://restxmlwithnamespace.{Region}.amazonaws.com",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://restxmlwithnamespace-fips.{Region}.{PartitionResult#dnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "FIPS is enabled but this partition does not support FIPS",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://restxmlwithnamespace.{Region}.{PartitionResult#dualStackDnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "DualStack is enabled but this partition does not support DualStack",
+                            "type": "error",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": "https://restxmlwithnamespace.{Region}.{PartitionResult#dnsSuffix}",
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
+                    ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "Invalid Configuration: Missing Region",
+                            "type": "error",
+                        }
+                    ),
+                ),
+                "root": 2,
+                "nodeCount": 14,
+                "nodes": "/////wAAAAH/////AAAAAAAAAA0AAAADAAAAAQAAAAQF9eEMAAAAAgAAAAUF9eEMAAAAAwAAAAgAAAAGAAAABAAAAAcF9eELAAAABQX14QkF9eEKAAAABAAAAAsAAAAJAAAABgAAAAoF9eEIAAAABwX14QYF9eEHAAAABQAAAAwF9eEFAAAABgX14QQF9eEFAAAAAwX14QEAAAAOAAAABAX14QIF9eED",
+            }
         ),
-        Trait.new(
-            id=ShapeID("aws.api#service"),
-            value=MappingProxyType({"sdkId": "Rest Xml Protocol Namespace"}),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.api#xmlNamespace"),
-            value=MappingProxyType({"uri": "https://example.com"}),
-        ),
-    ],
+        _aw: MappingProxyType({"sdkId": "Rest Xml Protocol Namespace"}),
+        _sNm: MappingProxyType({"uri": "https://example.com"}),
+    },
 )

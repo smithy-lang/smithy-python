@@ -2,989 +2,828 @@
 
 from types import MappingProxyType
 
-from smithy_core.prelude import (
-    BLOB,
-    BOOLEAN,
-    BYTE,
-    DOUBLE,
-    FLOAT,
-    INTEGER,
-    LONG,
-    SHORT,
-    STRING,
-    TIMESTAMP,
-    UNIT,
-)
-from smithy_core.schemas import Schema
-from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import Trait
-
-
-VALIDATION_EXCEPTION_FIELD = Schema.collection(
-    id=ShapeID("smithy.framework#ValidationExceptionField"),
-    members={
-        "path": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#required"))],
-        },
-        "message": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#required"))],
-        },
-    },
-)
-
-VALIDATION_EXCEPTION_FIELD_LIST = Schema.collection(
-    id=ShapeID("smithy.framework#ValidationExceptionFieldList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": VALIDATION_EXCEPTION_FIELD}},
-)
-
-VALIDATION_EXCEPTION = Schema.collection(
-    id=ShapeID("smithy.framework#ValidationException"),
-    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
-    members={
-        "message": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#required"))],
-        },
-        "fieldList": {"target": VALIDATION_EXCEPTION_FIELD_LIST},
-    },
-)
-
-CLIENT_OPTIONAL_DEFAULTS = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#ClientOptionalDefaults"),
-    members={
-        "member": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        }
-    },
-)
-
-COMPLEX_NESTED_ERROR_DATA = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#ComplexNestedErrorData"),
-    members={"Foo": {"target": STRING}},
-)
-
-COMPLEX_ERROR = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#ComplexError"),
-    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
-    members={
-        "TopLevel": {"target": STRING},
-        "Nested": {"target": COMPLEX_NESTED_ERROR_DATA},
-    },
-)
-
-TEST_ENUM = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#TestEnum"),
-    shape_type=ShapeType.ENUM,
-    members={"FOO": {"target": UNIT}, "BAR": {"target": UNIT}, "BAZ": {"target": UNIT}},
-)
-
-TEST_INT_ENUM = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#TestIntEnum"),
-    shape_type=ShapeType.INT_ENUM,
-    members={"ONE": {"target": UNIT}, "TWO": {"target": UNIT}},
-)
-
-TEST_STRING_LIST = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#TestStringList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING}},
-)
-
-TEST_STRING_MAP = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#TestStringMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
-)
-
-DEFAULTS = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#Defaults"),
-    members={
-        "defaultString": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="hi")],
-        },
-        "defaultBoolean": {
-            "target": BOOLEAN,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=True)],
-        },
-        "defaultList": {
-            "target": TEST_STRING_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=())],
-        },
-        "defaultTimestamp": {
-            "target": TIMESTAMP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "defaultBlob": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="YWJj")],
-        },
-        "defaultByte": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "defaultShort": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "defaultInteger": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=10)],
-        },
-        "defaultLong": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=100)],
-        },
-        "defaultFloat": {
-            "target": FLOAT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1.0)],
-        },
-        "defaultDouble": {
-            "target": DOUBLE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1.0)],
-        },
-        "defaultMap": {
-            "target": TEST_STRING_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"))],
-        },
-        "defaultEnum": {
-            "target": TEST_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="FOO")],
-        },
-        "defaultIntEnum": {
-            "target": TEST_INT_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "emptyString": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="")],
-        },
-        "falseBoolean": {
-            "target": BOOLEAN,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=False)],
-        },
-        "emptyBlob": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="")],
-        },
-        "zeroByte": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroShort": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroInteger": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroLong": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroFloat": {
-            "target": FLOAT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0.0)],
-        },
-        "zeroDouble": {
-            "target": DOUBLE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0.0)],
-        },
-    },
-)
-
-DENSE_BOOLEAN_MAP = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#DenseBooleanMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": BOOLEAN}},
-)
-
-DENSE_NUMBER_MAP = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#DenseNumberMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": INTEGER}},
-)
-
-STRING_SET = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#StringSet"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING}},
-)
-
-DENSE_SET_MAP = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#DenseSetMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING_SET}},
-)
-
-DENSE_STRING_MAP = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#DenseStringMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
-)
-
-GREETING_STRUCT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#GreetingStruct"),
-    members={"hi": {"target": STRING}},
-)
-
-DENSE_STRUCT_MAP = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#DenseStructMap"),
-    shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": GREETING_STRUCT}},
-)
-
-EMPTY_INPUT_OUTPUT_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#EmptyInputOutputInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#EmptyStructure",
-        )
-    ],
-)
-
-EMPTY_INPUT_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#EmptyInputOutputOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#EmptyStructure",
-        )
-    ],
-)
-
-EMPTY_INPUT_OUTPUT = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#EmptyInputOutput"),
-    shape_type=ShapeType.OPERATION,
-)
-
-FLOAT16_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#Float16Input"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-FLOAT16_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#Float16Output"),
-    members={"value": {"target": DOUBLE}},
-)
-
-FLOAT16 = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#Float16"), shape_type=ShapeType.OPERATION
-)
-
-FRACTIONAL_SECONDS_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#FractionalSecondsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-DATE_TIME = Schema(
-    id=ShapeID("smithy.protocoltests.shared#DateTime"),
-    shape_type=ShapeType.TIMESTAMP,
-    traits=[Trait.new(id=ShapeID("smithy.api#timestampFormat"), value="date-time")],
-)
-
-FRACTIONAL_SECONDS_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#FractionalSecondsOutput"),
-    members={"datetime": {"target": DATE_TIME}},
-)
-
-FRACTIONAL_SECONDS = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#FractionalSeconds"),
-    shape_type=ShapeType.OPERATION,
-)
-
-GREETING_WITH_ERRORS_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#GreetingWithErrorsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-GREETING_WITH_ERRORS_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#GreetingWithErrorsOutput"),
-    members={"greeting": {"target": STRING}},
-)
-
-INVALID_GREETING = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#InvalidGreeting"),
-    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
-    members={"Message": {"target": STRING}},
-)
-
-GREETING_WITH_ERRORS = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#GreetingWithErrors"),
-    shape_type=ShapeType.OPERATION,
-)
-
-NO_INPUT_OUTPUT_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#NoInputOutputInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-NO_INPUT_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#NoInputOutputOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        )
-    ],
-)
-
-NO_INPUT_OUTPUT = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#NoInputOutput"),
-    shape_type=ShapeType.OPERATION,
-)
-
-OPERATION_WITH_DEFAULTS_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#OperationWithDefaultsInput"),
-    members={
-        "defaults": {"target": DEFAULTS},
-        "clientOptionalDefaults": {"target": CLIENT_OPTIONAL_DEFAULTS},
-        "topLevelDefault": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="hi")],
-        },
-        "otherTopLevelDefault": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-    },
-)
-
-OPERATION_WITH_DEFAULTS_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#OperationWithDefaultsOutput"),
-    members={
-        "defaultString": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="hi")],
-        },
-        "defaultBoolean": {
-            "target": BOOLEAN,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=True)],
-        },
-        "defaultList": {
-            "target": TEST_STRING_LIST,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=())],
-        },
-        "defaultTimestamp": {
-            "target": TIMESTAMP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "defaultBlob": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="YWJj")],
-        },
-        "defaultByte": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "defaultShort": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "defaultInteger": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=10)],
-        },
-        "defaultLong": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=100)],
-        },
-        "defaultFloat": {
-            "target": FLOAT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1.0)],
-        },
-        "defaultDouble": {
-            "target": DOUBLE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1.0)],
-        },
-        "defaultMap": {
-            "target": TEST_STRING_MAP,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"))],
-        },
-        "defaultEnum": {
-            "target": TEST_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="FOO")],
-        },
-        "defaultIntEnum": {
-            "target": TEST_INT_ENUM,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=1)],
-        },
-        "emptyString": {
-            "target": STRING,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="")],
-        },
-        "falseBoolean": {
-            "target": BOOLEAN,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=False)],
-        },
-        "emptyBlob": {
-            "target": BLOB,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value="")],
-        },
-        "zeroByte": {
-            "target": BYTE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroShort": {
-            "target": SHORT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroInteger": {
-            "target": INTEGER,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroLong": {
-            "target": LONG,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
-        },
-        "zeroFloat": {
-            "target": FLOAT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0.0)],
-        },
-        "zeroDouble": {
-            "target": DOUBLE,
-            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0.0)],
-        },
-    },
-)
-
-OPERATION_WITH_DEFAULTS = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#OperationWithDefaults"),
-    shape_type=ShapeType.OPERATION,
-)
-
-OPTIONAL_INPUT_OUTPUT_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#OptionalInputOutputInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#SimpleStructure",
-        )
-    ],
-    members={"value": {"target": STRING}},
-)
-
-OPTIONAL_INPUT_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#OptionalInputOutputOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#SimpleStructure",
-        )
-    ],
-    members={"value": {"target": STRING}},
-)
-
-OPTIONAL_INPUT_OUTPUT = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#OptionalInputOutput"),
-    shape_type=ShapeType.OPERATION,
-)
-
-RPC_V2_CBOR_DENSE_MAPS_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborDenseMapsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#RpcV2CborDenseMapsInputOutput",
-        )
-    ],
-    members={
-        "denseStructMap": {"target": DENSE_STRUCT_MAP},
-        "denseNumberMap": {"target": DENSE_NUMBER_MAP},
-        "denseBooleanMap": {"target": DENSE_BOOLEAN_MAP},
-        "denseStringMap": {"target": DENSE_STRING_MAP},
-        "denseSetMap": {"target": DENSE_SET_MAP},
-    },
-)
-
-RPC_V2_CBOR_DENSE_MAPS_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborDenseMapsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#RpcV2CborDenseMapsInputOutput",
-        )
-    ],
-    members={
-        "denseStructMap": {"target": DENSE_STRUCT_MAP},
-        "denseNumberMap": {"target": DENSE_NUMBER_MAP},
-        "denseBooleanMap": {"target": DENSE_BOOLEAN_MAP},
-        "denseStringMap": {"target": DENSE_STRING_MAP},
-        "denseSetMap": {"target": DENSE_SET_MAP},
-    },
-)
-
-RPC_V2_CBOR_DENSE_MAPS = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborDenseMaps"),
-    shape_type=ShapeType.OPERATION,
-)
-
-BLOB_LIST = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#BlobList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": BLOB}},
-)
-
-BOOLEAN_LIST = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#BooleanList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": BOOLEAN}},
-)
-
-FOO_ENUM = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#FooEnum"),
-    shape_type=ShapeType.ENUM,
-    members={
-        "FOO": {"target": UNIT},
-        "BAZ": {"target": UNIT},
-        "BAR": {"target": UNIT},
-        "ONE": {"target": UNIT},
-        "ZERO": {"target": UNIT},
-    },
-)
-
-FOO_ENUM_LIST = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#FooEnumList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": FOO_ENUM}},
-)
-
-INTEGER_LIST = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#IntegerList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": INTEGER}},
-)
-
-INTEGER_ENUM = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#IntegerEnum"),
-    shape_type=ShapeType.INT_ENUM,
-    members={"A": {"target": UNIT}, "B": {"target": UNIT}, "C": {"target": UNIT}},
-)
-
-INTEGER_ENUM_LIST = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#IntegerEnumList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": INTEGER_ENUM}},
-)
-
-STRING_LIST = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#StringList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING}},
-)
-
-NESTED_STRING_LIST = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#NestedStringList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING_LIST}},
-)
-
-STRUCTURE_LIST_MEMBER = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#StructureListMember"),
-    members={"a": {"target": STRING}, "b": {"target": STRING}},
-)
-
-STRUCTURE_LIST = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#StructureList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": STRUCTURE_LIST_MEMBER}},
-)
-
-TIMESTAMP_LIST = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#TimestampList"),
-    shape_type=ShapeType.LIST,
-    members={"member": {"target": TIMESTAMP}},
-)
-
-RPC_V2_CBOR_LISTS_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborListsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#RpcV2CborListInputOutput",
-        )
-    ],
-    members={
-        "stringList": {"target": STRING_LIST},
-        "stringSet": {"target": STRING_SET},
-        "integerList": {"target": INTEGER_LIST},
-        "booleanList": {"target": BOOLEAN_LIST},
-        "timestampList": {"target": TIMESTAMP_LIST},
-        "enumList": {"target": FOO_ENUM_LIST},
-        "intEnumList": {"target": INTEGER_ENUM_LIST},
-        "nestedStringList": {"target": NESTED_STRING_LIST},
-        "structureList": {"target": STRUCTURE_LIST},
-        "blobList": {"target": BLOB_LIST},
-    },
-)
-
-RPC_V2_CBOR_LISTS_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborListsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#RpcV2CborListInputOutput",
-        )
-    ],
-    members={
-        "stringList": {"target": STRING_LIST},
-        "stringSet": {"target": STRING_SET},
-        "integerList": {"target": INTEGER_LIST},
-        "booleanList": {"target": BOOLEAN_LIST},
-        "timestampList": {"target": TIMESTAMP_LIST},
-        "enumList": {"target": FOO_ENUM_LIST},
-        "intEnumList": {"target": INTEGER_ENUM_LIST},
-        "nestedStringList": {"target": NESTED_STRING_LIST},
-        "structureList": {"target": STRUCTURE_LIST},
-        "blobList": {"target": BLOB_LIST},
-    },
-)
-
-RPC_V2_CBOR_LISTS = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborLists"),
-    shape_type=ShapeType.OPERATION,
-)
-
-RPC_V2_CBOR_NESTED_UNION = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborNestedUnion"),
-    shape_type=ShapeType.UNION,
-    members={"stringValue": {"target": STRING}},
-)
-
-SPARSE_BOOLEAN_MAP = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#SparseBooleanMap"),
-    shape_type=ShapeType.MAP,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"key": {"target": STRING}, "value": {"target": BOOLEAN}},
-)
-
-SPARSE_NUMBER_MAP = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#SparseNumberMap"),
-    shape_type=ShapeType.MAP,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"key": {"target": STRING}, "value": {"target": INTEGER}},
-)
-
-SPARSE_SET_MAP = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#SparseSetMap"),
-    shape_type=ShapeType.MAP,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"key": {"target": STRING}, "value": {"target": STRING_SET}},
-)
-
-SPARSE_STRING_MAP = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#SparseStringMap"),
-    shape_type=ShapeType.MAP,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
-)
-
-SPARSE_STRUCT_MAP = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#SparseStructMap"),
-    shape_type=ShapeType.MAP,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"key": {"target": STRING}, "value": {"target": GREETING_STRUCT}},
-)
-
-RPC_V2_CBOR_SPARSE_MAPS_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborSparseMapsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#RpcV2CborSparseMapsInputOutput",
-        )
-    ],
-    members={
-        "sparseStructMap": {"target": SPARSE_STRUCT_MAP},
-        "sparseNumberMap": {"target": SPARSE_NUMBER_MAP},
-        "sparseBooleanMap": {"target": SPARSE_BOOLEAN_MAP},
-        "sparseStringMap": {"target": SPARSE_STRING_MAP},
-        "sparseSetMap": {"target": SPARSE_SET_MAP},
-    },
-)
-
-RPC_V2_CBOR_SPARSE_MAPS_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborSparseMapsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#RpcV2CborSparseMapsInputOutput",
-        )
-    ],
-    members={
-        "sparseStructMap": {"target": SPARSE_STRUCT_MAP},
-        "sparseNumberMap": {"target": SPARSE_NUMBER_MAP},
-        "sparseBooleanMap": {"target": SPARSE_BOOLEAN_MAP},
-        "sparseStringMap": {"target": SPARSE_STRING_MAP},
-        "sparseSetMap": {"target": SPARSE_SET_MAP},
-    },
-)
-
-RPC_V2_CBOR_SPARSE_MAPS = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborSparseMaps"),
-    shape_type=ShapeType.OPERATION,
-)
-
-RPC_V2_CBOR_UNION = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborUnion"),
-    shape_type=ShapeType.UNION,
-    members={
-        "stringValue": {"target": STRING},
-        "unionValue": {"target": RPC_V2_CBOR_NESTED_UNION},
-    },
-)
-
-RPC_V2_CBOR_UNIONS_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborUnionsInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#RpcV2CborUnionInputOutput",
-        )
-    ],
-    members={
-        "contents": {"target": RPC_V2_CBOR_UNION},
-        "otherValue": {"target": STRING},
-    },
-)
-
-RPC_V2_CBOR_UNIONS_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborUnionsOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#RpcV2CborUnionInputOutput",
-        )
-    ],
-    members={
-        "contents": {"target": RPC_V2_CBOR_UNION},
-        "otherValue": {"target": STRING},
-    },
-)
-
-RPC_V2_CBOR_UNIONS = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2CborUnions"),
-    shape_type=ShapeType.OPERATION,
-)
-
-SIMPLE_SCALAR_PROPERTIES_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#SimpleScalarPropertiesInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#SimpleScalarStructure",
-        )
-    ],
-    members={
-        "trueBooleanValue": {"target": BOOLEAN},
-        "falseBooleanValue": {"target": BOOLEAN},
-        "byteValue": {"target": BYTE},
-        "doubleValue": {"target": DOUBLE},
-        "floatValue": {"target": FLOAT},
-        "integerValue": {"target": INTEGER},
-        "longValue": {"target": LONG},
-        "shortValue": {"target": SHORT},
-        "stringValue": {"target": STRING},
-        "blobValue": {"target": BLOB},
-    },
-)
-
-SIMPLE_SCALAR_PROPERTIES_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#SimpleScalarPropertiesOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#SimpleScalarStructure",
-        )
-    ],
-    members={
-        "trueBooleanValue": {"target": BOOLEAN},
-        "falseBooleanValue": {"target": BOOLEAN},
-        "byteValue": {"target": BYTE},
-        "doubleValue": {"target": DOUBLE},
-        "floatValue": {"target": FLOAT},
-        "integerValue": {"target": INTEGER},
-        "longValue": {"target": LONG},
-        "shortValue": {"target": SHORT},
-        "stringValue": {"target": STRING},
-        "blobValue": {"target": BLOB},
-    },
-)
-
-SIMPLE_SCALAR_PROPERTIES = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#SimpleScalarProperties"),
-    shape_type=ShapeType.OPERATION,
-)
-
-SPARSE_STRING_LIST = Schema.collection(
-    id=ShapeID("smithy.protocoltests.shared#SparseStringList"),
-    shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#sparse"))],
-    members={"member": {"target": STRING}},
-)
-
-SPARSE_NULLS_OPERATION_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#SparseNullsOperationInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#SparseNullsOperationInputOutput",
-        )
-    ],
-    members={
-        "sparseStringList": {"target": SPARSE_STRING_LIST},
-        "sparseStringMap": {"target": SPARSE_STRING_MAP},
-    },
-)
-
-SPARSE_NULLS_OPERATION_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#SparseNullsOperationOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#SparseNullsOperationInputOutput",
-        )
-    ],
-    members={
-        "sparseStringList": {"target": SPARSE_STRING_LIST},
-        "sparseStringMap": {"target": SPARSE_STRING_MAP},
-    },
-)
-
-SPARSE_NULLS_OPERATION = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#SparseNullsOperation"),
-    shape_type=ShapeType.OPERATION,
-)
-
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1 = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RecursiveShapesInputOutputNested1"),
-    members={
-        "foo": {"target": STRING},
-        # This needs to reference a schema that isn't defined yet.
-        # It will be populated with a non-null value at the end of the file.
-        "nested": None,
-    },
-)
-
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RecursiveShapesInputOutputNested2"),
-    members={
-        "bar": {"target": STRING},
-        "recursiveMember": {"target": RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1},
-    },
-)
-
-RECURSIVE_SHAPES_INPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RecursiveShapesInput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#RecursiveShapesInputOutput",
-        )
-    ],
-    members={"nested": {"target": RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1}},
-)
-
-RECURSIVE_SHAPES_OUTPUT = Schema.collection(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RecursiveShapesOutput"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.synthetic#originalShapeId"),
-            value="smithy.protocoltests.rpcv2Cbor#RecursiveShapesInputOutput",
-        )
-    ],
-    members={"nested": {"target": RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1}},
-)
-
-RECURSIVE_SHAPES = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RecursiveShapes"),
-    shape_type=ShapeType.OPERATION,
-)
-
-RPC_V2_PROTOCOL = Schema(
-    id=ShapeID("smithy.protocoltests.rpcv2Cbor#RpcV2Protocol"),
-    shape_type=ShapeType.SERVICE,
-    traits=[
-        Trait.new(id=ShapeID("smithy.protocols#rpcv2Cbor")),
-        Trait.new(
-            id=ShapeID("smithy.rules#endpointBdd"),
-            value=MappingProxyType(
-                {
-                    "version": "1.1",
-                    "parameters": MappingProxyType(
+
+n0 = "smithy.framework"
+_VEF = "ValidationExceptionField"
+_p = "path"
+_s = "smithy.api#required"
+_m = "message"
+_VEFL = "ValidationExceptionFieldList"
+_me = "member"
+_VE = "ValidationException"
+_sm = "smithy.api#error"
+_c = "client"
+_fL = "fieldList"
+n1 = "smithy.protocoltests.rpcv2Cbor"
+_COD = "ClientOptionalDefaults"
+_smi = "smithy.api#default"
+_CNED = "ComplexNestedErrorData"
+_F = "Foo"
+_CE = "ComplexError"
+_TL = "TopLevel"
+_N = "Nested"
+_TE = "TestEnum"
+_FOO = "FOO"
+_BAR = "BAR"
+_BAZ = "BAZ"
+_TIE = "TestIntEnum"
+_ONE = "ONE"
+_TWO = "TWO"
+_TSL = "TestStringList"
+_TSM = "TestStringMap"
+_k = "key"
+_v = "value"
+_D = "Defaults"
+_dS = "defaultString"
+_h = "hi"
+_dB = "defaultBoolean"
+_dL = "defaultList"
+_dT = "defaultTimestamp"
+_dBe = "defaultBlob"
+_YWJ = "YWJj"
+_dBef = "defaultByte"
+_dSe = "defaultShort"
+_dI = "defaultInteger"
+_dLe = "defaultLong"
+_dF = "defaultFloat"
+_dD = "defaultDouble"
+_dM = "defaultMap"
+_dE = "defaultEnum"
+_dIE = "defaultIntEnum"
+_eS = "emptyString"
+_v_ = ""
+_fB = "falseBoolean"
+_eB = "emptyBlob"
+_zB = "zeroByte"
+_zS = "zeroShort"
+_zI = "zeroInteger"
+_zL = "zeroLong"
+_zF = "zeroFloat"
+_zD = "zeroDouble"
+_DBM = "DenseBooleanMap"
+_DNM = "DenseNumberMap"
+n2 = "smithy.protocoltests.shared"
+_SS = "StringSet"
+_DSM = "DenseSetMap"
+_DSMe = "DenseStringMap"
+_GS = "GreetingStruct"
+_DSMen = "DenseStructMap"
+_EIOI = "EmptyInputOutputInput"
+_sSI = "smithy.synthetic#originalShapeId"
+_sCES = "smithy.protocoltests.rpcv2Cbor#EmptyStructure"
+_EIOO = "EmptyInputOutputOutput"
+_EIO = "EmptyInputOutput"
+_FI = "Float16Input"
+_sU = "smithy.api#Unit"
+_FO = "Float16Output"
+_Fl = "Float16"
+_FSI = "FractionalSecondsInput"
+_DT = "DateTime"
+_sF = "smithy.api#timestampFormat"
+_dt = "date-time"
+_FSO = "FractionalSecondsOutput"
+_d = "datetime"
+_FS = "FractionalSeconds"
+_GWEI = "GreetingWithErrorsInput"
+_GWEO = "GreetingWithErrorsOutput"
+_g = "greeting"
+_IG = "InvalidGreeting"
+_M = "Message"
+_GWE = "GreetingWithErrors"
+_NIOI = "NoInputOutputInput"
+_NIOO = "NoInputOutputOutput"
+_NIO = "NoInputOutput"
+_OWDI = "OperationWithDefaultsInput"
+_de = "defaults"
+_cOD = "clientOptionalDefaults"
+_tLD = "topLevelDefault"
+_oTLD = "otherTopLevelDefault"
+_OWDO = "OperationWithDefaultsOutput"
+_OWD = "OperationWithDefaults"
+_OIOI = "OptionalInputOutputInput"
+_sCSS = "smithy.protocoltests.rpcv2Cbor#SimpleStructure"
+_OIOO = "OptionalInputOutputOutput"
+_OIO = "OptionalInputOutput"
+_RVCDMI = "RpcV2CborDenseMapsInput"
+_sCRVCDMIO = "smithy.protocoltests.rpcv2Cbor#RpcV2CborDenseMapsInputOutput"
+_dSM = "denseStructMap"
+_dNM = "denseNumberMap"
+_dBM = "denseBooleanMap"
+_dSMe = "denseStringMap"
+_dSMen = "denseSetMap"
+_RVCDMO = "RpcV2CborDenseMapsOutput"
+_RVCDM = "RpcV2CborDenseMaps"
+_BL = "BlobList"
+_BLo = "BooleanList"
+_FE = "FooEnum"
+_ZERO = "ZERO"
+_FEL = "FooEnumList"
+_IL = "IntegerList"
+_IE = "IntegerEnum"
+_A = "A"
+_B = "B"
+_C = "C"
+_IEL = "IntegerEnumList"
+_SL = "StringList"
+_NSL = "NestedStringList"
+_SLM = "StructureListMember"
+_a = "a"
+_b = "b"
+_SLt = "StructureList"
+_TLi = "TimestampList"
+_RVCLI = "RpcV2CborListsInput"
+_sCRVCLIO = "smithy.protocoltests.rpcv2Cbor#RpcV2CborListInputOutput"
+_sL = "stringList"
+_sS = "stringSet"
+_iL = "integerList"
+_bL = "booleanList"
+_tL = "timestampList"
+_eL = "enumList"
+_iEL = "intEnumList"
+_nSL = "nestedStringList"
+_sLt = "structureList"
+_bLl = "blobList"
+_RVCLO = "RpcV2CborListsOutput"
+_RVCL = "RpcV2CborLists"
+_RVCNU = "RpcV2CborNestedUnion"
+_sV = "stringValue"
+_SBM = "SparseBooleanMap"
+_smit = "smithy.api#sparse"
+_SNM = "SparseNumberMap"
+_SSM = "SparseSetMap"
+_SSMp = "SparseStringMap"
+_SSMpa = "SparseStructMap"
+_RVCSMI = "RpcV2CborSparseMapsInput"
+_sCRVCSMIO = "smithy.protocoltests.rpcv2Cbor#RpcV2CborSparseMapsInputOutput"
+_sSM = "sparseStructMap"
+_sNM = "sparseNumberMap"
+_sBM = "sparseBooleanMap"
+_sSMp = "sparseStringMap"
+_sSMpa = "sparseSetMap"
+_RVCSMO = "RpcV2CborSparseMapsOutput"
+_RVCSM = "RpcV2CborSparseMaps"
+_RVCU = "RpcV2CborUnion"
+_uV = "unionValue"
+_RVCUI = "RpcV2CborUnionsInput"
+_sCRVCUIO = "smithy.protocoltests.rpcv2Cbor#RpcV2CborUnionInputOutput"
+_co = "contents"
+_oV = "otherValue"
+_RVCUO = "RpcV2CborUnionsOutput"
+_RVCUp = "RpcV2CborUnions"
+_SSPI = "SimpleScalarPropertiesInput"
+_sCSSS = "smithy.protocoltests.rpcv2Cbor#SimpleScalarStructure"
+_tBV = "trueBooleanValue"
+_fBV = "falseBooleanValue"
+_bV = "byteValue"
+_dV = "doubleValue"
+_fV = "floatValue"
+_iV = "integerValue"
+_lV = "longValue"
+_sVh = "shortValue"
+_bVl = "blobValue"
+_SSPO = "SimpleScalarPropertiesOutput"
+_SSP = "SimpleScalarProperties"
+_SSL = "SparseStringList"
+_SNOI = "SparseNullsOperationInput"
+_sCSNOIO = "smithy.protocoltests.rpcv2Cbor#SparseNullsOperationInputOutput"
+_sSL = "sparseStringList"
+_SNOO = "SparseNullsOperationOutput"
+_SNO = "SparseNullsOperation"
+_RSION = "RecursiveShapesInputOutputNested1"
+_f = "foo"
+_n = "nested"
+_RSIONe = "RecursiveShapesInputOutputNested2"
+_ba = "bar"
+_rM = "recursiveMember"
+_RSI = "RecursiveShapesInput"
+_sCRSIO = "smithy.protocoltests.rpcv2Cbor#RecursiveShapesInputOutput"
+_RSO = "RecursiveShapesOutput"
+_RS = "RecursiveShapes"
+_RVP = "RpcV2Protocol"
+_sC = "smithy.protocols#rpcv2Cbor"
+_sB = "smithy.rules#endpointBdd"
+
+VALIDATION_EXCEPTION_FIELD = (18, n0, _VEF, 0, (_p, _m), ((3, 1), (3, 1)))
+
+VALIDATION_EXCEPTION_FIELD_LIST = (
+    16,
+    n0,
+    _VEFL,
+    0,
+    (_me,),
+    ((VALIDATION_EXCEPTION_FIELD, 0),),
+)
+
+VALIDATION_EXCEPTION = (
+    18,
+    n0,
+    _VE,
+    {_sm: _c},
+    (_m, _fL),
+    ((3, 1), (VALIDATION_EXCEPTION_FIELD_LIST, 0)),
+)
+
+CLIENT_OPTIONAL_DEFAULTS = (18, n1, _COD, 0, (_me,), ((7, {_smi: 0}),))
+
+COMPLEX_NESTED_ERROR_DATA = (18, n1, _CNED, 0, (_F,), ((3, 0),))
+
+COMPLEX_ERROR = (
+    18,
+    n1,
+    _CE,
+    {_sm: _c},
+    (_TL, _N),
+    ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
+)
+
+TEST_ENUM = (14, n1, _TE, 0, (_FOO, _BAR, _BAZ), ((-1, 0), (-1, 0), (-1, 0)))
+
+TEST_INT_ENUM = (15, n1, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+
+TEST_STRING_LIST = (16, n1, _TSL, 0, (_me,), ((3, 0),))
+
+TEST_STRING_MAP = (17, n1, _TSM, 0, (_k, _v), ((3, 0), (3, 0)))
+
+DEFAULTS = (
+    18,
+    n1,
+    _D,
+    0,
+    (
+        _dS,
+        _dB,
+        _dL,
+        _dT,
+        _dBe,
+        _dBef,
+        _dSe,
+        _dI,
+        _dLe,
+        _dF,
+        _dD,
+        _dM,
+        _dE,
+        _dIE,
+        _eS,
+        _fB,
+        _eB,
+        _zB,
+        _zS,
+        _zI,
+        _zL,
+        _zF,
+        _zD,
+    ),
+    (
+        (3, {_smi: _h}),
+        (2, {_smi: True}),
+        (TEST_STRING_LIST, {_smi: ()}),
+        (4, {_smi: 0}),
+        (1, {_smi: _YWJ}),
+        (5, {_smi: 1}),
+        (6, {_smi: 1}),
+        (7, {_smi: 10}),
+        (8, {_smi: 100}),
+        (9, {_smi: 1.0}),
+        (10, {_smi: 1.0}),
+        (TEST_STRING_MAP, {_smi: None}),
+        (TEST_ENUM, {_smi: _FOO}),
+        (TEST_INT_ENUM, {_smi: 1}),
+        (3, {_smi: _v_}),
+        (2, {_smi: False}),
+        (1, {_smi: _v_}),
+        (5, {_smi: 0}),
+        (6, {_smi: 0}),
+        (7, {_smi: 0}),
+        (8, {_smi: 0}),
+        (9, {_smi: 0.0}),
+        (10, {_smi: 0.0}),
+    ),
+)
+
+DENSE_BOOLEAN_MAP = (17, n1, _DBM, 0, (_k, _v), ((3, 0), (2, 0)))
+
+DENSE_NUMBER_MAP = (17, n1, _DNM, 0, (_k, _v), ((3, 0), (7, 0)))
+
+STRING_SET = (16, n2, _SS, 0, (_me,), ((3, 0),))
+
+DENSE_SET_MAP = (17, n1, _DSM, 0, (_k, _v), ((3, 0), (STRING_SET, 0)))
+
+DENSE_STRING_MAP = (17, n1, _DSMe, 0, (_k, _v), ((3, 0), (3, 0)))
+
+GREETING_STRUCT = (18, n2, _GS, 0, (_h,), ((3, 0),))
+
+DENSE_STRUCT_MAP = (17, n1, _DSMen, 0, (_k, _v), ((3, 0), (GREETING_STRUCT, 0)))
+
+EMPTY_INPUT_OUTPUT_INPUT = (18, n1, _EIOI, {_sSI: _sCES})
+
+EMPTY_INPUT_OUTPUT_OUTPUT = (18, n1, _EIOO, {_sSI: _sCES})
+
+EMPTY_INPUT_OUTPUT = (
+    23,
+    n1,
+    _EIO,
+    0,
+    EMPTY_INPUT_OUTPUT_INPUT,
+    EMPTY_INPUT_OUTPUT_OUTPUT,
+    (),
+)
+
+FLOAT16_INPUT = (18, n1, _FI, {_sSI: _sU})
+
+FLOAT16_OUTPUT = (18, n1, _FO, 0, (_v,), ((10, 0),))
+
+FLOAT16 = (23, n1, _Fl, 0, FLOAT16_INPUT, FLOAT16_OUTPUT, ())
+
+FRACTIONAL_SECONDS_INPUT = (18, n1, _FSI, {_sSI: _sU})
+
+DATE_TIME = (4, n2, _DT, {_sF: _dt})
+
+FRACTIONAL_SECONDS_OUTPUT = (18, n1, _FSO, 0, (_d,), ((DATE_TIME, 0),))
+
+FRACTIONAL_SECONDS = (
+    23,
+    n1,
+    _FS,
+    0,
+    FRACTIONAL_SECONDS_INPUT,
+    FRACTIONAL_SECONDS_OUTPUT,
+    (),
+)
+
+GREETING_WITH_ERRORS_INPUT = (18, n1, _GWEI, {_sSI: _sU})
+
+GREETING_WITH_ERRORS_OUTPUT = (18, n1, _GWEO, 0, (_g,), ((3, 0),))
+
+INVALID_GREETING = (18, n1, _IG, {_sm: _c}, (_M,), ((3, 0),))
+
+GREETING_WITH_ERRORS = (
+    23,
+    n1,
+    _GWE,
+    0,
+    GREETING_WITH_ERRORS_INPUT,
+    GREETING_WITH_ERRORS_OUTPUT,
+    (INVALID_GREETING, COMPLEX_ERROR),
+)
+
+NO_INPUT_OUTPUT_INPUT = (18, n1, _NIOI, {_sSI: _sU})
+
+NO_INPUT_OUTPUT_OUTPUT = (18, n1, _NIOO, {_sSI: _sU})
+
+NO_INPUT_OUTPUT = (23, n1, _NIO, 0, NO_INPUT_OUTPUT_INPUT, NO_INPUT_OUTPUT_OUTPUT, ())
+
+OPERATION_WITH_DEFAULTS_INPUT = (
+    18,
+    n1,
+    _OWDI,
+    0,
+    (_de, _cOD, _tLD, _oTLD),
+    ((DEFAULTS, 0), (CLIENT_OPTIONAL_DEFAULTS, 0), (3, {_smi: _h}), (7, {_smi: 0})),
+)
+
+OPERATION_WITH_DEFAULTS_OUTPUT = (
+    18,
+    n1,
+    _OWDO,
+    0,
+    (
+        _dS,
+        _dB,
+        _dL,
+        _dT,
+        _dBe,
+        _dBef,
+        _dSe,
+        _dI,
+        _dLe,
+        _dF,
+        _dD,
+        _dM,
+        _dE,
+        _dIE,
+        _eS,
+        _fB,
+        _eB,
+        _zB,
+        _zS,
+        _zI,
+        _zL,
+        _zF,
+        _zD,
+    ),
+    (
+        (3, {_smi: _h}),
+        (2, {_smi: True}),
+        (TEST_STRING_LIST, {_smi: ()}),
+        (4, {_smi: 0}),
+        (1, {_smi: _YWJ}),
+        (5, {_smi: 1}),
+        (6, {_smi: 1}),
+        (7, {_smi: 10}),
+        (8, {_smi: 100}),
+        (9, {_smi: 1.0}),
+        (10, {_smi: 1.0}),
+        (TEST_STRING_MAP, {_smi: None}),
+        (TEST_ENUM, {_smi: _FOO}),
+        (TEST_INT_ENUM, {_smi: 1}),
+        (3, {_smi: _v_}),
+        (2, {_smi: False}),
+        (1, {_smi: _v_}),
+        (5, {_smi: 0}),
+        (6, {_smi: 0}),
+        (7, {_smi: 0}),
+        (8, {_smi: 0}),
+        (9, {_smi: 0.0}),
+        (10, {_smi: 0.0}),
+    ),
+)
+
+OPERATION_WITH_DEFAULTS = (
+    23,
+    n1,
+    _OWD,
+    0,
+    OPERATION_WITH_DEFAULTS_INPUT,
+    OPERATION_WITH_DEFAULTS_OUTPUT,
+    (VALIDATION_EXCEPTION,),
+)
+
+OPTIONAL_INPUT_OUTPUT_INPUT = (18, n1, _OIOI, {_sSI: _sCSS}, (_v,), ((3, 0),))
+
+OPTIONAL_INPUT_OUTPUT_OUTPUT = (18, n1, _OIOO, {_sSI: _sCSS}, (_v,), ((3, 0),))
+
+OPTIONAL_INPUT_OUTPUT = (
+    23,
+    n1,
+    _OIO,
+    0,
+    OPTIONAL_INPUT_OUTPUT_INPUT,
+    OPTIONAL_INPUT_OUTPUT_OUTPUT,
+    (),
+)
+
+RPC_V2_CBOR_DENSE_MAPS_INPUT = (
+    18,
+    n1,
+    _RVCDMI,
+    {_sSI: _sCRVCDMIO},
+    (_dSM, _dNM, _dBM, _dSMe, _dSMen),
+    (
+        (DENSE_STRUCT_MAP, 0),
+        (DENSE_NUMBER_MAP, 0),
+        (DENSE_BOOLEAN_MAP, 0),
+        (DENSE_STRING_MAP, 0),
+        (DENSE_SET_MAP, 0),
+    ),
+)
+
+RPC_V2_CBOR_DENSE_MAPS_OUTPUT = (
+    18,
+    n1,
+    _RVCDMO,
+    {_sSI: _sCRVCDMIO},
+    (_dSM, _dNM, _dBM, _dSMe, _dSMen),
+    (
+        (DENSE_STRUCT_MAP, 0),
+        (DENSE_NUMBER_MAP, 0),
+        (DENSE_BOOLEAN_MAP, 0),
+        (DENSE_STRING_MAP, 0),
+        (DENSE_SET_MAP, 0),
+    ),
+)
+
+RPC_V2_CBOR_DENSE_MAPS = (
+    23,
+    n1,
+    _RVCDM,
+    0,
+    RPC_V2_CBOR_DENSE_MAPS_INPUT,
+    RPC_V2_CBOR_DENSE_MAPS_OUTPUT,
+    (VALIDATION_EXCEPTION,),
+)
+
+BLOB_LIST = (16, n2, _BL, 0, (_me,), ((1, 0),))
+
+BOOLEAN_LIST = (16, n2, _BLo, 0, (_me,), ((2, 0),))
+
+FOO_ENUM = (
+    14,
+    n2,
+    _FE,
+    0,
+    (_FOO, _BAZ, _BAR, _ONE, _ZERO),
+    ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
+)
+
+FOO_ENUM_LIST = (16, n2, _FEL, 0, (_me,), ((FOO_ENUM, 0),))
+
+INTEGER_LIST = (16, n2, _IL, 0, (_me,), ((7, 0),))
+
+INTEGER_ENUM = (15, n2, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+
+INTEGER_ENUM_LIST = (16, n2, _IEL, 0, (_me,), ((INTEGER_ENUM, 0),))
+
+STRING_LIST = (16, n2, _SL, 0, (_me,), ((3, 0),))
+
+NESTED_STRING_LIST = (16, n2, _NSL, 0, (_me,), ((STRING_LIST, 0),))
+
+STRUCTURE_LIST_MEMBER = (18, n1, _SLM, 0, (_a, _b), ((3, 0), (3, 0)))
+
+STRUCTURE_LIST = (16, n1, _SLt, 0, (_me,), ((STRUCTURE_LIST_MEMBER, 0),))
+
+TIMESTAMP_LIST = (16, n2, _TLi, 0, (_me,), ((4, 0),))
+
+RPC_V2_CBOR_LISTS_INPUT = (
+    18,
+    n1,
+    _RVCLI,
+    {_sSI: _sCRVCLIO},
+    (_sL, _sS, _iL, _bL, _tL, _eL, _iEL, _nSL, _sLt, _bLl),
+    (
+        (STRING_LIST, 0),
+        (STRING_SET, 0),
+        (INTEGER_LIST, 0),
+        (BOOLEAN_LIST, 0),
+        (TIMESTAMP_LIST, 0),
+        (FOO_ENUM_LIST, 0),
+        (INTEGER_ENUM_LIST, 0),
+        (NESTED_STRING_LIST, 0),
+        (STRUCTURE_LIST, 0),
+        (BLOB_LIST, 0),
+    ),
+)
+
+RPC_V2_CBOR_LISTS_OUTPUT = (
+    18,
+    n1,
+    _RVCLO,
+    {_sSI: _sCRVCLIO},
+    (_sL, _sS, _iL, _bL, _tL, _eL, _iEL, _nSL, _sLt, _bLl),
+    (
+        (STRING_LIST, 0),
+        (STRING_SET, 0),
+        (INTEGER_LIST, 0),
+        (BOOLEAN_LIST, 0),
+        (TIMESTAMP_LIST, 0),
+        (FOO_ENUM_LIST, 0),
+        (INTEGER_ENUM_LIST, 0),
+        (NESTED_STRING_LIST, 0),
+        (STRUCTURE_LIST, 0),
+        (BLOB_LIST, 0),
+    ),
+)
+
+RPC_V2_CBOR_LISTS = (
+    23,
+    n1,
+    _RVCL,
+    0,
+    RPC_V2_CBOR_LISTS_INPUT,
+    RPC_V2_CBOR_LISTS_OUTPUT,
+    (VALIDATION_EXCEPTION,),
+)
+
+RPC_V2_CBOR_NESTED_UNION = (19, n1, _RVCNU, 0, (_sV,), ((3, 0),))
+
+SPARSE_BOOLEAN_MAP = (17, n1, _SBM, 64, (_k, _v), ((3, 0), (2, 0)))
+
+SPARSE_NUMBER_MAP = (17, n1, _SNM, 64, (_k, _v), ((3, 0), (7, 0)))
+
+SPARSE_SET_MAP = (17, n1, _SSM, 64, (_k, _v), ((3, 0), (STRING_SET, 0)))
+
+SPARSE_STRING_MAP = (17, n2, _SSMp, 64, (_k, _v), ((3, 0), (3, 0)))
+
+SPARSE_STRUCT_MAP = (17, n1, _SSMpa, 64, (_k, _v), ((3, 0), (GREETING_STRUCT, 0)))
+
+RPC_V2_CBOR_SPARSE_MAPS_INPUT = (
+    18,
+    n1,
+    _RVCSMI,
+    {_sSI: _sCRVCSMIO},
+    (_sSM, _sNM, _sBM, _sSMp, _sSMpa),
+    (
+        (SPARSE_STRUCT_MAP, 0),
+        (SPARSE_NUMBER_MAP, 0),
+        (SPARSE_BOOLEAN_MAP, 0),
+        (SPARSE_STRING_MAP, 0),
+        (SPARSE_SET_MAP, 0),
+    ),
+)
+
+RPC_V2_CBOR_SPARSE_MAPS_OUTPUT = (
+    18,
+    n1,
+    _RVCSMO,
+    {_sSI: _sCRVCSMIO},
+    (_sSM, _sNM, _sBM, _sSMp, _sSMpa),
+    (
+        (SPARSE_STRUCT_MAP, 0),
+        (SPARSE_NUMBER_MAP, 0),
+        (SPARSE_BOOLEAN_MAP, 0),
+        (SPARSE_STRING_MAP, 0),
+        (SPARSE_SET_MAP, 0),
+    ),
+)
+
+RPC_V2_CBOR_SPARSE_MAPS = (
+    23,
+    n1,
+    _RVCSM,
+    0,
+    RPC_V2_CBOR_SPARSE_MAPS_INPUT,
+    RPC_V2_CBOR_SPARSE_MAPS_OUTPUT,
+    (VALIDATION_EXCEPTION,),
+)
+
+RPC_V2_CBOR_UNION = (
+    19,
+    n1,
+    _RVCU,
+    0,
+    (_sV, _uV),
+    ((3, 0), (RPC_V2_CBOR_NESTED_UNION, 0)),
+)
+
+RPC_V2_CBOR_UNIONS_INPUT = (
+    18,
+    n1,
+    _RVCUI,
+    {_sSI: _sCRVCUIO},
+    (_co, _oV),
+    ((RPC_V2_CBOR_UNION, 0), (3, 0)),
+)
+
+RPC_V2_CBOR_UNIONS_OUTPUT = (
+    18,
+    n1,
+    _RVCUO,
+    {_sSI: _sCRVCUIO},
+    (_co, _oV),
+    ((RPC_V2_CBOR_UNION, 0), (3, 0)),
+)
+
+RPC_V2_CBOR_UNIONS = (
+    23,
+    n1,
+    _RVCUp,
+    0,
+    RPC_V2_CBOR_UNIONS_INPUT,
+    RPC_V2_CBOR_UNIONS_OUTPUT,
+    (),
+)
+
+SIMPLE_SCALAR_PROPERTIES_INPUT = (
+    18,
+    n1,
+    _SSPI,
+    {_sSI: _sCSSS},
+    (_tBV, _fBV, _bV, _dV, _fV, _iV, _lV, _sVh, _sV, _bVl),
+    ((2, 0), (2, 0), (5, 0), (10, 0), (9, 0), (7, 0), (8, 0), (6, 0), (3, 0), (1, 0)),
+)
+
+SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
+    18,
+    n1,
+    _SSPO,
+    {_sSI: _sCSSS},
+    (_tBV, _fBV, _bV, _dV, _fV, _iV, _lV, _sVh, _sV, _bVl),
+    ((2, 0), (2, 0), (5, 0), (10, 0), (9, 0), (7, 0), (8, 0), (6, 0), (3, 0), (1, 0)),
+)
+
+SIMPLE_SCALAR_PROPERTIES = (
+    23,
+    n1,
+    _SSP,
+    0,
+    SIMPLE_SCALAR_PROPERTIES_INPUT,
+    SIMPLE_SCALAR_PROPERTIES_OUTPUT,
+    (),
+)
+
+SPARSE_STRING_LIST = (16, n2, _SSL, 64, (_me,), ((3, 0),))
+
+SPARSE_NULLS_OPERATION_INPUT = (
+    18,
+    n1,
+    _SNOI,
+    {_sSI: _sCSNOIO},
+    (_sSL, _sSMp),
+    ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
+)
+
+SPARSE_NULLS_OPERATION_OUTPUT = (
+    18,
+    n1,
+    _SNOO,
+    {_sSI: _sCSNOIO},
+    (_sSL, _sSMp),
+    ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
+)
+
+SPARSE_NULLS_OPERATION = (
+    23,
+    n1,
+    _SNO,
+    0,
+    SPARSE_NULLS_OPERATION_INPUT,
+    SPARSE_NULLS_OPERATION_OUTPUT,
+    (),
+)
+
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1 = (
+    18,
+    n1,
+    _RSION,
+    0,
+    (_f, _n),
+    ((3, 0), (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0)),
+)
+
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (
+    18,
+    n1,
+    _RSIONe,
+    0,
+    (_ba, _rM),
+    ((3, 0), (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0)),
+)
+
+RECURSIVE_SHAPES_INPUT = (
+    18,
+    n1,
+    _RSI,
+    {_sSI: _sCRSIO},
+    (_n,),
+    ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
+)
+
+RECURSIVE_SHAPES_OUTPUT = (
+    18,
+    n1,
+    _RSO,
+    {_sSI: _sCRSIO},
+    (_n,),
+    ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
+)
+
+RECURSIVE_SHAPES = (23, n1, _RS, 0, RECURSIVE_SHAPES_INPUT, RECURSIVE_SHAPES_OUTPUT, ())
+
+RPC_V2_PROTOCOL = (
+    21,
+    n1,
+    _RVP,
+    {
+        _sC: None,
+        _sB: MappingProxyType(
+            {
+                "version": "1.1",
+                "parameters": MappingProxyType(
+                    {
+                        "endpoint": MappingProxyType(
+                            {
+                                "builtIn": "SDK::Endpoint",
+                                "required": False,
+                                "documentation": "Endpoint used for making requests. Should be formatted as a URI.",
+                                "type": "string",
+                            }
+                        )
+                    }
+                ),
+                "conditions": (
+                    MappingProxyType(
                         {
-                            "endpoint": MappingProxyType(
-                                {
-                                    "builtIn": "SDK::Endpoint",
-                                    "required": False,
-                                    "documentation": "Endpoint used for making requests. Should be formatted as a URI.",
-                                    "type": "string",
-                                }
-                            )
+                            "fn": "isSet",
+                            "argv": (MappingProxyType({"ref": "endpoint"}),),
                         }
                     ),
-                    "conditions": (
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "endpoint"}),),
-                            }
-                        ),
+                ),
+                "results": (
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "endpoint": MappingProxyType(
+                                {
+                                    "url": MappingProxyType({"ref": "endpoint"}),
+                                    "properties": MappingProxyType({}),
+                                    "headers": MappingProxyType({}),
+                                }
+                            ),
+                            "type": "endpoint",
+                        }
                     ),
-                    "results": (
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": MappingProxyType({"ref": "endpoint"}),
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "(default endpointRuleSet) endpoint is not set - you must configure an endpoint.",
-                                "type": "error",
-                            }
-                        ),
+                    MappingProxyType(
+                        {
+                            "conditions": (),
+                            "error": "(default endpointRuleSet) endpoint is not set - you must configure an endpoint.",
+                            "type": "error",
+                        }
                     ),
-                    "root": 2,
-                    "nodeCount": 2,
-                    "nodes": "/////wAAAAH/////AAAAAAX14QEF9eEC",
-                }
-            ),
+                ),
+                "root": 2,
+                "nodeCount": 2,
+                "nodes": "/////wAAAAH/////AAAAAAX14QEF9eEC",
+            }
         ),
-    ],
-)
-
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1.members["nested"] = Schema.member(
-    id=RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1.id.with_member("nested"),
-    target=RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2,
-    index=1,
+    },
 )

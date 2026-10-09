@@ -14,7 +14,7 @@ from smithy_core.interfaces import URI as URIInterface
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import HTTPPayloadTrait, HTTPTrait, StreamingTrait
+from smithy_core.traits import HTTPPayloadTrait, StreamingTrait
 from smithy_core.types import TypedProperties
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
@@ -173,16 +173,17 @@ def test_http_binding_protocol_falls_back_to_legacy_serialize() -> None:
     operation = APIOperation(
         input=LegacyInput,
         output=MockOutput,
-        schema=Schema(
-            id=ShapeID("ns.foo#LegacyOperation"),
-            shape_type=ShapeType.OPERATION,
-            traits=[HTTPTrait({"method": "POST", "code": 200, "uri": "/legacy"})],
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "ns.foo",
+            "LegacyOperation",
+            {"smithy.api#http": {"method": "POST", "code": 200, "uri": "/legacy"}},
+            LegacyInput.SCHEMA,
+            MockOutput.SCHEMA,
+            (),
         ),
-        input_schema=LegacyInput.SCHEMA,
-        output_schema=MockOutput.SCHEMA,
         error_registry=TypeRegistry({}),
         effective_auth_schemes=[],
-        error_schemas=[],
     )
     input = LegacyInput()
 
@@ -202,16 +203,17 @@ def test_http_binding_protocol_uses_structure_fast_path() -> None:
     operation = APIOperation(
         input=StructInput,
         output=MockOutput,
-        schema=Schema(
-            id=ShapeID("ns.foo#StructOperation"),
-            shape_type=ShapeType.OPERATION,
-            traits=[HTTPTrait({"method": "POST", "code": 200, "uri": "/structure"})],
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "ns.foo",
+            "StructOperation",
+            {"smithy.api#http": {"method": "POST", "code": 200, "uri": "/structure"}},
+            StructInput.SCHEMA,
+            MockOutput.SCHEMA,
+            (),
         ),
-        input_schema=StructInput.SCHEMA,
-        output_schema=MockOutput.SCHEMA,
         error_registry=TypeRegistry({}),
         effective_auth_schemes=[],
-        error_schemas=[],
     )
     input = StructInput()
 
@@ -247,16 +249,17 @@ async def test_deserialize_response_uses_cached_streaming_member(
     operation = APIOperation(
         input=LegacyInput,
         output=output,
-        schema=Schema(
-            id=ShapeID("ns.foo#DeserializeOperation"),
-            shape_type=ShapeType.OPERATION,
-            traits=[HTTPTrait({"method": "GET", "code": 200, "uri": "/"})],
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "ns.foo",
+            "DeserializeOperation",
+            {"smithy.api#http": {"method": "GET", "code": 200, "uri": "/"}},
+            LegacyInput.SCHEMA,
+            output.SCHEMA,
+            (),
         ),
-        input_schema=LegacyInput.SCHEMA,
-        output_schema=output.SCHEMA,
         error_registry=TypeRegistry({}),
         effective_auth_schemes=[],
-        error_schemas=[],
     )
     request = HTTPRequest(
         destination=URI(host="example.com"),

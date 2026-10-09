@@ -73,15 +73,17 @@ _UNARY_OUTPUT_SCHEMA = Schema.collection(
 OPERATION = APIOperation(
     input=StubInput,
     output=StubOutput,
-    schema=Schema(
-        id=ShapeID("com.example#StreamingOperation"),
-        shape_type=ShapeType.OPERATION,
+    static_schema=(
+        ShapeType.OPERATION.value,
+        "com.example",
+        "StreamingOperation",
+        0,
+        _INPUT_SCHEMA,
+        _OUTPUT_SCHEMA,
+        (),
     ),
-    input_schema=_INPUT_SCHEMA,
-    output_schema=_OUTPUT_SCHEMA,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[],
-    error_schemas=[],
 )
 
 # ``ClientCall.retryable()`` is False for operations with a streaming input, so
@@ -90,15 +92,17 @@ OPERATION = APIOperation(
 UNARY_OPERATION = APIOperation(
     input=StubInput,
     output=StubOutput,
-    schema=Schema(
-        id=ShapeID("com.example#UnaryOperation"),
-        shape_type=ShapeType.OPERATION,
+    static_schema=(
+        ShapeType.OPERATION.value,
+        "com.example",
+        "UnaryOperation",
+        0,
+        _UNARY_INPUT_SCHEMA,
+        _UNARY_OUTPUT_SCHEMA,
+        (),
     ),
-    input_schema=_UNARY_INPUT_SCHEMA,
-    output_schema=_UNARY_OUTPUT_SCHEMA,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[],
-    error_schemas=[],
 )
 
 

@@ -376,9 +376,10 @@ public final class StructureGenerator implements Runnable {
         writer.putContext("shapeSerializer", RuntimeTypes.SHAPE_SERIALIZER);
 
         writer.putContext("schema", symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA));
+        writer.putContext("hydrate", RuntimeTypes.HYDRATE);
         writer.write("""
                 def serialize(self, serializer: ${shapeSerializer:T}):
-                    serializer.write_struct(${schema:T}, self)
+                    serializer.write_struct(${hydrate:T}(${schema:T}), self)
 
                 """);
 
@@ -387,6 +388,7 @@ public final class StructureGenerator implements Runnable {
         if (serializeableMembers.isEmpty()) {
             writer.write("pass");
         } else {
+            writer.write("members = ${hydrate:T}(${schema:T}).members_by_index");
             for (MemberShape member : serializeableMembers) {
                 writer.pushState();
                 var target = model.expectShape(member.getTarget());
@@ -435,6 +437,15 @@ public final class StructureGenerator implements Runnable {
 
         var corrections = errorCorrections();
         writer.putContext("errorCorrection", !corrections.isEmpty());
+        // A struct with no (non-streaming) members emits no case arms, so the member
+        // index tuple would be an unused local.
+        boolean hasMembers = shape.members()
+                .stream()
+                .anyMatch(m -> {
+                    var t = model.expectShape(m.getTarget());
+                    return !(t.hasTrait(StreamingTrait.class) && t.isUnionShape());
+                });
+        writer.putContext("hasMembers", hasMembers);
 
         // TODO: either formalize deserialize_kwargs or remove it when http serde is converted
         writer.write("""
@@ -445,14 +456,18 @@ public final class StructureGenerator implements Runnable {
                 @classmethod
                 def deserialize_kwargs(cls, deserializer: $1T) -> dict[str, Any]:
                     kwargs: dict[str, Any] = {}
+                    schema = $6T($4T)
+                    ${?hasMembers}
+                    members = schema.members_by_index
+                    ${/hasMembers}
 
-                    def _consumer(schema: $2T, de: $1T) -> None:
-                        match schema.expect_member_index():
+                    def _consumer(member_schema: $2T, de: $1T) -> None:
+                        match member_schema.expect_member_index():
                             ${3C|}
                             case _:
-                                logger.debug("Unexpected member schema: %s", schema)
+                                logger.debug("Unexpected member schema: %s", member_schema)
 
-                    deserializer.read_struct($4T, consumer=_consumer)
+                    deserializer.read_struct(schema, consumer=_consumer)
                     ${?errorCorrection}
                     ${5C|}
                     ${/errorCorrection}
@@ -463,7 +478,8 @@ public final class StructureGenerator implements Runnable {
                 RuntimeTypes.SCHEMA,
                 writer.consumer(w -> deserializeMembers(shape.members())),
                 schemaSymbol,
-                writer.consumer(w -> writeErrorCorrection(corrections)));
+                writer.consumer(w -> writeErrorCorrection(corrections)),
+                RuntimeTypes.HYDRATE);
         writer.popState();
     }
 

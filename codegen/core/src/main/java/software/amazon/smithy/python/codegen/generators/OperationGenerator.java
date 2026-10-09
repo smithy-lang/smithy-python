@@ -50,18 +50,13 @@ public final class OperationGenerator implements Runnable {
                 $1L = $2T(
                         input = $3T,
                         output = $4T,
-                        schema = $5T,
-                        input_schema = $6T,
-                        output_schema = $7T,
-                        error_registry = $8T({
-                            $9C
+                        static_schema = $5T,
+                        error_registry = $6T({
+                            $7C
                         }),
                         effective_auth_schemes = [
-                            ${10C}
+                            ${8C}
                         ],
-                        error_schemas = [
-                            ${11C}
-                        ]
                 )
                 """,
                 opSymbol.getName(),
@@ -69,12 +64,9 @@ public final class OperationGenerator implements Runnable {
                 inSymbol,
                 outSymbol,
                 opSymbol.expectProperty(SymbolProperties.SCHEMA),
-                inSymbol.expectProperty(SymbolProperties.SCHEMA),
-                outSymbol.expectProperty(SymbolProperties.SCHEMA),
                 RuntimeTypes.TYPE_REGISTRY,
                 writer.consumer(this::writeErrorTypeRegistry),
-                writer.consumer(this::writeAuthSchemes),
-                writer.consumer(this::writeErrorSchemas));
+                writer.consumer(this::writeAuthSchemes));
     }
 
     private void writeErrorTypeRegistry(PythonWriter writer) {
@@ -82,13 +74,6 @@ public final class OperationGenerator implements Runnable {
         for (var error : errors) {
             var errSymbol = symbolProvider.toSymbol(model.expectShape(error));
             writer.write("$1T($2S): $3T,", RuntimeTypes.SHAPE_ID, error, errSymbol);
-        }
-    }
-
-    private void writeErrorSchemas(PythonWriter writer) {
-        for (var error : shape.getErrors()) {
-            var errSymbol = symbolProvider.toSymbol(model.expectShape(error));
-            writer.write("$T,", errSymbol.expectProperty(SymbolProperties.SCHEMA));
         }
     }
 
