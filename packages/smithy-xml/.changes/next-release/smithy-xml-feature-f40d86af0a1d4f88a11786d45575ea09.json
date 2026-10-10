@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added configurable eager XML deserialization to improve buffered payload performance. Generated XML clients automatically parse `bytes` eagerly while preserving incremental parsing for streaming readers, and can explicitly select eager or streaming behavior."
+}

@@ -795,6 +795,7 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
             status=response.status,
             context=context,
             retry_after=parse_retry_after(response),
+            codec=self.payload_codec,
         )
 
     def _create_serializer(

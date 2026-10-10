@@ -23,26 +23,26 @@ from .readers import XMLEvent, XMLEventReader
 from .traits import member_xml_name
 
 
-def _local_name(tag: str) -> str:
+def local_name(tag: str) -> str:
     """Strip namespace URI from an element tag: {uri}local -> local."""
     if tag.startswith("{"):
         return tag.split("}", 1)[1]
     return tag
 
 
-def _local_attr_name(name: str) -> str:
+def local_attr_name(name: str) -> str:
     """Strip a namespace prefix from a modeled attribute name: prefix:local -> local."""
     return name.rpartition(":")[2]
 
 
-def _validate_element_name(expected: str, elem: Element) -> None:
+def validate_element_name(expected: str, elem: Element) -> None:
     """Raise XMLParseError if the element's local name doesn't match expected."""
-    found = _local_name(elem.tag)
+    found = local_name(elem.tag)
     if found != expected:
         raise XMLParseError(f"Expected element '{expected}', got '{found}'")
 
 
-def _parse_xml_float(text: str) -> float:
+def parse_xml_float(text: str) -> float:
     """Parse an XML float string, handling NaN and Infinity."""
     match text:
         case "NaN":
@@ -81,7 +81,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
             event = next(self._reader)
             if event.type != "start":
                 raise XMLParseError(f"Expected start element, got '{event.type}'")
-            _validate_element_name(wrapper, event.elem)
+            validate_element_name(wrapper, event.elem)
             self._preconsumed_start = event.elem
 
     def is_null(self) -> bool:
@@ -107,7 +107,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
         return int(self._read_text())
 
     def read_float(self, schema: Schema) -> float:
-        return _parse_xml_float(self._read_text())
+        return parse_xml_float(self._read_text())
 
     def read_big_decimal(self, schema: Schema) -> Decimal:
         return Decimal(self._read_text())
@@ -144,13 +144,13 @@ class XMLShapeDeserializer(ShapeDeserializer):
                     continue
                 # Prefixed names (e.g. ``xsi:name``) are parsed into a
                 # namespace-qualified key, so only the local parts are compared.
-                expected_attr_name = _local_attr_name(member_xml_name(member_schema))
+                expected_attr_name = local_attr_name(member_xml_name(member_schema))
                 for attr_name, attr_value in start_elem.attrib.items():
-                    attr_local_name = _local_name(attr_name)
+                    attr_local_name = local_name(attr_name)
                     if attr_local_name == expected_attr_name:
                         consumer(
                             member_schema,
-                            _AttributeDeserializer(attr_value, self._settings),
+                            AttributeDeserializer(attr_value, self._settings),
                         )
                         break
 
@@ -165,7 +165,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
         }
 
         while self._reader.peek().type != "end":
-            tag = _local_name(self._reader.peek().elem.tag)
+            tag = local_name(self._reader.peek().elem.tag)
 
             if tag in flattened_names:
                 flattened_buffers.setdefault(tag, []).extend(self._buffer_element())
@@ -296,7 +296,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
 
         key: str | None = None
         while self._reader.peek().type != "end":
-            child_tag = _local_name(self._reader.peek().elem.tag)
+            child_tag = local_name(self._reader.peek().elem.tag)
             if child_tag == key_tag:
                 key = self._read_text()
             elif child_tag == value_tag:
@@ -313,7 +313,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
         next(self._reader)
 
 
-class _AttributeDeserializer(SpecificShapeDeserializer):
+class AttributeDeserializer(SpecificShapeDeserializer):
     """Deserializer for a value extracted from an XML attribute string."""
 
     def __init__(self, value: str, settings: XMLSettings) -> None:
@@ -348,7 +348,7 @@ class _AttributeDeserializer(SpecificShapeDeserializer):
         return self.read_integer(schema)
 
     def read_float(self, schema: Schema) -> float:
-        return _parse_xml_float(self._value)
+        return parse_xml_float(self._value)
 
     def read_double(self, schema: Schema) -> float:
         return self.read_float(schema)

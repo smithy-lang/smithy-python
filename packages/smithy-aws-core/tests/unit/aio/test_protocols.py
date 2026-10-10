@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 from typing import Any, cast
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from ijson.common import IncompleteJSONError  # type: ignore[reportMissingTypeStubs]
@@ -30,6 +30,7 @@ from smithy_core.types import TypedProperties
 from smithy_http import Fields, tuples_to_fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
 from smithy_json import JSONSettings
+from smithy_xml import XMLDeserializationMode
 
 
 @pytest.mark.parametrize(
@@ -511,28 +512,35 @@ async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
     )
-    with pytest.raises(_ModeledQueryError) as exc_info:
-        await protocol.deserialize_response(
-            operation=_mock_operation(
-                _operation_schema("FailingOperation"),
-                error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
-            ),
-            request=cast(HTTPRequest, Mock()),
-            response=HTTPResponse(
-                status=400,
-                fields=tuples_to_fields([]),
-                body=(
-                    b"<ErrorResponse><Error><Code>InvalidAction</Code>"
-                    b"<message>bad request</message></Error></ErrorResponse>"
+    protocol.payload_codec.deserialization_mode = XMLDeserializationMode.STREAMING
+    with patch.object(
+        protocol.payload_codec,
+        "create_deserializer",
+        wraps=protocol.payload_codec.create_deserializer,
+    ) as create_deserializer:
+        with pytest.raises(_ModeledQueryError) as exc_info:
+            await protocol.deserialize_response(
+                operation=_mock_operation(
+                    _operation_schema("FailingOperation"),
+                    error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
                 ),
-            ),
-            error_registry=TypeRegistry(
-                {ShapeID("com.test#InvalidActionError"): _ModeledQueryError}
-            ),
-            context=TypedProperties(),
-        )
+                request=cast(HTTPRequest, Mock()),
+                response=HTTPResponse(
+                    status=400,
+                    fields=tuples_to_fields([]),
+                    body=(
+                        b"<ErrorResponse><Error><Code>InvalidAction</Code>"
+                        b"<message>bad request</message></Error></ErrorResponse>"
+                    ),
+                ),
+                error_registry=TypeRegistry(
+                    {ShapeID("com.test#InvalidActionError"): _ModeledQueryError}
+                ),
+                context=TypedProperties(),
+            )
 
     assert exc_info.value.message == "bad request"
+    create_deserializer.assert_called_once()
 
 
 async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback() -> (

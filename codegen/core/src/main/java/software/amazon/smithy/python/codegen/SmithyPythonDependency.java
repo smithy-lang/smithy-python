@@ -65,6 +65,15 @@ public final class SmithyPythonDependency {
             false);
 
     /**
+     * The core smithy-xml python package.
+     */
+    public static final PythonDependency SMITHY_XML = new PythonDependency(
+            "smithy_xml",
+            "~=0.2.0",
+            Type.DEPENDENCY,
+            false);
+
+    /**
      * The core smithy-cbor python package.
      */
     public static final PythonDependency SMITHY_CBOR = new PythonDependency(

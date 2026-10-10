@@ -3,9 +3,12 @@
 import math
 from datetime import datetime
 from decimal import Decimal
+from io import BytesIO
 from typing import Any
+from xml.etree.ElementTree import ParseError
 
 import pytest
+from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.prelude import (
     BIG_DECIMAL,
     BLOB,
@@ -16,7 +19,9 @@ from smithy_core.prelude import (
     STRING,
     TIMESTAMP,
 )
-from smithy_xml import XMLCodec
+from smithy_xml import XMLCodec, XMLDeserializationMode
+from smithy_xml._private.deserializers import XMLShapeDeserializer
+from smithy_xml._private.value_deserializer import XMLValueDeserializer
 
 from . import (
     STRING_LIST_SCHEMA,
@@ -26,9 +31,14 @@ from . import (
 )
 
 
+@pytest.mark.parametrize("mode", list(XMLDeserializationMode))
 @pytest.mark.parametrize("expected, given", XML_SERDE_CASES)
-def test_xml_deserializer(expected: Any, given: bytes) -> None:
-    codec = XMLCodec()
+def test_xml_deserializer(
+    expected: Any,
+    given: bytes,
+    mode: XMLDeserializationMode,
+) -> None:
+    codec = XMLCodec(deserialization_mode=mode)
     deserializer = codec.create_deserializer(given)
     match expected:
         case bool():
@@ -67,6 +77,33 @@ def test_xml_deserializer(expected: Any, given: bytes) -> None:
     assert actual == expected
 
 
+@pytest.mark.parametrize(
+    "mode, source, expected_type",
+    [
+        (XMLDeserializationMode.AUTO, b"<s/>", XMLValueDeserializer),
+        (XMLDeserializationMode.AUTO, BytesIO(b"<s/>"), XMLShapeDeserializer),
+        (XMLDeserializationMode.EAGER, BytesIO(b"<s/>"), XMLValueDeserializer),
+        (XMLDeserializationMode.STREAMING, b"<s/>", XMLShapeDeserializer),
+    ],
+)
+def test_deserialization_mode_selects_parser(
+    mode: XMLDeserializationMode,
+    source: bytes | BytesIO,
+    expected_type: type[ShapeDeserializer],
+) -> None:
+    deserializer = XMLCodec(deserialization_mode=mode).create_deserializer(source)
+    assert isinstance(deserializer, expected_type)
+
+
+@pytest.mark.parametrize("mode", list(XMLDeserializationMode))
+def test_invalid_xml_uses_existing_error_type(mode: XMLDeserializationMode) -> None:
+    with pytest.raises(ParseError):
+        deserializer = XMLCodec(deserialization_mode=mode).create_deserializer(
+            b"<incomplete>"
+        )
+        deserializer.read_string(STRING)
+
+
 def test_read_document_raises() -> None:
     """XML does not support document types."""
     deserializer = XMLCodec().create_deserializer(b"<doc>foo</doc>")
@@ -97,29 +134,34 @@ def test_deserialize_empty_blob_self_closed() -> None:
     assert XMLCodec().create_deserializer(b"<b/>").read_blob(BLOB) == b""
 
 
-def test_wrapper_elements() -> None:
+@pytest.mark.parametrize("mode", list(XMLDeserializationMode))
+def test_wrapper_elements(mode: XMLDeserializationMode) -> None:
     """Deserializer can unwrap awsQuery-style response wrappers."""
     xml = (
         b"<OpResponse><OpResult>"
         b"<stringMember>hello</stringMember>"
         b"</OpResult></OpResponse>"
     )
-    deserializer = XMLCodec().create_deserializer(
+    deserializer = XMLCodec(deserialization_mode=mode).create_deserializer(
         xml, wrapper_elements=("OpResponse", "OpResult")
     )
     result = SerdeShape.deserialize(deserializer)
     assert result.string_member == "hello"
 
 
-def test_wrapper_elements_scalar_read() -> None:
+@pytest.mark.parametrize("mode", list(XMLDeserializationMode))
+def test_wrapper_elements_scalar_read(mode: XMLDeserializationMode) -> None:
     xml = b"<OpResponse><OpResult>hello</OpResult></OpResponse>"
-    deserializer = XMLCodec().create_deserializer(
+    deserializer = XMLCodec(deserialization_mode=mode).create_deserializer(
         xml, wrapper_elements=("OpResponse", "OpResult")
     )
     assert deserializer.read_string(STRING) == "hello"
 
 
-def test_flattened_list_interleaved_with_other_members() -> None:
+@pytest.mark.parametrize("mode", list(XMLDeserializationMode))
+def test_flattened_list_interleaved_with_other_members(
+    mode: XMLDeserializationMode,
+) -> None:
     """Flattened list elements can be interleaved with other struct members."""
     xml = (
         b"<SerdeShape>"
@@ -128,12 +170,15 @@ def test_flattened_list_interleaved_with_other_members() -> None:
         b"<flattenedListMember>second</flattenedListMember>"
         b"</SerdeShape>"
     )
-    result = SerdeShape.deserialize(XMLCodec().create_deserializer(xml))
+    result = SerdeShape.deserialize(
+        XMLCodec(deserialization_mode=mode).create_deserializer(xml)
+    )
     assert result.flattened_list_member == ["first", "second"]
     assert result.string_member == "middle"
 
 
-def test_unknown_members_skipped() -> None:
+@pytest.mark.parametrize("mode", list(XMLDeserializationMode))
+def test_unknown_members_skipped(mode: XMLDeserializationMode) -> None:
     xml = (
         b"<SerdeShape>"
         b"<stringMember>keep</stringMember>"
@@ -141,5 +186,7 @@ def test_unknown_members_skipped() -> None:
         b"<integerMember>5</integerMember>"
         b"</SerdeShape>"
     )
-    result = SerdeShape.deserialize(XMLCodec().create_deserializer(xml))
+    result = SerdeShape.deserialize(
+        XMLCodec(deserialization_mode=mode).create_deserializer(xml)
+    )
     assert result == SerdeShape(string_member="keep", integer_member=5)
