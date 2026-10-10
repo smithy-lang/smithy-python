@@ -56,6 +56,10 @@ public class AwsCodegenTest {
         assertTrue(config.contains("self.auth_schemes = auth_schemes"));
         assertTrue(config.contains("default_factory=lambda: AIOHTTPClient()"));
         assertFalse(config.contains("from smithy_http.aio.crt import AWSCRTHTTPClient"));
+        assertTrue(config.contains(
+                "json_deserialization_mode: JSONDeserializationMode | None"));
+        assertTrue(config.contains(
+                "\"json_deserialization_mode\": FieldSpec(default=None)"));
 
         var client = Files.readString(tempDir.resolve("src/restjson/client.py"));
         assertInOrder(
@@ -73,6 +77,9 @@ public class AwsCodegenTest {
         assertFalse(client.contains("plugin(self._config)"));
         assertTrue(client.contains("retry_mode=config.retry_mode"));
         assertTrue(client.contains("max_attempts=config.max_attempts"));
+        assertTrue(client.contains(
+                "from smithy_json.plugins import json_deserialization_plugin"));
+        assertTrue(client.contains("json_deserialization_plugin,"));
 
         var schemas = Files.readString(tempDir.resolve("src/restjson/_private/schemas.py"));
         assertTrue(schemas.contains("aws.protocols#restJson1"));

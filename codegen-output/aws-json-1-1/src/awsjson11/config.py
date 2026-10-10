@@ -25,6 +25,7 @@ from smithy_core.interceptors import Interceptor
 from smithy_core.interfaces.auth import AuthSchemeResolver
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
+from smithy_json import JSONDeserializationMode
 
 from .auth import HTTPAuthSchemeResolver
 from .models import (
@@ -111,6 +112,7 @@ class _AsyncJsonProtocolConfigOverrides(AwsConfigOverrides, total=False):
     )
     auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None
     auth_scheme_resolver: AuthSchemeResolver | None
+    json_deserialization_mode: JSONDeserializationMode | None
 
 
 @dataclass(kw_only=True, repr=False, init=False)
@@ -174,6 +176,12 @@ class AsyncJsonProtocolConfig(AsyncAwsConfig):
     header.
     """
 
+    json_deserialization_mode: JSONDeserializationMode | None = None
+    """
+    Controls whether JSON response payloads are deserialized eagerly or
+    incrementally.
+    """
+
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
         "aws_credentials_identity_resolver": FieldSpec(default=None),
         "region": FieldSpec(default=None),
@@ -182,6 +190,7 @@ class AsyncJsonProtocolConfig(AsyncAwsConfig):
         "aws_session_token": FieldSpec(default=None),
         "user_agent_extra": FieldSpec(default=None),
         "sdk_ua_app_id": FieldSpec(default=None),
+        "json_deserialization_mode": FieldSpec(default=None),
         **AsyncAwsConfig._FIELDS,
         "endpoint_uri": FieldSpec(
             default=None, resolver=EndpointUriResolver("json_protocol")
