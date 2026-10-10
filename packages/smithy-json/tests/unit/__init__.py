@@ -355,6 +355,11 @@ JSON_SERDE_CASES = [
     (Decimal("-Infinity"), b'"-Infinity"'),
     (b"foo", b'"Zm9v"'),
     ("foo", b'"foo"'),
+    # Non-ASCII characters are written as literal UTF-8
+    (
+        "caf\xe9 漢 \U0001f600 \u2028",
+        b'"caf\xc3\xa9 \xe6\xbc\xa2 \xf0\x9f\x98\x80 \xe2\x80\xa8"',
+    ),
     # RFC 8259 §7: control characters must be escaped
     ("line 1\nline 2", b'"line 1\\nline 2"'),
     ("col 1\tcol 2", b'"col 1\\tcol 2"'),
