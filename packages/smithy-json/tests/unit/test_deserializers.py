@@ -3,9 +3,11 @@
 import math
 from datetime import datetime
 from decimal import Decimal
+from io import BytesIO
 from typing import Any
 
 import pytest
+from ijson.common import IncompleteJSONError  # type: ignore
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.prelude import (
@@ -18,7 +20,9 @@ from smithy_core.prelude import (
     STRING,
     TIMESTAMP,
 )
-from smithy_json import JSONCodec, JSONDocument
+from smithy_json import JSONCodec, JSONDeserializationMode, JSONDocument
+from smithy_json._private.deserializers import JSONShapeDeserializer
+from smithy_json._private.value_deserializer import JSONValueDeserializer
 
 from . import (
     JSON_SERDE_CASES,
@@ -28,9 +32,17 @@ from . import (
 )
 
 
+@pytest.mark.parametrize(
+    "mode",
+    [JSONDeserializationMode.STREAMING, JSONDeserializationMode.EAGER],
+)
 @pytest.mark.parametrize("expected, given", JSON_SERDE_CASES)
-def test_json_deserializer(expected: Any, given: bytes) -> None:
-    codec = JSONCodec()
+def test_json_deserializer(
+    expected: Any,
+    given: bytes,
+    mode: JSONDeserializationMode,
+) -> None:
+    codec = JSONCodec(deserialization_mode=mode)
     deserializer = codec.create_deserializer(given)
     match expected:
         case None:
@@ -108,3 +120,46 @@ def test_uses_custom_document() -> None:
     codec = JSONCodec(document_class=CustomDocument)
     actual = codec.create_deserializer(b'{"foo": "bar"}').read_document(DOCUMENT)
     assert isinstance(actual, CustomDocument)
+
+
+@pytest.mark.parametrize(
+    "mode, source, expected_type",
+    [
+        (JSONDeserializationMode.AUTO, b"{}", JSONValueDeserializer),
+        (JSONDeserializationMode.AUTO, BytesIO(b"{}"), JSONShapeDeserializer),
+        (JSONDeserializationMode.EAGER, BytesIO(b"{}"), JSONValueDeserializer),
+        (JSONDeserializationMode.STREAMING, b"{}", JSONShapeDeserializer),
+    ],
+)
+def test_deserialization_mode_selects_parser(
+    mode: JSONDeserializationMode,
+    source: bytes | BytesIO,
+    expected_type: type[ShapeDeserializer],
+) -> None:
+    deserializer = JSONCodec(deserialization_mode=mode).create_deserializer(source)
+    assert isinstance(deserializer, expected_type)
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [JSONDeserializationMode.STREAMING, JSONDeserializationMode.EAGER],
+)
+def test_ignores_unknown_structure_members(mode: JSONDeserializationMode) -> None:
+    actual = JSONCodec(deserialization_mode=mode).deserialize(
+        b'{"unknown":{"nested":[1,2,3]},"stringMember":"value"}',
+        SerdeShape,
+    )
+
+    assert actual.string_member == "value"
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [JSONDeserializationMode.STREAMING, JSONDeserializationMode.EAGER],
+)
+def test_invalid_json_uses_existing_error_type(mode: JSONDeserializationMode) -> None:
+    with pytest.raises(IncompleteJSONError):
+        deserializer = JSONCodec(deserialization_mode=mode).create_deserializer(
+            b'{"incomplete":'
+        )
+        deserializer.read_document(DOCUMENT)

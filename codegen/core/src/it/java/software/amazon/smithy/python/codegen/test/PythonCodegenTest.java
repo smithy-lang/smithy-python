@@ -53,6 +53,14 @@ public class PythonCodegenTest {
         var config = Files.readString(tempDir.resolve("src/weather/config.py"));
         assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
         assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));
+        assertTrue(config.contains(
+                "json_deserialization_mode: JSONDeserializationMode | None"));
+        assertTrue(config.contains(
+                "self.json_deserialization_mode = json_deserialization_mode"));
+
+        assertTrue(client.contains(
+                "from smithy_json.plugins import json_deserialization_plugin"));
+        assertTrue(client.contains("json_deserialization_plugin,"));
 
         // An output that models a "responseMetadata" member gets both the SDK-reserved
         // response_metadata attribute and the escaped modeled member, so neither shadows

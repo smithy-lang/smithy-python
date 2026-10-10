@@ -14,6 +14,7 @@ from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
 from smithy_http.aio.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
+from smithy_json.plugins import json_deserialization_plugin
 
 from .config import AsyncJSONRPC10Config, Plugin
 from .models import (
@@ -94,7 +95,11 @@ class AsyncJSONRPC10Client(AsyncClient):
         super().__init__()
         self._config = config
         self._plugins = plugins
-        self._client_plugins: list[Plugin] = [aws_user_agent_plugin, user_agent_plugin]
+        self._client_plugins: list[Plugin] = [
+            aws_user_agent_plugin,
+            json_deserialization_plugin,
+            user_agent_plugin,
+        ]
 
     async def _ensure_setup(self) -> AsyncJSONRPC10Config:
         if not self._setup_done:

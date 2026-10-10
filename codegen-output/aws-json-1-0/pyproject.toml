@@ -26,7 +26,8 @@ classifiers = [
 dependencies = [
     "smithy_aws_core[json]~=0.12.0",
     "smithy_core~=0.9.0",
-    "smithy_http[aiohttp]~=0.6.0"
+    "smithy_http[aiohttp]~=0.6.0",
+    "smithy_json~=0.3.0"
 ]
 
 [project.optional-dependencies]
