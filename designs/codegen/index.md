@@ -63,3 +63,4 @@ behavior of generated packages.
 * [Code Generator CLI](cli.md)
 * [Service and Data-Shape Selection](selection.md)
 * [Native Python Symbols](symbols.md)
+* [Native Python Writer](writer.md)
