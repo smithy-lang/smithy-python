@@ -1,12 +1,26 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from smithy_core.types import TimestampFormat
 
 if TYPE_CHECKING:
     from ._private.documents import JSONDocument
+
+
+class JSONDeserializationMode(StrEnum):
+    """Controls how JSON payloads are parsed during deserialization."""
+
+    AUTO = "auto"
+    """Eagerly parse bytes while preserving incremental reader consumption."""
+
+    EAGER = "eager"
+    """Consume and materialize the complete JSON value before deserializing."""
+
+    STREAMING = "streaming"
+    """Incrementally deserialize JSON using the streaming parser."""
 
 
 @dataclass(slots=True)
@@ -29,3 +43,6 @@ class JSONSettings:
 
     default_namespace: str | None = None
     """The default namespace to use when determining a document's discriminator."""
+
+    deserialization_mode: JSONDeserializationMode = JSONDeserializationMode.AUTO
+    """Controls whether JSON deserialization is eager, streaming, or automatic."""
