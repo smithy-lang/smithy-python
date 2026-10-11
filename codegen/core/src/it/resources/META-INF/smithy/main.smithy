@@ -49,6 +49,9 @@ operation TestUnionListOperation {
     }
     output := {
         response: String
+        // A member named responseMetadata collides with the SDK-reserved
+        // response_metadata attribute and must be escaped on the generated output.
+        responseMetadata: String
     }
 }
 
@@ -305,6 +308,8 @@ operation ListCities {
         sparseItems: SparseCitySummaries
 
         mutual: MutuallyRecursiveA
+
+        recursiveUnion: RecursiveUnion
     }
 }
 
@@ -335,6 +340,8 @@ structure Defaults {
     @required
     requiredDefaultBool: Boolean = true
 
+    defaultNullBoolean: Boolean = null
+
     @required
     requiredStr: String
 
@@ -354,6 +361,8 @@ structure Defaults {
 
     @required
     requiredDefaultInt: Integer = 42
+
+    defaultNullLong: Long = null
 
     @required
     requiredFloat: Float
@@ -375,6 +384,8 @@ structure Defaults {
     @required
     requiredDefaultBlob: Blob = "c3BhbQ=="
 
+    defaultNullBlob: Blob = null
+
     // timestamp
     @required
     requiredTimestamp: Timestamp
@@ -393,6 +404,8 @@ structure Defaults {
 
     @required
     requiredDefaultTimestamp: Timestamp = 4.2
+
+    defaultNullTimestamp: Timestamp = null
 
     @required
     requiredList: StringList
@@ -413,6 +426,14 @@ structure Defaults {
 
     @required
     requiredDefaultMap: StringMap = {}
+
+    defaultEnum: StringYesNo = "YES"
+
+    defaultNullEnum: StringYesNo = null
+
+    defaultIntEnum: IntYesNo = 1
+
+    defaultNullIntEnum: IntYesNo = null
 
     @required
     requiredDocument: Document
@@ -567,6 +588,21 @@ structure MutuallyRecursiveB {
     mutual: MutuallyRecursiveA
 }
 
+union RecursiveUnion {
+    nested: RecursiveUnionMap
+    items: RecursiveUnionList
+    leaf: String
+}
+
+map RecursiveUnionMap {
+    key: String
+    value: RecursiveUnion
+}
+
+list RecursiveUnionList {
+    member: RecursiveUnion
+}
+
 // CitySummaries is a list of CitySummary structures.
 list CitySummaries {
     member: CitySummary
@@ -597,6 +633,7 @@ structure CitySummary {
 }
 
 @readonly
+@longPoll(timeoutMillis: 20000)
 @http(method: "GET", uri: "/current-time")
 operation GetCurrentTime {
     output := {

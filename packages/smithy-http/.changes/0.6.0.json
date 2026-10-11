@@ -1,0 +1,20 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "`HttpClientProtocol` implements `extract_response_metadata()`, reporting the HTTP status code."
+    },
+    {
+      "type": "feature",
+      "description": "Added a naive `RpcV2CborClientProtocol` for the `smithy.protocols#rpcv2Cbor` protocol (optional `cbor` extra)."
+    },
+    {
+      "type": "feature",
+      "description": "Added schema-cached HTTP binding plans for members, operations, payloads, and request and response dispatch."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-cbor` from `~=0.0.0` to `~=0.1.0`."
+    }
+  ]
+}

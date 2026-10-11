@@ -15,6 +15,7 @@ import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.utils.StringUtils;
 
 public final class AwsServiceIdIntegration implements PythonIntegration {
+
     @Override
     public SymbolProvider decorateSymbolProvider(Model model, PythonSettings settings, SymbolProvider symbolProvider) {
         return new ServiceIdSymbolProvider(symbolProvider);
@@ -33,8 +34,8 @@ public final class AwsServiceIdIntegration implements PythonIntegration {
             Symbol symbol = this.delegate.toSymbol(shape);
             if (shape.isServiceShape() && shape.hasTrait(ServiceTrait.class)) {
                 var serviceTrait = shape.expectTrait(ServiceTrait.class);
-                var serviceName = StringUtils.capitalize(serviceTrait.getSdkId() + "Client").replace(" ", "");
-                symbol = symbol.toBuilder().name(serviceName).build();
+                var baseClientName = StringUtils.capitalize(serviceTrait.getSdkId() + "Client").replace(" ", "");
+                symbol = symbol.toBuilder().name("Async" + baseClientName).build();
             }
             return symbol;
         }

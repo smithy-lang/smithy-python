@@ -9,31 +9,33 @@ import static software.amazon.smithy.python.codegen.CodegenUtils.isErrorMessage;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
+import software.amazon.smithy.model.knowledge.OperationIndex;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.StructureShape;
-import software.amazon.smithy.model.traits.ClientOptionalTrait;
 import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
-import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.RetryableTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
+import software.amazon.smithy.python.codegen.RequiredMemberTargetIndex;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SymbolProperties;
-import software.amazon.smithy.python.codegen.sections.ErrorSection;
-import software.amazon.smithy.python.codegen.sections.StructureSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -71,10 +73,10 @@ public final class StructureGenerator implements Runnable {
         var optional = new ArrayList<MemberShape>();
         var index = NullableIndex.of(context.model());
         for (MemberShape member : shape.members()) {
-            if (index.isMemberNullable(member) || member.hasTrait(DefaultTrait.class)) {
-                optional.add(member);
-            } else {
+            if (CodegenUtils.isRequiredMember(index, member)) {
                 required.add(member);
+            } else {
+                optional.add(member);
             }
         }
         this.requiredMembers = filterPropertyMembers(required);
@@ -97,11 +99,13 @@ public final class StructureGenerator implements Runnable {
     private void renderStructure() {
         writer.addStdlibImport("dataclasses", "dataclass");
         var symbol = symbolProvider.toSymbol(shape);
-        writer.pushState(new StructureSection(shape));
-
+        writer.addLocallyDefinedSymbol(symbol);
         writer.write("""
                 @dataclass(kw_only=True)
                 class $L:
+                    ${C|}
+
+                    ${C|}
                     ${C|}
 
                     ${C|}
@@ -112,12 +116,12 @@ public final class StructureGenerator implements Runnable {
 
                 """,
                 symbol.getName(),
-                writer.consumer(this::writeClassDocs),
+                writer.consumer(w -> writeClassDocs()),
                 writer.consumer(w -> writeProperties()),
+                writer.consumer(w -> writeResponseMetadataProperty()),
                 writer.consumer(w -> generateSerializeMethod()),
-                writer.consumer(w -> generateDeserializeMethod()));
-
-        writer.popState();
+                writer.consumer(w -> generateDeserializeMethod()),
+                writer.consumer(w -> generateSmithyDefaultMethod()));
     }
 
     private void renderError() {
@@ -127,8 +131,8 @@ public final class StructureGenerator implements Runnable {
 
         var fault = errorTrait.getValue();
         var symbol = symbolProvider.toSymbol(shape);
+        writer.addLocallyDefinedSymbol(symbol);
         var baseError = CodegenUtils.getServiceError(settings);
-        writer.pushState(new ErrorSection(symbol));
         writer.putContext("retryable", false);
         writer.putContext("throttling", false);
 
@@ -156,16 +160,56 @@ public final class StructureGenerator implements Runnable {
 
                     ${7C|}
 
+                    ${8C|}
+
                 """,
                 symbol.getName(),
                 baseError,
                 fault,
-                writer.consumer(this::writeClassDocs),
+                writer.consumer(w -> writeClassDocs()),
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
-                writer.consumer(w -> generateDeserializeMethod()));
-        writer.popState();
+                writer.consumer(w -> generateDeserializeMethod()),
+                writer.consumer(w -> generateSmithyDefaultMethod()));
+    }
 
+    private void writeClassDocs() {
+        var docs = shape.getTrait(DocumentationTrait.class)
+                .map(DocumentationTrait::getValue)
+                .orElse("Dataclass for " + shape.getId().getName() + " structure.");
+        writer.writeDocs(docs, context);
+    }
+
+    /**
+     * Writes the response metadata attribute onto operation outputs.
+     *
+     * <p>The attribute is not part of the service's modeled data, so it is excluded
+     * from equality and from the generated repr. Excluding it from equality also
+     * keeps generated protocol tests comparing shapes by their modeled members
+     * alone.
+     *
+     * <p>Errors receive the same attribute by inheriting it from the service error
+     * base class rather than having it written here.
+     */
+    private void writeResponseMetadataProperty() {
+        if (!OperationIndex.of(model).isOutputStructure(shape)) {
+            return;
+        }
+
+        writer.addStdlibImport("dataclasses", "field");
+        writer.write("""
+                $L: $T = field(default=$T, repr=False, compare=False)
+                $C
+                """,
+                CodegenUtils.RESPONSE_METADATA_MEMBER,
+                RuntimeTypes.RESPONSE_METADATA,
+                RuntimeTypes.EMPTY_RESPONSE_METADATA,
+                writer.consumer(w -> w.writeDocs("""
+                        Metadata about the response that produced this output.
+
+                        Use this to recover the request identifiers a service's support team \
+                        needs in order to investigate a call. Members of the metadata are \
+                        individually optional.""", context)));
     }
 
     private void writeProperties() {
@@ -179,21 +223,17 @@ public final class StructureGenerator implements Runnable {
             } else {
                 writer.putContext("sensitive", false);
             }
-            var docs = member.getMemberTrait(model, DocumentationTrait.class)
-                    .map(DocumentationTrait::getValue)
-                    .map(writer::formatDocs)
-                    .orElse(null);
-            writer.putContext("docs", docs);
 
             var memberName = symbolProvider.toMemberName(member);
             writer.putContext("quote", recursiveShapes.contains(target) ? "'" : "");
             writer.write("""
                     $L: ${quote:L}$T${quote:L}\
                     ${?sensitive} = field(repr=False)${/sensitive}
-                    ${?docs}""\"${docs:L}""\"${/docs}
+                    $C
                     """,
                     memberName,
-                    symbolProvider.toSymbol(member));
+                    symbolProvider.toSymbol(member),
+                    writer.consumer(w -> writeMemberDocs(member)));
             writer.popState();
         }
 
@@ -215,6 +255,14 @@ public final class StructureGenerator implements Runnable {
             if (member.hasTrait(DefaultTrait.class)) {
 
                 defaultValue = getDefaultValue(writer, member);
+                // A `@default: null` member is nullable and resolves to None, so
+                // it needs `| None` like a member with no default. Documents are
+                // excluded: a null document default is a non-None Document(None),
+                // built via default_factory below.
+                if (!target.isDocumentShape()
+                        && member.expectTrait(DefaultTrait.class).toNode().isNullNode()) {
+                    writer.putContext("nullable", true);
+                }
                 if (target.isDocumentShape() || defaultValue.startsWith("list[") || defaultValue.startsWith("dict[")) {
                     writer.addStdlibImport("dataclasses", "field");
                     defaultKey = "default_factory";
@@ -227,11 +275,6 @@ public final class StructureGenerator implements Runnable {
             writer.putContext("defaultKey", defaultKey);
             writer.putContext("defaultValue", defaultValue);
             writer.putContext("useField", requiresField);
-            var docs = member.getMemberTrait(model, DocumentationTrait.class)
-                    .map(DocumentationTrait::getValue)
-                    .map(writer::formatDocs)
-                    .orElse(null);
-            writer.putContext("docs", docs);
 
             writer.putContext("quote", recursiveShapes.contains(target) ? "'" : "");
 
@@ -242,15 +285,18 @@ public final class StructureGenerator implements Runnable {
                     ${?useField}\
                     field(${?sensitive}repr=False, ${/sensitive}${defaultKey:L}=${defaultValue:L})\
                     ${/useField}
-                    ${?docs}""\"${docs:L}""\"${/docs}
-                    """, memberName, symbolProvider.toSymbol(member));
+                    $C
+                    """,
+                    memberName,
+                    symbolProvider.toSymbol(member),
+                    writer.consumer(w -> writeMemberDocs(member)));
             writer.popState();
         }
     }
 
-    private void writeClassDocs(PythonWriter writer) {
-        shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
-            writer.writeDocs(writer.formatDocs(trait.getValue()).trim());
+    private void writeMemberDocs(MemberShape member) {
+        member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
+            writer.writeDocs(trait.getValue(), context);
         });
     }
 
@@ -277,15 +323,36 @@ public final class StructureGenerator implements Runnable {
         // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-default-trait
         var defaultNode = member.expectTrait(DefaultTrait.class).toNode();
         var target = model.expectShape(member.getTarget());
+        // A null default marks the member nullable and resolves to None. Documents are
+        // excluded since their null default is a non-None Document(None) (see the branch below).
+        if (!target.isDocumentShape() && defaultNode.isNullNode()) {
+            return "None";
+        }
         if (target.isTimestampShape()) {
             ZonedDateTime value = CodegenUtils.parseTimestampNode(model, member, defaultNode);
             return CodegenUtils.getDatetimeConstructor(writer, value);
         } else if (target.isBlobShape()) {
-            return String.format("b'%s'", defaultNode.expectStringNode().getValue());
+            writer.addStdlibImport("base64", "b64decode");
+            return String.format("b64decode(\"%s\")", defaultNode.expectStringNode().getValue());
+        } else if (target.isEnumShape()) {
+            // Wrap rather than emit a bare string so the value matches the field type.
+            var enumSymbol = symbolProvider.toSymbol(target)
+                    .expectProperty(SymbolProperties.ENUM_SYMBOL);
+            return String.format("%s(\"%s\")",
+                    writer.format("$T", enumSymbol),
+                    defaultNode.expectStringNode().getValue());
+        } else if (target.isIntEnumShape()) {
+            var enumSymbol = symbolProvider.toSymbol(target)
+                    .expectProperty(SymbolProperties.ENUM_SYMBOL);
+            return String.format("%s(%s)",
+                    writer.format("$T", enumSymbol),
+                    defaultNode.expectNumberNode().getValue());
         }
 
         if (target.isDocumentShape()) {
-            return String.format("lambda: Document(%s)", switch (defaultNode.getType()) {
+            var docSymbol = RuntimeTypes.DOCUMENT;
+            var docName = writer.format("$T", docSymbol);
+            return String.format("lambda: %s(%s)", docName, switch (defaultNode.getType()) {
                 case NULL -> "None";
                 case BOOLEAN -> defaultNode.expectBooleanNode().getValue() ? "True" : "False";
                 case ARRAY -> "list()";
@@ -294,8 +361,8 @@ public final class StructureGenerator implements Runnable {
             });
         }
 
+        // A null default is handled by the guard above, so it can't reach here.
         return switch (defaultNode.getType()) {
-            case NULL -> "None";
             case BOOLEAN -> defaultNode.expectBooleanNode().getValue() ? "True" : "False";
             // These will be given to a default_factory in field. They're inherently empty, so no need to
             // worry about any potential values.
@@ -304,47 +371,19 @@ public final class StructureGenerator implements Runnable {
         };
     }
 
-    private boolean hasDocs() {
-        if (shape.hasTrait(DocumentationTrait.class)) {
-            return true;
-        }
-        for (MemberShape member : shape.members()) {
-            if (member.getMemberTrait(model, DocumentationTrait.class).isPresent()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void writeMemberDocs(MemberShape member) {
-        member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
-            String descriptionPrefix = "";
-            if (member.hasTrait(RequiredTrait.class) && !member.hasTrait(ClientOptionalTrait.class)) {
-                descriptionPrefix = "**[Required]** - ";
-            }
-
-            String memberName = symbolProvider.toMemberName(member);
-            String docs = writer.formatDocs(String.format(":param %s: %s%s",
-                    memberName,
-                    descriptionPrefix,
-                    trait.getValue()));
-            writer.write(docs);
-        });
-    }
-
     private void generateSerializeMethod() {
         writer.pushState();
-        writer.addImport("smithy_core.serializers", "ShapeSerializer");
+        writer.putContext("shapeSerializer", RuntimeTypes.SHAPE_SERIALIZER);
 
         writer.putContext("schema", symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA));
         writer.write("""
-                def serialize(self, serializer: ShapeSerializer):
+                def serialize(self, serializer: ${shapeSerializer:T}):
                     serializer.write_struct(${schema:T}, self)
 
                 """);
 
         var serializeableMembers = filterMembers();
-        writer.write("def serialize_members(self, serializer: ShapeSerializer):").indent();
+        writer.write("def serialize_members(self, serializer: ${shapeSerializer:T}):").indent();
         if (serializeableMembers.isEmpty()) {
             writer.write("pass");
         } else {
@@ -390,35 +429,112 @@ public final class StructureGenerator implements Runnable {
         writer.pushState();
         writer.addLogger();
         writer.addStdlibImports("typing", Set.of("Self", "Any"));
-        writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
-        writer.addImport("smithy_core.schemas", "Schema");
 
         var schemaSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA);
         writer.putContext("schema", schemaSymbol);
 
+        var corrections = errorCorrections();
+        writer.putContext("errorCorrection", !corrections.isEmpty());
+
         // TODO: either formalize deserialize_kwargs or remove it when http serde is converted
         writer.write("""
                 @classmethod
-                def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+                def deserialize(cls, deserializer: $1T) -> Self:
                     return cls(**cls.deserialize_kwargs(deserializer))
 
                 @classmethod
-                def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
+                def deserialize_kwargs(cls, deserializer: $1T) -> dict[str, Any]:
                     kwargs: dict[str, Any] = {}
 
-                    def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
+                    def _consumer(schema: $2T, de: $1T) -> None:
                         match schema.expect_member_index():
-                            ${C|}
+                            ${3C|}
                             case _:
                                 logger.debug("Unexpected member schema: %s", schema)
 
-                    deserializer.read_struct($T, consumer=_consumer)
+                    deserializer.read_struct($4T, consumer=_consumer)
+                    ${?errorCorrection}
+                    ${5C|}
+                    ${/errorCorrection}
                     return kwargs
 
                 """,
+                RuntimeTypes.SHAPE_DESERIALIZER,
+                RuntimeTypes.SCHEMA,
                 writer.consumer(w -> deserializeMembers(shape.members())),
-                schemaSymbol);
+                schemaSymbol,
+                writer.consumer(w -> writeErrorCorrection(corrections)));
         writer.popState();
+    }
+
+    /**
+     * Collects client error correction defaults for required members the server failed
+     * to serialize, keyed by member name. Members whose targets have no synthesizable
+     * default (e.g. a streaming blob) are omitted; the dataclass will raise for those.
+     *
+     * @see <a href="https://smithy.io/2.0/spec/aggregate-types.html#client-error-correction">Smithy
+     *     spec: Client error correction</a>
+     */
+    private Map<String, Consumer<PythonWriter>> errorCorrections() {
+        var visitor = new MemberErrorCorrectionGenerator(context);
+        var corrections = new LinkedHashMap<String, Consumer<PythonWriter>>();
+        for (MemberShape member : requiredMembers) {
+            var defaultExpression = model.expectShape(member.getTarget()).accept(visitor);
+            if (defaultExpression == null) {
+                continue;
+            }
+            corrections.put(symbolProvider.toMemberName(member), defaultExpression);
+        }
+        return corrections;
+    }
+
+    private void writeErrorCorrection(Map<String, Consumer<PythonWriter>> corrections) {
+        corrections.forEach((memberName, defaultExpression) -> {
+            writer.pushState();
+            writer.putContext("memberName", memberName);
+            writer.write("""
+                    if ${memberName:S} not in kwargs:
+                        kwargs[${memberName:S}] = ${C|}""",
+                    writer.consumer(defaultExpression));
+            writer.popState();
+        });
+    }
+
+    /**
+     * Emits a {@code _smithy_default()} classmethod that constructs an instance with all
+     * required members filled in via client error correction. Used to fill nested structure
+     * members per the Smithy spec. Only emitted when this structure is actually referenced
+     * as the target of a required structure member elsewhere in the model. If the structure
+     * has any required member whose target has no synthesizable default (a streaming blob,
+     * or another structure whose own required members transitively have no default),
+     * {@code _smithy_default()} is also omitted.
+     */
+    private void generateSmithyDefaultMethod() {
+        if (!RequiredMemberTargetIndex.of(model).isRequiredMemberTarget(shape.getId())) {
+            return;
+        }
+        var visitor = new MemberErrorCorrectionGenerator(context);
+        if (shape.accept(visitor) == null) {
+            return;
+        }
+        writer.write("""
+                @classmethod
+                def _smithy_default(cls) -> Self:
+                    return cls(${C|})
+                """,
+                writer.consumer(w -> writeSmithyDefaultArguments(visitor)));
+    }
+
+    private void writeSmithyDefaultArguments(MemberErrorCorrectionGenerator visitor) {
+        var first = true;
+        for (MemberShape member : requiredMembers) {
+            if (!first) {
+                writer.writeInline(", ");
+            }
+            first = false;
+            writer.writeInline("$L=", symbolProvider.toMemberName(member));
+            model.expectShape(member.getTarget()).accept(visitor).accept(writer);
+        }
     }
 
     private void deserializeMembers(Collection<MemberShape> members) {

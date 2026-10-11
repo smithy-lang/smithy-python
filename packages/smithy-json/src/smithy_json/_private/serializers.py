@@ -7,6 +7,7 @@ from contextlib import AbstractContextManager
 from datetime import datetime
 from decimal import Decimal
 from io import BufferedWriter, RawIOBase
+from json.encoder import encode_basestring
 from types import TracebackType
 from typing import Self
 
@@ -270,14 +271,11 @@ class StreamingJSONEncoder:
                 self.write_array_end()
 
     def write_string(self, value: str) -> None:
-        self._sink.write(b'"')
-        self._sink.write(
-            value.replace("\\", "\\\\").replace('"', '\\"').encode("utf-8")
-        )
-        self._sink.write(b'"')
+        self._sink.write(encode_basestring(value).encode("utf-8"))
 
     def write_int(self, value: int) -> None:
-        self._sink.write(repr(value).encode("utf-8"))
+        # int() unwraps IntEnum members; otherwise repr would emit "<MyEnum.A: 1>".
+        self._sink.write(str(int(value)).encode("utf-8"))
 
     def write_float(self, value: float | Decimal) -> None:
         if not self._write_non_numeric_float(value=value):
@@ -288,7 +286,7 @@ class StreamingJSONEncoder:
 
     def _write_non_numeric_float(self, value: float | Decimal) -> bool:
         if value != value:
-            self._sink.write(b"NaN")
+            self._sink.write(b'"NaN"')
             return True
 
         if value == _INF:

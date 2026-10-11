@@ -50,7 +50,7 @@ class EventDeserializer(SpecificShapeDeserializer):
                     message_deserializer = self._create_deserializer(schema, headers)
                     message_deserializer.read_struct(schema, consumer)
                 else:
-                    member_schema = schema.members[member_name]
+                    member_schema = self._resolve_member_schema(schema, member_name)
                     message_deserializer = self._create_deserializer(
                         member_schema, headers
                     )
@@ -70,6 +70,21 @@ class EventDeserializer(SpecificShapeDeserializer):
                 )
             case _:
                 raise EventError(f"Unknown event structure: {self._event}")
+
+    def _resolve_member_schema(self, schema: Schema, member_name: str) -> Schema:
+        if member_schema := schema.members.get(member_name):
+            return member_schema
+
+        logger.debug(
+            "Received unmodeled event stream member %s for union %s",
+            member_name,
+            schema.id,
+        )
+        return Schema.member(
+            id=schema.id.with_member(member_name),
+            target=schema,
+            index=-1,
+        )
 
     def _create_deserializer(
         self, schema: Schema, headers: HEADERS_DICT

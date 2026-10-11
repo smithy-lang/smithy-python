@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.3.0
+
+### Features
+* Added serialization and deserialization support for Smithy non-finite floating-point values (`NaN`, `Infinity`, and `-Infinity`) using their JSON string representations.
+
+## v0.2.3
+
+### Bug fixes
+* Serialize `IntEnum` members as their underlying integer instead of their `repr`.
+
+## v0.2.2
+
+### Enhancements
+* Fixed string serialization to escape all control characters (U+0000-U+001F) per [RFC 8259](https://www.rfc-editor.org/rfc/rfc8259#section-7), preventing invalid JSON output for multiline and other control-character-containing strings. ([#647](https://github.com/smithy-lang/smithy-python/pull/647))
+
+## v0.2.1
+
+### Dependencies
+* Removed strict pinning on `smithy-core` in favor of client managed versions.
+
 ## v0.2.0
 
 ### Dependencies

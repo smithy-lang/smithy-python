@@ -9,6 +9,7 @@ from io import BytesIO
 
 import pytest
 from aws_sdk_signers import (
+    AsyncEventSigner,
     AsyncSigV4Signer,
     AWSCredentialIdentity,
     AWSRequest,
@@ -18,12 +19,32 @@ from aws_sdk_signers import (
     SigV4SigningProperties,
     URI,
 )
+from smithy_aws_event_stream.events import Event, EventHeaderEncoder, EventMessage
 
 SIGV4_RE = re.compile(
     r"AWS4-HMAC-SHA256 "
     r"Credential=(?P<access_key>\w+)/\d+/"
     r"(?P<signing_region>[a-z0-9-]+)/"
 )
+SIGNED_HEADERS_RE = re.compile(r"SignedHeaders=(?P<signed_headers>[^,]+)")
+
+# Headers that must not be signed, paired with a representative value. Authorization
+# is also excluded but is omitted here since signing replaces it.
+EXCLUDED_HEADERS = [
+    ("accept", "application/json"),
+    ("accept-encoding", "gzip"),
+    ("connection", "keep-alive"),
+    ("expect", "100-continue"),
+    ("keep-alive", "timeout=5"),
+    ("proxy-authenticate", 'Basic realm="proxy.example.com"'),
+    ("proxy-authorization", "Basic YWxhZGRpbjpvcGVuc2VzYW1l"),
+    ("te", "trailers"),
+    ("trailer", "x-amz-checksum-sha256"),
+    ("transfer-encoding", "chunked"),
+    ("upgrade", "websocket"),
+    ("user-agent", "aws-sdk-python/0.1.0"),
+    ("x-amzn-trace-id", "Root=foo;Parent=bar;Sampleid=1"),
+]
 
 
 @pytest.fixture(scope="module")
@@ -56,6 +77,41 @@ def aws_request() -> AWSRequest:
         body=BytesIO(b"123456"),
         fields=Fields({}),
     )
+
+
+CANONICAL_PATH_CASES: list[tuple[dict[str, bool], str, str]] = [
+    # Default: normalize the path, then encode it a second time.
+    ({}, "/a/./b/../c//d%20e", "/a/c/d%2520e"),
+    # No double-encoding keeps consecutive slashes but still removes dot segments.
+    ({"uri_encode_path": False}, "/a/./b/../c//d%20e", "/a/c//d%20e"),
+    # No normalization keeps every segment but still encodes a second time.
+    ({"normalize_path": False}, "/a/./b/../c//d%20e", "/a/./b/../c//d%2520e"),
+    # S3 signs the path exactly as it is sent.
+    (
+        {"uri_encode_path": False, "normalize_path": False},
+        "/a/./b/../c//d%20e",
+        "/a/./b/../c//d%20e",
+    ),
+]
+
+
+def _request_with_field(name: str, value: str) -> AWSRequest:
+    return AWSRequest(
+        destination=URI(
+            scheme="https",
+            host="127.0.0.1",
+            port=8000,
+        ),
+        method="GET",
+        body=BytesIO(b"123456"),
+        fields=Fields([Field(name=name, values=[value])]),
+    )
+
+
+def _signed_headers(request: AWSRequest) -> list[str]:
+    match = SIGNED_HEADERS_RE.search(request.fields["authorization"].as_string())
+    assert match is not None
+    return match.group("signed_headers").split(";")
 
 
 class TestSigV4Signer:
@@ -125,6 +181,46 @@ class TestSigV4Signer:
                 identity=identity,
             )
 
+    @pytest.mark.parametrize("name, value", EXCLUDED_HEADERS)
+    def test_sign_excludes_header_from_signed_headers(
+        self,
+        aws_identity: AWSCredentialIdentity,
+        signing_properties: SigV4SigningProperties,
+        name: str,
+        value: str,
+    ) -> None:
+        signed_request = self.SIGV4_SYNC_SIGNER.sign(
+            properties=signing_properties,
+            request=_request_with_field(name, value),
+            identity=aws_identity,
+        )
+        signed_headers = _signed_headers(signed_request)
+        assert "host" in signed_headers
+        assert name not in signed_headers
+        assert signed_request.fields[name].as_string() == value
+
+    def test_format_canonical_query_keeps_blank_values(self) -> None:
+        canonical_query = self.SIGV4_SYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
+            query="foo=bar&baz="
+        )
+        assert canonical_query == "baz=&foo=bar"
+
+    def test_format_canonical_query_with_literal_query_param(self) -> None:
+        canonical_query = self.SIGV4_SYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
+            query="sync"
+        )
+        assert canonical_query == "sync="
+
+    @pytest.mark.parametrize("options, path, expected", CANONICAL_PATH_CASES)
+    def test_format_canonical_path(
+        self, options: dict[str, bool], path: str, expected: str
+    ) -> None:
+        properties = SigV4SigningProperties(region="us-west-2", service="s3", **options)  # type: ignore[typeddict-item]
+        canonical_path = self.SIGV4_SYNC_SIGNER._format_canonical_path(  # pyright: ignore[reportPrivateUsage]
+            path=path, signing_properties=properties
+        )
+        assert canonical_path == expected
+
 
 class UnreadableAsyncStream:
     def __aiter__(self) -> typing.Self:
@@ -132,6 +228,111 @@ class UnreadableAsyncStream:
 
     async def __anext__(self) -> bytes:
         raise Exception("Read should not have been called!")
+
+
+class TestAsyncEventSigner:
+    async def test_sign_wraps_event_message_payload(
+        self,
+        aws_identity: AWSCredentialIdentity,
+    ) -> None:
+        signer = AsyncEventSigner(
+            initial_signature=b"initial-signature",
+            event_encoder_cls=EventHeaderEncoder,
+        )
+        message = EventMessage(
+            headers={":message-type": "event", ":event-type": "AudioEvent"},
+            payload=b"audio",
+        )
+
+        signed = await signer.sign(
+            event=message,
+            identity=aws_identity,
+            properties=SigV4SigningProperties(region="us-west-2", service="transcribe"),
+        )
+
+        assert (
+            signed.payload
+            == EventMessage(
+                headers={":message-type": "event", ":event-type": "AudioEvent"},
+                payload=b"audio",
+            ).encode()
+        )
+        assert ":date" in signed.headers
+        assert ":chunk-signature" in signed.headers
+
+    async def test_sign_empty_uses_zero_byte_outer_payload(
+        self,
+        aws_identity: AWSCredentialIdentity,
+    ) -> None:
+        signer = AsyncEventSigner(
+            initial_signature=b"initial-signature",
+            event_encoder_cls=EventHeaderEncoder,
+        )
+
+        signed = await signer.sign_empty(
+            event=EventMessage(),
+            identity=aws_identity,
+            properties=SigV4SigningProperties(region="us-west-2", service="transcribe"),
+        )
+
+        decoded = Event.decode(BytesIO(signed.encode()))
+        assert decoded is not None
+        assert decoded.message.payload == b""
+        assert ":date" in decoded.message.headers
+        assert ":chunk-signature" in decoded.message.headers
+
+    async def test_sign_empty_rejects_non_empty_event(
+        self,
+        aws_identity: AWSCredentialIdentity,
+    ) -> None:
+        signer = AsyncEventSigner(
+            initial_signature=b"initial-signature",
+            event_encoder_cls=EventHeaderEncoder,
+        )
+
+        with pytest.raises(ValueError):
+            await signer.sign_empty(
+                event=EventMessage(headers={"foo": "bar"}),
+                identity=aws_identity,
+                properties=SigV4SigningProperties(
+                    region="us-west-2", service="transcribe"
+                ),
+            )
+
+        with pytest.raises(ValueError):
+            await signer.sign_empty(
+                event=EventMessage(payload=b"audio"),
+                identity=aws_identity,
+                properties=SigV4SigningProperties(
+                    region="us-west-2", service="transcribe"
+                ),
+            )
+
+    async def test_sign_rejects_events_after_empty_event(
+        self,
+        aws_identity: AWSCredentialIdentity,
+    ) -> None:
+        signer = AsyncEventSigner(
+            initial_signature=b"initial-signature",
+            event_encoder_cls=EventHeaderEncoder,
+        )
+        properties = SigV4SigningProperties(region="us-west-2", service="transcribe")
+
+        await signer.sign_empty(
+            event=EventMessage(),
+            identity=aws_identity,
+            properties=properties,
+        )
+
+        with pytest.raises(RuntimeError, match="final empty event"):
+            await signer.sign(
+                event=EventMessage(
+                    headers={":message-type": "event", ":event-type": "AudioEvent"},
+                    payload=b"audio",
+                ),
+                identity=aws_identity,
+                properties=properties,
+            )
 
 
 class TestAsyncSigV4Signer:
@@ -201,6 +402,24 @@ class TestAsyncSigV4Signer:
                 identity=identity,
             )
 
+    @pytest.mark.parametrize("name, value", EXCLUDED_HEADERS)
+    async def test_sign_excludes_header_from_signed_headers(
+        self,
+        aws_identity: AWSCredentialIdentity,
+        signing_properties: SigV4SigningProperties,
+        name: str,
+        value: str,
+    ) -> None:
+        signed_request = await self.SIGV4_ASYNC_SIGNER.sign(
+            properties=signing_properties,
+            request=_request_with_field(name, value),
+            identity=aws_identity,
+        )
+        signed_headers = _signed_headers(signed_request)
+        assert "host" in signed_headers
+        assert name not in signed_headers
+        assert signed_request.fields[name].as_string() == value
+
     async def test_sign_event_stream(
         self,
         aws_identity: AWSCredentialIdentity,
@@ -231,3 +450,25 @@ class TestAsyncSigV4Signer:
         assert "X-Amz-Content-SHA256" in signed.fields
         payload_hash = signed.fields["X-Amz-Content-SHA256"].as_string()
         assert payload_hash == "STREAMING-AWS4-HMAC-SHA256-EVENTS"
+
+    async def test_format_canonical_query_keeps_blank_values(self) -> None:
+        canonical_query = await self.SIGV4_ASYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
+            query="foo=bar&baz="
+        )
+        assert canonical_query == "baz=&foo=bar"
+
+    async def test_format_canonical_query_with_literal_query_param(self) -> None:
+        canonical_query = await self.SIGV4_ASYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
+            query="sync"
+        )
+        assert canonical_query == "sync="
+
+    @pytest.mark.parametrize("options, path, expected", CANONICAL_PATH_CASES)
+    async def test_format_canonical_path(
+        self, options: dict[str, bool], path: str, expected: str
+    ) -> None:
+        properties = SigV4SigningProperties(region="us-west-2", service="s3", **options)  # type: ignore[typeddict-item]
+        canonical_path = await self.SIGV4_ASYNC_SIGNER._format_canonical_path(  # pyright: ignore[reportPrivateUsage]
+            path=path, signing_properties=properties
+        )
+        assert canonical_path == expected

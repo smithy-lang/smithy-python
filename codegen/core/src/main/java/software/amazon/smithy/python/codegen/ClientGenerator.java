@@ -22,8 +22,7 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
-import software.amazon.smithy.python.codegen.sections.*;
-import software.amazon.smithy.python.codegen.writer.MarkdownToRstDocConverter;
+import software.amazon.smithy.python.codegen.sections.ClientSetupSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -52,72 +51,194 @@ final class ClientGenerator implements Runnable {
 
     private void generateService(PythonWriter writer) {
         var serviceSymbol = symbolProvider.toSymbol(service);
+        writer.addLocallyDefinedSymbol(serviceSymbol);
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         writer.addLogger();
 
-        writer.openBlock("class $L:", "", serviceSymbol.getName(), () -> {
-            var docs = service.getTrait(DocumentationTrait.class)
-                    .map(StringTrait::getValue)
-                    .orElse("Client for " + serviceSymbol.getName());
-            String rstDocs =
-                    MarkdownToRstDocConverter.getInstance().convertCommonmarkToRst(docs);
-            writer.writeDocs(() -> {
-                writer.write("""
-                        $L
+        // Services with a generated async config resolve lazily on first use;
+        // the rest keep the synchronous constructor with old Config.
+        var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
+        var isAsyncConfig = asyncConfigSymbol.isPresent();
+        var configSym = asyncConfigSymbol.orElse(configSymbol);
 
-                        :param config: Optional configuration for the client. Here you can set things like the
-                            endpoint for HTTP services or auth credentials.
+        writer.openBlock("class $L($T):",
+                "",
+                serviceSymbol.getName(),
+                RuntimeTypes.ASYNC_CLIENT,
+                () -> {
+                    var docs = service.getTrait(DocumentationTrait.class)
+                            .map(StringTrait::getValue)
+                            .orElse("Client for " + service.getId().getName());
+                    writer.writeDocs(docs, context);
 
-                        :param plugins: A list of callables that modify the configuration dynamically. These
-                            can be used to set defaults, for example.""", rstDocs);
-            });
+                    writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                    writer.addStdlibImport("typing", "Any");
 
-            var defaultPlugins = new LinkedHashSet<SymbolReference>();
-
-            for (PythonIntegration integration : context.integrations()) {
-                for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
-                    if (runtimeClientPlugin.matchesService(model, service)) {
-                        runtimeClientPlugin.getPythonPlugin().ifPresent(defaultPlugins::add);
+                    // Collect service-scoped plugins applied once during setup.
+                    var servicePlugins = new LinkedHashSet<SymbolReference>();
+                    for (PythonIntegration integration : context.integrations()) {
+                        for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
+                            if (runtimeClientPlugin.matchesService(model, service)) {
+                                runtimeClientPlugin.getPythonPlugin().ifPresent(servicePlugins::add);
+                            }
+                        }
                     }
-                }
-            }
 
-            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addImport("smithy_core.retries", "RetryStrategyResolver");
-            writer.write("""
-                    def __init__(self, config: $1T | None = None, plugins: list[$2T] | None = None):
-                        self._config = config or $1T()
+                    writer.addStdlibImport("copy", "deepcopy");
 
-                        client_plugins: list[$2T] = [
-                            $3C
-                        ]
-                        if plugins:
-                            client_plugins.extend(plugins)
+                    writer.write("""
+                            def __init__(
+                                self,
+                                config: $1T | None = None,
+                                plugins: list[$2T] | None = None,
+                            ):
+                                ${3C|}
+                                super().__init__()
+                                self._config = config
+                                self._plugins = plugins
+                                self._client_plugins: list[$2T] = [
+                                    ${4C|}
+                                ]
 
-                        for plugin in client_plugins:
-                            plugin(self._config)
+                            async def _ensure_setup(self) -> $1T:
+                                if not self._setup_done:
+                                    async with self._derive_lock:
+                                        if self._closed:
+                                            raise RuntimeError(
+                                                "Cannot invoke an operation on a client that has been closed."
+                                            )
+                                        if not self._setup_done:
+                                            if self._config is None:
+                                                ${5C|}
+                                            else:
+                                                # Copy so plugins don't mutate the caller's config.
+                                                config = deepcopy(self._config)
+                                            for plugin in self._client_plugins:
+                                                plugin(config)
+                                            if self._plugins:
+                                                for plugin in self._plugins:
+                                                    plugin(config)
+                                            # Publish state only after setup fully succeeds, so a
+                                            # failed _post_setup leaves the caller's config untouched
+                                            # (no re-applied plugins) and the transport closeable.
+                                            await self._post_setup(config)
+                                            self._transport = config.transport
+                                            self._config = config
+                                            self._setup_done = True
+                                assert self._config is not None
+                                return self._config
 
-                        self._retry_strategy_resolver = RetryStrategyResolver()
-                    """, configSymbol, pluginSymbol, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
+                            async def _post_setup(self, config: $1T) -> None:
+                                ${6C|}
 
-            var topDownIndex = TopDownIndex.of(model);
-            var eventStreamIndex = EventStreamIndex.of(model);
-            for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
-                if (eventStreamIndex.getInputInfo(operation).isPresent()
-                        || eventStreamIndex.getOutputInfo(operation).isPresent()) {
-                    generateEventStreamOperation(writer, operation);
-                } else {
-                    generateOperation(writer, operation);
-                }
-            }
-        });
+                            async def _prepare_call[
+                                I: $12T, O: $13T
+                            ](
+                                self,
+                                input: I,
+                                operation: $8T[I, O],
+                                default_plugins: list[$2T],
+                                plugins: list[$2T] | None,
+                            ) -> tuple[$9T[Any, Any], $10T[I, O]]:
+                                if self._closed:
+                                    raise RuntimeError(
+                                        "Cannot invoke an operation on a client that has been closed."
+                                    )
+                                config = await self._ensure_setup()
+                                if default_plugins or plugins:
+                                    # Keep operation-plugin mutations scoped to this call.
+                                    config = deepcopy(config)
+                                    for plugin in default_plugins:
+                                        plugin(config)
+                                    if plugins:
+                                        for plugin in plugins:
+                                            plugin(config)
+                                if (
+                                    config.protocol is None
+                                    or config.transport is None
+                                    or config.endpoint_resolver is None
+                                    or config.auth_scheme_resolver is None
+                                    or config.auth_schemes is None
+                                ):
+                                    raise $7T(
+                                        "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                                        " and auth_schemes MUST be set on the config to make calls."
+                                    )
+                                retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+                                    retry_strategy=config.retry_strategy,
+                                    ${11C|}
+                                )
+                                return self._build_call(
+                                    input,
+                                    operation,
+                                    config=config,
+                                    retry_strategy=retry_strategy,
+                                )
+                            """,
+                            configSym,
+                            pluginSymbol,
+                            writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
+                            writer.consumer(w -> writeDefaultPlugins(w, servicePlugins)),
+                            writer.consumer(w -> {
+                                if (isAsyncConfig) {
+                                    w.write("config = await $T.resolve()", configSym);
+                                } else {
+                                    w.write("config = $T()", configSym);
+                                }
+                            }),
+                            writer.consumer(w -> {
+                                w.pushState(new ClientSetupSection());
+                                w.write("pass");
+                                w.popState();
+                            }),
+                            RuntimeTypes.EXPECTATION_NOT_MET_ERROR,
+                            RuntimeTypes.API_OPERATION,
+                            RuntimeTypes.REQUEST_PIPELINE,
+                            RuntimeTypes.CLIENT_CALL,
+                            writer.consumer(w -> {
+                                if (isAsyncConfig) {
+                                    w.write("retry_mode=config.retry_mode,");
+                                    w.write("max_attempts=config.max_attempts,");
+                                }
+                            }),
+                            RuntimeTypes.SERIALIZEABLE_SHAPE,
+                            RuntimeTypes.DESERIALIZEABLE_SHAPE);
+
+                    var topDownIndex = TopDownIndex.of(model);
+                    var eventStreamIndex = EventStreamIndex.of(model);
+                    for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
+                        if (eventStreamIndex.getInputInfo(operation).isPresent()
+                                || eventStreamIndex.getOutputInfo(operation).isPresent()) {
+                            generateEventStreamOperation(writer, operation);
+                        } else {
+                            generateOperation(writer, operation);
+                        }
+                    }
+                });
+
     }
 
     private void writeDefaultPlugins(PythonWriter writer, Collection<SymbolReference> plugins) {
         for (SymbolReference plugin : plugins) {
             writer.write("$T,", plugin);
         }
+    }
+
+    private void writeConstructorDocs(PythonWriter writer, String clientName) {
+        writer.writeMultiLineDocs(() -> {
+            writer.write("""
+                    Constructor for `$L`.
+
+                    Args:
+                        config:
+                            Optional configuration for the client. Here you can set things like
+                            the endpoint for HTTP services or auth credentials.
+                        plugins:
+                            A list of callables applied once to the client's base configuration.
+                            Their changes are inherited by every operation invocation.
+                    """, clientName);
+        });
     }
 
     /**
@@ -134,11 +255,11 @@ final class ClientGenerator implements Runnable {
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
 
-        writer.pushState(new OperationSection(service, operation));
         writer.putContext("input", inputSymbol);
         writer.putContext("output", outputSymbol);
         writer.putContext("plugin", pluginSymbol);
         writer.putContext("operationName", operationMethodSymbol.getName());
+        writer.putContext("operation", symbolProvider.toSymbol(operation));
         writer.write("""
                 async def ${operationName:L}(
                     self,
@@ -146,36 +267,65 @@ final class ClientGenerator implements Runnable {
                     plugins: list[${plugin:T}] | None = None
                 ) -> ${output:T}:
                     ${C|}
+                    pipeline, call = await self._prepare_call(
+                        input,
+                        ${operation:T},
+                        [
+                            ${C|}
+                        ],
+                        plugins,
+                    )
                     return await pipeline(call)
                 """,
-                writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
-        writer.popState();
+                writer.consumer(w -> writeOperationDocs(w, operation, input, output)),
+                writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
     }
 
-    private void writeSharedOperationInit(PythonWriter writer, OperationShape operation, Shape input) {
-        writer.writeDocs(() -> {
-            var docs = writer.formatDocs(operation.getTrait(DocumentationTrait.class)
+    private void writeOperationDocs(PythonWriter writer, OperationShape operation, Shape input, Shape output) {
+        writeOperationDocs(writer, operation, input, output, null);
+    }
+
+    private void writeOperationDocs(
+            PythonWriter writer,
+            OperationShape operation,
+            Shape input,
+            Shape output,
+            String eventStreamOutputDocs
+    ) {
+        writer.writeMultiLineDocs(() -> {
+            var operationDocs = writer.formatDocs(operation.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
                     .orElse(String.format("Invokes the %s operation.",
-                            operation.getId().getName())));
+                            operation.getId().getName())),
+                    context);
 
-            var inputDocs = input.getTrait(DocumentationTrait.class)
-                    .map(StringTrait::getValue)
-                    .orElse("The operation's input.");
+            var inputSymbolName = symbolProvider.toSymbol(input).getName();
+            var outputSymbolName = symbolProvider.toSymbol(output).getName();
+            var inputDocs = String.format("An instance of `%s`.", inputSymbolName);
+            var outputDocs = eventStreamOutputDocs != null ? eventStreamOutputDocs
+                    : String.format("An instance of `%s`.", outputSymbolName);
 
             writer.write("""
                     $L
-                    """, docs);
-            writer.write("");
-            writer.write(":param input: $L", inputDocs);
-            writer.write("");
-            writer.write("""
-                    :param plugins: A list of callables that modify the configuration dynamically.
-                        Changes made by these plugins only apply for the duration of the operation
-                        execution and will not affect any other operation invocations.""");
 
+                    Args:
+                        input:
+                            $L
+                        plugins:
+                            A list of callables that modify the configuration dynamically.
+                            Changes made by these plugins only apply for the duration of the
+                            operation execution and will not affect any other operation
+                            invocations.
+
+                    Returns:
+                        ${L|}
+                    """, operationDocs, inputDocs, outputDocs);
         });
+    }
 
+    // Operation-scoped default plugins, prepended to the caller's plugins for a
+    // single call. Service-scoped plugins live in self._client_plugins instead.
+    private void writeDefaultOperationPlugins(PythonWriter writer, OperationShape operation) {
         var defaultPlugins = new LinkedHashSet<SymbolReference>();
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
@@ -184,53 +334,10 @@ final class ClientGenerator implements Runnable {
                 }
             }
         }
-
-        writer.putContext("operation", symbolProvider.toSymbol(operation));
-        writer.addImport("smithy_core.aio.client", "ClientCall");
-        writer.addImport("smithy_core.interceptors", "InterceptorChain");
-        writer.addImport("smithy_core.types", "TypedProperties");
-        writer.addImport("smithy_core.aio.client", "RequestPipeline");
-        writer.addImport("smithy_core.exceptions", "ExpectationNotMetError");
-        writer.addImport("smithy_core.retries", "RetryStrategyOptions");
-        writer.addImport("smithy_core.interfaces.retries", "RetryStrategy");
-        writer.addStdlibImport("copy", "deepcopy");
-
-        writer.write("""
-                operation_plugins: list[Plugin] = [
-                    $C
-                ]
-                if plugins:
-                    operation_plugins.extend(plugins)
-                config = deepcopy(self._config)
-                for plugin in operation_plugins:
-                    plugin(config)
-                if config.protocol is None or config.transport is None:
-                    raise ExpectationNotMetError("protocol and transport MUST be set on the config to make calls.")
-
-                retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-                    retry_strategy=config.retry_strategy
-                )
-
-                pipeline = RequestPipeline(
-                    protocol=config.protocol,
-                    transport=config.transport
-                )
-                call = ClientCall(
-                    input=input,
-                    operation=${operation:T},
-                    context=TypedProperties({"config": config}),
-                    interceptor=InterceptorChain(config.interceptors),
-                    auth_scheme_resolver=config.auth_scheme_resolver,
-                    supported_auth_schemes=config.auth_schemes,
-                    endpoint_resolver=config.endpoint_resolver,
-                    retry_strategy=retry_strategy,
-                )
-                """, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
-
+        writeDefaultPlugins(writer, defaultPlugins);
     }
 
     private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
-        writer.pushState(new OperationSection(service, operation));
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("eventstream"));
         var operationSymbol = symbolProvider.toSymbol(operation);
@@ -269,14 +376,23 @@ final class ClientGenerator implements Runnable {
         // the type declaration so much that it's no better than Any.
         if (inputStreamSymbol.isPresent()) {
             if (outputStreamSymbol.isPresent()) {
-                writer.addImport("smithy_core.aio.eventstream", "DuplexEventStream");
+                writer.putContext("duplexEventStream", RuntimeTypes.DUPLEX_EVENT_STREAM);
+                var outputDocs = "A `DuplexEventStream` for bidirectional streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
                             input: ${input:T},
                             plugins: list[${plugin:T}] | None = None
-                        ) -> DuplexEventStream[${inputStream:T}, ${outputStream:T}, ${output:T}]:
+                        ) -> ${duplexEventStream:T}[${inputStream:T}, ${outputStream:T}, ${output:T}]:
                             ${C|}
+                            pipeline, call = await self._prepare_call(
+                                input,
+                                ${operation:T},
+                                [
+                                    ${C|}
+                                ],
+                                plugins,
+                            )
                             return await pipeline.duplex_stream(
                                 call,
                                 ${inputStream:T},
@@ -284,40 +400,60 @@ final class ClientGenerator implements Runnable {
                                 ${outputStreamDeserializer:T}().deserialize
                             )
                         """,
-                        writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
+                        writer.consumer(w -> writeOperationDocs(w, operation, input, output, outputDocs)),
+                        writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
             } else {
-                writer.addImport("smithy_core.aio.eventstream", "InputEventStream");
+                writer.putContext("inputEventStream", RuntimeTypes.INPUT_EVENT_STREAM);
+                var outputDocs = "An `InputEventStream` for client-to-server streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
                             input: ${input:T},
                             plugins: list[${plugin:T}] | None = None
-                        ) -> InputEventStream[${inputStream:T}, ${output:T}]:
+                        ) -> ${inputEventStream:T}[${inputStream:T}, ${output:T}]:
                             ${C|}
+                            pipeline, call = await self._prepare_call(
+                                input,
+                                ${operation:T},
+                                [
+                                    ${C|}
+                                ],
+                                plugins,
+                            )
                             return await pipeline.input_stream(
                                 call,
                                 ${inputStream:T}
                             )
-                        """, writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
+                        """,
+                        writer.consumer(w -> writeOperationDocs(w, operation, input, output, outputDocs)),
+                        writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
             }
         } else {
-            writer.addImport("smithy_core.aio.eventstream", "OutputEventStream");
+            writer.putContext("outputEventStream", RuntimeTypes.OUTPUT_EVENT_STREAM);
+            var outputDocs = "An `OutputEventStream` for server-to-client streaming.";
             writer.write("""
                     async def ${operationName:L}(
                         self,
                         input: ${input:T},
                         plugins: list[${plugin:T}] | None = None
-                    ) -> OutputEventStream[${outputStream:T}, ${output:T}]:
+                    ) -> ${outputEventStream:T}[${outputStream:T}, ${output:T}]:
                         ${C|}
+                        pipeline, call = await self._prepare_call(
+                            input,
+                            ${operation:T},
+                            [
+                                ${C|}
+                            ],
+                            plugins,
+                        )
                         return await pipeline.output_stream(
                             call,
                             ${outputStream:T},
                             ${outputStreamDeserializer:T}().deserialize
                         )
                     """,
-                    writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
+                    writer.consumer(w -> writeOperationDocs(w, operation, input, output, outputDocs)),
+                    writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
         }
-
-        writer.popState();
     }
 }

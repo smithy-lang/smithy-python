@@ -1,12 +1,13 @@
 [versions]
-junit5 = "6.0.1"
-smithy = "1.65.0"
+junit5 = "6.1.3"
+smithy = "1.73.0"
+mockito = "5.23.0"
 test-logger-plugin = "4.0.0"
 spotbugs = "6.0.22"
-spotless = "8.1.0"
-smithy-gradle-plugins = "1.3.0"
-dep-analysis = "3.5.1"
-jsoup = "1.21.2"
+spotless = "8.10.2"
+smithy-gradle-plugins = "1.5.0"
+dep-analysis = "3.19.2"
+jsoup = "1.22.1"
 commonmark = "0.17.0"
 
 [libraries]
@@ -14,8 +15,12 @@ smithy-model = { module = "software.amazon.smithy:smithy-model", version.ref = "
 smithy-codegen = { module = "software.amazon.smithy:smithy-codegen-core", version.ref = "smithy" }
 smithy-aws-traits = { module = "software.amazon.smithy:smithy-aws-traits", version.ref = "smithy" }
 smithy-aws-protocol-tests = { module = "software.amazon.smithy:smithy-aws-protocol-tests", version.ref = "smithy" }
+smithy-protocol-tests = { module = "software.amazon.smithy:smithy-protocol-tests", version.ref = "smithy" }
+smithy-protocol-traits = { module = "software.amazon.smithy:smithy-protocol-traits", version.ref = "smithy" }
 smithy-protocol-test-traits = { module = "software.amazon.smithy:smithy-protocol-test-traits", version.ref = "smithy"}
 smithy-waiters = { module = "software.amazon.smithy:smithy-waiters", version.ref = "smithy" }
+smithy-rules-engine = { module = "software.amazon.smithy:smithy-rules-engine", version.ref = "smithy" }
+smithy-aws-endpoints = { module = "software.amazon.smithy:smithy-aws-endpoints", version.ref = "smithy" }
 
 # Test dependencies
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit5" }
@@ -23,15 +28,13 @@ junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.re
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit5" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit5" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 
 # plugin artifacts for buildsrc plugins
 test-logger-plugin = { module = "com.adarshr:gradle-test-logger-plugin", version.ref = "test-logger-plugin" }
 spotbugs = { module = "com.github.spotbugs.snom:spotbugs-gradle-plugin", version.ref = "spotbugs" }
 spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 dependency-analysis = { module = "com.autonomousapps:dependency-analysis-gradle-plugin", version.ref = "dep-analysis" }
-
-jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
-commonmark = { module = "com.atlassian.commonmark:commonmark", version.ref ="commonmark" }
 
 [plugins]
 smithy-gradle-base = { id = "software.amazon.smithy.gradle.smithy-base", version.ref = "smithy-gradle-plugins" }

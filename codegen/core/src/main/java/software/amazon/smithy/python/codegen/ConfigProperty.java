@@ -20,6 +20,7 @@ import software.amazon.smithy.utils.ToSmithyBuilder;
 public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     private final String name;
     private final Symbol type;
+    private final Symbol inputType;
     private final boolean nullable;
     private final String documentation;
     private final Consumer<PythonWriter> initialize;
@@ -30,6 +31,7 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     private ConfigProperty(Builder builder) {
         this.name = Objects.requireNonNull(builder.name);
         this.type = Objects.requireNonNull(builder.type);
+        this.inputType = builder.inputType != null ? builder.inputType : this.type;
         this.nullable = builder.nullable;
         this.documentation = Objects.requireNonNull(builder.documentation);
         this.initialize = Objects.requireNonNull(builder.initialize);
@@ -47,6 +49,16 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
      */
     public Symbol type() {
         return type;
+    }
+
+    /**
+     * @return Returns the type accepted by the __init__ parameter.
+     *
+     * <p>Defaults to {@link #type()}. Differs when the input type is not the same as
+     * what finalizes on the config.
+     */
+    public Symbol inputType() {
+        return inputType;
     }
 
     /**
@@ -92,6 +104,7 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         return builder()
                 .name(name)
                 .type(type)
+                .inputType(inputType)
                 .nullable(nullable)
                 .documentation(documentation)
                 .initialize(initialize);
@@ -103,6 +116,7 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     public static final class Builder implements SmithyBuilder<ConfigProperty> {
         private String name;
         private Symbol type;
+        private Symbol inputType;
         private boolean nullable = true;
         private String documentation;
         private Consumer<PythonWriter> initialize = writer -> writer.write("self.$1L = $1L", name);
@@ -135,6 +149,19 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
          */
         public Builder type(Symbol type) {
             this.type = type;
+            return this;
+        }
+
+        /**
+         * Optionally differentiate the input type of a config property from its resolved type.
+         *
+         * <p>Used when the input type is not the same as what finalizes on the config.
+         *
+         * @param inputType The type accepted by the __init__ parameter.
+         * @return Returns the builder.
+         */
+        public Builder inputType(Symbol inputType) {
+            this.inputType = inputType;
             return this;
         }
 

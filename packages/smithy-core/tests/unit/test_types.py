@@ -3,6 +3,7 @@
 
 # pyright: reportPrivateUsage=false
 from datetime import UTC, datetime
+from enum import IntEnum, StrEnum
 from typing import Any, assert_type
 
 import pytest
@@ -14,6 +15,7 @@ from smithy_core.types import (
     PropertyKey,
     TimestampFormat,
     TypedProperties,
+    UnknownEnumMixin,
 )
 
 
@@ -351,3 +353,95 @@ def test_parametric_property() -> None:
     properties[parametric] = {"foo": "bar"}
 
     assert assert_type(properties[parametric], dict[str, str]) == {"foo": "bar"}
+
+
+class _Color(UnknownEnumMixin, StrEnum):
+    RED = "RED"
+    GREEN = "GREEN"
+
+
+class _Code(UnknownEnumMixin, IntEnum):
+    ZERO = 0
+    OK = 200
+    NOT_FOUND = 404
+
+
+def test_unknown_enum_known_values_resolve_to_members() -> None:
+    assert _Color("RED") is _Color.RED
+    assert _Code(200) is _Code.OK
+    assert not _Color.RED.is_unknown
+    assert not _Code.OK.is_unknown
+
+
+def test_unknown_enum_unrecognized_value_does_not_raise() -> None:
+    color = _Color("CHARTREUSE")
+    assert color.is_unknown
+    assert color.value == "CHARTREUSE"
+
+    code = _Code(418)
+    assert code.is_unknown
+    assert code.value == 418
+
+
+def test_unknown_enum_keeps_native_equality() -> None:
+    assert _Color("CHARTREUSE") == "CHARTREUSE"
+    assert _Code(418) == 418
+    assert _Color("CHARTREUSE") == _Color("CHARTREUSE")
+    assert _Color("CHARTREUSE") != _Color.RED
+
+    # Pseudo-members hash like their raw value, so dict lookups by raw value work.
+    codes: dict[Any, str] = {_Code(418): "teapot"}
+    assert codes[418] == "teapot"
+
+
+def test_wire_unknown_keeps_native_equality() -> None:
+    # A value the SDK doesn't recognize keeps native equality (forwards-compatible).
+    wire = _Code(418)
+    assert wire.is_unknown
+    assert not wire._smithy_corrected
+    assert wire == 418
+
+
+def test_error_corrected_placeholder_is_equal_to_nothing() -> None:
+    # An invented placeholder for a missing required member equals only itself —
+    # not its raw value, not a known member sharing it, not another placeholder.
+    color = _Color._corrected("")
+    assert color.is_unknown
+    assert color._smithy_corrected
+    assert color != ""
+    assert color != _Color.RED
+    assert color != _Color._corrected("")
+    assert color == color
+
+    code = _Code._corrected(0)
+    assert code.is_unknown
+    assert code._smithy_corrected
+    assert code != 0
+    assert code != _Code.ZERO
+    assert code != _Code._corrected(0)
+    assert code == code
+
+    assert {_Code.ZERO: "zero"}.get(code) is None
+
+
+def test_wire_unknown_and_corrected_differ_on_equality() -> None:
+    # Both report is_unknown, but the wire-unknown value keeps native equality
+    # while the invented placeholder matches nothing.
+    wire = _Code(418)
+    corrected = _Code._corrected(418)
+    assert wire.is_unknown and corrected.is_unknown
+    assert wire == 418
+    assert corrected != 418
+    assert wire != corrected
+
+
+def test_unknown_enum_rejects_mismatched_type() -> None:
+    with pytest.raises(ValueError):
+        _Color(0)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        _Code("RED")  # type: ignore[arg-type]
+
+
+def test_unknown_enum_str_and_serialization_behavior() -> None:
+    assert str(_Color("CHARTREUSE")) == "CHARTREUSE"
+    assert int(_Code(418)) == 418

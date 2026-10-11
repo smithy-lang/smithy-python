@@ -8,12 +8,10 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from functools import lru_cache
-from typing import Any, Literal
+from typing import Literal
 
 from .exceptions import RetryError
 from .interfaces import retries as retries_interface
-from .interfaces.retries import RetryStrategy
 
 RetryStrategyType = Literal["simple", "standard", "adaptive"]
 
@@ -27,52 +25,6 @@ class RetryStrategyOptions:
 
     max_attempts: int | None = None
     """Maximum number of attempts (initial attempt plus retries). If None, uses the strategy's default."""
-
-
-class RetryStrategyResolver:
-    """Retry strategy resolver that caches retry strategies based on configuration options.
-
-    This resolver caches retry strategy instances based on their configuration to reuse existing
-    instances of RetryStrategy with the same settings. Uses LRU cache for thread-safe caching.
-    """
-
-    async def resolve_retry_strategy(
-        self, *, retry_strategy: RetryStrategy | RetryStrategyOptions | None
-    ) -> RetryStrategy:
-        """Resolve a retry strategy from the provided options, using cache when possible.
-
-        :param retry_strategy: An explicitly configured retry strategy or options for creating one.
-        """
-        if isinstance(retry_strategy, RetryStrategy):
-            return retry_strategy
-        elif retry_strategy is None:
-            retry_strategy = RetryStrategyOptions()
-        elif not isinstance(retry_strategy, RetryStrategyOptions):  # type: ignore[reportUnnecessaryIsInstance]
-            raise TypeError(
-                f"retry_strategy must be RetryStrategy, RetryStrategyOptions, or None, "
-                f"got {type(retry_strategy).__name__}"
-            )
-        return self._create_retry_strategy(
-            retry_strategy.retry_mode, retry_strategy.max_attempts
-        )
-
-    @lru_cache
-    def _create_retry_strategy(
-        self, retry_mode: RetryStrategyType, max_attempts: int | None
-    ) -> RetryStrategy:
-        kwargs = {"max_attempts": max_attempts}
-        filtered_kwargs: dict[str, Any] = {
-            k: v for k, v in kwargs.items() if v is not None
-        }
-        match retry_mode:
-            case "simple":
-                return SimpleRetryStrategy(**filtered_kwargs)
-            case "standard":
-                return StandardRetryStrategy(**filtered_kwargs)
-            case "adaptive":
-                return AdaptiveRetryStrategy(**filtered_kwargs)
-            case _:
-                raise ValueError(f"Unknown retry mode: {retry_mode}")
 
 
 class ExponentialBackoffJitterType(Enum):
@@ -236,8 +188,7 @@ class ExponentialRetryBackoffStrategy(retries_interface.RetryBackoffStrategy):
 class SimpleRetryToken:
     """Basic retry token that stores only the attempt count and backoff strategy.
 
-    Retry tokens should always be obtained from an implementation of
-    :py:class:`retries_interface.RetryStrategy`.
+    Retry tokens should always be obtained from a retry strategy implementation.
     """
 
     retry_count: int
@@ -252,74 +203,13 @@ class SimpleRetryToken:
         return self.retry_count + 1
 
 
-class SimpleRetryStrategy(retries_interface.RetryStrategy):
-    def __init__(
-        self,
-        *,
-        backoff_strategy: retries_interface.RetryBackoffStrategy | None = None,
-        max_attempts: int = 5,
-    ):
-        """Basic retry strategy that simply invokes the given backoff strategy.
-
-        :param backoff_strategy: The backoff strategy used by returned tokens to compute
-        the retry delay. Defaults to :py:class:`ExponentialRetryBackoffStrategy`.
-
-        :param max_attempts: Upper limit on total number of attempts made, including
-        initial attempt and retries.
-        """
-        self.backoff_strategy = backoff_strategy or ExponentialRetryBackoffStrategy()
-        self.max_attempts = max_attempts
-
-    def acquire_initial_retry_token(
-        self, *, token_scope: str | None = None
-    ) -> SimpleRetryToken:
-        """Create a base retry token for the start of a request.
-
-        :param token_scope: This argument is ignored by this retry strategy.
-        """
-        retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
-        return SimpleRetryToken(retry_count=0, retry_delay=retry_delay)
-
-    def refresh_retry_token_for_retry(
-        self,
-        *,
-        token_to_renew: retries_interface.RetryToken,
-        error: Exception,
-    ) -> SimpleRetryToken:
-        """Replace an existing retry token from a failed attempt with a new token.
-
-        This retry strategy always returns a token until the attempt count stored in
-        the new token exceeds the ``max_attempts`` value.
-
-        :param token_to_renew: The token used for the previous failed attempt.
-        :param error: The error that triggered the need for a retry.
-        :raises RetryError: If no further retry attempts are allowed.
-        """
-        if isinstance(error, retries_interface.ErrorRetryInfo) and error.is_retry_safe:
-            retry_count = token_to_renew.retry_count + 1
-            if retry_count >= self.max_attempts:
-                raise RetryError(
-                    f"Reached maximum number of allowed attempts: {self.max_attempts}"
-                ) from error
-            retry_delay = self.backoff_strategy.compute_next_backoff_delay(retry_count)
-            return SimpleRetryToken(retry_count=retry_count, retry_delay=retry_delay)
-        else:
-            raise RetryError(f"Error is not retryable: {error}") from error
-
-    def record_success(self, *, token: retries_interface.RetryToken) -> None:
-        """Not used by this retry strategy."""
-
-    def __deepcopy__(self, memo: Any) -> "SimpleRetryStrategy":
-        return self
-
-
 class StandardRetryQuota:
     """Retry quota used by :py:class:`StandardRetryStrategy`."""
 
     INITIAL_RETRY_TOKENS: int = 500
-    RETRY_COST: int = 5
+    RETRY_COST: int = 14
     NO_RETRY_INCREMENT: int = 1
-    TIMEOUT_RETRY_COST: int = 10
+    THROTTLING_RETRY_COST: int = 5
 
     def __init__(self, initial_capacity: int = INITIAL_RETRY_TOKENS):
         """Initialize retry quota with configurable capacity.
@@ -337,11 +227,13 @@ class StandardRetryQuota:
         Otherwise, return the amount of capacity successfully allocated.
         """
 
-        is_timeout = (
+        is_throttling = (
             isinstance(error, retries_interface.ErrorRetryInfo)
-            and error.is_timeout_error
+            and error.is_throttling_error
         )
-        capacity_amount = self.TIMEOUT_RETRY_COST if is_timeout else self.RETRY_COST
+        capacity_amount = (
+            self.THROTTLING_RETRY_COST if is_throttling else self.RETRY_COST
+        )
 
         with self._lock:
             if capacity_amount > self._available_capacity:

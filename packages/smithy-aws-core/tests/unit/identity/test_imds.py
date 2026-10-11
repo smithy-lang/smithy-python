@@ -16,8 +16,12 @@ from smithy_aws_core.identity.imds import (
     TokenCache,
 )
 from smithy_core import URI
-from smithy_core.retries import SimpleRetryStrategy
+from smithy_core.aio.retries import SimpleRetryStrategy
 from smithy_http.aio import HTTPRequest
+
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:`IMDSCredentialsResolver` is deprecated:DeprecationWarning"
+)
 
 
 def test_config_defaults():

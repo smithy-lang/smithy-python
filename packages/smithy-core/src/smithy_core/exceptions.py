@@ -3,6 +3,8 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
+from .response import EMPTY_RESPONSE_METADATA, ResponseMetadata
+
 
 class SmithyError(Exception):
     """Base exception type for all exceptions raised by smithy-python."""
@@ -44,7 +46,8 @@ class CallError(SmithyError):
     retry_after: float | None = None
     """The amount of time that should pass before a retry.
 
-    Retry strategies MAY choose to wait longer.
+    Retry strategies MAY adjust this value, for example by clamping it to an
+    upper bound.
     """
 
     is_throttling_error: bool = False
@@ -52,6 +55,18 @@ class CallError(SmithyError):
 
     is_timeout_error: bool = False
     """Whether the error represents a timeout condition."""
+
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """Metadata about the response that produced this error.
+
+    Members of the metadata are individually optional, and an 
+    ``http_status_code`` of ``None`` indicates that no response
+    was received at all.
+
+    This is always set, so it is safe to access without a null check.
+    """
 
     def __post_init__(self):
         super().__init__(self.message)
@@ -88,7 +103,16 @@ class DiscriminatorError(SmithyError):
 
 
 class RetryError(SmithyError):
-    """Base exception type for all exceptions raised in retry strategies."""
+    """Base exception type for all exceptions raised in retry strategies.
+
+    :param retry_after: An optional delay in seconds that could apply to the
+        next attempt. Long-polling operations use this to back off before giving up
+        on retries.
+    """
+
+    def __init__(self, message: str = "", *, retry_after: float | None = None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
 
 
 class ExpectationNotMetError(SmithyError):
@@ -112,6 +136,11 @@ class AsyncBodyError(SmithyError):
 class UnsupportedStreamError(SmithyError):
     """Indicates that a serializer or deserializer's stream method was called, but data
     streams are not supported."""
+
+
+class UnsupportedTransportError(SmithyError):
+    """Indicates that an operation requires a transport capability that the configured
+    transport does not declare support for (e.g. duplex event streaming)."""
 
 
 class EndpointResolutionError(SmithyError):

@@ -17,7 +17,6 @@ from aws_sdk_signers import (
     Fields,
     URI,
 )
-from aws_sdk_signers.exceptions import AWSSDKWarning
 from aws_sdk_signers.signers import (
     SIGV4_TIMESTAMP_FORMAT,
     AsyncSigV4Signer,
@@ -103,21 +102,19 @@ def _test_signature_version_4_sync(test_case_name: str, signer: SigV4Signer) -> 
     signing_props = SigV4SigningProperties(
         region=REGION, service=SERVICE, date=DATE_STR
     )
-    with pytest.warns(AWSSDKWarning):
-        actual_canonical_request = signer.canonical_request(
-            signing_properties=signing_props, request=request
-        )
+    actual_canonical_request = signer.canonical_request(
+        signing_properties=signing_props, request=request
+    )
     assert test_case.canonical_request == actual_canonical_request
     actual_string_to_sign = signer.string_to_sign(
         canonical_request=actual_canonical_request, signing_properties=signing_props
     )
     assert test_case.string_to_sign == actual_string_to_sign
-    with pytest.warns(AWSSDKWarning):
-        signed_request = signer.sign(
-            properties=signing_props,
-            request=request,
-            identity=test_case.credentials,
-        )
+    signed_request = signer.sign(
+        properties=signing_props,
+        request=request,
+        identity=test_case.credentials,
+    )
     assert (
         signed_request.fields["Authorization"].as_string()
         == test_case.authorization_header
@@ -142,21 +139,19 @@ async def _test_signature_version_4_async(
         service=SERVICE,
         date=DATE_STR,
     )
-    with pytest.warns(AWSSDKWarning):
-        actual_canonical_request = await signer.canonical_request(
-            signing_properties=signing_props, request=request
-        )
+    actual_canonical_request = await signer.canonical_request(
+        signing_properties=signing_props, request=request
+    )
     assert test_case.canonical_request == actual_canonical_request
     actual_string_to_sign = await signer.string_to_sign(
         canonical_request=actual_canonical_request, signing_properties=signing_props
     )
     assert test_case.string_to_sign == actual_string_to_sign
-    with pytest.warns(AWSSDKWarning):
-        signed_request = await signer.sign(
-            properties=signing_props,
-            request=request,
-            identity=test_case.credentials,
-        )
+    signed_request = await signer.sign(
+        properties=signing_props,
+        request=request,
+        identity=test_case.credentials,
+    )
     assert (
         signed_request.fields["Authorization"].as_string()
         == test_case.authorization_header

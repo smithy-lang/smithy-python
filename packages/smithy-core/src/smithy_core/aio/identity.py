@@ -26,6 +26,10 @@ class CachingIdentityResolver[I: Identity, IP: Mapping[str, Any]](
     async def _get_identity(self, *, properties: IP) -> I:
         raise NotImplementedError
 
+    async def invalidate(self) -> None:
+        """Discard the cached identity so the next resolution re-reads its source."""
+        self._cached = None
+
 
 class ChainedIdentityResolver[I: Identity, IP: Mapping[str, Any]](
     CachingIdentityResolver[I, IP]
@@ -56,3 +60,9 @@ class ChainedIdentityResolver[I: Identity, IP: Mapping[str, Any]](
                 )
 
         raise SmithyIdentityError("Failed to resolve identity from resolver chain.")
+
+    async def invalidate(self) -> None:
+        """Discard this chain's cached identity and invalidate every sub-resolver."""
+        await super().invalidate()
+        for resolver in self._resolvers:
+            await resolver.invalidate()

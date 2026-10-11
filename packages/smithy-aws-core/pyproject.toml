@@ -22,19 +22,28 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Free Threading :: 2 - Beta",
   "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
-    "smithy-core~=0.2.0",
-    "smithy-http~=0.3.0",
-    "aws-sdk-signers~=0.1.0"
+    "smithy-core~=0.9.0",
+    "smithy-http~=0.6.0",
+    "aws-sdk-signers~=0.4.0"
 ]
 
 [project.urls]
 "Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-aws-core/CHANGELOG.md"
 "Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-aws-core/"
 "Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
+
+[project.entry-points."smithy_aws_core.identity.chain_providers"]
+Environment = "smithy_aws_core.identity.chain.providers.environment:EnvironmentCredentialsProvider"
+SharedConfig = "smithy_aws_core.identity.chain.providers.shared_config:SharedConfigProvider"
+ProfileSessionKeys = "smithy_aws_core.identity.chain.providers.profile:ProfileSessionCredentialsProvider"
+ProfileStaticKeys = "smithy_aws_core.identity.chain.providers.profile:ProfileStaticCredentialsProvider"
+ProfileCredentialProcess = "smithy_aws_core.identity.chain.providers.process:ProfileCredentialProcessProvider"
 
 [build-system]
 requires = ["hatchling"]
@@ -45,10 +54,13 @@ path = "src/smithy_aws_core/__init__.py"
 
 [project.optional-dependencies]
 eventstream = [
-    "smithy-aws-event-stream~=0.2.0"
+    "smithy-aws-event-stream~=0.3.0"
 ]
 json = [
-    "smithy-json~=0.2.0"
+    "smithy-json~=0.3.0"
+]
+xml = [
+    "smithy-xml~=0.2.0"
 ]
 
 [tool.hatch.build]

@@ -1,0 +1,16 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added the `smithy-cbor` package: an RFC 8949 CBOR codec supporting the `smithy.protocols#rpcv2Cbor` protocol."
+    },
+    {
+      "type": "enhancement",
+      "description": "Cache CBOR member encodings and structure member lookup metadata using schema extensions."
+    },
+    {
+      "type": "bugfix",
+      "description": "Allow CBOR integer tokens within the signed 64-bit range to deserialize into Smithy float and double shapes."
+    }
+  ]
+}

@@ -1,12 +1,13 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 #  pyright: reportMissingTypeStubs=false,reportUnknownMemberType=false
-#  flake8: noqa: F811
+from asyncio import gather
 from collections.abc import AsyncGenerator, AsyncIterable
 from copy import deepcopy
 from dataclasses import dataclass
 from inspect import iscoroutinefunction
-from typing import TYPE_CHECKING, Any
+from io import BytesIO
+from typing import TYPE_CHECKING, Any, Self
 
 from awscrt.exceptions import AwsCrtError
 
@@ -36,12 +37,12 @@ except ImportError:
 from smithy_core import interfaces as core_interfaces
 from smithy_core.aio import interfaces as core_aio_interfaces
 from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_core.exceptions import MissingDependencyError
 
 from .. import Field, Fields
 from .. import interfaces as http_interfaces
 from ..exceptions import SmithyHTTPError
-from ..interfaces import FieldPosition
 from . import interfaces as http_aio_interfaces
 
 # Default buffer size for reading from streams (8 KB)
@@ -142,6 +143,10 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     TIMEOUT_EXCEPTIONS = (_CRTTimeoutError,)
 
+    # CRT can stream request and response data concurrently when the connection
+    # negotiates HTTP/2.
+    SUPPORTS_DUPLEX_STREAMING = True
+
     def __init__(
         self,
         eventloop: _AWSCRTEventLoop | None = None,
@@ -160,6 +165,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         self._tls_ctx = crt_io.ClientTlsContext(crt_io.TlsContextOptions())
         self._socket_options = crt_io.SocketOptions()
         self._connections: ConnectionPoolDict = {}
+        self._closed = False
 
     async def send(
         self,
@@ -172,23 +178,53 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
         """
+        if self._closed:
+            raise SmithyHTTPError(
+                "Cannot send a request after the HTTP client has been closed."
+            )
+
         try:
             crt_request = self._marshal_request(request)
             connection = await self._get_connection(request.destination)
 
-            # Convert body to async iterator for request_body_generator
-            body_generator = self._create_body_generator(request.body)
-
-            crt_stream = connection.request(
-                crt_request,
-                request_body_generator=body_generator,
-            )
+            # request_body_generator is HTTP/2-only in CRT; HTTP/1.1 must use body_stream
+            if connection.version is crt_http.HttpVersion.Http2:
+                crt_stream = connection.request(
+                    crt_request,
+                    request_body_generator=self._create_body_generator(request.body),
+                )
+            else:
+                if (
+                    body_stream := await self._create_body_stream(request.body)
+                ) is not None:
+                    crt_request.body_stream = body_stream
+                crt_stream = connection.request(crt_request)
 
             return await self._await_response(crt_stream)
         except AwsCrtError as e:
             if e.name in self._TIMEOUT_ERROR_NAMES:
                 raise _CRTTimeoutError(f"CRT {e.name}: {e.message}") from e
             raise
+
+    async def close(self) -> None:
+        """Close all pooled HTTP connections."""
+        if self._closed:
+            return
+        self._closed = True
+        connections = tuple(self._connections.values())
+        self._connections.clear()
+        await gather(
+            *(connection.close() for connection in connections),
+            return_exceptions=True,
+        )
+
+    async def __aenter__(self) -> Self:
+        if self._closed:
+            raise SmithyHTTPError("Cannot enter an HTTP client that has been closed.")
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        await self.close()
 
     async def _await_response(
         self, stream: "AIOHttpClientStreamUnified"
@@ -203,7 +239,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                 fields[header_name] = Field(
                     name=header_name,
                     values=[header_val],
-                    kind=FieldPosition.HEADER,
+                    kind="header",
                 )
         return AWSCRTHTTPResponse(
             status=status_code,
@@ -294,8 +330,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             request.fields.set_field(Field(name="accept", values=["*/*"]))
 
         for fld in request.fields.entries.values():
-            # TODO: Use literal values for "header"/"trailer".
-            if fld.kind.value != FieldPosition.HEADER.value:
+            if fld.kind != "header":
                 continue
             for val in fld.values:
                 headers_list.append((fld.name, val))
@@ -309,6 +344,15 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             headers=headers,
         )
         return crt_request
+
+    async def _create_body_stream(
+        self, body: core_aio_interfaces.StreamingBlob
+    ) -> core_interfaces.BytesReader | None:
+        """Convert various body types to a bytes reader for CRT HTTP/1.1."""
+        if core_interfaces.is_bytes_reader(body):
+            return body
+        buffered = await read_streaming_blob_async(body)
+        return BytesIO(buffered) if buffered else None
 
     async def _create_body_generator(
         self, body: core_aio_interfaces.StreamingBlob

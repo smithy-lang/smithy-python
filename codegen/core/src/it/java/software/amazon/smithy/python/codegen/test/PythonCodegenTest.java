@@ -4,6 +4,11 @@
  */
 package software.amazon.smithy.python.codegen.test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -20,7 +25,7 @@ import software.amazon.smithy.python.codegen.PythonClientCodegenPlugin;
 public class PythonCodegenTest {
 
     @Test
-    public void testCodegen(@TempDir Path tempDir) {
+    public void testCodegen(@TempDir Path tempDir) throws IOException {
         // TODO: Move this to its own package once client codegen is in its own package
         PythonClientCodegenPlugin plugin = new PythonClientCodegenPlugin();
         Model model = Model.assembler(PythonCodegenTest.class.getClassLoader())
@@ -38,5 +43,32 @@ public class PythonCodegenTest {
                 .model(model)
                 .build();
         plugin.execute(context);
+
+        var client = Files.readString(tempDir.resolve("src/weather/client.py"));
+        assertFalse(client.contains("retry_mode="));
+        assertFalse(client.contains("max_attempts="));
+        assertTrue(client.contains("(AsyncClient):"));
+        assertTrue(client.contains("await self._prepare_call("));
+
+        var config = Files.readString(tempDir.resolve("src/weather/config.py"));
+        assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
+        assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));
+
+        // An output that models a "responseMetadata" member gets both the SDK-reserved
+        // response_metadata attribute and the escaped modeled member, so neither shadows
+        // the other.
+        var models = Files.readString(tempDir.resolve("src/weather/models.py"));
+        assertTrue(models.contains("response_metadata: ResponseMetadata"));
+        assertTrue(models.contains("response_metadata_:"));
+
+        var schemas = Files.readString(tempDir.resolve("src/weather/_private/schemas.py"));
+        assertTrue(schemas.contains("example.weather#fakeProtocol"));
+        assertTrue(schemas.contains("aws.protocols#restJson1"));
+        assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
+        assertTrue(schemas.contains("\"name\": \"weather-auth\""));
+        assertTrue(schemas.contains("smithy.rules#endpointBdd"));
+        assertTrue(schemas.contains("(default endpointRuleSet) endpoint is not set"));
+        assertTrue(schemas.contains("smithy.api#longPoll"));
+        assertTrue(schemas.contains("\"timeoutMillis\": 20000"));
     }
 }

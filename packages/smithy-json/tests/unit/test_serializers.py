@@ -1,5 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import json
 from datetime import datetime
 from decimal import Decimal
 from io import BytesIO
@@ -82,3 +83,59 @@ def test_json_serializer(given: Any, expected: bytes) -> None:
     sink.seek(0)
     actual = sink.read()
     assert actual == expected
+
+
+def _serialize_string(value: str) -> bytes:
+    """Serialize a string value through the JSON codec and return raw bytes."""
+    sink = BytesIO()
+    serializer = JSONCodec().create_serializer(sink)
+    serializer.write_string(STRING, value)
+    serializer.flush()
+    sink.seek(0)
+    return sink.read()
+
+
+class TestStringControlCharEscaping:
+    """RFC 8259 §7: All control characters U+0000-U+001F must be escaped."""
+
+    @pytest.mark.parametrize(
+        "char, escaped",
+        [
+            ("\n", "\\n"),
+            ("\r", "\\r"),
+            ("\t", "\\t"),
+            ("\b", "\\b"),
+            ("\f", "\\f"),
+        ],
+    )
+    def test_named_control_chars(self, char: str, escaped: str) -> None:
+        result = _serialize_string(f"a{char}b")
+        assert result == f'"a{escaped}b"'.encode()
+
+    def test_all_control_chars_produce_valid_json(self) -> None:
+        """Every U+0000-U+001F character must be escaped so output is valid JSON."""
+        for cp in range(0x20):
+            value = f"before{chr(cp)}after"
+            raw = _serialize_string(value)
+            # Must parse as valid JSON
+            parsed = json.loads(raw)
+            assert parsed == value, f"Round-trip failed for U+{cp:04X}"
+
+    def test_null_byte(self) -> None:
+        result = _serialize_string("a\x00b")
+        assert result == b'"a\\u0000b"'
+
+    def test_mixed_escapes(self) -> None:
+        result = _serialize_string('line 1\nline 2\t"quoted"\r\n')
+        assert result == b'"line 1\\nline 2\\t\\"quoted\\"\\r\\n"'
+
+    def test_existing_backslash_and_quote_still_escaped(self) -> None:
+        result = _serialize_string('a\\b"c')
+        assert result == b'"a\\\\b\\"c"'
+
+    def test_serialized_output_is_valid_json(self) -> None:
+        """Realistic multi-line prompt string produces valid JSON."""
+        value = "System: You are helpful.\nUser: Hello\nAssistant:"
+        raw = _serialize_string(value)
+        parsed = json.loads(raw)
+        assert parsed == value

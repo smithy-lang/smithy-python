@@ -6,6 +6,10 @@ on:
     branches:
       - develop
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -14,8 +18,10 @@ jobs:
     name: Check License Header
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
-      - uses: apache/skywalking-eyes/header@b7f8b351c2db8005972712d7efc0a15484a15bcb
+      - uses: apache/skywalking-eyes/header@a196742f472feaffafea537ce5a2a4c3c53a8de4
         with:
           mode: check 

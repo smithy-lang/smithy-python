@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "enhancement",
+      "description": "Aligned with service client minor version"
+    }
+  ]
+}

@@ -26,8 +26,11 @@ clients.
 
 The code generator uses the [gradle](https://gradle.org) build system, accessed
 via the gradle wrapper `gradlew`. To build the generator, simply run
-`./gradlew clean build`. Alternatively, run `make smithy-build` from the repo
-root. To run the protocol tests, run `make test-protocols`.
+`./gradlew clean build`. Alternatively, run `make build-java` from the repo
+root. Builds check formatting without modifying source. Run `make format-java`
+from the repo root to apply Java and Gradle formatting, and run
+`make check-java` to check formatting explicitly. To run the protocol tests,
+run `make test-protocols`.
 
 **WARNING: All interfaces are subject to change.**
 

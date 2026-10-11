@@ -14,9 +14,8 @@ import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SymbolProperties;
-import software.amazon.smithy.python.codegen.sections.UnionMemberSection;
-import software.amazon.smithy.python.codegen.sections.UnionSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -51,9 +50,13 @@ public final class UnionGenerator implements Runnable {
     public void run() {
         writer.addStdlibImports("typing", Set.of("Union"));
         writer.pushState();
-        var parentName = symbolProvider.toSymbol(shape).getName();
+        var parentSymbol = symbolProvider.toSymbol(shape);
+        var parentName = parentSymbol.getName();
+        writer.addLocallyDefinedSymbol(parentSymbol);
         writer.addStdlibImport("dataclasses", "dataclass");
-        writer.addImport("smithy_core.serializers", "ShapeSerializer");
+        writer.putContext("shapeSerializer", RuntimeTypes.SHAPE_SERIALIZER);
+        writer.putContext("shapeDeserializer", RuntimeTypes.SHAPE_DESERIALIZER);
+        writer.putContext("serializationError", RuntimeTypes.SERIALIZATION_ERROR);
         var schemaSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA);
         writer.putContext("schema", schemaSymbol);
 
@@ -61,32 +64,34 @@ public final class UnionGenerator implements Runnable {
         for (MemberShape member : shape.members()) {
             var memberSymbol = symbolProvider.toSymbol(member);
             memberNames.add(memberSymbol.getName());
+            writer.addLocallyDefinedSymbol(memberSymbol);
 
             var target = model.expectShape(member.getTarget());
             var targetSymbol = symbolProvider.toSymbol(target);
-            writer.pushState(new UnionMemberSection(memberSymbol));
+            writer.pushState();
+            writer.putContext("quote", recursiveShapes.contains(target) ? "'" : "");
             writer.write("""
                     @dataclass
                     class $1L:
                         ${2C|}
 
-                        value: $3T
+                        value: ${quote:L}$3T${quote:L}
 
-                        def serialize(self, serializer: ShapeSerializer):
+                        def serialize(self, serializer: ${shapeSerializer:T}):
                             serializer.write_struct($4T, self)
 
-                        def serialize_members(self, serializer: ShapeSerializer):
+                        def serialize_members(self, serializer: ${shapeSerializer:T}):
                             ${5C|}
 
                         @classmethod
-                        def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+                        def deserialize(cls, deserializer: ${shapeDeserializer:T}) -> Self:
                             return cls(value=${6C|})
 
                     """,
                     memberSymbol.getName(),
                     writer.consumer(w -> member.getMemberTrait(model, DocumentationTrait.class)
                             .map(StringTrait::getValue)
-                            .ifPresent(w::writeDocs)),
+                            .ifPresent(docs -> w.writeDocs(docs, context))),
                     targetSymbol,
                     schemaSymbol,
                     writer.consumer(w -> target.accept(
@@ -103,12 +108,12 @@ public final class UnionGenerator implements Runnable {
         // Since the underlying value is unknown and un-comparable, that is the only
         // realistic implementation.
         var unknownSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.UNION_UNKNOWN);
-        writer.pushState(new UnionMemberSection(unknownSymbol));
-        writer.addImport("smithy_core.exceptions", "SerializationError");
+        writer.addLocallyDefinedSymbol(unknownSymbol);
         writer.write("""
                 @dataclass
                 class $1L:
-                    \"""Represents an unknown variant.
+                    \"""
+                    Represents an unknown variant.
 
                     If you receive this value, you will need to update your library to receive the
                     parsed value.
@@ -118,26 +123,25 @@ public final class UnionGenerator implements Runnable {
 
                     tag: str
 
-                    def serialize(self, serializer: ShapeSerializer):
-                        raise SerializationError("Unknown union variants may not be serialized.")
+                    def serialize(self, serializer: ${shapeSerializer:T}):
+                        raise ${serializationError:T}("Unknown union variants may not be serialized.")
 
-                    def serialize_members(self, serializer: ShapeSerializer):
-                        raise SerializationError("Unknown union variants may not be serialized.")
+                    def serialize_members(self, serializer: ${shapeSerializer:T}):
+                        raise ${serializationError:T}("Unknown union variants may not be serialized.")
 
                     @classmethod
-                    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+                    def deserialize(cls, deserializer: ${shapeDeserializer:T}) -> Self:
                         raise NotImplementedError()
 
                 """, unknownSymbol.getName());
         memberNames.add(unknownSymbol.getName());
-        writer.popState();
 
-        writer.pushState(new UnionSection(shape, parentName, memberNames));
         // We need to use the old union syntax until we either migrate away from
         // Sphinx or Sphinx fixes the issue upstream: https://github.com/sphinx-doc/sphinx/issues/10785
-        writer.write("$L = Union[$L]\n", parentName, String.join(" | ", memberNames));
-        shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeDocs(trait.getValue()));
-        writer.popState();
+        writer.write("$L = Union[$L]", parentName, String.join(" | ", memberNames));
+        shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+            writer.writeDocs(trait.getValue(), context);
+        });
 
         generateDeserializer();
         writer.popState();
@@ -146,43 +150,44 @@ public final class UnionGenerator implements Runnable {
     private void generateDeserializer() {
         writer.addLogger();
         writer.addStdlibImports("typing", Set.of("Self", "Any"));
-        writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
-        writer.addImport("smithy_core.exceptions", "SerializationError");
-
-        // TODO: add in unknown handling
 
         var symbol = symbolProvider.toSymbol(shape);
         var deserializerSymbol = symbol.expectProperty(SymbolProperties.DESERIALIZER);
+        writer.addLocallyDefinedSymbol(deserializerSymbol);
         var schemaSymbol = symbol.expectProperty(SymbolProperties.SCHEMA);
+        var unknownSymbol = symbol.expectProperty(SymbolProperties.UNION_UNKNOWN);
         writer.putContext("schema", schemaSymbol);
-        writer.write("""
-                class $1L:
-                    _result: $2T | None = None
+        writer.write(
+                """
+                        class $1L:
+                            _result: $2T | None = None
 
-                    def deserialize(self, deserializer: ShapeDeserializer) -> $2T:
-                        self._result = None
-                        deserializer.read_struct($3T, self._consumer)
+                            def deserialize(self, deserializer: ${shapeDeserializer:T}) -> $2T:
+                                self._result = None
+                                deserializer.read_struct($3T, self._consumer)
 
-                        if self._result is None:
-                            raise SerializationError("Unions must have exactly one value, but found none.")
+                                if self._result is None:
+                                    raise ${serializationError:T}("Unions must have exactly one value, but found none.")
 
-                        return self._result
+                                return self._result
 
-                    def _consumer(self, schema: Schema, de: ShapeDeserializer) -> None:
-                        match schema.expect_member_index():
-                            ${4C|}
-                            case _:
-                                logger.debug("Unexpected member schema: %s", schema)
+                            def _consumer(self, schema: $4T, de: ${shapeDeserializer:T}) -> None:
+                                match schema.expect_member_index():
+                                    ${5C|}
+                                    case _:
+                                        self._set_result($6L(tag=schema.expect_member_name()))
 
-                    def _set_result(self, value: $2T) -> None:
-                        if self._result is not None:
-                            raise SerializationError("Unions must have exactly one value, but found more than one.")
-                        self._result = value
-                """,
+                            def _set_result(self, value: $2T) -> None:
+                                if self._result is not None:
+                                    raise ${serializationError:T}("Unions must have exactly one value, but found more than one.")
+                                self._result = value
+                        """,
                 deserializerSymbol.getName(),
                 symbol,
                 schemaSymbol,
-                writer.consumer(w -> deserializeMembers()));
+                RuntimeTypes.SCHEMA,
+                writer.consumer(w -> deserializeMembers()),
+                unknownSymbol.getName());
     }
 
     private void deserializeMembers() {

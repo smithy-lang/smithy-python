@@ -5,6 +5,7 @@ from smithy_core.prelude import INTEGER, STRING
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
+    EndpointTrait,
     ErrorTrait,
     HostLabelTrait,
     HTTPErrorTrait,
@@ -15,9 +16,18 @@ from smithy_core.traits import (
     HTTPQueryParamsTrait,
     HTTPQueryTrait,
     HTTPResponseCodeTrait,
+    HTTPTrait,
+    MediaTypeTrait,
+    RequiresLengthTrait,
     StreamingTrait,
+    TimestampFormatTrait,
 )
+from smithy_core.types import TimestampFormat
 from smithy_http.bindings import Binding, RequestBindingMatcher, ResponseBindingMatcher
+from smithy_http.schema_extensions import (
+    HTTP_BINDING_SCHEMA_EXTENSION,
+    HTTP_OPERATION_SCHEMA_EXTENSION,
+)
 
 PAYLOAD_BINDING = Schema.collection(
     id=ShapeID("com.example#Payload"),
@@ -52,12 +62,12 @@ GENERAL_BINDINGS = Schema.collection(
     id=ShapeID("com.example#BodyBindings"),
     members={
         "label": {"target": STRING, "traits": [HTTPLabelTrait()]},
-        "query": {"target": STRING, "traits": [HTTPQueryTrait()]},
+        "query": {"target": STRING, "traits": [HTTPQueryTrait("query")]},
         "queryParams": {
             "target": STRING_MAP,
             "traits": [HTTPQueryParamsTrait()],
         },
-        "header": {"target": STRING, "traits": [HTTPHeaderTrait()]},
+        "header": {"target": STRING, "traits": [HTTPHeaderTrait("header")]},
         "prefixHeaders": {
             "target": STRING_MAP,
             "traits": [HTTPPrefixHeadersTrait("foo")],
@@ -156,3 +166,197 @@ def test_response_matching() -> None:
     assert matcher.match(GENERAL_BINDINGS.members["hostLabel"]) == Binding.BODY
     assert matcher.match(GENERAL_BINDINGS.members["status"]) == Binding.STATUS
     assert matcher.match(GENERAL_BINDINGS.members["body"]) == Binding.BODY
+
+
+def test_http_binding_schema_extension_is_cached() -> None:
+    info = GENERAL_BINDINGS.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
+
+    assert info is GENERAL_BINDINGS.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
+    assert info.request_bindings == tuple(
+        RequestBindingMatcher(GENERAL_BINDINGS).bindings
+    )
+    assert info.response_bindings == tuple(
+        ResponseBindingMatcher(GENERAL_BINDINGS).bindings
+    )
+    assert info.has_request_body
+    assert info.has_response_body
+    assert info.request.query_names == frozenset({"query"})
+    assert info.request.header_names == frozenset({"header"})
+    assert info.request.body_members == (
+        False,
+        False,
+        False,
+        False,
+        False,
+        True,
+        True,
+        True,
+    )
+    assert info.response.body_members == (
+        True,
+        True,
+        True,
+        False,
+        False,
+        True,
+        False,
+        True,
+    )
+    assert (
+        info.response.headers_by_name["header"].member
+        is (GENERAL_BINDINGS.members["header"])
+    )
+    assert tuple(entry[:4] for entry in info.response.dispatch) == (
+        (
+            GENERAL_BINDINGS.members["header"],
+            Binding.HEADER,
+            "header",
+            False,
+        ),
+        (
+            GENERAL_BINDINGS.members["prefixHeaders"],
+            Binding.PREFIX_HEADERS,
+            "foo",
+            False,
+        ),
+        (
+            GENERAL_BINDINGS.members["status"],
+            Binding.STATUS,
+            None,
+            False,
+        ),
+    )
+    assert info.response_bound_members == (
+        (
+            GENERAL_BINDINGS.members["header"],
+            Binding.HEADER,
+            "header",
+            False,
+        ),
+        (
+            GENERAL_BINDINGS.members["prefixHeaders"],
+            Binding.PREFIX_HEADERS,
+            "foo",
+            False,
+        ),
+        (
+            GENERAL_BINDINGS.members["status"],
+            Binding.STATUS,
+            None,
+            False,
+        ),
+    )
+
+
+def test_http_binding_schema_extension_caches_payload_and_event_stream() -> None:
+    payload_info = PAYLOAD_BINDING.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
+    event_info = EVENT_STREAM_BINDING.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
+
+    assert payload_info.payload_member is PAYLOAD_BINDING.members["payload"]
+    assert payload_info.response.streaming_member is None
+    assert payload_info.response_bound_members == (
+        (
+            PAYLOAD_BINDING.members["payload"],
+            Binding.PAYLOAD,
+            None,
+            False,
+        ),
+    )
+    assert event_info.event_stream_member is EVENT_STREAM_BINDING.members["stream"]
+    assert (
+        event_info.response.streaming_member is EVENT_STREAM_BINDING.members["stream"]
+    )
+
+
+def test_http_binding_schema_extension_caches_member_formatting() -> None:
+    schema = Schema.collection(
+        id=ShapeID("com.example#Formatting"),
+        members={
+            "query": {
+                "target": STRING,
+                "traits": [HTTPQueryTrait("wireQuery")],
+            },
+            "header": {
+                "target": STRING,
+                "traits": [
+                    HTTPHeaderTrait("X-Header"),
+                    MediaTypeTrait("text/plain"),
+                ],
+            },
+            "timestamp": {
+                "target": Schema(
+                    id=ShapeID("smithy.api#Timestamp"),
+                    shape_type=ShapeType.TIMESTAMP,
+                ),
+                "traits": [
+                    HTTPHeaderTrait("X-Time"),
+                    TimestampFormatTrait("epoch-seconds"),
+                ],
+            },
+        },
+    )
+
+    metadata = schema.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
+    query, header, timestamp = metadata.members
+
+    assert query.request_wire_name == "wireQuery"
+    assert header.request_header_name == "x-header"
+    assert header.media_type == "text/plain"
+    assert timestamp.request_timestamp_format is TimestampFormat.EPOCH_SECONDS
+    assert timestamp.response_timestamp_format is TimestampFormat.EPOCH_SECONDS
+
+
+def test_http_binding_schema_extension_caches_payload_handling() -> None:
+    schema = Schema.collection(
+        id=ShapeID("com.example#PayloadMetadata"),
+        members={
+            "payload": {
+                "target": STRING,
+                "traits": [
+                    HTTPPayloadTrait(),
+                    MediaTypeTrait("application/custom"),
+                    RequiresLengthTrait(),
+                    StreamingTrait(),
+                ],
+            }
+        },
+    )
+
+    payload = schema.get_extension(HTTP_BINDING_SCHEMA_EXTENSION).request.payload
+    response = schema.get_extension(HTTP_BINDING_SCHEMA_EXTENSION).response
+
+    assert payload is not None
+    assert payload.member is schema.members["payload"]
+    assert payload.media_type == "application/custom"
+    assert payload.requires_length
+    assert payload.is_streaming
+    assert payload.is_raw
+    assert response.streaming_member is schema.members["payload"]
+
+
+def test_http_operation_schema_extension_is_cached() -> None:
+    schema = Schema(
+        id=ShapeID("com.example#Operation"),
+        shape_type=ShapeType.OPERATION,
+        traits=[
+            HTTPTrait(
+                {
+                    "method": "PUT",
+                    "code": 201,
+                    "uri": "/items/{id+}?fixed=value&flag",
+                }
+            ),
+            EndpointTrait({"hostPrefix": "{account}."}),
+        ],
+    )
+
+    metadata = schema.get_extension(HTTP_OPERATION_SCHEMA_EXTENSION)
+
+    assert metadata is schema.get_extension(HTTP_OPERATION_SCHEMA_EXTENSION)
+    assert metadata.method == "PUT"
+    assert metadata.path.pattern == "/items/{id+}"
+    assert metadata.query == "fixed=value&flag"
+    assert metadata.query_literal_names == frozenset({"fixed", "flag"})
+    assert metadata.response_status == 201
+    assert metadata.host_prefix == "{account}."
+    assert metadata.greedy_label_names == frozenset({"id"})

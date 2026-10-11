@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "bugfix",
+      "description": "Disabled automatic response decompression in `AIOHTTPClient`."
+    }
+  ]
+}

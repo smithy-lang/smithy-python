@@ -4,6 +4,7 @@
  */
 package software.amazon.smithy.python.codegen.generators;
 
+import java.util.Set;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -42,6 +43,16 @@ public interface ProtocolGenerator {
     ApplicationProtocol getApplicationProtocol(GenerationContext context);
 
     void initializeProtocol(GenerationContext context, PythonWriter writer);
+
+    /**
+     * Declares the extra {@code _PROTOCOL_SETTINGS} fields this protocol's constructor reads.
+     *
+     * @param context Generation context
+     * @return The extra settings fields this protocol requires.
+     */
+    default Set<ProtocolSettingsField> requiredProtocolSettings(GenerationContext context) {
+        return Set.of();
+    }
 
     /**
      * Generates the code for validating the generated protocol's serializers and deserializers.

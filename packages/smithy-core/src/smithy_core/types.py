@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from email.utils import format_datetime, parsedate_to_datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Self, overload
 
 from .exceptions import ExpectationNotMetError
 from .interfaces import PropertyKey as _PropertyKey
@@ -64,6 +64,64 @@ class JsonBlob(bytes):
         json_string = JsonBlob(json.dumps(j).encode(encoding="utf-8"))
         json_string._json = j
         return json_string
+
+
+class UnknownEnumMixin:
+    """Adds unknown-value support to a generated enum.
+
+    Mixed into an :class:`enum.Enum` with a data type, e.g.
+    ``class Color(UnknownEnumMixin, StrEnum)``. Unrecognized values become
+    pseudo-members (flagged by :attr:`is_unknown`) instead of raising. A value
+    from the wire keeps native equality; an error-correction placeholder
+    (:meth:`_corrected`) equals only itself.
+    """
+
+    if TYPE_CHECKING:
+        # Set by EnumType when this is mixed into an enum with a data type.
+        _member_type_: ClassVar[type[Any]]
+        _name_: str
+        _value_: Any
+
+    _smithy_unknown: bool = False
+    _smithy_corrected: bool = False
+
+    @classmethod
+    def _unknown(cls, value: Any) -> Self:
+        member_type: Any = cls._member_type_
+        pseudo: Self = member_type.__new__(cls, value)
+        pseudo._name_ = f"<smithy-unknown:{value}>"
+        pseudo._value_ = value
+        pseudo._smithy_unknown = True
+        return pseudo
+
+    @classmethod
+    def _corrected(cls, value: Any) -> Self:
+        pseudo = cls._unknown(value)
+        pseudo._smithy_corrected = True
+        return pseudo
+
+    @classmethod
+    def _missing_(cls, value: object) -> Self | None:
+        if isinstance(value, cls._member_type_):
+            return cls._unknown(value)
+        return None
+
+    def __eq__(self, other: object) -> bool:
+        if self._smithy_corrected or getattr(other, "_smithy_corrected", False):
+            return self is other
+        return super().__eq__(other)
+
+    def __ne__(self, other: object) -> bool:
+        result = self.__eq__(other)
+        return result if result is NotImplemented else not result
+
+    def __hash__(self) -> int:
+        return super().__hash__()
+
+    @property
+    def is_unknown(self) -> bool:
+        """True if this value was not known at SDK generation time."""
+        return self._smithy_unknown
 
 
 class TimestampFormat(Enum):

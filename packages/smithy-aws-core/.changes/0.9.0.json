@@ -1,0 +1,16 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added process credentials support to the default AWS identity chain through the active profile's `credential_process` setting."
+    },
+    {
+      "type": "enhancement",
+      "description": "Added support for the `x-amz-retry-after` response header."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-core` from `~=0.7.0` to `~=0.8.0`."
+    }
+  ]
+}

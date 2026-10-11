@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added `EventSigner.sign_empty` to the protocol for signing empty events."
+    }
+  ]
+}

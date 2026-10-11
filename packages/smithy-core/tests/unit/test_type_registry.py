@@ -1,5 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import re
+
 import pytest
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.documents import Document, TypeRegistry
@@ -42,7 +44,7 @@ def test_contains_sub_registry():
 def test_get_no_match():
     registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
 
-    with pytest.raises(KeyError, match="Unknown shape: com.example#Test2"):
+    with pytest.raises(KeyError, match=re.escape("Unknown shape: com.example#Test2")):
         registry[ShapeID("com.example#Test2")]
 
 

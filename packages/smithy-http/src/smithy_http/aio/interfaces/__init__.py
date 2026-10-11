@@ -64,7 +64,14 @@ class HTTPResponse(Response, Protocol):
 
 
 class HTTPClient(ClientTransport[HTTPRequest, HTTPResponse], Protocol):
-    """An asynchronous HTTP client interface."""
+    """An asynchronous HTTP client interface.
+
+    Header field names and values are not validated before reaching this
+    layer. Implementations of ``HTTPClient`` are responsible for
+    validating and handling those invalid and dangerous characters (such
+    as CR, LF, or NUL) as defined in `RFC 9110, Section 5.5
+    <https://www.rfc-editor.org/rfc/rfc9110#section-5.5>`_.
+    """
 
     def __init__(self, *, client_config: HTTPClientConfiguration | None) -> None:
         """

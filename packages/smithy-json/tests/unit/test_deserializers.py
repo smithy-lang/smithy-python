@@ -1,5 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import math
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
@@ -89,6 +90,12 @@ def test_json_deserializer(expected: Any, given: bytes) -> None:
         actual_value = actual.as_value()
         expected_value = expected.as_value()
         assert actual_value == expected_value
+    elif isinstance(expected, float) and math.isnan(expected):
+        assert isinstance(actual, float)
+        assert math.isnan(actual)
+    elif isinstance(expected, Decimal) and expected.is_nan():
+        assert isinstance(actual, Decimal)
+        assert actual.is_nan()
     else:
         assert actual == expected
 

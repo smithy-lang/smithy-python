@@ -7,7 +7,7 @@ Create new changelog entries for a specific package.
 
 import argparse
 import json
-from datetime import datetime
+import uuid
 from pathlib import Path
 
 PROJECT_ROOT_DIR = Path(__file__).resolve().parent.parent.parent
@@ -33,8 +33,8 @@ def create_change_entry(
     next_release_dir.mkdir(exist_ok=True)
 
     # Generate unique filename
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"{package_name}-{change_type}-{timestamp}.json"
+    unique_id = uuid.uuid4().hex
+    filename = f"{package_name}-{change_type}-{unique_id}.json"
 
     entry_data = {
         "type": change_type,

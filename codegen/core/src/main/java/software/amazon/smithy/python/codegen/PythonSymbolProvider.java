@@ -6,7 +6,9 @@ package software.amazon.smithy.python.codegen;
 
 import static java.lang.String.format;
 
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.ReservedWordSymbolProvider;
 import software.amazon.smithy.codegen.core.ReservedWordsBuilder;
@@ -14,6 +16,7 @@ import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.knowledge.OperationIndex;
 import software.amazon.smithy.model.loader.Prelude;
 import software.amazon.smithy.model.shapes.BigDecimalShape;
 import software.amazon.smithy.model.shapes.BigIntegerShape;
@@ -64,12 +67,15 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     private static final Logger LOGGER = Logger.getLogger(PythonSymbolProvider.class.getName());
     private static final String SHAPES_FILE = "models";
     private static final String SCHEMAS_FILE = "_private/schemas";
+    private static final Set<String> CLIENT_RESERVED_METHOD_NAMES = Set.of("close");
 
     private final Model model;
     private final ReservedWordSymbolProvider.Escaper escaper;
     private final ReservedWordSymbolProvider.Escaper errorMemberEscaper;
     private final PythonSettings settings;
     private final ServiceShape service;
+    private final Set<String> allShapeNames;
+    private final OperationIndex operationIndex;
 
     public PythonSymbolProvider(Model model, PythonSettings settings) {
         this.model = model;
@@ -99,6 +105,28 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
                 .memberReservedWords(reservedErrorMembers.build())
                 .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
                 .buildEscaper();
+
+        // Collect all shape names that will be generated as PascalCase classes in models.py.
+        // Used to detect collisions with synthesized names (union variants, unknown types).
+        this.allShapeNames = collectAllShapeNames();
+
+        // Built once because toMemberName runs for every member of every shape.
+        this.operationIndex = OperationIndex.of(model);
+    }
+
+    /**
+     * Collects the PascalCase names of all shapes that will be generated as classes.
+     */
+    private Set<String> collectAllShapeNames() {
+        var names = new HashSet<String>();
+        for (Shape shape : model.toSet()) {
+            if (shape.isStructureShape() || shape.isUnionShape()
+                    || shape.isEnumShape()
+                    || shape.isIntEnumShape()) {
+                names.add(getDefaultShapeName(shape));
+            }
+        }
+        return names;
     }
 
     private String escapeWord(String word) {
@@ -126,10 +154,37 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         }
 
         var container = model.expectShape(shape.getContainer());
+
+        // The response metadata attribute is added to operation outputs and errors
+        // by the generator, so a modeled member of the same name is escaped to keep
+        // it from shadowing the attribute.
+        if (CodegenUtils.RESPONSE_METADATA_MEMBER.equals(memberName)
+                && carriesResponseMetadata(container)) {
+            memberName = escapeWord(memberName);
+            LOGGER.warning(() -> format(
+                    "Escaped generated Python name for Smithy member %s from \"%s\" to \"%s\" because \"%s\" is reserved for SDK response metadata.",
+                    shape.getId(),
+                    CodegenUtils.RESPONSE_METADATA_MEMBER,
+                    escapeWord(CodegenUtils.RESPONSE_METADATA_MEMBER),
+                    CodegenUtils.RESPONSE_METADATA_MEMBER));
+        }
+
         if (container.isEnumShape() || container.isIntEnumShape()) {
             memberName = memberName.toUpperCase(Locale.ENGLISH);
         }
         return memberName;
+    }
+
+    /**
+     * Whether a shape is given a response metadata attribute, and so has a member
+     * name that must be kept clear.
+     *
+     * <p>Operation inputs and other structures are not given the attribute, so
+     * their members are left alone.
+     */
+    private boolean carriesResponseMetadata(Shape container) {
+        return container.hasTrait(ErrorTrait.class)
+                || operationIndex.isOutputStructure(container);
     }
 
     private String getDefaultShapeName(Shape shape) {
@@ -275,6 +330,9 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         // Operation names are escaped like members because ultimately they're
         // properties on an object too.
         var methodName = escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getId().getName(service)));
+        if (CLIENT_RESERVED_METHOD_NAMES.contains(methodName)) {
+            methodName = escapeWord(methodName);
+        }
         var methodSymbol = createGeneratedSymbolBuilder(shape, methodName, "client", false)
                 .putProperty(SymbolProperties.IMPORTABLE, false)
                 .build();
@@ -352,6 +410,9 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         String name = getDefaultShapeName(shape);
 
         var unknownName = name + "Unknown";
+        if (allShapeNames.contains(unknownName)) {
+            unknownName = name + "_Unknown";
+        }
         var unknownSymbol = createGeneratedSymbolBuilder(shape, unknownName, SHAPES_FILE).build();
         var builder = createGeneratedSymbolBuilder(shape, name, SHAPES_FILE)
                 .putProperty(SymbolProperties.UNION_UNKNOWN, unknownSymbol);
@@ -374,6 +435,12 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
             // Union members, unlike other shape members, have types generated for them.
             var containerSymbol = container.accept(this);
             var name = containerSymbol.getName() + StringUtils.capitalize(shape.getMemberName());
+            // Check if the synthesized variant name collides with any service-defined shape.
+            // Smithy shape names cannot contain underscores, so using "_" as separator
+            // guarantees the disambiguated name won't collide with any shape.
+            if (allShapeNames.contains(name)) {
+                name = containerSymbol.getName() + "_" + StringUtils.capitalize(shape.getMemberName());
+            }
             return createGeneratedSymbolBuilder(shape, name, SHAPES_FILE, false)
                     .putProperty(SymbolProperties.SCHEMA, containerSymbol.expectProperty(SymbolProperties.SCHEMA))
                     .build();

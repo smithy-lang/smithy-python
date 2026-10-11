@@ -12,6 +12,11 @@ This code generator, and the clients it generates, are unstable and should not
 be used in production systems yet. Several features, such as detailed logging,
 have not been implemented yet.
 
+> [!NOTE]
+> The Java generator in `codegen` remains the authoritative implementation.
+> `packages/smithy-python` contains an experimental Python-native CLI scaffold
+> that does not generate code yet.
+
 ### What is this repository?
 
 This repository contains two major components:
@@ -20,9 +25,9 @@ This repository contains two major components:
 2) Core modules and interfaces for building service clients in Python
 
 These components facilitate generating clients for any [Smithy](https://smithy.io/)
-service. The `codegen` directory contains the source code for generating clients.
-The `python-packages` directory contains the source code for the handwritten python
-components.
+service. The `codegen` directory contains the current Java generator,
+`packages/smithy-python` contains the Python-native generator scaffold, and the
+other directories under `packages` contain the handwritten Python components.
 
 This repository does *not* contain any generated clients, such as for S3 or other
 AWS services. Rather, these are the tools that facilitate the generation of those
@@ -112,12 +117,13 @@ With both files your project directory should look like this:
 
 The code generator libraries have not been published yet, so
 you'll need to build it yourself. To build and run the generator, you will need
-the following prerequisites:
+the following prerequisites installed in your environment:
 
 * [uv](https://docs.astral.sh/uv/)
 * The [Smithy CLI](https://smithy.io/2.0/guides/smithy-cli/cli_installation.html)
 * JDK 17 or newer
 * make
+* [pandoc](https://pandoc.org/installing.html) CLI
 
 This project uses [uv](https://docs.astral.sh/uv/) for managing all things python.
 Once you have it installed, run the following command to check that it's ready to use:
@@ -160,14 +166,24 @@ from echo.models import EchoMessageInput
 
 
 async def main() -> None:
-    client = EchoService(Config(endpoint_uri="https://example.com/"))
-    response = await client.echo_message(EchoMessageInput(message="spam"))
-    print(response.message)
+    async with EchoService(Config(endpoint_uri="https://example.com/")) as client:
+        response = await client.echo_message(EchoMessageInput(message="spam"))
+        print(response.message)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+#### pandoc CLI
+
+Smithy [documentation traits](https://smithy.io/2.0/spec/documentation-traits.html#documentation-trait) are modeled in one of two formats:
+
+- **Raw HTML** for AWS services  
+- **CommonMark** for all other Smithy-based services (may include embedded HTML)
+
+The code generator uses [pandoc](https://pandoc.org/) to normalize and convert this 
+content into Markdown suitable for Google-style Python docstrings.
 
 #### Is Java really required?
 
@@ -383,6 +399,10 @@ To build and run all the Java packages, simply run `./gradlew clean build` from
 the `codegen` directory. If this is the first time you have run this
 (or if you didn't already run `make install`), it will download Gradle onto your
 system to run along with any dependencies of the Java packages.
+
+Java builds check formatting without modifying source. From the repository
+root, run `make format-java` to apply formatting and `make check-java` to check
+it explicitly.
 
 For more details on working on the code generator, see the readme in the
 `codegen` directory.

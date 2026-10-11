@@ -6,6 +6,8 @@ package software.amazon.smithy.python.codegen.writer;
 
 import static software.amazon.smithy.python.codegen.SymbolProperties.IMPORTABLE;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -23,7 +25,7 @@ import software.amazon.smithy.model.node.NullNode;
 import software.amazon.smithy.model.node.NumberNode;
 import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.node.StringNode;
-import software.amazon.smithy.python.codegen.CodegenUtils;
+import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.StringUtils;
@@ -31,7 +33,11 @@ import software.amazon.smithy.utils.StringUtils;
 /**
  * Specialized code writer for managing Python dependencies.
  *
- * <p>Use the {@code $T} formatter to refer to {@link Symbol}s.
+ * <p>Use the {@code $T} formatter to refer to {@link Symbol}s. The formatter writes a
+ * placeholder token into the body text and records the symbol in a symbol table. At
+ * {@link #toString()} time, the writer detects name collisions between imported symbols
+ * and locally-defined names, aliases colliding imports with a {@code _} prefix, and
+ * replaces all placeholder tokens with the resolved (possibly aliased) names.
  *
  * <p>Use the {@code $N} formatter to render {@link Node}s.
  */
@@ -39,11 +45,26 @@ import software.amazon.smithy.utils.StringUtils;
 public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclarations> {
 
     private static final Logger LOGGER = Logger.getLogger(PythonWriter.class.getName());
-    private static final MarkdownToRstDocConverter DOC_CONVERTER = MarkdownToRstDocConverter.getInstance();
+
+    // Placeholder format: «namespace.name» — chosen to avoid conflicts with CodeFormatter's ${...} syntax.
+    private static final String PLACEHOLDER_PREFIX = "\u00AB";
+    private static final String PLACEHOLDER_SUFFIX = "\u00BB";
 
     private final String fullPackageName;
-    private final String commentStart;
+    private final String filename;
     private boolean addLogger = false;
+
+    /**
+     * Tracks all symbols referenced via {@code $T}, keyed by simple name.
+     * Used to detect collisions at {@link #toString()} time.
+     */
+    private final Map<String, Set<Symbol>> symbolTable = new HashMap<>();
+
+    /**
+     * Names that are defined locally in this file (e.g., class names, top-level variables).
+     * These take priority over imported names during collision resolution.
+     */
+    private final Set<String> locallyDefinedNames = new HashSet<>();
 
     /**
      * Constructs a PythonWriter.
@@ -52,24 +73,22 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * @param fullPackageName The fully-qualified name of the package.
      */
     public PythonWriter(PythonSettings settings, String fullPackageName) {
-        this(settings, fullPackageName, "#");
+        this(settings, fullPackageName, fullPackageName.replace('.', '/') + ".py");
     }
 
     /**
-     * Constructs a PythonWriter.
-     *
      * @param settings The python plugin settings.
      * @param fullPackageName The fully-qualified name of the package.
-     * @param commentStart The string that starts a comment in the given file format
+     * @param filename The output file's path; its extension selects the disclaimer comment syntax.
      */
-    public PythonWriter(PythonSettings settings, String fullPackageName, String commentStart) {
+    public PythonWriter(PythonSettings settings, String fullPackageName, String filename) {
         super(new ImportDeclarations(settings, fullPackageName));
         this.fullPackageName = fullPackageName;
+        this.filename = filename;
         trimBlankLines();
         trimTrailingSpaces();
         putFormatter('T', new PythonSymbolFormatter());
         putFormatter('N', new PythonNodeFormatter(this));
-        this.commentStart = commentStart;
     }
 
     /**
@@ -88,19 +107,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
 
         @Override
         public PythonWriter apply(String filename, String namespace) {
-            //Default is #
-            String commentStart = "#";
-            // Markdown doesn't have comments, so there's no non-intrusive way to
-            // add the warning.
-            if (filename.endsWith(".md")) {
-                commentStart = "";
-            } else if (filename.endsWith(".rst")) {
-                commentStart = "..\n    ";
-            } else if (filename.endsWith(".bat")) {
-                commentStart = "REM";
-            }
-
-            return new PythonWriter(settings, namespace, commentStart);
+            return new PythonWriter(settings, namespace, filename);
         }
     }
 
@@ -118,14 +125,30 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     }
 
     /**
-     * Writes documentation comments from a runnable.
+     * Writes single-line documentation comments from a runnable.
      *
-     * @param runnable A runnable that writes docs.
+     * @param runnable A runnable that writes single-line docs.
      * @return Returns the writer.
      */
-    public PythonWriter writeDocs(Runnable runnable) {
+    public PythonWriter writeSingleLineDocs(Runnable runnable) {
         pushState();
         writeInline("\"\"\"");
+        runnable.run();
+        trimTrailingWhitespaces();
+        write("\"\"\"");
+        popState();
+        return this;
+    }
+
+    /**
+     * Writes multi-line documentation comments from a runnable.
+     *
+     * @param runnable A runnable that writes multi-line docs.
+     * @return Returns the writer.
+     */
+    public PythonWriter writeMultiLineDocs(Runnable runnable) {
+        pushState();
+        write("\"\"\"");
         runnable.run();
         trimTrailingWhitespaces();
         ensureNewline();
@@ -138,10 +161,16 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * Writes documentation comments from a string.
      *
      * @param docs Documentation to write.
+     * @param context The generation context used to determine service type and formatting.
      * @return Returns the writer.
      */
-    public PythonWriter writeDocs(String docs) {
-        writeDocs(() -> write(formatDocs(docs)));
+    public PythonWriter writeDocs(String docs, GenerationContext context) {
+        String formatted = formatDocs(docs, context);
+        if (formatted.contains("\n")) {
+            writeMultiLineDocs(() -> write(formatted));
+        } else {
+            writeSingleLineDocs(() -> writeInline(formatted));
+        }
         return this;
     }
 
@@ -174,92 +203,35 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         return this;
     }
 
-    private static final int MAX_LINE_LENGTH = CodegenUtils.MAX_PREFERRED_LINE_LENGTH - 8;
-
     /**
-     * Formats a given Commonmark string and wraps it for use in a doc
-     * comment.
+     * Formats documentation from CommonMark or HTML to Google-style Markdown for Python docstrings.
+     *
+     * <p>For AWS services, expects HTML input. For generic clients, expects CommonMark input.
+     *
+     * <p>Quotes that would close the surrounding docstring are escaped. Use
+     * {@link #formatMarkdown} for documentation written outside a docstring.
      *
      * @param docs Documentation to format.
+     * @param context The generation context used to determine service type and formatting.
      * @return Formatted documentation.
      */
-    public String formatDocs(String docs) {
-        String rstDocs = DOC_CONVERTER.convertCommonmarkToRst(docs);
-        return wrapRST(rstDocs).toString().replace("$", "$$");
+    public String formatDocs(String docs, GenerationContext context) {
+        return MarkdownConverter.convertForDocstring(docs, context);
     }
 
-    public static String wrapRST(String text) {
-        StringBuilder wrappedText = new StringBuilder();
-        String[] lines = text.split("\n");
-        for (String line : lines) {
-            wrapLine(line, wrappedText);
-        }
-        return wrappedText.toString();
-    }
-
-    private static void wrapLine(String line, StringBuilder wrappedText) {
-        int indent = getIndentationLevel(line);
-        String indentStr = " ".repeat(indent);
-        line = line.trim();
-
-        while (line.length() > MAX_LINE_LENGTH) {
-            int wrapAt = findWrapPosition(line, MAX_LINE_LENGTH);
-            wrappedText.append(indentStr).append(line, 0, wrapAt).append("\n");
-            if (line.startsWith("* ")) {
-                indentStr += "  ";
-            }
-            line = line.substring(wrapAt).trim();
-            if (line.isEmpty()) {
-                return;
-            }
-        }
-        wrappedText.append(indentStr).append(line).append("\n");
-    }
-
-    private static int findWrapPosition(String line, int maxLineLength) {
-        // Find the last space before maxLineLength
-        int wrapAt = line.lastIndexOf(' ', maxLineLength);
-        if (wrapAt == -1) {
-            // If no space found, don't wrap
-            wrapAt = line.length();
-        } else {
-            // Ensure we don't break a link
-            //TODO account for earlier backticks on the same line as a link
-            int linkStart = line.lastIndexOf("`", wrapAt);
-            int linkEnd = line.indexOf("`_", wrapAt);
-            if (linkStart != -1 && (linkEnd != -1 && linkEnd > linkStart)) {
-                linkEnd = line.indexOf("`_", linkStart);
-                if (linkEnd != -1) {
-                    wrapAt = linkEnd + 2;
-                } else {
-                    // No matching `_` found, keep the original wrap position
-                    wrapAt = line.lastIndexOf(' ', maxLineLength);
-                    if (wrapAt == -1) {
-                        wrapAt = maxLineLength;
-                    }
-                }
-            }
-        }
-        // Include trailing punctuation before a space in the previous line
-        int nextSpace = line.indexOf(' ', wrapAt);
-        if (nextSpace != -1) {
-            int i = wrapAt;
-            while (i < nextSpace && !Character.isLetterOrDigit(line.charAt(i))) {
-                i++;
-            }
-            if (i == nextSpace) {
-                wrapAt = nextSpace;
-            }
-        }
-        return wrapAt;
-    }
-
-    private static int getIndentationLevel(String line) {
-        int indent = 0;
-        while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) {
-            indent++;
-        }
-        return indent;
+    /**
+     * Formats documentation from CommonMark or HTML to Markdown for files outside
+     * Python docstrings, such as the README.
+     *
+     * <p>This applies the same conversion as {@link #formatDocs} without escaping
+     * quotes for docstrings.
+     *
+     * @param docs Documentation to format.
+     * @param context The generation context used to determine service type and formatting.
+     * @return Formatted documentation.
+     */
+    public String formatMarkdown(String docs, GenerationContext context) {
+        return MarkdownConverter.convert(docs, context);
     }
 
     /**
@@ -284,7 +256,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * @return Returns the writer.
      */
     public PythonWriter writeComment(String comment) {
-        return openComment(() -> write(formatDocs(comment.replace("\n", " "))));
+        return openComment(() -> write(comment.replace("\n", " ")));
     }
 
     /**
@@ -395,24 +367,134 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         return this;
     }
 
+    /**
+     * Records a symbol as locally defined in this file (e.g., a class or top-level variable).
+     *
+     * <p>The writer uses this information at {@link #toString()} time to detect collisions
+     * between locally-defined names and imported names. When a collision is detected, the
+     * imported name is aliased with a {@code _} prefix.
+     *
+     * @param symbol The symbol being defined locally in this file.
+     * @return Returns the writer.
+     */
+    public PythonWriter addLocallyDefinedSymbol(Symbol symbol) {
+        locallyDefinedNames.add(symbol.getName());
+        return this;
+    }
+
     @Override
     public String toString() {
-        String contents = getImportContainer().toString();
+        String header = disclaimer(filename);
+        String logger = addLogger ? "\nlogger = logging.getLogger(__name__)\n\n" : "";
+        String mainContent = super.toString();
 
-        if (addLogger) {
-            contents += "\nlogger = logging.getLogger(__name__)\n\n";
+        // Resolve collisions: for each imported name that collides with a locally-defined
+        // name, alias the import with a "_" prefix and rewrite placeholders in the body.
+        Map<String, String> resolvedNames = resolveCollisions();
+
+        // Replace all placeholder tokens in the body with resolved names.
+        for (Map.Entry<String, String> entry : resolvedNames.entrySet()) {
+            var placeholder = PLACEHOLDER_PREFIX + entry.getKey() + PLACEHOLDER_SUFFIX;
+            mainContent = mainContent.replace(placeholder, entry.getValue());
         }
 
-        contents += super.toString();
-        if (!commentStart.equals("")) {
-            String header = String.format("%s Code generated by smithy-python-codegen DO NOT EDIT.%n%n", commentStart);
-            contents = header + contents;
+        String imports = getImportContainer().toString();
+
+        return header + imports + logger + mainContent;
+    }
+
+    private static final String DISCLAIMER_TEXT = "Code generated by smithy-python-codegen DO NOT EDIT.";
+
+    // The generated-file disclaimer must be a comment in the target language, so wrap it by extension.
+    private static String disclaimer(String filename) {
+        if (filename != null && filename.endsWith(".md")) {
+            return "<!-- " + DISCLAIMER_TEXT + " -->\n\n";
         }
-        return contents;
+        return "# " + DISCLAIMER_TEXT + "\n\n";
+    }
+
+    /**
+     * Detects collisions between symbols and resolves them by aliasing.
+     *
+     * <p>Collision cases handled:
+     * <ul>
+     *   <li>Imported symbol vs locally-defined name — the import is aliased as {@code _Name}.</li>
+     *   <li>Two imported symbols with the same simple name from different modules — each gets
+     *       a unique alias derived from its module namespace.</li>
+     *   <li>Both cases combined — locally-defined wins, all imports are aliased.</li>
+     * </ul>
+     *
+     * @return A map from placeholder key (namespace.name) to resolved name.
+     */
+    private Map<String, String> resolveCollisions() {
+        Map<String, String> resolvedNames = new HashMap<>();
+
+        for (Map.Entry<String, Set<Symbol>> entry : symbolTable.entrySet()) {
+            String simpleName = entry.getKey();
+            Set<Symbol> symbols = entry.getValue();
+
+            boolean collidesWithLocal = locallyDefinedNames.contains(simpleName);
+            boolean hasImportCollision = symbols.size() > 1;
+
+            if (!collidesWithLocal && !hasImportCollision) {
+                // No collision — use the plain name.
+                for (Symbol symbol : symbols) {
+                    String placeholderKey = symbol.getNamespace() + "." + symbol.getName();
+                    resolvedNames.put(placeholderKey, simpleName);
+                }
+                continue;
+            }
+
+            if (collidesWithLocal && !hasImportCollision) {
+                // Single import collides with a locally-defined name — alias it as _Name.
+                for (Symbol symbol : symbols) {
+                    String placeholderKey = symbol.getNamespace() + "." + symbol.getName();
+                    String aliasedName = "_" + simpleName;
+                    getImportContainer().aliasImport(symbol.getNamespace(), simpleName, aliasedName);
+                    resolvedNames.put(placeholderKey, aliasedName);
+                }
+            } else {
+                // Multiple imports with the same simple name (possibly also colliding with local).
+                // Each gets a unique alias derived from its module namespace.
+                for (Symbol symbol : symbols) {
+                    String placeholderKey = symbol.getNamespace() + "." + symbol.getName();
+                    String aliasedName = buildModuleAlias(symbol);
+                    getImportContainer().aliasImport(symbol.getNamespace(), simpleName, aliasedName);
+                    resolvedNames.put(placeholderKey, aliasedName);
+                }
+            }
+        }
+
+        return resolvedNames;
+    }
+
+    /**
+     * Builds a unique alias for a symbol based on its module namespace.
+     *
+     * <p>For example, {@code AuthOption} from {@code smithy_core.interfaces.auth} becomes
+     * {@code _smithy_core_interfaces_auth_AuthOption}, and {@code AuthOption} from
+     * {@code smithy_core.auth} becomes {@code _smithy_core_auth_AuthOption}.
+     *
+     * <p>The alias is constructed by joining all namespace segments with the symbol name.
+     * This guarantees uniqueness since no two modules share the same full namespace.
+     */
+    private static String buildModuleAlias(Symbol symbol) {
+        String namespace = symbol.getNamespace();
+        String[] parts = namespace.split("\\.");
+        var sb = new StringBuilder("_");
+        for (String part : parts) {
+            sb.append(part).append("_");
+        }
+        sb.append(symbol.getName());
+        return sb.toString();
     }
 
     /**
      * Implements Python symbol formatting for the {@code $T} formatter.
+     *
+     * <p>Instead of returning the symbol's name directly, this formatter writes a placeholder
+     * token and registers the symbol in the symbol table. The placeholder is resolved at
+     * {@link PythonWriter#toString()} time, where collision detection determines the final name.
      */
     private final class PythonSymbolFormatter implements BiFunction<Object, String, String> {
         @Override
@@ -423,7 +505,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
                 if (typeSymbol.getProperty(IMPORTABLE).orElse(true)) {
                     addUseImports(typeSymbol);
                 }
-                return typeSymbol.getName();
+                return resolvePlaceholder(typeSymbol);
             } else if (type instanceof SymbolReference typeSymbol) {
                 addImport(typeSymbol.getSymbol(), typeSymbol.getAlias(), SymbolReference.ContextOption.USE);
                 return typeSymbol.getAlias();
@@ -431,6 +513,42 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
                 throw new CodegenException(
                         "Invalid type provided to $T. Expected a Symbol, but found `" + type + "`");
             }
+        }
+
+        /**
+         * Returns a placeholder token for the symbol and registers it in the symbol table.
+         *
+         * <p>Symbols that do not participate in collision detection are returned as-is:
+         * <ul>
+         *   <li>Builtins (no namespace) such as {@code int}, {@code str}, {@code bool}:
+         *       they produce no import statement, so there is no import we could alias
+         *       to resolve a collision. A sanity check across all public AWS service
+         *       models confirms no class-generating shape name collides with a Python
+         *       built-in emitted by the codegen, so builtins are not special-cased here.</li>
+         *   <li>Symbols defined in the current writer's file (namespace equals the
+         *       writer's package name): they produce no import and cannot collide
+         *       with themselves.</li>
+         * </ul>
+         *
+         * <p>All other symbols (framework types and generated symbols imported from
+         * other files in the same package) are registered in the symbol table so
+         * collisions can be detected at {@link PythonWriter#toString()} time.
+         */
+        private String resolvePlaceholder(Symbol symbol) {
+            if (symbol.getNamespace().isEmpty()) {
+                // Builtin — no import statement is produced, so there is no alias to apply.
+                return symbol.getName();
+            }
+            if (symbol.getNamespace().equals(fullPackageName)) {
+                // Defined in the current writer's file — no import needed.
+                return symbol.getName();
+            }
+
+            // Register in symbol table for collision detection.
+            symbolTable.computeIfAbsent(symbol.getName(), k -> new HashSet<>()).add(symbol);
+
+            // Return a placeholder that will be resolved in toString().
+            return PLACEHOLDER_PREFIX + symbol.getNamespace() + "." + symbol.getName() + PLACEHOLDER_SUFFIX;
         }
     }
 

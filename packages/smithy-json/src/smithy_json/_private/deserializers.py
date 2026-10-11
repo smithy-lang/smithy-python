@@ -127,12 +127,10 @@ class JSONShapeDeserializer(ShapeDeserializer):
     def read_float(self, schema: Schema) -> float:
         event = next(self._stream)
         match event.value:
-            case Decimal():
+            case Decimal() | "Infinity" | "-Infinity" | "NaN":
                 return float(event.value)
             case int() | float():
                 return event.value
-            case "Infinity" | "-Infinity" | "NaN":
-                return float(event.value)
             case _:
                 raise JSONTokenError("number", event)
 
@@ -141,8 +139,8 @@ class JSONShapeDeserializer(ShapeDeserializer):
         match event.value:
             case Decimal():
                 return event.value
-            case int() | float():
-                return Decimal.from_float(event.value)
+            case int() | float() | "Infinity" | "-Infinity" | "NaN":
+                return Decimal(event.value)
             case _:
                 raise JSONTokenError("number", event)
 

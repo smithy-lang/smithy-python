@@ -1,0 +1,12 @@
+{
+  "changes": [
+    {
+      "type": "enhancement",
+      "description": "Improved default error message for instances of ClientTimeoutError."
+    },
+    {
+      "type": "breaking",
+      "description": "Refactored `resolve_retry_strategy` to avoid code duplication per operation."
+    }
+  ]
+}

@@ -12,4 +12,7 @@ extra["moduleName"] = "software.amazon.smithy.python.aws.codegen"
 dependencies {
     implementation(project(":core"))
     implementation(libs.smithy.aws.traits)
+    implementation(libs.smithy.protocol.test.traits)
+    implementation(libs.smithy.rules.engine)
+    implementation(libs.smithy.aws.endpoints)
 }

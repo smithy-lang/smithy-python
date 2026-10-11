@@ -1,0 +1,439 @@
+{
+    "smithy": "2.0",
+    "metadata": {
+        "alpha": 1,
+        "suppressions": [
+            {
+                "id": "Foo",
+                "namespace": "example.mini"
+            }
+        ],
+        "zeta": "last"
+    },
+    "shapes": {
+        "example.mini#BatchPoke": {
+            "type": "operation",
+            "input": {
+                "target": "example.mini#BatchPokeInput"
+            },
+            "output": {
+                "target": "example.mini#BatchPokeOutput"
+            }
+        },
+        "example.mini#BatchPokeInput": {
+            "type": "structure",
+            "members": {},
+            "traits": {
+                "smithy.api#input": {}
+            }
+        },
+        "example.mini#BatchPokeOutput": {
+            "type": "structure",
+            "members": {},
+            "traits": {
+                "smithy.api#output": {}
+            }
+        },
+        "example.mini#Choice": {
+            "type": "union",
+            "members": {
+                "text": {
+                    "target": "smithy.api#String"
+                },
+                "count": {
+                    "target": "smithy.api#Integer"
+                }
+            }
+        },
+        "example.mini#Color": {
+            "type": "enum",
+            "members": {
+                "RED": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": "red"
+                    }
+                },
+                "GREEN": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": "GREEN"
+                    }
+                },
+                "BLUE": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": "blue"
+                    }
+                }
+            }
+        },
+        "example.mini#GetThing": {
+            "type": "operation",
+            "input": {
+                "target": "example.mini#GetThingInput"
+            },
+            "output": {
+                "target": "example.mini#GetThingOutput"
+            },
+            "errors": [
+                {
+                    "target": "example.mini#ServiceError"
+                }
+            ]
+        },
+        "example.mini#GetThingInput": {
+            "type": "structure",
+            "members": {
+                "id": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#input": {}
+            }
+        },
+        "example.mini#GetThingOutput": {
+            "type": "structure",
+            "members": {
+                "thing": {
+                    "target": "example.mini#Thing"
+                }
+            },
+            "traits": {
+                "smithy.api#output": {}
+            }
+        },
+        "example.mini#GetWidget": {
+            "type": "operation",
+            "input": {
+                "target": "example.mini#GetWidgetInput"
+            },
+            "output": {
+                "target": "example.mini#GetWidgetOutput"
+            },
+            "traits": {
+                "smithy.api#readonly": {}
+            }
+        },
+        "example.mini#GetWidgetInput": {
+            "type": "structure",
+            "members": {
+                "widgetId": {
+                    "target": "smithy.api#String",
+                    "traits": {
+                        "smithy.api#required": {}
+                    }
+                }
+            },
+            "traits": {
+                "smithy.api#input": {},
+                "smithy.api#references": [
+                    {
+                        "resource": "example.mini#Widget"
+                    }
+                ]
+            }
+        },
+        "example.mini#GetWidgetOutput": {
+            "type": "structure",
+            "members": {
+                "name": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#output": {}
+            }
+        },
+        "example.mini#IdMixin": {
+            "type": "structure",
+            "members": {
+                "id": {
+                    "target": "smithy.api#String",
+                    "traits": {
+                        "smithy.api#documentation": "The id.",
+                        "smithy.api#required": {}
+                    }
+                },
+                "tag": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#mixin": {}
+            }
+        },
+        "example.mini#Level": {
+            "type": "intEnum",
+            "members": {
+                "LOW": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": 1
+                    }
+                },
+                "HIGH": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": 10
+                    }
+                }
+            }
+        },
+        "example.mini#ListWidgets": {
+            "type": "operation",
+            "input": {
+                "target": "example.mini#ListWidgetsInput"
+            },
+            "output": {
+                "target": "example.mini#ListWidgetsOutput"
+            },
+            "traits": {
+                "smithy.api#paginated": {
+                    "items": "items"
+                },
+                "smithy.api#readonly": {}
+            }
+        },
+        "example.mini#ListWidgetsInput": {
+            "type": "structure",
+            "members": {
+                "nextToken": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#input": {}
+            }
+        },
+        "example.mini#ListWidgetsOutput": {
+            "type": "structure",
+            "members": {
+                "nextToken": {
+                    "target": "smithy.api#String"
+                },
+                "items": {
+                    "target": "example.mini#StringList"
+                }
+            },
+            "traits": {
+                "smithy.api#output": {}
+            }
+        },
+        "example.mini#Mini": {
+            "type": "service",
+            "version": "2024-01-01",
+            "operations": [
+                {
+                    "target": "example.mini#GetThing"
+                }
+            ],
+            "resources": [
+                {
+                    "target": "example.mini#Widget"
+                }
+            ],
+            "errors": [
+                {
+                    "target": "example.mini#ServiceError"
+                }
+            ],
+            "rename": {
+                "example.mini#Nested": "RenamedNested"
+            },
+            "traits": {
+                "smithy.api#paginated": {
+                    "inputToken": "nextToken",
+                    "outputToken": "nextToken"
+                }
+            }
+        },
+        "example.mini#Nested": {
+            "type": "structure",
+            "members": {
+                "b": {
+                    "target": "smithy.api#String"
+                },
+                "a": {
+                    "target": "smithy.api#String"
+                }
+            }
+        },
+        "example.mini#PokeWidget": {
+            "type": "operation",
+            "input": {
+                "target": "example.mini#PokeWidgetInput"
+            },
+            "output": {
+                "target": "example.mini#PokeWidgetOutput"
+            }
+        },
+        "example.mini#PokeWidgetInput": {
+            "type": "structure",
+            "members": {
+                "widgetId": {
+                    "target": "smithy.api#String",
+                    "traits": {
+                        "smithy.api#required": {}
+                    }
+                }
+            },
+            "traits": {
+                "smithy.api#input": {}
+            }
+        },
+        "example.mini#PokeWidgetOutput": {
+            "type": "structure",
+            "members": {},
+            "traits": {
+                "smithy.api#output": {}
+            }
+        },
+        "example.mini#ServiceError": {
+            "type": "structure",
+            "members": {
+                "message": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#error": "server"
+            }
+        },
+        "example.mini#StampMixin": {
+            "type": "structure",
+            "mixins": [
+                {
+                    "target": "example.mini#IdMixin"
+                }
+            ],
+            "members": {
+                "created": {
+                    "target": "smithy.api#Timestamp"
+                }
+            },
+            "traits": {
+                "smithy.api#internal": {},
+                "smithy.api#mixin": {
+                    "localTraits": [
+                        "smithy.api#internal"
+                    ]
+                }
+            }
+        },
+        "example.mini#StringList": {
+            "type": "list",
+            "member": {
+                "target": "smithy.api#String"
+            }
+        },
+        "example.mini#Thing": {
+            "type": "structure",
+            "mixins": [
+                {
+                    "target": "example.mini#StampMixin"
+                }
+            ],
+            "members": {
+                "zzz": {
+                    "target": "smithy.api#Integer"
+                },
+                "aaa": {
+                    "target": "example.mini#Nested"
+                },
+                "unionish": {
+                    "target": "example.mini#Choice"
+                },
+                "things": {
+                    "target": "example.mini#ThingList"
+                },
+                "lookup": {
+                    "target": "example.mini#ThingMap"
+                },
+                "color": {
+                    "target": "example.mini#Color"
+                },
+                "level": {
+                    "target": "example.mini#Level"
+                },
+                "doc": {
+                    "target": "smithy.api#Document"
+                },
+                "prim": {
+                    "target": "smithy.api#PrimitiveInteger",
+                    "traits": {
+                        "smithy.api#default": 0
+                    }
+                },
+                "defaulted": {
+                    "target": "smithy.api#Integer",
+                    "traits": {
+                        "smithy.api#default": 5
+                    }
+                }
+            }
+        },
+        "example.mini#Thing$id": {
+            "type": "apply",
+            "traits": {
+                "smithy.api#documentation": "Overridden doc."
+            }
+        },
+        "example.mini#Thing$tag": {
+            "type": "apply",
+            "traits": {
+                "smithy.api#length": {
+                    "min": 1
+                }
+            }
+        },
+        "example.mini#ThingList": {
+            "type": "list",
+            "member": {
+                "target": "example.mini#Thing"
+            }
+        },
+        "example.mini#ThingMap": {
+            "type": "map",
+            "key": {
+                "target": "smithy.api#String"
+            },
+            "value": {
+                "target": "example.mini#Nested"
+            },
+            "traits": {
+                "smithy.api#sparse": {}
+            }
+        },
+        "example.mini#Widget": {
+            "type": "resource",
+            "identifiers": {
+                "widgetId": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "properties": {
+                "name": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "read": {
+                "target": "example.mini#GetWidget"
+            },
+            "list": {
+                "target": "example.mini#ListWidgets"
+            },
+            "operations": [
+                {
+                    "target": "example.mini#PokeWidget"
+                }
+            ],
+            "collectionOperations": [
+                {
+                    "target": "example.mini#BatchPoke"
+                }
+            ]
+        }
+    }
+}

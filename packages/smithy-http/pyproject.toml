@@ -22,7 +22,9 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Free Threading :: 2 - Beta",
   "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
@@ -36,7 +38,10 @@ dependencies = [
 
 [project.optional-dependencies]
 awscrt = [
-    "awscrt~=0.28.2",
+    "awscrt~=0.32.0",
+]
+cbor = [
+    "smithy-cbor~=0.1.0",
 ]
 aiohttp = [
     "aiohttp>=3.11.12, <4.0",

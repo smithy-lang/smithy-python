@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 import json
+import warnings
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from types import MappingProxyType
@@ -9,9 +10,9 @@ from typing import Literal
 
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces.retries import RetryStrategy
+from smithy_core.aio.retries import SimpleRetryStrategy
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_core.interfaces.retries import RetryStrategy
-from smithy_core.retries import SimpleRetryStrategy
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import HTTPClient
@@ -182,11 +183,22 @@ class EC2Metadata:
 class IMDSCredentialsResolver(
     IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
-    """Resolves AWS Credentials from an EC2 Instance Metadata Service (IMDS) client."""
+    """Resolves AWS Credentials from an EC2 Instance Metadata Service (IMDS) client.
+
+    .. warning::
+        This resolver is deprecated. Use the resolver provided by the
+        ``aws-credentials-imds`` package instead.
+    """
 
     _METADATA_PATH_BASE = "/latest/meta-data/iam/security-credentials"
 
     def __init__(self, http_client: HTTPClient, config: Config | None = None):
+        warnings.warn(
+            "`IMDSCredentialsResolver` is deprecated; install "
+            "`aws-credentials-imds` and use its resolver instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         # TODO: Respect IMDS specific config values from aws shared config file and environment.
         self._http_client = http_client
         self._ec2_metadata_client = EC2Metadata(http_client=http_client, config=config)
@@ -232,3 +244,7 @@ class IMDSCredentialsResolver(
             account_id=account_id,
         )
         return self._credentials
+
+    async def invalidate(self) -> None:
+        """Discard cached credentials so the next resolution re-queries IMDS."""
+        self._credentials = None

@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.Model;
@@ -31,6 +32,7 @@ import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
@@ -52,6 +54,18 @@ public final class CodegenUtils {
      * to fix any lingering issues.
      */
     public static final int MAX_PREFERRED_LINE_LENGTH = 88;
+
+    /**
+     * The name of the attribute carrying response metadata on operation outputs
+     * and modeled errors.
+     *
+     * <p>Declared on {@code CallError} for errors and emitted onto operation
+     * outputs by the structure generator. Because a service is free to model a
+     * member of the same name, the name is reserved on the members of those
+     * shapes and escaped if it collides. Both the emitter and the escaper read it
+     * from here so that they cannot disagree.
+     */
+    public static final String RESPONSE_METADATA_MEMBER = "response_metadata";
 
     static final Set<String> ERROR_MESSAGE_MEMBER_NAMES = SetUtils.of(
             "errormessage",
@@ -84,6 +98,57 @@ public final class CodegenUtils {
                 .namespace(String.format("%s.config", settings.moduleName()), ".")
                 .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
                 .build();
+    }
+
+    /**
+     * Gets the async configuration object symbol for the service, if one is generated.
+     *
+     * <p>This is the new async-resolved config class that inherits from AsyncAwsConfig.
+     * Derives the name from the SDK ID (e.g., "Bedrock Runtime" becomes
+     * "AsyncBedrockRuntimeConfig").
+     *
+     * <p>The async config class lives in {@code smithy-aws-core} and is only generated
+     * for AWS services, so this returns an empty {@code Optional} otherwise. This is the
+     * single source of truth for whether the class exists: generators must not emit
+     * references to it when this is empty, and the integration that defines it gates
+     * itself on this same result. Callers that need the name unconditionally would
+     * reintroduce references to a class nobody defines.
+     *
+     * @param settings The client settings.
+     * @param model The model containing the service shape.
+     * @return Returns the async config symbol, or empty if none is generated.
+     */
+    public static Optional<Symbol> getAsyncConfigSymbol(PythonSettings settings, Model model) {
+        return asyncConfigSymbolName(settings, model, "Config");
+    }
+
+    /**
+     * Gets the async plugin type hint symbol for the service, if one is generated.
+     *
+     * @param settings The client settings.
+     * @param model The model containing the service shape.
+     * @return Returns the async plugin symbol, or empty if none is generated.
+     * @see #getAsyncConfigSymbol(PythonSettings, Model)
+     */
+    public static Optional<Symbol> getAsyncPluginSymbol(PythonSettings settings, Model model) {
+        return asyncConfigSymbolName(settings, model, "Plugin");
+    }
+
+    private static Optional<Symbol> asyncConfigSymbolName(
+            PythonSettings settings,
+            Model model,
+            String suffix
+    ) {
+        if (!isAwsService(settings, model)) {
+            return Optional.empty();
+        }
+        var sdkId = settings.service(model).expectTrait(ServiceTrait.class).getSdkId();
+        var name = "Async" + StringUtils.capitalize(sdkId).replace(" ", "") + suffix;
+        return Optional.of(Symbol.builder()
+                .name(name)
+                .namespace(String.format("%s.config", settings.moduleName()), ".")
+                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
+                .build());
     }
 
     /**
@@ -126,6 +191,18 @@ public final class CodegenUtils {
     public static boolean isErrorMessage(Model model, MemberShape shape) {
         return ERROR_MESSAGE_MEMBER_NAMES.contains(shape.getMemberName().toLowerCase(Locale.US))
                 && model.expectShape(shape.getContainer()).hasTrait(ErrorTrait.class);
+    }
+
+    /**
+     * Determines whether a member is required in the generated Python constructor — that is,
+     * neither nullable nor carrying a default value.
+     *
+     * @param index A nullable index for the model.
+     * @param member The member to check.
+     * @return Returns whether the member is required in generated code.
+     */
+    public static boolean isRequiredMember(NullableIndex index, MemberShape member) {
+        return !index.isMemberNullable(member) && !member.hasTrait(DefaultTrait.class);
     }
 
     /**
@@ -278,6 +355,27 @@ public final class CodegenUtils {
     private static ZonedDateTime parseHttpDate(Node value) {
         Instant instant = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(value.expectStringNode().getValue()));
         return instant.atZone(ZoneId.of("UTC"));
+    }
+
+    /**
+     * Determines whether the service being generated is an AWS service.
+     *
+     * @param context The generation context.
+     * @return Returns true if the service is an AWS service, false otherwise.
+     */
+    public static boolean isAwsService(GenerationContext context) {
+        return isAwsService(context.settings(), context.model());
+    }
+
+    /**
+     * Determines whether the service being generated is an AWS service.
+     *
+     * @param settings The client settings.
+     * @param model The model containing the service shape.
+     * @return Returns true if the service is an AWS service, false otherwise.
+     */
+    public static boolean isAwsService(PythonSettings settings, Model model) {
+        return model.expectShape(settings.service()).hasTrait(ServiceTrait.class);
     }
 
     /**

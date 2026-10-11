@@ -30,5 +30,7 @@ repositories {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":aws:core"))
     implementation(libs.smithy.aws.protocol.tests)
+    implementation(libs.smithy.protocol.tests)
 }

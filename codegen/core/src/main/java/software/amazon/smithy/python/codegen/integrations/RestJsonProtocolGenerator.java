@@ -13,8 +13,8 @@ import software.amazon.smithy.protocoltests.traits.HttpMessageTestCase;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
-import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyUnstableApi;
@@ -31,12 +31,6 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 public class RestJsonProtocolGenerator implements ProtocolGenerator {
 
     private static final Set<String> TESTS_TO_SKIP = Set.of(
-            // These two tests essentially try to assert nan == nan,
-            // which is never true. We should update the generator to
-            // make specific assertions for these.
-            "RestJsonSupportsNaNFloatHeaderOutputs",
-            "RestJsonSupportsNaNFloatInputs",
-
             // This requires support of idempotency autofill
             "RestJsonQueryIdempotencyTokenAutoFill",
 
@@ -62,7 +56,6 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
             "RestJsonClientSkipsTopLevelDefaultValuesInInput",
             "RestJsonClientUsesExplicitlyProvidedMemberValuesOverDefaults",
             "RestJsonClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
-            "RestJsonClientPopulatesDefaultsValuesWhenMissingInResponse",
             "HttpPrefixEmptyHeaders");
 
     @Override
@@ -84,23 +77,21 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
     @Override
     public void initializeProtocol(GenerationContext context, PythonWriter writer) {
         writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("json"));
-        writer.addImport("smithy_aws_core.aio.protocols", "RestJsonClientProtocol");
-        var serviceSymbol = context.symbolProvider().toSymbol(context.settings().service(context.model()));
-        var serviceSchema = serviceSymbol.expectProperty(SymbolProperties.SCHEMA);
-        writer.write("RestJsonClientProtocol($T)", serviceSchema);
+        writer.write("$T(_PROTOCOL_SETTINGS)", RuntimeTypes.REST_JSON_CLIENT_PROTOCOL);
     }
 
     // This is here rather than in HttpBindingProtocolGenerator because eventually
     // it will need to generate some protocol-specific comparators.
     @Override
     public void generateProtocolTests(GenerationContext context) {
-        context.writerDelegator().useFileWriter("./tests/test_protocol.py", "tests.test_protocol", writer -> {
-            new HttpProtocolTestGenerator(
-                    context,
-                    getProtocol(),
-                    writer,
-                    (shape, testCase) -> filterTests(testCase)).run();
-        });
+        context.writerDelegator()
+                .useFileWriter("./tests/test_restjson_protocol.py", "tests.test_restjson_protocol", writer -> {
+                    new HttpProtocolTestGenerator(
+                            context,
+                            getProtocol(),
+                            writer,
+                            (shape, testCase) -> filterTests(testCase)).run();
+                });
     }
 
     private boolean filterTests(HttpMessageTestCase testCase) {

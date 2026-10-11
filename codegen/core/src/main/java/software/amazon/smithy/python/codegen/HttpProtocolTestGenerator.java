@@ -16,6 +16,7 @@ import java.util.function.BiPredicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import software.amazon.smithy.aws.traits.auth.SigV4Trait;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.Model;
@@ -181,19 +182,22 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     } else {
                         path = "";
                     }
-                    writer.addImport("smithy_core.retries", "SimpleRetryStrategy");
                     writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
+                        var configPrefix = getTestConfigPrefix();
                         writer.write("""
-                                config = $T(
+                                $L
                                     endpoint_uri="https://$L/$L",
                                     transport = $T(),
-                                    retry_strategy=SimpleRetryStrategy(max_attempts=1),
+                                    retry_strategy=$T(max_attempts=1),
+                                    ${C|}
                                 )
                                 """,
-                                CodegenUtils.getConfigSymbol(context.settings()),
+                                configPrefix,
                                 host,
                                 path,
-                                REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL);
+                                REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
+                                RuntimeTypes.SIMPLE_RETRY_STRATEGY,
+                                (Runnable) this::writeSigV4TestConfig);
                     }));
 
                     // Generate the input using the expected shape and params
@@ -400,10 +404,23 @@ public final class HttpProtocolTestGenerator implements Runnable {
             return;
         }
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
-        writer.write("actual_body_content = await AsyncBytesReader(actual.body or b'').read()");
-        writer.write("expected_body_content = b$S", testCase.getBody().get());
+        writer.write("actual_body_content = await $T(actual.body or b'').read()", RuntimeTypes.ASYNC_BYTES_READER);
+        writer.write("expected_body_content = $C", (Runnable) () -> writeTestBody(testCase, writer));
         compareMediaBlob(testCase, writer);
+    }
+
+    private void writeTestBody(HttpMessageTestCase testCase, PythonWriter writer) {
+        String body = testCase.getBody().orElse("");
+        if (isBinaryMediaType(testCase.getBodyMediaType().orElse(""))) {
+            writer.addStdlibImport("base64");
+            writer.writeInline("base64.b64decode(b$S)", body);
+        } else {
+            writer.writeInline("b$S", body);
+        }
+    }
+
+    private boolean isBinaryMediaType(String mediaType) {
+        return mediaType.equals("application/cbor");
     }
 
     private void compareMediaBlob(HttpMessageTestCase testCase, PythonWriter writer) {
@@ -414,6 +431,45 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     actual_body = json.loads(actual_body_content) if actual_body_content else ""
                     expected_body = json.loads(expected_body_content)
                     assert actual_body == expected_body
+
+                    """);
+            return;
+        }
+        if (contentType.equals("application/cbor")) {
+            // CBOR admits several encodings of the same value (definite vs indefinite
+            // length, map key order, integer width), so compare the decoded structures
+            // rather than the raw bytes.
+            writer.addDependency(SmithyPythonDependency.SMITHY_CBOR.asTestDependency());
+            writer.addImport("smithy_cbor", "loads", "_cbor_loads");
+            writer.addDependency(SmithyPythonDependency.SMITHY_TEST);
+            writer.addImport(SmithyPythonDependency.SMITHY_TEST.packageName(), "deep_equal");
+            writer.addStdlibImport("typing", "Any");
+            writer.write("""
+                    actual_body: Any = (
+                        _cbor_loads(actual_body_content) if actual_body_content else {}
+                    )
+                    expected_body: Any = (
+                        _cbor_loads(expected_body_content) if expected_body_content else {}
+                    )
+                    assert deep_equal(actual_body, expected_body)
+
+                    """);
+            return;
+        }
+        if (contentType.equals("application/xml") || contentType.endsWith("+xml")) {
+            // Compare the parsed documents so formatting whitespace and attribute order
+            // don't matter.
+            writer.addDependency(SmithyPythonDependency.SMITHY_TEST);
+            writer.addImport(SmithyPythonDependency.SMITHY_TEST.packageName(), "xml_equal");
+            writer.write("assert xml_equal(actual_body_content, expected_body_content)\n");
+            return;
+        }
+        if (contentType.equals("application/x-www-form-urlencoded")) {
+            writer.addStdlibImport("urllib.parse", "parse_qsl");
+            writer.write("""
+                    actual_params = sorted(parse_qsl(actual_body_content.decode(), keep_blank_values=True))
+                    expected_params = sorted(parse_qsl(expected_body_content.decode(), keep_blank_values=True))
+                    assert actual_params == expected_params
 
                     """);
             return;
@@ -429,21 +485,24 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 testFilter.test(operation, testCase),
                 () -> {
                     writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
+                        var configPrefix = getTestConfigPrefix();
                         writer.write("""
-                                config = $T(
+                                $L
                                     endpoint_uri="https://example.com",
                                     transport = $T(
                                         status=$L,
                                         headers=$J,
-                                        body=b$S,
+                                        body=$C,
                                     ),
+                                    ${C|}
                                 )
                                 """,
-                                CodegenUtils.getConfigSymbol(context.settings()),
+                                configPrefix,
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
-                                testCase.getBody().filter(body -> !body.isEmpty()).orElse(""));
+                                (Runnable) () -> writeTestBody(testCase, writer),
+                                (Runnable) this::writeSigV4TestConfig);
                     }));
                     // Create an empty input object to pass
                     var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
@@ -482,21 +541,24 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 testFilter.test(error, testCase),
                 () -> {
                     writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
+                        var configPrefix = getTestConfigPrefix();
                         writer.write("""
-                                config = $T(
+                                $L
                                     endpoint_uri="https://example.com",
                                     transport = $T(
                                         status=$L,
                                         headers=$J,
-                                        body=b$S,
+                                        body=$C,
                                     ),
+                                    ${C|}
                                 )
                                 """,
-                                CodegenUtils.getConfigSymbol(context.settings()),
+                                configPrefix,
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
-                                testCase.getBody().orElse(""));
+                                (Runnable) () -> writeTestBody(testCase, writer),
+                                (Runnable) this::writeSigV4TestConfig);
                     }));
                     // Create an empty input object to pass
                     var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
@@ -531,7 +593,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 .findAny();
 
         if (streamBinding.isEmpty()) {
-            writer.write("assert actual == expected\n");
+            writeDeepEqualAssertion(writer, "actual", "expected");
             return;
         }
 
@@ -546,18 +608,22 @@ public final class HttpProtocolTestGenerator implements Runnable {
             var memberName = context.symbolProvider().toMemberName(member);
             if (member.equals(streamingMember)) {
                 writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-                writer.addImport("smithy_core.aio.interfaces", "AsyncByteStream");
-                writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
                 writer.write("""
-                        assert isinstance(actual.$1L, AsyncByteStream)
+                        assert isinstance(actual.$1L, $2T)
                         actual_body_content = await actual.$1L.read()
-                        expected_body_content = await AsyncBytesReader(expected.$1L).read()
-                        """, memberName);
+                        expected_body_content = await $3T(expected.$1L).read()
+                        """, memberName, RuntimeTypes.ASYNC_BYTE_STREAM, RuntimeTypes.ASYNC_BYTES_READER);
                 compareMediaBlob(testCase, writer);
                 continue;
             }
-            writer.write("assert actual.$1L == expected.$1L\n", memberName);
+            writeDeepEqualAssertion(writer, "actual." + memberName, "expected." + memberName);
         }
+    }
+
+    private void writeDeepEqualAssertion(PythonWriter writer, String actual, String expected) {
+        writer.addDependency(SmithyPythonDependency.SMITHY_TEST);
+        writer.addImport(SmithyPythonDependency.SMITHY_TEST.packageName(), "deep_equal");
+        writer.write("assert deep_equal($L, $L)", actual, expected);
     }
 
     // Only generate test cases when protocol matches the target protocol.
@@ -587,7 +653,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writer.write("@mark.xfail()");
         }
         writer.openBlock("async def test_$L() -> None:", "", CaseUtils.toSnakeCase(testName), () -> {
-            testCase.getDocumentation().ifPresent(writer::writeDocs);
+            testCase.getDocumentation().ifPresent(docs -> writer.writeDocs(docs, context));
             f.run();
         });
     }
@@ -607,74 +673,104 @@ public final class HttpProtocolTestGenerator implements Runnable {
         });
     }
 
+    /**
+     * Returns the config construction prefix for test code.
+     * For AWS services: "config = await AsyncConfig.resolve("
+     * For non-AWS services: "config = Config("
+     */
+    private String getTestConfigPrefix() {
+        var configSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), model)
+                .orElse(CodegenUtils.getConfigSymbol(context.settings()));
+        writer.addImport(configSymbol.getNamespace(), configSymbol.getName());
+        return CodegenUtils.getAsyncConfigSymbol(context.settings(), model).isPresent()
+                ? "config = await %s.resolve(".formatted(configSymbol.getName())
+                : "config = %s(".formatted(configSymbol.getName());
+    }
+
+    private void writeSigV4TestConfig() {
+        if (!service.hasTrait(SigV4Trait.class)) {
+            return;
+        }
+        writer.write("""
+                region="us-east-1",
+                aws_access_key_id="test-access-key-id",
+                aws_secret_access_key="test-secret-access-key",
+                aws_credentials_identity_resolver=$T(),
+                """, RuntimeTypes.STATIC_CREDENTIALS_RESOLVER);
+    }
+
     private void writeUtilStubs(Symbol serviceSymbol) {
         LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
+        writer.addLocallyDefinedSymbol(TEST_HTTP_SERVICE_ERR_SYMBOL);
+        writer.addLocallyDefinedSymbol(REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL);
+        writer.addLocallyDefinedSymbol(RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL);
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-        writer.addImports("smithy_http.interfaces",
-                Set.of(
-                        "HTTPRequestConfiguration",
-                        "HTTPClientConfiguration"));
-        writer.addImports("smithy_http.aio.interfaces", Set.of("HTTPRequest", "HTTPResponse"));
-        writer.addImport("smithy_http", "tuples_to_fields");
-        writer.addImport("smithy_http.aio", "HTTPResponse", "_HTTPResponse");
-        writer.addImport("smithy_core.aio.utils", "async_list");
 
         writer.write("""
                 class $1L($2T):
                     ""\"A test error that subclasses the service-error for protocol tests.""\"
 
-                    def __init__(self, request: HTTPRequest):
+                    def __init__(self, request: $3T):
                         self.request = request
-
-
-                class $3L:
-                    ""\"An asynchronous HTTP client solely for testing purposes.""\"
-
-                    TIMEOUT_EXCEPTIONS = ()
-
-                    def __init__(self, *, client_config: HTTPClientConfiguration | None = None):
-                        self._client_config = client_config
-
-                    async def send(
-                        self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
-                    ) -> HTTPResponse:
-                        # Raise the exception with the request object to bypass actual request handling
-                        raise $1T(request)
 
 
                 class $4L:
                     ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
                     TIMEOUT_EXCEPTIONS = ()
+                    SUPPORTS_DUPLEX_STREAMING: bool = True
+
+                    def __init__(self, *, client_config: $5T | None = None):
+                        self._client_config = client_config
+
+                    async def send(
+                        self, request: $3T, *, request_config: $6T | None = None
+                    ) -> $7T:
+                        # Raise the exception with the request object to bypass actual request handling
+                        raise $1T(request)
+
+
+                class $8L:
+                    ""\"An asynchronous HTTP client solely for testing purposes.""\"
+
+                    TIMEOUT_EXCEPTIONS = ()
+                    SUPPORTS_DUPLEX_STREAMING: bool = True
 
                     def __init__(
                         self,
                         *,
-                        client_config: HTTPClientConfiguration | None = None,
+                        client_config: $5T | None = None,
                         status: int = 200,
                         headers: list[tuple[str, str]] | None = None,
                         body: bytes = b"",
                     ):
                         self._client_config = client_config
                         self.status = status
-                        self.fields = tuples_to_fields(headers or [])
+                        self.fields = $9T(headers or [])
                         self.body = body
 
                     async def send(
-                        self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
-                    ) -> _HTTPResponse:
+                        self, request: $3T, *, request_config: $6T | None = None
+                    ) -> ${10T}:
                         # Pre-construct the response from the request and return it
-                        return _HTTPResponse(
+                        return ${10T}(
                             status=self.status,
                             fields=self.fields,
-                            body=async_list([self.body]),
+                            body=${11T}([self.body]),
                         )
                 """,
                 TEST_HTTP_SERVICE_ERR_SYMBOL,
                 CodegenUtils.getServiceError(context.settings()),
+                RuntimeTypes.HTTP_REQUEST,
                 REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
-                RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL);
+                RuntimeTypes.HTTP_CLIENT_CONFIGURATION,
+                RuntimeTypes.HTTP_REQUEST_CONFIGURATION,
+                RuntimeTypes.HTTP_RESPONSE,
+                RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
+                RuntimeTypes.TUPLES_TO_FIELDS,
+                RuntimeTypes.HTTP_RESPONSE_IMPL,
+                RuntimeTypes.ASYNC_LIST);
     }
 
     /**
@@ -696,8 +792,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
             if (inputShape.isListShape()) {
                 var target = model.expectShape(inputShape.asListShape().get().getMember().getTarget());
                 if (target.isDocumentShape()) {
-                    writer.addImport("smithy_core.documents", "Document");
-                    openList = "Document([";
+                    var docName = writer.format("$T", RuntimeTypes.DOCUMENT);
+                    openList = docName + "([";
                     closeList = "])";
                 }
             }
@@ -733,7 +829,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
         @Override
         public Void numberNode(NumberNode node) {
-            // TODO: Add support for timestamp, int-enum, and others
             if (inputShape.isTimestampShape()) {
                 var parsed = CodegenUtils.parseTimestampNode(model, inputShape, node);
                 writer.writeInline(CodegenUtils.getDatetimeConstructor(writer, parsed));
@@ -802,8 +897,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
                 var formatString = "$L = $C,";
                 if (targetShape.isDocumentShape()) {
-                    writer.addImport("smithy_core.documents", "Document");
-                    formatString = "$L = Document($C),";
+                    var docName = writer.format("$T", RuntimeTypes.DOCUMENT);
+                    formatString = "$L = " + docName + "($C),";
                 }
 
                 writer.write(formatString,
@@ -830,8 +925,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
                         var formatString = "$S: $C,";
                         if (targetShape.isDocumentShape()) {
-                            writer.addImport("smithy_core.documents", "Document");
-                            formatString = "$S: Document($C),";
+                            var docName = writer.format("$T", RuntimeTypes.DOCUMENT);
+                            formatString = "$S: " + docName + "($C),";
                         }
 
                         writer.write(formatString,

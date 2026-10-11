@@ -1,0 +1,16 @@
+{
+  "changes": [
+    {
+      "type": "enhancement",
+      "description": "Added a protocol hook for extracting server-provided retry delays from error responses."
+    },
+    {
+      "type": "enhancement",
+      "description": "Declared `AWSCRTHTTPClient` as duplex (bidirectional) streaming capable via `SUPPORTS_DUPLEX_STREAMING`. `AIOHTTPClient` explicitly does not support duplex streaming."
+    },
+    {
+      "type": "enhancement",
+      "description": "Disabled automatic redirects in `AIOHTTPClient` so that redirect responses are returned to the caller instead of being followed transparently."
+    }
+  ]
+}

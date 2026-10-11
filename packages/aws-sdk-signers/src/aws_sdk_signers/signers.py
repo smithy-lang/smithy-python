@@ -5,7 +5,6 @@ import asyncio
 import datetime
 import hmac
 import io
-import warnings
 from binascii import hexlify
 from collections.abc import AsyncIterable, Iterable
 from copy import deepcopy
@@ -16,7 +15,7 @@ from urllib.parse import parse_qsl, quote
 
 from ._http import AWSRequest, Field, URI
 from ._io import AsyncBytesReader
-from .exceptions import AWSSDKWarning, MissingExpectedParameterException
+from .exceptions import MissingExpectedParameterException
 from .interfaces.identity import AWSCredentialsIdentity as _AWSCredentialsIdentity
 from .interfaces.io import AsyncSeekable, ConditionallySeekable, Seekable
 
@@ -29,6 +28,13 @@ HEADERS_EXCLUDED_FROM_SIGNING: tuple[str, ...] = (
     "authorization",
     "connection",
     "expect",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
     "user-agent",
     "x-amzn-trace-id",
 )
@@ -48,6 +54,7 @@ class SigV4SigningProperties(TypedDict, total=False):
     payload_signing_enabled: bool
     content_checksum_enabled: bool
     uri_encode_path: bool
+    normalize_path: bool
 
 
 class SigV4Signer:
@@ -305,17 +312,20 @@ class SigV4Signer:
         if path is None:
             path = "/"
 
-        if signing_properties.get("uri_encode_path", True):
-            normalized_path = _remove_dot_segments(path)
-            return quote(string=normalized_path, safe="/")
-        else:
-            return _remove_dot_segments(path, remove_consecutive_slashes=False)
+        uri_encode_path = signing_properties.get("uri_encode_path", True)
+        if signing_properties.get("normalize_path", True):
+            path = _remove_dot_segments(
+                path, remove_consecutive_slashes=uri_encode_path
+            )
+        if uri_encode_path:
+            return quote(string=path, safe="/")
+        return path
 
     def _format_canonical_query(self, *, query: str | None) -> str:
         if query is None:
             return ""
 
-        query_params = parse_qsl(qs=query)
+        query_params = parse_qsl(qs=query, keep_blank_values=True)
         query_parts = (
             (quote(string=key, safe=""), quote(string=value, safe=""))
             for key, value in query_params
@@ -399,12 +409,6 @@ class SigV4Signer:
                 "AsyncSigV4Signer for async AWSRequests or ensure your body is "
                 "of type Iterable[bytes]."
             )
-
-        warnings.warn(
-            "Payload signing is enabled. This may result in "
-            "decreased performance for large request bodies.",
-            AWSSDKWarning,
-        )
 
         checksum = sha256()
         if self._seekable(body):
@@ -685,17 +689,20 @@ class AsyncSigV4Signer:
         if path is None:
             path = "/"
 
-        if signing_properties.get("uri_encode_path", True):
-            normalized_path = _remove_dot_segments(path)
-            return quote(string=normalized_path, safe="/")
-        else:
-            return _remove_dot_segments(path, remove_consecutive_slashes=False)
+        uri_encode_path = signing_properties.get("uri_encode_path", True)
+        if signing_properties.get("normalize_path", True):
+            path = _remove_dot_segments(
+                path, remove_consecutive_slashes=uri_encode_path
+            )
+        if uri_encode_path:
+            return quote(string=path, safe="/")
+        return path
 
     async def _format_canonical_query(self, *, query: str | None) -> str:
         if query is None:
             return ""
 
-        query_params = parse_qsl(qs=query)
+        query_params = parse_qsl(qs=query, keep_blank_values=True)
         query_parts = (
             (quote(string=key, safe=""), quote(string=value, safe=""))
             for key, value in query_params
@@ -791,12 +798,6 @@ class AsyncSigV4Signer:
                 "SigV4Signer for sync AWSRequests or ensure your body is "
                 "of type AsyncIterable[bytes]."
             )
-        warnings.warn(
-            "Payload signing is enabled. This may result in "
-            "decreased performance for large request bodies.",
-            AWSSDKWarning,
-        )
-
         checksum = sha256()
         if self._seekable(body):
             position = body.tell()
@@ -835,6 +836,7 @@ class AsyncEventSigner:
         self._prior_signature = initial_signature
         self._signing_lock = asyncio.Lock()
         self._event_encoder_cls = event_encoder_cls
+        self._is_finalized = False
 
     async def sign(
         self,
@@ -843,9 +845,60 @@ class AsyncEventSigner:
         identity: _AWSCredentialsIdentity,
         properties: SigV4SigningProperties,
     ) -> "EventMessage":
+        return await self._sign_payload(
+            event=event,
+            payload=event.encode(),
+            identity=identity,
+            properties=properties,
+        )
+
+    async def sign_empty(
+        self,
+        *,
+        event: "EventMessage",
+        identity: _AWSCredentialsIdentity,
+        properties: SigV4SigningProperties,
+    ) -> "EventMessage":
+        """Sign an Amazon Event Stream final empty message.
+
+        The supplied ``event`` must have no headers and an empty payload.
+        Calling ``sign`` with an empty event message is not equivalent because
+        ``sign`` wraps the encoded event message as the payload.
+
+        The returned message contains ``:date`` and ``:chunk-signature``
+        headers and advances the running signature chain. After this method
+        returns, the signer cannot sign additional event stream messages.
+        """
+        if event.headers or event.payload:
+            raise ValueError(
+                "sign_empty requires an event with no headers and an empty payload."
+            )
+
+        return await self._sign_payload(
+            event=event,
+            payload=b"",
+            identity=identity,
+            properties=properties,
+            is_final=True,
+        )
+
+    async def _sign_payload(
+        self,
+        *,
+        event: "EventMessage",
+        payload: bytes,
+        identity: _AWSCredentialsIdentity,
+        properties: SigV4SigningProperties,
+        is_final: bool = False,
+    ) -> "EventMessage":
         async with self._signing_lock:
-            # Copy and prepopulate any missing values in the
-            # signing properties.
+            if self._is_finalized:
+                raise RuntimeError(
+                    "Cannot sign event stream messages after the final empty event "
+                    "has been signed."
+                )
+
+            # Copy and prepopulate any missing values in the signing properties.
             new_signing_properties = SigV4SigningProperties(  # type: ignore
                 **properties
             )
@@ -861,8 +914,6 @@ class AsyncEventSigner:
             encoder = self._event_encoder_cls()
             encoder.encode_headers(headers)
             encoded_headers = encoder.get_result()
-
-            payload = event.encode()
 
             string_to_sign = await self._event_string_to_sign(
                 timestamp=timestamp,
@@ -882,8 +933,10 @@ class AsyncEventSigner:
             event.headers = headers
             event.payload = payload
 
-            # set new prior signature before releasing the lock
+            # Set new prior signature before releasing the lock.
             self._prior_signature = hexlify(event_signature)
+            if is_final:
+                self._is_finalized = True
 
         return event
 

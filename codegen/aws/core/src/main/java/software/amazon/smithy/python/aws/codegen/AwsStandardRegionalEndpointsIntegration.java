@@ -59,11 +59,9 @@ public class AwsStandardRegionalEndpointsIntegration implements PythonIntegratio
                     .map(ServiceTrait::getEndpointPrefix)
                     .orElse(context.settings().service().getName());
 
-            writer.addImport("smithy_aws_core.endpoints.standard_regional",
-                    "StandardRegionalEndpointsResolver",
-                    "_RegionalResolver");
             writer.write(
-                    "self.endpoint_resolver = endpoint_resolver or _RegionalResolver(endpoint_prefix=$S)",
+                    "self.endpoint_resolver = endpoint_resolver or $1T(endpoint_prefix=$2S)",
+                    AwsRuntimeTypes.STANDARD_REGIONAL_ENDPOINTS_RESOLVER,
                     endpointPrefix);
 
         }

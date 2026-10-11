@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.4.0
+
+### Features
+* Added a `normalize_path` option to `SigV4SigningProperties`. Set it to `False`, along with `uri_encode_path`, to sign the URI path exactly as sent, as S3 requires.
+
+### Bug fixes
+* Excluded hop-by-hop and proxy headers (`Keep-Alive`, `Proxy-Authenticate`, `Proxy-Authorization`, `TE`, `Trailer`, `Transfer-Encoding`, and `Upgrade`) from SigV4 signing, so signatures stay valid when a proxy or the HTTP layer modifies them.
+
+## v0.3.1
+
+### Enhancements
+* Removed the `AWSSDKWarning` emitted during SigV4 payload signing. It fired on every signed request regardless of body size, adding noise on the default code path (and, under warnings-as-errors, could turn signing into a raised exception).
+
+## v0.3.0
+
+### Features
+* Added `AsyncEventSigner.sign_empty` for SigV4-signed Amazon Event Stream terminator frames. This supports services that require a final signed empty message before the HTTP body stream closes.
+
+## v0.2.0
+
+### Breaking Changes
+* Replace `FieldPosition` enum values with string literals for `Field.kind`. Use "header" and "trailer" instead of `FieldPosition.HEADER` and `FieldPosition.TRAILER`.
+
+### Bug fixes
+* Fixed SigV4 signature computation for URIs with literal query parameters (e.g., ?sync). parse_qsl was silently dropping query keys without values, causing InvalidSignatureException.
+
 ## v0.1.0
 
 ### Breaking Changes

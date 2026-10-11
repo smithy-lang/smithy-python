@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.3.0
+
+### Features
+* Added a signed empty end frame to `AWSEventPublisher.close` to signal event stream completion. This supports services that require a final signed empty message before the HTTP body stream closes.
+
+## v0.2.2
+
+### Enhancements
+* Handle unknown event types gracefully instead of crashing.
+
+## v0.2.1
+
+### Dependencies
+* Removed strict pinning on `smithy-core` in favor of client managed versions.
+
 ## v0.2.0
 
 ### Dependencies

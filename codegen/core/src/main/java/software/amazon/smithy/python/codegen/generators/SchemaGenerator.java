@@ -5,11 +5,12 @@
 package software.amazon.smithy.python.codegen.generators;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -22,11 +23,10 @@ import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
-import software.amazon.smithy.model.traits.DocumentationTrait;
-import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.model.traits.UnitTypeTrait;
-import software.amazon.smithy.model.traits.synthetic.SyntheticEnumTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
+import software.amazon.smithy.python.codegen.SchemaTraitFilterIndex;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -42,13 +42,6 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 public final class SchemaGenerator implements Consumer<Shape> {
     private static final Logger LOGGER = Logger.getLogger(SchemaGenerator.class.getName());
 
-    // Filter out traits that would overly bloat the definition, which are already part of the
-    // class, such as documentation.
-    private static final Set<ShapeId> DEFAULT_TRAIT_FILTER = Set.of(
-            DocumentationTrait.ID,
-            EnumTrait.ID,
-            SyntheticEnumTrait.ID);
-
     private static final Symbol UNIT_SYMBOL = Symbol.builder()
             .name("UNIT")
             .namespace("smithy_core.prelude", ".")
@@ -57,7 +50,8 @@ public final class SchemaGenerator implements Consumer<Shape> {
 
     private final GenerationContext context;
     private final Set<ShapeId> generatedShapes = new HashSet<>();
-    private final Map<MemberShape, Integer> deferredMembers = new HashMap<>();
+    private final Map<MemberShape, Integer> deferredMembers =
+            new TreeMap<>(Comparator.comparing(MemberShape::getId));
 
     public SchemaGenerator(GenerationContext context) {
         this.context = context;
@@ -96,11 +90,10 @@ public final class SchemaGenerator implements Consumer<Shape> {
     }
 
     private void writeShapeSchema(PythonWriter writer, Shape shape) {
-        writer.addImport("smithy_core.schemas", "Schema");
-        writer.addImports("smithy_core.shapes", Set.of("ShapeID", "ShapeType"));
         writer.pushState();
 
         var symbol = context.symbolProvider().toSymbol(shape).expectProperty(SymbolProperties.SCHEMA).getSymbol();
+        writer.addLocallyDefinedSymbol(symbol);
 
         var traits = filterTraits(shape);
         writer.putContext("isCollection", shape.isStructureShape() || !shape.members().isEmpty());
@@ -109,29 +102,33 @@ public final class SchemaGenerator implements Consumer<Shape> {
         writer.putContext("hasTraits", !traits.isEmpty());
 
         writer.write("""
-                $L = Schema${?isCollection}.collection${/isCollection}(
-                    id=ShapeID($S),
-                    ${^isStructure}shape_type=ShapeType.${shapeType:L},${/isStructure}
+                $1L = $2T${?isCollection}.collection${/isCollection}(
+                    id=$3T($4S),
+                    ${^isStructure}shape_type=$5T.${shapeType:L},${/isStructure}
                     ${?hasTraits}
                     traits=[
-                        ${C|}
+                        ${6C|}
                     ],
                     ${/hasTraits}
-                    ${C|}
+                    ${7C|}
                 )
                 """,
                 symbol.getName(),
+                RuntimeTypes.SCHEMA,
+                RuntimeTypes.SHAPE_ID,
                 shape.getId(),
+                RuntimeTypes.SHAPE_TYPE,
                 writer.consumer(w -> writeTraits(w, traits)),
                 writer.consumer(w -> writeSchemaMembers(w, shape)));
         writer.popState();
     }
 
     private Map<ShapeId, Optional<Node>> filterTraits(Shape shape) {
+        var traitFilter = SchemaTraitFilterIndex.of(context.model());
         return shape.getAllTraits()
                 .entrySet()
                 .stream()
-                .filter(t -> !DEFAULT_TRAIT_FILTER.contains(t.getKey()))
+                .filter(t -> traitFilter.includeTrait(t.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> {
                     var value = e.getValue().toNode();
                     if (value.isObjectNode() && value.asObjectNode().get().getMembers().isEmpty()) {
@@ -142,13 +139,14 @@ public final class SchemaGenerator implements Consumer<Shape> {
     }
 
     private void writeTraits(PythonWriter writer, Map<ShapeId, Optional<Node>> traits) {
-        writer.addImport("smithy_core.traits", "Trait");
         writer.pushState();
         writer.putContext("traits", traits);
         writer.write("""
                 ${#traits}
-                Trait.new(id=ShapeID(${key:S})${?value}, value=${value:N}${/value}),
-                ${/traits}""");
+                $1T.new(id=$2T(${key:S})${?value}, value=${value:N}${/value}),
+                ${/traits}""",
+                RuntimeTypes.TRAIT,
+                RuntimeTypes.SHAPE_ID);
         writer.popState();
     }
 
@@ -216,9 +214,6 @@ public final class SchemaGenerator implements Consumer<Shape> {
     }
 
     private void finalizeRecursiveShapes(PythonWriter writer) {
-        writer.addImport("smithy_core.schemas", "Schema");
-        writer.addImport("smithy_core.shapes", "ShapeType");
-
         for (Map.Entry<MemberShape, Integer> entry : deferredMembers.entrySet()) {
             var member = entry.getKey();
             LOGGER.warning("Generating member: " + member.getId());
@@ -236,7 +231,7 @@ public final class SchemaGenerator implements Consumer<Shape> {
             writer.putContext("hasTraits", !traits.isEmpty());
 
             writer.write("""
-                    $1T.members[$2S] = Schema.member(
+                    $1T.members[$2S] = $6T.member(
                         id=$1T.id.with_member($2S),
                         target=$3T,
                         index=$5L,
@@ -252,7 +247,8 @@ public final class SchemaGenerator implements Consumer<Shape> {
                     member.getMemberName(),
                     target,
                     writer.consumer(w -> writeTraits(w, traits)),
-                    entry.getValue());
+                    entry.getValue(),
+                    RuntimeTypes.SCHEMA);
 
             writer.popState();
         }

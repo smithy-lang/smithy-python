@@ -1,0 +1,12 @@
+{
+  "changes": [
+    {
+      "type": "breaking",
+      "description": "Replace `FieldPosition` enum values with string literals for `Field.kind`. Use \"header\" and \"trailer\" instead of `FieldPosition.HEADER` and `FieldPosition.TRAILER`."
+    },
+    {
+      "type": "dependency",
+      "description": "Upgrade CRT to 0.32.0 to fix bug where HTTP2 exceptions could hang indefinitely"
+    }
+  ]
+}

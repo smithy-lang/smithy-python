@@ -1,5 +1,66 @@
 # Changelog
 
+## v0.6.0
+
+### Features
+* `HttpClientProtocol` implements `extract_response_metadata()`, reporting the HTTP status code.
+* Added a naive `RpcV2CborClientProtocol` for the `smithy.protocols#rpcv2Cbor` protocol (optional `cbor` extra).
+* Added schema-cached HTTP binding plans for members, operations, payloads, and request and response dispatch.
+
+### Dependencies
+* Bump `smithy-cbor` from `~=0.0.0` to `~=0.1.0`.
+
+## v0.5.0
+
+### Features
+* Added deterministic connection-pool cleanup and async context manager support to HTTP clients.
+
+### Bug fixes
+* Stream aiohttp response bodies incrementally to enable true output event streams.
+* Fixed `AIOHTTPClient` to stop dropping valueless query parameters and automatically adding a `Content-Type` to bodyless POST, PUT, and PATCH requests.
+* Fixed duplicate Content-Type headers when a member is bound to Content-Type.
+
+## v0.4.4
+
+### Enhancements
+* Added a protocol hook for extracting server-provided retry delays from error responses.
+* Declared `AWSCRTHTTPClient` as duplex (bidirectional) streaming capable via `SUPPORTS_DUPLEX_STREAMING`. `AIOHTTPClient` explicitly does not support duplex streaming.
+* Disabled automatic redirects in `AIOHTTPClient` so that redirect responses are returned to the caller instead of being followed transparently.
+
+## v0.4.3
+
+### Enhancements
+* Enabled HTTP binding protocols to resolve modeled response errors when wire identifiers do not exactly match registered shape IDs. ([#742](https://github.com/smithy-lang/smithy-python/pull/742))
+
+### Bug fixes
+* Fixed `AIOHTTPClient` sending omitted request payloads with chunked transfer encoding.
+
+## v0.4.2
+
+### Bug fixes
+* Disabled automatic response decompression in `AIOHTTPClient`.
+
+## v0.4.1
+
+### Bug fixes
+* Fixed `AWSCRTHTTPClient` to send HTTP/1.1 request bodies via `body_stream` instead of the HTTP/2-only `request_body_generator`.
+
+## v0.4.0
+
+### Breaking Changes
+* Replace `FieldPosition` enum values with string literals for `Field.kind`. Use "header" and "trailer" instead of `FieldPosition.HEADER` and `FieldPosition.TRAILER`.
+
+### Dependencies
+* Upgrade CRT to 0.32.0 to fix bug where HTTP2 exceptions could hang indefinitely
+
+## v0.3.1
+
+### Bug fixes
+* Fixed empty error messaging for CRT-based timeout errors.
+
+### Dependencies
+* Removed strict pinning on `smithy-core` in favor of client managed versions.
+
 ## v0.3.0
 
 ### Features
