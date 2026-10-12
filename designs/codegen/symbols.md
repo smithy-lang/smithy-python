@@ -109,6 +109,13 @@ cannot have the same name within one declaration. A collision raises `ModelError
 with both Smithy IDs and the conflicting name. The first conflict follows model
 selection and member order. No numbered suffixes are added to hide collisions.
 
+Union members are currently named only as fields. If unions are generated with a
+class for each member or for unknown variants, those classes are declarations in
+the models module. The provider must name them and include them in the
+declaration collision check. Combining the union and member names is not enough
+on its own: Bedrock Agent Runtime defines a `Memory` union with a
+`sessionSummary` member and a separate `MemorySessionSummary` structure.
+
 Builtin names such as `list` are allowed unless the generator reserves them. A
 field named `list` does not prevent annotations from referring to the builtin;
 the writer handles that with import aliases or qualified names. References to
