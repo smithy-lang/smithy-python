@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Callable, Collection
 from dataclasses import dataclass, replace
 
 from .model import (
@@ -73,7 +74,13 @@ _FIXED_TYPES = {
 }
 
 
-def _name(value: str, *, pascal: bool = False, constant: bool = False) -> str:
+def _name(
+    value: str,
+    *,
+    pascal: bool = False,
+    constant: bool = False,
+    reserved: Collection[str] = (),
+) -> str:
     if pascal:
         result = "".join(word[:1].upper() + word[1:] for word in value.split("_"))
     else:
@@ -84,7 +91,7 @@ def _name(value: str, *, pascal: bool = False, constant: bool = False) -> str:
         result = result.upper()
     if result[:1].isdigit():
         result = "_" + result
-    if result in _KEYWORDS:
+    if result in _KEYWORDS or result in reserved:
         result += "_"
     return result
 
@@ -92,7 +99,14 @@ def _name(value: str, *, pascal: bool = False, constant: bool = False) -> str:
 class SymbolProvider:
     """Naming for selected data shapes; IDs and wire names are never modified."""
 
-    def __init__(self, model: Model, selection: Selection, *, package: str) -> None:
+    def __init__(
+        self,
+        model: Model,
+        selection: Selection,
+        *,
+        package: str,
+        reserved_member_names: Callable[[Shape], Collection[str]] | None = None,
+    ) -> None:
         if any(
             not part.isidentifier() or unicodedata.normalize("NFKC", part) in _KEYWORDS
             for part in package.split(".")
@@ -101,6 +115,7 @@ class SymbolProvider:
         self._model = model
         self._selection = selection
         self._package = package
+        self._reserved_member_names = reserved_member_names
         self._selected = frozenset(shape.id for shape in selection.shapes)
         declarations: dict[str, ShapeId] = {}
         for shape in selection.shapes:
@@ -219,4 +234,9 @@ class SymbolProvider:
         container = self._shape(member.container)
         if container.type not in _NAMED or self._model.is_prelude(container):
             raise ModelError(f"No generated member name for {member.id}")
-        return _name(member.name, constant=container.type in _ENUMS)
+        reserved = (
+            self._reserved_member_names(container)
+            if self._reserved_member_names
+            else ()
+        )
+        return _name(member.name, constant=container.type in _ENUMS, reserved=reserved)

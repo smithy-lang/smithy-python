@@ -7,9 +7,9 @@
 - What Python type represents a value?
 
 Pass a loaded model, a selection made from that model, and the destination package:
-`SymbolProvider(model, selection, *, package)`. The provider does not select more
-shapes, change the model, import packages, or write files. It uses only the
-standard library.
+`SymbolProvider(model, selection, *, package, reserved_member_names=None)`.
+The provider does not select more shapes, change the model, import packages, or
+write files. It uses only the standard library.
 
 ## Names and types
 
@@ -90,6 +90,14 @@ codegen. Update it when adding support for another Python version. Names such as
 `match`, `case`, `type` and `lazy` are valid Python field names and do not need a
 trailing underscore.
 
+Generators can reserve more member names with `reserved_member_names`, a callable
+that receives the containing structure, union or enum and returns the names to
+avoid. A generated name in that collection also gets a trailing `_`. Use this for
+names the generator adds to classes, such as `serialize` and `deserialize`, or
+attributes inherited by error classes. Compare against the final Python spelling:
+fields are snake_case and enum constants are UPPER_SNAKE_CASE. Escaped names are
+still checked for collisions.
+
 Rename values may contain only ASCII letters, digits and underscores, and must
 contain at least one letter or digit. If removing leading underscores would leave
 a digit at the start, keep one underscore: `_2HTTPServer` stays `_2HTTPServer`.
@@ -101,9 +109,10 @@ cannot have the same name within one declaration. A collision raises `ModelError
 with both Smithy IDs and the conflicting name. The first conflict follows model
 selection and member order. No numbered suffixes are added to hide collisions.
 
-Builtin names such as `list` are allowed. References to identically named types
-from different modules remain distinct; the future writer must handle import
-aliases or qualified names.
+Builtin names such as `list` are allowed unless the generator reserves them. A
+field named `list` does not prevent annotations from referring to the builtin;
+the writer handles that with import aliases or qualified names. References to
+identically named types from different modules also remain distinct.
 
 ## Type references
 

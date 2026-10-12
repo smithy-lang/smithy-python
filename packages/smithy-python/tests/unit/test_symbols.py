@@ -560,6 +560,77 @@ def test_cycle_diagnostic_excludes_noncyclic_prefix() -> None:
     )
 
 
+def test_reserved_member_names() -> None:
+    from smithy_python.model import Shape
+
+    model = model_with(
+        {
+            "example#Request": {
+                "type": "structure",
+                "members": {
+                    "serialize": {"target": "smithy.api#String"},
+                    "list": {"target": "smithy.api#String"},
+                },
+            },
+            "example#Failure": {
+                "type": "structure",
+                "members": {"fault": {"target": "smithy.api#String"}},
+                "traits": {"smithy.api#error": "client"},
+            },
+            "example#Choice": {
+                "type": "enum",
+                "members": {
+                    "SERIALIZE": {
+                        "target": "smithy.api#Unit",
+                        "traits": {"smithy.api#enumValue": "wire"},
+                    }
+                },
+            },
+        }
+    )
+    containers: list[str] = []
+
+    def reserved(container: Shape) -> set[str]:
+        containers.append(str(container.id))
+        names = {"serialize", "SERIALIZE"}
+        return names | {"fault"} if container.has_trait("error") else names
+
+    default = SymbolProvider(model, select_shapes(model), package="pkg")
+    symbols = SymbolProvider(
+        model, select_shapes(model), package="pkg", reserved_member_names=reserved
+    )
+    assert default.member_name("example#Request$serialize") == "serialize"
+    assert symbols.member_name("example#Request$serialize") == "serialize_"
+    assert symbols.member_name("example#Request$list") == "list"
+    assert symbols.member_name("example#Failure$fault") == "fault_"
+    assert symbols.member_name("example#Choice$SERIALIZE") == "SERIALIZE_"
+    assert set(containers) == {"example#Request", "example#Failure", "example#Choice"}
+
+
+def test_reserved_member_names_still_collide() -> None:
+    from smithy_python.model import ModelError
+
+    model = model_with(
+        {
+            "example#Request": {
+                "type": "structure",
+                "members": {
+                    "serialize": {"target": "smithy.api#String"},
+                    "serialize_": {"target": "smithy.api#String"},
+                },
+            }
+        }
+    )
+    with pytest.raises(ModelError) as error:
+        SymbolProvider(
+            model,
+            select_shapes(model),
+            package="pkg",
+            reserved_member_names=lambda _: {"serialize"},
+        )
+    assert "'serialize_'" in str(error.value)
+
+
 @pytest.mark.parametrize("word", [*keyword.kwlist, *keyword.softkwlist])
 def test_names_are_not_host_keywords(word: str) -> None:
     if word == "_":
