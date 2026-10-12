@@ -84,10 +84,11 @@ boundaries, and before the last capital of an uppercase run followed by lowercas
 
 Discard empty underscore-separated parts, including leading/trailing underscores.
 This avoids Python's special treatment of names such as `__init__` and `__private`.
-Append `_` if the result is a reserved Python word. The reserved-word list is fixed
-at Python 3.12 so results do not depend on the Python version running codegen.
-Names such as `match`, `case` and `type` are valid Python field names and do not
-need a trailing underscore.
+Append `_` if the result is a reserved Python word. The reserved-word list combines
+Python 3.12 through 3.15 so results do not depend on the Python version running
+codegen. Update it when adding support for another Python version. Names such as
+`match`, `case`, `type` and `lazy` are valid Python field names and do not need a
+trailing underscore.
 
 Rename values may contain only ASCII letters, digits and underscores, and must
 contain at least one letter or digit. If removing leading underscores would leave

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
+import keyword
 
 import pytest
 from smithy_python.model import MemberShape, Model, load_model
@@ -557,3 +558,28 @@ def test_cycle_diagnostic_excludes_noncyclic_prefix() -> None:
     assert str(error.value) == (
         "Collection-only cycle: example#Loop -> example#Other -> example#Loop"
     )
+
+
+@pytest.mark.parametrize("word", [*keyword.kwlist, *keyword.softkwlist])
+def test_names_are_not_host_keywords(word: str) -> None:
+    if word == "_":
+        pytest.skip("not a Smithy identifier")
+    model = model_with(
+        {
+            f"example#{word}": {
+                "type": "structure",
+                "members": {word: {"target": "smithy.api#String"}},
+            },
+            "example#Choice": {
+                "type": "enum",
+                "members": {word: {"target": "smithy.api#Unit"}},
+            },
+        }
+    )
+    symbols = SymbolProvider(model, select_shapes(model), package="pkg")
+    for name in (
+        symbols.declaration_name(f"example#{word}"),
+        symbols.member_name(f"example#{word}${word}"),
+        symbols.member_name(f"example#Choice${word}"),
+    ):
+        assert name.isidentifier() and not keyword.iskeyword(name)

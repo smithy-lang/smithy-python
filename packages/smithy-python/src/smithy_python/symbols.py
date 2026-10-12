@@ -20,8 +20,9 @@ from .model import (
 )
 from .selection import Selection
 
-# Python 3.12 hard keywords, deliberately independent of the host interpreter.
-# Soft keywords (match, case, type, _) remain ordinary identifiers here.
+# Union of Python 3.12-3.15 hard keywords, independent of the host interpreter.
+# Soft keywords (match, case, type, lazy, _) remain ordinary identifiers here.
+# Update this when adding support for another Python version.
 _KEYWORDS = frozenset(
     "False None True and as assert async await break class continue def del "
     "elif else except finally for from global if import in is lambda nonlocal "
