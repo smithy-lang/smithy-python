@@ -31,6 +31,9 @@ Run what CI runs and report the actual results:
   `make generate-protocol-tests`, then `make test-protocols`. If generation
   fails only because an intended snapshot changed, review the diff and still
   run the protocol tests. `make test-py` doesn't run protocol tests.
+- For protocol behavior fixes, rely on the Smithy protocol tests rather than
+  adding unit tests to `test_protocols.py`. If the upstream test is new, bump
+  `smithy` in `codegen/gradle/libs.versions.toml` to pick it up.
 - For codegen changes that affect naming, imports or type annotations,
   protocol-test models aren't enough. Also generate clients for real AWS
   service models and run ruff and pyright on the output. Start with the models
@@ -53,6 +56,8 @@ Run what CI runs and report the actual results:
   `make generate-protocol-tests` and commit the result in the same PR. That
   target fails whenever the output differs from the snapshot, so a failure is
   expected after an intended change.
+- Put logic shared by all generated clients in a runtime package instead of
+  emitting it into every client, and don't emit helpers that nothing calls.
 
 ## Package boundaries
 
@@ -60,6 +65,11 @@ Run what CI runs and report the actual results:
   (`smithy-http`, `smithy-json`, `smithy-xml`, `smithy-cbor`) never import
   `smithy_aws_*`. AWS-specific logic belongs in the `smithy_aws_*` packages,
   except SigV4 signing, which lives in `aws-sdk-signers`.
+- The same split applies to codegen. Keep AWS specifics out of `codegen/core`
+  and add them through an integration in `codegen/aws`. Generate
+  service-specific customizations (for example, the API Gateway `Accept`
+  header) into that service's client instead of adding them to
+  `smithy-aws-core`.
 - Fix behavior in the package that owns it. Add a public API there instead of
   reaching into another package's private attributes. In packages that have a
   `_private/` directory, keep internals there.
@@ -89,9 +99,13 @@ Run what CI runs and report the actual results:
   `smithy-http` also minor-bumps `smithy-aws-core`, and through it the AWS SDK
   packages. Java code generator version bumps also carry through to the AWS
   clients (a patch bump gives a patch bump, a minor bump gives a minor bump).
-- Changes to generated clients go under `## Unreleased` in the root `CHANGELOG.md`.
+- If a change alters generated clients, bump `version` in
+  `codegen/build.gradle.kts` in the same PR: patch for fixes, minor for
+  breaking changes. Without it, the release won't regenerate the clients.
+  Record breaking changes under a new `## vX.Y.Z` heading in the root
+  `CHANGELOG.md`.
 - Don't hand-edit `packages/*/CHANGELOG.md`, run `new-release.py`, or bump
-  versions. The release process does that.
+  runtime package versions. The release process does that.
 
 ## Writing and review
 
