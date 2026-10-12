@@ -631,6 +631,27 @@ def test_reserved_member_names_still_collide() -> None:
     assert "'serialize_'" in str(error.value)
 
 
+def test_type_references_are_cached() -> None:
+    from smithy_python.model import ModelError
+
+    model = model_with(
+        {
+            "example#Names": {"type": "list", "member": {"target": "example#Name"}},
+            "example#Name": {"type": "list", "member": {"target": "smithy.api#String"}},
+            "example#Loop": {"type": "list", "member": {"target": "example#Loop"}},
+            "example#Broken": {"type": "list", "member": {"target": "example#Loop"}},
+        }
+    )
+    symbols = SymbolProvider(model, select_shapes(model), package="pkg")
+    outer = symbols.type_reference("example#Names")
+    assert symbols.type_reference("example#Names") is outer
+    assert symbols.type_reference("example#Name") is outer.arguments[0]
+    for _ in range(2):
+        with pytest.raises(ModelError):
+            symbols.type_reference("example#Broken")
+    assert symbols.type_reference("example#Names") is outer
+
+
 @pytest.mark.parametrize("word", [*keyword.kwlist, *keyword.softkwlist])
 def test_names_are_not_host_keywords(word: str) -> None:
     if word == "_":

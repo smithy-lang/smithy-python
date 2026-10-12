@@ -116,6 +116,7 @@ class SymbolProvider:
         self._selection = selection
         self._package = package
         self._reserved_member_names = reserved_member_names
+        self._type_references: dict[ShapeId, TypeReference] = {}
         self._selected = frozenset(shape.id for shape in selection.shapes)
         declarations: dict[str, ShapeId] = {}
         for shape in selection.shapes:
@@ -172,7 +173,8 @@ class SymbolProvider:
     def type_reference(self, shape_id: ShapeId | str) -> TypeReference:
         """Resolve a value type; enums use str/int to permit unknown values."""
         root = self._model.get_shape(shape_id).id
-        resolved: dict[ShapeId, TypeReference] = {}
+        # Entries are complete references, so a failed walk leaves the cache valid.
+        resolved = self._type_references
         active: dict[ShapeId, None] = {}
         pending = [(root, False)]
         while pending:
