@@ -98,9 +98,9 @@ def test_type_references(kind: str, name: str, module: str) -> None:
     assert symbols.type_reference("smithy.api#Unit") == TypeReference("None")
 
 
-@pytest.mark.parametrize("kind,primitive", [("enum", "str"), ("intEnum", "int")])
+@pytest.mark.parametrize("kind,value_type", [("enum", "str"), ("intEnum", "int")])
 @pytest.mark.parametrize("sparse", [False, True])
-def test_enum_value_references(kind: str, primitive: str, sparse: bool) -> None:
+def test_enum_value_references(kind: str, value_type: str, sparse: bool) -> None:
     from smithy_python.symbols import TypeReference
 
     traits: dict[str, object] = {"smithy.api#sparse": {}} if sparse else {}
@@ -138,7 +138,7 @@ def test_enum_value_references(kind: str, primitive: str, sparse: bool) -> None:
     assert symbols.declaration_name("example#HTTPStatus") == "HTTPStatus"
     assert symbols.member_name("example#HTTPStatus$OK") == "OK"
     target = model.expect_shape("example#Response$status", MemberShape).target
-    assert symbols.type_reference(target) == TypeReference(primitive, "builtins")
+    assert symbols.type_reference(target) == TypeReference(value_type, "builtins")
     assert symbols.type_reference("example#Index") == TypeReference(
         "dict",
         "builtins",
@@ -147,7 +147,7 @@ def test_enum_value_references(kind: str, primitive: str, sparse: bool) -> None:
             TypeReference(
                 "list",
                 "builtins",
-                (TypeReference(primitive, "builtins", nullable=sparse),),
+                (TypeReference(value_type, "builtins", nullable=sparse),),
                 nullable=sparse,
             ),
         ),

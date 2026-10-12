@@ -46,7 +46,9 @@ class TypeReference:
     nullable: bool = False
 
 
-_PRIMITIVES = {
+# Types whose reference never depends on the shape: Smithy's simple types, with
+# enums widened to str/int so unknown values remain representable.
+_FIXED_TYPES = {
     ShapeType.BOOLEAN: TypeReference("bool", "builtins"),
     ShapeType.STRING: TypeReference("str", "builtins"),
     ShapeType.ENUM: TypeReference("str", "builtins"),
@@ -200,8 +202,8 @@ class SymbolProvider:
                 resolved[current] = TypeReference(
                     self.declaration_name(current), f"{self._package}.models"
                 )
-            elif shape.type in _PRIMITIVES:
-                resolved[current] = _PRIMITIVES[shape.type]
+            elif shape.type in _FIXED_TYPES:
+                resolved[current] = _FIXED_TYPES[shape.type]
             else:
                 raise ModelError(
                     f"No Python type reference for {current} ({shape.type})"

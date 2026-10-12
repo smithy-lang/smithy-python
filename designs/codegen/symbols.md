@@ -24,7 +24,7 @@ A `$` identifies a member inside a shape: `example#Response$statusCode` is the
 | `type_reference("smithy.api#Integer")`       | What type of value does it hold?          | `TypeReference("int", "builtins")` |
 
 `declaration_name` names structures, unions, enums and integer enums. Their
-future definitions belong in `<package>.models`. Primitive aliases, lists and
+future definitions belong in `<package>.models`. Other simple shapes, lists and
 maps do not get separate definitions: a list of strings is `list[str]`, not a
 new class.
 
@@ -69,18 +69,18 @@ of each nonempty part, preserving its remaining capitals. Fields use snake_case;
 enum constants use UPPER_SNAKE_CASE. Split words at lowercase-or-digit to uppercase
 boundaries, and before the last capital of an uppercase run followed by lowercase.
 
-| Input          | Class or enum | Field          | Enum constant  |
-| -------------- | ------------- | -------------- | -------------- |
-| HTTPServer     | HTTPServer    | http_server    | HTTP_SERVER    |
-| http_server    | HttpServer    | http_server    | HTTP_SERVER    |
-| getURL         | GetURL        | get_url        | GET_URL        |
-| HTTP2Server    | HTTP2Server   | http2_server   | HTTP2_SERVER   |
-| getURL2Value   | GetURL2Value  | get_url2_value | GET_URL2_VALUE |
-| **some__name** | SomeName      | some_name      | SOME_NAME      |
-| **init**       | Init          | init           | INIT           |
-| class          | Class         | class_         | CLASS          |
-| None           | None_         | none           | NONE           |
-| match          | Match         | match          | MATCH          |
+| Input            | Class or enum | Field          | Enum constant  |
+| ---------------- | ------------- | -------------- | -------------- |
+| `HTTPServer`     | HTTPServer    | http_server    | HTTP_SERVER    |
+| `http_server`    | HttpServer    | http_server    | HTTP_SERVER    |
+| `getURL`         | GetURL        | get_url        | GET_URL        |
+| `HTTP2Server`    | HTTP2Server   | http2_server   | HTTP2_SERVER   |
+| `getURL2Value`   | GetURL2Value  | get_url2_value | GET_URL2_VALUE |
+| `__some__name__` | SomeName      | some_name      | SOME_NAME      |
+| `__init__`       | Init          | init           | INIT           |
+| `class`          | Class         | class_         | CLASS          |
+| `None`           | None_         | none           | NONE           |
+| `match`          | Match         | match          | MATCH          |
 
 Discard empty underscore-separated parts, including leading/trailing underscores.
 This avoids Python's special treatment of names such as `__init__` and `__private`.
