@@ -35,7 +35,7 @@ _NAMED = _ENUMS | {ShapeType.STRUCTURE, ShapeType.UNION}
 
 @dataclass(frozen=True, slots=True)
 class TypeReference:
-    """A symbolic name, its defining module, and ordered generic arguments.
+    """A symbolic name, its public module, and ordered generic arguments.
 
     ``module=None`` denotes the None literal. ``nullable`` permits None in
     addition to this reference, and is used only for sparse collection entries.

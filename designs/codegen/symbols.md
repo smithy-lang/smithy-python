@@ -119,8 +119,10 @@ identically named types from different modules also remain distinct.
 `TypeReference(name, module=None, arguments=(), nullable=False)` is an immutable,
 hashable description of a type, not a Python annotation string. `name` and
 `module` identify the type; `arguments` holds its element, key or value types.
-`nullable=True` means the value can also be `None`. Resolved references are cached
-for the provider's lifetime.
+`nullable=True` means the value can also be `None`. `module` is the public module
+users import the type from. If the writer later places a definition in a different
+physical module, that placement is the writer's concern and does not change the
+reference. Resolved references are cached for the provider's lifetime.
 
 For example, `list[str]` is represented as:
 
