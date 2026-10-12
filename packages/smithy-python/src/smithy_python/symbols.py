@@ -115,7 +115,7 @@ class SymbolProvider:
         self._model = model
         self._selection = selection
         self._package = package
-        self._reserved_member_names = reserved_member_names
+        self._reserved_member_names: dict[ShapeId, frozenset[str]] = {}
         self._type_references: dict[ShapeId, TypeReference] = {}
         self._selected = frozenset(shape.id for shape in selection.shapes)
         declarations: dict[str, ShapeId] = {}
@@ -125,6 +125,10 @@ class SymbolProvider:
             self._check_collision(
                 declarations, self.declaration_name(shape.id), shape.id
             )
+            if reserved_member_names:
+                self._reserved_member_names[shape.id] = frozenset(
+                    reserved_member_names(shape)
+                )
             members: dict[str, ShapeId] = {}
             for member in shape.members.values():
                 self._check_collision(members, self.member_name(member.id), member.id)
@@ -236,9 +240,8 @@ class SymbolProvider:
         container = self._shape(member.container)
         if container.type not in _NAMED or self._model.is_prelude(container):
             raise ModelError(f"No generated member name for {member.id}")
-        reserved = (
-            self._reserved_member_names(container)
-            if self._reserved_member_names
-            else ()
+        return _name(
+            member.name,
+            constant=container.type in _ENUMS,
+            reserved=self._reserved_member_names.get(container.id, ()),
         )
-        return _name(member.name, constant=container.type in _ENUMS, reserved=reserved)

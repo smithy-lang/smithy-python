@@ -604,7 +604,11 @@ def test_reserved_member_names() -> None:
     assert symbols.member_name("example#Request$list") == "list"
     assert symbols.member_name("example#Failure$fault") == "fault_"
     assert symbols.member_name("example#Choice$SERIALIZE") == "SERIALIZE_"
-    assert set(containers) == {"example#Request", "example#Failure", "example#Choice"}
+    assert sorted(containers) == [
+        "example#Choice",
+        "example#Failure",
+        "example#Request",
+    ]
 
 
 def test_reserved_member_names_still_collide() -> None:
