@@ -4,11 +4,16 @@
 import copy
 import re
 import typing
+from collections.abc import AsyncIterator, Iterable
+from dataclasses import dataclass
 from datetime import UTC, datetime
+from hashlib import sha256
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 from aws_sdk_signers import (
+    AsyncBytesReader,
     AsyncEventSigner,
     AsyncSigV4Signer,
     AWSCredentialIdentity,
@@ -108,6 +113,63 @@ def _request_with_field(name: str, value: str) -> AWSRequest:
     )
 
 
+@dataclass(kw_only=True)
+class DataclassRequest:
+    """A request without a custom ``__deepcopy__``, like smithy-http's HTTPRequest."""
+
+    destination: URI
+    method: str
+    body: typing.Any
+    fields: Fields
+
+
+def _dataclass_request(body: typing.Any) -> AWSRequest:
+    request = DataclassRequest(
+        destination=URI(scheme="https", host="127.0.0.1", port=8000),
+        method="PUT",
+        body=body,
+        fields=Fields({}),
+    )
+    return typing.cast(AWSRequest, request)
+
+
+async def _async_chunks(chunks: Iterable[bytes]) -> AsyncIterator[bytes]:
+    for chunk in chunks:
+        yield chunk
+
+
+class AsyncSeekableBody:
+    """An async body with async seek and sync tell, like smithy-core's readers."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = BytesIO(data)
+
+    def __aiter__(self) -> AsyncIterator[bytes]:
+        return self._chunks()
+
+    async def _chunks(self) -> AsyncIterator[bytes]:
+        while chunk := self._data.read(2):
+            yield chunk
+
+    async def seek(self, offset: int, whence: int = 0) -> int:
+        return self._data.seek(offset, whence)
+
+    def tell(self) -> int:
+        return self._data.tell()
+
+
+# Signs the payload and sends its hash, so tests can check what was hashed.
+PAYLOAD_SIGNING_PROPERTIES = SigV4SigningProperties(
+    region="us-west-2",
+    service="s3",
+    content_checksum_enabled=True,
+)
+
+
+def _payload_hash(request: AWSRequest) -> str:
+    return request.fields["X-Amz-Content-SHA256"].as_string()
+
+
 def _signed_headers(request: AWSRequest) -> list[str]:
     match = SIGNED_HEADERS_RE.search(request.fields["authorization"].as_string())
     assert match is not None
@@ -150,6 +212,23 @@ class TestSigV4Signer:
         assert signed_request is not aws_request
         assert aws_request.fields == original_request.fields
         assert signed_request.fields != aws_request.fields
+
+    def test_sign_payload_restores_shared_seekable_body(
+        self, aws_identity: AWSCredentialIdentity, tmp_path: Path
+    ) -> None:
+        path = tmp_path / "body"
+        path.write_bytes(b"123456")
+        with path.open("rb") as body:
+            body.seek(2)
+            request = _dataclass_request(body)
+            signed_request = self.SIGV4_SYNC_SIGNER.sign(
+                properties=PAYLOAD_SIGNING_PROPERTIES,
+                request=request,
+                identity=aws_identity,
+            )
+            assert signed_request.body is body
+            assert body.tell() == 2
+            assert _payload_hash(signed_request) == sha256(b"3456").hexdigest()
 
     @typing.no_type_check
     def test_sign_with_invalid_identity(
@@ -371,6 +450,34 @@ class TestAsyncSigV4Signer:
         assert signed_request is not aws_request
         assert aws_request.fields == original_request.fields
         assert signed_request.fields != aws_request.fields
+
+    async def test_sign_payload_restores_shared_seekable_body(
+        self, aws_identity: AWSCredentialIdentity
+    ) -> None:
+        body = AsyncSeekableBody(b"123456")
+        await body.seek(2)
+        request = _dataclass_request(body)
+        signed_request = await self.SIGV4_ASYNC_SIGNER.sign(
+            properties=PAYLOAD_SIGNING_PROPERTIES,
+            request=request,
+            identity=aws_identity,
+        )
+        assert signed_request.body is body
+        assert body.tell() == 2
+        assert _payload_hash(signed_request) == sha256(b"3456").hexdigest()
+
+    async def test_sign_payload_buffers_non_seekable_body(
+        self, aws_identity: AWSCredentialIdentity
+    ) -> None:
+        request = _dataclass_request(_async_chunks([b"123", b"456"]))
+        signed_request = await self.SIGV4_ASYNC_SIGNER.sign(
+            properties=PAYLOAD_SIGNING_PROPERTIES,
+            request=request,
+            identity=aws_identity,
+        )
+        assert _payload_hash(signed_request) == sha256(b"123456").hexdigest()
+        assert isinstance(signed_request.body, AsyncBytesReader)
+        assert await signed_request.body.read() == b"123456"
 
     @typing.no_type_check
     async def test_sign_with_invalid_identity(
