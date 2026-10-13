@@ -8,6 +8,7 @@ import ast
 from collections import Counter
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from unicodedata import normalize
 
 from .exceptions import CodegenError
@@ -54,6 +55,21 @@ _SCOPES = (
     ast.DictComp,
     ast.GeneratorExp,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class _Import:
+    """One planned import. ``name=None`` imports the module itself."""
+
+    module: str
+    name: str | None
+    alias: str
+
+    def statement(self) -> str:
+        if self.name is None:
+            return f"import {self.module} as {self.alias}"
+        suffix = f" as {self.alias}" if self.alias != self.name else ""
+        return f"from {self.module} import {self.name}{suffix}"
 
 
 def _binding(name: str) -> str:
@@ -205,7 +221,7 @@ class PythonWriter:
 
     def _plan_imports(
         self, declarations: frozenset[str], local_names: frozenset[str]
-    ) -> tuple[dict[tuple[str | None, str], str], list[str]]:
+    ) -> tuple[dict[tuple[str | None, str], str], list[_Import]]:
         identities: set[tuple[str | None, str]] = set()
         pending = [
             part
@@ -247,7 +263,7 @@ class PythonWriter:
         )
         counts = Counter(_binding(name) for _, name in external)
         names: dict[tuple[str | None, str], str] = {}
-        imports: list[tuple[str, str, str, str]] = []
+        imports: list[_Import] = []
         for module, name in external:
             alias = (
                 f"_{module.replace('.', '_')}_{name}"
@@ -258,10 +274,7 @@ class PythonWriter:
                 else name
             )
             names[(module, name)] = alias
-            suffix = f" as {alias}" if alias != name else ""
-            imports.append(
-                (module, name, alias, f"from {module} import {name}{suffix}")
-            )
+            imports.append(_Import(module, name, alias))
         qualify_builtins = False
         for (module_binding, name_binding), (module, name) in representatives.items():
             if module is None:
@@ -273,21 +286,19 @@ class PythonWriter:
             elif module_binding == self._module:
                 names[(module, name)] = name
         if qualify_builtins:
-            imports.append(
-                ("builtins", "", "_builtins", "import builtins as _builtins")
-            )
+            imports.append(_Import("builtins", None, "_builtins"))
 
         # Check the complete plan, including unaliased imports. No binding gets
         # priority merely because its reference was encountered first.
         bindings = dict.fromkeys(reserved, "a generated declaration or local name")
-        imports.sort()
-        for module, name, alias, _ in imports:
-            owner = f"{module}.{name}" if name else module
-            binding = _binding(alias)
+        imports.sort(key=lambda item: (item.module, item.name or "", item.alias))
+        for item in imports:
+            owner = f"{item.module}.{item.name}" if item.name else item.module
+            binding = _binding(item.alias)
             if binding in bindings or binding in _BUILTINS:
                 conflict = bindings.get(binding, "a builtin")
                 raise CodegenError(
-                    f"Import binding {alias!r} for {owner} conflicts with {conflict}"
+                    f"Import binding {item.alias!r} for {owner} conflicts with {conflict}"
                 )
             bindings[binding] = owner
         for module, name in identities:
@@ -296,7 +307,7 @@ class PythonWriter:
                 _binding(name),
             )
             names[(module, name)] = names[representatives[identity]]
-        return names, [statement for _, _, _, statement in imports]
+        return names, imports
 
     @staticmethod
     def _annotation(
@@ -330,6 +341,6 @@ class PythonWriter:
         names, imports = self._plan_imports(*self._names())
         header = "from __future__ import annotations\n"
         if imports:
-            header += "\n" + "\n".join(imports) + "\n"
+            header += "\n" + "\n".join(item.statement() for item in imports) + "\n"
         body = self._body(lambda reference: self._annotation(reference, names))
         return header + ("\n\n" + "\n".join(body) + "\n" if body else "")
