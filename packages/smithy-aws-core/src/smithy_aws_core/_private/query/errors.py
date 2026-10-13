@@ -86,7 +86,6 @@ def create_aws_query_error(
     status: int,
     context: TypedProperties,
     retry_after: float | None = None,
-    codec: "XMLCodec | None" = None,
 ) -> CallError:
     """Create a modeled or generic CallError from an awsQuery error response."""
     code = _parse_aws_query_error_code(body, wrapper_elements)
@@ -106,7 +105,7 @@ def create_aws_query_error(
                 )
 
             _assert_xml()
-            deserializer = (codec or XMLCodec()).create_deserializer(
+            deserializer = XMLCodec().create_deserializer(
                 body, wrapper_elements=wrapper_elements
             )
             modeled_error = error_shape.deserialize(deserializer)
