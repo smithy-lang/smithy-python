@@ -80,6 +80,61 @@ def _bound_name(node: ast.AST) -> str | None:
     return None
 
 
+def _check_class_scopes(tree: ast.Module, outside: frozenset[str]) -> None:
+    """Reject raw outside names that a class shadows with its own members.
+
+    Annotations are evaluated later, against the finished class, so a member
+    shadows a name used anywhere in its class body. Method bodies are skipped
+    because they cannot see class members.
+    """
+    for scope in ast.walk(tree):
+        if not isinstance(scope, ast.ClassDef):
+            continue
+        bound: set[str] = set()
+        loaded: set[str] = set()
+        pending: list[ast.AST] = list(scope.body)
+        while pending:
+            node = pending.pop()
+            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+                loaded.add(node.id)
+                continue
+            name = _bound_name(node)
+            if name is not None:
+                bound.add(name)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                arguments = node.args
+                pending.extend(arguments.defaults)
+                pending.extend(filter(None, arguments.kw_defaults))
+                if not isinstance(node, ast.Lambda):
+                    pending.extend(node.decorator_list)
+                    if node.returns is not None:
+                        pending.append(node.returns)
+                    pending.extend(
+                        argument.annotation
+                        for argument in (
+                            *arguments.posonlyargs,
+                            *arguments.args,
+                            *arguments.kwonlyargs,
+                            *filter(None, (arguments.vararg, arguments.kwarg)),
+                        )
+                        if argument.annotation is not None
+                    )
+            elif isinstance(node, ast.ClassDef):
+                pending.extend((*node.decorator_list, *node.bases, *node.keywords))
+            elif isinstance(
+                node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
+            ):
+                pending.append(node.generators[0].iter)
+            else:
+                pending.extend(ast.iter_child_nodes(node))
+        shadowed = loaded & bound & (outside | _BUILTINS)
+        for name in sorted(shadowed):
+            raise CodegenError(
+                f"Raw name {name!r} in class {scope.name} is shadowed by a class "
+                "member; write it as a type reference"
+            )
+
+
 class PythonWriter:
     """Write trusted Python lines, retaining type references until rendering."""
 
@@ -145,6 +200,7 @@ class PythonWriter:
             pending.extend((child, nested) for child in ast.iter_child_nodes(node))
         declarations.discard(_PLACEHOLDER)
         local_names.discard(_PLACEHOLDER)
+        _check_class_scopes(tree, frozenset(declarations))
         return frozenset(declarations), frozenset(local_names)
 
     def _plan_imports(

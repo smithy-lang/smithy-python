@@ -60,7 +60,12 @@ Pass every builtin or imported name as a type reference, not just annotations.
 A reference can appear anywhere in a line, so defaults such as
 `field(default_factory=list)` and base classes such as `StrEnum` get the same
 aliases. If those names are written as raw text, a field with the same name
-replaces them in the rest of the class body.
+replaces them in the class body. `render()` raises `CodegenError` when raw text
+in a class body uses a builtin or module-level name that the same class also
+defines. The order does not matter, because annotations are evaluated against the
+finished class. Method bodies are not checked, because they cannot see class
+members. Other names defined in the class, such as a property used by its own
+`@value.setter`, are allowed.
 
 ## Annotations and imports
 

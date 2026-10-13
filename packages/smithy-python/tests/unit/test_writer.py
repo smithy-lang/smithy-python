@@ -362,6 +362,57 @@ def test_names_are_read_from_written_lines(source: str) -> None:
 
 
 @pytest.mark.parametrize(
+    "source,name",
+    [
+        (
+            "class Node:\n    list: int = 0\n    tags: int = field(default_factory=list)",
+            "list",
+        ),
+        # Annotations are evaluated against the finished class.
+        ("class Node:\n    items: list[int]\n    list: int = 0", "list"),
+        (
+            "from dataclasses import field\n"
+            "class Node:\n    field: int = 0\n    tags: int = field(default=0)",
+            "field",
+        ),
+        ("class Node:\n    list = None\n    def build(self, kind=list): ...", "list"),
+        ("class Node:\n    list = None\n    def build(self) -> list: ...", "list"),
+        ("class Node:\n    list = None\n    class Inner(list): ...", "list"),
+        ("class Node:\n    \uff4c\uff49\uff53\uff54 = None\n    items = list", "list"),
+    ],
+)
+def test_raw_names_shadowed_in_class_fail(source: str, name: str) -> None:
+    from smithy_python.exceptions import CodegenError
+
+    writer = PythonWriter("models")
+    writer.line(source)
+    message = f"Raw name {name!r} in class Node is shadowed by a class member"
+    with pytest.raises(CodegenError, match="^" + re.escape(message)):
+        writer.render()
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        # Method bodies cannot see class members.
+        "class Node:\n    list = None\n    def build(self):\n        return list()",
+        # Names defined in the class are meant to refer to the class member.
+        "class Node:\n"
+        "    @property\n    def value(self): ...\n"
+        "    @value.setter\n    def value(self, item): ...",
+        "class Node:\n    count = 1\n    total = count + 1",
+        # Class bodies do not see an enclosing class's members.
+        "class Node:\n    list = None\n    class Inner:\n        items = list",
+        "class Node:\n    values = [list for list in ()]",
+    ],
+)
+def test_raw_names_not_shadowed_in_class_pass(source: str) -> None:
+    writer = PythonWriter("models")
+    writer.line(source)
+    assert writer.render().endswith(source + "\n")
+
+
+@pytest.mark.parametrize(
     "line",
     [
         "class Node",  # Missing colon.
