@@ -20,8 +20,7 @@ from smithy_core.prelude import (
     STRING,
     TIMESTAMP,
 )
-from smithy_json import JSONCodec, JSONDeserializationMode, JSONDocument
-from smithy_json._private.deserializers import JSONShapeDeserializer
+from smithy_json import JSONCodec, JSONDocument
 from smithy_json._private.value_deserializer import JSONValueDeserializer
 
 from . import (
@@ -32,17 +31,9 @@ from . import (
 )
 
 
-@pytest.mark.parametrize(
-    "mode",
-    [JSONDeserializationMode.STREAMING, JSONDeserializationMode.EAGER],
-)
 @pytest.mark.parametrize("expected, given", JSON_SERDE_CASES)
-def test_json_deserializer(
-    expected: Any,
-    given: bytes,
-    mode: JSONDeserializationMode,
-) -> None:
-    codec = JSONCodec(deserialization_mode=mode)
+def test_json_deserializer(expected: Any, given: bytes) -> None:
+    codec = JSONCodec()
     deserializer = codec.create_deserializer(given)
     match expected:
         case None:
@@ -123,29 +114,19 @@ def test_uses_custom_document() -> None:
 
 
 @pytest.mark.parametrize(
-    "mode, source, expected_type",
+    "source",
     [
-        (JSONDeserializationMode.AUTO, b"{}", JSONValueDeserializer),
-        (JSONDeserializationMode.AUTO, BytesIO(b"{}"), JSONShapeDeserializer),
-        (JSONDeserializationMode.EAGER, BytesIO(b"{}"), JSONValueDeserializer),
-        (JSONDeserializationMode.STREAMING, b"{}", JSONShapeDeserializer),
+        b"{}",
+        BytesIO(b"{}"),
     ],
 )
-def test_deserialization_mode_selects_parser(
-    mode: JSONDeserializationMode,
-    source: bytes | BytesIO,
-    expected_type: type[ShapeDeserializer],
-) -> None:
-    deserializer = JSONCodec(deserialization_mode=mode).create_deserializer(source)
-    assert isinstance(deserializer, expected_type)
+def test_deserializer_is_eager(source: bytes | BytesIO) -> None:
+    deserializer = JSONCodec().create_deserializer(source)
+    assert isinstance(deserializer, JSONValueDeserializer)
 
 
-@pytest.mark.parametrize(
-    "mode",
-    [JSONDeserializationMode.STREAMING, JSONDeserializationMode.EAGER],
-)
-def test_ignores_unknown_structure_members(mode: JSONDeserializationMode) -> None:
-    actual = JSONCodec(deserialization_mode=mode).deserialize(
+def test_ignores_unknown_structure_members() -> None:
+    actual = JSONCodec().deserialize(
         b'{"unknown":{"nested":[1,2,3]},"stringMember":"value"}',
         SerdeShape,
     )
@@ -153,13 +134,7 @@ def test_ignores_unknown_structure_members(mode: JSONDeserializationMode) -> Non
     assert actual.string_member == "value"
 
 
-@pytest.mark.parametrize(
-    "mode",
-    [JSONDeserializationMode.STREAMING, JSONDeserializationMode.EAGER],
-)
-def test_invalid_json_uses_existing_error_type(mode: JSONDeserializationMode) -> None:
+def test_invalid_json_uses_existing_error_type() -> None:
     with pytest.raises(IncompleteJSONError):
-        deserializer = JSONCodec(deserialization_mode=mode).create_deserializer(
-            b'{"incomplete":'
-        )
+        deserializer = JSONCodec().create_deserializer(b'{"incomplete":')
         deserializer.read_document(DOCUMENT)

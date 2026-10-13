@@ -1,28 +1,20 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from io import BytesIO
-
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.interfaces import BytesReader, BytesWriter
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.types import TimestampFormat
 
-from ._private.deserializers import JSONShapeDeserializer as _JSONShapeDeserializer
 from ._private.documents import JSONDocument
 from ._private.serializers import JSONShapeSerializer as _JSONShapeSerializer
 from ._private.value_deserializer import (
     JSONValueDeserializer as _JSONValueDeserializer,
 )
-from .settings import JSONDeserializationMode, JSONSettings
+from .settings import JSONSettings
 
 __version__ = "0.3.0"
-__all__ = (
-    "JSONCodec",
-    "JSONDeserializationMode",
-    "JSONDocument",
-    "JSONSettings",
-)
+__all__ = ("JSONCodec", "JSONDocument", "JSONSettings")
 
 
 class JSONCodec(Codec):
@@ -35,7 +27,6 @@ class JSONCodec(Codec):
         default_timestamp_format: TimestampFormat = TimestampFormat.DATE_TIME,
         default_namespace: str | None = None,
         document_class: type[JSONDocument] = JSONDocument,
-        deserialization_mode: JSONDeserializationMode = JSONDeserializationMode.AUTO,
     ) -> None:
         """Initializes a JSONCodec.
 
@@ -48,8 +39,6 @@ class JSONCodec(Codec):
         :param default_namespace: The default namespace to use when determining a
             document's discriminator.
         :param document_class: The document class to deserialize to.
-        :param deserialization_mode: Controls whether JSON payloads are parsed eagerly,
-            incrementally, or selected automatically based on the source type.
         """
         self._settings = JSONSettings(
             use_json_name=use_json_name,
@@ -57,7 +46,6 @@ class JSONCodec(Codec):
             default_timestamp_format=default_timestamp_format,
             default_namespace=default_namespace,
             document_class=document_class,
-            deserialization_mode=deserialization_mode,
         )
 
     @property
@@ -68,22 +56,4 @@ class JSONCodec(Codec):
         return _JSONShapeSerializer(sink, settings=self._settings)
 
     def create_deserializer(self, source: bytes | BytesReader) -> "ShapeDeserializer":
-        mode = self._settings.deserialization_mode
-        if mode is JSONDeserializationMode.EAGER or (
-            mode is JSONDeserializationMode.AUTO and isinstance(source, bytes)
-        ):
-            return _JSONValueDeserializer(source, settings=self._settings)
-
-        if isinstance(source, bytes):
-            source = BytesIO(source)
-        return _JSONShapeDeserializer(source, settings=self._settings)
-
-    @property
-    def deserialization_mode(self) -> JSONDeserializationMode:
-        """The strategy used to deserialize JSON payloads."""
-
-        return self._settings.deserialization_mode
-
-    @deserialization_mode.setter
-    def deserialization_mode(self, value: JSONDeserializationMode) -> None:
-        self._settings.deserialization_mode = value
+        return _JSONValueDeserializer(source, settings=self._settings)
