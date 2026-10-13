@@ -7,6 +7,7 @@ provenance tracking, and precedence behavior.
 """
 
 import os
+import warnings
 from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
@@ -552,7 +553,7 @@ class TestResolveRetryMode:
             assert result.source == ConfigSource.PROFILE
 
     @pytest.mark.asyncio
-    async def test_adaptive_from_profile_warns_and_maps_to_standard(self):
+    async def test_resolves_adaptive_from_profile(self):
         fs = FakeFileSystem(
             {"/fake/config": "[profile default]\nretry_mode = adaptive\n"}
         )
@@ -562,12 +563,10 @@ class TestResolveRetryMode:
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/credentials",
             )
-            with pytest.warns(
-                UserWarning,
-                match="'adaptive' retry mode is not supported, using 'standard' instead.",
-            ):
+            with warnings.catch_warnings():
+                warnings.simplefilter("error")
                 result = await resolve_retry_mode(ctx)
-            assert result.value == "standard"
+            assert result.value == "adaptive"
             assert result.source == ConfigSource.PROFILE
 
     @pytest.mark.asyncio
@@ -606,15 +605,13 @@ class TestResolveRetryMode:
             assert result.source == ConfigSource.ENV
 
     @pytest.mark.asyncio
-    async def test_adaptive_warns_and_maps_to_standard(self):
+    async def test_resolves_adaptive_from_env(self):
         with patch.dict(os.environ, {"AWS_RETRY_MODE": "adaptive"}, clear=True):
             ctx = SharedConfigContext()
-            with pytest.warns(
-                UserWarning,
-                match="'adaptive' retry mode is not supported, using 'standard' instead.",
-            ):
+            with warnings.catch_warnings():
+                warnings.simplefilter("error")
                 result = await resolve_retry_mode(ctx)
-            assert result.value == "standard"
+            assert result.value == "adaptive"
             assert result.source == ConfigSource.ENV
 
 

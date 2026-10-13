@@ -70,7 +70,7 @@ class TestFieldSpec:
 
 
 class TestValidateRetryMode:
-    @pytest.mark.parametrize("mode", ["standard"])
+    @pytest.mark.parametrize("mode", ["standard", "adaptive"])
     def test_valid_modes(self, mode: str):
         validate_retry_mode(mode)
 

@@ -100,13 +100,6 @@ async def resolve_retry_mode(ctx: SharedConfigContext) -> Resolved[str | None]:
             stacklevel=2,
         )
         return Resolved(value="standard", source=result.source)
-    elif result.value == "adaptive":
-        warnings.warn(
-            "'adaptive' retry mode is not supported, using 'standard' instead.",
-            UserWarning,
-            stacklevel=2,
-        )
-        return Resolved(value="standard", source=result.source)
     return result
 
 

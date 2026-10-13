@@ -36,16 +36,15 @@ def validate_region(value: object) -> None:
 def validate_retry_mode(retry_mode: str):
     """Validate retry mode.
 
-    Valid values: 'standard'
+    Valid values: 'standard', 'adaptive'
 
     :param retry_mode: The retry mode value to validate
     :raises: ConfigValidationError: If the retry mode is invalid
     """
-    # NOTE: RetryStrategyType includes 'simple' for direct config use, but the only valid
-    # string mode accepted here is 'standard'. 'adaptive' and 'legacy' are intentionally
-    # rejected as direct overrides ('adaptive' support may be added later; 'legacy' is not
-    # recommended and never will be). When 'adaptive' or 'legacy' come from the environment
-    # or a config file, resolve_retry_mode() warns and maps them to 'standard'.
+    # NOTE: RetryStrategyType includes 'simple' for direct config use, but it isn't a
+    # valid string mode here. 'legacy' is intentionally rejected as a direct override
+    # (it is not recommended and never will be). When 'legacy' comes from the
+    # environment or a config file, resolve_retry_mode() warns and maps it to 'standard'.
 
     all_modes = list(get_args(RetryStrategyType))
     if "simple" in all_modes:

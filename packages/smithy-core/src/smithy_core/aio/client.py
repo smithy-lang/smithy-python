@@ -28,8 +28,6 @@ from ..interceptors import (
 )
 from ..interfaces import Endpoint, TypedProperties
 from ..interfaces.auth import AuthOption, AuthSchemeResolver
-from ..interfaces.retries import RetryStrategy
-from ..retries import AdaptiveRetryStrategy
 from ..schemas import APIOperation
 from ..serializers import SerializeableShape
 from ..shapes import ShapeID
@@ -46,7 +44,7 @@ from .interfaces import (
 from .interfaces.auth import AuthScheme
 from .interfaces.eventstream import EventReceiver
 from .interfaces.retries import RetryStrategy
-from .retries import RetryStrategyResolver
+from .retries import AdaptiveRetryStrategy, RetryStrategyResolver
 from .utils import close, seek
 
 if TYPE_CHECKING:
@@ -395,7 +393,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             token_scope=call.retry_scope
         )
 
-        last_error: Exception | None = None
+        last_output_context: OutputContext[I, O, TRequest, TResponse | None] | None = (
+            None
+        )
         while True:
             if retry_token.retry_delay:
                 await sleep(retry_token.retry_delay)
@@ -410,14 +410,18 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                     request_future,
                 )
             except TimeoutError as e:
-                # Only raised when an adaptive retry times out waiting for a send
-                # token. On a retry, surface the error that caused it instead.
-                if last_error is None:
+                # Only the adaptive send-token wait raises this. If it happens on a
+                # retry, return the previous failed attempt (as when attempts run out)
+                # so the caller's error still includes that response's request ID.
+                if last_output_context is None:
                     raise
-                raise last_error from e
+                last_error = last_output_context.response
+                if isinstance(last_error, Exception):
+                    last_error.add_note(f"Retry not attempted: {e}")
+                return last_output_context
 
             if isinstance(output_context.response, Exception):
-                last_error = output_context.response
+                last_output_context = output_context
                 try:
                     retry_token = await retry_strategy.refresh_retry_token_for_retry(
                         token_to_renew=retry_token,
@@ -457,8 +461,8 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
     ) -> OutputContext[I, O, TRequest, TResponse | None]:
         """Send a single attempt, applying client-side rate limiting (adaptive only).
 
-        Every attempt, retryable or not, acquires a send token before it is sent and
-        updates the rate limiter with its result.
+        Every attempt, retryable or not, acquires a send token before it is sent. Once a
+        response comes back from the service, the rate limiter is updated with it.
         """
         retry_strategy = call.retry_strategy
         try:
@@ -471,6 +475,10 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         output_context = await self._handle_attempt(
             call, request_context, request_future
         )
+
+        if output_context.transport_response is None:
+            # Failed before sending, or the connection failed: not a service response
+            return output_context
 
         if isinstance(output_context.response, Exception):
             await self._handle_post_error_response_rate_limiting(

@@ -8,11 +8,12 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from smithy_core.aio.client import RequestPipeline
 from smithy_core.aio.interfaces import retries as retries_interface
-from smithy_core.aio.retries import StandardRetryStrategy
+from smithy_core.aio.retries import AdaptiveRetryStrategy, StandardRetryStrategy
 from smithy_core.exceptions import CallError, ClientTimeoutError, RetryError
+from smithy_core.interceptors import RequestContext
 from smithy_core.retries import (
-    AdaptiveRetryStrategy,
     ExponentialBackoffJitterType,
     ExponentialRetryBackoffStrategy,
     StandardRetryQuota,
@@ -194,10 +195,11 @@ class TestAdaptiveRetryPipeline:
         clock = FakeClock()
         with (
             patch(
-                "smithy_core.retries.time", SimpleNamespace(monotonic=clock.monotonic)
+                "smithy_core.aio.retries.time",
+                SimpleNamespace(monotonic=clock.monotonic),
             ),
             patch("smithy_core.aio.client.sleep", clock.sleep),
-            patch("smithy_core.retries.asyncio.wait_for", clock.wait_for),
+            patch("smithy_core.aio.retries.asyncio.wait_for", clock.wait_for),
         ):
             yield clock
 
@@ -260,7 +262,11 @@ class TestAdaptiveRetryPipeline:
             jitter_type=ExponentialBackoffJitterType.FULL,
             random=lambda: 0.5,
         )
-        strategy = AdaptiveRetryStrategy(max_attempts=3, backoff_strategy=backoff)
+        strategy = AdaptiveRetryStrategy(
+            max_attempts=3,
+            backoff_strategy=backoff,
+            throttling_backoff_strategy=backoff,
+        )
         pipeline: RequestPipeline[Any, Any] = RequestPipeline(
             protocol=MagicMock(), transport=MagicMock()
         )
@@ -271,7 +277,9 @@ class TestAdaptiveRetryPipeline:
         async def handle_attempt(*args: Any) -> SimpleNamespace:
             status = next(responses)
             sent.append((clock.now - attempt_start, status))
-            return SimpleNamespace(response=self._response(status))
+            return SimpleNamespace(
+                transport_response=MagicMock(), response=self._response(status)
+            )
 
         original_pre_request = pipeline._handle_pre_request_rate_limiting  # type: ignore[reportPrivateUsage]
 
@@ -329,8 +337,12 @@ class TestAdaptiveRetryPipeline:
             if server_tokens >= 1:
                 server_tokens -= 1
                 succeeded.append(clock.now)
-                return SimpleNamespace(response=self._response(200))
-            return SimpleNamespace(response=self._response(429))
+                return SimpleNamespace(
+                    transport_response=MagicMock(), response=self._response(200)
+                )
+            return SimpleNamespace(
+                transport_response=MagicMock(), response=self._response(429)
+            )
 
         with patch.object(
             pipeline, "_handle_attempt", AsyncMock(side_effect=handle_attempt)
@@ -369,27 +381,18 @@ class TestAdaptiveRetryPipeline:
             with pytest.raises(TimeoutError, match="Failed to acquire"):
                 await wait_for(pipeline.input_stream(call, Any), timeout=1)
 
-    @pytest.mark.parametrize(
-        "acquire_results, expected_error",
-        [
-            # The first attempt can't get a send token, so there's no service error
-            ([TimeoutError("Failed to acquire")], TimeoutError),
-            # The retry after a throttle can't get a send token
-            ([None, TimeoutError("Failed to acquire")], CallError),
-        ],
-        ids=["first_attempt", "retry"],
-    )
-    async def test_send_token_timeout_surfaces_last_service_error(
-        self, acquire_results: list[Exception | None], expected_error: type[Exception]
-    ):
-        quota = StandardRetryQuota(initial_capacity=500)
-        strategy = AdaptiveRetryStrategy(max_attempts=3, retry_quota=quota)
+    def _pipeline_with_429_attempts(
+        self, strategy: AdaptiveRetryStrategy, acquire_results: list[Exception | None]
+    ) -> tuple[RequestPipeline[Any, Any], AsyncMock, Any]:
         pipeline: RequestPipeline[Any, Any] = RequestPipeline(
             protocol=MagicMock(), transport=MagicMock()
         )
-        attempt = AsyncMock(return_value=SimpleNamespace(response=self._response(429)))
-
-        with (
+        attempt = AsyncMock(
+            return_value=SimpleNamespace(
+                transport_response=MagicMock(), response=self._response(429)
+            )
+        )
+        patches = (
             patch.object(pipeline, "_handle_attempt", attempt),
             patch.object(
                 strategy,
@@ -397,15 +400,22 @@ class TestAdaptiveRetryPipeline:
                 AsyncMock(side_effect=acquire_results),
             ),
             patch("smithy_core.aio.client.sleep", AsyncMock()),
-        ):
-            with pytest.raises(expected_error) as exc_info:
+        )
+        return pipeline, attempt, patches
+
+    async def test_send_token_timeout_on_first_attempt_raises(self):
+        quota = StandardRetryQuota(initial_capacity=500)
+        strategy = AdaptiveRetryStrategy(max_attempts=3, retry_quota=quota)
+        pipeline, attempt, (p1, p2, p3) = self._pipeline_with_429_attempts(
+            strategy, [TimeoutError("Failed to acquire")]
+        )
+
+        with p1, p2, p3:
+            with pytest.raises(TimeoutError, match="Failed to acquire"):
                 await pipeline._retry(  # type: ignore[reportPrivateUsage]
                     self._call(strategy), self._request_context(), None
                 )
 
-        if expected_error is TimeoutError:
-            # Nothing was sent, so no retry quota was spent
-            assert quota.available_capacity == 500
-        if expected_error is CallError:
-            assert exc_info.value.is_throttling_error  # type: ignore[attr-defined]
-            assert isinstance(exc_info.value.__cause__, TimeoutError)
+        # Nothing was sent, so no retry quota was spent
+        attempt.assert_not_awaited()
+        assert quota.available_capacity == 500

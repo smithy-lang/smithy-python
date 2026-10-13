@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "`RetryStrategyResolver` now caches retry strategies per resolver instead of in a shared process-wide cache, so a client's retry state is no longer reset or shared when many clients are created."
+}

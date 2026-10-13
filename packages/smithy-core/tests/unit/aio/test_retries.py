@@ -1,7 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import gc
+import weakref
+
 import pytest
 from smithy_core.aio.retries import (
+    AdaptiveRetryStrategy,
     RetryStrategyResolver,
     SimpleRetryStrategy,
     StandardRetryStrategy,
@@ -286,6 +290,28 @@ async def test_retry_strategy_resolver_caches_strategies() -> None:
     assert strategy1 is not strategy3
 
 
+async def test_retry_strategy_resolver_cache_is_not_shared_across_resolvers() -> None:
+    resolver = RetryStrategyResolver()
+    options = RetryStrategyOptions(retry_mode="adaptive")
+    strategy = await resolver.resolve_retry_strategy(retry_strategy=options)
+
+    for _ in range(200):
+        await RetryStrategyResolver().resolve_retry_strategy(retry_strategy=options)
+
+    assert await resolver.resolve_retry_strategy(retry_strategy=options) is strategy
+
+
+async def test_retry_strategy_resolver_strategies_are_freed_with_resolver() -> None:
+    resolver = RetryStrategyResolver()
+    strategy = await resolver.resolve_retry_strategy(retry_strategy=None)
+    strategy_ref = weakref.ref(strategy)
+
+    del resolver, strategy
+    gc.collect()
+
+    assert strategy_ref() is None
+
+
 async def test_retry_strategy_resolver_returns_existing_strategy() -> None:
     resolver = RetryStrategyResolver()
     provided_strategy = SimpleRetryStrategy(max_attempts=7)
@@ -325,6 +351,17 @@ async def test_retry_strategy_resolver_uses_retry_mode_fallback() -> None:
     )
 
     assert isinstance(strategy, SimpleRetryStrategy)
+    assert strategy.max_attempts == 4
+
+
+async def test_retry_strategy_resolver_uses_adaptive_retry_mode_fallback() -> None:
+    resolver = RetryStrategyResolver()
+
+    strategy = await resolver.resolve_retry_strategy(
+        retry_strategy=None, retry_mode="adaptive", max_attempts=4
+    )
+
+    assert isinstance(strategy, AdaptiveRetryStrategy)
     assert strategy.max_attempts == 4
 
 
