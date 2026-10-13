@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
+import ast
 from collections import Counter
-from collections.abc import Generator, Iterable
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from unicodedata import normalize
 
@@ -40,29 +41,50 @@ _BUILTINS = frozenset(
 )
 
 
+# Stands in for each type reference while written lines are parsed for names.
+_PLACEHOLDER = "__smithy_reference__"
+# Children of these nodes are evaluated in a new scope.
+_SCOPES = (
+    ast.ClassDef,
+    ast.FunctionDef,
+    ast.AsyncFunctionDef,
+    ast.Lambda,
+    ast.ListComp,
+    ast.SetComp,
+    ast.DictComp,
+    ast.GeneratorExp,
+)
+
+
 def _binding(name: str) -> str:
     """Compare names as Python binds them, without changing emitted spelling."""
     return normalize("NFKC", name)
 
 
+def _bound_name(node: ast.AST) -> str | None:
+    """Return the name a node binds in its scope, if any."""
+    if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+        return node.id
+    if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+        return node.name
+    if isinstance(node, ast.arg):
+        return node.arg
+    if isinstance(node, ast.alias):
+        return None if node.name == "*" else node.asname or node.name.split(".")[0]
+    if isinstance(node, (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)):
+        return node.name
+    if isinstance(node, ast.MatchMapping):
+        return node.rest
+    if isinstance(node, (ast.TypeVar, ast.ParamSpec, ast.TypeVarTuple)):
+        return node.name
+    return None
+
+
 class PythonWriter:
     """Write trusted Python lines, retaining type references until rendering."""
 
-    def __init__(
-        self,
-        module: str,
-        *,
-        declarations: Iterable[str] = (),
-        local_names: Iterable[str] = (),
-    ) -> None:
+    def __init__(self, module: str) -> None:
         self._module = _binding(module)
-        self._declarations: set[str] = set()
-        for name in declarations:
-            binding = _binding(name)
-            if binding in self._declarations:
-                raise CodegenError(f"Duplicate generated declaration: {name!r}")
-            self._declarations.add(binding)
-        self._local_names = frozenset(_binding(name) for name in local_names)
         self._depth = 0
         self._lines: list[tuple[int, tuple[str | TypeReference, ...]]] = []
 
@@ -79,7 +101,55 @@ class PythonWriter:
         finally:
             self._depth -= 1
 
-    def _plan_imports(self) -> tuple[dict[tuple[str | None, str], str], list[str]]:
+    def _body(self, reference: Callable[[TypeReference], str]) -> list[str]:
+        body: list[str] = []
+        for depth, parts in self._lines:
+            text = "".join(
+                part if isinstance(part, str) else reference(part) for part in parts
+            )
+            body.append("    " * depth + text if text else "")
+        return body
+
+    def _names(self) -> tuple[frozenset[str], frozenset[str]]:
+        """Return the module and local names bound by the written lines."""
+        source = "\n".join(self._body(lambda _: _PLACEHOLDER))
+        try:
+            tree = ast.parse(source, feature_version=(3, 12))
+        except SyntaxError as error:
+            raise CodegenError(
+                f"Written lines are not valid Python 3.12 (line {error.lineno}): "
+                f"{error.msg}"
+            ) from error
+        declarations: set[str] = set()
+        local_names: set[str] = set()
+        classes: set[str] = set()
+        # Walk without recursion; written lines can nest deeply.
+        pending: list[tuple[ast.AST, bool]] = [(node, True) for node in tree.body]
+        while pending:
+            node, module_scope = pending.pop()
+            name = _bound_name(node)
+            if name is not None:
+                if isinstance(node, (ast.TypeVar, ast.ParamSpec, ast.TypeVarTuple)):
+                    local_names.add(name)
+                elif module_scope:
+                    if isinstance(node, ast.ClassDef):
+                        if name in classes:
+                            raise CodegenError(
+                                f"Duplicate generated declaration: {name!r}"
+                            )
+                        classes.add(name)
+                    declarations.add(name)
+                else:
+                    local_names.add(name)
+            nested = module_scope and not isinstance(node, _SCOPES)
+            pending.extend((child, nested) for child in ast.iter_child_nodes(node))
+        declarations.discard(_PLACEHOLDER)
+        local_names.discard(_PLACEHOLDER)
+        return frozenset(declarations), frozenset(local_names)
+
+    def _plan_imports(
+        self, declarations: frozenset[str], local_names: frozenset[str]
+    ) -> tuple[dict[tuple[str | None, str], str], list[str]]:
         identities: set[tuple[str | None, str]] = set()
         pending = [
             part
@@ -109,11 +179,11 @@ class PythonWriter:
         current_names = {
             name for module, name in representatives if module == self._module
         }
-        for name in sorted(current_names & self._local_names):
+        for name in sorted(current_names & local_names):
             raise CodegenError(
                 f"Same-module reference {self._module}.{name} conflicts with local name {name!r}"
             )
-        reserved = self._declarations | self._local_names | current_names
+        reserved = declarations | local_names | current_names
         external = sorted(
             (module, name)
             for (module_binding, _), (module, name) in representatives.items()
@@ -201,15 +271,9 @@ class PythonWriter:
 
     def render(self) -> str:
         """Return complete source without changing the recorded lines."""
-        names, imports = self._plan_imports()
+        names, imports = self._plan_imports(*self._names())
         header = "from __future__ import annotations\n"
         if imports:
             header += "\n" + "\n".join(imports) + "\n"
-        body: list[str] = []
-        for depth, parts in self._lines:
-            text = "".join(
-                part if isinstance(part, str) else self._annotation(part, names)
-                for part in parts
-            )
-            body.append("    " * depth + text if text else "")
+        body = self._body(lambda reference: self._annotation(reference, names))
         return header + ("\n\n" + "\n".join(body) + "\n" if body else "")

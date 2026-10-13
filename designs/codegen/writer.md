@@ -10,9 +10,7 @@ from smithy_python.symbols import TypeReference
 from smithy_python.writer import PythonWriter
 
 node = TypeReference("Node", "example.models", nullable=True)
-writer = PythonWriter(
-    "example.models", declarations={"Node"}, local_names={"children", "amount"}
-)
+writer = PythonWriter("example.models")
 writer.line("class Node:")
 with writer.indent():
     writer.line("children: ", TypeReference("list", "builtins", (node,)))
@@ -35,14 +33,14 @@ class Node:
 
 ## Writing a module
 
-`PythonWriter(module, *, declarations=(), local_names=())` takes the destination
-module name and the names the caller will use. Supply valid Python names.
-`declarations` contains module-level names. Duplicates raise `CodegenError`.
-`local_names` contains field and local names that can shadow annotations across
-the module. Do not automatically include enum constants or other class members
-that are not in an annotation's scope. Repeated local names are allowed because
-different classes can have the same field name.
-The symbol provider already checks for duplicate fields within a declaration.
+`PythonWriter(module)` takes the destination module name. Callers do not list
+the names their lines define; `render()` finds them in the written lines.
+Declarations are names bound at module level, such as classes, functions,
+assignments and imports. Local names are bound anywhere else, such as fields,
+parameters and local variables. Local names apply across the module, because a
+field in any class can shadow a reference in that class. Two module-level
+classes with the same name raise `CodegenError`. The symbol provider already
+checks for duplicate fields within a declaration.
 
 * `line(*parts)` joins strings and type references without separators at the
   current indentation. `line()` writes a blank line without spaces.
@@ -52,8 +50,11 @@ The symbol provider already checks for duplicate fields within a declaration.
   header, sorted imports and the body in written order. It does not modify the
   writer. Adding another reference can change aliases in the next render.
 
-Raw text is trusted Python, not a template. The writer does not parse it to
-find missing name reservations. Callers supply blank lines between declarations.
+Raw text is trusted Python, not a template. To find names, `render()` parses
+the written lines with the Python 3.12 grammar, with a placeholder standing in
+for each type reference. Lines that are not valid Python 3.12 raise
+`CodegenError`, including syntax added in later versions. Callers supply blank
+lines between declarations.
 
 Pass every builtin or imported name as a type reference, not just annotations.
 A reference can appear anywhere in a line, so defaults such as
@@ -103,9 +104,8 @@ follow the same comparison rules, so equivalent spellings do not cause self-impo
 Equivalent references share one import, using the lexicographically smallest
 supplied module/name pair so the choice does not depend on reference order.
 
-A same-module reference also listed in `local_names` raises `CodegenError`.
+A same-module reference whose name is also a local name raises `CodegenError`.
 This first version does not add self-imports or aliases for local declarations.
-Listing it only in `declarations` is normal.
 
 The writer returns source in memory. File output, documentation conversion and
 actual declaration generation remain separate follow-ups.

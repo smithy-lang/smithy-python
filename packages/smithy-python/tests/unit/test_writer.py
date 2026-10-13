@@ -33,7 +33,7 @@ def load_written_module(
 def test_nested_forward_and_mutual_annotations(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    writer = PythonWriter("written_models", declarations=("Node", "_2HTTPServer"))
+    writer = PythonWriter("written_models")
     writer.line("class Node:")
     with writer.indent():
         writer.line(
@@ -105,14 +105,18 @@ def test_imports_reserve_builtins_across_supported_versions(
 
 def test_indentation_restored_after_exception() -> None:
     writer = PythonWriter("models")
+    writer.line("if True:")
     with pytest.raises(RuntimeError), writer.indent():
-        writer.line("first")
+        writer.line("first = 1")
+        writer.line("if True:")
         with writer.indent():
-            writer.line("second")
+            writer.line("second = 2")
             writer.line()
             raise RuntimeError
-    writer.line("last")
-    assert writer.render().endswith("    first\n        second\n\nlast\n")
+    writer.line("last = 3")
+    assert writer.render().endswith(
+        "    first = 1\n    if True:\n        second = 2\n\nlast = 3\n"
+    )
 
 
 @pytest.mark.parametrize("scope", ["declaration", "local"])
@@ -133,11 +137,7 @@ def test_shadowed_references_load(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    writer = PythonWriter(
-        "written_models",
-        declarations=reserved if scope == "declaration" else ("Node",),
-        local_names=reserved if scope == "local" else (),
-    )
+    writer = PythonWriter("written_models")
     if scope == "declaration":
         for name in reserved:
             writer.line(name, " = 'shadow'")
@@ -166,7 +166,7 @@ def test_class_body_references_load(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     names = ("list", "field", "tags")
-    writer = PythonWriter("written_models", declarations=("Node",), local_names=names)
+    writer = PythonWriter("written_models")
     strings = TypeReference("list", "builtins", (TypeReference("str", "builtins"),))
     writer.line("@", TypeReference("dataclass", "dataclasses"))
     writer.line("class Node:")
@@ -287,7 +287,14 @@ def test_binding_conflicts(
 ) -> None:
     from smithy_python.exceptions import CodegenError
 
-    writer = PythonWriter("models", declarations=declarations, local_names=locals_)
+    writer = PythonWriter("models")
+    for name in declarations:
+        writer.line(name, " = None")
+    writer.line("class Holder:")
+    with writer.indent():
+        writer.line("pass")
+        for name in locals_:
+            writer.line(name, " = None")
     for ref in refs:
         writer.line("value: ", ref)
     with pytest.raises(CodegenError, match="^" + re.escape(prefix)):
@@ -308,13 +315,67 @@ def test_equivalent_import_names_are_aliased() -> None:
     )
 
 
-@pytest.mark.parametrize("names", [("Node", "Node"), ("K", "\u212a")])
-def test_duplicate_declarations_fail_at_construction(names: tuple[str, str]) -> None:
+@pytest.mark.parametrize(
+    "names,expected", [(("Node", "Node"), "Node"), (("K", "\u212a"), "K")]
+)
+def test_duplicate_classes_fail_at_render(
+    names: tuple[str, str], expected: str
+) -> None:
     from smithy_python.exceptions import CodegenError
 
-    message = f"Duplicate generated declaration: {names[1]!r}"
+    writer = PythonWriter("models")
+    for name in names:
+        writer.line("class ", name, ":")
+        with writer.indent():
+            writer.line("pass")
+    message = f"Duplicate generated declaration: {expected!r}"
     with pytest.raises(CodegenError, match="^" + re.escape(message) + "$"):
-        PythonWriter("models", declarations=names)
+        writer.render()
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "list = None",
+        "class Holder:\n    list = None",
+        "def build(list):\n    pass",
+        "def build():\n    list = None",
+        "for list in ():\n    pass",
+        "import json as list",
+        "from json import loads as list",
+        "try:\n    pass\nexcept Exception as list:\n    pass",
+        "with open('x') as list:\n    pass",
+        "build = lambda list: None",
+        "values = [None for list in ()]",
+        "match None:\n    case list:\n        pass",
+        "match {}:\n    case {**list}:\n        pass",
+        "type Alias[list] = None",
+    ],
+)
+def test_names_are_read_from_written_lines(source: str) -> None:
+    writer = PythonWriter("models")
+    writer.line(source)
+    writer.line("value: ", TypeReference("list", "builtins"))
+    rendered = writer.render()
+    assert "import builtins as _builtins" in rendered
+    assert rendered.endswith("value: _builtins.list\n")
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "class Node",  # Missing colon.
+        "value = t'text'",  # Template strings need Python 3.14.
+    ],
+)
+def test_invalid_python_fails_at_render(line: str) -> None:
+    from smithy_python.exceptions import CodegenError
+
+    writer = PythonWriter("models")
+    writer.line(line)
+    message = "Written lines are not valid Python 3.12"
+    with pytest.raises(CodegenError, match="^" + re.escape(message)):
+        writer.render()
 
 
 def test_builtin_names_cover_running_interpreter() -> None:
@@ -330,7 +391,7 @@ def test_builtin_names_cover_running_interpreter() -> None:
 def test_equivalent_current_module_names(
     module: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    writer = PythonWriter(module, declarations=("Node",))
+    writer = PythonWriter(module)
     writer.line("class Node:")
     with writer.indent():
         writer.line(
@@ -456,7 +517,7 @@ def test_generation_without_runtime_packages() -> None:
 
 
 def test_empty_writer_and_trusted_text() -> None:
-    writer = PythonWriter("models", local_names=("value", "value"))
+    writer = PythonWriter("models")
     assert writer.render() == "from __future__ import annotations\n"
     writer.line("value = '$T {not_a_template}'")
     assert writer.render().endswith("value = '$T {not_a_template}'\n")
