@@ -282,13 +282,16 @@ def test_operation_idempotency_token_member():
     operation = APIOperation[Any, Any](
         input=object,
         output=object,
-        schema=Schema(
-            id=ShapeID("com.example#Operation"), shape_type=ShapeType.OPERATION
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "com.example",
+            "Operation",
+            0,
+            input_schema,
+            input_schema,
+            (),
         ),
-        input_schema=input_schema,
-        output_schema=input_schema,
         error_registry=TypeRegistry({}),
         effective_auth_schemes=[],
-        error_schemas=[],
     )
     assert operation.idempotency_token_member is input_schema.members["token"]

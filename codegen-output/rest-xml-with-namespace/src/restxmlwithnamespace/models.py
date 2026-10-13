@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import logging
 from typing import Any, Self
 
+from smithy_core._schema_compact import hydrate
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import ModeledError
@@ -39,13 +40,12 @@ class NestedWithNamespace:
     attr_field: str | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_NESTED_WITH_NAMESPACE, self)
+        serializer.write_struct(hydrate(_SCHEMA_NESTED_WITH_NAMESPACE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_NESTED_WITH_NAMESPACE).members_by_index
         if self.attr_field is not None:
-            serializer.write_string(
-                _SCHEMA_NESTED_WITH_NAMESPACE.members["attrField"], self.attr_field
-            )
+            serializer.write_string(members[0], self.attr_field)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -54,18 +54,18 @@ class NestedWithNamespace:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_NESTED_WITH_NAMESPACE)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["attr_field"] = de.read_string(
-                        _SCHEMA_NESTED_WITH_NAMESPACE.members["attrField"]
-                    )
+                    kwargs["attr_field"] = de.read_string(members[0])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(_SCHEMA_NESTED_WITH_NAMESPACE, consumer=_consumer)
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -96,72 +96,42 @@ class SimpleScalarPropertiesInput:
     double_value: float | None = None
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.string_value is not None:
-            serializer.write_string(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["stringValue"],
-                self.string_value,
-            )
+            serializer.write_string(members[1], self.string_value)
 
         if self.true_boolean_value is not None:
-            serializer.write_boolean(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["trueBooleanValue"],
-                self.true_boolean_value,
-            )
+            serializer.write_boolean(members[2], self.true_boolean_value)
 
         if self.false_boolean_value is not None:
-            serializer.write_boolean(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["falseBooleanValue"],
-                self.false_boolean_value,
-            )
+            serializer.write_boolean(members[3], self.false_boolean_value)
 
         if self.byte_value is not None:
-            serializer.write_byte(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["byteValue"],
-                self.byte_value,
-            )
+            serializer.write_byte(members[4], self.byte_value)
 
         if self.short_value is not None:
-            serializer.write_short(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["shortValue"],
-                self.short_value,
-            )
+            serializer.write_short(members[5], self.short_value)
 
         if self.integer_value is not None:
-            serializer.write_integer(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["integerValue"],
-                self.integer_value,
-            )
+            serializer.write_integer(members[6], self.integer_value)
 
         if self.long_value is not None:
-            serializer.write_long(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["longValue"],
-                self.long_value,
-            )
+            serializer.write_long(members[7], self.long_value)
 
         if self.float_value is not None:
-            serializer.write_float(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["floatValue"],
-                self.float_value,
-            )
+            serializer.write_float(members[8], self.float_value)
 
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["Nested"], self.nested
-            )
+            serializer.write_struct(members[9], self.nested)
 
         if self.double_value is not None:
-            serializer.write_double(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["doubleValue"],
-                self.double_value,
-            )
+            serializer.write_double(members[10], self.double_value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -170,72 +140,48 @@ class SimpleScalarPropertiesInput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["string_value"] = de.read_string(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["stringValue"]
-                    )
+                    kwargs["string_value"] = de.read_string(members[1])
 
                 case 2:
-                    kwargs["true_boolean_value"] = de.read_boolean(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members[
-                            "trueBooleanValue"
-                        ]
-                    )
+                    kwargs["true_boolean_value"] = de.read_boolean(members[2])
 
                 case 3:
-                    kwargs["false_boolean_value"] = de.read_boolean(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members[
-                            "falseBooleanValue"
-                        ]
-                    )
+                    kwargs["false_boolean_value"] = de.read_boolean(members[3])
 
                 case 4:
-                    kwargs["byte_value"] = de.read_byte(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["byteValue"]
-                    )
+                    kwargs["byte_value"] = de.read_byte(members[4])
 
                 case 5:
-                    kwargs["short_value"] = de.read_short(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["shortValue"]
-                    )
+                    kwargs["short_value"] = de.read_short(members[5])
 
                 case 6:
-                    kwargs["integer_value"] = de.read_integer(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["integerValue"]
-                    )
+                    kwargs["integer_value"] = de.read_integer(members[6])
 
                 case 7:
-                    kwargs["long_value"] = de.read_long(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["longValue"]
-                    )
+                    kwargs["long_value"] = de.read_long(members[7])
 
                 case 8:
-                    kwargs["float_value"] = de.read_float(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["floatValue"]
-                    )
+                    kwargs["float_value"] = de.read_float(members[8])
 
                 case 9:
                     kwargs["nested"] = NestedWithNamespace.deserialize(de)
 
                 case 10:
-                    kwargs["double_value"] = de.read_double(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT.members["doubleValue"]
-                    )
+                    kwargs["double_value"] = de.read_double(members[10])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
@@ -276,72 +222,42 @@ class SimpleScalarPropertiesOutput:
     """
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT, self)
+        serializer.write_struct(hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
+        members = hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT).members_by_index
         if self.foo is not None:
-            serializer.write_string(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["foo"], self.foo
-            )
+            serializer.write_string(members[0], self.foo)
 
         if self.string_value is not None:
-            serializer.write_string(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["stringValue"],
-                self.string_value,
-            )
+            serializer.write_string(members[1], self.string_value)
 
         if self.true_boolean_value is not None:
-            serializer.write_boolean(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["trueBooleanValue"],
-                self.true_boolean_value,
-            )
+            serializer.write_boolean(members[2], self.true_boolean_value)
 
         if self.false_boolean_value is not None:
-            serializer.write_boolean(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["falseBooleanValue"],
-                self.false_boolean_value,
-            )
+            serializer.write_boolean(members[3], self.false_boolean_value)
 
         if self.byte_value is not None:
-            serializer.write_byte(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["byteValue"],
-                self.byte_value,
-            )
+            serializer.write_byte(members[4], self.byte_value)
 
         if self.short_value is not None:
-            serializer.write_short(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["shortValue"],
-                self.short_value,
-            )
+            serializer.write_short(members[5], self.short_value)
 
         if self.integer_value is not None:
-            serializer.write_integer(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["integerValue"],
-                self.integer_value,
-            )
+            serializer.write_integer(members[6], self.integer_value)
 
         if self.long_value is not None:
-            serializer.write_long(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["longValue"],
-                self.long_value,
-            )
+            serializer.write_long(members[7], self.long_value)
 
         if self.float_value is not None:
-            serializer.write_float(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["floatValue"],
-                self.float_value,
-            )
+            serializer.write_float(members[8], self.float_value)
 
         if self.nested is not None:
-            serializer.write_struct(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["Nested"], self.nested
-            )
+            serializer.write_struct(members[9], self.nested)
 
         if self.double_value is not None:
-            serializer.write_double(
-                _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["doubleValue"],
-                self.double_value,
-            )
+            serializer.write_double(members[10], self.double_value)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -350,82 +266,55 @@ class SimpleScalarPropertiesOutput:
     @classmethod
     def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        schema = hydrate(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT)
+        members = schema.members_by_index
 
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            match schema.expect_member_index():
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
                 case 0:
-                    kwargs["foo"] = de.read_string(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["foo"]
-                    )
+                    kwargs["foo"] = de.read_string(members[0])
 
                 case 1:
-                    kwargs["string_value"] = de.read_string(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["stringValue"]
-                    )
+                    kwargs["string_value"] = de.read_string(members[1])
 
                 case 2:
-                    kwargs["true_boolean_value"] = de.read_boolean(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members[
-                            "trueBooleanValue"
-                        ]
-                    )
+                    kwargs["true_boolean_value"] = de.read_boolean(members[2])
 
                 case 3:
-                    kwargs["false_boolean_value"] = de.read_boolean(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members[
-                            "falseBooleanValue"
-                        ]
-                    )
+                    kwargs["false_boolean_value"] = de.read_boolean(members[3])
 
                 case 4:
-                    kwargs["byte_value"] = de.read_byte(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["byteValue"]
-                    )
+                    kwargs["byte_value"] = de.read_byte(members[4])
 
                 case 5:
-                    kwargs["short_value"] = de.read_short(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["shortValue"]
-                    )
+                    kwargs["short_value"] = de.read_short(members[5])
 
                 case 6:
-                    kwargs["integer_value"] = de.read_integer(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["integerValue"]
-                    )
+                    kwargs["integer_value"] = de.read_integer(members[6])
 
                 case 7:
-                    kwargs["long_value"] = de.read_long(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["longValue"]
-                    )
+                    kwargs["long_value"] = de.read_long(members[7])
 
                 case 8:
-                    kwargs["float_value"] = de.read_float(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["floatValue"]
-                    )
+                    kwargs["float_value"] = de.read_float(members[8])
 
                 case 9:
                     kwargs["nested"] = NestedWithNamespace.deserialize(de)
 
                 case 10:
-                    kwargs["double_value"] = de.read_double(
-                        _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT.members["doubleValue"]
-                    )
+                    kwargs["double_value"] = de.read_double(members[10])
 
                 case _:
-                    logger.debug("Unexpected member schema: %s", schema)
+                    logger.debug("Unexpected member schema: %s", member_schema)
 
-        deserializer.read_struct(
-            _SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT, consumer=_consumer
-        )
+        deserializer.read_struct(schema, consumer=_consumer)
         return kwargs
 
 
 SIMPLE_SCALAR_PROPERTIES = APIOperation(
     input=SimpleScalarPropertiesInput,
     output=SimpleScalarPropertiesOutput,
-    schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES,
-    input_schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES_INPUT,
-    output_schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT,
+    static_schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-    error_schemas=[],
 )

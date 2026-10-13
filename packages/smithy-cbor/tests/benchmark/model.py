@@ -91,11 +91,6 @@ PUT_RECORDS_OUTPUT = Schema.collection(
     members={"records": {"target": RECORD_LIST}},
 )
 
-PUT_RECORDS = Schema(
-    id=ShapeID(f"{_NS}#PutRecords"),
-    shape_type=ShapeType.OPERATION,
-)
-
 SERVICE = Schema(
     id=ShapeID(f"{_NS}#BenchmarkService"),
     shape_type=ShapeType.SERVICE,
@@ -356,10 +351,15 @@ class PutRecordsOutput:
 PUT_RECORDS_OPERATION: APIOperation[PutRecordsInput, PutRecordsOutput] = APIOperation(
     input=PutRecordsInput,
     output=PutRecordsOutput,
-    schema=PUT_RECORDS,
-    input_schema=PUT_RECORDS_INPUT,
-    output_schema=PUT_RECORDS_OUTPUT,
+    static_schema=(
+        ShapeType.OPERATION.value,
+        _NS,
+        "PutRecords",
+        0,
+        PUT_RECORDS_INPUT,
+        PUT_RECORDS_OUTPUT,
+        (),
+    ),
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
-    error_schemas=[],
 )
