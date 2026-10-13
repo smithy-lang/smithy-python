@@ -133,6 +133,49 @@ def test_cache_pins_keyed_tuple_against_id_recycling() -> None:
     assert _schema_compact._cache[id(tup)][0] is tup
 
 
+def test_cycle_node_not_published_until_root_completes() -> None:
+    # In an A -> B -> A cycle, B finishes its own populate loop before A does. B must
+    # not land in _cache while A (reachable from B) is still half-built: nothing from
+    # the component is published until the outermost hydrate frame returns.
+    snapshots: list[tuple[bool, bool]] = []
+
+    a: StaticSchema = (
+        ShapeType.STRUCTURE.value,
+        NS,
+        "A",
+        0,
+        ("b",),
+        ((lambda: b, 0),),
+    )
+
+    def to_a() -> object:
+        # Resolved while B populates, i.e. after B's schema exists but before the
+        # root (A) frame returns. Record whether either node has leaked into _cache.
+        snapshots.append(
+            (id(a) in _schema_compact._cache, id(b) in _schema_compact._cache)
+        )
+        return a
+
+    b: StaticSchema = (
+        ShapeType.STRUCTURE.value,
+        NS,
+        "B",
+        0,
+        ("a",),
+        ((to_a, 0),),
+    )
+
+    schema_a = hydrate(a)
+    # The probe ran mid-build and saw neither node cached.
+    assert snapshots == [(False, False)]
+    # After the root returns, the whole component is published and fully linked.
+    assert id(a) in _schema_compact._cache
+    assert id(b) in _schema_compact._cache
+    schema_b = schema_a.members["b"].member_target
+    assert schema_b is not None
+    assert schema_b.members["a"].member_target is schema_a
+
+
 def test_concurrent_hydration_returns_fully_populated_schema() -> None:
     tup = _struct(
         "Concurrent",

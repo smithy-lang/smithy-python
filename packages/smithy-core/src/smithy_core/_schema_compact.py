@@ -131,18 +131,20 @@ def _resolve(ref: "StaticSchemaRef") -> Schema:
     return _resolve(ref())
 
 
-# id(tuple) -> fully hydrated Schema. A tuple is written here only once its members
-# id(tuple) -> (tuple, fully hydrated Schema). A tuple is written here only once its
-# members are fully resolved, so a reader never sees a half-built schema. The value
-# keeps a reference to the keyed tuple so its id() can't be recycled onto a different
-# tuple while cached -- which would otherwise let a transient hand-built tuple collide
-# with a stale entry.
+# id(tuple) -> (tuple, fully hydrated Schema). A component is written here only once
+# its ENTIRE connected graph is built: a cross-referenced sibling that finishes its
+# own populate loop first is still held out of _cache until the outermost hydrate
+# frame returns, so a reader (including another thread) never reaches a node whose
+# members point at a half-built sibling. The value keeps a reference to the keyed
+# tuple so its id() can't be recycled onto a different tuple while cached -- which
+# would otherwise let a transient hand-built tuple collide with a stale entry.
 _cache: dict[int, tuple["StaticSchema", Schema]] = {}
 
-# Per-thread id(tuple) -> in-progress Schema, holding schemas mid-hydration so a
-# recursive member target that resolves back to the same tuple gets the in-progress
-# object instead of recursing forever. Thread-local so one thread never observes
-# another's half-built schema.
+# Per-thread id(tuple) -> (tuple, in-progress Schema) for every node of the component
+# the outermost hydrate frame is currently building. Serves cycle breaking (a
+# recursive target resolving back to a node in flight gets the in-progress object
+# instead of recursing forever) and, at the root frame, the publish set. Thread-local
+# so one thread never observes another's half-built graph; the root frame clears it.
 _building = threading.local()
 
 # ShapeType ints whose tuples carry a trailing (member_names, member_targets) pair.
@@ -173,13 +175,34 @@ def hydrate(data: "StaticSchema | Schema") -> Schema:
     if cached is not None:
         return cached[1]
 
-    stack: dict[int, Schema] | None = getattr(_building, "stack", None)
+    stack: dict[int, tuple[StaticSchema, Schema]] | None = getattr(
+        _building, "stack", None
+    )
+    is_root = stack is None
     if stack is None:
         stack = _building.stack = {}
     building = stack.get(key)
     if building is not None:
-        return building
+        return building[1]
 
+    try:
+        schema = _build(data, key, stack)
+        if is_root:
+            # The whole component is now built; publish it atomically. A concurrent
+            # thread that missed the cache rebuilds its own complete copy rather than
+            # ever seeing a node from this half-built graph.
+            _cache.update(stack)
+        return schema
+    finally:
+        if is_root:
+            _building.stack = None
+
+
+def _build(
+    data: "StaticSchema",
+    key: int,
+    stack: dict[int, tuple["StaticSchema", Schema]],
+) -> Schema:
     type_int = cast(int, data[0])
     namespace = cast(str, data[1])
     shape_name = cast(str, data[2])
@@ -188,35 +211,31 @@ def hydrate(data: "StaticSchema | Schema") -> Schema:
     id_ = ShapeID.from_parts(namespace=namespace, name=shape_name)
 
     schema = Schema(id=id_, shape_type=shape_type, traits=_expand_traits(traits))
-    # Expose the in-progress schema for cycle breaking, but only to this thread and
-    # only until it is fully populated -- never in _cache until complete.
-    stack[key] = schema
-    try:
-        if type_int in _MEMBER_SHAPE_TYPES and len(data) > 4:
-            member_names = cast(tuple[str, ...], data[4])
-            member_targets = cast(
-                tuple[tuple[StaticSchemaRef, StaticSchemaTraits], ...], data[5]
+    # Expose the in-progress schema for cycle breaking before populating members. It
+    # stays in the thread-local stack (never _cache) until the root frame publishes
+    # the whole component; a raise mid-populate discards the stack unpublished.
+    stack[key] = (data, schema)
+    if type_int in _MEMBER_SHAPE_TYPES and len(data) > 4:
+        member_names = cast(tuple[str, ...], data[4])
+        member_targets = cast(
+            tuple[tuple[StaticSchemaRef, StaticSchemaTraits], ...], data[5]
+        )
+        # Mutate the members dict in place so a recursive target that captured it
+        # by reference during the cycle break observes the full map.
+        members = schema.members
+        for index, mname in enumerate(member_names):
+            target_ref, member_traits = member_targets[index]
+            target = _resolve(target_ref)
+            resolved = target.traits.copy()
+            resolved.update(_expand_traits(member_traits))
+            members[mname] = Schema(
+                id=id_.with_member(mname),
+                shape_type=target.shape_type,
+                traits=resolved,
+                members=target.members,
+                member_target=target,
+                member_index=index,
             )
-            # Mutate the members dict in place so a recursive target that captured it
-            # by reference during the cycle break observes the full map.
-            members = schema.members
-            for index, mname in enumerate(member_names):
-                target_ref, member_traits = member_targets[index]
-                target = _resolve(target_ref)
-                resolved = target.traits.copy()
-                resolved.update(_expand_traits(member_traits))
-                members[mname] = Schema(
-                    id=id_.with_member(mname),
-                    shape_type=target.shape_type,
-                    traits=resolved,
-                    members=target.members,
-                    member_target=target,
-                    member_index=index,
-                )
-    finally:
-        del stack[key]
-
-    _cache[key] = (data, schema)
     return schema
 
 

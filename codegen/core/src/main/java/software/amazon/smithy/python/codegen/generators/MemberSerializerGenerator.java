@@ -5,7 +5,6 @@
 package software.amazon.smithy.python.codegen.generators;
 
 import java.util.Locale;
-import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.shapes.BigDecimalShape;
 import software.amazon.smithy.model.shapes.BigIntegerShape;
@@ -23,7 +22,6 @@ import software.amazon.smithy.model.shapes.LongShape;
 import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
-import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.ShortShape;
 import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
@@ -39,13 +37,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  * Generates calls to shape serializers for member shapes.
  */
 @SmithyInternalApi
-public final class MemberSerializerGenerator extends ShapeVisitor.DataShapeVisitor<Void> {
+public final class MemberSerializerGenerator extends AbstractMemberGenerator {
 
-    private static final Logger LOGGER = Logger.getLogger(MemberSerializerGenerator.class.getName());
-
-    private final GenerationContext context;
-    private final PythonWriter writer;
-    private final MemberShape member;
     private final String serializerName;
 
     public MemberSerializerGenerator(
@@ -54,9 +47,7 @@ public final class MemberSerializerGenerator extends ShapeVisitor.DataShapeVisit
             MemberShape member,
             String serializerName
     ) {
-        this.context = context;
-        this.writer = writer;
-        this.member = member;
+        super(context, writer, member);
         this.serializerName = serializerName;
     }
 
@@ -93,28 +84,6 @@ public final class MemberSerializerGenerator extends ShapeVisitor.DataShapeVisit
         writer.write("${serializer:L}.write_$L(${C|}, ${property:L})", typeName, writer.consumer(w -> writeSchema()));
         writer.popState();
 
-    }
-
-    private void writeSchema() {
-        var parent = context.model().expectShape(member.getContainer());
-        if (parent.isListShape()) {
-            writer.writeInline("member_schema");
-        } else if (parent.isMapShape()) {
-            writer.writeInline("value_schema");
-        } else {
-            writer.writeInline("members[$L]", Integer.toString(memberIndex(parent)));
-        }
-    }
-
-    private int memberIndex(Shape parent) {
-        int index = 0;
-        for (var m : parent.members()) {
-            if (m.getMemberName().equals(member.getMemberName())) {
-                return index;
-            }
-            index++;
-        }
-        throw new CodegenException("Member not found in container: " + member.getId());
     }
 
     @Override
