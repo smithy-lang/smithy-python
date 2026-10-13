@@ -2,6 +2,8 @@
 
 from types import MappingProxyType
 
+from smithy_core._schema_compact import StaticOperationSchema, StaticSchema
+
 
 n0 = "aws.protocoltests.restxml.xmlns"
 _NWN = "NestedWithNamespace"
@@ -37,9 +39,16 @@ _aX = "aws.protocols#restXml"
 _sB = "smithy.rules#endpointBdd"
 _aw = "aws.api#service"
 
-NESTED_WITH_NAMESPACE = (18, n0, _NWN, 0, (_aF,), ((3, {_sN: _xN, _sA: None}),))
+NESTED_WITH_NAMESPACE: StaticSchema = (
+    18,
+    n0,
+    _NWN,
+    0,
+    (_aF,),
+    ((3, {_sN: _xN, _sA: None}),),
+)
 
-SIMPLE_SCALAR_PROPERTIES_INPUT = (
+SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     18,
     n0,
     _SSPI,
@@ -63,7 +72,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT = (
     ),
 )
 
-SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
+SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     18,
     n0,
     _SSPO,
@@ -87,7 +96,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
     ),
 )
 
-SIMPLE_SCALAR_PROPERTIES = (
+SIMPLE_SCALAR_PROPERTIES: StaticOperationSchema = (
     23,
     n0,
     _SSP,
@@ -97,7 +106,7 @@ SIMPLE_SCALAR_PROPERTIES = (
     (),
 )
 
-REST_XML_WITH_NAMESPACE = (
+REST_XML_WITH_NAMESPACE: StaticSchema = (
     21,
     n0,
     _RXWN,
@@ -253,8 +262,8 @@ REST_XML_WITH_NAMESPACE = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": MappingProxyType({"ref": "Endpoint"}),
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -266,8 +275,8 @@ REST_XML_WITH_NAMESPACE = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restxmlwithnamespace-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -286,8 +295,8 @@ REST_XML_WITH_NAMESPACE = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restxmlwithnamespace.{Region}.amazonaws.com",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -299,8 +308,8 @@ REST_XML_WITH_NAMESPACE = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restxmlwithnamespace-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -319,8 +328,8 @@ REST_XML_WITH_NAMESPACE = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restxmlwithnamespace.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -339,8 +348,8 @@ REST_XML_WITH_NAMESPACE = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restxmlwithnamespace.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",

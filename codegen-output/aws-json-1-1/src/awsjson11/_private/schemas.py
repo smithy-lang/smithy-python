@@ -2,6 +2,8 @@
 
 from types import MappingProxyType
 
+from smithy_core._schema_compact import StaticOperationSchema, StaticSchema
+
 
 n0 = "aws.protocoltests.json"
 _CNED = "ComplexNestedErrorData"
@@ -204,9 +206,9 @@ _a_ = "aws.protocols#awsJson1_1"
 _sB = "smithy.rules#endpointBdd"
 _aws = "aws.api#service"
 
-COMPLEX_NESTED_ERROR_DATA = (18, n0, _CNED, 0, (_F,), ((3, {_sN: _Fo}),))
+COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n0, _CNED, 0, (_F,), ((3, {_sN: _Fo}),))
 
-COMPLEX_ERROR = (
+COMPLEX_ERROR: StaticSchema = (
     18,
     n0,
     _CE,
@@ -215,11 +217,11 @@ COMPLEX_ERROR = (
     ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
-CONTENT_TYPE_PARAMETERS_INPUT = (18, n0, _CTPI, 0, (_v,), ((7, 0),))
+CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (18, n0, _CTPI, 0, (_v,), ((7, 0),))
 
-CONTENT_TYPE_PARAMETERS_OUTPUT = (18, n0, _CTPO, 0)
+CONTENT_TYPE_PARAMETERS_OUTPUT: StaticSchema = (18, n0, _CTPO, 0)
 
-CONTENT_TYPE_PARAMETERS = (
+CONTENT_TYPE_PARAMETERS: StaticOperationSchema = (
     23,
     n0,
     _CTP,
@@ -229,29 +231,45 @@ CONTENT_TYPE_PARAMETERS = (
     (),
 )
 
-DATETIME_OFFSETS_INPUT = (18, n0, _DOI, {_sSI: _sU})
+DATETIME_OFFSETS_INPUT: StaticSchema = (18, n0, _DOI, {_sSI: _sU})
 
-DATE_TIME = (4, n1, _DT, {_sF: _dt})
+DATE_TIME: StaticSchema = (4, n1, _DT, {_sF: _dt})
 
-DATETIME_OFFSETS_OUTPUT = (18, n0, _DOO, 0, (_d,), ((DATE_TIME, 0),))
+DATETIME_OFFSETS_OUTPUT: StaticSchema = (18, n0, _DOO, 0, (_d,), ((DATE_TIME, 0),))
 
-DATETIME_OFFSETS = (23, n0, _DO, 0, DATETIME_OFFSETS_INPUT, DATETIME_OFFSETS_OUTPUT, ())
+DATETIME_OFFSETS: StaticOperationSchema = (
+    23,
+    n0,
+    _DO,
+    0,
+    DATETIME_OFFSETS_INPUT,
+    DATETIME_OFFSETS_OUTPUT,
+    (),
+)
 
-DOCUMENT = (13, n0, _D, 0)
+DOCUMENT: StaticSchema = (13, n0, _D, 0)
 
-EMPTY_OPERATION_INPUT = (18, n0, _EOI, {_sSI: _sU})
+EMPTY_OPERATION_INPUT: StaticSchema = (18, n0, _EOI, {_sSI: _sU})
 
-EMPTY_OPERATION_OUTPUT = (18, n0, _EOO, {_sSI: _sU})
+EMPTY_OPERATION_OUTPUT: StaticSchema = (18, n0, _EOO, {_sSI: _sU})
 
-EMPTY_OPERATION = (23, n0, _EO, 0, EMPTY_OPERATION_INPUT, EMPTY_OPERATION_OUTPUT, ())
+EMPTY_OPERATION: StaticOperationSchema = (
+    23,
+    n0,
+    _EO,
+    0,
+    EMPTY_OPERATION_INPUT,
+    EMPTY_OPERATION_OUTPUT,
+    (),
+)
 
-EMPTY_STRUCT = (18, n0, _ES, 0)
+EMPTY_STRUCT: StaticSchema = (18, n0, _ES, 0)
 
-ENDPOINT_OPERATION_INPUT = (18, n0, _EOIn, {_sSI: _sU})
+ENDPOINT_OPERATION_INPUT: StaticSchema = (18, n0, _EOIn, {_sSI: _sU})
 
-ENDPOINT_OPERATION_OUTPUT = (18, n0, _EOOn, {_sSI: _sU})
+ENDPOINT_OPERATION_OUTPUT: StaticSchema = (18, n0, _EOOn, {_sSI: _sU})
 
-ENDPOINT_OPERATION = (
+ENDPOINT_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _EOn,
@@ -261,7 +279,7 @@ ENDPOINT_OPERATION = (
     (),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = (
+ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT: StaticSchema = (
     18,
     n0,
     _EWHLOI,
@@ -270,9 +288,9 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = (
     ((3, 257),),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = (18, n0, _EWHLOO, {_sSI: _sU})
+ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT: StaticSchema = (18, n0, _EWHLOO, {_sSI: _sU})
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION = (
+ENDPOINT_WITH_HOST_LABEL_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _EWHLO,
@@ -282,37 +300,72 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION = (
     (),
 )
 
-JSON_VALUE = (3, n0, _JV, {_sT: _a})
+JSON_VALUE: StaticSchema = (3, n0, _JV, {_sT: _a})
 
-LIST_OF_STRINGS = (16, n0, _LOS, 0, (_m,), ((3, 0),))
+LIST_OF_STRINGS: StaticSchema = (16, n0, _LOS, 0, (_m,), ((3, 0),))
 
-LIST_OF_LIST_OF_STRINGS = (16, n0, _LOLOS, 0, (_m,), ((LIST_OF_STRINGS, 0),))
+LIST_OF_LIST_OF_STRINGS: StaticSchema = (
+    16,
+    n0,
+    _LOLOS,
+    0,
+    (_m,),
+    ((LIST_OF_STRINGS, 0),),
+)
 
-MAP_OF_STRINGS = (17, n0, _MOS, 0, (_k, _v), ((3, 0), (3, 0)))
+MAP_OF_STRINGS: StaticSchema = (17, n0, _MOS, 0, (_k, _v), ((3, 0), (3, 0)))
 
-LIST_OF_MAPS_OF_STRINGS = (16, n0, _LOMOS, 0, (_m,), ((MAP_OF_STRINGS, 0),))
+LIST_OF_MAPS_OF_STRINGS: StaticSchema = (
+    16,
+    n0,
+    _LOMOS,
+    0,
+    (_m,),
+    ((MAP_OF_STRINGS, 0),),
+)
 
-SIMPLE_STRUCT = (18, n0, _SS, 0, (_V,), ((3, 0),))
+SIMPLE_STRUCT: StaticSchema = (18, n0, _SS, 0, (_V,), ((3, 0),))
 
-LIST_OF_STRUCTS = (16, n0, _LOSi, 0, (_m,), ((SIMPLE_STRUCT, 0),))
+LIST_OF_STRUCTS: StaticSchema = (16, n0, _LOSi, 0, (_m,), ((SIMPLE_STRUCT, 0),))
 
-MAP_OF_LISTS_OF_STRINGS = (17, n0, _MOLOS, 0, (_k, _v), ((3, 0), (LIST_OF_STRINGS, 0)))
+MAP_OF_LISTS_OF_STRINGS: StaticSchema = (
+    17,
+    n0,
+    _MOLOS,
+    0,
+    (_k, _v),
+    ((3, 0), (LIST_OF_STRINGS, 0)),
+)
 
-MAP_OF_MAP_OF_STRINGS = (17, n0, _MOMOS, 0, (_k, _v), ((3, 0), (MAP_OF_STRINGS, 0)))
+MAP_OF_MAP_OF_STRINGS: StaticSchema = (
+    17,
+    n0,
+    _MOMOS,
+    0,
+    (_k, _v),
+    ((3, 0), (MAP_OF_STRINGS, 0)),
+)
 
-MAP_OF_STRUCTS = (17, n0, _MOSa, 0, (_k, _v), ((3, 0), (SIMPLE_STRUCT, 0)))
+MAP_OF_STRUCTS: StaticSchema = (
+    17,
+    n0,
+    _MOSa,
+    0,
+    (_k, _v),
+    ((3, 0), (SIMPLE_STRUCT, 0)),
+)
 
-STRUCT_WITH_JSON_NAME = (18, n0, _SWJN, 0, (_V,), ((3, {_sN: _RM}),))
+STRUCT_WITH_JSON_NAME: StaticSchema = (18, n0, _SWJN, 0, (_V,), ((3, {_sN: _RM}),))
 
-ERROR_WITHOUT_MEMBERS = (18, n0, _EWM, {_s: _se})
+ERROR_WITHOUT_MEMBERS: StaticSchema = (18, n0, _EWM, {_s: _se})
 
-FOO_ERROR = (18, n0, _FE, {_s: _se})
+FOO_ERROR: StaticSchema = (18, n0, _FE, {_s: _se})
 
-FRACTIONAL_SECONDS_INPUT = (18, n0, _FSI, {_sSI: _sU})
+FRACTIONAL_SECONDS_INPUT: StaticSchema = (18, n0, _FSI, {_sSI: _sU})
 
-FRACTIONAL_SECONDS_OUTPUT = (18, n0, _FSO, 0, (_d,), ((DATE_TIME, 0),))
+FRACTIONAL_SECONDS_OUTPUT: StaticSchema = (18, n0, _FSO, 0, (_d,), ((DATE_TIME, 0),))
 
-FRACTIONAL_SECONDS = (
+FRACTIONAL_SECONDS: StaticOperationSchema = (
     23,
     n0,
     _FS,
@@ -322,13 +375,13 @@ FRACTIONAL_SECONDS = (
     (),
 )
 
-GREETING_WITH_ERRORS_INPUT = (18, n0, _GWEI, {_sSI: _sU})
+GREETING_WITH_ERRORS_INPUT: StaticSchema = (18, n0, _GWEI, {_sSI: _sU})
 
-GREETING_WITH_ERRORS_OUTPUT = (18, n0, _GWEO, 0, (_g,), ((3, 0),))
+GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (18, n0, _GWEO, 0, (_g,), ((3, 0),))
 
-INVALID_GREETING = (18, n0, _IG, {_s: _c}, (_M,), ((3, 0),))
+INVALID_GREETING: StaticSchema = (18, n0, _IG, {_s: _c}, (_M,), ((3, 0),))
 
-GREETING_WITH_ERRORS = (
+GREETING_WITH_ERRORS: StaticOperationSchema = (
     23,
     n0,
     _GWE,
@@ -338,11 +391,11 @@ GREETING_WITH_ERRORS = (
     (INVALID_GREETING, COMPLEX_ERROR, FOO_ERROR),
 )
 
-HOST_WITH_PATH_OPERATION_INPUT = (18, n0, _HWPOI, {_sSI: _sU})
+HOST_WITH_PATH_OPERATION_INPUT: StaticSchema = (18, n0, _HWPOI, {_sSI: _sU})
 
-HOST_WITH_PATH_OPERATION_OUTPUT = (18, n0, _HWPOO, {_sSI: _sU})
+HOST_WITH_PATH_OPERATION_OUTPUT: StaticSchema = (18, n0, _HWPOO, {_sSI: _sU})
 
-HOST_WITH_PATH_OPERATION = (
+HOST_WITH_PATH_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _HWPO,
@@ -352,7 +405,7 @@ HOST_WITH_PATH_OPERATION = (
     (),
 )
 
-FOO_ENUM = (
+FOO_ENUM: StaticSchema = (
     14,
     n1,
     _FEo,
@@ -361,13 +414,13 @@ FOO_ENUM = (
     ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
 )
 
-FOO_ENUM_LIST = (16, n1, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
+FOO_ENUM_LIST: StaticSchema = (16, n1, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
 
-FOO_ENUM_MAP = (17, n1, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
+FOO_ENUM_MAP: StaticSchema = (17, n1, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
 
-FOO_ENUM_SET = (16, n1, _FES, 0, (_m,), ((FOO_ENUM, 0),))
+FOO_ENUM_SET: StaticSchema = (16, n1, _FES, 0, (_m,), ((FOO_ENUM, 0),))
 
-JSON_ENUMS_INPUT = (
+JSON_ENUMS_INPUT: StaticSchema = (
     18,
     n0,
     _JEI,
@@ -383,7 +436,7 @@ JSON_ENUMS_INPUT = (
     ),
 )
 
-JSON_ENUMS_OUTPUT = (
+JSON_ENUMS_OUTPUT: StaticSchema = (
     18,
     n0,
     _JEO,
@@ -399,17 +452,32 @@ JSON_ENUMS_OUTPUT = (
     ),
 )
 
-JSON_ENUMS = (23, n0, _JE, 0, JSON_ENUMS_INPUT, JSON_ENUMS_OUTPUT, ())
+JSON_ENUMS: StaticOperationSchema = (
+    23,
+    n0,
+    _JE,
+    0,
+    JSON_ENUMS_INPUT,
+    JSON_ENUMS_OUTPUT,
+    (),
+)
 
-INTEGER_ENUM = (15, n1, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (15, n1, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
 
-INTEGER_ENUM_LIST = (16, n1, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
+INTEGER_ENUM_LIST: StaticSchema = (16, n1, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
 
-INTEGER_ENUM_MAP = (17, n1, _IEM, 0, (_k, _v), ((3, 0), (INTEGER_ENUM, 0)))
+INTEGER_ENUM_MAP: StaticSchema = (
+    17,
+    n1,
+    _IEM,
+    0,
+    (_k, _v),
+    ((3, 0), (INTEGER_ENUM, 0)),
+)
 
-INTEGER_ENUM_SET = (16, n1, _IES, 0, (_m,), ((INTEGER_ENUM, 0),))
+INTEGER_ENUM_SET: StaticSchema = (16, n1, _IES, 0, (_m,), ((INTEGER_ENUM, 0),))
 
-JSON_INT_ENUMS_INPUT = (
+JSON_INT_ENUMS_INPUT: StaticSchema = (
     18,
     n0,
     _JIEI,
@@ -425,7 +493,7 @@ JSON_INT_ENUMS_INPUT = (
     ),
 )
 
-JSON_INT_ENUMS_OUTPUT = (
+JSON_INT_ENUMS_OUTPUT: StaticSchema = (
     18,
     n0,
     _JIEO,
@@ -441,15 +509,23 @@ JSON_INT_ENUMS_OUTPUT = (
     ),
 )
 
-JSON_INT_ENUMS = (23, n0, _JIE, 0, JSON_INT_ENUMS_INPUT, JSON_INT_ENUMS_OUTPUT, ())
+JSON_INT_ENUMS: StaticOperationSchema = (
+    23,
+    n0,
+    _JIE,
+    0,
+    JSON_INT_ENUMS_INPUT,
+    JSON_INT_ENUMS_OUTPUT,
+    (),
+)
 
-STRING_LIST = (16, n1, _SL, 0, (_m,), ((3, 0),))
+STRING_LIST: StaticSchema = (16, n1, _SL, 0, (_m,), ((3, 0),))
 
-STRING_MAP = (17, n1, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
+STRING_MAP: StaticSchema = (17, n1, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
 
-GREETING_STRUCT = (18, n1, _GS, 0, (_h,), ((3, 0),))
+GREETING_STRUCT: StaticSchema = (18, n1, _GS, 0, (_h,), ((3, 0),))
 
-MY_UNION = (
+MY_UNION: StaticSchema = (
     19,
     n0,
     _MU,
@@ -468,23 +544,67 @@ MY_UNION = (
     ),
 )
 
-JSON_UNIONS_INPUT = (18, n0, _JUI, {_sSI: _aUIO}, (_co,), ((MY_UNION, 0),))
+JSON_UNIONS_INPUT: StaticSchema = (
+    18,
+    n0,
+    _JUI,
+    {_sSI: _aUIO},
+    (_co,),
+    ((MY_UNION, 0),),
+)
 
-JSON_UNIONS_OUTPUT = (18, n0, _JUO, {_sSI: _aUIO}, (_co,), ((MY_UNION, 0),))
+JSON_UNIONS_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _JUO,
+    {_sSI: _aUIO},
+    (_co,),
+    ((MY_UNION, 0),),
+)
 
-JSON_UNIONS = (23, n0, _JU, 0, JSON_UNIONS_INPUT, JSON_UNIONS_OUTPUT, ())
+JSON_UNIONS: StaticOperationSchema = (
+    23,
+    n0,
+    _JU,
+    0,
+    JSON_UNIONS_INPUT,
+    JSON_UNIONS_OUTPUT,
+    (),
+)
 
-NULL_OPERATION_INPUT = (18, n0, _NOI, {_sSI: _aNOIO}, (_st,), ((3, 0),))
+NULL_OPERATION_INPUT: StaticSchema = (18, n0, _NOI, {_sSI: _aNOIO}, (_st,), ((3, 0),))
 
-NULL_OPERATION_OUTPUT = (18, n0, _NOO, {_sSI: _aNOIO}, (_st,), ((3, 0),))
+NULL_OPERATION_OUTPUT: StaticSchema = (18, n0, _NOO, {_sSI: _aNOIO}, (_st,), ((3, 0),))
 
-NULL_OPERATION = (23, n0, _NO, 0, NULL_OPERATION_INPUT, NULL_OPERATION_OUTPUT, ())
+NULL_OPERATION: StaticOperationSchema = (
+    23,
+    n0,
+    _NO,
+    0,
+    NULL_OPERATION_INPUT,
+    NULL_OPERATION_OUTPUT,
+    (),
+)
 
-OPERATION_WITH_OPTIONAL_INPUT_OUTPUT_INPUT = (18, n0, _OWOIOI, 0, (_V,), ((3, 0),))
+OPERATION_WITH_OPTIONAL_INPUT_OUTPUT_INPUT: StaticSchema = (
+    18,
+    n0,
+    _OWOIOI,
+    0,
+    (_V,),
+    ((3, 0),),
+)
 
-OPERATION_WITH_OPTIONAL_INPUT_OUTPUT_OUTPUT = (18, n0, _OWOIOO, 0, (_V,), ((3, 0),))
+OPERATION_WITH_OPTIONAL_INPUT_OUTPUT_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _OWOIOO,
+    0,
+    (_V,),
+    ((3, 0),),
+)
 
-OPERATION_WITH_OPTIONAL_INPUT_OUTPUT = (
+OPERATION_WITH_OPTIONAL_INPUT_OUTPUT: StaticOperationSchema = (
     23,
     n0,
     _OWOIO,
@@ -494,7 +614,7 @@ OPERATION_WITH_OPTIONAL_INPUT_OUTPUT = (
     (),
 )
 
-PUT_AND_GET_INLINE_DOCUMENTS_INPUT = (
+PUT_AND_GET_INLINE_DOCUMENTS_INPUT: StaticSchema = (
     18,
     n0,
     _PAGIDI,
@@ -503,7 +623,7 @@ PUT_AND_GET_INLINE_DOCUMENTS_INPUT = (
     ((DOCUMENT, 0),),
 )
 
-PUT_AND_GET_INLINE_DOCUMENTS_OUTPUT = (
+PUT_AND_GET_INLINE_DOCUMENTS_OUTPUT: StaticSchema = (
     18,
     n0,
     _PAGIDO,
@@ -512,7 +632,7 @@ PUT_AND_GET_INLINE_DOCUMENTS_OUTPUT = (
     ((DOCUMENT, 0),),
 )
 
-PUT_AND_GET_INLINE_DOCUMENTS = (
+PUT_AND_GET_INLINE_DOCUMENTS: StaticOperationSchema = (
     23,
     n0,
     _PAGID,
@@ -522,7 +642,7 @@ PUT_AND_GET_INLINE_DOCUMENTS = (
     (),
 )
 
-PUT_WITH_CONTENT_ENCODING_INPUT = (
+PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     18,
     n0,
     _PWCEI,
@@ -531,9 +651,9 @@ PUT_WITH_CONTENT_ENCODING_INPUT = (
     ((3, {_sH: _CE_}), (3, 0)),
 )
 
-PUT_WITH_CONTENT_ENCODING_OUTPUT = (18, n0, _PWCEO, {_sSI: _sU})
+PUT_WITH_CONTENT_ENCODING_OUTPUT: StaticSchema = (18, n0, _PWCEO, {_sSI: _sU})
 
-PUT_WITH_CONTENT_ENCODING = (
+PUT_WITH_CONTENT_ENCODING: StaticOperationSchema = (
     23,
     n0,
     _PWCE,
@@ -543,7 +663,7 @@ PUT_WITH_CONTENT_ENCODING = (
     (),
 )
 
-SIMPLE_SCALAR_PROPERTIES_INPUT = (
+SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     18,
     n0,
     _SSPI,
@@ -552,7 +672,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT = (
     ((9, 0), (10, 0)),
 )
 
-SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
+SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     18,
     n0,
     _SSPO,
@@ -561,7 +681,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
     ((9, 0), (10, 0)),
 )
 
-SIMPLE_SCALAR_PROPERTIES = (
+SIMPLE_SCALAR_PROPERTIES: StaticOperationSchema = (
     23,
     n0,
     _SSP,
@@ -571,11 +691,11 @@ SIMPLE_SCALAR_PROPERTIES = (
     (),
 )
 
-SPARSE_STRING_LIST = (16, n1, _SSL, 64, (_m,), ((3, 0),))
+SPARSE_STRING_LIST: StaticSchema = (16, n1, _SSL, 64, (_m,), ((3, 0),))
 
-SPARSE_STRING_MAP = (17, n1, _SSM, 64, (_k, _v), ((3, 0), (3, 0)))
+SPARSE_STRING_MAP: StaticSchema = (17, n1, _SSM, 64, (_k, _v), ((3, 0), (3, 0)))
 
-SPARSE_NULLS_OPERATION_INPUT = (
+SPARSE_NULLS_OPERATION_INPUT: StaticSchema = (
     18,
     n0,
     _SNOI,
@@ -584,7 +704,7 @@ SPARSE_NULLS_OPERATION_INPUT = (
     ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
 )
 
-SPARSE_NULLS_OPERATION_OUTPUT = (
+SPARSE_NULLS_OPERATION_OUTPUT: StaticSchema = (
     18,
     n0,
     _SNOO,
@@ -593,7 +713,7 @@ SPARSE_NULLS_OPERATION_OUTPUT = (
     ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
 )
 
-SPARSE_NULLS_OPERATION = (
+SPARSE_NULLS_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _SNO,
@@ -603,7 +723,7 @@ SPARSE_NULLS_OPERATION = (
     (),
 )
 
-KITCHEN_SINK = (  # pyright: ignore[reportUnknownVariableType]
+KITCHEN_SINK: StaticSchema = (
     18,
     n0,
     _KS,
@@ -655,9 +775,9 @@ KITCHEN_SINK = (  # pyright: ignore[reportUnknownVariableType]
         (MAP_OF_MAP_OF_STRINGS, 0),
         (MAP_OF_STRINGS, 0),
         (MAP_OF_STRUCTS, 0),
-        (lambda: LIST_OF_KITCHEN_SINKS, 0),  # pyright: ignore[reportUnknownLambdaType]
-        (lambda: MAP_OF_KITCHEN_SINKS, 0),  # pyright: ignore[reportUnknownLambdaType]
-        (lambda: KITCHEN_SINK, 0),  # pyright: ignore[reportUnknownLambdaType]
+        (lambda: LIST_OF_KITCHEN_SINKS, 0),
+        (lambda: MAP_OF_KITCHEN_SINKS, 0),
+        (lambda: KITCHEN_SINK, 0),
         (SIMPLE_STRUCT, 0),
         (3, 0),
         (STRUCT_WITH_JSON_NAME, 0),
@@ -666,16 +786,9 @@ KITCHEN_SINK = (  # pyright: ignore[reportUnknownVariableType]
     ),
 )
 
-LIST_OF_KITCHEN_SINKS = (  # pyright: ignore[reportUnknownVariableType]
-    16,
-    n0,
-    _LOKS,
-    0,
-    (_m,),
-    ((KITCHEN_SINK, 0),),
-)
+LIST_OF_KITCHEN_SINKS: StaticSchema = (16, n0, _LOKS, 0, (_m,), ((KITCHEN_SINK, 0),))
 
-MAP_OF_KITCHEN_SINKS = (  # pyright: ignore[reportUnknownVariableType]
+MAP_OF_KITCHEN_SINKS: StaticSchema = (
     17,
     n0,
     _MOKS,
@@ -684,7 +797,7 @@ MAP_OF_KITCHEN_SINKS = (  # pyright: ignore[reportUnknownVariableType]
     ((3, 0), (KITCHEN_SINK, 0)),
 )
 
-ERROR_WITH_MEMBERS = (  # pyright: ignore[reportUnknownVariableType]
+ERROR_WITH_MEMBERS: StaticSchema = (
     18,
     n0,
     _EWMr,
@@ -701,7 +814,7 @@ ERROR_WITH_MEMBERS = (  # pyright: ignore[reportUnknownVariableType]
     ),
 )
 
-KITCHEN_SINK_OPERATION_INPUT = (  # pyright: ignore[reportUnknownVariableType]
+KITCHEN_SINK_OPERATION_INPUT: StaticSchema = (
     18,
     n0,
     _KSOI,
@@ -764,7 +877,7 @@ KITCHEN_SINK_OPERATION_INPUT = (  # pyright: ignore[reportUnknownVariableType]
     ),
 )
 
-KITCHEN_SINK_OPERATION_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
+KITCHEN_SINK_OPERATION_OUTPUT: StaticSchema = (
     18,
     n0,
     _KSOO,
@@ -827,7 +940,7 @@ KITCHEN_SINK_OPERATION_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
     ),
 )
 
-KITCHEN_SINK_OPERATION = (  # pyright: ignore[reportUnknownVariableType]
+KITCHEN_SINK_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _KSO,
@@ -837,7 +950,7 @@ KITCHEN_SINK_OPERATION = (  # pyright: ignore[reportUnknownVariableType]
     (ERROR_WITH_MEMBERS, ERROR_WITHOUT_MEMBERS),
 )
 
-JSON_PROTOCOL = (
+JSON_PROTOCOL: StaticSchema = (
     21,
     n0,
     _JP,
@@ -993,8 +1106,8 @@ JSON_PROTOCOL = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": MappingProxyType({"ref": "Endpoint"}),
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -1006,8 +1119,8 @@ JSON_PROTOCOL = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://jsonprotocol-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -1026,8 +1139,8 @@ JSON_PROTOCOL = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://jsonprotocol.{Region}.amazonaws.com",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -1039,8 +1152,8 @@ JSON_PROTOCOL = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://jsonprotocol-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -1059,8 +1172,8 @@ JSON_PROTOCOL = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://jsonprotocol.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -1079,8 +1192,8 @@ JSON_PROTOCOL = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://jsonprotocol.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",

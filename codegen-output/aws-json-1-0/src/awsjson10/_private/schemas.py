@@ -2,6 +2,8 @@
 
 from types import MappingProxyType
 
+from smithy_core._schema_compact import StaticOperationSchema, StaticSchema
+
 
 n0 = "aws.protocoltests.json10"
 _COD = "ClientOptionalDefaults"
@@ -188,11 +190,11 @@ _a_ = "aws.protocols#awsJson1_0"
 _sB = "smithy.rules#endpointBdd"
 _aw = "aws.api#service"
 
-CLIENT_OPTIONAL_DEFAULTS = (18, n0, _COD, 0, (_m,), ((7, {_s: 0}),))
+CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (18, n0, _COD, 0, (_m,), ((7, {_s: 0}),))
 
-COMPLEX_NESTED_ERROR_DATA = (18, n0, _CNED, 0, (_F,), ((3, {_sN: _Fo}),))
+COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n0, _CNED, 0, (_F,), ((3, {_sN: _Fo}),))
 
-COMPLEX_ERROR = (
+COMPLEX_ERROR: StaticSchema = (
     18,
     n0,
     _CE,
@@ -201,11 +203,11 @@ COMPLEX_ERROR = (
     ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
-CONTENT_TYPE_PARAMETERS_INPUT = (18, n0, _CTPI, 0, (_v,), ((7, 0),))
+CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (18, n0, _CTPI, 0, (_v,), ((7, 0),))
 
-CONTENT_TYPE_PARAMETERS_OUTPUT = (18, n0, _CTPO, 0)
+CONTENT_TYPE_PARAMETERS_OUTPUT: StaticSchema = (18, n0, _CTPO, 0)
 
-CONTENT_TYPE_PARAMETERS = (
+CONTENT_TYPE_PARAMETERS: StaticOperationSchema = (
     23,
     n0,
     _CTP,
@@ -215,15 +217,22 @@ CONTENT_TYPE_PARAMETERS = (
     (),
 )
 
-TEST_ENUM = (14, n0, _TE, 0, (_FOO, _BAR, _BAZ), ((-1, 0), (-1, 0), (-1, 0)))
+TEST_ENUM: StaticSchema = (
+    14,
+    n0,
+    _TE,
+    0,
+    (_FOO, _BAR, _BAZ),
+    ((-1, 0), (-1, 0), (-1, 0)),
+)
 
-TEST_INT_ENUM = (15, n0, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+TEST_INT_ENUM: StaticSchema = (15, n0, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
 
-TEST_STRING_LIST = (16, n0, _TSL, 0, (_m,), ((3, 0),))
+TEST_STRING_LIST: StaticSchema = (16, n0, _TSL, 0, (_m,), ((3, 0),))
 
-TEST_STRING_MAP = (17, n0, _TSM, 0, (_k, _v), ((3, 0), (3, 0)))
+TEST_STRING_MAP: StaticSchema = (17, n0, _TSM, 0, (_k, _v), ((3, 0), (3, 0)))
 
-DEFAULTS = (
+DEFAULTS: StaticSchema = (
     18,
     n0,
     _D,
@@ -290,19 +299,26 @@ DEFAULTS = (
     ),
 )
 
-FAREWELL = (18, n0, _Fa, 0, (_p,), ((3, {_s: _b}),))
+FAREWELL: StaticSchema = (18, n0, _Fa, 0, (_p,), ((3, {_s: _b}),))
 
-DIALOG = (18, n0, _Di, 0, (_l, _g, _f), ((3, 0), (3, {_s: _h}), (FAREWELL, 0)))
+DIALOG: StaticSchema = (
+    18,
+    n0,
+    _Di,
+    0,
+    (_l, _g, _f),
+    ((3, 0), (3, {_s: _h}), (FAREWELL, 0)),
+)
 
-DIALOG_LIST = (16, n0, _DL, 0, (_m,), ((DIALOG, 0),))
+DIALOG_LIST: StaticSchema = (16, n0, _DL, 0, (_m,), ((DIALOG, 0),))
 
-DIALOG_MAP = (17, n0, _DM, 0, (_k, _v), ((3, 0), (DIALOG, 0)))
+DIALOG_MAP: StaticSchema = (17, n0, _DM, 0, (_k, _v), ((3, 0), (DIALOG, 0)))
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT = (18, n0, _EIAEOI, 0)
+EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT: StaticSchema = (18, n0, _EIAEOI, 0)
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT = (18, n0, _EIAEOO, 0)
+EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT: StaticSchema = (18, n0, _EIAEOO, 0)
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT = (
+EMPTY_INPUT_AND_EMPTY_OUTPUT: StaticOperationSchema = (
     23,
     n0,
     _EIAEO,
@@ -312,11 +328,11 @@ EMPTY_INPUT_AND_EMPTY_OUTPUT = (
     (),
 )
 
-ENDPOINT_OPERATION_INPUT = (18, n0, _EOI, {_sSI: _sU})
+ENDPOINT_OPERATION_INPUT: StaticSchema = (18, n0, _EOI, {_sSI: _sU})
 
-ENDPOINT_OPERATION_OUTPUT = (18, n0, _EOO, {_sSI: _sU})
+ENDPOINT_OPERATION_OUTPUT: StaticSchema = (18, n0, _EOO, {_sSI: _sU})
 
-ENDPOINT_OPERATION = (
+ENDPOINT_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _EO,
@@ -326,11 +342,18 @@ ENDPOINT_OPERATION = (
     (),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = (18, n0, _EWHLOI, 0, (_la,), ((3, 257),))
+ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT: StaticSchema = (
+    18,
+    n0,
+    _EWHLOI,
+    0,
+    (_la,),
+    ((3, 257),),
+)
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = (18, n0, _EWHLOO, {_sSI: _sU})
+ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT: StaticSchema = (18, n0, _EWHLOO, {_sSI: _sU})
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION = (
+ENDPOINT_WITH_HOST_LABEL_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _EWHLO,
@@ -340,15 +363,15 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION = (
     (),
 )
 
-FOO_ERROR = (18, n0, _FE, {_sm: _se})
+FOO_ERROR: StaticSchema = (18, n0, _FE, {_sm: _se})
 
-GREETING_WITH_ERRORS_INPUT = (18, n0, _GWEI, 0, (_g,), ((3, 0),))
+GREETING_WITH_ERRORS_INPUT: StaticSchema = (18, n0, _GWEI, 0, (_g,), ((3, 0),))
 
-GREETING_WITH_ERRORS_OUTPUT = (18, n0, _GWEO, 0, (_g,), ((3, 0),))
+GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (18, n0, _GWEO, 0, (_g,), ((3, 0),))
 
-INVALID_GREETING = (18, n0, _IG, {_sm: _c}, (_M,), ((3, 0),))
+INVALID_GREETING: StaticSchema = (18, n0, _IG, {_sm: _c}, (_M,), ((3, 0),))
 
-GREETING_WITH_ERRORS = (
+GREETING_WITH_ERRORS: StaticOperationSchema = (
     23,
     n0,
     _GWE,
@@ -358,11 +381,11 @@ GREETING_WITH_ERRORS = (
     (INVALID_GREETING, COMPLEX_ERROR, FOO_ERROR),
 )
 
-HOST_WITH_PATH_OPERATION_INPUT = (18, n0, _HWPOI, {_sSI: _sU})
+HOST_WITH_PATH_OPERATION_INPUT: StaticSchema = (18, n0, _HWPOI, {_sSI: _sU})
 
-HOST_WITH_PATH_OPERATION_OUTPUT = (18, n0, _HWPOO, {_sSI: _sU})
+HOST_WITH_PATH_OPERATION_OUTPUT: StaticSchema = (18, n0, _HWPOO, {_sSI: _sU})
 
-HOST_WITH_PATH_OPERATION = (
+HOST_WITH_PATH_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _HWPO,
@@ -372,7 +395,7 @@ HOST_WITH_PATH_OPERATION = (
     (),
 )
 
-FOO_ENUM = (
+FOO_ENUM: StaticSchema = (
     14,
     n1,
     _FEo,
@@ -381,15 +404,15 @@ FOO_ENUM = (
     ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
 )
 
-INTEGER_ENUM = (15, n1, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (15, n1, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
 
-STRING_LIST = (16, n1, _SL, 0, (_m,), ((3, 0),))
+STRING_LIST: StaticSchema = (16, n1, _SL, 0, (_m,), ((3, 0),))
 
-STRING_MAP = (17, n1, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
+STRING_MAP: StaticSchema = (17, n1, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
 
-GREETING_STRUCT = (18, n1, _GS, 0, (_h,), ((3, 0),))
+GREETING_STRUCT: StaticSchema = (18, n1, _GS, 0, (_h,), ((3, 0),))
 
-MY_UNION = (
+MY_UNION: StaticSchema = (
     19,
     n0,
     _MU,
@@ -409,17 +432,25 @@ MY_UNION = (
     ),
 )
 
-JSON_UNIONS_INPUT = (18, n0, _JUI, 0, (_co,), ((MY_UNION, 0),))
+JSON_UNIONS_INPUT: StaticSchema = (18, n0, _JUI, 0, (_co,), ((MY_UNION, 0),))
 
-JSON_UNIONS_OUTPUT = (18, n0, _JUO, 0, (_co,), ((MY_UNION, 0),))
+JSON_UNIONS_OUTPUT: StaticSchema = (18, n0, _JUO, 0, (_co,), ((MY_UNION, 0),))
 
-JSON_UNIONS = (23, n0, _JU, 0, JSON_UNIONS_INPUT, JSON_UNIONS_OUTPUT, ())
+JSON_UNIONS: StaticOperationSchema = (
+    23,
+    n0,
+    _JU,
+    0,
+    JSON_UNIONS_INPUT,
+    JSON_UNIONS_OUTPUT,
+    (),
+)
 
-NO_INPUT_AND_NO_OUTPUT_INPUT = (18, n0, _NIANOI, {_sSI: _sU})
+NO_INPUT_AND_NO_OUTPUT_INPUT: StaticSchema = (18, n0, _NIANOI, {_sSI: _sU})
 
-NO_INPUT_AND_NO_OUTPUT_OUTPUT = (18, n0, _NIANOO, {_sSI: _sU})
+NO_INPUT_AND_NO_OUTPUT_OUTPUT: StaticSchema = (18, n0, _NIANOO, {_sSI: _sU})
 
-NO_INPUT_AND_NO_OUTPUT = (
+NO_INPUT_AND_NO_OUTPUT: StaticOperationSchema = (
     23,
     n0,
     _NIANO,
@@ -429,11 +460,11 @@ NO_INPUT_AND_NO_OUTPUT = (
     (),
 )
 
-NO_INPUT_AND_OUTPUT_INPUT = (18, n0, _NIAOI, {_sSI: _sU})
+NO_INPUT_AND_OUTPUT_INPUT: StaticSchema = (18, n0, _NIAOI, {_sSI: _sU})
 
-NO_INPUT_AND_OUTPUT_OUTPUT = (18, n0, _NIAOO, 0)
+NO_INPUT_AND_OUTPUT_OUTPUT: StaticSchema = (18, n0, _NIAOO, 0)
 
-NO_INPUT_AND_OUTPUT = (
+NO_INPUT_AND_OUTPUT: StaticOperationSchema = (
     23,
     n0,
     _NIAO,
@@ -443,7 +474,7 @@ NO_INPUT_AND_OUTPUT = (
     (),
 )
 
-OPERATION_WITH_DEFAULTS_INPUT = (
+OPERATION_WITH_DEFAULTS_INPUT: StaticSchema = (
     18,
     n0,
     _OWDI,
@@ -452,7 +483,7 @@ OPERATION_WITH_DEFAULTS_INPUT = (
     ((DEFAULTS, 0), (CLIENT_OPTIONAL_DEFAULTS, 0), (3, {_s: _h}), (7, {_s: 0})),
 )
 
-OPERATION_WITH_DEFAULTS_OUTPUT = (
+OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
     18,
     n0,
     _OWDO,
@@ -519,7 +550,7 @@ OPERATION_WITH_DEFAULTS_OUTPUT = (
     ),
 )
 
-OPERATION_WITH_DEFAULTS = (
+OPERATION_WITH_DEFAULTS: StaticOperationSchema = (
     23,
     n0,
     _OWD,
@@ -529,7 +560,7 @@ OPERATION_WITH_DEFAULTS = (
     (),
 )
 
-TOP_LEVEL = (
+TOP_LEVEL: StaticSchema = (
     18,
     n0,
     _TL,
@@ -538,9 +569,16 @@ TOP_LEVEL = (
     ((DIALOG, 1), (DIALOG_LIST, {_s: ()}), (DIALOG_MAP, {_s: None})),
 )
 
-OPERATION_WITH_NESTED_STRUCTURE_INPUT = (18, n0, _OWNSI, 0, (_tL,), ((TOP_LEVEL, 1),))
+OPERATION_WITH_NESTED_STRUCTURE_INPUT: StaticSchema = (
+    18,
+    n0,
+    _OWNSI,
+    0,
+    (_tL,),
+    ((TOP_LEVEL, 1),),
+)
 
-OPERATION_WITH_NESTED_STRUCTURE_OUTPUT = (
+OPERATION_WITH_NESTED_STRUCTURE_OUTPUT: StaticSchema = (
     18,
     n0,
     _OWNSO,
@@ -549,7 +587,7 @@ OPERATION_WITH_NESTED_STRUCTURE_OUTPUT = (
     ((DIALOG, 1), (DIALOG_LIST, {_s: ()}), (DIALOG_MAP, {_s: None})),
 )
 
-OPERATION_WITH_NESTED_STRUCTURE = (
+OPERATION_WITH_NESTED_STRUCTURE: StaticOperationSchema = (
     23,
     n0,
     _OWNS,
@@ -559,13 +597,13 @@ OPERATION_WITH_NESTED_STRUCTURE = (
     (),
 )
 
-OPERATION_WITH_REQUIRED_MEMBERS_INPUT = (18, n0, _OWRMI, {_sSI: _sU})
+OPERATION_WITH_REQUIRED_MEMBERS_INPUT: StaticSchema = (18, n0, _OWRMI, {_sSI: _sU})
 
-REQUIRED_STRING_LIST = (16, n0, _RSL, 0, (_m,), ((3, 0),))
+REQUIRED_STRING_LIST: StaticSchema = (16, n0, _RSL, 0, (_m,), ((3, 0),))
 
-REQUIRED_STRING_MAP = (17, n0, _RSM, 0, (_k, _v), ((3, 0), (3, 0)))
+REQUIRED_STRING_MAP: StaticSchema = (17, n0, _RSM, 0, (_k, _v), ((3, 0), (3, 0)))
 
-OPERATION_WITH_REQUIRED_MEMBERS_OUTPUT = (
+OPERATION_WITH_REQUIRED_MEMBERS_OUTPUT: StaticSchema = (
     18,
     n0,
     _OWRMO,
@@ -587,7 +625,7 @@ OPERATION_WITH_REQUIRED_MEMBERS_OUTPUT = (
     ),
 )
 
-OPERATION_WITH_REQUIRED_MEMBERS = (
+OPERATION_WITH_REQUIRED_MEMBERS: StaticOperationSchema = (
     23,
     n0,
     _OWRM,
@@ -597,13 +635,25 @@ OPERATION_WITH_REQUIRED_MEMBERS = (
     (),
 )
 
-OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS_INPUT = (18, n0, _OWRMWDI, {_sSI: _sU})
+OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS_INPUT: StaticSchema = (
+    18,
+    n0,
+    _OWRMWDI,
+    {_sSI: _sU},
+)
 
-REQUIRED_ENUM = (14, n0, _RE, 0, (_FOO, _BAR, _BAZ), ((-1, 0), (-1, 0), (-1, 0)))
+REQUIRED_ENUM: StaticSchema = (
+    14,
+    n0,
+    _RE,
+    0,
+    (_FOO, _BAR, _BAZ),
+    ((-1, 0), (-1, 0), (-1, 0)),
+)
 
-REQUIRED_INT_ENUM = (15, n0, _RIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+REQUIRED_INT_ENUM: StaticSchema = (15, n0, _RIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
 
-OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS_OUTPUT = (
+OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS_OUTPUT: StaticSchema = (
     18,
     n0,
     _OWRMWDO,
@@ -627,7 +677,7 @@ OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS_OUTPUT = (
     ),
 )
 
-OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS = (
+OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS: StaticOperationSchema = (
     23,
     n0,
     _OWRMWD,
@@ -637,7 +687,7 @@ OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS = (
     (),
 )
 
-PUT_WITH_CONTENT_ENCODING_INPUT = (
+PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     18,
     n0,
     _PWCEI,
@@ -646,9 +696,9 @@ PUT_WITH_CONTENT_ENCODING_INPUT = (
     ((3, {_sH: _CE_}), (3, 0)),
 )
 
-PUT_WITH_CONTENT_ENCODING_OUTPUT = (18, n0, _PWCEO, {_sSI: _sU})
+PUT_WITH_CONTENT_ENCODING_OUTPUT: StaticSchema = (18, n0, _PWCEO, {_sSI: _sU})
 
-PUT_WITH_CONTENT_ENCODING = (
+PUT_WITH_CONTENT_ENCODING: StaticOperationSchema = (
     23,
     n0,
     _PWCE,
@@ -658,11 +708,11 @@ PUT_WITH_CONTENT_ENCODING = (
     (),
 )
 
-QUERY_INCOMPATIBLE_OPERATION_INPUT = (18, n0, _QIOI, {_sSI: _sU})
+QUERY_INCOMPATIBLE_OPERATION_INPUT: StaticSchema = (18, n0, _QIOI, {_sSI: _sU})
 
-QUERY_INCOMPATIBLE_OPERATION_OUTPUT = (18, n0, _QIOO, {_sSI: _sU})
+QUERY_INCOMPATIBLE_OPERATION_OUTPUT: StaticSchema = (18, n0, _QIOO, {_sSI: _sU})
 
-QUERY_INCOMPATIBLE_OPERATION = (
+QUERY_INCOMPATIBLE_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _QIO,
@@ -672,11 +722,25 @@ QUERY_INCOMPATIBLE_OPERATION = (
     (),
 )
 
-SIMPLE_SCALAR_PROPERTIES_INPUT = (18, n0, _SSPI, 0, (_fV, _dV), ((9, 0), (10, 0)))
+SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
+    18,
+    n0,
+    _SSPI,
+    0,
+    (_fV, _dV),
+    ((9, 0), (10, 0)),
+)
 
-SIMPLE_SCALAR_PROPERTIES_OUTPUT = (18, n0, _SSPO, 0, (_fV, _dV), ((9, 0), (10, 0)))
+SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _SSPO,
+    0,
+    (_fV, _dV),
+    ((9, 0), (10, 0)),
+)
 
-SIMPLE_SCALAR_PROPERTIES = (
+SIMPLE_SCALAR_PROPERTIES: StaticOperationSchema = (
     23,
     n0,
     _SSP,
@@ -686,7 +750,7 @@ SIMPLE_SCALAR_PROPERTIES = (
     (),
 )
 
-JSON_RPC10 = (
+JSON_RPC10: StaticSchema = (
     21,
     n0,
     _JR,
@@ -842,8 +906,8 @@ JSON_RPC10 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": MappingProxyType({"ref": "Endpoint"}),
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -855,8 +919,8 @@ JSON_RPC10 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://jsonrpc10-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -875,8 +939,8 @@ JSON_RPC10 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://jsonrpc10.{Region}.amazonaws.com",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -888,8 +952,8 @@ JSON_RPC10 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://jsonrpc10-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -908,8 +972,8 @@ JSON_RPC10 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://jsonrpc10.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -928,8 +992,8 @@ JSON_RPC10 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://jsonrpc10.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",

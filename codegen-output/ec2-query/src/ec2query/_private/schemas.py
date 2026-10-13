@@ -2,6 +2,8 @@
 
 from types import MappingProxyType
 
+from smithy_core._schema_compact import StaticOperationSchema, StaticSchema
+
 
 n0 = "aws.protocoltests.ec2"
 _DOI = "DatetimeOffsetsInput"
@@ -250,19 +252,27 @@ _aQ = "aws.protocols#ec2Query"
 _sB = "smithy.rules#endpointBdd"
 _aws = "aws.api#service"
 
-DATETIME_OFFSETS_INPUT = (18, n0, _DOI, {_sSI: _sU})
+DATETIME_OFFSETS_INPUT: StaticSchema = (18, n0, _DOI, {_sSI: _sU})
 
-DATE_TIME = (4, n1, _DT, {_sF: _dt})
+DATE_TIME: StaticSchema = (4, n1, _DT, {_sF: _dt})
 
-DATETIME_OFFSETS_OUTPUT = (18, n0, _DOO, 0, (_d,), ((DATE_TIME, 0),))
+DATETIME_OFFSETS_OUTPUT: StaticSchema = (18, n0, _DOO, 0, (_d,), ((DATE_TIME, 0),))
 
-DATETIME_OFFSETS = (23, n0, _DO, 0, DATETIME_OFFSETS_INPUT, DATETIME_OFFSETS_OUTPUT, ())
+DATETIME_OFFSETS: StaticOperationSchema = (
+    23,
+    n0,
+    _DO,
+    0,
+    DATETIME_OFFSETS_INPUT,
+    DATETIME_OFFSETS_OUTPUT,
+    (),
+)
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT = (18, n0, _EIAEOI, 0)
+EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT: StaticSchema = (18, n0, _EIAEOI, 0)
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT = (18, n0, _EIAEOO, 0)
+EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT: StaticSchema = (18, n0, _EIAEOO, 0)
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT = (
+EMPTY_INPUT_AND_EMPTY_OUTPUT: StaticOperationSchema = (
     23,
     n0,
     _EIAEO,
@@ -272,11 +282,11 @@ EMPTY_INPUT_AND_EMPTY_OUTPUT = (
     (),
 )
 
-ENDPOINT_OPERATION_INPUT = (18, n0, _EOI, {_sSI: _sU})
+ENDPOINT_OPERATION_INPUT: StaticSchema = (18, n0, _EOI, {_sSI: _sU})
 
-ENDPOINT_OPERATION_OUTPUT = (18, n0, _EOO, {_sSI: _sU})
+ENDPOINT_OPERATION_OUTPUT: StaticSchema = (18, n0, _EOO, {_sSI: _sU})
 
-ENDPOINT_OPERATION = (
+ENDPOINT_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _EO,
@@ -286,7 +296,7 @@ ENDPOINT_OPERATION = (
     (),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = (
+ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT: StaticSchema = (
     18,
     n0,
     _EWHLOI,
@@ -295,9 +305,9 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = (
     ((3, 257),),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = (18, n0, _EWHLOO, {_sSI: _sU})
+ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT: StaticSchema = (18, n0, _EWHLOO, {_sSI: _sU})
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION = (
+ENDPOINT_WITH_HOST_LABEL_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _EWHLO,
@@ -307,11 +317,11 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION = (
     (),
 )
 
-FRACTIONAL_SECONDS_INPUT = (18, n0, _FSI, {_sSI: _sU})
+FRACTIONAL_SECONDS_INPUT: StaticSchema = (18, n0, _FSI, {_sSI: _sU})
 
-FRACTIONAL_SECONDS_OUTPUT = (18, n0, _FSO, 0, (_d,), ((DATE_TIME, 0),))
+FRACTIONAL_SECONDS_OUTPUT: StaticSchema = (18, n0, _FSO, 0, (_d,), ((DATE_TIME, 0),))
 
-FRACTIONAL_SECONDS = (
+FRACTIONAL_SECONDS: StaticOperationSchema = (
     23,
     n0,
     _FS,
@@ -321,9 +331,9 @@ FRACTIONAL_SECONDS = (
     (),
 )
 
-COMPLEX_NESTED_ERROR_DATA = (18, n0, _CNED, 0, (_F,), ((3, 0),))
+COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n0, _CNED, 0, (_F,), ((3, 0),))
 
-COMPLEX_ERROR = (
+COMPLEX_ERROR: StaticSchema = (
     18,
     n0,
     _CE,
@@ -332,13 +342,13 @@ COMPLEX_ERROR = (
     ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
-GREETING_WITH_ERRORS_INPUT = (18, n0, _GWEI, {_sSI: _sU})
+GREETING_WITH_ERRORS_INPUT: StaticSchema = (18, n0, _GWEI, {_sSI: _sU})
 
-GREETING_WITH_ERRORS_OUTPUT = (18, n0, _GWEO, 0, (_g,), ((3, 0),))
+GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (18, n0, _GWEO, 0, (_g,), ((3, 0),))
 
-INVALID_GREETING = (18, n0, _IG, {_smi: _c}, (_M,), ((3, 0),))
+INVALID_GREETING: StaticSchema = (18, n0, _IG, {_smi: _c}, (_M,), ((3, 0),))
 
-GREETING_WITH_ERRORS = (
+GREETING_WITH_ERRORS: StaticOperationSchema = (
     23,
     n0,
     _GWE,
@@ -348,11 +358,11 @@ GREETING_WITH_ERRORS = (
     (INVALID_GREETING, COMPLEX_ERROR),
 )
 
-HOST_WITH_PATH_OPERATION_INPUT = (18, n0, _HWPOI, {_sSI: _sU})
+HOST_WITH_PATH_OPERATION_INPUT: StaticSchema = (18, n0, _HWPOI, {_sSI: _sU})
 
-HOST_WITH_PATH_OPERATION_OUTPUT = (18, n0, _HWPOO, {_sSI: _sU})
+HOST_WITH_PATH_OPERATION_OUTPUT: StaticSchema = (18, n0, _HWPOO, {_sSI: _sU})
 
-HOST_WITH_PATH_OPERATION = (
+HOST_WITH_PATH_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _HWPO,
@@ -362,11 +372,18 @@ HOST_WITH_PATH_OPERATION = (
     (),
 )
 
-IGNORES_WRAPPING_XML_NAME_INPUT = (18, n0, _IWXNI, {_sSI: _sU})
+IGNORES_WRAPPING_XML_NAME_INPUT: StaticSchema = (18, n0, _IWXNI, {_sSI: _sU})
 
-IGNORES_WRAPPING_XML_NAME_OUTPUT = (18, n0, _IWXNO, {_sN: _IM}, (_f,), ((3, 0),))
+IGNORES_WRAPPING_XML_NAME_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _IWXNO,
+    {_sN: _IM},
+    (_f,),
+    ((3, 0),),
+)
 
-IGNORES_WRAPPING_XML_NAME = (
+IGNORES_WRAPPING_XML_NAME: StaticOperationSchema = (
     23,
     n0,
     _IWXN,
@@ -376,13 +393,13 @@ IGNORES_WRAPPING_XML_NAME = (
     (),
 )
 
-NESTED_STRUCTURES_OUTPUT = (18, n0, _NSO, {_sSI: _sU})
+NESTED_STRUCTURES_OUTPUT: StaticSchema = (18, n0, _NSO, {_sSI: _sU})
 
-NO_INPUT_AND_OUTPUT_INPUT = (18, n0, _NIAOI, {_sSI: _sU})
+NO_INPUT_AND_OUTPUT_INPUT: StaticSchema = (18, n0, _NIAOI, {_sSI: _sU})
 
-NO_INPUT_AND_OUTPUT_OUTPUT = (18, n0, _NIAOO, 0)
+NO_INPUT_AND_OUTPUT_OUTPUT: StaticSchema = (18, n0, _NIAOO, 0)
 
-NO_INPUT_AND_OUTPUT = (
+NO_INPUT_AND_OUTPUT: StaticOperationSchema = (
     23,
     n0,
     _NIAO,
@@ -392,7 +409,7 @@ NO_INPUT_AND_OUTPUT = (
     (),
 )
 
-PUT_WITH_CONTENT_ENCODING_INPUT = (
+PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     18,
     n0,
     _PWCEI,
@@ -401,9 +418,9 @@ PUT_WITH_CONTENT_ENCODING_INPUT = (
     ((3, {_sH: _CE_}), (3, 0)),
 )
 
-PUT_WITH_CONTENT_ENCODING_OUTPUT = (18, n0, _PWCEO, {_sSI: _sU})
+PUT_WITH_CONTENT_ENCODING_OUTPUT: StaticSchema = (18, n0, _PWCEO, {_sSI: _sU})
 
-PUT_WITH_CONTENT_ENCODING = (
+PUT_WITH_CONTENT_ENCODING: StaticOperationSchema = (
     23,
     n0,
     _PWCE,
@@ -413,11 +430,18 @@ PUT_WITH_CONTENT_ENCODING = (
     (),
 )
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT = (18, n0, _QITAFI, 0, (_t,), ((3, 2),))
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT: StaticSchema = (
+    18,
+    n0,
+    _QITAFI,
+    0,
+    (_t,),
+    ((3, 2),),
+)
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT = (18, n0, _QITAFO, {_sSI: _sU})
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT: StaticSchema = (18, n0, _QITAFO, {_sSI: _sU})
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = (
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL: StaticOperationSchema = (
     23,
     n0,
     _QITAF,
@@ -427,17 +451,17 @@ QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = (
     (),
 )
 
-GREETING_STRUCT = (18, n1, _GS, 0, (_h,), ((3, 0),))
+GREETING_STRUCT: StaticSchema = (18, n1, _GS, 0, (_h,), ((3, 0),))
 
-GREETING_LIST = (16, n1, _GL, 0, (_m,), ((GREETING_STRUCT, 0),))
+GREETING_LIST: StaticSchema = (16, n1, _GL, 0, (_m,), ((GREETING_STRUCT, 0),))
 
-STRING_LIST = (16, n1, _SL, 0, (_m,), ((3, 0),))
+STRING_LIST: StaticSchema = (16, n1, _SL, 0, (_m,), ((3, 0),))
 
-LIST_WITH_XML_NAME = (16, n0, _LWXN, 0, (_m,), ((3, {_sN: _i}),))
+LIST_WITH_XML_NAME: StaticSchema = (16, n0, _LWXN, 0, (_m,), ((3, {_sN: _i}),))
 
-NESTED_STRUCT_WITH_LIST = (18, n0, _NSWL, 0, (_LA,), ((STRING_LIST, 0),))
+NESTED_STRUCT_WITH_LIST: StaticSchema = (18, n0, _NSWL, 0, (_LA,), ((STRING_LIST, 0),))
 
-QUERY_LISTS_INPUT = (
+QUERY_LISTS_INPUT: StaticSchema = (
     18,
     n0,
     _QLI,
@@ -452,13 +476,21 @@ QUERY_LISTS_INPUT = (
     ),
 )
 
-QUERY_LISTS_OUTPUT = (18, n0, _QLO, {_sSI: _sU})
+QUERY_LISTS_OUTPUT: StaticSchema = (18, n0, _QLO, {_sSI: _sU})
 
-QUERY_LISTS = (23, n0, _QL, 0, QUERY_LISTS_INPUT, QUERY_LISTS_OUTPUT, ())
+QUERY_LISTS: StaticOperationSchema = (
+    23,
+    n0,
+    _QL,
+    0,
+    QUERY_LISTS_INPUT,
+    QUERY_LISTS_OUTPUT,
+    (),
+)
 
-EPOCH_SECONDS = (4, n1, _ES, {_sF: _es})
+EPOCH_SECONDS: StaticSchema = (4, n1, _ES, {_sF: _es})
 
-QUERY_TIMESTAMPS_INPUT = (
+QUERY_TIMESTAMPS_INPUT: StaticSchema = (
     18,
     n0,
     _QTI,
@@ -467,13 +499,21 @@ QUERY_TIMESTAMPS_INPUT = (
     ((4, 0), (4, {_sF: _es}), (EPOCH_SECONDS, 0)),
 )
 
-QUERY_TIMESTAMPS_OUTPUT = (18, n0, _QTO, {_sSI: _sU})
+QUERY_TIMESTAMPS_OUTPUT: StaticSchema = (18, n0, _QTO, {_sSI: _sU})
 
-QUERY_TIMESTAMPS = (23, n0, _QT, 0, QUERY_TIMESTAMPS_INPUT, QUERY_TIMESTAMPS_OUTPUT, ())
+QUERY_TIMESTAMPS: StaticOperationSchema = (
+    23,
+    n0,
+    _QT,
+    0,
+    QUERY_TIMESTAMPS_INPUT,
+    QUERY_TIMESTAMPS_OUTPUT,
+    (),
+)
 
-RECURSIVE_XML_SHAPES_INPUT = (18, n0, _RXSI, {_sSI: _sU})
+RECURSIVE_XML_SHAPES_INPUT: StaticSchema = (18, n0, _RXSI, {_sSI: _sU})
 
-FOO_ENUM = (
+FOO_ENUM: StaticSchema = (
     14,
     n1,
     _FE,
@@ -482,7 +522,7 @@ FOO_ENUM = (
     ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
 )
 
-SIMPLE_INPUT_PARAMS_INPUT = (
+SIMPLE_INPUT_PARAMS_INPUT: StaticSchema = (
     18,
     n0,
     _SIPI,
@@ -506,9 +546,9 @@ SIMPLE_INPUT_PARAMS_INPUT = (
     ),
 )
 
-SIMPLE_INPUT_PARAMS_OUTPUT = (18, n0, _SIPO, {_sSI: _sU})
+SIMPLE_INPUT_PARAMS_OUTPUT: StaticSchema = (18, n0, _SIPO, {_sSI: _sU})
 
-SIMPLE_INPUT_PARAMS = (
+SIMPLE_INPUT_PARAMS: StaticOperationSchema = (
     23,
     n0,
     _SIP,
@@ -518,9 +558,9 @@ SIMPLE_INPUT_PARAMS = (
     (),
 )
 
-SIMPLE_SCALAR_XML_PROPERTIES_INPUT = (18, n0, _SSXPI, {_sSI: _sU})
+SIMPLE_SCALAR_XML_PROPERTIES_INPUT: StaticSchema = (18, n0, _SSXPI, {_sSI: _sU})
 
-SIMPLE_SCALAR_XML_PROPERTIES_OUTPUT = (
+SIMPLE_SCALAR_XML_PROPERTIES_OUTPUT: StaticSchema = (
     18,
     n0,
     _SSXPO,
@@ -540,7 +580,7 @@ SIMPLE_SCALAR_XML_PROPERTIES_OUTPUT = (
     ),
 )
 
-SIMPLE_SCALAR_XML_PROPERTIES = (
+SIMPLE_SCALAR_XML_PROPERTIES: StaticOperationSchema = (
     23,
     n0,
     _SSXP,
@@ -550,27 +590,50 @@ SIMPLE_SCALAR_XML_PROPERTIES = (
     (),
 )
 
-XML_BLOBS_INPUT = (18, n0, _XBI, {_sSI: _sU})
+XML_BLOBS_INPUT: StaticSchema = (18, n0, _XBI, {_sSI: _sU})
 
-XML_BLOBS_OPERATION_OUTPUT = (18, n0, _XBOO, {_sSI: _aXBO}, (_da,), ((1, 0),))
+XML_BLOBS_OPERATION_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _XBOO,
+    {_sSI: _aXBO},
+    (_da,),
+    ((1, 0),),
+)
 
-XML_BLOBS = (23, n0, _XB, 0, XML_BLOBS_INPUT, XML_BLOBS_OPERATION_OUTPUT, ())
+XML_BLOBS: StaticOperationSchema = (
+    23,
+    n0,
+    _XB,
+    0,
+    XML_BLOBS_INPUT,
+    XML_BLOBS_OPERATION_OUTPUT,
+    (),
+)
 
-XML_EMPTY_BLOBS_INPUT = (18, n0, _XEBI, {_sSI: _sU})
+XML_EMPTY_BLOBS_INPUT: StaticSchema = (18, n0, _XEBI, {_sSI: _sU})
 
-XML_EMPTY_BLOBS_OUTPUT = (18, n0, _XEBO, {_sSI: _aXBO}, (_da,), ((1, 0),))
+XML_EMPTY_BLOBS_OUTPUT: StaticSchema = (18, n0, _XEBO, {_sSI: _aXBO}, (_da,), ((1, 0),))
 
-XML_EMPTY_BLOBS = (23, n0, _XEB, 0, XML_EMPTY_BLOBS_INPUT, XML_EMPTY_BLOBS_OUTPUT, ())
+XML_EMPTY_BLOBS: StaticOperationSchema = (
+    23,
+    n0,
+    _XEB,
+    0,
+    XML_EMPTY_BLOBS_INPUT,
+    XML_EMPTY_BLOBS_OUTPUT,
+    (),
+)
 
-XML_EMPTY_LISTS_INPUT = (18, n0, _XELI, {_sSI: _sU})
+XML_EMPTY_LISTS_INPUT: StaticSchema = (18, n0, _XELI, {_sSI: _sU})
 
-BOOLEAN_LIST = (16, n1, _BL, 0, (_m,), ((2, 0),))
+BOOLEAN_LIST: StaticSchema = (16, n1, _BL, 0, (_m,), ((2, 0),))
 
-FOO_ENUM_LIST = (16, n1, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
+FOO_ENUM_LIST: StaticSchema = (16, n1, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
 
-RENAMED_LIST_MEMBERS = (16, n0, _RLM, 0, (_m,), ((3, {_sN: _i}),))
+RENAMED_LIST_MEMBERS: StaticSchema = (16, n0, _RLM, 0, (_m,), ((3, {_sN: _i}),))
 
-LIST_WITH_MEMBER_NAMESPACE = (
+LIST_WITH_MEMBER_NAMESPACE: StaticSchema = (
     16,
     n0,
     _LWMN,
@@ -579,7 +642,7 @@ LIST_WITH_MEMBER_NAMESPACE = (
     ((3, {_sNm: MappingProxyType({"uri": "https://xml-member.example.com"})}),),
 )
 
-LIST_WITH_NAMESPACE = (
+LIST_WITH_NAMESPACE: StaticSchema = (
     16,
     n0,
     _LWN,
@@ -588,23 +651,44 @@ LIST_WITH_NAMESPACE = (
     ((3, 0),),
 )
 
-INTEGER_LIST = (16, n1, _IL, 0, (_m,), ((7, 0),))
+INTEGER_LIST: StaticSchema = (16, n1, _IL, 0, (_m,), ((7, 0),))
 
-INTEGER_ENUM = (15, n1, _IE, 0, (_A, _B_, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (
+    15,
+    n1,
+    _IE,
+    0,
+    (_A, _B_, _C),
+    ((-1, 0), (-1, 0), (-1, 0)),
+)
 
-INTEGER_ENUM_LIST = (16, n1, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
+INTEGER_ENUM_LIST: StaticSchema = (16, n1, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
 
-NESTED_STRING_LIST = (16, n1, _NSL, 0, (_m,), ((STRING_LIST, 0),))
+NESTED_STRING_LIST: StaticSchema = (16, n1, _NSL, 0, (_m,), ((STRING_LIST, 0),))
 
-STRING_SET = (16, n1, _SS, 0, (_m,), ((3, 0),))
+STRING_SET: StaticSchema = (16, n1, _SS, 0, (_m,), ((3, 0),))
 
-STRUCTURE_LIST_MEMBER = (18, n0, _SLM, 0, (_a, _b), ((3, {_sN: _v}), (3, {_sN: _o})))
+STRUCTURE_LIST_MEMBER: StaticSchema = (
+    18,
+    n0,
+    _SLM,
+    0,
+    (_a, _b),
+    ((3, {_sN: _v}), (3, {_sN: _o})),
+)
 
-STRUCTURE_LIST = (16, n0, _SLt, 0, (_m,), ((STRUCTURE_LIST_MEMBER, {_sN: _i}),))
+STRUCTURE_LIST: StaticSchema = (
+    16,
+    n0,
+    _SLt,
+    0,
+    (_m,),
+    ((STRUCTURE_LIST_MEMBER, {_sN: _i}),),
+)
 
-TIMESTAMP_LIST = (16, n1, _TLi, 0, (_m,), ((4, 0),))
+TIMESTAMP_LIST: StaticSchema = (16, n1, _TLi, 0, (_m,), ((4, 0),))
 
-XML_EMPTY_LISTS_OUTPUT = (
+XML_EMPTY_LISTS_OUTPUT: StaticSchema = (
     18,
     n0,
     _XELO,
@@ -628,15 +712,23 @@ XML_EMPTY_LISTS_OUTPUT = (
     ),
 )
 
-XML_EMPTY_LISTS = (23, n0, _XEL, 0, XML_EMPTY_LISTS_INPUT, XML_EMPTY_LISTS_OUTPUT, ())
+XML_EMPTY_LISTS: StaticOperationSchema = (
+    23,
+    n0,
+    _XEL,
+    0,
+    XML_EMPTY_LISTS_INPUT,
+    XML_EMPTY_LISTS_OUTPUT,
+    (),
+)
 
-XML_ENUMS_INPUT = (18, n0, _XEI, {_sSI: _sU})
+XML_ENUMS_INPUT: StaticSchema = (18, n0, _XEI, {_sSI: _sU})
 
-FOO_ENUM_MAP = (17, n1, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
+FOO_ENUM_MAP: StaticSchema = (17, n1, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
 
-FOO_ENUM_SET = (16, n1, _FES, 0, (_m,), ((FOO_ENUM, 0),))
+FOO_ENUM_SET: StaticSchema = (16, n1, _FES, 0, (_m,), ((FOO_ENUM, 0),))
 
-XML_ENUMS_OUTPUT = (
+XML_ENUMS_OUTPUT: StaticSchema = (
     18,
     n0,
     _XEO,
@@ -652,15 +744,30 @@ XML_ENUMS_OUTPUT = (
     ),
 )
 
-XML_ENUMS = (23, n0, _XE, 0, XML_ENUMS_INPUT, XML_ENUMS_OUTPUT, ())
+XML_ENUMS: StaticOperationSchema = (
+    23,
+    n0,
+    _XE,
+    0,
+    XML_ENUMS_INPUT,
+    XML_ENUMS_OUTPUT,
+    (),
+)
 
-XML_INT_ENUMS_INPUT = (18, n0, _XIEI, {_sSI: _sU})
+XML_INT_ENUMS_INPUT: StaticSchema = (18, n0, _XIEI, {_sSI: _sU})
 
-INTEGER_ENUM_MAP = (17, n1, _IEM, 0, (_k, _v), ((3, 0), (INTEGER_ENUM, 0)))
+INTEGER_ENUM_MAP: StaticSchema = (
+    17,
+    n1,
+    _IEM,
+    0,
+    (_k, _v),
+    ((3, 0), (INTEGER_ENUM, 0)),
+)
 
-INTEGER_ENUM_SET = (16, n1, _IES, 0, (_m,), ((INTEGER_ENUM, 0),))
+INTEGER_ENUM_SET: StaticSchema = (16, n1, _IES, 0, (_m,), ((INTEGER_ENUM, 0),))
 
-XML_INT_ENUMS_OUTPUT = (
+XML_INT_ENUMS_OUTPUT: StaticSchema = (
     18,
     n0,
     _XIEO,
@@ -676,11 +783,19 @@ XML_INT_ENUMS_OUTPUT = (
     ),
 )
 
-XML_INT_ENUMS = (23, n0, _XIE, 0, XML_INT_ENUMS_INPUT, XML_INT_ENUMS_OUTPUT, ())
+XML_INT_ENUMS: StaticOperationSchema = (
+    23,
+    n0,
+    _XIE,
+    0,
+    XML_INT_ENUMS_INPUT,
+    XML_INT_ENUMS_OUTPUT,
+    (),
+)
 
-XML_LISTS_INPUT = (18, n0, _XLI, {_sSI: _sU})
+XML_LISTS_INPUT: StaticSchema = (18, n0, _XLI, {_sSI: _sU})
 
-XML_LISTS_OPERATION_OUTPUT = (
+XML_LISTS_OPERATION_OUTPUT: StaticSchema = (
     18,
     n0,
     _XLOO,
@@ -704,11 +819,19 @@ XML_LISTS_OPERATION_OUTPUT = (
     ),
 )
 
-XML_LISTS = (23, n0, _XL, 0, XML_LISTS_INPUT, XML_LISTS_OPERATION_OUTPUT, ())
+XML_LISTS: StaticOperationSchema = (
+    23,
+    n0,
+    _XL,
+    0,
+    XML_LISTS_INPUT,
+    XML_LISTS_OPERATION_OUTPUT,
+    (),
+)
 
-XML_NAMESPACES_INPUT = (18, n0, _XNI, {_sSI: _sU})
+XML_NAMESPACES_INPUT: StaticSchema = (18, n0, _XNI, {_sSI: _sU})
 
-XML_NAMESPACED_LIST = (
+XML_NAMESPACED_LIST: StaticSchema = (
     16,
     n0,
     _XNL,
@@ -717,7 +840,7 @@ XML_NAMESPACED_LIST = (
     ((3, {_sNm: MappingProxyType({"uri": "http://bux.com"})}),),
 )
 
-XML_NAMESPACE_NESTED = (
+XML_NAMESPACE_NESTED: StaticSchema = (
     18,
     n0,
     _XNN,
@@ -729,7 +852,7 @@ XML_NAMESPACE_NESTED = (
     ),
 )
 
-XML_NAMESPACES_OUTPUT = (
+XML_NAMESPACES_OUTPUT: StaticSchema = (
     18,
     n0,
     _XNO,
@@ -738,13 +861,21 @@ XML_NAMESPACES_OUTPUT = (
     ((XML_NAMESPACE_NESTED, 0),),
 )
 
-XML_NAMESPACES = (23, n0, _XN, 0, XML_NAMESPACES_INPUT, XML_NAMESPACES_OUTPUT, ())
+XML_NAMESPACES: StaticOperationSchema = (
+    23,
+    n0,
+    _XN,
+    0,
+    XML_NAMESPACES_INPUT,
+    XML_NAMESPACES_OUTPUT,
+    (),
+)
 
-XML_TIMESTAMPS_INPUT = (18, n0, _XTI, {_sSI: _sU})
+XML_TIMESTAMPS_INPUT: StaticSchema = (18, n0, _XTI, {_sSI: _sU})
 
-HTTP_DATE = (4, n1, _HD, {_sF: _hd})
+HTTP_DATE: StaticSchema = (4, n1, _HD, {_sF: _hd})
 
-XML_TIMESTAMPS_OUTPUT = (
+XML_TIMESTAMPS_OUTPUT: StaticSchema = (
     18,
     n0,
     _XTO,
@@ -761,43 +892,37 @@ XML_TIMESTAMPS_OUTPUT = (
     ),
 )
 
-XML_TIMESTAMPS = (23, n0, _XT, 0, XML_TIMESTAMPS_INPUT, XML_TIMESTAMPS_OUTPUT, ())
+XML_TIMESTAMPS: StaticOperationSchema = (
+    23,
+    n0,
+    _XT,
+    0,
+    XML_TIMESTAMPS_INPUT,
+    XML_TIMESTAMPS_OUTPUT,
+    (),
+)
 
-STRUCT_ARG = (  # pyright: ignore[reportUnknownVariableType]
+STRUCT_ARG: StaticSchema = (
     18,
     n0,
     _SA,
     0,
     (_SAt, _OA, _RA),
-    (
-        (3, 0),
-        (2, 0),
-        (lambda: STRUCT_ARG, 0),  # pyright: ignore[reportUnknownLambdaType]
-    ),
+    ((3, 0), (2, 0), (lambda: STRUCT_ARG, 0)),
 )
 
-NESTED_STRUCTURES_INPUT = (  # pyright: ignore[reportUnknownVariableType]
-    18,
-    n0,
-    _NSI,
-    0,
-    (_N,),
-    ((STRUCT_ARG, 0),),
-)
+NESTED_STRUCTURES_INPUT: StaticSchema = (18, n0, _NSI, 0, (_N,), ((STRUCT_ARG, 0),))
 
-RECURSIVE_XML_SHAPES_OUTPUT_NESTED1 = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_XML_SHAPES_OUTPUT_NESTED1: StaticSchema = (
     18,
     n0,
     _RXSON,
     0,
     (_f, _n),
-    (
-        (3, 0),
-        (lambda: RECURSIVE_XML_SHAPES_OUTPUT_NESTED2, 0),  # pyright: ignore[reportUnknownLambdaType]
-    ),
+    ((3, 0), (lambda: RECURSIVE_XML_SHAPES_OUTPUT_NESTED2, 0)),
 )
 
-RECURSIVE_XML_SHAPES_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_XML_SHAPES_OUTPUT_NESTED2: StaticSchema = (
     18,
     n0,
     _RXSONe,
@@ -806,7 +931,7 @@ RECURSIVE_XML_SHAPES_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariable
     ((3, 0), (RECURSIVE_XML_SHAPES_OUTPUT_NESTED1, 0)),
 )
 
-NESTED_STRUCTURES = (  # pyright: ignore[reportUnknownVariableType]
+NESTED_STRUCTURES: StaticOperationSchema = (
     23,
     n0,
     _NS,
@@ -816,7 +941,7 @@ NESTED_STRUCTURES = (  # pyright: ignore[reportUnknownVariableType]
     (),
 )
 
-RECURSIVE_XML_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_XML_SHAPES_OUTPUT: StaticSchema = (
     18,
     n0,
     _RXSO,
@@ -825,7 +950,7 @@ RECURSIVE_XML_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
     ((RECURSIVE_XML_SHAPES_OUTPUT_NESTED1, 0),),
 )
 
-RECURSIVE_XML_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_XML_SHAPES: StaticOperationSchema = (
     23,
     n0,
     _RXS,
@@ -835,7 +960,7 @@ RECURSIVE_XML_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
     (),
 )
 
-AWS_EC2 = (
+AWS_EC2: StaticSchema = (
     21,
     n0,
     _AE,
@@ -991,8 +1116,8 @@ AWS_EC2 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": MappingProxyType({"ref": "Endpoint"}),
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -1004,8 +1129,8 @@ AWS_EC2 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://awsec2-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -1024,8 +1149,8 @@ AWS_EC2 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://awsec2.{Region}.amazonaws.com",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -1037,8 +1162,8 @@ AWS_EC2 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://awsec2-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -1057,8 +1182,8 @@ AWS_EC2 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://awsec2.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -1077,8 +1202,8 @@ AWS_EC2 = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://awsec2.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",

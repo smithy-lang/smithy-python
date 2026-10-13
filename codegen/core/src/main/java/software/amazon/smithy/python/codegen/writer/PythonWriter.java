@@ -636,7 +636,10 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         public String objectNode(ObjectNode node) {
             writer.addStdlibImport("types", "MappingProxyType");
             if (node.getMembers().isEmpty()) {
-                return "MappingProxyType({})";
+                // An unparameterized empty literal infers MappingProxyType[Unknown,
+                // Unknown], which leaks partially-unknown up through every enclosing
+                // trait value under strict pyright.
+                return "MappingProxyType[str, object]({})";
             }
 
             StringBuilder builder = new StringBuilder("MappingProxyType({\n");

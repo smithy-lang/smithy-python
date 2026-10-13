@@ -2,6 +2,8 @@
 
 from types import MappingProxyType
 
+from smithy_core._schema_compact import StaticOperationSchema, StaticSchema
+
 
 n0 = "aws.protocoltests.shared"
 _BL = "BooleanList"
@@ -838,11 +840,11 @@ _sB = "smithy.rules#endpointBdd"
 _aws = "aws.api#service"
 _aJ = "aws.protocols#restJson1"
 
-BOOLEAN_LIST = (16, n0, _BL, 0, (_m,), ((2, 0),))
+BOOLEAN_LIST: StaticSchema = (16, n0, _BL, 0, (_m,), ((2, 0),))
 
-DOUBLE_LIST = (16, n0, _DL, 0, (_m,), ((10, 0),))
+DOUBLE_LIST: StaticSchema = (16, n0, _DL, 0, (_m,), ((10, 0),))
 
-FOO_ENUM = (
+FOO_ENUM: StaticSchema = (
     14,
     n0,
     _FE,
@@ -851,25 +853,25 @@ FOO_ENUM = (
     ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
 )
 
-FOO_ENUM_LIST = (16, n0, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
+FOO_ENUM_LIST: StaticSchema = (16, n0, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
 
-INTEGER_ENUM = (15, n0, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (15, n0, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
 
-INTEGER_ENUM_LIST = (16, n0, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
+INTEGER_ENUM_LIST: StaticSchema = (16, n0, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
 
-INTEGER_LIST = (16, n0, _IL, 0, (_m,), ((7, 0),))
+INTEGER_LIST: StaticSchema = (16, n0, _IL, 0, (_m,), ((7, 0),))
 
-INTEGER_SET = (16, n0, _IS, 0, (_m,), ((7, 0),))
+INTEGER_SET: StaticSchema = (16, n0, _IS, 0, (_m,), ((7, 0),))
 
-STRING_LIST = (16, n0, _SL, 0, (_m,), ((3, 0),))
+STRING_LIST: StaticSchema = (16, n0, _SL, 0, (_m,), ((3, 0),))
 
-STRING_LIST_MAP = (17, n0, _SLM, 0, (_k, _v), ((3, 0), (STRING_LIST, 0)))
+STRING_LIST_MAP: StaticSchema = (17, n0, _SLM, 0, (_k, _v), ((3, 0), (STRING_LIST, 0)))
 
-STRING_SET = (16, n0, _SS, 0, (_m,), ((3, 0),))
+STRING_SET: StaticSchema = (16, n0, _SS, 0, (_m,), ((3, 0),))
 
-TIMESTAMP_LIST = (16, n0, _TL, 0, (_m,), ((4, 0),))
+TIMESTAMP_LIST: StaticSchema = (16, n0, _TL, 0, (_m,), ((4, 0),))
 
-ALL_QUERY_STRING_TYPES_INPUT = (
+ALL_QUERY_STRING_TYPES_INPUT: StaticSchema = (
     18,
     n1,
     _AQSTI,
@@ -922,9 +924,9 @@ ALL_QUERY_STRING_TYPES_INPUT = (
     ),
 )
 
-ALL_QUERY_STRING_TYPES_OUTPUT = (18, n1, _AQSTO, {_sSI: _sU})
+ALL_QUERY_STRING_TYPES_OUTPUT: StaticSchema = (18, n1, _AQSTO, {_sSI: _sU})
 
-ALL_QUERY_STRING_TYPES = (
+ALL_QUERY_STRING_TYPES: StaticOperationSchema = (
     23,
     n1,
     _AQST,
@@ -934,13 +936,20 @@ ALL_QUERY_STRING_TYPES = (
     (),
 )
 
-BLOB_PAYLOAD_EVENT = (18, n1, _BPE, 0, (_p,), ((1, {_sP: None}),))
+BLOB_PAYLOAD_EVENT: StaticSchema = (18, n1, _BPE, 0, (_p,), ((1, {_sP: None}),))
 
-CLIENT_OPTIONAL_DEFAULTS = (18, n1, _COD, 0, (_m,), ((7, {_sm: 0}),))
+CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (18, n1, _COD, 0, (_m,), ((7, {_sm: 0}),))
 
-COMPLEX_NESTED_ERROR_DATA = (18, n1, _CNED, 0, (_Fo,), ((3, {_sN: _Foo}),))
+COMPLEX_NESTED_ERROR_DATA: StaticSchema = (
+    18,
+    n1,
+    _CNED,
+    0,
+    (_Fo,),
+    ((3, {_sN: _Foo}),),
+)
 
-COMPLEX_ERROR = (
+COMPLEX_ERROR: StaticSchema = (
     18,
     n1,
     _CE,
@@ -949,7 +958,7 @@ COMPLEX_ERROR = (
     ((3, {_sH: _XH}), (3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
-CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT = (
+CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT: StaticSchema = (
     18,
     n1,
     _CAVQSI,
@@ -958,9 +967,9 @@ CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT = (
     ((3, {_sQ: _b}), (3, {_sQ: _mS})),
 )
 
-CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT = (18, n1, _CAVQSO, {_sSI: _sU})
+CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT: StaticSchema = (18, n1, _CAVQSO, {_sSI: _sU})
 
-CONSTANT_AND_VARIABLE_QUERY_STRING = (
+CONSTANT_AND_VARIABLE_QUERY_STRING: StaticOperationSchema = (
     23,
     n1,
     _CAVQS,
@@ -974,11 +983,11 @@ CONSTANT_AND_VARIABLE_QUERY_STRING = (
     (),
 )
 
-CONSTANT_QUERY_STRING_INPUT = (18, n1, _CQSI, 0, (_h,), ((3, 9),))
+CONSTANT_QUERY_STRING_INPUT: StaticSchema = (18, n1, _CQSI, 0, (_h,), ((3, 9),))
 
-CONSTANT_QUERY_STRING_OUTPUT = (18, n1, _CQSO, {_sSI: _sU})
+CONSTANT_QUERY_STRING_OUTPUT: StaticSchema = (18, n1, _CQSO, {_sSI: _sU})
 
-CONSTANT_QUERY_STRING = (
+CONSTANT_QUERY_STRING: StaticOperationSchema = (
     23,
     n1,
     _CQS,
@@ -992,11 +1001,11 @@ CONSTANT_QUERY_STRING = (
     (),
 )
 
-CONTENT_TYPE_PARAMETERS_INPUT = (18, n1, _CTPI, 0, (_v,), ((7, 0),))
+CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (18, n1, _CTPI, 0, (_v,), ((7, 0),))
 
-CONTENT_TYPE_PARAMETERS_OUTPUT = (18, n1, _CTPO, 0)
+CONTENT_TYPE_PARAMETERS_OUTPUT: StaticSchema = (18, n1, _CTPO, 0)
 
-CONTENT_TYPE_PARAMETERS = (
+CONTENT_TYPE_PARAMETERS: StaticOperationSchema = (
     23,
     n1,
     _CTP,
@@ -1006,13 +1015,13 @@ CONTENT_TYPE_PARAMETERS = (
     (),
 )
 
-DATETIME_OFFSETS_INPUT = (18, n1, _DOI, {_sSI: _sU})
+DATETIME_OFFSETS_INPUT: StaticSchema = (18, n1, _DOI, {_sSI: _sU})
 
-DATE_TIME = (4, n0, _DT, {_sF: _dt})
+DATE_TIME: StaticSchema = (4, n0, _DT, {_sF: _dt})
 
-DATETIME_OFFSETS_OUTPUT = (18, n1, _DOO, 0, (_d,), ((DATE_TIME, 0),))
+DATETIME_OFFSETS_OUTPUT: StaticSchema = (18, n1, _DOO, 0, (_d,), ((DATE_TIME, 0),))
 
-DATETIME_OFFSETS = (
+DATETIME_OFFSETS: StaticOperationSchema = (
     23,
     n1,
     _DO,
@@ -1022,17 +1031,24 @@ DATETIME_OFFSETS = (
     (),
 )
 
-DOCUMENT = (13, n1, _Do, 0)
+DOCUMENT: StaticSchema = (13, n1, _Do, 0)
 
-TEST_ENUM = (14, n1, _TE, 0, (_FOO, _BAR, _BAZ), ((-1, 0), (-1, 0), (-1, 0)))
+TEST_ENUM: StaticSchema = (
+    14,
+    n1,
+    _TE,
+    0,
+    (_FOO, _BAR, _BAZ),
+    ((-1, 0), (-1, 0), (-1, 0)),
+)
 
-TEST_INT_ENUM = (15, n1, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+TEST_INT_ENUM: StaticSchema = (15, n1, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
 
-TEST_STRING_LIST = (16, n1, _TSL, 0, (_m,), ((3, 0),))
+TEST_STRING_LIST: StaticSchema = (16, n1, _TSL, 0, (_m,), ((3, 0),))
 
-TEST_STRING_MAP = (17, n1, _TSM, 0, (_k, _v), ((3, 0), (3, 0)))
+TEST_STRING_MAP: StaticSchema = (17, n1, _TSM, 0, (_k, _v), ((3, 0), (3, 0)))
 
-DEFAULTS = (
+DEFAULTS: StaticSchema = (
     18,
     n1,
     _De,
@@ -1099,27 +1115,41 @@ DEFAULTS = (
     ),
 )
 
-DENSE_BOOLEAN_MAP = (17, n1, _DBM, 0, (_k, _v), ((3, 0), (2, 0)))
+DENSE_BOOLEAN_MAP: StaticSchema = (17, n1, _DBM, 0, (_k, _v), ((3, 0), (2, 0)))
 
-DENSE_NUMBER_MAP = (17, n1, _DNM, 0, (_k, _v), ((3, 0), (7, 0)))
+DENSE_NUMBER_MAP: StaticSchema = (17, n1, _DNM, 0, (_k, _v), ((3, 0), (7, 0)))
 
-DENSE_SET_MAP = (17, n1, _DSM, 0, (_k, _v), ((3, 0), (STRING_SET, 0)))
+DENSE_SET_MAP: StaticSchema = (17, n1, _DSM, 0, (_k, _v), ((3, 0), (STRING_SET, 0)))
 
-DENSE_STRING_MAP = (17, n1, _DSMe, 0, (_k, _v), ((3, 0), (3, 0)))
+DENSE_STRING_MAP: StaticSchema = (17, n1, _DSMe, 0, (_k, _v), ((3, 0), (3, 0)))
 
-GREETING_STRUCT = (18, n0, _GS, 0, (_hi,), ((3, 0),))
+GREETING_STRUCT: StaticSchema = (18, n0, _GS, 0, (_hi,), ((3, 0),))
 
-DENSE_STRUCT_MAP = (17, n1, _DSMen, 0, (_k, _v), ((3, 0), (GREETING_STRUCT, 0)))
+DENSE_STRUCT_MAP: StaticSchema = (
+    17,
+    n1,
+    _DSMen,
+    0,
+    (_k, _v),
+    ((3, 0), (GREETING_STRUCT, 0)),
+)
 
-FAREWELL = (18, n1, _Fa, 0, (_ph,), ((3, {_sm: _by}),))
+FAREWELL: StaticSchema = (18, n1, _Fa, 0, (_ph,), ((3, {_sm: _by}),))
 
-DIALOG = (18, n1, _Di, 0, (_l, _g, _f), ((3, 0), (3, {_sm: _hi}), (FAREWELL, 0)))
+DIALOG: StaticSchema = (
+    18,
+    n1,
+    _Di,
+    0,
+    (_l, _g, _f),
+    ((3, 0), (3, {_sm: _hi}), (FAREWELL, 0)),
+)
 
-DIALOG_LIST = (16, n1, _DLi, 0, (_m,), ((DIALOG, 0),))
+DIALOG_LIST: StaticSchema = (16, n1, _DLi, 0, (_m,), ((DIALOG, 0),))
 
-DIALOG_MAP = (17, n1, _DM, 0, (_k, _v), ((3, 0), (DIALOG, 0)))
+DIALOG_MAP: StaticSchema = (17, n1, _DM, 0, (_k, _v), ((3, 0), (DIALOG, 0)))
 
-DOCUMENT_TYPE_INPUT = (
+DOCUMENT_TYPE_INPUT: StaticSchema = (
     18,
     n1,
     _DTI,
@@ -1128,7 +1158,7 @@ DOCUMENT_TYPE_INPUT = (
     ((3, 0), (DOCUMENT, 0)),
 )
 
-DOCUMENT_TYPE_OUTPUT = (
+DOCUMENT_TYPE_OUTPUT: StaticSchema = (
     18,
     n1,
     _DTO,
@@ -1137,7 +1167,7 @@ DOCUMENT_TYPE_OUTPUT = (
     ((3, 0), (DOCUMENT, 0)),
 )
 
-DOCUMENT_TYPE = (
+DOCUMENT_TYPE: StaticOperationSchema = (
     23,
     n1,
     _DTo,
@@ -1147,9 +1177,9 @@ DOCUMENT_TYPE = (
     (),
 )
 
-DOCUMENT_VALUED_MAP = (17, n1, _DVM, 0, (_k, _v), ((3, 0), (DOCUMENT, 0)))
+DOCUMENT_VALUED_MAP: StaticSchema = (17, n1, _DVM, 0, (_k, _v), ((3, 0), (DOCUMENT, 0)))
 
-DOCUMENT_TYPE_AS_MAP_VALUE_INPUT = (
+DOCUMENT_TYPE_AS_MAP_VALUE_INPUT: StaticSchema = (
     18,
     n1,
     _DTAMVI,
@@ -1158,7 +1188,7 @@ DOCUMENT_TYPE_AS_MAP_VALUE_INPUT = (
     ((DOCUMENT_VALUED_MAP, 0),),
 )
 
-DOCUMENT_TYPE_AS_MAP_VALUE_OUTPUT = (
+DOCUMENT_TYPE_AS_MAP_VALUE_OUTPUT: StaticSchema = (
     18,
     n1,
     _DTAMVO,
@@ -1167,7 +1197,7 @@ DOCUMENT_TYPE_AS_MAP_VALUE_OUTPUT = (
     ((DOCUMENT_VALUED_MAP, 0),),
 )
 
-DOCUMENT_TYPE_AS_MAP_VALUE = (
+DOCUMENT_TYPE_AS_MAP_VALUE: StaticOperationSchema = (
     23,
     n1,
     _DTAMV,
@@ -1177,7 +1207,7 @@ DOCUMENT_TYPE_AS_MAP_VALUE = (
     (),
 )
 
-DOCUMENT_TYPE_AS_PAYLOAD_INPUT = (
+DOCUMENT_TYPE_AS_PAYLOAD_INPUT: StaticSchema = (
     18,
     n1,
     _DTAPI,
@@ -1186,7 +1216,7 @@ DOCUMENT_TYPE_AS_PAYLOAD_INPUT = (
     ((DOCUMENT, 16),),
 )
 
-DOCUMENT_TYPE_AS_PAYLOAD_OUTPUT = (
+DOCUMENT_TYPE_AS_PAYLOAD_OUTPUT: StaticSchema = (
     18,
     n1,
     _DTAPO,
@@ -1195,7 +1225,7 @@ DOCUMENT_TYPE_AS_PAYLOAD_OUTPUT = (
     ((DOCUMENT, 16),),
 )
 
-DOCUMENT_TYPE_AS_PAYLOAD = (
+DOCUMENT_TYPE_AS_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _DTAP,
@@ -1205,9 +1235,9 @@ DOCUMENT_TYPE_AS_PAYLOAD = (
     (),
 )
 
-ERROR_EVENT = (18, n1, _EE, {_smi: _c}, (_me,), ((3, 0),))
+ERROR_EVENT: StaticSchema = (18, n1, _EE, {_smi: _c}, (_me,), ((3, 0),))
 
-HEADERS_EVENT = (
+HEADERS_EVENT: StaticSchema = (
     18,
     n1,
     _HE,
@@ -1225,9 +1255,9 @@ HEADERS_EVENT = (
     ),
 )
 
-PAYLOAD_STRUCTURE = (18, n1, _PS, 0, (_sM,), ((3, 0),))
+PAYLOAD_STRUCTURE: StaticSchema = (18, n1, _PS, 0, (_sM,), ((3, 0),))
 
-HEADERS_AND_EXPLICIT_PAYLOAD_EVENT = (
+HEADERS_AND_EXPLICIT_PAYLOAD_EVENT: StaticSchema = (
     18,
     n1,
     _HAEPE,
@@ -1236,7 +1266,7 @@ HEADERS_AND_EXPLICIT_PAYLOAD_EVENT = (
     ((3, {_sHm: None}), (PAYLOAD_STRUCTURE, {_sP: None})),
 )
 
-HEADERS_AND_IMPLICIT_PAYLOAD_EVENT = (
+HEADERS_AND_IMPLICIT_PAYLOAD_EVENT: StaticSchema = (
     18,
     n1,
     _HAIPE,
@@ -1245,15 +1275,29 @@ HEADERS_AND_IMPLICIT_PAYLOAD_EVENT = (
     ((3, {_sHm: None}), (3, 0)),
 )
 
-STRING_PAYLOAD_EVENT = (18, n1, _SPE, 0, (_p,), ((3, {_sP: None}),))
+STRING_PAYLOAD_EVENT: StaticSchema = (18, n1, _SPE, 0, (_p,), ((3, {_sP: None}),))
 
-STRUCTURE_PAYLOAD_EVENT = (18, n1, _SPEt, 0, (_p,), ((PAYLOAD_STRUCTURE, {_sP: None}),))
+STRUCTURE_PAYLOAD_EVENT: StaticSchema = (
+    18,
+    n1,
+    _SPEt,
+    0,
+    (_p,),
+    ((PAYLOAD_STRUCTURE, {_sP: None}),),
+)
 
-PAYLOAD_UNION = (19, n1, _PU, 0, (_uM,), ((3, 0),))
+PAYLOAD_UNION: StaticSchema = (19, n1, _PU, 0, (_uM,), ((3, 0),))
 
-UNION_PAYLOAD_EVENT = (18, n1, _UPE, 0, (_p,), ((PAYLOAD_UNION, {_sP: None}),))
+UNION_PAYLOAD_EVENT: StaticSchema = (
+    18,
+    n1,
+    _UPE,
+    0,
+    (_p,),
+    ((PAYLOAD_UNION, {_sP: None}),),
+)
 
-EVENT_STREAM = (
+EVENT_STREAM: StaticSchema = (
     19,
     n1,
     _ES,
@@ -1271,11 +1315,11 @@ EVENT_STREAM = (
     ),
 )
 
-DUPLEX_STREAM_INPUT = (18, n1, _DSI, 0, (_st,), ((EVENT_STREAM, 16),))
+DUPLEX_STREAM_INPUT: StaticSchema = (18, n1, _DSI, 0, (_st,), ((EVENT_STREAM, 16),))
 
-DUPLEX_STREAM_OUTPUT = (18, n1, _DSO, 0, (_st,), ((EVENT_STREAM, 16),))
+DUPLEX_STREAM_OUTPUT: StaticSchema = (18, n1, _DSO, 0, (_st,), ((EVENT_STREAM, 16),))
 
-DUPLEX_STREAM = (
+DUPLEX_STREAM: StaticOperationSchema = (
     23,
     n1,
     _DS,
@@ -1285,7 +1329,7 @@ DUPLEX_STREAM = (
     (),
 )
 
-DUPLEX_STREAM_WITH_DISTINCT_STREAMS_INPUT = (
+DUPLEX_STREAM_WITH_DISTINCT_STREAMS_INPUT: StaticSchema = (
     18,
     n1,
     _DSWDSI,
@@ -1294,11 +1338,18 @@ DUPLEX_STREAM_WITH_DISTINCT_STREAMS_INPUT = (
     ((EVENT_STREAM, 16),),
 )
 
-SINGLETON_EVENT = (18, n1, _SE, 0, (_v,), ((3, 0),))
+SINGLETON_EVENT: StaticSchema = (18, n1, _SE, 0, (_v,), ((3, 0),))
 
-SINGLETON_EVENT_STREAM = (19, n1, _SES, 0, (_si,), ((SINGLETON_EVENT, 0),))
+SINGLETON_EVENT_STREAM: StaticSchema = (
+    19,
+    n1,
+    _SES,
+    0,
+    (_si,),
+    ((SINGLETON_EVENT, 0),),
+)
 
-DUPLEX_STREAM_WITH_DISTINCT_STREAMS_OUTPUT = (
+DUPLEX_STREAM_WITH_DISTINCT_STREAMS_OUTPUT: StaticSchema = (
     18,
     n1,
     _DSWDSO,
@@ -1307,7 +1358,7 @@ DUPLEX_STREAM_WITH_DISTINCT_STREAMS_OUTPUT = (
     ((SINGLETON_EVENT_STREAM, 16),),
 )
 
-DUPLEX_STREAM_WITH_DISTINCT_STREAMS = (
+DUPLEX_STREAM_WITH_DISTINCT_STREAMS: StaticOperationSchema = (
     23,
     n1,
     _DSWDS,
@@ -1321,7 +1372,7 @@ DUPLEX_STREAM_WITH_DISTINCT_STREAMS = (
     (),
 )
 
-DUPLEX_STREAM_WITH_INITIAL_MESSAGES_INPUT = (
+DUPLEX_STREAM_WITH_INITIAL_MESSAGES_INPUT: StaticSchema = (
     18,
     n1,
     _DSWIMI,
@@ -1330,7 +1381,7 @@ DUPLEX_STREAM_WITH_INITIAL_MESSAGES_INPUT = (
     ((3, {_sH: _irm, _smit: None}), (EVENT_STREAM, 16)),
 )
 
-DUPLEX_STREAM_WITH_INITIAL_MESSAGES_OUTPUT = (
+DUPLEX_STREAM_WITH_INITIAL_MESSAGES_OUTPUT: StaticSchema = (
     18,
     n1,
     _DSWIMO,
@@ -1339,9 +1390,16 @@ DUPLEX_STREAM_WITH_INITIAL_MESSAGES_OUTPUT = (
     ((3, {_sH: _irm_, _smit: None}), (EVENT_STREAM, 16)),
 )
 
-SERVICE_UNAVAILABLE_ERROR = (18, n1, _SUE, {_smi: _se, _sE: 500}, (_me,), ((3, 0),))
+SERVICE_UNAVAILABLE_ERROR: StaticSchema = (
+    18,
+    n1,
+    _SUE,
+    {_smi: _se, _sE: 500},
+    (_me,),
+    ((3, 0),),
+)
 
-DUPLEX_STREAM_WITH_INITIAL_MESSAGES = (
+DUPLEX_STREAM_WITH_INITIAL_MESSAGES: StaticOperationSchema = (
     23,
     n1,
     _DSWIM,
@@ -1355,11 +1413,11 @@ DUPLEX_STREAM_WITH_INITIAL_MESSAGES = (
     (SERVICE_UNAVAILABLE_ERROR,),
 )
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT = (18, n1, _EIAEOI, 0)
+EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT: StaticSchema = (18, n1, _EIAEOI, 0)
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT = (18, n1, _EIAEOO, 0)
+EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT: StaticSchema = (18, n1, _EIAEOO, 0)
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT = (
+EMPTY_INPUT_AND_EMPTY_OUTPUT: StaticOperationSchema = (
     23,
     n1,
     _EIAEO,
@@ -1369,11 +1427,11 @@ EMPTY_INPUT_AND_EMPTY_OUTPUT = (
     (),
 )
 
-ENDPOINT_OPERATION_INPUT = (18, n1, _EOI, {_sSI: _sU})
+ENDPOINT_OPERATION_INPUT: StaticSchema = (18, n1, _EOI, {_sSI: _sU})
 
-ENDPOINT_OPERATION_OUTPUT = (18, n1, _EOO, {_sSI: _sU})
+ENDPOINT_OPERATION_OUTPUT: StaticSchema = (18, n1, _EOO, {_sSI: _sU})
 
-ENDPOINT_OPERATION = (
+ENDPOINT_OPERATION: StaticOperationSchema = (
     23,
     n1,
     _EO,
@@ -1386,7 +1444,7 @@ ENDPOINT_OPERATION = (
     (),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = (
+ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT: StaticSchema = (
     18,
     n1,
     _EWHLOI,
@@ -1395,9 +1453,9 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = (
     ((3, 257),),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = (18, n1, _EWHLOO, {_sSI: _sU})
+ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT: StaticSchema = (18, n1, _EWHLOO, {_sSI: _sU})
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION = (
+ENDPOINT_WITH_HOST_LABEL_OPERATION: StaticOperationSchema = (
     23,
     n1,
     _EWHLO,
@@ -1412,15 +1470,15 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION = (
     (),
 )
 
-FINITE_STREAMING_BLOB = (1, n1, _FSB, {_smith: None, _sLmi: None})
+FINITE_STREAMING_BLOB: StaticSchema = (1, n1, _FSB, {_smith: None, _sLmi: None})
 
-FOO_ERROR = (18, n1, _FEo, {_smi: _se, _sE: 500})
+FOO_ERROR: StaticSchema = (18, n1, _FEo, {_smi: _se, _sE: 500})
 
-FRACTIONAL_SECONDS_INPUT = (18, n1, _FSI, {_sSI: _sU})
+FRACTIONAL_SECONDS_INPUT: StaticSchema = (18, n1, _FSI, {_sSI: _sU})
 
-FRACTIONAL_SECONDS_OUTPUT = (18, n1, _FSO, 0, (_d,), ((DATE_TIME, 0),))
+FRACTIONAL_SECONDS_OUTPUT: StaticSchema = (18, n1, _FSO, 0, (_d,), ((DATE_TIME, 0),))
 
-FRACTIONAL_SECONDS = (
+FRACTIONAL_SECONDS: StaticOperationSchema = (
     23,
     n1,
     _FS,
@@ -1430,13 +1488,20 @@ FRACTIONAL_SECONDS = (
     (),
 )
 
-GREETING_WITH_ERRORS_INPUT = (18, n1, _GWEI, {_sSI: _sU})
+GREETING_WITH_ERRORS_INPUT: StaticSchema = (18, n1, _GWEI, {_sSI: _sU})
 
-GREETING_WITH_ERRORS_OUTPUT = (18, n1, _GWEO, 0, (_g,), ((3, {_sH: _XG}),))
+GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _GWEO,
+    0,
+    (_g,),
+    ((3, {_sH: _XG}),),
+)
 
-INVALID_GREETING = (18, n1, _IG, {_smi: _c, _sE: 400}, (_M,), ((3, 0),))
+INVALID_GREETING: StaticSchema = (18, n1, _IG, {_smi: _c, _sE: 400}, (_M,), ((3, 0),))
 
-GREETING_WITH_ERRORS = (
+GREETING_WITH_ERRORS: StaticOperationSchema = (
     23,
     n1,
     _GWE,
@@ -1446,11 +1511,11 @@ GREETING_WITH_ERRORS = (
     (INVALID_GREETING, COMPLEX_ERROR, FOO_ERROR),
 )
 
-HOST_WITH_PATH_OPERATION_INPUT = (18, n1, _HWPOI, {_sSI: _sU})
+HOST_WITH_PATH_OPERATION_INPUT: StaticSchema = (18, n1, _HWPOI, {_sSI: _sU})
 
-HOST_WITH_PATH_OPERATION_OUTPUT = (18, n1, _HWPOO, {_sSI: _sU})
+HOST_WITH_PATH_OPERATION_OUTPUT: StaticSchema = (18, n1, _HWPOO, {_sSI: _sU})
 
-HOST_WITH_PATH_OPERATION = (
+HOST_WITH_PATH_OPERATION: StaticOperationSchema = (
     23,
     n1,
     _HWPO,
@@ -1460,11 +1525,25 @@ HOST_WITH_PATH_OPERATION = (
     (),
 )
 
-HTTP_CHECKSUM_REQUIRED_INPUT = (18, n1, _HCRI, {_sSI: _aHCRIO}, (_fo,), ((3, 0),))
+HTTP_CHECKSUM_REQUIRED_INPUT: StaticSchema = (
+    18,
+    n1,
+    _HCRI,
+    {_sSI: _aHCRIO},
+    (_fo,),
+    ((3, 0),),
+)
 
-HTTP_CHECKSUM_REQUIRED_OUTPUT = (18, n1, _HCRO, {_sSI: _aHCRIO}, (_fo,), ((3, 0),))
+HTTP_CHECKSUM_REQUIRED_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _HCRO,
+    {_sSI: _aHCRIO},
+    (_fo,),
+    ((3, 0),),
+)
 
-HTTP_CHECKSUM_REQUIRED = (
+HTTP_CHECKSUM_REQUIRED: StaticOperationSchema = (
     23,
     n1,
     _HCR,
@@ -1477,9 +1556,9 @@ HTTP_CHECKSUM_REQUIRED = (
     (),
 )
 
-STRING_MAP = (17, n0, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
+STRING_MAP: StaticSchema = (17, n0, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
 
-HTTP_EMPTY_PREFIX_HEADERS_INPUT = (
+HTTP_EMPTY_PREFIX_HEADERS_INPUT: StaticSchema = (
     18,
     n1,
     _HEPHI,
@@ -1488,7 +1567,7 @@ HTTP_EMPTY_PREFIX_HEADERS_INPUT = (
     ((STRING_MAP, {_sPH: _v_}), (3, {_sH: _h})),
 )
 
-HTTP_EMPTY_PREFIX_HEADERS_OUTPUT = (
+HTTP_EMPTY_PREFIX_HEADERS_OUTPUT: StaticSchema = (
     18,
     n1,
     _HEPHO,
@@ -1497,7 +1576,7 @@ HTTP_EMPTY_PREFIX_HEADERS_OUTPUT = (
     ((STRING_MAP, {_sPH: _v_}), (3, {_sH: _h})),
 )
 
-HTTP_EMPTY_PREFIX_HEADERS = (
+HTTP_EMPTY_PREFIX_HEADERS: StaticOperationSchema = (
     23,
     n1,
     _HEPH,
@@ -1507,13 +1586,27 @@ HTTP_EMPTY_PREFIX_HEADERS = (
     (),
 )
 
-STRING_ENUM = (14, n1, _SEt, 0, (_V,), ((-1, 0),))
+STRING_ENUM: StaticSchema = (14, n1, _SEt, 0, (_V,), ((-1, 0),))
 
-HTTP_ENUM_PAYLOAD_INPUT = (18, n1, _HEPI, {_sSI: _aEPI}, (_p,), ((STRING_ENUM, 16),))
+HTTP_ENUM_PAYLOAD_INPUT: StaticSchema = (
+    18,
+    n1,
+    _HEPI,
+    {_sSI: _aEPI},
+    (_p,),
+    ((STRING_ENUM, 16),),
+)
 
-HTTP_ENUM_PAYLOAD_OUTPUT = (18, n1, _HEPO, {_sSI: _aEPI}, (_p,), ((STRING_ENUM, 16),))
+HTTP_ENUM_PAYLOAD_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _HEPO,
+    {_sSI: _aEPI},
+    (_p,),
+    ((STRING_ENUM, 16),),
+)
 
-HTTP_ENUM_PAYLOAD = (
+HTTP_ENUM_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _HEP,
@@ -1523,7 +1616,7 @@ HTTP_ENUM_PAYLOAD = (
     (),
 )
 
-HTTP_PAYLOAD_TRAITS_INPUT = (
+HTTP_PAYLOAD_TRAITS_INPUT: StaticSchema = (
     18,
     n1,
     _HPTI,
@@ -1532,7 +1625,7 @@ HTTP_PAYLOAD_TRAITS_INPUT = (
     ((3, {_sH: _XF}), (1, 16)),
 )
 
-HTTP_PAYLOAD_TRAITS_OUTPUT = (
+HTTP_PAYLOAD_TRAITS_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPTO,
@@ -1541,7 +1634,7 @@ HTTP_PAYLOAD_TRAITS_OUTPUT = (
     ((3, {_sH: _XF}), (1, 16)),
 )
 
-HTTP_PAYLOAD_TRAITS = (
+HTTP_PAYLOAD_TRAITS: StaticOperationSchema = (
     23,
     n1,
     _HPT,
@@ -1551,9 +1644,9 @@ HTTP_PAYLOAD_TRAITS = (
     (),
 )
 
-TEXT_PLAIN_BLOB = (1, n0, _TPB, {_sT: _t})
+TEXT_PLAIN_BLOB: StaticSchema = (1, n0, _TPB, {_sT: _t})
 
-HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT = (
+HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT: StaticSchema = (
     18,
     n1,
     _HPTWMTI,
@@ -1562,7 +1655,7 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT = (
     ((3, {_sH: _XF}), (TEXT_PLAIN_BLOB, 16)),
 )
 
-HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT = (
+HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPTWMTO,
@@ -1571,7 +1664,7 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT = (
     ((3, {_sH: _XF}), (TEXT_PLAIN_BLOB, 16)),
 )
 
-HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE = (
+HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE: StaticOperationSchema = (
     23,
     n1,
     _HPTWMT,
@@ -1585,9 +1678,9 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE = (
     (),
 )
 
-NESTED_PAYLOAD = (18, n1, _NP, 0, (_g, _n), ((3, 0), (3, 0)))
+NESTED_PAYLOAD: StaticSchema = (18, n1, _NP, 0, (_g, _n), ((3, 0), (3, 0)))
 
-HTTP_PAYLOAD_WITH_STRUCTURE_INPUT = (
+HTTP_PAYLOAD_WITH_STRUCTURE_INPUT: StaticSchema = (
     18,
     n1,
     _HPWSI,
@@ -1596,7 +1689,7 @@ HTTP_PAYLOAD_WITH_STRUCTURE_INPUT = (
     ((NESTED_PAYLOAD, 16),),
 )
 
-HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT = (
+HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPWSO,
@@ -1605,7 +1698,7 @@ HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT = (
     ((NESTED_PAYLOAD, 16),),
 )
 
-HTTP_PAYLOAD_WITH_STRUCTURE = (
+HTTP_PAYLOAD_WITH_STRUCTURE: StaticOperationSchema = (
     23,
     n1,
     _HPWS,
@@ -1615,9 +1708,9 @@ HTTP_PAYLOAD_WITH_STRUCTURE = (
     (),
 )
 
-UNION_PAYLOAD = (19, n1, _UP, 0, (_g,), ((3, 0),))
+UNION_PAYLOAD: StaticSchema = (19, n1, _UP, 0, (_g,), ((3, 0),))
 
-HTTP_PAYLOAD_WITH_UNION_INPUT = (
+HTTP_PAYLOAD_WITH_UNION_INPUT: StaticSchema = (
     18,
     n1,
     _HPWUI,
@@ -1626,7 +1719,7 @@ HTTP_PAYLOAD_WITH_UNION_INPUT = (
     ((UNION_PAYLOAD, 16),),
 )
 
-HTTP_PAYLOAD_WITH_UNION_OUTPUT = (
+HTTP_PAYLOAD_WITH_UNION_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPWUO,
@@ -1635,7 +1728,7 @@ HTTP_PAYLOAD_WITH_UNION_OUTPUT = (
     ((UNION_PAYLOAD, 16),),
 )
 
-HTTP_PAYLOAD_WITH_UNION = (
+HTTP_PAYLOAD_WITH_UNION: StaticOperationSchema = (
     23,
     n1,
     _HPWU,
@@ -1645,7 +1738,7 @@ HTTP_PAYLOAD_WITH_UNION = (
     (),
 )
 
-HTTP_PREFIX_HEADERS_INPUT = (
+HTTP_PREFIX_HEADERS_INPUT: StaticSchema = (
     18,
     n1,
     _HPHI,
@@ -1654,7 +1747,7 @@ HTTP_PREFIX_HEADERS_INPUT = (
     ((3, {_sH: _xf}), (STRING_MAP, {_sPH: _xf_})),
 )
 
-HTTP_PREFIX_HEADERS_OUTPUT = (
+HTTP_PREFIX_HEADERS_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPHO,
@@ -1663,7 +1756,7 @@ HTTP_PREFIX_HEADERS_OUTPUT = (
     ((3, {_sH: _xf}), (STRING_MAP, {_sPH: _xf_})),
 )
 
-HTTP_PREFIX_HEADERS = (
+HTTP_PREFIX_HEADERS: StaticOperationSchema = (
     23,
     n1,
     _HPH,
@@ -1673,9 +1766,9 @@ HTTP_PREFIX_HEADERS = (
     (),
 )
 
-HTTP_PREFIX_HEADERS_IN_RESPONSE_INPUT = (18, n1, _HPHIRI, 0)
+HTTP_PREFIX_HEADERS_IN_RESPONSE_INPUT: StaticSchema = (18, n1, _HPHIRI, 0)
 
-HTTP_PREFIX_HEADERS_IN_RESPONSE_OUTPUT = (
+HTTP_PREFIX_HEADERS_IN_RESPONSE_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPHIRO,
@@ -1684,7 +1777,7 @@ HTTP_PREFIX_HEADERS_IN_RESPONSE_OUTPUT = (
     ((STRING_MAP, {_sPH: _v_}),),
 )
 
-HTTP_PREFIX_HEADERS_IN_RESPONSE = (
+HTTP_PREFIX_HEADERS_IN_RESPONSE: StaticOperationSchema = (
     23,
     n1,
     _HPHIR,
@@ -1694,9 +1787,9 @@ HTTP_PREFIX_HEADERS_IN_RESPONSE = (
     (),
 )
 
-QUERY_MAP = (17, n1, _QM, 0, (_k, _v), ((3, 0), (3, 0)))
+QUERY_MAP: StaticSchema = (17, n1, _QM, 0, (_k, _v), ((3, 0), (3, 0)))
 
-HTTP_QUERY_PARAMS_ONLY_OPERATION_INPUT = (
+HTTP_QUERY_PARAMS_ONLY_OPERATION_INPUT: StaticSchema = (
     18,
     n1,
     _HQPOOI,
@@ -1705,9 +1798,9 @@ HTTP_QUERY_PARAMS_ONLY_OPERATION_INPUT = (
     ((QUERY_MAP, 1024),),
 )
 
-HTTP_QUERY_PARAMS_ONLY_OPERATION_OUTPUT = (18, n1, _HQPOOO, {_sSI: _sU})
+HTTP_QUERY_PARAMS_ONLY_OPERATION_OUTPUT: StaticSchema = (18, n1, _HQPOOO, {_sSI: _sU})
 
-HTTP_QUERY_PARAMS_ONLY_OPERATION = (
+HTTP_QUERY_PARAMS_ONLY_OPERATION: StaticOperationSchema = (
     23,
     n1,
     _HQPOO,
@@ -1717,7 +1810,7 @@ HTTP_QUERY_PARAMS_ONLY_OPERATION = (
     (),
 )
 
-HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT = (
+HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT: StaticSchema = (
     18,
     n1,
     _HRWFLI,
@@ -1726,9 +1819,9 @@ HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT = (
     ((9, 9), (10, 9)),
 )
 
-HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT = (18, n1, _HRWFLO, {_sSI: _sU})
+HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT: StaticSchema = (18, n1, _HRWFLO, {_sSI: _sU})
 
-HTTP_REQUEST_WITH_FLOAT_LABELS = (
+HTTP_REQUEST_WITH_FLOAT_LABELS: StaticOperationSchema = (
     23,
     n1,
     _HRWFL,
@@ -1742,7 +1835,7 @@ HTTP_REQUEST_WITH_FLOAT_LABELS = (
     (),
 )
 
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT = (
+HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT: StaticSchema = (
     18,
     n1,
     _HRWGLIPI,
@@ -1751,9 +1844,14 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT = (
     ((3, 9), (3, 9)),
 )
 
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT = (18, n1, _HRWGLIPO, {_sSI: _sU})
+HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _HRWGLIPO,
+    {_sSI: _sU},
+)
 
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = (
+HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH: StaticOperationSchema = (
     23,
     n1,
     _HRWGLIP,
@@ -1770,7 +1868,7 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = (
     (),
 )
 
-HTTP_REQUEST_WITH_LABELS_INPUT = (
+HTTP_REQUEST_WITH_LABELS_INPUT: StaticSchema = (
     18,
     n1,
     _HRWLI,
@@ -1779,9 +1877,9 @@ HTTP_REQUEST_WITH_LABELS_INPUT = (
     ((3, 9), (6, 9), (7, 9), (8, 9), (9, 9), (10, 9), (2, 9), (4, 9)),
 )
 
-HTTP_REQUEST_WITH_LABELS_OUTPUT = (18, n1, _HRWLO, {_sSI: _sU})
+HTTP_REQUEST_WITH_LABELS_OUTPUT: StaticSchema = (18, n1, _HRWLO, {_sSI: _sU})
 
-HTTP_REQUEST_WITH_LABELS = (
+HTTP_REQUEST_WITH_LABELS: StaticOperationSchema = (
     23,
     n1,
     _HRWL,
@@ -1798,11 +1896,11 @@ HTTP_REQUEST_WITH_LABELS = (
     (),
 )
 
-EPOCH_SECONDS = (4, n0, _ESp, {_sF: _es})
+EPOCH_SECONDS: StaticSchema = (4, n0, _ESp, {_sF: _es})
 
-HTTP_DATE = (4, n0, _HD, {_sF: _hd})
+HTTP_DATE: StaticSchema = (4, n0, _HD, {_sF: _hd})
 
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT = (
+HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT: StaticSchema = (
     18,
     n1,
     _HRWLATFI,
@@ -1819,9 +1917,14 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT = (
     ),
 )
 
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT = (18, n1, _HRWLATFO, {_sSI: _sU})
+HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _HRWLATFO,
+    {_sSI: _sU},
+)
 
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = (
+HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT: StaticOperationSchema = (
     23,
     n1,
     _HRWLATF,
@@ -1838,11 +1941,18 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = (
     (),
 )
 
-HTTP_REQUEST_WITH_REGEX_LITERAL_INPUT = (18, n1, _HRWRLI, 0, (_str_,), ((3, 9),))
+HTTP_REQUEST_WITH_REGEX_LITERAL_INPUT: StaticSchema = (
+    18,
+    n1,
+    _HRWRLI,
+    0,
+    (_str_,),
+    ((3, 9),),
+)
 
-HTTP_REQUEST_WITH_REGEX_LITERAL_OUTPUT = (18, n1, _HRWRLO, {_sSI: _sU})
+HTTP_REQUEST_WITH_REGEX_LITERAL_OUTPUT: StaticSchema = (18, n1, _HRWRLO, {_sSI: _sU})
 
-HTTP_REQUEST_WITH_REGEX_LITERAL = (
+HTTP_REQUEST_WITH_REGEX_LITERAL: StaticOperationSchema = (
     23,
     n1,
     _HRWRL,
@@ -1852,11 +1962,11 @@ HTTP_REQUEST_WITH_REGEX_LITERAL = (
     (),
 )
 
-HTTP_RESPONSE_CODE_INPUT = (18, n1, _HRCI, {_sSI: _sU})
+HTTP_RESPONSE_CODE_INPUT: StaticSchema = (18, n1, _HRCI, {_sSI: _sU})
 
-HTTP_RESPONSE_CODE_OUTPUT = (18, n1, _HRCO, 0, (_St,), ((7, 128),))
+HTTP_RESPONSE_CODE_OUTPUT: StaticSchema = (18, n1, _HRCO, 0, (_St,), ((7, 128),))
 
-HTTP_RESPONSE_CODE = (
+HTTP_RESPONSE_CODE: StaticOperationSchema = (
     23,
     n1,
     _HRC,
@@ -1866,11 +1976,25 @@ HTTP_RESPONSE_CODE = (
     (),
 )
 
-HTTP_STRING_PAYLOAD_INPUT = (18, n1, _HSPI, {_sSI: _aSPI}, (_p,), ((3, 16),))
+HTTP_STRING_PAYLOAD_INPUT: StaticSchema = (
+    18,
+    n1,
+    _HSPI,
+    {_sSI: _aSPI},
+    (_p,),
+    ((3, 16),),
+)
 
-HTTP_STRING_PAYLOAD_OUTPUT = (18, n1, _HSPO, {_sSI: _aSPI}, (_p,), ((3, 16),))
+HTTP_STRING_PAYLOAD_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _HSPO,
+    {_sSI: _aSPI},
+    (_p,),
+    ((3, 16),),
+)
 
-HTTP_STRING_PAYLOAD = (
+HTTP_STRING_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _HSP,
@@ -1880,11 +2004,18 @@ HTTP_STRING_PAYLOAD = (
     (),
 )
 
-IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT = (18, n1, _IQPIRI, {_sSI: _sU})
+IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT: StaticSchema = (18, n1, _IQPIRI, {_sSI: _sU})
 
-IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT = (18, n1, _IQPIRO, 0, (_b,), ((3, {_sQ: _b}),))
+IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _IQPIRO,
+    0,
+    (_b,),
+    ((3, {_sQ: _b}),),
+)
 
-IGNORE_QUERY_PARAMS_IN_RESPONSE = (
+IGNORE_QUERY_PARAMS_IN_RESPONSE: StaticOperationSchema = (
     23,
     n1,
     _IQPIR,
@@ -1894,7 +2025,7 @@ IGNORE_QUERY_PARAMS_IN_RESPONSE = (
     (),
 )
 
-INPUT_AND_OUTPUT_WITH_HEADERS_INPUT = (
+INPUT_AND_OUTPUT_WITH_HEADERS_INPUT: StaticSchema = (
     18,
     n1,
     _IAOWHI,
@@ -1941,7 +2072,7 @@ INPUT_AND_OUTPUT_WITH_HEADERS_INPUT = (
     ),
 )
 
-INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT = (
+INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT: StaticSchema = (
     18,
     n1,
     _IAOWHO,
@@ -1988,7 +2119,7 @@ INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT = (
     ),
 )
 
-INPUT_AND_OUTPUT_WITH_HEADERS = (
+INPUT_AND_OUTPUT_WITH_HEADERS: StaticOperationSchema = (
     23,
     n1,
     _IAOWH,
@@ -1998,11 +2129,11 @@ INPUT_AND_OUTPUT_WITH_HEADERS = (
     (),
 )
 
-INPUT_STREAM_INPUT = (18, n1, _ISI, 0, (_st,), ((EVENT_STREAM, 16),))
+INPUT_STREAM_INPUT: StaticSchema = (18, n1, _ISI, 0, (_st,), ((EVENT_STREAM, 16),))
 
-INPUT_STREAM_OUTPUT = (18, n1, _ISO, {_sSI: _sU})
+INPUT_STREAM_OUTPUT: StaticSchema = (18, n1, _ISO, {_sSI: _sU})
 
-INPUT_STREAM = (
+INPUT_STREAM: StaticOperationSchema = (
     23,
     n1,
     _ISn,
@@ -2012,7 +2143,7 @@ INPUT_STREAM = (
     (),
 )
 
-INPUT_STREAM_WITH_INITIAL_REQUEST_INPUT = (
+INPUT_STREAM_WITH_INITIAL_REQUEST_INPUT: StaticSchema = (
     18,
     n1,
     _ISWIRI,
@@ -2021,9 +2152,9 @@ INPUT_STREAM_WITH_INITIAL_REQUEST_INPUT = (
     ((3, {_sH: _irm, _smit: None}), (EVENT_STREAM, 16)),
 )
 
-INPUT_STREAM_WITH_INITIAL_REQUEST_OUTPUT = (18, n1, _ISWIRO, {_sSI: _sU})
+INPUT_STREAM_WITH_INITIAL_REQUEST_OUTPUT: StaticSchema = (18, n1, _ISWIRO, {_sSI: _sU})
 
-INPUT_STREAM_WITH_INITIAL_REQUEST = (
+INPUT_STREAM_WITH_INITIAL_REQUEST: StaticOperationSchema = (
     23,
     n1,
     _ISWIR,
@@ -2033,11 +2164,11 @@ INPUT_STREAM_WITH_INITIAL_REQUEST = (
     (),
 )
 
-JSON_BLOBS_INPUT = (18, n1, _JBI, {_sSI: _aJBIO}, (_da,), ((1, 0),))
+JSON_BLOBS_INPUT: StaticSchema = (18, n1, _JBI, {_sSI: _aJBIO}, (_da,), ((1, 0),))
 
-JSON_BLOBS_OUTPUT = (18, n1, _JBO, {_sSI: _aJBIO}, (_da,), ((1, 0),))
+JSON_BLOBS_OUTPUT: StaticSchema = (18, n1, _JBO, {_sSI: _aJBIO}, (_da,), ((1, 0),))
 
-JSON_BLOBS = (
+JSON_BLOBS: StaticOperationSchema = (
     23,
     n1,
     _JB,
@@ -2047,11 +2178,11 @@ JSON_BLOBS = (
     (),
 )
 
-FOO_ENUM_MAP = (17, n0, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
+FOO_ENUM_MAP: StaticSchema = (17, n0, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
 
-FOO_ENUM_SET = (16, n0, _FES, 0, (_m,), ((FOO_ENUM, 0),))
+FOO_ENUM_SET: StaticSchema = (16, n0, _FES, 0, (_m,), ((FOO_ENUM, 0),))
 
-JSON_ENUMS_INPUT = (
+JSON_ENUMS_INPUT: StaticSchema = (
     18,
     n1,
     _JEI,
@@ -2067,7 +2198,7 @@ JSON_ENUMS_INPUT = (
     ),
 )
 
-JSON_ENUMS_OUTPUT = (
+JSON_ENUMS_OUTPUT: StaticSchema = (
     18,
     n1,
     _JEO,
@@ -2083,7 +2214,7 @@ JSON_ENUMS_OUTPUT = (
     ),
 )
 
-JSON_ENUMS = (
+JSON_ENUMS: StaticOperationSchema = (
     23,
     n1,
     _JE,
@@ -2093,13 +2224,20 @@ JSON_ENUMS = (
     (),
 )
 
-JSON_HEADER_STRING = (3, n1, _JHS, {_sT: _a})
+JSON_HEADER_STRING: StaticSchema = (3, n1, _JHS, {_sT: _a})
 
-INTEGER_ENUM_MAP = (17, n0, _IEM, 0, (_k, _v), ((3, 0), (INTEGER_ENUM, 0)))
+INTEGER_ENUM_MAP: StaticSchema = (
+    17,
+    n0,
+    _IEM,
+    0,
+    (_k, _v),
+    ((3, 0), (INTEGER_ENUM, 0)),
+)
 
-INTEGER_ENUM_SET = (16, n0, _IES, 0, (_m,), ((INTEGER_ENUM, 0),))
+INTEGER_ENUM_SET: StaticSchema = (16, n0, _IES, 0, (_m,), ((INTEGER_ENUM, 0),))
 
-JSON_INT_ENUMS_INPUT = (
+JSON_INT_ENUMS_INPUT: StaticSchema = (
     18,
     n1,
     _JIEI,
@@ -2115,7 +2253,7 @@ JSON_INT_ENUMS_INPUT = (
     ),
 )
 
-JSON_INT_ENUMS_OUTPUT = (
+JSON_INT_ENUMS_OUTPUT: StaticSchema = (
     18,
     n1,
     _JIEO,
@@ -2131,7 +2269,7 @@ JSON_INT_ENUMS_OUTPUT = (
     ),
 )
 
-JSON_INT_ENUMS = (
+JSON_INT_ENUMS: StaticOperationSchema = (
     23,
     n1,
     _JIE,
@@ -2141,13 +2279,20 @@ JSON_INT_ENUMS = (
     (),
 )
 
-NESTED_STRING_LIST = (16, n0, _NSL, 0, (_m,), ((STRING_LIST, 0),))
+NESTED_STRING_LIST: StaticSchema = (16, n0, _NSL, 0, (_m,), ((STRING_LIST, 0),))
 
-STRUCTURE_LIST_MEMBER = (18, n1, _SLMt, 0, (_a_, _b_), ((3, {_sN: _v}), (3, {_sN: _o})))
+STRUCTURE_LIST_MEMBER: StaticSchema = (
+    18,
+    n1,
+    _SLMt,
+    0,
+    (_a_, _b_),
+    ((3, {_sN: _v}), (3, {_sN: _o})),
+)
 
-STRUCTURE_LIST = (16, n1, _SLt, 0, (_m,), ((STRUCTURE_LIST_MEMBER, 0),))
+STRUCTURE_LIST: StaticSchema = (16, n1, _SLt, 0, (_m,), ((STRUCTURE_LIST_MEMBER, 0),))
 
-JSON_LISTS_INPUT = (
+JSON_LISTS_INPUT: StaticSchema = (
     18,
     n1,
     _JLI,
@@ -2166,7 +2311,7 @@ JSON_LISTS_INPUT = (
     ),
 )
 
-JSON_LISTS_OUTPUT = (
+JSON_LISTS_OUTPUT: StaticSchema = (
     18,
     n1,
     _JLO,
@@ -2185,7 +2330,7 @@ JSON_LISTS_OUTPUT = (
     ),
 )
 
-JSON_LISTS = (
+JSON_LISTS: StaticOperationSchema = (
     23,
     n1,
     _JL,
@@ -2195,7 +2340,7 @@ JSON_LISTS = (
     (),
 )
 
-JSON_MAPS_INPUT = (
+JSON_MAPS_INPUT: StaticSchema = (
     18,
     n1,
     _JMI,
@@ -2210,7 +2355,7 @@ JSON_MAPS_INPUT = (
     ),
 )
 
-JSON_MAPS_OUTPUT = (
+JSON_MAPS_OUTPUT: StaticSchema = (
     18,
     n1,
     _JMO,
@@ -2225,7 +2370,7 @@ JSON_MAPS_OUTPUT = (
     ),
 )
 
-JSON_MAPS = (
+JSON_MAPS: StaticOperationSchema = (
     23,
     n1,
     _JM,
@@ -2235,7 +2380,7 @@ JSON_MAPS = (
     (),
 )
 
-JSON_TIMESTAMPS_INPUT = (
+JSON_TIMESTAMPS_INPUT: StaticSchema = (
     18,
     n1,
     _JTI,
@@ -2252,7 +2397,7 @@ JSON_TIMESTAMPS_INPUT = (
     ),
 )
 
-JSON_TIMESTAMPS_OUTPUT = (
+JSON_TIMESTAMPS_OUTPUT: StaticSchema = (
     18,
     n1,
     _JTO,
@@ -2269,7 +2414,7 @@ JSON_TIMESTAMPS_OUTPUT = (
     ),
 )
 
-JSON_TIMESTAMPS = (
+JSON_TIMESTAMPS: StaticOperationSchema = (
     23,
     n1,
     _JT,
@@ -2279,11 +2424,11 @@ JSON_TIMESTAMPS = (
     (),
 )
 
-RENAMED_GREETING = (18, n2, _GS, 0, (_sa,), ((3, 0),))
+RENAMED_GREETING: StaticSchema = (18, n2, _GS, 0, (_sa,), ((3, 0),))
 
-NESTED_UNION = (19, n1, _NU, 0, (_sV,), ((3, 0),))
+NESTED_UNION: StaticSchema = (19, n1, _NU, 0, (_sV,), ((3, 0),))
 
-MY_UNION = (
+MY_UNION: StaticSchema = (
     19,
     n1,
     _MU,
@@ -2304,11 +2449,25 @@ MY_UNION = (
     ),
 )
 
-JSON_UNIONS_INPUT = (18, n1, _JUI, {_sSI: _aUIO}, (_co,), ((MY_UNION, 0),))
+JSON_UNIONS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _JUI,
+    {_sSI: _aUIO},
+    (_co,),
+    ((MY_UNION, 0),),
+)
 
-JSON_UNIONS_OUTPUT = (18, n1, _JUO, {_sSI: _aUIO}, (_co,), ((MY_UNION, 0),))
+JSON_UNIONS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _JUO,
+    {_sSI: _aUIO},
+    (_co,),
+    ((MY_UNION, 0),),
+)
 
-JSON_UNIONS = (
+JSON_UNIONS: StaticOperationSchema = (
     23,
     n1,
     _JU,
@@ -2318,13 +2477,20 @@ JSON_UNIONS = (
     (),
 )
 
-JSON_VALUE = (3, n1, _JV, {_sT: _a})
+JSON_VALUE: StaticSchema = (3, n1, _JV, {_sT: _a})
 
-MALFORMED_ACCEPT_WITH_BODY_INPUT = (18, n1, _MAWBI, {_sSI: _sU})
+MALFORMED_ACCEPT_WITH_BODY_INPUT: StaticSchema = (18, n1, _MAWBI, {_sSI: _sU})
 
-MALFORMED_ACCEPT_WITH_BODY_OUTPUT = (18, n1, _MAWBO, {_sSI: _aGS}, (_hi,), ((3, 0),))
+MALFORMED_ACCEPT_WITH_BODY_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MAWBO,
+    {_sSI: _aGS},
+    (_hi,),
+    ((3, 0),),
+)
 
-MALFORMED_ACCEPT_WITH_BODY = (
+MALFORMED_ACCEPT_WITH_BODY: StaticOperationSchema = (
     23,
     n1,
     _MAWB,
@@ -2334,11 +2500,23 @@ MALFORMED_ACCEPT_WITH_BODY = (
     (),
 )
 
-MALFORMED_ACCEPT_WITH_GENERIC_STRING_INPUT = (18, n1, _MAWGSI, {_sSI: _sU})
+MALFORMED_ACCEPT_WITH_GENERIC_STRING_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MAWGSI,
+    {_sSI: _sU},
+)
 
-MALFORMED_ACCEPT_WITH_GENERIC_STRING_OUTPUT = (18, n1, _MAWGSO, 0, (_p,), ((3, 16),))
+MALFORMED_ACCEPT_WITH_GENERIC_STRING_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MAWGSO,
+    0,
+    (_p,),
+    ((3, 16),),
+)
 
-MALFORMED_ACCEPT_WITH_GENERIC_STRING = (
+MALFORMED_ACCEPT_WITH_GENERIC_STRING: StaticOperationSchema = (
     23,
     n1,
     _MAWGS,
@@ -2352,13 +2530,20 @@ MALFORMED_ACCEPT_WITH_GENERIC_STRING = (
     (),
 )
 
-MALFORMED_ACCEPT_WITH_PAYLOAD_INPUT = (18, n1, _MAWPI, {_sSI: _sU})
+MALFORMED_ACCEPT_WITH_PAYLOAD_INPUT: StaticSchema = (18, n1, _MAWPI, {_sSI: _sU})
 
-JPEG_BLOB = (1, n0, _JBp, {_sT: _im})
+JPEG_BLOB: StaticSchema = (1, n0, _JBp, {_sT: _im})
 
-MALFORMED_ACCEPT_WITH_PAYLOAD_OUTPUT = (18, n1, _MAWPO, 0, (_p,), ((JPEG_BLOB, 16),))
+MALFORMED_ACCEPT_WITH_PAYLOAD_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MAWPO,
+    0,
+    (_p,),
+    ((JPEG_BLOB, 16),),
+)
 
-MALFORMED_ACCEPT_WITH_PAYLOAD = (
+MALFORMED_ACCEPT_WITH_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _MAWP,
@@ -2368,11 +2553,11 @@ MALFORMED_ACCEPT_WITH_PAYLOAD = (
     (),
 )
 
-MALFORMED_BLOB_INPUT = (18, n1, _MBI, 0, (_bl,), ((1, 0),))
+MALFORMED_BLOB_INPUT: StaticSchema = (18, n1, _MBI, 0, (_bl,), ((1, 0),))
 
-MALFORMED_BLOB_OUTPUT = (18, n1, _MBO, {_sSI: _sU})
+MALFORMED_BLOB_OUTPUT: StaticSchema = (18, n1, _MBO, {_sSI: _sU})
 
-MALFORMED_BLOB = (
+MALFORMED_BLOB: StaticOperationSchema = (
     23,
     n1,
     _MB,
@@ -2382,7 +2567,7 @@ MALFORMED_BLOB = (
     (),
 )
 
-MALFORMED_BOOLEAN_INPUT = (
+MALFORMED_BOOLEAN_INPUT: StaticSchema = (
     18,
     n1,
     _MBIa,
@@ -2391,9 +2576,9 @@ MALFORMED_BOOLEAN_INPUT = (
     ((2, 0), (2, 9), (2, {_sQ: _bIQ}), (2, {_sH: _bIH})),
 )
 
-MALFORMED_BOOLEAN_OUTPUT = (18, n1, _MBOa, {_sSI: _sU})
+MALFORMED_BOOLEAN_OUTPUT: StaticSchema = (18, n1, _MBOa, {_sSI: _sU})
 
-MALFORMED_BOOLEAN = (
+MALFORMED_BOOLEAN: StaticOperationSchema = (
     23,
     n1,
     _MBa,
@@ -2407,7 +2592,7 @@ MALFORMED_BOOLEAN = (
     (),
 )
 
-MALFORMED_BYTE_INPUT = (
+MALFORMED_BYTE_INPUT: StaticSchema = (
     18,
     n1,
     _MBIal,
@@ -2416,9 +2601,9 @@ MALFORMED_BYTE_INPUT = (
     ((5, 0), (5, 9), (5, {_sQ: _bIQy}), (5, {_sH: _bIHy})),
 )
 
-MALFORMED_BYTE_OUTPUT = (18, n1, _MBOal, {_sSI: _sU})
+MALFORMED_BYTE_OUTPUT: StaticSchema = (18, n1, _MBOal, {_sSI: _sU})
 
-MALFORMED_BYTE = (
+MALFORMED_BYTE: StaticOperationSchema = (
     23,
     n1,
     _MBal,
@@ -2428,7 +2613,7 @@ MALFORMED_BYTE = (
     (),
 )
 
-MALFORMED_CONTENT_TYPE_WITH_BODY_INPUT = (
+MALFORMED_CONTENT_TYPE_WITH_BODY_INPUT: StaticSchema = (
     18,
     n1,
     _MCTWBI,
@@ -2437,9 +2622,9 @@ MALFORMED_CONTENT_TYPE_WITH_BODY_INPUT = (
     ((3, 0),),
 )
 
-MALFORMED_CONTENT_TYPE_WITH_BODY_OUTPUT = (18, n1, _MCTWBO, {_sSI: _sU})
+MALFORMED_CONTENT_TYPE_WITH_BODY_OUTPUT: StaticSchema = (18, n1, _MCTWBO, {_sSI: _sU})
 
-MALFORMED_CONTENT_TYPE_WITH_BODY = (
+MALFORMED_CONTENT_TYPE_WITH_BODY: StaticOperationSchema = (
     23,
     n1,
     _MCTWB,
@@ -2449,7 +2634,7 @@ MALFORMED_CONTENT_TYPE_WITH_BODY = (
     (),
 )
 
-MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_INPUT = (
+MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_INPUT: StaticSchema = (
     18,
     n1,
     _MCTWGSI,
@@ -2458,9 +2643,14 @@ MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_INPUT = (
     ((3, 16),),
 )
 
-MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_OUTPUT = (18, n1, _MCTWGSO, {_sSI: _sU})
+MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MCTWGSO,
+    {_sSI: _sU},
+)
 
-MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING = (
+MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING: StaticOperationSchema = (
     23,
     n1,
     _MCTWGS,
@@ -2474,11 +2664,21 @@ MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING = (
     (),
 )
 
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY_INPUT = (18, n1, _MCTWBIa, {_sSI: _sU})
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MCTWBIa,
+    {_sSI: _sU},
+)
 
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY_OUTPUT = (18, n1, _MCTWBOa, {_sSI: _sU})
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MCTWBOa,
+    {_sSI: _sU},
+)
 
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY = (
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY: StaticOperationSchema = (
     23,
     n1,
     _MCTWBa,
@@ -2492,7 +2692,7 @@ MALFORMED_CONTENT_TYPE_WITHOUT_BODY = (
     (),
 )
 
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_INPUT = (
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_INPUT: StaticSchema = (
     18,
     n1,
     _MCTWBEII,
@@ -2501,14 +2701,14 @@ MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_INPUT = (
     ((3, {_sH: _he}),),
 )
 
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_OUTPUT = (
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_OUTPUT: StaticSchema = (
     18,
     n1,
     _MCTWBEIO,
     {_sSI: _sU},
 )
 
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT = (
+MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT: StaticOperationSchema = (
     23,
     n1,
     _MCTWBEI,
@@ -2522,7 +2722,7 @@ MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT = (
     (),
 )
 
-MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_INPUT = (
+MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_INPUT: StaticSchema = (
     18,
     n1,
     _MCTWPI,
@@ -2531,9 +2731,14 @@ MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_INPUT = (
     ((JPEG_BLOB, 16),),
 )
 
-MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_OUTPUT = (18, n1, _MCTWPO, {_sSI: _sU})
+MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MCTWPO,
+    {_sSI: _sU},
+)
 
-MALFORMED_CONTENT_TYPE_WITH_PAYLOAD = (
+MALFORMED_CONTENT_TYPE_WITH_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _MCTWP,
@@ -2547,7 +2752,7 @@ MALFORMED_CONTENT_TYPE_WITH_PAYLOAD = (
     (),
 )
 
-MALFORMED_DOUBLE_INPUT = (
+MALFORMED_DOUBLE_INPUT: StaticSchema = (
     18,
     n1,
     _MDI,
@@ -2556,9 +2761,9 @@ MALFORMED_DOUBLE_INPUT = (
     ((10, 0), (10, 9), (10, {_sQ: _dIQ}), (10, {_sH: _dIH})),
 )
 
-MALFORMED_DOUBLE_OUTPUT = (18, n1, _MDO, {_sSI: _sU})
+MALFORMED_DOUBLE_OUTPUT: StaticSchema = (18, n1, _MDO, {_sSI: _sU})
 
-MALFORMED_DOUBLE = (
+MALFORMED_DOUBLE: StaticOperationSchema = (
     23,
     n1,
     _MD,
@@ -2572,7 +2777,7 @@ MALFORMED_DOUBLE = (
     (),
 )
 
-MALFORMED_FLOAT_INPUT = (
+MALFORMED_FLOAT_INPUT: StaticSchema = (
     18,
     n1,
     _MFI,
@@ -2581,9 +2786,9 @@ MALFORMED_FLOAT_INPUT = (
     ((9, 0), (9, 9), (9, {_sQ: _fIQ}), (9, {_sH: _fIH})),
 )
 
-MALFORMED_FLOAT_OUTPUT = (18, n1, _MFO, {_sSI: _sU})
+MALFORMED_FLOAT_OUTPUT: StaticSchema = (18, n1, _MFO, {_sSI: _sU})
 
-MALFORMED_FLOAT = (
+MALFORMED_FLOAT: StaticOperationSchema = (
     23,
     n1,
     _MF,
@@ -2593,7 +2798,7 @@ MALFORMED_FLOAT = (
     (),
 )
 
-MALFORMED_INTEGER_INPUT = (
+MALFORMED_INTEGER_INPUT: StaticSchema = (
     18,
     n1,
     _MII,
@@ -2602,9 +2807,9 @@ MALFORMED_INTEGER_INPUT = (
     ((7, 0), (7, 9), (7, {_sQ: _iIQ}), (7, {_sH: _iIH})),
 )
 
-MALFORMED_INTEGER_OUTPUT = (18, n1, _MIO, {_sSI: _sU})
+MALFORMED_INTEGER_OUTPUT: StaticSchema = (18, n1, _MIO, {_sSI: _sU})
 
-MALFORMED_INTEGER = (
+MALFORMED_INTEGER: StaticOperationSchema = (
     23,
     n1,
     _MI,
@@ -2618,13 +2823,13 @@ MALFORMED_INTEGER = (
     (),
 )
 
-SIMPLE_LIST = (16, n1, _SLi, 0, (_m,), ((3, 0),))
+SIMPLE_LIST: StaticSchema = (16, n1, _SLi, 0, (_m,), ((3, 0),))
 
-MALFORMED_LIST_INPUT = (18, n1, _MLI, 0, (_bLo,), ((SIMPLE_LIST, 0),))
+MALFORMED_LIST_INPUT: StaticSchema = (18, n1, _MLI, 0, (_bLo,), ((SIMPLE_LIST, 0),))
 
-MALFORMED_LIST_OUTPUT = (18, n1, _MLO, {_sSI: _sU})
+MALFORMED_LIST_OUTPUT: StaticSchema = (18, n1, _MLO, {_sSI: _sU})
 
-MALFORMED_LIST = (
+MALFORMED_LIST: StaticOperationSchema = (
     23,
     n1,
     _ML,
@@ -2634,7 +2839,7 @@ MALFORMED_LIST = (
     (),
 )
 
-MALFORMED_LONG_INPUT = (
+MALFORMED_LONG_INPUT: StaticSchema = (
     18,
     n1,
     _MLIa,
@@ -2643,9 +2848,9 @@ MALFORMED_LONG_INPUT = (
     ((8, 0), (8, 9), (8, {_sQ: _lIQ}), (8, {_sH: _lIH})),
 )
 
-MALFORMED_LONG_OUTPUT = (18, n1, _MLOa, {_sSI: _sU})
+MALFORMED_LONG_OUTPUT: StaticSchema = (18, n1, _MLOa, {_sSI: _sU})
 
-MALFORMED_LONG = (
+MALFORMED_LONG: StaticOperationSchema = (
     23,
     n1,
     _MLa,
@@ -2655,13 +2860,13 @@ MALFORMED_LONG = (
     (),
 )
 
-SIMPLE_MAP = (17, n1, _SMi, 0, (_k, _v), ((3, 0), (3, 0)))
+SIMPLE_MAP: StaticSchema = (17, n1, _SMi, 0, (_k, _v), ((3, 0), (3, 0)))
 
-MALFORMED_MAP_INPUT = (18, n1, _MMI, 0, (_bM,), ((SIMPLE_MAP, 0),))
+MALFORMED_MAP_INPUT: StaticSchema = (18, n1, _MMI, 0, (_bM,), ((SIMPLE_MAP, 0),))
 
-MALFORMED_MAP_OUTPUT = (18, n1, _MMO, {_sSI: _sU})
+MALFORMED_MAP_OUTPUT: StaticSchema = (18, n1, _MMO, {_sSI: _sU})
 
-MALFORMED_MAP = (
+MALFORMED_MAP: StaticOperationSchema = (
     23,
     n1,
     _MM,
@@ -2671,11 +2876,18 @@ MALFORMED_MAP = (
     (),
 )
 
-MALFORMED_REQUEST_BODY_INPUT = (18, n1, _MRBI, 0, (_in, _fl), ((7, 0), (9, 0)))
+MALFORMED_REQUEST_BODY_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MRBI,
+    0,
+    (_in, _fl),
+    ((7, 0), (9, 0)),
+)
 
-MALFORMED_REQUEST_BODY_OUTPUT = (18, n1, _MRBO, {_sSI: _sU})
+MALFORMED_REQUEST_BODY_OUTPUT: StaticSchema = (18, n1, _MRBO, {_sSI: _sU})
 
-MALFORMED_REQUEST_BODY = (
+MALFORMED_REQUEST_BODY: StaticOperationSchema = (
     23,
     n1,
     _MRB,
@@ -2685,7 +2897,7 @@ MALFORMED_REQUEST_BODY = (
     (),
 )
 
-MALFORMED_SHORT_INPUT = (
+MALFORMED_SHORT_INPUT: StaticSchema = (
     18,
     n1,
     _MSI,
@@ -2694,9 +2906,9 @@ MALFORMED_SHORT_INPUT = (
     ((6, 0), (6, 9), (6, {_sQ: _sIQ}), (6, {_sH: _sIH})),
 )
 
-MALFORMED_SHORT_OUTPUT = (18, n1, _MSO, {_sSI: _sU})
+MALFORMED_SHORT_OUTPUT: StaticSchema = (18, n1, _MSO, {_sSI: _sU})
 
-MALFORMED_SHORT = (
+MALFORMED_SHORT: StaticOperationSchema = (
     23,
     n1,
     _MS,
@@ -2706,7 +2918,7 @@ MALFORMED_SHORT = (
     (),
 )
 
-MALFORMED_STRING_INPUT = (
+MALFORMED_STRING_INPUT: StaticSchema = (
     18,
     n1,
     _MSIa,
@@ -2715,9 +2927,9 @@ MALFORMED_STRING_INPUT = (
     ((JSON_HEADER_STRING, {_sH: _amth}),),
 )
 
-MALFORMED_STRING_OUTPUT = (18, n1, _MSOa, {_sSI: _sU})
+MALFORMED_STRING_OUTPUT: StaticSchema = (18, n1, _MSOa, {_sSI: _sU})
 
-MALFORMED_STRING = (
+MALFORMED_STRING: StaticOperationSchema = (
     23,
     n1,
     _MSa,
@@ -2727,7 +2939,7 @@ MALFORMED_STRING = (
     (),
 )
 
-MALFORMED_TIMESTAMP_BODY_DATE_TIME_INPUT = (
+MALFORMED_TIMESTAMP_BODY_DATE_TIME_INPUT: StaticSchema = (
     18,
     n1,
     _MTBDTI,
@@ -2736,9 +2948,9 @@ MALFORMED_TIMESTAMP_BODY_DATE_TIME_INPUT = (
     ((4, {_sF: _dt, _smit: None}),),
 )
 
-MALFORMED_TIMESTAMP_BODY_DATE_TIME_OUTPUT = (18, n1, _MTBDTO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_BODY_DATE_TIME_OUTPUT: StaticSchema = (18, n1, _MTBDTO, {_sSI: _sU})
 
-MALFORMED_TIMESTAMP_BODY_DATE_TIME = (
+MALFORMED_TIMESTAMP_BODY_DATE_TIME: StaticOperationSchema = (
     23,
     n1,
     _MTBDT,
@@ -2752,11 +2964,18 @@ MALFORMED_TIMESTAMP_BODY_DATE_TIME = (
     (),
 )
 
-MALFORMED_TIMESTAMP_BODY_DEFAULT_INPUT = (18, n1, _MTBDI, 0, (_ti,), ((4, 1),))
+MALFORMED_TIMESTAMP_BODY_DEFAULT_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTBDI,
+    0,
+    (_ti,),
+    ((4, 1),),
+)
 
-MALFORMED_TIMESTAMP_BODY_DEFAULT_OUTPUT = (18, n1, _MTBDO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_BODY_DEFAULT_OUTPUT: StaticSchema = (18, n1, _MTBDO, {_sSI: _sU})
 
-MALFORMED_TIMESTAMP_BODY_DEFAULT = (
+MALFORMED_TIMESTAMP_BODY_DEFAULT: StaticOperationSchema = (
     23,
     n1,
     _MTBD,
@@ -2766,7 +2985,7 @@ MALFORMED_TIMESTAMP_BODY_DEFAULT = (
     (),
 )
 
-MALFORMED_TIMESTAMP_BODY_HTTP_DATE_INPUT = (
+MALFORMED_TIMESTAMP_BODY_HTTP_DATE_INPUT: StaticSchema = (
     18,
     n1,
     _MTBHDI,
@@ -2775,9 +2994,9 @@ MALFORMED_TIMESTAMP_BODY_HTTP_DATE_INPUT = (
     ((4, {_sF: _hd, _smit: None}),),
 )
 
-MALFORMED_TIMESTAMP_BODY_HTTP_DATE_OUTPUT = (18, n1, _MTBHDO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_BODY_HTTP_DATE_OUTPUT: StaticSchema = (18, n1, _MTBHDO, {_sSI: _sU})
 
-MALFORMED_TIMESTAMP_BODY_HTTP_DATE = (
+MALFORMED_TIMESTAMP_BODY_HTTP_DATE: StaticOperationSchema = (
     23,
     n1,
     _MTBHD,
@@ -2791,7 +3010,7 @@ MALFORMED_TIMESTAMP_BODY_HTTP_DATE = (
     (),
 )
 
-MALFORMED_TIMESTAMP_HEADER_DATE_TIME_INPUT = (
+MALFORMED_TIMESTAMP_HEADER_DATE_TIME_INPUT: StaticSchema = (
     18,
     n1,
     _MTHDTI,
@@ -2800,9 +3019,14 @@ MALFORMED_TIMESTAMP_HEADER_DATE_TIME_INPUT = (
     ((4, {_sF: _dt, _sH: _ti, _smit: None}),),
 )
 
-MALFORMED_TIMESTAMP_HEADER_DATE_TIME_OUTPUT = (18, n1, _MTHDTO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_HEADER_DATE_TIME_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTHDTO,
+    {_sSI: _sU},
+)
 
-MALFORMED_TIMESTAMP_HEADER_DATE_TIME = (
+MALFORMED_TIMESTAMP_HEADER_DATE_TIME: StaticOperationSchema = (
     23,
     n1,
     _MTHDT,
@@ -2816,7 +3040,7 @@ MALFORMED_TIMESTAMP_HEADER_DATE_TIME = (
     (),
 )
 
-MALFORMED_TIMESTAMP_HEADER_DEFAULT_INPUT = (
+MALFORMED_TIMESTAMP_HEADER_DEFAULT_INPUT: StaticSchema = (
     18,
     n1,
     _MTHDI,
@@ -2825,9 +3049,9 @@ MALFORMED_TIMESTAMP_HEADER_DEFAULT_INPUT = (
     ((4, {_sH: _ti, _smit: None}),),
 )
 
-MALFORMED_TIMESTAMP_HEADER_DEFAULT_OUTPUT = (18, n1, _MTHDO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_HEADER_DEFAULT_OUTPUT: StaticSchema = (18, n1, _MTHDO, {_sSI: _sU})
 
-MALFORMED_TIMESTAMP_HEADER_DEFAULT = (
+MALFORMED_TIMESTAMP_HEADER_DEFAULT: StaticOperationSchema = (
     23,
     n1,
     _MTHD,
@@ -2841,7 +3065,7 @@ MALFORMED_TIMESTAMP_HEADER_DEFAULT = (
     (),
 )
 
-MALFORMED_TIMESTAMP_HEADER_EPOCH_INPUT = (
+MALFORMED_TIMESTAMP_HEADER_EPOCH_INPUT: StaticSchema = (
     18,
     n1,
     _MTHEI,
@@ -2850,9 +3074,9 @@ MALFORMED_TIMESTAMP_HEADER_EPOCH_INPUT = (
     ((4, {_sF: _es, _sH: _ti, _smit: None}),),
 )
 
-MALFORMED_TIMESTAMP_HEADER_EPOCH_OUTPUT = (18, n1, _MTHEO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_HEADER_EPOCH_OUTPUT: StaticSchema = (18, n1, _MTHEO, {_sSI: _sU})
 
-MALFORMED_TIMESTAMP_HEADER_EPOCH = (
+MALFORMED_TIMESTAMP_HEADER_EPOCH: StaticOperationSchema = (
     23,
     n1,
     _MTHE,
@@ -2862,11 +3086,18 @@ MALFORMED_TIMESTAMP_HEADER_EPOCH = (
     (),
 )
 
-MALFORMED_TIMESTAMP_PATH_DEFAULT_INPUT = (18, n1, _MTPDI, 0, (_ti,), ((4, 9),))
+MALFORMED_TIMESTAMP_PATH_DEFAULT_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTPDI,
+    0,
+    (_ti,),
+    ((4, 9),),
+)
 
-MALFORMED_TIMESTAMP_PATH_DEFAULT_OUTPUT = (18, n1, _MTPDO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_PATH_DEFAULT_OUTPUT: StaticSchema = (18, n1, _MTPDO, {_sSI: _sU})
 
-MALFORMED_TIMESTAMP_PATH_DEFAULT = (
+MALFORMED_TIMESTAMP_PATH_DEFAULT: StaticOperationSchema = (
     23,
     n1,
     _MTPD,
@@ -2880,7 +3111,7 @@ MALFORMED_TIMESTAMP_PATH_DEFAULT = (
     (),
 )
 
-MALFORMED_TIMESTAMP_PATH_EPOCH_INPUT = (
+MALFORMED_TIMESTAMP_PATH_EPOCH_INPUT: StaticSchema = (
     18,
     n1,
     _MTPEI,
@@ -2889,9 +3120,9 @@ MALFORMED_TIMESTAMP_PATH_EPOCH_INPUT = (
     ((4, {_sF: _es, _smit: None, _sL: None}),),
 )
 
-MALFORMED_TIMESTAMP_PATH_EPOCH_OUTPUT = (18, n1, _MTPEO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_PATH_EPOCH_OUTPUT: StaticSchema = (18, n1, _MTPEO, {_sSI: _sU})
 
-MALFORMED_TIMESTAMP_PATH_EPOCH = (
+MALFORMED_TIMESTAMP_PATH_EPOCH: StaticOperationSchema = (
     23,
     n1,
     _MTPE,
@@ -2905,7 +3136,7 @@ MALFORMED_TIMESTAMP_PATH_EPOCH = (
     (),
 )
 
-MALFORMED_TIMESTAMP_PATH_HTTP_DATE_INPUT = (
+MALFORMED_TIMESTAMP_PATH_HTTP_DATE_INPUT: StaticSchema = (
     18,
     n1,
     _MTPHDI,
@@ -2914,9 +3145,9 @@ MALFORMED_TIMESTAMP_PATH_HTTP_DATE_INPUT = (
     ((4, {_sF: _hd, _smit: None, _sL: None}),),
 )
 
-MALFORMED_TIMESTAMP_PATH_HTTP_DATE_OUTPUT = (18, n1, _MTPHDO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_PATH_HTTP_DATE_OUTPUT: StaticSchema = (18, n1, _MTPHDO, {_sSI: _sU})
 
-MALFORMED_TIMESTAMP_PATH_HTTP_DATE = (
+MALFORMED_TIMESTAMP_PATH_HTTP_DATE: StaticOperationSchema = (
     23,
     n1,
     _MTPHD,
@@ -2930,7 +3161,7 @@ MALFORMED_TIMESTAMP_PATH_HTTP_DATE = (
     (),
 )
 
-MALFORMED_TIMESTAMP_QUERY_DEFAULT_INPUT = (
+MALFORMED_TIMESTAMP_QUERY_DEFAULT_INPUT: StaticSchema = (
     18,
     n1,
     _MTQDI,
@@ -2939,9 +3170,9 @@ MALFORMED_TIMESTAMP_QUERY_DEFAULT_INPUT = (
     ((4, {_sQ: _ti, _smit: None}),),
 )
 
-MALFORMED_TIMESTAMP_QUERY_DEFAULT_OUTPUT = (18, n1, _MTQDO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_QUERY_DEFAULT_OUTPUT: StaticSchema = (18, n1, _MTQDO, {_sSI: _sU})
 
-MALFORMED_TIMESTAMP_QUERY_DEFAULT = (
+MALFORMED_TIMESTAMP_QUERY_DEFAULT: StaticOperationSchema = (
     23,
     n1,
     _MTQD,
@@ -2955,7 +3186,7 @@ MALFORMED_TIMESTAMP_QUERY_DEFAULT = (
     (),
 )
 
-MALFORMED_TIMESTAMP_QUERY_EPOCH_INPUT = (
+MALFORMED_TIMESTAMP_QUERY_EPOCH_INPUT: StaticSchema = (
     18,
     n1,
     _MTQEI,
@@ -2964,9 +3195,9 @@ MALFORMED_TIMESTAMP_QUERY_EPOCH_INPUT = (
     ((4, {_sF: _es, _sQ: _ti, _smit: None}),),
 )
 
-MALFORMED_TIMESTAMP_QUERY_EPOCH_OUTPUT = (18, n1, _MTQEO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_QUERY_EPOCH_OUTPUT: StaticSchema = (18, n1, _MTQEO, {_sSI: _sU})
 
-MALFORMED_TIMESTAMP_QUERY_EPOCH = (
+MALFORMED_TIMESTAMP_QUERY_EPOCH: StaticOperationSchema = (
     23,
     n1,
     _MTQE,
@@ -2976,7 +3207,7 @@ MALFORMED_TIMESTAMP_QUERY_EPOCH = (
     (),
 )
 
-MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_INPUT = (
+MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_INPUT: StaticSchema = (
     18,
     n1,
     _MTQHDI,
@@ -2985,9 +3216,14 @@ MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_INPUT = (
     ((4, {_sF: _hd, _sQ: _ti, _smit: None}),),
 )
 
-MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_OUTPUT = (18, n1, _MTQHDO, {_sSI: _sU})
+MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTQHDO,
+    {_sSI: _sU},
+)
 
-MALFORMED_TIMESTAMP_QUERY_HTTP_DATE = (
+MALFORMED_TIMESTAMP_QUERY_HTTP_DATE: StaticOperationSchema = (
     23,
     n1,
     _MTQHD,
@@ -3001,13 +3237,13 @@ MALFORMED_TIMESTAMP_QUERY_HTTP_DATE = (
     (),
 )
 
-SIMPLE_UNION = (19, n1, _SU, 0, (_in, _str), ((7, 0), (3, 0)))
+SIMPLE_UNION: StaticSchema = (19, n1, _SU, 0, (_in, _str), ((7, 0), (3, 0)))
 
-MALFORMED_UNION_INPUT = (18, n1, _MUI, 0, (_u,), ((SIMPLE_UNION, 0),))
+MALFORMED_UNION_INPUT: StaticSchema = (18, n1, _MUI, 0, (_u,), ((SIMPLE_UNION, 0),))
 
-MALFORMED_UNION_OUTPUT = (18, n1, _MUO, {_sSI: _sU})
+MALFORMED_UNION_OUTPUT: StaticSchema = (18, n1, _MUO, {_sSI: _sU})
 
-MALFORMED_UNION = (
+MALFORMED_UNION: StaticOperationSchema = (
     23,
     n1,
     _MUa,
@@ -3017,11 +3253,25 @@ MALFORMED_UNION = (
     (),
 )
 
-MEDIA_TYPE_HEADER_INPUT = (18, n1, _MTHI, 0, (_j,), ((JSON_VALUE, {_sH: _XJ}),))
+MEDIA_TYPE_HEADER_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTHI,
+    0,
+    (_j,),
+    ((JSON_VALUE, {_sH: _XJ}),),
+)
 
-MEDIA_TYPE_HEADER_OUTPUT = (18, n1, _MTHO, 0, (_j,), ((JSON_VALUE, {_sH: _XJ}),))
+MEDIA_TYPE_HEADER_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTHO,
+    0,
+    (_j,),
+    ((JSON_VALUE, {_sH: _XJ}),),
+)
 
-MEDIA_TYPE_HEADER = (
+MEDIA_TYPE_HEADER: StaticOperationSchema = (
     23,
     n1,
     _MTH,
@@ -3031,11 +3281,11 @@ MEDIA_TYPE_HEADER = (
     (),
 )
 
-NO_INPUT_AND_NO_OUTPUT_INPUT = (18, n1, _NIANOI, {_sSI: _sU})
+NO_INPUT_AND_NO_OUTPUT_INPUT: StaticSchema = (18, n1, _NIANOI, {_sSI: _sU})
 
-NO_INPUT_AND_NO_OUTPUT_OUTPUT = (18, n1, _NIANOO, {_sSI: _sU})
+NO_INPUT_AND_NO_OUTPUT_OUTPUT: StaticSchema = (18, n1, _NIANOO, {_sSI: _sU})
 
-NO_INPUT_AND_NO_OUTPUT = (
+NO_INPUT_AND_NO_OUTPUT: StaticOperationSchema = (
     23,
     n1,
     _NIANO,
@@ -3045,11 +3295,11 @@ NO_INPUT_AND_NO_OUTPUT = (
     (),
 )
 
-NO_INPUT_AND_OUTPUT_INPUT = (18, n1, _NIAOI, {_sSI: _sU})
+NO_INPUT_AND_OUTPUT_INPUT: StaticSchema = (18, n1, _NIAOI, {_sSI: _sU})
 
-NO_INPUT_AND_OUTPUT_OUTPUT = (18, n1, _NIAOO, 0)
+NO_INPUT_AND_OUTPUT_OUTPUT: StaticSchema = (18, n1, _NIAOO, 0)
 
-NO_INPUT_AND_OUTPUT = (
+NO_INPUT_AND_OUTPUT: StaticOperationSchema = (
     23,
     n1,
     _NIAO,
@@ -3059,7 +3309,7 @@ NO_INPUT_AND_OUTPUT = (
     (),
 )
 
-NULL_AND_EMPTY_HEADERS_CLIENT_INPUT = (
+NULL_AND_EMPTY_HEADERS_CLIENT_INPUT: StaticSchema = (
     18,
     n1,
     _NAEHCI,
@@ -3068,7 +3318,7 @@ NULL_AND_EMPTY_HEADERS_CLIENT_INPUT = (
     ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
 )
 
-NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT = (
+NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT: StaticSchema = (
     18,
     n1,
     _NAEHCO,
@@ -3077,7 +3327,7 @@ NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT = (
     ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
 )
 
-NULL_AND_EMPTY_HEADERS_CLIENT = (
+NULL_AND_EMPTY_HEADERS_CLIENT: StaticOperationSchema = (
     23,
     n1,
     _NAEHC,
@@ -3087,7 +3337,7 @@ NULL_AND_EMPTY_HEADERS_CLIENT = (
     (),
 )
 
-NULL_AND_EMPTY_HEADERS_SERVER_INPUT = (
+NULL_AND_EMPTY_HEADERS_SERVER_INPUT: StaticSchema = (
     18,
     n1,
     _NAEHSI,
@@ -3096,7 +3346,7 @@ NULL_AND_EMPTY_HEADERS_SERVER_INPUT = (
     ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
 )
 
-NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT = (
+NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT: StaticSchema = (
     18,
     n1,
     _NAEHSO,
@@ -3105,7 +3355,7 @@ NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT = (
     ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
 )
 
-NULL_AND_EMPTY_HEADERS_SERVER = (
+NULL_AND_EMPTY_HEADERS_SERVER: StaticOperationSchema = (
     23,
     n1,
     _NAEHS,
@@ -3115,7 +3365,7 @@ NULL_AND_EMPTY_HEADERS_SERVER = (
     (),
 )
 
-OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT = (
+OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT: StaticSchema = (
     18,
     n1,
     _ONSESI,
@@ -3124,9 +3374,9 @@ OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT = (
     ((3, {_sQ: _Nu}), (3, {_sQ: _Em})),
 )
 
-OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT = (18, n1, _ONSESO, {_sSI: _sU})
+OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT: StaticSchema = (18, n1, _ONSESO, {_sSI: _sU})
 
-OMITS_NULL_SERIALIZES_EMPTY_STRING = (
+OMITS_NULL_SERIALIZES_EMPTY_STRING: StaticOperationSchema = (
     23,
     n1,
     _ONSES,
@@ -3136,7 +3386,7 @@ OMITS_NULL_SERIALIZES_EMPTY_STRING = (
     (),
 )
 
-OMITS_SERIALIZING_EMPTY_LISTS_INPUT = (
+OMITS_SERIALIZING_EMPTY_LISTS_INPUT: StaticSchema = (
     18,
     n1,
     _OSELI,
@@ -3153,9 +3403,9 @@ OMITS_SERIALIZING_EMPTY_LISTS_INPUT = (
     ),
 )
 
-OMITS_SERIALIZING_EMPTY_LISTS_OUTPUT = (18, n1, _OSELO, {_sSI: _sU})
+OMITS_SERIALIZING_EMPTY_LISTS_OUTPUT: StaticSchema = (18, n1, _OSELO, {_sSI: _sU})
 
-OMITS_SERIALIZING_EMPTY_LISTS = (
+OMITS_SERIALIZING_EMPTY_LISTS: StaticOperationSchema = (
     23,
     n1,
     _OSEL,
@@ -3165,7 +3415,7 @@ OMITS_SERIALIZING_EMPTY_LISTS = (
     (),
 )
 
-OPERATION_WITH_DEFAULTS_INPUT = (
+OPERATION_WITH_DEFAULTS_INPUT: StaticSchema = (
     18,
     n1,
     _OWDI,
@@ -3174,7 +3424,7 @@ OPERATION_WITH_DEFAULTS_INPUT = (
     ((DEFAULTS, 0), (CLIENT_OPTIONAL_DEFAULTS, 0), (3, {_sm: _hi}), (7, {_sm: 0})),
 )
 
-OPERATION_WITH_DEFAULTS_OUTPUT = (
+OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
     18,
     n1,
     _OWDO,
@@ -3241,7 +3491,7 @@ OPERATION_WITH_DEFAULTS_OUTPUT = (
     ),
 )
 
-OPERATION_WITH_DEFAULTS = (
+OPERATION_WITH_DEFAULTS: StaticOperationSchema = (
     23,
     n1,
     _OWD,
@@ -3251,7 +3501,7 @@ OPERATION_WITH_DEFAULTS = (
     (),
 )
 
-TOP_LEVEL = (
+TOP_LEVEL: StaticSchema = (
     18,
     n1,
     _TLo,
@@ -3260,9 +3510,16 @@ TOP_LEVEL = (
     ((DIALOG, 1), (DIALOG_LIST, {_sm: ()}), (DIALOG_MAP, {_sm: None})),
 )
 
-OPERATION_WITH_NESTED_STRUCTURE_INPUT = (18, n1, _OWNSI, 0, (_tLo,), ((TOP_LEVEL, 1),))
+OPERATION_WITH_NESTED_STRUCTURE_INPUT: StaticSchema = (
+    18,
+    n1,
+    _OWNSI,
+    0,
+    (_tLo,),
+    ((TOP_LEVEL, 1),),
+)
 
-OPERATION_WITH_NESTED_STRUCTURE_OUTPUT = (
+OPERATION_WITH_NESTED_STRUCTURE_OUTPUT: StaticSchema = (
     18,
     n1,
     _OWNSO,
@@ -3271,7 +3528,7 @@ OPERATION_WITH_NESTED_STRUCTURE_OUTPUT = (
     ((DIALOG, 1), (DIALOG_LIST, {_sm: ()}), (DIALOG_MAP, {_sm: None})),
 )
 
-OPERATION_WITH_NESTED_STRUCTURE = (
+OPERATION_WITH_NESTED_STRUCTURE: StaticOperationSchema = (
     23,
     n1,
     _OWNS,
@@ -3281,11 +3538,11 @@ OPERATION_WITH_NESTED_STRUCTURE = (
     (),
 )
 
-OUTPUT_STREAM_INPUT = (18, n1, _OSI, {_sSI: _sU})
+OUTPUT_STREAM_INPUT: StaticSchema = (18, n1, _OSI, {_sSI: _sU})
 
-OUTPUT_STREAM_OUTPUT = (18, n1, _OSO, 0, (_st,), ((EVENT_STREAM, 16),))
+OUTPUT_STREAM_OUTPUT: StaticSchema = (18, n1, _OSO, 0, (_st,), ((EVENT_STREAM, 16),))
 
-OUTPUT_STREAM = (
+OUTPUT_STREAM: StaticOperationSchema = (
     23,
     n1,
     _OS,
@@ -3295,9 +3552,9 @@ OUTPUT_STREAM = (
     (SERVICE_UNAVAILABLE_ERROR,),
 )
 
-OUTPUT_STREAM_WITH_INITIAL_RESPONSE_INPUT = (18, n1, _OSWIRI, {_sSI: _sU})
+OUTPUT_STREAM_WITH_INITIAL_RESPONSE_INPUT: StaticSchema = (18, n1, _OSWIRI, {_sSI: _sU})
 
-OUTPUT_STREAM_WITH_INITIAL_RESPONSE_OUTPUT = (
+OUTPUT_STREAM_WITH_INITIAL_RESPONSE_OUTPUT: StaticSchema = (
     18,
     n1,
     _OSWIRO,
@@ -3306,7 +3563,7 @@ OUTPUT_STREAM_WITH_INITIAL_RESPONSE_OUTPUT = (
     ((3, {_sH: _irm_, _smit: None}), (EVENT_STREAM, 16)),
 )
 
-OUTPUT_STREAM_WITH_INITIAL_RESPONSE = (
+OUTPUT_STREAM_WITH_INITIAL_RESPONSE: StaticOperationSchema = (
     23,
     n1,
     _OSWIR,
@@ -3320,15 +3577,29 @@ OUTPUT_STREAM_WITH_INITIAL_RESPONSE = (
     (),
 )
 
-PAYLOAD_CONFIG = (18, n1, _PC, 0, (_da,), ((7, 0),))
+PAYLOAD_CONFIG: StaticSchema = (18, n1, _PC, 0, (_da,), ((7, 0),))
 
-PLAYER_ACTION = (19, n1, _PA, 0, (_q,), ((-1, 0),))
+PLAYER_ACTION: StaticSchema = (19, n1, _PA, 0, (_q,), ((-1, 0),))
 
-POST_PLAYER_ACTION_INPUT = (18, n1, _PPAI, 0, (_ac,), ((PLAYER_ACTION, 0),))
+POST_PLAYER_ACTION_INPUT: StaticSchema = (
+    18,
+    n1,
+    _PPAI,
+    0,
+    (_ac,),
+    ((PLAYER_ACTION, 0),),
+)
 
-POST_PLAYER_ACTION_OUTPUT = (18, n1, _PPAO, 0, (_ac,), ((PLAYER_ACTION, 1),))
+POST_PLAYER_ACTION_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _PPAO,
+    0,
+    (_ac,),
+    ((PLAYER_ACTION, 1),),
+)
 
-POST_PLAYER_ACTION = (
+POST_PLAYER_ACTION: StaticOperationSchema = (
     23,
     n1,
     _PPA,
@@ -3338,7 +3609,7 @@ POST_PLAYER_ACTION = (
     (),
 )
 
-UNION_WITH_JSON_NAME = (
+UNION_WITH_JSON_NAME: StaticSchema = (
     19,
     n1,
     _UWJN,
@@ -3347,7 +3618,7 @@ UNION_WITH_JSON_NAME = (
     ((3, {_sN: _FOO}), (3, 0), (3, {_sN: _baz})),
 )
 
-POST_UNION_WITH_JSON_NAME_INPUT = (
+POST_UNION_WITH_JSON_NAME_INPUT: StaticSchema = (
     18,
     n1,
     _PUWJNI,
@@ -3356,7 +3627,7 @@ POST_UNION_WITH_JSON_NAME_INPUT = (
     ((UNION_WITH_JSON_NAME, 0),),
 )
 
-POST_UNION_WITH_JSON_NAME_OUTPUT = (
+POST_UNION_WITH_JSON_NAME_OUTPUT: StaticSchema = (
     18,
     n1,
     _PUWJNO,
@@ -3365,7 +3636,7 @@ POST_UNION_WITH_JSON_NAME_OUTPUT = (
     ((UNION_WITH_JSON_NAME, 1),),
 )
 
-POST_UNION_WITH_JSON_NAME = (
+POST_UNION_WITH_JSON_NAME: StaticOperationSchema = (
     23,
     n1,
     _PUWJN,
@@ -3375,7 +3646,7 @@ POST_UNION_WITH_JSON_NAME = (
     (),
 )
 
-PUT_WITH_CONTENT_ENCODING_INPUT = (
+PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     18,
     n1,
     _PWCEI,
@@ -3384,9 +3655,9 @@ PUT_WITH_CONTENT_ENCODING_INPUT = (
     ((3, {_sH: _CE_}), (3, 0)),
 )
 
-PUT_WITH_CONTENT_ENCODING_OUTPUT = (18, n1, _PWCEO, {_sSI: _sU})
+PUT_WITH_CONTENT_ENCODING_OUTPUT: StaticSchema = (18, n1, _PWCEO, {_sSI: _sU})
 
-PUT_WITH_CONTENT_ENCODING = (
+PUT_WITH_CONTENT_ENCODING: StaticOperationSchema = (
     23,
     n1,
     _PWCE,
@@ -3401,7 +3672,7 @@ PUT_WITH_CONTENT_ENCODING = (
     (),
 )
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT = (
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT: StaticSchema = (
     18,
     n1,
     _QITAFI,
@@ -3410,9 +3681,9 @@ QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT = (
     ((3, {_sQ: _to, _sTm: None}),),
 )
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT = (18, n1, _QITAFO, {_sSI: _sU})
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT: StaticSchema = (18, n1, _QITAFO, {_sSI: _sU})
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = (
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL: StaticOperationSchema = (
     23,
     n1,
     _QITAF,
@@ -3422,7 +3693,7 @@ QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = (
     (),
 )
 
-QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT = (
+QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT: StaticSchema = (
     18,
     n1,
     _QPASLMI,
@@ -3431,9 +3702,9 @@ QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT = (
     ((3, {_sQ: _cor}), (STRING_LIST_MAP, 1024)),
 )
 
-QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT = (18, n1, _QPASLMO, {_sSI: _sU})
+QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT: StaticSchema = (18, n1, _QPASLMO, {_sSI: _sU})
 
-QUERY_PARAMS_AS_STRING_LIST_MAP = (
+QUERY_PARAMS_AS_STRING_LIST_MAP: StaticOperationSchema = (
     23,
     n1,
     _QPASLM,
@@ -3443,7 +3714,7 @@ QUERY_PARAMS_AS_STRING_LIST_MAP = (
     (),
 )
 
-QUERY_PRECEDENCE_INPUT = (
+QUERY_PRECEDENCE_INPUT: StaticSchema = (
     18,
     n1,
     _QPI,
@@ -3452,9 +3723,9 @@ QUERY_PRECEDENCE_INPUT = (
     ((3, {_sQ: _ba}), (STRING_MAP, 1024)),
 )
 
-QUERY_PRECEDENCE_OUTPUT = (18, n1, _QPO, {_sSI: _sU})
+QUERY_PRECEDENCE_OUTPUT: StaticSchema = (18, n1, _QPO, {_sSI: _sU})
 
-QUERY_PRECEDENCE = (
+QUERY_PRECEDENCE: StaticOperationSchema = (
     23,
     n1,
     _QP,
@@ -3464,11 +3735,11 @@ QUERY_PRECEDENCE = (
     (),
 )
 
-RESPONSE_CODE_HTTP_FALLBACK_INPUT = (18, n1, _RCHFI, {_sSI: _aRCHFIO})
+RESPONSE_CODE_HTTP_FALLBACK_INPUT: StaticSchema = (18, n1, _RCHFI, {_sSI: _aRCHFIO})
 
-RESPONSE_CODE_HTTP_FALLBACK_OUTPUT = (18, n1, _RCHFO, {_sSI: _aRCHFIO})
+RESPONSE_CODE_HTTP_FALLBACK_OUTPUT: StaticSchema = (18, n1, _RCHFO, {_sSI: _aRCHFIO})
 
-RESPONSE_CODE_HTTP_FALLBACK = (
+RESPONSE_CODE_HTTP_FALLBACK: StaticOperationSchema = (
     23,
     n1,
     _RCHF,
@@ -3482,11 +3753,11 @@ RESPONSE_CODE_HTTP_FALLBACK = (
     (),
 )
 
-RESPONSE_CODE_REQUIRED_INPUT = (18, n1, _RCRI, {_sSI: _sU})
+RESPONSE_CODE_REQUIRED_INPUT: StaticSchema = (18, n1, _RCRI, {_sSI: _sU})
 
-RESPONSE_CODE_REQUIRED_OUTPUT = (18, n1, _RCRO, 0, (_rC,), ((7, 129),))
+RESPONSE_CODE_REQUIRED_OUTPUT: StaticSchema = (18, n1, _RCRO, 0, (_rC,), ((7, 129),))
 
-RESPONSE_CODE_REQUIRED = (
+RESPONSE_CODE_REQUIRED: StaticOperationSchema = (
     23,
     n1,
     _RCR,
@@ -3500,7 +3771,7 @@ RESPONSE_CODE_REQUIRED = (
     (),
 )
 
-SIMPLE_SCALAR_PROPERTIES_INPUT = (
+SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     18,
     n1,
     _SSPI,
@@ -3520,7 +3791,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT = (
     ),
 )
 
-SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
+SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     18,
     n1,
     _SSPO,
@@ -3540,7 +3811,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
     ),
 )
 
-SIMPLE_SCALAR_PROPERTIES = (
+SIMPLE_SCALAR_PROPERTIES: StaticOperationSchema = (
     23,
     n1,
     _SSP,
@@ -3550,11 +3821,11 @@ SIMPLE_SCALAR_PROPERTIES = (
     (),
 )
 
-SPARSE_SHORT_LIST = (16, n0, _SSL, 64, (_m,), ((6, 0),))
+SPARSE_SHORT_LIST: StaticSchema = (16, n0, _SSL, 64, (_m,), ((6, 0),))
 
-SPARSE_STRING_LIST = (16, n0, _SSLp, 64, (_m,), ((3, 0),))
+SPARSE_STRING_LIST: StaticSchema = (16, n0, _SSLp, 64, (_m,), ((3, 0),))
 
-SPARSE_JSON_LISTS_INPUT = (
+SPARSE_JSON_LISTS_INPUT: StaticSchema = (
     18,
     n1,
     _SJLI,
@@ -3563,7 +3834,7 @@ SPARSE_JSON_LISTS_INPUT = (
     ((SPARSE_STRING_LIST, 0), (SPARSE_SHORT_LIST, 0)),
 )
 
-SPARSE_JSON_LISTS_OUTPUT = (
+SPARSE_JSON_LISTS_OUTPUT: StaticSchema = (
     18,
     n1,
     _SJLO,
@@ -3572,7 +3843,7 @@ SPARSE_JSON_LISTS_OUTPUT = (
     ((SPARSE_STRING_LIST, 0), (SPARSE_SHORT_LIST, 0)),
 )
 
-SPARSE_JSON_LISTS = (
+SPARSE_JSON_LISTS: StaticOperationSchema = (
     23,
     n1,
     _SJL,
@@ -3582,17 +3853,24 @@ SPARSE_JSON_LISTS = (
     (),
 )
 
-SPARSE_BOOLEAN_MAP = (17, n1, _SBM, 64, (_k, _v), ((3, 0), (2, 0)))
+SPARSE_BOOLEAN_MAP: StaticSchema = (17, n1, _SBM, 64, (_k, _v), ((3, 0), (2, 0)))
 
-SPARSE_NUMBER_MAP = (17, n1, _SNM, 64, (_k, _v), ((3, 0), (7, 0)))
+SPARSE_NUMBER_MAP: StaticSchema = (17, n1, _SNM, 64, (_k, _v), ((3, 0), (7, 0)))
 
-SPARSE_SET_MAP = (17, n1, _SSM, 64, (_k, _v), ((3, 0), (STRING_SET, 0)))
+SPARSE_SET_MAP: StaticSchema = (17, n1, _SSM, 64, (_k, _v), ((3, 0), (STRING_SET, 0)))
 
-SPARSE_STRING_MAP = (17, n0, _SSMp, 64, (_k, _v), ((3, 0), (3, 0)))
+SPARSE_STRING_MAP: StaticSchema = (17, n0, _SSMp, 64, (_k, _v), ((3, 0), (3, 0)))
 
-SPARSE_STRUCT_MAP = (17, n1, _SSMpa, 64, (_k, _v), ((3, 0), (GREETING_STRUCT, 0)))
+SPARSE_STRUCT_MAP: StaticSchema = (
+    17,
+    n1,
+    _SSMpa,
+    64,
+    (_k, _v),
+    ((3, 0), (GREETING_STRUCT, 0)),
+)
 
-SPARSE_JSON_MAPS_INPUT = (
+SPARSE_JSON_MAPS_INPUT: StaticSchema = (
     18,
     n1,
     _SJMI,
@@ -3607,7 +3885,7 @@ SPARSE_JSON_MAPS_INPUT = (
     ),
 )
 
-SPARSE_JSON_MAPS_OUTPUT = (
+SPARSE_JSON_MAPS_OUTPUT: StaticSchema = (
     18,
     n1,
     _SJMO,
@@ -3622,7 +3900,7 @@ SPARSE_JSON_MAPS_OUTPUT = (
     ),
 )
 
-SPARSE_JSON_MAPS = (
+SPARSE_JSON_MAPS: StaticOperationSchema = (
     23,
     n1,
     _SJM,
@@ -3632,9 +3910,9 @@ SPARSE_JSON_MAPS = (
     (),
 )
 
-STREAMING_BLOB = (1, n1, _SB, {_smith: None})
+STREAMING_BLOB: StaticSchema = (1, n1, _SB, {_smith: None})
 
-STREAMING_TRAITS_INPUT = (
+STREAMING_TRAITS_INPUT: StaticSchema = (
     18,
     n1,
     _STI,
@@ -3643,7 +3921,7 @@ STREAMING_TRAITS_INPUT = (
     ((3, {_sH: _XF}), (STREAMING_BLOB, {_sm: _v_, _sPm: None})),
 )
 
-STREAMING_TRAITS_OUTPUT = (
+STREAMING_TRAITS_OUTPUT: StaticSchema = (
     18,
     n1,
     _STO,
@@ -3652,7 +3930,7 @@ STREAMING_TRAITS_OUTPUT = (
     ((3, {_sH: _XF}), (STREAMING_BLOB, {_sm: _v_, _sPm: None})),
 )
 
-STREAMING_TRAITS = (
+STREAMING_TRAITS: StaticOperationSchema = (
     23,
     n1,
     _ST,
@@ -3662,7 +3940,7 @@ STREAMING_TRAITS = (
     (),
 )
 
-STREAMING_TRAITS_REQUIRE_LENGTH_INPUT = (
+STREAMING_TRAITS_REQUIRE_LENGTH_INPUT: StaticSchema = (
     18,
     n1,
     _STRLI,
@@ -3671,9 +3949,9 @@ STREAMING_TRAITS_REQUIRE_LENGTH_INPUT = (
     ((3, {_sH: _XF}), (FINITE_STREAMING_BLOB, {_sm: _v_, _sPm: None})),
 )
 
-STREAMING_TRAITS_REQUIRE_LENGTH_OUTPUT = (18, n1, _STRLO, {_sSI: _sU})
+STREAMING_TRAITS_REQUIRE_LENGTH_OUTPUT: StaticSchema = (18, n1, _STRLO, {_sSI: _sU})
 
-STREAMING_TRAITS_REQUIRE_LENGTH = (
+STREAMING_TRAITS_REQUIRE_LENGTH: StaticOperationSchema = (
     23,
     n1,
     _STRL,
@@ -3683,9 +3961,9 @@ STREAMING_TRAITS_REQUIRE_LENGTH = (
     (),
 )
 
-STREAMING_TEXT_PLAIN_BLOB = (1, n1, _STPB, {_smith: None, _sT: _t})
+STREAMING_TEXT_PLAIN_BLOB: StaticSchema = (1, n1, _STPB, {_smith: None, _sT: _t})
 
-STREAMING_TRAITS_WITH_MEDIA_TYPE_INPUT = (
+STREAMING_TRAITS_WITH_MEDIA_TYPE_INPUT: StaticSchema = (
     18,
     n1,
     _STWMTI,
@@ -3694,7 +3972,7 @@ STREAMING_TRAITS_WITH_MEDIA_TYPE_INPUT = (
     ((3, {_sH: _XF}), (STREAMING_TEXT_PLAIN_BLOB, {_sm: _v_, _sPm: None})),
 )
 
-STREAMING_TRAITS_WITH_MEDIA_TYPE_OUTPUT = (
+STREAMING_TRAITS_WITH_MEDIA_TYPE_OUTPUT: StaticSchema = (
     18,
     n1,
     _STWMTO,
@@ -3703,7 +3981,7 @@ STREAMING_TRAITS_WITH_MEDIA_TYPE_OUTPUT = (
     ((3, {_sH: _XF}), (STREAMING_TEXT_PLAIN_BLOB, {_sm: _v_, _sPm: None})),
 )
 
-STREAMING_TRAITS_WITH_MEDIA_TYPE = (
+STREAMING_TRAITS_WITH_MEDIA_TYPE: StaticOperationSchema = (
     23,
     n1,
     _STWMT,
@@ -3713,9 +3991,9 @@ STREAMING_TRAITS_WITH_MEDIA_TYPE = (
     (),
 )
 
-TEST_CONFIG = (18, n1, _TC, 0, (_tim,), ((7, 0),))
+TEST_CONFIG: StaticSchema = (18, n1, _TC, 0, (_tim,), ((7, 0),))
 
-TEST_BODY_STRUCTURE_INPUT = (
+TEST_BODY_STRUCTURE_INPUT: StaticSchema = (
     18,
     n1,
     _TBSI,
@@ -3724,7 +4002,7 @@ TEST_BODY_STRUCTURE_INPUT = (
     ((3, {_sH: _xati}), (TEST_CONFIG, 0)),
 )
 
-TEST_BODY_STRUCTURE_OUTPUT = (
+TEST_BODY_STRUCTURE_OUTPUT: StaticSchema = (
     18,
     n1,
     _TBSO,
@@ -3733,7 +4011,7 @@ TEST_BODY_STRUCTURE_OUTPUT = (
     ((3, {_sH: _xati}), (TEST_CONFIG, 0)),
 )
 
-TEST_BODY_STRUCTURE = (
+TEST_BODY_STRUCTURE: StaticOperationSchema = (
     23,
     n1,
     _TBS,
@@ -3743,9 +4021,9 @@ TEST_BODY_STRUCTURE = (
     (),
 )
 
-TEST_GET_NO_INPUT_NO_PAYLOAD_INPUT = (18, n1, _TGNINPI, {_sSI: _sU})
+TEST_GET_NO_INPUT_NO_PAYLOAD_INPUT: StaticSchema = (18, n1, _TGNINPI, {_sSI: _sU})
 
-TEST_GET_NO_INPUT_NO_PAYLOAD_OUTPUT = (
+TEST_GET_NO_INPUT_NO_PAYLOAD_OUTPUT: StaticSchema = (
     18,
     n1,
     _TGNINPO,
@@ -3754,7 +4032,7 @@ TEST_GET_NO_INPUT_NO_PAYLOAD_OUTPUT = (
     ((3, {_sH: _XATI}),),
 )
 
-TEST_GET_NO_INPUT_NO_PAYLOAD = (
+TEST_GET_NO_INPUT_NO_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _TGNINP,
@@ -3764,7 +4042,7 @@ TEST_GET_NO_INPUT_NO_PAYLOAD = (
     (),
 )
 
-TEST_GET_NO_PAYLOAD_INPUT = (
+TEST_GET_NO_PAYLOAD_INPUT: StaticSchema = (
     18,
     n1,
     _TGNPI,
@@ -3773,7 +4051,7 @@ TEST_GET_NO_PAYLOAD_INPUT = (
     ((3, {_sH: _XATI}),),
 )
 
-TEST_GET_NO_PAYLOAD_OUTPUT = (
+TEST_GET_NO_PAYLOAD_OUTPUT: StaticSchema = (
     18,
     n1,
     _TGNPO,
@@ -3782,7 +4060,7 @@ TEST_GET_NO_PAYLOAD_OUTPUT = (
     ((3, {_sH: _XATI}),),
 )
 
-TEST_GET_NO_PAYLOAD = (
+TEST_GET_NO_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _TGNP,
@@ -3792,7 +4070,7 @@ TEST_GET_NO_PAYLOAD = (
     (),
 )
 
-TEST_PAYLOAD_BLOB_INPUT = (
+TEST_PAYLOAD_BLOB_INPUT: StaticSchema = (
     18,
     n1,
     _TPBI,
@@ -3801,7 +4079,7 @@ TEST_PAYLOAD_BLOB_INPUT = (
     ((3, {_sH: _CT}), (1, 16)),
 )
 
-TEST_PAYLOAD_BLOB_OUTPUT = (
+TEST_PAYLOAD_BLOB_OUTPUT: StaticSchema = (
     18,
     n1,
     _TPBO,
@@ -3810,7 +4088,7 @@ TEST_PAYLOAD_BLOB_OUTPUT = (
     ((3, {_sH: _CT}), (1, 16)),
 )
 
-TEST_PAYLOAD_BLOB = (
+TEST_PAYLOAD_BLOB: StaticOperationSchema = (
     23,
     n1,
     _TPBe,
@@ -3820,7 +4098,7 @@ TEST_PAYLOAD_BLOB = (
     (),
 )
 
-TEST_PAYLOAD_STRUCTURE_INPUT = (
+TEST_PAYLOAD_STRUCTURE_INPUT: StaticSchema = (
     18,
     n1,
     _TPSI,
@@ -3829,7 +4107,7 @@ TEST_PAYLOAD_STRUCTURE_INPUT = (
     ((3, {_sH: _xati}), (PAYLOAD_CONFIG, 16)),
 )
 
-TEST_PAYLOAD_STRUCTURE_OUTPUT = (
+TEST_PAYLOAD_STRUCTURE_OUTPUT: StaticSchema = (
     18,
     n1,
     _TPSO,
@@ -3838,7 +4116,7 @@ TEST_PAYLOAD_STRUCTURE_OUTPUT = (
     ((3, {_sH: _xati}), (PAYLOAD_CONFIG, 16)),
 )
 
-TEST_PAYLOAD_STRUCTURE = (
+TEST_PAYLOAD_STRUCTURE: StaticOperationSchema = (
     23,
     n1,
     _TPS,
@@ -3848,9 +4126,9 @@ TEST_PAYLOAD_STRUCTURE = (
     (),
 )
 
-TEST_POST_NO_INPUT_NO_PAYLOAD_INPUT = (18, n1, _TPNINPI, {_sSI: _sU})
+TEST_POST_NO_INPUT_NO_PAYLOAD_INPUT: StaticSchema = (18, n1, _TPNINPI, {_sSI: _sU})
 
-TEST_POST_NO_INPUT_NO_PAYLOAD_OUTPUT = (
+TEST_POST_NO_INPUT_NO_PAYLOAD_OUTPUT: StaticSchema = (
     18,
     n1,
     _TPNINPO,
@@ -3859,7 +4137,7 @@ TEST_POST_NO_INPUT_NO_PAYLOAD_OUTPUT = (
     ((3, {_sH: _XATI}),),
 )
 
-TEST_POST_NO_INPUT_NO_PAYLOAD = (
+TEST_POST_NO_INPUT_NO_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _TPNINP,
@@ -3869,7 +4147,7 @@ TEST_POST_NO_INPUT_NO_PAYLOAD = (
     (),
 )
 
-TEST_POST_NO_PAYLOAD_INPUT = (
+TEST_POST_NO_PAYLOAD_INPUT: StaticSchema = (
     18,
     n1,
     _TPNPI,
@@ -3878,7 +4156,7 @@ TEST_POST_NO_PAYLOAD_INPUT = (
     ((3, {_sH: _XATI}),),
 )
 
-TEST_POST_NO_PAYLOAD_OUTPUT = (
+TEST_POST_NO_PAYLOAD_OUTPUT: StaticSchema = (
     18,
     n1,
     _TPNPO,
@@ -3887,7 +4165,7 @@ TEST_POST_NO_PAYLOAD_OUTPUT = (
     ((3, {_sH: _XATI}),),
 )
 
-TEST_POST_NO_PAYLOAD = (
+TEST_POST_NO_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _TPNP,
@@ -3897,7 +4175,7 @@ TEST_POST_NO_PAYLOAD = (
     (),
 )
 
-TIMESTAMP_FORMAT_HEADERS_INPUT = (
+TIMESTAMP_FORMAT_HEADERS_INPUT: StaticSchema = (
     18,
     n1,
     _TFHI,
@@ -3914,7 +4192,7 @@ TIMESTAMP_FORMAT_HEADERS_INPUT = (
     ),
 )
 
-TIMESTAMP_FORMAT_HEADERS_OUTPUT = (
+TIMESTAMP_FORMAT_HEADERS_OUTPUT: StaticSchema = (
     18,
     n1,
     _TFHO,
@@ -3931,7 +4209,7 @@ TIMESTAMP_FORMAT_HEADERS_OUTPUT = (
     ),
 )
 
-TIMESTAMP_FORMAT_HEADERS = (
+TIMESTAMP_FORMAT_HEADERS: StaticOperationSchema = (
     23,
     n1,
     _TFH,
@@ -3941,11 +4219,11 @@ TIMESTAMP_FORMAT_HEADERS = (
     (),
 )
 
-UNIT_INPUT_AND_OUTPUT_INPUT = (18, n1, _UIAOI, {_sSI: _sU})
+UNIT_INPUT_AND_OUTPUT_INPUT: StaticSchema = (18, n1, _UIAOI, {_sSI: _sU})
 
-UNIT_INPUT_AND_OUTPUT_OUTPUT = (18, n1, _UIAOO, {_sSI: _sU})
+UNIT_INPUT_AND_OUTPUT_OUTPUT: StaticSchema = (18, n1, _UIAOO, {_sSI: _sU})
 
-UNIT_INPUT_AND_OUTPUT = (
+UNIT_INPUT_AND_OUTPUT: StaticOperationSchema = (
     23,
     n1,
     _UIAO,
@@ -3955,19 +4233,16 @@ UNIT_INPUT_AND_OUTPUT = (
     (),
 )
 
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1 = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1: StaticSchema = (
     18,
     n1,
     _RSION,
     0,
     (_fo, _ne),
-    (
-        (3, 0),
-        (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0),  # pyright: ignore[reportUnknownLambdaType]
-    ),
+    ((3, 0), (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0)),
 )
 
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2: StaticSchema = (
     18,
     n1,
     _RSIONe,
@@ -3976,7 +4251,7 @@ RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariab
     ((3, 0), (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0)),
 )
 
-RECURSIVE_SHAPES_INPUT = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_INPUT: StaticSchema = (
     18,
     n1,
     _RSI,
@@ -3985,7 +4260,7 @@ RECURSIVE_SHAPES_INPUT = (  # pyright: ignore[reportUnknownVariableType]
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-RECURSIVE_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_OUTPUT: StaticSchema = (
     18,
     n1,
     _RSO,
@@ -3994,7 +4269,7 @@ RECURSIVE_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-RECURSIVE_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES: StaticOperationSchema = (
     23,
     n1,
     _RS,
@@ -4004,7 +4279,7 @@ RECURSIVE_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
     (),
 )
 
-REST_JSON = (
+REST_JSON: StaticSchema = (
     21,
     n1,
     _RJ,
@@ -4159,8 +4434,8 @@ REST_JSON = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": MappingProxyType({"ref": "Endpoint"}),
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -4172,8 +4447,8 @@ REST_JSON = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restjson-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -4192,8 +4467,8 @@ REST_JSON = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restjson.{Region}.amazonaws.com",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -4205,8 +4480,8 @@ REST_JSON = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restjson-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -4225,8 +4500,8 @@ REST_JSON = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restjson.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -4245,8 +4520,8 @@ REST_JSON = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restjson.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",

@@ -2,6 +2,8 @@
 
 from types import MappingProxyType
 
+from smithy_core._schema_compact import StaticOperationSchema, StaticSchema
+
 
 n0 = "aws.protocoltests.shared"
 _BL = "BooleanList"
@@ -568,11 +570,11 @@ _aX = "aws.protocols#restXml"
 _sB = "smithy.rules#endpointBdd"
 _aws = "aws.api#service"
 
-BOOLEAN_LIST = (16, n0, _BL, 0, (_m,), ((2, 0),))
+BOOLEAN_LIST: StaticSchema = (16, n0, _BL, 0, (_m,), ((2, 0),))
 
-DOUBLE_LIST = (16, n0, _DL, 0, (_m,), ((10, 0),))
+DOUBLE_LIST: StaticSchema = (16, n0, _DL, 0, (_m,), ((10, 0),))
 
-FOO_ENUM = (
+FOO_ENUM: StaticSchema = (
     14,
     n0,
     _FE,
@@ -581,25 +583,25 @@ FOO_ENUM = (
     ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
 )
 
-FOO_ENUM_LIST = (16, n0, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
+FOO_ENUM_LIST: StaticSchema = (16, n0, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
 
-INTEGER_ENUM = (15, n0, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (15, n0, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
 
-INTEGER_ENUM_LIST = (16, n0, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
+INTEGER_ENUM_LIST: StaticSchema = (16, n0, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
 
-INTEGER_LIST = (16, n0, _IL, 0, (_m,), ((7, 0),))
+INTEGER_LIST: StaticSchema = (16, n0, _IL, 0, (_m,), ((7, 0),))
 
-INTEGER_SET = (16, n0, _IS, 0, (_m,), ((7, 0),))
+INTEGER_SET: StaticSchema = (16, n0, _IS, 0, (_m,), ((7, 0),))
 
-STRING_MAP = (17, n0, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
+STRING_MAP: StaticSchema = (17, n0, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
 
-STRING_LIST = (16, n0, _SL, 0, (_m,), ((3, 0),))
+STRING_LIST: StaticSchema = (16, n0, _SL, 0, (_m,), ((3, 0),))
 
-STRING_SET = (16, n0, _SS, 0, (_m,), ((3, 0),))
+STRING_SET: StaticSchema = (16, n0, _SS, 0, (_m,), ((3, 0),))
 
-TIMESTAMP_LIST = (16, n0, _TL, 0, (_m,), ((4, 0),))
+TIMESTAMP_LIST: StaticSchema = (16, n0, _TL, 0, (_m,), ((4, 0),))
 
-ALL_QUERY_STRING_TYPES_INPUT = (
+ALL_QUERY_STRING_TYPES_INPUT: StaticSchema = (
     18,
     n1,
     _AQSTI,
@@ -652,9 +654,9 @@ ALL_QUERY_STRING_TYPES_INPUT = (
     ),
 )
 
-ALL_QUERY_STRING_TYPES_OUTPUT = (18, n1, _AQSTO, {_sSI: _sU})
+ALL_QUERY_STRING_TYPES_OUTPUT: StaticSchema = (18, n1, _AQSTO, {_sSI: _sU})
 
-ALL_QUERY_STRING_TYPES = (
+ALL_QUERY_STRING_TYPES: StaticOperationSchema = (
     23,
     n1,
     _AQST,
@@ -664,9 +666,9 @@ ALL_QUERY_STRING_TYPES = (
     (),
 )
 
-PAYLOAD_WITH_XML_NAME = (18, n1, _PWXN, {_sN: _H}, (_n,), ((3, 0),))
+PAYLOAD_WITH_XML_NAME: StaticSchema = (18, n1, _PWXN, {_sN: _H}, (_n,), ((3, 0),))
 
-BODY_WITH_XML_NAME_INPUT = (
+BODY_WITH_XML_NAME_INPUT: StaticSchema = (
     18,
     n1,
     _BWXNI,
@@ -675,7 +677,7 @@ BODY_WITH_XML_NAME_INPUT = (
     ((PAYLOAD_WITH_XML_NAME, 0),),
 )
 
-BODY_WITH_XML_NAME_OUTPUT = (
+BODY_WITH_XML_NAME_OUTPUT: StaticSchema = (
     18,
     n1,
     _BWXNO,
@@ -684,7 +686,7 @@ BODY_WITH_XML_NAME_OUTPUT = (
     ((PAYLOAD_WITH_XML_NAME, 0),),
 )
 
-BODY_WITH_XML_NAME = (
+BODY_WITH_XML_NAME: StaticOperationSchema = (
     23,
     n1,
     _BWXN,
@@ -694,9 +696,9 @@ BODY_WITH_XML_NAME = (
     (),
 )
 
-COMPLEX_NESTED_ERROR_DATA = (18, n1, _CNED, 0, (_Fo,), ((3, 0),))
+COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n1, _CNED, 0, (_Fo,), ((3, 0),))
 
-COMPLEX_ERROR = (
+COMPLEX_ERROR: StaticSchema = (
     18,
     n1,
     _CE,
@@ -705,7 +707,7 @@ COMPLEX_ERROR = (
     ((3, {_sH: _XH}), (3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
-CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT = (
+CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT: StaticSchema = (
     18,
     n1,
     _CAVQSI,
@@ -714,9 +716,9 @@ CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT = (
     ((3, {_sQ: _b}), (3, {_sQ: _mS})),
 )
 
-CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT = (18, n1, _CAVQSO, {_sSI: _sU})
+CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT: StaticSchema = (18, n1, _CAVQSO, {_sSI: _sU})
 
-CONSTANT_AND_VARIABLE_QUERY_STRING = (
+CONSTANT_AND_VARIABLE_QUERY_STRING: StaticOperationSchema = (
     23,
     n1,
     _CAVQS,
@@ -730,11 +732,11 @@ CONSTANT_AND_VARIABLE_QUERY_STRING = (
     (),
 )
 
-CONSTANT_QUERY_STRING_INPUT = (18, n1, _CQSI, 0, (_h,), ((3, 9),))
+CONSTANT_QUERY_STRING_INPUT: StaticSchema = (18, n1, _CQSI, 0, (_h,), ((3, 9),))
 
-CONSTANT_QUERY_STRING_OUTPUT = (18, n1, _CQSO, {_sSI: _sU})
+CONSTANT_QUERY_STRING_OUTPUT: StaticSchema = (18, n1, _CQSO, {_sSI: _sU})
 
-CONSTANT_QUERY_STRING = (
+CONSTANT_QUERY_STRING: StaticOperationSchema = (
     23,
     n1,
     _CQS,
@@ -748,11 +750,11 @@ CONSTANT_QUERY_STRING = (
     (),
 )
 
-CONTENT_TYPE_PARAMETERS_INPUT = (18, n1, _CTPI, 0, (_v,), ((7, 0),))
+CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (18, n1, _CTPI, 0, (_v,), ((7, 0),))
 
-CONTENT_TYPE_PARAMETERS_OUTPUT = (18, n1, _CTPO, 0)
+CONTENT_TYPE_PARAMETERS_OUTPUT: StaticSchema = (18, n1, _CTPO, 0)
 
-CONTENT_TYPE_PARAMETERS = (
+CONTENT_TYPE_PARAMETERS: StaticOperationSchema = (
     23,
     n1,
     _CTP,
@@ -762,13 +764,13 @@ CONTENT_TYPE_PARAMETERS = (
     (),
 )
 
-DATETIME_OFFSETS_INPUT = (18, n1, _DOI, {_sSI: _sU})
+DATETIME_OFFSETS_INPUT: StaticSchema = (18, n1, _DOI, {_sSI: _sU})
 
-DATE_TIME = (4, n0, _DT, {_sF: _dt})
+DATE_TIME: StaticSchema = (4, n0, _DT, {_sF: _dt})
 
-DATETIME_OFFSETS_OUTPUT = (18, n1, _DOO, 0, (_d,), ((DATE_TIME, 0),))
+DATETIME_OFFSETS_OUTPUT: StaticSchema = (18, n1, _DOO, 0, (_d,), ((DATE_TIME, 0),))
 
-DATETIME_OFFSETS = (
+DATETIME_OFFSETS: StaticOperationSchema = (
     23,
     n1,
     _DO,
@@ -778,11 +780,11 @@ DATETIME_OFFSETS = (
     (),
 )
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT = (18, n1, _EIAEOI, 0)
+EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT: StaticSchema = (18, n1, _EIAEOI, 0)
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT = (18, n1, _EIAEOO, 0)
+EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT: StaticSchema = (18, n1, _EIAEOO, 0)
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT = (
+EMPTY_INPUT_AND_EMPTY_OUTPUT: StaticOperationSchema = (
     23,
     n1,
     _EIAEO,
@@ -792,11 +794,11 @@ EMPTY_INPUT_AND_EMPTY_OUTPUT = (
     (),
 )
 
-ENDPOINT_OPERATION_INPUT = (18, n1, _EOI, {_sSI: _sU})
+ENDPOINT_OPERATION_INPUT: StaticSchema = (18, n1, _EOI, {_sSI: _sU})
 
-ENDPOINT_OPERATION_OUTPUT = (18, n1, _EOO, {_sSI: _sU})
+ENDPOINT_OPERATION_OUTPUT: StaticSchema = (18, n1, _EOO, {_sSI: _sU})
 
-ENDPOINT_OPERATION = (
+ENDPOINT_OPERATION: StaticOperationSchema = (
     23,
     n1,
     _EO,
@@ -809,7 +811,7 @@ ENDPOINT_OPERATION = (
     (),
 )
 
-ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT = (
+ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT: StaticSchema = (
     18,
     n1,
     _EWHLHOI,
@@ -818,9 +820,14 @@ ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT = (
     ((3, {_sH: _XAAI, _sLm: None, _smi: None}),),
 )
 
-ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_OUTPUT = (18, n1, _EWHLHOO, {_sSI: _sU})
+ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _EWHLHOO,
+    {_sSI: _sU},
+)
 
-ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION = (
+ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION: StaticOperationSchema = (
     23,
     n1,
     _EWHLHO,
@@ -835,7 +842,7 @@ ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION = (
     (),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = (
+ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT: StaticSchema = (
     18,
     n1,
     _EWHLOI,
@@ -844,9 +851,9 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = (
     ((3, 257),),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = (18, n1, _EWHLOO, {_sSI: _sU})
+ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT: StaticSchema = (18, n1, _EWHLOO, {_sSI: _sU})
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION = (
+ENDPOINT_WITH_HOST_LABEL_OPERATION: StaticOperationSchema = (
     23,
     n1,
     _EWHLO,
@@ -861,9 +868,9 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION = (
     (),
 )
 
-FOO_ENUM_MAP = (17, n0, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
+FOO_ENUM_MAP: StaticSchema = (17, n0, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
 
-FLATTENED_XML_MAP_INPUT = (
+FLATTENED_XML_MAP_INPUT: StaticSchema = (
     18,
     n1,
     _FXMI,
@@ -872,7 +879,7 @@ FLATTENED_XML_MAP_INPUT = (
     ((FOO_ENUM_MAP, {_sFm: None}),),
 )
 
-FLATTENED_XML_MAP_OUTPUT = (
+FLATTENED_XML_MAP_OUTPUT: StaticSchema = (
     18,
     n1,
     _FXMO,
@@ -881,7 +888,7 @@ FLATTENED_XML_MAP_OUTPUT = (
     ((FOO_ENUM_MAP, {_sFm: None}),),
 )
 
-FLATTENED_XML_MAP = (
+FLATTENED_XML_MAP: StaticOperationSchema = (
     23,
     n1,
     _FXM,
@@ -891,7 +898,7 @@ FLATTENED_XML_MAP = (
     (),
 )
 
-FLATTENED_XML_MAP_WITH_XML_NAME_INPUT_OUTPUT_MAP = (
+FLATTENED_XML_MAP_WITH_XML_NAME_INPUT_OUTPUT_MAP: StaticSchema = (
     17,
     n1,
     _FXMWXNIOM,
@@ -900,7 +907,7 @@ FLATTENED_XML_MAP_WITH_XML_NAME_INPUT_OUTPUT_MAP = (
     ((3, {_sN: _K}), (3, {_sN: _V})),
 )
 
-FLATTENED_XML_MAP_WITH_XML_NAME_INPUT = (
+FLATTENED_XML_MAP_WITH_XML_NAME_INPUT: StaticSchema = (
     18,
     n1,
     _FXMWXNI,
@@ -909,7 +916,7 @@ FLATTENED_XML_MAP_WITH_XML_NAME_INPUT = (
     ((FLATTENED_XML_MAP_WITH_XML_NAME_INPUT_OUTPUT_MAP, {_sN: _KVP, _sFm: None}),),
 )
 
-FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT = (
+FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT: StaticSchema = (
     18,
     n1,
     _FXMWXNO,
@@ -918,7 +925,7 @@ FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT = (
     ((FLATTENED_XML_MAP_WITH_XML_NAME_INPUT_OUTPUT_MAP, {_sN: _KVP, _sFm: None}),),
 )
 
-FLATTENED_XML_MAP_WITH_XML_NAME = (
+FLATTENED_XML_MAP_WITH_XML_NAME: StaticOperationSchema = (
     23,
     n1,
     _FXMWXN,
@@ -928,9 +935,14 @@ FLATTENED_XML_MAP_WITH_XML_NAME = (
     (),
 )
 
-FLATTENED_XML_MAP_WITH_XML_NAMESPACE_INPUT = (18, n1, _FXMWXNIl, {_sSI: _sU})
+FLATTENED_XML_MAP_WITH_XML_NAMESPACE_INPUT: StaticSchema = (
+    18,
+    n1,
+    _FXMWXNIl,
+    {_sSI: _sU},
+)
 
-FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT_MAP = (
+FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT_MAP: StaticSchema = (
     17,
     n1,
     _FXMWXNOM,
@@ -945,7 +957,7 @@ FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT_MAP = (
     ),
 )
 
-FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT = (
+FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT: StaticSchema = (
     18,
     n1,
     _FXMWXNOl,
@@ -963,7 +975,7 @@ FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT = (
     ),
 )
 
-FLATTENED_XML_MAP_WITH_XML_NAMESPACE = (
+FLATTENED_XML_MAP_WITH_XML_NAMESPACE: StaticOperationSchema = (
     23,
     n1,
     _FXMWXNl,
@@ -977,13 +989,13 @@ FLATTENED_XML_MAP_WITH_XML_NAMESPACE = (
     (),
 )
 
-FOO_PREFIX_HEADERS = (17, n1, _FPH, 0, (_k, _v), ((3, 0), (3, 0)))
+FOO_PREFIX_HEADERS: StaticSchema = (17, n1, _FPH, 0, (_k, _v), ((3, 0), (3, 0)))
 
-FRACTIONAL_SECONDS_INPUT = (18, n1, _FSI, {_sSI: _sU})
+FRACTIONAL_SECONDS_INPUT: StaticSchema = (18, n1, _FSI, {_sSI: _sU})
 
-FRACTIONAL_SECONDS_OUTPUT = (18, n1, _FSO, 0, (_d,), ((DATE_TIME, 0),))
+FRACTIONAL_SECONDS_OUTPUT: StaticSchema = (18, n1, _FSO, 0, (_d,), ((DATE_TIME, 0),))
 
-FRACTIONAL_SECONDS = (
+FRACTIONAL_SECONDS: StaticOperationSchema = (
     23,
     n1,
     _FS,
@@ -993,13 +1005,20 @@ FRACTIONAL_SECONDS = (
     (),
 )
 
-GREETING_WITH_ERRORS_INPUT = (18, n1, _GWEI, {_sSI: _sU})
+GREETING_WITH_ERRORS_INPUT: StaticSchema = (18, n1, _GWEI, {_sSI: _sU})
 
-GREETING_WITH_ERRORS_OUTPUT = (18, n1, _GWEO, 0, (_g,), ((3, {_sH: _XG}),))
+GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _GWEO,
+    0,
+    (_g,),
+    ((3, {_sH: _XG}),),
+)
 
-INVALID_GREETING = (18, n1, _IG, {_sm: _c, _sE: 400}, (_M,), ((3, 0),))
+INVALID_GREETING: StaticSchema = (18, n1, _IG, {_sm: _c, _sE: 400}, (_M,), ((3, 0),))
 
-GREETING_WITH_ERRORS = (
+GREETING_WITH_ERRORS: StaticOperationSchema = (
     23,
     n1,
     _GWE,
@@ -1009,7 +1028,7 @@ GREETING_WITH_ERRORS = (
     (INVALID_GREETING, COMPLEX_ERROR),
 )
 
-HTTP_EMPTY_PREFIX_HEADERS_INPUT = (
+HTTP_EMPTY_PREFIX_HEADERS_INPUT: StaticSchema = (
     18,
     n1,
     _HEPHI,
@@ -1018,7 +1037,7 @@ HTTP_EMPTY_PREFIX_HEADERS_INPUT = (
     ((STRING_MAP, {_sPH: _v_}), (3, {_sH: _h})),
 )
 
-HTTP_EMPTY_PREFIX_HEADERS_OUTPUT = (
+HTTP_EMPTY_PREFIX_HEADERS_OUTPUT: StaticSchema = (
     18,
     n1,
     _HEPHO,
@@ -1027,7 +1046,7 @@ HTTP_EMPTY_PREFIX_HEADERS_OUTPUT = (
     ((STRING_MAP, {_sPH: _v_}), (3, {_sH: _h})),
 )
 
-HTTP_EMPTY_PREFIX_HEADERS = (
+HTTP_EMPTY_PREFIX_HEADERS: StaticOperationSchema = (
     23,
     n1,
     _HEPH,
@@ -1037,13 +1056,27 @@ HTTP_EMPTY_PREFIX_HEADERS = (
     (),
 )
 
-STRING_ENUM = (14, n1, _SE, 0, (_V,), ((-1, 0),))
+STRING_ENUM: StaticSchema = (14, n1, _SE, 0, (_V,), ((-1, 0),))
 
-HTTP_ENUM_PAYLOAD_INPUT = (18, n1, _HEPI, {_sSI: _aEPI}, (_p,), ((STRING_ENUM, 16),))
+HTTP_ENUM_PAYLOAD_INPUT: StaticSchema = (
+    18,
+    n1,
+    _HEPI,
+    {_sSI: _aEPI},
+    (_p,),
+    ((STRING_ENUM, 16),),
+)
 
-HTTP_ENUM_PAYLOAD_OUTPUT = (18, n1, _HEPO, {_sSI: _aEPI}, (_p,), ((STRING_ENUM, 16),))
+HTTP_ENUM_PAYLOAD_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _HEPO,
+    {_sSI: _aEPI},
+    (_p,),
+    ((STRING_ENUM, 16),),
+)
 
-HTTP_ENUM_PAYLOAD = (
+HTTP_ENUM_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _HEP,
@@ -1053,7 +1086,7 @@ HTTP_ENUM_PAYLOAD = (
     (),
 )
 
-HTTP_PAYLOAD_TRAITS_INPUT = (
+HTTP_PAYLOAD_TRAITS_INPUT: StaticSchema = (
     18,
     n1,
     _HPTI,
@@ -1062,7 +1095,7 @@ HTTP_PAYLOAD_TRAITS_INPUT = (
     ((3, {_sH: _XF}), (1, 16)),
 )
 
-HTTP_PAYLOAD_TRAITS_OUTPUT = (
+HTTP_PAYLOAD_TRAITS_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPTO,
@@ -1071,7 +1104,7 @@ HTTP_PAYLOAD_TRAITS_OUTPUT = (
     ((3, {_sH: _XF}), (1, 16)),
 )
 
-HTTP_PAYLOAD_TRAITS = (
+HTTP_PAYLOAD_TRAITS: StaticOperationSchema = (
     23,
     n1,
     _HPT,
@@ -1081,9 +1114,9 @@ HTTP_PAYLOAD_TRAITS = (
     (),
 )
 
-TEXT_PLAIN_BLOB = (1, n0, _TPB, {_sT: _t})
+TEXT_PLAIN_BLOB: StaticSchema = (1, n0, _TPB, {_sT: _t})
 
-HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT = (
+HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT: StaticSchema = (
     18,
     n1,
     _HPTWMTI,
@@ -1092,7 +1125,7 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT = (
     ((3, {_sH: _XF}), (TEXT_PLAIN_BLOB, 16)),
 )
 
-HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT = (
+HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPTWMTO,
@@ -1101,7 +1134,7 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT = (
     ((3, {_sH: _XF}), (TEXT_PLAIN_BLOB, 16)),
 )
 
-HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE = (
+HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE: StaticOperationSchema = (
     23,
     n1,
     _HPTWMT,
@@ -1115,7 +1148,7 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE = (
     (),
 )
 
-HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT = (
+HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT: StaticSchema = (
     18,
     n1,
     _HPWMXNI,
@@ -1124,7 +1157,7 @@ HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT = (
     ((PAYLOAD_WITH_XML_NAME, {_sN: _Ho, _sP: None}),),
 )
 
-HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_OUTPUT = (
+HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPWMXNO,
@@ -1133,7 +1166,7 @@ HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_OUTPUT = (
     ((PAYLOAD_WITH_XML_NAME, {_sN: _Ho, _sP: None}),),
 )
 
-HTTP_PAYLOAD_WITH_MEMBER_XML_NAME = (
+HTTP_PAYLOAD_WITH_MEMBER_XML_NAME: StaticOperationSchema = (
     23,
     n1,
     _HPWMXN,
@@ -1143,9 +1176,9 @@ HTTP_PAYLOAD_WITH_MEMBER_XML_NAME = (
     (),
 )
 
-NESTED_PAYLOAD = (18, n1, _NP, 0, (_g, _n), ((3, 0), (3, 0)))
+NESTED_PAYLOAD: StaticSchema = (18, n1, _NP, 0, (_g, _n), ((3, 0), (3, 0)))
 
-HTTP_PAYLOAD_WITH_STRUCTURE_INPUT = (
+HTTP_PAYLOAD_WITH_STRUCTURE_INPUT: StaticSchema = (
     18,
     n1,
     _HPWSI,
@@ -1154,7 +1187,7 @@ HTTP_PAYLOAD_WITH_STRUCTURE_INPUT = (
     ((NESTED_PAYLOAD, 16),),
 )
 
-HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT = (
+HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPWSO,
@@ -1163,7 +1196,7 @@ HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT = (
     ((NESTED_PAYLOAD, 16),),
 )
 
-HTTP_PAYLOAD_WITH_STRUCTURE = (
+HTTP_PAYLOAD_WITH_STRUCTURE: StaticOperationSchema = (
     23,
     n1,
     _HPWS,
@@ -1173,9 +1206,9 @@ HTTP_PAYLOAD_WITH_STRUCTURE = (
     (),
 )
 
-UNION_PAYLOAD = (19, n1, _UP, 0, (_g,), ((3, 0),))
+UNION_PAYLOAD: StaticSchema = (19, n1, _UP, 0, (_g,), ((3, 0),))
 
-HTTP_PAYLOAD_WITH_UNION_INPUT = (
+HTTP_PAYLOAD_WITH_UNION_INPUT: StaticSchema = (
     18,
     n1,
     _HPWUI,
@@ -1184,7 +1217,7 @@ HTTP_PAYLOAD_WITH_UNION_INPUT = (
     ((UNION_PAYLOAD, 16),),
 )
 
-HTTP_PAYLOAD_WITH_UNION_OUTPUT = (
+HTTP_PAYLOAD_WITH_UNION_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPWUO,
@@ -1193,7 +1226,7 @@ HTTP_PAYLOAD_WITH_UNION_OUTPUT = (
     ((UNION_PAYLOAD, 16),),
 )
 
-HTTP_PAYLOAD_WITH_UNION = (
+HTTP_PAYLOAD_WITH_UNION: StaticOperationSchema = (
     23,
     n1,
     _HPWU,
@@ -1203,7 +1236,7 @@ HTTP_PAYLOAD_WITH_UNION = (
     (),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAME_INPUT = (
+HTTP_PAYLOAD_WITH_XML_NAME_INPUT: StaticSchema = (
     18,
     n1,
     _HPWXNI,
@@ -1212,7 +1245,7 @@ HTTP_PAYLOAD_WITH_XML_NAME_INPUT = (
     ((PAYLOAD_WITH_XML_NAME, 16),),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAME_OUTPUT = (
+HTTP_PAYLOAD_WITH_XML_NAME_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPWXNO,
@@ -1221,7 +1254,7 @@ HTTP_PAYLOAD_WITH_XML_NAME_OUTPUT = (
     ((PAYLOAD_WITH_XML_NAME, 16),),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAME = (
+HTTP_PAYLOAD_WITH_XML_NAME: StaticOperationSchema = (
     23,
     n1,
     _HPWXN,
@@ -1231,7 +1264,7 @@ HTTP_PAYLOAD_WITH_XML_NAME = (
     (),
 )
 
-PAYLOAD_WITH_XML_NAMESPACE = (
+PAYLOAD_WITH_XML_NAMESPACE: StaticSchema = (
     18,
     n1,
     _PWXNa,
@@ -1240,7 +1273,7 @@ PAYLOAD_WITH_XML_NAMESPACE = (
     ((3, 0),),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAMESPACE_INPUT = (
+HTTP_PAYLOAD_WITH_XML_NAMESPACE_INPUT: StaticSchema = (
     18,
     n1,
     _HPWXNIt,
@@ -1249,7 +1282,7 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE_INPUT = (
     ((PAYLOAD_WITH_XML_NAMESPACE, 16),),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAMESPACE_OUTPUT = (
+HTTP_PAYLOAD_WITH_XML_NAMESPACE_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPWXNOt,
@@ -1258,7 +1291,7 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE_OUTPUT = (
     ((PAYLOAD_WITH_XML_NAMESPACE, 16),),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAMESPACE = (
+HTTP_PAYLOAD_WITH_XML_NAMESPACE: StaticOperationSchema = (
     23,
     n1,
     _HPWXNt,
@@ -1268,7 +1301,7 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE = (
     (),
 )
 
-PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX = (
+PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX: StaticSchema = (
     18,
     n1,
     _PWXNAP,
@@ -1277,7 +1310,7 @@ PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX = (
     ((3, 0),),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT = (
+HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT: StaticSchema = (
     18,
     n1,
     _HPWXNAPI,
@@ -1286,7 +1319,7 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT = (
     ((PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, 16),),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT = (
+HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPWXNAPO,
@@ -1295,7 +1328,7 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT = (
     ((PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, 16),),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX = (
+HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX: StaticOperationSchema = (
     23,
     n1,
     _HPWXNAP,
@@ -1309,7 +1342,7 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX = (
     (),
 )
 
-HTTP_PREFIX_HEADERS_INPUT = (
+HTTP_PREFIX_HEADERS_INPUT: StaticSchema = (
     18,
     n1,
     _HPHI,
@@ -1318,7 +1351,7 @@ HTTP_PREFIX_HEADERS_INPUT = (
     ((3, {_sH: _xf}), (FOO_PREFIX_HEADERS, {_sPH: _xf_})),
 )
 
-HTTP_PREFIX_HEADERS_OUTPUT = (
+HTTP_PREFIX_HEADERS_OUTPUT: StaticSchema = (
     18,
     n1,
     _HPHO,
@@ -1327,7 +1360,7 @@ HTTP_PREFIX_HEADERS_OUTPUT = (
     ((3, {_sH: _xf}), (FOO_PREFIX_HEADERS, {_sPH: _xf_})),
 )
 
-HTTP_PREFIX_HEADERS = (
+HTTP_PREFIX_HEADERS: StaticOperationSchema = (
     23,
     n1,
     _HPH,
@@ -1337,7 +1370,7 @@ HTTP_PREFIX_HEADERS = (
     (),
 )
 
-HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT = (
+HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT: StaticSchema = (
     18,
     n1,
     _HRWFLI,
@@ -1346,9 +1379,9 @@ HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT = (
     ((9, 9), (10, 9)),
 )
 
-HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT = (18, n1, _HRWFLO, {_sSI: _sU})
+HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT: StaticSchema = (18, n1, _HRWFLO, {_sSI: _sU})
 
-HTTP_REQUEST_WITH_FLOAT_LABELS = (
+HTTP_REQUEST_WITH_FLOAT_LABELS: StaticOperationSchema = (
     23,
     n1,
     _HRWFL,
@@ -1362,7 +1395,7 @@ HTTP_REQUEST_WITH_FLOAT_LABELS = (
     (),
 )
 
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT = (
+HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT: StaticSchema = (
     18,
     n1,
     _HRWGLIPI,
@@ -1371,9 +1404,14 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT = (
     ((3, 9), (3, 9)),
 )
 
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT = (18, n1, _HRWGLIPO, {_sSI: _sU})
+HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _HRWGLIPO,
+    {_sSI: _sU},
+)
 
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = (
+HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH: StaticOperationSchema = (
     23,
     n1,
     _HRWGLIP,
@@ -1390,7 +1428,7 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = (
     (),
 )
 
-HTTP_REQUEST_WITH_LABELS_INPUT = (
+HTTP_REQUEST_WITH_LABELS_INPUT: StaticSchema = (
     18,
     n1,
     _HRWLI,
@@ -1399,9 +1437,9 @@ HTTP_REQUEST_WITH_LABELS_INPUT = (
     ((3, 9), (6, 9), (7, 9), (8, 9), (9, 9), (10, 9), (2, 9), (4, 9)),
 )
 
-HTTP_REQUEST_WITH_LABELS_OUTPUT = (18, n1, _HRWLO, {_sSI: _sU})
+HTTP_REQUEST_WITH_LABELS_OUTPUT: StaticSchema = (18, n1, _HRWLO, {_sSI: _sU})
 
-HTTP_REQUEST_WITH_LABELS = (
+HTTP_REQUEST_WITH_LABELS: StaticOperationSchema = (
     23,
     n1,
     _HRWL,
@@ -1418,11 +1456,11 @@ HTTP_REQUEST_WITH_LABELS = (
     (),
 )
 
-EPOCH_SECONDS = (4, n0, _ES, {_sF: _es})
+EPOCH_SECONDS: StaticSchema = (4, n0, _ES, {_sF: _es})
 
-HTTP_DATE = (4, n0, _HD, {_sF: _hd})
+HTTP_DATE: StaticSchema = (4, n0, _HD, {_sF: _hd})
 
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT = (
+HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT: StaticSchema = (
     18,
     n1,
     _HRWLATFI,
@@ -1439,9 +1477,14 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT = (
     ),
 )
 
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT = (18, n1, _HRWLATFO, {_sSI: _sU})
+HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _HRWLATFO,
+    {_sSI: _sU},
+)
 
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = (
+HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT: StaticOperationSchema = (
     23,
     n1,
     _HRWLATF,
@@ -1458,11 +1501,11 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = (
     (),
 )
 
-HTTP_RESPONSE_CODE_INPUT = (18, n1, _HRCI, {_sSI: _sU})
+HTTP_RESPONSE_CODE_INPUT: StaticSchema = (18, n1, _HRCI, {_sSI: _sU})
 
-HTTP_RESPONSE_CODE_OUTPUT = (18, n1, _HRCO, 0, (_St,), ((7, 128),))
+HTTP_RESPONSE_CODE_OUTPUT: StaticSchema = (18, n1, _HRCO, 0, (_St,), ((7, 128),))
 
-HTTP_RESPONSE_CODE = (
+HTTP_RESPONSE_CODE: StaticOperationSchema = (
     23,
     n1,
     _HRC,
@@ -1472,11 +1515,25 @@ HTTP_RESPONSE_CODE = (
     (),
 )
 
-HTTP_STRING_PAYLOAD_INPUT = (18, n1, _HSPI, {_sSI: _aSPI}, (_p,), ((3, 16),))
+HTTP_STRING_PAYLOAD_INPUT: StaticSchema = (
+    18,
+    n1,
+    _HSPI,
+    {_sSI: _aSPI},
+    (_p,),
+    ((3, 16),),
+)
 
-HTTP_STRING_PAYLOAD_OUTPUT = (18, n1, _HSPO, {_sSI: _aSPI}, (_p,), ((3, 16),))
+HTTP_STRING_PAYLOAD_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _HSPO,
+    {_sSI: _aSPI},
+    (_p,),
+    ((3, 16),),
+)
 
-HTTP_STRING_PAYLOAD = (
+HTTP_STRING_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _HSP,
@@ -1486,11 +1543,18 @@ HTTP_STRING_PAYLOAD = (
     (),
 )
 
-IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT = (18, n1, _IQPIRI, {_sSI: _sU})
+IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT: StaticSchema = (18, n1, _IQPIRI, {_sSI: _sU})
 
-IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT = (18, n1, _IQPIRO, 0, (_b,), ((3, {_sQ: _b}),))
+IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _IQPIRO,
+    0,
+    (_b,),
+    ((3, {_sQ: _b}),),
+)
 
-IGNORE_QUERY_PARAMS_IN_RESPONSE = (
+IGNORE_QUERY_PARAMS_IN_RESPONSE: StaticOperationSchema = (
     23,
     n1,
     _IQPIR,
@@ -1500,7 +1564,7 @@ IGNORE_QUERY_PARAMS_IN_RESPONSE = (
     (),
 )
 
-INPUT_AND_OUTPUT_WITH_HEADERS_INPUT = (
+INPUT_AND_OUTPUT_WITH_HEADERS_INPUT: StaticSchema = (
     18,
     n1,
     _IAOWHI,
@@ -1543,7 +1607,7 @@ INPUT_AND_OUTPUT_WITH_HEADERS_INPUT = (
     ),
 )
 
-INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT = (
+INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT: StaticSchema = (
     18,
     n1,
     _IAOWHO,
@@ -1586,7 +1650,7 @@ INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT = (
     ),
 )
 
-INPUT_AND_OUTPUT_WITH_HEADERS = (
+INPUT_AND_OUTPUT_WITH_HEADERS: StaticOperationSchema = (
     23,
     n1,
     _IAOWH,
@@ -1596,7 +1660,7 @@ INPUT_AND_OUTPUT_WITH_HEADERS = (
     (),
 )
 
-LIST_WITH_MEMBER_NAMESPACE = (
+LIST_WITH_MEMBER_NAMESPACE: StaticSchema = (
     16,
     n1,
     _LWMN,
@@ -1605,7 +1669,7 @@ LIST_WITH_MEMBER_NAMESPACE = (
     ((3, {_sNm: MappingProxyType({"uri": "https://xml-member.example.com"})}),),
 )
 
-LIST_WITH_NAMESPACE = (
+LIST_WITH_NAMESPACE: StaticSchema = (
     16,
     n1,
     _LWN,
@@ -1614,9 +1678,9 @@ LIST_WITH_NAMESPACE = (
     ((3, 0),),
 )
 
-NESTED_MAP = (17, n1, _NM, 0, (_k, _v), ((3, 0), (FOO_ENUM_MAP, 0)))
+NESTED_MAP: StaticSchema = (17, n1, _NM, 0, (_k, _v), ((3, 0), (FOO_ENUM_MAP, 0)))
 
-NESTED_XML_MAPS_INPUT = (
+NESTED_XML_MAPS_INPUT: StaticSchema = (
     18,
     n1,
     _NXMI,
@@ -1625,7 +1689,7 @@ NESTED_XML_MAPS_INPUT = (
     ((NESTED_MAP, 0), (NESTED_MAP, {_sFm: None})),
 )
 
-NESTED_XML_MAPS_OUTPUT = (
+NESTED_XML_MAPS_OUTPUT: StaticSchema = (
     18,
     n1,
     _NXMO,
@@ -1634,7 +1698,7 @@ NESTED_XML_MAPS_OUTPUT = (
     ((NESTED_MAP, 0), (NESTED_MAP, {_sFm: None})),
 )
 
-NESTED_XML_MAPS = (
+NESTED_XML_MAPS: StaticOperationSchema = (
     23,
     n1,
     _NXM,
@@ -1644,7 +1708,7 @@ NESTED_XML_MAPS = (
     (),
 )
 
-NESTED_XML_MAP_WITH_XML_NAME_INNER_MAP = (
+NESTED_XML_MAP_WITH_XML_NAME_INNER_MAP: StaticSchema = (
     17,
     n1,
     _NXMWXNIM,
@@ -1653,7 +1717,7 @@ NESTED_XML_MAP_WITH_XML_NAME_INNER_MAP = (
     ((3, {_sN: _IK}), (3, {_sN: _IV})),
 )
 
-NESTED_XML_MAP_WITH_XML_NAME_MAP = (
+NESTED_XML_MAP_WITH_XML_NAME_MAP: StaticSchema = (
     17,
     n1,
     _NXMWXNM,
@@ -1662,7 +1726,7 @@ NESTED_XML_MAP_WITH_XML_NAME_MAP = (
     ((3, {_sN: _OK}), (NESTED_XML_MAP_WITH_XML_NAME_INNER_MAP, 0)),
 )
 
-NESTED_XML_MAP_WITH_XML_NAME_INPUT = (
+NESTED_XML_MAP_WITH_XML_NAME_INPUT: StaticSchema = (
     18,
     n1,
     _NXMWXNI,
@@ -1671,7 +1735,7 @@ NESTED_XML_MAP_WITH_XML_NAME_INPUT = (
     ((NESTED_XML_MAP_WITH_XML_NAME_MAP, 0),),
 )
 
-NESTED_XML_MAP_WITH_XML_NAME_OUTPUT = (
+NESTED_XML_MAP_WITH_XML_NAME_OUTPUT: StaticSchema = (
     18,
     n1,
     _NXMWXNO,
@@ -1680,7 +1744,7 @@ NESTED_XML_MAP_WITH_XML_NAME_OUTPUT = (
     ((NESTED_XML_MAP_WITH_XML_NAME_MAP, 0),),
 )
 
-NESTED_XML_MAP_WITH_XML_NAME = (
+NESTED_XML_MAP_WITH_XML_NAME: StaticOperationSchema = (
     23,
     n1,
     _NXMWXN,
@@ -1690,11 +1754,11 @@ NESTED_XML_MAP_WITH_XML_NAME = (
     (),
 )
 
-NO_INPUT_AND_NO_OUTPUT_INPUT = (18, n1, _NIANOI, {_sSI: _sU})
+NO_INPUT_AND_NO_OUTPUT_INPUT: StaticSchema = (18, n1, _NIANOI, {_sSI: _sU})
 
-NO_INPUT_AND_NO_OUTPUT_OUTPUT = (18, n1, _NIANOO, {_sSI: _sU})
+NO_INPUT_AND_NO_OUTPUT_OUTPUT: StaticSchema = (18, n1, _NIANOO, {_sSI: _sU})
 
-NO_INPUT_AND_NO_OUTPUT = (
+NO_INPUT_AND_NO_OUTPUT: StaticOperationSchema = (
     23,
     n1,
     _NIANO,
@@ -1704,11 +1768,11 @@ NO_INPUT_AND_NO_OUTPUT = (
     (),
 )
 
-NO_INPUT_AND_OUTPUT_INPUT = (18, n1, _NIAOI, {_sSI: _sU})
+NO_INPUT_AND_OUTPUT_INPUT: StaticSchema = (18, n1, _NIAOI, {_sSI: _sU})
 
-NO_INPUT_AND_OUTPUT_OUTPUT = (18, n1, _NIAOO, 0)
+NO_INPUT_AND_OUTPUT_OUTPUT: StaticSchema = (18, n1, _NIAOO, 0)
 
-NO_INPUT_AND_OUTPUT = (
+NO_INPUT_AND_OUTPUT: StaticOperationSchema = (
     23,
     n1,
     _NIAO,
@@ -1718,7 +1782,7 @@ NO_INPUT_AND_OUTPUT = (
     (),
 )
 
-NULL_AND_EMPTY_HEADERS_CLIENT_INPUT = (
+NULL_AND_EMPTY_HEADERS_CLIENT_INPUT: StaticSchema = (
     18,
     n1,
     _NAEHCI,
@@ -1727,7 +1791,7 @@ NULL_AND_EMPTY_HEADERS_CLIENT_INPUT = (
     ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
 )
 
-NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT = (
+NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT: StaticSchema = (
     18,
     n1,
     _NAEHCO,
@@ -1736,7 +1800,7 @@ NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT = (
     ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
 )
 
-NULL_AND_EMPTY_HEADERS_CLIENT = (
+NULL_AND_EMPTY_HEADERS_CLIENT: StaticOperationSchema = (
     23,
     n1,
     _NAEHC,
@@ -1746,7 +1810,7 @@ NULL_AND_EMPTY_HEADERS_CLIENT = (
     (),
 )
 
-NULL_AND_EMPTY_HEADERS_SERVER_INPUT = (
+NULL_AND_EMPTY_HEADERS_SERVER_INPUT: StaticSchema = (
     18,
     n1,
     _NAEHSI,
@@ -1755,7 +1819,7 @@ NULL_AND_EMPTY_HEADERS_SERVER_INPUT = (
     ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
 )
 
-NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT = (
+NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT: StaticSchema = (
     18,
     n1,
     _NAEHSO,
@@ -1764,7 +1828,7 @@ NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT = (
     ((3, {_sH: _XA}), (3, {_sH: _XB____}), (STRING_LIST, {_sH: _XC})),
 )
 
-NULL_AND_EMPTY_HEADERS_SERVER = (
+NULL_AND_EMPTY_HEADERS_SERVER: StaticOperationSchema = (
     23,
     n1,
     _NAEHS,
@@ -1774,7 +1838,7 @@ NULL_AND_EMPTY_HEADERS_SERVER = (
     (),
 )
 
-OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT = (
+OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT: StaticSchema = (
     18,
     n1,
     _ONSESI,
@@ -1783,9 +1847,9 @@ OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT = (
     ((3, {_sQ: _Nu}), (3, {_sQ: _Em})),
 )
 
-OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT = (18, n1, _ONSESO, {_sSI: _sU})
+OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT: StaticSchema = (18, n1, _ONSESO, {_sSI: _sU})
 
-OMITS_NULL_SERIALIZES_EMPTY_STRING = (
+OMITS_NULL_SERIALIZES_EMPTY_STRING: StaticOperationSchema = (
     23,
     n1,
     _ONSES,
@@ -1795,7 +1859,7 @@ OMITS_NULL_SERIALIZES_EMPTY_STRING = (
     (),
 )
 
-PUT_WITH_CONTENT_ENCODING_INPUT = (
+PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     18,
     n1,
     _PWCEI,
@@ -1804,9 +1868,9 @@ PUT_WITH_CONTENT_ENCODING_INPUT = (
     ((3, {_sH: _CE_}), (3, 0)),
 )
 
-PUT_WITH_CONTENT_ENCODING_OUTPUT = (18, n1, _PWCEO, {_sSI: _sU})
+PUT_WITH_CONTENT_ENCODING_OUTPUT: StaticSchema = (18, n1, _PWCEO, {_sSI: _sU})
 
-PUT_WITH_CONTENT_ENCODING = (
+PUT_WITH_CONTENT_ENCODING: StaticOperationSchema = (
     23,
     n1,
     _PWCE,
@@ -1821,7 +1885,7 @@ PUT_WITH_CONTENT_ENCODING = (
     (),
 )
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT = (
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT: StaticSchema = (
     18,
     n1,
     _QITAFI,
@@ -1830,9 +1894,9 @@ QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT = (
     ((3, {_sQ: _to, _sTm: None}),),
 )
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT = (18, n1, _QITAFO, {_sSI: _sU})
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT: StaticSchema = (18, n1, _QITAFO, {_sSI: _sU})
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = (
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL: StaticOperationSchema = (
     23,
     n1,
     _QITAF,
@@ -1842,9 +1906,9 @@ QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = (
     (),
 )
 
-STRING_LIST_MAP = (17, n0, _SLM, 0, (_k, _v), ((3, 0), (STRING_LIST, 0)))
+STRING_LIST_MAP: StaticSchema = (17, n0, _SLM, 0, (_k, _v), ((3, 0), (STRING_LIST, 0)))
 
-QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT = (
+QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT: StaticSchema = (
     18,
     n1,
     _QPASLMI,
@@ -1853,9 +1917,9 @@ QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT = (
     ((3, {_sQ: _co}), (STRING_LIST_MAP, 1024)),
 )
 
-QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT = (18, n1, _QPASLMO, {_sSI: _sU})
+QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT: StaticSchema = (18, n1, _QPASLMO, {_sSI: _sU})
 
-QUERY_PARAMS_AS_STRING_LIST_MAP = (
+QUERY_PARAMS_AS_STRING_LIST_MAP: StaticOperationSchema = (
     23,
     n1,
     _QPASLM,
@@ -1865,7 +1929,7 @@ QUERY_PARAMS_AS_STRING_LIST_MAP = (
     (),
 )
 
-QUERY_PRECEDENCE_INPUT = (
+QUERY_PRECEDENCE_INPUT: StaticSchema = (
     18,
     n1,
     _QPI,
@@ -1874,9 +1938,9 @@ QUERY_PRECEDENCE_INPUT = (
     ((3, {_sQ: _ba}), (STRING_MAP, 1024)),
 )
 
-QUERY_PRECEDENCE_OUTPUT = (18, n1, _QPO, {_sSI: _sU})
+QUERY_PRECEDENCE_OUTPUT: StaticSchema = (18, n1, _QPO, {_sSI: _sU})
 
-QUERY_PRECEDENCE = (
+QUERY_PRECEDENCE: StaticOperationSchema = (
     23,
     n1,
     _QP,
@@ -1886,9 +1950,9 @@ QUERY_PRECEDENCE = (
     (),
 )
 
-RENAMED_LIST_MEMBERS = (16, n1, _RLM, 0, (_m,), ((3, {_sN: _it}),))
+RENAMED_LIST_MEMBERS: StaticSchema = (16, n1, _RLM, 0, (_m,), ((3, {_sN: _it}),))
 
-SIMPLE_SCALAR_PROPERTIES_INPUT = (
+SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     18,
     n1,
     _SSPI,
@@ -1908,7 +1972,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT = (
     ),
 )
 
-SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
+SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     18,
     n1,
     _SSPO,
@@ -1928,7 +1992,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
     ),
 )
 
-SIMPLE_SCALAR_PROPERTIES = (
+SIMPLE_SCALAR_PROPERTIES: StaticOperationSchema = (
     23,
     n1,
     _SSP,
@@ -1938,7 +2002,7 @@ SIMPLE_SCALAR_PROPERTIES = (
     (),
 )
 
-TIMESTAMP_FORMAT_HEADERS_INPUT = (
+TIMESTAMP_FORMAT_HEADERS_INPUT: StaticSchema = (
     18,
     n1,
     _TFHI,
@@ -1955,7 +2019,7 @@ TIMESTAMP_FORMAT_HEADERS_INPUT = (
     ),
 )
 
-TIMESTAMP_FORMAT_HEADERS_OUTPUT = (
+TIMESTAMP_FORMAT_HEADERS_OUTPUT: StaticSchema = (
     18,
     n1,
     _TFHO,
@@ -1972,7 +2036,7 @@ TIMESTAMP_FORMAT_HEADERS_OUTPUT = (
     ),
 )
 
-TIMESTAMP_FORMAT_HEADERS = (
+TIMESTAMP_FORMAT_HEADERS: StaticOperationSchema = (
     23,
     n1,
     _TFH,
@@ -1982,7 +2046,7 @@ TIMESTAMP_FORMAT_HEADERS = (
     (),
 )
 
-XML_ATTRIBUTES_INPUT = (
+XML_ATTRIBUTES_INPUT: StaticSchema = (
     18,
     n1,
     _XAI,
@@ -1991,7 +2055,7 @@ XML_ATTRIBUTES_INPUT = (
     ((3, 0), (3, {_sN: _te, _sA: None})),
 )
 
-XML_ATTRIBUTES_OUTPUT = (
+XML_ATTRIBUTES_OUTPUT: StaticSchema = (
     18,
     n1,
     _XAO,
@@ -2000,7 +2064,7 @@ XML_ATTRIBUTES_OUTPUT = (
     ((3, 0), (3, {_sN: _te, _sA: None})),
 )
 
-XML_ATTRIBUTES = (
+XML_ATTRIBUTES: StaticOperationSchema = (
     23,
     n1,
     _XAm,
@@ -2010,7 +2074,7 @@ XML_ATTRIBUTES = (
     (),
 )
 
-XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST = (
+XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST: StaticSchema = (
     18,
     n1,
     _XAIMPR,
@@ -2019,7 +2083,7 @@ XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST = (
     ((3, 0), (3, {_sN: _te, _sA: None}), (3, 0)),
 )
 
-XML_ATTRIBUTES_IN_MIDDLE_INPUT = (
+XML_ATTRIBUTES_IN_MIDDLE_INPUT: StaticSchema = (
     18,
     n1,
     _XAIMI,
@@ -2028,7 +2092,7 @@ XML_ATTRIBUTES_IN_MIDDLE_INPUT = (
     ((XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST, 16),),
 )
 
-XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE = (
+XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE: StaticSchema = (
     18,
     n1,
     _XAIMPRm,
@@ -2037,7 +2101,7 @@ XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE = (
     ((3, 0), (3, {_sN: _te, _sA: None}), (3, 0)),
 )
 
-XML_ATTRIBUTES_IN_MIDDLE_OUTPUT = (
+XML_ATTRIBUTES_IN_MIDDLE_OUTPUT: StaticSchema = (
     18,
     n1,
     _XAIMO,
@@ -2046,7 +2110,7 @@ XML_ATTRIBUTES_IN_MIDDLE_OUTPUT = (
     ((XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE, 16),),
 )
 
-XML_ATTRIBUTES_IN_MIDDLE = (
+XML_ATTRIBUTES_IN_MIDDLE: StaticOperationSchema = (
     23,
     n1,
     _XAIM,
@@ -2056,7 +2120,7 @@ XML_ATTRIBUTES_IN_MIDDLE = (
     (),
 )
 
-XML_ATTRIBUTES_PAYLOAD_REQUEST = (
+XML_ATTRIBUTES_PAYLOAD_REQUEST: StaticSchema = (
     18,
     n1,
     _XAPR,
@@ -2065,7 +2129,7 @@ XML_ATTRIBUTES_PAYLOAD_REQUEST = (
     ((3, 0), (3, {_sN: _te, _sA: None})),
 )
 
-XML_ATTRIBUTES_ON_PAYLOAD_INPUT = (
+XML_ATTRIBUTES_ON_PAYLOAD_INPUT: StaticSchema = (
     18,
     n1,
     _XAOPI,
@@ -2074,7 +2138,7 @@ XML_ATTRIBUTES_ON_PAYLOAD_INPUT = (
     ((XML_ATTRIBUTES_PAYLOAD_REQUEST, 16),),
 )
 
-XML_ATTRIBUTES_PAYLOAD_RESPONSE = (
+XML_ATTRIBUTES_PAYLOAD_RESPONSE: StaticSchema = (
     18,
     n1,
     _XAPRm,
@@ -2083,7 +2147,7 @@ XML_ATTRIBUTES_PAYLOAD_RESPONSE = (
     ((3, 0), (3, {_sN: _te, _sA: None})),
 )
 
-XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT = (
+XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT: StaticSchema = (
     18,
     n1,
     _XAOPO,
@@ -2092,7 +2156,7 @@ XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT = (
     ((XML_ATTRIBUTES_PAYLOAD_RESPONSE, 16),),
 )
 
-XML_ATTRIBUTES_ON_PAYLOAD = (
+XML_ATTRIBUTES_ON_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
     _XAOP,
@@ -2102,11 +2166,11 @@ XML_ATTRIBUTES_ON_PAYLOAD = (
     (),
 )
 
-XML_BLOBS_INPUT = (18, n1, _XBI, {_sSI: _aXBR}, (_da,), ((1, 0),))
+XML_BLOBS_INPUT: StaticSchema = (18, n1, _XBI, {_sSI: _aXBR}, (_da,), ((1, 0),))
 
-XML_BLOBS_OUTPUT = (18, n1, _XBO, {_sSI: _aXBRw}, (_da,), ((1, 0),))
+XML_BLOBS_OUTPUT: StaticSchema = (18, n1, _XBO, {_sSI: _aXBRw}, (_da,), ((1, 0),))
 
-XML_BLOBS = (
+XML_BLOBS: StaticOperationSchema = (
     23,
     n1,
     _XBm,
@@ -2116,11 +2180,18 @@ XML_BLOBS = (
     (),
 )
 
-XML_EMPTY_BLOBS_INPUT = (18, n1, _XEBI, {_sSI: _aXEBR}, (_da,), ((1, 0),))
+XML_EMPTY_BLOBS_INPUT: StaticSchema = (18, n1, _XEBI, {_sSI: _aXEBR}, (_da,), ((1, 0),))
 
-XML_EMPTY_BLOBS_OUTPUT = (18, n1, _XEBO, {_sSI: _aXEBRw}, (_da,), ((1, 0),))
+XML_EMPTY_BLOBS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XEBO,
+    {_sSI: _aXEBRw},
+    (_da,),
+    ((1, 0),),
+)
 
-XML_EMPTY_BLOBS = (
+XML_EMPTY_BLOBS: StaticOperationSchema = (
     23,
     n1,
     _XEB,
@@ -2130,13 +2201,27 @@ XML_EMPTY_BLOBS = (
     (),
 )
 
-STRUCTURE_LIST_MEMBER = (18, n1, _SLMt, 0, (_a, _b_), ((3, {_sN: _v}), (3, {_sN: _o})))
+STRUCTURE_LIST_MEMBER: StaticSchema = (
+    18,
+    n1,
+    _SLMt,
+    0,
+    (_a, _b_),
+    ((3, {_sN: _v}), (3, {_sN: _o})),
+)
 
-STRUCTURE_LIST = (16, n1, _SLt, 0, (_m,), ((STRUCTURE_LIST_MEMBER, {_sN: _it}),))
+STRUCTURE_LIST: StaticSchema = (
+    16,
+    n1,
+    _SLt,
+    0,
+    (_m,),
+    ((STRUCTURE_LIST_MEMBER, {_sN: _it}),),
+)
 
-NESTED_STRING_LIST = (16, n0, _NSL, 0, (_m,), ((STRING_LIST, 0),))
+NESTED_STRING_LIST: StaticSchema = (16, n0, _NSL, 0, (_m,), ((STRING_LIST, 0),))
 
-XML_EMPTY_LISTS_INPUT = (
+XML_EMPTY_LISTS_INPUT: StaticSchema = (
     18,
     n1,
     _XELI,
@@ -2177,7 +2262,7 @@ XML_EMPTY_LISTS_INPUT = (
     ),
 )
 
-XML_EMPTY_LISTS_OUTPUT = (
+XML_EMPTY_LISTS_OUTPUT: StaticSchema = (
     18,
     n1,
     _XELO,
@@ -2218,7 +2303,7 @@ XML_EMPTY_LISTS_OUTPUT = (
     ),
 )
 
-XML_EMPTY_LISTS = (
+XML_EMPTY_LISTS: StaticOperationSchema = (
     23,
     n1,
     _XEL,
@@ -2228,9 +2313,9 @@ XML_EMPTY_LISTS = (
     (),
 )
 
-GREETING_STRUCT = (18, n0, _GS, 0, (_hi,), ((3, 0),))
+GREETING_STRUCT: StaticSchema = (18, n0, _GS, 0, (_hi,), ((3, 0),))
 
-XML_MAPS_INPUT_OUTPUT_MAP = (
+XML_MAPS_INPUT_OUTPUT_MAP: StaticSchema = (
     17,
     n1,
     _XMIOM,
@@ -2239,7 +2324,7 @@ XML_MAPS_INPUT_OUTPUT_MAP = (
     ((3, 0), (GREETING_STRUCT, 0)),
 )
 
-XML_EMPTY_MAPS_INPUT = (
+XML_EMPTY_MAPS_INPUT: StaticSchema = (
     18,
     n1,
     _XEMI,
@@ -2248,7 +2333,7 @@ XML_EMPTY_MAPS_INPUT = (
     ((XML_MAPS_INPUT_OUTPUT_MAP, 0),),
 )
 
-XML_EMPTY_MAPS_OUTPUT = (
+XML_EMPTY_MAPS_OUTPUT: StaticSchema = (
     18,
     n1,
     _XEMO,
@@ -2257,7 +2342,7 @@ XML_EMPTY_MAPS_OUTPUT = (
     ((XML_MAPS_INPUT_OUTPUT_MAP, 0),),
 )
 
-XML_EMPTY_MAPS = (
+XML_EMPTY_MAPS: StaticOperationSchema = (
     23,
     n1,
     _XEM,
@@ -2267,11 +2352,25 @@ XML_EMPTY_MAPS = (
     (),
 )
 
-XML_EMPTY_STRINGS_INPUT = (18, n1, _XESI, {_sSI: _aXESR}, (_eS,), ((3, 0),))
+XML_EMPTY_STRINGS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XESI,
+    {_sSI: _aXESR},
+    (_eS,),
+    ((3, 0),),
+)
 
-XML_EMPTY_STRINGS_OUTPUT = (18, n1, _XESO, {_sSI: _aXESRw}, (_eS,), ((3, 0),))
+XML_EMPTY_STRINGS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XESO,
+    {_sSI: _aXESRw},
+    (_eS,),
+    ((3, 0),),
+)
 
-XML_EMPTY_STRINGS = (
+XML_EMPTY_STRINGS: StaticOperationSchema = (
     23,
     n1,
     _XES,
@@ -2281,9 +2380,9 @@ XML_EMPTY_STRINGS = (
     (),
 )
 
-FOO_ENUM_SET = (16, n0, _FES, 0, (_m,), ((FOO_ENUM, 0),))
+FOO_ENUM_SET: StaticSchema = (16, n0, _FES, 0, (_m,), ((FOO_ENUM, 0),))
 
-XML_ENUMS_INPUT = (
+XML_ENUMS_INPUT: StaticSchema = (
     18,
     n1,
     _XEI,
@@ -2299,7 +2398,7 @@ XML_ENUMS_INPUT = (
     ),
 )
 
-XML_ENUMS_OUTPUT = (
+XML_ENUMS_OUTPUT: StaticSchema = (
     18,
     n1,
     _XEO,
@@ -2315,7 +2414,7 @@ XML_ENUMS_OUTPUT = (
     ),
 )
 
-XML_ENUMS = (
+XML_ENUMS: StaticOperationSchema = (
     23,
     n1,
     _XEm,
@@ -2325,11 +2424,18 @@ XML_ENUMS = (
     (),
 )
 
-INTEGER_ENUM_MAP = (17, n0, _IEM, 0, (_k, _v), ((3, 0), (INTEGER_ENUM, 0)))
+INTEGER_ENUM_MAP: StaticSchema = (
+    17,
+    n0,
+    _IEM,
+    0,
+    (_k, _v),
+    ((3, 0), (INTEGER_ENUM, 0)),
+)
 
-INTEGER_ENUM_SET = (16, n0, _IES, 0, (_m,), ((INTEGER_ENUM, 0),))
+INTEGER_ENUM_SET: StaticSchema = (16, n0, _IES, 0, (_m,), ((INTEGER_ENUM, 0),))
 
-XML_INT_ENUMS_INPUT = (
+XML_INT_ENUMS_INPUT: StaticSchema = (
     18,
     n1,
     _XIEI,
@@ -2345,7 +2451,7 @@ XML_INT_ENUMS_INPUT = (
     ),
 )
 
-XML_INT_ENUMS_OUTPUT = (
+XML_INT_ENUMS_OUTPUT: StaticSchema = (
     18,
     n1,
     _XIEO,
@@ -2361,7 +2467,7 @@ XML_INT_ENUMS_OUTPUT = (
     ),
 )
 
-XML_INT_ENUMS = (
+XML_INT_ENUMS: StaticOperationSchema = (
     23,
     n1,
     _XIE,
@@ -2371,7 +2477,7 @@ XML_INT_ENUMS = (
     (),
 )
 
-XML_LISTS_INPUT = (
+XML_LISTS_INPUT: StaticSchema = (
     18,
     n1,
     _XLI,
@@ -2412,7 +2518,7 @@ XML_LISTS_INPUT = (
     ),
 )
 
-XML_LISTS_OUTPUT = (
+XML_LISTS_OUTPUT: StaticSchema = (
     18,
     n1,
     _XLO,
@@ -2453,7 +2559,7 @@ XML_LISTS_OUTPUT = (
     ),
 )
 
-XML_LISTS = (
+XML_LISTS: StaticOperationSchema = (
     23,
     n1,
     _XLm,
@@ -2463,7 +2569,7 @@ XML_LISTS = (
     (),
 )
 
-XML_MAPS_INPUT = (
+XML_MAPS_INPUT: StaticSchema = (
     18,
     n1,
     _XMI,
@@ -2472,7 +2578,7 @@ XML_MAPS_INPUT = (
     ((XML_MAPS_INPUT_OUTPUT_MAP, 0),),
 )
 
-XML_MAPS_OUTPUT = (
+XML_MAPS_OUTPUT: StaticSchema = (
     18,
     n1,
     _XMO,
@@ -2481,7 +2587,7 @@ XML_MAPS_OUTPUT = (
     ((XML_MAPS_INPUT_OUTPUT_MAP, 0),),
 )
 
-XML_MAPS = (
+XML_MAPS: StaticOperationSchema = (
     23,
     n1,
     _XM,
@@ -2491,7 +2597,7 @@ XML_MAPS = (
     (),
 )
 
-XML_MAPS_XML_NAME_INPUT_OUTPUT_MAP = (
+XML_MAPS_XML_NAME_INPUT_OUTPUT_MAP: StaticSchema = (
     17,
     n1,
     _XMXNIOM,
@@ -2500,7 +2606,7 @@ XML_MAPS_XML_NAME_INPUT_OUTPUT_MAP = (
     ((3, {_sN: _At}), (GREETING_STRUCT, {_sN: _Se})),
 )
 
-XML_MAPS_XML_NAME_INPUT = (
+XML_MAPS_XML_NAME_INPUT: StaticSchema = (
     18,
     n1,
     _XMXNI,
@@ -2509,7 +2615,7 @@ XML_MAPS_XML_NAME_INPUT = (
     ((XML_MAPS_XML_NAME_INPUT_OUTPUT_MAP, 0),),
 )
 
-XML_MAPS_XML_NAME_OUTPUT = (
+XML_MAPS_XML_NAME_OUTPUT: StaticSchema = (
     18,
     n1,
     _XMXNO,
@@ -2518,7 +2624,7 @@ XML_MAPS_XML_NAME_OUTPUT = (
     ((XML_MAPS_XML_NAME_INPUT_OUTPUT_MAP, 0),),
 )
 
-XML_MAPS_XML_NAME = (
+XML_MAPS_XML_NAME: StaticOperationSchema = (
     23,
     n1,
     _XMXN,
@@ -2528,7 +2634,7 @@ XML_MAPS_XML_NAME = (
     (),
 )
 
-XML_MAP_WITH_XML_NAMESPACE_INPUT_OUTPUT_MAP = (
+XML_MAP_WITH_XML_NAMESPACE_INPUT_OUTPUT_MAP: StaticSchema = (
     17,
     n1,
     _XMWXNIOM,
@@ -2543,7 +2649,7 @@ XML_MAP_WITH_XML_NAMESPACE_INPUT_OUTPUT_MAP = (
     ),
 )
 
-XML_MAP_WITH_XML_NAMESPACE_INPUT = (
+XML_MAP_WITH_XML_NAMESPACE_INPUT: StaticSchema = (
     18,
     n1,
     _XMWXNI,
@@ -2560,7 +2666,7 @@ XML_MAP_WITH_XML_NAMESPACE_INPUT = (
     ),
 )
 
-XML_MAP_WITH_XML_NAMESPACE_OUTPUT = (
+XML_MAP_WITH_XML_NAMESPACE_OUTPUT: StaticSchema = (
     18,
     n1,
     _XMWXNO,
@@ -2577,7 +2683,7 @@ XML_MAP_WITH_XML_NAMESPACE_OUTPUT = (
     ),
 )
 
-XML_MAP_WITH_XML_NAMESPACE = (
+XML_MAP_WITH_XML_NAMESPACE: StaticOperationSchema = (
     23,
     n1,
     _XMWXN,
@@ -2587,7 +2693,7 @@ XML_MAP_WITH_XML_NAMESPACE = (
     (),
 )
 
-XML_NAMESPACED_LIST = (
+XML_NAMESPACED_LIST: StaticSchema = (
     16,
     n1,
     _XNL,
@@ -2596,7 +2702,7 @@ XML_NAMESPACED_LIST = (
     ((3, {_sNm: MappingProxyType({"uri": "http://bux.com"})}),),
 )
 
-XML_NAMESPACE_NESTED = (
+XML_NAMESPACE_NESTED: StaticSchema = (
     18,
     n1,
     _XNN,
@@ -2608,7 +2714,7 @@ XML_NAMESPACE_NESTED = (
     ),
 )
 
-XML_NAMESPACES_INPUT = (
+XML_NAMESPACES_INPUT: StaticSchema = (
     18,
     n1,
     _XNI,
@@ -2617,7 +2723,7 @@ XML_NAMESPACES_INPUT = (
     ((XML_NAMESPACE_NESTED, 0),),
 )
 
-XML_NAMESPACES_OUTPUT = (
+XML_NAMESPACES_OUTPUT: StaticSchema = (
     18,
     n1,
     _XNO,
@@ -2626,7 +2732,7 @@ XML_NAMESPACES_OUTPUT = (
     ((XML_NAMESPACE_NESTED, 0),),
 )
 
-XML_NAMESPACES = (
+XML_NAMESPACES: StaticOperationSchema = (
     23,
     n1,
     _XN,
@@ -2636,7 +2742,7 @@ XML_NAMESPACES = (
     (),
 )
 
-XML_TIMESTAMPS_INPUT = (
+XML_TIMESTAMPS_INPUT: StaticSchema = (
     18,
     n1,
     _XTI,
@@ -2653,7 +2759,7 @@ XML_TIMESTAMPS_INPUT = (
     ),
 )
 
-XML_TIMESTAMPS_OUTPUT = (
+XML_TIMESTAMPS_OUTPUT: StaticSchema = (
     18,
     n1,
     _XTO,
@@ -2670,7 +2776,7 @@ XML_TIMESTAMPS_OUTPUT = (
     ),
 )
 
-XML_TIMESTAMPS = (
+XML_TIMESTAMPS: StaticOperationSchema = (
     23,
     n1,
     _XTm,
@@ -2680,7 +2786,7 @@ XML_TIMESTAMPS = (
     (),
 )
 
-XML_NESTED_UNION_STRUCT = (
+XML_NESTED_UNION_STRUCT: StaticSchema = (
     18,
     n1,
     _XNUS,
@@ -2689,7 +2795,7 @@ XML_NESTED_UNION_STRUCT = (
     ((3, 0), (2, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (10, 0)),
 )
 
-XML_UNION_SHAPE = (  # pyright: ignore[reportUnknownVariableType]
+XML_UNION_SHAPE: StaticSchema = (
     19,
     n1,
     _XUS,
@@ -2704,24 +2810,21 @@ XML_UNION_SHAPE = (  # pyright: ignore[reportUnknownVariableType]
         (8, 0),
         (9, 0),
         (10, 0),
-        (lambda: XML_UNION_SHAPE, 0),  # pyright: ignore[reportUnknownLambdaType]
+        (lambda: XML_UNION_SHAPE, 0),
         (XML_NESTED_UNION_STRUCT, 0),
     ),
 )
 
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1 = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1: StaticSchema = (
     18,
     n1,
     _RSION,
     0,
     (_f, _ne),
-    (
-        (3, 0),
-        (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0),  # pyright: ignore[reportUnknownLambdaType]
-    ),
+    ((3, 0), (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0)),
 )
 
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2: StaticSchema = (
     18,
     n1,
     _RSIONe,
@@ -2730,7 +2833,7 @@ RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariab
     ((3, 0), (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0)),
 )
 
-XML_UNIONS_INPUT = (  # pyright: ignore[reportUnknownVariableType]
+XML_UNIONS_INPUT: StaticSchema = (
     18,
     n1,
     _XUI,
@@ -2739,7 +2842,7 @@ XML_UNIONS_INPUT = (  # pyright: ignore[reportUnknownVariableType]
     ((XML_UNION_SHAPE, 0),),
 )
 
-XML_UNIONS_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
+XML_UNIONS_OUTPUT: StaticSchema = (
     18,
     n1,
     _XUO,
@@ -2748,7 +2851,7 @@ XML_UNIONS_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
     ((XML_UNION_SHAPE, 0),),
 )
 
-RECURSIVE_SHAPES_INPUT = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_INPUT: StaticSchema = (
     18,
     n1,
     _RSI,
@@ -2757,7 +2860,7 @@ RECURSIVE_SHAPES_INPUT = (  # pyright: ignore[reportUnknownVariableType]
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-RECURSIVE_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_OUTPUT: StaticSchema = (
     18,
     n1,
     _RSO,
@@ -2766,7 +2869,7 @@ RECURSIVE_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-XML_UNIONS = (  # pyright: ignore[reportUnknownVariableType]
+XML_UNIONS: StaticOperationSchema = (
     23,
     n1,
     _XU,
@@ -2776,7 +2879,7 @@ XML_UNIONS = (  # pyright: ignore[reportUnknownVariableType]
     (),
 )
 
-RECURSIVE_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES: StaticOperationSchema = (
     23,
     n1,
     _RS,
@@ -2786,7 +2889,7 @@ RECURSIVE_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
     (),
 )
 
-REST_XML = (
+REST_XML: StaticSchema = (
     21,
     n1,
     _RX,
@@ -2942,8 +3045,8 @@ REST_XML = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": MappingProxyType({"ref": "Endpoint"}),
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -2955,8 +3058,8 @@ REST_XML = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restxml-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -2975,8 +3078,8 @@ REST_XML = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restxml.{Region}.amazonaws.com",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -2988,8 +3091,8 @@ REST_XML = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restxml-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -3008,8 +3111,8 @@ REST_XML = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restxml.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",
@@ -3028,8 +3131,8 @@ REST_XML = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": "https://restxml.{Region}.{PartitionResult#dnsSuffix}",
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",

@@ -28,6 +28,7 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.ShapeType;
 import software.amazon.smithy.model.traits.UnitTypeTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SchemaTraitFilterIndex;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -99,11 +100,6 @@ public final class SchemaGenerator implements Consumer<Shape> {
     // Variable names already handed out, for collision detection across both the
     // initialism and preferred-prefix allocation paths.
     private final Set<String> allocated = new HashSet<>();
-
-    // Shapes whose emitted tuple holds an unknown-typed value (a lambda, or a
-    // reference to another tainted shape). Their assignment lines get an inline
-    // reportUnknownVariableType ignore; nothing else does.
-    private final Set<ShapeId> tainted = new HashSet<>();
 
     public SchemaGenerator(GenerationContext context) {
         this.context = context;
@@ -254,16 +250,13 @@ public final class SchemaGenerator implements Consumer<Shape> {
         int typeInt = typeInt(shape);
         var key = schemaName(shape);
 
-        boolean shapeTainted = computeTaint(shape);
-        if (shapeTainted) {
-            tainted.add(shape.getId());
-        }
-        // The ignore rides the opening line as a trailing comment; the tuple continues
-        // across the following lines unaffected.
-        var opener = shapeTainted
-                ? "$L = (  # pyright: ignore[reportUnknownVariableType]"
-                : "$L = (";
-        writer.write(opener, key);
+        // Annotate the global with its static-schema alias so a forward/recursive
+        // lambda member doesn't leave the inferred tuple type partially unknown, which
+        // otherwise leaks to every import and APIOperation(static_schema=) call site.
+        var typeSymbol = shape.isOperationShape()
+                ? RuntimeTypes.STATIC_OPERATION_SCHEMA
+                : RuntimeTypes.STATIC_SCHEMA;
+        writer.write("$L: $T = (", key, typeSymbol);
         writer.writeInline("$L, $L, $L, ", Integer.toString(typeInt), nsConst, nameConst);
         writeTraits(writer, traits);
 
@@ -290,26 +283,6 @@ public final class SchemaGenerator implements Consumer<Shape> {
         written.add(shape.getId());
     }
 
-    // A shape is unknown-tainted if any of its references is a lambda (forward or
-    // recursive) or points at an already-tainted shape; operations also consider their
-    // input, output, and error refs. Computed before emission so the opening line can
-    // carry the inline ignore.
-    private boolean computeTaint(Shape shape) {
-        if (shape.isOperationShape()) {
-            var op = shape.asOperationShape().get();
-            var refs = new ArrayList<ShapeId>();
-            refs.add(op.getInputShape());
-            refs.add(op.getOutputShape());
-            refs.addAll(op.getErrors());
-            return refs.stream().anyMatch(this::refTainted);
-        }
-        return shape.members().stream().anyMatch(m -> refTainted(m.getTarget()));
-    }
-
-    private boolean refTainted(ShapeId target) {
-        return isLambdaTarget(target) || tainted.contains(target);
-    }
-
     // Operation tuple trailing slots: input_ref, output_ref, (error_refs...). Matches
     // _schema_compact._OP_INPUT / _OP_OUTPUT / _OP_ERRORS.
     private void writeOperationRefs(PythonWriter writer, OperationShape op) {
@@ -320,7 +293,7 @@ public final class SchemaGenerator implements Consumer<Shape> {
             for (var error : op.getErrors()) {
                 writer.writeInline("");
                 writeSchemaRef(writer, error);
-                writer.write(errorRefSuffix(error));
+                writer.write(",");
             }
         });
     }
@@ -328,15 +301,7 @@ public final class SchemaGenerator implements Consumer<Shape> {
     private void writeOperationRef(PythonWriter writer, ShapeId target) {
         writer.writeInline("");
         writeSchemaRef(writer, target);
-        writer.write(isLambdaTarget(target)
-                ? ",  # pyright: ignore[reportUnknownLambdaType]"
-                : ",");
-    }
-
-    private String errorRefSuffix(ShapeId target) {
-        return isLambdaTarget(target)
-                ? ",  # pyright: ignore[reportUnknownLambdaType]"
-                : ",";
+        writer.write(",");
     }
 
     private String schemaName(Shape shape) {
@@ -359,22 +324,8 @@ public final class SchemaGenerator implements Consumer<Shape> {
         for (var member : shape.members()) {
             writer.writeInline("");
             writeMemberTarget(writer, member);
-            // Only an actual lambda line carries a lambda-return type pyright can't
-            // resolve; a tainted bare sibling is handled by the shape's opener ignore.
-            if (isLambdaTarget(member.getTarget())) {
-                writer.write(",  # pyright: ignore[reportUnknownLambdaType]");
-            } else {
-                writer.write(",");
-            }
+            writer.write(",");
         }
-    }
-
-    // A member target emits a lambda when it is a non-prelude shape not yet defined in
-    // file order (a forward or recursive reference).
-    private boolean isLambdaTarget(ShapeId target) {
-        return !target.equals(UnitTypeTrait.UNIT)
-                && !PRELUDE_INTS.containsKey(target.toString())
-                && !written.contains(target);
     }
 
     private void writeMemberTarget(PythonWriter writer, MemberShape member) {

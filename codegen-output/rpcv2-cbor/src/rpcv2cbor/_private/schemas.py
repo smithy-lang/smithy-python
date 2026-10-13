@@ -2,6 +2,8 @@
 
 from types import MappingProxyType
 
+from smithy_core._schema_compact import StaticOperationSchema, StaticSchema
+
 
 n0 = "smithy.framework"
 _VEF = "ValidationExceptionField"
@@ -203,9 +205,9 @@ _RVP = "RpcV2Protocol"
 _sC = "smithy.protocols#rpcv2Cbor"
 _sB = "smithy.rules#endpointBdd"
 
-VALIDATION_EXCEPTION_FIELD = (18, n0, _VEF, 0, (_p, _m), ((3, 1), (3, 1)))
+VALIDATION_EXCEPTION_FIELD: StaticSchema = (18, n0, _VEF, 0, (_p, _m), ((3, 1), (3, 1)))
 
-VALIDATION_EXCEPTION_FIELD_LIST = (
+VALIDATION_EXCEPTION_FIELD_LIST: StaticSchema = (
     16,
     n0,
     _VEFL,
@@ -214,7 +216,7 @@ VALIDATION_EXCEPTION_FIELD_LIST = (
     ((VALIDATION_EXCEPTION_FIELD, 0),),
 )
 
-VALIDATION_EXCEPTION = (
+VALIDATION_EXCEPTION: StaticSchema = (
     18,
     n0,
     _VE,
@@ -223,11 +225,11 @@ VALIDATION_EXCEPTION = (
     ((3, 1), (VALIDATION_EXCEPTION_FIELD_LIST, 0)),
 )
 
-CLIENT_OPTIONAL_DEFAULTS = (18, n1, _COD, 0, (_me,), ((7, {_smi: 0}),))
+CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (18, n1, _COD, 0, (_me,), ((7, {_smi: 0}),))
 
-COMPLEX_NESTED_ERROR_DATA = (18, n1, _CNED, 0, (_F,), ((3, 0),))
+COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n1, _CNED, 0, (_F,), ((3, 0),))
 
-COMPLEX_ERROR = (
+COMPLEX_ERROR: StaticSchema = (
     18,
     n1,
     _CE,
@@ -236,15 +238,22 @@ COMPLEX_ERROR = (
     ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
-TEST_ENUM = (14, n1, _TE, 0, (_FOO, _BAR, _BAZ), ((-1, 0), (-1, 0), (-1, 0)))
+TEST_ENUM: StaticSchema = (
+    14,
+    n1,
+    _TE,
+    0,
+    (_FOO, _BAR, _BAZ),
+    ((-1, 0), (-1, 0), (-1, 0)),
+)
 
-TEST_INT_ENUM = (15, n1, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+TEST_INT_ENUM: StaticSchema = (15, n1, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
 
-TEST_STRING_LIST = (16, n1, _TSL, 0, (_me,), ((3, 0),))
+TEST_STRING_LIST: StaticSchema = (16, n1, _TSL, 0, (_me,), ((3, 0),))
 
-TEST_STRING_MAP = (17, n1, _TSM, 0, (_k, _v), ((3, 0), (3, 0)))
+TEST_STRING_MAP: StaticSchema = (17, n1, _TSM, 0, (_k, _v), ((3, 0), (3, 0)))
 
-DEFAULTS = (
+DEFAULTS: StaticSchema = (
     18,
     n1,
     _D,
@@ -301,25 +310,32 @@ DEFAULTS = (
     ),
 )
 
-DENSE_BOOLEAN_MAP = (17, n1, _DBM, 0, (_k, _v), ((3, 0), (2, 0)))
+DENSE_BOOLEAN_MAP: StaticSchema = (17, n1, _DBM, 0, (_k, _v), ((3, 0), (2, 0)))
 
-DENSE_NUMBER_MAP = (17, n1, _DNM, 0, (_k, _v), ((3, 0), (7, 0)))
+DENSE_NUMBER_MAP: StaticSchema = (17, n1, _DNM, 0, (_k, _v), ((3, 0), (7, 0)))
 
-STRING_SET = (16, n2, _SS, 0, (_me,), ((3, 0),))
+STRING_SET: StaticSchema = (16, n2, _SS, 0, (_me,), ((3, 0),))
 
-DENSE_SET_MAP = (17, n1, _DSM, 0, (_k, _v), ((3, 0), (STRING_SET, 0)))
+DENSE_SET_MAP: StaticSchema = (17, n1, _DSM, 0, (_k, _v), ((3, 0), (STRING_SET, 0)))
 
-DENSE_STRING_MAP = (17, n1, _DSMe, 0, (_k, _v), ((3, 0), (3, 0)))
+DENSE_STRING_MAP: StaticSchema = (17, n1, _DSMe, 0, (_k, _v), ((3, 0), (3, 0)))
 
-GREETING_STRUCT = (18, n2, _GS, 0, (_h,), ((3, 0),))
+GREETING_STRUCT: StaticSchema = (18, n2, _GS, 0, (_h,), ((3, 0),))
 
-DENSE_STRUCT_MAP = (17, n1, _DSMen, 0, (_k, _v), ((3, 0), (GREETING_STRUCT, 0)))
+DENSE_STRUCT_MAP: StaticSchema = (
+    17,
+    n1,
+    _DSMen,
+    0,
+    (_k, _v),
+    ((3, 0), (GREETING_STRUCT, 0)),
+)
 
-EMPTY_INPUT_OUTPUT_INPUT = (18, n1, _EIOI, {_sSI: _sCES})
+EMPTY_INPUT_OUTPUT_INPUT: StaticSchema = (18, n1, _EIOI, {_sSI: _sCES})
 
-EMPTY_INPUT_OUTPUT_OUTPUT = (18, n1, _EIOO, {_sSI: _sCES})
+EMPTY_INPUT_OUTPUT_OUTPUT: StaticSchema = (18, n1, _EIOO, {_sSI: _sCES})
 
-EMPTY_INPUT_OUTPUT = (
+EMPTY_INPUT_OUTPUT: StaticOperationSchema = (
     23,
     n1,
     _EIO,
@@ -329,19 +345,19 @@ EMPTY_INPUT_OUTPUT = (
     (),
 )
 
-FLOAT16_INPUT = (18, n1, _FI, {_sSI: _sU})
+FLOAT16_INPUT: StaticSchema = (18, n1, _FI, {_sSI: _sU})
 
-FLOAT16_OUTPUT = (18, n1, _FO, 0, (_v,), ((10, 0),))
+FLOAT16_OUTPUT: StaticSchema = (18, n1, _FO, 0, (_v,), ((10, 0),))
 
-FLOAT16 = (23, n1, _Fl, 0, FLOAT16_INPUT, FLOAT16_OUTPUT, ())
+FLOAT16: StaticOperationSchema = (23, n1, _Fl, 0, FLOAT16_INPUT, FLOAT16_OUTPUT, ())
 
-FRACTIONAL_SECONDS_INPUT = (18, n1, _FSI, {_sSI: _sU})
+FRACTIONAL_SECONDS_INPUT: StaticSchema = (18, n1, _FSI, {_sSI: _sU})
 
-DATE_TIME = (4, n2, _DT, {_sF: _dt})
+DATE_TIME: StaticSchema = (4, n2, _DT, {_sF: _dt})
 
-FRACTIONAL_SECONDS_OUTPUT = (18, n1, _FSO, 0, (_d,), ((DATE_TIME, 0),))
+FRACTIONAL_SECONDS_OUTPUT: StaticSchema = (18, n1, _FSO, 0, (_d,), ((DATE_TIME, 0),))
 
-FRACTIONAL_SECONDS = (
+FRACTIONAL_SECONDS: StaticOperationSchema = (
     23,
     n1,
     _FS,
@@ -351,13 +367,13 @@ FRACTIONAL_SECONDS = (
     (),
 )
 
-GREETING_WITH_ERRORS_INPUT = (18, n1, _GWEI, {_sSI: _sU})
+GREETING_WITH_ERRORS_INPUT: StaticSchema = (18, n1, _GWEI, {_sSI: _sU})
 
-GREETING_WITH_ERRORS_OUTPUT = (18, n1, _GWEO, 0, (_g,), ((3, 0),))
+GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (18, n1, _GWEO, 0, (_g,), ((3, 0),))
 
-INVALID_GREETING = (18, n1, _IG, {_sm: _c}, (_M,), ((3, 0),))
+INVALID_GREETING: StaticSchema = (18, n1, _IG, {_sm: _c}, (_M,), ((3, 0),))
 
-GREETING_WITH_ERRORS = (
+GREETING_WITH_ERRORS: StaticOperationSchema = (
     23,
     n1,
     _GWE,
@@ -367,13 +383,21 @@ GREETING_WITH_ERRORS = (
     (INVALID_GREETING, COMPLEX_ERROR),
 )
 
-NO_INPUT_OUTPUT_INPUT = (18, n1, _NIOI, {_sSI: _sU})
+NO_INPUT_OUTPUT_INPUT: StaticSchema = (18, n1, _NIOI, {_sSI: _sU})
 
-NO_INPUT_OUTPUT_OUTPUT = (18, n1, _NIOO, {_sSI: _sU})
+NO_INPUT_OUTPUT_OUTPUT: StaticSchema = (18, n1, _NIOO, {_sSI: _sU})
 
-NO_INPUT_OUTPUT = (23, n1, _NIO, 0, NO_INPUT_OUTPUT_INPUT, NO_INPUT_OUTPUT_OUTPUT, ())
+NO_INPUT_OUTPUT: StaticOperationSchema = (
+    23,
+    n1,
+    _NIO,
+    0,
+    NO_INPUT_OUTPUT_INPUT,
+    NO_INPUT_OUTPUT_OUTPUT,
+    (),
+)
 
-OPERATION_WITH_DEFAULTS_INPUT = (
+OPERATION_WITH_DEFAULTS_INPUT: StaticSchema = (
     18,
     n1,
     _OWDI,
@@ -382,7 +406,7 @@ OPERATION_WITH_DEFAULTS_INPUT = (
     ((DEFAULTS, 0), (CLIENT_OPTIONAL_DEFAULTS, 0), (3, {_smi: _h}), (7, {_smi: 0})),
 )
 
-OPERATION_WITH_DEFAULTS_OUTPUT = (
+OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
     18,
     n1,
     _OWDO,
@@ -439,7 +463,7 @@ OPERATION_WITH_DEFAULTS_OUTPUT = (
     ),
 )
 
-OPERATION_WITH_DEFAULTS = (
+OPERATION_WITH_DEFAULTS: StaticOperationSchema = (
     23,
     n1,
     _OWD,
@@ -449,11 +473,25 @@ OPERATION_WITH_DEFAULTS = (
     (VALIDATION_EXCEPTION,),
 )
 
-OPTIONAL_INPUT_OUTPUT_INPUT = (18, n1, _OIOI, {_sSI: _sCSS}, (_v,), ((3, 0),))
+OPTIONAL_INPUT_OUTPUT_INPUT: StaticSchema = (
+    18,
+    n1,
+    _OIOI,
+    {_sSI: _sCSS},
+    (_v,),
+    ((3, 0),),
+)
 
-OPTIONAL_INPUT_OUTPUT_OUTPUT = (18, n1, _OIOO, {_sSI: _sCSS}, (_v,), ((3, 0),))
+OPTIONAL_INPUT_OUTPUT_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _OIOO,
+    {_sSI: _sCSS},
+    (_v,),
+    ((3, 0),),
+)
 
-OPTIONAL_INPUT_OUTPUT = (
+OPTIONAL_INPUT_OUTPUT: StaticOperationSchema = (
     23,
     n1,
     _OIO,
@@ -463,7 +501,7 @@ OPTIONAL_INPUT_OUTPUT = (
     (),
 )
 
-RPC_V2_CBOR_DENSE_MAPS_INPUT = (
+RPC_V2_CBOR_DENSE_MAPS_INPUT: StaticSchema = (
     18,
     n1,
     _RVCDMI,
@@ -478,7 +516,7 @@ RPC_V2_CBOR_DENSE_MAPS_INPUT = (
     ),
 )
 
-RPC_V2_CBOR_DENSE_MAPS_OUTPUT = (
+RPC_V2_CBOR_DENSE_MAPS_OUTPUT: StaticSchema = (
     18,
     n1,
     _RVCDMO,
@@ -493,7 +531,7 @@ RPC_V2_CBOR_DENSE_MAPS_OUTPUT = (
     ),
 )
 
-RPC_V2_CBOR_DENSE_MAPS = (
+RPC_V2_CBOR_DENSE_MAPS: StaticOperationSchema = (
     23,
     n1,
     _RVCDM,
@@ -503,11 +541,11 @@ RPC_V2_CBOR_DENSE_MAPS = (
     (VALIDATION_EXCEPTION,),
 )
 
-BLOB_LIST = (16, n2, _BL, 0, (_me,), ((1, 0),))
+BLOB_LIST: StaticSchema = (16, n2, _BL, 0, (_me,), ((1, 0),))
 
-BOOLEAN_LIST = (16, n2, _BLo, 0, (_me,), ((2, 0),))
+BOOLEAN_LIST: StaticSchema = (16, n2, _BLo, 0, (_me,), ((2, 0),))
 
-FOO_ENUM = (
+FOO_ENUM: StaticSchema = (
     14,
     n2,
     _FE,
@@ -516,25 +554,25 @@ FOO_ENUM = (
     ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
 )
 
-FOO_ENUM_LIST = (16, n2, _FEL, 0, (_me,), ((FOO_ENUM, 0),))
+FOO_ENUM_LIST: StaticSchema = (16, n2, _FEL, 0, (_me,), ((FOO_ENUM, 0),))
 
-INTEGER_LIST = (16, n2, _IL, 0, (_me,), ((7, 0),))
+INTEGER_LIST: StaticSchema = (16, n2, _IL, 0, (_me,), ((7, 0),))
 
-INTEGER_ENUM = (15, n2, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (15, n2, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
 
-INTEGER_ENUM_LIST = (16, n2, _IEL, 0, (_me,), ((INTEGER_ENUM, 0),))
+INTEGER_ENUM_LIST: StaticSchema = (16, n2, _IEL, 0, (_me,), ((INTEGER_ENUM, 0),))
 
-STRING_LIST = (16, n2, _SL, 0, (_me,), ((3, 0),))
+STRING_LIST: StaticSchema = (16, n2, _SL, 0, (_me,), ((3, 0),))
 
-NESTED_STRING_LIST = (16, n2, _NSL, 0, (_me,), ((STRING_LIST, 0),))
+NESTED_STRING_LIST: StaticSchema = (16, n2, _NSL, 0, (_me,), ((STRING_LIST, 0),))
 
-STRUCTURE_LIST_MEMBER = (18, n1, _SLM, 0, (_a, _b), ((3, 0), (3, 0)))
+STRUCTURE_LIST_MEMBER: StaticSchema = (18, n1, _SLM, 0, (_a, _b), ((3, 0), (3, 0)))
 
-STRUCTURE_LIST = (16, n1, _SLt, 0, (_me,), ((STRUCTURE_LIST_MEMBER, 0),))
+STRUCTURE_LIST: StaticSchema = (16, n1, _SLt, 0, (_me,), ((STRUCTURE_LIST_MEMBER, 0),))
 
-TIMESTAMP_LIST = (16, n2, _TLi, 0, (_me,), ((4, 0),))
+TIMESTAMP_LIST: StaticSchema = (16, n2, _TLi, 0, (_me,), ((4, 0),))
 
-RPC_V2_CBOR_LISTS_INPUT = (
+RPC_V2_CBOR_LISTS_INPUT: StaticSchema = (
     18,
     n1,
     _RVCLI,
@@ -554,7 +592,7 @@ RPC_V2_CBOR_LISTS_INPUT = (
     ),
 )
 
-RPC_V2_CBOR_LISTS_OUTPUT = (
+RPC_V2_CBOR_LISTS_OUTPUT: StaticSchema = (
     18,
     n1,
     _RVCLO,
@@ -574,7 +612,7 @@ RPC_V2_CBOR_LISTS_OUTPUT = (
     ),
 )
 
-RPC_V2_CBOR_LISTS = (
+RPC_V2_CBOR_LISTS: StaticOperationSchema = (
     23,
     n1,
     _RVCL,
@@ -584,19 +622,26 @@ RPC_V2_CBOR_LISTS = (
     (VALIDATION_EXCEPTION,),
 )
 
-RPC_V2_CBOR_NESTED_UNION = (19, n1, _RVCNU, 0, (_sV,), ((3, 0),))
+RPC_V2_CBOR_NESTED_UNION: StaticSchema = (19, n1, _RVCNU, 0, (_sV,), ((3, 0),))
 
-SPARSE_BOOLEAN_MAP = (17, n1, _SBM, 64, (_k, _v), ((3, 0), (2, 0)))
+SPARSE_BOOLEAN_MAP: StaticSchema = (17, n1, _SBM, 64, (_k, _v), ((3, 0), (2, 0)))
 
-SPARSE_NUMBER_MAP = (17, n1, _SNM, 64, (_k, _v), ((3, 0), (7, 0)))
+SPARSE_NUMBER_MAP: StaticSchema = (17, n1, _SNM, 64, (_k, _v), ((3, 0), (7, 0)))
 
-SPARSE_SET_MAP = (17, n1, _SSM, 64, (_k, _v), ((3, 0), (STRING_SET, 0)))
+SPARSE_SET_MAP: StaticSchema = (17, n1, _SSM, 64, (_k, _v), ((3, 0), (STRING_SET, 0)))
 
-SPARSE_STRING_MAP = (17, n2, _SSMp, 64, (_k, _v), ((3, 0), (3, 0)))
+SPARSE_STRING_MAP: StaticSchema = (17, n2, _SSMp, 64, (_k, _v), ((3, 0), (3, 0)))
 
-SPARSE_STRUCT_MAP = (17, n1, _SSMpa, 64, (_k, _v), ((3, 0), (GREETING_STRUCT, 0)))
+SPARSE_STRUCT_MAP: StaticSchema = (
+    17,
+    n1,
+    _SSMpa,
+    64,
+    (_k, _v),
+    ((3, 0), (GREETING_STRUCT, 0)),
+)
 
-RPC_V2_CBOR_SPARSE_MAPS_INPUT = (
+RPC_V2_CBOR_SPARSE_MAPS_INPUT: StaticSchema = (
     18,
     n1,
     _RVCSMI,
@@ -611,7 +656,7 @@ RPC_V2_CBOR_SPARSE_MAPS_INPUT = (
     ),
 )
 
-RPC_V2_CBOR_SPARSE_MAPS_OUTPUT = (
+RPC_V2_CBOR_SPARSE_MAPS_OUTPUT: StaticSchema = (
     18,
     n1,
     _RVCSMO,
@@ -626,7 +671,7 @@ RPC_V2_CBOR_SPARSE_MAPS_OUTPUT = (
     ),
 )
 
-RPC_V2_CBOR_SPARSE_MAPS = (
+RPC_V2_CBOR_SPARSE_MAPS: StaticOperationSchema = (
     23,
     n1,
     _RVCSM,
@@ -636,7 +681,7 @@ RPC_V2_CBOR_SPARSE_MAPS = (
     (VALIDATION_EXCEPTION,),
 )
 
-RPC_V2_CBOR_UNION = (
+RPC_V2_CBOR_UNION: StaticSchema = (
     19,
     n1,
     _RVCU,
@@ -645,7 +690,7 @@ RPC_V2_CBOR_UNION = (
     ((3, 0), (RPC_V2_CBOR_NESTED_UNION, 0)),
 )
 
-RPC_V2_CBOR_UNIONS_INPUT = (
+RPC_V2_CBOR_UNIONS_INPUT: StaticSchema = (
     18,
     n1,
     _RVCUI,
@@ -654,7 +699,7 @@ RPC_V2_CBOR_UNIONS_INPUT = (
     ((RPC_V2_CBOR_UNION, 0), (3, 0)),
 )
 
-RPC_V2_CBOR_UNIONS_OUTPUT = (
+RPC_V2_CBOR_UNIONS_OUTPUT: StaticSchema = (
     18,
     n1,
     _RVCUO,
@@ -663,7 +708,7 @@ RPC_V2_CBOR_UNIONS_OUTPUT = (
     ((RPC_V2_CBOR_UNION, 0), (3, 0)),
 )
 
-RPC_V2_CBOR_UNIONS = (
+RPC_V2_CBOR_UNIONS: StaticOperationSchema = (
     23,
     n1,
     _RVCUp,
@@ -673,7 +718,7 @@ RPC_V2_CBOR_UNIONS = (
     (),
 )
 
-SIMPLE_SCALAR_PROPERTIES_INPUT = (
+SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     18,
     n1,
     _SSPI,
@@ -682,7 +727,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT = (
     ((2, 0), (2, 0), (5, 0), (10, 0), (9, 0), (7, 0), (8, 0), (6, 0), (3, 0), (1, 0)),
 )
 
-SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
+SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     18,
     n1,
     _SSPO,
@@ -691,7 +736,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT = (
     ((2, 0), (2, 0), (5, 0), (10, 0), (9, 0), (7, 0), (8, 0), (6, 0), (3, 0), (1, 0)),
 )
 
-SIMPLE_SCALAR_PROPERTIES = (
+SIMPLE_SCALAR_PROPERTIES: StaticOperationSchema = (
     23,
     n1,
     _SSP,
@@ -701,9 +746,9 @@ SIMPLE_SCALAR_PROPERTIES = (
     (),
 )
 
-SPARSE_STRING_LIST = (16, n2, _SSL, 64, (_me,), ((3, 0),))
+SPARSE_STRING_LIST: StaticSchema = (16, n2, _SSL, 64, (_me,), ((3, 0),))
 
-SPARSE_NULLS_OPERATION_INPUT = (
+SPARSE_NULLS_OPERATION_INPUT: StaticSchema = (
     18,
     n1,
     _SNOI,
@@ -712,7 +757,7 @@ SPARSE_NULLS_OPERATION_INPUT = (
     ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
 )
 
-SPARSE_NULLS_OPERATION_OUTPUT = (
+SPARSE_NULLS_OPERATION_OUTPUT: StaticSchema = (
     18,
     n1,
     _SNOO,
@@ -721,7 +766,7 @@ SPARSE_NULLS_OPERATION_OUTPUT = (
     ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
 )
 
-SPARSE_NULLS_OPERATION = (
+SPARSE_NULLS_OPERATION: StaticOperationSchema = (
     23,
     n1,
     _SNO,
@@ -731,19 +776,16 @@ SPARSE_NULLS_OPERATION = (
     (),
 )
 
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1 = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1: StaticSchema = (
     18,
     n1,
     _RSION,
     0,
     (_f, _n),
-    (
-        (3, 0),
-        (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0),  # pyright: ignore[reportUnknownLambdaType]
-    ),
+    ((3, 0), (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0)),
 )
 
-RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2: StaticSchema = (
     18,
     n1,
     _RSIONe,
@@ -752,7 +794,7 @@ RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2 = (  # pyright: ignore[reportUnknownVariab
     ((3, 0), (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0)),
 )
 
-RECURSIVE_SHAPES_INPUT = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_INPUT: StaticSchema = (
     18,
     n1,
     _RSI,
@@ -761,7 +803,7 @@ RECURSIVE_SHAPES_INPUT = (  # pyright: ignore[reportUnknownVariableType]
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-RECURSIVE_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES_OUTPUT: StaticSchema = (
     18,
     n1,
     _RSO,
@@ -770,7 +812,7 @@ RECURSIVE_SHAPES_OUTPUT = (  # pyright: ignore[reportUnknownVariableType]
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
-RECURSIVE_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
+RECURSIVE_SHAPES: StaticOperationSchema = (
     23,
     n1,
     _RS,
@@ -780,7 +822,7 @@ RECURSIVE_SHAPES = (  # pyright: ignore[reportUnknownVariableType]
     (),
 )
 
-RPC_V2_PROTOCOL = (
+RPC_V2_PROTOCOL: StaticSchema = (
     21,
     n1,
     _RVP,
@@ -816,8 +858,8 @@ RPC_V2_PROTOCOL = (
                             "endpoint": MappingProxyType(
                                 {
                                     "url": MappingProxyType({"ref": "endpoint"}),
-                                    "properties": MappingProxyType({}),
-                                    "headers": MappingProxyType({}),
+                                    "properties": MappingProxyType[str, object]({}),
+                                    "headers": MappingProxyType[str, object]({}),
                                 }
                             ),
                             "type": "endpoint",

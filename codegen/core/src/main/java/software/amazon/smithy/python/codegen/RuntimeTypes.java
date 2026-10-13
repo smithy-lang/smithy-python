@@ -26,6 +26,10 @@ public final class RuntimeTypes {
     // smithy_core._schema_compact
     public static final Symbol HYDRATE =
             createSymbol("_schema_compact", "hydrate", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol STATIC_SCHEMA =
+            createSymbol("_schema_compact", "StaticSchema", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol STATIC_OPERATION_SCHEMA =
+            createSymbol("_schema_compact", "StaticOperationSchema", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.shapes
     public static final Symbol SHAPE_ID = createSymbol("shapes", "ShapeID", SmithyPythonDependency.SMITHY_CORE);
