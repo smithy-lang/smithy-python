@@ -55,6 +55,12 @@ The symbol provider already checks for duplicate fields within a declaration.
 Raw text is trusted Python, not a template. The writer does not parse it to
 find missing name reservations. Callers supply blank lines between declarations.
 
+Pass every builtin or imported name as a type reference, not just annotations.
+A reference can appear anywhere in a line, so defaults such as
+`field(default_factory=list)` and base classes such as `StrEnum` get the same
+aliases. If those names are written as raw text, a field with the same name
+replaces them in the rest of the class body.
+
 ## Annotations and imports
 
 Nested arguments retain their order. `nullable=True` adds `| None` only at that

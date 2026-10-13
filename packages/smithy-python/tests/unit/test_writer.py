@@ -162,6 +162,36 @@ def test_shadowed_references_load(
     }
 
 
+def test_class_body_references_load(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    names = ("list", "field", "tags")
+    writer = PythonWriter("written_models", declarations=("Node",), local_names=names)
+    strings = TypeReference("list", "builtins", (TypeReference("str", "builtins"),))
+    writer.line("@", TypeReference("dataclass", "dataclasses"))
+    writer.line("class Node:")
+    with writer.indent():
+        for name in names:
+            writer.line(
+                f"{name}: ",
+                strings,
+                " = ",
+                TypeReference("field", "dataclasses"),
+                "(default_factory=",
+                TypeReference("list", "builtins"),
+                ")",
+            )
+    source = writer.render()
+    assert "from dataclasses import field as _dataclasses_field" in source
+    assert "default_factory=_builtins.list" in source
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    node: type = module.Node
+    assert vars(node()) == {"list": [], "field": [], "tags": []}
+    assert get_type_hints(node, vars(module), dict(vars(node))) == dict.fromkeys(
+        names, list[str]
+    )
+
+
 def test_all_colliding_imports_are_aliased(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
