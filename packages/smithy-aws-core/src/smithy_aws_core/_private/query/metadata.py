@@ -1,19 +1,18 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from xml.etree.ElementTree import ParseError, fromstring
+from xml.etree.ElementTree import Element
 
-from ._xml import find_child
+from ._xml import find_child, parse_xml_root
 
 
-def parse_aws_query_request_id(body: bytes) -> str | None:
+def parse_aws_query_request_id(source: bytes | Element | None) -> str | None:
     """Parse the request ID from an awsQuery response body.
 
     There is no request ID header. Successes nest it under ``ResponseMetadata``,
     errors put it directly under the root.
     """
-    try:
-        root = fromstring(body)  # noqa: S314
-    except ParseError:
+    root = parse_xml_root(source) if isinstance(source, bytes) else source
+    if root is None:
         return None
 
     metadata = find_child(root, "ResponseMetadata")

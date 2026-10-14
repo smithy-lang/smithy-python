@@ -1,9 +1,8 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
-from io import BytesIO
 from typing import Any
-from xml.etree.ElementTree import iterparse
+from xml.etree.ElementTree import Element, fromstring, parse
 
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer
@@ -13,7 +12,6 @@ from smithy_core.shapes import ShapeID
 from smithy_core.types import TimestampFormat
 
 from ._private.deserializers import XMLShapeDeserializer as _XMLShapeDeserializer
-from ._private.readers import XMLEventReader as _XMLEventReader
 from ._private.serializers import XMLShapeSerializer as _XMLShapeSerializer
 from .settings import XMLSettings
 
@@ -60,11 +58,25 @@ class XMLCodec(Codec):
         *,
         wrapper_elements: tuple[str, ...] = (),
     ) -> ShapeDeserializer:
-        if isinstance(source, bytes):
-            source = BytesIO(source)
-        reader = _XMLEventReader(
-            iterparse(source, events=("start", "end"))  # noqa: S314
+        root = (
+            fromstring(source)  # noqa: S314
+            if isinstance(source, bytes)
+            else parse(source).getroot()  # noqa: S314
         )
+        return self.create_deserializer_from_element(
+            root,
+            wrapper_elements=wrapper_elements,
+        )
+
+    def create_deserializer_from_element(
+        self,
+        root: Element,
+        *,
+        wrapper_elements: tuple[str, ...] = (),
+    ) -> ShapeDeserializer:
+        """Create a deserializer from an already parsed XML root element."""
         return _XMLShapeDeserializer(
-            settings=self._settings, reader=reader, wrapper_elements=wrapper_elements
+            settings=self._settings,
+            root=root,
+            wrapper_elements=wrapper_elements,
         )

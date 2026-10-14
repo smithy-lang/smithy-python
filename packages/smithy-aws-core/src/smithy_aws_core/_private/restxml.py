@@ -1,9 +1,9 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from typing import NamedTuple
-from xml.etree.ElementTree import ParseError, fromstring
+from xml.etree.ElementTree import Element
 
-from .query._xml import find_child, local_name
+from .query._xml import find_child, local_name, parse_xml_root
 
 
 class RestXmlErrorInfo(NamedTuple):
@@ -21,16 +21,15 @@ class RestXmlErrorInfo(NamedTuple):
     """The elements enclosing the error's members."""
 
 
-def parse_rest_xml_error(body: bytes) -> RestXmlErrorInfo:
+def parse_rest_xml_error(source: bytes | Element | None) -> RestXmlErrorInfo:
     """Parse the code, message, and wrapper elements of a restXml error response.
 
     Errors are normally wrapped as ``<ErrorResponse><Error>...</Error></ErrorResponse>``,
     but services with ``noErrorWrapping`` (such as S3) send a bare ``<Error>``. Both are
     accepted so the protocol needn't be configured for either.
     """
-    try:
-        element = fromstring(body)  # noqa: S314
-    except ParseError:
+    element = parse_xml_root(source) if isinstance(source, bytes) else source
+    if element is None:
         return _EMPTY
 
     wrapper_elements: tuple[str, ...] = ("Error",)
