@@ -6,9 +6,7 @@ import json
 from base64 import b64decode
 from collections.abc import Callable, Mapping, Sequence
 from decimal import Decimal
-from json import JSONDecodeError
 
-from ijson.common import IncompleteJSONError  # type: ignore
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.exceptions import SmithyError
@@ -49,21 +47,18 @@ class JSONShapeDeserializer(ShapeDeserializer):
     """Deserializes Smithy shapes from a fully materialized JSON value."""
 
     def __init__(self, source: bytes | BytesReader, settings: JSONSettings) -> None:
-        try:
-            if isinstance(source, bytes):
-                self._value: JSONValue = json.loads(
-                    source,
-                    parse_float=Decimal,
-                    parse_constant=_reject_constant,
-                )
-            else:
-                self._value = json.load(
-                    source,
-                    parse_float=Decimal,
-                    parse_constant=_reject_constant,
-                )
-        except (JSONDecodeError, UnicodeDecodeError, ValueError) as error:
-            raise IncompleteJSONError(f"parse error: {error}") from error
+        if isinstance(source, bytes):
+            self._value: JSONValue = json.loads(
+                source,
+                parse_float=Decimal,
+                parse_constant=_reject_constant,
+            )
+        else:
+            self._value = json.load(
+                source,
+                parse_float=Decimal,
+                parse_constant=_reject_constant,
+            )
 
         self._settings = settings
         self._json_names: dict[ShapeID, dict[str, Schema]] = {}

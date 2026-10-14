@@ -42,8 +42,7 @@ class JSONDocument(Document):
         return b64decode(expect_type(str, self._value))
 
     def as_float(self) -> float:
-        # Floats are returned as Decimals by default in ijson, which is the correct
-        # behavior, since technically JSON numbers have arbitrary precision.
+        # JSON numbers are parsed as Decimals to preserve their arbitrary precision.
         return float(expect_type(Decimal, self._value))
 
     def as_timestamp(self) -> datetime:

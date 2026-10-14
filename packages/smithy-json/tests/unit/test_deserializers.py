@@ -4,10 +4,10 @@ import math
 from datetime import datetime
 from decimal import Decimal
 from io import BytesIO
+from json import JSONDecodeError
 from typing import Any
 
 import pytest
-from ijson.common import IncompleteJSONError  # type: ignore
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.prelude import (
@@ -134,7 +134,7 @@ def test_ignores_unknown_structure_members() -> None:
     assert actual.string_member == "value"
 
 
-def test_invalid_json_uses_existing_error_type() -> None:
-    with pytest.raises(IncompleteJSONError):
+def test_invalid_json_raises_json_decode_error() -> None:
+    with pytest.raises(JSONDecodeError):
         deserializer = JSONCodec().create_deserializer(b'{"incomplete":')
         deserializer.read_document(DOCUMENT)
