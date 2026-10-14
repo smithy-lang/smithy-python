@@ -22,26 +22,26 @@ from ..settings import XMLSettings
 from .traits import member_xml_name
 
 
-def local_name(tag: str) -> str:
+def _local_name(tag: str) -> str:
     """Strip namespace URI from an element tag: {uri}local -> local."""
     if tag.startswith("{"):
         return tag.split("}", 1)[1]
     return tag
 
 
-def local_attr_name(name: str) -> str:
+def _local_attr_name(name: str) -> str:
     """Strip a namespace prefix from a modeled attribute name: prefix:local -> local."""
     return name.rpartition(":")[2]
 
 
-def validate_element_name(expected: str, elem: Element) -> None:
+def _validate_element_name(expected: str, elem: Element) -> None:
     """Raise XMLParseError if the element's local name doesn't match expected."""
-    found = local_name(elem.tag)
+    found = _local_name(elem.tag)
     if found != expected:
         raise XMLParseError(f"Expected element '{expected}', got '{found}'")
 
 
-def parse_xml_float(text: str) -> float:
+def _parse_xml_float(text: str) -> float:
     """Parse an XML float string, handling NaN and Infinity."""
     match text:
         case "NaN":
@@ -78,7 +78,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
 
         current = root
         for index, wrapper in enumerate(wrapper_elements):
-            validate_element_name(wrapper, current)
+            _validate_element_name(wrapper, current)
             if index < len(wrapper_elements) - 1:
                 child = next(iter(current), None)
                 if child is None:
@@ -111,7 +111,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
         return int(self._read_text())
 
     def read_float(self, schema: Schema) -> float:
-        return parse_xml_float(self._read_text())
+        return _parse_xml_float(self._read_text())
 
     def read_big_decimal(self, schema: Schema) -> Decimal:
         return Decimal(self._read_text())
@@ -141,18 +141,18 @@ class XMLShapeDeserializer(ShapeDeserializer):
             for member_schema in schema.members.values():
                 if member_schema.get_trait(XMLAttributeTrait) is None:
                     continue
-                expected_name = local_attr_name(member_xml_name(member_schema))
+                expected_name = _local_attr_name(member_xml_name(member_schema))
                 for attribute_name, value in element.attrib.items():
-                    if local_name(attribute_name) == expected_name:
+                    if _local_name(attribute_name) == expected_name:
                         consumer(
                             member_schema,
-                            AttributeDeserializer(value, self._settings),
+                            _AttributeDeserializer(value, self._settings),
                         )
                         break
 
         flattened: dict[str, list[Element]] = {}
         for child in element:
-            name = local_name(child.tag)
+            name = _local_name(child.tag)
             member_schema = xml_names.get(name)
             if member_schema is None:
                 continue
@@ -206,7 +206,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
     ) -> None:
         key: str | None = None
         for child in entry:
-            name = local_name(child.tag)
+            name = _local_name(child.tag)
             if name == key_tag:
                 key = child.text or ""
             elif name == value_tag:
@@ -246,7 +246,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
         return result
 
 
-class AttributeDeserializer(SpecificShapeDeserializer):
+class _AttributeDeserializer(SpecificShapeDeserializer):
     """Deserializer for a value extracted from an XML attribute string."""
 
     def __init__(self, value: str, settings: XMLSettings) -> None:
@@ -281,7 +281,7 @@ class AttributeDeserializer(SpecificShapeDeserializer):
         return self.read_integer(schema)
 
     def read_float(self, schema: Schema) -> float:
-        return parse_xml_float(self._value)
+        return _parse_xml_float(self._value)
 
     def read_double(self, schema: Schema) -> float:
         return self.read_float(schema)
