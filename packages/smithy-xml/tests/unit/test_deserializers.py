@@ -5,7 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from io import BytesIO
 from typing import Any
-from xml.etree.ElementTree import ParseError
+from xml.etree.ElementTree import ParseError, fromstring
 
 import pytest
 from smithy_core.prelude import (
@@ -19,7 +19,7 @@ from smithy_core.prelude import (
     TIMESTAMP,
 )
 from smithy_xml import XMLCodec
-from smithy_xml._private.value_deserializer import XMLValueDeserializer
+from smithy_xml._private.deserializers import XMLShapeDeserializer
 
 from . import (
     STRING_LIST_SCHEMA,
@@ -79,7 +79,14 @@ def test_xml_deserializer(expected: Any, given: bytes) -> None:
 )
 def test_deserializer_is_eager(source: bytes | BytesIO) -> None:
     deserializer = XMLCodec().create_deserializer(source)
-    assert isinstance(deserializer, XMLValueDeserializer)
+    assert isinstance(deserializer, XMLShapeDeserializer)
+
+
+def test_creates_deserializer_from_parsed_element() -> None:
+    root = fromstring(b"<s>value</s>")
+    deserializer = XMLCodec().create_deserializer_from_element(root)
+
+    assert deserializer.read_string(STRING) == "value"
 
 
 def test_invalid_xml_uses_existing_error_type() -> None:

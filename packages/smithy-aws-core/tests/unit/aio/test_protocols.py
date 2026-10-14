@@ -3,7 +3,8 @@
 
 from dataclasses import dataclass
 from typing import Any, cast
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+from xml.etree import ElementTree
 
 import pytest
 from ijson.common import IncompleteJSONError  # type: ignore[reportMissingTypeStubs]
@@ -511,28 +512,63 @@ async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
     )
-    with pytest.raises(_ModeledQueryError) as exc_info:
-        await protocol.deserialize_response(
-            operation=_mock_operation(
-                _operation_schema("FailingOperation"),
-                error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
-            ),
+    with patch(
+        "smithy_aws_core._private.query._xml.fromstring",
+        wraps=ElementTree.fromstring,
+    ) as parse:
+        with pytest.raises(_ModeledQueryError) as exc_info:
+            await protocol.deserialize_response(
+                operation=_mock_operation(
+                    _operation_schema("FailingOperation"),
+                    error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
+                ),
+                request=cast(HTTPRequest, Mock()),
+                response=HTTPResponse(
+                    status=400,
+                    fields=tuples_to_fields([]),
+                    body=(
+                        b"<ErrorResponse><Error><Code>InvalidAction</Code>"
+                        b"<message>bad request</message></Error></ErrorResponse>"
+                    ),
+                ),
+                error_registry=TypeRegistry(
+                    {ShapeID("com.test#InvalidActionError"): _ModeledQueryError}
+                ),
+                context=TypedProperties(),
+            )
+
+    assert exc_info.value.message == "bad request"
+    parse.assert_called_once()
+
+
+async def test_aws_query_parses_success_body_once() -> None:
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test", service_target="QueryService", version="2020-01-08"
+        )
+    )
+    operation = _mock_operation(_operation_schema("EmptyOperation"))
+    cast(Any, operation).output = _EmptyOutput
+    cast(Any, operation).output_schema = _EMPTY_OUTPUT_SCHEMA
+
+    with patch(
+        "smithy_aws_core._private.query._xml.fromstring",
+        wraps=ElementTree.fromstring,
+    ) as parse:
+        output = await protocol.deserialize_response(
+            operation=operation,
             request=cast(HTTPRequest, Mock()),
             response=HTTPResponse(
-                status=400,
+                status=200,
                 fields=tuples_to_fields([]),
-                body=(
-                    b"<ErrorResponse><Error><Code>InvalidAction</Code>"
-                    b"<message>bad request</message></Error></ErrorResponse>"
-                ),
+                body=b"<EmptyOperationResponse/>",
             ),
-            error_registry=TypeRegistry(
-                {ShapeID("com.test#InvalidActionError"): _ModeledQueryError}
-            ),
+            error_registry=TypeRegistry({}),
             context=TypedProperties(),
         )
 
-    assert exc_info.value.message == "bad request"
+    assert isinstance(output, _EmptyOutput)
+    parse.assert_called_once()
 
 
 async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback() -> (
@@ -591,6 +627,33 @@ async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
         "Unknown error for operation com.test#FailingOperation"
         " - status: 500, code: UnknownThing"
     )
+
+
+async def test_aws_query_parses_invalid_error_body_once() -> None:
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test", service_target="QueryService", version="2020-01-08"
+        )
+    )
+
+    with patch(
+        "smithy_aws_core._private.query._xml.fromstring",
+        wraps=ElementTree.fromstring,
+    ) as parse:
+        with pytest.raises(CallError):
+            await protocol.deserialize_response(
+                operation=_mock_operation(_operation_schema("FailingOperation")),
+                request=cast(HTTPRequest, Mock()),
+                response=HTTPResponse(
+                    status=500,
+                    fields=tuples_to_fields([]),
+                    body=b"not xml",
+                ),
+                error_registry=TypeRegistry({}),
+                context=TypedProperties(),
+            )
+
+    parse.assert_called_once()
 
 
 async def test_aws_query_reports_request_id_from_the_response_body() -> None:
@@ -805,26 +868,31 @@ def _rest_xml_operation() -> APIOperation[Any, Any]:
 
 
 async def test_rest_xml_modeled_error_falls_back_to_message_element() -> None:
-    with pytest.raises(_NoSuchBucket) as exc_info:
-        await _rest_xml_protocol().deserialize_response(
-            operation=_rest_xml_operation(),
-            request=cast(HTTPRequest, Mock()),
-            response=HTTPResponse(
-                status=404,
-                fields=tuples_to_fields([]),
-                body=(
-                    b"<Error><Code>NoSuchBucket</Code>"
-                    b"<Message>The specified bucket does not exist</Message></Error>"
+    with patch(
+        "smithy_aws_core._private.query._xml.fromstring",
+        wraps=ElementTree.fromstring,
+    ) as parse:
+        with pytest.raises(_NoSuchBucket) as exc_info:
+            await _rest_xml_protocol().deserialize_response(
+                operation=_rest_xml_operation(),
+                request=cast(HTTPRequest, Mock()),
+                response=HTTPResponse(
+                    status=404,
+                    fields=tuples_to_fields([]),
+                    body=(
+                        b"<Error><Code>NoSuchBucket</Code>"
+                        b"<Message>The specified bucket does not exist</Message></Error>"
+                    ),
                 ),
-            ),
-            error_registry=TypeRegistry(
-                {ShapeID("com.test#NoSuchBucket"): _NoSuchBucket}
-            ),
-            context=TypedProperties(),
-        )
+                error_registry=TypeRegistry(
+                    {ShapeID("com.test#NoSuchBucket"): _NoSuchBucket}
+                ),
+                context=TypedProperties(),
+            )
 
     assert exc_info.value.message == "The specified bucket does not exist"
     assert str(exc_info.value) == "The specified bucket does not exist"
+    parse.assert_called_once()
 
 
 _STATS_SCHEMA = Schema.collection(

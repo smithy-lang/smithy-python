@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 from typing import Any
-from xml.etree.ElementTree import fromstring, parse
+from xml.etree.ElementTree import Element, fromstring, parse
 
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer
@@ -11,10 +11,8 @@ from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID
 from smithy_core.types import TimestampFormat
 
+from ._private.deserializers import XMLShapeDeserializer as _XMLShapeDeserializer
 from ._private.serializers import XMLShapeSerializer as _XMLShapeSerializer
-from ._private.value_deserializer import (
-    XMLValueDeserializer as _XMLValueDeserializer,
-)
 from .settings import XMLSettings
 
 __version__ = "0.2.0"
@@ -65,7 +63,19 @@ class XMLCodec(Codec):
             if isinstance(source, bytes)
             else parse(source).getroot()  # noqa: S314
         )
-        return _XMLValueDeserializer(
+        return self.create_deserializer_from_element(
+            root,
+            wrapper_elements=wrapper_elements,
+        )
+
+    def create_deserializer_from_element(
+        self,
+        root: Element,
+        *,
+        wrapper_elements: tuple[str, ...] = (),
+    ) -> ShapeDeserializer:
+        """Create a deserializer from an already parsed XML root element."""
+        return _XMLShapeDeserializer(
             settings=self._settings,
             root=root,
             wrapper_elements=wrapper_elements,

@@ -5,6 +5,7 @@ from dataclasses import dataclass, replace
 from inspect import iscoroutinefunction
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, ClassVar, Final
+from xml.etree.ElementTree import Element
 
 from smithy_core import URI as _URI
 from smithy_core.aio.interfaces import (
@@ -43,6 +44,7 @@ from smithy_http.aio.protocols import (
 )
 from smithy_http.deserializers import HTTPResponseDeserializer
 
+from .._private.query._xml import parse_xml_root
 from .._private.query.errors import create_aws_query_error
 from .._private.query.metadata import parse_aws_query_request_id
 from .._private.query.serializers import Ec2QueryShapeSerializer, QueryShapeSerializer
@@ -334,7 +336,8 @@ class RestXmlClientProtocol(_AWSHttpBindingClientProtocol):
             body = response_body.read()
 
         retry_after = parse_retry_after(response)
-        error_info = parse_rest_xml_error(body)
+        root = parse_xml_root(body)
+        error_info = parse_rest_xml_error(root)
         code = error_info.code
         error_id = None
         if code is not None:
@@ -344,7 +347,7 @@ class RestXmlClientProtocol(_AWSHttpBindingClientProtocol):
                     error_id = error_schema.id
                     break
 
-        if error_id is not None and error_id in error_registry:
+        if error_id is not None and error_id in error_registry and root is not None:
             error_shape = error_registry.get(error_id)
             if not issubclass(error_shape, ModeledError):
                 raise ExpectationNotMetError(
@@ -353,7 +356,11 @@ class RestXmlClientProtocol(_AWSHttpBindingClientProtocol):
                 )
 
             deserializer = HTTPResponseDeserializer(
-                payload_codec=_XMLErrorCodec(self._codec, error_info.wrapper_elements),
+                payload_codec=_XMLErrorCodec(
+                    self._codec,
+                    error_info.wrapper_elements,
+                    root,
+                ),
                 http_trait=operation.schema.expect_trait(HTTPTrait),
                 response=response,
                 body=body,
@@ -397,6 +404,7 @@ class _XMLErrorCodec(Codec):
 
     codec: "XMLCodec"
     wrapper_elements: tuple[str, ...]
+    root: Element
 
     @property
     def media_type(self) -> str:
@@ -406,8 +414,8 @@ class _XMLErrorCodec(Codec):
         return self.codec.create_serializer(sink)
 
     def create_deserializer(self, source: bytes | BytesReader) -> ShapeDeserializer:
-        return self.codec.create_deserializer(
-            source, wrapper_elements=self.wrapper_elements
+        return self.codec.create_deserializer_from_element(
+            self.root, wrapper_elements=self.wrapper_elements
         )
 
 
@@ -737,11 +745,12 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         context: TypedProperties,
     ) -> OperationOutput:
         body = await response.consume_body_async()
+        root = parse_xml_root(body)
 
         # Recorded before any branch below returns or raises, so successes, empty
         # outputs and errors alike can report the identifier. Bound to this
         # response so extraction never attributes it to a different attempt.
-        request_id = parse_aws_query_request_id(body)
+        request_id = parse_aws_query_request_id(root)
         if request_id is not None:
             context[_QUERY_REQUEST_ID] = _RecordedQueryRequestId(response, request_id)
 
@@ -749,9 +758,9 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
             raise await self._create_error(
                 operation=operation,
                 response=response,
-                response_body=body,
                 error_registry=error_registry,
                 context=context,
+                root=root,
             )
 
         if len(body) == 0:
@@ -764,8 +773,14 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
             )
 
         wrapper_elements = self._response_wrapper_elements(operation)
-        deserializer = self.payload_codec.create_deserializer(
-            body, wrapper_elements=wrapper_elements
+        deserializer = (
+            self.payload_codec.create_deserializer(
+                body, wrapper_elements=wrapper_elements
+            )
+            if root is None
+            else self.payload_codec.create_deserializer_from_element(
+                root, wrapper_elements=wrapper_elements
+            )
         )
         return operation.output.deserialize(deserializer)
 
@@ -782,12 +797,12 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         *,
         operation: APIOperation[Any, Any],
         response: HTTPResponse,
-        response_body: bytes,
         error_registry: TypeRegistry,
         context: TypedProperties,
+        root: Element | None,
     ) -> CallError:
         return create_aws_query_error(
-            body=response_body,
+            body=root,
             operation=operation,
             error_registry=error_registry,
             default_namespace=self._default_namespace,
