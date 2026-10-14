@@ -63,6 +63,23 @@ async def parse_config_file(
         raise ConfigParseError(f"Unable to parse config file '{file_path}': {e}") from e
 
 
+def parse_config_file_sync(file_path: str, filesystem: FileSystem) -> RawParsedSections:
+    """Synchronously read and parse an AWS config or credentials file.
+
+    :param file_path: Resolved path to the file.
+    :param filesystem: FileSystem object to use.
+    :returns: Raw sections dict {section_name: {key: value}}.
+    :raises ConfigParseError: If the file has invalid syntax.
+    """
+    content = filesystem.read_file_sync(file_path)
+    if content is None:
+        return {}
+    try:
+        return _parse_content(content)
+    except ConfigParseError as e:
+        raise ConfigParseError(f"Unable to parse config file '{file_path}': {e}") from e
+
+
 def standardize(
     raw_sections: RawParsedSections, file_type: FileType
 ) -> StandardizedOutput:

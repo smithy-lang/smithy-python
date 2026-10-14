@@ -16,7 +16,7 @@ from smithy_aws_core.identity.imds import (
     TokenCache,
 )
 from smithy_core import URI
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_http.aio import HTTPRequest
 
 pytestmark = pytest.mark.filterwarnings(
@@ -26,7 +26,7 @@ pytestmark = pytest.mark.filterwarnings(
 
 def test_config_defaults():
     config = Config()
-    assert isinstance(config.retry_strategy, SimpleRetryStrategy)
+    assert isinstance(config.retry_strategy, AsyncSimpleRetryStrategy)
     assert config.endpoint_uri == URI(
         scheme="http", host=Config._HOST_MAPPING["IPv4"], port=80
     )

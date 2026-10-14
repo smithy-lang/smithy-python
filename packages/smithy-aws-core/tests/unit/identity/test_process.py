@@ -404,7 +404,7 @@ async def test_invalidate_preserves_cached_credentials():
     with patch("asyncio.create_subprocess_exec", return_value=process) as mock_exec:
         resolver = ProcessCredentialsResolver(["mock-process"])
         identity_one = await resolver.get_identity(properties={})
-        await resolver.invalidate()
+        resolver.invalidate()
         identity_two = await resolver.get_identity(properties={})
 
     mock_exec.assert_called_once()

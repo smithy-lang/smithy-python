@@ -319,7 +319,7 @@ class RestXmlClientProtocol(_AWSHttpBindingClientProtocol):
     def content_type(self) -> str:
         return self._content_type
 
-    async def _create_error(
+    def _create_error(
         self,
         operation: APIOperation[Any, Any],
         request: HTTPRequest,
@@ -484,9 +484,29 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         context: TypedProperties,
     ) -> OperationOutput:
         body = await response.consume_body_async()
+        return self._deserialize_from_body(
+            body=body,
+            operation=operation,
+            response=response,
+            error_registry=error_registry,
+            context=context,
+        )
 
+    def _deserialize_from_body[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self,
+        *,
+        body: bytes,
+        operation: APIOperation[OperationInput, OperationOutput],
+        response: HTTPResponse,
+        error_registry: TypeRegistry,
+        context: TypedProperties,
+    ) -> OperationOutput:
+        # Mode-agnostic tail: body already read (sync or async).
         if not self._is_success(operation, context, response):
-            raise await self._create_error(
+            raise self._create_error(
                 operation=operation,
                 response=response,
                 response_body=body,
@@ -506,7 +526,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
     ) -> bool:
         return 200 <= response.status < 300
 
-    async def _create_error(
+    def _create_error(
         self,
         *,
         operation: APIOperation[Any, Any],
@@ -737,7 +757,26 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         context: TypedProperties,
     ) -> OperationOutput:
         body = await response.consume_body_async()
+        return self._deserialize_from_body(
+            body=body,
+            operation=operation,
+            response=response,
+            error_registry=error_registry,
+            context=context,
+        )
 
+    def _deserialize_from_body[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self,
+        *,
+        body: bytes,
+        operation: APIOperation[OperationInput, OperationOutput],
+        response: HTTPResponse,
+        error_registry: TypeRegistry,
+        context: TypedProperties,
+    ) -> OperationOutput:
         # Recorded before any branch below returns or raises, so successes, empty
         # outputs and errors alike can report the identifier. Bound to this
         # response so extraction never attributes it to a different attempt.
@@ -746,7 +785,7 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
             context[_QUERY_REQUEST_ID] = _RecordedQueryRequestId(response, request_id)
 
         if not self._is_success(operation, context, response):
-            raise await self._create_error(
+            raise self._create_error(
                 operation=operation,
                 response=response,
                 response_body=body,
@@ -777,7 +816,7 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
     ) -> bool:
         return 200 <= response.status < 300
 
-    async def _create_error(
+    def _create_error(
         self,
         *,
         operation: APIOperation[Any, Any],

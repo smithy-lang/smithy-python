@@ -10,7 +10,7 @@ from .exceptions import ConfigValidationError
 from .types import UNSET, ConfigSource, Resolved
 
 
-async def _resolve_str(
+async def _resolve_str_async(
     ctx: SharedConfigContext,
     *,
     env_vars: Sequence[str] = (),
@@ -42,7 +42,7 @@ async def _resolve_str(
     return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]
 
 
-async def _resolve_int(
+async def _resolve_int_async(
     ctx: SharedConfigContext,
     *,
     env_vars: Sequence[str] = (),
@@ -55,7 +55,7 @@ async def _resolve_int(
     :param profile_keys: Config file profile keys to check, in order.
     :returns: Resolved int value with source, or Resolved(value=UNSET) if not found.
     """
-    result = await _resolve_str(ctx, env_vars=env_vars, profile_keys=profile_keys)
+    result = await _resolve_str_async(ctx, env_vars=env_vars, profile_keys=profile_keys)
     if result.value is UNSET:
         return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]
     try:
@@ -67,27 +67,111 @@ async def _resolve_int(
         ) from e
 
 
-async def resolve_region(ctx: SharedConfigContext) -> Resolved[str | None]:
+def _resolve_str(
+    ctx: SharedConfigContext,
+    *,
+    env_vars: Sequence[str] = (),
+    profile_keys: Sequence[str] = (),
+) -> Resolved[str]:
+    """Synchronous counterpart to :py:func:`_resolve_str_async`."""
+    for var_name in env_vars:
+        value: str | None = os.environ.get(var_name)
+        if value:
+            return Resolved(value=value, source=ConfigSource.ENV)
+
+    if profile_keys:
+        config_file = ctx.parsed_profiles_sync()
+        for key in profile_keys:
+            value = config_file.get(ctx.profile_name, key)
+            if value:
+                return Resolved(value=value, source=ConfigSource.PROFILE)
+
+    return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]
+
+
+def _resolve_int(
+    ctx: SharedConfigContext,
+    *,
+    env_vars: Sequence[str] = (),
+    profile_keys: Sequence[str] = (),
+) -> Resolved[int | None]:
+    """Synchronous counterpart to :py:func:`_resolve_int_async`."""
+    result = _resolve_str(ctx, env_vars=env_vars, profile_keys=profile_keys)
+    if result.value is UNSET:
+        return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]
+    try:
+        return Resolved(value=int(result.value), source=result.source)
+    except (ValueError, TypeError) as e:
+        raise ConfigValidationError(
+            f"Invalid integer value {result.value!r} for config key. "
+            "Expected a valid integer."
+        ) from e
+
+
+def resolve_region(ctx: SharedConfigContext) -> Resolved[str | None]:
+    """Synchronous counterpart to :py:func:`resolve_region_async`."""
+    return _resolve_str(
+        ctx, env_vars=("AWS_REGION", "AWS_DEFAULT_REGION"), profile_keys=("region",)
+    )
+
+
+def resolve_retry_mode(ctx: SharedConfigContext) -> Resolved[str | None]:
+    """Synchronous counterpart to :py:func:`resolve_retry_mode_async`."""
+    result = _resolve_str(
+        ctx, env_vars=("AWS_RETRY_MODE",), profile_keys=("retry_mode",)
+    )
+    if result.value in ("legacy", "adaptive"):
+        warnings.warn(
+            f"'{result.value}' retry mode is not supported, using 'standard' instead.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return Resolved(value="standard", source=result.source)
+    return result
+
+
+def resolve_max_attempts(ctx: SharedConfigContext) -> Resolved[int | None]:
+    """Synchronous counterpart to :py:func:`resolve_max_attempts_async`."""
+    return _resolve_int(
+        ctx, env_vars=("AWS_MAX_ATTEMPTS",), profile_keys=("max_attempts",)
+    )
+
+
+def resolve_endpoint_uri(ctx: SharedConfigContext) -> Resolved[str | None]:
+    """Synchronous counterpart to :py:func:`resolve_endpoint_uri_async`."""
+    return _resolve_str(
+        ctx, env_vars=("AWS_ENDPOINT_URL",), profile_keys=("endpoint_url",)
+    )
+
+
+def resolve_sdk_ua_app_id(ctx: SharedConfigContext) -> Resolved[str | None]:
+    """Synchronous counterpart to :py:func:`resolve_sdk_ua_app_id_async`."""
+    return _resolve_str(
+        ctx, env_vars=("AWS_SDK_UA_APP_ID",), profile_keys=("sdk_ua_app_id",)
+    )
+
+
+async def resolve_region_async(ctx: SharedConfigContext) -> Resolved[str | None]:
     """Resolve the AWS region from environment or config file.
 
     :param ctx: The shared resolution context.
     :returns: Resolved region value with source.
     """
-    return await _resolve_str(
+    return await _resolve_str_async(
         ctx,
         env_vars=("AWS_REGION", "AWS_DEFAULT_REGION"),
         profile_keys=("region",),
     )
 
 
-async def resolve_retry_mode(ctx: SharedConfigContext) -> Resolved[str | None]:
+async def resolve_retry_mode_async(ctx: SharedConfigContext) -> Resolved[str | None]:
     """
     Resolve the AWS retry mode from environment or config file.
 
     :param ctx: The shared resolution context.
     :returns: Resolved retry mode value with source.
     """
-    result = await _resolve_str(
+    result = await _resolve_str_async(
         ctx,
         env_vars=("AWS_RETRY_MODE",),
         profile_keys=("retry_mode",),
@@ -110,20 +194,20 @@ async def resolve_retry_mode(ctx: SharedConfigContext) -> Resolved[str | None]:
     return result
 
 
-async def resolve_max_attempts(ctx: SharedConfigContext) -> Resolved[int | None]:
+async def resolve_max_attempts_async(ctx: SharedConfigContext) -> Resolved[int | None]:
     """Resolve the maximum number of retry attempts from environment or config file.
 
     :param ctx: The shared resolution context.
     :returns: Resolved max attempts value with source.
     """
-    return await _resolve_int(
+    return await _resolve_int_async(
         ctx,
         env_vars=("AWS_MAX_ATTEMPTS",),
         profile_keys=("max_attempts",),
     )
 
 
-async def resolve_endpoint_uri(ctx: SharedConfigContext) -> Resolved[str | None]:
+async def resolve_endpoint_uri_async(ctx: SharedConfigContext) -> Resolved[str | None]:
     """Resolve the endpoint URI from global environment or config file.
 
     This is the base resolver that only checks global sources.
@@ -132,20 +216,20 @@ async def resolve_endpoint_uri(ctx: SharedConfigContext) -> Resolved[str | None]
     :param ctx: The shared resolution context.
     :returns: Resolved endpoint URI value with source.
     """
-    return await _resolve_str(
+    return await _resolve_str_async(
         ctx,
         env_vars=("AWS_ENDPOINT_URL",),
         profile_keys=("endpoint_url",),
     )
 
 
-async def resolve_sdk_ua_app_id(ctx: SharedConfigContext) -> Resolved[str | None]:
+async def resolve_sdk_ua_app_id_async(ctx: SharedConfigContext) -> Resolved[str | None]:
     """Resolve the SDK user-agent app ID from environment or config file.
 
     :param ctx: The shared resolution context.
     :returns: Resolved app ID value with source.
     """
-    return await _resolve_str(
+    return await _resolve_str_async(
         ctx,
         env_vars=("AWS_SDK_UA_APP_ID",),
         profile_keys=("sdk_ua_app_id",),
@@ -174,12 +258,35 @@ class EndpointUriResolver:
 
         self._service_key = service_id.replace(" ", "_").replace("-", "_").lower()
 
-    async def __call__(self, ctx: SharedConfigContext) -> Resolved[str | None]:
+    def __call__(self, ctx: SharedConfigContext) -> Resolved[str | None]:
         """Resolve the endpoint URI from all sources.
 
         :param ctx: The shared resolution context.
         :returns: Resolved endpoint URI value with source.
         """
+        value = os.environ.get(self._service_env_var)
+        if value:
+            return Resolved(value=value, source=ConfigSource.ENV)
+
+        value = os.environ.get("AWS_ENDPOINT_URL")
+        if value:
+            return Resolved(value=value, source=ConfigSource.ENV)
+
+        config_file = ctx.parsed_profiles_sync()
+        value = config_file.get_service_config(
+            ctx.profile_name, self._service_key, "endpoint_url"
+        )
+        if value:
+            return Resolved(value=value, source=ConfigSource.PROFILE)
+
+        value = config_file.get(ctx.profile_name, "endpoint_url")
+        if value:
+            return Resolved(value=value, source=ConfigSource.PROFILE)
+
+        return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]
+
+    async def resolve_async(self, ctx: SharedConfigContext) -> Resolved[str | None]:
+        """Async counterpart to :py:meth:`__call__`."""
         value = os.environ.get(self._service_env_var)
         if value:
             return Resolved(value=value, source=ConfigSource.ENV)

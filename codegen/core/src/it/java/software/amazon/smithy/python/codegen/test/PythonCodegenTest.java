@@ -51,8 +51,9 @@ public class PythonCodegenTest {
         assertTrue(client.contains("await self._prepare_call("));
 
         var config = Files.readString(tempDir.resolve("src/weather/config.py"));
-        assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
-        assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));
+        assertTrue(config.contains("default_factory=lambda: Urllib3HTTPClient()"));
+        assertTrue(config.contains("async_default_factory=lambda: AIOHTTPClient()"));
+        assertFalse(config.contains("AWSCRTHTTPClient()"));
 
         // An output that models a "responseMetadata" member gets both the SDK-reserved
         // response_metadata attribute and the escaped modeled member, so neither shadows

@@ -7,15 +7,27 @@ from typing import Any, cast
 from smithy_aws_core.config import ConfigSource
 from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_aws_core.identity.chain import IdentityChain
-from smithy_core.aio.client import AsyncClient, ClientCall, RequestPipeline
+from smithy_core.aio.client import (
+    AsyncClient,
+    ClientCall,
+    RequestPipeline as _smithy_core_aio_client_RequestPipeline,
+)
+from smithy_core.aio.interfaces.retries import AsyncRetryStrategy
+from smithy_core.client import (
+    Client,
+    RequestPipeline as _smithy_core_client_RequestPipeline,
+)
 from smithy_core.deserializers import DeserializeableShape
 from smithy_core.exceptions import ExpectationNotMetError
+from smithy_core.interfaces import ClientTransport
+from smithy_core.interfaces.retries import RetryStrategy
+from smithy_core.retries import RetryStrategyOptions
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
 from smithy_http.aio.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
 
-from .config import AsyncJsonProtocolConfig, Plugin
+from .config import AsyncJsonProtocolConfig, JsonProtocolConfig, Plugin
 from .models import (
     CONTENT_TYPE_PARAMETERS,
     ContentTypeParametersInput,
@@ -153,7 +165,7 @@ class AsyncJsonProtocolClient(AsyncClient):
         operation: APIOperation[I, O],
         default_plugins: list[Plugin],
         plugins: list[Plugin] | None,
-    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+    ) -> tuple[_smithy_core_aio_client_RequestPipeline[Any, Any], ClientCall[I, O]]:
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
@@ -179,7 +191,10 @@ class AsyncJsonProtocolClient(AsyncClient):
                 " and auth_schemes MUST be set on the config to make calls."
             )
         retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-            retry_strategy=config.retry_strategy,
+            retry_strategy=cast(
+                "AsyncRetryStrategy | RetryStrategyOptions | None",
+                config.retry_strategy,
+            ),
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
         )
@@ -599,3 +614,508 @@ class AsyncJsonProtocolClient(AsyncClient):
             input, SPARSE_NULLS_OPERATION, [], plugins
         )
         return await pipeline(call)
+
+
+class JsonProtocolClient(Client):
+    """Synchronous client for JsonProtocol"""
+
+    def __init__(
+        self,
+        config: JsonProtocolConfig | None = None,
+        plugins: list[Plugin] | None = None,
+    ):
+        """
+        Constructor for `JsonProtocolClient`.
+
+        Args:
+            config:
+                Optional configuration for the client. Here you can set things like
+                the endpoint for HTTP services or auth credentials.
+            plugins:
+                A list of callables applied once to the client's base configuration.
+                Their changes are inherited by every operation invocation.
+        """
+        super().__init__()
+        self._config = config
+        self._plugins = plugins
+        self._client_plugins: list[Plugin] = [aws_user_agent_plugin, user_agent_plugin]
+
+    def _ensure_setup(self) -> JsonProtocolConfig:
+        if not self._setup_done:
+            with self._derive_lock:
+                if self._closed:
+                    raise RuntimeError(
+                        "Cannot invoke an operation on a client that has been closed."
+                    )
+                if not self._setup_done:
+                    if self._config is None:
+                        config = JsonProtocolConfig.resolve()
+                    else:
+                        # Copy so plugins don't mutate the caller's config.
+                        config = deepcopy(self._config)
+                    # Plugins are typed against the async config but
+                    # only touch the shared base fields.
+                    plugin_config = cast("AsyncJsonProtocolConfig", config)
+                    for plugin in self._client_plugins:
+                        plugin(plugin_config)
+                    if self._plugins:
+                        for plugin in self._plugins:
+                            plugin(plugin_config)
+                    # Publish state only after setup fully succeeds, so a
+                    # failed _post_setup leaves the caller's config untouched
+                    # (no re-applied plugins) and the transport closeable.
+                    self._post_setup(config)
+                    self._transport = cast(
+                        "ClientTransport[Any, Any] | None", config.transport
+                    )
+                    self._config = config
+                    self._setup_done = True
+        assert self._config is not None
+        return self._config
+
+    def _post_setup(self, config: JsonProtocolConfig) -> None:
+        pass
+
+    def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        input: I,
+        operation: APIOperation[I, O],
+        default_plugins: list[Plugin],
+        plugins: list[Plugin] | None,
+    ) -> tuple[_smithy_core_client_RequestPipeline[Any, Any], ClientCall[I, O]]:
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+        config = self._ensure_setup()
+        if default_plugins or plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(config)
+            # Plugins are typed against the async config but
+            # only touch the shared base fields.
+            plugin_config = cast("AsyncJsonProtocolConfig", config)
+            for plugin in default_plugins:
+                plugin(plugin_config)
+            if plugins:
+                for plugin in plugins:
+                    plugin(plugin_config)
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=cast(
+                "RetryStrategy | RetryStrategyOptions | None", config.retry_strategy
+            )
+        )
+        return self._build_call(
+            input, operation, config=config, retry_strategy=retry_strategy
+        )
+
+    def content_type_parameters(
+        self, input: ContentTypeParametersInput, plugins: list[Plugin] | None = None
+    ) -> ContentTypeParametersOutput:
+        """
+        The example tests how servers must support requests containing a
+        `Content-Type` header with parameters.
+
+        Args:
+            input:
+                An instance of `ContentTypeParametersInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `ContentTypeParametersOutput`.
+        """
+        pipeline, call = self._prepare_call(input, CONTENT_TYPE_PARAMETERS, [], plugins)
+        return pipeline(call)
+
+    def datetime_offsets(
+        self, input: DatetimeOffsetsInput, plugins: list[Plugin] | None = None
+    ) -> DatetimeOffsetsOutput:
+        """
+        Invokes the DatetimeOffsets operation.
+
+        Args:
+            input:
+                An instance of `DatetimeOffsetsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
+        """
+        pipeline, call = self._prepare_call(input, DATETIME_OFFSETS, [], plugins)
+        return pipeline(call)
+
+    def empty_operation(
+        self, input: EmptyOperationInput, plugins: list[Plugin] | None = None
+    ) -> EmptyOperationOutput:
+        """
+        Invokes the EmptyOperation operation.
+
+        Args:
+            input:
+                An instance of `EmptyOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EmptyOperationOutput`.
+        """
+        pipeline, call = self._prepare_call(input, EMPTY_OPERATION, [], plugins)
+        return pipeline(call)
+
+    def endpoint_operation(
+        self, input: EndpointOperationInput, plugins: list[Plugin] | None = None
+    ) -> EndpointOperationOutput:
+        """
+        Invokes the EndpointOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
+        """
+        pipeline, call = self._prepare_call(input, ENDPOINT_OPERATION, [], plugins)
+        return pipeline(call)
+
+    def endpoint_with_host_label_operation(
+        self,
+        input: EndpointWithHostLabelOperationInput,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput:
+        """
+        Invokes the EndpointWithHostLabelOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointWithHostLabelOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
+        """
+        pipeline, call = self._prepare_call(
+            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+        )
+        return pipeline(call)
+
+    def fractional_seconds(
+        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+    ) -> FractionalSecondsOutput:
+        """
+        Invokes the FractionalSeconds operation.
+
+        Args:
+            input:
+                An instance of `FractionalSecondsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
+        """
+        pipeline, call = self._prepare_call(input, FRACTIONAL_SECONDS, [], plugins)
+        return pipeline(call)
+
+    def greeting_with_errors(
+        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+    ) -> GreetingWithErrorsOutput:
+        """
+        This operation has three possible return values: 1. A successful
+        response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting
+        error. 3. A ComplexError error. Implementations must be able to
+        successfully take a response and properly deserialize successful and
+        error responses.
+
+        Args:
+            input:
+                An instance of `GreetingWithErrorsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
+        """
+        pipeline, call = self._prepare_call(input, GREETING_WITH_ERRORS, [], plugins)
+        return pipeline(call)
+
+    def host_with_path_operation(
+        self, input: HostWithPathOperationInput, plugins: list[Plugin] | None = None
+    ) -> HostWithPathOperationOutput:
+        """
+        Invokes the HostWithPathOperation operation.
+
+        Args:
+            input:
+                An instance of `HostWithPathOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
+        """
+        pipeline, call = self._prepare_call(
+            input, HOST_WITH_PATH_OPERATION, [], plugins
+        )
+        return pipeline(call)
+
+    def json_enums(
+        self, input: JsonEnumsInput, plugins: list[Plugin] | None = None
+    ) -> JsonEnumsOutput:
+        """
+        This example serializes enums as top level properties, in lists, sets,
+        and maps.
+
+        Args:
+            input:
+                An instance of `JsonEnumsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonEnumsOutput`.
+        """
+        pipeline, call = self._prepare_call(input, JSON_ENUMS, [], plugins)
+        return pipeline(call)
+
+    def json_int_enums(
+        self, input: JsonIntEnumsInput, plugins: list[Plugin] | None = None
+    ) -> JsonIntEnumsOutput:
+        """
+        This example serializes intEnums as top level properties, in lists,
+        sets, and maps.
+
+        Args:
+            input:
+                An instance of `JsonIntEnumsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonIntEnumsOutput`.
+        """
+        pipeline, call = self._prepare_call(input, JSON_INT_ENUMS, [], plugins)
+        return pipeline(call)
+
+    def json_unions(
+        self, input: JsonUnionsInput, plugins: list[Plugin] | None = None
+    ) -> JsonUnionsOutput:
+        """
+        This operation uses unions for inputs and outputs.
+
+        Args:
+            input:
+                An instance of `JsonUnionsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonUnionsOutput`.
+        """
+        pipeline, call = self._prepare_call(input, JSON_UNIONS, [], plugins)
+        return pipeline(call)
+
+    def kitchen_sink_operation(
+        self, input: KitchenSinkOperationInput, plugins: list[Plugin] | None = None
+    ) -> KitchenSinkOperationOutput:
+        """
+        Invokes the KitchenSinkOperation operation.
+
+        Args:
+            input:
+                An instance of `KitchenSinkOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `KitchenSinkOperationOutput`.
+        """
+        pipeline, call = self._prepare_call(input, KITCHEN_SINK_OPERATION, [], plugins)
+        return pipeline(call)
+
+    def null_operation(
+        self, input: NullOperationInput, plugins: list[Plugin] | None = None
+    ) -> NullOperationOutput:
+        """
+        Invokes the NullOperation operation.
+
+        Args:
+            input:
+                An instance of `NullOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NullOperationOutput`.
+        """
+        pipeline, call = self._prepare_call(input, NULL_OPERATION, [], plugins)
+        return pipeline(call)
+
+    def operation_with_optional_input_output(
+        self,
+        input: OperationWithOptionalInputOutputInput,
+        plugins: list[Plugin] | None = None,
+    ) -> OperationWithOptionalInputOutputOutput:
+        """
+        Invokes the OperationWithOptionalInputOutput operation.
+
+        Args:
+            input:
+                An instance of `OperationWithOptionalInputOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OperationWithOptionalInputOutputOutput`.
+        """
+        pipeline, call = self._prepare_call(
+            input, OPERATION_WITH_OPTIONAL_INPUT_OUTPUT, [], plugins
+        )
+        return pipeline(call)
+
+    def put_and_get_inline_documents(
+        self, input: PutAndGetInlineDocumentsInput, plugins: list[Plugin] | None = None
+    ) -> PutAndGetInlineDocumentsOutput:
+        """
+        This example serializes an inline document as part of the payload.
+
+        Args:
+            input:
+                An instance of `PutAndGetInlineDocumentsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `PutAndGetInlineDocumentsOutput`.
+        """
+        pipeline, call = self._prepare_call(
+            input, PUT_AND_GET_INLINE_DOCUMENTS, [], plugins
+        )
+        return pipeline(call)
+
+    def put_with_content_encoding(
+        self, input: PutWithContentEncodingInput, plugins: list[Plugin] | None = None
+    ) -> PutWithContentEncodingOutput:
+        """
+        Invokes the PutWithContentEncoding operation.
+
+        Args:
+            input:
+                An instance of `PutWithContentEncodingInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
+        """
+        pipeline, call = self._prepare_call(
+            input, PUT_WITH_CONTENT_ENCODING, [], plugins
+        )
+        return pipeline(call)
+
+    def simple_scalar_properties(
+        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+    ) -> SimpleScalarPropertiesOutput:
+        """
+        Invokes the SimpleScalarProperties operation.
+
+        Args:
+            input:
+                An instance of `SimpleScalarPropertiesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
+        """
+        pipeline, call = self._prepare_call(
+            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+        )
+        return pipeline(call)
+
+    def sparse_nulls_operation(
+        self, input: SparseNullsOperationInput, plugins: list[Plugin] | None = None
+    ) -> SparseNullsOperationOutput:
+        """
+        Invokes the SparseNullsOperation operation.
+
+        Args:
+            input:
+                An instance of `SparseNullsOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SparseNullsOperationOutput`.
+        """
+        pipeline, call = self._prepare_call(input, SPARSE_NULLS_OPERATION, [], plugins)
+        return pipeline(call)
