@@ -1,12 +1,15 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import Sequence
+import logging
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from typing import Any
 
 from .deserializers import DeserializeableShape
 from .interfaces import TypedProperties
 from .serializers import SerializeableShape
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
@@ -547,8 +550,7 @@ class InterceptorChain(AnyInterceptor):
         return f"InterceptorChain(chain={self._chain!r})"
 
     def read_before_execution(self, context: InputContext[Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_execution(context)
+        self._invoke_all(lambda interceptor: interceptor.read_before_execution(context))
 
     def modify_before_serialization(self, context: InputContext[Any]) -> Any:
         for interceptor in self._chain:
@@ -558,12 +560,14 @@ class InterceptorChain(AnyInterceptor):
         return context.request
 
     def read_before_serialization(self, context: InputContext[Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_serialization(context)
+        self._invoke_all(
+            lambda interceptor: interceptor.read_before_serialization(context)
+        )
 
     def read_after_serialization(self, context: RequestContext[Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_after_serialization(context)
+        self._invoke_all(
+            lambda interceptor: interceptor.read_after_serialization(context)
+        )
 
     def modify_before_retry_loop(self, context: RequestContext[Any, Any]) -> Any:
         for interceptor in self._chain:
@@ -574,8 +578,7 @@ class InterceptorChain(AnyInterceptor):
         return context.transport_request
 
     def read_before_attempt(self, context: RequestContext[Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_attempt(context)
+        self._invoke_all(lambda interceptor: interceptor.read_before_attempt(context))
 
     def modify_before_signing(self, context: RequestContext[Any, Any]) -> Any:
         for interceptor in self._chain:
@@ -585,12 +588,10 @@ class InterceptorChain(AnyInterceptor):
         return context.transport_request
 
     def read_before_signing(self, context: RequestContext[Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_signing(context)
+        self._invoke_all(lambda interceptor: interceptor.read_before_signing(context))
 
     def read_after_signing(self, context: RequestContext[Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_after_signing(context)
+        self._invoke_all(lambda interceptor: interceptor.read_after_signing(context))
 
     def modify_before_transmit(self, context: RequestContext[Any, Any]) -> Any:
         for interceptor in self._chain:
@@ -600,12 +601,10 @@ class InterceptorChain(AnyInterceptor):
         return context.transport_request
 
     def read_before_transmit(self, context: RequestContext[Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_transmit(context)
+        self._invoke_all(lambda interceptor: interceptor.read_before_transmit(context))
 
     def read_after_transmit(self, context: ResponseContext[Any, Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_after_transmit(context)
+        self._invoke_all(lambda interceptor: interceptor.read_after_transmit(context))
 
     def modify_before_deserialization(
         self, context: ResponseContext[Any, Any, Any]
@@ -620,14 +619,16 @@ class InterceptorChain(AnyInterceptor):
     def read_before_deserialization(
         self, context: ResponseContext[Any, Any, Any]
     ) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_deserialization(context)
+        self._invoke_all(
+            lambda interceptor: interceptor.read_before_deserialization(context)
+        )
 
     def read_after_deserialization(
         self, context: OutputContext[Any, Any, Any, Any]
     ) -> None:
-        for interceptor in self._chain:
-            interceptor.read_after_deserialization(context)
+        self._invoke_all(
+            lambda interceptor: interceptor.read_after_deserialization(context)
+        )
 
     def modify_before_attempt_completion(
         self, context: OutputContext[Any, Any, Any, Any | None]
@@ -641,8 +642,7 @@ class InterceptorChain(AnyInterceptor):
     def read_after_attempt(
         self, context: OutputContext[Any, Any, Any, Any | None]
     ) -> None:
-        for interceptor in self._chain:
-            interceptor.read_after_attempt(context)
+        self._invoke_all(lambda interceptor: interceptor.read_after_attempt(context))
 
     def modify_before_completion(
         self, context: OutputContext[Any, Any, Any | None, Any | None]
@@ -662,7 +662,31 @@ class InterceptorChain(AnyInterceptor):
             try:
                 interceptor.read_after_execution(context)
             except Exception as e:
+                if exception is not None:
+                    _log_dropped(exception)
                 context = replace(context, response=e)
                 exception = e
         if exception is not None:
             raise exception
+
+    def _invoke_all(self, hook: Callable[[AnyInterceptor], None]) -> None:
+        # A failing read hook mustn't keep later interceptors from running, so
+        # every interceptor is invoked before the last exception is raised.
+        exception: Exception | None = None
+        for interceptor in self._chain:
+            try:
+                hook(interceptor)
+            except Exception as e:
+                if exception is not None:
+                    _log_dropped(exception)
+                exception = e
+        if exception is not None:
+            raise exception
+
+
+def _log_dropped(exception: Exception) -> None:
+    _LOGGER.error(
+        "An interceptor raised an exception that was dropped because a later "
+        "interceptor raised one too.",
+        exc_info=exception,
+    )

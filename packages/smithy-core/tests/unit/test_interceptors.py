@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from typing import Any, cast
+from unittest.mock import Mock
 
 import pytest
 from smithy_core.interceptors import (
@@ -23,6 +24,21 @@ def _context() -> OutputContext[Any, Any, Any, Any]:
         properties=TypedProperties(),
     )
 
+
+READ_HOOKS = [
+    "read_before_execution",
+    "read_before_serialization",
+    "read_after_serialization",
+    "read_before_attempt",
+    "read_before_signing",
+    "read_after_signing",
+    "read_before_transmit",
+    "read_after_transmit",
+    "read_before_deserialization",
+    "read_after_deserialization",
+    "read_after_attempt",
+    "read_after_execution",
+]
 
 MODIFY_HOOKS = [
     "modify_before_serialization",
@@ -83,3 +99,42 @@ def test_chain_keeps_modifications_from_earlier_interceptors(hook: str) -> None:
     chain = InterceptorChain([_Appender("a"), Interceptor()])
 
     assert getattr(chain, hook)(_context()) == "a"
+
+
+def _raising(name: str, calls: list[str]) -> Any:
+    """An interceptor whose every hook records its name and raises."""
+
+    def raise_error(context: Any) -> None:
+        calls.append(name)
+        raise RuntimeError(name)
+
+    interceptor = Mock()
+    for hook in READ_HOOKS + MODIFY_HOOKS:
+        getattr(interceptor, hook).side_effect = raise_error
+    return interceptor
+
+
+@pytest.mark.parametrize("hook", READ_HOOKS)
+def test_read_hook_runs_every_interceptor_and_raises_the_last_error(
+    hook: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    calls: list[str] = []
+    chain = InterceptorChain([_raising(name, calls) for name in ("1", "2", "3")])
+
+    with pytest.raises(RuntimeError, match="3"):
+        getattr(chain, hook)(_context())
+
+    assert calls == ["1", "2", "3"]
+    dropped = [str(record.exc_info[1]) for record in caplog.records if record.exc_info]
+    assert dropped == ["1", "2"]
+
+
+@pytest.mark.parametrize("hook", MODIFY_HOOKS)
+def test_modify_hook_stops_at_the_first_error(hook: str) -> None:
+    calls: list[str] = []
+    chain = InterceptorChain([_raising(name, calls) for name in ("1", "2")])
+
+    with pytest.raises(RuntimeError, match="1"):
+        getattr(chain, hook)(_context())
+
+    assert calls == ["1"]
