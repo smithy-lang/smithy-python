@@ -26,6 +26,10 @@ public final class ImportDeclarations implements ImportContainer {
     private final Map<String, Map<String, String>> stdlibImports = new TreeMap<>();
     private final Map<String, Map<String, String>> externalImports = new TreeMap<>();
     private final Map<String, Map<String, String>> localImports = new TreeMap<>();
+    // Imports emitted inside `if TYPE_CHECKING:` -- used only in annotations, never at
+    // runtime. Requires `from __future__ import annotations` so annotations stay strings.
+    private final Map<String, Map<String, String>> typeCheckingImports = new TreeMap<>();
+    private boolean futureAnnotations = false;
 
     private final PythonSettings settings;
     private final String localNamespace;
@@ -55,6 +59,21 @@ public final class ImportDeclarations implements ImportContainer {
             return addImportToMap(ns, name, alias, localImports);
         }
         return addImportToMap(namespace, name, alias, externalImports);
+    }
+
+    /** Enable `from __future__ import annotations` so annotations are deferred strings. */
+    public void enableFutureAnnotations() {
+        this.futureAnnotations = true;
+    }
+
+    /** Add an import that is emitted only inside `if TYPE_CHECKING:` (annotation-only). */
+    public ImportDeclarations addTypeCheckingImport(String namespace, String name, String alias) {
+        var isTestModule = this.localNamespace.startsWith("tests");
+        var ns = namespace.startsWith(settings.moduleName()) && !isTestModule
+                ? relativize(namespace)
+                : namespace;
+        enableFutureAnnotations();
+        return addImportToMap(ns, name, alias, typeCheckingImports);
     }
 
     private String relativize(String namespace) {
@@ -154,10 +173,15 @@ public final class ImportDeclarations implements ImportContainer {
 
     @Override
     public String toString() {
-        if (externalImports.isEmpty() && stdlibImports.isEmpty() && localImports.isEmpty()) {
+        if (externalImports.isEmpty() && stdlibImports.isEmpty()
+                && localImports.isEmpty()
+                && typeCheckingImports.isEmpty()) {
             return "";
         }
         StringBuilder builder = new StringBuilder();
+        if (futureAnnotations) {
+            builder.append("from __future__ import annotations\n\n");
+        }
         if (!stdlibImports.isEmpty()) {
             formatImportList(builder, stdlibImports);
         }
@@ -166,6 +190,20 @@ public final class ImportDeclarations implements ImportContainer {
         }
         if (!localImports.isEmpty()) {
             formatImportList(builder, localImports);
+        }
+        if (!typeCheckingImports.isEmpty()) {
+            builder.append("from typing import TYPE_CHECKING\n\n");
+            builder.append("if TYPE_CHECKING:\n");
+            var block = new StringBuilder();
+            formatImportList(block, typeCheckingImports);
+            // indent the rendered imports into the TYPE_CHECKING block
+            for (var line : block.toString().split("\n", -1)) {
+                if (line.isEmpty()) {
+                    builder.append("\n");
+                } else {
+                    builder.append("    ").append(line).append("\n");
+                }
+            }
         }
         builder.append("\n");
         return builder.toString();

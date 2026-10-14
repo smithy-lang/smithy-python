@@ -382,13 +382,14 @@ class MemberSchema(TypedDict):
 
 @dataclass(kw_only=True, frozen=True)
 class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
-    """A modeled Smithy operation."""
+    """A modeled Smithy operation.
 
-    input: type[I]
-    """The input type of the operation."""
-
-    output: type[O]
-    """The output type of the operation."""
+    Input, output, and error types are resolved lazily from ``static_schema`` via
+    ``model_registry`` on first access, so importing a client's operation table
+    builds no model classes until an operation is actually used. Static typing is
+    carried by the generated ``.pyi`` (operation constants are declared with concrete
+    ``APIOperation[Input, Output]`` type arguments).
+    """
 
     static_schema: "StaticOperationSchema" = field(repr=False)
     """The operation's compact schema tuple.
@@ -398,11 +399,41 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
     properties hydrate from it and cache in place on first access.
     """
 
-    error_registry: "TypeRegistry"
-    """A TypeRegistry used to create errors."""
+    model_registry: "Any" = field(default=None, repr=False)
+    """The client's ModelRegistry, used to build input/output/error types on demand.
 
-    effective_auth_schemes: Sequence[ShapeID]
+    Hand-built operations supply a registry whose ``build(name)`` returns the
+    types for the shape names carried in ``static_schema``.
+    """
+
+    error_ids: Sequence[ShapeID] = ()
+    """Shape ids of the operation's modeled errors, resolved to types on demand."""
+
+    effective_auth_schemes: Sequence[ShapeID] = ()
     """A list of effective auth schemes for the operation."""
+
+    @cached_property
+    def input(self) -> type[I]:
+        """The input type of the operation (built on first access)."""
+        return self.model_registry.build(self.input_schema.id.name)
+
+    @cached_property
+    def output(self) -> type[O]:
+        """The output type of the operation (built on first access)."""
+        return self.model_registry.build(self.output_schema.id.name)
+
+    @cached_property
+    def error_registry(self) -> "TypeRegistry":
+        """A TypeRegistry of modeled error types, built on first access.
+
+        Only touched on an error path, so success calls never build error classes.
+        """
+        from .documents import TypeRegistry
+
+        registry = self.model_registry
+        return TypeRegistry(
+            {error_id: registry.build(error_id.name) for error_id in self.error_ids}
+        )
 
     @cached_property
     def schema(self) -> Schema:

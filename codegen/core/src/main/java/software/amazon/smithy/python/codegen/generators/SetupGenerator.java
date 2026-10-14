@@ -172,6 +172,9 @@ public final class SetupGenerator {
                     reportUnnecessaryComparison = false
                     reportUnusedClass = false
                     enableExperimentalFeatures = true
+                    # models.py is the dynamic runtime; models.pyi carries the typed
+                    # surface for consumers, so don't type-check the implementation body.
+                    exclude = ["**/models.py"]
 
                     [tool.ruff]
                     target-version = "py312"

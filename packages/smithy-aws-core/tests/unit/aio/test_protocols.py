@@ -33,6 +33,14 @@ from smithy_http.aio import HTTPRequest, HTTPResponse
 from smithy_json import JSONSettings
 
 
+class _StubRegistry:
+    def __init__(self, classes: dict[str, type]) -> None:
+        self._classes = classes
+
+    def build(self, name: str) -> type:
+        return self._classes[name]
+
+
 @pytest.mark.parametrize(
     "header, expected",
     [
@@ -852,8 +860,6 @@ def _rest_xml_protocol() -> RestXmlClientProtocol:
 
 def _rest_xml_operation() -> APIOperation[Any, Any]:
     return APIOperation(
-        input=_EmptyInput,
-        output=_EmptyOutput,
         static_schema=(
             ShapeType.OPERATION.value,
             "com.test",
@@ -863,7 +869,9 @@ def _rest_xml_operation() -> APIOperation[Any, Any]:
             _EMPTY_OUTPUT_SCHEMA,
             (_NO_SUCH_BUCKET_SCHEMA,),
         ),
-        error_registry=TypeRegistry({}),
+        model_registry=_StubRegistry(
+            {"EmptyInput": _EmptyInput, "EmptyOutput": _EmptyOutput}
+        ),
         effective_auth_schemes=[],
     )
 
