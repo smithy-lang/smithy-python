@@ -551,10 +551,11 @@ class InterceptorChain(AnyInterceptor):
             interceptor.read_before_execution(context)
 
     def modify_before_serialization(self, context: InputContext[Any]) -> Any:
-        request = context.request
         for interceptor in self._chain:
-            request = interceptor.modify_before_serialization(context)
-        return request
+            context = replace(
+                context, request=interceptor.modify_before_serialization(context)
+            )
+        return context.request
 
     def read_before_serialization(self, context: InputContext[Any]) -> None:
         for interceptor in self._chain:
@@ -565,20 +566,23 @@ class InterceptorChain(AnyInterceptor):
             interceptor.read_after_serialization(context)
 
     def modify_before_retry_loop(self, context: RequestContext[Any, Any]) -> Any:
-        transport_request = context.transport_request
         for interceptor in self._chain:
-            transport_request = interceptor.modify_before_retry_loop(context)
-        return transport_request
+            context = replace(
+                context,
+                transport_request=interceptor.modify_before_retry_loop(context),
+            )
+        return context.transport_request
 
     def read_before_attempt(self, context: RequestContext[Any, Any]) -> None:
         for interceptor in self._chain:
             interceptor.read_before_attempt(context)
 
     def modify_before_signing(self, context: RequestContext[Any, Any]) -> Any:
-        transport_request = context.transport_request
         for interceptor in self._chain:
-            transport_request = interceptor.modify_before_signing(context)
-        return transport_request
+            context = replace(
+                context, transport_request=interceptor.modify_before_signing(context)
+            )
+        return context.transport_request
 
     def read_before_signing(self, context: RequestContext[Any, Any]) -> None:
         for interceptor in self._chain:
@@ -589,10 +593,11 @@ class InterceptorChain(AnyInterceptor):
             interceptor.read_after_signing(context)
 
     def modify_before_transmit(self, context: RequestContext[Any, Any]) -> Any:
-        transport_request = context.transport_request
         for interceptor in self._chain:
-            transport_request = interceptor.modify_before_transmit(context)
-        return transport_request
+            context = replace(
+                context, transport_request=interceptor.modify_before_transmit(context)
+            )
+        return context.transport_request
 
     def read_before_transmit(self, context: RequestContext[Any, Any]) -> None:
         for interceptor in self._chain:
@@ -605,10 +610,12 @@ class InterceptorChain(AnyInterceptor):
     def modify_before_deserialization(
         self, context: ResponseContext[Any, Any, Any]
     ) -> Any:
-        transport_response = context.transport_response
         for interceptor in self._chain:
-            transport_response = interceptor.modify_before_deserialization(context)
-        return transport_response
+            context = replace(
+                context,
+                transport_response=interceptor.modify_before_deserialization(context),
+            )
+        return context.transport_response
 
     def read_before_deserialization(
         self, context: ResponseContext[Any, Any, Any]
@@ -625,10 +632,11 @@ class InterceptorChain(AnyInterceptor):
     def modify_before_attempt_completion(
         self, context: OutputContext[Any, Any, Any, Any | None]
     ) -> Any | Exception:
-        response = context.response
         for interceptor in self._chain:
-            response = interceptor.modify_before_attempt_completion(context)
-        return response
+            context = replace(
+                context, response=interceptor.modify_before_attempt_completion(context)
+            )
+        return context.response
 
     def read_after_attempt(
         self, context: OutputContext[Any, Any, Any, Any | None]
@@ -639,10 +647,11 @@ class InterceptorChain(AnyInterceptor):
     def modify_before_completion(
         self, context: OutputContext[Any, Any, Any | None, Any | None]
     ) -> Any | Exception:
-        response = context.response
         for interceptor in self._chain:
-            response = interceptor.modify_before_attempt_completion(context)
-        return response
+            context = replace(
+                context, response=interceptor.modify_before_completion(context)
+            )
+        return context.response
 
     def read_after_execution(
         self, context: OutputContext[Any, Any, Any | None, Any | None]

@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed `InterceptorChain` discarding changes made by `modify_*` hooks. Each interceptor now receives the value returned by the interceptor before it, so an interceptor that returns its input unchanged no longer undoes earlier modifications. `modify_before_completion` also now calls each interceptor's `modify_before_completion` hook instead of `modify_before_attempt_completion`."
+}
