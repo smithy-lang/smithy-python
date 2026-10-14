@@ -611,7 +611,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 writer.write("""
                         assert isinstance(actual.$1L, $2T)
                         actual_body_content = await actual.$1L.read()
-                        expected_body_content = await $3T(expected.$1L).read()
+                        expected_body_content = await $3T(expected.$1L or b"").read()
                         """, memberName, RuntimeTypes.ASYNC_BYTE_STREAM, RuntimeTypes.ASYNC_BYTES_READER);
                 compareMediaBlob(testCase, writer);
                 continue;

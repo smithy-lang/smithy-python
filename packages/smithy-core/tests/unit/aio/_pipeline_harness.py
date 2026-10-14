@@ -9,7 +9,6 @@ from smithy_core.aio.interfaces import ClientProtocol
 from smithy_core.aio.interfaces.retries import RetryStrategy
 from smithy_core.aio.retries import SimpleRetryStrategy
 from smithy_core.deserializers import ShapeDeserializer
-from smithy_core.documents import TypeRegistry
 from smithy_core.endpoints import EndpointResolverParams
 from smithy_core.interceptors import InterceptorChain
 from smithy_core.response import EMPTY_RESPONSE_METADATA, ResponseMetadata
@@ -70,9 +69,27 @@ _UNARY_OUTPUT_SCHEMA = Schema.collection(
     members={"message": {"target": _STRING}},
 )
 
-OPERATION = APIOperation(
-    input=StubInput,
-    output=StubOutput,
+
+class _StubRegistry:
+    """A hand-built operation's model registry: maps shape name to its stub type."""
+
+    def __init__(self, classes: dict[str, type]) -> None:
+        self._classes = classes
+
+    def build(self, name: str) -> type:
+        return self._classes[name]
+
+
+_STUB_REGISTRY = _StubRegistry(
+    {
+        "StreamingInput": StubInput,
+        "StreamingOutput": StubOutput,
+        "UnaryInput": StubInput,
+        "UnaryOutput": StubOutput,
+    }
+)
+
+OPERATION: APIOperation[StubInput, StubOutput] = APIOperation(
     static_schema=(
         ShapeType.OPERATION.value,
         "com.example",
@@ -82,16 +99,14 @@ OPERATION = APIOperation(
         _OUTPUT_SCHEMA,
         (),
     ),
-    error_registry=TypeRegistry({}),
+    model_registry=_STUB_REGISTRY,
     effective_auth_schemes=[],
 )
 
 # ``ClientCall.retryable()`` is False for operations with a streaming input, so
 # OPERATION above never enters the retry loop. This one has no input stream and so
 # exercises it.
-UNARY_OPERATION = APIOperation(
-    input=StubInput,
-    output=StubOutput,
+UNARY_OPERATION: APIOperation[StubInput, StubOutput] = APIOperation(
     static_schema=(
         ShapeType.OPERATION.value,
         "com.example",
@@ -101,7 +116,7 @@ UNARY_OPERATION = APIOperation(
         _UNARY_OUTPUT_SCHEMA,
         (),
     ),
-    error_registry=TypeRegistry({}),
+    model_registry=_STUB_REGISTRY,
     effective_auth_schemes=[],
 )
 

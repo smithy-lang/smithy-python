@@ -73,7 +73,9 @@ _DSMen = "DenseStructMap"
 _EIOI = "EmptyInputOutputInput"
 _sSI = "smithy.synthetic#originalShapeId"
 _sCES = "smithy.protocoltests.rpcv2Cbor#EmptyStructure"
+_smit = "smithy.api#input"
 _EIOO = "EmptyInputOutputOutput"
+_smith = "smithy.api#output"
 _EIO = "EmptyInputOutput"
 _FI = "Float16Input"
 _sU = "smithy.api#Unit"
@@ -150,7 +152,7 @@ _RVCL = "RpcV2CborLists"
 _RVCNU = "RpcV2CborNestedUnion"
 _sV = "stringValue"
 _SBM = "SparseBooleanMap"
-_smit = "smithy.api#sparse"
+_smithy = "smithy.api#sparse"
 _SNM = "SparseNumberMap"
 _SSM = "SparseSetMap"
 _SSMp = "SparseStringMap"
@@ -295,7 +297,7 @@ DEFAULTS: StaticSchema = (
         (8, {_smi: 100}),
         (9, {_smi: 1.0}),
         (10, {_smi: 1.0}),
-        (TEST_STRING_MAP, {_smi: None}),
+        (TEST_STRING_MAP, {_smi: MappingProxyType[str, object]({})}),
         (TEST_ENUM, {_smi: _FOO}),
         (TEST_INT_ENUM, {_smi: 1}),
         (3, {_smi: _v_}),
@@ -331,9 +333,9 @@ DENSE_STRUCT_MAP: StaticSchema = (
     ((3, 0), (GREETING_STRUCT, 0)),
 )
 
-EMPTY_INPUT_OUTPUT_INPUT: StaticSchema = (18, n1, _EIOI, {_sSI: _sCES})
+EMPTY_INPUT_OUTPUT_INPUT: StaticSchema = (18, n1, _EIOI, {_sSI: _sCES, _smit: None})
 
-EMPTY_INPUT_OUTPUT_OUTPUT: StaticSchema = (18, n1, _EIOO, {_sSI: _sCES})
+EMPTY_INPUT_OUTPUT_OUTPUT: StaticSchema = (18, n1, _EIOO, {_sSI: _sCES, _smith: None})
 
 EMPTY_INPUT_OUTPUT: StaticOperationSchema = (
     23,
@@ -345,17 +347,24 @@ EMPTY_INPUT_OUTPUT: StaticOperationSchema = (
     (),
 )
 
-FLOAT16_INPUT: StaticSchema = (18, n1, _FI, {_sSI: _sU})
+FLOAT16_INPUT: StaticSchema = (18, n1, _FI, {_sSI: _sU, _smit: None})
 
-FLOAT16_OUTPUT: StaticSchema = (18, n1, _FO, 0, (_v,), ((10, 0),))
+FLOAT16_OUTPUT: StaticSchema = (18, n1, _FO, {_smith: None}, (_v,), ((10, 0),))
 
 FLOAT16: StaticOperationSchema = (23, n1, _Fl, 0, FLOAT16_INPUT, FLOAT16_OUTPUT, ())
 
-FRACTIONAL_SECONDS_INPUT: StaticSchema = (18, n1, _FSI, {_sSI: _sU})
+FRACTIONAL_SECONDS_INPUT: StaticSchema = (18, n1, _FSI, {_sSI: _sU, _smit: None})
 
 DATE_TIME: StaticSchema = (4, n2, _DT, {_sF: _dt})
 
-FRACTIONAL_SECONDS_OUTPUT: StaticSchema = (18, n1, _FSO, 0, (_d,), ((DATE_TIME, 0),))
+FRACTIONAL_SECONDS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _FSO,
+    {_smith: None},
+    (_d,),
+    ((DATE_TIME, 0),),
+)
 
 FRACTIONAL_SECONDS: StaticOperationSchema = (
     23,
@@ -367,9 +376,16 @@ FRACTIONAL_SECONDS: StaticOperationSchema = (
     (),
 )
 
-GREETING_WITH_ERRORS_INPUT: StaticSchema = (18, n1, _GWEI, {_sSI: _sU})
+GREETING_WITH_ERRORS_INPUT: StaticSchema = (18, n1, _GWEI, {_sSI: _sU, _smit: None})
 
-GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (18, n1, _GWEO, 0, (_g,), ((3, 0),))
+GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _GWEO,
+    {_smith: None},
+    (_g,),
+    ((3, 0),),
+)
 
 INVALID_GREETING: StaticSchema = (18, n1, _IG, {_sm: _c}, (_M,), ((3, 0),))
 
@@ -383,9 +399,9 @@ GREETING_WITH_ERRORS: StaticOperationSchema = (
     (INVALID_GREETING, COMPLEX_ERROR),
 )
 
-NO_INPUT_OUTPUT_INPUT: StaticSchema = (18, n1, _NIOI, {_sSI: _sU})
+NO_INPUT_OUTPUT_INPUT: StaticSchema = (18, n1, _NIOI, {_sSI: _sU, _smit: None})
 
-NO_INPUT_OUTPUT_OUTPUT: StaticSchema = (18, n1, _NIOO, {_sSI: _sU})
+NO_INPUT_OUTPUT_OUTPUT: StaticSchema = (18, n1, _NIOO, {_sSI: _sU, _smith: None})
 
 NO_INPUT_OUTPUT: StaticOperationSchema = (
     23,
@@ -401,7 +417,7 @@ OPERATION_WITH_DEFAULTS_INPUT: StaticSchema = (
     18,
     n1,
     _OWDI,
-    0,
+    {_smit: None},
     (_de, _cOD, _tLD, _oTLD),
     ((DEFAULTS, 0), (CLIENT_OPTIONAL_DEFAULTS, 0), (3, {_smi: _h}), (7, {_smi: 0})),
 )
@@ -410,7 +426,7 @@ OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
     18,
     n1,
     _OWDO,
-    0,
+    {_smith: None},
     (
         _dS,
         _dB,
@@ -448,7 +464,7 @@ OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
         (8, {_smi: 100}),
         (9, {_smi: 1.0}),
         (10, {_smi: 1.0}),
-        (TEST_STRING_MAP, {_smi: None}),
+        (TEST_STRING_MAP, {_smi: MappingProxyType[str, object]({})}),
         (TEST_ENUM, {_smi: _FOO}),
         (TEST_INT_ENUM, {_smi: 1}),
         (3, {_smi: _v_}),
@@ -477,7 +493,7 @@ OPTIONAL_INPUT_OUTPUT_INPUT: StaticSchema = (
     18,
     n1,
     _OIOI,
-    {_sSI: _sCSS},
+    {_sSI: _sCSS, _smit: None},
     (_v,),
     ((3, 0),),
 )
@@ -486,7 +502,7 @@ OPTIONAL_INPUT_OUTPUT_OUTPUT: StaticSchema = (
     18,
     n1,
     _OIOO,
-    {_sSI: _sCSS},
+    {_sSI: _sCSS, _smith: None},
     (_v,),
     ((3, 0),),
 )
@@ -505,7 +521,7 @@ RPC_V2_CBOR_DENSE_MAPS_INPUT: StaticSchema = (
     18,
     n1,
     _RVCDMI,
-    {_sSI: _sCRVCDMIO},
+    {_sSI: _sCRVCDMIO, _smit: None},
     (_dSM, _dNM, _dBM, _dSMe, _dSMen),
     (
         (DENSE_STRUCT_MAP, 0),
@@ -520,7 +536,7 @@ RPC_V2_CBOR_DENSE_MAPS_OUTPUT: StaticSchema = (
     18,
     n1,
     _RVCDMO,
-    {_sSI: _sCRVCDMIO},
+    {_sSI: _sCRVCDMIO, _smith: None},
     (_dSM, _dNM, _dBM, _dSMe, _dSMen),
     (
         (DENSE_STRUCT_MAP, 0),
@@ -576,7 +592,7 @@ RPC_V2_CBOR_LISTS_INPUT: StaticSchema = (
     18,
     n1,
     _RVCLI,
-    {_sSI: _sCRVCLIO},
+    {_sSI: _sCRVCLIO, _smit: None},
     (_sL, _sS, _iL, _bL, _tL, _eL, _iEL, _nSL, _sLt, _bLl),
     (
         (STRING_LIST, 0),
@@ -596,7 +612,7 @@ RPC_V2_CBOR_LISTS_OUTPUT: StaticSchema = (
     18,
     n1,
     _RVCLO,
-    {_sSI: _sCRVCLIO},
+    {_sSI: _sCRVCLIO, _smith: None},
     (_sL, _sS, _iL, _bL, _tL, _eL, _iEL, _nSL, _sLt, _bLl),
     (
         (STRING_LIST, 0),
@@ -645,7 +661,7 @@ RPC_V2_CBOR_SPARSE_MAPS_INPUT: StaticSchema = (
     18,
     n1,
     _RVCSMI,
-    {_sSI: _sCRVCSMIO},
+    {_sSI: _sCRVCSMIO, _smit: None},
     (_sSM, _sNM, _sBM, _sSMp, _sSMpa),
     (
         (SPARSE_STRUCT_MAP, 0),
@@ -660,7 +676,7 @@ RPC_V2_CBOR_SPARSE_MAPS_OUTPUT: StaticSchema = (
     18,
     n1,
     _RVCSMO,
-    {_sSI: _sCRVCSMIO},
+    {_sSI: _sCRVCSMIO, _smith: None},
     (_sSM, _sNM, _sBM, _sSMp, _sSMpa),
     (
         (SPARSE_STRUCT_MAP, 0),
@@ -694,7 +710,7 @@ RPC_V2_CBOR_UNIONS_INPUT: StaticSchema = (
     18,
     n1,
     _RVCUI,
-    {_sSI: _sCRVCUIO},
+    {_sSI: _sCRVCUIO, _smit: None},
     (_co, _oV),
     ((RPC_V2_CBOR_UNION, 0), (3, 0)),
 )
@@ -703,7 +719,7 @@ RPC_V2_CBOR_UNIONS_OUTPUT: StaticSchema = (
     18,
     n1,
     _RVCUO,
-    {_sSI: _sCRVCUIO},
+    {_sSI: _sCRVCUIO, _smith: None},
     (_co, _oV),
     ((RPC_V2_CBOR_UNION, 0), (3, 0)),
 )
@@ -722,7 +738,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     18,
     n1,
     _SSPI,
-    {_sSI: _sCSSS},
+    {_sSI: _sCSSS, _smit: None},
     (_tBV, _fBV, _bV, _dV, _fV, _iV, _lV, _sVh, _sV, _bVl),
     ((2, 0), (2, 0), (5, 0), (10, 0), (9, 0), (7, 0), (8, 0), (6, 0), (3, 0), (1, 0)),
 )
@@ -731,7 +747,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     18,
     n1,
     _SSPO,
-    {_sSI: _sCSSS},
+    {_sSI: _sCSSS, _smith: None},
     (_tBV, _fBV, _bV, _dV, _fV, _iV, _lV, _sVh, _sV, _bVl),
     ((2, 0), (2, 0), (5, 0), (10, 0), (9, 0), (7, 0), (8, 0), (6, 0), (3, 0), (1, 0)),
 )
@@ -752,7 +768,7 @@ SPARSE_NULLS_OPERATION_INPUT: StaticSchema = (
     18,
     n1,
     _SNOI,
-    {_sSI: _sCSNOIO},
+    {_sSI: _sCSNOIO, _smit: None},
     (_sSL, _sSMp),
     ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
 )
@@ -761,7 +777,7 @@ SPARSE_NULLS_OPERATION_OUTPUT: StaticSchema = (
     18,
     n1,
     _SNOO,
-    {_sSI: _sCSNOIO},
+    {_sSI: _sCSNOIO, _smith: None},
     (_sSL, _sSMp),
     ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
 )
@@ -798,7 +814,7 @@ RECURSIVE_SHAPES_INPUT: StaticSchema = (
     18,
     n1,
     _RSI,
-    {_sSI: _sCRSIO},
+    {_sSI: _sCRSIO, _smit: None},
     (_n,),
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
@@ -807,7 +823,7 @@ RECURSIVE_SHAPES_OUTPUT: StaticSchema = (
     18,
     n1,
     _RSO,
-    {_sSI: _sCRSIO},
+    {_sSI: _sCRSIO, _smith: None},
     (_n,),
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )

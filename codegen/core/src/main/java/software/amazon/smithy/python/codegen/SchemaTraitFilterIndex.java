@@ -32,10 +32,12 @@ import software.amazon.smithy.model.traits.HttpQueryTrait;
 import software.amazon.smithy.model.traits.HttpResponseCodeTrait;
 import software.amazon.smithy.model.traits.HttpTrait;
 import software.amazon.smithy.model.traits.IdempotencyTokenTrait;
+import software.amazon.smithy.model.traits.InputTrait;
 import software.amazon.smithy.model.traits.JsonNameTrait;
 import software.amazon.smithy.model.traits.LengthTrait;
 import software.amazon.smithy.model.traits.LongPollTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
+import software.amazon.smithy.model.traits.OutputTrait;
 import software.amazon.smithy.model.traits.PatternTrait;
 import software.amazon.smithy.model.traits.ProtocolDefinitionTrait;
 import software.amazon.smithy.model.traits.RangeTrait;
@@ -86,6 +88,8 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     IdempotencyTokenTrait.ID,
                     DefaultTrait.ID, // runtime populates default values
                     RequiredTrait.ID, // runtime enforcement
+                    InputTrait.ID, // runtime input-structure nullability (@input members optional)
+                    OutputTrait.ID, // runtime injects response_metadata on output structures
                     TimestampFormatTrait.ID, // read per-member by smithy_http / smithy_aws_core serde
                     ORIGINAL_SHAPE_ID, // rpcv2Cbor unit detection
                     ServiceTrait.ID, // service metadata, including sdkId used by package docs

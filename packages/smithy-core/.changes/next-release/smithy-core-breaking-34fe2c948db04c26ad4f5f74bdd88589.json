@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Generated model classes are now built lazily from the schema on first access via a `ModelRegistry`, rather than defined eagerly at import. This moves per-class construction cost off the import/cold-start path."
+}

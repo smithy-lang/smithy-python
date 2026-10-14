@@ -356,25 +356,46 @@ public final class ConfigGenerator implements Runnable {
         var operationShapes = TopDownIndex.of(context.model())
                 .getContainedOperations(settings.service());
 
-        writer.addStdlibImport("typing", "Union");
+        writer.addStdlibImports("typing", java.util.Set.of("TYPE_CHECKING", "Any", "Union"));
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
 
-        writer.writeInline("_ServiceInterceptor = Union[");
-        var iter = operationShapes.iterator();
-        while (iter.hasNext()) {
-            var operation = iter.next();
-            var input = symbolProvider.toSymbol(context.model().expectShape(operation.getInputShape()));
-            var output = symbolProvider.toSymbol(context.model().expectShape(operation.getOutputShape()));
-
-            // TODO: pull the transport request/response types off of the application protocol
-            writer.addStdlibImport("typing", "Any");
-            writer.writeInline("$T[$T, $T, Any, Any]", RuntimeTypes.INTERCEPTOR, input, output);
-            if (iter.hasNext()) {
-                writer.writeInline(", ");
-            } else {
-                writer.writeInline("]");
-            }
+        // Collect the input/output class names referenced by the interceptor union.
+        // They are emitted as a TYPE_CHECKING-only import + alias so they are NOT built
+        // at runtime: the models module builds classes lazily, and the interceptor union
+        // is only ever read as a type (the `interceptors` field annotation is a string
+        // under `from __future__ import annotations`).
+        var names = new java.util.TreeSet<String>();
+        var unionMembers = new java.util.ArrayList<String>();
+        for (var operation : operationShapes) {
+            var input = symbolProvider.toSymbol(
+                    context.model().expectShape(operation.getInputShape())).getName();
+            var output = symbolProvider.toSymbol(
+                    context.model().expectShape(operation.getOutputShape())).getName();
+            names.add(input);
+            names.add(output);
+            unionMembers.add(String.format("Interceptor[%s, %s, Any, Any]", input, output));
         }
+
+        writer.write("if TYPE_CHECKING:").indent();
+        writer.write("from smithy_core.interceptors import Interceptor");
+        writer.openBlock("from .models import (", ")", () -> {
+            for (var name : names) {
+                writer.write("$L,", name);
+            }
+        });
+        writer.write("");
+        writer.openBlock("_ServiceInterceptor = Union[", "]", () -> {
+            for (var member : unionMembers) {
+                writer.write("$L,", member);
+            }
+        });
+        writer.dedent();
+        // Runtime fallback: the precise union above is TYPE_CHECKING-only (it names every
+        // input/output class, which would build them all eagerly). At runtime the alias
+        // is Any so the `interceptors` field annotation resolves without building models.
+        writer.write("else:").indent();
+        writer.write("_ServiceInterceptor = Any");
+        writer.dedent();
         writer.write("");
     }
 

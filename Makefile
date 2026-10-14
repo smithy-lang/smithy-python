@@ -24,9 +24,18 @@ build-java: ## Builds and tests the Java code generation packages without modify
 
 test-protocols: ## Generates and runs protocol tests for all supported protocols.
 	cd codegen && ./gradlew :protocol-test:clean :protocol-test:build
+	uv pip install -e packages/smithy-test
 	@set -e; for projection_dir in codegen/protocol-test/build/smithyprojections/protocol-test/*/python-client-codegen; do \
 		uv pip install "$$projection_dir"; \
 		uv run pytest "$$projection_dir"; \
+	done
+
+# pyright's wrapper imports typing_extensions, which fails to import on 3.15
+# (removed typing.no_type_check_decorator); run the stub type-check on 3.12 only.
+typecheck-protocols: ## Type-checks the generated protocol-test stub fixtures with pyright.
+	@set -e; for projection_dir in codegen/protocol-test/build/smithyprojections/protocol-test/*/python-client-codegen; do \
+		uv pip install "$$projection_dir"; \
+		uv run pyright "$$projection_dir/tests/_typecheck.py"; \
 	done
 
 
