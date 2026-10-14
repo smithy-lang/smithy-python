@@ -6,11 +6,9 @@ from smithy_core.interfaces import BytesReader, BytesWriter
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.types import TimestampFormat
 
+from ._private.deserializers import JSONShapeDeserializer as _JSONShapeDeserializer
 from ._private.documents import JSONDocument
 from ._private.serializers import JSONShapeSerializer as _JSONShapeSerializer
-from ._private.value_deserializer import (
-    JSONValueDeserializer as _JSONValueDeserializer,
-)
 from .settings import JSONSettings
 
 __version__ = "0.3.0"
@@ -56,4 +54,4 @@ class JSONCodec(Codec):
         return _JSONShapeSerializer(sink, settings=self._settings)
 
     def create_deserializer(self, source: bytes | BytesReader) -> "ShapeDeserializer":
-        return _JSONValueDeserializer(source, settings=self._settings)
+        return _JSONShapeDeserializer(source, settings=self._settings)

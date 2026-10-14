@@ -21,7 +21,7 @@ from smithy_core.prelude import (
     TIMESTAMP,
 )
 from smithy_json import JSONCodec, JSONDocument
-from smithy_json._private.value_deserializer import JSONValueDeserializer
+from smithy_json._private.deserializers import JSONShapeDeserializer
 
 from . import (
     JSON_SERDE_CASES,
@@ -122,7 +122,7 @@ def test_uses_custom_document() -> None:
 )
 def test_deserializer_is_eager(source: bytes | BytesIO) -> None:
     deserializer = JSONCodec().create_deserializer(source)
-    assert isinstance(deserializer, JSONValueDeserializer)
+    assert isinstance(deserializer, JSONShapeDeserializer)
 
 
 def test_ignores_unknown_structure_members() -> None:
