@@ -322,10 +322,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         call: ClientCall[I, O],
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
+        interceptor = call.interceptor
+        input_context = InputContext(request=call.input, properties=call.context)
         try:
-            interceptor = call.interceptor
-
-            input_context = InputContext(request=call.input, properties=call.context)
             interceptor.read_before_execution(input_context)
 
             input_context = replace(
@@ -338,7 +337,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
             transport_request = self.protocol.serialize_request(
                 operation=call.operation,
-                input=call.input,
+                input=input_context.request,
                 endpoint=_UNRESOLVED,
                 context=input_context.properties,
             )
@@ -353,11 +352,11 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             )
         except Exception as e:
             return OutputContext(
-                request=call.input,
+                request=input_context.request,
                 response=e,
                 transport_request=None,
                 transport_response=None,
-                properties=call.context,
+                properties=input_context.properties,
             )
 
         try:
@@ -449,7 +448,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
             endpoint_params = EndpointResolverParams(
                 operation=call.operation,
-                input=call.input,
+                input=request_context.request,
                 context=request_context.properties,
             )
             _LOGGER.debug("Calling endpoint resolver with params: %s", endpoint_params)

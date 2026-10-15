@@ -10,7 +10,13 @@ from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.eventstream import DuplexEventStream, InputEventStream
 from smithy_core.aio.interfaces import ClientTransport
 from smithy_core.auth import AuthOption
-from smithy_core.exceptions import CallError, UnsupportedTransportError
+from smithy_core.exceptions import CallError, SmithyError, UnsupportedTransportError
+from smithy_core.interceptors import (
+    InputContext,
+    Interceptor,
+    InterceptorChain,
+    OutputContext,
+)
 from smithy_core.response import EMPTY_RESPONSE_METADATA
 from smithy_core.shapes import ShapeID
 from smithy_core.types import TypedProperties
@@ -18,8 +24,10 @@ from smithy_core.types import TypedProperties
 from ._pipeline_harness import (
     DuplexTransport,
     NonDuplexTransport,
+    StubEndpointResolver,
     StubEvent,
     StubEventReceiver,
+    StubInput,
     StubOutput,
     UndeclaredTransport,
     client_call,
@@ -170,6 +178,55 @@ async def test_auth_option_signer_properties_override_scheme_defaults() -> None:
         "region": "us-west-2",
         "service": "override",
     }
+
+
+class _ReplaceInput(Interceptor[Any, Any, Any, Any]):
+    """Replaces the input before serialization and records what later hooks see."""
+
+    def __init__(self, fail_after_modifying: bool = False) -> None:
+        self.replacement = StubInput()
+        self.fail_after_modifying = fail_after_modifying
+        self.completion_request: Any = None
+
+    def modify_before_serialization(self, context: InputContext[Any]) -> Any:
+        return self.replacement
+
+    def read_before_serialization(self, context: InputContext[Any]) -> None:
+        if self.fail_after_modifying:
+            raise RuntimeError("boom")
+
+    def modify_before_completion(
+        self, context: OutputContext[Any, Any, Any, Any]
+    ) -> Any:
+        self.completion_request = context.request
+        return context.response
+
+
+async def test_modified_input_is_serialized_and_used_to_resolve_endpoint() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    interceptor = _ReplaceInput()
+    resolver = StubEndpointResolver()
+    call = replace(
+        client_call(),
+        interceptor=InterceptorChain([interceptor]),
+        endpoint_resolver=resolver,
+    )
+
+    await harness.pipeline(call)
+
+    assert harness.protocol.serialized_inputs == [interceptor.replacement]
+    assert resolver.resolved_inputs == [interceptor.replacement]
+
+
+async def test_modified_input_reaches_completion_when_serialization_fails() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    interceptor = _ReplaceInput(fail_after_modifying=True)
+    call = replace(client_call(), interceptor=InterceptorChain([interceptor]))
+
+    with pytest.raises(SmithyError):
+        await harness.pipeline(call)
+
+    assert interceptor.completion_request is interceptor.replacement
 
 
 class _CountingTransport:
