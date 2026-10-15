@@ -33,14 +33,17 @@ class Node:
 
 ## Writing a module
 
-`PythonWriter(module)` takes the destination module name. Callers do not list
-the names their lines define; `render()` finds them in the written lines.
-Declarations are names bound at module level, such as classes, functions,
-assignments and imports. Local names are bound anywhere else, such as fields,
-parameters and local variables. Local names apply across the module, because a
-field in any class can shadow a reference in that class. Two module-level
-classes with the same name raise `CodegenError`. The symbol provider already
-checks for duplicate fields within a declaration.
+`PythonWriter(module)` takes the destination module name. `render()` finds the
+names bound by the written lines and follows Python's scoping rules.
+Module-level names, such as classes, functions, assignments, imports and
+`global` assignments, apply to every reference. A local name, such as a field,
+parameter or local variable, applies only to references that can see it. A
+class member is visible in its class body, including method signatures, but not
+in method bodies, nested classes or comprehensions. A function's locals are
+visible in its body and nested functions, not in its signature.
+
+Names may be rebound, as in `if`/`else` branches or `@overload` stubs. The
+symbol provider ensures that declaration and field names are unique.
 
 * `line(*parts)` joins strings and type references without separators at the
   current indentation. `line()` writes a blank line without spaces.
@@ -51,21 +54,41 @@ checks for duplicate fields within a declaration.
   writer. Adding another reference can change aliases in the next render.
 
 Raw text is trusted Python, not a template. To find names, `render()` parses
-the written lines with the Python 3.12 grammar, with a placeholder standing in
-for each type reference. Lines that are not valid Python 3.12 raise
-`CodegenError`, including syntax added in later versions. Callers supply blank
-lines between declarations.
+the written lines with the Python 3.12 grammar, with a unique placeholder
+standing in for each type reference. Lines that are not valid Python 3.12 raise
+`CodegenError`, including syntax added in later versions. So do lines that raise
+`SyntaxWarning`, such as an invalid escape sequence in `"""Match \d+."""`;
+later Python versions will reject them. Callers supply blank lines between
+declarations.
+
+The analysis reads the syntax tree rather than `symtable`, whose results change
+between Python versions and omit annotations under `from __future__ import
+annotations`. A reference joined to raw text, such as `obj.` followed by a
+reference, has no scope of its own. It is treated as visible to every local
+name.
 
 Pass every builtin or imported name as a type reference, not just annotations.
 A reference can appear anywhere in a line, so defaults such as
 `field(default_factory=list)` and base classes such as `StrEnum` get the same
 aliases. If those names are written as raw text, a field with the same name
 replaces them in the class body. `render()` raises `CodegenError` when raw text
-in a class body uses a builtin or module-level name that the same class also
-defines. The order does not matter, because annotations are evaluated against the
-finished class. Method bodies are not checked, because they cannot see class
-members. Other names defined in the class, such as a property used by its own
-`@value.setter`, are allowed.
+in a class body names a builtin or module-level name that resolves to a member
+of the same class instead:
+
+* In an annotation, including a method signature, any member other than a
+  nested class shadows the name. Annotations are evaluated later, against the
+  finished class, so order does not matter. An annotation naming a nested class
+  means that class.
+* In other code, such as defaults, decorators and base classes, only a field
+  (an annotated name) bound by an earlier statement shadows the name. This code
+  runs in order, so `list: list[str] = field(default_factory=list)` still sees
+  the builtin in its own default. A field holds a default value, so referring to
+  it by name is almost always a mistake. Other members are often referenced on
+  purpose, as with `@type.setter` for a `type` property or an enum alias such as
+  `LIST = list`.
+
+Method bodies, nested classes and comprehensions are not checked, because they
+cannot see class members.
 
 ## Annotations and imports
 
@@ -89,15 +112,17 @@ import `smithy_core`.
 
 ## Names that collide
 
-An import matching a declaration, local name, builtin, the future import's
-`annotations` name, or another imported type uses a module-derived alias.
+An import uses a module-derived alias when its name matches a module-level
+name, a local name visible where it is referenced, a builtin, the future
+import's `annotations` name, or another imported type.
 For example, `decimal.Decimal` becomes `_decimal_Decimal`. Dots in a module
 path become underscores. All imports sharing a short name receive aliases,
 regardless of the order they were written.
 
-A field named `list` makes builtin list references use `_builtins.list[T]`, with
-`import builtins as _builtins`. An alias that still collides raises
-`CodegenError`. The writer never adds numbered suffixes or renames declarations.
+A field named `list` makes builtin list references in that class use
+`_builtins.list[T]`, with `import builtins as _builtins`. An alias that still
+collides raises `CodegenError`. The writer never adds numbered suffixes or
+renames declarations.
 The builtin-name list combines Python 3.12 through 3.15, including
 platform-specific names, so imports do not depend on the generator host.
 Update the list when adding support for another Python version.
@@ -109,8 +134,9 @@ follow the same comparison rules, so equivalent spellings do not cause self-impo
 Equivalent references share one import, using the lexicographically smallest
 supplied module/name pair so the choice does not depend on reference order.
 
-A same-module reference whose name is also a local name raises `CodegenError`.
-This first version does not add self-imports or aliases for local declarations.
+A same-module reference whose name is a local name visible where it is
+referenced raises `CodegenError`. This first version does not add self-imports
+or aliases for local declarations.
 
 The writer returns source in memory. File output, documentation conversion and
 actual declaration generation remain separate follow-ups.

@@ -5,12 +5,14 @@ import builtins
 import importlib.util
 import re
 import sys
+import warnings
 from decimal import Decimal
 from pathlib import Path
 from types import ModuleType
 from typing import get_type_hints
 
 import pytest
+from smithy_python.exceptions import CodegenError
 from smithy_python.symbols import TypeReference
 from smithy_python.writer import PythonWriter
 
@@ -285,8 +287,6 @@ def test_binding_conflicts(
     refs: tuple[TypeReference, ...],
     prefix: str,
 ) -> None:
-    from smithy_python.exceptions import CodegenError
-
     writer = PythonWriter("models")
     for name in declarations:
         writer.line(name, " = None")
@@ -295,8 +295,8 @@ def test_binding_conflicts(
         writer.line("pass")
         for name in locals_:
             writer.line(name, " = None")
-    for ref in refs:
-        writer.line("value: ", ref)
+        for ref in refs:
+            writer.line("value: ", ref)
     with pytest.raises(CodegenError, match="^" + re.escape(prefix)):
         writer.render()
 
@@ -315,50 +315,141 @@ def test_equivalent_import_names_are_aliased() -> None:
     )
 
 
-@pytest.mark.parametrize(
-    "names,expected", [(("Node", "Node"), "Node"), (("K", "\u212a"), "K")]
-)
-def test_duplicate_classes_fail_at_render(
-    names: tuple[str, str], expected: str
+def test_module_names_can_be_rebound(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from smithy_python.exceptions import CodegenError
-
-    writer = PythonWriter("models")
-    for name in names:
-        writer.line("class ", name, ":")
+    writer = PythonWriter("written_models")
+    writer.line("if ", TypeReference("version_info", "sys"), " >= (3, 13):")
+    with writer.indent():
+        writer.line("class Node:")
         with writer.indent():
-            writer.line("pass")
-    message = f"Duplicate generated declaration: {expected!r}"
-    with pytest.raises(CodegenError, match="^" + re.escape(message) + "$"):
-        writer.render()
+            writer.line("value: ", TypeReference("int", "builtins"))
+    writer.line("else:")
+    with writer.indent():
+        writer.line("class Node:")
+        with writer.indent():
+            writer.line("value: ", TypeReference("int", "builtins"))
+    writer.line()
+    writer.line("@", TypeReference("overload", "typing"))
+    writer.line("def build(value: ", TypeReference("int", "builtins"), ") -> None: ...")
+    writer.line("def build(value: ", TypeReference("object", "builtins"), ") -> None:")
+    with writer.indent():
+        writer.line("pass")
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    assert get_type_hints(module.Node) == {"value": int}
 
 
 @pytest.mark.parametrize(
     "source",
     [
-        "list = None",
-        "class Holder:\n    list = None",
-        "def build(list):\n    pass",
-        "def build():\n    list = None",
-        "for list in ():\n    pass",
-        "import json as list",
-        "from json import loads as list",
-        "try:\n    pass\nexcept Exception as list:\n    pass",
-        "with open('x') as list:\n    pass",
-        "build = lambda list: None",
-        "values = [None for list in ()]",
-        "match None:\n    case list:\n        pass",
-        "match {}:\n    case {**list}:\n        pass",
-        "type Alias[list] = None",
+        "list = None\nvalue: {ref}",
+        "class Holder:\n    list = None\n    value: {ref}",
+        "def build(list):\n    return {ref}",
+        "def build():\n    list = None\n    return {ref}",
+        "def build():\n    global list\n    list = None\nvalue: {ref}",
+        "def outer():\n    list = None\n    def inner():\n        return {ref}",
+        "def outer():\n"
+        "    list = None\n"
+        "    def inner():\n"
+        "        nonlocal list\n"
+        "        list = 1\n"
+        "        return {ref}",
+        "def build():\n    [(list := None) for _ in ()]\n    return {ref}",
+        "for list in ():\n    pass\nvalue: {ref}",
+        "import json as list\nvalue: {ref}",
+        "from json import loads as list\nvalue: {ref}",
+        "try:\n    pass\nexcept Exception as list:\n    pass\nvalue: {ref}",
+        "with open('x') as list:\n    pass\nvalue: {ref}",
+        "build = lambda list: {ref}",
+        "values = [{ref} for list in ()]",
+        "match None:\n    case list:\n        pass\nvalue: {ref}",
+        "match {}:\n    case {**list}:\n        pass\nvalue: {ref}",
+        "type Alias[list] = {ref}",
+        "def build[list](value: {ref}) -> None: ...",
+        "class Holder:\n    list = None\n    def build(self) -> {ref}: ...",
     ],
 )
-def test_names_are_read_from_written_lines(source: str) -> None:
+def test_names_visible_to_a_reference_are_reserved(source: str) -> None:
     writer = PythonWriter("models")
-    writer.line(source)
-    writer.line("value: ", TypeReference("list", "builtins"))
+    before, after = source.split("{ref}")
+    writer.line(before, TypeReference("list", "builtins"), after)
     rendered = writer.render()
     assert "import builtins as _builtins" in rendered
-    assert rendered.endswith("value: _builtins.list\n")
+    assert rendered.endswith(source.replace("{ref}", "_builtins.list") + "\n")
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "def build(list): ...\nvalue: {ref}",
+        "def build():\n    list = None\nvalue: {ref}",
+        "values = [None for list in ()]\nvalue: {ref}",
+        # Methods, nested classes and comprehensions cannot see class members.
+        "class Holder:\n    list = None\n    def build(self):\n        return {ref}",
+        "class Holder:\n    list = None\n    class Inner:\n        value: {ref}",
+        "class Holder:\n    list = None\n    values = [{ref} for _ in ()]",
+    ],
+)
+def test_names_hidden_from_a_reference_are_not_reserved(source: str) -> None:
+    writer = PythonWriter("models")
+    before, after = source.split("{ref}")
+    writer.line(before, TypeReference("list", "builtins"), after)
+    rendered = writer.render()
+    assert "import builtins" not in rendered
+    assert rendered.endswith(source.replace("{ref}", "list") + "\n")
+
+
+@pytest.mark.parametrize(
+    "before,after",
+    [
+        ('value: "', '"'),  # A string annotation has no scope in the syntax tree.
+        ("value = ", "_suffix"),  # Joined to raw text, the reference is not a name.
+    ],
+)
+def test_unscoped_reference_sees_every_local_name(before: str, after: str) -> None:
+    writer = PythonWriter("models")
+    writer.line("def build():")
+    with writer.indent():
+        writer.line("Decimal = 1")
+    writer.line(before, TypeReference("Decimal", "decimal"), after)
+    assert "from decimal import Decimal as _decimal_Decimal" in writer.render()
+
+
+def shape_factory(*returned: str | TypeReference) -> PythonWriter:
+    writer = PythonWriter("written_models")
+    writer.line("class Shape:")
+    with writer.indent():
+        writer.line("pass")
+    writer.line()
+    writer.line("def make() -> ", TypeReference("Shape", "written_models"), ":")
+    with writer.indent():
+        writer.line("Shape = 1")
+        writer.line("return ", *returned)
+    return writer
+
+
+def test_function_local_does_not_conflict_with_module_reference(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    writer = shape_factory("Shape")
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    assert get_type_hints(module.make) == {"return": module.Shape}
+
+
+def test_function_local_conflicts_with_reference_in_its_body() -> None:
+    writer = shape_factory(TypeReference("Shape", "written_models"), "()")
+    with pytest.raises(CodegenError, match=r"^Same-module reference"):
+        writer.render()
+
+
+def test_placeholder_spelling_cannot_hide_a_name() -> None:
+    writer = PythonWriter("models")
+    writer.line("_smithy_reference_0_ = 1")
+    writer.line("value: ", TypeReference("_smithy_reference_0_", "other"))
+    assert (
+        "from other import _smithy_reference_0_ as _other__smithy_reference_0_"
+        in writer.render()
+    )
 
 
 @pytest.mark.parametrize(
@@ -375,15 +466,25 @@ def test_names_are_read_from_written_lines(source: str) -> None:
             "class Node:\n    field: int = 0\n    tags: int = field(default=0)",
             "field",
         ),
-        ("class Node:\n    list = None\n    def build(self, kind=list): ...", "list"),
+        ("class Node:\n    list: int = 0\n    def build(self, kind=list): ...", "list"),
         ("class Node:\n    list = None\n    def build(self) -> list: ...", "list"),
-        ("class Node:\n    list = None\n    class Inner(list): ...", "list"),
-        ("class Node:\n    \uff4c\uff49\uff53\uff54 = None\n    items = list", "list"),
+        (
+            "class Node:\n    list = None\n    def build[T](self) -> list[T]: ...",
+            "list",
+        ),
+        ("class Node:\n    def list(self): ...\n    items: list[int]", "list"),
+        ("class Node:\n    list: int = 0\n    class Inner(list): ...", "list"),
+        (
+            "class Node:\n    list: int = 0\n    tags = list\n    list: int = 1",
+            "list",
+        ),
+        (
+            "class Node:\n    \uff4c\uff49\uff53\uff54: int = 0\n    items = list",
+            "list",
+        ),
     ],
 )
 def test_raw_names_shadowed_in_class_fail(source: str, name: str) -> None:
-    from smithy_python.exceptions import CodegenError
-
     writer = PythonWriter("models")
     writer.line(source)
     message = f"Raw name {name!r} in class Node is shadowed by a class member"
@@ -400,9 +501,24 @@ def test_raw_names_shadowed_in_class_fail(source: str, name: str) -> None:
         "class Node:\n"
         "    @property\n    def value(self): ...\n"
         "    @value.setter\n    def value(self, item): ...",
+        "class Node:\n"
+        "    @property\n    def type(self): ...\n"
+        "    @type.setter\n    def type(self, item): ...",
         "class Node:\n    count = 1\n    total = count + 1",
+        # Members other than fields may be referenced in later class-body code.
+        "class Node:\n    list = 1\n    LIST = list",
+        # Code that runs before a field is bound still sees the builtin.
+        "class Node:\n    items = [x for x in range(3)]\n    range: int = 0",
+        "class Node:\n    list: int = len([])\n    len: int = 0",
+        # An annotation naming a nested class means that class.
+        "class Config: ...\nclass Node:\n    class Config: ...\n    config: Config",
         # Class bodies do not see an enclosing class's members.
         "class Node:\n    list = None\n    class Inner:\n        items = list",
+        # Type parameters are not class members.
+        "class Node:\n    def build[T](self, value: T) -> T: ...",
+        "def build[T](value: T) -> T: ...",
+        # Base classes run in order, including those of generic classes.
+        "class Node:\n    list = None\n    class Inner[T](list): ...",
         "class Node:\n    values = [list for list in ()]",
     ],
 )
@@ -420,13 +536,25 @@ def test_raw_names_not_shadowed_in_class_pass(source: str) -> None:
     ],
 )
 def test_invalid_python_fails_at_render(line: str) -> None:
-    from smithy_python.exceptions import CodegenError
-
     writer = PythonWriter("models")
     writer.line(line)
     message = "Written lines are not valid Python 3.12"
     with pytest.raises(CodegenError, match="^" + re.escape(message)):
         writer.render()
+
+
+@pytest.mark.parametrize("strict", [False, True])
+def test_syntax_warnings_fail_at_render(strict: bool) -> None:
+    writer = PythonWriter("models")
+    writer.line("class Node:")
+    with writer.indent():
+        writer.line('"""Match \\d+."""')
+    # Python 3.14 rewords the warning; both versions name the escape sequence.
+    message = re.escape("Written lines raise SyntaxWarning (line 2): ") + ".*escape"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error" if strict else "default")
+        with pytest.raises(CodegenError, match="^" + message):
+            writer.render()
 
 
 def test_builtin_names_cover_running_interpreter() -> None:
@@ -535,8 +663,6 @@ def test_future_import_name_is_reserved() -> None:
     ],
 )
 def test_only_none_literal_can_omit_module(reference: TypeReference) -> None:
-    from smithy_python.exceptions import CodegenError
-
     writer = PythonWriter("models")
     writer.line("value: ", reference)
     with pytest.raises(CodegenError, match="module"):
