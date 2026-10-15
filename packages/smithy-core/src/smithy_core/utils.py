@@ -252,3 +252,18 @@ def remove_dot_segments(path: str, remove_consecutive_slashes: bool = False) -> 
     if remove_consecutive_slashes:
         result = result.replace("//", "/")
     return result
+
+
+def close(stream: Any) -> None:
+    """Close a synchronous stream if it exposes a close method."""
+    if (close := getattr(stream, "close", None)) is not None:
+        close()
+
+
+def seek(stream: Any, offset: int, whence: int = 0) -> int | None:
+    """Seek a synchronous stream to a specified point."""
+    if (seekable := getattr(stream, "seekable", None)) is not None and not seekable():
+        return None
+    if (seek := getattr(stream, "seek", None)) is not None:
+        return seek(offset, whence)
+    return None
