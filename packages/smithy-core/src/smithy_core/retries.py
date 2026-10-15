@@ -290,7 +290,7 @@ class CubicCalculator:
 
     def __init__(
         self,
-        starting_max_rate: float = 0.5,
+        starting_max_rate: float = 0,
         start_time: float | None = None,
     ):
         """Initialize a new CubicCalculator.
@@ -298,9 +298,9 @@ class CubicCalculator:
         :param starting_max_rate: Initial maximum request per second.
         :param start_time: Initial time of the CubicCalculator.
         """
-        if starting_max_rate <= 0:
+        if starting_max_rate < 0:
             raise ValueError(
-                f"starting_max_rate must be positive, got {starting_max_rate}"
+                f"starting_max_rate must not be negative, got {starting_max_rate}"
             )
         if start_time is None:
             start_time = time.monotonic()

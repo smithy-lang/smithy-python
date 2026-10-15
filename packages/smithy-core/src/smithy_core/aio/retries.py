@@ -618,7 +618,7 @@ class AdaptiveRetryStrategy(StandardRetryStrategy):
     throttled and wasted on retries.
     """
 
-    STARTING_MAX_RATE = 0.5
+    STARTING_MAX_RATE = 0
 
     def __init__(
         self,

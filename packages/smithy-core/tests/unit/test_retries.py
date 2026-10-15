@@ -472,18 +472,18 @@ class TestRateLimiter:
             assert token_bucket.current_capacity < 25
 
     async def test_sending_rate_sequence(self):
-        # Each step is (throttled, timestamp, expected measured rate, expected new
-        # rate). The new rate isn't checked until the first throttle.
-        steps: list[tuple[bool, float, float, float | None]] = [
-            (False, 0.2, 0.0, None),
-            (False, 0.4, 0.0, None),
-            (False, 0.6, 4.8, None),
-            (False, 0.8, 4.8, None),
-            (False, 1.0, 4.16, None),
-            (False, 1.2, 4.16, None),
-            (False, 1.4, 4.16, None),
-            (False, 1.6, 5.632, None),
-            (False, 1.8, 5.632, None),
+        # Each step is (throttled, timestamp, expected measured rate, expected fill
+        # rate of the bucket)
+        steps = [
+            (False, 0.2, 0.0, 0.5),
+            (False, 0.4, 0.0, 0.5),
+            (False, 0.6, 4.8, 0.5),
+            (False, 0.8, 4.8, 0.5),
+            (False, 1.0, 4.16, 0.5),
+            (False, 1.2, 4.16, 0.6912),
+            (False, 1.4, 4.16, 1.0976),
+            (False, 1.6, 5.632, 1.6384),
+            (False, 1.8, 5.632, 2.3328),
             (True, 2.0, 4.3264, 3.02848),
             (False, 2.2, 4.3264, 3.486639),
             (False, 2.4, 4.3264, 3.821874),
@@ -494,7 +494,6 @@ class TestRateLimiter:
             (False, 3.4, 4.333056, 3.452226),
         ]
         now = 0.0
-        new_rates: list[float] = []
         with patch(
             "smithy_core.aio.retries.time", SimpleNamespace(monotonic=lambda: now)
         ):
@@ -506,23 +505,15 @@ class TestRateLimiter:
                 rate_tracker=tracker,
                 rate_limiter_enabled=False,
             )
-            set_rate = token_bucket._set_rate  # type: ignore[reportPrivateUsage]
 
-            def record_rate(rate: float) -> None:
-                new_rates.append(rate)
-                set_rate(rate)
-
-            token_bucket._set_rate = record_rate  # type: ignore[method-assign]
-
-            for throttled, timestamp, measured_rate, new_rate in steps:
+            for throttled, timestamp, measured_rate, fill_rate in steps:
                 now = timestamp
                 await limiter.after_receiving_response(throttling_error=throttled)
 
                 assert tracker.measured_client_rate == pytest.approx(  # type: ignore
                     measured_rate, abs=1e-6
                 )
-                if new_rate is not None:
-                    assert new_rates[-1] == pytest.approx(new_rate, abs=1e-6)  # type: ignore
+                assert token_bucket.fill_rate == pytest.approx(fill_rate, abs=1e-6)  # type: ignore
 
     async def test_calculated_rate_is_capped_at_2x_measured_rate(self):
         with patch("time.monotonic") as mock_time:
