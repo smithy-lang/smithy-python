@@ -152,13 +152,13 @@ class TestTokenBucket:
     @pytest.mark.asyncio
     async def test_initial_state(self):
         token_bucket = TokenBucket()
-        assert token_bucket.current_capacity == token_bucket.MIN_CAPACITY
+        assert token_bucket.current_capacity == 0
         assert token_bucket.max_capacity == token_bucket.MIN_CAPACITY
         assert token_bucket.fill_rate == token_bucket.MIN_FILL_RATE
 
     @pytest.mark.asyncio
     async def test_acquire_succeeds_immediately_within_capacity(self):
-        token_bucket = TokenBucket()
+        token_bucket = TokenBucket(curr_capacity=1)
 
         with patch("smithy_core.aio.retries.asyncio.wait_for") as mock_wait_for:
             await token_bucket.acquire(1)
@@ -181,7 +181,7 @@ class TestTokenBucket:
 
     @pytest.mark.asyncio
     async def test_update_bucket_updates_rate(self):
-        token_bucket = TokenBucket()
+        token_bucket = TokenBucket(curr_capacity=1)
 
         await token_bucket.update_rate(5.0)
         assert token_bucket.fill_rate == 5.0
@@ -255,9 +255,9 @@ class TestTokenBucket:
         await task
 
     async def test_acquire_does_not_wait_past_timeout(self):
-        # At the minimum fill rate a token takes 2s to refill, far past the timeout
+        # The bucket starts empty, and at the minimum fill rate a token takes 2s to
+        # refill, far past the timeout
         token_bucket = TokenBucket(timeout=0.05)
-        await token_bucket.acquire(1)
 
         start = time.monotonic()
         with pytest.raises(TimeoutError):
@@ -269,7 +269,7 @@ class TestTokenBucket:
         token_bucket = TokenBucket(fill_rate=20.0)
 
         async def contended_acquires():
-            # The bucket starts with one token, so the second acquire has to wait
+            # The bucket starts empty, so both acquires have to wait
             await asyncio.gather(token_bucket.acquire(1), token_bucket.acquire(1))
 
         asyncio.run(contended_acquires())
@@ -356,7 +356,7 @@ class TestRateLimiter:
         "rate_limiter_enabled, current_bucket_capacity, expected_bucket_capacity_after_acquire",
         [
             (True, 2.0, 1.0),
-            (False, 0, 1.0),
+            (False, 1.0, 1.0),
         ],
     )
     async def test_token_consumption_before_request_scenarios(
@@ -436,7 +436,7 @@ class TestRateLimiter:
     async def test_raises_timeout_error_when_token_acquisition_takes_30_secs(self):
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 31]
-            token_bucket = TokenBucket(curr_capacity=0)
+            token_bucket = TokenBucket(curr_capacity=1)
             calculator = CubicCalculator()
             tracker = RequestRateTracker()
             limiter = ClientRateLimiter(
@@ -453,7 +453,7 @@ class TestRateLimiter:
     async def test_tokens_accumulation_after_numerous_successful_responses(self):
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [i * 0.01 for i in range(5000)]
-            token_bucket = TokenBucket(curr_capacity=0)
+            token_bucket = TokenBucket(curr_capacity=1)
             calculator = CubicCalculator()
             tracker = RequestRateTracker()
             limiter = ClientRateLimiter(

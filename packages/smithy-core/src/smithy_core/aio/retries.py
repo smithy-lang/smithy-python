@@ -316,19 +316,20 @@ class TokenBucket:
     def __init__(
         self,
         *,
-        curr_capacity: float = MIN_CAPACITY,
+        curr_capacity: float = 0,
         fill_rate: float = MIN_FILL_RATE,
         timeout: float = DEFAULT_TIMEOUT,
     ):
         """Initialize a new TokenBucket.
 
-        :param curr_capacity: Initial number of tokens in the bucket.
+        :param curr_capacity: Initial number of tokens in the bucket. The bucket can
+            hold at least MIN_CAPACITY tokens, but starts empty by default.
         :param fill_rate: Rate at which tokens are added to the bucket (tokens/second).
         :param timeout: Maximum time to wait for token acquisition before
         raising TimeoutError.
         """
-        self._curr_capacity: float = max(curr_capacity, self.MIN_CAPACITY)
-        self._max_capacity: float = self._curr_capacity
+        self._curr_capacity: float = curr_capacity
+        self._max_capacity: float = max(curr_capacity, self.MIN_CAPACITY)
         self._fill_rate: float = max(fill_rate, self.MIN_FILL_RATE)
         self._timeout = timeout
         self._last_timestamp: float = time.monotonic()

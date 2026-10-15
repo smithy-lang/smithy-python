@@ -235,7 +235,7 @@ class TestAdaptiveRetryPipeline:
                 [429, 429, 429],
                 [
                     (0.0, 429, 0.5, False),
-                    (0.0, 429, 1.0, False),
+                    (1.5, 429, 1.0, False),
                     (1.0, 429, None, True),
                 ],
             ),
@@ -243,8 +243,8 @@ class TestAdaptiveRetryPipeline:
                 [429, 500, 200],
                 [
                     (0.0, 429, 0.5, False),
-                    (0.0, 500, 1.0, False),
-                    (1.0, 200, None, True),
+                    (1.5, 500, 1.0, False),
+                    (0.0, 200, None, True),
                 ],
             ),
         ],
