@@ -11,21 +11,27 @@ _m = "member"
 _DL = "DoubleList"
 _FE = "FooEnum"
 _FOO = "FOO"
+_sV = "smithy.api#enumValue"
+_F = "Foo"
 _BAZ = "BAZ"
+_B = "Baz"
 _BAR = "BAR"
+_Ba = "Bar"
 _ONE = "ONE"
+_v = "1"
 _ZERO = "ZERO"
+_v_ = "0"
 _FEL = "FooEnumList"
 _IE = "IntegerEnum"
 _A = "A"
-_B = "B"
+_B_ = "B"
 _C = "C"
 _IEL = "IntegerEnumList"
 _IL = "IntegerList"
 _IS = "IntegerSet"
 _SM = "StringMap"
 _k = "key"
-_v = "value"
+_va = "value"
 _SL = "StringList"
 _SS = "StringSet"
 _TL = "TimestampList"
@@ -48,7 +54,7 @@ _qIS = "queryIntegerSet"
 _qL = "queryLong"
 _L = "Long"
 _qF = "queryFloat"
-_F = "Float"
+_Fl = "Float"
 _qD = "queryDouble"
 _D = "Double"
 _qDL = "queryDoubleList"
@@ -83,7 +89,6 @@ _ne = "nested"
 _BWXNO = "BodyWithXmlNameOutput"
 _BWXN = "BodyWithXmlName"
 _CNED = "ComplexNestedErrorData"
-_Fo = "Foo"
 _CE = "ComplexError"
 _smit = "smithy.api#error"
 _c = "client"
@@ -169,11 +174,12 @@ _GWE = "GreetingWithErrors"
 _HEPHI = "HttpEmptyPrefixHeadersInput"
 _pH = "prefixHeaders"
 _sPH = "smithy.api#httpPrefixHeaders"
-_v_ = ""
+_v__ = ""
 _sHp = "specificHeader"
 _HEPHO = "HttpEmptyPrefixHeadersOutput"
 _HEPH = "HttpEmptyPrefixHeaders"
 _SE = "StringEnum"
+_e = "enumvalue"
 _HEPI = "HttpEnumPayloadInput"
 _aEPI = "aws.protocoltests.restxml#EnumPayloadInput"
 _p = "payload"
@@ -359,7 +365,7 @@ _Em = "Empty"
 _ONSESO = "OmitsNullSerializesEmptyStringOutput"
 _ONSES = "OmitsNullSerializesEmptyString"
 _PWCEI = "PutWithContentEncodingInput"
-_e = "encoding"
+_en = "encoding"
 _CE_ = "Content-Encoding"
 _da = "data"
 _PWCEO = "PutWithContentEncodingOutput"
@@ -384,7 +390,7 @@ _RLM = "RenamedListMembers"
 _it = "item"
 _SSPI = "SimpleScalarPropertiesInput"
 _aSSPR = "aws.protocoltests.restxml#SimpleScalarPropertiesRequest"
-_sV = "stringValue"
+_sVt = "stringValue"
 _tBV = "trueBooleanValue"
 _fBV = "falseBooleanValue"
 _bV = "byteValue"
@@ -530,7 +536,7 @@ _aXMWXNRw = "aws.protocoltests.restxml#XmlMapWithXmlNamespaceResponse"
 _XMWXN = "XmlMapWithXmlNamespace"
 _XNL = "XmlNamespacedList"
 _XNN = "XmlNamespaceNested"
-_va = "values"
+_val = "values"
 _XNI = "XmlNamespacesInput"
 _aXNR = "aws.protocoltests.restxml#XmlNamespacesRequest"
 _XNO = "XmlNamespacesOutput"
@@ -552,7 +558,7 @@ _XNUS = "XmlNestedUnionStruct"
 _bVo = "booleanValue"
 _XUS = "XmlUnionShape"
 _uV = "unionValue"
-_sVt = "structValue"
+_sVtr = "structValue"
 _RSION = "RecursiveShapesInputOutputNested1"
 _RSIONe = "RecursiveShapesInputOutputNested2"
 _rM = "recursiveMember"
@@ -582,12 +588,25 @@ FOO_ENUM: StaticSchema = (
     _FE,
     0,
     (_FOO, _BAZ, _BAR, _ONE, _ZERO),
-    ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
+    (
+        (-1, {_sV: _F}),
+        (-1, {_sV: _B}),
+        (-1, {_sV: _Ba}),
+        (-1, {_sV: _v}),
+        (-1, {_sV: _v_}),
+    ),
 )
 
 FOO_ENUM_LIST: StaticSchema = (16, n0, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
 
-INTEGER_ENUM: StaticSchema = (15, n0, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (
+    15,
+    n0,
+    _IE,
+    0,
+    (_A, _B_, _C),
+    ((-1, {_sV: 1}), (-1, {_sV: 2}), (-1, {_sV: 3})),
+)
 
 INTEGER_ENUM_LIST: StaticSchema = (16, n0, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
 
@@ -595,7 +614,7 @@ INTEGER_LIST: StaticSchema = (16, n0, _IL, 0, (_m,), ((7, 0),))
 
 INTEGER_SET: StaticSchema = (16, n0, _IS, 0, (_m,), ((7, 0),))
 
-STRING_MAP: StaticSchema = (17, n0, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
+STRING_MAP: StaticSchema = (17, n0, _SM, 0, (_k, _va), ((3, 0), (3, 0)))
 
 STRING_LIST: StaticSchema = (16, n0, _SL, 0, (_m,), ((3, 0),))
 
@@ -641,7 +660,7 @@ ALL_QUERY_STRING_TYPES_INPUT: StaticSchema = (
         (INTEGER_LIST, {_sQ: _IL}),
         (INTEGER_SET, {_sQ: _IS}),
         (8, {_sQ: _L}),
-        (9, {_sQ: _F}),
+        (9, {_sQ: _Fl}),
         (10, {_sQ: _D}),
         (DOUBLE_LIST, {_sQ: _DL}),
         (2, {_sQ: _Bo}),
@@ -698,7 +717,7 @@ BODY_WITH_XML_NAME: StaticOperationSchema = (
     (),
 )
 
-COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n1, _CNED, 0, (_Fo,), ((3, 0),))
+COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n1, _CNED, 0, (_F,), ((3, 0),))
 
 COMPLEX_ERROR: StaticSchema = (
     18,
@@ -769,7 +788,7 @@ CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (
     n1,
     _CTPI,
     {_s: None},
-    (_v,),
+    (_va,),
     ((7, 0),),
 )
 
@@ -901,7 +920,7 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION: StaticOperationSchema = (
     (),
 )
 
-FOO_ENUM_MAP: StaticSchema = (17, n0, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
+FOO_ENUM_MAP: StaticSchema = (17, n0, _FEM, 0, (_k, _va), ((3, 0), (FOO_ENUM, 0)))
 
 FLATTENED_XML_MAP_INPUT: StaticSchema = (
     18,
@@ -936,7 +955,7 @@ FLATTENED_XML_MAP_WITH_XML_NAME_INPUT_OUTPUT_MAP: StaticSchema = (
     n1,
     _FXMWXNIOM,
     0,
-    (_k, _v),
+    (_k, _va),
     ((3, {_sN: _K}), (3, {_sN: _V})),
 )
 
@@ -980,7 +999,7 @@ FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT_MAP: StaticSchema = (
     n1,
     _FXMWXNOM,
     0,
-    (_k, _v),
+    (_k, _va),
     (
         (3, {_sN: _K, _sNm: MappingProxyType({"uri": "https://the-key.example.com"})}),
         (
@@ -1022,7 +1041,7 @@ FLATTENED_XML_MAP_WITH_XML_NAMESPACE: StaticOperationSchema = (
     (),
 )
 
-FOO_PREFIX_HEADERS: StaticSchema = (17, n1, _FPH, 0, (_k, _v), ((3, 0), (3, 0)))
+FOO_PREFIX_HEADERS: StaticSchema = (17, n1, _FPH, 0, (_k, _va), ((3, 0), (3, 0)))
 
 FRACTIONAL_SECONDS_INPUT: StaticSchema = (18, n1, _FSI, {_sSI: _sU, _s: None})
 
@@ -1074,7 +1093,7 @@ HTTP_EMPTY_PREFIX_HEADERS_INPUT: StaticSchema = (
     _HEPHI,
     {_s: None},
     (_pH, _sHp),
-    ((STRING_MAP, {_sPH: _v_}), (3, {_sH: _h})),
+    ((STRING_MAP, {_sPH: _v__}), (3, {_sH: _h})),
 )
 
 HTTP_EMPTY_PREFIX_HEADERS_OUTPUT: StaticSchema = (
@@ -1083,7 +1102,7 @@ HTTP_EMPTY_PREFIX_HEADERS_OUTPUT: StaticSchema = (
     _HEPHO,
     {_sm: None},
     (_pH, _sHp),
-    ((STRING_MAP, {_sPH: _v_}), (3, {_sH: _h})),
+    ((STRING_MAP, {_sPH: _v__}), (3, {_sH: _h})),
 )
 
 HTTP_EMPTY_PREFIX_HEADERS: StaticOperationSchema = (
@@ -1096,7 +1115,7 @@ HTTP_EMPTY_PREFIX_HEADERS: StaticOperationSchema = (
     (),
 )
 
-STRING_ENUM: StaticSchema = (14, n1, _SE, 0, (_V,), ((-1, 0),))
+STRING_ENUM: StaticSchema = (14, n1, _SE, 0, (_V,), ((-1, {_sV: _e}),))
 
 HTTP_ENUM_PAYLOAD_INPUT: StaticSchema = (
     18,
@@ -1735,7 +1754,7 @@ LIST_WITH_NAMESPACE: StaticSchema = (
     ((3, 0),),
 )
 
-NESTED_MAP: StaticSchema = (17, n1, _NM, 0, (_k, _v), ((3, 0), (FOO_ENUM_MAP, 0)))
+NESTED_MAP: StaticSchema = (17, n1, _NM, 0, (_k, _va), ((3, 0), (FOO_ENUM_MAP, 0)))
 
 NESTED_XML_MAPS_INPUT: StaticSchema = (
     18,
@@ -1770,7 +1789,7 @@ NESTED_XML_MAP_WITH_XML_NAME_INNER_MAP: StaticSchema = (
     n1,
     _NXMWXNIM,
     0,
-    (_k, _v),
+    (_k, _va),
     ((3, {_sN: _IK}), (3, {_sN: _IV})),
 )
 
@@ -1779,7 +1798,7 @@ NESTED_XML_MAP_WITH_XML_NAME_MAP: StaticSchema = (
     n1,
     _NXMWXNM,
     0,
-    (_k, _v),
+    (_k, _va),
     ((3, {_sN: _OK}), (NESTED_XML_MAP_WITH_XML_NAME_INNER_MAP, 0)),
 )
 
@@ -1930,7 +1949,7 @@ PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     n1,
     _PWCEI,
     {_s: None},
-    (_e, _da),
+    (_en, _da),
     ((3, {_sH: _CE_}), (3, 0)),
 )
 
@@ -1986,7 +2005,7 @@ QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL: StaticOperationSchema = (
     (),
 )
 
-STRING_LIST_MAP: StaticSchema = (17, n0, _SLM, 0, (_k, _v), ((3, 0), (STRING_LIST, 0)))
+STRING_LIST_MAP: StaticSchema = (17, n0, _SLM, 0, (_k, _va), ((3, 0), (STRING_LIST, 0)))
 
 QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT: StaticSchema = (
     18,
@@ -2042,7 +2061,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     n1,
     _SSPI,
     {_sSI: _aSSPR, _s: None},
-    (_f, _sV, _tBV, _fBV, _bV, _sVh, _iV, _lV, _fV, _dV),
+    (_f, _sVt, _tBV, _fBV, _bV, _sVh, _iV, _lV, _fV, _dV),
     (
         (3, {_sH: _XF}),
         (3, 0),
@@ -2062,7 +2081,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     n1,
     _SSPO,
     {_sSI: _aSSPRw, _sm: None},
-    (_f, _sV, _tBV, _fBV, _bV, _sVh, _iV, _lV, _fV, _dV),
+    (_f, _sVt, _tBV, _fBV, _bV, _sVh, _iV, _lV, _fV, _dV),
     (
         (3, {_sH: _XF}),
         (3, 0),
@@ -2313,7 +2332,7 @@ STRUCTURE_LIST_MEMBER: StaticSchema = (
     _SLMt,
     0,
     (_a, _b_),
-    ((3, {_sN: _v}), (3, {_sN: _o})),
+    ((3, {_sN: _va}), (3, {_sN: _o})),
 )
 
 STRUCTURE_LIST: StaticSchema = (
@@ -2426,7 +2445,7 @@ XML_MAPS_INPUT_OUTPUT_MAP: StaticSchema = (
     n1,
     _XMIOM,
     0,
-    (_k, _v),
+    (_k, _va),
     ((3, 0), (GREETING_STRUCT, 0)),
 )
 
@@ -2535,7 +2554,7 @@ INTEGER_ENUM_MAP: StaticSchema = (
     n0,
     _IEM,
     0,
-    (_k, _v),
+    (_k, _va),
     ((3, 0), (INTEGER_ENUM, 0)),
 )
 
@@ -2708,7 +2727,7 @@ XML_MAPS_XML_NAME_INPUT_OUTPUT_MAP: StaticSchema = (
     n1,
     _XMXNIOM,
     0,
-    (_k, _v),
+    (_k, _va),
     ((3, {_sN: _At}), (GREETING_STRUCT, {_sN: _Se})),
 )
 
@@ -2745,7 +2764,7 @@ XML_MAP_WITH_XML_NAMESPACE_INPUT_OUTPUT_MAP: StaticSchema = (
     n1,
     _XMWXNIOM,
     0,
-    (_k, _v),
+    (_k, _va),
     (
         (3, {_sN: _K, _sNm: MappingProxyType({"uri": "https://the-key.example.com"})}),
         (
@@ -2813,7 +2832,7 @@ XML_NAMESPACE_NESTED: StaticSchema = (
     n1,
     _XNN,
     {_sNm: MappingProxyType({"uri": "http://foo.com"})},
-    (_f, _va),
+    (_f, _val),
     (
         (3, {_sNm: MappingProxyType({"uri": "http://baz.com", "prefix": "baz"})}),
         (XML_NAMESPACED_LIST, {_sNm: MappingProxyType({"uri": "http://qux.com"})}),
@@ -2897,7 +2916,7 @@ XML_NESTED_UNION_STRUCT: StaticSchema = (
     n1,
     _XNUS,
     0,
-    (_sV, _bVo, _bV, _sVh, _iV, _lV, _fV, _dV),
+    (_sVt, _bVo, _bV, _sVh, _iV, _lV, _fV, _dV),
     ((3, 0), (2, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (10, 0)),
 )
 
@@ -2906,7 +2925,7 @@ XML_UNION_SHAPE: StaticSchema = (
     n1,
     _XUS,
     0,
-    (_sV, _bVo, _bV, _sVh, _iV, _lV, _fV, _dV, _uV, _sVt),
+    (_sVt, _bVo, _bV, _sVh, _iV, _lV, _fV, _dV, _uV, _sVtr),
     (
         (3, 0),
         (2, 0),

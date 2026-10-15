@@ -18,6 +18,7 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.traits.AuthDefinitionTrait;
 import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.EndpointTrait;
+import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.EventHeaderTrait;
 import software.amazon.smithy.model.traits.EventPayloadTrait;
@@ -87,6 +88,7 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     SensitiveTrait.ID,
                     IdempotencyTokenTrait.ID,
                     DefaultTrait.ID, // runtime populates default values
+                    EnumValueTrait.ID, // runtime builds enum members with their wire value
                     RequiredTrait.ID, // runtime enforcement
                     InputTrait.ID, // runtime input-structure nullability (@input members optional)
                     OutputTrait.ID, // runtime injects response_metadata on output structures

@@ -102,13 +102,16 @@ _QT = "QueryTimestamps"
 _RXSI = "RecursiveXmlShapesInput"
 _FE = "FooEnum"
 _FOO = "FOO"
+_sV = "smithy.api#enumValue"
 _BAZ = "BAZ"
+_B = "Baz"
 _BAR = "BAR"
+_Ba = "Bar"
 _ONE = "ONE"
+_v = "1"
 _ZERO = "ZERO"
+_v_ = "0"
 _SIPI = "SimpleInputParamsInput"
-_B = "Bar"
-_Ba = "Baz"
 _Bam = "Bam"
 _FV = "FloatValue"
 _Bo = "Boo"
@@ -130,7 +133,7 @@ _SIPO = "SimpleInputParamsOutput"
 _SIP = "SimpleInputParams"
 _SSXPI = "SimpleScalarXmlPropertiesInput"
 _SSXPO = "SimpleScalarXmlPropertiesOutput"
-_sV = "stringValue"
+_sVt = "stringValue"
 _eSV = "emptyStringValue"
 _tBV = "trueBooleanValue"
 _fBV = "falseBooleanValue"
@@ -166,7 +169,7 @@ _NSL = "NestedStringList"
 _SS = "StringSet"
 _SLM = "StructureListMember"
 _a = "a"
-_v = "value"
+_va = "value"
 _b = "b"
 _o = "other"
 _SLt = "StructureList"
@@ -220,7 +223,7 @@ _XL = "XmlLists"
 _XNI = "XmlNamespacesInput"
 _XNL = "XmlNamespacedList"
 _XNN = "XmlNamespaceNested"
-_va = "values"
+_val = "values"
 _XNO = "XmlNamespacesOutput"
 _n = "nested"
 _XN = "XmlNamespaces"
@@ -557,7 +560,13 @@ FOO_ENUM: StaticSchema = (
     _FE,
     0,
     (_FOO, _BAZ, _BAR, _ONE, _ZERO),
-    ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
+    (
+        (-1, {_sV: _F}),
+        (-1, {_sV: _B}),
+        (-1, {_sV: _Ba}),
+        (-1, {_sV: _v}),
+        (-1, {_sV: _v_}),
+    ),
 )
 
 SIMPLE_INPUT_PARAMS_INPUT: StaticSchema = (
@@ -565,7 +574,7 @@ SIMPLE_INPUT_PARAMS_INPUT: StaticSchema = (
     n0,
     _SIPI,
     {_s: None},
-    (_F, _B, _Ba, _Bam, _FV, _Bo, _Q, _FE, _HQN, _HQAXN, _UXN, _DQN, _DQAXN, _DXN),
+    (_F, _Ba, _B, _Bam, _FV, _Bo, _Q, _FE, _HQN, _HQAXN, _UXN, _DQN, _DQAXN, _DXN),
     (
         (3, 0),
         (3, 0),
@@ -608,7 +617,7 @@ SIMPLE_SCALAR_XML_PROPERTIES_OUTPUT: StaticSchema = (
     n0,
     _SSXPO,
     {_sm: None},
-    (_sV, _eSV, _tBV, _fBV, _bV, _sVh, _iV, _lV, _fV, _dV),
+    (_sVt, _eSV, _tBV, _fBV, _bV, _sVh, _iV, _lV, _fV, _dV),
     (
         (3, {_aQN: _IM}),
         (3, 0),
@@ -709,7 +718,7 @@ INTEGER_ENUM: StaticSchema = (
     _IE,
     0,
     (_A, _B_, _C),
-    ((-1, 0), (-1, 0), (-1, 0)),
+    ((-1, {_sV: 1}), (-1, {_sV: 2}), (-1, {_sV: 3})),
 )
 
 INTEGER_ENUM_LIST: StaticSchema = (16, n1, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
@@ -724,7 +733,7 @@ STRUCTURE_LIST_MEMBER: StaticSchema = (
     _SLM,
     0,
     (_a, _b),
-    ((3, {_sN: _v}), (3, {_sN: _o})),
+    ((3, {_sN: _va}), (3, {_sN: _o})),
 )
 
 STRUCTURE_LIST: StaticSchema = (
@@ -774,7 +783,7 @@ XML_EMPTY_LISTS: StaticOperationSchema = (
 
 XML_ENUMS_INPUT: StaticSchema = (18, n0, _XEI, {_sSI: _sU, _s: None})
 
-FOO_ENUM_MAP: StaticSchema = (17, n1, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
+FOO_ENUM_MAP: StaticSchema = (17, n1, _FEM, 0, (_k, _va), ((3, 0), (FOO_ENUM, 0)))
 
 FOO_ENUM_SET: StaticSchema = (16, n1, _FES, 0, (_m,), ((FOO_ENUM, 0),))
 
@@ -811,7 +820,7 @@ INTEGER_ENUM_MAP: StaticSchema = (
     n1,
     _IEM,
     0,
-    (_k, _v),
+    (_k, _va),
     ((3, 0), (INTEGER_ENUM, 0)),
 )
 
@@ -895,7 +904,7 @@ XML_NAMESPACE_NESTED: StaticSchema = (
     n0,
     _XNN,
     {_sNm: MappingProxyType({"uri": "http://foo.com"})},
-    (_f, _va),
+    (_f, _val),
     (
         (3, {_sNm: MappingProxyType({"uri": "http://baz.com", "prefix": "baz"})}),
         (XML_NAMESPACED_LIST, {_sNm: MappingProxyType({"uri": "http://qux.com"})}),

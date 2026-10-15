@@ -20,7 +20,22 @@ class ServiceError(ModeledError):
     """
 
 
-_registry = ModelRegistry(_schemas)
+_registry = ModelRegistry(
+    _schemas,
+    renames={},
+    index={
+        "NestedWithNamespace": "NESTED_WITH_NAMESPACE",
+        "SimpleScalarPropertiesInput": "SIMPLE_SCALAR_PROPERTIES_INPUT",
+        "SimpleScalarPropertiesOutput": "SIMPLE_SCALAR_PROPERTIES_OUTPUT",
+    },
+    shape_names=frozenset(
+        {
+            "NestedWithNamespace",
+            "SimpleScalarPropertiesInput",
+            "SimpleScalarPropertiesOutput",
+        }
+    ),
+)
 
 
 def __getattr__(name: str):
