@@ -1,12 +1,15 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import Sequence
+import logging
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from typing import Any
 
 from .deserializers import DeserializeableShape
 from .interfaces import TypedProperties
 from .serializers import SerializeableShape
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
@@ -122,8 +125,11 @@ class Interceptor[
         The `request` of the context will always be available. Other static properties
         will be None.
 
-        If exceptions are thrown by this hook, execution will jump to
-        `modify_before_completion` with the thrown exception as the `response`.
+        Exceptions thrown by this hook will be stored until all interceptors have had
+        their `read_before_serialization` invoked. Execution will then jump to
+        `modify_before_completion` with the thrown exception as the `response`. If
+        multiple `read_before_serialization` methods throw exceptions, the latest will
+        be used and earlier ones will be logged and dropped.
         """
 
     def read_after_serialization(
@@ -142,8 +148,11 @@ class Interceptor[
         The `request` and `transport_request` of the context will always be available.
         Other static properties will be None.
 
-        If exceptions are thrown by this hook, execution will jump to
-        `modify_before_completion` with the thrown exception as the `response`.
+        Exceptions thrown by this hook will be stored until all interceptors have had
+        their `read_after_serialization` invoked. Execution will then jump to
+        `modify_before_completion` with the thrown exception as the `response`. If
+        multiple `read_after_serialization` methods throw exceptions, the latest will be
+        used and earlier ones will be logged and dropped.
         """
 
     def modify_before_retry_loop(
@@ -235,8 +244,11 @@ class Interceptor[
         not include changes made in previous attempts (e.g. by request signers or other
         interceptors).
 
-        If exceptions are thrown by this hook, execution will jump to
+        Exceptions thrown by this hook will be stored until all interceptors have had
+        their `read_before_signing` invoked. Execution will then jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
+        If multiple `read_before_signing` methods throw exceptions, the latest will be
+        used and earlier ones will be logged and dropped.
         """
 
     def read_after_signing(
@@ -258,8 +270,11 @@ class Interceptor[
         not include changes made in previous attempts (e.g. by request signers or other
         interceptors).
 
-        If exceptions are thrown by this hook, execution will jump to
+        Exceptions thrown by this hook will be stored until all interceptors have had
+        their `read_after_signing` invoked. Execution will then jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
+        If multiple `read_after_signing` methods throw exceptions, the latest will be
+        used and earlier ones will be logged and dropped.
         """
 
     def modify_before_transmit(
@@ -308,8 +323,11 @@ class Interceptor[
         not include changes made in previous attempts (e.g. by request signers or other
         interceptors).
 
-        If exceptions are thrown by this hook, execution will jump to
+        Exceptions thrown by this hook will be stored until all interceptors have had
+        their `read_before_transmit` invoked. Execution will then jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
+        If multiple `read_before_transmit` methods throw exceptions, the latest will be
+        used and earlier ones will be logged and dropped.
         """
 
     def read_after_transmit(
@@ -334,8 +352,11 @@ class Interceptor[
         retries, the context will not include changes made in previous attempts (e.g.
         by request signers or other interceptors).
 
-        If exceptions are thrown by this hook, execution will jump to
+        Exceptions thrown by this hook will be stored until all interceptors have had
+        their `read_after_transmit` invoked. Execution will then jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
+        If multiple `read_after_transmit` methods throw exceptions, the latest will be
+        used and earlier ones will be logged and dropped.
         """
 
     def modify_before_deserialization(
@@ -389,8 +410,11 @@ class Interceptor[
         retries, the context will not include changes made in previous attempts (e.g.
         by request signers or other interceptors).
 
-        If exceptions are thrown by this hook, execution will jump to
+        Exceptions thrown by this hook will be stored until all interceptors have had
+        their `read_before_deserialization` invoked. Execution will then jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
+        If multiple `read_before_deserialization` methods throw exceptions, the latest
+        will be used and earlier ones will be logged and dropped.
         """
 
     def read_after_deserialization(
@@ -414,8 +438,11 @@ class Interceptor[
         include changes made in previous attempts (e.g. by request signers or other
         interceptors).
 
-        If exceptions are thrown by this hook, execution will jump to
+        Exceptions thrown by this hook will be stored until all interceptors have had
+        their `read_after_deserialization` invoked. Execution will then jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
+        If multiple `read_after_deserialization` methods throw exceptions, the latest
+        will be used and earlier ones will be logged and dropped.
         """
 
     def modify_before_attempt_completion(
@@ -469,9 +496,10 @@ class Interceptor[
         other interceptors).
 
         Exceptions thrown by this hook will be stored until all interceptors have had
-        their `read_after_attempt` invoked. If multiple `read_after_attempt` methods
-        throw exceptions, the latest will be used and earlier ones will be logged and
-        dropped. If the retry strategy determines that the execution is retryable,
+        their `read_after_attempt` invoked, and later interceptors will receive the
+        most recent exception as the `response`. If multiple `read_after_attempt`
+        methods throw exceptions, the latest will be used and earlier ones will be
+        logged and dropped. If the retry strategy determines that the execution is retryable,
         execution will then jump to `read_before_attempt`. Otherwise, execution will
         jump to `modify_before_completion` with the thrown exception as the `response`.
         """
@@ -521,8 +549,9 @@ class Interceptor[
         proceeded far enough for them to be generated.
 
         Exceptions thrown by this hook will be stored until all interceptors have had
-        their `read_after_execution` invoked. The exception will then be treated as the
-        final response. If multiple `read_after_execution` methods throw exceptions,
+        their `read_after_execution` invoked, and later interceptors will receive the
+        most recent exception as the `response`. The exception will then be treated as
+        the final response. If multiple `read_after_execution` methods throw exceptions,
         the latest will be used and earlier ones will be logged and dropped.
         """
 
@@ -547,113 +576,171 @@ class InterceptorChain(AnyInterceptor):
         return f"InterceptorChain(chain={self._chain!r})"
 
     def read_before_execution(self, context: InputContext[Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_execution(context)
+        self._invoke_all(lambda interceptor: interceptor.read_before_execution(context))
 
     def modify_before_serialization(self, context: InputContext[Any]) -> Any:
-        request = context.request
         for interceptor in self._chain:
             request = interceptor.modify_before_serialization(context)
-        return request
+            _check_returned(request, interceptor, "modify_before_serialization")
+            # Most hooks return what they were given, so only copy on a change.
+            if request is not context.request:
+                context = replace(context, request=request)
+        return context.request
 
     def read_before_serialization(self, context: InputContext[Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_serialization(context)
+        self._invoke_all(
+            lambda interceptor: interceptor.read_before_serialization(context)
+        )
 
     def read_after_serialization(self, context: RequestContext[Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_after_serialization(context)
+        self._invoke_all(
+            lambda interceptor: interceptor.read_after_serialization(context)
+        )
 
     def modify_before_retry_loop(self, context: RequestContext[Any, Any]) -> Any:
-        transport_request = context.transport_request
         for interceptor in self._chain:
             transport_request = interceptor.modify_before_retry_loop(context)
-        return transport_request
+            _check_returned(transport_request, interceptor, "modify_before_retry_loop")
+            if transport_request is not context.transport_request:
+                context = replace(context, transport_request=transport_request)
+        return context.transport_request
 
     def read_before_attempt(self, context: RequestContext[Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_attempt(context)
+        self._invoke_all(lambda interceptor: interceptor.read_before_attempt(context))
 
     def modify_before_signing(self, context: RequestContext[Any, Any]) -> Any:
-        transport_request = context.transport_request
         for interceptor in self._chain:
             transport_request = interceptor.modify_before_signing(context)
-        return transport_request
+            _check_returned(transport_request, interceptor, "modify_before_signing")
+            if transport_request is not context.transport_request:
+                context = replace(context, transport_request=transport_request)
+        return context.transport_request
 
     def read_before_signing(self, context: RequestContext[Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_signing(context)
+        self._invoke_all(lambda interceptor: interceptor.read_before_signing(context))
 
     def read_after_signing(self, context: RequestContext[Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_after_signing(context)
+        self._invoke_all(lambda interceptor: interceptor.read_after_signing(context))
 
     def modify_before_transmit(self, context: RequestContext[Any, Any]) -> Any:
-        transport_request = context.transport_request
         for interceptor in self._chain:
             transport_request = interceptor.modify_before_transmit(context)
-        return transport_request
+            _check_returned(transport_request, interceptor, "modify_before_transmit")
+            if transport_request is not context.transport_request:
+                context = replace(context, transport_request=transport_request)
+        return context.transport_request
 
     def read_before_transmit(self, context: RequestContext[Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_transmit(context)
+        self._invoke_all(lambda interceptor: interceptor.read_before_transmit(context))
 
     def read_after_transmit(self, context: ResponseContext[Any, Any, Any]) -> None:
-        for interceptor in self._chain:
-            interceptor.read_after_transmit(context)
+        self._invoke_all(lambda interceptor: interceptor.read_after_transmit(context))
 
     def modify_before_deserialization(
         self, context: ResponseContext[Any, Any, Any]
     ) -> Any:
-        transport_response = context.transport_response
         for interceptor in self._chain:
             transport_response = interceptor.modify_before_deserialization(context)
-        return transport_response
+            _check_returned(
+                transport_response, interceptor, "modify_before_deserialization"
+            )
+            if transport_response is not context.transport_response:
+                context = replace(context, transport_response=transport_response)
+        return context.transport_response
 
     def read_before_deserialization(
         self, context: ResponseContext[Any, Any, Any]
     ) -> None:
-        for interceptor in self._chain:
-            interceptor.read_before_deserialization(context)
+        self._invoke_all(
+            lambda interceptor: interceptor.read_before_deserialization(context)
+        )
 
     def read_after_deserialization(
         self, context: OutputContext[Any, Any, Any, Any]
     ) -> None:
-        for interceptor in self._chain:
-            interceptor.read_after_deserialization(context)
+        self._invoke_all(
+            lambda interceptor: interceptor.read_after_deserialization(context)
+        )
 
     def modify_before_attempt_completion(
         self, context: OutputContext[Any, Any, Any, Any | None]
     ) -> Any | Exception:
-        response = context.response
         for interceptor in self._chain:
             response = interceptor.modify_before_attempt_completion(context)
-        return response
+            _check_returned(response, interceptor, "modify_before_attempt_completion")
+            if response is not context.response:
+                context = replace(context, response=response)
+        return context.response
 
     def read_after_attempt(
         self, context: OutputContext[Any, Any, Any, Any | None]
     ) -> None:
-        for interceptor in self._chain:
-            interceptor.read_after_attempt(context)
+        self._invoke_all_passing_errors(
+            context, lambda interceptor, ctx: interceptor.read_after_attempt(ctx)
+        )
 
     def modify_before_completion(
         self, context: OutputContext[Any, Any, Any | None, Any | None]
     ) -> Any | Exception:
-        response = context.response
         for interceptor in self._chain:
-            response = interceptor.modify_before_attempt_completion(context)
-        return response
+            response = interceptor.modify_before_completion(context)
+            _check_returned(response, interceptor, "modify_before_completion")
+            if response is not context.response:
+                context = replace(context, response=response)
+        return context.response
 
     def read_after_execution(
         self, context: OutputContext[Any, Any, Any | None, Any | None]
     ) -> None:
+        self._invoke_all_passing_errors(
+            context, lambda interceptor, ctx: interceptor.read_after_execution(ctx)
+        )
+
+    def _invoke_all(self, hook: Callable[[AnyInterceptor], None]) -> None:
+        # A failing read hook mustn't keep later interceptors from running, so
+        # every interceptor is invoked before the last exception is raised.
         exception: Exception | None = None
         for interceptor in self._chain:
-            # Every one of these is supposed to be guaranteed to be called.
             try:
-                interceptor.read_after_execution(context)
+                hook(interceptor)
             except Exception as e:
+                if exception is not None:
+                    _log_dropped(exception)
+                exception = e
+        if exception is not None:
+            raise exception
+
+    def _invoke_all_passing_errors[C: OutputContext[Any, Any, Any, Any]](
+        self, context: C, hook: Callable[[AnyInterceptor, C], None]
+    ) -> None:
+        # Like _invoke_all, but each exception also becomes the response that later
+        # interceptors see, since it has replaced the attempt's or execution's result.
+        exception: Exception | None = None
+        for interceptor in self._chain:
+            try:
+                hook(interceptor, context)
+            except Exception as e:
+                if exception is not None:
+                    _log_dropped(exception)
                 context = replace(context, response=e)
                 exception = e
         if exception is not None:
             raise exception
+
+
+def _check_returned(value: Any, interceptor: AnyInterceptor, hook: str) -> None:
+    # A modify hook that changes its value in place and forgets to return it would
+    # otherwise hand None to the next interceptor, which then fails confusingly.
+    if value is None:
+        raise TypeError(
+            f"{interceptor!r}.{hook} returned None. Modify hooks must return the "
+            "value to use, even if they changed it in place."
+        )
+
+
+def _log_dropped(exception: Exception) -> None:
+    _LOGGER.debug(
+        "An interceptor raised an exception that was dropped because a later "
+        "interceptor raised one too.",
+        exc_info=exception,
+    )

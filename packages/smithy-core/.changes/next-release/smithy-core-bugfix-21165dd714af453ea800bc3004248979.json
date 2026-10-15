@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed the request pipeline ignoring the request returned by `modify_before_serialization`. The modified request is now serialized, used for endpoint resolution, and passed to later hooks if serialization fails. `InterceptorChain` now also raises a `TypeError` when a `modify_*` hook returns `None`, instead of passing `None` to the next interceptor."
+}

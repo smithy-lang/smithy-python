@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed `InterceptorChain` skipping later interceptors when one raised in a `read_*` hook. Every interceptor's read hook now runs, then the last exception is raised and earlier ones are logged. `read_after_attempt` also now passes each exception to later interceptors as the `response`, as `read_after_execution` already did."
+}

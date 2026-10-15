@@ -147,6 +147,7 @@ class StubEventReceiver:
 class StubProtocol:
     def __init__(self) -> None:
         self.serialize_request_calls = 0
+        self.serialized_inputs: list[Any] = []
         self.set_service_endpoint_calls = 0
         self.deserialize_response_calls = 0
         self.create_event_publisher_calls = 0
@@ -166,6 +167,7 @@ class StubProtocol:
 
     def serialize_request(self, **kwargs: Any) -> StubRequest:
         self.serialize_request_calls += 1
+        self.serialized_inputs.append(kwargs["input"])
         return StubRequest()
 
     def set_service_endpoint(self, *, request: Any, endpoint: Any) -> Any:
@@ -198,7 +200,11 @@ class StubEndpoint:
 
 
 class StubEndpointResolver:
+    def __init__(self) -> None:
+        self.resolved_inputs: list[Any] = []
+
     async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Any:
+        self.resolved_inputs.append(params.input)
         return StubEndpoint()
 
 
