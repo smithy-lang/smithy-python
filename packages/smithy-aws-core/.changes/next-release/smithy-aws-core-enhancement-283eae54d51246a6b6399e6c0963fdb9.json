@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "The `AWS_RETRY_MODE` environment variable and `retry_mode` config setting now accept `adaptive` instead of falling back to `standard` with a warning."
+}

@@ -3,12 +3,13 @@
 
 from dataclasses import replace
 from typing import Any, cast
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.eventstream import DuplexEventStream, InputEventStream
 from smithy_core.aio.interfaces import ClientTransport
+from smithy_core.aio.retries import AdaptiveRetryStrategy
 from smithy_core.auth import AuthOption
 from smithy_core.exceptions import CallError, SmithyError, UnsupportedTransportError
 from smithy_core.interceptors import (
@@ -108,6 +109,37 @@ async def test_response_metadata_attached_to_error() -> None:
 
     assert exc_info.value.response_metadata.request_id == "stub-request-id"
     assert exc_info.value.response_metadata.http_status_code == 200
+
+
+async def test_response_metadata_kept_when_retry_times_out_waiting_for_send_token() -> (
+    None
+):
+    # Adaptive mode: the first attempt is throttled, then the retry can't get a send
+    # token. The caller should still get the throttle with its response metadata.
+    harness = pipeline_harness(NonDuplexTransport())
+
+    async def throttle(**kwargs: Any) -> StubOutput:
+        raise CallError("Rate exceeded", is_retry_safe=True, is_throttling_error=True)
+
+    harness.protocol.deserialize_response = throttle  # type: ignore[method-assign]
+    strategy = AdaptiveRetryStrategy(max_attempts=3)
+    timeout = TimeoutError("Failed to acquire 1.0 tokens within 30.0s")
+
+    with (
+        patch.object(
+            strategy,
+            "acquire_from_token_bucket",
+            AsyncMock(side_effect=[None, timeout]),
+        ),
+        patch("smithy_core.aio.client.sleep", AsyncMock()),
+    ):
+        with pytest.raises(CallError, match="Rate exceeded") as exc_info:
+            await harness.pipeline(retryable_client_call(strategy))
+
+    assert harness.transport.send_calls == 1
+    assert exc_info.value.response_metadata.request_id == "stub-request-id"
+    assert exc_info.value.response_metadata.http_status_code == 200
+    assert exc_info.value.__notes__ == [f"Retry not attempted: {timeout}"]
 
 
 async def test_response_metadata_empty_when_no_response_received() -> None:

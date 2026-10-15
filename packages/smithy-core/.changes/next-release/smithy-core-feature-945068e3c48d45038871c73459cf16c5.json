@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added support for `adaptive` retry mode, which builds on standard retries by adding client-side rate limiting that slows the client's sending rate when a service throttles requests."
+}

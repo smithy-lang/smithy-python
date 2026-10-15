@@ -31,7 +31,7 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
 
 
             def dynamodb_retry_plugin(config: $1T) -> None:
-                \"\"\"Apply DynamoDB's standard-mode retry defaults for any option left unset.\"\"\"
+                \"\"\"Apply DynamoDB's standard and adaptive mode retry defaults for any option left unset.\"\"\"
                 retry_strategy = config.retry_strategy
                 if retry_strategy is not None and not isinstance(
                     retry_strategy, $2T
@@ -49,10 +49,11 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                     if config.source_of("max_attempts") == $4T.DEFAULT:
                         max_attempts = None
 
-                if retry_mode != "standard":
+                if retry_mode not in ("standard", "adaptive"):
                     return
 
-                config.retry_strategy = $3T(
+                strategy_cls = $7T if retry_mode == "adaptive" else $3T
+                config.retry_strategy = strategy_cls(
                     max_attempts=(
                         max_attempts
                         if max_attempts is not None
@@ -85,6 +86,10 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
         final Symbol standardRetryStrategy = Symbol.builder()
                 .namespace("smithy_core.aio.retries", ".")
                 .name("StandardRetryStrategy")
+                .build();
+        final Symbol adaptiveRetryStrategy = Symbol.builder()
+                .namespace("smithy_core.aio.retries", ".")
+                .name("AdaptiveRetryStrategy")
                 .build();
         final Symbol configSource = Symbol.builder()
                 .namespace("smithy_aws_core.config", ".")
@@ -122,7 +127,8 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                                                         standardRetryStrategy,
                                                         configSource,
                                                         exponentialBackoffStrategy,
-                                                        exponentialBackoffJitterType);
+                                                        exponentialBackoffJitterType,
+                                                        adaptiveRetryStrategy);
                                             });
                             return List.of(filename);
                         })

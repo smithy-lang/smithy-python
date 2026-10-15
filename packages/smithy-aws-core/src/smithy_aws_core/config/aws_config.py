@@ -78,10 +78,10 @@ class AsyncAwsConfig:
     """
 
     retry_mode: RetryStrategyType | None = None
-    """The retry mode to use. ``standard`` is the only accepted override.
+    """The retry mode to use. Accepted overrides are ``standard`` and ``adaptive``.
 
-    ``legacy`` and ``adaptive`` are rejected when set here; when they come from
-    the environment or a config file they warn and fall back to ``standard``.
+    ``legacy`` is rejected when set here; when it comes from the environment or a
+    config file it warns and falls back to ``standard``.
     """
 
     max_attempts: int | None = None

@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import random
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -10,7 +11,7 @@ from typing import Literal
 from .exceptions import RetryError
 from .interfaces import retries as retries_interface
 
-RetryStrategyType = Literal["simple", "standard"]
+RetryStrategyType = Literal["simple", "standard", "adaptive"]
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -270,3 +271,88 @@ class StandardRetryToken:
 
     quota_acquired: int = 0
     """The amount of quota acquired for this retry attempt."""
+
+
+class CubicCalculator:
+    """CubicCalculator calculates a new rate using a modified CUBIC algorithm.
+
+    CubicCalculator implements the CUBIC congestion control algorithm for
+    adaptive rate limiting. It dynamically adjusts request rates based on
+    throttling responses, reducing rates by 30% when throttled and
+    gradually increasing rates using a scale function when the request
+    is successful.
+    """
+
+    # Scale constant used to scale up requests
+    _SCALE_CONSTANT = 0.4
+    # Beta constant used to slow down requests
+    _BETA = 0.7
+
+    def __init__(
+        self,
+        starting_max_rate: float = 0,
+        start_time: float | None = None,
+    ):
+        """Initialize a new CubicCalculator.
+
+        :param starting_max_rate: Initial maximum request per second.
+        :param start_time: Initial time of the CubicCalculator.
+        """
+        if starting_max_rate < 0:
+            raise ValueError(
+                f"starting_max_rate must not be negative, got {starting_max_rate}"
+            )
+        if start_time is None:
+            start_time = time.monotonic()
+
+        self._last_max_rate = starting_max_rate
+        self._last_throttle_time = start_time
+        self._inflection_point_time = self.calculate_and_update_inflection_point()
+
+    def calculate_and_update_inflection_point(self) -> float:
+        """Calculate and update the CUBIC inflection point for rate recovery.
+
+        After throttling, the CUBIC curve returns to the previous maximum rate
+        after exactly `_inflection_point_time` seconds. Before this point, the
+        rate grows slowly. After this point, it grows rapidly.
+        :return: Inflection point time in seconds for the CUBIC algorithm.
+        """
+        self._inflection_point_time = (
+            (self._last_max_rate * (1 - self._BETA)) / self._SCALE_CONSTANT
+        ) ** (1 / 3.0)
+        return self._inflection_point_time
+
+    def calculate_scaled_request_rate(self, timestamp: float) -> float:
+        """Scale up the request rate after a successful response.
+
+        :param timestamp: Timestamp of the response.
+        :return: New calculated request rate based on CUBIC scaling.
+        """
+        dt = timestamp - self._last_throttle_time
+        calculated_rate = (
+            self._SCALE_CONSTANT * ((dt - self._inflection_point_time) ** 3)
+        ) + self._last_max_rate
+        return calculated_rate
+
+    def calculate_throttled_request_rate(
+        self, rate_to_use: float, timestamp: float
+    ) -> float:
+        """Throttle the request rate after a throttled response is received.
+
+        :param rate_to_use: Current request rate in use.
+        :param timestamp: Timestamp of the response.
+        :return: New calculated request rate based on CUBIC throttling.
+        """
+        self._last_max_rate = rate_to_use
+        self.calculate_and_update_inflection_point()
+        calculated_rate = rate_to_use * self._BETA
+        self._last_throttle_time = timestamp
+        return calculated_rate
+
+    @property
+    def last_max_rate(self) -> float:
+        return self._last_max_rate
+
+    @property
+    def last_throttle_time(self) -> float:
+        return self._last_throttle_time
