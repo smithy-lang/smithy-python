@@ -11,14 +11,20 @@ _m = "member"
 _DL = "DoubleList"
 _FE = "FooEnum"
 _FOO = "FOO"
+_sV = "smithy.api#enumValue"
+_F = "Foo"
 _BAZ = "BAZ"
+_B = "Baz"
 _BAR = "BAR"
+_Ba = "Bar"
 _ONE = "ONE"
+_v = "1"
 _ZERO = "ZERO"
+_v_ = "0"
 _FEL = "FooEnumList"
 _IE = "IntegerEnum"
 _A = "A"
-_B = "B"
+_B_ = "B"
 _C = "C"
 _IEL = "IntegerEnumList"
 _IL = "IntegerList"
@@ -26,7 +32,7 @@ _IS = "IntegerSet"
 _SL = "StringList"
 _SLM = "StringListMap"
 _k = "key"
-_v = "value"
+_va = "value"
 _SS = "StringSet"
 _TL = "TimestampList"
 n1 = "aws.protocoltests.restjson"
@@ -48,7 +54,7 @@ _qIS = "queryIntegerSet"
 _qL = "queryLong"
 _L = "Long"
 _qF = "queryFloat"
-_F = "Float"
+_Fl = "Float"
 _qD = "queryDouble"
 _D = "Double"
 _qDL = "queryDoubleList"
@@ -78,9 +84,8 @@ _sP = "smithy.api#eventPayload"
 _COD = "ClientOptionalDefaults"
 _smit = "smithy.api#default"
 _CNED = "ComplexNestedErrorData"
-_Fo = "Foo"
 _sN = "smithy.api#jsonName"
-_Foo = "Fooooo"
+_Fo = "Fooooo"
 _CE = "ComplexError"
 _smith = "smithy.api#error"
 _c = "client"
@@ -140,7 +145,7 @@ _dM = "defaultMap"
 _dE = "defaultEnum"
 _dIE = "defaultIntEnum"
 _eS = "emptyString"
-_v_ = ""
+_v__ = ""
 _fB = "falseBoolean"
 _eB = "emptyBlob"
 _zB = "zeroByte"
@@ -166,7 +171,7 @@ _DLi = "DialogList"
 _DM = "DialogMap"
 _DTI = "DocumentTypeInput"
 _aDTIO = "aws.protocoltests.restjson#DocumentTypeInputOutput"
-_sV = "stringValue"
+_sVt = "stringValue"
 _dV = "documentValue"
 _DTO = "DocumentTypeOutput"
 _DTo = "DocumentType"
@@ -275,6 +280,7 @@ _HEPHO = "HttpEmptyPrefixHeadersOutput"
 _HEPH = "HttpEmptyPrefixHeaders"
 _SEt = "StringEnum"
 _V = "V"
+_en = "enumvalue"
 _HEPI = "HttpEnumPayloadInput"
 _aEPI = "aws.protocoltests.restjson#EnumPayloadInput"
 _HEPO = "HttpEnumPayloadOutput"
@@ -494,7 +500,7 @@ _tV = "timestampValue"
 _eV = "enumValue"
 _lV = "listValue"
 _mV = "mapValue"
-_sVt = "structureValue"
+_sVtr = "structureValue"
 _rSV = "renamedStructureValue"
 _uV = "unionValue"
 _JUI = "JsonUnionsInput"
@@ -706,7 +712,7 @@ _PUWJNI = "PostUnionWithJsonNameInput"
 _PUWJNO = "PostUnionWithJsonNameOutput"
 _PUWJN = "PostUnionWithJsonName"
 _PWCEI = "PutWithContentEncodingInput"
-_en = "encoding"
+_enc = "encoding"
 _CE_ = "Content-Encoding"
 _PWCEO = "PutWithContentEncodingOutput"
 _PWCE = "PutWithContentEncoding"
@@ -852,12 +858,25 @@ FOO_ENUM: StaticSchema = (
     _FE,
     0,
     (_FOO, _BAZ, _BAR, _ONE, _ZERO),
-    ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
+    (
+        (-1, {_sV: _F}),
+        (-1, {_sV: _B}),
+        (-1, {_sV: _Ba}),
+        (-1, {_sV: _v}),
+        (-1, {_sV: _v_}),
+    ),
 )
 
 FOO_ENUM_LIST: StaticSchema = (16, n0, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
 
-INTEGER_ENUM: StaticSchema = (15, n0, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (
+    15,
+    n0,
+    _IE,
+    0,
+    (_A, _B_, _C),
+    ((-1, {_sV: 1}), (-1, {_sV: 2}), (-1, {_sV: 3})),
+)
 
 INTEGER_ENUM_LIST: StaticSchema = (16, n0, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
 
@@ -867,7 +886,7 @@ INTEGER_SET: StaticSchema = (16, n0, _IS, 0, (_m,), ((7, 0),))
 
 STRING_LIST: StaticSchema = (16, n0, _SL, 0, (_m,), ((3, 0),))
 
-STRING_LIST_MAP: StaticSchema = (17, n0, _SLM, 0, (_k, _v), ((3, 0), (STRING_LIST, 0)))
+STRING_LIST_MAP: StaticSchema = (17, n0, _SLM, 0, (_k, _va), ((3, 0), (STRING_LIST, 0)))
 
 STRING_SET: StaticSchema = (16, n0, _SS, 0, (_m,), ((3, 0),))
 
@@ -911,7 +930,7 @@ ALL_QUERY_STRING_TYPES_INPUT: StaticSchema = (
         (INTEGER_LIST, {_sQ: _IL}),
         (INTEGER_SET, {_sQ: _IS}),
         (8, {_sQ: _L}),
-        (9, {_sQ: _F}),
+        (9, {_sQ: _Fl}),
         (10, {_sQ: _D}),
         (DOUBLE_LIST, {_sQ: _DL}),
         (2, {_sQ: _Bo}),
@@ -942,14 +961,7 @@ BLOB_PAYLOAD_EVENT: StaticSchema = (18, n1, _BPE, 0, (_p,), ((1, {_sP: None}),))
 
 CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (18, n1, _COD, 0, (_m,), ((7, {_smit: 0}),))
 
-COMPLEX_NESTED_ERROR_DATA: StaticSchema = (
-    18,
-    n1,
-    _CNED,
-    0,
-    (_Fo,),
-    ((3, {_sN: _Foo}),),
-)
+COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n1, _CNED, 0, (_F,), ((3, {_sN: _Fo}),))
 
 COMPLEX_ERROR: StaticSchema = (
     18,
@@ -1020,7 +1032,7 @@ CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (
     n1,
     _CTPI,
     {_s: None},
-    (_v,),
+    (_va,),
     ((7, 0),),
 )
 
@@ -1067,14 +1079,21 @@ TEST_ENUM: StaticSchema = (
     _TE,
     0,
     (_FOO, _BAR, _BAZ),
-    ((-1, 0), (-1, 0), (-1, 0)),
+    ((-1, {_sV: _FOO}), (-1, {_sV: _BAR}), (-1, {_sV: _BAZ})),
 )
 
-TEST_INT_ENUM: StaticSchema = (15, n1, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+TEST_INT_ENUM: StaticSchema = (
+    15,
+    n1,
+    _TIE,
+    0,
+    (_ONE, _TWO),
+    ((-1, {_sV: 1}), (-1, {_sV: 2})),
+)
 
 TEST_STRING_LIST: StaticSchema = (16, n1, _TSL, 0, (_m,), ((3, 0),))
 
-TEST_STRING_MAP: StaticSchema = (17, n1, _TSM, 0, (_k, _v), ((3, 0), (3, 0)))
+TEST_STRING_MAP: StaticSchema = (17, n1, _TSM, 0, (_k, _va), ((3, 0), (3, 0)))
 
 DEFAULTS: StaticSchema = (
     18,
@@ -1131,9 +1150,9 @@ DEFAULTS: StaticSchema = (
         (TEST_STRING_MAP, {_smit: MappingProxyType[str, object]({})}),
         (TEST_ENUM, {_smit: _FOO}),
         (TEST_INT_ENUM, {_smit: 1}),
-        (3, {_smit: _v_}),
+        (3, {_smit: _v__}),
         (2, {_smit: False}),
-        (1, {_smit: _v_}),
+        (1, {_smit: _v__}),
         (5, {_smit: 0}),
         (6, {_smit: 0}),
         (7, {_smit: 0}),
@@ -1143,13 +1162,13 @@ DEFAULTS: StaticSchema = (
     ),
 )
 
-DENSE_BOOLEAN_MAP: StaticSchema = (17, n1, _DBM, 0, (_k, _v), ((3, 0), (2, 0)))
+DENSE_BOOLEAN_MAP: StaticSchema = (17, n1, _DBM, 0, (_k, _va), ((3, 0), (2, 0)))
 
-DENSE_NUMBER_MAP: StaticSchema = (17, n1, _DNM, 0, (_k, _v), ((3, 0), (7, 0)))
+DENSE_NUMBER_MAP: StaticSchema = (17, n1, _DNM, 0, (_k, _va), ((3, 0), (7, 0)))
 
-DENSE_SET_MAP: StaticSchema = (17, n1, _DSM, 0, (_k, _v), ((3, 0), (STRING_SET, 0)))
+DENSE_SET_MAP: StaticSchema = (17, n1, _DSM, 0, (_k, _va), ((3, 0), (STRING_SET, 0)))
 
-DENSE_STRING_MAP: StaticSchema = (17, n1, _DSMe, 0, (_k, _v), ((3, 0), (3, 0)))
+DENSE_STRING_MAP: StaticSchema = (17, n1, _DSMe, 0, (_k, _va), ((3, 0), (3, 0)))
 
 GREETING_STRUCT: StaticSchema = (18, n0, _GS, 0, (_hi,), ((3, 0),))
 
@@ -1158,7 +1177,7 @@ DENSE_STRUCT_MAP: StaticSchema = (
     n1,
     _DSMen,
     0,
-    (_k, _v),
+    (_k, _va),
     ((3, 0), (GREETING_STRUCT, 0)),
 )
 
@@ -1175,14 +1194,14 @@ DIALOG: StaticSchema = (
 
 DIALOG_LIST: StaticSchema = (16, n1, _DLi, 0, (_m,), ((DIALOG, 0),))
 
-DIALOG_MAP: StaticSchema = (17, n1, _DM, 0, (_k, _v), ((3, 0), (DIALOG, 0)))
+DIALOG_MAP: StaticSchema = (17, n1, _DM, 0, (_k, _va), ((3, 0), (DIALOG, 0)))
 
 DOCUMENT_TYPE_INPUT: StaticSchema = (
     18,
     n1,
     _DTI,
     {_sSI: _aDTIO, _s: None},
-    (_sV, _dV),
+    (_sVt, _dV),
     ((3, 0), (DOCUMENT, 0)),
 )
 
@@ -1191,7 +1210,7 @@ DOCUMENT_TYPE_OUTPUT: StaticSchema = (
     n1,
     _DTO,
     {_sSI: _aDTIO, _sm: None},
-    (_sV, _dV),
+    (_sVt, _dV),
     ((3, 0), (DOCUMENT, 0)),
 )
 
@@ -1205,7 +1224,14 @@ DOCUMENT_TYPE: StaticOperationSchema = (
     (),
 )
 
-DOCUMENT_VALUED_MAP: StaticSchema = (17, n1, _DVM, 0, (_k, _v), ((3, 0), (DOCUMENT, 0)))
+DOCUMENT_VALUED_MAP: StaticSchema = (
+    17,
+    n1,
+    _DVM,
+    0,
+    (_k, _va),
+    ((3, 0), (DOCUMENT, 0)),
+)
 
 DOCUMENT_TYPE_AS_MAP_VALUE_INPUT: StaticSchema = (
     18,
@@ -1380,7 +1406,7 @@ DUPLEX_STREAM_WITH_DISTINCT_STREAMS_INPUT: StaticSchema = (
     ((EVENT_STREAM, 16),),
 )
 
-SINGLETON_EVENT: StaticSchema = (18, n1, _SE, 0, (_v,), ((3, 0),))
+SINGLETON_EVENT: StaticSchema = (18, n1, _SE, 0, (_va,), ((3, 0),))
 
 SINGLETON_EVENT_STREAM: StaticSchema = (
     19,
@@ -1610,7 +1636,7 @@ HTTP_CHECKSUM_REQUIRED: StaticOperationSchema = (
     (),
 )
 
-STRING_MAP: StaticSchema = (17, n0, _SM, 0, (_k, _v), ((3, 0), (3, 0)))
+STRING_MAP: StaticSchema = (17, n0, _SM, 0, (_k, _va), ((3, 0), (3, 0)))
 
 HTTP_EMPTY_PREFIX_HEADERS_INPUT: StaticSchema = (
     18,
@@ -1618,7 +1644,7 @@ HTTP_EMPTY_PREFIX_HEADERS_INPUT: StaticSchema = (
     _HEPHI,
     {_s: None},
     (_pH, _sHp),
-    ((STRING_MAP, {_sPH: _v_}), (3, {_sH: _h})),
+    ((STRING_MAP, {_sPH: _v__}), (3, {_sH: _h})),
 )
 
 HTTP_EMPTY_PREFIX_HEADERS_OUTPUT: StaticSchema = (
@@ -1627,7 +1653,7 @@ HTTP_EMPTY_PREFIX_HEADERS_OUTPUT: StaticSchema = (
     _HEPHO,
     {_sm: None},
     (_pH, _sHp),
-    ((STRING_MAP, {_sPH: _v_}), (3, {_sH: _h})),
+    ((STRING_MAP, {_sPH: _v__}), (3, {_sH: _h})),
 )
 
 HTTP_EMPTY_PREFIX_HEADERS: StaticOperationSchema = (
@@ -1640,7 +1666,7 @@ HTTP_EMPTY_PREFIX_HEADERS: StaticOperationSchema = (
     (),
 )
 
-STRING_ENUM: StaticSchema = (14, n1, _SEt, 0, (_V,), ((-1, 0),))
+STRING_ENUM: StaticSchema = (14, n1, _SEt, 0, (_V,), ((-1, {_sV: _en}),))
 
 HTTP_ENUM_PAYLOAD_INPUT: StaticSchema = (
     18,
@@ -1828,7 +1854,7 @@ HTTP_PREFIX_HEADERS_IN_RESPONSE_OUTPUT: StaticSchema = (
     _HPHIRO,
     {_sm: None},
     (_pH,),
-    ((STRING_MAP, {_sPH: _v_}),),
+    ((STRING_MAP, {_sPH: _v__}),),
 )
 
 HTTP_PREFIX_HEADERS_IN_RESPONSE: StaticOperationSchema = (
@@ -1841,7 +1867,7 @@ HTTP_PREFIX_HEADERS_IN_RESPONSE: StaticOperationSchema = (
     (),
 )
 
-QUERY_MAP: StaticSchema = (17, n1, _QM, 0, (_k, _v), ((3, 0), (3, 0)))
+QUERY_MAP: StaticSchema = (17, n1, _QM, 0, (_k, _va), ((3, 0), (3, 0)))
 
 HTTP_QUERY_PARAMS_ONLY_OPERATION_INPUT: StaticSchema = (
     18,
@@ -2289,7 +2315,7 @@ JSON_BLOBS: StaticOperationSchema = (
     (),
 )
 
-FOO_ENUM_MAP: StaticSchema = (17, n0, _FEM, 0, (_k, _v), ((3, 0), (FOO_ENUM, 0)))
+FOO_ENUM_MAP: StaticSchema = (17, n0, _FEM, 0, (_k, _va), ((3, 0), (FOO_ENUM, 0)))
 
 FOO_ENUM_SET: StaticSchema = (16, n0, _FES, 0, (_m,), ((FOO_ENUM, 0),))
 
@@ -2342,7 +2368,7 @@ INTEGER_ENUM_MAP: StaticSchema = (
     n0,
     _IEM,
     0,
-    (_k, _v),
+    (_k, _va),
     ((3, 0), (INTEGER_ENUM, 0)),
 )
 
@@ -2398,7 +2424,7 @@ STRUCTURE_LIST_MEMBER: StaticSchema = (
     _SLMt,
     0,
     (_a_, _b_),
-    ((3, {_sN: _v}), (3, {_sN: _o})),
+    ((3, {_sN: _va}), (3, {_sN: _o})),
 )
 
 STRUCTURE_LIST: StaticSchema = (16, n1, _SLt, 0, (_m,), ((STRUCTURE_LIST_MEMBER, 0),))
@@ -2537,14 +2563,14 @@ JSON_TIMESTAMPS: StaticOperationSchema = (
 
 RENAMED_GREETING: StaticSchema = (18, n2, _GS, 0, (_sa,), ((3, 0),))
 
-NESTED_UNION: StaticSchema = (19, n1, _NU, 0, (_sV,), ((3, 0),))
+NESTED_UNION: StaticSchema = (19, n1, _NU, 0, (_sVt,), ((3, 0),))
 
 MY_UNION: StaticSchema = (
     19,
     n1,
     _MU,
     0,
-    (_sV, _bV, _nV, _bVl, _tV, _eV, _lV, _mV, _sVt, _rSV, _uV),
+    (_sVt, _bV, _nV, _bVl, _tV, _eV, _lV, _mV, _sVtr, _rSV, _uV),
     (
         (3, 0),
         (2, 0),
@@ -2996,7 +3022,7 @@ MALFORMED_LONG: StaticOperationSchema = (
     (),
 )
 
-SIMPLE_MAP: StaticSchema = (17, n1, _SMi, 0, (_k, _v), ((3, 0), (3, 0)))
+SIMPLE_MAP: StaticSchema = (17, n1, _SMi, 0, (_k, _va), ((3, 0), (3, 0)))
 
 MALFORMED_MAP_INPUT: StaticSchema = (
     18,
@@ -3709,9 +3735,9 @@ OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
         (TEST_STRING_MAP, {_smit: MappingProxyType[str, object]({})}),
         (TEST_ENUM, {_smit: _FOO}),
         (TEST_INT_ENUM, {_smit: 1}),
-        (3, {_smit: _v_}),
+        (3, {_smit: _v__}),
         (2, {_smit: False}),
-        (1, {_smit: _v_}),
+        (1, {_smit: _v__}),
         (5, {_smit: 0}),
         (6, {_smit: 0}),
         (7, {_smit: 0}),
@@ -3877,7 +3903,7 @@ POST_UNION_WITH_JSON_NAME_INPUT: StaticSchema = (
     n1,
     _PUWJNI,
     {_s: None},
-    (_v,),
+    (_va,),
     ((UNION_WITH_JSON_NAME, 0),),
 )
 
@@ -3886,7 +3912,7 @@ POST_UNION_WITH_JSON_NAME_OUTPUT: StaticSchema = (
     n1,
     _PUWJNO,
     {_sm: None},
-    (_v,),
+    (_va,),
     ((UNION_WITH_JSON_NAME, 1),),
 )
 
@@ -3905,7 +3931,7 @@ PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     n1,
     _PWCEI,
     {_s: None},
-    (_en, _da),
+    (_enc, _da),
     ((3, {_sH: _CE_}), (3, 0)),
 )
 
@@ -4066,7 +4092,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     n1,
     _SSPI,
     {_sSI: _aSSPIO, _s: None},
-    (_fo, _sV, _tBV, _fBV, _bVy, _sVh, _iV, _lVo, _fV, _dVo),
+    (_fo, _sVt, _tBV, _fBV, _bVy, _sVh, _iV, _lVo, _fV, _dVo),
     (
         (3, {_sH: _XF}),
         (3, 0),
@@ -4086,7 +4112,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     n1,
     _SSPO,
     {_sSI: _aSSPIO, _sm: None},
-    (_fo, _sV, _tBV, _fBV, _bVy, _sVh, _iV, _lVo, _fV, _dVo),
+    (_fo, _sVt, _tBV, _fBV, _bVy, _sVh, _iV, _lVo, _fV, _dVo),
     (
         (3, {_sH: _XF}),
         (3, 0),
@@ -4143,20 +4169,20 @@ SPARSE_JSON_LISTS: StaticOperationSchema = (
     (),
 )
 
-SPARSE_BOOLEAN_MAP: StaticSchema = (17, n1, _SBM, 64, (_k, _v), ((3, 0), (2, 0)))
+SPARSE_BOOLEAN_MAP: StaticSchema = (17, n1, _SBM, 64, (_k, _va), ((3, 0), (2, 0)))
 
-SPARSE_NUMBER_MAP: StaticSchema = (17, n1, _SNM, 64, (_k, _v), ((3, 0), (7, 0)))
+SPARSE_NUMBER_MAP: StaticSchema = (17, n1, _SNM, 64, (_k, _va), ((3, 0), (7, 0)))
 
-SPARSE_SET_MAP: StaticSchema = (17, n1, _SSM, 64, (_k, _v), ((3, 0), (STRING_SET, 0)))
+SPARSE_SET_MAP: StaticSchema = (17, n1, _SSM, 64, (_k, _va), ((3, 0), (STRING_SET, 0)))
 
-SPARSE_STRING_MAP: StaticSchema = (17, n0, _SSMp, 64, (_k, _v), ((3, 0), (3, 0)))
+SPARSE_STRING_MAP: StaticSchema = (17, n0, _SSMp, 64, (_k, _va), ((3, 0), (3, 0)))
 
 SPARSE_STRUCT_MAP: StaticSchema = (
     17,
     n1,
     _SSMpa,
     64,
-    (_k, _v),
+    (_k, _va),
     ((3, 0), (GREETING_STRUCT, 0)),
 )
 
@@ -4208,7 +4234,7 @@ STREAMING_TRAITS_INPUT: StaticSchema = (
     _STI,
     {_sSI: _aSTIO, _s: None},
     (_fo, _bl),
-    ((3, {_sH: _XF}), (STREAMING_BLOB, {_smit: _v_, _sPm: None})),
+    ((3, {_sH: _XF}), (STREAMING_BLOB, {_smit: _v__, _sPm: None})),
 )
 
 STREAMING_TRAITS_OUTPUT: StaticSchema = (
@@ -4217,7 +4243,7 @@ STREAMING_TRAITS_OUTPUT: StaticSchema = (
     _STO,
     {_sSI: _aSTIO, _sm: None},
     (_fo, _bl),
-    ((3, {_sH: _XF}), (STREAMING_BLOB, {_smit: _v_, _sPm: None})),
+    ((3, {_sH: _XF}), (STREAMING_BLOB, {_smit: _v__, _sPm: None})),
 )
 
 STREAMING_TRAITS: StaticOperationSchema = (
@@ -4236,7 +4262,7 @@ STREAMING_TRAITS_REQUIRE_LENGTH_INPUT: StaticSchema = (
     _STRLI,
     {_s: None},
     (_fo, _bl),
-    ((3, {_sH: _XF}), (FINITE_STREAMING_BLOB, {_smit: _v_, _sPm: None})),
+    ((3, {_sH: _XF}), (FINITE_STREAMING_BLOB, {_smit: _v__, _sPm: None})),
 )
 
 STREAMING_TRAITS_REQUIRE_LENGTH_OUTPUT: StaticSchema = (
@@ -4268,7 +4294,7 @@ STREAMING_TRAITS_WITH_MEDIA_TYPE_INPUT: StaticSchema = (
     _STWMTI,
     {_sSI: _aSTWMTIO, _s: None},
     (_fo, _bl),
-    ((3, {_sH: _XF}), (STREAMING_TEXT_PLAIN_BLOB, {_smit: _v_, _sPm: None})),
+    ((3, {_sH: _XF}), (STREAMING_TEXT_PLAIN_BLOB, {_smit: _v__, _sPm: None})),
 )
 
 STREAMING_TRAITS_WITH_MEDIA_TYPE_OUTPUT: StaticSchema = (
@@ -4277,7 +4303,7 @@ STREAMING_TRAITS_WITH_MEDIA_TYPE_OUTPUT: StaticSchema = (
     _STWMTO,
     {_sSI: _aSTWMTIO, _sm: None},
     (_fo, _bl),
-    ((3, {_sH: _XF}), (STREAMING_TEXT_PLAIN_BLOB, {_smit: _v_, _sPm: None})),
+    ((3, {_sH: _XF}), (STREAMING_TEXT_PLAIN_BLOB, {_smit: _v__, _sPm: None})),
 )
 
 STREAMING_TRAITS_WITH_MEDIA_TYPE: StaticOperationSchema = (

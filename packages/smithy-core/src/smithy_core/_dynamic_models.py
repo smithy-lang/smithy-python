@@ -18,10 +18,11 @@ from __future__ import annotations
 
 import datetime
 from base64 import b64decode
+from collections.abc import Collection
 from dataclasses import field as _field
 from dataclasses import make_dataclass
 from decimal import Decimal
-from enum import StrEnum
+from enum import IntEnum, StrEnum
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, cast, dataclass_transform
 
@@ -34,12 +35,14 @@ from .serializers import ShapeSerializer
 from .shapes import ShapeID, ShapeType
 from .traits import (
     DefaultTrait,
+    EnumValueTrait,
     ErrorTrait,
     RequiredTrait,
     SensitiveTrait,
     SparseTrait,
     StreamingTrait,
 )
+from .types import UnknownEnumMixin
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -140,22 +143,48 @@ _OUTPUT_TRAIT = ShapeID("smithy.api#output")
 class ModelRegistry:
     """Builds and caches model classes for one generated client from its schemas.
 
-    CAUTION: ``schemas_module`` must be the client's ``_private.schemas``; the
-    registry indexes it by shape name and never hydrates a shape until it is first
-    requested.
+    CAUTION: ``schemas_module`` must be the client's ``_private.schemas``. Generated
+    clients pass a codegen-built ``index`` and ``shape_names`` so no shape is hydrated
+    until first requested; absent those, the registry falls back to hydrating every
+    schema once to build the index.
     """
 
     def __init__(
-        self, schemas_module: ModuleType, renames: dict[str, str] | None = None
+        self,
+        schemas_module: ModuleType,
+        renames: dict[str, str] | None = None,
+        *,
+        index: dict[str, str] | None = None,
+        shape_names: Collection[str] | None = None,
+        service_error: str | None = None,
     ) -> None:
         self._schemas = schemas_module
         self._renames = renames or {}
         self._classes: dict[str, type] = {}
         self._union_schemas: dict[str, Schema] = {}
-        self._index: dict[str, str] | None = None
-        self._shape_names: set[str] = set()
+        # A codegen-supplied index (name -> schema-const, variant/unknown names already
+        # disambiguated) lets the registry resolve a build() without hydrating every
+        # schema in the module just to map names; the scanning fallback hydrates all.
+        self._index: dict[str, str] | None = index
+        self._shape_names: set[str] = set(shape_names) if shape_names else set()
+        # Generated clients name their per-service error base (a ModeledError subclass
+        # emitted into the models module). Modeled errors extend it so `except
+        # ServiceError` catches them; a hand-built registry omits it and falls back to
+        # ModeledError.
+        self._service_error_name = service_error
         self._codec = SchemaExtension(self._resolve_member_codec)
         self._field_names_ext = SchemaExtension(self._compute_field_names)
+
+    def _error_base(self) -> type:
+        if self._service_error_name is None:
+            return ModeledError
+        return getattr(self._models_module, self._service_error_name)
+
+    @property
+    def _models_module(self) -> ModuleType:
+        import sys
+
+        return sys.modules[self._schemas.__name__.rsplit(".", 2)[0] + ".models"]
 
     def _field_names(self, schema: Schema) -> tuple[str, ...]:
         return schema.get_extension(self._field_names_ext)
@@ -213,8 +242,8 @@ class ModelRegistry:
         if schema.shape_type == ShapeType.UNION:
             self._build_union(schema.id.name, schema)
             return self._classes[name]
-        if schema.shape_type == ShapeType.ENUM:
-            built: type = cast(type, StrEnum(name, {v: v for v in schema.members}))
+        if schema.shape_type in (ShapeType.ENUM, ShapeType.INT_ENUM):
+            built: type = self._build_enum(name, schema)
         else:
             built = self._build_struct(name, schema)
         built.__module__ = self._schemas.__name__.rsplit(".", 2)[0] + ".models"
@@ -301,7 +330,7 @@ class ModelRegistry:
                 fields.append((field_names[i], _py_type(member)))
             else:
                 fields.append((field_names[i], _py_type(member), spec))
-        bases: tuple[type, ...] = (ModeledError,) if is_error else ()
+        bases: tuple[type, ...] = (self._error_base(),) if is_error else ()
         # Operation outputs carry a non-modeled response_metadata attribute, excluded
         # from eq and repr. Errors inherit it from ModeledError instead.
         if not is_error and self._is_output(schema):
@@ -321,6 +350,32 @@ class ModelRegistry:
             kw_only=True,
             namespace=self._struct_namespace(schema),
         )
+
+    def _build_enum(self, name: str, schema: Schema) -> type:
+        # Mirrors EnumGenerator/IntEnumGenerator: UnknownEnumMixin first base, member
+        # name from the symbol-provider namer, wire value from the enumValue trait (the
+        # member name is only the default when the trait is absent).
+        is_int = schema.shape_type is ShapeType.INT_ENUM
+        base: type = IntEnum if is_int else StrEnum
+        members: dict[str, Any] = {}
+        for member in schema.members_by_index:
+            member_name = member.expect_member_name()
+            value_trait = member.get_trait(EnumValueTrait)
+            value = value_trait.value if value_trait is not None else member_name
+            members[
+                member_field_name(
+                    member_name,
+                    is_error=False,
+                    carries_response_metadata=False,
+                    is_enum=True,
+                )
+            ] = value
+        bases = (UnknownEnumMixin, base)
+        meta = type(base)
+        ns = cast("dict[str, Any]", meta.__prepare__(name, bases))
+        for field_name, value in members.items():
+            ns[field_name] = value
+        return cast(type, meta(name, bases, ns))
 
     def _field_spec(self, member: Schema, input_nullable: bool) -> Any:
         """The dataclass default for a member.

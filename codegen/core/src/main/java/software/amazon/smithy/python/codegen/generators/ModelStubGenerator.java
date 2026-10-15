@@ -57,7 +57,7 @@ public final class ModelStubGenerator implements Runnable {
 
         context.writerDelegator().useFileWriter(filename, namespace, writer -> {
             writer.addStdlibImport("dataclasses", "dataclass");
-            writer.addStdlibImports("typing", java.util.Set.of("Union", "Any", "Self"));
+            writer.addStdlibImports("typing", java.util.Set.of("Union", "Self"));
             writer.addImport("smithy_core.schemas", "APIOperation");
             writer.addImport("smithy_core.exceptions", "ModeledError");
             writer.addImport("smithy_core.serializers", "ShapeSerializer");
@@ -73,8 +73,6 @@ public final class ModelStubGenerator implements Runnable {
                         def serialize_members(self, serializer: ShapeSerializer) -> None: ...
                         @classmethod
                         def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
-                        @classmethod
-                        def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]: ...
 
                     class ServiceError(ModeledError):
                         ...
@@ -104,7 +102,7 @@ public final class ModelStubGenerator implements Runnable {
         writer.addLocallyDefinedSymbol(symbol);
         var isError = shape.hasTrait(ErrorTrait.class);
         var base = isError
-                ? "(ModeledError, _SerdeShape)"
+                ? "(ServiceError, _SerdeShape)"
                 : "(_SerdeShape)";
         var index = NullableIndex.of(model);
         writer.openBlock("@dataclass(kw_only=True)\nclass $L$L:", "", name, base, () -> {

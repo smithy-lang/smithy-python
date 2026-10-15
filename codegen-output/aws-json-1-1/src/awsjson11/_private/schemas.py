@@ -81,10 +81,15 @@ _HWPOO = "HostWithPathOperationOutput"
 _HWPO = "HostWithPathOperation"
 _FEo = "FooEnum"
 _FOO = "FOO"
+_sV = "smithy.api#enumValue"
 _BAZ = "BAZ"
+_B = "Baz"
 _BAR = "BAR"
+_Ba = "Bar"
 _ONE = "ONE"
+_v_ = "1"
 _ZERO = "ZERO"
+_v__ = "0"
 _FEL = "FooEnumList"
 _FEM = "FooEnumMap"
 _FES = "FooEnumSet"
@@ -100,7 +105,7 @@ _JEO = "JsonEnumsOutput"
 _JE = "JsonEnums"
 _IE = "IntegerEnum"
 _A = "A"
-_B = "B"
+_B_ = "B"
 _C = "C"
 _IEL = "IntegerEnumList"
 _IEM = "IntegerEnumMap"
@@ -120,7 +125,7 @@ _SM = "StringMap"
 _GS = "GreetingStruct"
 _h = "hi"
 _MU = "MyUnion"
-_sV = "stringValue"
+_sVt = "stringValue"
 _bV = "booleanValue"
 _nV = "numberValue"
 _bVl = "blobValue"
@@ -128,7 +133,7 @@ _tV = "timestampValue"
 _eV = "enumValue"
 _lV = "listValue"
 _mV = "mapValue"
-_sVt = "structureValue"
+_sVtr = "structureValue"
 _JUI = "JsonUnionsInput"
 _aUIO = "aws.protocoltests.json#UnionInputOutput"
 _co = "contents"
@@ -451,7 +456,13 @@ FOO_ENUM: StaticSchema = (
     _FEo,
     0,
     (_FOO, _BAZ, _BAR, _ONE, _ZERO),
-    ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
+    (
+        (-1, {_sV: _F}),
+        (-1, {_sV: _B}),
+        (-1, {_sV: _Ba}),
+        (-1, {_sV: _v_}),
+        (-1, {_sV: _v__}),
+    ),
 )
 
 FOO_ENUM_LIST: StaticSchema = (16, n1, _FEL, 0, (_m,), ((FOO_ENUM, 0),))
@@ -502,7 +513,14 @@ JSON_ENUMS: StaticOperationSchema = (
     (),
 )
 
-INTEGER_ENUM: StaticSchema = (15, n1, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (
+    15,
+    n1,
+    _IE,
+    0,
+    (_A, _B_, _C),
+    ((-1, {_sV: 1}), (-1, {_sV: 2}), (-1, {_sV: 3})),
+)
 
 INTEGER_ENUM_LIST: StaticSchema = (16, n1, _IEL, 0, (_m,), ((INTEGER_ENUM, 0),))
 
@@ -570,7 +588,7 @@ MY_UNION: StaticSchema = (
     n0,
     _MU,
     0,
-    (_sV, _bV, _nV, _bVl, _tV, _eV, _lV, _mV, _sVt),
+    (_sVt, _bV, _nV, _bVl, _tV, _eV, _lV, _mV, _sVtr),
     (
         (3, 0),
         (2, 0),

@@ -26,6 +26,7 @@ _smit = "smithy.api#output"
 _CTP = "ContentTypeParameters"
 _TE = "TestEnum"
 _FOO = "FOO"
+_sV = "smithy.api#enumValue"
 _BAR = "BAR"
 _BAZ = "BAZ"
 _TIE = "TestIntEnum"
@@ -102,16 +103,20 @@ _HWPOO = "HostWithPathOperationOutput"
 _HWPO = "HostWithPathOperation"
 n1 = "aws.protocoltests.shared"
 _FEo = "FooEnum"
+_B = "Baz"
+_Ba = "Bar"
+_v__ = "1"
 _ZERO = "ZERO"
+_v___ = "0"
 _IE = "IntegerEnum"
 _A = "A"
-_B = "B"
+_B_ = "B"
 _C = "C"
 _SL = "StringList"
 _SM = "StringMap"
 _GS = "GreetingStruct"
 _MU = "MyUnion"
-_sV = "stringValue"
+_sVt = "stringValue"
 _bV = "booleanValue"
 _nV = "numberValue"
 _bVl = "blobValue"
@@ -120,7 +125,7 @@ _eV = "enumValue"
 _iEV = "intEnumValue"
 _lV = "listValue"
 _mV = "mapValue"
-_sVt = "structureValue"
+_sVtr = "structureValue"
 _JUI = "JsonUnionsInput"
 _co = "contents"
 _JUO = "JsonUnionsOutput"
@@ -232,10 +237,17 @@ TEST_ENUM: StaticSchema = (
     _TE,
     0,
     (_FOO, _BAR, _BAZ),
-    ((-1, 0), (-1, 0), (-1, 0)),
+    ((-1, {_sV: _FOO}), (-1, {_sV: _BAR}), (-1, {_sV: _BAZ})),
 )
 
-TEST_INT_ENUM: StaticSchema = (15, n0, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+TEST_INT_ENUM: StaticSchema = (
+    15,
+    n0,
+    _TIE,
+    0,
+    (_ONE, _TWO),
+    ((-1, {_sV: 1}), (-1, {_sV: 2})),
+)
 
 TEST_STRING_LIST: StaticSchema = (16, n0, _TSL, 0, (_m,), ((3, 0),))
 
@@ -434,10 +446,23 @@ FOO_ENUM: StaticSchema = (
     _FEo,
     0,
     (_FOO, _BAZ, _BAR, _ONE, _ZERO),
-    ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
+    (
+        (-1, {_sV: _F}),
+        (-1, {_sV: _B}),
+        (-1, {_sV: _Ba}),
+        (-1, {_sV: _v__}),
+        (-1, {_sV: _v___}),
+    ),
 )
 
-INTEGER_ENUM: StaticSchema = (15, n1, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (
+    15,
+    n1,
+    _IE,
+    0,
+    (_A, _B_, _C),
+    ((-1, {_sV: 1}), (-1, {_sV: 2}), (-1, {_sV: 3})),
+)
 
 STRING_LIST: StaticSchema = (16, n1, _SL, 0, (_m,), ((3, 0),))
 
@@ -450,7 +475,7 @@ MY_UNION: StaticSchema = (
     n0,
     _MU,
     0,
-    (_sV, _bV, _nV, _bVl, _tV, _eV, _iEV, _lV, _mV, _sVt),
+    (_sVt, _bV, _nV, _bVl, _tV, _eV, _iEV, _lV, _mV, _sVtr),
     (
         (3, 0),
         (2, 0),
@@ -706,10 +731,17 @@ REQUIRED_ENUM: StaticSchema = (
     _RE,
     0,
     (_FOO, _BAR, _BAZ),
-    ((-1, 0), (-1, 0), (-1, 0)),
+    ((-1, {_sV: _FOO}), (-1, {_sV: _BAR}), (-1, {_sV: _BAZ})),
 )
 
-REQUIRED_INT_ENUM: StaticSchema = (15, n0, _RIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+REQUIRED_INT_ENUM: StaticSchema = (
+    15,
+    n0,
+    _RIE,
+    0,
+    (_ONE, _TWO),
+    ((-1, {_sV: 1}), (-1, {_sV: 2})),
+)
 
 OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS_OUTPUT: StaticSchema = (
     18,

@@ -213,6 +213,14 @@ class IdempotencyTokenTrait(Trait, id=ShapeID("smithy.api#idempotencyToken")):
 
 
 @dataclass(init=False, frozen=True)
+class EnumValueTrait(Trait, id=ShapeID("smithy.api#enumValue")):
+    @property
+    def value(self) -> str | int:
+        assert isinstance(self.document_value, str | int)
+        return self.document_value
+
+
+@dataclass(init=False, frozen=True)
 class LongPollTrait(Trait, id=ShapeID("smithy.api#longPoll")):
     """Indicates that the service may hold the request open while waiting for
     information to become available."""

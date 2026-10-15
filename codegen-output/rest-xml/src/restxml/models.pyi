@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum
-from typing import Any, Self, Union
+from typing import Self, Union
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
@@ -17,8 +17,6 @@ class _SerdeShape:
     def serialize_members(self, serializer: ShapeSerializer) -> None: ...
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
-    @classmethod
-    def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]: ...
 
 class ServiceError(ModeledError): ...
 
@@ -60,7 +58,7 @@ class BodyWithXmlNameOutput(_SerdeShape):
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
-class ComplexError(ModeledError, _SerdeShape):
+class ComplexError(ServiceError, _SerdeShape):
     header: str | None = ...
     top_level: str | None = ...
     nested: ComplexNestedErrorData | None = ...
@@ -402,7 +400,7 @@ class InputAndOutputWithHeadersOutput(_SerdeShape):
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
-class InvalidGreeting(ModeledError, _SerdeShape):
+class InvalidGreeting(ServiceError, _SerdeShape):
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)

@@ -26,6 +26,7 @@ _TL = "TopLevel"
 _N = "Nested"
 _TE = "TestEnum"
 _FOO = "FOO"
+_sV = "smithy.api#enumValue"
 _BAR = "BAR"
 _BAZ = "BAZ"
 _TIE = "TestIntEnum"
@@ -120,12 +121,16 @@ _RVCDM = "RpcV2CborDenseMaps"
 _BL = "BlobList"
 _BLo = "BooleanList"
 _FE = "FooEnum"
+_B = "Baz"
+_Ba = "Bar"
+_v__ = "1"
 _ZERO = "ZERO"
+_v___ = "0"
 _FEL = "FooEnumList"
 _IL = "IntegerList"
 _IE = "IntegerEnum"
 _A = "A"
-_B = "B"
+_B_ = "B"
 _C = "C"
 _IEL = "IntegerEnumList"
 _SL = "StringList"
@@ -150,7 +155,7 @@ _bLl = "blobList"
 _RVCLO = "RpcV2CborListsOutput"
 _RVCL = "RpcV2CborLists"
 _RVCNU = "RpcV2CborNestedUnion"
-_sV = "stringValue"
+_sVt = "stringValue"
 _SBM = "SparseBooleanMap"
 _smithy = "smithy.api#sparse"
 _SNM = "SparseNumberMap"
@@ -246,10 +251,17 @@ TEST_ENUM: StaticSchema = (
     _TE,
     0,
     (_FOO, _BAR, _BAZ),
-    ((-1, 0), (-1, 0), (-1, 0)),
+    ((-1, {_sV: _FOO}), (-1, {_sV: _BAR}), (-1, {_sV: _BAZ})),
 )
 
-TEST_INT_ENUM: StaticSchema = (15, n1, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+TEST_INT_ENUM: StaticSchema = (
+    15,
+    n1,
+    _TIE,
+    0,
+    (_ONE, _TWO),
+    ((-1, {_sV: 1}), (-1, {_sV: 2})),
+)
 
 TEST_STRING_LIST: StaticSchema = (16, n1, _TSL, 0, (_me,), ((3, 0),))
 
@@ -567,14 +579,27 @@ FOO_ENUM: StaticSchema = (
     _FE,
     0,
     (_FOO, _BAZ, _BAR, _ONE, _ZERO),
-    ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
+    (
+        (-1, {_sV: _F}),
+        (-1, {_sV: _B}),
+        (-1, {_sV: _Ba}),
+        (-1, {_sV: _v__}),
+        (-1, {_sV: _v___}),
+    ),
 )
 
 FOO_ENUM_LIST: StaticSchema = (16, n2, _FEL, 0, (_me,), ((FOO_ENUM, 0),))
 
 INTEGER_LIST: StaticSchema = (16, n2, _IL, 0, (_me,), ((7, 0),))
 
-INTEGER_ENUM: StaticSchema = (15, n2, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (
+    15,
+    n2,
+    _IE,
+    0,
+    (_A, _B_, _C),
+    ((-1, {_sV: 1}), (-1, {_sV: 2}), (-1, {_sV: 3})),
+)
 
 INTEGER_ENUM_LIST: StaticSchema = (16, n2, _IEL, 0, (_me,), ((INTEGER_ENUM, 0),))
 
@@ -638,7 +663,7 @@ RPC_V2_CBOR_LISTS: StaticOperationSchema = (
     (VALIDATION_EXCEPTION,),
 )
 
-RPC_V2_CBOR_NESTED_UNION: StaticSchema = (19, n1, _RVCNU, 0, (_sV,), ((3, 0),))
+RPC_V2_CBOR_NESTED_UNION: StaticSchema = (19, n1, _RVCNU, 0, (_sVt,), ((3, 0),))
 
 SPARSE_BOOLEAN_MAP: StaticSchema = (17, n1, _SBM, 64, (_k, _v), ((3, 0), (2, 0)))
 
@@ -702,7 +727,7 @@ RPC_V2_CBOR_UNION: StaticSchema = (
     n1,
     _RVCU,
     0,
-    (_sV, _uV),
+    (_sVt, _uV),
     ((3, 0), (RPC_V2_CBOR_NESTED_UNION, 0)),
 )
 
@@ -739,7 +764,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     n1,
     _SSPI,
     {_sSI: _sCSSS, _smit: None},
-    (_tBV, _fBV, _bV, _dV, _fV, _iV, _lV, _sVh, _sV, _bVl),
+    (_tBV, _fBV, _bV, _dV, _fV, _iV, _lV, _sVh, _sVt, _bVl),
     ((2, 0), (2, 0), (5, 0), (10, 0), (9, 0), (7, 0), (8, 0), (6, 0), (3, 0), (1, 0)),
 )
 
@@ -748,7 +773,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     n1,
     _SSPO,
     {_sSI: _sCSSS, _smith: None},
-    (_tBV, _fBV, _bV, _dV, _fV, _iV, _lV, _sVh, _sV, _bVl),
+    (_tBV, _fBV, _bV, _dV, _fV, _iV, _lV, _sVh, _sVt, _bVl),
     ((2, 0), (2, 0), (5, 0), (10, 0), (9, 0), (7, 0), (8, 0), (6, 0), (3, 0), (1, 0)),
 )
 

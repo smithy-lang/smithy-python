@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum
-from typing import Any, Self, Union
+from typing import Self, Union
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
@@ -18,8 +18,6 @@ class _SerdeShape:
     def serialize_members(self, serializer: ShapeSerializer) -> None: ...
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
-    @classmethod
-    def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]: ...
 
 class ServiceError(ModeledError): ...
 
@@ -28,7 +26,7 @@ class ClientOptionalDefaults(_SerdeShape):
     member: int | None = ...
 
 @dataclass(kw_only=True)
-class ComplexError(ModeledError, _SerdeShape):
+class ComplexError(ServiceError, _SerdeShape):
     top_level: str | None = ...
     nested: ComplexNestedErrorData | None = ...
     response_metadata: ResponseMetadata = ...
@@ -111,7 +109,7 @@ class Farewell(_SerdeShape):
     phrase: str | None = ...
 
 @dataclass(kw_only=True)
-class FooError(ModeledError, _SerdeShape):
+class FooError(ServiceError, _SerdeShape):
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
@@ -132,7 +130,7 @@ class HostWithPathOperationOutput(_SerdeShape):
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
-class InvalidGreeting(ModeledError, _SerdeShape):
+class InvalidGreeting(ServiceError, _SerdeShape):
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
