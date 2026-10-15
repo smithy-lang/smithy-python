@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "JSON payloads are now eagerly parsed before deserialization, improving performance for both `bytes` and `BytesReader` inputs."
+}

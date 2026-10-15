@@ -1,14 +1,12 @@
-#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  SPDX-License-Identifier: Apache-2.0
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 import datetime
+import json
 from base64 import b64decode
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from decimal import Decimal
-from typing import Literal, NamedTuple, Protocol, cast
 
-import ijson  # type: ignore
-from ijson.common import ObjectBuilder  # type: ignore
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.exceptions import SmithyError
@@ -20,153 +18,103 @@ from smithy_core.types import TimestampFormat
 
 from ..settings import JSONSettings
 
-# TODO: put these type hints in a pyi somewhere. There here because ijson isn't
-# typed.
-type JSONParseEventType = Literal[
-    "null",
-    "string",
-    "number",
-    "boolean",
-    "start_array",
-    "end_array",
-    "start_map",
-    "map_key",
-    "end_map",
-]
-
-type JSONParseEventValue = str | int | float | Decimal | bool | None
-
-type JSON = Mapping[str, "JSON"] | Sequence["JSON"] | JSONParseEventValue
+type JSONValue = (
+    Mapping[str, "JSONValue"]
+    | Sequence["JSONValue"]
+    | str
+    | int
+    | Decimal
+    | bool
+    | None
+)
 
 
-class JSONParseEvent(NamedTuple):
-    path: str
-    type: JSONParseEventType
-    value: JSONParseEventValue
+class JSONValueError(SmithyError):
+    """Raised when a parsed JSON value does not match the requested Smithy type."""
 
-
-class JSONTokenError(SmithyError):
-    def __init__(self, expected: str, event: JSONParseEvent) -> None:
+    def __init__(self, expected: str, value: JSONValue) -> None:
         super().__init__(
-            f"Error parsing JSON. Expected token of type `{expected}` at path "
-            f"`{event.path}`, but found: `{event.type}`: {event.value}"
+            f"Error parsing JSON. Expected value of type `{expected}`, "
+            f"but found: `{type(value).__name__}`: {value}"
         )
 
 
-class TypedObjectBuilder(Protocol):
-    value: JSON
-
-    def event(self, event: JSONParseEventType, value: JSONParseEventValue): ...
-
-
-class BufferedParser:
-    """A wrapper around the ijson parser that allows peeking."""
-
-    def __init__(
-        self, stream: Iterator[tuple[str, JSONParseEventType, JSONParseEventValue]]
-    ) -> None:
-        self._stream = stream
-        self._pending: JSONParseEvent | None = None
-
-    def __iter__(self):
-        return self
-
-    def __next__(self) -> JSONParseEvent:
-        if self._pending is not None:
-            result = self._pending
-            self._pending = None
-            return result
-        return self._next()
-
-    def _next(self) -> JSONParseEvent:
-        return JSONParseEvent(*next(self._stream))
-
-    def peek(self) -> JSONParseEvent:
-        if self._pending is None:
-            self._pending = self._next()
-        return self._pending
+def _reject_constant(value: str) -> None:
+    raise ValueError(f"Invalid JSON constant: {value}")
 
 
 class JSONShapeDeserializer(ShapeDeserializer):
-    def __init__(self, source: BytesReader, settings: JSONSettings) -> None:
-        self._stream = BufferedParser(ijson.parse(source))
-        self._settings = settings
+    """Deserializes Smithy shapes from a fully materialized JSON value."""
 
-        # A mapping of json name to member name for each shape. Since the deserializer
-        # is shared and we don't know which shapes will be deserialized, this is
-        # populated on an as-needed basis.
-        self._json_names: dict[ShapeID, dict[str, str]] = {}
-
-    def is_null(self) -> bool:
-        return self._stream.peek().type == "null"
-
-    def read_null(self) -> None:
-        event = next(self._stream)
-        if event.value is not None:
-            raise JSONTokenError("null", event)
-        return None
-
-    def read_boolean(self, schema: Schema) -> bool:
-        event = next(self._stream)
-        if not isinstance(event.value, bool):
-            raise JSONTokenError("boolean", event)
-        return event.value
-
-    def read_blob(self, schema: Schema) -> bytes:
-        event = next(self._stream)
-        if event.type != "string" or not isinstance(event.value, str):
-            raise JSONTokenError("string", event)
-        return b64decode(event.value)
-
-    def read_integer(self, schema: Schema) -> int:
-        event = next(self._stream)
-        if not isinstance(event.value, int):
-            raise JSONTokenError("number", event)
-        return event.value
-
-    def read_float(self, schema: Schema) -> float:
-        event = next(self._stream)
-        match event.value:
-            case Decimal() | "Infinity" | "-Infinity" | "NaN":
-                return float(event.value)
-            case int() | float():
-                return event.value
-            case _:
-                raise JSONTokenError("number", event)
-
-    def read_big_decimal(self, schema: Schema) -> Decimal:
-        event = next(self._stream)
-        match event.value:
-            case Decimal():
-                return event.value
-            case int() | float() | "Infinity" | "-Infinity" | "NaN":
-                return Decimal(event.value)
-            case _:
-                raise JSONTokenError("number", event)
-
-    def read_string(self, schema: Schema) -> str:
-        event = next(self._stream)
-        if event.type not in ("string", "map_key") or not isinstance(event.value, str):
-            raise JSONTokenError("string | map_key", event)
-        return event.value
-
-    def read_document(self, schema: Schema) -> Document:
-        start = next(self._stream)
-        if start.type not in ("start_map", "start_array"):
-            return self._settings.document_class(
-                value=start.value, schema=schema, settings=self._settings
+    def __init__(self, source: bytes | BytesReader, settings: JSONSettings) -> None:
+        if isinstance(source, bytes):
+            self._value: JSONValue = json.loads(
+                source,
+                parse_float=Decimal,
+                parse_constant=_reject_constant,
+            )
+        else:
+            self._value = json.load(
+                source,
+                parse_float=Decimal,
+                parse_constant=_reject_constant,
             )
 
-        end_type = "end_map" if start.type == "start_map" else "end_array"
-        builder = cast(TypedObjectBuilder, ObjectBuilder())
-        builder.event(start.type, start.value)
-        while (
-            event := next(self._stream)
-        ).path != start.path or event.type != end_type:
-            builder.event(event.type, event.value)
+        self._settings = settings
+        self._json_names: dict[ShapeID, dict[str, Schema]] = {}
 
+    def is_null(self) -> bool:
+        return self._value is None
+
+    def read_null(self) -> None:
+        if self._value is not None:
+            raise JSONValueError("null", self._value)
+
+    def read_boolean(self, schema: Schema) -> bool:
+        if not isinstance(self._value, bool):
+            raise JSONValueError("boolean", self._value)
+        return self._value
+
+    def read_blob(self, schema: Schema) -> bytes:
+        if not isinstance(self._value, str):
+            raise JSONValueError("string", self._value)
+        return b64decode(self._value)
+
+    def read_integer(self, schema: Schema) -> int:
+        if not isinstance(self._value, int) or isinstance(self._value, bool):
+            raise JSONValueError("number", self._value)
+        return self._value
+
+    def read_float(self, schema: Schema) -> float:
+        match self._value:
+            case Decimal() | "Infinity" | "-Infinity" | "NaN":
+                return float(self._value)
+            case int() if not isinstance(self._value, bool):
+                return self._value
+            case _:
+                raise JSONValueError("number", self._value)
+
+    def read_big_decimal(self, schema: Schema) -> Decimal:
+        match self._value:
+            case Decimal():
+                return self._value
+            case int() if not isinstance(self._value, bool):
+                return Decimal(self._value)
+            case "Infinity" | "-Infinity" | "NaN":
+                return Decimal(self._value)
+            case _:
+                raise JSONValueError("number", self._value)
+
+    def read_string(self, schema: Schema) -> str:
+        if not isinstance(self._value, str):
+            raise JSONValueError("string", self._value)
+        return self._value
+
+    def read_document(self, schema: Schema) -> Document:
         return self._settings.document_class(
-            value=builder.value, schema=schema, settings=self._settings
+            value=self._value,
+            schema=schema,
+            settings=self._settings,
         )
 
     def read_timestamp(self, schema: Schema) -> datetime.datetime:
@@ -182,79 +130,71 @@ class JSONShapeDeserializer(ShapeDeserializer):
                 return format.deserialize(self.read_string(schema=schema))
 
     def read_struct(
-        self, schema: Schema, consumer: Callable[[Schema, "ShapeDeserializer"], None]
-    ):
-        event = next(self._stream)
-        if event.type != "start_map":
-            raise JSONTokenError("start_map", event)
+        self,
+        schema: Schema,
+        consumer: Callable[[Schema, ShapeDeserializer], None],
+    ) -> None:
+        value = self._value
+        if not isinstance(value, Mapping):
+            raise JSONValueError("object", value)
 
-        while self._stream.peek().type != "end_map":
-            key = self.read_string(schema=schema)
-            member = self._resolve_member(schema=schema, key=key)
-            if not member:
-                self._skip()
-                continue
-            if self.is_null() and member.shape_type is not ShapeType.DOCUMENT:
-                self.read_null()
-                continue
-            consumer(member, self)
-
-        next(self._stream)
-
-    def _resolve_member(self, schema: Schema, key: str) -> Schema | None:
-        if self._settings.use_json_name:
-            if schema.id not in self._json_names:
-                self._cache_json_names(schema=schema)
-            if key in self._json_names[schema.id]:
-                return schema.members.get(self._json_names[schema.id][key])
-            return None
-
-        return schema.members.get(key)
-
-    def _cache_json_names(self, schema: Schema):
-        result: dict[str, str] = {}
-        for member_name, member_schema in schema.members.items():
-            name: str = member_name
-            if json_name := member_schema.get_trait(JSONNameTrait):
-                name = json_name.value
-            result[name] = member_name
-        self._json_names[schema.id] = result
+        struct_schema = schema.member_target or schema
+        members = self._members_by_wire_name(struct_schema)
+        try:
+            for key, member_value in value.items():
+                member = members.get(key)
+                if member is None:
+                    continue
+                if member_value is None and member.shape_type is not ShapeType.DOCUMENT:
+                    continue
+                self._value = member_value
+                consumer(member, self)
+        finally:
+            self._value = value
 
     def read_list(
-        self, schema: Schema, consumer: Callable[["ShapeDeserializer"], None]
-    ):
-        event = next(self._stream)
-        if event.type != "start_array":
-            raise JSONTokenError("start_array", event)
+        self,
+        schema: Schema,
+        consumer: Callable[[ShapeDeserializer], None],
+    ) -> None:
+        value = self._value
+        if not isinstance(value, Sequence) or isinstance(value, str):
+            raise JSONValueError("array", value)
 
-        while self._stream.peek().type != "end_array":
-            consumer(self)
-
-        next(self._stream)
+        try:
+            for member_value in value:
+                self._value = member_value
+                consumer(self)
+        finally:
+            self._value = value
 
     def read_map(
         self,
         schema: Schema,
-        consumer: Callable[[str, "ShapeDeserializer"], None],
-    ):
-        event = next(self._stream)
-        if event.type != "start_map":
-            raise JSONTokenError("start_map", event)
+        consumer: Callable[[str, ShapeDeserializer], None],
+    ) -> None:
+        value = self._value
+        if not isinstance(value, Mapping):
+            raise JSONValueError("object", value)
 
-        key_schema = schema.members["key"]
-        while self._stream.peek().type != "end_map":
-            consumer(self.read_string(schema=key_schema), self)
+        try:
+            for key, member_value in value.items():
+                self._value = member_value
+                consumer(key, self)
+        finally:
+            self._value = value
 
-        next(self._stream)
+    def _members_by_wire_name(self, schema: Schema) -> Mapping[str, Schema]:
+        if not self._settings.use_json_name:
+            return schema.members
 
-    def _skip(self) -> None:
-        start = next(self._stream)
-        if start.type not in ("start_map", "start_array"):
-            return
-
-        end_type = "end_map" if start.type == "start_map" else "end_array"
-
-        while (
-            event := next(self._stream)
-        ).path != start.path or event.type != end_type:
-            continue
+        members = self._json_names.get(schema.id)
+        if members is None:
+            members = {}
+            for member_name, member in schema.members.items():
+                json_name = member.get_trait(JSONNameTrait)
+                members[json_name.value if json_name is not None else member_name] = (
+                    member
+                )
+            self._json_names[schema.id] = members
+        return members
