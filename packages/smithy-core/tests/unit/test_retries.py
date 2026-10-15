@@ -3,6 +3,7 @@
 import asyncio
 import sys
 import threading
+import time
 from collections.abc import Callable, Coroutine, Iterator
 from copy import deepcopy
 from types import SimpleNamespace
@@ -253,6 +254,16 @@ class TestTokenBucket:
         assert acquired
         await task
 
+    async def test_acquire_does_not_wait_past_timeout(self):
+        # At the minimum fill rate a token takes 2s to refill, far past the timeout
+        token_bucket = TokenBucket(timeout=0.05)
+        await token_bucket.acquire(1)
+
+        start = time.monotonic()
+        with pytest.raises(TimeoutError):
+            await token_bucket.acquire(1)
+        assert time.monotonic() - start < 1
+
     def test_acquire_works_across_event_loops(self):
         # A client, and so its bucket, can outlive the event loop it was first used on
         token_bucket = TokenBucket(fill_rate=20.0)
@@ -495,13 +506,13 @@ class TestRateLimiter:
                 rate_tracker=tracker,
                 rate_limiter_enabled=False,
             )
-            update_rate = token_bucket.update_rate
+            set_rate = token_bucket._set_rate  # type: ignore[reportPrivateUsage]
 
-            async def record_rate(rate: float) -> None:
+            def record_rate(rate: float) -> None:
                 new_rates.append(rate)
-                await update_rate(rate)
+                set_rate(rate)
 
-            token_bucket.update_rate = record_rate  # type: ignore[method-assign]
+            token_bucket._set_rate = record_rate  # type: ignore[method-assign]
 
             for throttled, timestamp, measured_rate, new_rate in steps:
                 now = timestamp
@@ -532,12 +543,32 @@ class TestRateLimiter:
                 patch.object(
                     calculator, "calculate_scaled_request_rate", return_value=20.0
                 ),
-                patch.object(token_bucket, "update_rate") as mock_update,
+                patch.object(token_bucket, "_set_rate") as mock_set_rate,
             ):
                 await limiter.after_receiving_response(throttling_error=False)
 
                 # calculated rate should be capped at 2x measured rate at 2 * 5.0 = 10.0
-                mock_update.assert_called_once_with(10.0)
+                mock_set_rate.assert_called_once_with(10.0)
+
+    async def test_new_rate_is_set_while_holding_the_lock(self):
+        # Two threads could otherwise calculate rates A then B but apply B then A
+        token_bucket = TokenBucket()
+        limiter = ClientRateLimiter(
+            token_bucket=token_bucket,
+            cubic_calculator=CubicCalculator(),
+            rate_tracker=RequestRateTracker(),
+            rate_limiter_enabled=True,
+        )
+        lock_held: list[bool] = []
+
+        def record_lock(rate: float) -> None:
+            lock_held.append(limiter._lock.locked())  # type: ignore[reportPrivateUsage]
+
+        token_bucket._set_rate = record_lock  # type: ignore[method-assign]
+        await limiter.after_receiving_response(throttling_error=True)
+        await limiter.after_receiving_response(throttling_error=False)
+
+        assert lock_held == [True, True]
 
 
 class TestCubicCalculator:

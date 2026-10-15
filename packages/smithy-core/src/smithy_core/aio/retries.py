@@ -360,14 +360,17 @@ class TokenBucket:
                     wait_time = (amount - self._curr_capacity) / self._fill_rate
 
                 elapsed = time.monotonic() - start_time
-                if elapsed > self._timeout:
+                if elapsed >= self._timeout:
                     # Fails the request; this is not counted as a retry attempt
                     raise TimeoutError(
                         f"Failed to acquire {amount} tokens within {self._timeout}s"
                     )
-                # Wait outside the thread lock
+                # Wait outside the thread lock, and never past the timeout
                 try:
-                    await asyncio.wait_for(condition.wait(), timeout=wait_time)
+                    await asyncio.wait_for(
+                        condition.wait(),
+                        timeout=min(wait_time, self._timeout - elapsed),
+                    )
                 except TimeoutError:
                     pass
 
@@ -411,12 +414,17 @@ class TokenBucket:
         :param rate: New fill rate (tokens/second). It won't be less than MIN_FILL_RATE.
             Current capacity will be reduced if it exceeds the new maximum capacity.
         """
+        self._set_rate(rate)
+        await self._notify_waiters()
+
+    def _set_rate(self, rate: float) -> None:
         with self._lock:
             self._refill()
             self._fill_rate = max(rate, self.MIN_FILL_RATE)
             self._max_capacity = max(rate, self.MIN_CAPACITY)
             self._curr_capacity = min(self._curr_capacity, self._max_capacity)
 
+    async def _notify_waiters(self) -> None:
         # Wakes waiters on this event loop. Waiters on other threads' loops pick up
         # the new rate when their current wait times out.
         condition = self._get_condition()
@@ -586,7 +594,10 @@ class ClientRateLimiter:
                 )
 
             new_rate = min(cubic_calculated_rate, 2 * measured_rate)
-        await self._token_bucket.update_rate(new_rate)
+            # Set under the lock so rates reach the bucket in the order they're
+            # calculated. Waking waiters awaits, so it happens after the lock.
+            self._token_bucket._set_rate(new_rate)  # pyright: ignore[reportPrivateUsage]
+        await self._token_bucket._notify_waiters()  # pyright: ignore[reportPrivateUsage]
 
     @property
     def rate_limit_enabled(self) -> bool:
