@@ -144,6 +144,24 @@ class StreamingOutput(MockOutput):
     )
 
 
+class _StubRegistry:
+    def __init__(self, classes: dict[str, type]) -> None:
+        self._classes = classes
+
+    def build(self, name: str) -> type:
+        return self._classes[name]
+
+
+_STUB_REGISTRY = _StubRegistry(
+    {
+        "LegacyInput": LegacyInput,
+        "StructInput": StructInput,
+        "MockOutput": MockOutput,
+        "StreamingOutput": StreamingOutput,
+    }
+)
+
+
 class AsyncBody:
     async def read(self, size: int = -1) -> bytes:
         return b"{}"
@@ -170,9 +188,7 @@ async def test_buffer_async_body_fast_paths_synchronous_bytes(
 
 
 def test_http_binding_protocol_falls_back_to_legacy_serialize() -> None:
-    operation = APIOperation(
-        input=LegacyInput,
-        output=MockOutput,
+    operation: APIOperation[Any, Any] = APIOperation(
         static_schema=(
             ShapeType.OPERATION.value,
             "ns.foo",
@@ -182,7 +198,7 @@ def test_http_binding_protocol_falls_back_to_legacy_serialize() -> None:
             MockOutput.SCHEMA,
             (),
         ),
-        error_registry=TypeRegistry({}),
+        model_registry=_STUB_REGISTRY,
         effective_auth_schemes=[],
     )
     input = LegacyInput()
@@ -200,9 +216,7 @@ def test_http_binding_protocol_falls_back_to_legacy_serialize() -> None:
 
 
 def test_http_binding_protocol_uses_structure_fast_path() -> None:
-    operation = APIOperation(
-        input=StructInput,
-        output=MockOutput,
+    operation: APIOperation[Any, Any] = APIOperation(
         static_schema=(
             ShapeType.OPERATION.value,
             "ns.foo",
@@ -212,7 +226,7 @@ def test_http_binding_protocol_uses_structure_fast_path() -> None:
             MockOutput.SCHEMA,
             (),
         ),
-        error_registry=TypeRegistry({}),
+        model_registry=_STUB_REGISTRY,
         effective_auth_schemes=[],
     )
     input = StructInput()
@@ -246,9 +260,7 @@ async def test_deserialize_response_uses_cached_streaming_member(
         "output_stream_member",
         property(fail_if_scanned),
     )
-    operation = APIOperation(
-        input=LegacyInput,
-        output=output,
+    operation: APIOperation[Any, Any] = APIOperation(
         static_schema=(
             ShapeType.OPERATION.value,
             "ns.foo",
@@ -258,7 +270,7 @@ async def test_deserialize_response_uses_cached_streaming_member(
             output.SCHEMA,
             (),
         ),
-        error_registry=TypeRegistry({}),
+        model_registry=_STUB_REGISTRY,
         effective_auth_schemes=[],
     )
     request = HTTPRequest(

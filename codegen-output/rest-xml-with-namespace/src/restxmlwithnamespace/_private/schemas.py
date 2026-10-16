@@ -14,6 +14,7 @@ _sA = "smithy.api#xmlAttribute"
 _SSPI = "SimpleScalarPropertiesInput"
 _sSI = "smithy.synthetic#originalShapeId"
 _aSSPR = "aws.protocoltests.restxml.xmlns#SimpleScalarPropertiesRequest"
+_s = "smithy.api#input"
 _f = "foo"
 _sH = "smithy.api#httpHeader"
 _XF = "X-Foo"
@@ -31,8 +32,9 @@ _dV = "doubleValue"
 _DD = "DoubleDribble"
 _SSPO = "SimpleScalarPropertiesOutput"
 _aSSPRw = "aws.protocoltests.restxml.xmlns#SimpleScalarPropertiesResponse"
+_sm = "smithy.api#output"
 _SSP = "SimpleScalarProperties"
-_s = "smithy.api#http"
+_smi = "smithy.api#http"
 _RXWN = "RestXmlWithNamespace"
 _a = "aws.auth#sigv4"
 _aX = "aws.protocols#restXml"
@@ -52,7 +54,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     18,
     n0,
     _SSPI,
-    {_sSI: _aSSPR},
+    {_sSI: _aSSPR, _s: None},
     (_f, _sV, _tBV, _fBV, _bV, _sVh, _iV, _lV, _fV, _N, _dV),
     (
         (3, {_sH: _XF}),
@@ -76,7 +78,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     18,
     n0,
     _SSPO,
-    {_sSI: _aSSPRw},
+    {_sSI: _aSSPRw, _sm: None},
     (_f, _sV, _tBV, _fBV, _bV, _sVh, _iV, _lV, _fV, _N, _dV),
     (
         (3, {_sH: _XF}),
@@ -100,7 +102,7 @@ SIMPLE_SCALAR_PROPERTIES: StaticOperationSchema = (
     23,
     n0,
     _SSP,
-    {_s: MappingProxyType({"uri": "/SimpleScalarProperties", "method": "PUT"})},
+    {_smi: MappingProxyType({"uri": "/SimpleScalarProperties", "method": "PUT"})},
     SIMPLE_SCALAR_PROPERTIES_INPUT,
     SIMPLE_SCALAR_PROPERTIES_OUTPUT,
     (),

@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Removed the `input`/`output`/`error_registry` constructor overrides from `APIOperation`. Operations are now constructed from a `static_schema` tuple plus a `model_registry` that resolves input, output, and error types on demand."
+}

@@ -56,8 +56,9 @@ public class PythonCodegenTest {
 
         // An output that models a "responseMetadata" member gets both the SDK-reserved
         // response_metadata attribute and the escaped modeled member, so neither shadows
-        // the other.
-        var models = Files.readString(tempDir.resolve("src/weather/models.py"));
+        // the other. Field declarations live in the typed stub (models.py builds
+        // classes lazily at runtime), so the surface is asserted against models.pyi.
+        var models = Files.readString(tempDir.resolve("src/weather/models.pyi"));
         assertTrue(models.contains("response_metadata: ResponseMetadata"));
         assertTrue(models.contains("response_metadata_:"));
 

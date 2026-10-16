@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import software.amazon.smithy.codegen.core.TopologicalIndex;
+import software.amazon.smithy.model.knowledge.OperationIndex;
 import software.amazon.smithy.model.loader.Prelude;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
@@ -26,6 +27,9 @@ import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.ShapeType;
+import software.amazon.smithy.model.traits.DefaultTrait;
+import software.amazon.smithy.model.traits.InputTrait;
+import software.amazon.smithy.model.traits.OutputTrait;
 import software.amazon.smithy.model.traits.UnitTypeTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
@@ -411,17 +415,38 @@ public final class SchemaGenerator implements Consumer<Shape> {
 
     private Map<ShapeId, Optional<Node>> filterTraits(Shape shape) {
         var traitFilter = SchemaTraitFilterIndex.of(context.model());
-        return shape.getAllTraits()
-                .entrySet()
-                .stream()
-                .filter(t -> traitFilter.includeTrait(t.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> {
-                    var value = e.getValue().toNode();
-                    if (value.isObjectNode() && value.asObjectNode().get().getMembers().isEmpty()) {
-                        return Optional.empty();
-                    }
-                    return Optional.of(value);
-                }));
+        Map<ShapeId, Optional<Node>> filtered = new LinkedHashMap<>();
+        for (var entry : shape.getAllTraits().entrySet()) {
+            if (!traitFilter.includeTrait(entry.getKey())) {
+                continue;
+            }
+            var value = entry.getValue().toNode();
+            // An empty-object trait value normally means a valueless annotation trait, so
+            // it collapses to Optional.empty(). @default is exempt: `@default({})` and
+            // `@default([])` are real document values the runtime must rebuild, distinct
+            // from `@default(null)`.
+            if (value.isObjectNode()
+                    && value.asObjectNode().get().getMembers().isEmpty()
+                    && !entry.getKey().equals(DefaultTrait.ID)) {
+                filtered.put(entry.getKey(), Optional.empty());
+            } else {
+                filtered.put(entry.getKey(), Optional.of(value));
+            }
+        }
+        // Record the generator's own input/output nullability decision explicitly on
+        // the schema: OperationIndex treats operation I/O structures as @input/@output
+        // regardless of an authored trait, so the runtime reads one authoritative
+        // signal instead of reconstructing the operation graph.
+        if (shape.isStructureShape()) {
+            var operationIndex = OperationIndex.of(context.model());
+            if (operationIndex.isInputStructure(shape)) {
+                filtered.put(InputTrait.ID, Optional.empty());
+            }
+            if (operationIndex.isOutputStructure(shape)) {
+                filtered.put(OutputTrait.ID, Optional.empty());
+            }
+        }
+        return filtered;
     }
 
     private int typeInt(Shape shape) {

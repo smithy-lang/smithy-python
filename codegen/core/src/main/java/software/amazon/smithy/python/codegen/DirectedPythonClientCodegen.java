@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.SymbolProvider;
-import software.amazon.smithy.codegen.core.TopologicalIndex;
 import software.amazon.smithy.codegen.core.directed.CreateContextDirective;
 import software.amazon.smithy.codegen.core.directed.CreateSymbolProviderDirective;
 import software.amazon.smithy.codegen.core.directed.CustomizeDirective;
@@ -30,17 +29,14 @@ import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.generators.ConfigGenerator;
-import software.amazon.smithy.python.codegen.generators.EnumGenerator;
+import software.amazon.smithy.python.codegen.generators.ConformanceTestGenerator;
 import software.amazon.smithy.python.codegen.generators.InitGenerator;
-import software.amazon.smithy.python.codegen.generators.IntEnumGenerator;
-import software.amazon.smithy.python.codegen.generators.ListGenerator;
-import software.amazon.smithy.python.codegen.generators.MapGenerator;
+import software.amazon.smithy.python.codegen.generators.ModelModuleGenerator;
+import software.amazon.smithy.python.codegen.generators.ModelStubGenerator;
 import software.amazon.smithy.python.codegen.generators.OperationGenerator;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.generators.SchemaGenerator;
 import software.amazon.smithy.python.codegen.generators.ServiceErrorGenerator;
-import software.amazon.smithy.python.codegen.generators.StructureGenerator;
-import software.amazon.smithy.python.codegen.generators.UnionGenerator;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.writer.PythonDelegator;
 import software.amazon.smithy.utils.SmithyUnstableApi;
@@ -107,6 +103,14 @@ final class DirectedPythonClientCodegen
         new ServiceErrorGenerator(directive.settings(), directive.context().writerDelegator()).run();
         SchemaGenerator.generateAll(directive.context(), directive.connectedShapes().values());
 
+        // Models are built on demand at runtime from the schemas; emit the thin
+        // dynamic models.py once instead of eager per-shape classes, plus the typed
+        // models.pyi stub for static tooling.
+        var modelShapes = new java.util.ArrayList<>(directive.connectedShapes().values());
+        new ModelModuleGenerator(directive.context(), modelShapes).run();
+        new ModelStubGenerator(directive.context(), modelShapes).run();
+        new ConformanceTestGenerator(directive.context(), modelShapes).run();
+
         new ConfigGenerator(directive.settings(), directive.context()).run();
         var serviceIndex = ServiceIndex.of(directive.model());
         if (directive.context().applicationProtocol().isHttpProtocol()) {
@@ -142,75 +146,37 @@ final class DirectedPythonClientCodegen
 
     @Override
     public void generateStructure(GenerateStructureDirective<GenerationContext, PythonSettings> directive) {
-        directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
-            StructureGenerator generator = new StructureGenerator(
-                    directive.context(),
-                    writer,
-                    directive.shape(),
-                    TopologicalIndex.of(directive.model()).getRecursiveShapes());
-            generator.run();
-        });
+        // Structures are built on demand at runtime; see ModelModuleGenerator.
     }
 
     @Override
     public void generateError(GenerateErrorDirective<GenerationContext, PythonSettings> directive) {
-        directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
-            StructureGenerator generator = new StructureGenerator(
-                    directive.context(),
-                    writer,
-                    directive.shape(),
-                    TopologicalIndex.of(directive.model()).getRecursiveShapes());
-            generator.run();
-        });
+        // Errors are built on demand at runtime; see ModelModuleGenerator.
     }
 
     @Override
     public void generateUnion(GenerateUnionDirective<GenerationContext, PythonSettings> directive) {
-        directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
-            UnionGenerator generator = new UnionGenerator(
-                    directive.context(),
-                    writer,
-                    directive.shape(),
-                    TopologicalIndex.of(directive.model()).getRecursiveShapes());
-            generator.run();
-        });
+        // Unions are built on demand at runtime; see ModelModuleGenerator.
     }
 
     @Override
     public void generateList(GenerateListDirective<GenerationContext, PythonSettings> directive) {
-        var serSymbol = directive.context()
-                .symbolProvider()
-                .toSymbol(directive.shape())
-                .expectProperty(SymbolProperties.SERIALIZER);
-        var delegator = directive.context().writerDelegator();
-        delegator.useFileWriter(serSymbol.getDefinitionFile(), serSymbol.getNamespace(), writer -> {
-            new ListGenerator(directive.context(), writer, directive.shape()).run();
-        });
+        // List serde is handled generically by the runtime codec; nothing to emit.
     }
 
     @Override
     public void generateMap(GenerateMapDirective<GenerationContext, PythonSettings> directive) {
-        var serSymbol = directive.context()
-                .symbolProvider()
-                .toSymbol(directive.shape())
-                .expectProperty(SymbolProperties.SERIALIZER);
-        var delegator = directive.context().writerDelegator();
-        delegator.useFileWriter(serSymbol.getDefinitionFile(), serSymbol.getNamespace(), writer -> {
-            new MapGenerator(directive.context(), writer, directive.shape()).run();
-        });
+        // Map serde is handled generically by the runtime codec; nothing to emit.
     }
 
     @Override
     public void generateEnumShape(GenerateEnumDirective<GenerationContext, PythonSettings> directive) {
-        if (!directive.shape().isEnumShape()) {
-            return;
-        }
-        new EnumGenerator(directive.context(), directive.shape().asEnumShape().get()).run();
+        // Enums are built on demand at runtime; see ModelModuleGenerator.
     }
 
     @Override
     public void generateIntEnumShape(GenerateIntEnumDirective<GenerationContext, PythonSettings> directive) {
-        new IntEnumGenerator(directive).run();
+        // Int enums are built on demand at runtime; see ModelModuleGenerator.
     }
 
     @Override
