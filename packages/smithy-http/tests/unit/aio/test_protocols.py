@@ -1,10 +1,13 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
+import gzip
+from types import SimpleNamespace
 from typing import Any, Self
 
 import pytest
 from smithy_core import URI
+from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
@@ -147,6 +150,101 @@ class StreamingOutput(MockOutput):
 class AsyncBody:
     async def read(self, size: int = -1) -> bytes:
         return b"{}"
+
+
+async def test_http_binding_compresses_absent_optional_payload_as_empty() -> None:
+    class OptionalPayloadInput:
+        SCHEMA = Schema.collection(
+            id=ShapeID("ns.foo#OptionalPayloadInput"),
+            members={
+                "payload": {
+                    "target": Schema(
+                        id=ShapeID("ns.foo#Payload"), shape_type=ShapeType.BLOB
+                    ),
+                    "traits": [HTTPPayloadTrait()],
+                }
+            },
+        )
+
+        def serialize(self, serializer: ShapeSerializer) -> None:
+            serializer.write_struct(self.SCHEMA, self)
+
+        def serialize_members(self, serializer: ShapeSerializer) -> None:
+            pass
+
+    operation = APIOperation(
+        input=OptionalPayloadInput,
+        output=MockOutput,
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "ns.foo",
+            "OptionalPayloadOperation",
+            {
+                "smithy.api#http": {"method": "POST", "code": 200, "uri": "/"},
+                "smithy.api#requestCompression": {"encodings": ["gzip"]},
+            },
+            OptionalPayloadInput.SCHEMA,
+            MockOutput.SCHEMA,
+            (),
+        ),
+        error_registry=TypeRegistry({}),
+        effective_auth_schemes=[],
+    )
+    request = MockBindingProtocol().serialize_request(
+        operation=operation,
+        input=OptionalPayloadInput(),
+        endpoint=URI(host="example.com"),
+        context=TypedProperties(
+            {"config": SimpleNamespace(request_compression_encoding="gzip")}
+        ),
+    )
+    assert request.fields["Content-Encoding"].as_string() == "gzip"
+    wire = await AsyncBytesReader(request.body).read()
+    assert gzip.decompress(wire) == b""
+    assert int(request.fields["Content-Length"].as_string()) == len(wire)
+
+
+@pytest.mark.parametrize("explicit", [None, "gzip"])
+async def test_http_binding_protocol_compresses_modeled_request(
+    explicit: str | None,
+) -> None:
+    operation = APIOperation(
+        input=StructInput,
+        output=MockOutput,
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "ns.foo",
+            "CompressedOperation",
+            {
+                "smithy.api#http": {
+                    "method": "POST",
+                    "code": 200,
+                    "uri": "/compressed",
+                },
+                "smithy.api#requestCompression": {"encodings": ["gzip"]},
+            },
+            StructInput.SCHEMA,
+            MockOutput.SCHEMA,
+            (),
+        ),
+        error_registry=TypeRegistry({}),
+        effective_auth_schemes=[],
+    )
+    config = SimpleNamespace(
+        request_compression_encoding=explicit,
+        disable_request_compression=False,
+        request_min_compression_size_bytes=0 if explicit is None else 10240,
+    )
+    request = MockBindingProtocol().serialize_request(
+        operation=operation,
+        input=StructInput(),
+        endpoint=URI(host="example.com"),
+        context=TypedProperties({"config": config}),
+    )
+    assert request.fields["Content-Encoding"].as_string() == "gzip"
+    wire_body = await AsyncBytesReader(request.body).read()
+    assert gzip.decompress(wire_body) == b""
+    assert int(request.fields["Content-Length"].as_string()) == len(wire_body)
 
 
 @pytest.mark.parametrize("body", [b"{}", bytearray(b"{}")])

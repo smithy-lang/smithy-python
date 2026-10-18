@@ -3,12 +3,13 @@
 # pyright: reportPrivateUsage=false, reportUnusedFunction=false
 import threading
 from collections.abc import Iterator
+from types import MappingProxyType
 
 import pytest
 from smithy_core import _schema_compact
 from smithy_core._schema_compact import StaticSchema, hydrate
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import SensitiveTrait
+from smithy_core.traits import RequestCompressionTrait, SensitiveTrait
 
 NS = "ns.example"
 
@@ -40,6 +41,21 @@ def test_simple_shape_hydrates_and_caches() -> None:
     assert schema.id == ShapeID.from_parts(namespace=NS, name="Str")
     assert schema.shape_type is ShapeType.STRING
     assert hydrate(tup) is schema
+
+
+def test_request_compression_encodings_read_frozen_compact_trait_value() -> None:
+    operation: StaticSchema = (
+        ShapeType.OPERATION.value,
+        NS,
+        "CompressedOperation",
+        {"smithy.api#requestCompression": MappingProxyType({"encodings": ("gzip",)})},
+        _struct("Input", ()),
+        _struct("Output", ()),
+        (),
+    )
+    trait = hydrate(operation).expect_trait(RequestCompressionTrait)
+    assert isinstance(trait.document_value, MappingProxyType)
+    assert trait.encodings == ["gzip"]
 
 
 def test_prelude_schema_passes_through() -> None:

@@ -19,9 +19,6 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public final class AwsJson10ProtocolGenerator implements ProtocolGenerator {
     private static final Set<String> TESTS_TO_SKIP = Set.of(
-            // TODO: support the request compression trait.
-            "SDKAppliedContentEncoding_awsJson1_0",
-            "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_awsJson1_0",
 
             // TODO: fix default value behavior for JSON RPC.
             "AwsJson10ClientPopulatesDefaultValuesInInput",

@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Add a typed requestCompression trait that preserves the ordered content encodings advertised by an operation."
+}

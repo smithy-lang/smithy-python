@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Resolve request compression settings from client overrides, environment variables, and shared AWS configuration, and apply compression across AWS HTTP protocols."
+}

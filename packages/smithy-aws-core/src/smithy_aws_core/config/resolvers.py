@@ -193,3 +193,31 @@ class EndpointUriResolver:
             return Resolved(value=value, source=ConfigSource.PROFILE)
 
         return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]
+
+
+async def resolve_disable_request_compression(
+    ctx: SharedConfigContext,
+) -> Resolved[bool]:
+    """Resolve the standard request compression switch."""
+    result = await _resolve_str(
+        ctx,
+        env_vars=("AWS_DISABLE_REQUEST_COMPRESSION",),
+        profile_keys=("disable_request_compression",),
+    )
+    if result.value is UNSET:
+        return Resolved(value=UNSET, source=result.source)  # type: ignore[arg-type]
+    value = str(result.value).lower()
+    if value not in ("true", "false"):
+        raise ConfigValidationError("disable_request_compression must be true or false")
+    return Resolved(value=value == "true", source=result.source)
+
+
+async def resolve_request_min_compression_size_bytes(
+    ctx: SharedConfigContext,
+) -> Resolved[int | None]:
+    """Resolve the standard buffered request compression threshold."""
+    return await _resolve_int(
+        ctx,
+        env_vars=("AWS_REQUEST_MIN_COMPRESSION_SIZE_BYTES",),
+        profile_keys=("request_min_compression_size_bytes",),
+    )

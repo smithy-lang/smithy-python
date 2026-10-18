@@ -42,6 +42,7 @@ from smithy_http.aio.protocols import (
     HttpBindingClientProtocol,
     HttpClientProtocol,
 )
+from smithy_http.compression import RequestCompression
 from smithy_http.deserializers import HTTPResponseDeserializer
 
 from .._private.query._xml import parse_xml_root
@@ -462,21 +463,21 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
+        compression = RequestCompression.from_operation(operation, context)
         payload = self.payload_codec.serialize(shape=input)
+        fields = tuples_to_fields(
+            [
+                ("content-type", self.content_type),
+                ("content-length", str(len(payload))),
+                ("x-amz-target", f"{self._service_name}.{operation.schema.id.name}"),
+            ]
+        )
+        body = compression.compress(payload, fields)
         return _HTTPRequest(
             method="POST",
             destination=_URI(host="", path="/"),
-            fields=tuples_to_fields(
-                [
-                    ("content-type", self.content_type),
-                    ("content-length", str(len(payload))),
-                    (
-                        "x-amz-target",
-                        f"{self._service_name}.{operation.schema.id.name}",
-                    ),
-                ]
-            ),
-            body=AsyncBytesReader(payload),
+            fields=fields,
+            body=AsyncBytesReader(body),
         )
 
     async def deserialize_response[
@@ -708,6 +709,7 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
+        compression = RequestCompression.from_operation(operation, context)
         sink = BytesIO()
         params: list[tuple[str, str]] = []
         serializer = self._create_serializer(
@@ -719,17 +721,18 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         serializer.flush()
         content_length = sink.tell()
         sink.seek(0)
-        body = AsyncBytesReader(sink)
+        fields = tuples_to_fields(
+            [
+                ("content-type", self.content_type),
+                ("content-length", str(content_length)),
+            ]
+        )
+        body = compression.compress(sink, fields)
         return _HTTPRequest(
             method="POST",
             destination=_URI(host="", path="/"),
-            fields=tuples_to_fields(
-                [
-                    ("content-type", self.content_type),
-                    ("content-length", str(content_length)),
-                ]
-            ),
-            body=body,
+            fields=fields,
+            body=AsyncBytesReader(body),
         )
 
     async def deserialize_response[

@@ -91,6 +91,9 @@ class Config:
     auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]]
     """A map of auth scheme ids to auth schemes."""
 
+    disable_request_compression: bool
+    """Disable compression on operations that advertise support."""
+
     endpoint_resolver: EndpointResolver
     """
     The endpoint resolver used to resolve the final endpoint per-operation
@@ -122,6 +125,15 @@ class Config:
     the service endpoint.
     """
 
+    request_compression_encoding: str | None
+    """Explicitly request gzip regardless of size; unsupported operations fail."""
+
+    request_min_compression_size_bytes: int
+    """
+    Minimum buffered request size for automatic compression; zero compresses
+    all.
+    """
+
     retry_strategy: RetryStrategy | RetryStrategyOptions | None
     """
     The retry strategy or options for configuring retry behavior. Can be
@@ -150,6 +162,7 @@ class Config:
         *,
         auth_scheme_resolver: AuthSchemeResolver | None = None,
         auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None = None,
+        disable_request_compression: bool | None = None,
         endpoint_resolver: EndpointResolver | None = None,
         endpoint_uri: str | URI | None = None,
         http_request_config: HTTPRequestConfiguration | None = None,
@@ -158,6 +171,8 @@ class Config:
         | ProtocolConstructor[ClientProtocol[Any, Any]]
         | None = None,
         region: str | None = None,
+        request_compression_encoding: str | None = None,
+        request_min_compression_size_bytes: int | None = None,
         retry_strategy: RetryStrategy | RetryStrategyOptions | None = None,
         sdk_ua_app_id: str | None = None,
         transport: ClientTransport[Any, Any] | None = None,
@@ -165,6 +180,11 @@ class Config:
     ):
         self.auth_scheme_resolver = auth_scheme_resolver or DefaultAuthResolver()
         self.auth_schemes = auth_schemes or {}
+        self.disable_request_compression = (
+            disable_request_compression
+            if disable_request_compression is not None
+            else False
+        )
         self.endpoint_resolver = endpoint_resolver or StandardRegionalEndpointsResolver(
             endpoint_prefix="RpcV2Protocol"
         )
@@ -177,6 +197,12 @@ class Config:
             "ClientProtocol[Any, Any]", protocol
         ) or RpcV2CborClientProtocol(_PROTOCOL_SETTINGS)
         self.region = region
+        self.request_compression_encoding = request_compression_encoding
+        self.request_min_compression_size_bytes = (
+            request_min_compression_size_bytes
+            if request_min_compression_size_bytes is not None
+            else 10240
+        )
         self.retry_strategy = retry_strategy
         self.sdk_ua_app_id = sdk_ua_app_id
         self.transport = transport or AIOHTTPClient()

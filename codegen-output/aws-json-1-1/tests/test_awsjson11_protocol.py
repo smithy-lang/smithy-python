@@ -5746,7 +5746,6 @@ async def test_put_and_get_inline_documents_input_response_put_and_get_inline_do
         assert deep_equal(actual, expected)
 
 
-@mark.xfail()
 async def test_sdk_applied_content_encoding_aws_json1_1_request_put_with_content_encoding() -> (
     None
 ):
@@ -5820,7 +5819,6 @@ async def test_sdk_applied_content_encoding_aws_json1_1_request_put_with_content
         )
 
 
-@mark.xfail()
 async def test_sdk_appends_gzip_and_ignores_http_provided_encoding_aws_json1_1_request_put_with_content_encoding() -> (
     None
 ):

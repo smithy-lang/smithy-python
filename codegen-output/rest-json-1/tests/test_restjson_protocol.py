@@ -10786,7 +10786,6 @@ async def test_post_union_with_json_name_response3_response_post_union_with_json
         assert deep_equal(actual, expected)
 
 
-@mark.xfail()
 async def test_sdk_applied_content_encoding_rest_json1_request_put_with_content_encoding() -> (
     None
 ):
@@ -10860,7 +10859,6 @@ async def test_sdk_applied_content_encoding_rest_json1_request_put_with_content_
         )
 
 
-@mark.xfail()
 async def test_sdk_appended_gzip_after_provided_encoding_rest_json1_request_put_with_content_encoding() -> (
     None
 ):
