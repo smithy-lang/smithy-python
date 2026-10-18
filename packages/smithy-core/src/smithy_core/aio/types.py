@@ -89,13 +89,19 @@ class AsyncBytesReader:
         if not self._seekable:
             raise NotImplementedError
 
-        return await seek(self._data, offset, whence)  # type: ignore
+        # Iterables can yield more bytes than read() returned to the caller.
+        # Relative seeks start at the logical cursor, before that unread tail.
+        if whence == 1:
+            offset -= len(self._remainder)
+        position = await seek(self._data, offset, whence)
+        self._remainder = b""
+        return position  # type: ignore
 
     def tell(self) -> int:
         """Returns the position of the cursor."""
         if self._seekable:
             if (tell := getattr(self._data, "tell", None)) is not None:
-                return tell()
+                return tell() - len(self._remainder)
         raise NotImplementedError
 
     async def _read_from_iterable(

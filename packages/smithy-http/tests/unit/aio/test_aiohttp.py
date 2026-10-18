@@ -6,7 +6,7 @@ from asyncio import CancelledError
 from collections.abc import AsyncIterator
 from hashlib import sha256
 from io import BytesIO
-from typing import Any, cast
+from typing import Any, Self, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -203,6 +203,62 @@ async def test_send_rewinds_gzip_source_after_probe_consumes_then_fails(
     assert source.tell() == 6
     assert body.tell() == 0
     assert gzip.decompress(await body.read()) == payload
+    await body.close()
+    await client.close()
+
+
+@pytest.mark.parametrize("compressed", [False, True])
+async def test_send_preserves_seekable_async_iterable_payload(compressed: bool) -> None:
+    class SeekableChunks:
+        def __init__(self, payload: bytes) -> None:
+            self.source = BytesIO(payload)
+
+        def __aiter__(self) -> Self:
+            return self
+
+        async def __anext__(self) -> bytes:
+            chunk = self.source.read()
+            if not chunk:
+                raise StopAsyncIteration
+            return chunk
+
+        async def seek(self, offset: int, whence: int = 0) -> int:
+            return self.source.seek(offset, whence)
+
+        def tell(self) -> int:
+            return self.source.tell()
+
+        async def close(self) -> None:
+            self.source.close()
+
+    payload = b"".join(
+        sha256(index.to_bytes(4, "big")).digest() for index in range(8192)
+    )
+    source = SeekableChunks(payload)
+    fields = Fields()
+    body = (
+        RequestCompression(encoding="gzip", minimum_size=0).compress(
+            source, fields, streaming=True
+        )
+        if compressed
+        else AsyncBytesReader(source)
+    )
+    assert isinstance(body, AsyncBytesReader)
+    client, session = _create_client()
+    request = HTTPRequest(
+        method="POST",
+        destination=URI(scheme="https", host="example.com"),
+        body=body,
+        fields=fields,
+    )
+    await client.send(request)
+    assert session.request.call_args.kwargs["data"] is body
+    wire = await body.read()
+    actual = gzip.decompress(wire) if compressed else wire
+    assert actual == payload
+    await body.seek(0)
+    replay = await body.read()
+    assert replay == wire
     await body.close()
     await client.close()
 
