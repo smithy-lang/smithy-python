@@ -92,8 +92,34 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
     """The retry scope for the operation."""
 
     def retryable(self) -> bool:
-        # TODO: check to see if the stream is seekable
+        """Whether the operation can be retried whatever its request body is.
+
+        Operations with an input stream can't be, but a request with a data stream can
+        still be retried if the stream can be rewound.
+        """
         return self.operation.input_stream_member is None
+
+
+async def _retry_start(
+    call: ClientCall[Any, Any],
+    body: Any,
+    request_future: Future[Any] | None,
+) -> int | None:
+    """Find where a request body is rewound to before each retry.
+
+    :returns: The position to rewind to, or None if the request can't be retried.
+    """
+    if call.retryable():
+        return 0
+    # Event streams are never retried.
+    if request_future is not None:
+        return None
+    # A data stream is resent from where it started, so it can be retried only if it
+    # can be rewound there.
+    try:
+        return await seek(body, 0, 1)
+    except (OSError, ValueError, NotImplementedError):
+        return None
 
 
 class RequestPipeline[TRequest: Request, TResponse: Response]:
@@ -382,7 +408,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         request_context: RequestContext[I, TRequest],
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
-        if not call.retryable():
+        body = request_context.transport_request.body
+        start = await _retry_start(call, body, request_future)
+        if start is None:
             return await self._send_with_rate_limiting(
                 call, request_context, request_future
             )
@@ -444,7 +472,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                     retry_token.retry_delay,
                 )
 
-                await seek(request_context.transport_request.body, 0)
+                await seek(body, start)
             else:
                 await retry_strategy.record_success(token=retry_token)
                 return output_context

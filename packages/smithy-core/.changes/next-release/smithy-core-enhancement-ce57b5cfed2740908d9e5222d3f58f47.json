@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Added retries for requests with a seekable streaming payload, which are resent from the position the stream was at when the operation was called."
+}

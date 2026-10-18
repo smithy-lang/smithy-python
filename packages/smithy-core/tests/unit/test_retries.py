@@ -728,6 +728,12 @@ class TestRequestPipelineRateLimiting:
         call.retry_strategy = strategy
         return call
 
+    def _unseekable_request_context(self) -> Any:
+        # The request's input stream can't be rewound, so it can't be resent
+        context = MagicMock()
+        context.transport_request.body.seekable.return_value = False
+        return context
+
     def _adaptive_strategy_with_mocked_limiter(
         self,
     ) -> tuple[AdaptiveRetryStrategy, ClientRateLimiter]:
@@ -753,7 +759,9 @@ class TestRequestPipelineRateLimiting:
 
         with patch.object(pipeline, "_handle_attempt", handle_attempt):
             await pipeline._retry(  # type: ignore[reportPrivateUsage]
-                self._non_retryable_call(strategy), MagicMock(), None
+                self._non_retryable_call(strategy),
+                self._unseekable_request_context(),
+                None,
             )
 
         handle_attempt.assert_awaited_once()
@@ -775,7 +783,9 @@ class TestRequestPipelineRateLimiting:
 
         with patch.object(pipeline, "_handle_attempt", handle_attempt):
             output_context = await pipeline._retry(  # type: ignore[reportPrivateUsage]
-                self._non_retryable_call(strategy), MagicMock(), None
+                self._non_retryable_call(strategy),
+                self._unseekable_request_context(),
+                None,
             )
 
         # Sent once and returned as-is, even though the error is retry-safe
@@ -798,7 +808,9 @@ class TestRequestPipelineRateLimiting:
 
         with patch.object(pipeline, "_handle_attempt", handle_attempt):
             output_context = await pipeline._retry(  # type: ignore[reportPrivateUsage]
-                self._non_retryable_call(strategy), MagicMock(), None
+                self._non_retryable_call(strategy),
+                self._unseekable_request_context(),
+                None,
             )
 
         assert output_context.response is error
