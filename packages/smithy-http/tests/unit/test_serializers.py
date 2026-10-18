@@ -1,11 +1,13 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import datetime
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from datetime import UTC
 from decimal import Decimal
 from inspect import iscoroutinefunction
 from io import BytesIO
+from pathlib import Path
 from typing import Any, ClassVar, Protocol, Self
 
 import pytest
@@ -13,16 +15,18 @@ from smithy_core import URI
 from smithy_core.aio.interfaces import StreamingBlob
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
+from smithy_core.exceptions import SerializationError
 from smithy_core.prelude import (
     BIG_DECIMAL,
     BLOB,
     BOOLEAN,
     FLOAT,
     INTEGER,
+    LONG,
     STRING,
     TIMESTAMP,
 )
-from smithy_core.schemas import Schema
+from smithy_core.schemas import MemberSchema, Schema
 from smithy_core.serializers import (
     SerializeableStruct,
     ShapeSerializer,
@@ -47,6 +51,7 @@ from smithy_core.traits import (
 from smithy_http import Fields, tuples_to_fields
 from smithy_http.aio import HTTPResponse as _HTTPResponse
 from smithy_http.deserializers import HTTPResponseDeserializer
+from smithy_http.interfaces import Fields as FieldsInterface
 from smithy_http.serializers import (
     HTTPBindingSerializer,
     HTTPRequestSerializer,
@@ -2309,3 +2314,288 @@ async def test_serialize_response_event_stream_creates_writeable_body() -> None:
 
     assert "header" in actual.fields
     assert actual.fields["header"].as_string() == "foo"
+
+
+def _streaming_payload_schema(*, requires_length: bool = False) -> Schema:
+    payload: MemberSchema = {
+        "target": BLOB,
+        "traits": [HTTPPayloadTrait(), StreamingTrait()],
+    }
+    if requires_length:
+        payload["traits"].append(RequiresLengthTrait())
+    return Schema.collection(
+        id=ShapeID(
+            "com.smithy#RequiredLengthStreamingPayload"
+            if requires_length
+            else "com.smithy#StreamingPayload"
+        ),
+        members={
+            "payload": payload,
+            "contentLength": {
+                "target": LONG,
+                "traits": [HTTPHeaderTrait("Content-Length")],
+            },
+            "transferEncoding": {
+                "target": STRING,
+                "traits": [HTTPHeaderTrait("Transfer-Encoding")],
+            },
+        },
+    )
+
+
+STREAMING_PAYLOAD = _streaming_payload_schema()
+REQUIRED_LENGTH_STREAMING_PAYLOAD = _streaming_payload_schema(requires_length=True)
+STREAMING_DATA = b"foobar"
+
+
+class SeekableFalseBytesReader(NonSeekableBytesReader):
+    """A stream with seek and tell that reports it can't seek, like a pipe."""
+
+    def seekable(self) -> bool:
+        return False
+
+    def seek(self, offset: int, whence: int = 0, /) -> int:
+        raise OSError("unseekable")
+
+    def tell(self) -> int:
+        raise OSError("unseekable")
+
+
+class CoroutineTellBytesReader(NonSeekableBytesReader):
+    """A stream whose tell returns a coroutine without being declared async."""
+
+    def seek(self, offset: int, whence: int = 0, /) -> int:
+        return self._wrapped.seek(offset, whence)
+
+    def tell(self) -> Any:
+        return self._tell()
+
+    async def _tell(self) -> int:
+        return self._wrapped.tell()
+
+
+class CoroutineSeekBytesReader(NonSeekableBytesReader):
+    """A stream whose seek returns a coroutine without being declared async."""
+
+    def seek(self, offset: int, whence: int = 0, /) -> Any:
+        return self._seek(offset, whence)
+
+    def tell(self) -> int:
+        return self._wrapped.tell()
+
+    async def _seek(self, offset: int, whence: int) -> int:
+        return self._wrapped.seek(offset, whence)
+
+
+class SeekOnlyBytesReader(NonSeekableBytesReader):
+    """A stream that can seek but can't report its position."""
+
+    def seek(self, offset: int, whence: int = 0, /) -> int:
+        return self._wrapped.seek(offset, whence)
+
+
+class FailsAfterSeekingBytesReader(NonSeekableBytesReader):
+    """A stream that can seek to its end but fails to report the position there."""
+
+    def seek(self, offset: int, whence: int = 0, /) -> int:
+        return self._wrapped.seek(offset, whence)
+
+    def tell(self) -> int:
+        if self._wrapped.tell() != 0:
+            raise OSError("tell failed")
+        return 0
+
+
+async def _async_chunks(data: bytes) -> AsyncIterator[bytes]:
+    yield data
+
+
+def _serialize_streaming(
+    kind: str,
+    payload: StreamingBlob | None,
+    *,
+    content_length: int | None = None,
+    transfer_encoding: str | None = None,
+    schema: Schema = STREAMING_PAYLOAD,
+) -> FieldsInterface:
+    """Serialize a request the way generated clients do, or a response, and return
+    its fields. A payload of None leaves the payload member unset."""
+
+    def write(serializer: ShapeSerializer) -> None:
+        if payload is not None:
+            serializer.write_data_stream(schema.members["payload"], payload)
+        if content_length is not None:
+            serializer.write_long(schema.members["contentLength"], content_length)
+        if transfer_encoding is not None:
+            serializer.write_string(
+                schema.members["transferEncoding"], transfer_encoding
+            )
+
+    http_trait = HTTPTrait({"method": "PUT", "code": 200, "uri": "/"})
+    if kind == "request":
+        serializer = HTTPBindingSerializer(
+            payload_codec=JSONCodec(), schema=schema, http_trait=http_trait
+        )
+        write(serializer)
+        return serializer.build_request().fields
+
+    response_serializer = HTTPResponseSerializer(
+        payload_codec=JSONCodec(), http_trait=http_trait
+    )
+    with response_serializer.begin_struct(schema) as struct_serializer:
+        write(struct_serializer)
+    assert response_serializer.result is not None
+    return response_serializer.result.fields
+
+
+@pytest.mark.parametrize("kind", ["request", "response"])
+@pytest.mark.parametrize("offset", [0, 2])
+async def test_streaming_payload_sets_content_length(kind: str, offset: int) -> None:
+    payload = BytesIO(STREAMING_DATA)
+    payload.seek(offset)
+    fields = _serialize_streaming(kind, payload)
+
+    # The length counts what's left from the current position, which is kept.
+    assert fields["content-length"].values == [str(len(STREAMING_DATA) - offset)]
+    assert payload.tell() == offset
+
+
+@pytest.mark.parametrize("kind", ["request", "response"])
+async def test_streaming_payload_past_its_end_has_zero_content_length(
+    kind: str,
+) -> None:
+    payload = BytesIO(STREAMING_DATA)
+    payload.seek(len(STREAMING_DATA) + 4)
+    fields = _serialize_streaming(kind, payload)
+    assert fields["content-length"].values == ["0"]
+
+
+@pytest.mark.parametrize("kind", ["request", "response"])
+async def test_streaming_payload_that_fails_after_seeking_raises(kind: str) -> None:
+    # Swallowing the error would send the stream from its end, with an empty body.
+    with pytest.raises(OSError, match="tell failed"):
+        _serialize_streaming(kind, FailsAfterSeekingBytesReader(STREAMING_DATA))
+
+
+@pytest.mark.parametrize("kind", ["request", "response"])
+async def test_streaming_file_payload_sets_content_length(
+    kind: str, tmp_path: Path
+) -> None:
+    path = tmp_path / "payload"
+    path.write_bytes(STREAMING_DATA)
+    with path.open("rb") as payload:
+        fields = _serialize_streaming(kind, payload)
+        assert fields["content-length"].values == [str(len(STREAMING_DATA))]
+        assert payload.tell() == 0
+
+
+@pytest.mark.parametrize("kind", ["request", "response"])
+@pytest.mark.parametrize(
+    "factory",
+    [
+        lambda: NonSeekableBytesReader(STREAMING_DATA),
+        lambda: SeekableFalseBytesReader(STREAMING_DATA),
+        lambda: AsyncBytesReader(BytesIO(STREAMING_DATA)),
+        lambda: _async_chunks(STREAMING_DATA),
+        lambda: CoroutineTellBytesReader(STREAMING_DATA),
+        lambda: CoroutineSeekBytesReader(STREAMING_DATA),
+        lambda: AsyncBytesReader(SeekOnlyBytesReader(STREAMING_DATA)),
+    ],
+    ids=[
+        "no-seek",
+        "seekable-false",
+        "async-seek",
+        "async-iterable",
+        "coroutine-tell",
+        "coroutine-seek",
+        "async-reader-without-tell",
+    ],
+)
+async def test_streaming_payload_of_unknown_length_omits_content_length(
+    kind: str, factory: Callable[[], StreamingBlob]
+) -> None:
+    fields = _serialize_streaming(kind, factory())
+    assert "content-length" not in fields
+
+
+@pytest.mark.parametrize("kind", ["request", "response"])
+@pytest.mark.parametrize(
+    "factory",
+    [lambda: STREAMING_DATA, lambda: NonSeekableBytesReader(STREAMING_DATA)],
+    ids=["bytes", "no-seek"],
+)
+async def test_modeled_content_length_is_not_duplicated(
+    kind: str, factory: Callable[[], StreamingBlob]
+) -> None:
+    fields = _serialize_streaming(kind, factory(), content_length=6)
+    assert fields["content-length"].values == ["6"]
+
+
+async def test_requires_length_computes_content_length() -> None:
+    fields = _serialize_streaming(
+        "request", BytesIO(STREAMING_DATA), schema=REQUIRED_LENGTH_STREAMING_PAYLOAD
+    )
+    assert fields["content-length"].values == [str(len(STREAMING_DATA))]
+
+
+@pytest.mark.parametrize("kind", ["request", "response"])
+@pytest.mark.parametrize(
+    "factory",
+    [
+        lambda: NonSeekableBytesReader(STREAMING_DATA),
+        lambda: _async_chunks(STREAMING_DATA),
+    ],
+    ids=["no-seek", "async-iterable"],
+)
+async def test_requires_length_raises_for_stream_of_unknown_length(
+    kind: str, factory: Callable[[], StreamingBlob]
+) -> None:
+    with pytest.raises(SerializationError):
+        _serialize_streaming(kind, factory(), schema=REQUIRED_LENGTH_STREAMING_PAYLOAD)
+
+
+async def test_requires_length_uses_modeled_content_length() -> None:
+    fields = _serialize_streaming(
+        "request",
+        NonSeekableBytesReader(STREAMING_DATA),
+        content_length=6,
+        schema=REQUIRED_LENGTH_STREAMING_PAYLOAD,
+    )
+    assert fields["content-length"].values == ["6"]
+
+
+@pytest.mark.parametrize("kind", ["request", "response"])
+async def test_unset_streaming_payload_that_requires_length_has_zero_length(
+    kind: str,
+) -> None:
+    fields = _serialize_streaming(kind, None, schema=REQUIRED_LENGTH_STREAMING_PAYLOAD)
+    assert fields["content-length"].values == ["0"]
+
+
+@pytest.mark.parametrize("kind", ["request", "response"])
+async def test_unset_streaming_payload_omits_content_length(kind: str) -> None:
+    # Requests without content, such as GETs, shouldn't send a Content-Length.
+    fields = _serialize_streaming(kind, None)
+    assert "content-length" not in fields
+
+
+@pytest.mark.parametrize("kind", ["request", "response"])
+async def test_streaming_payload_with_transfer_encoding_omits_content_length(
+    kind: str,
+) -> None:
+    fields = _serialize_streaming(
+        kind, BytesIO(STREAMING_DATA), transfer_encoding="chunked"
+    )
+    assert "content-length" not in fields
+    assert fields["transfer-encoding"].values == ["chunked"]
+
+
+@pytest.mark.parametrize("kind", ["request", "response"])
+async def test_requires_length_with_transfer_encoding_raises(kind: str) -> None:
+    with pytest.raises(SerializationError):
+        _serialize_streaming(
+            kind,
+            BytesIO(STREAMING_DATA),
+            transfer_encoding="chunked",
+            schema=REQUIRED_LENGTH_STREAMING_PAYLOAD,
+        )
