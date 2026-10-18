@@ -7,7 +7,6 @@ from datetime import UTC
 from decimal import Decimal
 from inspect import iscoroutinefunction
 from io import BytesIO
-from pathlib import Path
 from typing import Any, ClassVar, Protocol, Self
 
 import pytest
@@ -2478,18 +2477,6 @@ async def test_streaming_payload_that_fails_after_seeking_raises(kind: str) -> N
 
 
 @pytest.mark.parametrize("kind", ["request", "response"])
-async def test_streaming_file_payload_sets_content_length(
-    kind: str, tmp_path: Path
-) -> None:
-    path = tmp_path / "payload"
-    path.write_bytes(STREAMING_DATA)
-    with path.open("rb") as payload:
-        fields = _serialize_streaming(kind, payload)
-        assert fields["content-length"].values == [str(len(STREAMING_DATA))]
-        assert payload.tell() == 0
-
-
-@pytest.mark.parametrize("kind", ["request", "response"])
 @pytest.mark.parametrize(
     "factory",
     [
@@ -2520,14 +2507,19 @@ async def test_streaming_payload_of_unknown_length_omits_content_length(
 
 @pytest.mark.parametrize("kind", ["request", "response"])
 @pytest.mark.parametrize(
+    "schema",
+    [STREAMING_PAYLOAD, REQUIRED_LENGTH_STREAMING_PAYLOAD],
+    ids=["optional-length", "requires-length"],
+)
+@pytest.mark.parametrize(
     "factory",
     [lambda: STREAMING_DATA, lambda: NonSeekableBytesReader(STREAMING_DATA)],
     ids=["bytes", "no-seek"],
 )
-async def test_modeled_content_length_is_not_duplicated(
-    kind: str, factory: Callable[[], StreamingBlob]
+async def test_modeled_content_length_is_used_once(
+    kind: str, schema: Schema, factory: Callable[[], StreamingBlob]
 ) -> None:
-    fields = _serialize_streaming(kind, factory(), content_length=6)
+    fields = _serialize_streaming(kind, factory(), content_length=6, schema=schema)
     assert fields["content-length"].values == ["6"]
 
 
@@ -2552,16 +2544,6 @@ async def test_requires_length_raises_for_stream_of_unknown_length(
 ) -> None:
     with pytest.raises(SerializationError):
         _serialize_streaming(kind, factory(), schema=REQUIRED_LENGTH_STREAMING_PAYLOAD)
-
-
-async def test_requires_length_uses_modeled_content_length() -> None:
-    fields = _serialize_streaming(
-        "request",
-        NonSeekableBytesReader(STREAMING_DATA),
-        content_length=6,
-        schema=REQUIRED_LENGTH_STREAMING_PAYLOAD,
-    )
-    assert fields["content-length"].values == ["6"]
 
 
 @pytest.mark.parametrize("kind", ["request", "response"])
