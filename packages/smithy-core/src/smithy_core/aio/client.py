@@ -30,7 +30,7 @@ from ..interfaces import Endpoint, TypedProperties
 from ..interfaces.auth import AuthOption, AuthSchemeResolver
 from ..schemas import APIOperation
 from ..serializers import SerializeableShape
-from ..shapes import ShapeID
+from ..shapes import ShapeID, ShapeType
 from ..types import PropertyKey
 from ..types import TypedProperties as _TypedProperties
 from .eventstream import DuplexEventStream, InputEventStream, OutputEventStream
@@ -92,30 +92,22 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
     """The retry scope for the operation."""
 
     def retryable(self) -> bool:
-        """Whether the operation can be retried whatever its request body is.
+        """Whether the operation can be retried.
 
-        Operations with an input stream can't be, but a request with a data stream can
-        still be retried if the stream can be rewound.
+        Operations with an input event stream are never retried. A request for any
+        other operation is retried only if its body can be rewound to where it started.
         """
-        return self.operation.input_stream_member is None
+        member = self.operation.input_stream_member
+        return member is None or member.shape_type is not ShapeType.UNION
 
 
-async def _retry_start(
-    call: ClientCall[Any, Any],
-    body: Any,
-    request_future: Future[Any] | None,
-) -> int | None:
-    """Find where a request body is rewound to before each retry.
+async def _rewind_position(body: Any) -> int | None:
+    """Find where a request body is rewound to before it's resent.
 
-    :returns: The position to rewind to, or None if the request can't be retried.
+    :returns: The body's current position, or None if it can't be rewound.
     """
-    if call.retryable():
+    if body is None or isinstance(body, bytes | bytearray):
         return 0
-    # Event streams are never retried.
-    if request_future is not None:
-        return None
-    # A data stream is resent from where it started, so it can be retried only if it
-    # can be rewound there.
     try:
         return await seek(body, 0, 1)
     except (OSError, ValueError, NotImplementedError):
@@ -409,8 +401,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
         body = request_context.transport_request.body
-        start = await _retry_start(call, body, request_future)
-        if start is None:
+        if not call.retryable() or (start := await _rewind_position(body)) is None:
             return await self._send_with_rate_limiting(
                 call, request_context, request_future
             )
@@ -472,7 +463,11 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                     retry_token.retry_delay,
                 )
 
-                await seek(body, start)
+                try:
+                    await seek(body, start)
+                except (OSError, ValueError, NotImplementedError) as e:
+                    output_context.response.add_note(f"Retry not attempted: {e}")
+                    return output_context
             else:
                 await retry_strategy.record_success(token=retry_token)
                 return output_context

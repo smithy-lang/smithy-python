@@ -27,6 +27,8 @@ from smithy_core.shapes import ShapeID
 from smithy_core.types import TypedProperties
 
 from ._pipeline_harness import (
+    DATA_STREAM_OPERATION,
+    OPERATION,
     DuplexTransport,
     NonDuplexTransport,
     StubEndpointResolver,
@@ -341,7 +343,7 @@ async def _chunks() -> AsyncIterator[bytes]:
 
 
 def _streaming_call_failing_once(
-    harness: Any, body: Any, *, max_attempts: int = 2
+    harness: Any, body: Any, *, operation: Any = DATA_STREAM_OPERATION
 ) -> Any:
     request = StubRequest()
     request.body = body
@@ -356,9 +358,10 @@ def _streaming_call_failing_once(
     harness.protocol.deserialize_response = fail_first_attempt  # type: ignore[method-assign]
     return replace(
         client_call(),
+        operation=operation,
         retry_strategy=SimpleRetryStrategy(
             backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=0),
-            max_attempts=max_attempts,
+            max_attempts=2,
         ),
     )
 
@@ -408,9 +411,31 @@ async def test_data_stream_that_fails_to_seek_is_sent_once() -> None:
     assert cast(BodyRecordingTransport, harness.transport).bodies == [b"foobar"]
 
 
+class SeekBackFailsBody(UnrewindableBody):
+    """A body that reports its position but fails to seek back to it."""
+
+    def seek(self, offset: int, whence: int = 0) -> int:
+        if whence == 1:
+            return 0
+        raise UnsupportedOperation("seek")
+
+
+async def test_data_stream_that_fails_to_rewind_returns_the_attempts_error() -> None:
+    harness = pipeline_harness(BodyRecordingTransport())
+    call = _streaming_call_failing_once(harness, SeekBackFailsBody())
+
+    with pytest.raises(CallError, match="Service unavailable") as exc_info:
+        await harness.pipeline(call)
+
+    assert cast(BodyRecordingTransport, harness.transport).bodies == [b"foobar"]
+    assert any(
+        note.startswith("Retry not attempted") for note in exc_info.value.__notes__
+    )
+
+
 async def test_input_event_stream_is_not_retried() -> None:
     harness = pipeline_harness(NonDuplexTransport())
-    call = _streaming_call_failing_once(harness, BytesIO(b""))
+    call = _streaming_call_failing_once(harness, BytesIO(b""), operation=OPERATION)
 
     stream = await harness.pipeline.input_stream(call, StubEvent)
 
