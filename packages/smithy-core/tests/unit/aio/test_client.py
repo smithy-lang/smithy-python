@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from dataclasses import replace
 from io import BytesIO, UnsupportedOperation
 from typing import Any, cast
@@ -378,16 +378,6 @@ async def test_seekable_data_stream_is_retried_from_its_start() -> None:
     assert cast(BodyRecordingTransport, harness.transport).bodies == [b"obar", b"obar"]
 
 
-async def test_non_seekable_data_stream_is_not_retried() -> None:
-    harness = pipeline_harness(BodyRecordingTransport())
-    call = _streaming_call_failing_once(harness, AsyncBytesReader(_chunks()))
-
-    with pytest.raises(CallError, match="Service unavailable"):
-        await harness.pipeline(call)
-
-    assert cast(BodyRecordingTransport, harness.transport).bodies == [b"foobar"]
-
-
 class UnrewindableBody:
     """A body that reports it's seekable but fails to seek."""
 
@@ -401,9 +391,16 @@ class UnrewindableBody:
         return b"foobar"
 
 
-async def test_data_stream_that_fails_to_seek_is_sent_once() -> None:
+@pytest.mark.parametrize(
+    "factory",
+    [lambda: AsyncBytesReader(_chunks()), UnrewindableBody],
+    ids=["not-seekable", "fails-to-seek"],
+)
+async def test_data_stream_that_cant_be_rewound_is_sent_once(
+    factory: Callable[[], Any],
+) -> None:
     harness = pipeline_harness(BodyRecordingTransport())
-    call = _streaming_call_failing_once(harness, UnrewindableBody())
+    call = _streaming_call_failing_once(harness, factory())
 
     with pytest.raises(CallError, match="Service unavailable"):
         await harness.pipeline(call)

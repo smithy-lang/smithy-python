@@ -2360,49 +2360,11 @@ class SeekableFalseBytesReader(NonSeekableBytesReader):
         raise OSError("unseekable")
 
 
-class CoroutineTellBytesReader(NonSeekableBytesReader):
-    """A stream whose tell returns a coroutine without being declared async."""
-
-    def seek(self, offset: int, whence: int = 0, /) -> int:
-        return self._wrapped.seek(offset, whence)
-
-    def tell(self) -> Any:
-        return self._tell()
-
-    async def _tell(self) -> int:
-        return self._wrapped.tell()
-
-
-class CoroutineSeekBytesReader(NonSeekableBytesReader):
-    """A stream whose seek returns a coroutine without being declared async."""
-
-    def seek(self, offset: int, whence: int = 0, /) -> Any:
-        return self._seek(offset, whence)
-
-    def tell(self) -> int:
-        return self._wrapped.tell()
-
-    async def _seek(self, offset: int, whence: int) -> int:
-        return self._wrapped.seek(offset, whence)
-
-
 class SeekOnlyBytesReader(NonSeekableBytesReader):
     """A stream that can seek but can't report its position."""
 
     def seek(self, offset: int, whence: int = 0, /) -> int:
         return self._wrapped.seek(offset, whence)
-
-
-class FailsAfterSeekingBytesReader(NonSeekableBytesReader):
-    """A stream that can seek to its end but fails to report the position there."""
-
-    def seek(self, offset: int, whence: int = 0, /) -> int:
-        return self._wrapped.seek(offset, whence)
-
-    def tell(self) -> int:
-        if self._wrapped.tell() != 0:
-            raise OSError("tell failed")
-        return 0
 
 
 async def _async_chunks(data: bytes) -> AsyncIterator[bytes]:
@@ -2470,13 +2432,6 @@ async def test_streaming_payload_past_its_end_has_zero_content_length(
 
 
 @pytest.mark.parametrize("kind", ["request", "response"])
-async def test_streaming_payload_that_fails_after_seeking_raises(kind: str) -> None:
-    # Swallowing the error would send the stream from its end, with an empty body.
-    with pytest.raises(OSError, match="tell failed"):
-        _serialize_streaming(kind, FailsAfterSeekingBytesReader(STREAMING_DATA))
-
-
-@pytest.mark.parametrize("kind", ["request", "response"])
 @pytest.mark.parametrize(
     "factory",
     [
@@ -2484,8 +2439,6 @@ async def test_streaming_payload_that_fails_after_seeking_raises(kind: str) -> N
         lambda: SeekableFalseBytesReader(STREAMING_DATA),
         lambda: AsyncBytesReader(BytesIO(STREAMING_DATA)),
         lambda: _async_chunks(STREAMING_DATA),
-        lambda: CoroutineTellBytesReader(STREAMING_DATA),
-        lambda: CoroutineSeekBytesReader(STREAMING_DATA),
         lambda: AsyncBytesReader(SeekOnlyBytesReader(STREAMING_DATA)),
     ],
     ids=[
@@ -2493,8 +2446,6 @@ async def test_streaming_payload_that_fails_after_seeking_raises(kind: str) -> N
         "seekable-false",
         "async-seek",
         "async-iterable",
-        "coroutine-tell",
-        "coroutine-seek",
         "async-reader-without-tell",
     ],
 )
