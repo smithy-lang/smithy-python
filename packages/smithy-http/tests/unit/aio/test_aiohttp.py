@@ -168,6 +168,45 @@ async def test_send_restores_position_when_body_probe_fails(
     await client.close()
 
 
+@pytest.mark.parametrize("error", [OSError, CancelledError])
+async def test_send_rewinds_gzip_source_after_probe_consumes_then_fails(
+    error: type[BaseException],
+) -> None:
+    class FailOnceSource(BytesIO):
+        failed = False
+
+        def read(self, size: int | None = -1) -> bytes:
+            if not self.failed:
+                self.failed = True
+                super().read(1)
+                raise error("source probe failed")
+            return super().read(size)
+
+    payload = b"complete gzip source after retry"
+    source = FailOnceSource(b"prefix" + payload)
+    source.seek(6)
+    fields = Fields()
+    body = RequestCompression(encoding="gzip", minimum_size=0).compress(
+        source, fields, streaming=True
+    )
+    assert isinstance(body, AsyncBytesReader)
+    client, session = _create_client()
+    request = HTTPRequest(
+        method="POST",
+        destination=URI(scheme="https", host="example.com"),
+        body=body,
+        fields=fields,
+    )
+    with pytest.raises(error, match="source probe failed"):
+        await client.send(request)
+    session.request.assert_not_awaited()
+    assert source.tell() == 6
+    assert body.tell() == 0
+    assert gzip.decompress(await body.read()) == payload
+    await body.close()
+    await client.close()
+
+
 async def test_send_disables_redirects() -> None:
     client, session = _create_client()
 

@@ -384,12 +384,36 @@ async def test_compressed_request_is_signed_and_replayed_by_pipeline() -> None:
     assert canonical_payloads == [sha256(transmitted[0]).hexdigest()] * 2
 
 
-async def test_signed_compressed_seekable_stream_is_not_fully_buffered() -> None:
+@pytest.mark.parametrize("source_kind", ["sync", "async_no_tell"])
+async def test_signed_compressed_seekable_stream_is_not_fully_buffered(
+    source_kind: str,
+) -> None:
+    class AsyncSeekableNoTell:
+        def __init__(self, data: bytes) -> None:
+            self.buffer = BytesIO(data)
+
+        async def read(self, size: int = -1) -> bytes:
+            return self.buffer.read(size)
+
+        async def seek(self, offset: int, whence: int = 0) -> int:
+            return self.buffer.seek(offset, whence)
+
+        async def close(self) -> None:
+            self.buffer.close()
+
+        @property
+        def closed(self) -> bool:
+            return self.buffer.closed
+
     payload = b"".join(
         sha256(index.to_bytes(4, "big")).digest() for index in range(8192)
     )
-    source = BytesIO(b"prefix" + payload)
-    source.seek(6)
+    if source_kind == "sync":
+        source = BytesIO(b"prefix" + payload)
+        source.seek(6)
+    else:
+        source = AsyncSeekableNoTell(b"prefix" + payload)
+        await source.seek(6)
     fields = Fields()
     body = RequestCompression(encoding="gzip", minimum_size=0).compress(
         source, fields, streaming=True

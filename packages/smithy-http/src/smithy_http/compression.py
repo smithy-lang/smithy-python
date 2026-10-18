@@ -105,18 +105,23 @@ class RequestCompression:
 class _GzipReader(AsyncBytesReader):
     def __init__(self, body: StreamingBlob) -> None:
         self._source = AsyncBytesReader(body)
-        self._origin = self._source.tell() if self._source.seekable() else None
+        self._origin: int | None = None
         self._position = 0
         self._compressed = _gzip_chunks(self._source)
         super().__init__(self._compressed)
 
+    async def _ensure_origin(self) -> None:
+        if self._origin is None and self._source.seekable():
+            self._origin = await self._source.seek(0, 1)
+
     async def read(self, size: int = -1) -> bytes:
+        await self._ensure_origin()
         result = await super().read(size)
         self._position += len(result)
         return result
 
     def seekable(self) -> bool:
-        return self._origin is not None
+        return self._source.seekable()
 
     def tell(self) -> int:
         if not self.seekable():
@@ -130,10 +135,13 @@ class _GzipReader(AsyncBytesReader):
 
         Positions beyond EOF are clamped to EOF, as with gzip.GzipFile.
         """
-        if self._origin is None:
+        if not self.seekable():
             raise NotImplementedError
         if self.closed:
             raise ValueError("I/O operation on closed file.")
+        await self._ensure_origin()
+        if self._origin is None:
+            raise NotImplementedError("The source did not return its seek position")
         if whence == 0:
             target = offset
         elif whence == 1:
@@ -146,7 +154,9 @@ class _GzipReader(AsyncBytesReader):
             raise ValueError(f"Invalid whence: {whence}")
         if target < 0:
             raise ValueError("Negative seek position")
-        if target == self._position:
+        # A failed read may advance the source without emitting compressed bytes.
+        # Absolute seeks must restart it even when the logical position matches.
+        if target == self._position and whence != 0:
             return self._position
         await self._compressed.aclose()
         await self._source.seek(self._origin)
