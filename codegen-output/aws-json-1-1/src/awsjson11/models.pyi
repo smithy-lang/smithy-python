@@ -19,7 +19,13 @@ class _SerdeShape:
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
 
-class ServiceError(ModeledError): ...
+class ServiceError(ModeledError):
+    """
+    Base error for all errors in the service.
+
+    Some exceptions do not extend from this class, including
+    synthetic, implicit, and shared exception types.
+    """
 
 @dataclass(kw_only=True)
 class ComplexError(ServiceError, _SerdeShape):

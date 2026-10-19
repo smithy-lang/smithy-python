@@ -76,7 +76,12 @@ public final class ModelStubGenerator implements Runnable {
                         def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
 
                     class ServiceError(ModeledError):
-                        ...
+                        \"""
+                        Base error for all errors in the service.
+
+                        Some exceptions do not extend from this class, including
+                        synthetic, implicit, and shared exception types.
+                        \"""
                     """);
 
             for (var shape : shapes) {
