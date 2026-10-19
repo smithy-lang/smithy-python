@@ -30,7 +30,7 @@ from ..interfaces import Endpoint, TypedProperties
 from ..interfaces.auth import AuthOption, AuthSchemeResolver
 from ..schemas import APIOperation
 from ..serializers import SerializeableShape
-from ..shapes import ShapeID
+from ..shapes import ShapeID, ShapeType
 from ..types import PropertyKey
 from ..types import TypedProperties as _TypedProperties
 from .eventstream import DuplexEventStream, InputEventStream, OutputEventStream
@@ -92,8 +92,26 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
     """The retry scope for the operation."""
 
     def retryable(self) -> bool:
-        # TODO: check to see if the stream is seekable
-        return self.operation.input_stream_member is None
+        """Whether the operation can be retried.
+
+        Operations with an input event stream are never retried. A request for any
+        other operation is retried only if its body can be rewound to where it started.
+        """
+        member = self.operation.input_stream_member
+        return member is None or member.shape_type is not ShapeType.UNION
+
+
+async def _rewind_position(body: Any) -> int | None:
+    """Find where a request body is rewound to before it's resent.
+
+    :returns: The body's current position, or None if it can't be rewound.
+    """
+    if body is None or isinstance(body, bytes | bytearray):
+        return 0
+    try:
+        return await seek(body, 0, 1)
+    except (OSError, ValueError, NotImplementedError):
+        return None
 
 
 class RequestPipeline[TRequest: Request, TResponse: Response]:
@@ -382,7 +400,8 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         request_context: RequestContext[I, TRequest],
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
-        if not call.retryable():
+        body = request_context.transport_request.body
+        if not call.retryable() or (start := await _rewind_position(body)) is None:
             return await self._send_with_rate_limiting(
                 call, request_context, request_future
             )
@@ -444,7 +463,11 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                     retry_token.retry_delay,
                 )
 
-                await seek(request_context.transport_request.body, 0)
+                try:
+                    await seek(body, start)
+                except (OSError, ValueError, NotImplementedError) as e:
+                    output_context.response.add_note(f"Retry not attempted: {e}")
+                    return output_context
             else:
                 await retry_strategy.record_success(token=retry_token)
                 return output_context

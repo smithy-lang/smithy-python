@@ -12,6 +12,7 @@ from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.endpoints import EndpointResolverParams
 from smithy_core.interceptors import InterceptorChain
+from smithy_core.prelude import BLOB
 from smithy_core.response import EMPTY_RESPONSE_METADATA, ResponseMetadata
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
@@ -86,7 +87,29 @@ OPERATION = APIOperation(
     effective_auth_schemes=[],
 )
 
-# ``ClientCall.retryable()`` is False for operations with a streaming input, so
+_DATA_STREAM_INPUT_SCHEMA = Schema.collection(
+    id=ShapeID("com.example#DataStreamInput"),
+    members={"body": {"target": BLOB, "traits": [StreamingTrait()]}},
+)
+
+# An operation whose input is a data stream rather than an event stream.
+DATA_STREAM_OPERATION = APIOperation(
+    input=StubInput,
+    output=StubOutput,
+    static_schema=(
+        ShapeType.OPERATION.value,
+        "com.example",
+        "DataStreamOperation",
+        0,
+        _DATA_STREAM_INPUT_SCHEMA,
+        _UNARY_OUTPUT_SCHEMA,
+        (),
+    ),
+    error_registry=TypeRegistry({}),
+    effective_auth_schemes=[],
+)
+
+# ``ClientCall.retryable()`` is False for operations with an input event stream, so
 # OPERATION above never enters the retry loop. This one has no input stream and so
 # exercises it.
 UNARY_OPERATION = APIOperation(

@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed HTTP serializers sending seekable streaming payloads, such as files, without a Content-Length and sending a modeled Content-Length twice."
+}

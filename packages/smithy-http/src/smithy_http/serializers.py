@@ -1,11 +1,11 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from base64 import b64encode
-from collections.abc import Callable, Iterator, Sized
+from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from datetime import datetime
 from decimal import Decimal
-from inspect import iscoroutinefunction
+from inspect import iscoroutine
 from io import BytesIO
 from types import TracebackType
 from typing import TYPE_CHECKING
@@ -34,7 +34,7 @@ from smithy_core.traits import (
 from smithy_core.types import PathPattern, TimestampFormat
 from smithy_core.utils import serialize_float
 
-from . import Field, tuples_to_fields
+from . import Field, Fields, tuples_to_fields
 from .aio import HTTPRequest as _HTTPRequest
 from .aio import HTTPResponse as _HTTPResponse
 from .aio.interfaces import HTTPRequest, HTTPResponse
@@ -110,26 +110,75 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
             self.result = binding_serializer.build_request()
 
 
-def _compute_content_length(
-    payload: object,
-) -> int | None:
-    if (tell := getattr(payload, "tell", None)) is not None and not iscoroutinefunction(
-        tell
-    ):
-        start: int = tell()
-        if (end := _seek(payload, 0, 2)) is not None:
-            content_length: int = end - start
-            _seek(payload, start, 0)
-            return content_length
-    return None
+def _set_content_length(
+    fields: Fields,
+    content_length: int | None,
+    raw_payload: "AsyncStreamingBlob | None",
+    *,
+    required: bool,
+) -> None:
+    # A length the caller already set, such as with a modeled Content-Length
+    # member, takes precedence and isn't computed again.
+    if "content-length" in fields:
+        return
+
+    # A body sent with Transfer-Encoding can't also have a Content-Length.
+    if "transfer-encoding" not in fields:
+        if raw_payload is not None:
+            content_length = _compute_content_length(raw_payload)
+        if content_length is not None:
+            fields.set_field(Field(name="content-length", values=[str(content_length)]))
+            return
+
+    if required:
+        raise SerializationError(
+            "This operation requires the content length of the input stream, but "
+            "it was not provided and was unable to be computed. Provide a "
+            "seekable stream or set the content length explicitly."
+        )
 
 
-def _seek(payload: object, pos: int, whence: int = 0) -> int | None:
-    if (seek := getattr(payload, "seek", None)) is not None and not iscoroutinefunction(
-        seek
-    ):
-        return seek(pos, whence)
-    return None
+def _compute_content_length(payload: "AsyncStreamingBlob") -> int | None:
+    """Determine the length of a raw payload without consuming it.
+
+    ``bytes`` and ``bytearray`` report their length, and synchronously seekable
+    streams are measured from their current position to the end. The length of any
+    other stream, including async streams, is unknown.
+    """
+    if isinstance(payload, bytes | bytearray):
+        return len(payload)
+
+    tell = getattr(payload, "tell", None)
+    seek = getattr(payload, "seek", None)
+    if tell is None or seek is None:
+        return None
+
+    try:
+        if (seekable := getattr(payload, "seekable", None)) is not None:
+            if _is_async(is_seekable := seekable()) or not is_seekable:
+                return None
+        if _is_async(start := tell()) or _is_async(seek(0, 2)):
+            return None
+    except (OSError, ValueError, NotImplementedError):
+        # Pipes raise io.UnsupportedOperation, closed files raise ValueError, and
+        # AsyncBytesReader raises NotImplementedError if its source can't tell.
+        return None
+
+    # The stream is now at its end, so errors are raised instead of sending it on
+    # with an empty body.
+    end: int = tell()
+    seek(start, 0)
+    # A stream positioned past its end has nothing left to send.
+    return max(end - start, 0)
+
+
+def _is_async(result: object) -> bool:
+    # Wrappers of async methods return a coroutine without being declared with
+    # ``async def``. Closing it avoids a "never awaited" warning.
+    if iscoroutine(result):
+        result.close()
+        return True
+    return False
 
 
 class HTTPBindingSerializer(InterceptingSerializer):
@@ -171,7 +220,6 @@ class HTTPBindingSerializer(InterceptingSerializer):
         self._raw_payload_serializer: RawPayloadSerializer | None = None
         self._payload: AsyncBytesReader | AsyncBytesProvider | None = None
         self._content_type: str | None = payload_codec.media_type
-        self._content_length: int | None = None
         self._content_length_required = False
         self._writes_document_body = False
         self._result: HTTPRequest | None = None
@@ -253,21 +301,21 @@ class HTTPBindingSerializer(InterceptingSerializer):
             self._body_context = None
 
         payload = self._payload
+        content_length: int | None = None
+        raw_payload: AsyncStreamingBlob | None = None
         if self._raw_payload_serializer is not None:
             raw_payload = self._raw_payload_serializer.payload
-            if isinstance(raw_payload, Sized):
-                self._content_length = len(raw_payload)
-            payload = AsyncBytesReader(raw_payload or b"")
+            if raw_payload is None and self._content_length_required:
+                # An unset payload is sent as an empty body, whose length is 0.
+                raw_payload = b""
         elif self._sync_payload is not None:
             if (
                 self._binding_metadata.request.payload is not None
                 or self._writes_document_body
             ):
-                self._content_length = self._sync_payload.tell()
+                content_length = self._sync_payload.tell()
             self._sync_payload.seek(0)
             payload = AsyncBytesReader(self._sync_payload)
-
-        assert payload is not None  # noqa: S101
 
         headers = self.header_serializer.headers
         if self._content_type is not None and (
@@ -276,18 +324,14 @@ class HTTPBindingSerializer(InterceptingSerializer):
         ):
             headers.append(("content-type", self._content_type))
 
-        if self._content_length is not None:
-            headers.append(("content-length", str(self._content_length)))
-
         fields = tuples_to_fields(headers)
-        if self._content_length_required and "content-length" not in fields:
-            content_length = _compute_content_length(payload)
-            if content_length is None:
-                raise SerializationError(
-                    "This operation requires the content length of the input "
-                    "stream, but it was not provided and was unable to be computed."
-                )
-            fields.set_field(Field(name="content-length", values=[str(content_length)]))
+        _set_content_length(
+            fields, content_length, raw_payload, required=self._content_length_required
+        )
+        if self._raw_payload_serializer is not None:
+            payload = AsyncBytesReader(raw_payload or b"")
+
+        assert payload is not None  # noqa: S101
 
         self._result = _HTTPRequest(
             method=self._operation_metadata.method,
@@ -388,8 +432,8 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
 
         content_type: str | None = self._payload_codec.media_type
         content_length: int | None = None
-        content_length_source: object | None = None
         content_length_required = False
+        raw_payload: AsyncStreamingBlob | None = None
 
         binding_metadata = schema.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
         response_metadata = binding_metadata.response
@@ -410,9 +454,8 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
                 )
                 yield binding_serializer
                 raw_payload = payload_serializer.payload
-                if isinstance(raw_payload, Sized):
-                    content_length = len(raw_payload)
-                content_length_source = raw_payload
+                if raw_payload is None and content_length_required:
+                    raw_payload = b""
                 payload = AsyncBytesReader(raw_payload or b"")
             else:
                 if payload_metadata.media_type is not None:
@@ -454,20 +497,10 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
         ):
             headers.append(("content-type", content_type))
 
-        if content_length is not None:
-            headers.append(("content-length", str(content_length)))
-
         fields = tuples_to_fields(headers)
-        if content_length_required and "content-length" not in fields:
-            content_length = _compute_content_length(
-                content_length_source if content_length_source is not None else payload
-            )
-            if content_length is None:
-                raise SerializationError(
-                    "This operation requires the content length of the input "
-                    "stream, but it was not provided and was unable to be computed."
-                )
-            fields.set_field(Field(name="content-length", values=[str(content_length)]))
+        _set_content_length(
+            fields, content_length, raw_payload, required=content_length_required
+        )
 
         status = binding_serializer.response_code_serializer.response_code
         if status is None:
