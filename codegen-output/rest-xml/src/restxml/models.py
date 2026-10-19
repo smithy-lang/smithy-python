@@ -86,7 +86,7 @@ class ServiceError(ModeledError):
 
 _registry = ModelRegistry(
     _schemas,
-    renames={"str": "FOO_ENUM", "int": "INTEGER_ENUM"},
+    renames={},
     index={
         "AllQueryStringTypesInput": "ALL_QUERY_STRING_TYPES_INPUT",
         "AllQueryStringTypesOutput": "ALL_QUERY_STRING_TYPES_OUTPUT",

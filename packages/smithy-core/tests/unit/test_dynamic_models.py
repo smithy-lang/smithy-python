@@ -8,6 +8,7 @@ from typing import cast
 from smithy_core import _schema_compact
 from smithy_core._dynamic_models import ModelRegistry
 from smithy_core._schema_compact import StaticSchema
+from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
 from smithy_core.shapes import ShapeType
 from smithy_core.types import UnknownEnumMixin
@@ -217,3 +218,72 @@ def test_modeled_error_falls_back_to_modeled_error_without_service_error() -> No
     cls = registry.build("Boom")
     assert issubclass(cls, ModeledError)
     assert cls.__mro__[1] is ModeledError
+
+
+def test_enum_member_deserialize_coerces_to_enum_class() -> None:
+    # A member whose target is an enum must deserialize to the enum class, not the
+    # raw wire string (the eager generator wrapped it as EnumClass(read_string(...))).
+    _schema_compact._cache.clear()
+    lang = _enum("Lang", (("EN_US", "en-US"), ("MULTI", "multi")))
+    req = (
+        ShapeType.STRUCTURE.value,
+        NS,
+        "Req",
+        0,
+        ("lang",),
+        ((lambda: lang, 0),),
+    )
+    mod = _module(LANG=lang, REQ=req)
+    registry = ModelRegistry(
+        mod,
+        index={"Lang": "LANG", "Req": "REQ"},
+        shape_names={"Lang", "Req"},
+    )
+    req_schema = _schema_compact.hydrate(req)
+    member = req_schema.members_by_index[0]
+    _, reader = member.get_extension(registry._codec)
+
+    class _De:
+        def read_string(self, schema: object) -> str:
+            return "en-US"
+
+    result = reader(cast(ShapeDeserializer, _De()), member)
+    lang = cast("type[StrEnum]", registry.build("Lang"))
+    assert result is lang["EN_US"]
+
+
+def test_union_classes_report_models_module() -> None:
+    # The union parent, each variant, and the Unknown class must carry the client
+    # models module, not smithy_core._dynamic_models.
+    _schema_compact._cache.clear()
+    mod = _module(
+        FOO=_union("Foo", (("a", ShapeType.STRING.value),)),
+    )
+    registry = ModelRegistry(mod, index={"Foo": "FOO"}, shape_names={"Foo"})
+    registry.build("Foo")
+    for name in ("Foo", "FooA", "FooUnknown"):
+        assert registry.build(name).__module__ == "ns.example.models"
+
+
+def test_concurrent_build_returns_one_class() -> None:
+    import threading
+
+    _schema_compact._cache.clear()
+    mod = _module(FOO=_struct("Foo", (("a", ShapeType.STRING.value),)))
+    registry = ModelRegistry(mod, index={"Foo": "FOO"}, shape_names={"Foo"})
+    start = threading.Barrier(8)
+    results: list[type] = []
+    lock = threading.Lock()
+
+    def worker() -> None:
+        start.wait()
+        built = registry.build("Foo")
+        with lock:
+            results.append(built)
+
+    threads = [threading.Thread(target=worker) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert len({id(r) for r in results}) == 1

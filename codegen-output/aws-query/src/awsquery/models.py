@@ -54,7 +54,7 @@ class ServiceError(ModeledError):
 
 _registry = ModelRegistry(
     _schemas,
-    renames={"str": "FOO_ENUM", "int": "INTEGER_ENUM"},
+    renames={},
     index={
         "ComplexError": "COMPLEX_ERROR",
         "ComplexNestedErrorData": "COMPLEX_NESTED_ERROR_DATA",

@@ -73,7 +73,12 @@ public final class ModelModuleGenerator implements Runnable {
                     continue;
                 }
                 var constName = schemaRef.get().getSymbol().getName();
-                var symbolName = symbol.getName();
+                // An enum/int-enum resolves to a generic `str`/`int` symbol carrying the
+                // real class name in ENUM_SYMBOL; reading symbol.getName() here would
+                // index/rename-detect against "str"/"int" and miss a renamed enum.
+                var classSymbol = symbol.getProperty(SymbolProperties.ENUM_SYMBOL)
+                        .orElse(symbol);
+                var symbolName = classSymbol.getName();
                 var idName = shape.getId().getName();
                 shapeNames.add(idName);
                 index.put(idName, constName);

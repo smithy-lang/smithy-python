@@ -37,7 +37,7 @@ class ServiceError(ModeledError):
 
 _registry = ModelRegistry(
     _schemas,
-    renames={"str": "FOO_ENUM", "int": "INTEGER_ENUM"},
+    renames={},
     index={
         "ClientOptionalDefaults": "CLIENT_OPTIONAL_DEFAULTS",
         "ComplexError": "COMPLEX_ERROR",

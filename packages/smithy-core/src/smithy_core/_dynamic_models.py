@@ -23,6 +23,7 @@ from dataclasses import field as _field
 from dataclasses import make_dataclass
 from decimal import Decimal
 from enum import IntEnum, StrEnum
+from threading import RLock
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, cast, dataclass_transform
 
@@ -64,13 +65,11 @@ def _scalar(write_name: str, read_name: str) -> tuple[_Writer, _Reader]:
 _SCALAR_CODECS: dict[ShapeType, tuple[_Writer, _Reader]] = {
     ShapeType.BOOLEAN: _scalar("write_boolean", "read_boolean"),
     ShapeType.STRING: _scalar("write_string", "read_string"),
-    ShapeType.ENUM: _scalar("write_string", "read_string"),
     ShapeType.TIMESTAMP: _scalar("write_timestamp", "read_timestamp"),
     ShapeType.BLOB: _scalar("write_blob", "read_blob"),
     ShapeType.BYTE: _scalar("write_byte", "read_byte"),
     ShapeType.SHORT: _scalar("write_short", "read_short"),
     ShapeType.INTEGER: _scalar("write_integer", "read_integer"),
-    ShapeType.INT_ENUM: _scalar("write_integer", "read_integer"),
     ShapeType.LONG: _scalar("write_long", "read_long"),
     ShapeType.FLOAT: _scalar("write_float", "read_float"),
     ShapeType.DOUBLE: _scalar("write_double", "read_double"),
@@ -162,6 +161,11 @@ class ModelRegistry:
         self._renames = renames or {}
         self._classes: dict[str, type] = {}
         self._union_schemas: dict[str, Schema] = {}
+        # Reentrant because build() recurses: unions build their variants, and a
+        # member codec resolves nested targets through build(). Guards the
+        # read-miss-build-store on _classes so concurrent builders of one shape
+        # cannot publish two distinct class objects.
+        self._lock = RLock()
         # A codegen-supplied index (name -> schema-const, variant/unknown names already
         # disambiguated) lets the registry resolve a build() without hydrating every
         # schema in the module just to map names; the scanning fallback hydrates all.
@@ -181,10 +185,14 @@ class ModelRegistry:
         return getattr(self._models_module, self._service_error_name)
 
     @property
+    def _models_module_name(self) -> str:
+        return self._schemas.__name__.rsplit(".", 2)[0] + ".models"
+
+    @property
     def _models_module(self) -> ModuleType:
         import sys
 
-        return sys.modules[self._schemas.__name__.rsplit(".", 2)[0] + ".models"]
+        return sys.modules[self._models_module_name]
 
     def _field_names(self, schema: Schema) -> tuple[str, ...]:
         return schema.get_extension(self._field_names_ext)
@@ -214,41 +222,47 @@ class ModelRegistry:
         cached = self._classes.get(name)
         if cached is not None:
             return cached
-        index = self._ensure_index()
-        # Event-stream union deserializer helper: _<Union>Deserializer().deserialize(d).
-        if name.startswith("_") and name.endswith("Deserializer"):
-            union_name = name[1 : -len("Deserializer")]
-            if union_name in index:
-                built = self._build_union_deserializer(union_name)
-                self._classes[name] = built
-                return built
-        renamed = self._renames.get(name)
-        if renamed is not None:
-            const = renamed
-        elif name in index:
-            const = index[name]
-        else:
-            # smithy.api#Unit is a prelude empty struct used as a union variant target;
-            # it is not emitted as a generated schema constant, so build it from the prelude.
-            if name == "Unit":
-                from .prelude import UNIT
+        with self._lock:
+            cached = self._classes.get(name)
+            if cached is not None:
+                return cached
+            index = self._ensure_index()
+            # Event-stream union deserializer helper: _<Union>Deserializer().deserialize(d).
+            if name.startswith("_") and name.endswith("Deserializer"):
+                union_name = name[1 : -len("Deserializer")]
+                if union_name in index:
+                    built = self._build_union_deserializer(union_name)
+                    self._classes[name] = built
+                    return built
+            module = self._models_module_name
+            renamed = self._renames.get(name)
+            if renamed is not None:
+                const = renamed
+            elif name in index:
+                const = index[name]
+            else:
+                # smithy.api#Unit is a prelude empty struct used as a union variant
+                # target; it is not emitted as a generated schema constant, so build it
+                # from the prelude.
+                if name == "Unit":
+                    from .prelude import UNIT
 
-                built = self._build_struct("Unit", UNIT)
-                built.__module__ = self._schemas.__name__.rsplit(".", 2)[0] + ".models"
-                self._classes[name] = built
-                return built
-            raise AttributeError(name)
-        schema = hydrate(getattr(self._schemas, const))
-        if schema.shape_type == ShapeType.UNION:
-            self._build_union(schema.id.name, schema)
-            return self._classes[name]
-        if schema.shape_type in (ShapeType.ENUM, ShapeType.INT_ENUM):
-            built: type = self._build_enum(name, schema)
-        else:
-            built = self._build_struct(name, schema)
-        built.__module__ = self._schemas.__name__.rsplit(".", 2)[0] + ".models"
-        self._classes[name] = built
-        return built
+                    built = self._build_struct("Unit", UNIT)
+                    built.__module__ = module
+                    self._classes[name] = built
+                    return built
+                raise AttributeError(name)
+            schema = hydrate(getattr(self._schemas, const))
+            if schema.shape_type == ShapeType.UNION:
+                self._build_union(schema.id.name, schema)
+                return self._classes[name]
+            if schema.shape_type in (ShapeType.ENUM, ShapeType.INT_ENUM):
+                built = self._build_enum(name, schema)
+            else:
+                built = self._build_struct(name, schema)
+            built.__module__ = module
+            self._classes[name] = built
+            return built
 
     def _build_union_deserializer(self, union_name: str) -> type:
         # Ensure the union (and its variants + schema) are registered.
@@ -442,19 +456,24 @@ class ModelRegistry:
         return None
 
     def _build_union(self, name: str, schema: Schema) -> None:
+        module = self._models_module_name
         for member in schema.members_by_index:
             vname = variant_class_name(
                 name, member.expect_member_name(), self._shape_names
             )
-            self._classes[vname] = self._build_variant(
-                vname, schema, member.expect_member_index()
-            )
+            variant = self._build_variant(vname, schema, member.expect_member_index())
+            variant.__module__ = module
+            self._classes[vname] = variant
         unknown = union_unknown_name(name, self._shape_names)
-        self._classes[unknown] = make_dataclass(unknown, [("tag", str)])
+        unknown_cls = make_dataclass(unknown, [("tag", str)])
+        unknown_cls.__module__ = module
+        self._classes[unknown] = unknown_cls
         self._union_schemas[name] = schema
         # A tagged union has no single runtime class; expose a marker so the name
         # resolves. Static code uses the .pyi union alias, not this object.
-        self._classes[name] = make_dataclass(name, [])
+        marker = make_dataclass(name, [])
+        marker.__module__ = module
+        self._classes[name] = marker
 
     def _build_variant(self, vname: str, union_schema: Schema, index: int) -> type:
         registry = self
@@ -542,6 +561,22 @@ class ModelRegistry:
         st = member.shape_type
         if st == ShapeType.BLOB and self._is_streaming(member):
             return _scalar("write_data_stream", "read_data_stream")
+        if st in (ShapeType.ENUM, ShapeType.INT_ENUM):
+            # A StrEnum/IntEnum serializes as its bare str/int, but deserialize must
+            # coerce the raw primitive back through the enum class (matching the eager
+            # EnumGenerator's `EnumClass(read_string(...))`).
+            is_int = st == ShapeType.INT_ENUM
+            enum_cls = self.build(member.expect_member_target().id.name)
+            write_name = "write_integer" if is_int else "write_string"
+            read_name = "read_integer" if is_int else "read_string"
+
+            def we(s: ShapeSerializer, m: Schema, v: Any) -> None:
+                getattr(s, write_name)(m, v)
+
+            def re(d: ShapeDeserializer, m: Schema) -> Any:
+                return enum_cls(getattr(d, read_name)(m))
+
+            return we, re
         scalar = _SCALAR_CODECS.get(st)
         if scalar is not None:
             return scalar
