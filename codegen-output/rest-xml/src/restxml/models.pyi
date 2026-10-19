@@ -22,6 +22,8 @@ class ServiceError(ModeledError): ...
 
 @dataclass(kw_only=True)
 class AllQueryStringTypesInput(_SerdeShape):
+    """Dataclass for AllQueryStringTypesInput structure."""
+
     query_string: str | None = ...
     query_string_list: list[str] | None = ...
     query_string_set: list[str] | None = ...
@@ -46,19 +48,27 @@ class AllQueryStringTypesInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class AllQueryStringTypesOutput(_SerdeShape):
+    """Dataclass for AllQueryStringTypesOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class BodyWithXmlNameInput(_SerdeShape):
+    """Dataclass for BodyWithXmlNameInput structure."""
+
     nested: PayloadWithXmlName | None = ...
 
 @dataclass(kw_only=True)
 class BodyWithXmlNameOutput(_SerdeShape):
+    """Dataclass for BodyWithXmlNameOutput structure."""
+
     nested: PayloadWithXmlName | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class ComplexError(ServiceError, _SerdeShape):
+    """This error is thrown when a request is invalid."""
+
     header: str | None = ...
     top_level: str | None = ...
     nested: ComplexNestedErrorData | None = ...
@@ -66,246 +76,342 @@ class ComplexError(ServiceError, _SerdeShape):
 
 @dataclass(kw_only=True)
 class ComplexNestedErrorData(_SerdeShape):
+    """Dataclass for ComplexNestedErrorData structure."""
+
     foo: str | None = ...
 
 @dataclass(kw_only=True)
 class ConstantAndVariableQueryStringInput(_SerdeShape):
+    """Dataclass for ConstantAndVariableQueryStringInput structure."""
+
     baz: str | None = ...
     maybe_set: str | None = ...
 
 @dataclass(kw_only=True)
 class ConstantAndVariableQueryStringOutput(_SerdeShape):
+    """Dataclass for ConstantAndVariableQueryStringOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class ConstantQueryStringInput(_SerdeShape):
+    """Dataclass for ConstantQueryStringInput structure."""
+
     hello: str | None = ...
 
 @dataclass(kw_only=True)
 class ConstantQueryStringOutput(_SerdeShape):
+    """Dataclass for ConstantQueryStringOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class ContentTypeParametersInput(_SerdeShape):
+    """Dataclass for ContentTypeParametersInput structure."""
+
     value: int | None = ...
 
 @dataclass(kw_only=True)
 class ContentTypeParametersOutput(_SerdeShape):
+    """Dataclass for ContentTypeParametersOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class DatetimeOffsetsInput(_SerdeShape):
-    pass
+    """Dataclass for DatetimeOffsetsInput structure."""
 
 @dataclass(kw_only=True)
 class DatetimeOffsetsOutput(_SerdeShape):
+    """Dataclass for DatetimeOffsetsOutput structure."""
+
     datetime_: datetime | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class EmptyInputAndEmptyOutputInput(_SerdeShape):
-    pass
+    """Dataclass for EmptyInputAndEmptyOutputInput structure."""
 
 @dataclass(kw_only=True)
 class EmptyInputAndEmptyOutputOutput(_SerdeShape):
+    """Dataclass for EmptyInputAndEmptyOutputOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class EndpointOperationInput(_SerdeShape):
-    pass
+    """Dataclass for EndpointOperationInput structure."""
 
 @dataclass(kw_only=True)
 class EndpointOperationOutput(_SerdeShape):
+    """Dataclass for EndpointOperationOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class EndpointWithHostLabelHeaderOperationInput(_SerdeShape):
+    """Dataclass for EndpointWithHostLabelHeaderOperationInput structure."""
+
     account_id: str | None = ...
 
 @dataclass(kw_only=True)
 class EndpointWithHostLabelHeaderOperationOutput(_SerdeShape):
+    """Dataclass for EndpointWithHostLabelHeaderOperationOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class EndpointWithHostLabelOperationInput(_SerdeShape):
+    """Dataclass for EndpointWithHostLabelOperationInput structure."""
+
     label: str | None = ...
 
 @dataclass(kw_only=True)
 class EndpointWithHostLabelOperationOutput(_SerdeShape):
+    """Dataclass for EndpointWithHostLabelOperationOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class FlattenedXmlMapInput(_SerdeShape):
+    """Dataclass for FlattenedXmlMapInput structure."""
+
     my_map: dict[str, str] | None = ...
 
 @dataclass(kw_only=True)
 class FlattenedXmlMapOutput(_SerdeShape):
+    """Dataclass for FlattenedXmlMapOutput structure."""
+
     my_map: dict[str, str] | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class FlattenedXmlMapWithXmlNameInput(_SerdeShape):
+    """Dataclass for FlattenedXmlMapWithXmlNameInput structure."""
+
     my_map: dict[str, str] | None = ...
 
 @dataclass(kw_only=True)
 class FlattenedXmlMapWithXmlNameOutput(_SerdeShape):
+    """Dataclass for FlattenedXmlMapWithXmlNameOutput structure."""
+
     my_map: dict[str, str] | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class FlattenedXmlMapWithXmlNamespaceInput(_SerdeShape):
-    pass
+    """Dataclass for FlattenedXmlMapWithXmlNamespaceInput structure."""
 
 @dataclass(kw_only=True)
 class FlattenedXmlMapWithXmlNamespaceOutput(_SerdeShape):
+    """Dataclass for FlattenedXmlMapWithXmlNamespaceOutput structure."""
+
     my_map: dict[str, str] | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class FractionalSecondsInput(_SerdeShape):
-    pass
+    """Dataclass for FractionalSecondsInput structure."""
 
 @dataclass(kw_only=True)
 class FractionalSecondsOutput(_SerdeShape):
+    """Dataclass for FractionalSecondsOutput structure."""
+
     datetime_: datetime | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class GreetingWithErrorsInput(_SerdeShape):
-    pass
+    """Dataclass for GreetingWithErrorsInput structure."""
 
 @dataclass(kw_only=True)
 class GreetingWithErrorsOutput(_SerdeShape):
+    """Dataclass for GreetingWithErrorsOutput structure."""
+
     greeting: str | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpEmptyPrefixHeadersInput(_SerdeShape):
+    """Dataclass for HttpEmptyPrefixHeadersInput structure."""
+
     prefix_headers: dict[str, str] | None = ...
     specific_header: str | None = ...
 
 @dataclass(kw_only=True)
 class HttpEmptyPrefixHeadersOutput(_SerdeShape):
+    """Dataclass for HttpEmptyPrefixHeadersOutput structure."""
+
     prefix_headers: dict[str, str] | None = ...
     specific_header: str | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpEnumPayloadInput(_SerdeShape):
+    """Dataclass for HttpEnumPayloadInput structure."""
+
     payload: str | None = ...
 
 @dataclass(kw_only=True)
 class HttpEnumPayloadOutput(_SerdeShape):
+    """Dataclass for HttpEnumPayloadOutput structure."""
+
     payload: str | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadTraitsInput(_SerdeShape):
+    """Dataclass for HttpPayloadTraitsInput structure."""
+
     foo: str | None = ...
     blob: bytes | None = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadTraitsOutput(_SerdeShape):
+    """Dataclass for HttpPayloadTraitsOutput structure."""
+
     foo: str | None = ...
     blob: bytes | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadTraitsWithMediaTypeInput(_SerdeShape):
+    """Dataclass for HttpPayloadTraitsWithMediaTypeInput structure."""
+
     foo: str | None = ...
     blob: bytes | None = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadTraitsWithMediaTypeOutput(_SerdeShape):
+    """Dataclass for HttpPayloadTraitsWithMediaTypeOutput structure."""
+
     foo: str | None = ...
     blob: bytes | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithMemberXmlNameInput(_SerdeShape):
+    """Dataclass for HttpPayloadWithMemberXmlNameInput structure."""
+
     nested: PayloadWithXmlName | None = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithMemberXmlNameOutput(_SerdeShape):
+    """Dataclass for HttpPayloadWithMemberXmlNameOutput structure."""
+
     nested: PayloadWithXmlName | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithStructureInput(_SerdeShape):
+    """Dataclass for HttpPayloadWithStructureInput structure."""
+
     nested: NestedPayload | None = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithStructureOutput(_SerdeShape):
+    """Dataclass for HttpPayloadWithStructureOutput structure."""
+
     nested: NestedPayload | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithUnionInput(_SerdeShape):
+    """Dataclass for HttpPayloadWithUnionInput structure."""
+
     nested: UnionPayload | None = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithUnionOutput(_SerdeShape):
+    """Dataclass for HttpPayloadWithUnionOutput structure."""
+
     nested: UnionPayload | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithXmlNameInput(_SerdeShape):
+    """Dataclass for HttpPayloadWithXmlNameInput structure."""
+
     nested: PayloadWithXmlName | None = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithXmlNameOutput(_SerdeShape):
+    """Dataclass for HttpPayloadWithXmlNameOutput structure."""
+
     nested: PayloadWithXmlName | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithXmlNamespaceAndPrefixInput(_SerdeShape):
+    """Dataclass for HttpPayloadWithXmlNamespaceAndPrefixInput structure."""
+
     nested: PayloadWithXmlNamespaceAndPrefix | None = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithXmlNamespaceAndPrefixOutput(_SerdeShape):
+    """Dataclass for HttpPayloadWithXmlNamespaceAndPrefixOutput structure."""
+
     nested: PayloadWithXmlNamespaceAndPrefix | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithXmlNamespaceInput(_SerdeShape):
+    """Dataclass for HttpPayloadWithXmlNamespaceInput structure."""
+
     nested: PayloadWithXmlNamespace | None = ...
 
 @dataclass(kw_only=True)
 class HttpPayloadWithXmlNamespaceOutput(_SerdeShape):
+    """Dataclass for HttpPayloadWithXmlNamespaceOutput structure."""
+
     nested: PayloadWithXmlNamespace | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpPrefixHeadersInput(_SerdeShape):
+    """Dataclass for HttpPrefixHeadersInput structure."""
+
     foo: str | None = ...
     foo_map: dict[str, str] | None = ...
 
 @dataclass(kw_only=True)
 class HttpPrefixHeadersOutput(_SerdeShape):
+    """Dataclass for HttpPrefixHeadersOutput structure."""
+
     foo: str | None = ...
     foo_map: dict[str, str] | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpRequestWithFloatLabelsInput(_SerdeShape):
+    """Dataclass for HttpRequestWithFloatLabelsInput structure."""
+
     float_: float | None = ...
     double: float | None = ...
 
 @dataclass(kw_only=True)
 class HttpRequestWithFloatLabelsOutput(_SerdeShape):
+    """Dataclass for HttpRequestWithFloatLabelsOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpRequestWithGreedyLabelInPathInput(_SerdeShape):
+    """Dataclass for HttpRequestWithGreedyLabelInPathInput structure."""
+
     foo: str | None = ...
     baz: str | None = ...
 
 @dataclass(kw_only=True)
 class HttpRequestWithGreedyLabelInPathOutput(_SerdeShape):
+    """Dataclass for HttpRequestWithGreedyLabelInPathOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpRequestWithLabelsAndTimestampFormatInput(_SerdeShape):
+    """Dataclass for HttpRequestWithLabelsAndTimestampFormatInput structure."""
+
     member_epoch_seconds: datetime | None = ...
     member_http_date: datetime | None = ...
     member_date_time: datetime | None = ...
@@ -316,10 +422,14 @@ class HttpRequestWithLabelsAndTimestampFormatInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class HttpRequestWithLabelsAndTimestampFormatOutput(_SerdeShape):
+    """Dataclass for HttpRequestWithLabelsAndTimestampFormatOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpRequestWithLabelsInput(_SerdeShape):
+    """Dataclass for HttpRequestWithLabelsInput structure."""
+
     string: str | None = ...
     short: int | None = ...
     integer: int | None = ...
@@ -327,41 +437,58 @@ class HttpRequestWithLabelsInput(_SerdeShape):
     float_: float | None = ...
     double: float | None = ...
     boolean: bool | None = ...
+    """Serialized in the path as true or false."""
     timestamp: datetime | None = ...
+    """
+    Note that this member has no format, so it's serialized as an RFC 3399
+    date-time.
+    """
 
 @dataclass(kw_only=True)
 class HttpRequestWithLabelsOutput(_SerdeShape):
+    """Dataclass for HttpRequestWithLabelsOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpResponseCodeInput(_SerdeShape):
-    pass
+    """Dataclass for HttpResponseCodeInput structure."""
 
 @dataclass(kw_only=True)
 class HttpResponseCodeOutput(_SerdeShape):
+    """Dataclass for HttpResponseCodeOutput structure."""
+
     status: int | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HttpStringPayloadInput(_SerdeShape):
+    """Dataclass for HttpStringPayloadInput structure."""
+
     payload: str | None = ...
 
 @dataclass(kw_only=True)
 class HttpStringPayloadOutput(_SerdeShape):
+    """Dataclass for HttpStringPayloadOutput structure."""
+
     payload: str | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class IgnoreQueryParamsInResponseInput(_SerdeShape):
-    pass
+    """Dataclass for IgnoreQueryParamsInResponseInput structure."""
 
 @dataclass(kw_only=True)
 class IgnoreQueryParamsInResponseOutput(_SerdeShape):
+    """Dataclass for IgnoreQueryParamsInResponseOutput structure."""
+
     baz: str | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class InputAndOutputWithHeadersInput(_SerdeShape):
+    """Dataclass for InputAndOutputWithHeadersInput structure."""
+
     header_string: str | None = ...
     header_byte: int | None = ...
     header_short: int | None = ...
@@ -381,6 +508,8 @@ class InputAndOutputWithHeadersInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class InputAndOutputWithHeadersOutput(_SerdeShape):
+    """Dataclass for InputAndOutputWithHeadersOutput structure."""
+
     header_string: str | None = ...
     header_byte: int | None = ...
     header_short: int | None = ...
@@ -401,57 +530,77 @@ class InputAndOutputWithHeadersOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class InvalidGreeting(ServiceError, _SerdeShape):
+    """This error is thrown when an invalid greeting value is provided."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class NestedPayload(_SerdeShape):
+    """Dataclass for NestedPayload structure."""
+
     greeting: str | None = ...
     name: str | None = ...
 
 @dataclass(kw_only=True)
 class NestedXmlMapsInput(_SerdeShape):
+    """Dataclass for NestedXmlMapsInput structure."""
+
     nested_map: dict[str, dict[str, str]] | None = ...
     flat_nested_map: dict[str, dict[str, str]] | None = ...
 
 @dataclass(kw_only=True)
 class NestedXmlMapsOutput(_SerdeShape):
+    """Dataclass for NestedXmlMapsOutput structure."""
+
     nested_map: dict[str, dict[str, str]] | None = ...
     flat_nested_map: dict[str, dict[str, str]] | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class NestedXmlMapWithXmlNameInput(_SerdeShape):
+    """Dataclass for NestedXmlMapWithXmlNameInput structure."""
+
     nested_xml_map_with_xml_name_map: dict[str, dict[str, str]] | None = ...
 
 @dataclass(kw_only=True)
 class NestedXmlMapWithXmlNameOutput(_SerdeShape):
+    """Dataclass for NestedXmlMapWithXmlNameOutput structure."""
+
     nested_xml_map_with_xml_name_map: dict[str, dict[str, str]] | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class NoInputAndNoOutputInput(_SerdeShape):
-    pass
+    """Dataclass for NoInputAndNoOutputInput structure."""
 
 @dataclass(kw_only=True)
 class NoInputAndNoOutputOutput(_SerdeShape):
+    """Dataclass for NoInputAndNoOutputOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class NoInputAndOutputInput(_SerdeShape):
-    pass
+    """Dataclass for NoInputAndOutputInput structure."""
 
 @dataclass(kw_only=True)
 class NoInputAndOutputOutput(_SerdeShape):
+    """Dataclass for NoInputAndOutputOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class NullAndEmptyHeadersClientInput(_SerdeShape):
+    """Dataclass for NullAndEmptyHeadersClientInput structure."""
+
     a: str | None = ...
     b: str | None = ...
     c: list[str] | None = ...
 
 @dataclass(kw_only=True)
 class NullAndEmptyHeadersClientOutput(_SerdeShape):
+    """Dataclass for NullAndEmptyHeadersClientOutput structure."""
+
     a: str | None = ...
     b: str | None = ...
     c: list[str] | None = ...
@@ -459,12 +608,16 @@ class NullAndEmptyHeadersClientOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class NullAndEmptyHeadersServerInput(_SerdeShape):
+    """Dataclass for NullAndEmptyHeadersServerInput structure."""
+
     a: str | None = ...
     b: str | None = ...
     c: list[str] | None = ...
 
 @dataclass(kw_only=True)
 class NullAndEmptyHeadersServerOutput(_SerdeShape):
+    """Dataclass for NullAndEmptyHeadersServerOutput structure."""
+
     a: str | None = ...
     b: str | None = ...
     c: list[str] | None = ...
@@ -472,81 +625,117 @@ class NullAndEmptyHeadersServerOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class OmitsNullSerializesEmptyStringInput(_SerdeShape):
+    """Dataclass for OmitsNullSerializesEmptyStringInput structure."""
+
     null_value: str | None = ...
     empty_string: str | None = ...
 
 @dataclass(kw_only=True)
 class OmitsNullSerializesEmptyStringOutput(_SerdeShape):
+    """Dataclass for OmitsNullSerializesEmptyStringOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class PayloadWithXmlName(_SerdeShape):
+    """Dataclass for PayloadWithXmlName structure."""
+
     name: str | None = ...
 
 @dataclass(kw_only=True)
 class PayloadWithXmlNamespace(_SerdeShape):
+    """Dataclass for PayloadWithXmlNamespace structure."""
+
     name: str | None = ...
 
 @dataclass(kw_only=True)
 class PayloadWithXmlNamespaceAndPrefix(_SerdeShape):
+    """Dataclass for PayloadWithXmlNamespaceAndPrefix structure."""
+
     name: str | None = ...
 
 @dataclass(kw_only=True)
 class PutWithContentEncodingInput(_SerdeShape):
+    """Dataclass for PutWithContentEncodingInput structure."""
+
     encoding: str | None = ...
     data: str | None = ...
 
 @dataclass(kw_only=True)
 class PutWithContentEncodingOutput(_SerdeShape):
+    """Dataclass for PutWithContentEncodingOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class QueryIdempotencyTokenAutoFillInput(_SerdeShape):
+    """Dataclass for QueryIdempotencyTokenAutoFillInput structure."""
+
     token: str | None = ...
 
 @dataclass(kw_only=True)
 class QueryIdempotencyTokenAutoFillOutput(_SerdeShape):
+    """Dataclass for QueryIdempotencyTokenAutoFillOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class QueryParamsAsStringListMapInput(_SerdeShape):
+    """Dataclass for QueryParamsAsStringListMapInput structure."""
+
     qux: str | None = ...
     foo: dict[str, list[str]] | None = ...
 
 @dataclass(kw_only=True)
 class QueryParamsAsStringListMapOutput(_SerdeShape):
+    """Dataclass for QueryParamsAsStringListMapOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class QueryPrecedenceInput(_SerdeShape):
+    """Dataclass for QueryPrecedenceInput structure."""
+
     foo: str | None = ...
     baz: dict[str, str] | None = ...
 
 @dataclass(kw_only=True)
 class QueryPrecedenceOutput(_SerdeShape):
+    """Dataclass for QueryPrecedenceOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class RecursiveShapesInput(_SerdeShape):
+    """Dataclass for RecursiveShapesInput structure."""
+
     nested: RecursiveShapesInputOutputNested1 | None = ...
 
 @dataclass(kw_only=True)
 class RecursiveShapesInputOutputNested1(_SerdeShape):
+    """Dataclass for RecursiveShapesInputOutputNested1 structure."""
+
     foo: str | None = ...
     nested: RecursiveShapesInputOutputNested2 | None = ...
 
 @dataclass(kw_only=True)
 class RecursiveShapesInputOutputNested2(_SerdeShape):
+    """Dataclass for RecursiveShapesInputOutputNested2 structure."""
+
     bar: str | None = ...
     recursive_member: RecursiveShapesInputOutputNested1 | None = ...
 
 @dataclass(kw_only=True)
 class RecursiveShapesOutput(_SerdeShape):
+    """Dataclass for RecursiveShapesOutput structure."""
+
     nested: RecursiveShapesInputOutputNested1 | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class SimpleScalarPropertiesInput(_SerdeShape):
+    """Dataclass for SimpleScalarPropertiesInput structure."""
+
     foo: str | None = ...
     string_value: str | None = ...
     true_boolean_value: bool | None = ...
@@ -560,6 +749,8 @@ class SimpleScalarPropertiesInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class SimpleScalarPropertiesOutput(_SerdeShape):
+    """Dataclass for SimpleScalarPropertiesOutput structure."""
+
     foo: str | None = ...
     string_value: str | None = ...
     true_boolean_value: bool | None = ...
@@ -577,11 +768,15 @@ class StringEnum(UnknownEnumMixin, StrEnum):
 
 @dataclass(kw_only=True)
 class StructureListMember(_SerdeShape):
+    """Dataclass for StructureListMember structure."""
+
     a: str | None = ...
     b: str | None = ...
 
 @dataclass(kw_only=True)
 class TimestampFormatHeadersInput(_SerdeShape):
+    """Dataclass for TimestampFormatHeadersInput structure."""
+
     member_epoch_seconds: datetime | None = ...
     member_http_date: datetime | None = ...
     member_date_time: datetime | None = ...
@@ -592,6 +787,8 @@ class TimestampFormatHeadersInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class TimestampFormatHeadersOutput(_SerdeShape):
+    """Dataclass for TimestampFormatHeadersOutput structure."""
+
     member_epoch_seconds: datetime | None = ...
     member_http_date: datetime | None = ...
     member_date_time: datetime | None = ...
@@ -607,6 +804,12 @@ class UnionPayloadGreeting(_SerdeShape):
 
 @dataclass
 class UnionPayloadUnknown(_SerdeShape):
+    """
+    Represents an unknown variant. If you receive this value, you will need
+    to update your library to receive the parsed value. This value may not
+    be deliberately sent.
+    """
+
     tag: str
 
 UnionPayload = Union[UnionPayloadGreeting | UnionPayloadUnknown]
@@ -616,75 +819,105 @@ class _UnionPayloadDeserializer:
 
 @dataclass(kw_only=True)
 class XmlAttributesInMiddleInput(_SerdeShape):
+    """Dataclass for XmlAttributesInMiddleInput structure."""
+
     payload: XmlAttributesInMiddlePayloadRequest | None = ...
 
 @dataclass(kw_only=True)
 class XmlAttributesInMiddleOutput(_SerdeShape):
+    """Dataclass for XmlAttributesInMiddleOutput structure."""
+
     payload: XmlAttributesInMiddlePayloadResponse | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class XmlAttributesInMiddlePayloadRequest(_SerdeShape):
+    """Dataclass for XmlAttributesInMiddlePayloadRequest structure."""
+
     foo: str | None = ...
     attr: str | None = ...
     baz: str | None = ...
 
 @dataclass(kw_only=True)
 class XmlAttributesInMiddlePayloadResponse(_SerdeShape):
+    """Dataclass for XmlAttributesInMiddlePayloadResponse structure."""
+
     foo: str | None = ...
     attr: str | None = ...
     baz: str | None = ...
 
 @dataclass(kw_only=True)
 class XmlAttributesInput(_SerdeShape):
+    """Dataclass for XmlAttributesInput structure."""
+
     foo: str | None = ...
     attr: str | None = ...
 
 @dataclass(kw_only=True)
 class XmlAttributesOnPayloadInput(_SerdeShape):
+    """Dataclass for XmlAttributesOnPayloadInput structure."""
+
     payload: XmlAttributesPayloadRequest | None = ...
 
 @dataclass(kw_only=True)
 class XmlAttributesOnPayloadOutput(_SerdeShape):
+    """Dataclass for XmlAttributesOnPayloadOutput structure."""
+
     payload: XmlAttributesPayloadResponse | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class XmlAttributesOutput(_SerdeShape):
+    """Dataclass for XmlAttributesOutput structure."""
+
     foo: str | None = ...
     attr: str | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class XmlAttributesPayloadRequest(_SerdeShape):
+    """Dataclass for XmlAttributesPayloadRequest structure."""
+
     foo: str | None = ...
     attr: str | None = ...
 
 @dataclass(kw_only=True)
 class XmlAttributesPayloadResponse(_SerdeShape):
+    """Dataclass for XmlAttributesPayloadResponse structure."""
+
     foo: str | None = ...
     attr: str | None = ...
 
 @dataclass(kw_only=True)
 class XmlBlobsInput(_SerdeShape):
+    """Dataclass for XmlBlobsInput structure."""
+
     data: bytes | None = ...
 
 @dataclass(kw_only=True)
 class XmlBlobsOutput(_SerdeShape):
+    """Dataclass for XmlBlobsOutput structure."""
+
     data: bytes | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class XmlEmptyBlobsInput(_SerdeShape):
+    """Dataclass for XmlEmptyBlobsInput structure."""
+
     data: bytes | None = ...
 
 @dataclass(kw_only=True)
 class XmlEmptyBlobsOutput(_SerdeShape):
+    """Dataclass for XmlEmptyBlobsOutput structure."""
+
     data: bytes | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class XmlEmptyListsInput(_SerdeShape):
+    """Dataclass for XmlEmptyListsInput structure."""
+
     string_list: list[str] | None = ...
     string_set: list[str] | None = ...
     integer_list: list[int] | None = ...
@@ -693,6 +926,7 @@ class XmlEmptyListsInput(_SerdeShape):
     enum_list: list[str] | None = ...
     int_enum_list: list[int] | None = ...
     nested_string_list: list[list[str]] | None = ...
+    """A list of lists of strings."""
     renamed_list_members: list[str] | None = ...
     flattened_list: list[str] | None = ...
     flattened_list2: list[str] | None = ...
@@ -703,6 +937,8 @@ class XmlEmptyListsInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class XmlEmptyListsOutput(_SerdeShape):
+    """Dataclass for XmlEmptyListsOutput structure."""
+
     string_list: list[str] | None = ...
     string_set: list[str] | None = ...
     integer_list: list[int] | None = ...
@@ -711,6 +947,7 @@ class XmlEmptyListsOutput(_SerdeShape):
     enum_list: list[str] | None = ...
     int_enum_list: list[int] | None = ...
     nested_string_list: list[list[str]] | None = ...
+    """A list of lists of strings."""
     renamed_list_members: list[str] | None = ...
     flattened_list: list[str] | None = ...
     flattened_list2: list[str] | None = ...
@@ -722,24 +959,34 @@ class XmlEmptyListsOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class XmlEmptyMapsInput(_SerdeShape):
+    """Dataclass for XmlEmptyMapsInput structure."""
+
     my_map: dict[str, GreetingStruct] | None = ...
 
 @dataclass(kw_only=True)
 class XmlEmptyMapsOutput(_SerdeShape):
+    """Dataclass for XmlEmptyMapsOutput structure."""
+
     my_map: dict[str, GreetingStruct] | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class XmlEmptyStringsInput(_SerdeShape):
+    """Dataclass for XmlEmptyStringsInput structure."""
+
     empty_string: str | None = ...
 
 @dataclass(kw_only=True)
 class XmlEmptyStringsOutput(_SerdeShape):
+    """Dataclass for XmlEmptyStringsOutput structure."""
+
     empty_string: str | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class XmlEnumsInput(_SerdeShape):
+    """Dataclass for XmlEnumsInput structure."""
+
     foo_enum1: str | None = ...
     foo_enum2: str | None = ...
     foo_enum3: str | None = ...
@@ -749,6 +996,8 @@ class XmlEnumsInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class XmlEnumsOutput(_SerdeShape):
+    """Dataclass for XmlEnumsOutput structure."""
+
     foo_enum1: str | None = ...
     foo_enum2: str | None = ...
     foo_enum3: str | None = ...
@@ -759,6 +1008,8 @@ class XmlEnumsOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class XmlIntEnumsInput(_SerdeShape):
+    """Dataclass for XmlIntEnumsInput structure."""
+
     int_enum1: int | None = ...
     int_enum2: int | None = ...
     int_enum3: int | None = ...
@@ -768,6 +1019,8 @@ class XmlIntEnumsInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class XmlIntEnumsOutput(_SerdeShape):
+    """Dataclass for XmlIntEnumsOutput structure."""
+
     int_enum1: int | None = ...
     int_enum2: int | None = ...
     int_enum3: int | None = ...
@@ -778,6 +1031,8 @@ class XmlIntEnumsOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class XmlListsInput(_SerdeShape):
+    """Dataclass for XmlListsInput structure."""
+
     string_list: list[str] | None = ...
     string_set: list[str] | None = ...
     integer_list: list[int] | None = ...
@@ -786,6 +1041,7 @@ class XmlListsInput(_SerdeShape):
     enum_list: list[str] | None = ...
     int_enum_list: list[int] | None = ...
     nested_string_list: list[list[str]] | None = ...
+    """A list of lists of strings."""
     renamed_list_members: list[str] | None = ...
     flattened_list: list[str] | None = ...
     flattened_list2: list[str] | None = ...
@@ -796,6 +1052,8 @@ class XmlListsInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class XmlListsOutput(_SerdeShape):
+    """Dataclass for XmlListsOutput structure."""
+
     string_list: list[str] | None = ...
     string_set: list[str] | None = ...
     integer_list: list[int] | None = ...
@@ -804,6 +1062,7 @@ class XmlListsOutput(_SerdeShape):
     enum_list: list[str] | None = ...
     int_enum_list: list[int] | None = ...
     nested_string_list: list[list[str]] | None = ...
+    """A list of lists of strings."""
     renamed_list_members: list[str] | None = ...
     flattened_list: list[str] | None = ...
     flattened_list2: list[str] | None = ...
@@ -815,47 +1074,67 @@ class XmlListsOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class XmlMapsInput(_SerdeShape):
+    """Dataclass for XmlMapsInput structure."""
+
     my_map: dict[str, GreetingStruct] | None = ...
 
 @dataclass(kw_only=True)
 class XmlMapsOutput(_SerdeShape):
+    """Dataclass for XmlMapsOutput structure."""
+
     my_map: dict[str, GreetingStruct] | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class XmlMapsXmlNameInput(_SerdeShape):
+    """Dataclass for XmlMapsXmlNameInput structure."""
+
     my_map: dict[str, GreetingStruct] | None = ...
 
 @dataclass(kw_only=True)
 class XmlMapsXmlNameOutput(_SerdeShape):
+    """Dataclass for XmlMapsXmlNameOutput structure."""
+
     my_map: dict[str, GreetingStruct] | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class XmlMapWithXmlNamespaceInput(_SerdeShape):
+    """Dataclass for XmlMapWithXmlNamespaceInput structure."""
+
     my_map: dict[str, str] | None = ...
 
 @dataclass(kw_only=True)
 class XmlMapWithXmlNamespaceOutput(_SerdeShape):
+    """Dataclass for XmlMapWithXmlNamespaceOutput structure."""
+
     my_map: dict[str, str] | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class XmlNamespaceNested(_SerdeShape):
+    """Dataclass for XmlNamespaceNested structure."""
+
     foo: str | None = ...
     values: list[str] | None = ...
 
 @dataclass(kw_only=True)
 class XmlNamespacesInput(_SerdeShape):
+    """Dataclass for XmlNamespacesInput structure."""
+
     nested: XmlNamespaceNested | None = ...
 
 @dataclass(kw_only=True)
 class XmlNamespacesOutput(_SerdeShape):
+    """Dataclass for XmlNamespacesOutput structure."""
+
     nested: XmlNamespaceNested | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class XmlNestedUnionStruct(_SerdeShape):
+    """Dataclass for XmlNestedUnionStruct structure."""
+
     string_value: str | None = ...
     boolean_value: bool | None = ...
     byte_value: int | None = ...
@@ -867,6 +1146,8 @@ class XmlNestedUnionStruct(_SerdeShape):
 
 @dataclass(kw_only=True)
 class XmlTimestampsInput(_SerdeShape):
+    """Dataclass for XmlTimestampsInput structure."""
+
     normal: datetime | None = ...
     date_time: datetime | None = ...
     date_time_on_target: datetime | None = ...
@@ -877,6 +1158,8 @@ class XmlTimestampsInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class XmlTimestampsOutput(_SerdeShape):
+    """Dataclass for XmlTimestampsOutput structure."""
+
     normal: datetime | None = ...
     date_time: datetime | None = ...
     date_time_on_target: datetime | None = ...
@@ -928,6 +1211,12 @@ class XmlUnionShapeStructValue(_SerdeShape):
 
 @dataclass
 class XmlUnionShapeUnknown(_SerdeShape):
+    """
+    Represents an unknown variant. If you receive this value, you will need
+    to update your library to receive the parsed value. This value may not
+    be deliberately sent.
+    """
+
     tag: str
 
 XmlUnionShape = Union[
@@ -949,10 +1238,14 @@ class _XmlUnionShapeDeserializer:
 
 @dataclass(kw_only=True)
 class XmlUnionsInput(_SerdeShape):
+    """Dataclass for XmlUnionsInput structure."""
+
     union_value: XmlUnionShape | None = ...
 
 @dataclass(kw_only=True)
 class XmlUnionsOutput(_SerdeShape):
+    """Dataclass for XmlUnionsOutput structure."""
+
     union_value: XmlUnionShape | None = ...
     response_metadata: ResponseMetadata = ...
 
@@ -965,6 +1258,8 @@ class FooEnum(UnknownEnumMixin, StrEnum):
 
 @dataclass(kw_only=True)
 class GreetingStruct(_SerdeShape):
+    """Dataclass for GreetingStruct structure."""
+
     hi: str | None = ...
 
 class IntegerEnum(UnknownEnumMixin, IntEnum):

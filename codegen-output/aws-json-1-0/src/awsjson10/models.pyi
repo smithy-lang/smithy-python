@@ -23,28 +23,40 @@ class ServiceError(ModeledError): ...
 
 @dataclass(kw_only=True)
 class ClientOptionalDefaults(_SerdeShape):
+    """Dataclass for ClientOptionalDefaults structure."""
+
     member: int | None = ...
 
 @dataclass(kw_only=True)
 class ComplexError(ServiceError, _SerdeShape):
+    """This error is thrown when a request is invalid."""
+
     top_level: str | None = ...
     nested: ComplexNestedErrorData | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class ComplexNestedErrorData(_SerdeShape):
+    """Dataclass for ComplexNestedErrorData structure."""
+
     foo: str | None = ...
 
 @dataclass(kw_only=True)
 class ContentTypeParametersInput(_SerdeShape):
+    """Dataclass for ContentTypeParametersInput structure."""
+
     value: int | None = ...
 
 @dataclass(kw_only=True)
 class ContentTypeParametersOutput(_SerdeShape):
+    """Dataclass for ContentTypeParametersOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class Defaults(_SerdeShape):
+    """Dataclass for Defaults structure."""
+
     default_string: str | None = ...
     default_boolean: bool | None = ...
     default_list: list[str] | None = ...
@@ -76,70 +88,101 @@ class Defaults(_SerdeShape):
 
 @dataclass(kw_only=True)
 class Dialog(_SerdeShape):
+    """Dataclass for Dialog structure."""
+
     language: str | None = ...
     greeting: str | None = ...
     farewell: Farewell | None = ...
 
 @dataclass(kw_only=True)
 class EmptyInputAndEmptyOutputInput(_SerdeShape):
-    pass
+    """Dataclass for EmptyInputAndEmptyOutputInput structure."""
 
 @dataclass(kw_only=True)
 class EmptyInputAndEmptyOutputOutput(_SerdeShape):
+    """Dataclass for EmptyInputAndEmptyOutputOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class EndpointOperationInput(_SerdeShape):
-    pass
+    """Dataclass for EndpointOperationInput structure."""
 
 @dataclass(kw_only=True)
 class EndpointOperationOutput(_SerdeShape):
+    """Dataclass for EndpointOperationOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class EndpointWithHostLabelOperationInput(_SerdeShape):
+    """Dataclass for EndpointWithHostLabelOperationInput structure."""
+
     label: str | None = ...
 
 @dataclass(kw_only=True)
 class EndpointWithHostLabelOperationOutput(_SerdeShape):
+    """Dataclass for EndpointWithHostLabelOperationOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class Farewell(_SerdeShape):
+    """Dataclass for Farewell structure."""
+
     phrase: str | None = ...
 
 @dataclass(kw_only=True)
 class FooError(ServiceError, _SerdeShape):
+    """
+    This error has test cases that test some of the dark corners of Amazon
+    service framework history. It should only be implemented by clients.
+    """
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class GreetingWithErrorsInput(_SerdeShape):
+    """Dataclass for GreetingWithErrorsInput structure."""
+
     greeting: str | None = ...
 
 @dataclass(kw_only=True)
 class GreetingWithErrorsOutput(_SerdeShape):
+    """Dataclass for GreetingWithErrorsOutput structure."""
+
     greeting: str | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class HostWithPathOperationInput(_SerdeShape):
-    pass
+    """Dataclass for HostWithPathOperationInput structure."""
 
 @dataclass(kw_only=True)
 class HostWithPathOperationOutput(_SerdeShape):
+    """Dataclass for HostWithPathOperationOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class InvalidGreeting(ServiceError, _SerdeShape):
+    """This error is thrown when an invalid greeting value is provided."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class JsonUnionsInput(_SerdeShape):
+    """Dataclass for JsonUnionsInput structure."""
+
     contents: MyUnion | None = ...
+    """A union with a representative set of types for members."""
 
 @dataclass(kw_only=True)
 class JsonUnionsOutput(_SerdeShape):
+    """Dataclass for JsonUnionsOutput structure."""
+
     contents: MyUnion | None = ...
+    """A union with a representative set of types for members."""
     response_metadata: ResponseMetadata = ...
 
 @dataclass
@@ -184,6 +227,12 @@ class MyUnionStructureValue(_SerdeShape):
 
 @dataclass
 class MyUnionUnknown(_SerdeShape):
+    """
+    Represents an unknown variant. If you receive this value, you will need
+    to update your library to receive the parsed value. This value may not
+    be deliberately sent.
+    """
+
     tag: str
 
 MyUnion = Union[
@@ -199,28 +248,35 @@ MyUnion = Union[
     | MyUnionStructureValue
     | MyUnionUnknown
 ]
+"""A union with a representative set of types for members."""
 
 class _MyUnionDeserializer:
     def deserialize(self, deserializer: ShapeDeserializer) -> MyUnion: ...
 
 @dataclass(kw_only=True)
 class NoInputAndNoOutputInput(_SerdeShape):
-    pass
+    """Dataclass for NoInputAndNoOutputInput structure."""
 
 @dataclass(kw_only=True)
 class NoInputAndNoOutputOutput(_SerdeShape):
+    """Dataclass for NoInputAndNoOutputOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class NoInputAndOutputInput(_SerdeShape):
-    pass
+    """Dataclass for NoInputAndOutputInput structure."""
 
 @dataclass(kw_only=True)
 class NoInputAndOutputOutput(_SerdeShape):
+    """Dataclass for NoInputAndOutputOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class OperationWithDefaultsInput(_SerdeShape):
+    """Dataclass for OperationWithDefaultsInput structure."""
+
     defaults: Defaults | None = ...
     client_optional_defaults: ClientOptionalDefaults | None = ...
     top_level_default: str | None = ...
@@ -228,6 +284,8 @@ class OperationWithDefaultsInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class OperationWithDefaultsOutput(_SerdeShape):
+    """Dataclass for OperationWithDefaultsOutput structure."""
+
     default_string: str | None = ...
     default_boolean: bool | None = ...
     default_list: list[str] | None = ...
@@ -260,10 +318,14 @@ class OperationWithDefaultsOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class OperationWithNestedStructureInput(_SerdeShape):
+    """Dataclass for OperationWithNestedStructureInput structure."""
+
     top_level: TopLevel | None = ...
 
 @dataclass(kw_only=True)
 class OperationWithNestedStructureOutput(_SerdeShape):
+    """Dataclass for OperationWithNestedStructureOutput structure."""
+
     dialog: Dialog
     dialog_list: list[Dialog] | None = ...
     dialog_map: dict[str, Dialog] | None = ...
@@ -271,10 +333,12 @@ class OperationWithNestedStructureOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class OperationWithRequiredMembersInput(_SerdeShape):
-    pass
+    """Dataclass for OperationWithRequiredMembersInput structure."""
 
 @dataclass(kw_only=True)
 class OperationWithRequiredMembersOutput(_SerdeShape):
+    """Dataclass for OperationWithRequiredMembersOutput structure."""
+
     required_string: str
     required_boolean: bool
     required_list: list[str]
@@ -291,10 +355,12 @@ class OperationWithRequiredMembersOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class OperationWithRequiredMembersWithDefaultsInput(_SerdeShape):
-    pass
+    """Dataclass for OperationWithRequiredMembersWithDefaultsInput structure."""
 
 @dataclass(kw_only=True)
 class OperationWithRequiredMembersWithDefaultsOutput(_SerdeShape):
+    """Dataclass for OperationWithRequiredMembersWithDefaultsOutput structure."""
+
     required_string: str | None = ...
     required_boolean: bool | None = ...
     required_list: list[str] | None = ...
@@ -313,19 +379,25 @@ class OperationWithRequiredMembersWithDefaultsOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class PutWithContentEncodingInput(_SerdeShape):
+    """Dataclass for PutWithContentEncodingInput structure."""
+
     encoding: str | None = ...
     data: str | None = ...
 
 @dataclass(kw_only=True)
 class PutWithContentEncodingOutput(_SerdeShape):
+    """Dataclass for PutWithContentEncodingOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class QueryIncompatibleOperationInput(_SerdeShape):
-    pass
+    """Dataclass for QueryIncompatibleOperationInput structure."""
 
 @dataclass(kw_only=True)
 class QueryIncompatibleOperationOutput(_SerdeShape):
+    """Dataclass for QueryIncompatibleOperationOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 class RequiredEnum(UnknownEnumMixin, StrEnum):
@@ -339,11 +411,15 @@ class RequiredIntEnum(UnknownEnumMixin, IntEnum):
 
 @dataclass(kw_only=True)
 class SimpleScalarPropertiesInput(_SerdeShape):
+    """Dataclass for SimpleScalarPropertiesInput structure."""
+
     float_value: float | None = ...
     double_value: float | None = ...
 
 @dataclass(kw_only=True)
 class SimpleScalarPropertiesOutput(_SerdeShape):
+    """Dataclass for SimpleScalarPropertiesOutput structure."""
+
     float_value: float | None = ...
     double_value: float | None = ...
     response_metadata: ResponseMetadata = ...
@@ -359,6 +435,8 @@ class TestIntEnum(UnknownEnumMixin, IntEnum):
 
 @dataclass(kw_only=True)
 class TopLevel(_SerdeShape):
+    """Dataclass for TopLevel structure."""
+
     dialog: Dialog
     dialog_list: list[Dialog] | None = ...
     dialog_map: dict[str, Dialog] | None = ...
@@ -372,6 +450,8 @@ class FooEnum(UnknownEnumMixin, StrEnum):
 
 @dataclass(kw_only=True)
 class GreetingStruct(_SerdeShape):
+    """Dataclass for GreetingStruct structure."""
+
     hi: str | None = ...
 
 class IntegerEnum(UnknownEnumMixin, IntEnum):

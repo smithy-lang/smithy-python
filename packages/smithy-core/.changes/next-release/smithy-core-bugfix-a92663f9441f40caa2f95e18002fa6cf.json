@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Restored docstrings on generated model classes, members, enums, and unions, which were dropped from the type stub when model classes became lazily loaded."
+}

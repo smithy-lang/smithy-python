@@ -22,30 +22,56 @@ class ServiceError(ModeledError): ...
 
 @dataclass(kw_only=True)
 class ValidationException(ServiceError, _SerdeShape):
+    """
+    A standard error for input validation failures. This should be thrown by
+    services when a member of the input structure falls outside of the
+    modeled or documented constraints.
+    """
+
     field_list: list[ValidationExceptionField] | None = ...
+    """
+    A list of specific failures encountered while validating the input. A
+    member can appear in this list more than once if it failed to satisfy
+    multiple constraints.
+    """
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class ValidationExceptionField(_SerdeShape):
+    """Describes one specific validation failure for an input member."""
+
     path: str
+    """
+    A JSONPointer expression to the structure member whose value failed to
+    satisfy the modeled constraints.
+    """
     message: str
+    """A detailed description of the validation failure."""
 
 @dataclass(kw_only=True)
 class ClientOptionalDefaults(_SerdeShape):
+    """Dataclass for ClientOptionalDefaults structure."""
+
     member: int | None = ...
 
 @dataclass(kw_only=True)
 class ComplexError(ServiceError, _SerdeShape):
+    """This error is thrown when a request is invalid."""
+
     top_level: str | None = ...
     nested: ComplexNestedErrorData | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class ComplexNestedErrorData(_SerdeShape):
+    """Dataclass for ComplexNestedErrorData structure."""
+
     foo: str | None = ...
 
 @dataclass(kw_only=True)
 class Defaults(_SerdeShape):
+    """Dataclass for Defaults structure."""
+
     default_string: str | None = ...
     default_boolean: bool | None = ...
     default_list: list[str] | None = ...
@@ -72,53 +98,67 @@ class Defaults(_SerdeShape):
 
 @dataclass(kw_only=True)
 class EmptyInputOutputInput(_SerdeShape):
-    pass
+    """Dataclass for EmptyInputOutputInput structure."""
 
 @dataclass(kw_only=True)
 class EmptyInputOutputOutput(_SerdeShape):
+    """Dataclass for EmptyInputOutputOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class Float16Input(_SerdeShape):
-    pass
+    """Dataclass for Float16Input structure."""
 
 @dataclass(kw_only=True)
 class Float16Output(_SerdeShape):
+    """Dataclass for Float16Output structure."""
+
     value: float | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class FractionalSecondsInput(_SerdeShape):
-    pass
+    """Dataclass for FractionalSecondsInput structure."""
 
 @dataclass(kw_only=True)
 class FractionalSecondsOutput(_SerdeShape):
+    """Dataclass for FractionalSecondsOutput structure."""
+
     datetime_: datetime | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class GreetingWithErrorsInput(_SerdeShape):
-    pass
+    """Dataclass for GreetingWithErrorsInput structure."""
 
 @dataclass(kw_only=True)
 class GreetingWithErrorsOutput(_SerdeShape):
+    """Dataclass for GreetingWithErrorsOutput structure."""
+
     greeting: str | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class InvalidGreeting(ServiceError, _SerdeShape):
+    """This error is thrown when an invalid greeting value is provided."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class NoInputOutputInput(_SerdeShape):
-    pass
+    """Dataclass for NoInputOutputInput structure."""
 
 @dataclass(kw_only=True)
 class NoInputOutputOutput(_SerdeShape):
+    """Dataclass for NoInputOutputOutput structure."""
+
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class OperationWithDefaultsInput(_SerdeShape):
+    """Dataclass for OperationWithDefaultsInput structure."""
+
     defaults: Defaults | None = ...
     client_optional_defaults: ClientOptionalDefaults | None = ...
     top_level_default: str | None = ...
@@ -126,6 +166,8 @@ class OperationWithDefaultsInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class OperationWithDefaultsOutput(_SerdeShape):
+    """Dataclass for OperationWithDefaultsOutput structure."""
+
     default_string: str | None = ...
     default_boolean: bool | None = ...
     default_list: list[str] | None = ...
@@ -153,34 +195,48 @@ class OperationWithDefaultsOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class OptionalInputOutputInput(_SerdeShape):
+    """Dataclass for OptionalInputOutputInput structure."""
+
     value: str | None = ...
 
 @dataclass(kw_only=True)
 class OptionalInputOutputOutput(_SerdeShape):
+    """Dataclass for OptionalInputOutputOutput structure."""
+
     value: str | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class RecursiveShapesInput(_SerdeShape):
+    """Dataclass for RecursiveShapesInput structure."""
+
     nested: RecursiveShapesInputOutputNested1 | None = ...
 
 @dataclass(kw_only=True)
 class RecursiveShapesInputOutputNested1(_SerdeShape):
+    """Dataclass for RecursiveShapesInputOutputNested1 structure."""
+
     foo: str | None = ...
     nested: RecursiveShapesInputOutputNested2 | None = ...
 
 @dataclass(kw_only=True)
 class RecursiveShapesInputOutputNested2(_SerdeShape):
+    """Dataclass for RecursiveShapesInputOutputNested2 structure."""
+
     bar: str | None = ...
     recursive_member: RecursiveShapesInputOutputNested1 | None = ...
 
 @dataclass(kw_only=True)
 class RecursiveShapesOutput(_SerdeShape):
+    """Dataclass for RecursiveShapesOutput structure."""
+
     nested: RecursiveShapesInputOutputNested1 | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class RpcV2CborDenseMapsInput(_SerdeShape):
+    """Dataclass for RpcV2CborDenseMapsInput structure."""
+
     dense_struct_map: dict[str, GreetingStruct] | None = ...
     dense_number_map: dict[str, int] | None = ...
     dense_boolean_map: dict[str, bool] | None = ...
@@ -189,6 +245,8 @@ class RpcV2CborDenseMapsInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class RpcV2CborDenseMapsOutput(_SerdeShape):
+    """Dataclass for RpcV2CborDenseMapsOutput structure."""
+
     dense_struct_map: dict[str, GreetingStruct] | None = ...
     dense_number_map: dict[str, int] | None = ...
     dense_boolean_map: dict[str, bool] | None = ...
@@ -198,6 +256,8 @@ class RpcV2CborDenseMapsOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class RpcV2CborListsInput(_SerdeShape):
+    """Dataclass for RpcV2CborListsInput structure."""
+
     string_list: list[str] | None = ...
     string_set: list[str] | None = ...
     integer_list: list[int] | None = ...
@@ -206,11 +266,14 @@ class RpcV2CborListsInput(_SerdeShape):
     enum_list: list[str] | None = ...
     int_enum_list: list[int] | None = ...
     nested_string_list: list[list[str]] | None = ...
+    """A list of lists of strings."""
     structure_list: list[StructureListMember] | None = ...
     blob_list: list[bytes] | None = ...
 
 @dataclass(kw_only=True)
 class RpcV2CborListsOutput(_SerdeShape):
+    """Dataclass for RpcV2CborListsOutput structure."""
+
     string_list: list[str] | None = ...
     string_set: list[str] | None = ...
     integer_list: list[int] | None = ...
@@ -219,6 +282,7 @@ class RpcV2CborListsOutput(_SerdeShape):
     enum_list: list[str] | None = ...
     int_enum_list: list[int] | None = ...
     nested_string_list: list[list[str]] | None = ...
+    """A list of lists of strings."""
     structure_list: list[StructureListMember] | None = ...
     blob_list: list[bytes] | None = ...
     response_metadata: ResponseMetadata = ...
@@ -229,6 +293,15 @@ class RpcV2CborNestedUnionStringValue(_SerdeShape):
 
 @dataclass
 class RpcV2CborNestedUnionUnknown(_SerdeShape):
+    """
+    Represents an unknown variant.
+
+    If you receive this value, you will need to update your library to
+    receive the parsed value.
+
+    This value may not be deliberately sent.
+    """
+
     tag: str
 
 RpcV2CborNestedUnion = Union[
@@ -240,6 +313,8 @@ class _RpcV2CborNestedUnionDeserializer:
 
 @dataclass(kw_only=True)
 class RpcV2CborSparseMapsInput(_SerdeShape):
+    """Dataclass for RpcV2CborSparseMapsInput structure."""
+
     sparse_struct_map: dict[str, GreetingStruct | None] | None = ...
     sparse_number_map: dict[str, int | None] | None = ...
     sparse_boolean_map: dict[str, bool | None] | None = ...
@@ -248,6 +323,8 @@ class RpcV2CborSparseMapsInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class RpcV2CborSparseMapsOutput(_SerdeShape):
+    """Dataclass for RpcV2CborSparseMapsOutput structure."""
+
     sparse_struct_map: dict[str, GreetingStruct | None] | None = ...
     sparse_number_map: dict[str, int | None] | None = ...
     sparse_boolean_map: dict[str, bool | None] | None = ...
@@ -265,6 +342,15 @@ class RpcV2CborUnionUnionValue(_SerdeShape):
 
 @dataclass
 class RpcV2CborUnionUnknown(_SerdeShape):
+    """
+    Represents an unknown variant.
+
+    If you receive this value, you will need to update your library to
+    receive the parsed value.
+
+    This value may not be deliberately sent.
+    """
+
     tag: str
 
 RpcV2CborUnion = Union[
@@ -276,17 +362,23 @@ class _RpcV2CborUnionDeserializer:
 
 @dataclass(kw_only=True)
 class RpcV2CborUnionsInput(_SerdeShape):
+    """Dataclass for RpcV2CborUnionsInput structure."""
+
     contents: RpcV2CborUnion | None = ...
     other_value: str | None = ...
 
 @dataclass(kw_only=True)
 class RpcV2CborUnionsOutput(_SerdeShape):
+    """Dataclass for RpcV2CborUnionsOutput structure."""
+
     contents: RpcV2CborUnion | None = ...
     other_value: str | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class SimpleScalarPropertiesInput(_SerdeShape):
+    """Dataclass for SimpleScalarPropertiesInput structure."""
+
     true_boolean_value: bool | None = ...
     false_boolean_value: bool | None = ...
     byte_value: int | None = ...
@@ -300,6 +392,8 @@ class SimpleScalarPropertiesInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class SimpleScalarPropertiesOutput(_SerdeShape):
+    """Dataclass for SimpleScalarPropertiesOutput structure."""
+
     true_boolean_value: bool | None = ...
     false_boolean_value: bool | None = ...
     byte_value: int | None = ...
@@ -314,17 +408,23 @@ class SimpleScalarPropertiesOutput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class SparseNullsOperationInput(_SerdeShape):
+    """Dataclass for SparseNullsOperationInput structure."""
+
     sparse_string_list: list[str | None] | None = ...
     sparse_string_map: dict[str, str | None] | None = ...
 
 @dataclass(kw_only=True)
 class SparseNullsOperationOutput(_SerdeShape):
+    """Dataclass for SparseNullsOperationOutput structure."""
+
     sparse_string_list: list[str | None] | None = ...
     sparse_string_map: dict[str, str | None] | None = ...
     response_metadata: ResponseMetadata = ...
 
 @dataclass(kw_only=True)
 class StructureListMember(_SerdeShape):
+    """Dataclass for StructureListMember structure."""
+
     a: str | None = ...
     b: str | None = ...
 
@@ -346,6 +446,8 @@ class FooEnum(UnknownEnumMixin, StrEnum):
 
 @dataclass(kw_only=True)
 class GreetingStruct(_SerdeShape):
+    """Dataclass for GreetingStruct structure."""
+
     hi: str | None = ...
 
 class IntegerEnum(UnknownEnumMixin, IntEnum):
