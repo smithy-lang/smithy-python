@@ -3,7 +3,7 @@
 # pyright: reportPrivateUsage=false
 from enum import IntEnum, StrEnum
 from types import ModuleType
-from typing import cast
+from typing import Any, cast
 
 from smithy_core import _schema_compact
 from smithy_core._dynamic_models import ModelRegistry
@@ -287,3 +287,75 @@ def test_concurrent_build_returns_one_class() -> None:
     for t in threads:
         t.join()
     assert len({id(r) for r in results}) == 1
+
+
+def _operation(name: str, input_ref: object, output_ref: object) -> StaticSchema:
+    # Operation tuple: shape header (0-3) then input (4), output (5), errors (6).
+    return (
+        ShapeType.OPERATION.value,
+        NS,
+        name,
+        0,
+        input_ref,
+        output_ref,
+        (),
+    )
+
+
+def test_import_and_one_operation_does_not_build_every_shape() -> None:
+    # Importing the operation table (constructing APIOperation objects) must build no
+    # model classes and hydrate no schemas; using one operation must build only that
+    # operation's input, leaving sibling operations' shapes and unrelated shapes alone.
+    import smithy_core._dynamic_models as dm
+    from smithy_core.schemas import APIOperation
+
+    _schema_compact._cache.clear()
+    a_in = _struct("AInput", (("a", ShapeType.STRING.value),))
+    a_out = _struct("AOutput", (("a", ShapeType.STRING.value),))
+    b_in = _struct("BInput", (("b", ShapeType.STRING.value),))
+    b_out = _struct("BOutput", (("b", ShapeType.STRING.value),))
+    unrelated = _struct("Unrelated", (("c", ShapeType.STRING.value),))
+    mod = _module(
+        AINPUT=a_in,
+        AOUTPUT=a_out,
+        BINPUT=b_in,
+        BOUTPUT=b_out,
+        UNRELATED=unrelated,
+        OP_A=_operation("OpA", lambda: a_in, lambda: a_out),
+        OP_B=_operation("OpB", lambda: b_in, lambda: b_out),
+    )
+    registry = ModelRegistry(
+        mod,
+        index={
+            "AInput": "AINPUT",
+            "AOutput": "AOUTPUT",
+            "BInput": "BINPUT",
+            "BOutput": "BOUTPUT",
+            "Unrelated": "UNRELATED",
+        },
+        shape_names={"AInput", "AOutput", "BInput", "BOutput", "Unrelated"},
+    )
+
+    hydrations: list[object] = []
+    original = dm.hydrate
+
+    def _counting(tup: StaticSchema) -> object:
+        hydrations.append(tup)
+        return original(tup)
+
+    dm.hydrate = _counting
+    try:
+        # Construct the operation table the way generated models.py does.
+        op_a: APIOperation[Any, Any] = APIOperation(
+            static_schema=mod.OP_A, model_registry=registry
+        )
+        APIOperation(static_schema=mod.OP_B, model_registry=registry)
+        assert registry._classes == {}  # no class built by constructing the table
+        assert hydrations == []  # no schema hydrated by constructing the table
+
+        built: type = op_a.input  # using one operation
+        assert built.__name__ == "AInput"
+        # Only AInput was built; sibling and unrelated shapes stayed lazy.
+        assert set(registry._classes) == {"AInput"}
+    finally:
+        dm.hydrate = original
