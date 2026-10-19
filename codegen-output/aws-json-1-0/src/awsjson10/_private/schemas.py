@@ -19,11 +19,14 @@ _c = "client"
 _TL = "TopLevel"
 _N = "Nested"
 _CTPI = "ContentTypeParametersInput"
+_smi = "smithy.api#input"
 _v = "value"
 _CTPO = "ContentTypeParametersOutput"
+_smit = "smithy.api#output"
 _CTP = "ContentTypeParameters"
 _TE = "TestEnum"
 _FOO = "FOO"
+_sV = "smithy.api#enumValue"
 _BAR = "BAR"
 _BAZ = "BAZ"
 _TIE = "TestIntEnum"
@@ -81,11 +84,11 @@ _sSI = "smithy.synthetic#originalShapeId"
 _sU = "smithy.api#Unit"
 _EOO = "EndpointOperationOutput"
 _EO = "EndpointOperation"
-_smi = "smithy.api#endpoint"
+_smith = "smithy.api#endpoint"
 _EWHLOI = "EndpointWithHostLabelOperationInput"
 _la = "label"
 _sL = "smithy.api#hostLabel"
-_smit = "smithy.api#required"
+_smithy = "smithy.api#required"
 _EWHLOO = "EndpointWithHostLabelOperationOutput"
 _EWHLO = "EndpointWithHostLabelOperation"
 _FE = "FooError"
@@ -100,16 +103,20 @@ _HWPOO = "HostWithPathOperationOutput"
 _HWPO = "HostWithPathOperation"
 n1 = "aws.protocoltests.shared"
 _FEo = "FooEnum"
+_B = "Baz"
+_Ba = "Bar"
+_v__ = "1"
 _ZERO = "ZERO"
+_v___ = "0"
 _IE = "IntegerEnum"
 _A = "A"
-_B = "B"
+_B_ = "B"
 _C = "C"
 _SL = "StringList"
 _SM = "StringMap"
 _GS = "GreetingStruct"
 _MU = "MyUnion"
-_sV = "stringValue"
+_sVt = "stringValue"
 _bV = "booleanValue"
 _nV = "numberValue"
 _bVl = "blobValue"
@@ -118,7 +125,7 @@ _eV = "enumValue"
 _iEV = "intEnumValue"
 _lV = "listValue"
 _mV = "mapValue"
-_sVt = "structureValue"
+_sVtr = "structureValue"
 _JUI = "JsonUnionsInput"
 _co = "contents"
 _JUO = "JsonUnionsOutput"
@@ -203,9 +210,16 @@ COMPLEX_ERROR: StaticSchema = (
     ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
-CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (18, n0, _CTPI, 0, (_v,), ((7, 0),))
+CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (
+    18,
+    n0,
+    _CTPI,
+    {_smi: None},
+    (_v,),
+    ((7, 0),),
+)
 
-CONTENT_TYPE_PARAMETERS_OUTPUT: StaticSchema = (18, n0, _CTPO, 0)
+CONTENT_TYPE_PARAMETERS_OUTPUT: StaticSchema = (18, n0, _CTPO, {_smit: None})
 
 CONTENT_TYPE_PARAMETERS: StaticOperationSchema = (
     23,
@@ -223,10 +237,17 @@ TEST_ENUM: StaticSchema = (
     _TE,
     0,
     (_FOO, _BAR, _BAZ),
-    ((-1, 0), (-1, 0), (-1, 0)),
+    ((-1, {_sV: _FOO}), (-1, {_sV: _BAR}), (-1, {_sV: _BAZ})),
 )
 
-TEST_INT_ENUM: StaticSchema = (15, n0, _TIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+TEST_INT_ENUM: StaticSchema = (
+    15,
+    n0,
+    _TIE,
+    0,
+    (_ONE, _TWO),
+    ((-1, {_sV: 1}), (-1, {_sV: 2})),
+)
 
 TEST_STRING_LIST: StaticSchema = (16, n0, _TSL, 0, (_m,), ((3, 0),))
 
@@ -271,7 +292,7 @@ DEFAULTS: StaticSchema = (
         (3, {_s: _h}),
         (2, {_s: True}),
         (TEST_STRING_LIST, {_s: ()}),
-        (13, {_s: None}),
+        (13, {_s: MappingProxyType[str, object]({})}),
         (13, {_s: _h}),
         (13, {_s: True}),
         (13, {_s: ()}),
@@ -284,7 +305,7 @@ DEFAULTS: StaticSchema = (
         (8, {_s: 100}),
         (9, {_s: 1.0}),
         (10, {_s: 1.0}),
-        (TEST_STRING_MAP, {_s: None}),
+        (TEST_STRING_MAP, {_s: MappingProxyType[str, object]({})}),
         (TEST_ENUM, {_s: _FOO}),
         (TEST_INT_ENUM, {_s: 1}),
         (3, {_s: _v_}),
@@ -314,9 +335,9 @@ DIALOG_LIST: StaticSchema = (16, n0, _DL, 0, (_m,), ((DIALOG, 0),))
 
 DIALOG_MAP: StaticSchema = (17, n0, _DM, 0, (_k, _v), ((3, 0), (DIALOG, 0)))
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT: StaticSchema = (18, n0, _EIAEOI, 0)
+EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT: StaticSchema = (18, n0, _EIAEOI, {_smi: None})
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT: StaticSchema = (18, n0, _EIAEOO, 0)
+EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT: StaticSchema = (18, n0, _EIAEOO, {_smit: None})
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT: StaticOperationSchema = (
     23,
@@ -328,15 +349,15 @@ EMPTY_INPUT_AND_EMPTY_OUTPUT: StaticOperationSchema = (
     (),
 )
 
-ENDPOINT_OPERATION_INPUT: StaticSchema = (18, n0, _EOI, {_sSI: _sU})
+ENDPOINT_OPERATION_INPUT: StaticSchema = (18, n0, _EOI, {_sSI: _sU, _smi: None})
 
-ENDPOINT_OPERATION_OUTPUT: StaticSchema = (18, n0, _EOO, {_sSI: _sU})
+ENDPOINT_OPERATION_OUTPUT: StaticSchema = (18, n0, _EOO, {_sSI: _sU, _smit: None})
 
 ENDPOINT_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _EO,
-    {_smi: MappingProxyType({"hostPrefix": "foo."})},
+    {_smith: MappingProxyType({"hostPrefix": "foo."})},
     ENDPOINT_OPERATION_INPUT,
     ENDPOINT_OPERATION_OUTPUT,
     (),
@@ -346,18 +367,23 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT: StaticSchema = (
     18,
     n0,
     _EWHLOI,
-    0,
+    {_smi: None},
     (_la,),
     ((3, 257),),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT: StaticSchema = (18, n0, _EWHLOO, {_sSI: _sU})
+ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _EWHLOO,
+    {_sSI: _sU, _smit: None},
+)
 
 ENDPOINT_WITH_HOST_LABEL_OPERATION: StaticOperationSchema = (
     23,
     n0,
     _EWHLO,
-    {_smi: MappingProxyType({"hostPrefix": "foo.{label}."})},
+    {_smith: MappingProxyType({"hostPrefix": "foo.{label}."})},
     ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT,
     ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT,
     (),
@@ -365,9 +391,23 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION: StaticOperationSchema = (
 
 FOO_ERROR: StaticSchema = (18, n0, _FE, {_sm: _se})
 
-GREETING_WITH_ERRORS_INPUT: StaticSchema = (18, n0, _GWEI, 0, (_g,), ((3, 0),))
+GREETING_WITH_ERRORS_INPUT: StaticSchema = (
+    18,
+    n0,
+    _GWEI,
+    {_smi: None},
+    (_g,),
+    ((3, 0),),
+)
 
-GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (18, n0, _GWEO, 0, (_g,), ((3, 0),))
+GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _GWEO,
+    {_smit: None},
+    (_g,),
+    ((3, 0),),
+)
 
 INVALID_GREETING: StaticSchema = (18, n0, _IG, {_sm: _c}, (_M,), ((3, 0),))
 
@@ -381,9 +421,14 @@ GREETING_WITH_ERRORS: StaticOperationSchema = (
     (INVALID_GREETING, COMPLEX_ERROR, FOO_ERROR),
 )
 
-HOST_WITH_PATH_OPERATION_INPUT: StaticSchema = (18, n0, _HWPOI, {_sSI: _sU})
+HOST_WITH_PATH_OPERATION_INPUT: StaticSchema = (18, n0, _HWPOI, {_sSI: _sU, _smi: None})
 
-HOST_WITH_PATH_OPERATION_OUTPUT: StaticSchema = (18, n0, _HWPOO, {_sSI: _sU})
+HOST_WITH_PATH_OPERATION_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _HWPOO,
+    {_sSI: _sU, _smit: None},
+)
 
 HOST_WITH_PATH_OPERATION: StaticOperationSchema = (
     23,
@@ -401,10 +446,23 @@ FOO_ENUM: StaticSchema = (
     _FEo,
     0,
     (_FOO, _BAZ, _BAR, _ONE, _ZERO),
-    ((-1, 0), (-1, 0), (-1, 0), (-1, 0), (-1, 0)),
+    (
+        (-1, {_sV: _F}),
+        (-1, {_sV: _B}),
+        (-1, {_sV: _Ba}),
+        (-1, {_sV: _v__}),
+        (-1, {_sV: _v___}),
+    ),
 )
 
-INTEGER_ENUM: StaticSchema = (15, n1, _IE, 0, (_A, _B, _C), ((-1, 0), (-1, 0), (-1, 0)))
+INTEGER_ENUM: StaticSchema = (
+    15,
+    n1,
+    _IE,
+    0,
+    (_A, _B_, _C),
+    ((-1, {_sV: 1}), (-1, {_sV: 2}), (-1, {_sV: 3})),
+)
 
 STRING_LIST: StaticSchema = (16, n1, _SL, 0, (_m,), ((3, 0),))
 
@@ -417,7 +475,7 @@ MY_UNION: StaticSchema = (
     n0,
     _MU,
     0,
-    (_sV, _bV, _nV, _bVl, _tV, _eV, _iEV, _lV, _mV, _sVt),
+    (_sVt, _bV, _nV, _bVl, _tV, _eV, _iEV, _lV, _mV, _sVtr),
     (
         (3, 0),
         (2, 0),
@@ -432,9 +490,16 @@ MY_UNION: StaticSchema = (
     ),
 )
 
-JSON_UNIONS_INPUT: StaticSchema = (18, n0, _JUI, 0, (_co,), ((MY_UNION, 0),))
+JSON_UNIONS_INPUT: StaticSchema = (18, n0, _JUI, {_smi: None}, (_co,), ((MY_UNION, 0),))
 
-JSON_UNIONS_OUTPUT: StaticSchema = (18, n0, _JUO, 0, (_co,), ((MY_UNION, 0),))
+JSON_UNIONS_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _JUO,
+    {_smit: None},
+    (_co,),
+    ((MY_UNION, 0),),
+)
 
 JSON_UNIONS: StaticOperationSchema = (
     23,
@@ -446,9 +511,14 @@ JSON_UNIONS: StaticOperationSchema = (
     (),
 )
 
-NO_INPUT_AND_NO_OUTPUT_INPUT: StaticSchema = (18, n0, _NIANOI, {_sSI: _sU})
+NO_INPUT_AND_NO_OUTPUT_INPUT: StaticSchema = (18, n0, _NIANOI, {_sSI: _sU, _smi: None})
 
-NO_INPUT_AND_NO_OUTPUT_OUTPUT: StaticSchema = (18, n0, _NIANOO, {_sSI: _sU})
+NO_INPUT_AND_NO_OUTPUT_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _NIANOO,
+    {_sSI: _sU, _smit: None},
+)
 
 NO_INPUT_AND_NO_OUTPUT: StaticOperationSchema = (
     23,
@@ -460,9 +530,9 @@ NO_INPUT_AND_NO_OUTPUT: StaticOperationSchema = (
     (),
 )
 
-NO_INPUT_AND_OUTPUT_INPUT: StaticSchema = (18, n0, _NIAOI, {_sSI: _sU})
+NO_INPUT_AND_OUTPUT_INPUT: StaticSchema = (18, n0, _NIAOI, {_sSI: _sU, _smi: None})
 
-NO_INPUT_AND_OUTPUT_OUTPUT: StaticSchema = (18, n0, _NIAOO, 0)
+NO_INPUT_AND_OUTPUT_OUTPUT: StaticSchema = (18, n0, _NIAOO, {_smit: None})
 
 NO_INPUT_AND_OUTPUT: StaticOperationSchema = (
     23,
@@ -478,7 +548,7 @@ OPERATION_WITH_DEFAULTS_INPUT: StaticSchema = (
     18,
     n0,
     _OWDI,
-    0,
+    {_smi: None},
     (_d, _cOD, _tLD, _oTLD),
     ((DEFAULTS, 0), (CLIENT_OPTIONAL_DEFAULTS, 0), (3, {_s: _h}), (7, {_s: 0})),
 )
@@ -487,7 +557,7 @@ OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
     18,
     n0,
     _OWDO,
-    0,
+    {_smit: None},
     (
         _dS,
         _dB,
@@ -522,7 +592,7 @@ OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
         (3, {_s: _h}),
         (2, {_s: True}),
         (TEST_STRING_LIST, {_s: ()}),
-        (13, {_s: None}),
+        (13, {_s: MappingProxyType[str, object]({})}),
         (13, {_s: _h}),
         (13, {_s: True}),
         (13, {_s: ()}),
@@ -535,7 +605,7 @@ OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
         (8, {_s: 100}),
         (9, {_s: 1.0}),
         (10, {_s: 1.0}),
-        (TEST_STRING_MAP, {_s: None}),
+        (TEST_STRING_MAP, {_s: MappingProxyType[str, object]({})}),
         (TEST_ENUM, {_s: _FOO}),
         (TEST_INT_ENUM, {_s: 1}),
         (3, {_s: _v_}),
@@ -566,14 +636,18 @@ TOP_LEVEL: StaticSchema = (
     _TL,
     0,
     (_di, _dLi, _dMi),
-    ((DIALOG, 1), (DIALOG_LIST, {_s: ()}), (DIALOG_MAP, {_s: None})),
+    (
+        (DIALOG, 1),
+        (DIALOG_LIST, {_s: ()}),
+        (DIALOG_MAP, {_s: MappingProxyType[str, object]({})}),
+    ),
 )
 
 OPERATION_WITH_NESTED_STRUCTURE_INPUT: StaticSchema = (
     18,
     n0,
     _OWNSI,
-    0,
+    {_smi: None},
     (_tL,),
     ((TOP_LEVEL, 1),),
 )
@@ -582,9 +656,13 @@ OPERATION_WITH_NESTED_STRUCTURE_OUTPUT: StaticSchema = (
     18,
     n0,
     _OWNSO,
-    0,
+    {_smit: None},
     (_di, _dLi, _dMi),
-    ((DIALOG, 1), (DIALOG_LIST, {_s: ()}), (DIALOG_MAP, {_s: None})),
+    (
+        (DIALOG, 1),
+        (DIALOG_LIST, {_s: ()}),
+        (DIALOG_MAP, {_s: MappingProxyType[str, object]({})}),
+    ),
 )
 
 OPERATION_WITH_NESTED_STRUCTURE: StaticOperationSchema = (
@@ -597,7 +675,12 @@ OPERATION_WITH_NESTED_STRUCTURE: StaticOperationSchema = (
     (),
 )
 
-OPERATION_WITH_REQUIRED_MEMBERS_INPUT: StaticSchema = (18, n0, _OWRMI, {_sSI: _sU})
+OPERATION_WITH_REQUIRED_MEMBERS_INPUT: StaticSchema = (
+    18,
+    n0,
+    _OWRMI,
+    {_sSI: _sU, _smi: None},
+)
 
 REQUIRED_STRING_LIST: StaticSchema = (16, n0, _RSL, 0, (_m,), ((3, 0),))
 
@@ -607,7 +690,7 @@ OPERATION_WITH_REQUIRED_MEMBERS_OUTPUT: StaticSchema = (
     18,
     n0,
     _OWRMO,
-    0,
+    {_smit: None},
     (_rS, _rB, _rL, _rT, _rBe, _rBeq, _rSe, _rI, _rLe, _rF, _rD, _rM),
     (
         (3, 1),
@@ -639,7 +722,7 @@ OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS_INPUT: StaticSchema = (
     18,
     n0,
     _OWRMWDI,
-    {_sSI: _sU},
+    {_sSI: _sU, _smi: None},
 )
 
 REQUIRED_ENUM: StaticSchema = (
@@ -648,32 +731,39 @@ REQUIRED_ENUM: StaticSchema = (
     _RE,
     0,
     (_FOO, _BAR, _BAZ),
-    ((-1, 0), (-1, 0), (-1, 0)),
+    ((-1, {_sV: _FOO}), (-1, {_sV: _BAR}), (-1, {_sV: _BAZ})),
 )
 
-REQUIRED_INT_ENUM: StaticSchema = (15, n0, _RIE, 0, (_ONE, _TWO), ((-1, 0), (-1, 0)))
+REQUIRED_INT_ENUM: StaticSchema = (
+    15,
+    n0,
+    _RIE,
+    0,
+    (_ONE, _TWO),
+    ((-1, {_sV: 1}), (-1, {_sV: 2})),
+)
 
 OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS_OUTPUT: StaticSchema = (
     18,
     n0,
     _OWRMWDO,
-    0,
+    {_smit: None},
     (_rS, _rB, _rL, _rT, _rBe, _rBeq, _rSe, _rI, _rLe, _rF, _rD, _rM, _rE, _rIE),
     (
-        (3, {_s: _h, _smit: None}),
-        (2, {_s: True, _smit: None}),
-        (REQUIRED_STRING_LIST, {_s: (), _smit: None}),
-        (4, {_s: 1, _smit: None}),
-        (1, {_s: _YY, _smit: None}),
-        (5, {_s: 1, _smit: None}),
-        (6, {_s: 1, _smit: None}),
-        (7, {_s: 10, _smit: None}),
-        (8, {_s: 100, _smit: None}),
-        (9, {_s: 1.0, _smit: None}),
-        (10, {_s: 1.0, _smit: None}),
-        (REQUIRED_STRING_MAP, {_s: None, _smit: None}),
-        (REQUIRED_ENUM, {_s: _FOO, _smit: None}),
-        (REQUIRED_INT_ENUM, {_s: 1, _smit: None}),
+        (3, {_s: _h, _smithy: None}),
+        (2, {_s: True, _smithy: None}),
+        (REQUIRED_STRING_LIST, {_s: (), _smithy: None}),
+        (4, {_s: 1, _smithy: None}),
+        (1, {_s: _YY, _smithy: None}),
+        (5, {_s: 1, _smithy: None}),
+        (6, {_s: 1, _smithy: None}),
+        (7, {_s: 10, _smithy: None}),
+        (8, {_s: 100, _smithy: None}),
+        (9, {_s: 1.0, _smithy: None}),
+        (10, {_s: 1.0, _smithy: None}),
+        (REQUIRED_STRING_MAP, {_s: MappingProxyType[str, object]({}), _smithy: None}),
+        (REQUIRED_ENUM, {_s: _FOO, _smithy: None}),
+        (REQUIRED_INT_ENUM, {_s: 1, _smithy: None}),
     ),
 )
 
@@ -691,12 +781,17 @@ PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     18,
     n0,
     _PWCEI,
-    0,
+    {_smi: None},
     (_e, _da),
     ((3, {_sH: _CE_}), (3, 0)),
 )
 
-PUT_WITH_CONTENT_ENCODING_OUTPUT: StaticSchema = (18, n0, _PWCEO, {_sSI: _sU})
+PUT_WITH_CONTENT_ENCODING_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _PWCEO,
+    {_sSI: _sU, _smit: None},
+)
 
 PUT_WITH_CONTENT_ENCODING: StaticOperationSchema = (
     23,
@@ -708,9 +803,19 @@ PUT_WITH_CONTENT_ENCODING: StaticOperationSchema = (
     (),
 )
 
-QUERY_INCOMPATIBLE_OPERATION_INPUT: StaticSchema = (18, n0, _QIOI, {_sSI: _sU})
+QUERY_INCOMPATIBLE_OPERATION_INPUT: StaticSchema = (
+    18,
+    n0,
+    _QIOI,
+    {_sSI: _sU, _smi: None},
+)
 
-QUERY_INCOMPATIBLE_OPERATION_OUTPUT: StaticSchema = (18, n0, _QIOO, {_sSI: _sU})
+QUERY_INCOMPATIBLE_OPERATION_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _QIOO,
+    {_sSI: _sU, _smit: None},
+)
 
 QUERY_INCOMPATIBLE_OPERATION: StaticOperationSchema = (
     23,
@@ -726,7 +831,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     18,
     n0,
     _SSPI,
-    0,
+    {_smi: None},
     (_fV, _dV),
     ((9, 0), (10, 0)),
 )
@@ -735,7 +840,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     18,
     n0,
     _SSPO,
-    0,
+    {_smit: None},
     (_fV, _dV),
     ((9, 0), (10, 0)),
 )

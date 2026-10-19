@@ -823,15 +823,15 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
             sink=sink, action=action, version=self._version, params=params
         )
 
-    def _action_name(
+    def _action_name[I: SerializeableShape, O: DeserializeableShape](
         self,
-        operation: APIOperation[SerializeableShape, DeserializeableShape],
+        operation: APIOperation[I, O],
     ) -> str:
         return operation.schema.id.name
 
-    def _response_wrapper_elements(
+    def _response_wrapper_elements[I: SerializeableShape, O: DeserializeableShape](
         self,
-        operation: APIOperation[SerializeableShape, DeserializeableShape],
+        operation: APIOperation[I, O],
     ) -> tuple[str, ...]:
         name = operation.schema.id.name
         # Operations with no output members will omit the <OpResult> element.
@@ -867,9 +867,9 @@ class Ec2QueryClientProtocol(AwsQueryClientProtocol):
             sink=sink, action=action, version=self._version, params=params
         )
 
-    def _response_wrapper_elements(
+    def _response_wrapper_elements[I: SerializeableShape, O: DeserializeableShape](
         self,
-        operation: APIOperation[SerializeableShape, DeserializeableShape],
+        operation: APIOperation[I, O],
     ) -> tuple[str, ...]:
         return (f"{operation.schema.id.name}Response",)
 

@@ -22,7 +22,6 @@ from typing import Any, Self
 
 from smithy_core.aio.interfaces import ProtocolSettings
 from smithy_core.deserializers import ShapeDeserializer
-from smithy_core.documents import TypeRegistry
 from smithy_core.prelude import (
     DOUBLE,
     INTEGER,
@@ -348,9 +347,15 @@ class PutRecordsOutput:
         return kwargs
 
 
+class _StubRegistry:
+    def __init__(self, classes: dict[str, type]) -> None:
+        self._classes = classes
+
+    def build(self, name: str) -> type:
+        return self._classes[name]
+
+
 PUT_RECORDS_OPERATION: APIOperation[PutRecordsInput, PutRecordsOutput] = APIOperation(
-    input=PutRecordsInput,
-    output=PutRecordsOutput,
     static_schema=(
         ShapeType.OPERATION.value,
         _NS,
@@ -360,6 +365,8 @@ PUT_RECORDS_OPERATION: APIOperation[PutRecordsInput, PutRecordsOutput] = APIOper
         PUT_RECORDS_OUTPUT,
         (),
     ),
-    error_registry=TypeRegistry({}),
+    model_registry=_StubRegistry(
+        {"PutRecordsInput": PutRecordsInput, "PutRecordsOutput": PutRecordsOutput}
+    ),
     effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
 )

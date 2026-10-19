@@ -255,17 +255,33 @@ final class ClientGenerator implements Runnable {
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
 
-        writer.putContext("input", inputSymbol);
-        writer.putContext("output", outputSymbol);
+        // Input/output types are used ONLY in annotations here. Import them under
+        // TYPE_CHECKING and reference by bare name (with future-annotations deferring
+        // the annotations) so importing the client does not eagerly build every model
+        // class. The operation constant below is a real runtime import.
+        writer.getImportContainer().enableFutureAnnotations();
+        writer.getImportContainer()
+                .addTypeCheckingImport(
+                        inputSymbol.getNamespace(),
+                        inputSymbol.getName(),
+                        inputSymbol.getName());
+        writer.getImportContainer()
+                .addTypeCheckingImport(
+                        outputSymbol.getNamespace(),
+                        outputSymbol.getName(),
+                        outputSymbol.getName());
+
+        writer.putContext("input", inputSymbol.getName());
+        writer.putContext("output", outputSymbol.getName());
         writer.putContext("plugin", pluginSymbol);
         writer.putContext("operationName", operationMethodSymbol.getName());
         writer.putContext("operation", symbolProvider.toSymbol(operation));
         writer.write("""
                 async def ${operationName:L}(
                     self,
-                    input: ${input:T},
+                    input: ${input:L},
                     plugins: list[${plugin:T}] | None = None
-                ) -> ${output:T}:
+                ) -> ${output:L}:
                     ${C|}
                     pipeline, call = await self._prepare_call(
                         input,

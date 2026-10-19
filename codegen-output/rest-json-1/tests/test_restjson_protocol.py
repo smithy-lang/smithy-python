@@ -12752,7 +12752,7 @@ async def test_rest_json_streaming_traits_with_blob_response_streaming_traits() 
         assert deep_equal(actual.foo, expected.foo)
         assert isinstance(actual.blob, AsyncByteStream)
         actual_body_content = await actual.blob.read()
-        expected_body_content = await AsyncBytesReader(expected.blob).read()
+        expected_body_content = await AsyncBytesReader(expected.blob or b"").read()
 
         assert actual_body_content == expected_body_content
 
@@ -12786,7 +12786,7 @@ async def test_rest_json_streaming_traits_with_no_blob_body_response_streaming_t
         assert deep_equal(actual.foo, expected.foo)
         assert isinstance(actual.blob, AsyncByteStream)
         actual_body_content = await actual.blob.read()
-        expected_body_content = await AsyncBytesReader(expected.blob).read()
+        expected_body_content = await AsyncBytesReader(expected.blob or b"").read()
 
         assert actual_body_content == expected_body_content
 
@@ -13046,7 +13046,7 @@ async def test_rest_json_streaming_traits_with_media_type_with_blob_response_str
         assert deep_equal(actual.foo, expected.foo)
         assert isinstance(actual.blob, AsyncByteStream)
         actual_body_content = await actual.blob.read()
-        expected_body_content = await AsyncBytesReader(expected.blob).read()
+        expected_body_content = await AsyncBytesReader(expected.blob or b"").read()
 
         assert actual_body_content == expected_body_content
 

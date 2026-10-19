@@ -4,7 +4,6 @@ from dataclasses import asdict, fields, replace
 from typing import Any
 
 import pytest
-from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import ExpectationNotMetError, SmithyError
 from smithy_core.schemas import APIOperation, Schema, SchemaExtension
 from smithy_core.shapes import ShapeID, ShapeType
@@ -17,6 +16,14 @@ from smithy_core.traits import (
 
 ID: ShapeID = ShapeID("ns.foo#bar")
 STRING = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
+
+
+class _StubRegistry:
+    def __init__(self, classes: dict[str, type]) -> None:
+        self._classes = classes
+
+    def build(self, name: str) -> type:
+        return self._classes[name]
 
 
 def test_traits_list():
@@ -280,8 +287,6 @@ def test_operation_idempotency_token_member():
         },
     )
     operation = APIOperation[Any, Any](
-        input=object,
-        output=object,
         static_schema=(
             ShapeType.OPERATION.value,
             "com.example",
@@ -291,7 +296,7 @@ def test_operation_idempotency_token_member():
             input_schema,
             (),
         ),
-        error_registry=TypeRegistry({}),
+        model_registry=_StubRegistry({"OperationInput": object}),
         effective_auth_schemes=[],
     )
     assert operation.idempotency_token_member is input_schema.members["token"]
