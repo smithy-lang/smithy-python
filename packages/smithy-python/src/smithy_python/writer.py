@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import ast
 import itertools
+import keyword
 import re
 import warnings
 from collections import Counter
@@ -106,6 +107,26 @@ def _binding(name: str) -> str:
 def _identity(module: str | None, name: str) -> tuple[str | None, str]:
     """Return a reference's module and name as Python binds them."""
     return (None if module is None else _binding(module), _binding(name))
+
+
+def _validate_identifier(value: str, kind: str) -> None:
+    """Require a Python identifier that is not a hard keyword."""
+    if not value.isidentifier() or keyword.iskeyword(_binding(value)):
+        raise CodegenError(f"Invalid Python {kind}: {value!r}")
+
+
+def _validate_module(module: str, *, relative: bool) -> None:
+    """Require an absolute module or, when allowed, a relative import path."""
+    path = module.lstrip(".") if relative else module
+    if not path:
+        if relative and module and not module.strip("."):
+            return
+        raise CodegenError(f"Invalid Python module: {module!r}")
+    if any(
+        not part.isidentifier() or keyword.iskeyword(_binding(part))
+        for part in path.split(".")
+    ):
+        raise CodegenError(f"Invalid Python module: {module!r}")
 
 
 def _is_local(name: str, shadows: Iterable[frozenset[str]]) -> bool:
@@ -325,6 +346,7 @@ class PythonWriter:
     """Write trusted Python lines, retaining type references until rendering."""
 
     def __init__(self, module: str) -> None:
+        _validate_module(module, relative=False)
         self._module = _binding(module)
         self._depth = 0
         self._lines: list[tuple[int, tuple[str | TypeReference, ...]]] = []
@@ -397,6 +419,9 @@ class PythonWriter:
                     raise CodegenError(
                         f"Only the None literal may omit its module: {ref.name!r}"
                     )
+                if ref.module is not None:
+                    _validate_identifier(ref.name, "reference name")
+                    _validate_module(ref.module, relative=True)
                 identities.add((ref.module, ref.name))
                 key = _identity(ref.module, ref.name)
                 local_names.setdefault(key, set()).add(shadow)

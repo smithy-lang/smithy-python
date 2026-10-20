@@ -42,6 +42,11 @@ class member is visible in its class body, including method signatures, but not
 in method bodies, nested classes or comprehensions. A function's locals are
 visible in its body and nested functions, not in its signature.
 
+The destination must be an absolute Python module name. Reference modules may
+also be relative, such as `.models` or `..types`. Reference names and module
+components must be valid identifiers and cannot be hard keywords. Invalid
+values raise `CodegenError`.
+
 Names may be rebound, as in `if`/`else` branches or `@overload` stubs. The
 symbol provider ensures that declaration and field names are unique.
 

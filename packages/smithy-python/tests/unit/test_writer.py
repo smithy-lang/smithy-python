@@ -3,6 +3,7 @@
 
 import builtins
 import importlib.util
+import keyword
 import re
 import sys
 import warnings
@@ -559,10 +560,11 @@ def test_syntax_warnings_fail_at_render(strict: bool) -> None:
 
 def test_builtin_names_cover_running_interpreter() -> None:
     writer = PythonWriter("models")
-    for name in dir(builtins):
+    names = [name for name in dir(builtins) if not keyword.iskeyword(name)]
+    for name in names:
         writer.line("value: ", TypeReference(name, "external"))
     source = writer.render()
-    for name in dir(builtins):
+    for name in names:
         assert f"from external import {name} as _external_{name}\n" in source
 
 
@@ -667,6 +669,41 @@ def test_only_none_literal_can_omit_module(reference: TypeReference) -> None:
     writer.line("value: ", reference)
     with pytest.raises(CodegenError, match="module"):
         writer.render()
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        TypeReference("class", "external"),
+        TypeReference("\uff43\uff4c\uff41\uff53\uff53", "external"),
+        TypeReference("Not Valid", "external"),
+        TypeReference("Thing", ""),
+        TypeReference("Thing", "bad-module"),
+        TypeReference("Thing", "bad module"),
+        TypeReference("Thing", "package.class"),
+        TypeReference("Thing", ".bad-module"),
+    ],
+)
+def test_invalid_type_reference_names_and_modules_fail(
+    reference: TypeReference,
+) -> None:
+    writer = PythonWriter("models")
+    writer.line("value: ", reference)
+    with pytest.raises(CodegenError, match=r"^Invalid Python"):
+        writer.render()
+
+
+@pytest.mark.parametrize("module", ["", ".models", "bad-module", "package.class"])
+def test_invalid_destination_modules_fail(module: str) -> None:
+    with pytest.raises(CodegenError, match=r"^Invalid Python module"):
+        PythonWriter(module)
+
+
+@pytest.mark.parametrize("module", [".", "..", ".models", "..types"])
+def test_relative_reference_modules_are_valid(module: str) -> None:
+    writer = PythonWriter("package.models")
+    writer.line("value: ", TypeReference("Thing", module))
+    compile(writer.render(), "<generated>", "exec")
 
 
 def test_generation_without_runtime_packages() -> None:
