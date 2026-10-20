@@ -1,0 +1,756 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+import builtins
+import importlib.util
+import keyword
+import re
+import sys
+import warnings
+from decimal import Decimal
+from pathlib import Path
+from types import ModuleType
+from typing import get_type_hints
+
+import pytest
+from smithy_python.exceptions import CodegenError
+from smithy_python.symbols import TypeReference
+from smithy_python.writer import PythonWriter
+
+
+def load_written_module(
+    writer: PythonWriter, directory: Path, monkeypatch: pytest.MonkeyPatch
+) -> ModuleType:
+    path = directory / "written_models.py"
+    path.write_text(writer.render(), encoding="utf-8")
+    # Repeated renders can have the same size and filesystem timestamp.
+    Path(importlib.util.cache_from_source(str(path))).unlink(missing_ok=True)
+    spec = importlib.util.spec_from_file_location("written_models", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    monkeypatch.setitem(sys.modules, spec.name, module)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_nested_forward_and_mutual_annotations(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    writer = PythonWriter("written_models")
+    writer.line("class Node:")
+    with writer.indent():
+        writer.line(
+            "children: ",
+            TypeReference(
+                "dict",
+                "builtins",
+                (
+                    TypeReference("str", "builtins"),
+                    TypeReference(
+                        "list",
+                        "builtins",
+                        (TypeReference("Node", "written_models", nullable=True),),
+                        nullable=True,
+                    ),
+                ),
+                nullable=True,
+            ),
+        )
+        writer.line("server: ", TypeReference("_2HTTPServer", "written_models"))
+        writer.line("amount: ", TypeReference("Decimal", "decimal"))
+        writer.line("nothing: ", TypeReference("None"))
+    writer.line()
+    writer.line("class _2HTTPServer:")
+    with writer.indent():
+        writer.line("node: ", TypeReference("Node", "written_models"))
+    source = writer.render()
+    assert source.startswith("from __future__ import annotations\n")
+    assert "from written_models" not in source
+    assert "dict[str, list[Node | None] | None] | None" in source
+    assert source == writer.render()
+    assert source.endswith("\n")
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    node = module.Node
+    server = module._2HTTPServer
+    assert get_type_hints(node) == {
+        "children": dict[str, list[node | None] | None] | None,
+        "server": server,
+        "amount": Decimal,
+        "nothing": type(None),
+    }
+    assert get_type_hints(server) == {"node": node}
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "PythonFinalizationError",  # Added in Python 3.13.
+        "_IncompleteInputError",  # Added in Python 3.13.
+        "ImportCycleError",  # Added in Python 3.15.
+        "__lazy_import__",  # Added in Python 3.15.
+        "frozendict",  # Added in Python 3.15.
+        "sentinel",  # Added in Python 3.15.
+        "WindowsError",  # Windows-only, present throughout Python 3.12-3.15.
+    ],
+)
+def test_imports_reserve_builtins_across_supported_versions(
+    name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    external = ModuleType("external")
+    setattr(external, name, str)
+    monkeypatch.setitem(sys.modules, "external", external)
+    writer = PythonWriter("written_models")
+    writer.line("value: ", TypeReference(name, "external"))
+    assert f"from external import {name} as _external_{name}" in writer.render()
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    assert get_type_hints(module) == {"value": str}
+
+
+def test_indentation_restored_after_exception() -> None:
+    writer = PythonWriter("models")
+    writer.line("if True:")
+    with pytest.raises(RuntimeError), writer.indent():
+        writer.line("first = 1")
+        writer.line("if True:")
+        with writer.indent():
+            writer.line("second = 2")
+            writer.line()
+            raise RuntimeError
+    writer.line("last = 3")
+    assert writer.render().endswith(
+        "    first = 1\n    if True:\n        second = 2\n\nlast = 3\n"
+    )
+
+
+@pytest.mark.parametrize("scope", ["declaration", "local"])
+@pytest.mark.parametrize(
+    "reserved",
+    [
+        ("Decimal", "list", "int"),
+        (
+            "\uff24\uff45\uff43\uff49\uff4d\uff41\uff4c",
+            "\uff4c\uff49\uff53\uff54",
+            "\uff49\uff4e\uff54",
+        ),
+    ],
+)
+def test_shadowed_references_load(
+    scope: str,
+    reserved: tuple[str, ...],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    writer = PythonWriter("written_models")
+    if scope == "declaration":
+        for name in reserved:
+            writer.line(name, " = 'shadow'")
+    writer.line("class Node:")
+    with writer.indent():
+        if scope == "local":
+            for name in reserved:
+                writer.line(name, " = 'shadow'")
+        writer.line("amount: ", TypeReference("Decimal", "decimal"))
+        writer.line(
+            "items: ",
+            TypeReference("list", "builtins", (TypeReference("int", "builtins"),)),
+        )
+    source = writer.render()
+    assert "import builtins as _builtins" in source
+    assert "from decimal import Decimal as _decimal_Decimal" in source
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    node: type = module.Node
+    assert get_type_hints(node, vars(module), dict(vars(node))) == {
+        "amount": Decimal,
+        "items": list[int],
+    }
+
+
+def test_class_body_references_load(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    names = ("list", "field", "tags")
+    writer = PythonWriter("written_models")
+    strings = TypeReference("list", "builtins", (TypeReference("str", "builtins"),))
+    writer.line("@", TypeReference("dataclass", "dataclasses"))
+    writer.line("class Node:")
+    with writer.indent():
+        for name in names:
+            writer.line(
+                f"{name}: ",
+                strings,
+                " = ",
+                TypeReference("field", "dataclasses"),
+                "(default_factory=",
+                TypeReference("list", "builtins"),
+                ")",
+            )
+    source = writer.render()
+    assert "from dataclasses import field as _dataclasses_field" in source
+    assert "default_factory=_builtins.list" in source
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    node: type = module.Node
+    assert vars(node()) == {"list": [], "field": [], "tags": []}
+    assert get_type_hints(node, vars(module), dict(vars(node))) == dict.fromkeys(
+        names, list[str]
+    )
+
+
+def test_all_colliding_imports_are_aliased(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    alpha = ModuleType("alpha.models")
+    beta = ModuleType("beta.models")
+    setattr(alpha, "Thing", str)
+    setattr(beta, "Thing", int)
+    monkeypatch.setitem(sys.modules, "alpha.models", alpha)
+    monkeypatch.setitem(sys.modules, "beta.models", beta)
+    for modules in (("alpha.models", "beta.models"), ("beta.models", "alpha.models")):
+        writer = PythonWriter("models")
+        for index, module in enumerate(modules):
+            writer.line(f"value_{index}: ", TypeReference("Thing", module))
+        source = writer.render()
+        assert "from alpha.models import Thing as _alpha_models_Thing" in source
+        assert "from beta.models import Thing as _beta_models_Thing" in source
+        assert source.index("from alpha") < source.index("from beta")
+        result = load_written_module(writer, tmp_path, monkeypatch)
+        assert get_type_hints(result) == {
+            f"value_{index}": str if module == "alpha.models" else int
+            for index, module in enumerate(modules)
+        }
+
+
+@pytest.mark.parametrize("name", ["str", "list", "open", "Exception"])
+def test_external_builtin_name_is_aliased(name: str) -> None:
+    writer = PythonWriter("models")
+    writer.line("value: ", TypeReference(name, "external"))
+    assert f"from external import {name} as _external_{name}" in writer.render()
+
+
+@pytest.mark.parametrize(
+    "declarations,locals_,refs,prefix",
+    [
+        (
+            ("Decimal", "_decimal_Decimal"),
+            (),
+            (TypeReference("Decimal", "decimal"),),
+            "Import binding '_decimal_Decimal' for",
+        ),
+        (
+            (),
+            ("list", "_builtins"),
+            (TypeReference("list", "builtins"),),
+            "Import binding '_builtins' for",
+        ),
+        (
+            ("Node",),
+            ("Node",),
+            (TypeReference("Node", "models"),),
+            "Same-module reference models.Node conflicts with local name",
+        ),
+        (
+            (),
+            (),
+            (TypeReference("Thing", "a.b"), TypeReference("Thing", "a_b")),
+            "Import binding '_a_b_Thing' for",
+        ),
+        (
+            ("Decimal",),
+            (),
+            (
+                TypeReference("Decimal", "decimal"),
+                TypeReference("_decimal_Decimal", "other"),
+            ),
+            "Import binding '_decimal_Decimal' for",
+        ),
+        (
+            (),
+            ("list",),
+            (TypeReference("list", "builtins"), TypeReference("_builtins", "other")),
+            "Import binding '_builtins' for",
+        ),
+        (
+            ("Decimal", "_\uff44\uff45\uff43\uff49\uff4d\uff41\uff4c_Decimal"),
+            (),
+            (TypeReference("Decimal", "decimal"),),
+            "Import binding '_decimal_Decimal' for",
+        ),
+        (
+            ("K",),
+            ("\u212a",),
+            (TypeReference("K", "models"),),
+            "Same-module reference models.K conflicts with local name",
+        ),
+    ],
+)
+def test_binding_conflicts(
+    declarations: tuple[str, ...],
+    locals_: tuple[str, ...],
+    refs: tuple[TypeReference, ...],
+    prefix: str,
+) -> None:
+    writer = PythonWriter("models")
+    for name in declarations:
+        writer.line(name, " = None")
+    writer.line("class Holder:")
+    with writer.indent():
+        writer.line("pass")
+        for name in locals_:
+            writer.line(name, " = None")
+        for ref in refs:
+            writer.line("value: ", ref)
+    with pytest.raises(CodegenError, match="^" + re.escape(prefix)):
+        writer.render()
+
+
+def test_equivalent_import_names_are_aliased() -> None:
+    writer = PythonWriter("models")
+    writer.line("first: ", TypeReference("K", "alpha"))
+    writer.line("second: ", TypeReference("\u212a", "beta"))
+    writer.line("text: ", TypeReference("\uff53\uff54\uff52", "external"))
+    source = writer.render()
+    assert "from alpha import K as _alpha_K" in source
+    assert "from beta import \u212a as _beta_\u212a" in source
+    assert (
+        "from external import \uff53\uff54\uff52 as _external_\uff53\uff54\uff52"
+        in source
+    )
+
+
+def test_module_names_can_be_rebound(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    writer = PythonWriter("written_models")
+    writer.line("if ", TypeReference("version_info", "sys"), " >= (3, 13):")
+    with writer.indent():
+        writer.line("class Node:")
+        with writer.indent():
+            writer.line("value: ", TypeReference("int", "builtins"))
+    writer.line("else:")
+    with writer.indent():
+        writer.line("class Node:")
+        with writer.indent():
+            writer.line("value: ", TypeReference("int", "builtins"))
+    writer.line()
+    writer.line("@", TypeReference("overload", "typing"))
+    writer.line("def build(value: ", TypeReference("int", "builtins"), ") -> None: ...")
+    writer.line("def build(value: ", TypeReference("object", "builtins"), ") -> None:")
+    with writer.indent():
+        writer.line("pass")
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    assert get_type_hints(module.Node) == {"value": int}
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "list = None\nvalue: {ref}",
+        "class Holder:\n    list = None\n    value: {ref}",
+        "def build(list):\n    return {ref}",
+        "def build():\n    list = None\n    return {ref}",
+        "def build():\n    global list\n    list = None\nvalue: {ref}",
+        "def outer():\n    list = None\n    def inner():\n        return {ref}",
+        "def outer():\n"
+        "    list = None\n"
+        "    def inner():\n"
+        "        nonlocal list\n"
+        "        list = 1\n"
+        "        return {ref}",
+        "def build():\n    [(list := None) for _ in ()]\n    return {ref}",
+        "for list in ():\n    pass\nvalue: {ref}",
+        "import json as list\nvalue: {ref}",
+        "from json import loads as list\nvalue: {ref}",
+        "try:\n    pass\nexcept Exception as list:\n    pass\nvalue: {ref}",
+        "with open('x') as list:\n    pass\nvalue: {ref}",
+        "build = lambda list: {ref}",
+        "values = [{ref} for list in ()]",
+        "match None:\n    case list:\n        pass\nvalue: {ref}",
+        "match {}:\n    case {**list}:\n        pass\nvalue: {ref}",
+        "type Alias[list] = {ref}",
+        "def build[list](value: {ref}) -> None: ...",
+        "class Holder:\n    list = None\n    def build(self) -> {ref}: ...",
+    ],
+)
+def test_names_visible_to_a_reference_are_reserved(source: str) -> None:
+    writer = PythonWriter("models")
+    before, after = source.split("{ref}")
+    writer.line(before, TypeReference("list", "builtins"), after)
+    rendered = writer.render()
+    assert "import builtins as _builtins" in rendered
+    assert rendered.endswith(source.replace("{ref}", "_builtins.list") + "\n")
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "def build(list): ...\nvalue: {ref}",
+        "def build():\n    list = None\nvalue: {ref}",
+        "values = [None for list in ()]\nvalue: {ref}",
+        # Methods, nested classes and comprehensions cannot see class members.
+        "class Holder:\n    list = None\n    def build(self):\n        return {ref}",
+        "class Holder:\n    list = None\n    class Inner:\n        value: {ref}",
+        "class Holder:\n    list = None\n    values = [{ref} for _ in ()]",
+    ],
+)
+def test_names_hidden_from_a_reference_are_not_reserved(source: str) -> None:
+    writer = PythonWriter("models")
+    before, after = source.split("{ref}")
+    writer.line(before, TypeReference("list", "builtins"), after)
+    rendered = writer.render()
+    assert "import builtins" not in rendered
+    assert rendered.endswith(source.replace("{ref}", "list") + "\n")
+
+
+@pytest.mark.parametrize(
+    "before,after",
+    [
+        ('value: "', '"'),  # A string annotation has no scope in the syntax tree.
+        ("value = ", "_suffix"),  # Joined to raw text, the reference is not a name.
+    ],
+)
+def test_unscoped_reference_sees_every_local_name(before: str, after: str) -> None:
+    writer = PythonWriter("models")
+    writer.line("def build():")
+    with writer.indent():
+        writer.line("Decimal = 1")
+    writer.line(before, TypeReference("Decimal", "decimal"), after)
+    assert "from decimal import Decimal as _decimal_Decimal" in writer.render()
+
+
+def shape_factory(*returned: str | TypeReference) -> PythonWriter:
+    writer = PythonWriter("written_models")
+    writer.line("class Shape:")
+    with writer.indent():
+        writer.line("pass")
+    writer.line()
+    writer.line("def make() -> ", TypeReference("Shape", "written_models"), ":")
+    with writer.indent():
+        writer.line("Shape = 1")
+        writer.line("return ", *returned)
+    return writer
+
+
+def test_function_local_does_not_conflict_with_module_reference(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    writer = shape_factory("Shape")
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    assert get_type_hints(module.make) == {"return": module.Shape}
+
+
+def test_function_local_conflicts_with_reference_in_its_body() -> None:
+    writer = shape_factory(TypeReference("Shape", "written_models"), "()")
+    with pytest.raises(CodegenError, match=r"^Same-module reference"):
+        writer.render()
+
+
+def test_placeholder_spelling_cannot_hide_a_name() -> None:
+    writer = PythonWriter("models")
+    writer.line("_smithy_reference_0_ = 1")
+    writer.line("value: ", TypeReference("_smithy_reference_0_", "other"))
+    assert (
+        "from other import _smithy_reference_0_ as _other__smithy_reference_0_"
+        in writer.render()
+    )
+
+
+@pytest.mark.parametrize(
+    "source,name",
+    [
+        (
+            "class Node:\n    list: int = 0\n    tags: int = field(default_factory=list)",
+            "list",
+        ),
+        # Annotations are evaluated against the finished class.
+        ("class Node:\n    items: list[int]\n    list: int = 0", "list"),
+        (
+            "from dataclasses import field\n"
+            "class Node:\n    field: int = 0\n    tags: int = field(default=0)",
+            "field",
+        ),
+        ("class Node:\n    list: int = 0\n    def build(self, kind=list): ...", "list"),
+        ("class Node:\n    list = None\n    def build(self) -> list: ...", "list"),
+        (
+            "class Node:\n    list = None\n    def build[T](self) -> list[T]: ...",
+            "list",
+        ),
+        ("class Node:\n    def list(self): ...\n    items: list[int]", "list"),
+        ("class Node:\n    list: int = 0\n    class Inner(list): ...", "list"),
+        (
+            "class Node:\n    list: int = 0\n    tags = list\n    list: int = 1",
+            "list",
+        ),
+        (
+            "class Node:\n    \uff4c\uff49\uff53\uff54: int = 0\n    items = list",
+            "list",
+        ),
+    ],
+)
+def test_raw_names_shadowed_in_class_fail(source: str, name: str) -> None:
+    writer = PythonWriter("models")
+    writer.line(source)
+    message = f"Raw name {name!r} in class Node is shadowed by a class member"
+    with pytest.raises(CodegenError, match="^" + re.escape(message)):
+        writer.render()
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        # Method bodies cannot see class members.
+        "class Node:\n    list = None\n    def build(self):\n        return list()",
+        # Names defined in the class are meant to refer to the class member.
+        "class Node:\n"
+        "    @property\n    def value(self): ...\n"
+        "    @value.setter\n    def value(self, item): ...",
+        "class Node:\n"
+        "    @property\n    def type(self): ...\n"
+        "    @type.setter\n    def type(self, item): ...",
+        "class Node:\n    count = 1\n    total = count + 1",
+        # Members other than fields may be referenced in later class-body code.
+        "class Node:\n    list = 1\n    LIST = list",
+        # Code that runs before a field is bound still sees the builtin.
+        "class Node:\n    items = [x for x in range(3)]\n    range: int = 0",
+        "class Node:\n    list: int = len([])\n    len: int = 0",
+        # An annotation naming a nested class means that class.
+        "class Config: ...\nclass Node:\n    class Config: ...\n    config: Config",
+        # Class bodies do not see an enclosing class's members.
+        "class Node:\n    list = None\n    class Inner:\n        items = list",
+        # Type parameters are not class members.
+        "class Node:\n    def build[T](self, value: T) -> T: ...",
+        "def build[T](value: T) -> T: ...",
+        # Base classes run in order, including those of generic classes.
+        "class Node:\n    list = None\n    class Inner[T](list): ...",
+        "class Node:\n    values = [list for list in ()]",
+    ],
+)
+def test_raw_names_not_shadowed_in_class_pass(source: str) -> None:
+    writer = PythonWriter("models")
+    writer.line(source)
+    assert writer.render().endswith(source + "\n")
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "class Node",  # Missing colon.
+        "value = t'text'",  # Template strings need Python 3.14.
+    ],
+)
+def test_invalid_python_fails_at_render(line: str) -> None:
+    writer = PythonWriter("models")
+    writer.line(line)
+    message = "Written lines are not valid Python 3.12"
+    with pytest.raises(CodegenError, match="^" + re.escape(message)):
+        writer.render()
+
+
+@pytest.mark.parametrize("strict", [False, True])
+def test_syntax_warnings_fail_at_render(strict: bool) -> None:
+    writer = PythonWriter("models")
+    writer.line("class Node:")
+    with writer.indent():
+        writer.line('"""Match \\d+."""')
+    # Python 3.14 rewords the warning; both versions name the escape sequence.
+    message = re.escape("Written lines raise SyntaxWarning (line 2): ") + ".*escape"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error" if strict else "default")
+        with pytest.raises(CodegenError, match="^" + message):
+            writer.render()
+
+
+def test_builtin_names_cover_running_interpreter() -> None:
+    writer = PythonWriter("models")
+    names = [name for name in dir(builtins) if not keyword.iskeyword(name)]
+    for name in names:
+        writer.line("value: ", TypeReference(name, "external"))
+    source = writer.render()
+    for name in names:
+        assert f"from external import {name} as _external_{name}\n" in source
+
+
+@pytest.mark.parametrize("module", ["written_models", "\uff57ritten_models"])
+def test_equivalent_current_module_names(
+    module: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    writer = PythonWriter(module)
+    writer.line("class Node:")
+    with writer.indent():
+        writer.line(
+            "child: ", TypeReference("Node", "\uff57ritten_models", nullable=True)
+        )
+    result = load_written_module(writer, tmp_path, monkeypatch)
+    assert get_type_hints(result.Node) == {"child": result.Node | None}
+
+
+def test_equivalent_external_identities_are_deduplicated(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    refs = (
+        TypeReference("Decimal", "decimal"),
+        TypeReference("\uff24ecimal", "\uff44ecimal"),
+    )
+    outputs: list[str] = []
+    for order in (refs, tuple(reversed(refs))):
+        writer = PythonWriter("written_models")
+        for index, ref in enumerate(order):
+            writer.line(f"value_{index}: ", ref)
+        source = writer.render()
+        assert source.count("from decimal import Decimal") == 1
+        outputs.append(source)
+        module = load_written_module(writer, tmp_path, monkeypatch)
+        assert get_type_hints(module) == {"value_0": Decimal, "value_1": Decimal}
+    assert outputs[0] == outputs[1]
+
+
+def test_equivalent_builtin_module_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    writer = PythonWriter("written_models")
+    writer.line("value: ", TypeReference("str", "\uff42uiltins"))
+    assert "import str" not in writer.render()
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    assert get_type_hints(module) == {"value": str}
+
+
+def test_current_module_reference_reserves_its_binding() -> None:
+    writer = PythonWriter("models")
+    writer.line("first: ", TypeReference("Decimal", "models"))
+    writer.line("second: ", TypeReference("Decimal", "decimal"))
+    assert "from decimal import Decimal as _decimal_Decimal" in writer.render()
+
+
+def test_nullable_none_is_still_literal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    writer = PythonWriter("written_models")
+    writer.line("value: ", TypeReference("None", nullable=True))
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    assert get_type_hints(module) == {"value": type(None)}
+
+
+def test_render_replans_without_changing_previous_lines() -> None:
+    writer = PythonWriter("models")
+    writer.line("first: ", TypeReference("Thing", "alpha"))
+    assert "first: Thing" in writer.render()
+    writer.line("second: ", TypeReference("Thing", "beta"))
+    assert "first: _alpha_Thing" in writer.render()
+    assert "second: _beta_Thing" in writer.render()
+    assert writer.render() == writer.render()
+
+
+def test_deep_collection_rendering() -> None:
+    ref = TypeReference("str", "builtins")
+    for _ in range(1200):
+        ref = TypeReference("list", "builtins", (ref,))
+    writer = PythonWriter("models")
+    writer.line("value: ", ref)
+    assert writer.render().endswith(
+        "value: " + "list[" * 1200 + "str" + "]" * 1200 + "\n"
+    )
+
+
+def test_future_import_name_is_reserved() -> None:
+    writer = PythonWriter("models")
+    writer.line("value: ", TypeReference("annotations", "external"))
+    assert (
+        "from external import annotations as _external_annotations" in writer.render()
+    )
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        TypeReference("Nope"),
+        TypeReference("None", arguments=(TypeReference("str", "builtins"),)),
+    ],
+)
+def test_only_none_literal_can_omit_module(reference: TypeReference) -> None:
+    writer = PythonWriter("models")
+    writer.line("value: ", reference)
+    with pytest.raises(CodegenError, match="module"):
+        writer.render()
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        TypeReference("class", "external"),
+        TypeReference("\uff43\uff4c\uff41\uff53\uff53", "external"),
+        TypeReference("Not Valid", "external"),
+        TypeReference("Thing", ""),
+        TypeReference("Thing", "bad-module"),
+        TypeReference("Thing", "bad module"),
+        TypeReference("Thing", "package.class"),
+        TypeReference("Thing", ".bad-module"),
+    ],
+)
+def test_invalid_type_reference_names_and_modules_fail(
+    reference: TypeReference,
+) -> None:
+    writer = PythonWriter("models")
+    writer.line("value: ", reference)
+    with pytest.raises(CodegenError, match=r"^Invalid Python"):
+        writer.render()
+
+
+@pytest.mark.parametrize("module", ["", ".models", "bad-module", "package.class"])
+def test_invalid_destination_modules_fail(module: str) -> None:
+    with pytest.raises(CodegenError, match=r"^Invalid Python module"):
+        PythonWriter(module)
+
+
+@pytest.mark.parametrize("module", [".", "..", ".models", "..types"])
+def test_relative_reference_modules_are_valid(module: str) -> None:
+    writer = PythonWriter("package.models")
+    writer.line("value: ", TypeReference("Thing", module))
+    compile(writer.render(), "<generated>", "exec")
+
+
+def test_generation_without_runtime_packages() -> None:
+    import subprocess
+
+    source_path = Path(__file__).resolve().parents[2] / "src"
+    program = (
+        "import sys, importlib.util\n"
+        f"sys.path.insert(0, {str(source_path)!r})\n"
+        "assert importlib.util.find_spec('smithy_core') is None\n"
+        "from smithy_python.writer import PythonWriter\n"
+        "from smithy_python.symbols import TypeReference\n"
+        "writer = PythonWriter('models')\n"
+        "writer.line('document: ', TypeReference('Document', 'smithy_core.documents'))\n"
+        "assert 'from smithy_core.documents import Document' in writer.render()\n"
+        "assert 'smithy_core' not in sys.modules\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-I", "-S", "-c", program],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_empty_writer_and_trusted_text() -> None:
+    writer = PythonWriter("models")
+    assert writer.render() == "from __future__ import annotations\n"
+    writer.line("value = '$T {not_a_template}'")
+    assert writer.render().endswith("value = '$T {not_a_template}'\n")
+
+
+def test_import_identity_and_order() -> None:
+    refs = (
+        TypeReference("Decimal", "decimal"),
+        TypeReference("datetime", "datetime"),
+        TypeReference("Decimal", "decimal", nullable=True),
+        TypeReference("list", "builtins", (TypeReference("Decimal", "decimal"),)),
+    )
+    prefixes: list[str] = []
+    for order in (refs, tuple(reversed(refs))):
+        writer = PythonWriter("models")
+        for ref in order:
+            writer.line("value: ", ref)
+        prefix = writer.render().split("value:")[0]
+        assert prefix.count("from decimal import Decimal") == 1
+        assert prefix.index("from datetime") < prefix.index("from decimal")
+        prefixes.append(prefix)
+    assert prefixes[0] == prefixes[1]
