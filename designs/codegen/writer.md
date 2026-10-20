@@ -2,8 +2,9 @@
 
 `PythonWriter` turns lines of Python text and `TypeReference` values into the
 source of one module. Pass references from `SymbolProvider.type_reference()`
-or construct them directly. The writer chooses annotation spellings and imports.
-The caller decides which declarations, fields and defaults to write.
+or construct them directly. The writer chooses annotation spellings and
+imports, and can record package dependencies from references. The caller
+decides which declarations, fields, and defaults to write.
 
 ```python
 from smithy_python.symbols import TypeReference
@@ -33,8 +34,9 @@ class Node:
 
 ## Writing a module
 
-`PythonWriter(module)` takes the destination module name. `render()` finds the
-names bound by the written lines and follows Python's scoping rules.
+`PythonWriter(module, dependencies=None)` takes the destination module name and
+an optional shared `DependencySet`. `render()` finds the names bound by the
+written lines and follows Python's scoping rules.
 Module-level names, such as classes, functions, assignments, imports and
 `global` assignments, apply to every reference. A local name, such as a field,
 parameter or local variable, applies only to references that can see it. A
@@ -114,6 +116,22 @@ Imports are deduplicated by module and name, then sorted by module, name and
 alias. Referenced packages don't have to be installed in the generator's environment.
 For example, rendering a reference to `smithy_core.documents.Document` does not
 import `smithy_core`.
+
+## Dependencies
+
+When a dependency set is provided, `line()` records dependencies from each
+`TypeReference` and its nested arguments. Recording happens when the reference
+is written so package metadata can be generated before source rendering.
+Repeated dependency records are deduplicated by `DependencySet`.
+
+Imports and package requirements remain separate. A module name controls the
+generated import, while a dependency record controls the generated package
+metadata. Annotation-only references still contribute dependencies because
+type checking a generated package must resolve them.
+
+Writers created by `FileManifest.python_module()` share the generation
+context's dependency set. A standalone writer without a dependency set retains
+its current rendering behavior.
 
 ## Names that collide
 

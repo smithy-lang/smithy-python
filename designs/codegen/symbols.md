@@ -123,19 +123,30 @@ identically named types from different modules also remain distinct.
 
 ## Type references
 
-`TypeReference(name, module=None, arguments=(), nullable=False)` is an immutable,
-hashable description of a type, not a Python annotation string. `name` and
-`module` identify the type; `arguments` holds its element, key or value types.
-`nullable=True` means the value can also be `None`. `module` is the public module
-users import the type from. If the writer later places a definition in a different
-physical module, that placement is the writer's concern and does not change the
-reference. Resolved references are cached for the provider's lifetime.
+`TypeReference(name, module=None, arguments=(), nullable=False,
+dependencies=())` is an immutable, hashable description of a type, not a Python
+annotation string. `name` and `module` identify the type. `arguments` holds its
+element, key, or value types. `nullable=True` means the value can also be
+`None`. `dependencies` contains the package requirements needed to use the
+reference.
+
+`module` is the public module users import the type from. Dependency records
+supply package names and versions. Module names only control imports. If the
+writer later places a definition in a different physical module, that placement
+is the writer's concern and does not change the reference. Resolved references
+are cached for the provider's lifetime.
 
 For example, `list[str]` is represented as:
 
 ```python
 TypeReference("list", "builtins", (TypeReference("str", "builtins"),))
 ```
+
+References to standard-library and generated modules have no dependencies. A
+runtime reference such as `smithy_core.documents.Document` carries the
+compatible `smithy-core` dependency from the generator's runtime package
+catalog. Collection references retain the dependencies of their nested
+arguments.
 
 | Smithy type                                     | Python value type                |
 | ----------------------------------------------- | -------------------------------- |
