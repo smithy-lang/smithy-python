@@ -80,7 +80,7 @@ Parsing occurs once while resolving `TypesSettings`. Selection intersects the
 result with eligible declaration candidates and does not reorder either set.
 
 Selector conformance fixtures run the same expressions and models through the
-Java and native implementations. The selected shape ID sets must match.
+Java and Python implementations. The selected shape ID sets must match.
 
 Selection has no output side effects. It returns model objects for generation
 and does not construct symbols, schemas, or writers.

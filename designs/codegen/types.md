@@ -2,44 +2,30 @@
 
 ## Abstract
 
-The native generator can load a Smithy model, select shapes, resolve Python
-symbols, and write one Python module in memory. It does not yet coordinate
-generators or write an artifact.
-
-This design adds artifact settings, a generation context, output management,
-and the first complete `types` generation path. The generated package preserves
-the public behavior of the Java-generated package it replaces. It reuses the
-compact schema representation introduced in
-[PR #841](https://github.com/smithy-lang/smithy-python/pull/841) and the lazy
-client model representation introduced in
-[PR #851](https://github.com/smithy-lang/smithy-python/pull/851). The
-implementation also carries forward the code-size and runtime performance work
-already present in smithy-java and smithy-php.
+This document describes how the Python generator produces standalone types
+packages. It defines package settings, shape selection, generation context,
+schema and model emission, dependency tracking, and output publication.
+Generated packages expose lazy models backed by compact, lazily hydrated
+schemas.
 
 ## Goals
 
-* Generate an importable standalone types package through
-  `smithy-python generate types`.
-* Reuse the loaded model, selection, symbol provider, and writers across the
-  complete generation.
-* Preserve the current generated package's public modules, declarations,
-  constructor behavior, schema semantics, and serde behavior.
-* Preserve the compact encoding and lazy hydration from PR #841.
-* Apply the lazy model construction from PR #851 to standalone types.
-* Bound repeated model analysis, symbol resolution, and writer work.
-* Produce deterministic output on every supported generator host.
-* Validate every generated file before modifying the output directory.
-* Keep the generation context and output APIs reusable by later artifacts.
+* The `smithy-python generate types` command produces an importable standalone
+  types package.
+* Generation reuses the loaded model, selection, symbol provider, and writers.
+* Generated packages expose compatible public modules, declarations,
+  constructors, schemas, and serde behavior.
+* Schemas use compact encoding and hydrate on first use.
+* Model classes are constructed and cached on first access.
+* Model analysis, symbol resolution, and writer work are computed once and
+  reused.
+* Output is deterministic on every supported generator host.
+* Every generated file is validated before the output directory is modified.
+* The generation context and output APIs are reusable by other artifacts.
 
-The first implementation does not generate a client, resolve a protocol, or add
-protocol integrations. It does not change `smithy-core` schema or model runtime
-APIs.
+Generated packages use `smithy-core` schema and model runtime APIs.
 
 ## Compatibility
-
-The Java generator remains the compatibility reference until the native
-generator replaces it for an artifact. Source formatting does not need to
-match. Generated package behavior does.
 
 | Area | Required behavior |
 | --- | --- |
@@ -51,35 +37,23 @@ match. Generated package behavior does.
 | Typing | Generated packages must pass strict Pyright checks and expose the same public types. |
 | Runtime support | Generated packages depend on handwritten runtime packages, not `smithy-python`. |
 
-PR #851 changed Java-generated client packages to build model classes on demand
-through `ModelRegistry` and declare the static surface in `models.pyi`.
-Java-generated standalone types packages still emit model declarations into
-Python source.
-
-The native generator applies the PR #851 representation to standalone types.
-An explicit import such as `from example.models import Widget` returns a class
-with the same public name, module, fields, constructor, and serde behavior. The
-class is cached after first access, so later imports and attribute reads return
-the same object.
+Model classes are built on demand through `ModelRegistry`, and their static
+surface is declared in `models.pyi`. An explicit import such as
+`from example.models import Widget` returns a class with the expected public
+name, module, fields, constructor, and serde behavior. The class is cached after
+first access, so later imports and attribute reads return the same object.
 
 The lazy facade preserves explicit imports, star imports, `dir(models)`, class
 identity, dataclass inspection, and pickling by module and qualified name.
 Concurrent first access returns one class object. Packages generated without a
 service still provide `ServiceError` and use it as the base of modeled errors.
 
-The generated stub is the static typing contract. Runtime classes populate
-field names in `__annotations__` for dataclass behavior, but annotation object
-identity and `typing.get_type_hints()` output are not compatibility contracts.
-Lazy construction also changes when declarations enter `models.__dict__` and
-when class construction errors occur. Direct inspection of `models.__dict__`
-is not part of the generated API compatibility contract.
+`models.pyi` defines the complete static typing surface. Runtime classes expose
+generated field names in `__annotations__` and enter `models.__dict__` when
+first accessed. Class-construction errors surface from that first access.
 
-Files under `_private` are not public API. The native generator may change their
-layout if generated public modules and runtime behavior stay compatible.
-
-Existing generated packages continue to work with their declared runtime
-dependencies. Enabling the native generator changes build-time tooling and does
-not require users to regenerate other packages.
+Files under `_private` are not public API. The generator may change their layout
+if generated public modules and runtime behavior stay compatible.
 
 ## Pipeline
 
@@ -108,10 +82,7 @@ staged validation and output commit
 ```
 
 The CLI selects the artifact generator. Artifact generators share the context
-and output APIs but control their own generation phases. The first version does
-not copy smithy-java's directed codegen lifecycle. A fixed lifecycle would add
-extension points before the native generator has a second artifact that needs
-them.
+and output APIs but control their own generation phases.
 
 ## Settings
 
@@ -120,9 +91,9 @@ them.
 ```python
 @dataclass(frozen=True, slots=True)
 class ArtifactSettings:
-    module: str
-    module_version: str
-    module_description: str | None
+    package: str
+    package_version: str
+    package_description: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,22 +106,21 @@ The resolved service remains on `Selection`. It is not duplicated in settings.
 The CLI subcommand identifies the artifact, so settings do not duplicate that
 value. Artifact-specific settings extend the shared frozen dataclass.
 
-The `types` command initially adds:
+The `types` command accepts:
 
-* `--module`
-* `--module-version`
-* `--module-description`
+* `--package`
+* `--package-version`
+* `--package-description`
 * `--selector`
 * `--generate-inputs-and-outputs`
 
-`module` and `module-version` are required. The module follows the validation
-rules in `SymbolProvider`. The description defaults to
-`"<module> types package"`.
+`package` and `package-version` are required. The package identifies the
+generated import package and follows the validation rules in `SymbolProvider`.
+The description defaults to `"<package> types package"`.
 
 The selector setting is parsed once into an immutable selector syntax tree.
-The native parser and evaluator implement the Smithy selector language and
-produce the same selected shape IDs as Java's `Selector.parse()` and
-`Selector.select()`.
+The parser and evaluator implement the Smithy selector language and produce the
+same selected shape IDs as Java's `Selector.parse()` and `Selector.select()`.
 
 Types generation never infers a service. The options apply in this order:
 
@@ -192,7 +162,7 @@ The context is constructed once after model loading and selection. Generators
 receive the context directly. They do not reload the model, construct their own
 symbol providers, or inspect files written by another generator.
 
-`TypesGenerator` receives `GenerationContext[TypesSettings]`. Later artifacts
+`TypesGenerator` receives `GenerationContext[TypesSettings]`. Other artifacts
 can define their own settings subclasses without casts or a shared union of
 artifact settings.
 
@@ -302,27 +272,25 @@ artifact. Validation compiles Python modules and checks text-file invariants. A
 syntax, import-planning, or staging error removes the staging directory and
 leaves the existing output untouched.
 
-Publication uses `os.replace` for each file. Individual files are atomic, but
-the complete directory update is not. The configured output directory must not
-be modified by another generator during commit.
+Publication uses `os.replace` to atomically update each file. Commit requires
+exclusive access to the configured output directory.
 
 The output directory contains a generated artifact manifest with normalized
 paths and content hashes. On a later run, the generator may delete a stale file
 only when the previous manifest owns it and its content still matches the
 recorded hash. Modified generated files and files absent from the manifest are
-retained. This follows the output ownership used by smithy-php.
+retained.
 
-The first native run over an output directory without a manifest does not
-delete files. Builds that switch from Java generation should use a clean output
-directory until native ownership has been established.
+When no previous artifact manifest exists, the generator does not delete
+existing files.
 
 The Smithy `run` plugin output restriction still applies. Symlinks or resolved
 ancestors that escape the output root are rejected.
 
 ## Schema Emission
 
-The native generator emits the compact schema format introduced in PR #841 in
-`<package>._private.schemas`.
+The generator emits the compact schema format consumed by
+`smithy_core._schema_compact` in `<package>._private.schemas`.
 
 Each generated schema is module-level immutable data:
 
@@ -360,11 +328,11 @@ shape type integers, prelude sentinels, or trait bit positions increments the
 version and requires a coordinated `smithy-core` dependency update.
 
 Trait planning applies the Java generator's `SchemaTraitFilterIndex` rules to
-each emitted data shape. The native and Java generators must emit the same
-trait IDs and values for the same model. Input and output traits are synthesized
-under the same conditions. A schema uses the integer trait bit vector only when
-every present trait is represented by a valueless bit. Otherwise it emits the
-complete trait mapping.
+each emitted data shape. Generated schemas contain the same trait IDs and values
+for the same model. Input and output traits are synthesized under the same
+conditions. A schema uses the integer trait bit vector only when every present
+trait is represented by a valueless bit. Otherwise it emits the complete trait
+mapping.
 
 The emitter preserves these properties:
 
@@ -385,7 +353,7 @@ the Java generator even when its private constant names differ.
 
 ## Model Emission
 
-Standalone types adopt the lazy client model representation from PR #851:
+Standalone types use `ModelRegistry` to construct model classes on demand:
 
 * `models.py` contains a `ModelRegistry` and module `__getattr__`.
 * `models.pyi` declares the complete typed surface.
@@ -430,7 +398,7 @@ that require an additional name-to-index lookup.
 
 ## Package Files
 
-The first complete `types` artifact contains:
+The `types` artifact contains:
 
 * `pyproject.toml`
 * `README.md`
@@ -441,18 +409,12 @@ The first complete `types` artifact contains:
 * `src/<package>/_private/schemas.py`
 * `src/<package>/py.typed`
 
-The native file inventory may differ because adopting PR #851 adds `models.pyi`
-and moves model construction into the runtime. Parity fixtures require the
-current public modules and package metadata. Private helpers and typing-only
-files can differ.
-
 Package setup renders the dependency set collected during generation.
 
 ## Large Models
 
-The first implementation emits the same module boundaries as the current
-artifact. The output API and generation plan must allow later partitioning
-without changing public imports.
+Schema and stub partitioning must not change public imports. The output API and
+generation plan allow private content to move behind stable facade modules.
 
 smithy-java partitions schema classes after a model reaches 500 schema fields
 and then targets about 50 KB of generated schema content per class. smithy-php
@@ -464,22 +426,21 @@ uses a centralized lazy schema registry. Python can combine those approaches:
 * Route schema constant access through generated indexes.
 * Partition large type stubs behind the public `models.pyi` facade.
 
-Python thresholds must be based on Python measurements. Relevant inputs include
-writer render time, peak generator memory, generated import time, and type
-checker time. The Java bytecode limit does not apply to Python.
+Python partitioning thresholds must be based on Python measurements. Relevant inputs include writer render time, peak generator memory, generated import time, and type
+checker time.
 
 Partitioning bounds the syntax tree analyzed by `PythonWriter` and prevents a
-single EC2-sized source file from dominating codegen memory. It is deferred
-until the unpartitioned native output passes parity tests. The private facade
-keeps the change compatible with generated imports.
+single EC2-sized source file from dominating codegen memory. Measurements
+establish the partitioning thresholds. Facade modules preserve generated
+imports.
 
 ## Performance
 
-| Existing optimization | Native implementation |
+| Optimization | Generator behavior |
 | --- | --- |
-| PR #841 compact schema tuples | Emit the same versioned tuple encoding. |
-| PR #841 lazy schema hydration | Hydrate and cache a connected schema graph on first use. |
-| PR #851 lazy client models | Use the same indexed registry for standalone types. |
+| Compact schema tuples | Emit the versioned tuple encoding consumed by `smithy-core`. |
+| Lazy schema hydration | Hydrate and cache a connected schema graph on first use. |
+| Lazy model construction | Use an indexed registry to construct standalone types. |
 | Cached symbol resolution | Reuse one symbol provider and cached type references. |
 | Dense serde dispatch | Preserve member order and dense member indexes. |
 
@@ -490,60 +451,25 @@ source memory to one file.
 Measurements record generator time and peak memory, generated bytes and file
 counts, package import cost, first schema and model access, warm serde
 throughput, and strict Pyright time. The test set includes a small fixture, the
-standalone types integration-test model, and a large AWS model such as EC2. A
-regression against Java-generated Python output requires measurement and an
-explicit migration decision.
+standalone types integration-test model, and a large AWS model such as EC2.
 
 ## Validation
 
-Each implementation PR tests its new contract. Before migration, the Java and
-native generators run against the same fixtures. Differential checks cover the
-compatibility table, selected shape IDs, compact encoding version and mappings,
-dependency sets, serde results, deterministic output, concurrent model
-construction, star imports, pickle round trips, and generation without a
-service. Generated packages must compile on every supported Python version and
-pass Ruff and strict Pyright. Formatting and private helper inventories are not
-compared.
-
-## Implementation Sequence
-
-### Generation Core
-
-Add settings, dependency records, `GenerationContext`, `GenerationPlan`,
-staged `FileManifest`, and artifact dispatch.
-
-### Compact Schemas
-
-Port the PR #841 representation through the shared schema planner, encoding
-contract, trait planner, and emitter.
-
-### Lazy Models
-
-Apply the PR #851 representation through the shared `ModelRegistry` facade,
-generated model index, `__dir__`, and `models.pyi` emitter. Add `__all__`,
-synchronized construction, pickle support, and service-independent error
-generation. Generate package initialization and typing metadata. Enable
-`smithy-python generate types` after this phase produces a complete package.
-
-### Packaging and Parity
-
-Generate project metadata, dependency declarations, and documentation. Run the
-complete Java/native parity suite and large-model measurements.
-
-## Deferred Work
-
-Add private schema and stub partitioning after measurements establish useful
-thresholds. Public module paths remain unchanged.
+Tests cover the compatibility table, selected shape IDs, compact encoding
+version and mappings, dependency sets, serde results, deterministic output,
+concurrent model construction, star imports, pickle round trips, and generation
+without a service. Generated packages must compile on every supported Python
+version and pass Ruff and strict Pyright.
 
 ## Alternatives
 
 ### Port the Java Directed Codegen Framework
 
 The Java framework supplies a lifecycle for shape and integration hooks. Porting
-it first would make the initial native artifact depend on extension points that
-have no native consumer. The explicit artifact generator keeps the first
-implementation smaller. Shared phases can become hooks after a second artifact
-demonstrates the required lifecycle.
+it would make the types artifact depend on extension points that have no Python
+consumer. The explicit artifact generator keeps the design smaller. Shared
+phases can become hooks after another artifact demonstrates the required
+lifecycle.
 
 ### Write Files During Generation
 
@@ -561,19 +487,19 @@ keeps that boundary explicit.
 ### Build Runtime Schemas During Import
 
 Emitting constructed `Schema` objects would reduce hydration code, but shifts
-the cost to every package import. Compact static data preserves the current
-cold-start behavior and shares the runtime cache.
+the cost to every package import. Compact static data preserves cold-start
+behavior and shares the runtime cache.
 
 ### Preserve Eager Standalone Models
 
-Matching the current standalone source representation would keep every class in
-`models.__dict__` immediately after import. It would also require a second model
-emitter and would construct every class during package import. The native
-generator uses one lazy representation and preserves supported behavior through
-the public facade and typed stub.
+Eager standalone declarations would place every class in `models.__dict__`
+immediately after import. They would also require a second model emitter and
+construct every class during package import. The generator uses one lazy
+representation and exposes supported behavior through the public facade and
+typed stub.
 
 ### Require Byte-Identical Java Output
 
-Byte-identical output would couple the native implementation to Java writer
+Byte-identical output would couple the Python implementation to Java writer
 formatting and internal helper names. Behavioral parity protects users while
-allowing native source organization and import planning to evolve.
+allowing Python source organization and import planning to evolve.

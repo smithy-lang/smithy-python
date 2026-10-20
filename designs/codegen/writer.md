@@ -130,8 +130,8 @@ metadata. Annotation-only references still contribute dependencies because
 type checking a generated package must resolve them.
 
 Writers created by `FileManifest.python_module()` share the generation
-context's dependency set. A standalone writer without a dependency set retains
-its current rendering behavior.
+context's dependency set. A standalone writer without a dependency set renders
+without recording dependencies.
 
 ## Names that collide
 
@@ -158,8 +158,8 @@ Equivalent references share one import, using the lexicographically smallest
 supplied module/name pair so the choice does not depend on reference order.
 
 A same-module reference whose name is a local name visible where it is
-referenced raises `CodegenError`. This first version does not add self-imports
-or aliases for local declarations.
+referenced raises `CodegenError`. The writer does not add self-imports or aliases
+for local declarations.
 
 The writer returns source in memory. File output, documentation conversion and
 actual declaration generation remain separate follow-ups.
