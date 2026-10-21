@@ -14,14 +14,9 @@ from inspect import signature
 from unittest.mock import patch
 
 import pytest
-from smithy_aws_core.config.aws_config import AsyncAwsConfig, AwsConfigOverrides
-from smithy_aws_core.config.context import SharedConfigContext
-from smithy_aws_core.config.exceptions import (
-    ConfigError,
-    ConfigValidationError,
-    ProfileNotFoundError,
-)
-from smithy_aws_core.config.resolvers import (
+from smithy_aws_core.aio.config.aws_config import AsyncAwsConfig, AwsConfigOverrides
+from smithy_aws_core.aio.config.context import SharedConfigContext
+from smithy_aws_core.aio.config.resolvers import (
     EndpointUriResolver,
     resolve_endpoint_uri,
     resolve_max_attempts,
@@ -29,10 +24,15 @@ from smithy_aws_core.config.resolvers import (
     resolve_retry_mode,
     resolve_sdk_ua_app_id,
 )
+from smithy_aws_core.aio.identity.environment import EnvironmentCredentialsResolver
+from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
+from smithy_aws_core.config.exceptions import (
+    ConfigError,
+    ConfigValidationError,
+    ProfileNotFoundError,
+)
 from smithy_aws_core.config.types import UNSET, ConfigSource
-from smithy_aws_core.identity.environment import EnvironmentCredentialsResolver
-from smithy_aws_core.identity.static import StaticCredentialsResolver
-from smithy_core.aio.retries import StandardRetryStrategy
+from smithy_core.aio.retries import AsyncStandardRetryStrategy
 from smithy_http.interfaces import HTTPRequestConfiguration
 from smithy_http.testing import MockHTTPClient
 
@@ -499,7 +499,7 @@ class TestConfigDeepCopy:
         # clients, locks, and shared retry quotas that must not be duplicated
         transport = MockHTTPClient()
         resolver = EnvironmentCredentialsResolver()
-        retry_strategy = StandardRetryStrategy()
+        retry_strategy = AsyncStandardRetryStrategy()
         config.transport = transport
         config.aws_credentials_identity_resolver = resolver
         config.retry_strategy = retry_strategy
@@ -980,7 +980,7 @@ class TestIncodeStaticCredentialResolution:
 
     @pytest.mark.asyncio
     async def test_explicit_resolver_not_overwritten(self):
-        custom_resolver = StaticCredentialsResolver()
+        custom_resolver = AsyncStaticCredentialsResolver()
         with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
             config = await AsyncAwsConfig.resolve(
                 fs=NullFileSystem(),

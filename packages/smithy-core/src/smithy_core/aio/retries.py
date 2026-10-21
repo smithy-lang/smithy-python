@@ -19,38 +19,40 @@ from ..retries import (
     StandardRetryQuota,
     StandardRetryToken,
 )
-from .interfaces.retries import RetryStrategy
+from .interfaces.retries import AsyncRetryStrategy
 
 __all__ = [
-    "AdaptiveRetryStrategy",
-    "ClientRateLimiter",
-    "RequestRateTracker",
-    "RetryStrategyResolver",
-    "SimpleRetryStrategy",
-    "StandardRetryStrategy",
-    "TokenBucket",
+    "AsyncAdaptiveRetryStrategy",
+    "AsyncClientRateLimiter",
+    "AsyncRequestRateTracker",
+    "AsyncRetryStrategyResolver",
+    "AsyncSimpleRetryStrategy",
+    "AsyncStandardRetryStrategy",
+    "AsyncTokenBucket",
 ]
 
 
-class RetryStrategyResolver:
+class AsyncRetryStrategyResolver:
     """Retry strategy resolver that caches retry strategies based on configuration options.
 
     This resolver caches retry strategy instances based on their configuration to reuse existing
-    instances of RetryStrategy with the same settings. Each resolver has its own cache, so a
+    instances of AsyncRetryStrategy with the same settings. Each resolver has its own cache, so a
     client keeps its strategies, and any state they hold such as an adaptive rate limiter,
     for as long as the client exists, no matter how many other clients are created.
     """
 
     def __init__(self) -> None:
-        self._strategies: dict[tuple[RetryStrategyType, int | None], RetryStrategy] = {}
+        self._strategies: dict[
+            tuple[RetryStrategyType, int | None], AsyncRetryStrategy
+        ] = {}
 
     async def resolve_retry_strategy(
         self,
         *,
-        retry_strategy: RetryStrategy | RetryStrategyOptions | None,
+        retry_strategy: AsyncRetryStrategy | RetryStrategyOptions | None,
         retry_mode: RetryStrategyType | None = None,
         max_attempts: int | None = None,
-    ) -> RetryStrategy:
+    ) -> AsyncRetryStrategy:
         """Resolve a retry strategy from the provided options, using cache when possible.
 
         :param retry_strategy: An explicitly configured retry strategy or options for
@@ -60,7 +62,7 @@ class RetryStrategyResolver:
         :param max_attempts: Maximum attempts to fall back on when ``retry_strategy`` is
             None, typically resolved from ``AWS_MAX_ATTEMPTS`` or a config profile.
         """
-        if isinstance(retry_strategy, RetryStrategy):
+        if isinstance(retry_strategy, AsyncRetryStrategy):
             return retry_strategy
         elif retry_strategy is None:
             # Fall back to the separately-resolved config values.
@@ -70,7 +72,7 @@ class RetryStrategyResolver:
             )
         elif not isinstance(retry_strategy, RetryStrategyOptions):  # type: ignore[reportUnnecessaryIsInstance]
             raise TypeError(
-                f"retry_strategy must be RetryStrategy, RetryStrategyOptions, or None, "
+                f"retry_strategy must be AsyncRetryStrategy, RetryStrategyOptions, or None, "
                 f"got {type(retry_strategy).__name__}"
             )
         return self._create_retry_strategy(
@@ -79,7 +81,7 @@ class RetryStrategyResolver:
 
     def _create_retry_strategy(
         self, retry_mode: RetryStrategyType, max_attempts: int | None
-    ) -> RetryStrategy:
+    ) -> AsyncRetryStrategy:
         key = (retry_mode, max_attempts)
         if key not in self._strategies:
             self._strategies[key] = self._new_retry_strategy(retry_mode, max_attempts)
@@ -87,23 +89,23 @@ class RetryStrategyResolver:
 
     def _new_retry_strategy(
         self, retry_mode: RetryStrategyType, max_attempts: int | None
-    ) -> RetryStrategy:
+    ) -> AsyncRetryStrategy:
         kwargs: dict[str, Any] = {"max_attempts": max_attempts}
         filtered_kwargs: dict[str, Any] = {
             k: v for k, v in kwargs.items() if v is not None
         }
         match retry_mode:
             case "simple":
-                return SimpleRetryStrategy(**filtered_kwargs)
+                return AsyncSimpleRetryStrategy(**filtered_kwargs)
             case "standard":
-                return StandardRetryStrategy(**filtered_kwargs)
+                return AsyncStandardRetryStrategy(**filtered_kwargs)
             case "adaptive":
-                return AdaptiveRetryStrategy(**filtered_kwargs)
+                return AsyncAdaptiveRetryStrategy(**filtered_kwargs)
             case _:
                 raise ValueError(f"Unknown retry mode: {retry_mode}")
 
 
-class SimpleRetryStrategy:
+class AsyncSimpleRetryStrategy:
     def __init__(
         self,
         *,
@@ -157,11 +159,11 @@ class SimpleRetryStrategy:
     async def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""
 
-    def __deepcopy__(self, memo: Any) -> "SimpleRetryStrategy":
+    def __deepcopy__(self, memo: Any) -> "AsyncSimpleRetryStrategy":
         return self
 
 
-class StandardRetryStrategy:
+class AsyncStandardRetryStrategy:
     _RETRY_AFTER_MAX_ADDITIONAL: float = 5
     """Upper bound (seconds) for additional delay beyond the computed backoff."""
 
@@ -247,7 +249,7 @@ class StandardRetryStrategy:
         """
         if not isinstance(token_to_renew, StandardRetryToken):
             raise TypeError(
-                f"StandardRetryStrategy requires StandardRetryToken, got {type(token_to_renew).__name__}"
+                f"AsyncStandardRetryStrategy requires StandardRetryToken, got {type(token_to_renew).__name__}"
             )
 
         if isinstance(error, retries_interface.ErrorRetryInfo) and error.is_retry_safe:
@@ -295,18 +297,18 @@ class StandardRetryStrategy:
         """
         if not isinstance(token, StandardRetryToken):
             raise TypeError(
-                f"StandardRetryStrategy requires StandardRetryToken, got {type(token).__name__}"
+                f"AsyncStandardRetryStrategy requires StandardRetryToken, got {type(token).__name__}"
             )
         self._retry_quota.release(release_amount=token.quota_acquired)
 
-    def __deepcopy__(self, memo: Any) -> "StandardRetryStrategy":
+    def __deepcopy__(self, memo: Any) -> "AsyncStandardRetryStrategy":
         return self
 
 
-class TokenBucket:
+class AsyncTokenBucket:
     """Token bucket for rate limiting with configurable fill rate.
 
-    TokenBucket provides a collection of arbitrary tokens while managing issuance
+    AsyncTokenBucket provides a collection of arbitrary tokens while managing issuance
     and refilling over time. This is controlled by a fill rate that can be variably
     adjusted. When tokens aren't available, the bucket will enforce a delay before
     attempting to reacquire tokens until one is available or the defined timeout is
@@ -330,7 +332,7 @@ class TokenBucket:
         fill_rate: float = MIN_FILL_RATE,
         timeout: float = DEFAULT_TIMEOUT,
     ):
-        """Initialize a new TokenBucket.
+        """Initialize a new AsyncTokenBucket.
 
         :param curr_capacity: Initial number of tokens in the bucket. The bucket can
             hold at least MIN_CAPACITY tokens, but starts empty by default.
@@ -467,10 +469,10 @@ class TokenBucket:
         return self._fill_rate
 
 
-class RequestRateTracker:
-    """RequestRateTracker tracks the client's request sending rate.
+class AsyncRequestRateTracker:
+    """AsyncRequestRateTracker tracks the client's request sending rate.
 
-    RequestRateTracker measures the actual client request sending rate using
+    AsyncRequestRateTracker measures the actual client request sending rate using
     time-bucketed sampling with exponential smoothing. It tracks requests in
     half-second intervals by default and calculates a smoothed average rate
     to provide accurate measurements for adaptive rate limiting algorithms.
@@ -484,7 +486,7 @@ class RequestRateTracker:
         smoothing: float = _DEFAULT_SMOOTHING,
         time_bucket_range: float = _TIME_BUCKET_RANGE,
     ):
-        """Initialize a new RequestRateTracker.
+        """Initialize a new AsyncRequestRateTracker.
 
         :param smoothing: Exponential smoothing factor. This constant
         represents how much weight is given to recent measurements.
@@ -537,10 +539,10 @@ class RequestRateTracker:
         return self._measured_rate
 
 
-class ClientRateLimiter:
-    """ClientRateLimiter limits the rate of requests.
+class AsyncClientRateLimiter:
+    """AsyncClientRateLimiter limits the rate of requests.
 
-    ClientRateLimiter implements adaptive rate limiting using token bucket and CUBIC
+    AsyncClientRateLimiter implements adaptive rate limiting using token bucket and CUBIC
     algorithm. It controls request sending rates by acquiring tokens before requests
     and dynamically adjusting rates based on service responses - reducing rates when
     throttled and increasing rates during successful periods to optimize throughput
@@ -551,12 +553,12 @@ class ClientRateLimiter:
 
     def __init__(
         self,
-        token_bucket: TokenBucket,
+        token_bucket: AsyncTokenBucket,
         cubic_calculator: CubicCalculator,
-        rate_tracker: RequestRateTracker,
+        rate_tracker: AsyncRequestRateTracker,
         rate_limiter_enabled: bool,
     ):
-        """Initialize a new ClientRateLimiter.
+        """Initialize a new AsyncClientRateLimiter.
 
         :param token_bucket: Token bucket for controlling request sending rates.
         :param cubic_calculator: CUBIC algorithm calculator for rate adjustments.
@@ -615,10 +617,10 @@ class ClientRateLimiter:
         return self._rate_limiter_enabled
 
 
-class AdaptiveRetryStrategy(StandardRetryStrategy):
+class AsyncAdaptiveRetryStrategy(AsyncStandardRetryStrategy):
     """Adaptive retry strategy with client-side rate limiting using CUBIC algorithm.
 
-    Builds on top of StandardRetryStrategy by adding token bucket rate limiting and
+    Builds on top of AsyncStandardRetryStrategy by adding token bucket rate limiting and
     CUBIC congestion control. Rate limiting is enabled after the first throttling
     response and dynamically adjusts sending rates based on the response type.
 
@@ -638,9 +640,9 @@ class AdaptiveRetryStrategy(StandardRetryStrategy):
         | None = None,
         max_attempts: int = 3,
         retry_quota: StandardRetryQuota | None = None,
-        rate_limiter: ClientRateLimiter | None = None,
+        rate_limiter: AsyncClientRateLimiter | None = None,
     ):
-        """Initialize AdaptiveRetryStrategy.
+        """Initialize AsyncAdaptiveRetryStrategy.
 
         :param backoff_strategy: The backoff strategy used to compute the retry delay
             for non-throttling errors. Defaults to a 50ms-base
@@ -667,12 +669,12 @@ class AdaptiveRetryStrategy(StandardRetryStrategy):
         )
 
         if rate_limiter is None:
-            token_bucket = TokenBucket()
+            token_bucket = AsyncTokenBucket()
             cubic_calculator = CubicCalculator(
                 starting_max_rate=self.STARTING_MAX_RATE, start_time=time.monotonic()
             )
-            rate_tracker = RequestRateTracker()
-            self._rate_limiter = ClientRateLimiter(
+            rate_tracker = AsyncRequestRateTracker()
+            self._rate_limiter = AsyncClientRateLimiter(
                 token_bucket=token_bucket,
                 cubic_calculator=cubic_calculator,
                 rate_tracker=rate_tracker,
@@ -682,7 +684,7 @@ class AdaptiveRetryStrategy(StandardRetryStrategy):
             self._rate_limiter = rate_limiter
 
     @property
-    def rate_limiter(self) -> ClientRateLimiter:
+    def rate_limiter(self) -> AsyncClientRateLimiter:
         """Get the rate limiter for integration with request pipeline."""
         return self._rate_limiter
 
@@ -696,5 +698,5 @@ class AdaptiveRetryStrategy(StandardRetryStrategy):
         if self._rate_limiter.rate_limit_enabled:
             await self._rate_limiter.before_sending_request()
 
-    def __deepcopy__(self, memo: Any) -> "AdaptiveRetryStrategy":
+    def __deepcopy__(self, memo: Any) -> "AsyncAdaptiveRetryStrategy":
         return self

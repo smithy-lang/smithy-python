@@ -70,7 +70,7 @@ public class AwsIdentityIntegration implements PythonIntegration {
                         )""",
                     Symbol.builder()
                             .name("IdentityChain")
-                            .namespace("smithy_aws_core.identity.chain", ".")
+                            .namespace("smithy_aws_core.aio.identity.chain", ".")
                             .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                             .build(),
                     Symbol.builder()
@@ -79,7 +79,7 @@ public class AwsIdentityIntegration implements PythonIntegration {
                             .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                             .build(),
                     Symbol.builder()
-                            .name("HTTPClient")
+                            .name("AsyncHTTPClient")
                             .namespace("smithy_http.aio.interfaces", ".")
                             .addDependency(SmithyPythonDependency.SMITHY_HTTP)
                             .build(),

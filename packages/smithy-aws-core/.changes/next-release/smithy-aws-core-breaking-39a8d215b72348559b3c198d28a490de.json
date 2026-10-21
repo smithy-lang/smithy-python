@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Move symbol names to prepare for dual sync/async signatures"
+}

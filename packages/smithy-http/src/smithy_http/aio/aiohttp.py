@@ -32,7 +32,7 @@ from ..interfaces import (
     HTTPRequestConfiguration,
 )
 from . import HTTPResponse
-from .interfaces import HTTPClient, HTTPRequest
+from .interfaces import AsyncHTTPClient, HTTPRequest
 from .interfaces import HTTPResponse as HTTPResponseInterface
 
 __all__ = ["AIOHTTPClient", "AIOHTTPClientConfig"]
@@ -65,8 +65,8 @@ class _AIOHTTPStreamingBody(AsyncIterable[bytes]):
         self._response.release()
 
 
-class AIOHTTPClient(HTTPClient):
-    """Implementation of :py:class:`.interfaces.HTTPClient` using aiohttp."""
+class AIOHTTPClient(AsyncHTTPClient):
+    """Implementation of :py:class:`.interfaces.AsyncHTTPClient` using aiohttp."""
 
     TIMEOUT_EXCEPTIONS = (TimeoutError,)
 

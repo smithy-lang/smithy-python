@@ -109,17 +109,17 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
 
             var asyncAwsConfigSymbol = Symbol.builder()
                     .name("AsyncAwsConfig")
-                    .namespace("smithy_aws_core.config.aws_config", ".")
+                    .namespace("smithy_aws_core.aio.config.aws_config", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
             var awsConfigOverridesSymbol = Symbol.builder()
                     .name("AwsConfigOverrides")
-                    .namespace("smithy_aws_core.config", ".")
+                    .namespace("smithy_aws_core.aio.config.aws_config", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
             var fileSystemSymbol = Symbol.builder()
                     .name("FileSystem")
-                    .namespace("smithy_aws_core.config", ".")
+                    .namespace("smithy_aws_core.aio.config", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
             var fieldSpecSymbol = Symbol.builder()
@@ -128,9 +128,9 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
             var protocolSymbol = Symbol.builder()
-                    .name("ClientProtocol[Any, Any]")
+                    .name("AsyncClientProtocol[Any, Any]")
                     .addReference(Symbol.builder()
-                            .name("ClientProtocol")
+                            .name("AsyncClientProtocol")
                             .namespace("smithy_core.aio.interfaces", ".")
                             .addDependency(SmithyPythonDependency.SMITHY_CORE)
                             .build())
@@ -138,22 +138,22 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // The override accepts a protocol class in addition to an instance; the
             // resolved dataclass field is always an instance, so it uses protocolSymbol.
             var protocolInputSymbol = Symbol.builder()
-                    .name("ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]]")
+                    .name("AsyncClientProtocol[Any, Any] | ProtocolConstructor[AsyncClientProtocol[Any, Any]]")
                     .addReference(Symbol.builder()
-                            .name("ClientProtocol")
+                            .name("AsyncClientProtocol")
                             .namespace("smithy_core.aio.interfaces", ".")
                             .addDependency(SmithyPythonDependency.SMITHY_CORE)
                             .build())
                     .addReference(Symbol.builder()
                             .name("ProtocolConstructor")
-                            .namespace("smithy_core.aio.interfaces", ".")
+                            .namespace("smithy_core.interfaces", ".")
                             .addDependency(SmithyPythonDependency.SMITHY_CORE)
                             .build())
                     .build();
             var authSchemeSymbol = Symbol.builder()
-                    .name("AuthScheme[Any, Any, Any, Any]")
+                    .name("AsyncAuthScheme[Any, Any, Any, Any]")
                     .addReference(Symbol.builder()
-                            .name("AuthScheme")
+                            .name("AsyncAuthScheme")
                             .namespace("smithy_core.aio.interfaces.auth", ".")
                             .addDependency(SmithyPythonDependency.SMITHY_CORE)
                             .build())
@@ -210,7 +210,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
 
             writer.write("protocol: $T | None = None", protocolSymbol);
             writer.writeDocs("Pass a protocol class reference from smithy_aws_core.aio.protocols "
-                    + "to select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom "
+                    + "to select the protocol, e.g. protocol=AsyncAwsJson10ClientProtocol. For custom "
                     + "protocols a protocol instance may also be passed.", context);
             writer.write("");
 
@@ -260,7 +260,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // endpoint_uri FieldSpec — overrides base class with service-aware resolver
             var endpointUriResolverSymbol = Symbol.builder()
                     .name("EndpointUriResolver")
-                    .namespace("smithy_aws_core.config.resolvers", ".")
+                    .namespace("smithy_aws_core.aio.config.resolvers", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
             var snakeCaseServiceId = serviceId.replace(" ", "_").toLowerCase();

@@ -6,8 +6,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from smithy_aws_core.config import DefaultFileSystem, load_config
-from smithy_aws_core.config.file_parser import parse_config_file
+from smithy_aws_core.aio.config import DefaultFileSystem, load_config
+from smithy_aws_core.aio.config.file_parser import parse_config_file
 
 
 class TestFileIssues:

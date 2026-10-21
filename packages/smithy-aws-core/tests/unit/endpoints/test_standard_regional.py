@@ -5,10 +5,10 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
-from smithy_aws_core.endpoints import REGIONAL_ENDPOINT_CONFIG
-from smithy_aws_core.endpoints.standard_regional import (
+from smithy_aws_core.aio.endpoints.standard_regional import (
     StandardRegionalEndpointsResolver,
 )
+from smithy_aws_core.endpoints import REGIONAL_ENDPOINT_CONFIG
 from smithy_core import URI
 from smithy_core.endpoints import EndpointResolverParams
 from smithy_core.exceptions import EndpointResolutionError

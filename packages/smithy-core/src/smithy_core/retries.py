@@ -213,7 +213,7 @@ class SimpleRetryToken:
 
 
 class StandardRetryQuota:
-    """Retry quota used by :py:class:`StandardRetryStrategy`."""
+    """Retry quota used by :py:class:`AsyncStandardRetryStrategy`."""
 
     INITIAL_RETRY_TOKENS: int = 500
     RETRY_COST: int = 14

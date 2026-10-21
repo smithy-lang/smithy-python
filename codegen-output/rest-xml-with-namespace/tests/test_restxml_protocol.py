@@ -3,8 +3,8 @@
 from urllib.parse import parse_qsl
 
 from pytest import fail, raises
-from smithy_aws_core.identity import StaticCredentialsResolver
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
+from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import async_list
 from smithy_http import tuples_to_fields
@@ -34,11 +34,11 @@ async def test_xml_namespace_simple_scalar_properties_request_simple_scalar_prop
         config=await AsyncRestXmlProtocolNamespaceConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -128,7 +128,7 @@ async def test_xml_namespace_simple_scalar_properties_response_simple_scalar_pro
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 

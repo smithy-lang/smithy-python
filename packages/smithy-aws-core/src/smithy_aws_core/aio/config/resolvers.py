@@ -5,9 +5,9 @@ import os
 import warnings
 from collections.abc import Sequence
 
+from ...config.exceptions import ConfigValidationError
+from ...config.types import UNSET, ConfigSource, Resolved
 from .context import SharedConfigContext
-from .exceptions import ConfigValidationError
-from .types import UNSET, ConfigSource, Resolved
 
 __all__ = [
     "EndpointUriResolver",

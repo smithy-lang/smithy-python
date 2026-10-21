@@ -8,9 +8,12 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from smithy_core.aio.interfaces import AsyncByteStream, AsyncWriter
-from smithy_core.aio.interfaces.auth import EventSigner
-from smithy_core.aio.interfaces.eventstream import EventPublisher, EventReceiver
-from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces.auth import AsyncEventSigner
+from smithy_core.aio.interfaces.eventstream import (
+    AsyncEventPublisher,
+    AsyncEventReceiver,
+)
+from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.exceptions import ExpectationNotMetError
@@ -33,13 +36,15 @@ if TYPE_CHECKING:
 
 @dataclass
 class SigningConfig:
-    signer: "EventSigner[AWSCredentialsIdentity, SigV4SigningProperties]"
+    signer: "AsyncEventSigner[AWSCredentialsIdentity, SigV4SigningProperties]"
     signing_properties: "SigV4SigningProperties"
-    identity_resolver: "IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]"
+    identity_resolver: (
+        "AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]"
+    )
     identity_properties: "AWSIdentityProperties"
 
 
-class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
+class AWSEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
     def __init__(
         self,
         payload_codec: Codec,
@@ -145,7 +150,7 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
             raise OSError("Failed to write to stream.") from e
 
 
-class AWSEventReceiver[E: DeserializeableShape](EventReceiver[E]):
+class AWSEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
     def __init__(
         self,
         payload_codec: Codec,

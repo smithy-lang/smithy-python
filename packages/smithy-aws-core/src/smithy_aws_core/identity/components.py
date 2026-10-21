@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol, TypedDict
 
-from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.interfaces.identity import Identity
 
 __all__ = [
@@ -44,7 +44,7 @@ class AWSIdentityProperties(TypedDict, total=False):
     session_token: str | None
 
 
-type AWSCredentialsResolver = IdentityResolver[
+type AWSCredentialsResolver = AsyncIdentityResolver[
     AWSCredentialsIdentity, AWSIdentityProperties
 ]
 

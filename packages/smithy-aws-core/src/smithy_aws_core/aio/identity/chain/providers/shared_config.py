@@ -4,9 +4,9 @@ import os
 
 from smithy_core.interfaces.identity import Identity
 
+from .....identity.chain.ordering import Standard, StandardProvider
+from .....identity.components import AWSCredentialsIdentity
 from ....config import load_config
-from ...components import AWSCredentialsIdentity
-from ..ordering import Standard, StandardProvider
 from ..provider import ChainSetup
 
 __all__ = ["SharedConfigProvider"]

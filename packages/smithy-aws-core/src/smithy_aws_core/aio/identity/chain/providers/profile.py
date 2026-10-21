@@ -2,9 +2,9 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.interfaces.identity import Identity
 
-from ...components import AWSCredentialsIdentity
-from ...static import StaticCredentialsResolver
-from ..ordering import Standard, StandardProvider
+from .....identity.chain.ordering import Standard, StandardProvider
+from .....identity.components import AWSCredentialsIdentity
+from ...static import AsyncStaticCredentialsResolver
 from ..provider import ChainSetup
 
 __all__ = [
@@ -57,7 +57,7 @@ class ProfileSessionCredentialsProvider:
             session_token=session_token,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        setup.add_terminal_resolver(StaticCredentialsResolver(identity))
+        setup.add_terminal_resolver(AsyncStaticCredentialsResolver(identity))
 
 
 class ProfileStaticCredentialsProvider:
@@ -96,4 +96,4 @@ class ProfileStaticCredentialsProvider:
             secret_access_key=secret_access_key,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        setup.add_terminal_resolver(StaticCredentialsResolver(identity))
+        setup.add_terminal_resolver(AsyncStaticCredentialsResolver(identity))

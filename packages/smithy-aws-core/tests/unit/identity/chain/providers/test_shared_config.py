@@ -4,12 +4,14 @@ from collections.abc import Awaitable, Callable
 from unittest.mock import AsyncMock
 
 import pytest
-from smithy_aws_core.config.merged_config import MergedConfig
-from smithy_aws_core.identity.chain.provider import ChainSetup
-from smithy_aws_core.identity.chain.providers import (
+from smithy_aws_core.aio.identity.chain.provider import ChainSetup
+from smithy_aws_core.aio.identity.chain.providers import (
     shared_config as shared_config_module,
 )
-from smithy_aws_core.identity.chain.providers.shared_config import SharedConfigProvider
+from smithy_aws_core.aio.identity.chain.providers.shared_config import (
+    SharedConfigProvider,
+)
+from smithy_aws_core.config.merged_config import MergedConfig
 
 from .conftest import OtherIdentity
 

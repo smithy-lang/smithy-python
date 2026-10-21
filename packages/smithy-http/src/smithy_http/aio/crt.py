@@ -149,7 +149,7 @@ class _CRTTimeoutError(Exception):
     """Internal wrapper for CRT timeout errors."""
 
 
-class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
+class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
     _TIMEOUT_ERROR_NAMES = frozenset(["AWS_IO_SOCKET_TIMEOUT", "AWS_IO_SOCKET_CLOSED"])

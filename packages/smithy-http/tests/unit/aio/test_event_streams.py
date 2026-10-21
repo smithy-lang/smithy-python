@@ -25,7 +25,7 @@ from smithy_core.traits import RequiredTrait, RpcV2CborTrait, StreamingTrait
 from smithy_core.types import TypedProperties
 from smithy_http import Fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
-from smithy_http.aio.protocols import RpcV2CborClientProtocol
+from smithy_http.aio.protocols import AsyncRpcV2CborClientProtocol
 
 pytest.importorskip("smithy_cbor")
 
@@ -178,8 +178,8 @@ def _service_schema(trait: RpcV2CborTrait | None = None) -> Schema:
     )
 
 
-def _protocol(service_schema: Schema | None = None) -> RpcV2CborClientProtocol:
-    return RpcV2CborClientProtocol(
+def _protocol(service_schema: Schema | None = None) -> AsyncRpcV2CborClientProtocol:
+    return AsyncRpcV2CborClientProtocol(
         ProtocolSettings(
             namespace="smithy.example",
             service_target="StreamService",
