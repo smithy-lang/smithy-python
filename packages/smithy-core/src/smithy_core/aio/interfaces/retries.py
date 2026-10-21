@@ -6,8 +6,8 @@ from ...interfaces.retries import RetryBackoffStrategy, RetryToken
 
 
 @runtime_checkable
-class RetryStrategy(Protocol):
-    """Issuer of :py:class:`RetryToken`s."""
+class AsyncRetryStrategy(Protocol):
+    """Issuer of :py:class:`RetryToken`s whose decisions may await I/O."""
 
     backoff_strategy: RetryBackoffStrategy
     """The strategy used by returned tokens to compute delay duration values."""

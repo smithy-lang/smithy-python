@@ -25,9 +25,9 @@ class NamedResolver:
         """Resolve an identity using the underlying resolver."""
         return await self.resolver.get_identity(properties=properties)
 
-    async def invalidate(self) -> None:
+    def invalidate(self) -> None:
         """Invalidate any identity cached by the underlying resolver."""
-        await self.resolver.invalidate()
+        self.resolver.invalidate()
 
 
 class ChainSetup:

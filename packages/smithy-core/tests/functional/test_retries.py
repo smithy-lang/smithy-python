@@ -10,7 +10,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from smithy_core.aio.client import RequestPipeline
 from smithy_core.aio.interfaces import retries as retries_interface
-from smithy_core.aio.retries import AdaptiveRetryStrategy, StandardRetryStrategy
+from smithy_core.aio.retries import (
+    AsyncAdaptiveRetryStrategy,
+    AsyncStandardRetryStrategy,
+)
 from smithy_core.exceptions import CallError, ClientTimeoutError, RetryError
 from smithy_core.interceptors import RequestContext
 from smithy_core.retries import (
@@ -23,7 +26,7 @@ from smithy_core.types import TypedProperties
 
 # TODO: Refactor this to use a smithy-testing generated client
 async def retry_operation(
-    strategy: retries_interface.RetryStrategy,
+    strategy: retries_interface.AsyncRetryStrategy,
     responses: list[int | Exception],
 ) -> tuple[str, int]:
     token = await strategy.acquire_initial_retry_token()
@@ -61,7 +64,7 @@ async def retry_operation(
 
 async def test_standard_retry_eventually_succeeds():
     quota = StandardRetryQuota(initial_capacity=500)
-    strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=3, retry_quota=quota)
 
     result, attempts = await retry_operation(strategy, [500, 500, 200])
 
@@ -72,7 +75,7 @@ async def test_standard_retry_eventually_succeeds():
 
 async def test_standard_retry_fails_due_to_max_attempts():
     quota = StandardRetryQuota(initial_capacity=500)
-    strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=3, retry_quota=quota)
 
     with pytest.raises(CallError, match="502"):
         await retry_operation(strategy, [502, 502, 502])
@@ -82,7 +85,7 @@ async def test_standard_retry_fails_due_to_max_attempts():
 
 async def test_retry_quota_exhausted_after_single_retry():
     quota = StandardRetryQuota(initial_capacity=14)
-    strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=3, retry_quota=quota)
 
     with pytest.raises(CallError, match="502"):
         await retry_operation(strategy, [500, 502])
@@ -92,7 +95,7 @@ async def test_retry_quota_exhausted_after_single_retry():
 
 async def test_retry_quota_prevents_retries_when_quota_zero():
     quota = StandardRetryQuota(initial_capacity=0)
-    strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=3, retry_quota=quota)
 
     with pytest.raises(CallError, match="500"):
         await retry_operation(strategy, [500])
@@ -102,7 +105,7 @@ async def test_retry_quota_prevents_retries_when_quota_zero():
 
 async def test_retry_quota_stops_retries_when_exhausted():
     quota = StandardRetryQuota(initial_capacity=20)
-    strategy = StandardRetryStrategy(max_attempts=5, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=5, retry_quota=quota)
 
     with pytest.raises(CallError, match="502"):
         await retry_operation(strategy, [500, 502])
@@ -112,7 +115,7 @@ async def test_retry_quota_stops_retries_when_exhausted():
 
 async def test_retry_quota_recovers_after_successful_responses():
     quota = StandardRetryQuota(initial_capacity=30)
-    strategy = StandardRetryStrategy(max_attempts=5, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=5, retry_quota=quota)
 
     # First operation: 2 retries then success
     await retry_operation(strategy, [500, 502, 200])
@@ -130,7 +133,7 @@ async def test_retry_quota_shared_across_concurrent_operations():
         max_backoff=10,
         jitter_type=ExponentialBackoffJitterType.FULL,
     )
-    strategy = StandardRetryStrategy(
+    strategy = AsyncStandardRetryStrategy(
         max_attempts=5,
         retry_quota=quota,
         backoff_strategy=backoff,
@@ -148,7 +151,7 @@ async def test_retry_quota_shared_across_concurrent_operations():
 
 async def test_retry_quota_handles_timeout_errors():
     quota = StandardRetryQuota(initial_capacity=500)
-    strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=3, retry_quota=quota)
 
     timeout1 = ClientTimeoutError()
     timeout2 = ClientTimeoutError()
@@ -198,12 +201,16 @@ class TestAdaptiveRetryPipeline:
                 "smithy_core.aio.retries.time",
                 SimpleNamespace(monotonic=clock.monotonic),
             ),
+            patch(
+                "smithy_core.retries.time",
+                SimpleNamespace(monotonic=clock.monotonic),
+            ),
             patch("smithy_core.aio.client.sleep", clock.sleep),
             patch("smithy_core.aio.retries.asyncio.wait_for", clock.wait_for),
         ):
             yield clock
 
-    def _call(self, strategy: AdaptiveRetryStrategy) -> Any:
+    def _call(self, strategy: AsyncAdaptiveRetryStrategy) -> Any:
         call = MagicMock()
         call.retryable.return_value = True
         call.retry_strategy = strategy
@@ -262,7 +269,7 @@ class TestAdaptiveRetryPipeline:
             jitter_type=ExponentialBackoffJitterType.FULL,
             random=lambda: 0.5,
         )
-        strategy = AdaptiveRetryStrategy(
+        strategy = AsyncAdaptiveRetryStrategy(
             max_attempts=3,
             backoff_strategy=backoff,
             throttling_backoff_strategy=backoff,
@@ -319,7 +326,7 @@ class TestAdaptiveRetryPipeline:
         duration = 120.0
 
         # No retries, so backoff can't slow the client; only rate limiting can
-        strategy = AdaptiveRetryStrategy(max_attempts=1)
+        strategy = AsyncAdaptiveRetryStrategy(max_attempts=1)
         pipeline: RequestPipeline[Any, Any] = RequestPipeline(
             protocol=MagicMock(), transport=MagicMock()
         )
@@ -365,7 +372,7 @@ class TestAdaptiveRetryPipeline:
         assert success_rate > 8
 
     async def test_input_stream_raises_when_send_token_acquisition_fails(self):
-        strategy = AdaptiveRetryStrategy()
+        strategy = AsyncAdaptiveRetryStrategy()
         pipeline: RequestPipeline[Any, Any] = RequestPipeline(
             protocol=MagicMock(), transport=MagicMock()
         )
@@ -382,7 +389,9 @@ class TestAdaptiveRetryPipeline:
                 await wait_for(pipeline.input_stream(call, Any), timeout=1)
 
     def _pipeline_with_429_attempts(
-        self, strategy: AdaptiveRetryStrategy, acquire_results: list[Exception | None]
+        self,
+        strategy: AsyncAdaptiveRetryStrategy,
+        acquire_results: list[Exception | None],
     ) -> tuple[RequestPipeline[Any, Any], AsyncMock, Any]:
         pipeline: RequestPipeline[Any, Any] = RequestPipeline(
             protocol=MagicMock(), transport=MagicMock()
@@ -405,7 +414,7 @@ class TestAdaptiveRetryPipeline:
 
     async def test_send_token_timeout_on_first_attempt_raises(self):
         quota = StandardRetryQuota(initial_capacity=500)
-        strategy = AdaptiveRetryStrategy(max_attempts=3, retry_quota=quota)
+        strategy = AsyncAdaptiveRetryStrategy(max_attempts=3, retry_quota=quota)
         pipeline, attempt, (p1, p2, p3) = self._pipeline_with_429_attempts(
             strategy, [TimeoutError("Failed to acquire")]
         )

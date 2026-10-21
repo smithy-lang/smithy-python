@@ -6,7 +6,7 @@ from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable, Sequence
 from copy import copy
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Self, cast
 
 from .. import URI
 from ..auth import AuthParams
@@ -28,6 +28,7 @@ from ..interceptors import (
 )
 from ..interfaces import Endpoint, TypedProperties
 from ..interfaces.auth import AuthOption, AuthSchemeResolver
+from ..interfaces.retries import RetryStrategy
 from ..schemas import APIOperation
 from ..serializers import SerializeableShape
 from ..shapes import ShapeID, ShapeType
@@ -43,8 +44,8 @@ from .interfaces import (
 )
 from .interfaces.auth import AuthScheme
 from .interfaces.eventstream import EventReceiver
-from .interfaces.retries import RetryStrategy
-from .retries import AdaptiveRetryStrategy, RetryStrategyResolver
+from .interfaces.retries import AsyncRetryStrategy
+from .retries import AsyncAdaptiveRetryStrategy, AsyncRetryStrategyResolver
 from .utils import close, seek
 
 if TYPE_CHECKING:
@@ -85,8 +86,12 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
     endpoint_resolver: EndpointResolver
     """The endpoint resolver for the operation."""
 
-    retry_strategy: RetryStrategy
-    """The retry strategy to use for the operation."""
+    retry_strategy: "RetryStrategy | AsyncRetryStrategy"
+    """The retry strategy to use for the operation.
+
+    Statically a union; each pipeline populates and narrows to its own mode's
+    strategy, mirroring the auth-scheme pin-and-narrow at the attempt boundary.
+    """
 
     retry_scope: str | None = None
     """The retry scope for the operation."""
@@ -406,7 +411,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 call, request_context, request_future
             )
 
-        retry_strategy = call.retry_strategy
+        retry_strategy = cast(AsyncRetryStrategy, call.retry_strategy)
         retry_token = await retry_strategy.acquire_initial_retry_token(
             token_scope=call.retry_scope
         )
@@ -486,7 +491,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         Every attempt, retryable or not, acquires a send token before it is sent. Once a
         response comes back from the service, the rate limiter is updated with it.
         """
-        retry_strategy = call.retry_strategy
+        retry_strategy = cast(AsyncRetryStrategy, call.retry_strategy)
         try:
             await self._handle_pre_request_rate_limiting(retry_strategy)
         except Exception as e:
@@ -511,25 +516,25 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         return output_context
 
     async def _handle_pre_request_rate_limiting(
-        self, retry_strategy: RetryStrategy
+        self, retry_strategy: AsyncRetryStrategy
     ) -> None:
         """Handle rate limiting before sending request."""
-        if isinstance(retry_strategy, AdaptiveRetryStrategy):
+        if isinstance(retry_strategy, AsyncAdaptiveRetryStrategy):
             await retry_strategy.acquire_from_token_bucket()
 
     async def _handle_post_error_response_rate_limiting(
-        self, retry_strategy: RetryStrategy, error: Exception
+        self, retry_strategy: AsyncRetryStrategy, error: Exception
     ) -> None:
         """Handle rate limiting after failed response."""
-        if isinstance(retry_strategy, AdaptiveRetryStrategy):
+        if isinstance(retry_strategy, AsyncAdaptiveRetryStrategy):
             is_throttling = retry_strategy.is_throttling_error(error)
             await retry_strategy.rate_limiter.after_receiving_response(is_throttling)
 
     async def _handle_success_rate_limiting(
-        self, retry_strategy: RetryStrategy
+        self, retry_strategy: AsyncRetryStrategy
     ) -> None:
         """Handle rate limiting after successful response."""
-        if isinstance(retry_strategy, AdaptiveRetryStrategy):
+        if isinstance(retry_strategy, AsyncAdaptiveRetryStrategy):
             await retry_strategy.rate_limiter.after_receiving_response(
                 throttling_error=False
             )
@@ -554,7 +559,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 context=request_context.properties,
             )
             _LOGGER.debug("Calling endpoint resolver with params: %s", endpoint_params)
-            endpoint: Endpoint = await call.endpoint_resolver.resolve_endpoint(
+            endpoint: Endpoint = call.endpoint_resolver.resolve_endpoint(
                 endpoint_params
             )
             _LOGGER.debug("Endpoint resolver result: %s", endpoint)
@@ -765,7 +770,7 @@ class AsyncClient:
         self._setup_done = False
         self._closed = False
         self._transport: ClientTransport[Any, Any] | None = None
-        self._retry_strategy_resolver = RetryStrategyResolver()
+        self._retry_strategy_resolver = AsyncRetryStrategyResolver()
 
     def _build_call[I: SerializeableShape, O: DeserializeableShape](
         self,
@@ -773,7 +778,7 @@ class AsyncClient:
         operation: APIOperation[I, O],
         *,
         config: Any,
-        retry_strategy: RetryStrategy,
+        retry_strategy: AsyncRetryStrategy,
     ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
         """Build the pipeline and call from a resolved config and retry strategy."""
         pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)

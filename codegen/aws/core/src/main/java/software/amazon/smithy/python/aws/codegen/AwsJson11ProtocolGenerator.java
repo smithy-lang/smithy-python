@@ -46,8 +46,13 @@ public final class AwsJson11ProtocolGenerator implements ProtocolGenerator {
     @Override
     public void initializeProtocol(GenerationContext context, PythonWriter writer) {
         writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("json"));
-        writer.addImport("smithy_aws_core.aio.protocols", "AwsJson11ClientProtocol");
-        writer.write("AwsJson11ClientProtocol(_PROTOCOL_SETTINGS)");
+        writer.write("$T(_PROTOCOL_SETTINGS)", AwsRuntimeTypes.AWS_JSON_11_CLIENT_PROTOCOL);
+    }
+
+    @Override
+    public void initializeSyncProtocol(GenerationContext context, PythonWriter writer) {
+        writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("json"));
+        writer.write("$T(_PROTOCOL_SETTINGS)", AwsRuntimeTypes.AWS_JSON_11_SYNC_CLIENT_PROTOCOL);
     }
 
     @Override

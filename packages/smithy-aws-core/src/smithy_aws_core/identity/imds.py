@@ -10,8 +10,8 @@ from typing import Literal
 
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import IdentityResolver
-from smithy_core.aio.interfaces.retries import RetryStrategy
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_core.aio.interfaces.retries import AsyncRetryStrategy
+from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
@@ -36,7 +36,7 @@ class Config:
     _MIN_TTL = 5
     _MAX_TTL = 21600
 
-    retry_strategy: RetryStrategy
+    retry_strategy: AsyncRetryStrategy
     endpoint_uri: URI
     endpoint_mode: Literal["IPv4", "IPv6"]
     token_ttl: int
@@ -44,14 +44,14 @@ class Config:
     def __init__(
         self,
         *,
-        retry_strategy: RetryStrategy | None = None,
+        retry_strategy: AsyncRetryStrategy | None = None,
         endpoint_uri: URI | None = None,
         endpoint_mode: Literal["IPv4", "IPv6"] = "IPv4",
         token_ttl: int = _MAX_TTL,
         ec2_instance_profile_name: str | None = None,
     ):
         #  TODO: Implement retries.
-        self.retry_strategy = retry_strategy or SimpleRetryStrategy(max_attempts=3)
+        self.retry_strategy = retry_strategy or AsyncSimpleRetryStrategy(max_attempts=3)
         self.endpoint_mode = endpoint_mode
         self.endpoint_uri = self._resolve_endpoint(endpoint_uri, endpoint_mode)
         self.token_ttl = self._validate_token_ttl(token_ttl)
@@ -245,6 +245,6 @@ class IMDSCredentialsResolver(
         )
         return self._credentials
 
-    async def invalidate(self) -> None:
+    def invalidate(self) -> None:
         """Discard cached credentials so the next resolution re-queries IMDS."""
         self._credentials = None

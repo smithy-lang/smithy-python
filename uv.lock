@@ -766,6 +766,9 @@ awscrt = [
 cbor = [
     { name = "smithy-cbor" },
 ]
+urllib3 = [
+    { name = "urllib3" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -773,9 +776,10 @@ requires-dist = [
     { name = "awscrt", marker = "extra == 'awscrt'", specifier = "~=0.32.0" },
     { name = "smithy-cbor", marker = "extra == 'cbor'", editable = "packages/smithy-cbor" },
     { name = "smithy-core", editable = "packages/smithy-core" },
+    { name = "urllib3", marker = "extra == 'urllib3'", specifier = ">=2.0,<3.0" },
     { name = "yarl", marker = "extra == 'aiohttp'" },
 ]
-provides-extras = ["aiohttp", "awscrt", "cbor"]
+provides-extras = ["aiohttp", "awscrt", "cbor", "urllib3"]
 
 [[package]]
 name = "smithy-json"
@@ -851,6 +855,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f6/37/23083fcd6e35492953e8d2aaaa68b860eb422b34627b13f2ce3eb6106061/typing_extensions-4.13.2.tar.gz", hash = "sha256:e6c81219bd689f51865d9e372991c540bda33a0379d5573cddb9a3a23f7caaef", size = 106967, upload-time = "2025-04-10T14:19:05.416Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/54/b1ae86c0973cc6f0210b53d508ca3641fb6d0c56823f288d108bc7ab3cc8/typing_extensions-4.13.2-py3-none-any.whl", hash = "sha256:a439e7c04b49fec3e5d3e2beaa21755cadbbdc391694e28ccdd36ca4a1408f8c", size = 45806, upload-time = "2025-04-10T14:19:03.967Z" },
+]
+
+[[package]]
+name = "urllib3"
+version = "2.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/05/b17359e1cefb4f909b5e40b1b90a496d987258916dbbf88e842c729f510e/urllib3-2.8.0.tar.gz", hash = "sha256:63bf2ead4c879426ebf22ef2a781eeb4aa3b4ae798a0435506f8687fd5bb9b63", size = 458972, upload-time = "2026-09-15T19:29:36.253Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/9d/c4e665119135114480843e7ab388fa94d8480650450e6f8e26b70d323a4c/urllib3-2.8.0-py3-none-any.whl", hash = "sha256:0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3", size = 135717, upload-time = "2026-09-15T19:29:34.577Z" },
 ]
 
 [[package]]

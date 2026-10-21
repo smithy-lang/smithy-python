@@ -11,7 +11,7 @@ from .interfaces import EndpointResolver
 class StaticEndpointResolver(EndpointResolver):
     """A basic endpoint resolver that forwards a static URI."""
 
-    async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> _Endpoint:
+    def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> _Endpoint:
         static_uri = resolve_static_uri(params)
         if static_uri is None:
             raise EndpointResolutionError(

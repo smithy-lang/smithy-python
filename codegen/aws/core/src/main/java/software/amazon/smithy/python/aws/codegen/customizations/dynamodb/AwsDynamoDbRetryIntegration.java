@@ -85,7 +85,7 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                 .build();
         final Symbol standardRetryStrategy = Symbol.builder()
                 .namespace("smithy_core.aio.retries", ".")
-                .name("StandardRetryStrategy")
+                .name("AsyncStandardRetryStrategy")
                 .build();
         final Symbol adaptiveRetryStrategy = Symbol.builder()
                 .namespace("smithy_core.aio.retries", ".")
@@ -121,8 +121,7 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                                                 writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE);
                                                 writer.write(
                                                         DYNAMODB_RETRY_MODULE,
-                                                        CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model())
-                                                                .orElseThrow(),
+                                                        CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model()),
                                                         retryStrategyOptions,
                                                         standardRetryStrategy,
                                                         configSource,

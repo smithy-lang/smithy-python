@@ -353,7 +353,9 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
 
     @Override
     public Symbol serviceShape(ServiceShape shape) {
-        var name = getDefaultShapeName(shape);
+        // Async client takes the Async-prefixed name; the sync client (generated into
+        // the same module) holds the canonical unprefixed name.
+        var name = "Async" + getDefaultShapeName(shape);
         return createGeneratedSymbolBuilder(shape, name, "client").build();
     }
 
