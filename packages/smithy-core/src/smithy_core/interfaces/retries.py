@@ -34,6 +34,17 @@ class ErrorRetryInfo(Protocol):
     """Whether the error is a timeout error."""
 
 
+@runtime_checkable
+class RetryStrategy(Protocol):
+    """Issuer of :py:class:`RetryToken`s.
+
+    Placeholder for the synchronous retry-strategy interface; populated alongside the
+    sync retry implementations.
+    """
+
+    # TODO(sync-api): implement alongside the sync client
+
+
 class RetryBackoffStrategy(Protocol):
     """Stateless strategy for computing retry delays based on retry attempt account."""
 
@@ -49,7 +60,7 @@ class RetryBackoffStrategy(Protocol):
 
 @dataclass(kw_only=True)
 class RetryToken(Protocol):
-    """Token issued by a :py:class:`smithy_core.aio.interfaces.retries.RetryStrategy` for the next attempt."""
+    """Token issued by a :py:class:`smithy_core.aio.interfaces.retries.AsyncRetryStrategy` for the next attempt."""
 
     retry_count: int
     """Retry count is the total number of attempts minus the initial attempt."""

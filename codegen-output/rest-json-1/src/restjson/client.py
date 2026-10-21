@@ -6,20 +6,20 @@ from copy import deepcopy
 import logging
 from typing import Any, cast
 
+from smithy_aws_core.aio.identity.chain import IdentityChain
 from smithy_aws_core.config import ConfigSource
 from smithy_aws_core.identity import AWSCredentialsIdentity
-from smithy_aws_core.identity.chain import IdentityChain
-from smithy_core.aio.client import AsyncClient, ClientCall, RequestPipeline
+from smithy_core.aio.client import AsyncClient, AsyncClientCall, AsyncRequestPipeline
 from smithy_core.aio.eventstream import (
-    DuplexEventStream,
-    InputEventStream,
-    OutputEventStream,
+    AsyncDuplexEventStream,
+    AsyncInputEventStream,
+    AsyncOutputEventStream,
 )
 from smithy_core.deserializers import DeserializeableShape
 from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
-from smithy_http.aio.interfaces import HTTPClient
+from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.plugins import user_agent_plugin
 
 from .config import AsyncRestJsonProtocolConfig, Plugin
@@ -444,7 +444,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
                 config_file=config_file,
                 profile_name=profile_name,
                 region_override=config.region,
-                http_client=cast(HTTPClient | None, config.transport),
+                http_client=cast(AsyncHTTPClient | None, config.transport),
             )
 
     async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
@@ -453,7 +453,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         operation: APIOperation[I, O],
         default_plugins: list[Plugin],
         plugins: list[Plugin] | None,
-    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+    ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
@@ -677,7 +677,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
 
     async def duplex_stream(
         self, input: DuplexStreamInput, plugins: list[Plugin] | None = None
-    ) -> DuplexEventStream[EventStream, EventStream, DuplexStreamOutput]:
+    ) -> AsyncDuplexEventStream[EventStream, EventStream, DuplexStreamOutput]:
         """
         Invokes the DuplexStream operation.
 
@@ -702,7 +702,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         self,
         input: DuplexStreamWithDistinctStreamsInput,
         plugins: list[Plugin] | None = None,
-    ) -> InputEventStream[EventStream, DuplexStreamWithDistinctStreamsOutput]:
+    ) -> AsyncInputEventStream[EventStream, DuplexStreamWithDistinctStreamsOutput]:
         """
         Invokes the DuplexStreamWithDistinctStreams operation.
 
@@ -727,7 +727,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         self,
         input: DuplexStreamWithInitialMessagesInput,
         plugins: list[Plugin] | None = None,
-    ) -> DuplexEventStream[
+    ) -> AsyncDuplexEventStream[
         EventStream, EventStream, DuplexStreamWithInitialMessagesOutput
     ]:
         """
@@ -1363,7 +1363,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
 
     async def input_stream(
         self, input: InputStreamInput, plugins: list[Plugin] | None = None
-    ) -> InputEventStream[EventStream, InputStreamOutput]:
+    ) -> AsyncInputEventStream[EventStream, InputStreamOutput]:
         """
         Invokes the InputStream operation.
 
@@ -1386,7 +1386,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         self,
         input: InputStreamWithInitialRequestInput,
         plugins: list[Plugin] | None = None,
-    ) -> InputEventStream[EventStream, InputStreamWithInitialRequestOutput]:
+    ) -> AsyncInputEventStream[EventStream, InputStreamWithInitialRequestOutput]:
         """
         Invokes the InputStreamWithInitialRequest operation.
 
@@ -2556,7 +2556,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
 
     async def output_stream(
         self, input: OutputStreamInput, plugins: list[Plugin] | None = None
-    ) -> OutputEventStream[EventStream, OutputStreamOutput]:
+    ) -> AsyncOutputEventStream[EventStream, OutputStreamOutput]:
         """
         Invokes the OutputStream operation.
 
@@ -2581,7 +2581,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         self,
         input: OutputStreamWithInitialResponseInput,
         plugins: list[Plugin] | None = None,
-    ) -> OutputEventStream[EventStream, OutputStreamWithInitialResponseOutput]:
+    ) -> AsyncOutputEventStream[EventStream, OutputStreamWithInitialResponseOutput]:
         """
         Invokes the OutputStreamWithInitialResponse operation.
 

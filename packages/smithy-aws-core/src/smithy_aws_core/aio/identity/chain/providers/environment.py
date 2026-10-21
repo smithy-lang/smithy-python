@@ -4,9 +4,9 @@ import os
 
 from smithy_core.interfaces.identity import Identity
 
-from ...components import AWSCredentialsIdentity
+from .....identity.chain.ordering import Standard, StandardProvider
+from .....identity.components import AWSCredentialsIdentity
 from ...environment import EnvironmentCredentialsResolver
-from ..ordering import Standard, StandardProvider
 from ..provider import ChainSetup
 
 __all__ = ["EnvironmentCredentialsProvider"]

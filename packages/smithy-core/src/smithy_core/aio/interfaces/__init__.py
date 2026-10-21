@@ -1,7 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import AsyncIterable, Callable
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
 
 from ...documents import TypeRegistry
@@ -9,7 +8,7 @@ from ...endpoints import EndpointResolverParams
 from ...exceptions import UnsupportedStreamError
 from ...interfaces import Endpoint, TypedProperties, URI
 from ...interfaces import StreamingBlob as SyncStreamingBlob
-from .eventstream import EventPublisher, EventReceiver
+from .eventstream import AsyncEventPublisher, AsyncEventReceiver
 
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
@@ -19,7 +18,7 @@ if TYPE_CHECKING:
     from ...schemas import APIOperation
     from ...serializers import SerializeableShape
     from ...shapes import ShapeID
-    from .auth import AuthScheme
+    from .auth import AsyncAuthScheme
 
 
 @runtime_checkable
@@ -76,7 +75,7 @@ class Response(Protocol):
         ...
 
 
-class EndpointResolver(Protocol):
+class AsyncEndpointResolver(Protocol):
     """Resolves an operation's endpoint based given parameters."""
 
     async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Endpoint:
@@ -87,11 +86,11 @@ class EndpointResolver(Protocol):
         ...
 
 
-class ClientTransport[I: Request, O: Response](Protocol):
+class AsyncClientTransport[I: Request, O: Response](Protocol):
     """Protocol-agnostic representation of a client transport (e.g. an HTTP client).
 
     Transports that support duplex (bidirectional) event streaming can implement
-    :py:class:`DuplexClientTransport`.
+    :py:class:`AsyncDuplexClientTransport`.
     """
 
     TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
@@ -101,7 +100,9 @@ class ClientTransport[I: Request, O: Response](Protocol):
         ...
 
 
-class DuplexClientTransport[I: Request, O: Response](ClientTransport[I, O], Protocol):
+class AsyncDuplexClientTransport[I: Request, O: Response](
+    AsyncClientTransport[I, O], Protocol
+):
     """A client transport that supports duplex (bidirectional) event streaming.
 
     Duplex transports can read response data while the request body is still being
@@ -111,36 +112,7 @@ class DuplexClientTransport[I: Request, O: Response](ClientTransport[I, O], Prot
     SUPPORTS_DUPLEX_STREAMING: Literal[True]
 
 
-@dataclass(kw_only=True, frozen=True)
-class ProtocolSettings:
-    """Service-level metadata for constructing a protocol.
-
-    Lets a consumer select a protocol by class alone (e.g.
-    ``protocol=AwsQueryClientProtocol``) without importing a private schema module.
-    """
-
-    namespace: str
-    """The service's Smithy namespace, e.g. ``com.amazonaws.sqs``."""
-
-    service_target: str
-    """The service shape name, used as the ``X-Amz-Target`` prefix by RPC protocols."""
-
-    version: str | None = None
-    """The service API version. Required by awsQuery; unused by other protocols."""
-
-    xml_namespace: str | None = None
-    """The URI of the service's ``@xmlNamespace``, applied by restXml to request
-    payloads that don't declare their own namespace."""
-
-
-type ProtocolConstructor[T] = Callable[[ProtocolSettings], T]
-"""A callable that builds a protocol instance from ``ProtocolSettings``.
-
-A protocol class satisfies this, since calling the class constructs an instance.
-"""
-
-
-class ClientProtocol[I: Request, O: Response](Protocol):
+class AsyncClientProtocol[I: Request, O: Response](Protocol):
     """A protocol used by a client to communicate with a server."""
 
     @property
@@ -236,8 +208,8 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         request: I,
         event_type: "TypeForm[Event]",
         context: TypedProperties,
-        auth_scheme: "AuthScheme[Any, Any, Any, Any] | None" = None,
-    ) -> EventPublisher[Event]:
+        auth_scheme: "AsyncAuthScheme[Any, Any, Any, Any] | None" = None,
+    ) -> AsyncEventPublisher[Event]:
         """Creates an event publisher for a protocol event stream.
 
         :param operation: The event stream operation.
@@ -261,7 +233,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         event_type: "TypeForm[Event]",
         event_deserializer: Callable[["ShapeDeserializer"], Event],
         context: TypedProperties,
-    ) -> EventReceiver[Event]:
+    ) -> AsyncEventReceiver[Event]:
         """Creates an event receiver for a protocol event stream.
 
         :param operation: The event stream operation.

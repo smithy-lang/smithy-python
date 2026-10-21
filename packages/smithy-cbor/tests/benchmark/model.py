@@ -20,8 +20,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Self
 
-from smithy_core.aio.interfaces import ProtocolSettings
 from smithy_core.deserializers import ShapeDeserializer
+from smithy_core.interfaces import ProtocolSettings
 from smithy_core.prelude import (
     DOUBLE,
     INTEGER,

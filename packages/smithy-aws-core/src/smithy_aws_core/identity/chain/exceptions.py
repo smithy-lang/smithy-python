@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyError, SmithyIdentityError
 
 __all__ = [
@@ -41,7 +41,7 @@ class IdentityResolverFailure:
     """A failed identity resolution attempt."""
 
     provider_name: str
-    resolver: IdentityResolver[Any, Any]
+    resolver: AsyncIdentityResolver[Any, Any]
     error: SmithyIdentityError
 
 

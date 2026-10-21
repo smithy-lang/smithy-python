@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from smithy_aws_core.identity.process import ProcessCredentialsResolver
+from smithy_aws_core.aio.identity.process import ProcessCredentialsResolver
 from smithy_core.exceptions import SmithyIdentityError
 
 ISO8601 = "%Y-%m-%dT%H:%M:%SZ"

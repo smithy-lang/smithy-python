@@ -9,12 +9,12 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from smithy_aws_core.identity import AWSCredentialsIdentity
-from smithy_aws_core.identity.container import (
-    ContainerCredentialsConfig,
+from smithy_aws_core.aio.identity.container import (
     ContainerCredentialsResolver,
     ContainerMetadataClient,
 )
+from smithy_aws_core.identity import AWSCredentialsIdentity
+from smithy_aws_core.identity.container import ContainerCredentialsConfig
 from smithy_core import URI
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_http import Fields

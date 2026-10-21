@@ -33,31 +33,37 @@ from ..serializers import SerializeableShape
 from ..shapes import ShapeID, ShapeType
 from ..types import PropertyKey
 from ..types import TypedProperties as _TypedProperties
-from .eventstream import DuplexEventStream, InputEventStream, OutputEventStream
+from .eventstream import (
+    AsyncDuplexEventStream,
+    AsyncInputEventStream,
+    AsyncOutputEventStream,
+)
 from .interfaces import (
-    ClientProtocol,
-    ClientTransport,
-    EndpointResolver,
+    AsyncClientProtocol,
+    AsyncClientTransport,
+    AsyncEndpointResolver,
     Request,
     Response,
 )
-from .interfaces.auth import AuthScheme
-from .interfaces.eventstream import EventReceiver
-from .interfaces.retries import RetryStrategy
-from .retries import AdaptiveRetryStrategy, RetryStrategyResolver
+from .interfaces.auth import AsyncAuthScheme
+from .interfaces.eventstream import AsyncEventReceiver
+from .interfaces.retries import AsyncRetryStrategy
+from .retries import AsyncAdaptiveRetryStrategy, AsyncRetryStrategyResolver
 from .utils import close, seek
 
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
-AUTH_SCHEME = PropertyKey(key="auth_scheme", value_type=AuthScheme[Any, Any, Any, Any])
+AUTH_SCHEME = PropertyKey(
+    key="auth_scheme", value_type=AsyncAuthScheme[Any, Any, Any, Any]
+)
 
 _UNRESOLVED = URI(host="", path="/")
 _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(kw_only=True, frozen=True)
-class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
+class AsyncClientCall[I: SerializeableShape, O: DeserializeableShape]:
     """A data class containing all the initial information about an operation
     invocation."""
 
@@ -79,13 +85,13 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
     auth_scheme_resolver: AuthSchemeResolver
     """The auth scheme resolver for the operation."""
 
-    supported_auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]]
+    supported_auth_schemes: dict[ShapeID, AsyncAuthScheme[Any, Any, Any, Any]]
     """The supported auth schemes for the operation."""
 
-    endpoint_resolver: EndpointResolver
+    endpoint_resolver: AsyncEndpointResolver
     """The endpoint resolver for the operation."""
 
-    retry_strategy: RetryStrategy
+    retry_strategy: AsyncRetryStrategy
     """The retry strategy to use for the operation."""
 
     retry_scope: str | None = None
@@ -114,26 +120,26 @@ async def _rewind_position(body: Any) -> int | None:
         return None
 
 
-class RequestPipeline[TRequest: Request, TResponse: Response]:
+class AsyncRequestPipeline[TRequest: Request, TResponse: Response]:
     """Invokes client operations asynchronously."""
 
-    protocol: ClientProtocol[TRequest, TResponse]
+    protocol: AsyncClientProtocol[TRequest, TResponse]
     """The protocol to use to serialize the request and deserialize the response."""
 
-    transport: ClientTransport[TRequest, TResponse]
+    transport: AsyncClientTransport[TRequest, TResponse]
     """The transport to use to send the request and receive the response (e.g. an HTTP
     Client)."""
 
     def __init__(
         self,
-        protocol: ClientProtocol[TRequest, TResponse],
-        transport: ClientTransport[TRequest, TResponse],
+        protocol: AsyncClientProtocol[TRequest, TResponse],
+        transport: AsyncClientTransport[TRequest, TResponse],
     ) -> None:
         self.protocol = protocol
         self.transport = transport
 
     async def __call__[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[I, O], /
+        self, call: AsyncClientCall[I, O], /
     ) -> O:
         """Invoke an operation asynchronously.
 
@@ -147,8 +153,8 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         O: DeserializeableShape,
         E: SerializeableShape,
     ](
-        self, call: ClientCall[I, O], event_type: "TypeForm[E]", /
-    ) -> InputEventStream[E, O]:
+        self, call: AsyncClientCall[I, O], event_type: "TypeForm[E]", /
+    ) -> AsyncInputEventStream[E, O]:
         """Invoke an input stream operation asynchronously.
 
         :param call: The operation to invoke and associated context.
@@ -166,7 +172,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             context=request_context.properties,
             auth_scheme=request_context.properties.get(AUTH_SCHEME),
         )
-        return InputEventStream(input_stream=input_stream, output_future=output_future)
+        return AsyncInputEventStream(
+            input_stream=input_stream, output_future=output_future
+        )
 
     async def _await_output[I: SerializeableShape, O: DeserializeableShape](
         self,
@@ -181,11 +189,11 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         E: DeserializeableShape,
     ](
         self,
-        call: ClientCall[I, O],
+        call: AsyncClientCall[I, O],
         event_type: "TypeForm[E]",
         event_deserializer: Callable[[ShapeDeserializer], E],
         /,
-    ) -> OutputEventStream[E, O]:
+    ) -> AsyncOutputEventStream[E, O]:
         """Invoke an input stream operation asynchronously.
 
         :param call: The operation to invoke and associated context.
@@ -201,7 +209,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             event_deserializer=event_deserializer,
             context=output_context.properties,
         )
-        return OutputEventStream(output_stream=output_stream, output=output)
+        return AsyncOutputEventStream(output_stream=output_stream, output=output)
 
     async def duplex_stream[
         I: SerializeableShape,
@@ -210,12 +218,12 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         OE: DeserializeableShape,
     ](
         self,
-        call: ClientCall[I, O],
+        call: AsyncClientCall[I, O],
         input_event_type: "TypeForm[IE]",
         output_event_type: "TypeForm[OE]",
         event_deserializer: Callable[[ShapeDeserializer], OE],
         /,
-    ) -> DuplexEventStream[IE, OE, O]:
+    ) -> AsyncDuplexEventStream[IE, OE, O]:
         """Invoke an input stream operation asynchronously.
 
         :param call: The operation to invoke and associated context.
@@ -253,7 +261,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 event_deserializer=event_deserializer,
             )
         )
-        return DuplexEventStream(input_stream=input_stream, output_future=output_future)
+        return AsyncDuplexEventStream(
+            input_stream=input_stream, output_future=output_future
+        )
 
     async def _await_output_stream[
         I: SerializeableShape,
@@ -261,11 +271,11 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         OE: DeserializeableShape,
     ](
         self,
-        call: ClientCall[I, O],
+        call: AsyncClientCall[I, O],
         execute_task: Awaitable[tuple[O, OutputContext[I, O, TRequest, TResponse]]],
         output_event_type: "TypeForm[OE]",
         event_deserializer: Callable[[ShapeDeserializer], OE],
-    ) -> tuple[O, EventReceiver[OE]]:
+    ) -> tuple[O, AsyncEventReceiver[OE]]:
         output, output_context = await execute_task
         output_stream = self.protocol.create_event_receiver(
             operation=call.operation,
@@ -279,7 +289,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
     async def _execute_request[I: SerializeableShape, O: DeserializeableShape](
         self,
-        call: ClientCall[I, O],
+        call: AsyncClientCall[I, O],
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> tuple[O, OutputContext[I, O, TRequest, TResponse]]:
         _LOGGER.debug(
@@ -337,7 +347,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
     async def _handle_execution[I: SerializeableShape, O: DeserializeableShape](
         self,
-        call: ClientCall[I, O],
+        call: AsyncClientCall[I, O],
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
         interceptor = call.interceptor
@@ -396,7 +406,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
     async def _retry[I: SerializeableShape, O: DeserializeableShape](
         self,
-        call: ClientCall[I, O],
+        call: AsyncClientCall[I, O],
         request_context: RequestContext[I, TRequest],
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
@@ -477,7 +487,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         O: DeserializeableShape,
     ](
         self,
-        call: ClientCall[I, O],
+        call: AsyncClientCall[I, O],
         request_context: RequestContext[I, TRequest],
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest, TResponse | None]:
@@ -511,32 +521,32 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         return output_context
 
     async def _handle_pre_request_rate_limiting(
-        self, retry_strategy: RetryStrategy
+        self, retry_strategy: AsyncRetryStrategy
     ) -> None:
         """Handle rate limiting before sending request."""
-        if isinstance(retry_strategy, AdaptiveRetryStrategy):
+        if isinstance(retry_strategy, AsyncAdaptiveRetryStrategy):
             await retry_strategy.acquire_from_token_bucket()
 
     async def _handle_post_error_response_rate_limiting(
-        self, retry_strategy: RetryStrategy, error: Exception
+        self, retry_strategy: AsyncRetryStrategy, error: Exception
     ) -> None:
         """Handle rate limiting after failed response."""
-        if isinstance(retry_strategy, AdaptiveRetryStrategy):
+        if isinstance(retry_strategy, AsyncAdaptiveRetryStrategy):
             is_throttling = retry_strategy.is_throttling_error(error)
             await retry_strategy.rate_limiter.after_receiving_response(is_throttling)
 
     async def _handle_success_rate_limiting(
-        self, retry_strategy: RetryStrategy
+        self, retry_strategy: AsyncRetryStrategy
     ) -> None:
         """Handle rate limiting after successful response."""
-        if isinstance(retry_strategy, AdaptiveRetryStrategy):
+        if isinstance(retry_strategy, AsyncAdaptiveRetryStrategy):
             await retry_strategy.rate_limiter.after_receiving_response(
                 throttling_error=False
             )
 
     async def _handle_attempt[I: SerializeableShape, O: DeserializeableShape](
         self,
-        call: ClientCall[I, O],
+        call: AsyncClientCall[I, O],
         request_context: RequestContext[I, TRequest],
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest, TResponse | None]:
@@ -698,8 +708,8 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         return self._finalize_attempt(call, output_context)
 
     def _resolve_auth[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[Any, Any], params: AuthParams[I, O]
-    ) -> tuple[AuthOption, AuthScheme[TRequest, Any, Any, Any]] | None:
+        self, call: AsyncClientCall[Any, Any], params: AuthParams[I, O]
+    ) -> tuple[AuthOption, AsyncAuthScheme[TRequest, Any, Any, Any]] | None:
         auth_options: Sequence[AuthOption] = (
             call.auth_scheme_resolver.resolve_auth_scheme(auth_parameters=params)
         )
@@ -714,7 +724,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
     def _finalize_attempt[I: SerializeableShape, O: DeserializeableShape](
         self,
-        call: ClientCall[I, O],
+        call: AsyncClientCall[I, O],
         output_context: OutputContext[I, O, TRequest, TResponse | None],
     ) -> OutputContext[I, O, TRequest, TResponse | None]:
         interceptor = call.interceptor
@@ -735,7 +745,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
     def _finalize_execution[I: SerializeableShape, O: DeserializeableShape](
         self,
-        call: ClientCall[I, O],
+        call: AsyncClientCall[I, O],
         output_context: OutputContext[I, O, TRequest | None, TResponse | None],
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
         interceptor = call.interceptor
@@ -764,8 +774,8 @@ class AsyncClient:
         self._derive_lock = asyncio.Lock()
         self._setup_done = False
         self._closed = False
-        self._transport: ClientTransport[Any, Any] | None = None
-        self._retry_strategy_resolver = RetryStrategyResolver()
+        self._transport: AsyncClientTransport[Any, Any] | None = None
+        self._retry_strategy_resolver = AsyncRetryStrategyResolver()
 
     def _build_call[I: SerializeableShape, O: DeserializeableShape](
         self,
@@ -773,11 +783,13 @@ class AsyncClient:
         operation: APIOperation[I, O],
         *,
         config: Any,
-        retry_strategy: RetryStrategy,
-    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+        retry_strategy: AsyncRetryStrategy,
+    ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
         """Build the pipeline and call from a resolved config and retry strategy."""
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
-        call = ClientCall(
+        pipeline = AsyncRequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
+        call = AsyncClientCall(
             input=input,
             operation=operation,
             context=_TypedProperties({"config": config}),

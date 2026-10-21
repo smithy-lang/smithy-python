@@ -2,8 +2,8 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import pytest
+from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
 from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
-from smithy_aws_core.identity.static import StaticCredentialsResolver
 from smithy_core.exceptions import SmithyIdentityError
 
 
@@ -12,13 +12,13 @@ async def test_returns_fixed_identity() -> None:
         access_key_id="akid",
         secret_access_key="secret",
     )
-    resolver = StaticCredentialsResolver(identity)
+    resolver = AsyncStaticCredentialsResolver(identity)
 
     assert await resolver.get_identity(properties={}) is identity
 
 
 async def test_reads_request_properties() -> None:
-    resolver = StaticCredentialsResolver()
+    resolver = AsyncStaticCredentialsResolver()
 
     identity = await resolver.get_identity(
         properties={
@@ -45,4 +45,4 @@ async def test_requires_both_request_keys(
     properties: AWSIdentityProperties,
 ) -> None:
     with pytest.raises(SmithyIdentityError):
-        await StaticCredentialsResolver().get_identity(properties=properties)
+        await AsyncStaticCredentialsResolver().get_identity(properties=properties)

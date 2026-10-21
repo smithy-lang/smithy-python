@@ -6,7 +6,7 @@ from inspect import iscoroutinefunction
 from typing import TYPE_CHECKING, Any, cast
 
 from smithy_core import URI as _URI
-from smithy_core.aio.interfaces import AsyncByteStream, ClientProtocol, ProtocolSettings
+from smithy_core.aio.interfaces import AsyncByteStream, AsyncClientProtocol
 from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
@@ -20,6 +20,7 @@ from smithy_core.exceptions import (
 )
 from smithy_core.interfaces import (
     Endpoint,
+    ProtocolSettings,
     SeekableBytesReader,
     TypedProperties,
     URI,
@@ -46,13 +47,13 @@ from . import HTTPRequest as _HTTPRequest
 from .interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 
 __all__ = [
-    "HttpBindingClientProtocol",
-    "HttpClientProtocol",
-    "RpcV2CborClientProtocol",
+    "AsyncHttpBindingClientProtocol",
+    "AsyncHttpClientProtocol",
+    "AsyncRpcV2CborClientProtocol",
 ]
 
 
-class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
+class AsyncHttpClientProtocol(AsyncClientProtocol[HTTPRequest, HTTPResponse]):
     """An HTTP-based protocol."""
 
     def set_service_endpoint(
@@ -102,7 +103,7 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         return ResponseMetadata(http_status_code=response.status)
 
 
-class HttpBindingClientProtocol(HttpClientProtocol):
+class AsyncHttpBindingClientProtocol(AsyncHttpClientProtocol):
     """An HTTP-based protocol that uses HTTP binding traits."""
 
     @property
@@ -355,7 +356,7 @@ def _is_unit(schema: Schema | None) -> bool:
     return original is not None and original.document_value == str(UNIT.id)
 
 
-class _RpcV2ClientProtocol(HttpClientProtocol):
+class _RpcV2ClientProtocol(AsyncHttpClientProtocol):
     """Shared framing for the Smithy RPC v2 protocol family (rpcv2Cbor, rpcv2Json).
 
     Subclasses supply the codec-specific pieces: the protocol id, content type,
@@ -506,7 +507,7 @@ class _RpcV2ClientProtocol(HttpClientProtocol):
         return candidate
 
 
-class RpcV2CborClientProtocol(_RpcV2ClientProtocol):
+class AsyncRpcV2CborClientProtocol(_RpcV2ClientProtocol):
     """An implementation of the smithy.protocols#rpcv2Cbor protocol."""
 
     _id: ShapeID = RpcV2CborTrait.id

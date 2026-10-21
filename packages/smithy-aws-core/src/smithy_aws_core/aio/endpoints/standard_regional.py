@@ -3,16 +3,16 @@
 from typing import Any
 
 from smithy_core import URI
-from smithy_core.aio.interfaces import EndpointResolver
+from smithy_core.aio.interfaces import AsyncEndpointResolver
 from smithy_core.endpoints import Endpoint, EndpointResolverParams, resolve_static_uri
 from smithy_core.exceptions import EndpointResolutionError
 
-from . import REGIONAL_ENDPOINT_CONFIG
+from ...endpoints import REGIONAL_ENDPOINT_CONFIG
 
 __all__ = ["StandardRegionalEndpointsResolver"]
 
 
-class StandardRegionalEndpointsResolver(EndpointResolver):
+class StandardRegionalEndpointsResolver(AsyncEndpointResolver):
     """Resolves endpoints for services with standard regional endpoints."""
 
     def __init__(self, endpoint_prefix: str = "bedrock-runtime"):

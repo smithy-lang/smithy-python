@@ -9,13 +9,13 @@ from smithy_core.aio.utils import async_list
 
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPResponse
-from smithy_http.aio.interfaces import HTTPClient, HTTPRequest
+from smithy_http.aio.interfaces import AsyncHTTPClient, HTTPRequest
 from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 
 __all__ = ["MockHTTPClient", "MockHTTPClientError"]
 
 
-class MockHTTPClient(HTTPClient):
+class MockHTTPClient(AsyncHTTPClient):
     """Implementation of :py:class:`.interfaces.HTTPClient` solely for testing purposes.
 
     Simulates HTTP request/response behavior. Responses are queued in FIFO order and

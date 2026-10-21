@@ -6,7 +6,7 @@ from copy import deepcopy
 import logging
 from typing import Any
 
-from smithy_core.aio.client import AsyncClient, ClientCall, RequestPipeline
+from smithy_core.aio.client import AsyncClient, AsyncClientCall, AsyncRequestPipeline
 from smithy_core.deserializers import DeserializeableShape
 from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.schemas import APIOperation
@@ -129,7 +129,7 @@ class RpcV2Protocol(AsyncClient):
         operation: APIOperation[I, O],
         default_plugins: list[Plugin],
         plugins: list[Plugin] | None,
-    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+    ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."

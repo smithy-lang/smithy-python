@@ -38,3 +38,33 @@ class AuthSchemeResolver(Protocol):
             authentication schemes to potentially use.
         """
         ...
+
+
+class Signer(Protocol):
+    """A class that signs requests before they are sent.
+
+    Placeholder for the synchronous signer; populated alongside the sync client
+    implementation.
+    """
+
+    # TODO(sync-api): implement alongside the sync client
+
+
+class EventSigner(Protocol):
+    """A class that signs event stream events before they are sent.
+
+    Placeholder for the synchronous event signer; populated alongside the sync client
+    implementation.
+    """
+
+    # TODO(sync-api): implement alongside the sync client
+
+
+class AuthScheme(Protocol):
+    """A class that coordinates identity and auth.
+
+    Placeholder for the synchronous auth scheme; populated alongside the sync client
+    implementation.
+    """
+
+    # TODO(sync-api): implement alongside the sync client

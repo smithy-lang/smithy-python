@@ -50,7 +50,7 @@ public class AwsCodegenTest {
         assertTrue(config.contains(
                 "interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])"));
         assertTrue(config.contains(
-                "def set_auth_scheme(self, scheme: AuthScheme[Any, Any, Any, Any]) -> None:"));
+                "def set_auth_scheme(self, scheme: AsyncAuthScheme[Any, Any, Any, Any]) -> None:"));
         assertTrue(config.contains("auth_schemes = dict(self.auth_schemes or {})"));
         assertTrue(config.contains("auth_schemes[scheme.scheme_id] = scheme"));
         assertTrue(config.contains("self.auth_schemes = auth_schemes"));

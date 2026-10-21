@@ -5,7 +5,7 @@ from typing import Any
 from unittest.mock import Mock
 
 from smithy_core import URI
-from smithy_core.aio.endpoints import StaticEndpointResolver
+from smithy_core.aio.endpoints import AsyncStaticEndpointResolver
 from smithy_core.endpoints import STATIC_ENDPOINT_CONFIG, EndpointResolverParams
 from smithy_core.types import TypedProperties
 
@@ -34,7 +34,7 @@ async def test_endpoint_provider_with_uri_string() -> None:
         query="foo=bar&foo=baz",
         port=8080,
     )
-    resolver = StaticEndpointResolver()
+    resolver = AsyncStaticEndpointResolver()
     result = await resolver.resolve_endpoint(params=params)
     assert result.uri == expected
 
@@ -48,6 +48,6 @@ async def test_endpoint_provider_with_uri_object() -> None:
         port=8080,
     )
     params = EndpointConfig.params(expected)
-    resolver = StaticEndpointResolver()
+    resolver = AsyncStaticEndpointResolver()
     result = await resolver.resolve_endpoint(params=params)
     assert result.uri == expected

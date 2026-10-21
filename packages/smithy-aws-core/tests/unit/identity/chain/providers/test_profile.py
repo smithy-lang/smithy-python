@@ -4,13 +4,13 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 import pytest
-from smithy_aws_core.config.merged_config import MergedConfig
-from smithy_aws_core.identity import AWSCredentialsIdentity
-from smithy_aws_core.identity.chain.provider import ChainSetup
-from smithy_aws_core.identity.chain.providers.profile import (
+from smithy_aws_core.aio.identity.chain.provider import ChainSetup
+from smithy_aws_core.aio.identity.chain.providers.profile import (
     ProfileSessionCredentialsProvider,
     ProfileStaticCredentialsProvider,
 )
+from smithy_aws_core.config.merged_config import MergedConfig
+from smithy_aws_core.identity import AWSCredentialsIdentity
 
 from .conftest import OtherIdentity
 

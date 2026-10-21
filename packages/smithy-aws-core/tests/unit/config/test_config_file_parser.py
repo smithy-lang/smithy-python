@@ -6,12 +6,12 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from smithy_aws_core.config import DefaultFileSystem
+from smithy_aws_core.aio.config import DefaultFileSystem
+from smithy_aws_core.aio.config.file_parser import parse_config_file
 from smithy_aws_core.config.exceptions import ConfigParseError
 from smithy_aws_core.config.file_parser import (
     FileType,
     RawParsedSections,
-    parse_config_file,
     standardize,
 )
 from smithy_aws_core.config.merged_config import MergedConfig

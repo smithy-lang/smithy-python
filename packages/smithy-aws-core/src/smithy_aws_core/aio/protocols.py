@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING, Any, ClassVar, Final
 from xml.etree.ElementTree import Element
 
 from smithy_core import URI as _URI
-from smithy_core.aio.interfaces import (
-    AsyncWriter,
-    ProtocolSettings,
+from smithy_core.aio.interfaces import AsyncWriter
+from smithy_core.aio.interfaces.auth import AsyncAuthScheme
+from smithy_core.aio.interfaces.eventstream import (
+    AsyncEventPublisher,
+    AsyncEventReceiver,
 )
-from smithy_core.aio.interfaces.auth import AuthScheme
-from smithy_core.aio.interfaces.eventstream import EventPublisher, EventReceiver
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
@@ -26,7 +26,13 @@ from smithy_core.exceptions import (
     ModeledError,
     UnsupportedStreamError,
 )
-from smithy_core.interfaces import BytesReader, BytesWriter, TypedProperties, URI
+from smithy_core.interfaces import (
+    BytesReader,
+    BytesWriter,
+    ProtocolSettings,
+    TypedProperties,
+    URI,
+)
 from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 from smithy_core.prelude import DOCUMENT
 from smithy_core.response import ResponseMetadata
@@ -39,8 +45,8 @@ from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPRequest as _HTTPRequest
 from smithy_http.aio.interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 from smithy_http.aio.protocols import (
-    HttpBindingClientProtocol,
-    HttpClientProtocol,
+    AsyncHttpBindingClientProtocol,
+    AsyncHttpClientProtocol,
 )
 from smithy_http.deserializers import HTTPResponseDeserializer
 
@@ -103,12 +109,12 @@ if TYPE_CHECKING:
 __all__ = [
     "AWSErrorIdentifier",
     "AWSJSONDocument",
-    "AwsJson10ClientProtocol",
-    "AwsJson11ClientProtocol",
-    "AwsQueryClientProtocol",
-    "Ec2QueryClientProtocol",
-    "RestJsonClientProtocol",
-    "RestXmlClientProtocol",
+    "AsyncAwsJson10ClientProtocol",
+    "AsyncAwsJson11ClientProtocol",
+    "AsyncAwsQueryClientProtocol",
+    "AsyncEc2QueryClientProtocol",
+    "AsyncRestJsonClientProtocol",
+    "AsyncRestXmlClientProtocol",
 ]
 
 
@@ -191,7 +197,7 @@ class _AWSResponseMetadataMixin:
 
 
 class _AWSHttpBindingClientProtocol(
-    _AWSResponseMetadataMixin, HttpBindingClientProtocol
+    _AWSResponseMetadataMixin, AsyncHttpBindingClientProtocol
 ):
     """Base for the AWS protocols that use HTTP bindings: restJson1 and restXml.
 
@@ -211,8 +217,8 @@ class _AWSHttpBindingClientProtocol(
         request: HTTPRequest,
         event_type: "TypeForm[Event]",
         context: TypedProperties,
-        auth_scheme: AuthScheme[Any, Any, Any, Any] | None = None,
-    ) -> EventPublisher[Event]:
+        auth_scheme: AsyncAuthScheme[Any, Any, Any, Any] | None = None,
+    ) -> AsyncEventPublisher[Event]:
         _assert_event_stream()
         signing_config: SigningConfig | None = None
         if auth_scheme is not None:
@@ -255,7 +261,7 @@ class _AWSHttpBindingClientProtocol(
         event_type: "TypeForm[Event]",
         event_deserializer: Callable[[ShapeDeserializer], Event],
         context: TypedProperties,
-    ) -> EventReceiver[Event]:
+    ) -> AsyncEventReceiver[Event]:
         _assert_event_stream()
         return AWSEventReceiver(
             payload_codec=self.payload_codec,
@@ -264,7 +270,7 @@ class _AWSHttpBindingClientProtocol(
         )
 
 
-class RestJsonClientProtocol(_AWSHttpBindingClientProtocol):
+class AsyncRestJsonClientProtocol(_AWSHttpBindingClientProtocol):
     """An implementation of the aws.protocols#restJson1 protocol."""
 
     _id: Final = RestJson1Trait.id
@@ -310,7 +316,7 @@ class RestJsonClientProtocol(_AWSHttpBindingClientProtocol):
         return error_id
 
 
-class RestXmlClientProtocol(_AWSHttpBindingClientProtocol):
+class AsyncRestXmlClientProtocol(_AWSHttpBindingClientProtocol):
     """An implementation of the aws.protocols#restXml protocol."""
 
     _id: Final = RestXmlTrait.id
@@ -431,7 +437,7 @@ class _XMLErrorCodec(Codec):
         )
 
 
-class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
+class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, AsyncHttpClientProtocol):
     _error_identifier: Final = AWSErrorIdentifier()
 
     _id: ClassVar[ShapeID]
@@ -616,14 +622,14 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         return error_id
 
 
-class AwsJson10ClientProtocol(_AWSJSONClientProtocol):
+class AsyncAwsJson10ClientProtocol(_AWSJSONClientProtocol):
     """An implementation of the aws.protocols#awsJson1_0 protocol."""
 
     _id: ClassVar[ShapeID] = AwsJson1_0Trait.id
     _content_type: ClassVar[str] = "application/x-amz-json-1.0"
 
 
-class AwsJson11ClientProtocol(_AWSJSONClientProtocol):
+class AsyncAwsJson11ClientProtocol(_AWSJSONClientProtocol):
     """An implementation of the aws.protocols#awsJson1_1 protocol."""
 
     _id: ClassVar[ShapeID] = AwsJson1_1Trait.id
@@ -648,14 +654,14 @@ class _RecordedQueryRequestId:
 _QUERY_REQUEST_ID = PropertyKey(
     key="aws_query_request_id", value_type=_RecordedQueryRequestId
 )
-"""Where :py:class:`AwsQueryClientProtocol` records a body-sourced request ID.
+"""Where :py:class:`AsyncAwsQueryClientProtocol` records a body-sourced request ID.
 
 The body is only available while deserializing, so the value is stored there for
 ``extract_response_metadata`` to read back.
 """
 
 
-class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
+class AsyncAwsQueryClientProtocol(_AWSResponseMetadataMixin, AsyncHttpClientProtocol):
     """An implementation of the aws.protocols#awsQuery protocol."""
 
     _id: ClassVar[ShapeID] = AwsQueryTrait.id
@@ -858,7 +864,7 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         return ("ErrorResponse", "Error")
 
 
-class Ec2QueryClientProtocol(AwsQueryClientProtocol):
+class AsyncEc2QueryClientProtocol(AsyncAwsQueryClientProtocol):
     """An implementation of the aws.protocols#ec2Query protocol.
 
     An EC2-specific extension of awsQuery: input keys resolve via ``@ec2QueryName``

@@ -5,10 +5,10 @@ import json
 from datetime import UTC, datetime
 from typing import TypeGuard, cast
 
-from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 
-from .components import AWSCredentialsIdentity, AWSIdentityProperties
+from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
 
 __all__ = ["ProcessCredentialsResolver"]
 
@@ -20,7 +20,7 @@ def _is_command_list(command: object) -> TypeGuard[list[str]]:
 
 
 class ProcessCredentialsResolver(
-    IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
+    AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
     """Resolves AWS Credentials from a process.
 

@@ -28,11 +28,14 @@ from smithy_http.aio.interfaces import (
 from smithy_http.aio.interfaces import (
     HTTPResponse as HTTPResponseInterface,
 )
-from smithy_http.aio.protocols import HttpBindingClientProtocol, HttpClientProtocol
+from smithy_http.aio.protocols import (
+    AsyncHttpBindingClientProtocol,
+    AsyncHttpClientProtocol,
+)
 from smithy_json import JSONCodec
 
 
-class MockProtocol(HttpClientProtocol):
+class MockProtocol(AsyncHttpClientProtocol):
     _id = ShapeID("ns.foo#bar")
 
     @property
@@ -61,7 +64,7 @@ class MockProtocol(HttpClientProtocol):
         raise Exception("This is only for tests.")
 
 
-class MockBindingProtocol(HttpBindingClientProtocol):
+class MockBindingProtocol(AsyncHttpBindingClientProtocol):
     _id = ShapeID("ns.foo#binding")
     _codec = JSONCodec()
     _error_identifier = HTTPErrorIdentifier()

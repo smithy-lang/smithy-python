@@ -8,14 +8,16 @@ from collections.abc import Awaitable, Callable
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from smithy_aws_core.aio.identity.chain.provider import ChainSetup
+from smithy_aws_core.aio.identity.chain.providers.process import (
+    ProfileCredentialProcessProvider,
+)
+from smithy_aws_core.aio.identity.process import ProcessCredentialsResolver
 from smithy_aws_core.config.merged_config import MergedConfig
-from smithy_aws_core.identity.chain.provider import ChainSetup
 from smithy_aws_core.identity.chain.providers.process import (
     ProcessConfigurationError,
-    ProfileCredentialProcessProvider,
     _split_process_command,
 )
-from smithy_aws_core.identity.process import ProcessCredentialsResolver
 
 from .conftest import OtherIdentity
 

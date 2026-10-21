@@ -28,3 +28,13 @@ class Identity(Protocol):
         if self.expiration is None:
             return False
         return datetime.now(tz=UTC) >= self.expiration
+
+
+class IdentityResolver(Protocol):
+    """Loads a user's :py:class:`Identity` from a given source.
+
+    Placeholder for the synchronous identity resolver; populated alongside the sync
+    client implementation.
+    """
+
+    # TODO(sync-api): implement alongside the sync client

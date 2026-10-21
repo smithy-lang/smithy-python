@@ -3,11 +3,11 @@
 from collections.abc import Awaitable, Callable
 
 import pytest
-from smithy_aws_core.identity.chain.provider import ChainSetup
-from smithy_aws_core.identity.chain.providers.environment import (
+from smithy_aws_core.aio.identity.chain.provider import ChainSetup
+from smithy_aws_core.aio.identity.chain.providers.environment import (
     EnvironmentCredentialsProvider,
 )
-from smithy_aws_core.identity.environment import EnvironmentCredentialsResolver
+from smithy_aws_core.aio.identity.environment import EnvironmentCredentialsResolver
 
 from .conftest import OtherIdentity
 

@@ -3,7 +3,7 @@
 """Throughput benchmark: rpcv2Cbor protocol vs awsJson1_0 protocol.
 
 Measures the PROTOCOL layer (``serialize_request`` / ``deserialize_response``), NOT the
-raw codec. Both protocol classes subclass ``HttpClientProtocol`` and expose the same two
+raw codec. Both protocol classes subclass ``AsyncHttpClientProtocol`` and expose the same two
 methods; we build a modeled shape + ``Schema`` + ``APIOperation`` by hand (see
 ``model.py``) exactly the way a generated client does, then drive the protocol methods
 directly with a plain ``time.perf_counter`` loop (no benchmark dependency).
@@ -20,14 +20,14 @@ import time
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 
-from smithy_aws_core.aio.protocols import AwsJson10ClientProtocol
+from smithy_aws_core.aio.protocols import AsyncAwsJson10ClientProtocol
 from smithy_core import URI
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.interfaces import TypedProperties as _TypedPropertiesInterface
 from smithy_core.types import TypedProperties
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPResponse
-from smithy_http.aio.protocols import RpcV2CborClientProtocol
+from smithy_http.aio.protocols import AsyncRpcV2CborClientProtocol
 
 from .model import (
     PUT_RECORDS_OPERATION,
@@ -126,7 +126,7 @@ class _Measurement:
 
 def _bench_protocol(
     name: str,
-    protocol: RpcV2CborClientProtocol | AwsJson10ClientProtocol,
+    protocol: AsyncRpcV2CborClientProtocol | AsyncAwsJson10ClientProtocol,
     content_type: str,
     ctx: _TypedPropertiesInterface,
 ) -> tuple[_Measurement, _Measurement, int]:
@@ -196,8 +196,8 @@ def test_protocol_throughput() -> None:
     """
     ctx = TypedProperties()
 
-    cbor = RpcV2CborClientProtocol(SETTINGS)
-    json = AwsJson10ClientProtocol(SETTINGS)
+    cbor = AsyncRpcV2CborClientProtocol(SETTINGS)
+    json = AsyncAwsJson10ClientProtocol(SETTINGS)
 
     cbor_ser, cbor_de, cbor_bytes = _bench_protocol(
         "cbor", cbor, "application/cbor", ctx

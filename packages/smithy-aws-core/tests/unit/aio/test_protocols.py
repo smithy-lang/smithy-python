@@ -9,12 +9,12 @@ from xml.etree import ElementTree
 import pytest
 from ijson.common import IncompleteJSONError  # type: ignore[reportMissingTypeStubs]
 from smithy_aws_core.aio.protocols import (
+    AsyncAwsJson11ClientProtocol,
+    AsyncAwsQueryClientProtocol,
+    AsyncRestXmlClientProtocol,
     AWSErrorIdentifier,
-    AwsJson11ClientProtocol,
     AWSJSONDocument,
-    AwsQueryClientProtocol,
     ProtocolSettings,
-    RestXmlClientProtocol,
 )
 from smithy_aws_event_stream.events import EventMessage
 from smithy_core import URI as _URI
@@ -211,8 +211,8 @@ def _mock_operation(
     return cast("APIOperation[Any, Any]", operation)
 
 
-def _aws_json11_protocol() -> AwsJson11ClientProtocol:
-    return AwsJson11ClientProtocol(
+def _aws_json11_protocol() -> AsyncAwsJson11ClientProtocol:
+    return AsyncAwsJson11ClientProtocol(
         ProtocolSettings(namespace="com.test", service_target="JsonService")
     )
 
@@ -491,7 +491,7 @@ async def test_aws_json11_raises_parse_error_for_invalid_error_body() -> None:
 
 
 async def test_aws_query_serializes_base_request_shape() -> None:
-    protocol = AwsQueryClientProtocol(
+    protocol = AsyncAwsQueryClientProtocol(
         ProtocolSettings(
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
@@ -515,7 +515,7 @@ async def test_aws_query_serializes_base_request_shape() -> None:
 
 
 async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None:
-    protocol = AwsQueryClientProtocol(
+    protocol = AsyncAwsQueryClientProtocol(
         ProtocolSettings(
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
@@ -550,7 +550,7 @@ async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None
 
 
 async def test_aws_query_parses_success_body_once() -> None:
-    protocol = AwsQueryClientProtocol(
+    protocol = AsyncAwsQueryClientProtocol(
         ProtocolSettings(
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
@@ -582,7 +582,7 @@ async def test_aws_query_parses_success_body_once() -> None:
 async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback() -> (
     None
 ):
-    protocol = AwsQueryClientProtocol(
+    protocol = AsyncAwsQueryClientProtocol(
         ProtocolSettings(
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
@@ -609,7 +609,7 @@ async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback(
 
 
 async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
-    protocol = AwsQueryClientProtocol(
+    protocol = AsyncAwsQueryClientProtocol(
         ProtocolSettings(
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
@@ -638,7 +638,7 @@ async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
 
 
 async def test_aws_query_parses_invalid_error_body_once() -> None:
-    protocol = AwsQueryClientProtocol(
+    protocol = AsyncAwsQueryClientProtocol(
         ProtocolSettings(
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
@@ -665,7 +665,7 @@ async def test_aws_query_parses_invalid_error_body_once() -> None:
 
 
 async def test_aws_query_reports_request_id_from_the_response_body() -> None:
-    protocol = AwsQueryClientProtocol(
+    protocol = AsyncAwsQueryClientProtocol(
         ProtocolSettings(
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
@@ -700,7 +700,7 @@ async def test_aws_query_reports_request_id_from_the_response_body() -> None:
 
 
 async def test_aws_query_prefers_a_request_id_header_when_one_is_sent() -> None:
-    protocol = AwsQueryClientProtocol(
+    protocol = AsyncAwsQueryClientProtocol(
         ProtocolSettings(
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
@@ -722,7 +722,7 @@ async def test_aws_query_prefers_a_request_id_header_when_one_is_sent() -> None:
 
 
 async def test_aws_query_reports_no_request_id_when_the_body_has_none() -> None:
-    protocol = AwsQueryClientProtocol(
+    protocol = AsyncAwsQueryClientProtocol(
         ProtocolSettings(
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
@@ -738,7 +738,7 @@ async def test_aws_query_reports_no_request_id_when_the_body_has_none() -> None:
 
 
 async def test_aws_query_does_not_report_a_previous_attempts_request_id() -> None:
-    protocol = AwsQueryClientProtocol(
+    protocol = AsyncAwsQueryClientProtocol(
         ProtocolSettings(
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
@@ -777,7 +777,7 @@ async def test_aws_query_does_not_report_a_previous_attempts_request_id() -> Non
 async def test_aws_query_does_not_report_a_previous_attempts_request_id_when_deserialization_is_skipped() -> (
     None
 ):
-    protocol = AwsQueryClientProtocol(
+    protocol = AsyncAwsQueryClientProtocol(
         ProtocolSettings(
             namespace="com.test", service_target="QueryService", version="2020-01-08"
         )
@@ -809,7 +809,7 @@ async def test_aws_query_does_not_report_a_previous_attempts_request_id_when_des
 
 
 async def _deserialize_query_error(
-    protocol: AwsQueryClientProtocol,
+    protocol: AsyncAwsQueryClientProtocol,
     response: HTTPResponse,
     context: TypedProperties,
 ) -> None:
@@ -848,8 +848,8 @@ class _NoSuchBucket(ModeledError):
         return cls()
 
 
-def _rest_xml_protocol() -> RestXmlClientProtocol:
-    return RestXmlClientProtocol(
+def _rest_xml_protocol() -> AsyncRestXmlClientProtocol:
+    return AsyncRestXmlClientProtocol(
         ProtocolSettings(
             namespace="com.test",
             service_target="XmlService",

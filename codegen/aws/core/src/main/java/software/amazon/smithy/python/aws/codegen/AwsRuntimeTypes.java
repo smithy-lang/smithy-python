@@ -19,21 +19,21 @@ public final class AwsRuntimeTypes {
     // smithy_aws_core.aio.protocols
     public static final Symbol AWS_QUERY_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
-            "AwsQueryClientProtocol");
+            "AsyncAwsQueryClientProtocol");
 
     // smithy_aws_core.aio.protocols
     public static final Symbol EC2_QUERY_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
-            "Ec2QueryClientProtocol");
+            "AsyncEc2QueryClientProtocol");
 
     // smithy_aws_core.aio.protocols
     public static final Symbol REST_XML_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
-            "RestXmlClientProtocol");
+            "AsyncRestXmlClientProtocol");
 
-    // smithy_aws_core.endpoints.standard_regional
+    // smithy_aws_core.aio.endpoints.standard_regional
     public static final Symbol STANDARD_REGIONAL_ENDPOINTS_RESOLVER = createSymbol(
-            "endpoints.standard_regional",
+            "aio.endpoints.standard_regional",
             "StandardRegionalEndpointsResolver");
 
     private AwsRuntimeTypes() {}

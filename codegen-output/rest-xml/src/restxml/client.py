@@ -6,15 +6,15 @@ from copy import deepcopy
 import logging
 from typing import Any, cast
 
+from smithy_aws_core.aio.identity.chain import IdentityChain
 from smithy_aws_core.config import ConfigSource
 from smithy_aws_core.identity import AWSCredentialsIdentity
-from smithy_aws_core.identity.chain import IdentityChain
-from smithy_core.aio.client import AsyncClient, ClientCall, RequestPipeline
+from smithy_core.aio.client import AsyncClient, AsyncClientCall, AsyncRequestPipeline
 from smithy_core.deserializers import DeserializeableShape
 from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
-from smithy_http.aio.interfaces import HTTPClient
+from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.plugins import user_agent_plugin
 
 from .config import AsyncRestXmlProtocolConfig, Plugin
@@ -293,7 +293,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
                 config_file=config_file,
                 profile_name=profile_name,
                 region_override=config.region,
-                http_client=cast(HTTPClient | None, config.transport),
+                http_client=cast(AsyncHTTPClient | None, config.transport),
             )
 
     async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
@@ -302,7 +302,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         operation: APIOperation[I, O],
         default_plugins: list[Plugin],
         plugins: list[Plugin] | None,
-    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+    ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."

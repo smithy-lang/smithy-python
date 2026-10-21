@@ -3,22 +3,22 @@
 from typing import Any, Protocol, Self
 
 from smithy_core import URI
-from smithy_core.aio.interfaces.auth import AuthScheme, Signer
-from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces.auth import AsyncAuthScheme, AsyncSigner
+from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces import TypedProperties as _TypedProperties
 from smithy_core.traits import APIKeyLocation, HTTPAPIKeyAuthTrait
 from smithy_core.types import PropertyKey
 
 from ... import Field
-from ..identity.apikey import APIKeyIdentity, APIKeyIdentityProperties
+from ...identity import APIKeyIdentity, APIKeyIdentityProperties
 from ..interfaces import HTTPRequest
 
 __all__ = [
     "API_KEY_RESOLVER_CONFIG",
-    "APIKeyAuthScheme",
     "APIKeyResolverConfig",
-    "APIKeySigner",
+    "AsyncAPIKeyAuthScheme",
+    "AsyncAPIKeySigner",
 ]
 
 
@@ -32,7 +32,7 @@ class APIKeyResolverConfig(Protocol):
     """
 
     api_key_identity_resolver: (
-        IdentityResolver[APIKeyIdentity, APIKeyIdentityProperties] | None
+        AsyncIdentityResolver[APIKeyIdentity, APIKeyIdentityProperties] | None
     )
     """An API key identity resolver.
 
@@ -44,7 +44,7 @@ API_KEY_RESOLVER_CONFIG = PropertyKey(key="config", value_type=APIKeyResolverCon
 """A context property bearing an API key config."""
 
 
-class APIKeySigner(Signer[HTTPRequest, APIKeyIdentity, Any]):
+class AsyncAPIKeySigner(AsyncSigner[HTTPRequest, APIKeyIdentity, Any]):
     """A signer that signs http requests with an api key."""
 
     def __init__(
@@ -86,18 +86,18 @@ class APIKeySigner(Signer[HTTPRequest, APIKeyIdentity, Any]):
         return request
 
 
-class APIKeyAuthScheme(
-    AuthScheme[HTTPRequest, APIKeyIdentity, APIKeyIdentityProperties, Any]
+class AsyncAPIKeyAuthScheme(
+    AsyncAuthScheme[HTTPRequest, APIKeyIdentity, APIKeyIdentityProperties, Any]
 ):
     """An auth scheme containing necessary data and tools for api key auth."""
 
     scheme_id = HTTPAPIKeyAuthTrait.id
-    _signer: APIKeySigner
+    _signer: AsyncAPIKeySigner
 
     def __init__(
         self, *, name: str, location: APIKeyLocation, scheme: str | None = None
     ) -> None:
-        self._signer = APIKeySigner(name=name, location=location, scheme=scheme)
+        self._signer = AsyncAPIKeySigner(name=name, location=location, scheme=scheme)
 
     def identity_properties(
         self, *, context: _TypedProperties
@@ -109,7 +109,7 @@ class APIKeyAuthScheme(
 
     def identity_resolver(
         self, *, context: _TypedProperties
-    ) -> IdentityResolver[APIKeyIdentity, APIKeyIdentityProperties]:
+    ) -> AsyncIdentityResolver[APIKeyIdentity, APIKeyIdentityProperties]:
         config = context.get(API_KEY_RESOLVER_CONFIG)
         if config is None or config.api_key_identity_resolver is None:
             raise SmithyIdentityError(
@@ -121,7 +121,7 @@ class APIKeyAuthScheme(
     def signer_properties(self, *, context: _TypedProperties) -> Any:
         return {}
 
-    def signer(self) -> Signer[HTTPRequest, APIKeyIdentity, Any]:
+    def signer(self) -> AsyncSigner[HTTPRequest, APIKeyIdentity, Any]:
         return self._signer
 
     @classmethod
