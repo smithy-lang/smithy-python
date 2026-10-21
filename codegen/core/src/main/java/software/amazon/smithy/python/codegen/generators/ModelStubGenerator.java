@@ -16,6 +16,7 @@ import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
+import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
@@ -75,7 +76,12 @@ public final class ModelStubGenerator implements Runnable {
                         def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
 
                     class ServiceError(ModeledError):
-                        ...
+                        \"""
+                        Base error for all errors in the service.
+
+                        Some exceptions do not extend from this class, including
+                        synthetic, implicit, and shared exception types.
+                        \"""
                     """);
 
             for (var shape : shapes) {
@@ -106,12 +112,12 @@ public final class ModelStubGenerator implements Runnable {
                 : "(_SerdeShape)";
         var index = NullableIndex.of(model);
         writer.openBlock("@dataclass(kw_only=True)\nclass $L$L:", "", name, base, () -> {
+            writeShapeDocs(writer, shape, "Dataclass for " + shape.getId().getName() + " structure.");
             var members = shape.members()
                     .stream()
                     .filter(m -> !CodegenUtils.isErrorMessage(model, m))
                     .toList();
             if (members.isEmpty() && !carriesResponseMetadata(shape)) {
-                writer.write("pass");
                 return;
             }
             for (var member : members) {
@@ -123,12 +129,33 @@ public final class ModelStubGenerator implements Runnable {
                 } else {
                     writer.write("$L: $T | None = ...", memberName, memberTypeSymbol(member));
                 }
+                writeMemberDocs(writer, member);
             }
             if (carriesResponseMetadata(shape)) {
                 writer.write("response_metadata: $T = ...", RuntimeTypes.RESPONSE_METADATA);
+                writer.writeDocs("""
+                        Metadata about the response that produced this output.
+
+                        Use this to recover the request identifiers a service's support team \
+                        needs in order to investigate a call. Members of the metadata are \
+                        individually optional.""", context);
             }
         });
         writer.write("");
+    }
+
+    // The runtime attaches the DocumentationTrait text at build time; the stub is the
+    // only surface IDEs/pyright read, so docstrings must be emitted here too.
+    private void writeShapeDocs(PythonWriter writer, Shape shape, String fallback) {
+        var docs = shape.getTrait(DocumentationTrait.class)
+                .map(DocumentationTrait::getValue)
+                .orElse(fallback);
+        writer.writeDocs(docs, context);
+    }
+
+    private void writeMemberDocs(PythonWriter writer, MemberShape member) {
+        member.getMemberTrait(model, DocumentationTrait.class)
+                .ifPresent(trait -> writer.writeDocs(trait.getValue(), context));
     }
 
     private boolean carriesResponseMetadata(Shape shape) {
@@ -150,7 +177,10 @@ public final class ModelStubGenerator implements Runnable {
                     "@dataclass\nclass $L(_SerdeShape):",
                     "",
                     variantName,
-                    () -> writer.write("value: $T", valueTypeSymbol(target)));
+                    () -> {
+                        writeMemberDocs(writer, member);
+                        writer.write("value: $T", valueTypeSymbol(target));
+                    });
             writer.write("");
         }
         var unknownSymbol = parentSymbol.expectProperty(SymbolProperties.UNION_UNKNOWN);
@@ -160,10 +190,21 @@ public final class ModelStubGenerator implements Runnable {
                 "@dataclass\nclass $L(_SerdeShape):",
                 "",
                 unknownName,
-                () -> writer.write("tag: str"));
+                () -> {
+                    writer.writeDocs("""
+                            Represents an unknown variant.
+
+                            If you receive this value, you will need to update your library to receive the \
+                            parsed value.
+
+                            This value may not be deliberately sent.""", context);
+                    writer.write("tag: str");
+                });
         writer.write("");
         variantNames.add(unknownName);
         writer.write("$L = Union[$L]", parentName, String.join(" | ", variantNames));
+        shape.getTrait(DocumentationTrait.class)
+                .ifPresent(trait -> writer.writeDocs(trait.getValue(), context));
         writer.write("");
         // The runtime builds a `_<Union>Deserializer().deserialize(d)` helper for event-
         // stream unions; declare it so client.py's event-stream wiring type-checks.
@@ -198,10 +239,13 @@ public final class ModelStubGenerator implements Runnable {
         writer.addLocallyDefinedSymbol(enumSymbol);
         writer.addStdlibImport("enum", "StrEnum");
         writer.openBlock("class $L($T, StrEnum):", "", name, RuntimeTypes.UNKNOWN_ENUM_MIXIN, () -> {
+            shape.getTrait(DocumentationTrait.class)
+                    .ifPresent(trait -> writer.writeDocs(trait.getValue(), context));
             for (var member : shape.members()) {
                 var memberName = symbolProvider.toMemberName(member);
                 var value = member.expectTrait(EnumValueTrait.class).expectStringValue();
                 writer.write("$L = $S", memberName, value);
+                writeMemberDocs(writer, member);
             }
         });
         writer.write("");
@@ -217,10 +261,13 @@ public final class ModelStubGenerator implements Runnable {
                 enumSymbol.getName(),
                 RuntimeTypes.UNKNOWN_ENUM_MIXIN,
                 () -> {
+                    shape.getTrait(DocumentationTrait.class)
+                            .ifPresent(trait -> writer.writeDocs(trait.getValue(), context));
                     for (var member : shape.members()) {
                         var memberName = symbolProvider.toMemberName(member);
                         var value = member.expectTrait(EnumValueTrait.class).expectIntValue();
                         writer.write("$L = $L", memberName, value);
+                        writeMemberDocs(writer, member);
                     }
                 });
         writer.write("");

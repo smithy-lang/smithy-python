@@ -15,14 +15,24 @@ class _SerdeShape:
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
 
-class ServiceError(ModeledError): ...
+class ServiceError(ModeledError):
+    """
+    Base error for all errors in the service.
+
+    Some exceptions do not extend from this class, including
+    synthetic, implicit, and shared exception types.
+    """
 
 @dataclass(kw_only=True)
 class NestedWithNamespace(_SerdeShape):
+    """Dataclass for NestedWithNamespace structure."""
+
     attr_field: str | None = ...
 
 @dataclass(kw_only=True)
 class SimpleScalarPropertiesInput(_SerdeShape):
+    """Dataclass for SimpleScalarPropertiesInput structure."""
+
     foo: str | None = ...
     string_value: str | None = ...
     true_boolean_value: bool | None = ...
@@ -37,6 +47,8 @@ class SimpleScalarPropertiesInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class SimpleScalarPropertiesOutput(_SerdeShape):
+    """Dataclass for SimpleScalarPropertiesOutput structure."""
+
     foo: str | None = ...
     string_value: str | None = ...
     true_boolean_value: bool | None = ...
@@ -49,6 +61,12 @@ class SimpleScalarPropertiesOutput(_SerdeShape):
     nested: NestedWithNamespace | None = ...
     double_value: float | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 SIMPLE_SCALAR_PROPERTIES: APIOperation[
     SimpleScalarPropertiesInput, SimpleScalarPropertiesOutput

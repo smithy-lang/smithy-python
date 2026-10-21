@@ -19,113 +19,235 @@ class _SerdeShape:
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
 
-class ServiceError(ModeledError): ...
+class ServiceError(ModeledError):
+    """
+    Base error for all errors in the service.
+
+    Some exceptions do not extend from this class, including
+    synthetic, implicit, and shared exception types.
+    """
 
 @dataclass(kw_only=True)
 class ComplexError(ServiceError, _SerdeShape):
+    """This error is thrown when a request is invalid."""
+
     top_level: str | None = ...
     nested: ComplexNestedErrorData | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class ComplexNestedErrorData(_SerdeShape):
+    """Dataclass for ComplexNestedErrorData structure."""
+
     foo: str | None = ...
 
 @dataclass(kw_only=True)
 class ContentTypeParametersInput(_SerdeShape):
+    """Dataclass for ContentTypeParametersInput structure."""
+
     value: int | None = ...
 
 @dataclass(kw_only=True)
 class ContentTypeParametersOutput(_SerdeShape):
+    """Dataclass for ContentTypeParametersOutput structure."""
+
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class DatetimeOffsetsInput(_SerdeShape):
-    pass
+    """Dataclass for DatetimeOffsetsInput structure."""
 
 @dataclass(kw_only=True)
 class DatetimeOffsetsOutput(_SerdeShape):
+    """Dataclass for DatetimeOffsetsOutput structure."""
+
     datetime_: datetime | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class EmptyOperationInput(_SerdeShape):
-    pass
+    """Dataclass for EmptyOperationInput structure."""
 
 @dataclass(kw_only=True)
 class EmptyOperationOutput(_SerdeShape):
+    """Dataclass for EmptyOperationOutput structure."""
+
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class EmptyStruct(_SerdeShape):
-    pass
+    """Dataclass for EmptyStruct structure."""
 
 @dataclass(kw_only=True)
 class EndpointOperationInput(_SerdeShape):
-    pass
+    """Dataclass for EndpointOperationInput structure."""
 
 @dataclass(kw_only=True)
 class EndpointOperationOutput(_SerdeShape):
+    """Dataclass for EndpointOperationOutput structure."""
+
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class EndpointWithHostLabelOperationInput(_SerdeShape):
+    """Dataclass for EndpointWithHostLabelOperationInput structure."""
+
     label: str | None = ...
 
 @dataclass(kw_only=True)
 class EndpointWithHostLabelOperationOutput(_SerdeShape):
+    """Dataclass for EndpointWithHostLabelOperationOutput structure."""
+
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class ErrorWithMembers(ServiceError, _SerdeShape):
+    """Dataclass for ErrorWithMembers structure."""
+
     code: str | None = ...
     complex_data: KitchenSink | None = ...
     integer_field: int | None = ...
     list_field: list[str] | None = ...
     map_field: dict[str, str] | None = ...
     string_field: str | None = ...
+    """abc"""
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class ErrorWithoutMembers(ServiceError, _SerdeShape):
+    """Dataclass for ErrorWithoutMembers structure."""
+
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class FooError(ServiceError, _SerdeShape):
+    """
+    This error has test cases that test some of the dark corners of Amazon
+    service framework history. It should only be implemented by clients.
+    """
+
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class FractionalSecondsInput(_SerdeShape):
-    pass
+    """Dataclass for FractionalSecondsInput structure."""
 
 @dataclass(kw_only=True)
 class FractionalSecondsOutput(_SerdeShape):
+    """Dataclass for FractionalSecondsOutput structure."""
+
     datetime_: datetime | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class GreetingWithErrorsInput(_SerdeShape):
-    pass
+    """Dataclass for GreetingWithErrorsInput structure."""
 
 @dataclass(kw_only=True)
 class GreetingWithErrorsOutput(_SerdeShape):
+    """Dataclass for GreetingWithErrorsOutput structure."""
+
     greeting: str | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class HostWithPathOperationInput(_SerdeShape):
-    pass
+    """Dataclass for HostWithPathOperationInput structure."""
 
 @dataclass(kw_only=True)
 class HostWithPathOperationOutput(_SerdeShape):
+    """Dataclass for HostWithPathOperationOutput structure."""
+
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class InvalidGreeting(ServiceError, _SerdeShape):
+    """This error is thrown when an invalid greeting value is provided."""
+
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class JsonEnumsInput(_SerdeShape):
+    """Dataclass for JsonEnumsInput structure."""
+
     foo_enum1: str | None = ...
     foo_enum2: str | None = ...
     foo_enum3: str | None = ...
@@ -135,6 +257,8 @@ class JsonEnumsInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class JsonEnumsOutput(_SerdeShape):
+    """Dataclass for JsonEnumsOutput structure."""
+
     foo_enum1: str | None = ...
     foo_enum2: str | None = ...
     foo_enum3: str | None = ...
@@ -142,9 +266,17 @@ class JsonEnumsOutput(_SerdeShape):
     foo_enum_set: list[str] | None = ...
     foo_enum_map: dict[str, str] | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class JsonIntEnumsInput(_SerdeShape):
+    """Dataclass for JsonIntEnumsInput structure."""
+
     int_enum1: int | None = ...
     int_enum2: int | None = ...
     int_enum3: int | None = ...
@@ -154,6 +286,8 @@ class JsonIntEnumsInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class JsonIntEnumsOutput(_SerdeShape):
+    """Dataclass for JsonIntEnumsOutput structure."""
+
     int_enum1: int | None = ...
     int_enum2: int | None = ...
     int_enum3: int | None = ...
@@ -161,18 +295,38 @@ class JsonIntEnumsOutput(_SerdeShape):
     int_enum_set: list[int] | None = ...
     int_enum_map: dict[str, int] | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class JsonUnionsInput(_SerdeShape):
+    """A shared structure that contains a single union member."""
+
     contents: MyUnion | None = ...
+    """A union with a representative set of types for members."""
 
 @dataclass(kw_only=True)
 class JsonUnionsOutput(_SerdeShape):
+    """A shared structure that contains a single union member."""
+
     contents: MyUnion | None = ...
+    """A union with a representative set of types for members."""
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class KitchenSink(_SerdeShape):
+    """Dataclass for KitchenSink structure."""
+
     blob: bytes | None = ...
     boolean: bool | None = ...
     double: float | None = ...
@@ -202,6 +356,8 @@ class KitchenSink(_SerdeShape):
 
 @dataclass(kw_only=True)
 class KitchenSinkOperationInput(_SerdeShape):
+    """Dataclass for KitchenSinkOperationInput structure."""
+
     blob: bytes | None = ...
     boolean: bool | None = ...
     double: float | None = ...
@@ -231,6 +387,8 @@ class KitchenSinkOperationInput(_SerdeShape):
 
 @dataclass(kw_only=True)
 class KitchenSinkOperationOutput(_SerdeShape):
+    """Dataclass for KitchenSinkOperationOutput structure."""
+
     blob: bytes | None = ...
     boolean: bool | None = ...
     double: float | None = ...
@@ -258,6 +416,12 @@ class KitchenSinkOperationOutput(_SerdeShape):
     timestamp: datetime | None = ...
     unix_timestamp: datetime | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass
 class MyUnionStringValue(_SerdeShape):
@@ -297,6 +461,12 @@ class MyUnionStructureValue(_SerdeShape):
 
 @dataclass
 class MyUnionUnknown(_SerdeShape):
+    """
+    Represents an unknown variant. If you receive this value, you will need
+    to update your library to receive the parsed value. This value may not
+    be deliberately sent.
+    """
+
     tag: str
 
 MyUnion = Union[
@@ -311,74 +481,139 @@ MyUnion = Union[
     | MyUnionStructureValue
     | MyUnionUnknown
 ]
+"""A union with a representative set of types for members."""
 
 class _MyUnionDeserializer:
     def deserialize(self, deserializer: ShapeDeserializer) -> MyUnion: ...
 
 @dataclass(kw_only=True)
 class NullOperationInput(_SerdeShape):
+    """Dataclass for NullOperationInput structure."""
+
     string: str | None = ...
 
 @dataclass(kw_only=True)
 class NullOperationOutput(_SerdeShape):
+    """Dataclass for NullOperationOutput structure."""
+
     string: str | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class OperationWithOptionalInputOutputInput(_SerdeShape):
+    """Dataclass for OperationWithOptionalInputOutputInput structure."""
+
     value: str | None = ...
 
 @dataclass(kw_only=True)
 class OperationWithOptionalInputOutputOutput(_SerdeShape):
+    """Dataclass for OperationWithOptionalInputOutputOutput structure."""
+
     value: str | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class PutAndGetInlineDocumentsInput(_SerdeShape):
+    """Dataclass for PutAndGetInlineDocumentsInput structure."""
+
     inline_document: Document | None = ...
 
 @dataclass(kw_only=True)
 class PutAndGetInlineDocumentsOutput(_SerdeShape):
+    """Dataclass for PutAndGetInlineDocumentsOutput structure."""
+
     inline_document: Document | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class PutWithContentEncodingInput(_SerdeShape):
+    """Dataclass for PutWithContentEncodingInput structure."""
+
     encoding: str | None = ...
     data: str | None = ...
 
 @dataclass(kw_only=True)
 class PutWithContentEncodingOutput(_SerdeShape):
+    """Dataclass for PutWithContentEncodingOutput structure."""
+
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class SimpleScalarPropertiesInput(_SerdeShape):
+    """Dataclass for SimpleScalarPropertiesInput structure."""
+
     float_value: float | None = ...
     double_value: float | None = ...
 
 @dataclass(kw_only=True)
 class SimpleScalarPropertiesOutput(_SerdeShape):
+    """Dataclass for SimpleScalarPropertiesOutput structure."""
+
     float_value: float | None = ...
     double_value: float | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class SimpleStruct(_SerdeShape):
+    """Dataclass for SimpleStruct structure."""
+
     value: str | None = ...
 
 @dataclass(kw_only=True)
 class SparseNullsOperationInput(_SerdeShape):
+    """Dataclass for SparseNullsOperationInput structure."""
+
     sparse_string_list: list[str | None] | None = ...
     sparse_string_map: dict[str, str | None] | None = ...
 
 @dataclass(kw_only=True)
 class SparseNullsOperationOutput(_SerdeShape):
+    """Dataclass for SparseNullsOperationOutput structure."""
+
     sparse_string_list: list[str | None] | None = ...
     sparse_string_map: dict[str, str | None] | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 @dataclass(kw_only=True)
 class StructWithJsonName(_SerdeShape):
+    """Dataclass for StructWithJsonName structure."""
+
     value: str | None = ...
 
 class FooEnum(UnknownEnumMixin, StrEnum):
@@ -390,6 +625,8 @@ class FooEnum(UnknownEnumMixin, StrEnum):
 
 @dataclass(kw_only=True)
 class GreetingStruct(_SerdeShape):
+    """Dataclass for GreetingStruct structure."""
+
     hi: str | None = ...
 
 class IntegerEnum(UnknownEnumMixin, IntEnum):
