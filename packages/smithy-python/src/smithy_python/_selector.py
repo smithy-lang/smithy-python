@@ -80,6 +80,19 @@ _AGGREGATE: Final = frozenset(
 _SERVICE: Final = frozenset(
     {ShapeType.SERVICE, ShapeType.RESOURCE, ShapeType.OPERATION}
 )
+_TOPDOWN_RELATIONSHIPS: Final = frozenset(
+    {
+        "operation",
+        "resource",
+        "collectionOperation",
+        "create",
+        "put",
+        "read",
+        "update",
+        "delete",
+        "list",
+    }
+)
 _ENUM_TRAIT: Final = ShapeId("smithy.api", "enum")
 _TRAIT_TRAIT: Final = ShapeId("smithy.api", "trait")
 _AUTH_DEFINITION_TRAIT: Final = ShapeId("smithy.api", "authDefinition")
@@ -91,6 +104,51 @@ _PRELUDE_AUTH_TRAITS: Final = frozenset(
         ShapeId("smithy.api", "httpDigestAuth"),
     }
 )
+_PRELUDE_TRAIT_TYPES: Final[Mapping[ShapeId, ShapeType]] = {
+    ShapeId("smithy.api", name): shape_type
+    for shape_type, names in (
+        (
+            ShapeType.STRING,
+            (
+                "documentation",
+                "httpHeader",
+                "httpPrefixHeaders",
+                "httpQuery",
+                "jsonName",
+                "mediaType",
+                "pattern",
+                "resourceIdentifier",
+                "since",
+                "title",
+                "xmlName",
+            ),
+        ),
+        (
+            ShapeType.LIST,
+            (
+                "auth",
+                "createsResources",
+                "deletesResources",
+                "enum",
+                "examples",
+                "putsResources",
+                "readsResources",
+                "references",
+                "suppress",
+                "tags",
+                "updatesResources",
+            ),
+        ),
+        (
+            ShapeType.MAP,
+            ("externalDocumentation", "traitValidators", "unstableFeatures"),
+        ),
+        (ShapeType.DOCUMENT, ("default", "enumValue")),
+        (ShapeType.ENUM, ("error", "timestampFormat")),
+        (ShapeType.INTEGER, ("httpError",)),
+    )
+    for name in names
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,28 +176,17 @@ class Selector:
         roots: list[frozenset[Shape]] = []
         for expression in self._roots:
             context = _Context(graph, roots, self._variable_names)
-            matches: set[Shape] = set()
-
-            def capture_root(result: Shape) -> bool:
-                matches.add(result)
-                return False
-
-            for shape in graph.shapes:
-                context.clear_variables()
-                expression.push(context, shape, capture_root)
-            roots.append(frozenset(matches))
+            roots.append(
+                context.collect(expression, graph.shapes, reset_variables=True)
+            )
 
         context = _Context(graph, roots, self._variable_names)
-        result: set[ShapeId] = set()
-
-        def capture(selected: Shape) -> bool:
-            result.add(selected.id)
-            return False
-
-        for shape in graph.shapes:
-            context.clear_variables()
-            self._expression.push(context, shape, capture)
-        return frozenset(result)
+        return frozenset(
+            shape.id
+            for shape in context.collect(
+                self._expression, graph.shapes, reset_variables=True
+            )
+        )
 
     @property
     def is_identity(self) -> bool:
@@ -195,6 +242,27 @@ class _TypeExpression(_Expression):
         return False
 
 
+_TYPE_EXPRESSIONS: Final[Mapping[str, _TypeExpression]] = {
+    **{
+        shape_type.value: _TypeExpression(frozenset({shape_type}))
+        for shape_type in ShapeType
+    },
+    "number": _TypeExpression(_NUMBERS),
+    "simpleType": _TypeExpression(_SIMPLE),
+    "collection": _TypeExpression(frozenset({ShapeType.LIST})),
+    "set": _TypeExpression(frozenset({ShapeType.LIST})),
+    "aggregateType": _TypeExpression(_AGGREGATE),
+    "serviceType": _TypeExpression(_SERVICE),
+    "dataType": _TypeExpression(_SIMPLE | _AGGREGATE),
+    "string": _TypeExpression(
+        frozenset({ShapeType.STRING}), frozenset({ShapeType.ENUM})
+    ),
+    "integer": _TypeExpression(
+        frozenset({ShapeType.INTEGER}), frozenset({ShapeType.INT_ENUM})
+    ),
+}
+
+
 @dataclass(frozen=True, slots=True)
 class _AnyExpression(_Expression):
     expressions: tuple[_Expression, ...]
@@ -248,14 +316,7 @@ class _VariableStoreExpression(_Expression):
     expression: _Expression
 
     def push(self, context: _Context, shape: Shape, receiver: _Receiver) -> bool:
-        captures: set[Shape] = set()
-
-        def capture(result: Shape) -> bool:
-            captures.add(result)
-            return False
-
-        self.expression.push(context, shape, capture)
-        context.variables[self.slot] = frozenset(captures)
+        context.variables[self.slot] = context.collect(self.expression, (shape,))
         return receiver(shape)
 
 
@@ -264,10 +325,7 @@ class _VariableGetExpression(_Expression):
     slot: int
 
     def push(self, context: _Context, shape: Shape, receiver: _Receiver) -> bool:
-        for result in context.variable(self.slot):
-            if receiver(result):
-                return True
-        return False
+        return any(receiver(result) for result in context.variable(self.slot))
 
 
 @dataclass(frozen=True, slots=True)
@@ -275,10 +333,7 @@ class _RootExpression(_Expression):
     index: int
 
     def push(self, context: _Context, shape: Shape, receiver: _Receiver) -> bool:
-        for result in context.roots[self.index]:
-            if receiver(result):
-                return True
-        return False
+        return any(receiver(result) for result in context.roots[self.index])
 
 
 @dataclass(frozen=True, slots=True)
@@ -290,9 +345,7 @@ class _NeighborExpression(_Expression):
         for edge in context.graph.neighbors(
             shape, forward=self.forward, include_traits="trait" in self.labels
         ):
-            if self.labels and edge.label not in self.labels:
-                continue
-            if receiver(edge.target):
+            if (not self.labels or edge.label in self.labels) and receiver(edge.target):
                 return True
         return False
 
@@ -353,13 +406,14 @@ class _TopDownExpression(_Expression):
     def push(self, context: _Context, shape: Shape, receiver: _Receiver) -> bool:
         if shape.type not in _SERVICE:
             return False
-        visited: set[Shape] = set()
+        visited: set[tuple[Shape, bool]] = set()
         pending = [(shape, False)]
         while pending:
             current, qualified = pending.pop()
-            if current in visited:
+            state = (current, qualified)
+            if state in visited:
                 continue
-            visited.add(current)
+            visited.add(state)
             if not qualified and context.receives(self.qualifier, current):
                 qualified = True
             if (
@@ -375,7 +429,7 @@ class _TopDownExpression(_Expression):
                 for edge in context.graph.neighbors(
                     current, forward=True, include_traits=False
                 )
-                if edge.label in {"operation", "resource"}
+                if edge.label in _TOPDOWN_RELATIONSHIPS
             ]
             pending.extend((child, qualified) for child in reversed(children))
         return False
@@ -389,11 +443,11 @@ class _AttributeExpression(_Expression):
     insensitive: bool = False
 
     def push(self, context: _Context, shape: Shape, receiver: _Receiver) -> bool:
-        actual = _shape_value(shape, context).path(self.path)
-        if self.comparator is None:
-            matches = actual.present
-        else:
-            matches = any(
+        actual = _Value("shape", shape, context).path(self.path)
+        matches = (
+            actual.present
+            if self.comparator is None
+            else any(
                 _compare(
                     self.comparator,
                     actual,
@@ -402,6 +456,7 @@ class _AttributeExpression(_Expression):
                 )
                 for value in self.expected
             )
+        )
         return receiver(shape) if matches else False
 
 
@@ -431,7 +486,7 @@ class _ScopedAttributeExpression(_Expression):
     assertions: tuple[_ScopedAssertion, ...]
 
     def push(self, context: _Context, shape: Shape, receiver: _Receiver) -> bool:
-        value = _shape_value(shape, context).path(self.path)
+        value = _Value("shape", shape, context).path(self.path)
         if not value.present:
             return False
         for scope in value.flatten():
@@ -455,7 +510,6 @@ class _ScopedAttributeExpression(_Expression):
 class _Edge:
     target: Shape
     label: str
-    trait: bool = False
 
 
 class _Graph:
@@ -466,15 +520,14 @@ class _Graph:
         for shape in model.iter_shapes(include_prelude=True):
             shapes.append(shape)
             shapes.extend(shape.members.values())
-        self.shapes = tuple(shapes)
-        virtual_traits = _virtual_trait_shapes(model, self.shapes)
-        graph_shapes = (*self.shapes, *virtual_traits.values())
+        virtual_traits = _virtual_trait_shapes(model, shapes)
+        self.shapes = (*shapes, *virtual_traits.values())
         self._forward: dict[Shape, tuple[_Edge, ...]] = {}
         reverse: dict[Shape, list[_Edge]] = {}
         trait_forward: dict[Shape, list[_Edge]] = {}
         trait_reverse: dict[Shape, list[_Edge]] = {}
 
-        for shape in graph_shapes:
+        for shape in self.shapes:
             edges = (
                 ()
                 if shape.id in virtual_traits
@@ -487,15 +540,15 @@ class _Graph:
                 target = model.find_shape(trait_id) or virtual_traits.get(trait_id)
                 if target is None:
                     continue
-                trait_forward.setdefault(shape, []).append(_Edge(target, "trait", True))
-                trait_reverse.setdefault(target, []).append(_Edge(shape, "trait", True))
+                trait_forward.setdefault(shape, []).append(_Edge(target, "trait"))
+                trait_reverse.setdefault(target, []).append(_Edge(shape, "trait"))
 
-        self._reverse = {shape: tuple(reverse.get(shape, ())) for shape in graph_shapes}
+        self._reverse = {shape: tuple(reverse.get(shape, ())) for shape in self.shapes}
         self._trait_forward = {
-            shape: tuple(trait_forward.get(shape, ())) for shape in graph_shapes
+            shape: tuple(trait_forward.get(shape, ())) for shape in self.shapes
         }
         self._trait_reverse = {
-            shape: tuple(trait_reverse.get(shape, ())) for shape in graph_shapes
+            shape: tuple(trait_reverse.get(shape, ())) for shape in self.shapes
         }
 
     def neighbors(
@@ -582,6 +635,26 @@ class _Context:
             return frozenset()
         return self.variable(slot)
 
+    def collect(
+        self,
+        expression: _Expression,
+        shapes: Iterable[Shape],
+        *,
+        reset_variables: bool = False,
+    ) -> frozenset[Shape]:
+        """Collect every result produced by an expression."""
+        matches: set[Shape] = set()
+
+        def capture(result: Shape) -> bool:
+            matches.add(result)
+            return False
+
+        for shape in shapes:
+            if reset_variables:
+                self.clear_variables()
+            expression.push(self, shape, capture)
+        return frozenset(matches)
+
     def receives(self, expression: _Expression, shape: Shape) -> bool:
         received = False
 
@@ -599,10 +672,6 @@ class _Value:
     kind: str
     value: _ValueData = None
     context: _Context | None = None
-
-    @classmethod
-    def empty(cls) -> _Value:
-        return _EMPTY_VALUE
 
     @classmethod
     def literal(cls, value: bool | int | float | str) -> _Value:
@@ -763,10 +832,6 @@ class _Value:
 _EMPTY_VALUE: Final = _Value("empty")
 
 
-def _shape_value(shape: Shape, context: _Context) -> _Value:
-    return _Value("shape", shape, context)
-
-
 def _absolute_trait(value: str) -> ShapeId:
     return ShapeId.from_string(
         value, default_namespace=None if "#" in value else "smithy.api"
@@ -791,8 +856,12 @@ def _virtual_trait_shapes(
     }
     if not missing:
         return {}
-    missing.add(_TRAIT_TRAIT)
-    if missing & _PRELUDE_AUTH_TRAITS:
+    if model.find_shape(_TRAIT_TRAIT) is None:
+        missing.add(_TRAIT_TRAIT)
+    if (
+        missing & _PRELUDE_AUTH_TRAITS
+        and model.find_shape(_AUTH_DEFINITION_TRAIT) is None
+    ):
         missing.add(_AUTH_DEFINITION_TRAIT)
     empty: Mapping[str, Node] = MappingProxyType({})
     result: dict[ShapeId, Shape] = {}
@@ -802,7 +871,7 @@ def _virtual_trait_shapes(
             traits[_AUTH_DEFINITION_TRAIT] = empty
         result[shape_id] = Shape(
             id=shape_id,
-            type=ShapeType.STRUCTURE,
+            type=_PRELUDE_TRAIT_TYPES.get(shape_id, ShapeType.STRUCTURE),
             traits=MappingProxyType(traits),
         )
     return result
@@ -863,6 +932,8 @@ def _compare(comparator: str, lhs: _Value, rhs: _Value, insensitive: bool) -> bo
                     left_number = Decimal(a)
                     right_number = Decimal(b)
                 except InvalidOperation:
+                    continue
+                if not left_number.is_finite() or not right_number.is_finite():
                     continue
                 if comparator == ">" and left_number > right_number:
                     return True
@@ -962,7 +1033,7 @@ class _Parser:
             self._position += 1
             return self._parse_variable()
         token = self._identifier()
-        type_expression = _type_expression(token)
+        type_expression = _TYPE_EXPRESSIONS.get(token)
         if type_expression is None:
             self._error(f"Unknown shape type: {token}")
         return type_expression
@@ -1079,7 +1150,8 @@ class _Parser:
         self._ws()
         if self._take("@"):
             self._expect("{")
-            path = self._parse_path(allow_empty=False)
+            self._ws()
+            path = () if self._peek() == "}" else self._parse_path(allow_empty=False)
             self._expect("}")
             self._ws()
             return _ScopedOperand(path=path)
@@ -1162,7 +1234,10 @@ class _Parser:
             return match.group()
         start = self._position
         while (
-            not self._eof and not self._peek().isspace() and self._peek() not in ",]|}"
+            not self._eof
+            and not self._peek().isspace()
+            and self._peek() not in ",]|}"
+            and not self._source.startswith("&&", self._position)
         ):
             self._position += 1
         if start == self._position:
@@ -1218,28 +1293,3 @@ class _Parser:
         line_start = self._source.rfind("\n", 0, self._position) + 1
         column = self._position - line_start + 1
         raise SelectorSyntaxError(f"{message} at line {line}, column {column}")
-
-
-def _type_expression(kind_name: str) -> _Expression | None:
-    if kind_name == "number":
-        return _TypeExpression(_NUMBERS)
-    if kind_name == "simpleType":
-        return _TypeExpression(_SIMPLE)
-    if kind_name in {"collection", "set"}:
-        return _TypeExpression(frozenset({ShapeType.LIST}))
-    if kind_name == "aggregateType":
-        return _TypeExpression(_AGGREGATE)
-    if kind_name == "serviceType":
-        return _TypeExpression(_SERVICE)
-    if kind_name == "dataType":
-        return _TypeExpression(_SIMPLE | _AGGREGATE)
-    try:
-        shape_type = ShapeType(kind_name)
-    except ValueError:
-        return None
-    aliases: frozenset[ShapeType] = frozenset()
-    if shape_type is ShapeType.STRING:
-        aliases = frozenset({ShapeType.ENUM})
-    elif shape_type is ShapeType.INTEGER:
-        aliases = frozenset({ShapeType.INT_ENUM})
-    return _TypeExpression(frozenset({shape_type}), aliases)

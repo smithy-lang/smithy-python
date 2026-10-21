@@ -11,6 +11,7 @@ from dataclasses import dataclass, replace
 
 from .dependencies import SMITHY_CORE, Dependency
 from .model import (
+    DECLARATION_TYPES,
     ListShape,
     MapShape,
     MemberShape,
@@ -33,7 +34,8 @@ _KEYWORDS = frozenset(
     "not or pass raise return try while with yield".split()
 )
 _ENUMS = frozenset({ShapeType.ENUM, ShapeType.INT_ENUM})
-_NAMED = _ENUMS | {ShapeType.STRUCTURE, ShapeType.UNION}
+_ACRONYM_BOUNDARY = re.compile(r"([A-Z]+)([A-Z][a-z])")
+_WORD_BOUNDARY = re.compile(r"([a-z0-9])([A-Z])")
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,8 +93,8 @@ def _name(
     if pascal:
         result = "".join(word[:1].upper() + word[1:] for word in value.split("_"))
     else:
-        value = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", value)
-        value = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", value)
+        value = _ACRONYM_BOUNDARY.sub(r"\1_\2", value)
+        value = _WORD_BOUNDARY.sub(r"\1_\2", value)
         result = "_".join(word.lower() for word in value.split("_") if word)
     if constant:
         result = result.upper()
@@ -101,6 +103,26 @@ def _name(
     if result in _KEYWORDS or result in reserved:
         result += "_"
     return result
+
+
+def _plan_schema_names(selection: Selection) -> dict[ShapeId, str]:
+    names: dict[ShapeId, str] = {}
+    used: set[str] = set()
+    for shape in selection.shapes:
+        selected = (
+            selection.service.rename.get(shape.id, shape.id.name)
+            if selection.service
+            else shape.id.name
+        )
+        base = _name(selected, constant=True)
+        name = base
+        suffix = 2
+        while name in used:
+            name = f"{base}_{suffix}"
+            suffix += 1
+        used.add(name)
+        names[shape.id] = name
+    return names
 
 
 class SymbolProvider:
@@ -125,14 +147,14 @@ class SymbolProvider:
         self._reserved_member_names: dict[ShapeId, frozenset[str]] = {}
         self._type_references: dict[ShapeId, TypeReference] = {}
         self._declaration_names: dict[ShapeId, str] = {}
-        self._schema_names: dict[ShapeId, str] = {}
+        self._schema_names = _plan_schema_names(selection)
         self._union_variant_names: dict[ShapeId, str] = {}
         self._union_unknown_names: dict[ShapeId, str] = {}
         self._selected = frozenset(shape.id for shape in selection.shapes)
-        self._shape_names = frozenset(shape.id.name for shape in model.iter_shapes())
+        self._shape_names: frozenset[str] = frozenset()
         declarations: dict[str, ShapeId] = {}
         for shape in selection.shapes:
-            if shape.type not in _NAMED or shape.has_trait("streaming"):
+            if shape.type not in DECLARATION_TYPES or shape.has_trait("streaming"):
                 continue
             self._check_collision(
                 declarations, self.declaration_name(shape.id), shape.id
@@ -144,6 +166,17 @@ class SymbolProvider:
             members: dict[str, ShapeId] = {}
             for member in shape.members.values():
                 self._check_collision(members, self.member_name(member.id), member.id)
+        self._shape_names = frozenset(declarations)
+        for shape in selection.shapes:
+            if shape.type is not ShapeType.UNION or shape.has_trait("streaming"):
+                continue
+            for member in shape.members.values():
+                self._check_collision(
+                    declarations, self.union_variant_name(member.id), member.id
+                )
+            self._check_collision(
+                declarations, self.union_unknown_name(shape.id), shape.id
+            )
 
     @staticmethod
     def _check_collision(
@@ -155,10 +188,14 @@ class SymbolProvider:
             )
         scope[name] = shape_id
 
-    def _shape(self, shape_id: ShapeId | str) -> Shape:
+    def _selected_shape(self, shape_id: ShapeId | str) -> Shape:
         shape = self._model.get_shape(shape_id)
         if shape.id.root not in self._selected and not self._model.is_prelude(shape):
             raise ModelError(f"Shape {shape.id} is not selected")
+        return shape
+
+    def _shape(self, shape_id: ShapeId | str) -> Shape:
+        shape = self._selected_shape(shape_id)
         if (
             shape.is_mixin
             or shape.has_trait("trait")
@@ -178,7 +215,7 @@ class SymbolProvider:
         cached = self._declaration_names.get(shape.id)
         if cached is not None:
             return cached
-        if shape.type not in _NAMED or self._model.is_prelude(shape):
+        if shape.type not in DECLARATION_TYPES or self._model.is_prelude(shape):
             raise ModelError(f"No generated declaration for {shape.id}")
         service = self._selection.service
         name = service.rename.get(shape.id, shape.id.name) if service else shape.id.name
@@ -192,15 +229,21 @@ class SymbolProvider:
 
     def schema_name(self, shape_id: ShapeId | str) -> str:
         """Return the module-level compact schema constant name."""
-        shape = self._shape(shape_id)
+        shape = self._selected_shape(shape_id)
+        if (
+            shape.id.is_member
+            or shape.is_mixin
+            or shape.has_trait("trait")
+            or shape.type
+            in (ShapeType.SERVICE, ShapeType.OPERATION, ShapeType.RESOURCE)
+        ):
+            raise ModelError(f"No data schema for {shape.id} ({shape.type})")
         cached = self._schema_names.get(shape.id)
         if cached is not None:
             return cached
-        service = self._selection.service
-        name = service.rename.get(shape.id, shape.id.name) if service else shape.id.name
-        result = _name(name, constant=True)
-        self._schema_names[shape.id] = result
-        return result
+        if self._model.is_prelude(shape):
+            return _name(shape.id.name, constant=True)
+        raise ModelError(f"No schema name planned for {shape.id}")
 
     def union_variant_name(self, shape_id: ShapeId | str) -> str:
         """Return the generated class name for a union member."""
@@ -300,7 +343,7 @@ class SymbolProvider:
         if not isinstance(member, MemberShape):
             raise ModelError(f"Member naming requires a member ID: {member.id}")
         container = self._shape(member.container)
-        if container.type not in _NAMED or self._model.is_prelude(container):
+        if container.type not in DECLARATION_TYPES or self._model.is_prelude(container):
             raise ModelError(f"No generated member name for {member.id}")
         return _name(
             member.name,

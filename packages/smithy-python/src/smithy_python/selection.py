@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from ._selector import Selector
 from .exceptions import InvalidInvocationError, InvalidShapeIdError, ModelError
 from .model import (
+    DECLARATION_TYPES,
     MemberShape,
     Model,
     OperationShape,
@@ -27,15 +28,6 @@ __all__ = [
     "select_shapes",
     "select_type_shapes",
 ]
-
-_DECLARATIONS = frozenset(
-    {
-        ShapeType.STRUCTURE,
-        ShapeType.UNION,
-        ShapeType.ENUM,
-        ShapeType.INT_ENUM,
-    }
-)
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,15 +69,7 @@ def select_shapes(
         _check_names(eligible)
         return Selection(service=None, shapes=eligible, excluded_count=0)
 
-    visited: set[ShapeId] = set()
-    pending = [service.id]
-    while pending:
-        shape_id = pending.pop()
-        if shape_id in visited:
-            continue
-        visited.add(shape_id)
-        pending.extend(_references(model.get_shape(shape_id)))
-
+    visited = _closure(model, service.id)
     selected = tuple(shape for shape in eligible if shape.id in visited)
     return Selection(
         service=service, shapes=selected, excluded_count=len(eligible) - len(selected)
@@ -112,7 +96,7 @@ def select_type_shapes(
     declarations = tuple(
         shape
         for shape in model.iter_shapes()
-        if shape.type in _DECLARATIONS
+        if shape.type in DECLARATION_TYPES
         and not shape.is_mixin
         and not shape.has_trait("trait")
         and not shape.has_trait("private")
@@ -131,13 +115,22 @@ def select_type_shapes(
         if resolved_selector.is_identity
         else resolved_selector.select(model)
     )
+    operation_inputs_and_outputs = {
+        shape_id
+        for operation in model.iter_shapes(OperationShape)
+        for shape_id in (operation.input, operation.output)
+    }
     roots = tuple(
         shape
         for shape in candidates
         if shape.id in selected_ids
         and (
             generate_inputs_and_outputs
-            or (not shape.has_trait("input") and not shape.has_trait("output"))
+            or (
+                shape.id not in operation_inputs_and_outputs
+                and not shape.has_trait("input")
+                and not shape.has_trait("output")
+            )
         )
     )
 
@@ -166,7 +159,11 @@ def select_type_shapes(
 
     shapes = tuple(shape for shape in model.iter_shapes() if shape.id in closure)
     _check_names(
-        tuple(shape for shape in shapes if shape.type in _DECLARATIONS),
+        tuple(
+            shape
+            for shape in shapes
+            if shape.type in DECLARATION_TYPES and not shape.has_trait("streaming")
+        ),
         service=service,
     )
     return Selection(service=service, shapes=shapes, excluded_count=excluded_count)

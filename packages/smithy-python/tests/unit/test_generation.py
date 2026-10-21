@@ -1,8 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-import json
-
 import pytest
 from smithy_python.dependencies import DependencySet
 from smithy_python.files import FileManifest
@@ -37,25 +35,6 @@ def test_types_settings_default_to_identity_selection() -> None:
     assert not settings.generate_inputs_and_outputs
 
 
-def test_generation_plan_preserves_selection_order() -> None:
-    model = load_model(
-        json.dumps(
-            {
-                "smithy": "2.0",
-                "shapes": {
-                    "example#Second": {"type": "string"},
-                    "example#First": {"type": "integer"},
-                },
-            }
-        )
-    )
-    plan = GenerationPlan.from_selection(select_shapes(model))
-    assert tuple(map(str, plan.selected_shape_ids)) == (
-        "example#Second",
-        "example#First",
-    )
-
-
 def test_generation_context_shares_manifest_dependencies() -> None:
     model = load_model('{"smithy": "2.0"}')
     selection = select_shapes(model)
@@ -67,7 +46,7 @@ def test_generation_context_shares_manifest_dependencies() -> None:
         selection=selection,
         settings=settings,
         symbols=symbols,
-        plan=GenerationPlan.from_selection(selection),
+        plan=GenerationPlan.from_selection(model, selection, symbols),
         dependencies=dependencies,
         files=FileManifest(dependencies),
     )
@@ -85,7 +64,7 @@ def test_generation_context_shares_manifest_dependencies() -> None:
         )
 
 
-def test_generation_plan_indexes_names_strings_and_recursive_shapes() -> None:
+def test_generation_plan_orders_schemas_and_plans_names() -> None:
     model = load_model(
         {
             "smithy": "2.0",
@@ -114,36 +93,44 @@ def test_generation_plan_indexes_names_strings_and_recursive_shapes() -> None:
     )
     selection = select_type_shapes(model)
     symbols = SymbolProvider(model, selection, package="example")
-    plan = GenerationPlan.from_selection(selection, symbols)
+    plan = GenerationPlan.from_selection(model, selection, symbols)
 
-    assert tuple(map(str, plan.selected_shape_ids)) == (
-        "example#Leaf",
-        "example#CycleB",
-        "example#CycleA",
-        "example#Root",
-        "example#Choice",
-        "example#ChoiceFoo",
-        "example#ChoiceUnknown",
-    )
-    assert tuple(map(str, (shape.id for shape in plan.recursive_schema_shapes))) == (
-        "example#CycleB",
-        "example#CycleA",
-    )
-    assert tuple(map(str, (shape.id for shape in plan.schema_shapes))) == (
+    assert tuple(map(str, (shape.id for shape in plan.schemas.shapes))) == (
         "example#Leaf",
         "example#Root",
         "example#Choice",
         "example#ChoiceFoo",
         "example#ChoiceUnknown",
+        "example#CycleB",
+        "example#CycleA",
     )
-    assert plan.schema_names[model.get_shape("example#Choice").id] == "CHOICE"
+    assert plan.schemas.names[model.get_shape("example#Choice").id] == "CHOICE"
     assert (
-        plan.union_variant_names[model.get_shape("example#Choice$foo").id]
+        plan.models.union_variant_names[model.get_shape("example#Choice$foo").id]
         == "Choice_Foo"
     )
     assert (
-        plan.union_unknown_names[model.get_shape("example#Choice").id]
+        plan.models.union_unknown_names[model.get_shape("example#Choice").id]
         == "Choice_Unknown"
     )
-    assert plan.schema_strings["example"] == "n0"
-    assert plan.shapes_by_type
+    assert plan.schemas.strings["example"] == "n0"
+
+
+def test_generation_plan_keeps_streaming_schemas_out_of_model_declarations() -> None:
+    model = load_model(
+        {
+            "smithy": "2.0",
+            "shapes": {
+                "example#Events": {
+                    "type": "union",
+                    "traits": {"smithy.api#streaming": {}},
+                }
+            },
+        }
+    )
+    selection = select_type_shapes(model)
+    symbols = SymbolProvider(model, selection, package="example")
+    plan = GenerationPlan.from_selection(model, selection, symbols)
+    shape_id = model.get_shape("example#Events").id
+    assert plan.schemas.names[shape_id] == "EVENTS"
+    assert shape_id not in plan.models.declaration_names

@@ -362,6 +362,16 @@ def test_type_selection_controls_input_output_roots() -> None:
                 "type": "structure",
                 "traits": {"smithy.api#output": {}},
             },
+            "a#ImplicitInput": {
+                "type": "structure",
+                "members": {"value": {"target": "a#Shared"}},
+            },
+            "a#ImplicitOutput": {"type": "structure"},
+            "a#Operation": {
+                "type": "operation",
+                "input": {"target": "a#ImplicitInput"},
+                "output": {"target": "a#ImplicitOutput"},
+            },
             "a#Data": {"type": "structure"},
         }
     )
@@ -370,7 +380,14 @@ def test_type_selection_controls_input_output_roots() -> None:
     assert [
         str(shape.id)
         for shape in select_type_shapes(model, generate_inputs_and_outputs=True).shapes
-    ] == ["a#Shared", "a#Input", "a#Output", "a#Data"]
+    ] == [
+        "a#Shared",
+        "a#Input",
+        "a#Output",
+        "a#ImplicitInput",
+        "a#ImplicitOutput",
+        "a#Data",
+    ]
 
 
 def test_type_selection_checks_only_selected_declaration_names() -> None:
@@ -385,6 +402,25 @@ def test_type_selection_checks_only_selected_declaration_names() -> None:
 
     with pytest.raises(ModelError, match="a#Name, b#name"):
         select_type_shapes(model)
+
+
+def test_type_selection_excludes_streaming_unions_from_name_checks() -> None:
+    model = _model(
+        {
+            "a#Events": {
+                "type": "union",
+                "traits": {"smithy.api#streaming": {}},
+            },
+            "b#Events": {"type": "structure"},
+        }
+    )
+
+    result = select_type_shapes(model)
+
+    assert result.shapes == (
+        model.get_shape("a#Events"),
+        model.get_shape("b#Events"),
+    )
 
 
 def test_type_selection_uses_service_renames_for_name_conflicts() -> None:

@@ -59,7 +59,17 @@ def test_file_manifest_reuses_python_writer_and_records_dependencies(
 
 @pytest.mark.parametrize(
     "path",
-    ("", "/models.py", "example//models.py", "./models.py", "../models.py", "a\\b"),
+    (
+        "",
+        "/models.py",
+        "example//models.py",
+        "./models.py",
+        "../models.py",
+        "a\\b",
+        "D:/outside/models.py",
+        "D:outside/models.py",
+        "nested/D:/outside/models.py",
+    ),
 )
 def test_file_manifest_rejects_invalid_paths(path: str) -> None:
     files = FileManifest()
@@ -134,6 +144,26 @@ def test_stale_owned_path_changed_to_directory_is_retained(tmp_path: Path) -> No
     assert output.joinpath("stale/user.txt").read_text(encoding="utf-8") == "user\n"
 
 
+def test_stale_owned_path_with_symlinked_ancestor_is_retained(tmp_path: Path) -> None:
+    output = tmp_path / "output"
+    first = FileManifest()
+    first.text_file("old/file.txt", "generated\n")
+    first.commit(output)
+    output.joinpath("old/file.txt").unlink()
+    output.joinpath("old").rmdir()
+    output.joinpath("current").mkdir()
+    try:
+        output.joinpath("old").symlink_to("current", target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"Cannot create symlinks: {error}")
+
+    second = FileManifest()
+    second.text_file("current/file.txt", "generated\n")
+    second.commit(output)
+
+    assert output.joinpath("current/file.txt").read_text() == "generated\n"
+
+
 def test_without_previous_manifest_existing_files_are_not_deleted(
     tmp_path: Path,
 ) -> None:
@@ -163,6 +193,23 @@ def test_symlink_that_escapes_output_is_rejected(tmp_path: Path) -> None:
         files.commit(output)
 
     assert not outside.joinpath("generated.txt").exists()
+
+
+def test_symlinked_destination_ancestor_is_rejected(tmp_path: Path) -> None:
+    output = tmp_path / "output"
+    output.mkdir()
+    output.joinpath("real").mkdir()
+    try:
+        output.joinpath("alias").symlink_to("real", target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"Cannot create symlinks: {error}")
+
+    files = FileManifest()
+    files.text_file("alias/generated.txt", "content\n")
+    with pytest.raises(CodegenError, match="symlinked ancestor"):
+        files.commit(output)
+
+    assert not output.joinpath("real/generated.txt").exists()
 
 
 def test_invalid_previous_manifest_prevents_publication(tmp_path: Path) -> None:

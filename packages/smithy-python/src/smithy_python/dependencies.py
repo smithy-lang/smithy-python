@@ -95,7 +95,7 @@ class DependencySet(Collection[Dependency]):
 
 SMITHY_CORE = Dependency(
     package="smithy-core",
-    specifier="~=0.9.0",
+    specifier="~=0.10.0",
     group="runtime",
 )
 """Compatible smithy-core runtime for generated artifacts."""

@@ -166,19 +166,15 @@ symbol providers, or inspect files written by another generator.
 can define their own settings subclasses without casts or a shared union of
 artifact settings.
 
-`GenerationPlan` stores derived model data used by more than one emitter:
+`GenerationPlan` composes focused plans for each emitter.
 
-* Selected shape IDs.
-* Shapes grouped by kind in stable model order.
-* Topologically ordered and recursive schema shapes.
-* Schema constant names.
-* Interned schema strings.
-* Model declaration names and rename mappings.
-* Union variant and unknown-class names.
+`SchemaPlan` contains shapes in schema emission order, filtered trait values,
+schema constant names, and interned schema strings.
+`ModelPlan` contains declaration names, rename mappings, and union variant and
+unknown-class names.
 
 Planning uses iterative graph algorithms so model depth does not consume the
-Python stack. Each index is computed once. The symbol provider continues to
-cache resolved `TypeReference` values.
+Python stack. The symbol provider caches resolved `TypeReference` values.
 
 The plan contains semantic data, not rendered source. Emitters can partition
 files later without recomputing shape relationships.

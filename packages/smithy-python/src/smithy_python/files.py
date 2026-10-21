@@ -8,7 +8,6 @@ import hashlib
 import itertools
 import json
 import os
-import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -37,26 +36,29 @@ type _GeneratedFile = _PythonFile | _TextFile
 
 
 def _normalize_path(path: str) -> str:
+    parts = path.split("/")
     if (
         not path
         or path.startswith("/")
         or "\\" in path
-        or any(part in ("", ".", "..") for part in path.split("/"))
+        or any(
+            part in ("", ".", "..")
+            or (
+                len(part) >= 2
+                and part[0].isascii()
+                and part[0].isalpha()
+                and part[1] == ":"
+            )
+            for part in parts
+        )
     ):
         raise CodegenError(f"Invalid generated path: {path!r}")
     return str(PurePosixPath(path))
 
 
-def _digest_bytes(content: bytes) -> str:
-    return hashlib.sha256(content).hexdigest()
-
-
 def _digest_file(path: Path) -> str:
-    digest = hashlib.sha256()
     with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
+        return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
 class FileManifest:
@@ -115,20 +117,16 @@ class FileManifest:
             self._validate_safe_path(output, path)
 
         output.parent.mkdir(parents=True, exist_ok=True)
-        staging = Path(
-            tempfile.mkdtemp(
-                prefix=f".{output.name or 'output'}.smithy-python-",
-                dir=output.parent,
-            )
-        )
-        try:
+        with tempfile.TemporaryDirectory(
+            prefix=f".{output.name or 'output'}.smithy-python-",
+            dir=output.parent,
+        ) as directory:
+            staging = Path(directory)
             hashes = self._stage_files(staging)
             manifest_content = self._render_manifest(hashes)
             manifest_target = staging / _MANIFEST_PATH
             manifest_target.write_text(manifest_content, encoding="utf-8")
             self._publish(output, staging, hashes, previous)
-        finally:
-            shutil.rmtree(staging, ignore_errors=True)
 
     @staticmethod
     def _claim_public_path(path: str) -> None:
@@ -170,6 +168,10 @@ class FileManifest:
         current = output
         for index, part in enumerate(parts):
             current /= part
+            if index < len(parts) - 1 and current.is_symlink():
+                raise CodegenError(
+                    f"Generated path {path!r} contains a symlinked ancestor"
+                )
             if current.exists():
                 is_target = index == len(parts) - 1
                 if (is_target and current.is_dir()) or (
@@ -238,7 +240,7 @@ class FileManifest:
             target = staging.joinpath(*PurePosixPath(path).parts)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(encoded)
-            hashes[path] = _digest_bytes(encoded)
+            hashes[path] = hashlib.sha256(encoded).hexdigest()
         return hashes
 
     @staticmethod
@@ -267,8 +269,12 @@ class FileManifest:
             os.replace(source, target)
 
         for path in sorted(previous.keys() - hashes.keys()):
-            target = output.joinpath(*PurePosixPath(path).parts)
-            if not target.is_file() or target.is_symlink():
+            parts = PurePosixPath(path).parts
+            target = output.joinpath(*parts)
+            if not target.is_file() or any(
+                output.joinpath(*parts[:index]).is_symlink()
+                for index in range(1, len(parts) + 1)
+            ):
                 continue
             try:
                 unchanged = _digest_file(target) == previous[path]

@@ -28,7 +28,7 @@ id -> value for valued/unknown traits (also carrying any valueless ones present)
 
 import threading
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Final, cast
 
 from . import prelude
 from .schemas import Schema
@@ -37,6 +37,8 @@ from .traits import DynamicTrait, Trait
 
 if TYPE_CHECKING:
     from .documents import DocumentValue
+
+_ENCODING_VERSION: Final = 2
 
 type StaticSchema = tuple[Any, ...]
 # A member target: a prelude int, a sibling tuple, or a lambda returning one. A built
@@ -66,10 +68,28 @@ _PRELUDE: dict[int, Schema] = {
     ShapeType.DOCUMENT.value: prelude.DOCUMENT,
 }
 
-# The UNIT prelude schema, referenced by enum members. Given its own sentinel so it
-# does not collide with a simple-type substitute.
+# Prelude schemas whose identity or traits differ from the ordinary simple-type
+# substitutes use dedicated sentinels.
 UNIT = -1
-_PRELUDE[UNIT] = prelude.UNIT
+PRIMITIVE_BOOLEAN = -2
+PRIMITIVE_BYTE = -3
+PRIMITIVE_SHORT = -4
+PRIMITIVE_INTEGER = -5
+PRIMITIVE_LONG = -6
+PRIMITIVE_FLOAT = -7
+PRIMITIVE_DOUBLE = -8
+_PRELUDE.update(
+    {
+        UNIT: prelude.UNIT,
+        PRIMITIVE_BOOLEAN: prelude.PRIMITIVE_BOOLEAN,
+        PRIMITIVE_BYTE: prelude.PRIMITIVE_BYTE,
+        PRIMITIVE_SHORT: prelude.PRIMITIVE_SHORT,
+        PRIMITIVE_INTEGER: prelude.PRIMITIVE_INTEGER,
+        PRIMITIVE_LONG: prelude.PRIMITIVE_LONG,
+        PRIMITIVE_FLOAT: prelude.PRIMITIVE_FLOAT,
+        PRIMITIVE_DOUBLE: prelude.PRIMITIVE_DOUBLE,
+    }
+)
 
 # Bit index -> trait id for valueless two-state traits; OR of bits encodes any
 # combination.

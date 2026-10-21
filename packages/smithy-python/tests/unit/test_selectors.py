@@ -57,15 +57,25 @@ def test_attributes_projections_scopes_and_comparators() -> None:
                 "type": "string",
                 "traits": {
                     "example#config": {
+                        "enabled": True,
                         "min": 3,
                         "max": 3,
+                        "mode": "foo",
                         "tags": ["internal", "external"],
                     }
                 },
             },
             "example#NoMatch": {
                 "type": "string",
-                "traits": {"example#config": {"min": 1, "max": 3, "tags": []}},
+                "traits": {
+                    "example#config": {
+                        "enabled": False,
+                        "min": 1,
+                        "max": 3,
+                        "mode": "foo",
+                        "tags": [],
+                    }
+                },
             },
         }
     )
@@ -77,6 +87,14 @@ def test_attributes_projections_scopes_and_comparators() -> None:
     assert _select(model, "[@trait|example#config: @{min} = @{max}]") == {
         "example#Match"
     }
+    assert _select(
+        model,
+        "[@trait|example#config|tags|(values): @{} = external]",
+    ) == {"example#Match"}
+    assert _select(
+        model,
+        "[@trait|example#config: @{mode}=foo&&@{enabled}=true]",
+    ) == {"example#Match"}
     assert _select(model, "[id|name ^= match i]") == {"example#Match"}
 
 
@@ -139,6 +157,7 @@ def test_traits_recursive_selector_and_topdown() -> None:
             "example#Derived": {
                 "type": "structure",
                 "mixins": [{"target": "example#Base"}],
+                "traits": {"smithy.api#sensitive": {}},
             },
             "example#Service": {
                 "type": "service",
@@ -159,10 +178,129 @@ def test_traits_recursive_selector_and_topdown() -> None:
     assert _select(model, "-[trait]-> [trait|trait] [id|namespace=example]") == {
         "example#Marker"
     }
+    assert _select(
+        model,
+        "[id=smithy.api#sensitive] <-[trait]- structure",
+    ) == {"example#Derived"}
     assert _select(model, ":topdown([trait|example#Marker])") == {
         "example#Service",
         "example#Operation",
     }
+
+
+def test_virtual_prelude_traits_preserve_shape_types() -> None:
+    model = _model(
+        {
+            "example#Data": {
+                "type": "structure",
+                "traits": {"smithy.api#xmlName": "renamed"},
+            }
+        }
+    )
+
+    assert _select(
+        model,
+        "structure :test(-[trait]-> string [id=smithy.api#xmlName])",
+    ) == {"example#Data"}
+
+
+@pytest.mark.parametrize(
+    ("meta_trait", "applied_trait"),
+    (
+        ("smithy.api#trait", "example#Missing"),
+        ("smithy.api#authDefinition", "smithy.api#httpApiKeyAuth"),
+    ),
+)
+def test_virtual_traits_do_not_shadow_existing_meta_traits(
+    meta_trait: str, applied_trait: str
+) -> None:
+    model = _model(
+        {
+            meta_trait: {
+                "type": "structure",
+                "members": {"value": {"target": "smithy.api#String"}},
+            },
+            "example#Data": {
+                "type": "structure",
+                "traits": {applied_trait: {}},
+            },
+        }
+    )
+
+    assert _select(model, f"[id={meta_trait}] > member") == {f"{meta_trait}$value"}
+
+
+def test_topdown_includes_resource_operations() -> None:
+    model = _model(
+        {
+            "example#Marker": {
+                "type": "structure",
+                "traits": {"smithy.api#trait": {}},
+            },
+            "example#Service": {
+                "type": "service",
+                "version": "1",
+                "resources": [{"target": "example#Resource"}],
+                "traits": {"example#Marker": {}},
+            },
+            "example#Resource": {
+                "type": "resource",
+                "create": {"target": "example#Create"},
+                "collectionOperations": [{"target": "example#Collection"}],
+            },
+            "example#Create": {"type": "operation"},
+            "example#Collection": {"type": "operation"},
+        }
+    )
+
+    assert _select(model, ":topdown([trait|example#Marker])") == {
+        "example#Service",
+        "example#Resource",
+        "example#Create",
+        "example#Collection",
+    }
+
+
+def test_topdown_tracks_qualification_per_path() -> None:
+    model = _model(
+        {
+            "example#Marker": {
+                "type": "structure",
+                "traits": {"smithy.api#trait": {}},
+            },
+            "example#Service": {
+                "type": "service",
+                "version": "1",
+                "operations": [{"target": "example#Operation"}],
+                "resources": [{"target": "example#Resource"}],
+            },
+            "example#Resource": {
+                "type": "resource",
+                "create": {"target": "example#Operation"},
+                "traits": {"example#Marker": {}},
+            },
+            "example#Operation": {"type": "operation"},
+        }
+    )
+
+    assert _select(model, ":topdown([trait|example#Marker])") == {
+        "example#Resource",
+        "example#Operation",
+    }
+
+
+@pytest.mark.parametrize("value", ["NaN", "Infinity", "-Infinity"])
+def test_ordered_comparisons_ignore_non_finite_values(value: str) -> None:
+    model = _model(
+        {
+            "example#Value": {
+                "type": "string",
+                "traits": {"smithy.api#default": value},
+            }
+        }
+    )
+
+    assert _select(model, "[trait|default > 0]") == set()
 
 
 def test_invalid_selector_reports_location() -> None:
