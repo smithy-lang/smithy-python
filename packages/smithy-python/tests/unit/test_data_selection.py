@@ -6,7 +6,7 @@ from __future__ import annotations
 import pytest
 from smithy_python.exceptions import InvalidInvocationError, ModelError
 from smithy_python.model import Model, load_model
-from smithy_python.selection import select_shapes
+from smithy_python.selection import Selector, select_shapes, select_type_shapes
 
 
 def _model(shapes: dict[str, object]) -> Model:
@@ -310,3 +310,98 @@ def test_direct_api_errors_and_empty_selection() -> None:
         select_shapes(
             _model({"a#Name": {"type": "string"}, "b#name": {"type": "string"}})
         )
+
+
+def test_type_selection_does_not_infer_service_and_adds_dependencies() -> None:
+    model = _model(
+        {
+            "a#First": {"type": "service", "errors": [{"target": "a#Hidden"}]},
+            "a#Second": {"type": "service", "errors": [{"target": "a#Public"}]},
+            "a#Shared": {"type": "string"},
+            "a#Public": {
+                "type": "structure",
+                "members": {"value": {"target": "a#Shared"}},
+            },
+            "a#Hidden": {"type": "structure"},
+            "a#Input": {
+                "type": "structure",
+                "traits": {"smithy.api#input": {}},
+            },
+            "a#Private": {
+                "type": "structure",
+                "traits": {"smithy.api#private": {}},
+            },
+        }
+    )
+
+    result = select_type_shapes(
+        model, selector=Selector.parse("structure [id|name=Public]")
+    )
+    assert result.service is None
+    assert [str(shape.id) for shape in result.shapes] == ["a#Shared", "a#Public"]
+
+    result = select_type_shapes(model, service_id="a#Second")
+    assert result.service is model.get_shape("a#Second")
+    assert result.shapes == (
+        model.get_shape("a#Shared"),
+        model.get_shape("a#Public"),
+    )
+    assert result.excluded_count == 2
+
+
+def test_type_selection_controls_input_output_roots() -> None:
+    model = _model(
+        {
+            "a#Shared": {"type": "string"},
+            "a#Input": {
+                "type": "structure",
+                "traits": {"smithy.api#input": {}},
+                "members": {"value": {"target": "a#Shared"}},
+            },
+            "a#Output": {
+                "type": "structure",
+                "traits": {"smithy.api#output": {}},
+            },
+            "a#Data": {"type": "structure"},
+        }
+    )
+
+    assert [str(shape.id) for shape in select_type_shapes(model).shapes] == ["a#Data"]
+    assert [
+        str(shape.id)
+        for shape in select_type_shapes(model, generate_inputs_and_outputs=True).shapes
+    ] == ["a#Shared", "a#Input", "a#Output", "a#Data"]
+
+
+def test_type_selection_checks_only_selected_declaration_names() -> None:
+    model = _model(
+        {
+            "a#Name": {"type": "structure"},
+            "b#name": {"type": "structure"},
+        }
+    )
+    result = select_type_shapes(model, selector=Selector.parse("[id|namespace=a]"))
+    assert result.shapes == (model.get_shape("a#Name"),)
+
+    with pytest.raises(ModelError, match="a#Name, b#name"):
+        select_type_shapes(model)
+
+
+def test_type_selection_uses_service_renames_for_name_conflicts() -> None:
+    model = _model(
+        {
+            "a#Service": {
+                "type": "service",
+                "errors": [{"target": "a#Name"}, {"target": "b#name"}],
+                "rename": {"b#name": "OtherName"},
+            },
+            "a#Name": {"type": "structure"},
+            "b#name": {"type": "structure"},
+        }
+    )
+
+    result = select_type_shapes(model, service_id="a#Service")
+    assert result.shapes == (
+        model.get_shape("a#Name"),
+        model.get_shape("b#name"),
+    )

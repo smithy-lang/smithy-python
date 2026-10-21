@@ -34,3 +34,7 @@ class InvalidShapeIdError(ModelError, ValueError):
 
 class ShapeNotFoundError(ModelError, LookupError):
     """Raised when a shape ID does not resolve to a shape in the model."""
+
+
+class SelectorSyntaxError(CodegenError, ValueError):
+    """Raised when a Smithy selector expression is invalid."""

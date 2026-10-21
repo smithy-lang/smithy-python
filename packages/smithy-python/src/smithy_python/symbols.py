@@ -124,7 +124,12 @@ class SymbolProvider:
         self._package = package
         self._reserved_member_names: dict[ShapeId, frozenset[str]] = {}
         self._type_references: dict[ShapeId, TypeReference] = {}
+        self._declaration_names: dict[ShapeId, str] = {}
+        self._schema_names: dict[ShapeId, str] = {}
+        self._union_variant_names: dict[ShapeId, str] = {}
+        self._union_unknown_names: dict[ShapeId, str] = {}
         self._selected = frozenset(shape.id for shape in selection.shapes)
+        self._shape_names = frozenset(shape.id.name for shape in model.iter_shapes())
         declarations: dict[str, ShapeId] = {}
         for shape in selection.shapes:
             if shape.type not in _NAMED or shape.has_trait("streaming"):
@@ -170,6 +175,9 @@ class SymbolProvider:
     def declaration_name(self, shape_id: ShapeId | str) -> str:
         """Return a generated type's PascalCase name; aliases have no declaration."""
         shape = self._shape(shape_id)
+        cached = self._declaration_names.get(shape.id)
+        if cached is not None:
+            return cached
         if shape.type not in _NAMED or self._model.is_prelude(shape):
             raise ModelError(f"No generated declaration for {shape.id}")
         service = self._selection.service
@@ -179,6 +187,53 @@ class SymbolProvider:
             raise ModelError(
                 f"Invalid Python declaration name {result!r} for {shape.id}"
             )
+        self._declaration_names[shape.id] = result
+        return result
+
+    def schema_name(self, shape_id: ShapeId | str) -> str:
+        """Return the module-level compact schema constant name."""
+        shape = self._shape(shape_id)
+        cached = self._schema_names.get(shape.id)
+        if cached is not None:
+            return cached
+        service = self._selection.service
+        name = service.rename.get(shape.id, shape.id.name) if service else shape.id.name
+        result = _name(name, constant=True)
+        self._schema_names[shape.id] = result
+        return result
+
+    def union_variant_name(self, shape_id: ShapeId | str) -> str:
+        """Return the generated class name for a union member."""
+        member = self._shape(shape_id)
+        if not isinstance(member, MemberShape):
+            raise ModelError(f"Union variant naming requires a member ID: {member.id}")
+        cached = self._union_variant_names.get(member.id)
+        if cached is not None:
+            return cached
+        container = self._shape(member.container)
+        if container.type is not ShapeType.UNION:
+            raise ModelError(f"{member.id} is not a union member")
+        container_name = self.declaration_name(container.id)
+        capitalized = member.name[:1].upper() + member.name[1:]
+        result = container_name + capitalized
+        if result in self._shape_names:
+            result = container_name + "_" + capitalized
+        self._union_variant_names[member.id] = result
+        return result
+
+    def union_unknown_name(self, shape_id: ShapeId | str) -> str:
+        """Return the generated unknown-variant class name for a union."""
+        shape = self._shape(shape_id)
+        cached = self._union_unknown_names.get(shape.id)
+        if cached is not None:
+            return cached
+        if shape.type is not ShapeType.UNION:
+            raise ModelError(f"{shape.id} is not a union")
+        container_name = self.declaration_name(shape.id)
+        result = container_name + "Unknown"
+        if result in self._shape_names:
+            result = container_name + "_Unknown"
+        self._union_unknown_names[shape.id] = result
         return result
 
     def type_reference(self, shape_id: ShapeId | str) -> TypeReference:

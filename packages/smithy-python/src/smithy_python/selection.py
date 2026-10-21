@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Self
 
+from ._selector import Selector
 from .exceptions import InvalidInvocationError, InvalidShapeIdError, ModelError
 from .model import (
     MemberShape,
@@ -20,28 +20,22 @@ from .model import (
     ShapeType,
 )
 
-__all__ = ["Selection", "resolve_service", "select_shapes"]
+__all__ = [
+    "Selection",
+    "Selector",
+    "resolve_service",
+    "select_shapes",
+    "select_type_shapes",
+]
 
-
-@dataclass(frozen=True, slots=True)
-class _Identity:
-    pass
-
-
-@dataclass(frozen=True, slots=True)
-class Selector:
-    """A parsed Smithy selector.
-
-    Selector parsing and evaluation are added with generation planning. The
-    identity value is sufficient for settings that do not narrow selection.
-    """
-
-    _expression: _Identity
-
-    @classmethod
-    def identity(cls) -> Self:
-        """Return a selector that retains every candidate shape."""
-        return cls(_Identity())
+_DECLARATIONS = frozenset(
+    {
+        ShapeType.STRUCTURE,
+        ShapeType.UNION,
+        ShapeType.ENUM,
+        ShapeType.INT_ENUM,
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,6 +92,98 @@ def select_shapes(
     )
 
 
+def select_type_shapes(
+    model: Model,
+    *,
+    service_id: str | None = None,
+    selector: Selector | None = None,
+    generate_inputs_and_outputs: bool = False,
+) -> Selection:
+    """Select declarations and their schema dependencies for standalone types.
+
+    Unlike client selection, this function never infers a service. A selector
+    narrows declaration roots before their transitive member targets are added.
+    """
+    service = (
+        resolve_service(model, service_id=service_id)
+        if service_id is not None
+        else None
+    )
+    declarations = tuple(
+        shape
+        for shape in model.iter_shapes()
+        if shape.type in _DECLARATIONS
+        and not shape.is_mixin
+        and not shape.has_trait("trait")
+        and not shape.has_trait("private")
+    )
+    if service is None:
+        candidates = declarations
+        excluded_count = 0
+    else:
+        closure = _closure(model, service.id)
+        candidates = tuple(shape for shape in declarations if shape.id in closure)
+        excluded_count = len(declarations) - len(candidates)
+
+    resolved_selector = selector or Selector.identity()
+    selected_ids = (
+        frozenset(shape.id for shape in candidates)
+        if resolved_selector.is_identity
+        else resolved_selector.select(model)
+    )
+    roots = tuple(
+        shape
+        for shape in candidates
+        if shape.id in selected_ids
+        and (
+            generate_inputs_and_outputs
+            or (not shape.has_trait("input") and not shape.has_trait("output"))
+        )
+    )
+
+    closure = {shape.id for shape in roots}
+    pending = list(closure)
+    while pending:
+        shape = model.get_shape(pending.pop())
+        for member in shape.members.values():
+            target = model.get_shape(member.target)
+            if (
+                model.is_prelude(target)
+                or target.id in closure
+                or target.is_mixin
+                or target.has_trait("trait")
+                or target.type
+                in {
+                    ShapeType.SERVICE,
+                    ShapeType.OPERATION,
+                    ShapeType.RESOURCE,
+                    ShapeType.MEMBER,
+                }
+            ):
+                continue
+            closure.add(target.id)
+            pending.append(target.id)
+
+    shapes = tuple(shape for shape in model.iter_shapes() if shape.id in closure)
+    _check_names(
+        tuple(shape for shape in shapes if shape.type in _DECLARATIONS),
+        service=service,
+    )
+    return Selection(service=service, shapes=shapes, excluded_count=excluded_count)
+
+
+def _closure(model: Model, root: ShapeId) -> set[ShapeId]:
+    visited: set[ShapeId] = set()
+    pending = [root]
+    while pending:
+        shape_id = pending.pop()
+        if shape_id in visited:
+            continue
+        visited.add(shape_id)
+        pending.extend(_references(model.get_shape(shape_id)))
+    return visited
+
+
 def _references(shape: Shape) -> Iterator[ShapeId]:
     # Only semantic relationships are edges, never trait nodes, rename entries,
     # or mixin declarations (the loader has already flattened their contents).
@@ -131,10 +217,13 @@ def _references(shape: Shape) -> Iterator[ShapeId]:
         yield from shape.resources
 
 
-def _check_names(shapes: tuple[Shape, ...]) -> None:
+def _check_names(
+    shapes: tuple[Shape, ...], *, service: ServiceShape | None = None
+) -> None:
     by_name: dict[str, list[ShapeId]] = {}
     for shape in shapes:
-        by_name.setdefault(shape.id.name.casefold(), []).append(shape.id)
+        name = service.rename.get(shape.id, shape.id.name) if service else shape.id.name
+        by_name.setdefault(name.casefold(), []).append(shape.id)
     conflicts = [ids for ids in by_name.values() if len(ids) > 1]
     if conflicts:
         details = "; ".join(

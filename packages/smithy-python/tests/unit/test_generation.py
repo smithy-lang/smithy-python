@@ -13,7 +13,7 @@ from smithy_python.generation import (
     TypesSettings,
 )
 from smithy_python.model import load_model
-from smithy_python.selection import Selector, select_shapes
+from smithy_python.selection import Selector, select_shapes, select_type_shapes
 from smithy_python.symbols import SymbolProvider
 
 
@@ -83,3 +83,67 @@ def test_generation_context_shares_manifest_dependencies() -> None:
             dependencies=dependencies,
             files=FileManifest(),
         )
+
+
+def test_generation_plan_indexes_names_strings_and_recursive_shapes() -> None:
+    model = load_model(
+        {
+            "smithy": "2.0",
+            "shapes": {
+                "example#Leaf": {"type": "string"},
+                "example#CycleB": {
+                    "type": "structure",
+                    "members": {"a": {"target": "example#CycleA"}},
+                },
+                "example#CycleA": {
+                    "type": "structure",
+                    "members": {"b": {"target": "example#CycleB"}},
+                },
+                "example#Root": {
+                    "type": "structure",
+                    "members": {"leaf": {"target": "example#Leaf"}},
+                },
+                "example#Choice": {
+                    "type": "union",
+                    "members": {"foo": {"target": "example#Leaf"}},
+                },
+                "example#ChoiceFoo": {"type": "structure"},
+                "example#ChoiceUnknown": {"type": "structure"},
+            },
+        }
+    )
+    selection = select_type_shapes(model)
+    symbols = SymbolProvider(model, selection, package="example")
+    plan = GenerationPlan.from_selection(selection, symbols)
+
+    assert tuple(map(str, plan.selected_shape_ids)) == (
+        "example#Leaf",
+        "example#CycleB",
+        "example#CycleA",
+        "example#Root",
+        "example#Choice",
+        "example#ChoiceFoo",
+        "example#ChoiceUnknown",
+    )
+    assert tuple(map(str, (shape.id for shape in plan.recursive_schema_shapes))) == (
+        "example#CycleB",
+        "example#CycleA",
+    )
+    assert tuple(map(str, (shape.id for shape in plan.schema_shapes))) == (
+        "example#Leaf",
+        "example#Root",
+        "example#Choice",
+        "example#ChoiceFoo",
+        "example#ChoiceUnknown",
+    )
+    assert plan.schema_names[model.get_shape("example#Choice").id] == "CHOICE"
+    assert (
+        plan.union_variant_names[model.get_shape("example#Choice$foo").id]
+        == "Choice_Foo"
+    )
+    assert (
+        plan.union_unknown_names[model.get_shape("example#Choice").id]
+        == "Choice_Unknown"
+    )
+    assert plan.schema_strings["example"] == "n0"
+    assert plan.shapes_by_type
