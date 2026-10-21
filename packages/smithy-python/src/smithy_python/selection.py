@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass
+from typing import Self
 
 from .exceptions import InvalidInvocationError, InvalidShapeIdError, ModelError
 from .model import (
@@ -20,6 +21,27 @@ from .model import (
 )
 
 __all__ = ["Selection", "resolve_service", "select_shapes"]
+
+
+@dataclass(frozen=True, slots=True)
+class _Identity:
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class Selector:
+    """A parsed Smithy selector.
+
+    Selector parsing and evaluation are added with generation planning. The
+    identity value is sufficient for settings that do not narrow selection.
+    """
+
+    _expression: _Identity
+
+    @classmethod
+    def identity(cls) -> Self:
+        """Return a selector that retains every candidate shape."""
+        return cls(_Identity())
 
 
 @dataclass(frozen=True, slots=True)

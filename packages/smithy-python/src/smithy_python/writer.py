@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 from unicodedata import normalize
 
+from .dependencies import DependencySet
 from .exceptions import CodegenError
 from .symbols import TypeReference
 
@@ -347,14 +348,24 @@ def _analyze(
 class PythonWriter:
     """Write trusted Python lines, retaining type references until rendering."""
 
-    def __init__(self, module: str) -> None:
+    def __init__(
+        self, module: str, *, dependencies: DependencySet | None = None
+    ) -> None:
         _validate_module(module, relative=False)
         self._module = _binding(module)
+        self._dependencies = dependencies
         self._depth = 0
         self._lines: list[tuple[int, tuple[str | TypeReference, ...]]] = []
 
     def line(self, *parts: str | TypeReference) -> None:
         """Append one line, concatenating its parts without separators."""
+        if self._dependencies is not None:
+            pending = [part for part in parts if isinstance(part, TypeReference)]
+            while pending:
+                reference = pending.pop()
+                for dependency in reference.dependencies:
+                    self._dependencies.add(dependency)
+                pending.extend(reference.arguments)
         self._lines.append((self._depth, parts))
 
     @contextmanager

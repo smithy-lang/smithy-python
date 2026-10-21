@@ -5,6 +5,7 @@ import json
 import keyword
 
 import pytest
+from smithy_python.dependencies import SMITHY_CORE
 from smithy_python.model import MemberShape, Model, load_model
 from smithy_python.selection import select_shapes
 from smithy_python.symbols import SymbolProvider
@@ -89,8 +90,10 @@ def test_type_references(kind: str, name: str, module: str) -> None:
     model = model_with({"example#HTTPServer": {"type": kind}})
     symbols = SymbolProvider(model, select_shapes(model), package="example.client")
     ref = symbols.type_reference("example#HTTPServer")
-    assert ref == TypeReference(name, module)
-    assert hash(ref) == hash(TypeReference(name, module))
+    dependencies = (SMITHY_CORE,) if kind == "document" else ()
+    expected = TypeReference(name, module, dependencies=dependencies)
+    assert ref == expected
+    assert hash(ref) == hash(expected)
     with pytest.raises(FrozenInstanceError):
         setattr(ref, "name", "Changed")
     if module != "example.client.models" and kind not in ("enum", "intEnum"):
@@ -348,7 +351,7 @@ def test_only_emitted_declarations_collide() -> None:
         "Document", "pkg.models"
     )
     assert symbols.type_reference("smithy.api#Document") == TypeReference(
-        "Document", "smithy_core.documents"
+        "Document", "smithy_core.documents", dependencies=(SMITHY_CORE,)
     )
     assert symbols.member_name("example#Document$list") == "list"
     assert symbols.member_name("example#Document$dict") == "dict"

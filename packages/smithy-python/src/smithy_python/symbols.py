@@ -9,6 +9,7 @@ import unicodedata
 from collections.abc import Callable, Collection
 from dataclasses import dataclass, replace
 
+from .dependencies import SMITHY_CORE, Dependency
 from .model import (
     ListShape,
     MapShape,
@@ -41,13 +42,15 @@ class TypeReference:
 
     ``module=None`` denotes the None literal. ``nullable`` permits None in
     addition to this reference, and is used only for sparse collection entries.
-    No imports or annotation rendering are performed.
+    Dependencies are recorded when a writer consumes the reference. No imports
+    or annotation rendering are performed here.
     """
 
     name: str
     module: str | None = None
     arguments: tuple[TypeReference, ...] = ()
     nullable: bool = False
+    dependencies: tuple[Dependency, ...] = ()
 
 
 # Types whose reference never depends on the shape: Smithy's simple types, with
@@ -72,7 +75,9 @@ _FIXED_TYPES = {
     ShapeType.BLOB: TypeReference("bytes", "builtins"),
     ShapeType.BIG_DECIMAL: TypeReference("Decimal", "decimal"),
     ShapeType.TIMESTAMP: TypeReference("datetime", "datetime"),
-    ShapeType.DOCUMENT: TypeReference("Document", "smithy_core.documents"),
+    ShapeType.DOCUMENT: TypeReference(
+        "Document", "smithy_core.documents", dependencies=(SMITHY_CORE,)
+    ),
 }
 
 
