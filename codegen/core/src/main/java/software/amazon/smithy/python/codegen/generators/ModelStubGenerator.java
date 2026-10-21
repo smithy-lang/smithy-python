@@ -133,6 +133,12 @@ public final class ModelStubGenerator implements Runnable {
             }
             if (carriesResponseMetadata(shape)) {
                 writer.write("response_metadata: $T = ...", RuntimeTypes.RESPONSE_METADATA);
+                writer.writeDocs("""
+                        Metadata about the response that produced this output.
+
+                        Use this to recover the request identifiers a service's support team \
+                        needs in order to investigate a call. Members of the metadata are \
+                        individually optional.""", context);
             }
         });
         writer.write("");

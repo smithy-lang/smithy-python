@@ -61,6 +61,12 @@ class SimpleScalarPropertiesOutput(_SerdeShape):
     nested: NestedWithNamespace | None = ...
     double_value: float | None = ...
     response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output. Use this to
+    recover the request identifiers a service's support team needs in order
+    to investigate a call. Members of the metadata are individually
+    optional.
+    """
 
 SIMPLE_SCALAR_PROPERTIES: APIOperation[
     SimpleScalarPropertiesInput, SimpleScalarPropertiesOutput
