@@ -208,6 +208,8 @@ def _mock_operation(
     operation = Mock(spec=APIOperation)
     operation.schema = schema
     operation.error_schemas = error_schemas or []
+    operation.input_stream_member = None
+    operation.output_stream_member = None
     return cast("APIOperation[Any, Any]", operation)
 
 

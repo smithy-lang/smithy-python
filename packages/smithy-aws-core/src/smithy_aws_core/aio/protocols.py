@@ -1,19 +1,14 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from collections.abc import Callable
 from dataclasses import dataclass, replace
-from inspect import iscoroutinefunction
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, ClassVar, Final
 from xml.etree.ElementTree import Element
 
 from smithy_core import URI as _URI
 from smithy_core.aio.interfaces import (
-    AsyncWriter,
     ProtocolSettings,
 )
-from smithy_core.aio.interfaces.auth import AuthScheme
-from smithy_core.aio.interfaces.eventstream import EventPublisher, EventReceiver
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
@@ -24,7 +19,6 @@ from smithy_core.exceptions import (
     ExpectationNotMetError,
     MissingDependencyError,
     ModeledError,
-    UnsupportedStreamError,
 )
 from smithy_core.interfaces import BytesReader, BytesWriter, TypedProperties, URI
 from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
@@ -40,7 +34,7 @@ from smithy_http.aio import HTTPRequest as _HTTPRequest
 from smithy_http.aio.interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 from smithy_http.aio.protocols import (
     HttpBindingClientProtocol,
-    HttpClientProtocol,
+    RpcClientProtocol,
 )
 from smithy_http.deserializers import HTTPResponseDeserializer
 
@@ -78,26 +72,9 @@ try:
 except ImportError:
     _HAS_XML = False  # type: ignore
 
-try:
-    from smithy_aws_event_stream.aio import (
-        AWSEventPublisher,
-        AWSEventReceiver,
-        SigningConfig,
-    )
-
-    _HAS_EVENT_STREAM = True
-except ImportError:
-    _HAS_EVENT_STREAM = False  # type: ignore
-
 if TYPE_CHECKING:
-    from smithy_aws_event_stream.aio import (
-        AWSEventPublisher,
-        AWSEventReceiver,
-        SigningConfig,
-    )
     from smithy_json import JSONCodec, JSONDocument
     from smithy_xml import XMLCodec
-    from typing_extensions import TypeForm
 
 
 __all__ = [
@@ -123,14 +100,6 @@ def _assert_xml() -> None:
     if not _HAS_XML:
         raise MissingDependencyError(
             "Attempted to use XML codec, but smithy-xml is not installed."
-        )
-
-
-def _assert_event_stream() -> None:
-    if not _HAS_EVENT_STREAM:
-        raise MissingDependencyError(
-            "Attempted to use event streams, but smithy-aws-event-stream "
-            "is not installed."
         )
 
 
@@ -195,73 +164,10 @@ class _AWSHttpBindingClientProtocol(
 ):
     """Base for the AWS protocols that use HTTP bindings: restJson1 and restXml.
 
-    Adds AWS response metadata and event streams. Events are framed as
-    ``application/vnd.amazon.eventstream``, and structured event payloads use the
-    protocol's payload codec.
+    Adds AWS response metadata. Event streams are inherited from
+    ``HttpClientProtocol``: events are framed as ``application/vnd.amazon.eventstream``
+    and structured event payloads use the protocol's payload codec.
     """
-
-    def create_event_publisher[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-        Event: SerializeableShape,
-    ](
-        self,
-        *,
-        operation: "APIOperation[OperationInput, OperationOutput]",
-        request: HTTPRequest,
-        event_type: "TypeForm[Event]",
-        context: TypedProperties,
-        auth_scheme: AuthScheme[Any, Any, Any, Any] | None = None,
-    ) -> EventPublisher[Event]:
-        _assert_event_stream()
-        signing_config: SigningConfig | None = None
-        if auth_scheme is not None:
-            event_signer = auth_scheme.event_signer(request=request)
-            if event_signer is not None:
-                signing_config = SigningConfig(
-                    signer=event_signer,
-                    signing_properties=auth_scheme.signer_properties(context=context),
-                    identity_resolver=auth_scheme.identity_resolver(context=context),
-                    identity_properties=auth_scheme.identity_properties(
-                        context=context
-                    ),
-                )
-
-        # The HTTP body must be an async writeable. The HTTP serializers are responsible
-        # for ensuring this.
-        body = request.body
-        if not isinstance(body, AsyncWriter) or not iscoroutinefunction(body.write):
-            raise UnsupportedStreamError(
-                "Input streams require an async write function, but none was present "
-                "on the serialized HTTP request."
-            )
-
-        return AWSEventPublisher[Event](
-            payload_codec=self.payload_codec,
-            async_writer=body,
-            signing_config=signing_config,
-        )
-
-    def create_event_receiver[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-        Event: DeserializeableShape,
-    ](
-        self,
-        *,
-        operation: "APIOperation[OperationInput, OperationOutput]",
-        request: HTTPRequest,
-        response: HTTPResponse,
-        event_type: "TypeForm[Event]",
-        event_deserializer: Callable[[ShapeDeserializer], Event],
-        context: TypedProperties,
-    ) -> EventReceiver[Event]:
-        _assert_event_stream()
-        return AWSEventReceiver(
-            payload_codec=self.payload_codec,
-            source=AsyncBytesReader(response.body),
-            deserializer=event_deserializer,
-        )
 
 
 class RestJsonClientProtocol(_AWSHttpBindingClientProtocol):
@@ -431,7 +337,7 @@ class _XMLErrorCodec(Codec):
         )
 
 
-class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
+class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
     _error_identifier: Final = AWSErrorIdentifier()
 
     _id: ClassVar[ShapeID]
@@ -474,6 +380,24 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
+        if operation.input_stream_member is not None:
+            # RPC event streams carry the input as an initial-request event at the head
+            # of the stream body; the envelope keeps x-amz-target as a normal request.
+            return _HTTPRequest(
+                method="POST",
+                destination=_URI(host="", path="/"),
+                fields=tuples_to_fields(
+                    [
+                        ("content-type", "application/vnd.amazon.eventstream"),
+                        (
+                            "x-amz-target",
+                            f"{self._service_name}.{operation.schema.id.name}",
+                        ),
+                    ]
+                ),
+                body=self._build_initial_request_body(input),
+            )
+
         payload = self.payload_codec.serialize(shape=input)
         return _HTTPRequest(
             method="POST",
@@ -503,6 +427,11 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         error_registry: TypeRegistry,
         context: TypedProperties,
     ) -> OperationOutput:
+        if operation.output_stream_member is not None and response.status == 200:
+            return await self._deserialize_event_stream_response(
+                operation=operation, response=response, context=context
+            )
+
         body = await response.consume_body_async()
 
         if not self._is_success(operation, context, response):
@@ -655,7 +584,7 @@ The body is only available while deserializing, so the value is stored there for
 """
 
 
-class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
+class AwsQueryClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
     """An implementation of the aws.protocols#awsQuery protocol."""
 
     _id: ClassVar[ShapeID] = AwsQueryTrait.id

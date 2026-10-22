@@ -1,22 +1,30 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import os
-from collections.abc import AsyncIterable
+from collections.abc import AsyncIterable, Callable
 from inspect import iscoroutinefunction
 from typing import TYPE_CHECKING, Any, cast
 
 from smithy_core import URI as _URI
-from smithy_core.aio.interfaces import AsyncByteStream, ClientProtocol, ProtocolSettings
+from smithy_core.aio.interfaces import (
+    AsyncByteStream,
+    AsyncWriter,
+    ClientProtocol,
+    ProtocolSettings,
+)
 from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
+from smithy_core.aio.interfaces.auth import AuthScheme
+from smithy_core.aio.interfaces.eventstream import EventPublisher, EventReceiver
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
-from smithy_core.deserializers import DeserializeableShape
+from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import (
     CallError,
     ExpectationNotMetError,
     MissingDependencyError,
     ModeledError,
+    UnsupportedStreamError,
 )
 from smithy_core.interfaces import (
     Endpoint,
@@ -34,6 +42,7 @@ from smithy_core.traits import (
     ORIGINAL_SHAPE_ID,
     RpcV2CborTrait,
 )
+from smithy_core.types import PropertyKey
 
 from .. import tuples_to_fields
 from ..deserializers import HTTPResponseDeserializer
@@ -48,12 +57,76 @@ from .interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 __all__ = [
     "HttpBindingClientProtocol",
     "HttpClientProtocol",
+    "RpcClientProtocol",
     "RpcV2CborClientProtocol",
 ]
+
+try:
+    from smithy_aws_event_stream._private.deserializers import (
+        EventDeserializer as _EventDeserializer,
+    )
+    from smithy_aws_event_stream._private.serializers import (
+        EventSerializer as _EventSerializer,
+    )
+    from smithy_aws_event_stream.aio import (
+        AWSEventPublisher,
+        AWSEventReceiver,
+        SigningConfig,
+    )
+    from smithy_aws_event_stream.events import Event as _Event
+    from smithy_aws_event_stream.exceptions import MissingInitialResponse
+    from smithy_core.aio.types import AsyncBytesProvider
+
+    _HAS_EVENT_STREAM = True
+except ImportError:
+    _HAS_EVENT_STREAM = False  # type: ignore
+
+if TYPE_CHECKING:
+    from smithy_aws_event_stream._private.deserializers import (
+        EventDeserializer as _EventDeserializer,
+    )
+    from smithy_aws_event_stream._private.serializers import (
+        EventSerializer as _EventSerializer,
+    )
+    from smithy_aws_event_stream.aio import (
+        AWSEventPublisher,
+        AWSEventReceiver,
+        SigningConfig,
+    )
+    from smithy_aws_event_stream.events import Event as _Event
+    from smithy_aws_event_stream.exceptions import MissingInitialResponse
+    from smithy_core.aio.types import AsyncBytesProvider
+    from typing_extensions import TypeForm
+
+
+_EVENT_STREAM_CONTENT_TYPE = "application/vnd.amazon.eventstream"
+
+_EVENT_STREAM_SOURCE = PropertyKey(
+    key="smithy_http_event_stream_source", value_type=AsyncByteStream
+)
+"""Carries the response-body reader already positioned past the initial-response event.
+
+RPC output streams read their initial response off the first event frame in
+``deserialize_response``; the receiver then continues from this same reader so the
+frames stay in order.
+"""
+
+
+def _assert_event_stream() -> None:
+    if not _HAS_EVENT_STREAM:
+        raise MissingDependencyError(
+            "Attempted to use event streams, but smithy-aws-event-stream "
+            "is not installed."
+        )
 
 
 class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
     """An HTTP-based protocol."""
+
+    @property
+    def payload_codec(self) -> Codec:
+        """The codec used for the serde of event payloads and HTTP bodies."""
+        raise NotImplementedError()
 
     def set_service_endpoint(
         self,
@@ -100,6 +173,69 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         that define them are expected to override this and add them.
         """
         return ResponseMetadata(http_status_code=response.status)
+
+    def create_event_publisher[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+        Event: SerializeableShape,
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        request: HTTPRequest,
+        event_type: "TypeForm[Event]",
+        context: TypedProperties,
+        auth_scheme: AuthScheme[Any, Any, Any, Any] | None = None,
+    ) -> EventPublisher[Event]:
+        _assert_event_stream()
+        signing_config: SigningConfig | None = None
+        if auth_scheme is not None:
+            event_signer = auth_scheme.event_signer(request=request)
+            if event_signer is not None:
+                signing_config = SigningConfig(
+                    signer=event_signer,
+                    signing_properties=auth_scheme.signer_properties(context=context),
+                    identity_resolver=auth_scheme.identity_resolver(context=context),
+                    identity_properties=auth_scheme.identity_properties(
+                        context=context
+                    ),
+                )
+
+        # The HTTP body must be an async writeable. Protocols that serialize an event
+        # stream request are responsible for setting one.
+        body = request.body
+        if not isinstance(body, AsyncWriter) or not iscoroutinefunction(body.write):
+            raise UnsupportedStreamError(
+                "Input streams require an async write function, but none was present "
+                "on the serialized HTTP request."
+            )
+
+        return AWSEventPublisher[Event](
+            payload_codec=self.payload_codec,
+            async_writer=body,
+            signing_config=signing_config,
+        )
+
+    def create_event_receiver[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+        Event: DeserializeableShape,
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        request: HTTPRequest,
+        response: HTTPResponse,
+        event_type: "TypeForm[Event]",
+        event_deserializer: Callable[[ShapeDeserializer], Event],
+        context: TypedProperties,
+    ) -> EventReceiver[Event]:
+        _assert_event_stream()
+        return AWSEventReceiver(
+            payload_codec=self.payload_codec,
+            source=AsyncBytesReader(response.body),
+            deserializer=event_deserializer,
+        )
 
 
 class HttpBindingClientProtocol(HttpClientProtocol):
@@ -355,7 +491,92 @@ def _is_unit(schema: Schema | None) -> bool:
     return original is not None and original.document_value == str(UNIT.id)
 
 
-class _RpcV2ClientProtocol(HttpClientProtocol):
+class RpcClientProtocol(HttpClientProtocol):
+    """Base for the RPC-based protocols (awsJson, awsQuery, rpcv2).
+
+    RPC protocols serialize the whole operation input through a codec rather than via
+    HTTP bindings. This base carries the event-stream framing they share: per the
+    Amazon event stream specification, an RPC event stream carries the operation input
+    and output as ``initial-request`` and ``initial-response`` events at the head of
+    the stream rather than as the HTTP request and response bodies.
+
+    Subclasses build their own HTTP request envelope (path, headers) and response
+    handling; they delegate the event-stream body to the helpers here, gated on the
+    operation's ``input_stream_member`` / ``output_stream_member``. A protocol that
+    never models an event stream (awsQuery) simply never reaches these helpers.
+    """
+
+    def _build_initial_request_body(
+        self, input: SerializeableShape
+    ) -> "AsyncBytesProvider":
+        """Serialize the input as an ``initial-request`` event seeding a writable body.
+
+        The returned body is an async writer that the event publisher appends
+        subsequent input events to.
+        """
+        _assert_event_stream()
+        serializer = _EventSerializer(
+            payload_codec=self.payload_codec, is_client_mode=True
+        )
+        input.serialize(serializer)
+        initial = serializer.get_result()
+        if initial is None:
+            raise ExpectationNotMetError(
+                "Expected an initial-request event to be serialized, but was None."
+            )
+        return AsyncBytesProvider(intial_data=initial.encode())
+
+    async def _deserialize_event_stream_response[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self,
+        *,
+        operation: APIOperation[OperationInput, OperationOutput],
+        response: HTTPResponse,
+        context: TypedProperties,
+    ) -> OperationOutput:
+        # The initial output is the first event on the stream (``initial-response``).
+        # It is read here off a reader over the response body; the same reader is then
+        # handed to the event receiver via context so it continues from the next event.
+        _assert_event_stream()
+        source = AsyncBytesReader(response.body)
+        event = await _Event.decode_async(source)
+        if event is None:
+            raise MissingInitialResponse()
+        deserializer = _EventDeserializer(
+            event=event, payload_codec=self.payload_codec, is_client_mode=True
+        )
+        output = operation.output.deserialize(deserializer)
+        context[_EVENT_STREAM_SOURCE] = source
+        return output
+
+    def create_event_receiver[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+        Event: DeserializeableShape,
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        request: HTTPRequest,
+        response: HTTPResponse,
+        event_type: "TypeForm[Event]",
+        event_deserializer: Callable[[ShapeDeserializer], Event],
+        context: TypedProperties,
+    ) -> EventReceiver[Event]:
+        _assert_event_stream()
+        # Continue from the reader that already consumed the initial-response frame in
+        # deserialize_response, so subsequent events stay in order.
+        source = context.get(_EVENT_STREAM_SOURCE) or AsyncBytesReader(response.body)
+        return AWSEventReceiver(
+            payload_codec=self.payload_codec,
+            source=source,
+            deserializer=event_deserializer,
+        )
+
+
+class _RpcV2ClientProtocol(RpcClientProtocol):
     """Shared framing for the Smithy RPC v2 protocol family (rpcv2Cbor, rpcv2Json).
 
     Subclasses supply the codec-specific pieces: the protocol id, content type,
@@ -404,6 +625,22 @@ class _RpcV2ClientProtocol(HttpClientProtocol):
         operation_name = operation.schema.id.name
         path = f"/service/{self._service_name}/operation/{operation_name}"
 
+        if operation.input_stream_member is not None:
+            # RPC event streams carry the input as an initial-request event at the head
+            # of the stream body; the HTTP envelope is otherwise a normal RPC request.
+            return _HTTPRequest(
+                method="POST",
+                destination=_URI(host="", path=path),
+                fields=tuples_to_fields(
+                    [
+                        ("Smithy-Protocol", self._smithy_protocol),
+                        ("Accept", _EVENT_STREAM_CONTENT_TYPE),
+                        ("Content-Type", _EVENT_STREAM_CONTENT_TYPE),
+                    ]
+                ),
+                body=self._build_initial_request_body(input),
+            )
+
         # The protocol omits the body AND the Content-Type header for operations whose
         # input is the unit type (no modeled input). Every other operation serializes
         # the input shape, even when it has no members.
@@ -437,6 +674,11 @@ class _RpcV2ClientProtocol(HttpClientProtocol):
         error_registry: TypeRegistry,
         context: TypedProperties,
     ) -> OperationOutput:
+        if operation.output_stream_member is not None and response.status == 200:
+            return await self._deserialize_event_stream_response(
+                operation=operation, response=response, context=context
+            )
+
         body = await response.consume_body_async()
         if response.status != 200:
             raise self._create_error(
