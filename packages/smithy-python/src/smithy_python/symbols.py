@@ -69,6 +69,13 @@ class SymbolProvider:
         self._union_variant_names: dict[ShapeId, str] = {}
         self._union_unknown_names: dict[ShapeId, str] = {}
         self._selected = frozenset(shape.id for shape in selection.shapes)
+        self._reserved_declarations = _RESERVED_DECLARATIONS
+        if any(
+            shape.type not in _ENUMS
+            and any(member.target == _UNIT for member in shape.members.values())
+            for shape in selection.shapes
+        ):
+            self._reserved_declarations |= {"Unit"}
         self._shape_names: frozenset[str] = frozenset()
         declarations: dict[str, ShapeId] = {}
         for shape in selection.shapes:
@@ -84,7 +91,7 @@ class SymbolProvider:
             members: dict[str, ShapeId] = {}
             for member in shape.members.values():
                 self._check_collision(members, self.member_name(member.id), member.id)
-        self._shape_names = frozenset(declarations)
+        self._shape_names = frozenset((*declarations, *self._reserved_declarations))
         for shape in selection.shapes:
             if shape.type is not ShapeType.UNION or shape.has_trait("streaming"):
                 continue
@@ -106,7 +113,7 @@ class SymbolProvider:
             raise ModelError(f"No generated declaration for {shape.id}")
         service = self._selection.service
         name = service.rename.get(shape.id, shape.id.name) if service else shape.id.name
-        result = _name(name, pascal=True)
+        result = _name(name, pascal=True, reserved=self._reserved_declarations)
         if not re.fullmatch(r"[A-Za-z0-9_]+", name) or not result.isidentifier():
             raise ModelError(
                 f"Invalid Python declaration name {result!r} for {shape.id}"
@@ -211,7 +218,7 @@ class SymbolProvider:
                     pending.append((current, True))
                     pending.extend((target, False) for target in reversed(targets))
             elif current == ShapeId("smithy.api", "Unit"):
-                resolved[current] = TypeReference("None")
+                resolved[current] = TypeReference("Unit", f"{self._package}.models")
             elif shape.type in (ShapeType.STRUCTURE, ShapeType.UNION):
                 resolved[current] = TypeReference(
                     self.declaration_name(current), f"{self._package}.models"
@@ -237,6 +244,7 @@ class SymbolProvider:
         return _name(
             member.name,
             constant=container.type in _ENUMS,
+            preserve_underscores=True,
             reserved=self._reserved_member_names.get(container.id, ()),
         )
 
@@ -279,6 +287,8 @@ _KEYWORDS = frozenset(
     "not or pass raise return try while with yield".split()
 )
 _ENUMS = frozenset({ShapeType.ENUM, ShapeType.INT_ENUM})
+_RESERVED_DECLARATIONS = frozenset({"ServiceError"})
+_UNIT = ShapeId("smithy.api", "Unit")
 _ACRONYM_BOUNDARY = re.compile(r"([A-Z]+)([A-Z][a-z])")
 _WORD_BOUNDARY = re.compile(r"([a-z0-9])([A-Z])")
 
@@ -321,6 +331,7 @@ def _name(
     *,
     pascal: bool = False,
     constant: bool = False,
+    preserve_underscores: bool = False,
     reserved: Collection[str] = (),
 ) -> str:
     if pascal:
@@ -328,14 +339,32 @@ def _name(
     else:
         value = _ACRONYM_BOUNDARY.sub(r"\1_\2", value)
         value = _WORD_BOUNDARY.sub(r"\1_\2", value)
-        result = "_".join(word.lower() for word in value.split("_") if word)
-    if constant:
-        result = result.upper()
+        result = (
+            value.lower()
+            if preserve_underscores
+            else "_".join(word.lower() for word in value.split("_") if word)
+        )
     if result[:1].isdigit():
         result = "_" + result
-    if result in _KEYWORDS or result in reserved:
+    if result.startswith("__") and not result.endswith("__"):
+        result += "___"
+    elif (
+        result in _KEYWORDS
+        or result in reserved
+        or (constant and result.upper() in reserved)
+    ):
         result += "_"
+    if constant:
+        result = _escape_enum_underscores(result).upper()
     return result
+
+
+def _escape_enum_underscores(name: str) -> str:
+    if name.startswith("__"):
+        return name + "_" if name.endswith("__") and not name.endswith("___") else name
+    if name.startswith("_") and name.endswith("_") and not name.endswith("__"):
+        return name + "_"
+    return name
 
 
 def _plan_schema_names(selection: Selection) -> dict[ShapeId, str]:

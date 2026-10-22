@@ -25,6 +25,9 @@ __all__ = [
     "TypesSettings",
 ]
 
+_SERVICE_ERROR = "ServiceError"
+_UNIT = _model.ShapeId("smithy.api", "Unit")
+
 
 @dataclass(frozen=True, slots=True)
 class ArtifactSettings:
@@ -47,10 +50,15 @@ class TypesSettings(ArtifactSettings):
 class ModelPlan:
     """Derived semantic data used to emit lazy model declarations."""
 
+    shapes: tuple[_model.Shape, ...]
     declaration_names: Mapping[_model.ShapeId, str]
     renames: Mapping[str, str]
     union_variant_names: Mapping[_model.ShapeId, str]
     union_unknown_names: Mapping[_model.ShapeId, str]
+    registry_index: Mapping[str, str]
+    target_names: Mapping[str, str]
+    shape_names: frozenset[str]
+    includes_unit: bool
 
     @classmethod
     def from_shapes(
@@ -60,31 +68,55 @@ class ModelPlan:
         schema_names: Mapping[_model.ShapeId, str],
     ) -> ModelPlan:
         """Plan declaration and union names in stable shape order."""
+        model_shapes: list[_model.Shape] = []
         declarations: dict[_model.ShapeId, str] = {}
         variants: dict[_model.ShapeId, str] = {}
         unknowns: dict[_model.ShapeId, str] = {}
+        index: dict[str, str] = {}
+        renames: dict[str, str] = {}
+        target_names: dict[str, str] = {}
+        includes_unit = any(
+            shape.type not in (_model.ShapeType.ENUM, _model.ShapeType.INT_ENUM)
+            and any(member.target == _UNIT for member in shape.members.values())
+            for shape in shapes
+        )
         for shape in shapes:
             if shape.type not in _model.DECLARATION_TYPES or shape.has_trait(
                 "streaming"
             ):
                 continue
-            declarations[shape.id] = symbols.declaration_name(shape.id)
+            model_shapes.append(shape)
+            declaration = symbols.declaration_name(shape.id)
+            schema = schema_names[shape.id]
+            declarations[shape.id] = declaration
+            index[declaration] = schema
+            if declaration != shape.id.name:
+                renames[declaration] = schema
+                target_names[str(shape.id)] = declaration
             if shape.type is _model.ShapeType.UNION:
                 for member in shape.members.values():
-                    variants[member.id] = symbols.union_variant_name(member.id)
-                unknowns[shape.id] = symbols.union_unknown_name(shape.id)
+                    variant = symbols.union_variant_name(member.id)
+                    variants[member.id] = variant
+                    index[variant] = schema
+                unknown = symbols.union_unknown_name(shape.id)
+                unknowns[shape.id] = unknown
+                index[unknown] = schema
 
         return cls(
+            shapes=tuple(model_shapes),
             declaration_names=MappingProxyType(declarations),
-            renames=MappingProxyType(
-                {
-                    declaration: schema_names[shape_id]
-                    for shape_id, declaration in declarations.items()
-                    if declaration != shape_id.name
-                }
-            ),
+            renames=MappingProxyType(renames),
             union_variant_names=MappingProxyType(variants),
             union_unknown_names=MappingProxyType(unknowns),
+            registry_index=MappingProxyType(index),
+            target_names=MappingProxyType(target_names),
+            shape_names=frozenset(
+                (
+                    *declarations.values(),
+                    *(("Unit",) if includes_unit else ()),
+                )
+            ),
+            includes_unit=includes_unit,
         )
 
 

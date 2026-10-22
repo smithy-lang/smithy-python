@@ -18,6 +18,7 @@ lint = [
 ]
 typing = [
     "pyright>=1.1.400",
+    "typing-extensions>=4.14.0",
 ]
 changelog = [
     "jinja2>=3.1.6"

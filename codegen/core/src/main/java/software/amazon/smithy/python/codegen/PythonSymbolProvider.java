@@ -147,6 +147,9 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         }
 
         var memberName = escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getMemberName()));
+        if (memberName.startsWith("__") && !memberName.endsWith("__")) {
+            memberName += "___";
+        }
 
         // Escape words that are only reserved for error members.
         if (shape.hasTrait(ErrorTrait.class)) {
@@ -170,6 +173,16 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         }
 
         if (container.isEnumShape() || container.isIntEnumShape()) {
+            if (memberName.startsWith("__")
+                    && memberName.endsWith("__")
+                    && !memberName.endsWith("___")) {
+                memberName += "_";
+            } else if (memberName.startsWith("_")
+                    && !memberName.startsWith("__")
+                    && memberName.endsWith("_")
+                    && !memberName.endsWith("__")) {
+                memberName += "_";
+            }
             memberName = memberName.toUpperCase(Locale.ENGLISH);
         }
         return memberName;

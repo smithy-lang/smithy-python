@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Added optional full shape ID target mappings to `ModelRegistry` so generators can resolve renamed and same-named cross-namespace model targets without ambiguous local-name lookups."
+}

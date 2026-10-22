@@ -3,17 +3,38 @@
 # pyright: reportPrivateUsage=false
 from enum import IntEnum, StrEnum
 from types import ModuleType
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
+import pytest
 from smithy_core import _schema_compact
 from smithy_core._dynamic_models import ModelRegistry
 from smithy_core._schema_compact import StaticSchema
 from smithy_core.deserializers import ShapeDeserializer
-from smithy_core.exceptions import ModeledError
+from smithy_core.exceptions import ModeledError, SerializationError
+from smithy_core.schemas import Schema
+from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeType
 from smithy_core.types import UnknownEnumMixin
 
 NS = "ns.example"
+
+
+class _UnknownVariant(Protocol):
+    def serialize(self, serializer: ShapeSerializer) -> None: ...
+
+    def serialize_members(self, serializer: ShapeSerializer) -> None: ...
+
+
+class _UnknownVariantClass(Protocol):
+    def __call__(self, *, tag: str) -> _UnknownVariant: ...
+
+    def deserialize(self, deserializer: ShapeDeserializer) -> _UnknownVariant: ...
+
+
+class _ModeledErrorClass(Protocol):
+    def __call__(self) -> ModeledError: ...
+
+    def deserialize(self, deserializer: ShapeDeserializer) -> ModeledError: ...
 
 
 def _struct(name: str, members: tuple[tuple[str, object], ...]) -> StaticSchema:
@@ -30,12 +51,17 @@ def _struct(name: str, members: tuple[tuple[str, object], ...]) -> StaticSchema:
 _ERROR_TRAIT = "smithy.api#error"
 
 
-def _error_struct(name: str, members: tuple[tuple[str, object], ...]) -> StaticSchema:
+def _error_struct(
+    name: str,
+    members: tuple[tuple[str, object], ...],
+    *,
+    fault: str = "client",
+) -> StaticSchema:
     return (
         ShapeType.STRUCTURE.value,
         NS,
         name,
-        {_ERROR_TRAIT: "client"},
+        {_ERROR_TRAIT: fault},
         tuple(m[0] for m in members),
         tuple((m[1], 0) for m in members),
     )
@@ -126,6 +152,249 @@ def test_supplied_index_matches_scanning_fallback() -> None:
         shape_names={"Foo", "Bar"},
     ).build("Foo")
     assert _fields(scanned) == _fields(supplied)
+
+
+def test_supplied_index_preserves_distinct_same_named_structures() -> None:
+    first = (
+        ShapeType.STRUCTURE.value,
+        "a.example",
+        "Thing",
+        0,
+        ("first",),
+        ((ShapeType.STRING.value, 0),),
+    )
+    second = (
+        ShapeType.STRUCTURE.value,
+        "b.example",
+        "Thing",
+        0,
+        ("second",),
+        ((ShapeType.STRING.value, 0),),
+    )
+    registry = ModelRegistry(
+        _module(FIRST=first, SECOND=second),
+        index={"FirstThing": "FIRST", "SecondThing": "SECOND"},
+    )
+
+    first_cls = registry.build("FirstThing")
+    second_cls = registry.build("SecondThing")
+    assert first_cls is not second_cls
+    assert first_cls.__name__ == "FirstThing"
+    assert second_cls.__name__ == "SecondThing"
+    assert _fields(first_cls) == ["first"]
+    assert _fields(second_cls) == ["second"]
+
+
+def test_registry_copies_supplied_name_maps() -> None:
+    renames = {"Alias": "FOO"}
+    index = {"Alias": "FOO"}
+    registry = ModelRegistry(
+        _module(FOO=_struct("Foo", ())),
+        renames=renames,
+        index=index,
+    )
+    renames.clear()
+    index.clear()
+
+    assert registry.build("Alias").__name__ == "Alias"
+
+
+def test_alias_and_canonical_struct_lookups_share_class_identity() -> None:
+    registry = ModelRegistry(
+        _module(FOO=_struct("Foo", ())),
+        renames={"Alias": "FOO"},
+    )
+
+    alias = registry.build("Alias")
+    assert registry.build("Foo") is alias
+    assert registry.build("Alias") is alias
+
+
+def test_alias_and_canonical_union_lookups_share_class_identity() -> None:
+    registry = ModelRegistry(
+        _module(FOO=_union("Foo", (("value", ShapeType.STRING.value),))),
+        renames={"Alias": "FOO"},
+    )
+
+    alias = registry.build("Alias")
+    variant = registry.build("AliasValue")
+    unknown = registry.build("AliasUnknown")
+    assert registry.build("Foo") is alias
+    assert registry.build("Alias") is alias
+    assert registry.build("AliasValue") is variant
+    assert registry.build("FooValue") is variant
+    assert registry.build("FooUnknown") is unknown
+
+    class _De:
+        def read_struct(self, schema: Schema, consumer: Any) -> None:
+            consumer(schema.members_by_index[0], self)
+
+        def read_string(self, schema: Schema) -> str:
+            return "value"
+
+    alias_deserializer = registry.build("_AliasDeserializer")()
+    original_deserializer = registry.build("_FooDeserializer")()
+    alias_value = alias_deserializer.deserialize(cast(ShapeDeserializer, _De()))
+    original_value = original_deserializer.deserialize(cast(ShapeDeserializer, _De()))
+    assert type(alias_value) is variant
+    assert type(original_value) is variant
+    assert alias_value.value == original_value.value == "value"
+
+
+def test_renamed_union_does_not_replace_same_named_shape() -> None:
+    renamed = (
+        ShapeType.UNION.value,
+        "a.example",
+        "Thing",
+        0,
+        ("value",),
+        ((ShapeType.STRING.value, 0),),
+    )
+    other = (
+        ShapeType.STRUCTURE.value,
+        "b.example",
+        "Thing",
+        0,
+        ("other",),
+        ((ShapeType.STRING.value, 0),),
+    )
+    registry = ModelRegistry(
+        _module(A_OTHER=other, Z_RENAMED=renamed),
+        renames={"FirstThing": "Z_RENAMED"},
+    )
+
+    first = registry.build("FirstThing")
+    thing = registry.build("Thing")
+    assert first is not thing
+    assert _fields(thing) == ["other"]
+
+
+def test_supplied_union_names_override_original_shape_names() -> None:
+    union = (
+        ShapeType.UNION.value,
+        "a.example",
+        "Foo",
+        0,
+        ("item",),
+        ((ShapeType.STRING.value, 0),),
+    )
+    item = (
+        ShapeType.STRUCTURE.value,
+        "b.example",
+        "OldItem",
+        0,
+        ("item",),
+        ((ShapeType.STRING.value, 0),),
+    )
+    unknown = (
+        ShapeType.STRUCTURE.value,
+        "b.example",
+        "OldUnknown",
+        0,
+        ("unknown",),
+        ((ShapeType.STRING.value, 0),),
+    )
+    registry = ModelRegistry(
+        _module(FOO=union, ITEM=item, UNKNOWN=unknown),
+        renames={
+            "Choice": "FOO",
+            "ChoiceItem": "ITEM",
+            "ChoiceUnknown": "UNKNOWN",
+        },
+        index={
+            "Foo": "FOO",
+            "Choice_Item": "FOO",
+            "Choice_Unknown": "FOO",
+            "OldItem": "ITEM",
+            "OldUnknown": "UNKNOWN",
+        },
+        shape_names={"Foo", "OldItem", "OldUnknown"},
+    )
+
+    item_cls = registry.build("ChoiceItem")
+    unknown_cls = registry.build("ChoiceUnknown")
+    registry.build("Choice")
+    assert registry.build("Choice_Item") is not item_cls
+    assert registry.build("Choice_Unknown") is not unknown_cls
+    assert registry.build("ChoiceItem") is item_cls
+    assert registry.build("ChoiceUnknown") is unknown_cls
+
+
+def test_renamed_union_aliases_do_not_replace_renamed_models() -> None:
+    registry = ModelRegistry(
+        _module(
+            FOO=_union("Foo", (("value", ShapeType.STRING.value),)),
+            VALUE=_struct("ValueModel", (("value", ShapeType.STRING.value),)),
+            UNKNOWN=_struct("UnknownModel", (("value", ShapeType.STRING.value),)),
+        ),
+        renames={
+            "Alias": "FOO",
+            "FooValue": "VALUE",
+            "FooUnknown": "UNKNOWN",
+        },
+    )
+
+    registry.build("Alias")
+    assert _fields(registry.build("FooValue")) == ["value"]
+    assert _fields(registry.build("FooUnknown")) == ["value"]
+    assert registry.build("FooValue") is not registry.build("AliasValue")
+    assert registry.build("FooUnknown") is not registry.build("AliasUnknown")
+
+
+def test_renamed_union_original_alias_does_not_replace_renamed_model() -> None:
+    registry = ModelRegistry(
+        _module(
+            FOO=_union("Foo", (("value", ShapeType.STRING.value),)),
+            MODEL=_struct("Model", (("value", ShapeType.STRING.value),)),
+        ),
+        renames={"Alias": "FOO", "Foo": "MODEL"},
+    )
+
+    registry.build("Alias")
+    assert _fields(registry.build("Foo")) == ["value"]
+    assert registry.build("Foo") is not registry.build("Alias")
+
+
+def test_target_names_resolve_renames_by_full_shape_id() -> None:
+    _schema_compact._cache.clear()
+    first = (
+        ShapeType.STRUCTURE.value,
+        "a.example",
+        "Thing",
+        0,
+    )
+    second = (
+        ShapeType.STRUCTURE.value,
+        "b.example",
+        "Thing",
+        0,
+    )
+    container = _struct("Container", (("value", lambda: second),))
+    registry = ModelRegistry(
+        _module(FIRST=first, SECOND=second, CONTAINER=container),
+        renames={"FirstThing": "FIRST", "SecondThing": "SECOND"},
+        index={
+            "FirstThing": "FIRST",
+            "SecondThing": "SECOND",
+            "Container": "CONTAINER",
+        },
+        target_names={
+            "a.example#Thing": "FirstThing",
+            "b.example#Thing": "SecondThing",
+            f"{NS}#Container": "Container",
+        },
+        shape_names={"FirstThing", "SecondThing", "Container"},
+    )
+    schema = _schema_compact.hydrate(container)
+    member = schema.members_by_index[0]
+    _, reader = member.get_extension(registry._codec)
+
+    class _De:
+        def read_struct(self, schema: object, consumer: object) -> None:
+            pass
+
+    result = reader(cast(ShapeDeserializer, _De()), member)
+    assert type(result).__name__ == "SecondThing"
 
 
 def test_supplied_index_disambiguated_union_variant() -> None:
@@ -220,6 +489,20 @@ def test_modeled_error_falls_back_to_modeled_error_without_service_error() -> No
     assert cls.__mro__[1] is ModeledError
 
 
+def test_modeled_error_uses_modeled_fault() -> None:
+    _schema_compact._cache.clear()
+    mod = _module(BOOM=_error_struct("Boom", (), fault="server"))
+    registry = ModelRegistry(mod, index={"Boom": "BOOM"}, shape_names={"Boom"})
+    cls = cast(_ModeledErrorClass, registry.build("Boom"))
+
+    class _De:
+        def read_struct(self, schema: Schema, consumer: Any) -> None:
+            pass
+
+    assert cls().fault == "server"
+    assert cls.deserialize(cast(ShapeDeserializer, _De())).fault == "server"
+
+
 def test_enum_member_deserialize_coerces_to_enum_class() -> None:
     # A member whose target is an enum must deserialize to the enum class, not the
     # raw wire string (the eager generator wrapped it as EnumClass(read_string(...))).
@@ -263,6 +546,22 @@ def test_union_classes_report_models_module() -> None:
     registry.build("Foo")
     for name in ("Foo", "FooA", "FooUnknown"):
         assert registry.build(name).__module__ == "ns.example.models"
+
+
+def test_unknown_union_variant_rejects_serde() -> None:
+    _schema_compact._cache.clear()
+    mod = _module(FOO=_union("Foo", (("a", ShapeType.STRING.value),)))
+    registry = ModelRegistry(mod, index={"Foo": "FOO"}, shape_names={"Foo"})
+    registry.build("Foo")
+    unknown = cast(_UnknownVariantClass, registry.build("FooUnknown"))
+    value = unknown(tag="future")
+
+    with pytest.raises(SerializationError):
+        value.serialize(cast(ShapeSerializer, object()))
+    with pytest.raises(SerializationError):
+        value.serialize_members(cast(ShapeSerializer, object()))
+    with pytest.raises(NotImplementedError):
+        unknown.deserialize(cast(ShapeDeserializer, object()))
 
 
 def test_concurrent_build_returns_one_class() -> None:
