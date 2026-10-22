@@ -1541,6 +1541,9 @@
     "load_model": "rex-function",
     "to_json": "rex-function"
   },
+  "smithy_python.models": {
+    "ModelGenerator": "class"
+  },
   "smithy_python.schemas": {
     "SchemaGenerator": "class",
     "SchemaPlan": "class"

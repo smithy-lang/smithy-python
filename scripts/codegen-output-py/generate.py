@@ -1,5 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+# pyright: reportPrivateUsage=false
 """Regenerate the committed native Python codegen snapshot."""
 
 import hashlib
@@ -12,6 +13,7 @@ from smithy_python.dependencies import DependencySet
 from smithy_python.files import FileManifest
 from smithy_python.generation import GenerationContext, GenerationPlan, TypesSettings
 from smithy_python.model import load_model
+from smithy_python.models import ModelGenerator, _model_reserved_member_names
 from smithy_python.schemas import SchemaGenerator
 from smithy_python.selection import select_type_shapes
 from smithy_python.symbols import SymbolProvider
@@ -35,7 +37,12 @@ def main() -> None:
         package_version="1.0.0",
         package_description="Example native Python codegen output",
     )
-    symbols = SymbolProvider(model, selection, package=settings.package)
+    symbols = SymbolProvider(
+        model,
+        selection,
+        package=settings.package,
+        reserved_member_names=_model_reserved_member_names(model),
+    )
     dependencies = DependencySet()
     context = GenerationContext(
         model=model,
@@ -47,6 +54,7 @@ def main() -> None:
         files=FileManifest(dependencies),
     )
     SchemaGenerator().generate(context)
+    ModelGenerator().generate(context)
     context.files.commit(_OUTPUT)
     _format_output()
 
@@ -57,7 +65,7 @@ def _format_output() -> None:
         args = [sys.executable, "-m", "ruff", command]
         if command == "check":
             args.append("--fix")
-        subprocess.run(
+        subprocess.run(  # noqa: S603
             [*args, str(_OUTPUT), "--config", str(config)],
             check=True,
         )
