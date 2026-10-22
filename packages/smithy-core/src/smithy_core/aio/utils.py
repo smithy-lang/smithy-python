@@ -9,6 +9,14 @@ from ..interfaces import BytesReader
 from ..interfaces import StreamingBlob as SyncStreamingBlob
 from .interfaces import AsyncByteStream, StreamingBlob
 
+__all__ = [
+    "async_list",
+    "close",
+    "read_streaming_blob",
+    "read_streaming_blob_async",
+    "seek",
+]
+
 
 async def async_list[E](lst: Iterable[E]) -> AsyncIterable[E]:
     """Turn an Iterable into an AsyncIterable."""

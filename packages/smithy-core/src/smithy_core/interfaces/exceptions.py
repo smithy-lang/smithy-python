@@ -4,6 +4,8 @@ from typing import Protocol, runtime_checkable
 
 from ..exceptions import Fault
 
+__all__ = ["HasFault"]
+
 
 @runtime_checkable
 class HasFault(Protocol):

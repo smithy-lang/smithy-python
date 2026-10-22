@@ -13,6 +13,13 @@ from ...interfaces import (
     HTTPRequestConfiguration,
 )
 
+__all__ = [
+    "HTTPClient",
+    "HTTPErrorIdentifier",
+    "HTTPRequest",
+    "HTTPResponse",
+]
+
 
 class HTTPRequest(Request, Protocol):
     """HTTP primitive for an Exchange to construct a version agnostic HTTP message.

@@ -45,6 +45,12 @@ from ..serializers import HTTPBindingSerializer, HTTPRequestSerializer
 from . import HTTPRequest as _HTTPRequest
 from .interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 
+__all__ = [
+    "HttpBindingClientProtocol",
+    "HttpClientProtocol",
+    "RpcV2CborClientProtocol",
+]
+
 
 class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
     """An HTTP-based protocol."""

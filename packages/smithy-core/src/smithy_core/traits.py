@@ -19,6 +19,50 @@ if TYPE_CHECKING:
     from .documents import DocumentValue
 
 
+__all__ = [
+    "ORIGINAL_SHAPE_ID",
+    "APIKeyLocation",
+    "DefaultTrait",
+    "DynamicTrait",
+    "EndpointTrait",
+    "EnumValueTrait",
+    "ErrorFault",
+    "ErrorTrait",
+    "EventHeaderTrait",
+    "EventPayloadTrait",
+    "HTTPAPIKeyAuthTrait",
+    "HTTPChecksumRequiredTrait",
+    "HTTPErrorTrait",
+    "HTTPHeaderTrait",
+    "HTTPLabelTrait",
+    "HTTPPayloadTrait",
+    "HTTPPrefixHeadersTrait",
+    "HTTPQueryParamsTrait",
+    "HTTPQueryTrait",
+    "HTTPResponseCodeTrait",
+    "HTTPTrait",
+    "HostLabelTrait",
+    "IdempotencyTokenTrait",
+    "InternalTrait",
+    "JSONNameTrait",
+    "LongPollTrait",
+    "MediaTypeTrait",
+    "RequiredTrait",
+    "RequiresLengthTrait",
+    "RpcV2CborTrait",
+    "SensitiveTrait",
+    "SparseTrait",
+    "StreamingTrait",
+    "TimestampFormatTrait",
+    "Trait",
+    "UnitTypeTrait",
+    "XMLAttributeTrait",
+    "XMLFlattenedTrait",
+    "XMLNameTrait",
+    "XMLNamespaceTrait",
+]
+
+
 @dataclass(kw_only=True, frozen=True, slots=True)
 class DynamicTrait:
     """A component that can be attached to a schema to describe additional information

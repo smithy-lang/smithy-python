@@ -35,6 +35,8 @@ from . import HTTPResponse
 from .interfaces import HTTPClient, HTTPRequest
 from .interfaces import HTTPResponse as HTTPResponseInterface
 
+__all__ = ["AIOHTTPClient", "AIOHTTPClientConfig"]
+
 
 def _assert_aiohttp() -> None:
     if not HAS_AIOHTTP:

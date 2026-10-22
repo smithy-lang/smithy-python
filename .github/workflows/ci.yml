@@ -58,6 +58,11 @@ jobs:
         run: |
           make check-py
 
+      - name: Check API snapshot
+        if: ${{ matrix.python-version == '3.12' }}
+        run: |
+          make api-snapshot
+
       - name: Test python packages
         run: |
           make test-py

@@ -13,6 +13,14 @@ from .schemas import APIOperation
 from .serializers import SerializeableShape
 from .types import PropertyKey, TypedProperties
 
+__all__ = [
+    "STATIC_ENDPOINT_CONFIG",
+    "Endpoint",
+    "EndpointResolverParams",
+    "StaticEndpointConfig",
+    "resolve_static_uri",
+]
+
 
 @dataclass(kw_only=True)
 class Endpoint(_Endpoint):

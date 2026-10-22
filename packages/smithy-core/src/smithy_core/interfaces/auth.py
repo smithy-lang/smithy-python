@@ -10,6 +10,9 @@ if TYPE_CHECKING:
     from ..auth import AuthParams
 
 
+__all__ = ["AuthOption", "AuthSchemeResolver"]
+
+
 class AuthOption(Protocol):
     """Auth scheme used for signing and identity resolution."""
 

@@ -10,6 +10,13 @@ from smithy_core.retries import RetryStrategyType
 from .exceptions import ConfigValidationError, ProfileNotFoundError
 from .types import ConfigSource
 
+__all__ = [
+    "validate_max_attempts",
+    "validate_profile",
+    "validate_region",
+    "validate_retry_mode",
+]
+
 _REGION_PATTERN = re.compile(r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$")
 
 

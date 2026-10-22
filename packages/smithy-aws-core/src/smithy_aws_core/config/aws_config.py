@@ -40,6 +40,11 @@ from .validators import (
 
 _CREDENTIAL_FIELDS = ("aws_access_key_id", "aws_secret_access_key", "aws_session_token")
 
+__all__ = [
+    "AsyncAwsConfig",
+    "AwsConfigOverrides",
+]
+
 
 class AwsConfigOverrides(TypedDict, total=False):
     """Common keyword overrides accepted by AWS config resolution."""

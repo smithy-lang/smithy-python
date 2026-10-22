@@ -24,6 +24,18 @@ from smithy_core.types import PathPattern, TimestampFormat
 
 from .bindings import Binding, RequestBindingMatcher, ResponseBindingMatcher
 
+__all__ = [
+    "HTTP_BINDING_SCHEMA_EXTENSION",
+    "HTTP_OPERATION_SCHEMA_EXTENSION",
+    "HTTPBindingSchemaMetadata",
+    "HTTPMemberBindingMetadata",
+    "HTTPOperationSchemaMetadata",
+    "HTTPPayloadMetadata",
+    "HTTPRequestBindingMetadata",
+    "HTTPResponseBindingDispatch",
+    "HTTPResponseBindingMetadata",
+]
+
 type HTTPResponseBindingDispatch = tuple[
     Schema,
     Binding,

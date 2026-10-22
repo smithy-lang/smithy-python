@@ -11,6 +11,8 @@ from .serializers import SerializeableShape
 from .shapes import ShapeID
 from .types import TypedProperties
 
+__all__ = ["AuthOption", "AuthParams", "DefaultAuthResolver", "NoAuthResolver"]
+
 
 @dataclass(kw_only=True, frozen=True)
 class AuthParams[I: SerializeableShape, O: DeserializeableShape]:

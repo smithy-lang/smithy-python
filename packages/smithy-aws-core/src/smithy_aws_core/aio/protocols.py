@@ -100,6 +100,18 @@ if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
 
+__all__ = [
+    "AWSErrorIdentifier",
+    "AWSJSONDocument",
+    "AwsJson10ClientProtocol",
+    "AwsJson11ClientProtocol",
+    "AwsQueryClientProtocol",
+    "Ec2QueryClientProtocol",
+    "RestJsonClientProtocol",
+    "RestXmlClientProtocol",
+]
+
+
 def _assert_json() -> None:
     if not _HAS_JSON:
         raise MissingDependencyError(

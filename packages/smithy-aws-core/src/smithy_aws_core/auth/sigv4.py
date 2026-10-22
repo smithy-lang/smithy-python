@@ -29,6 +29,14 @@ except ImportError:
     HAS_EVENT_STREAM = False  # type: ignore
 
 
+__all__ = [
+    "SIGV4_CONFIG",
+    "SigV4AuthScheme",
+    "SigV4Config",
+    "SigV4Signer",
+]
+
+
 class SigV4Config(Protocol):
     region: str | None
     aws_credentials_identity_resolver: AWSCredentialsResolver | None

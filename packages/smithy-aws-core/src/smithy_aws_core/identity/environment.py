@@ -7,6 +7,8 @@ from smithy_core.exceptions import SmithyIdentityError
 
 from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
+__all__ = ["EnvironmentCredentialsResolver"]
+
 
 class EnvironmentCredentialsResolver(
     IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]

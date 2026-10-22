@@ -20,6 +20,8 @@ from smithy_core.traits import (
     StreamingTrait,
 )
 
+__all__ = ["Binding", "RequestBindingMatcher", "ResponseBindingMatcher"]
+
 
 class Binding(Enum):
     """HTTP binding locations."""

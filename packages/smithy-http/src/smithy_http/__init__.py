@@ -7,6 +7,15 @@ from typing import get_args
 from . import interfaces
 from .interfaces import FieldPosition
 
+__all__ = [
+    "Field",
+    "FieldPosition",
+    "Fields",
+    "interfaces",
+    "quote_and_escape_field_value",
+    "tuples_to_fields",
+]
+
 __version__ = "0.6.0"
 
 _VALID_FIELD_POSITIONS = frozenset(get_args(FieldPosition))

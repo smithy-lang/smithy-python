@@ -8,6 +8,8 @@ from ..exceptions import SmithyIdentityError
 from ..interfaces.identity import Identity
 from .interfaces.identity import IdentityResolver
 
+__all__ = ["CachingIdentityResolver", "ChainedIdentityResolver"]
+
 logger: Final = logging.getLogger(__name__)
 
 

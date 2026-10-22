@@ -12,6 +12,8 @@ from smithy_http.aio import HTTPResponse
 from smithy_http.aio.interfaces import HTTPClient, HTTPRequest
 from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 
+__all__ = ["MockHTTPClient", "MockHTTPClientError"]
+
 
 class MockHTTPClient(HTTPClient):
     """Implementation of :py:class:`.interfaces.HTTPClient` solely for testing purposes.

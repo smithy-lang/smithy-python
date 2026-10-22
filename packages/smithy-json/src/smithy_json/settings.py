@@ -9,6 +9,9 @@ if TYPE_CHECKING:
     from ._private.documents import JSONDocument
 
 
+__all__ = ["JSONSettings"]
+
+
 @dataclass(slots=True)
 class JSONSettings:
     """Settings for the JSON codec."""

@@ -19,6 +19,8 @@ from unicodedata import normalize
 from .exceptions import CodegenError
 from .symbols import TypeReference
 
+__all__ = ["PythonWriter"]
+
 # Union of Python 3.12-3.15 builtins, including platform-specific names.
 # Keep this fixed so import planning does not depend on the generator host.
 _BUILTINS = frozenset(

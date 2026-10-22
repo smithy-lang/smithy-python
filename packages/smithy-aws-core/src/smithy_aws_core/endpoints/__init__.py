@@ -3,6 +3,11 @@
 from smithy_core.endpoints import StaticEndpointConfig
 from smithy_core.types import PropertyKey
 
+__all__ = [
+    "REGIONAL_ENDPOINT_CONFIG",
+    "RegionalEndpointConfig",
+]
+
 
 class RegionalEndpointConfig(StaticEndpointConfig):
     """Endpoint config for services with standard regional endpoints."""

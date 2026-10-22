@@ -21,6 +21,12 @@ from smithy_aws_core.identity.components import (
     AWSIdentityProperties,
 )
 
+__all__ = [
+    "ContainerCredentialsConfig",
+    "ContainerCredentialsResolver",
+    "ContainerMetadataClient",
+]
+
 _CONTAINER_METADATA_IP = "169.254.170.2"
 _CONTAINER_METADATA_ALLOWED_HOSTS = {
     _CONTAINER_METADATA_IP,

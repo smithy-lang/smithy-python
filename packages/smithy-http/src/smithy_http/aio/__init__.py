@@ -9,6 +9,8 @@ from smithy_core.aio.utils import read_streaming_blob, read_streaming_blob_async
 from .. import interfaces as http_interfaces
 from . import interfaces as http_aio_interfaces
 
+__all__ = ["HTTPRequest", "HTTPResponse"]
+
 
 @dataclass(kw_only=True)
 class HTTPRequest(http_aio_interfaces.HTTPRequest):

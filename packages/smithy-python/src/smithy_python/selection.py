@@ -19,6 +19,8 @@ from .model import (
     ShapeType,
 )
 
+__all__ = ["Selection", "resolve_service", "select_shapes"]
+
 
 @dataclass(frozen=True, slots=True)
 class Selection:

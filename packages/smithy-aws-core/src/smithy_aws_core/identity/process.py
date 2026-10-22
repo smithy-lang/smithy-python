@@ -10,6 +10,8 @@ from smithy_core.exceptions import SmithyIdentityError
 
 from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
+__all__ = ["ProcessCredentialsResolver"]
+
 
 def _is_command_list(command: object) -> TypeGuard[list[str]]:
     if not isinstance(command, list) or not command:

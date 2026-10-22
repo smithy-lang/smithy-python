@@ -7,6 +7,8 @@ from ..exceptions import EndpointResolutionError
 from ..interfaces import Endpoint as _Endpoint
 from .interfaces import EndpointResolver
 
+__all__ = ["StaticEndpointResolver"]
+
 
 class StaticEndpointResolver(EndpointResolver):
     """A basic endpoint resolver that forwards a static URI."""

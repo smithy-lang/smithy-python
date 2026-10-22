@@ -7,6 +7,13 @@ from typing import Protocol, TypedDict
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.interfaces.identity import Identity
 
+__all__ = [
+    "AWSCredentialsIdentity",
+    "AWSCredentialsResolver",
+    "AWSIdentityConfig",
+    "AWSIdentityProperties",
+]
+
 
 @dataclass(kw_only=True)
 class AWSCredentialsIdentity(Identity):

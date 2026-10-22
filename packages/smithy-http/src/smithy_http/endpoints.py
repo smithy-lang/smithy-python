@@ -9,6 +9,8 @@ from smithy_core.types import PropertyKey, TypedProperties
 
 from . import Fields, interfaces
 
+__all__ = ["HEADERS", "HTTPEndpoint"]
+
 HEADERS = PropertyKey(key="headers", value_type=interfaces.Fields)
 """An Endpoint property indicating the given fields MUST be added to the request."""
 

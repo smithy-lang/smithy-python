@@ -31,6 +31,9 @@ if TYPE_CHECKING:
     from .serializers import SerializeableShape
 
 
+__all__ = ["APIOperation", "MemberSchema", "Schema", "SchemaExtension"]
+
+
 @dataclass(kw_only=True, frozen=True, init=False)
 class Schema:
     """Describes a shape, its traits, and its members."""
