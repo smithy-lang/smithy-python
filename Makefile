@@ -92,6 +92,11 @@ test-py: ## Runs tests for the python packages.
 	uv run pytest packages
 
 
+test-integration: ## Runs integration tests that drive generated clients over a real transport. Requires `make test-protocols` (or generate-protocol-tests) to have installed the generated clients first.
+	uv pip install h2 trustme "packages/smithy-http[awscrt]"
+	uv run pytest packages/*/tests/integration --no-cov
+
+
 benchmark: ## Runs ser/deser throughput benchmarks (coverage disabled; not part of CI or the default test run).
 	uv run pytest packages/*/tests/benchmark --no-cov -s -q
 

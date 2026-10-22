@@ -133,9 +133,13 @@ class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
 
     :param read_buffer_size: The buffer size in bytes to use when reading from streams.
         Defaults to 8192 (8 KB).
+    :param trust_store_path: Path to a PEM CA bundle that overrides the default system
+        trust store when verifying TLS peers. Enables connecting to a server whose
+        certificate chains to a private CA.
     """
 
     read_buffer_size: int = DEFAULT_READ_BUFFER_SIZE
+    trust_store_path: str | None = None
 
     def __post_init__(self) -> None:
         _assert_crt()
@@ -171,7 +175,12 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             eventloop = _AWSCRTEventLoop()
         self._eventloop = eventloop
         self._client_bootstrap = self._eventloop.bootstrap
-        self._tls_ctx = crt_io.ClientTlsContext(crt_io.TlsContextOptions())
+        tls_ctx_options = crt_io.TlsContextOptions()
+        if self._config.trust_store_path is not None:
+            tls_ctx_options.override_default_trust_store_from_path(
+                None, self._config.trust_store_path
+            )
+        self._tls_ctx = crt_io.ClientTlsContext(tls_ctx_options)
         self._socket_options = crt_io.SocketOptions()
         self._connections: ConnectionPoolDict = {}
         self._closed = False

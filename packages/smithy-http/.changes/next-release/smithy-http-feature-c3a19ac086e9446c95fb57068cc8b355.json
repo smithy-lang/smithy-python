@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added a RpcClientProtocol base class and client-side event stream support for the rpcv2Cbor protocol."
+}

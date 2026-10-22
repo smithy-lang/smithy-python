@@ -46,6 +46,12 @@ smithy_python = { workspace = true }
 [tool.pyright]
 typeCheckingMode = "strict"
 enableExperimentalFeatures = true
+# Drives a stubless h2 server and the dynamically-typed generated client; strict
+# typing there is noise, not signal.
+exclude = [
+    "**/__pycache__",
+    "packages/smithy-aws-core/tests/integration",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto" # makes pytest run async tests without having to be marked with the @pytest.mark.asyncio decorator
