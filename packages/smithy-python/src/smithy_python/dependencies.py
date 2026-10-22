@@ -8,7 +8,15 @@ from collections.abc import Collection, Iterable, Iterator
 from dataclasses import dataclass
 from typing import Literal
 
-from .exceptions import CodegenError
+from . import exceptions as _exceptions
+
+__all__ = [
+    "HATCHLING",
+    "SMITHY_CORE",
+    "Dependency",
+    "DependencyGroup",
+    "DependencySet",
+]
 
 type DependencyGroup = Literal["runtime", "build", "test", "docs"]
 
@@ -55,7 +63,7 @@ class DependencySet(Collection[Dependency]):
             self._dependencies[key] = dependency
             return
         if previous.specifier != dependency.specifier:
-            raise CodegenError(
+            raise _exceptions.CodegenError(
                 f"Conflicting {dependency.group} dependency specifiers for "
                 f"{dependency.package!r}: {previous.specifier!r} and "
                 f"{dependency.specifier!r}"

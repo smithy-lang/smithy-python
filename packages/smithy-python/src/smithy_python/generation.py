@@ -9,12 +9,21 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Protocol
 
-from .dependencies import DependencySet
-from .files import FileManifest
-from .model import DECLARATION_TYPES, Model, Shape, ShapeId, ShapeType
-from .schemas import SchemaPlan
-from .selection import Selection, Selector
-from .symbols import SymbolProvider
+from . import dependencies as _dependencies
+from . import files as _files
+from . import model as _model
+from . import schemas as _schemas
+from . import selection as _selection
+from . import symbols as _symbols
+
+__all__ = [
+    "ArtifactGenerator",
+    "ArtifactSettings",
+    "GenerationContext",
+    "GenerationPlan",
+    "ModelPlan",
+    "TypesSettings",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,7 +39,7 @@ class ArtifactSettings:
 class TypesSettings(ArtifactSettings):
     """Settings for a standalone types package."""
 
-    selector: Selector = field(default_factory=Selector.identity)
+    selector: _selection.Selector = field(default_factory=_selection.Selector.identity)
     generate_inputs_and_outputs: bool = False
 
 
@@ -38,27 +47,29 @@ class TypesSettings(ArtifactSettings):
 class ModelPlan:
     """Derived semantic data used to emit lazy model declarations."""
 
-    declaration_names: Mapping[ShapeId, str]
+    declaration_names: Mapping[_model.ShapeId, str]
     renames: Mapping[str, str]
-    union_variant_names: Mapping[ShapeId, str]
-    union_unknown_names: Mapping[ShapeId, str]
+    union_variant_names: Mapping[_model.ShapeId, str]
+    union_unknown_names: Mapping[_model.ShapeId, str]
 
     @classmethod
     def from_shapes(
         cls,
-        shapes: tuple[Shape, ...],
-        symbols: SymbolProvider,
-        schema_names: Mapping[ShapeId, str],
+        shapes: tuple[_model.Shape, ...],
+        symbols: _symbols.SymbolProvider,
+        schema_names: Mapping[_model.ShapeId, str],
     ) -> ModelPlan:
         """Plan declaration and union names in stable shape order."""
-        declarations: dict[ShapeId, str] = {}
-        variants: dict[ShapeId, str] = {}
-        unknowns: dict[ShapeId, str] = {}
+        declarations: dict[_model.ShapeId, str] = {}
+        variants: dict[_model.ShapeId, str] = {}
+        unknowns: dict[_model.ShapeId, str] = {}
         for shape in shapes:
-            if shape.type not in DECLARATION_TYPES or shape.has_trait("streaming"):
+            if shape.type not in _model.DECLARATION_TYPES or shape.has_trait(
+                "streaming"
+            ):
                 continue
             declarations[shape.id] = symbols.declaration_name(shape.id)
-            if shape.type is ShapeType.UNION:
+            if shape.type is _model.ShapeType.UNION:
                 for member in shape.members.values():
                     variants[member.id] = symbols.union_variant_name(member.id)
                 unknowns[shape.id] = symbols.union_unknown_name(shape.id)
@@ -81,16 +92,19 @@ class ModelPlan:
 class GenerationPlan:
     """Derived semantic data shared by artifact emitters."""
 
-    schemas: SchemaPlan
+    schemas: _schemas.SchemaPlan
     models: ModelPlan
 
     @classmethod
     def from_selection(
-        cls, model: Model, selection: Selection, symbols: SymbolProvider
+        cls,
+        model: _model.Model,
+        selection: _selection.Selection,
+        symbols: _symbols.SymbolProvider,
     ) -> GenerationPlan:
         """Build focused plans in stable selection order."""
         selected = selection.shapes
-        schemas = SchemaPlan.from_shapes(model, selected, symbols)
+        schemas = _schemas.SchemaPlan.from_shapes(model, selected, symbols)
         return cls(
             schemas=schemas,
             models=ModelPlan.from_shapes(selected, symbols, schemas.names),
@@ -101,13 +115,13 @@ class GenerationPlan:
 class GenerationContext[SettingsT: ArtifactSettings]:
     """State shared by one artifact generation."""
 
-    model: Model
-    selection: Selection
+    model: _model.Model
+    selection: _selection.Selection
     settings: SettingsT
-    symbols: SymbolProvider
+    symbols: _symbols.SymbolProvider
     plan: GenerationPlan
-    dependencies: DependencySet
-    files: FileManifest
+    dependencies: _dependencies.DependencySet
+    files: _files.FileManifest
 
     def __post_init__(self) -> None:
         if self.files.dependencies is not self.dependencies:

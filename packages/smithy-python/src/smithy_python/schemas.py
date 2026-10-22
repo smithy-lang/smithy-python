@@ -10,14 +10,92 @@ from math import isfinite
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
-from .dependencies import SMITHY_CORE
-from .exceptions import CodegenError
-from .model import Model, Node, OperationShape, Shape, ShapeId, ShapeType
-from .symbols import SymbolProvider, TypeReference
+from . import dependencies as _dependencies
+from . import exceptions as _exceptions
+from . import model as _model
+from . import symbols as _symbols
 
 if TYPE_CHECKING:
     from .generation import GenerationContext, TypesSettings
     from .writer import PythonWriter
+
+__all__ = ["SchemaGenerator", "SchemaPlan"]
+
+
+@dataclass(frozen=True, slots=True)
+class SchemaPlan:
+    """Derived semantic data used to emit compact schemas."""
+
+    shapes: tuple[_model.Shape, ...]
+    names: Mapping[_model.ShapeId, str]
+    strings: Mapping[str, str]
+    traits: Mapping[_model.ShapeId, _TraitPlan]
+
+    @classmethod
+    def from_shapes(
+        cls,
+        model: _model.Model,
+        shapes: tuple[_model.Shape, ...],
+        symbols: _symbols.SymbolProvider,
+    ) -> SchemaPlan:
+        """Plan schema order, filtered traits, names, and interned strings."""
+        emitted = _schema_order(shapes)
+        included = _included_traits(model)
+        inputs = {
+            operation.input for operation in model.iter_shapes(_model.OperationShape)
+        }
+        outputs = {
+            operation.output for operation in model.iter_shapes(_model.OperationShape)
+        }
+        strings = _StringStore()
+        traits: dict[_model.ShapeId, _TraitPlan] = {}
+        for shape in emitted:
+            additional: list[_model.ShapeId] = []
+            if shape.type is _model.ShapeType.STRUCTURE:
+                if shape.id in inputs:
+                    additional.append(_INPUT_TRAIT)
+                if shape.id in outputs:
+                    additional.append(_OUTPUT_TRAIT)
+            shape_traits = _plan_traits(shape, included, additional)
+            traits[shape.id] = shape_traits
+            strings.intern(shape.id.namespace, preferred="n")
+            strings.intern(shape.id.name)
+            _intern_traits(strings, shape_traits)
+            for member in shape.members.values():
+                member_traits = _plan_traits(member, included)
+                traits[member.id] = member_traits
+                strings.intern(member.name)
+                _intern_traits(strings, member_traits)
+
+        return cls(
+            shapes=emitted,
+            names=MappingProxyType(
+                {shape.id: symbols.schema_name(shape.id) for shape in emitted}
+            ),
+            strings=MappingProxyType(strings.values),
+            traits=MappingProxyType(traits),
+        )
+
+
+class SchemaGenerator:
+    """Emit the compact schema module for a standalone types package."""
+
+    def generate(self, context: GenerationContext[TypesSettings]) -> None:
+        """Register ``<package>._private.schemas`` with the file manifest."""
+        package = context.settings.package
+        path = f"src/{package.replace('.', '/')}/_private/schemas.py"
+        writer = context.files.python_module(path, f"{package}._private.schemas")
+        plan = context.plan.schemas
+        for value, name in plan.strings.items():
+            writer.line(name, " = ", repr(value))
+        if plan.strings:
+            writer.line()
+
+        written: set[_model.ShapeId] = set()
+        for shape in plan.shapes:
+            _write_shape(writer, plan, shape, written)
+            written.add(shape.id)
+
 
 # This contract is intentionally local to the generator. It must match
 # smithy_core._schema_compact without making smithy-python import smithy-core.
@@ -31,36 +109,36 @@ _PRIMITIVE_LONG_INT: Final = -6
 _PRIMITIVE_FLOAT_INT: Final = -7
 _PRIMITIVE_DOUBLE_INT: Final = -8
 
-_TYPE_INTS: Final[Mapping[ShapeType, int]] = {
-    ShapeType.BLOB: 1,
-    ShapeType.BOOLEAN: 2,
-    ShapeType.STRING: 3,
-    ShapeType.TIMESTAMP: 4,
-    ShapeType.BYTE: 5,
-    ShapeType.SHORT: 6,
-    ShapeType.INTEGER: 7,
-    ShapeType.LONG: 8,
-    ShapeType.FLOAT: 9,
-    ShapeType.DOUBLE: 10,
-    ShapeType.BIG_INTEGER: 11,
-    ShapeType.BIG_DECIMAL: 12,
-    ShapeType.DOCUMENT: 13,
-    ShapeType.ENUM: 14,
-    ShapeType.INT_ENUM: 15,
-    ShapeType.LIST: 16,
-    ShapeType.MAP: 17,
-    ShapeType.STRUCTURE: 18,
-    ShapeType.UNION: 19,
-    ShapeType.SERVICE: 21,
-    ShapeType.OPERATION: 23,
+_TYPE_INTS: Final[Mapping[_model.ShapeType, int]] = {
+    _model.ShapeType.BLOB: 1,
+    _model.ShapeType.BOOLEAN: 2,
+    _model.ShapeType.STRING: 3,
+    _model.ShapeType.TIMESTAMP: 4,
+    _model.ShapeType.BYTE: 5,
+    _model.ShapeType.SHORT: 6,
+    _model.ShapeType.INTEGER: 7,
+    _model.ShapeType.LONG: 8,
+    _model.ShapeType.FLOAT: 9,
+    _model.ShapeType.DOUBLE: 10,
+    _model.ShapeType.BIG_INTEGER: 11,
+    _model.ShapeType.BIG_DECIMAL: 12,
+    _model.ShapeType.DOCUMENT: 13,
+    _model.ShapeType.ENUM: 14,
+    _model.ShapeType.INT_ENUM: 15,
+    _model.ShapeType.LIST: 16,
+    _model.ShapeType.MAP: 17,
+    _model.ShapeType.STRUCTURE: 18,
+    _model.ShapeType.UNION: 19,
+    _model.ShapeType.SERVICE: 21,
+    _model.ShapeType.OPERATION: 23,
 }
 
 
-def _shape_id(value: str) -> ShapeId:
-    return ShapeId.from_string(value)
+def _shape_id(value: str) -> _model.ShapeId:
+    return _model.ShapeId.from_string(value)
 
 
-_PRELUDE_INTS: Final[Mapping[ShapeId, int]] = {
+_PRELUDE_INTS: Final[Mapping[_model.ShapeId, int]] = {
     _shape_id("smithy.api#Blob"): 1,
     _shape_id("smithy.api#Boolean"): 2,
     _shape_id("smithy.api#String"): 3,
@@ -162,101 +240,30 @@ _DEFINITION_TRAITS: Final = (
     _shape_id("smithy.api#authDefinition"),
 )
 
-_STATIC_SCHEMA: Final = TypeReference(
+_STATIC_SCHEMA: Final = _symbols.TypeReference(
     "StaticSchema",
     "smithy_core._schema_compact",
-    dependencies=(SMITHY_CORE,),
+    dependencies=(_dependencies.SMITHY_CORE,),
 )
-_MAPPING_PROXY: Final = TypeReference("MappingProxyType", "types")
-_TYPED_MAPPING_PROXY: Final = TypeReference(
+_MAPPING_PROXY: Final = _symbols.TypeReference("MappingProxyType", "types")
+_TYPED_MAPPING_PROXY: Final = _symbols.TypeReference(
     "MappingProxyType",
     "types",
     arguments=(
-        TypeReference("str", "builtins"),
-        TypeReference("object", "builtins"),
+        _symbols.TypeReference("str", "builtins"),
+        _symbols.TypeReference("object", "builtins"),
     ),
 )
 
-type _SourcePart = str | TypeReference
-type _TraitPlan = int | Mapping[ShapeId, Node]
-
-
-@dataclass(frozen=True, slots=True)
-class SchemaPlan:
-    """Derived semantic data used to emit compact schemas."""
-
-    shapes: tuple[Shape, ...]
-    names: Mapping[ShapeId, str]
-    strings: Mapping[str, str]
-    traits: Mapping[ShapeId, _TraitPlan]
-
-    @classmethod
-    def from_shapes(
-        cls,
-        model: Model,
-        shapes: tuple[Shape, ...],
-        symbols: SymbolProvider,
-    ) -> SchemaPlan:
-        """Plan schema order, filtered traits, names, and interned strings."""
-        emitted = _schema_order(shapes)
-        included = _included_traits(model)
-        inputs = {operation.input for operation in model.iter_shapes(OperationShape)}
-        outputs = {operation.output for operation in model.iter_shapes(OperationShape)}
-        strings = _StringStore()
-        traits: dict[ShapeId, _TraitPlan] = {}
-        for shape in emitted:
-            additional: list[ShapeId] = []
-            if shape.type is ShapeType.STRUCTURE:
-                if shape.id in inputs:
-                    additional.append(_INPUT_TRAIT)
-                if shape.id in outputs:
-                    additional.append(_OUTPUT_TRAIT)
-            shape_traits = _plan_traits(shape, included, additional)
-            traits[shape.id] = shape_traits
-            strings.intern(shape.id.namespace, preferred="n")
-            strings.intern(shape.id.name)
-            _intern_traits(strings, shape_traits)
-            for member in shape.members.values():
-                member_traits = _plan_traits(member, included)
-                traits[member.id] = member_traits
-                strings.intern(member.name)
-                _intern_traits(strings, member_traits)
-
-        return cls(
-            shapes=emitted,
-            names=MappingProxyType(
-                {shape.id: symbols.schema_name(shape.id) for shape in emitted}
-            ),
-            strings=MappingProxyType(strings.values),
-            traits=MappingProxyType(traits),
-        )
-
-
-class SchemaGenerator:
-    """Emit the compact schema module for a standalone types package."""
-
-    def generate(self, context: GenerationContext[TypesSettings]) -> None:
-        """Register ``<package>._private.schemas`` with the file manifest."""
-        package = context.settings.package
-        path = f"src/{package.replace('.', '/')}/_private/schemas.py"
-        writer = context.files.python_module(path, f"{package}._private.schemas")
-        plan = context.plan.schemas
-        for value, name in plan.strings.items():
-            writer.line(name, " = ", repr(value))
-        if plan.strings:
-            writer.line()
-
-        written: set[ShapeId] = set()
-        for shape in plan.shapes:
-            _write_shape(writer, plan, shape, written)
-            written.add(shape.id)
+type _SourcePart = str | _symbols.TypeReference
+type _TraitPlan = int | Mapping[_model.ShapeId, _model.Node]
 
 
 def _write_shape(
     writer: PythonWriter,
     plan: SchemaPlan,
-    shape: Shape,
-    written: set[ShapeId],
+    shape: _model.Shape,
+    written: set[_model.ShapeId],
 ) -> None:
     writer.line(plan.names[shape.id], ": ", _STATIC_SCHEMA, " = (")
     with writer.indent():
@@ -287,7 +294,7 @@ def _write_shape(
     writer.line()
 
 
-def _included_traits(model: Model) -> frozenset[ShapeId]:
+def _included_traits(model: _model.Model) -> frozenset[_model.ShapeId]:
     included = set(_INCLUDED_TRAITS)
     for shape in model.iter_shapes():
         for definition_trait in _DEFINITION_TRAITS:
@@ -307,13 +314,13 @@ def _included_traits(model: Model) -> frozenset[ShapeId]:
 
 
 def _plan_traits(
-    shape: Shape,
-    included: frozenset[ShapeId],
-    additional: Collection[ShapeId] = (),
+    shape: _model.Shape,
+    included: frozenset[_model.ShapeId],
+    additional: Collection[_model.ShapeId] = (),
 ) -> _TraitPlan:
     bits = 0
-    values: dict[ShapeId, Node] = {}
-    valueless_bits: list[ShapeId] = []
+    values: dict[_model.ShapeId, _model.Node] = {}
+    valueless_bits: list[_model.ShapeId] = []
     for trait_id, value in shape.traits.items():
         if trait_id not in included:
             continue
@@ -359,7 +366,7 @@ def _trait_parts(plan: SchemaPlan, traits: _TraitPlan) -> tuple[_SourcePart, ...
 
 
 def _node_parts(
-    value: Node,
+    value: _model.Node,
     *,
     strings: Mapping[str, str],
     intern_string: bool = False,
@@ -373,7 +380,7 @@ def _node_parts(
             return (strings[value],)
         return (repr(value),)
     if isinstance(value, float) and not isfinite(value):
-        raise CodegenError("Cannot emit a non-finite numeric trait value")
+        raise _exceptions.CodegenError("Cannot emit a non-finite numeric trait value")
     if isinstance(value, int | float):
         return (repr(value),)
     if isinstance(value, tuple):
@@ -398,19 +405,23 @@ def _node_parts(
     return tuple(parts)
 
 
-def _schema_ref(plan: SchemaPlan, target: ShapeId, written: set[ShapeId]) -> str:
+def _schema_ref(
+    plan: SchemaPlan, target: _model.ShapeId, written: set[_model.ShapeId]
+) -> str:
     if (prelude := _PRELUDE_INTS.get(target)) is not None:
         return str(prelude)
     try:
         name = plan.names[target]
     except KeyError as error:
-        raise CodegenError(f"Schema target {target} was not selected") from error
+        raise _exceptions.CodegenError(
+            f"Schema target {target} was not selected"
+        ) from error
     return name if target in written else f"lambda: {name}"
 
 
 def _schema_order(
-    shapes: tuple[Shape, ...],
-) -> tuple[Shape, ...]:
+    shapes: tuple[_model.Shape, ...],
+) -> tuple[_model.Shape, ...]:
     by_id = {shape.id: shape for shape in shapes}
     graph = {
         shape.id: tuple(
@@ -418,18 +429,20 @@ def _schema_order(
         )
         for shape in shapes
     }
-    reverse: dict[ShapeId, list[ShapeId]] = {shape.id: [] for shape in shapes}
+    reverse: dict[_model.ShapeId, list[_model.ShapeId]] = {
+        shape.id: [] for shape in shapes
+    }
     for source, targets in graph.items():
         for target in targets:
             reverse[target].append(source)
 
-    finished: list[ShapeId] = []
-    visited: set[ShapeId] = set()
+    finished: list[_model.ShapeId] = []
+    visited: set[_model.ShapeId] = set()
     for root in graph:
         if root in visited:
             continue
         visited.add(root)
-        pending: list[tuple[ShapeId, int]] = [(root, 0)]
+        pending: list[tuple[_model.ShapeId, int]] = [(root, 0)]
         while pending:
             current, index = pending[-1]
             targets = graph[current]
@@ -443,12 +456,12 @@ def _schema_order(
                 visited.add(target)
                 pending.append((target, 0))
 
-    recursive: set[ShapeId] = set()
+    recursive: set[_model.ShapeId] = set()
     visited.clear()
     for root in reversed(finished):
         if root in visited:
             continue
-        component: list[ShapeId] = []
+        component: list[_model.ShapeId] = []
         component_pending = [root]
         visited.add(root)
         while component_pending:

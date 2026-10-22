@@ -40,6 +40,44 @@ class Selection:
     """Eligible data shapes omitted by the service closure (zero without a service)."""
 
 
+def resolve_service(
+    model: Model, *, service_id: str | None = None, require_service: bool = False
+) -> ServiceShape | None:
+    """Resolve an absolute service ID or the sole non-mixin service.
+
+    Invalid or ambiguous selections raise :class:`InvalidInvocationError`.
+    """
+    if service_id is not None:
+        try:
+            shape_id = ShapeId.from_string(service_id)
+        except InvalidShapeIdError as error:
+            raise InvalidInvocationError(f"--service: {error}") from error
+        if shape_id.is_member:
+            raise InvalidInvocationError(
+                f"--service {service_id!r} is a member ID, not a service"
+            )
+        shape = model.find_shape(shape_id)
+        if shape is None:
+            raise InvalidInvocationError(f"--service {service_id!r} is not defined")
+        if not isinstance(shape, ServiceShape):
+            raise InvalidInvocationError(f"--service {service_id!r} is not a service")
+        if shape.is_mixin:
+            raise InvalidInvocationError(f"--service {service_id!r} is a mixin")
+        return shape
+
+    services = model.services()
+    if len(services) > 1:
+        candidates = ", ".join(str(service.id) for service in services)
+        raise InvalidInvocationError(
+            f"Multiple services found; select one with --service: {candidates}"
+        )
+    if services:
+        return services[0]
+    if require_service:
+        raise InvalidInvocationError("Client generation requires a service")
+    return None
+
+
 def select_shapes(
     model: Model, *, service_id: str | None = None, require_service: bool = False
 ) -> Selection:
@@ -227,41 +265,3 @@ def _check_names(
             ", ".join(str(shape_id) for shape_id in ids) for ids in conflicts
         )
         raise ModelError(f"Case-insensitive data shape name conflicts: {details}")
-
-
-def resolve_service(
-    model: Model, *, service_id: str | None = None, require_service: bool = False
-) -> ServiceShape | None:
-    """Resolve an absolute service ID or the sole non-mixin service.
-
-    Invalid or ambiguous selections raise :class:`InvalidInvocationError`.
-    """
-    if service_id is not None:
-        try:
-            shape_id = ShapeId.from_string(service_id)
-        except InvalidShapeIdError as error:
-            raise InvalidInvocationError(f"--service: {error}") from error
-        if shape_id.is_member:
-            raise InvalidInvocationError(
-                f"--service {service_id!r} is a member ID, not a service"
-            )
-        shape = model.find_shape(shape_id)
-        if shape is None:
-            raise InvalidInvocationError(f"--service {service_id!r} is not defined")
-        if not isinstance(shape, ServiceShape):
-            raise InvalidInvocationError(f"--service {service_id!r} is not a service")
-        if shape.is_mixin:
-            raise InvalidInvocationError(f"--service {service_id!r} is a mixin")
-        return shape
-
-    services = model.services()
-    if len(services) > 1:
-        candidates = ", ".join(str(service.id) for service in services)
-        raise InvalidInvocationError(
-            f"Multiple services found; select one with --service: {candidates}"
-        )
-    if services:
-        return services[0]
-    if require_service:
-        raise InvalidInvocationError("Client generation requires a service")
-    return None

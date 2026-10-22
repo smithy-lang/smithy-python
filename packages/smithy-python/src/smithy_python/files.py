@@ -13,83 +13,47 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Final, cast
 
-from .dependencies import DependencySet
-from .exceptions import CodegenError
-from .writer import PythonWriter
+from . import dependencies as _dependencies
+from . import exceptions as _exceptions
+from . import writer as _writer
+
+__all__ = ["FileManifest"]
 
 _MANIFEST_PATH: Final = ".smithy-python-manifest.json"
 _MANIFEST_VERSION: Final = 1
 
 
-@dataclass(slots=True)
-class _PythonFile:
-    module: str
-    writer: PythonWriter
-
-
-@dataclass(frozen=True, slots=True)
-class _TextFile:
-    content: str
-
-
-type _GeneratedFile = _PythonFile | _TextFile
-
-
-def _normalize_path(path: str) -> str:
-    parts = path.split("/")
-    if (
-        not path
-        or path.startswith("/")
-        or "\\" in path
-        or any(
-            part in ("", ".", "..")
-            or (
-                len(part) >= 2
-                and part[0].isascii()
-                and part[0].isalpha()
-                and part[1] == ":"
-            )
-            for part in parts
-        )
-    ):
-        raise CodegenError(f"Invalid generated path: {path!r}")
-    return str(PurePosixPath(path))
-
-
-def _digest_file(path: Path) -> str:
-    with path.open("rb") as stream:
-        return hashlib.file_digest(stream, "sha256").hexdigest()
-
-
 class FileManifest:
     """Collect, validate, publish, and track files for one generated artifact."""
 
-    def __init__(self, dependencies: DependencySet | None = None) -> None:
+    def __init__(self, dependencies: _dependencies.DependencySet | None = None) -> None:
         self._dependencies = (
-            dependencies if dependencies is not None else DependencySet()
+            dependencies if dependencies is not None else _dependencies.DependencySet()
         )
         self._files: dict[str, _GeneratedFile] = {}
 
     @property
-    def dependencies(self) -> DependencySet:
+    def dependencies(self) -> _dependencies.DependencySet:
         """Dependencies recorded by writers owned by this manifest."""
         return self._dependencies
 
-    def python_module(self, path: str, module: str) -> PythonWriter:
+    def python_module(self, path: str, module: str) -> _writer.PythonWriter:
         """Return the shared writer for a generated Python module."""
         path = _normalize_path(path)
         self._claim_public_path(path)
         existing = self._files.get(path)
         if isinstance(existing, _PythonFile):
             if existing.module != module:
-                raise CodegenError(
+                raise _exceptions.CodegenError(
                     f"Generated path {path!r} already uses module "
                     f"{existing.module!r}, not {module!r}"
                 )
             return existing.writer
         if existing is not None:
-            raise CodegenError(f"Generated path {path!r} is already a text file")
-        writer = PythonWriter(module, dependencies=self._dependencies)
+            raise _exceptions.CodegenError(
+                f"Generated path {path!r} is already a text file"
+            )
+        writer = _writer.PythonWriter(module, dependencies=self._dependencies)
         self._files[path] = _PythonFile(module, writer)
         return writer
 
@@ -98,7 +62,9 @@ class FileManifest:
         path = _normalize_path(path)
         self._claim_public_path(path)
         if path in self._files:
-            raise CodegenError(f"Generated path {path!r} is already claimed")
+            raise _exceptions.CodegenError(
+                f"Generated path {path!r} is already claimed"
+            )
         self._files[path] = _TextFile(content)
 
     def commit(self, output: Path) -> None:
@@ -106,9 +72,11 @@ class FileManifest:
         output = output.absolute()
         self._validate_path_tree()
         if output.is_symlink() and not output.exists():
-            raise CodegenError(f"Output path is a dangling symlink: {output}")
+            raise _exceptions.CodegenError(
+                f"Output path is a dangling symlink: {output}"
+            )
         if output.exists() and not output.is_dir():
-            raise CodegenError(f"Output path is not a directory: {output}")
+            raise _exceptions.CodegenError(f"Output path is not a directory: {output}")
 
         previous = self._load_previous_manifest(output)
         for path in self._files:
@@ -131,7 +99,7 @@ class FileManifest:
     @staticmethod
     def _claim_public_path(path: str) -> None:
         if path == _MANIFEST_PATH:
-            raise CodegenError(
+            raise _exceptions.CodegenError(
                 f"Generated path {_MANIFEST_PATH!r} is reserved for output ownership"
             )
 
@@ -139,7 +107,7 @@ class FileManifest:
         paths = sorted(PurePosixPath(path).parts for path in self._files)
         for previous, current in itertools.pairwise(paths):
             if len(previous) < len(current) and current[: len(previous)] == previous:
-                raise CodegenError(
+                raise _exceptions.CodegenError(
                     f"Generated path {'/'.join(previous)!r} conflicts with "
                     f"{'/'.join(current)!r}"
                 )
@@ -152,12 +120,12 @@ class FileManifest:
             current /= part
             if current.is_symlink():
                 if not current.exists():
-                    raise CodegenError(
+                    raise _exceptions.CodegenError(
                         f"Generated path {path!r} contains a dangling symlink"
                     )
                 resolved = current.resolve(strict=False)
                 if not resolved.is_relative_to(root):
-                    raise CodegenError(
+                    raise _exceptions.CodegenError(
                         f"Generated path {path!r} escapes the output directory"
                     )
 
@@ -169,7 +137,7 @@ class FileManifest:
         for index, part in enumerate(parts):
             current /= part
             if index < len(parts) - 1 and current.is_symlink():
-                raise CodegenError(
+                raise _exceptions.CodegenError(
                     f"Generated path {path!r} contains a symlinked ancestor"
                 )
             if current.exists():
@@ -177,7 +145,7 @@ class FileManifest:
                 if (is_target and current.is_dir()) or (
                     not is_target and not current.is_dir()
                 ):
-                    raise CodegenError(
+                    raise _exceptions.CodegenError(
                         f"Generated path {path!r} conflicts with {current}"
                     )
 
@@ -185,7 +153,7 @@ class FileManifest:
     def _load_previous_manifest(output: Path) -> dict[str, str]:
         manifest = output / _MANIFEST_PATH
         if manifest.is_symlink():
-            raise CodegenError(
+            raise _exceptions.CodegenError(
                 f"Output ownership manifest cannot be a symlink: {manifest}"
             )
         if not manifest.exists():
@@ -193,22 +161,22 @@ class FileManifest:
         try:
             value: object = json.loads(manifest.read_text(encoding="utf-8"))
         except (OSError, UnicodeError, json.JSONDecodeError) as error:
-            raise CodegenError(
+            raise _exceptions.CodegenError(
                 f"Cannot read output ownership manifest: {error}"
             ) from error
         if not isinstance(value, dict):
-            raise CodegenError("Invalid output ownership manifest")
+            raise _exceptions.CodegenError("Invalid output ownership manifest")
         manifest_data = cast(dict[object, object], value)
         files = manifest_data.get("files")
         if manifest_data.get("version") != _MANIFEST_VERSION or not isinstance(
             files, dict
         ):
-            raise CodegenError("Invalid output ownership manifest")
+            raise _exceptions.CodegenError("Invalid output ownership manifest")
         file_data = cast(dict[object, object], files)
         result: dict[str, str] = {}
         for raw_path, digest in file_data.items():
             if not isinstance(raw_path, str) or not isinstance(digest, str):
-                raise CodegenError("Invalid output ownership manifest")
+                raise _exceptions.CodegenError("Invalid output ownership manifest")
             path = _normalize_path(raw_path)
             if (
                 path != raw_path
@@ -216,7 +184,7 @@ class FileManifest:
                 or len(digest) != 64
                 or any(character not in "0123456789abcdef" for character in digest)
             ):
-                raise CodegenError("Invalid output ownership manifest")
+                raise _exceptions.CodegenError("Invalid output ownership manifest")
             result[path] = digest
         return result
 
@@ -229,13 +197,15 @@ class FileManifest:
                 try:
                     compile(content, path, "exec", dont_inherit=True)
                 except (SyntaxError, ValueError) as error:
-                    raise CodegenError(
+                    raise _exceptions.CodegenError(
                         f"Generated Python module {path!r} is invalid: {error}"
                     ) from error
             else:
                 content = generated.content
             if "\0" in content:
-                raise CodegenError(f"Generated text file {path!r} contains a null byte")
+                raise _exceptions.CodegenError(
+                    f"Generated text file {path!r} contains a null byte"
+                )
             encoded = content.encode()
             target = staging.joinpath(*PurePosixPath(path).parts)
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -284,3 +254,43 @@ class FileManifest:
                 target.unlink()
 
         os.replace(staging / _MANIFEST_PATH, output / _MANIFEST_PATH)
+
+
+@dataclass(slots=True)
+class _PythonFile:
+    module: str
+    writer: _writer.PythonWriter
+
+
+@dataclass(frozen=True, slots=True)
+class _TextFile:
+    content: str
+
+
+type _GeneratedFile = _PythonFile | _TextFile
+
+
+def _normalize_path(path: str) -> str:
+    parts = path.split("/")
+    if (
+        not path
+        or path.startswith("/")
+        or "\\" in path
+        or any(
+            part in ("", ".", "..")
+            or (
+                len(part) >= 2
+                and part[0].isascii()
+                and part[0].isalpha()
+                and part[1] == ":"
+            )
+            for part in parts
+        )
+    ):
+        raise _exceptions.CodegenError(f"Invalid generated path: {path!r}")
+    return str(PurePosixPath(path))
+
+
+def _digest_file(path: Path) -> str:
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()

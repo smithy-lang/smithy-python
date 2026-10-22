@@ -9,7 +9,7 @@ import unicodedata
 from collections.abc import Callable, Collection
 from dataclasses import dataclass, replace
 
-from .dependencies import SMITHY_CORE, Dependency
+from . import dependencies as _dependencies
 from .model import (
     DECLARATION_TYPES,
     ListShape,
@@ -24,18 +24,6 @@ from .model import (
 from .selection import Selection
 
 __all__ = ["SymbolProvider", "TypeReference"]
-
-# Union of Python 3.12-3.15 hard keywords, independent of the host interpreter.
-# Soft keywords (match, case, type, lazy, _) remain ordinary identifiers here.
-# Update this when adding support for another Python version.
-_KEYWORDS = frozenset(
-    "False None True and as assert async await break class continue def del "
-    "elif else except finally for from global if import in is lambda nonlocal "
-    "not or pass raise return try while with yield".split()
-)
-_ENUMS = frozenset({ShapeType.ENUM, ShapeType.INT_ENUM})
-_ACRONYM_BOUNDARY = re.compile(r"([A-Z]+)([A-Z][a-z])")
-_WORD_BOUNDARY = re.compile(r"([a-z0-9])([A-Z])")
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,77 +40,7 @@ class TypeReference:
     module: str | None = None
     arguments: tuple[TypeReference, ...] = ()
     nullable: bool = False
-    dependencies: tuple[Dependency, ...] = ()
-
-
-# Types whose reference never depends on the shape: Smithy's simple types, with
-# enums widened to str/int so unknown values remain representable.
-_FIXED_TYPES = {
-    ShapeType.BOOLEAN: TypeReference("bool", "builtins"),
-    ShapeType.STRING: TypeReference("str", "builtins"),
-    ShapeType.ENUM: TypeReference("str", "builtins"),
-    ShapeType.INT_ENUM: TypeReference("int", "builtins"),
-    **dict.fromkeys(
-        (
-            ShapeType.BYTE,
-            ShapeType.SHORT,
-            ShapeType.INTEGER,
-            ShapeType.LONG,
-            ShapeType.BIG_INTEGER,
-        ),
-        TypeReference("int", "builtins"),
-    ),
-    ShapeType.FLOAT: TypeReference("float", "builtins"),
-    ShapeType.DOUBLE: TypeReference("float", "builtins"),
-    ShapeType.BLOB: TypeReference("bytes", "builtins"),
-    ShapeType.BIG_DECIMAL: TypeReference("Decimal", "decimal"),
-    ShapeType.TIMESTAMP: TypeReference("datetime", "datetime"),
-    ShapeType.DOCUMENT: TypeReference(
-        "Document", "smithy_core.documents", dependencies=(SMITHY_CORE,)
-    ),
-}
-
-
-def _name(
-    value: str,
-    *,
-    pascal: bool = False,
-    constant: bool = False,
-    reserved: Collection[str] = (),
-) -> str:
-    if pascal:
-        result = "".join(word[:1].upper() + word[1:] for word in value.split("_"))
-    else:
-        value = _ACRONYM_BOUNDARY.sub(r"\1_\2", value)
-        value = _WORD_BOUNDARY.sub(r"\1_\2", value)
-        result = "_".join(word.lower() for word in value.split("_") if word)
-    if constant:
-        result = result.upper()
-    if result[:1].isdigit():
-        result = "_" + result
-    if result in _KEYWORDS or result in reserved:
-        result += "_"
-    return result
-
-
-def _plan_schema_names(selection: Selection) -> dict[ShapeId, str]:
-    names: dict[ShapeId, str] = {}
-    used: set[str] = set()
-    for shape in selection.shapes:
-        selected = (
-            selection.service.rename.get(shape.id, shape.id.name)
-            if selection.service
-            else shape.id.name
-        )
-        base = _name(selected, constant=True)
-        name = base
-        suffix = 2
-        while name in used:
-            name = f"{base}_{suffix}"
-            suffix += 1
-        used.add(name)
-        names[shape.id] = name
-    return names
+    dependencies: tuple[_dependencies.Dependency, ...] = ()
 
 
 class SymbolProvider:
@@ -177,37 +95,6 @@ class SymbolProvider:
             self._check_collision(
                 declarations, self.union_unknown_name(shape.id), shape.id
             )
-
-    @staticmethod
-    def _check_collision(
-        scope: dict[str, ShapeId], name: str, shape_id: ShapeId
-    ) -> None:
-        if name in scope:
-            raise ModelError(
-                f"Python name collision {name!r}: {scope[name]}, {shape_id}"
-            )
-        scope[name] = shape_id
-
-    def _selected_shape(self, shape_id: ShapeId | str) -> Shape:
-        shape = self._model.get_shape(shape_id)
-        if shape.id.root not in self._selected and not self._model.is_prelude(shape):
-            raise ModelError(f"Shape {shape.id} is not selected")
-        return shape
-
-    def _shape(self, shape_id: ShapeId | str) -> Shape:
-        shape = self._selected_shape(shape_id)
-        if (
-            shape.is_mixin
-            or shape.has_trait("trait")
-            or shape.type
-            in (ShapeType.SERVICE, ShapeType.OPERATION, ShapeType.RESOURCE)
-        ):
-            raise ModelError(f"No data symbol for {shape.id} ({shape.type})")
-        if shape.type in (ShapeType.BLOB, ShapeType.UNION) and shape.has_trait(
-            "streaming"
-        ):
-            raise ModelError(f"Unsupported streaming {shape.type}: {shape.id}")
-        return shape
 
     def declaration_name(self, shape_id: ShapeId | str) -> str:
         """Return a generated type's PascalCase name; aliases have no declaration."""
@@ -350,3 +237,116 @@ class SymbolProvider:
             constant=container.type in _ENUMS,
             reserved=self._reserved_member_names.get(container.id, ()),
         )
+
+    @staticmethod
+    def _check_collision(
+        scope: dict[str, ShapeId], name: str, shape_id: ShapeId
+    ) -> None:
+        if name in scope:
+            raise ModelError(
+                f"Python name collision {name!r}: {scope[name]}, {shape_id}"
+            )
+        scope[name] = shape_id
+
+    def _selected_shape(self, shape_id: ShapeId | str) -> Shape:
+        shape = self._model.get_shape(shape_id)
+        if shape.id.root not in self._selected and not self._model.is_prelude(shape):
+            raise ModelError(f"Shape {shape.id} is not selected")
+        return shape
+
+    def _shape(self, shape_id: ShapeId | str) -> Shape:
+        shape = self._selected_shape(shape_id)
+        if (
+            shape.is_mixin
+            or shape.has_trait("trait")
+            or shape.type
+            in (ShapeType.SERVICE, ShapeType.OPERATION, ShapeType.RESOURCE)
+        ):
+            raise ModelError(f"No data symbol for {shape.id} ({shape.type})")
+        if shape.type in (ShapeType.BLOB, ShapeType.UNION) and shape.has_trait(
+            "streaming"
+        ):
+            raise ModelError(f"Unsupported streaming {shape.type}: {shape.id}")
+        return shape
+
+
+# Union of Python 3.12-3.15 hard keywords, independent of the host interpreter.
+# Soft keywords (match, case, type, lazy, _) remain ordinary identifiers here.
+# Update this when adding support for another Python version.
+_KEYWORDS = frozenset(
+    "False None True and as assert async await break class continue def del "
+    "elif else except finally for from global if import in is lambda nonlocal "
+    "not or pass raise return try while with yield".split()
+)
+_ENUMS = frozenset({ShapeType.ENUM, ShapeType.INT_ENUM})
+_ACRONYM_BOUNDARY = re.compile(r"([A-Z]+)([A-Z][a-z])")
+_WORD_BOUNDARY = re.compile(r"([a-z0-9])([A-Z])")
+
+# Types whose reference never depends on the shape: Smithy's simple types, with
+# enums widened to str/int so unknown values remain representable.
+_FIXED_TYPES = {
+    ShapeType.BOOLEAN: TypeReference("bool", "builtins"),
+    ShapeType.STRING: TypeReference("str", "builtins"),
+    ShapeType.ENUM: TypeReference("str", "builtins"),
+    ShapeType.INT_ENUM: TypeReference("int", "builtins"),
+    **dict.fromkeys(
+        (
+            ShapeType.BYTE,
+            ShapeType.SHORT,
+            ShapeType.INTEGER,
+            ShapeType.LONG,
+            ShapeType.BIG_INTEGER,
+        ),
+        TypeReference("int", "builtins"),
+    ),
+    ShapeType.FLOAT: TypeReference("float", "builtins"),
+    ShapeType.DOUBLE: TypeReference("float", "builtins"),
+    ShapeType.BLOB: TypeReference("bytes", "builtins"),
+    ShapeType.BIG_DECIMAL: TypeReference("Decimal", "decimal"),
+    ShapeType.TIMESTAMP: TypeReference("datetime", "datetime"),
+    ShapeType.DOCUMENT: TypeReference(
+        "Document", "smithy_core.documents", dependencies=(_dependencies.SMITHY_CORE,)
+    ),
+}
+
+
+def _name(
+    value: str,
+    *,
+    pascal: bool = False,
+    constant: bool = False,
+    reserved: Collection[str] = (),
+) -> str:
+    if pascal:
+        result = "".join(word[:1].upper() + word[1:] for word in value.split("_"))
+    else:
+        value = _ACRONYM_BOUNDARY.sub(r"\1_\2", value)
+        value = _WORD_BOUNDARY.sub(r"\1_\2", value)
+        result = "_".join(word.lower() for word in value.split("_") if word)
+    if constant:
+        result = result.upper()
+    if result[:1].isdigit():
+        result = "_" + result
+    if result in _KEYWORDS or result in reserved:
+        result += "_"
+    return result
+
+
+def _plan_schema_names(selection: Selection) -> dict[ShapeId, str]:
+    names: dict[ShapeId, str] = {}
+    used: set[str] = set()
+    for shape in selection.shapes:
+        selected = (
+            selection.service.rename.get(shape.id, shape.id.name)
+            if selection.service
+            else shape.id.name
+        )
+        base = _name(selected, constant=True)
+        name = base
+        suffix = 2
+        while name in used:
+            name = f"{base}_{suffix}"
+            suffix += 1
+        used.add(name)
+        names[shape.id] = name
+    return names
