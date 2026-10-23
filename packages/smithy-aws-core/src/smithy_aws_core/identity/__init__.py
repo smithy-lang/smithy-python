@@ -9,12 +9,16 @@ from .components import (
     AWSIdentityConfig,
     AWSIdentityProperties,
 )
+from .environment import EnvironmentCredentialsResolver
+from .static import StaticCredentialsResolver
 
 __all__ = (
     "AWSCredentialsIdentity",
     "AWSCredentialsResolver",
     "AWSIdentityProperties",
+    "EnvironmentCredentialsResolver",
     "IdentityChainError",
+    "StaticCredentialsResolver",
     "UnclaimedSource",
 )
 

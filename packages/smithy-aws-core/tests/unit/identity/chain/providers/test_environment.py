@@ -5,9 +5,11 @@ from collections.abc import Awaitable, Callable
 import pytest
 from smithy_aws_core.aio.identity.chain.provider import ChainSetup
 from smithy_aws_core.aio.identity.chain.providers.environment import (
-    EnvironmentCredentialsProvider,
+    AsyncEnvironmentCredentialsProvider,
 )
-from smithy_aws_core.aio.identity.environment import EnvironmentCredentialsResolver
+from smithy_aws_core.aio.identity.environment import (
+    AsyncEnvironmentCredentialsResolver,
+)
 
 from .conftest import OtherIdentity
 
@@ -20,7 +22,7 @@ async def test_ignores_non_aws_identity_type(
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret")
 
     setup = await setup_provider(
-        EnvironmentCredentialsProvider(), identity_type=OtherIdentity
+        AsyncEnvironmentCredentialsProvider(), identity_type=OtherIdentity
     )
 
     assert setup.resolvers == ()
@@ -45,7 +47,7 @@ async def test_requires_both_keys(
     for name, value in environment.items():
         monkeypatch.setenv(name, value)
 
-    setup = await setup_provider(EnvironmentCredentialsProvider())
+    setup = await setup_provider(AsyncEnvironmentCredentialsProvider())
 
     assert setup.resolvers == ()
     assert not setup.terminal
@@ -58,12 +60,12 @@ async def test_registers_terminal_resolver(
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "akid")
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret")
 
-    setup = await setup_provider(EnvironmentCredentialsProvider())
+    setup = await setup_provider(AsyncEnvironmentCredentialsProvider())
 
     assert setup.terminal
     assert len(setup.resolvers) == 1
     assert setup.resolvers[0].provider_name == "Environment"
-    assert isinstance(setup.resolvers[0].resolver, EnvironmentCredentialsResolver)
+    assert isinstance(setup.resolvers[0].resolver, AsyncEnvironmentCredentialsResolver)
 
 
 async def test_explicit_profile_suppresses_environment_credentials(
@@ -74,7 +76,7 @@ async def test_explicit_profile_suppresses_environment_credentials(
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret")
 
     setup = await setup_provider(
-        EnvironmentCredentialsProvider(),
+        AsyncEnvironmentCredentialsProvider(),
         profile_name="work",
     )
 
@@ -90,8 +92,8 @@ async def test_aws_profile_env_var_does_not_suppress_environment_credentials(
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "akid")
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret")
 
-    setup = await setup_provider(EnvironmentCredentialsProvider())
+    setup = await setup_provider(AsyncEnvironmentCredentialsProvider())
 
     assert setup.terminal
     assert len(setup.resolvers) == 1
-    assert isinstance(setup.resolvers[0].resolver, EnvironmentCredentialsResolver)
+    assert isinstance(setup.resolvers[0].resolver, AsyncEnvironmentCredentialsResolver)

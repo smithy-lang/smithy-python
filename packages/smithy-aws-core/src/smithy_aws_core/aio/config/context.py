@@ -13,8 +13,8 @@ from ...config.file_parser import (
 )
 from ...config.merged_config import MergedConfig
 from ...config.types import ConfigSource
-from .file_parser import parse_config_file
-from .filesystem import DefaultFileSystem, FileSystem
+from .file_parser import parse_config_file_async
+from .filesystem import AsyncDefaultFileSystem, AsyncFileSystem
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +22,10 @@ _PROFILE_ENV_VAR = "AWS_PROFILE"
 _DEFAULT_PROFILE = "default"
 
 
-async def load_config(
+async def load_config_async(
     config_file_path: Path | None = None,
     credentials_file_path: Path | None = None,
-    fs: FileSystem | None = None,
+    fs: AsyncFileSystem | None = None,
 ) -> MergedConfig:
     """Load and merge AWS config and credentials files.
 
@@ -36,17 +36,17 @@ async def load_config(
         Defaults to AWS_CONFIG_FILE env var or ~/.aws/config.
     :param credentials_file_path: Override path for credentials file.
         Defaults to AWS_SHARED_CREDENTIALS_FILE env var or ~/.aws/credentials.
-    :param fs: FileSystem to use for reading files.
-        Defaults to DefaultFileSystem (real disk I/O).
+    :param fs: AsyncFileSystem to use for reading files.
+        Defaults to AsyncDefaultFileSystem (real disk I/O).
     :returns: A MergedConfig with merged profiles from both files.
     """
-    filesystem = fs or DefaultFileSystem()
+    filesystem = fs or AsyncDefaultFileSystem()
     config_path, credentials_path = _resolve_config_paths(
         config_file_path, credentials_file_path
     )
 
-    raw_config = await parse_config_file(str(config_path), filesystem)
-    raw_credentials = await parse_config_file(str(credentials_path), filesystem)
+    raw_config = await parse_config_file_async(str(config_path), filesystem)
+    raw_credentials = await parse_config_file_async(str(credentials_path), filesystem)
 
     std_config = standardize(raw_config, FileType.CONFIG)
     std_credentials = standardize(raw_credentials, FileType.CREDENTIALS)
@@ -54,7 +54,7 @@ async def load_config(
     return MergedConfig(std_config, std_credentials)
 
 
-class SharedConfigContext:
+class AsyncSharedConfigContext:
     """Resolution context shared across resolvers during config construction.
 
     Holds environment state and cached file data that resolvers use to
@@ -65,7 +65,7 @@ class SharedConfigContext:
         self,
         *,
         profile_name: str | None = None,
-        fs: FileSystem | None = None,
+        fs: AsyncFileSystem | None = None,
         http_client: Any | None = None,
         config_file_path: str | Path | None = None,
         credentials_file_path: str | Path | None = None,
@@ -81,7 +81,7 @@ class SharedConfigContext:
         :param config_file_path: Override path for config file.
         :param credentials_file_path: Override path for credentials file.
         """
-        self._fs: FileSystem = fs if fs is not None else DefaultFileSystem()
+        self._fs: AsyncFileSystem = fs if fs is not None else AsyncDefaultFileSystem()
         self._http_client: Any | None = http_client
         self._profile_name, self._profile_source = self._resolve_profile_name(
             profile_name
@@ -105,7 +105,7 @@ class SharedConfigContext:
         return self._profile_source
 
     @property
-    def fs(self) -> FileSystem:
+    def fs(self) -> AsyncFileSystem:
         """The filesystem abstraction."""
         return self._fs
 
@@ -114,7 +114,7 @@ class SharedConfigContext:
         """HTTP client for network-based resolvers."""
         return self._http_client
 
-    def __deepcopy__(self, memo: Any) -> "SharedConfigContext":
+    def __deepcopy__(self, memo: Any) -> "AsyncSharedConfigContext":
         """Return self rather than a copy.
 
         The context is read-only once resolution finishes: resolvers have
@@ -135,7 +135,7 @@ class SharedConfigContext:
         read from disk once per context.
         """
         if self._cached_config_file is None:
-            self._cached_config_file = await load_config(
+            self._cached_config_file = await load_config_async(
                 config_file_path=self._config_file_path,
                 credentials_file_path=self._credentials_file_path,
                 fs=self._fs,

@@ -28,8 +28,8 @@ from ...config.validators import (
     validate_region,
     validate_retry_mode,
 )
-from .context import SharedConfigContext
-from .filesystem import FileSystem
+from .context import AsyncSharedConfigContext
+from .filesystem import AsyncFileSystem
 from .resolvers import (
     resolve_endpoint_uri,
     resolve_max_attempts,
@@ -140,7 +140,9 @@ class AsyncAwsConfig:
     """The retry strategy or options for configuring retry behavior.
     """
 
-    _ctx: SharedConfigContext | None = field(default=None, repr=False, compare=False)
+    _ctx: AsyncSharedConfigContext | None = field(
+        default=None, repr=False, compare=False
+    )
     _sources: dict[str, ConfigSource] = field(  # type: ignore[assignment]
         default_factory=dict,
         repr=False,
@@ -228,7 +230,7 @@ class AsyncAwsConfig:
         cls,
         *,
         profile: str | None = None,
-        fs: FileSystem | None = None,
+        fs: AsyncFileSystem | None = None,
         config_file_path: str | None = None,
         credentials_file_path: str | None = None,
         **overrides: Unpack[AwsConfigOverrides],
@@ -260,13 +262,13 @@ class AsyncAwsConfig:
         cls,
         *,
         profile: str | None,
-        fs: FileSystem | None,
+        fs: AsyncFileSystem | None,
         config_file_path: str | None,
         credentials_file_path: str | None,
         overrides: Mapping[str, object],
     ) -> Self:
         """Internal resolution entry point for generated typed config factories."""
-        ctx = SharedConfigContext(
+        ctx = AsyncSharedConfigContext(
             profile_name=profile,
             fs=fs,
             config_file_path=config_file_path,
@@ -296,10 +298,10 @@ class AsyncAwsConfig:
         """
         return self._sources.get(field_name)
 
-    def resolution_context(self) -> SharedConfigContext | None:
+    def resolution_context(self) -> AsyncSharedConfigContext | None:
         """Get the resolution context used to create this config.
 
-        :returns: The SharedConfigContext, or None if not available.
+        :returns: The AsyncSharedConfigContext, or None if not available.
         """
         return self._ctx
 

@@ -6,8 +6,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from smithy_aws_core.aio.config import DefaultFileSystem, load_config
-from smithy_aws_core.aio.config.file_parser import parse_config_file
+from smithy_aws_core.aio.config import AsyncDefaultFileSystem, load_config_async
+from smithy_aws_core.aio.config.file_parser import parse_config_file_async
 
 
 class TestFileIssues:
@@ -15,7 +15,7 @@ class TestFileIssues:
 
     @pytest.mark.asyncio
     async def test_load_config_with_missing_files(self, tmp_path: Path):
-        config_file = await load_config(
+        config_file = await load_config_async(
             config_file_path=tmp_path / "no_config",
             credentials_file_path=tmp_path / "no_credentials",
         )
@@ -25,7 +25,7 @@ class TestFileIssues:
 
     @pytest.mark.asyncio
     async def test_permission_denied_returns_empty(self, tmp_path: Path):
-        fs = DefaultFileSystem()
+        fs = AsyncDefaultFileSystem()
         restricted_file = tmp_path / "restricted_config"
         restricted_file.write_text("[profile default]\nregion = us-east-1\n")
         # Patch read_text to raise PermissionError rather than relying on
@@ -33,7 +33,7 @@ class TestFileIssues:
         with patch.object(
             Path, "read_text", side_effect=PermissionError("Permission denied")
         ):
-            result = await parse_config_file(str(restricted_file), fs)
+            result = await parse_config_file_async(str(restricted_file), fs)
         assert result == {}
 
 
@@ -43,11 +43,11 @@ class TestEncodingErrors:
     @pytest.mark.asyncio
     async def test_bad_unicode_raises_error(self, tmp_path: Path):
         """A file with invalid UTF-8 bytes should raise UnicodeDecodeError."""
-        fs = DefaultFileSystem()
+        fs = AsyncDefaultFileSystem()
         bad_file = tmp_path / "bad_config"
         bad_file.write_bytes(b"[default]\nregion = \xff\xfe invalid")
         with pytest.raises(UnicodeDecodeError):
-            await parse_config_file(str(bad_file), fs)
+            await parse_config_file_async(str(bad_file), fs)
 
 
 class TestMultiFileMerge:
@@ -66,7 +66,7 @@ class TestMultiFileMerge:
             "aws_secret_access_key = CREDS_SECRET\n"
         )
 
-        result = await load_config(
+        result = await load_config_async(
             config_file_path=config,
             credentials_file_path=credentials,
         )
@@ -80,7 +80,7 @@ class TestMultiFileMerge:
         config = tmp_path / "config"
         config.write_text("[profile work]\nregion = us-west-2\n")
 
-        result = await load_config(
+        result = await load_config_async(
             config_file_path=config,
             credentials_file_path=tmp_path / "nonexistent",
         )
@@ -91,7 +91,7 @@ class TestMultiFileMerge:
         credentials = tmp_path / "credentials"
         credentials.write_text("[default]\naws_access_key_id = KEY\n")
 
-        result = await load_config(
+        result = await load_config_async(
             config_file_path=tmp_path / "nonexistent",
             credentials_file_path=credentials,
         )

@@ -6,16 +6,16 @@ from smithy_core.interfaces.identity import Identity
 
 from .....identity.chain.ordering import Standard, StandardProvider
 from .....identity.components import AWSCredentialsIdentity
-from ...environment import EnvironmentCredentialsResolver
+from ...environment import AsyncEnvironmentCredentialsResolver
 from ..provider import ChainSetup
 
-__all__ = ["EnvironmentCredentialsProvider"]
+__all__ = ["AsyncEnvironmentCredentialsProvider"]
 
 _ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID"
 _SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"  # noqa: S105
 
 
-class EnvironmentCredentialsProvider:
+class AsyncEnvironmentCredentialsProvider:
     """Adds an environment resolver unless an explicit profile is selected."""
 
     @property
@@ -43,4 +43,4 @@ class EnvironmentCredentialsProvider:
         if not os.getenv(_ACCESS_KEY_ID) or not os.getenv(_SECRET_ACCESS_KEY):
             return
 
-        setup.add_terminal_resolver(EnvironmentCredentialsResolver())
+        setup.add_terminal_resolver(AsyncEnvironmentCredentialsResolver())

@@ -5,18 +5,18 @@ from ...config.file_parser import (
     RawParsedSections,
     _parse_content,  # type: ignore[reportPrivateUsage]
 )
-from .filesystem import FileSystem
+from .filesystem import AsyncFileSystem
 
 
-async def parse_config_file(
-    file_path: str, filesystem: FileSystem
+async def parse_config_file_async(
+    file_path: str, filesystem: AsyncFileSystem
 ) -> RawParsedSections:
     """Parse an AWS config or credentials file.
 
     Reads the file asynchronously and parses it into raw sections.
 
     :param file_path: Resolved path to the file.
-    :param filesystem: FileSystem object to use.
+    :param filesystem: AsyncFileSystem object to use.
     :returns: Raw sections dict {section_name: {key: value}}.
     :raises ConfigParseError: If the file has invalid syntax.
     """

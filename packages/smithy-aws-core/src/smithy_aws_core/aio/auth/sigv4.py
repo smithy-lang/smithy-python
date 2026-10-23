@@ -19,10 +19,10 @@ from smithy_http.aio.interfaces import HTTPRequest
 from ...identity import (
     AWS_IDENTITY_CONFIG,
     AWSCredentialsIdentity,
-    AWSCredentialsResolver,
     AWSIdentityProperties,
 )
 from ...traits import SigV4Trait
+from ..identity import AsyncAWSCredentialsResolver
 
 if TYPE_CHECKING:
     from smithy_aws_event_stream.events import EventHeaderEncoder
@@ -37,7 +37,7 @@ except ImportError:
 
 class SigV4Config(Protocol):
     region: str | None
-    aws_credentials_identity_resolver: AWSCredentialsResolver | None
+    aws_credentials_identity_resolver: AsyncAWSCredentialsResolver | None
 
 
 SIGV4_CONFIG = PropertyKey(key="config", value_type=SigV4Config)
@@ -86,7 +86,9 @@ class AsyncSigV4AuthScheme(
             "session_token": config.aws_session_token,
         }
 
-    def identity_resolver(self, *, context: _TypedProperties) -> AWSCredentialsResolver:
+    def identity_resolver(
+        self, *, context: _TypedProperties
+    ) -> AsyncAWSCredentialsResolver:
         config = context.get(SIGV4_CONFIG)
         if config is None or config.aws_credentials_identity_resolver is None:
             raise SmithyIdentityError(

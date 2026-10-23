@@ -1,9 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
-from typing import Any
 
-from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyError, SmithyIdentityError
 
 __all__ = [
@@ -41,7 +39,7 @@ class IdentityResolverFailure:
     """A failed identity resolution attempt."""
 
     provider_name: str
-    resolver: AsyncIdentityResolver[Any, Any]
+    resolver: object
     error: SmithyIdentityError
 
 

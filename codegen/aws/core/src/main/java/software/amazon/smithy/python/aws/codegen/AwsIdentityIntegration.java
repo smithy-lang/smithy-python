@@ -69,7 +69,7 @@ public class AwsIdentityIntegration implements PythonIntegration {
                             http_client=cast($3T | None, config.transport),
                         )""",
                     Symbol.builder()
-                            .name("IdentityChain")
+                            .name("AsyncIdentityChain")
                             .namespace("smithy_aws_core.aio.identity.chain", ".")
                             .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                             .build(),

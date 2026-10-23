@@ -10,7 +10,7 @@ from smithy_core.exceptions import SmithyIdentityError
 
 from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
 
-__all__ = ["ProcessCredentialsResolver"]
+__all__ = ["AsyncProcessCredentialsResolver"]
 
 
 def _is_command_list(command: object) -> TypeGuard[list[str]]:
@@ -19,7 +19,7 @@ def _is_command_list(command: object) -> TypeGuard[list[str]]:
     return all(isinstance(argument, str) for argument in cast(list[object], command))
 
 
-class ProcessCredentialsResolver(
+class AsyncProcessCredentialsResolver(
     AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
     """Resolves AWS Credentials from a process.
