@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
+import contextlib
 import logging
 from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable, Sequence
@@ -159,13 +160,21 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             self._await_output(self._execute_request(call, request_future))
         )
         request_context = await request_future
-        input_stream = await self.protocol.create_event_publisher(
-            operation=call.operation,
-            request=request_context.transport_request,
-            event_type=event_type,
-            context=request_context.properties,
-            auth_scheme=request_context.properties.get(AUTH_SCHEME),
-        )
+        try:
+            input_stream = await self.protocol.create_event_publisher(
+                operation=call.operation,
+                request=request_context.transport_request,
+                event_type=event_type,
+                context=request_context.properties,
+                auth_scheme=request_context.properties.get(AUTH_SCHEME),
+            )
+        except BaseException:
+            # Publisher creation failed; the request task is still running, so cancel
+            # and drain it rather than leaking a pending task.
+            output_future.cancel()
+            with contextlib.suppress(BaseException):
+                await output_future
+            raise
         return InputEventStream(input_stream=input_stream, output_future=output_future)
 
     async def _await_output[I: SerializeableShape, O: DeserializeableShape](
@@ -238,13 +247,21 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         request_future = Future[RequestContext[I, TRequest]]()
         execute_task = asyncio.create_task(self._execute_request(call, request_future))
         request_context = await request_future
-        input_stream = await self.protocol.create_event_publisher(
-            operation=call.operation,
-            request=request_context.transport_request,
-            event_type=input_event_type,
-            context=request_context.properties,
-            auth_scheme=request_context.properties.get(AUTH_SCHEME),
-        )
+        try:
+            input_stream = await self.protocol.create_event_publisher(
+                operation=call.operation,
+                request=request_context.transport_request,
+                event_type=input_event_type,
+                context=request_context.properties,
+                auth_scheme=request_context.properties.get(AUTH_SCHEME),
+            )
+        except BaseException:
+            # Publisher creation failed; the request task is still running, so cancel
+            # and drain it rather than leaking a pending task.
+            execute_task.cancel()
+            with contextlib.suppress(BaseException):
+                await execute_task
+            raise
         output_future = asyncio.create_task(
             self._await_output_stream(
                 call=call,

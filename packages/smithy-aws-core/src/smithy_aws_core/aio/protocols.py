@@ -466,13 +466,11 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
     ](
         self, operation: APIOperation[OperationInput, OperationOutput]
     ) -> OperationOutput:
-        # No initial-response: an empty JSON document fills all-optional outputs; the
-        # codec raises if a required member lacks a default, signaling the operation
-        # required an initial-response.
-        try:
-            return self.payload_codec.deserialize(source=b"{}", shape=operation.output)
-        except Exception as e:
-            raise MissingInitialResponse() from e
+        # initial-response is required only if an empty document can't satisfy the
+        # output; clients fill defaults, so only a required-without-default member does.
+        if self._requires_initial_response(operation.output_schema):
+            raise MissingInitialResponse()
+        return self.payload_codec.deserialize(source=b"{}", shape=operation.output)
 
     def _is_success(
         self,

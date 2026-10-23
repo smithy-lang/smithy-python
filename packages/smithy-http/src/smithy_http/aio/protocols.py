@@ -1,5 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import asyncio
 import os
 from collections.abc import AsyncIterable, Callable
 from inspect import iscoroutinefunction
@@ -40,6 +41,8 @@ from smithy_core.serializers import SerializeableShape, SerializeableStruct
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
     ORIGINAL_SHAPE_ID,
+    DefaultTrait,
+    RequiredTrait,
     RpcV2CborTrait,
 )
 from smithy_core.types import PropertyKey
@@ -561,6 +564,21 @@ class RpcClientProtocol(HttpClientProtocol):
         # any list containing h2, requires h2; only an h1-and-nothing-else list opts out.
         return "h2" in self._event_stream_http or not self._event_stream_http
 
+    @staticmethod
+    def _requires_initial_response(output: Schema) -> bool:
+        """Whether the output needs an ``initial-response`` to be populated.
+
+        An empty document satisfies any member that is optional or has a default
+        (clients fill defaults), so only a ``@required`` member without a ``@default``
+        forces an initial-response.
+        """
+        for member in output.members.values():
+            if member.get_trait(RequiredTrait) is not None and (
+                member.get_trait(DefaultTrait) is None
+            ):
+                return True
+        return False
+
     def _build_initial_request_body(
         self, input: SerializeableShape, context: TypedProperties
     ) -> "AsyncBytesProvider":
@@ -790,15 +808,15 @@ class _RpcV2ClientProtocol(RpcClientProtocol):
     ](
         self, operation: APIOperation[OperationInput, OperationOutput]
     ) -> OperationOutput:
-        # No initial-response: the output is whatever an empty document yields. The
-        # codec raises if a required member has no default, which is the spec-correct
-        # signal that this operation required an initial-response.
-        try:
-            return self._codec.deserialize(
-                source=self._empty_document, shape=operation.output
-            )
-        except Exception as e:
-            raise MissingInitialResponse() from e
+        # initial-response is required only if the output cannot be satisfied by an
+        # empty document. Clients populate missing members from their defaults, so a
+        # required member WITH a default is fine; only a required member with no
+        # default genuinely needs the initial-response.
+        if self._requires_initial_response(operation.output_schema):
+            raise MissingInitialResponse()
+        return self._codec.deserialize(
+            source=self._empty_document, shape=operation.output
+        )
 
     def _create_error(
         self,
@@ -894,3 +912,10 @@ class _PrependedEventStream:
             self._buffer = self._buffer[size:]
             return head
         return await self._source.read(size)
+
+    async def close(self) -> None:
+        # Forward close to the wrapped source so the receiver can tear down the
+        # underlying response body; without this the connection leaks.
+        if (close := getattr(self._source, "close", None)) is not None:
+            if asyncio.iscoroutine(result := close()):
+                await result
