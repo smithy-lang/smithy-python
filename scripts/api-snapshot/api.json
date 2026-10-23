@@ -765,6 +765,9 @@
     "AsyncInputEventStream": "class[async]",
     "AsyncOutputEventStream": "class[async]",
     "DeserializeableShape": "rex-protocol",
+    "DuplexEventStream": "class[async]",
+    "InputEventStream": "class[async]",
+    "OutputEventStream": "class[async]",
     "SerializeableShape": "rex-protocol"
   },
   "smithy_core.aio.identity": {
