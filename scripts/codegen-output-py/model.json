@@ -1,0 +1,171 @@
+{
+  "smithy": "2.0",
+  "shapes": {
+    "example#ExampleService": {
+      "type": "service",
+      "version": "2026-10-23",
+      "operations": [
+        {
+          "target": "example#GetExample"
+        }
+      ],
+      "rename": {
+        "example#Example": "RenamedExample",
+        "example#Value": "ExampleValue"
+      }
+    },
+    "example#GetExample": {
+      "type": "operation",
+      "input": {
+        "target": "example#GetExampleInput"
+      },
+      "output": {
+        "target": "example#GetExampleOutput"
+      },
+      "errors": [
+        {
+          "target": "example#ExampleError"
+        }
+      ]
+    },
+    "example#GetExampleInput": {
+      "type": "structure",
+      "traits": {
+        "smithy.api#documentation": "Input for retrieving an example."
+      },
+      "members": {
+        "id": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "example#GetExampleOutput": {
+      "type": "structure",
+      "members": {
+        "example": {
+          "target": "example#Example"
+        },
+        "value": {
+          "target": "example#Value"
+        }
+      }
+    },
+    "example#ExampleError": {
+      "type": "structure",
+      "traits": {
+        "smithy.api#documentation": "An example modeled error.",
+        "smithy.api#error": "client"
+      },
+      "members": {
+        "message": {
+          "target": "smithy.api#String"
+        },
+        "retryAfterSeconds": {
+          "target": "smithy.api#Integer"
+        }
+      }
+    },
+    "example#Example": {
+      "type": "structure",
+      "traits": {
+        "smithy.api#documentation": "A representative generated structure."
+      },
+      "members": {
+        "name": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The example name.",
+            "smithy.api#required": {}
+          }
+        },
+        "count": {
+          "target": "smithy.api#PrimitiveInteger"
+        },
+        "tags": {
+          "target": "example#TagList"
+        },
+        "attributes": {
+          "target": "example#Attributes"
+        },
+        "choice": {
+          "target": "example#Value"
+        },
+        "status": {
+          "target": "example#Status"
+        },
+        "code": {
+          "target": "example#Code"
+        }
+      }
+    },
+    "example#TagList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#String"
+      }
+    },
+    "example#Attributes": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.api#Document"
+      }
+    },
+    "example#Value": {
+      "type": "union",
+      "traits": {
+        "smithy.api#documentation": "A representative generated union."
+      },
+      "members": {
+        "text": {
+          "target": "smithy.api#String"
+        },
+        "number": {
+          "target": "smithy.api#Integer"
+        },
+        "empty": {
+          "target": "smithy.api#Unit"
+        }
+      }
+    },
+    "example#Status": {
+      "type": "enum",
+      "members": {
+        "ACTIVE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "active"
+          }
+        },
+        "INACTIVE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "inactive"
+          }
+        }
+      }
+    },
+    "example#Code": {
+      "type": "intEnum",
+      "members": {
+        "OK": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": 200
+          }
+        },
+        "NOT_FOUND": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": 404
+          }
+        }
+      }
+    }
+  }
+}

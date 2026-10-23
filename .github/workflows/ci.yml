@@ -71,6 +71,11 @@ jobs:
         run: |
           make build-py
 
+      - name: Check native Python codegen output
+        if: ${{ matrix.python-version == '3.12' }}
+        run: |
+          make generate-codegen-output-py
+
       - name: Build (and test) java packages
         run: |
           make build-java
