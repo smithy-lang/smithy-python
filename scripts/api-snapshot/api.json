@@ -1270,6 +1270,7 @@
     "AsyncClientTransport": "rex-protocol[async]",
     "AsyncHTTPClient": "protocol[async]",
     "Fields": "rex-protocol",
+    "HTTPClient": "protocol[async]",
     "HTTPClientConfiguration": "rex-class",
     "HTTPErrorIdentifier": "class",
     "HTTPRequest": "protocol[async]",
