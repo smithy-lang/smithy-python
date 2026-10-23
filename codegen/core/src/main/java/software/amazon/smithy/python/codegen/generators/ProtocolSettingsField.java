@@ -14,5 +14,6 @@ public enum ProtocolSettingsField {
     NAMESPACE,
     SERVICE_TARGET,
     VERSION,
-    XML_NAMESPACE
+    XML_NAMESPACE,
+    EVENT_STREAM_HTTP
 }

@@ -132,6 +132,13 @@ class ProtocolSettings:
     """The URI of the service's ``@xmlNamespace``, applied by restXml to request
     payloads that don't declare their own namespace."""
 
+    event_stream_http: tuple[str, ...] = ()
+    """The protocol trait's ``eventStreamHttp`` ALPN priority list (empty if unset).
+
+    Clients negotiate one of these for event streams; an empty tuple means the trait
+    did not constrain it.
+    """
+
 
 type ProtocolConstructor[T] = Callable[[ProtocolSettings], T]
 """A callable that builds a protocol instance from ``ProtocolSettings``.
@@ -225,7 +232,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         """
         ...
 
-    def create_event_publisher[
+    async def create_event_publisher[
         OperationInput: "SerializeableShape",
         OperationOutput: "DeserializeableShape",
         Event: "SerializeableShape",

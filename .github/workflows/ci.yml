@@ -77,7 +77,7 @@ jobs:
 
       - name: Run protocol tests
         run: |
-          make generate-protocol-tests test-protocols
+          make generate-protocol-tests test-protocols test-integration
 
       - name: Type-check protocol test stubs
         if: ${{ matrix.python-version == '3.12' }}
