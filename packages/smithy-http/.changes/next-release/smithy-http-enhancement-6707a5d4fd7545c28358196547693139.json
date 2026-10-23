@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "When force_http_2 is set, AWSCRTHTTPClient now advertises only HTTP/2 in its TLS ALPN list, so endpoints that would otherwise negotiate HTTP/1.1 cannot downgrade the connection below the required HTTP/2 (needed for event streams)."
+}

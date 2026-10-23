@@ -297,8 +297,14 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             port = self._HTTPS_PORT
             tls_connection_options = self._tls_ctx.new_connection_options()
             tls_connection_options.set_server_name(url.host)
-            # TODO: Support TLS configuration, including alpn
-            tls_connection_options.set_alpn_list(["h2", "http/1.1"])
+            # Offering http/1.1 lets endpoints that prefer it (most standard AWS
+            # endpoints) negotiate down, which then fails the force_http_2 check below.
+            # Event streams need h2, so advertise only h2 when it is required.
+            # TODO: Support broader TLS configuration.
+            if self._config.force_http_2:
+                tls_connection_options.set_alpn_list(["h2"])
+            else:
+                tls_connection_options.set_alpn_list(["h2", "http/1.1"])
         else:
             raise SmithyHTTPError(
                 f"AWSCRTHTTPClient does not support URL scheme {url.scheme}"

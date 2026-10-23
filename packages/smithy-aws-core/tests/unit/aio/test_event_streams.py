@@ -135,12 +135,13 @@ def _request() -> HTTPRequest:
     )
 
 
-async def test_serialize_request_writes_initial_request_frame() -> None:
+async def test_serialize_request_defers_initial_request_to_publisher() -> None:
+    context = TypedProperties()
     request = _protocol().serialize_request(
         operation=_operation(),
         input=InitialMessage(message="hello"),
         endpoint=URI(host="example.com"),
-        context=TypedProperties(),
+        context=context,
     )
 
     assert (
@@ -154,6 +155,14 @@ async def test_serialize_request_writes_initial_request_frame() -> None:
     assert isinstance(body, AsyncWriter)
 
     from io import BytesIO
+
+    publisher = await _protocol().create_event_publisher(
+        operation=_operation(),
+        request=request,
+        event_type=Any,
+        context=context,
+    )
+    assert publisher is not None
 
     frame_bytes = await anext(aiter(body))
     event = Event.decode(BytesIO(frame_bytes))

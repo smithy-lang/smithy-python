@@ -225,7 +225,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         """
         ...
 
-    def create_event_publisher[
+    async def create_event_publisher[
         OperationInput: "SerializeableShape",
         OperationOutput: "DeserializeableShape",
         Event: "SerializeableShape",

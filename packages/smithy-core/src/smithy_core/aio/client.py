@@ -159,7 +159,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             self._await_output(self._execute_request(call, request_future))
         )
         request_context = await request_future
-        input_stream = self.protocol.create_event_publisher(
+        input_stream = await self.protocol.create_event_publisher(
             operation=call.operation,
             request=request_context.transport_request,
             event_type=event_type,
@@ -238,7 +238,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         request_future = Future[RequestContext[I, TRequest]]()
         execute_task = asyncio.create_task(self._execute_request(call, request_future))
         request_context = await request_future
-        input_stream = self.protocol.create_event_publisher(
+        input_stream = await self.protocol.create_event_publisher(
             operation=call.operation,
             request=request_context.transport_request,
             event_type=input_event_type,

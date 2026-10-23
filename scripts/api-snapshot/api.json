@@ -102,6 +102,7 @@
     "JSONCodec": "rex-class",
     "JSONDocument": "rex-class",
     "MissingDependencyError": "rex-exception",
+    "MissingInitialResponse": "rex-exception",
     "ModeledError": "rex-exception",
     "PropertyKey": "rex-class",
     "ProtocolSettings": "rex-class",

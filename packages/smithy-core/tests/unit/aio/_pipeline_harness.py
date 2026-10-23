@@ -221,7 +221,7 @@ class StubProtocol:
             raise self.extract_response_metadata_error
         return self.stub_response_metadata
 
-    def create_event_publisher(self, **kwargs: Any) -> StubEventPublisher:
+    async def create_event_publisher(self, **kwargs: Any) -> StubEventPublisher:
         self.create_event_publisher_calls += 1
         return StubEventPublisher()
 
