@@ -67,7 +67,16 @@ public final class Rpcv2CborProtocolGenerator implements ProtocolGenerator {
     public Set<ProtocolSettingsField> requiredProtocolSettings(GenerationContext context) {
         // The RPC URI is /service/{service_target}/operation/{name}, and the codec
         // resolves document discriminators against the service namespace.
-        return Set.of(ProtocolSettingsField.NAMESPACE, ProtocolSettingsField.SERVICE_TARGET);
+        return Set.of(
+                ProtocolSettingsField.NAMESPACE,
+                ProtocolSettingsField.SERVICE_TARGET,
+                ProtocolSettingsField.EVENT_STREAM_HTTP);
+    }
+
+    @Override
+    public java.util.List<String> eventStreamHttp(GenerationContext context) {
+        ServiceShape service = context.settings().service(context.model());
+        return service.expectTrait(Rpcv2CborTrait.class).getEventStreamHttp();
     }
 
     @Override

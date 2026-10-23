@@ -1240,6 +1240,7 @@
     "SerializeableStruct": "rex-protocol",
     "ShapeDeserializer": "rex-protocol",
     "ShapeID": "rex-class",
+    "ShapeType": "rex-class",
     "SigningConfig": "rex-class",
     "SyncStreamingBlob": "rex-type_alias",
     "TypeRegistry": "rex-class",

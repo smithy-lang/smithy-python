@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added an event_stream_http field to ProtocolSettings carrying the protocol trait's eventStreamHttp ALPN versions, which the RPC client protocols use to require HTTP/2 for event-stream operations."
+}
