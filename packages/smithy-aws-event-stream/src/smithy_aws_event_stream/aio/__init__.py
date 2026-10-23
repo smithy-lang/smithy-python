@@ -113,8 +113,10 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
         # signature, so it must be the first frame signed and written -- not poured
         # into the body unsigned ahead of the signer.
         if (initial := self._initial_message) is not None:
-            self._initial_message = None
+            # Clear only after a successful write: signing or the socket write can
+            # fail, and the frame must stay pending rather than be silently skipped.
             await self._write(initial)
+            self._initial_message = None
 
     async def _write(self, message: EventMessage) -> None:
         if self._signing_config is not None:

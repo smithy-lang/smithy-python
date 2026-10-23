@@ -21,7 +21,7 @@ from smithy_core.prelude import STRING
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import StreamingTrait
+from smithy_core.traits import RequiredTrait, StreamingTrait
 from smithy_core.types import TypedProperties
 from smithy_http import Fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
@@ -31,6 +31,7 @@ pytest.importorskip("smithy_cbor")
 
 from smithy_aws_event_stream.aio import AWSEventReceiver
 from smithy_aws_event_stream.events import Event, EventMessage
+from smithy_aws_event_stream.exceptions import MissingInitialResponse
 from smithy_cbor import CBORCodec
 
 _CODEC = CBORCodec()
@@ -117,6 +118,16 @@ _DATA_STREAM_BLOB = Schema.collection(
 _DATA_STREAM_IO_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#DataStreamOpIO"),
     members={"body": {"target": _DATA_STREAM_BLOB}},
+)
+
+# An output event stream whose non-stream member is @required with no default, so an
+# absent initial-response cannot be filled by defaults and must raise.
+_REQUIRED_OUTPUT_IO_SCHEMA = Schema.collection(
+    id=ShapeID("smithy.example#RequiredOutputIO"),
+    members={
+        "message": {"target": STRING, "traits": [RequiredTrait()]},
+        "stream": {"target": _EVENT_STREAM},
+    },
 )
 
 
@@ -374,3 +385,19 @@ async def test_deserialize_response_empty_stream_defaults_output() -> None:
     )
     assert isinstance(output, InitialMessage)
     assert output.message is None
+
+
+async def test_missing_initial_response_raises_when_required_member_has_no_default() -> (
+    None
+):
+    # The output has a @required member with no default, so an empty document cannot
+    # satisfy it: an absent initial-response must raise rather than fabricate a value.
+    response = HTTPResponse(status=200, fields=Fields(), body=AsyncBytesReader(b""))
+    with pytest.raises(MissingInitialResponse):
+        await _protocol().deserialize_response(
+            operation=_operation(output_schema=_REQUIRED_OUTPUT_IO_SCHEMA),
+            request=_request(),
+            response=response,
+            error_registry=TypeRegistry({}),
+            context=TypedProperties(),
+        )
