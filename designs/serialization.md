@@ -14,16 +14,16 @@ based on information from a Smithy model.
 * Hot-swappable - Implementations should be flexible enough to be swapped at
   runtime if necessary. If a service supports more than one protocol, it should
   be trivially easy to swap between them, even at runtime.
-* Flexible - Implementations should be useable for purposes other than as a
+* Flexible - Implementations should be usable for purposes other than as a
   component of making a request to a web service. Customers should be able to
   feed well-formed data from any source into a protocol and have it transform
   that data with no side-effects.
 
-## Terminology - `Protocol` vs protcol
+## Terminology - `Protocol` vs protocol
 
 In Smithy, a "protocol" is a method of communicating with a service over a
 particular transport using a particular format. For example, the
-`aws.protocols#RestJson1` protocol is a protocol that communicates over the an
+`aws.protocols#RestJson1` protocol is a protocol that communicates over an
 HTTP transport that makes use of REST bindings and formats structured HTTP
 payloads in JSON.
 
@@ -46,7 +46,7 @@ class ImplicitImplementation:
 ```
 
 Since this is *structural* subtyping, it isn't required that implementations
-actual inheret from the `Protocol` or otherwise declare that they're
+actually inherit from the `Protocol` or otherwise declare that they're
 implementing it. But they *can* to make it more explicit or to inherit a default
 implementation. The `Protocol` class itself cannot be instantiated, however.
 
@@ -602,7 +602,7 @@ members dictionary. Recursive members are added at the end, regardless of where
 they appear in the model.)
 
 Doing member dispatch this way is an optimization, which uses relatively simple
-integer comparision instead of the comparatively more expensive string
+integer comparison instead of the comparatively more expensive string
 comparison needed to compare based on the member name. Further testing needs to
 be done in Python to determine whether the performance impact justifies the
 extra artifact size. In other language, the compiler is also capable of turning
