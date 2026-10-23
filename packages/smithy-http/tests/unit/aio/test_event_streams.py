@@ -108,6 +108,17 @@ _PLAIN_IO_SCHEMA = Schema.collection(
     members={"message": {"target": STRING}},
 )
 
+# A DATA stream (a @streaming blob), NOT an event stream. It must not force HTTP/2.
+_DATA_STREAM_BLOB = Schema.collection(
+    id=ShapeID("smithy.example#DataStream"),
+    shape_type=ShapeType.BLOB,
+    traits=[StreamingTrait()],
+)
+_DATA_STREAM_IO_SCHEMA = Schema.collection(
+    id=ShapeID("smithy.example#DataStreamOpIO"),
+    members={"body": {"target": _DATA_STREAM_BLOB}},
+)
+
 
 class _StubRegistry:
     def build(self, name: str) -> type:
@@ -289,9 +300,27 @@ async def test_output_only_stream_advertises_event_stream_accept() -> None:
     assert request.fields["Content-Type"].as_string() == "application/cbor"
 
 
-async def test_deserialize_response_without_initial_response_replays_first_event() -> (
-    None
-):
+async def test_event_stream_requires_http2() -> None:
+    # A @streaming UNION member is an event stream: it must negotiate HTTP/2.
+    request = _serialize(_operation())
+    assert getattr(request, "http2_required") is True
+
+
+async def test_data_stream_does_not_require_http2() -> None:
+    # A @streaming BLOB member is a DATA stream, not an event stream: it must NOT be
+    # forced onto HTTP/2. input_stream_member/output_stream_member match both, so this
+    # guards against treating a data stream as an event stream.
+    request = _serialize(
+        _operation(input_schema=_PLAIN_IO_SCHEMA, output_schema=_DATA_STREAM_IO_SCHEMA)
+    )
+    assert getattr(request, "http2_required") is False
+
+
+async def test_non_streaming_does_not_require_http2() -> None:
+    request = _serialize(
+        _operation(input_schema=_PLAIN_IO_SCHEMA, output_schema=_PLAIN_IO_SCHEMA)
+    )
+    assert getattr(request, "http2_required") is False
     # The output members are all optional, so the stream may omit initial-response and
     # start with a real event. The output defaults, and that first event is not lost --
     # the receiver replays it.

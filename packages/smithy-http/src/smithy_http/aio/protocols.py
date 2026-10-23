@@ -37,7 +37,7 @@ from smithy_core.prelude import DOCUMENT, UNIT
 from smithy_core.response import ResponseMetadata
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import SerializeableShape, SerializeableStruct
-from smithy_core.shapes import ShapeID
+from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
     ORIGINAL_SHAPE_ID,
     RpcV2CborTrait,
@@ -519,6 +519,17 @@ def _is_unit(schema: Schema | None) -> bool:
     return original is not None and original.document_value == str(UNIT.id)
 
 
+def _is_event_stream_member(member: Schema | None) -> bool:
+    """Whether a ``@streaming`` member is an EVENT stream (union), not a data stream.
+
+    ``input_stream_member``/``output_stream_member`` match any ``@streaming`` member;
+    a blob target is a data stream, only a union target is an event stream.
+    """
+    return member is not None and member.expect_member_target().shape_type is (
+        ShapeType.UNION
+    )
+
+
 class RpcClientProtocol(HttpClientProtocol):
     """Base for the RPC-based protocols (awsJson, awsQuery, rpcv2).
 
@@ -533,6 +544,22 @@ class RpcClientProtocol(HttpClientProtocol):
     operation's ``input_stream_member`` / ``output_stream_member``. A protocol that
     never models an event stream (awsQuery) simply never reaches these helpers.
     """
+
+    # The protocol trait's eventStreamHttp ALPN list (empty if the trait left it unset).
+    _event_stream_http: tuple[str, ...] = ()
+
+    def _requires_http2(self, operation: APIOperation[Any, Any]) -> bool:
+        # Only EVENT streams (a @streaming UNION member) force HTTP/2 -- a @streaming
+        # blob is a data stream and runs fine over HTTP/1.1. input_stream_member /
+        # output_stream_member match either, so check the target is a union here.
+        if not (
+            _is_event_stream_member(operation.input_stream_member)
+            or _is_event_stream_member(operation.output_stream_member)
+        ):
+            return False
+        # Require HTTP/2 unless the model EXPLICITLY allows only HTTP/1.1: no list, or
+        # any list containing h2, requires h2; only an h1-and-nothing-else list opts out.
+        return "h2" in self._event_stream_http or not self._event_stream_http
 
     def _build_initial_request_body(
         self, input: SerializeableShape, context: TypedProperties
@@ -677,6 +704,11 @@ class _RpcV2ClientProtocol(RpcClientProtocol):
         operation_name = operation.schema.id.name
         path = f"/service/{self._service_name}/operation/{operation_name}"
 
+        # An event-stream operation must negotiate HTTP/2 (see _requires_http2); mark
+        # the request so the transport does so for this operation alone, leaving
+        # non-streaming operations on HTTP/1.1.
+        http2_required = self._requires_http2(operation)
+
         # Accept describes the RESPONSE and Content-Type the REQUEST body, so they turn
         # on output_stream_member and input_stream_member independently: a one-way
         # stream advertises the event-stream media type on only the streaming side.
@@ -699,6 +731,7 @@ class _RpcV2ClientProtocol(RpcClientProtocol):
                 destination=_URI(host="", path=path),
                 fields=tuples_to_fields(fields),
                 body=self._build_initial_request_body(input, context),
+                http2_required=http2_required,
             )
 
         # The protocol omits the body AND the Content-Type header for operations whose
@@ -716,6 +749,7 @@ class _RpcV2ClientProtocol(RpcClientProtocol):
             destination=_URI(host="", path=path),
             fields=tuples_to_fields(fields),
             body=AsyncBytesReader(payload),
+            http2_required=http2_required,
         )
 
     async def deserialize_response[
@@ -832,6 +866,7 @@ class RpcV2CborClientProtocol(_RpcV2ClientProtocol):
     def __init__(self, settings: ProtocolSettings) -> None:
         _assert_cbor()
         self._service_name = settings.service_target
+        self._event_stream_http = tuple(settings.event_stream_http)
         self._codec = CBORCodec(default_namespace=settings.namespace)
 
     def _decode_document(self, body: bytes) -> object:

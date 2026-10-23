@@ -352,6 +352,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
     def __init__(self, settings: ProtocolSettings) -> None:
         _assert_json()
         self._service_name: Final = settings.service_target
+        self._event_stream_http = tuple(settings.event_stream_http)
         self._codec: Final = JSONCodec(
             document_class=AWSJSONDocument,
             default_namespace=settings.namespace,
@@ -386,6 +387,10 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
+        # An event-stream operation must negotiate HTTP/2 (see _requires_http2); the
+        # transport does so per operation, leaving non-streaming calls on HTTP/1.1.
+        http2_required = self._requires_http2(operation)
+
         if operation.input_stream_member is not None:
             # RPC event streams carry the input as an initial-request event at the head
             # of the stream body; the envelope keeps x-amz-target as a normal request.
@@ -402,6 +407,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
                     ]
                 ),
                 body=self._build_initial_request_body(input, context),
+                http2_required=http2_required,
             )
 
         payload = self.payload_codec.serialize(shape=input)
@@ -419,6 +425,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
                 ]
             ),
             body=AsyncBytesReader(payload),
+            http2_required=http2_required,
         )
 
     async def deserialize_response[

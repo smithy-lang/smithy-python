@@ -20,6 +20,10 @@ class HTTPRequest(http_aio_interfaces.HTTPRequest):
     body: core_aio_interfaces.StreamingBlob = field(repr=False, default=b"")
     method: str
     fields: http_interfaces.Fields
+    http2_required: bool = False
+    """Transport hint: negotiate HTTP/2 for this request and don't reuse a non-h2
+    connection for it. Set for event-stream operations whose protocol permits h2;
+    not sent on the wire."""
 
 
 # HTTPResponse implements http_interfaces.HTTPResponse but cannot be explicitly

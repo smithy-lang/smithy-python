@@ -45,7 +45,9 @@ else:
     _ServiceInterceptor = Any
 
 _PROTOCOL_SETTINGS = ProtocolSettings(
-    namespace="smithy.python.tests.handwritten", service_target="MyHandwrittenModel"
+    namespace="smithy.python.tests.handwritten",
+    service_target="MyHandwrittenModel",
+    event_stream_http=("h2",),
 )
 
 
