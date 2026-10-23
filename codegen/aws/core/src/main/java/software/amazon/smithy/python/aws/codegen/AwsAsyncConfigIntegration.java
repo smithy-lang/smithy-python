@@ -118,7 +118,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
             var fileSystemSymbol = Symbol.builder()
-                    .name("FileSystem")
+                    .name("AsyncFileSystem")
                     .namespace("smithy_aws_core.aio.config", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();

@@ -164,7 +164,7 @@ class EC2Metadata:
         return body.decode("utf-8")
 
 
-class IMDSCredentialsResolver(
+class AsyncIMDSCredentialsResolver(
     AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
     """Resolves AWS Credentials from an EC2 Instance Metadata Service (IMDS) client.
@@ -178,7 +178,7 @@ class IMDSCredentialsResolver(
 
     def __init__(self, http_client: AsyncHTTPClient, config: Config | None = None):
         warnings.warn(
-            "`IMDSCredentialsResolver` is deprecated; install "
+            "`AsyncIMDSCredentialsResolver` is deprecated; install "
             "`aws-credentials-imds` and use its resolver instead.",
             DeprecationWarning,
             stacklevel=2,

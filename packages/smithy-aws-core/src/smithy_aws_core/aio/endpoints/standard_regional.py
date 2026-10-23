@@ -9,10 +9,10 @@ from smithy_core.exceptions import EndpointResolutionError
 
 from ...endpoints import REGIONAL_ENDPOINT_CONFIG
 
-__all__ = ["StandardRegionalEndpointsResolver"]
+__all__ = ["AsyncStandardRegionalEndpointsResolver"]
 
 
-class StandardRegionalEndpointsResolver(AsyncEndpointResolver):
+class AsyncStandardRegionalEndpointsResolver(AsyncEndpointResolver):
     """Resolves endpoints for services with standard regional endpoints."""
 
     def __init__(self, endpoint_prefix: str = "bedrock-runtime"):

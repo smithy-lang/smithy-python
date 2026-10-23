@@ -9,9 +9,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from smithy_aws_core.aio.identity.imds import (
+    AsyncIMDSCredentialsResolver,
     Config,
     EC2Metadata,
-    IMDSCredentialsResolver,
     TokenCache,
 )
 from smithy_aws_core.identity.imds import Token
@@ -20,7 +20,7 @@ from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_http.aio import HTTPRequest
 
 pytestmark = pytest.mark.filterwarnings(
-    "ignore:`IMDSCredentialsResolver` is deprecated:DeprecationWarning"
+    "ignore:`AsyncIMDSCredentialsResolver` is deprecated:DeprecationWarning"
 )
 
 
@@ -153,11 +153,11 @@ async def test_ec2_metadata_get():
 
 
 async def test_imds_credentials_resolver():
-    # Test IMDSCredentialsResolver retrieving credentials
+    # Test AsyncIMDSCredentialsResolver retrieving credentials
     http_client = AsyncMock()
     config = Config()
     ec2_metadata = AsyncMock()
-    resolver = IMDSCredentialsResolver(http_client, config)
+    resolver = AsyncIMDSCredentialsResolver(http_client, config)
     resolver._ec2_metadata_client = ec2_metadata
 
     # Mock EC2Metadata client get responses

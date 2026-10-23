@@ -6,13 +6,13 @@ from smithy_core.interfaces.identity import Identity
 
 from .....identity.chain.ordering import Standard, StandardProvider
 from .....identity.components import AWSCredentialsIdentity
-from ....config import load_config
+from ....config import load_config_async
 from ..provider import ChainSetup
 
-__all__ = ["SharedConfigProvider"]
+__all__ = ["AsyncSharedConfigProvider"]
 
 
-class SharedConfigProvider:
+class AsyncSharedConfigProvider:
     """Loads and selects the active AWS profile for downstream providers."""
 
     @property
@@ -32,7 +32,7 @@ class SharedConfigProvider:
 
         config_file = setup.config_file
         if config_file is None:
-            config_file = await load_config()
+            config_file = await load_config_async()
             setup.set_config_file(config_file)
 
         profile_name = setup.profile_name or os.getenv("AWS_PROFILE") or "default"

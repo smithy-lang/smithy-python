@@ -8,8 +8,8 @@ from ...static import AsyncStaticCredentialsResolver
 from ..provider import ChainSetup
 
 __all__ = [
-    "ProfileSessionCredentialsProvider",
-    "ProfileStaticCredentialsProvider",
+    "AsyncProfileSessionCredentialsProvider",
+    "AsyncProfileStaticCredentialsProvider",
 ]
 
 _ACCESS_KEY_ID = "aws_access_key_id"
@@ -19,7 +19,7 @@ _ACCOUNT_ID = "aws_account_id"
 _ROLE_ARN = "role_arn"
 
 
-class ProfileSessionCredentialsProvider:
+class AsyncProfileSessionCredentialsProvider:
     """Adds a resolver for session credentials from the active profile."""
 
     @property
@@ -60,7 +60,7 @@ class ProfileSessionCredentialsProvider:
         setup.add_terminal_resolver(AsyncStaticCredentialsResolver(identity))
 
 
-class ProfileStaticCredentialsProvider:
+class AsyncProfileStaticCredentialsProvider:
     """Adds a resolver for static credentials from the active profile."""
 
     @property

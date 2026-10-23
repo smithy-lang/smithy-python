@@ -25,13 +25,13 @@ from ....identity.chain.ordering import (
 )
 from .provider import ChainIdentityProvider, ChainSetup, NamedResolver
 
-__all__ = ("IdentityChain",)
+__all__ = ("AsyncIdentityChain",)
 
 _CHAIN_PROVIDER_ENTRY_POINT_GROUP = "smithy_aws_core.identity.chain_providers"
 logger = logging.getLogger(__name__)
 
 
-class IdentityChain[I: Identity](AsyncIdentityResolver[I, Mapping[str, Any]]):
+class AsyncIdentityChain[I: Identity](AsyncIdentityResolver[I, Mapping[str, Any]]):
     """Resolves identities from an assembled sequence of resolvers."""
 
     _resolvers: tuple[AsyncIdentityResolver[I, Any], ...]
@@ -71,7 +71,7 @@ class IdentityChain[I: Identity](AsyncIdentityResolver[I, Mapping[str, Any]]):
         profile_name: str | None = None,
         region_override: str | None = None,
         http_client: AsyncHTTPClient | None = None,
-    ) -> "IdentityChain[ChainIdentity]":
+    ) -> "AsyncIdentityChain[ChainIdentity]":
         """Create an identity chain from discovered providers.
 
         :param identity_type: The identity type to resolve.
@@ -104,7 +104,7 @@ class IdentityChain[I: Identity](AsyncIdentityResolver[I, Mapping[str, Any]]):
 
         for source in unclaimed_sources:
             logger.warning(str(source))
-        return IdentityChain(
+        return AsyncIdentityChain(
             setup.resolvers,
             identity_type=identity_type,
             unclaimed_sources=unclaimed_sources,

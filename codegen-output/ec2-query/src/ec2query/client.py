@@ -6,7 +6,7 @@ from copy import deepcopy
 import logging
 from typing import Any, cast
 
-from smithy_aws_core.aio.identity.chain import IdentityChain
+from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config import ConfigSource
 from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_core.aio.client import AsyncClient, AsyncClientCall, AsyncRequestPipeline
@@ -168,7 +168,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
                 config_file = await config_context.parsed_profiles()
                 if config_context.profile_source is ConfigSource.OVERRIDE:
                     profile_name = config_context.profile_name
-            config.aws_credentials_identity_resolver = await IdentityChain.create(
+            config.aws_credentials_identity_resolver = await AsyncIdentityChain.create(
                 AWSCredentialsIdentity,
                 config_file=config_file,
                 profile_name=profile_name,

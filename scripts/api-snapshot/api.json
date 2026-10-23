@@ -74,9 +74,9 @@
   "smithy_aws_core.aio.auth": {},
   "smithy_aws_core.aio.auth.sigv4": {
     "AWSCredentialsIdentity": "rex-class",
-    "AWSCredentialsResolver": "rex-type_alias",
     "AWSIdentityProperties": "rex-class",
     "AWS_IDENTITY_CONFIG": "rex-PropertyKey",
+    "AsyncAWSCredentialsResolver": "rex-type_alias",
     "AsyncAuthScheme": "rex-protocol",
     "AsyncEventSigner": "rex-class[async]",
     "AsyncEventSignerProtocol": "rex-protocol[async]",
@@ -95,28 +95,28 @@
   },
   "smithy_aws_core.aio.config": {
     "AsyncAwsConfig": "rex-class[async]",
+    "AsyncDefaultFileSystem": "rex-class[async]",
+    "AsyncFileSystem": "rex-protocol[async]",
+    "AsyncSharedConfigContext": "rex-class[async]",
     "AwsConfigOverrides": "rex-class",
-    "DefaultFileSystem": "rex-class[async]",
-    "FileSystem": "rex-protocol[async]",
-    "SharedConfigContext": "rex-class[async]",
     "aws_config": "rex-module",
     "context": "rex-module",
     "file_parser": "rex-module",
     "filesystem": "rex-module",
-    "load_config": "rex-function[async]",
+    "load_config_async": "rex-function[async]",
     "resolvers": "rex-module"
   },
   "smithy_aws_core.aio.config.aws_config": {
     "AsyncAwsConfig": "class[async]",
+    "AsyncFileSystem": "rex-protocol[async]",
+    "AsyncSharedConfigContext": "rex-class[async]",
     "AwsConfigOverrides": "class",
     "ConfigError": "rex-exception",
     "ConfigSource": "rex-class",
     "ConfigValidationError": "rex-exception",
     "FieldSpec": "rex-class",
-    "FileSystem": "rex-protocol[async]",
     "Resolved": "rex-class",
     "RetryStrategyOptions": "rex-class",
-    "SharedConfigContext": "rex-class[async]",
     "UNSET": "rex-_UnsetType",
     "resolve_endpoint_uri": "rex-function[async]",
     "resolve_max_attempts": "rex-function[async]",
@@ -129,34 +129,34 @@
     "validate_retry_mode": "rex-function"
   },
   "smithy_aws_core.aio.config.context": {
+    "AsyncDefaultFileSystem": "rex-class[async]",
+    "AsyncFileSystem": "rex-protocol[async]",
+    "AsyncSharedConfigContext": "class[async]",
     "ConfigSource": "rex-class",
-    "DefaultFileSystem": "rex-class[async]",
-    "FileSystem": "rex-protocol[async]",
     "FileType": "rex-class",
     "MergedConfig": "rex-class",
-    "SharedConfigContext": "class[async]",
-    "load_config": "function[async]",
+    "load_config_async": "function[async]",
     "logger": "Logger",
-    "parse_config_file": "rex-function[async]",
+    "parse_config_file_async": "rex-function[async]",
     "standardize": "rex-function"
   },
   "smithy_aws_core.aio.config.file_parser": {
+    "AsyncFileSystem": "rex-protocol[async]",
     "ConfigParseError": "rex-exception",
-    "FileSystem": "rex-protocol[async]",
     "RawParsedSections": "rex-type_alias",
-    "parse_config_file": "function[async]"
+    "parse_config_file_async": "function[async]"
   },
   "smithy_aws_core.aio.config.filesystem": {
-    "DefaultFileSystem": "class[async]",
-    "FileSystem": "protocol[async]",
+    "AsyncDefaultFileSystem": "class[async]",
+    "AsyncFileSystem": "protocol[async]",
     "logger": "Logger"
   },
   "smithy_aws_core.aio.config.resolvers": {
+    "AsyncSharedConfigContext": "rex-class[async]",
     "ConfigSource": "rex-class",
     "ConfigValidationError": "rex-exception",
     "EndpointUriResolver": "class[async]",
     "Resolved": "rex-class",
-    "SharedConfigContext": "rex-class[async]",
     "UNSET": "rex-_UnsetType",
     "resolve_endpoint_uri": "function[async]",
     "resolve_max_attempts": "function[async]",
@@ -167,26 +167,30 @@
   "smithy_aws_core.aio.endpoints": {},
   "smithy_aws_core.aio.endpoints.standard_regional": {
     "AsyncEndpointResolver": "rex-protocol[async]",
+    "AsyncStandardRegionalEndpointsResolver": "class[async]",
     "Endpoint": "rex-class",
     "EndpointResolutionError": "rex-exception",
     "EndpointResolverParams": "rex-class",
     "REGIONAL_ENDPOINT_CONFIG": "rex-PropertyKey",
-    "StandardRegionalEndpointsResolver": "class[async]",
     "URI": "rex-class",
     "resolve_static_uri": "rex-function"
   },
   "smithy_aws_core.aio.identity": {
+    "AWSCredentialsIdentity": "rex-class",
+    "AWSIdentityProperties": "rex-class",
+    "AsyncAWSCredentialsResolver": "rex-type_alias",
+    "AsyncContainerCredentialsResolver": "rex-class[async]",
+    "AsyncEnvironmentCredentialsProvider": "rex-class[async]",
+    "AsyncEnvironmentCredentialsResolver": "rex-class[async]",
+    "AsyncIMDSCredentialsResolver": "rex-class[async]",
+    "AsyncIdentityChain": "rex-class[async]",
+    "AsyncIdentityResolver": "rex-protocol[async]",
+    "AsyncProcessCredentialsResolver": "rex-class[async]",
+    "AsyncProfileCredentialProcessProvider": "rex-class[async]",
+    "AsyncProfileSessionCredentialsProvider": "rex-class[async]",
+    "AsyncProfileStaticCredentialsProvider": "rex-class[async]",
+    "AsyncSharedConfigProvider": "rex-class[async]",
     "AsyncStaticCredentialsResolver": "rex-class[async]",
-    "ContainerCredentialsResolver": "rex-class[async]",
-    "EnvironmentCredentialsProvider": "rex-class[async]",
-    "EnvironmentCredentialsResolver": "rex-class[async]",
-    "IMDSCredentialsResolver": "rex-class[async]",
-    "IdentityChain": "rex-class[async]",
-    "ProcessCredentialsResolver": "rex-class[async]",
-    "ProfileCredentialProcessProvider": "rex-class[async]",
-    "ProfileSessionCredentialsProvider": "rex-class[async]",
-    "ProfileStaticCredentialsProvider": "rex-class[async]",
-    "SharedConfigProvider": "rex-class[async]",
     "chain": "rex-module",
     "container": "rex-module",
     "environment": "rex-module",
@@ -197,12 +201,12 @@
   "smithy_aws_core.aio.identity.chain": {
     "After": "rex-class",
     "AsyncHTTPClient": "rex-protocol[async]",
+    "AsyncIdentityChain": "class[async]",
     "AsyncIdentityResolver": "rex-protocol[async]",
     "Before": "rex-class",
     "ChainIdentityProvider": "rex-protocol[async]",
     "ChainSetup": "rex-class",
     "Identity": "rex-protocol",
-    "IdentityChain": "class[async]",
     "IdentityChainConfigurationError": "rex-exception",
     "IdentityChainError": "rex-exception",
     "IdentityResolverFailure": "rex-class",
@@ -234,48 +238,48 @@
   },
   "smithy_aws_core.aio.identity.chain.providers.environment": {
     "AWSCredentialsIdentity": "rex-class",
+    "AsyncEnvironmentCredentialsProvider": "class[async]",
+    "AsyncEnvironmentCredentialsResolver": "rex-class[async]",
     "ChainSetup": "rex-class",
-    "EnvironmentCredentialsProvider": "class[async]",
-    "EnvironmentCredentialsResolver": "rex-class[async]",
     "Identity": "rex-protocol",
     "Standard": "rex-class",
     "StandardProvider": "rex-class"
   },
   "smithy_aws_core.aio.identity.chain.providers.process": {
     "AWSCredentialsIdentity": "rex-class",
+    "AsyncProcessCredentialsResolver": "rex-class[async]",
+    "AsyncProfileCredentialProcessProvider": "class[async]",
     "ChainSetup": "rex-class",
     "Identity": "rex-protocol",
-    "ProcessCredentialsResolver": "rex-class[async]",
-    "ProfileCredentialProcessProvider": "class[async]",
     "Standard": "rex-class",
     "StandardProvider": "rex-class"
   },
   "smithy_aws_core.aio.identity.chain.providers.profile": {
     "AWSCredentialsIdentity": "rex-class",
+    "AsyncProfileSessionCredentialsProvider": "class[async]",
+    "AsyncProfileStaticCredentialsProvider": "class[async]",
     "AsyncStaticCredentialsResolver": "rex-class[async]",
     "ChainSetup": "rex-class",
     "Identity": "rex-protocol",
-    "ProfileSessionCredentialsProvider": "class[async]",
-    "ProfileStaticCredentialsProvider": "class[async]",
     "Standard": "rex-class",
     "StandardProvider": "rex-class"
   },
   "smithy_aws_core.aio.identity.chain.providers.shared_config": {
     "AWSCredentialsIdentity": "rex-class",
+    "AsyncSharedConfigProvider": "class[async]",
     "ChainSetup": "rex-class",
     "Identity": "rex-protocol",
-    "SharedConfigProvider": "class[async]",
     "Standard": "rex-class",
     "StandardProvider": "rex-class",
-    "load_config": "rex-function[async]"
+    "load_config_async": "rex-function[async]"
   },
   "smithy_aws_core.aio.identity.container": {
     "AWSCredentialsIdentity": "rex-class",
     "AWSIdentityProperties": "rex-class",
+    "AsyncContainerCredentialsResolver": "class[async]",
     "AsyncHTTPClient": "rex-protocol[async]",
     "AsyncIdentityResolver": "rex-protocol[async]",
     "ContainerCredentialsConfig": "rex-class",
-    "ContainerCredentialsResolver": "class[async]",
     "ContainerMetadataClient": "class[async]",
     "Field": "rex-class",
     "Fields": "rex-class",
@@ -287,14 +291,15 @@
   "smithy_aws_core.aio.identity.environment": {
     "AWSCredentialsIdentity": "rex-class",
     "AWSIdentityProperties": "rex-class",
+    "AsyncEnvironmentCredentialsResolver": "class[async]",
     "AsyncIdentityResolver": "rex-protocol[async]",
-    "EnvironmentCredentialsResolver": "class[async]",
-    "SmithyIdentityError": "rex-exception"
+    "EnvironmentCredentialsResolver": "rex-class"
   },
   "smithy_aws_core.aio.identity.imds": {
     "AWSCredentialsIdentity": "rex-class",
     "AWSIdentityProperties": "rex-class",
     "AsyncHTTPClient": "rex-protocol[async]",
+    "AsyncIMDSCredentialsResolver": "class[async]",
     "AsyncIdentityResolver": "rex-protocol[async]",
     "AsyncRetryStrategy": "rex-protocol[async]",
     "AsyncSimpleRetryStrategy": "rex-class[async]",
@@ -303,7 +308,6 @@
     "Field": "rex-class",
     "Fields": "rex-class",
     "HTTPRequest": "rex-class[async]",
-    "IMDSCredentialsResolver": "class[async]",
     "SmithyIdentityError": "rex-exception",
     "Token": "rex-class",
     "TokenCache": "class[async]",
@@ -313,7 +317,7 @@
     "AWSCredentialsIdentity": "rex-class",
     "AWSIdentityProperties": "rex-class",
     "AsyncIdentityResolver": "rex-protocol[async]",
-    "ProcessCredentialsResolver": "class[async]",
+    "AsyncProcessCredentialsResolver": "class[async]",
     "SmithyIdentityError": "rex-exception"
   },
   "smithy_aws_core.aio.identity.static": {
@@ -321,7 +325,7 @@
     "AWSIdentityProperties": "rex-class",
     "AsyncIdentityResolver": "rex-protocol[async]",
     "AsyncStaticCredentialsResolver": "class[async]",
-    "SmithyIdentityError": "rex-exception"
+    "StaticCredentialsResolver": "rex-class"
   },
   "smithy_aws_core.aio.protocols": {
     "APIOperation": "rex-class",
@@ -403,20 +407,20 @@
   },
   "smithy_aws_core.config": {
     "AsyncAwsConfig": "rex-class[async]",
+    "AsyncDefaultFileSystem": "rex-class[async]",
+    "AsyncFileSystem": "rex-protocol[async]",
+    "AsyncSharedConfigContext": "rex-class[async]",
     "AwsConfigOverrides": "rex-class",
     "ConfigError": "rex-exception",
     "ConfigParseError": "rex-exception",
     "ConfigSource": "rex-class",
     "ConfigValidationError": "rex-exception",
-    "DefaultFileSystem": "rex-class[async]",
-    "FileSystem": "rex-protocol[async]",
     "MergedConfig": "rex-class",
     "ProfileNotFoundError": "rex-exception",
-    "SharedConfigContext": "rex-class[async]",
     "context": "rex-module",
     "exceptions": "rex-module",
     "file_parser": "rex-module",
-    "load_config": "rex-function[async]",
+    "load_config_async": "rex-function[async]",
     "merged_config": "rex-module",
     "shared_config_files_exist": "rex-function",
     "types": "rex-module",
@@ -478,13 +482,17 @@
     "AWSIdentityConfig": "rex-protocol",
     "AWSIdentityProperties": "rex-class",
     "AWS_IDENTITY_CONFIG": "PropertyKey",
+    "EnvironmentCredentialsResolver": "rex-class",
     "IdentityChainError": "rex-exception",
     "PropertyKey": "rex-class",
+    "StaticCredentialsResolver": "rex-class",
     "UnclaimedSource": "rex-class",
     "chain": "rex-module",
     "components": "rex-module",
     "container": "rex-module",
-    "imds": "rex-module"
+    "environment": "rex-module",
+    "imds": "rex-module",
+    "static": "rex-module"
   },
   "smithy_aws_core.identity.chain": {
     "After": "rex-class",
@@ -501,7 +509,6 @@
     "providers": "rex-module"
   },
   "smithy_aws_core.identity.chain.exceptions": {
-    "AsyncIdentityResolver": "rex-protocol[async]",
     "IdentityChainConfigurationError": "exception",
     "IdentityChainError": "exception",
     "IdentityResolverFailure": "class",
@@ -529,16 +536,25 @@
     "AWSCredentialsResolver": "rex-type_alias",
     "AWSIdentityConfig": "protocol",
     "AWSIdentityProperties": "class",
-    "AsyncIdentityResolver": "rex-protocol[async]",
-    "Identity": "rex-protocol"
+    "Identity": "rex-protocol",
+    "IdentityResolver": "rex-protocol"
   },
   "smithy_aws_core.identity.container": {
     "ContainerCredentialsConfig": "class"
+  },
+  "smithy_aws_core.identity.environment": {
+    "AWSCredentialsIdentity": "rex-class",
+    "AWSIdentityProperties": "rex-class",
+    "EnvironmentCredentialsResolver": "class",
+    "SmithyIdentityError": "rex-exception"
   },
   "smithy_aws_core.identity.imds": {
     "Token": "class"
   },
   "smithy_aws_core.identity.static": {
+    "AWSCredentialsIdentity": "rex-class",
+    "AWSIdentityProperties": "rex-class",
+    "SmithyIdentityError": "rex-exception",
     "StaticCredentialsResolver": "class"
   },
   "smithy_aws_core.interceptors": {},

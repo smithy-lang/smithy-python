@@ -13,11 +13,11 @@ from typing import (
 )
 
 from smithy_aws_core.aio.auth.sigv4 import AsyncSigV4AuthScheme
-from smithy_aws_core.aio.config import FileSystem
+from smithy_aws_core.aio.config import AsyncFileSystem
 from smithy_aws_core.aio.config.aws_config import AsyncAwsConfig, AwsConfigOverrides
 from smithy_aws_core.aio.config.resolvers import EndpointUriResolver
 from smithy_aws_core.aio.endpoints.standard_regional import (
-    StandardRegionalEndpointsResolver,
+    AsyncStandardRegionalEndpointsResolver,
 )
 from smithy_aws_core.aio.protocols import AsyncEc2QueryClientProtocol
 from smithy_aws_core.config.types import FieldSpec
@@ -230,7 +230,7 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
             default=None, resolver=EndpointUriResolver("ec2_protocol")
         ),
         "endpoint_resolver": FieldSpec(
-            default_factory=lambda: StandardRegionalEndpointsResolver(
+            default_factory=lambda: AsyncStandardRegionalEndpointsResolver(
                 endpoint_prefix="awsec2"
             )
         ),
@@ -261,7 +261,7 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
         cls,
         *,
         profile: str | None = None,
-        fs: FileSystem | None = None,
+        fs: AsyncFileSystem | None = None,
         config_file_path: str | None = None,
         credentials_file_path: str | None = None,
         **overrides: Unpack[_AsyncEC2ProtocolConfigOverrides],

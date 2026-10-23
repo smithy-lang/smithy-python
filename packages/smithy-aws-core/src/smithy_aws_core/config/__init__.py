@@ -15,22 +15,22 @@ from .types import ConfigSource
 
 if TYPE_CHECKING:
     from ..aio.config.aws_config import AsyncAwsConfig, AwsConfigOverrides
-    from ..aio.config.context import SharedConfigContext, load_config
-    from ..aio.config.filesystem import DefaultFileSystem, FileSystem
+    from ..aio.config.context import AsyncSharedConfigContext, load_config_async
+    from ..aio.config.filesystem import AsyncDefaultFileSystem, AsyncFileSystem
 
 __all__ = [
     "AsyncAwsConfig",
+    "AsyncDefaultFileSystem",
+    "AsyncFileSystem",
+    "AsyncSharedConfigContext",
     "AwsConfigOverrides",
     "ConfigError",
     "ConfigParseError",
     "ConfigSource",
     "ConfigValidationError",
-    "DefaultFileSystem",
-    "FileSystem",
     "MergedConfig",
     "ProfileNotFoundError",
-    "SharedConfigContext",
-    "load_config",
+    "load_config_async",
     "shared_config_files_exist",
 ]
 
@@ -40,10 +40,10 @@ __all__ = [
 _RELOCATED = {
     "AsyncAwsConfig": "aws_config",
     "AwsConfigOverrides": "aws_config",
-    "SharedConfigContext": "context",
-    "load_config": "context",
-    "DefaultFileSystem": "filesystem",
-    "FileSystem": "filesystem",
+    "AsyncSharedConfigContext": "context",
+    "load_config_async": "context",
+    "AsyncDefaultFileSystem": "filesystem",
+    "AsyncFileSystem": "filesystem",
 }
 
 

@@ -96,7 +96,7 @@ class ContainerMetadataClient:
         return hostname in _CONTAINER_METADATA_ALLOWED_HOSTS
 
 
-class ContainerCredentialsResolver(
+class AsyncContainerCredentialsResolver(
     AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
     """Resolves AWS Credentials from container credential sources.
@@ -117,7 +117,7 @@ class ContainerCredentialsResolver(
         config: ContainerCredentialsConfig | None = None,
     ):
         warnings.warn(
-            "`ContainerCredentialsResolver` is deprecated; install "
+            "`AsyncContainerCredentialsResolver` is deprecated; install "
             "`aws-credentials-http` and use its resolver instead.",
             DeprecationWarning,
             stacklevel=2,

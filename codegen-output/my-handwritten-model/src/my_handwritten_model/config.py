@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, TYPE_CHECKING, TypeAlias, Union, cast
 
 from smithy_aws_core.aio.endpoints.standard_regional import (
-    StandardRegionalEndpointsResolver,
+    AsyncStandardRegionalEndpointsResolver,
 )
 from smithy_core.aio.interfaces import (
     AsyncClientProtocol,
@@ -138,8 +138,11 @@ class Config:
     ):
         self.auth_scheme_resolver = auth_scheme_resolver or DefaultAuthResolver()
         self.auth_schemes = auth_schemes or {}
-        self.endpoint_resolver = endpoint_resolver or StandardRegionalEndpointsResolver(
-            endpoint_prefix="MyHandwrittenModel"
+        self.endpoint_resolver = (
+            endpoint_resolver
+            or AsyncStandardRegionalEndpointsResolver(
+                endpoint_prefix="MyHandwrittenModel"
+            )
         )
         self.endpoint_uri = endpoint_uri
         self.http_request_config = http_request_config

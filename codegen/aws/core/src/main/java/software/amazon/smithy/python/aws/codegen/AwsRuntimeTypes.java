@@ -34,7 +34,7 @@ public final class AwsRuntimeTypes {
     // smithy_aws_core.aio.endpoints.standard_regional
     public static final Symbol STANDARD_REGIONAL_ENDPOINTS_RESOLVER = createSymbol(
             "aio.endpoints.standard_regional",
-            "StandardRegionalEndpointsResolver");
+            "AsyncStandardRegionalEndpointsResolver");
 
     private AwsRuntimeTypes() {}
 

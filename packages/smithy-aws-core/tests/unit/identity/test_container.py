@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from smithy_aws_core.aio.identity.container import (
-    ContainerCredentialsResolver,
+    AsyncContainerCredentialsResolver,
     ContainerMetadataClient,
 )
 from smithy_aws_core.identity import AWSCredentialsIdentity
@@ -31,7 +31,7 @@ DEFAULT_RESPONSE_DATA = {
 ISO8601 = "%Y-%m-%dT%H:%M:%SZ"
 
 pytestmark = pytest.mark.filterwarnings(
-    "ignore:`ContainerCredentialsResolver` is deprecated:DeprecationWarning"
+    "ignore:`AsyncContainerCredentialsResolver` is deprecated:DeprecationWarning"
 )
 
 
@@ -157,9 +157,9 @@ async def test_resolver_env_relative():
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
 
     with patch.dict(
-        os.environ, {ContainerCredentialsResolver.ENV_VAR: "/test"}, clear=True
+        os.environ, {AsyncContainerCredentialsResolver.ENV_VAR: "/test"}, clear=True
     ):
-        resolver = ContainerCredentialsResolver(http_client)
+        resolver = AsyncContainerCredentialsResolver(http_client)
         identity = await resolver.get_identity(properties={})
 
     # Ensure we derive the correct destination
@@ -181,10 +181,10 @@ async def test_resolver_env_full():
 
     with patch.dict(
         os.environ,
-        {ContainerCredentialsResolver.ENV_VAR_FULL: "http://169.254.170.23/full"},
+        {AsyncContainerCredentialsResolver.ENV_VAR_FULL: "http://169.254.170.23/full"},
         clear=True,
     ):
-        resolver = ContainerCredentialsResolver(http_client)
+        resolver = AsyncContainerCredentialsResolver(http_client)
         identity = await resolver.get_identity(properties={})
 
     # Ensure we derive the correct destination
@@ -207,12 +207,12 @@ async def test_resolver_env_token():
     with patch.dict(
         os.environ,
         {
-            ContainerCredentialsResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
-            ContainerCredentialsResolver.ENV_VAR_AUTH_TOKEN: "Bearer foobar",
+            AsyncContainerCredentialsResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
+            AsyncContainerCredentialsResolver.ENV_VAR_AUTH_TOKEN: "Bearer foobar",
         },
         clear=True,
     ):
-        resolver = ContainerCredentialsResolver(http_client)
+        resolver = AsyncContainerCredentialsResolver(http_client)
         identity = await resolver.get_identity(properties={})
 
     # Ensure we derive the correct destination and fields
@@ -242,12 +242,12 @@ async def test_resolver_env_token_file(tmp_path: pathlib.Path):
     with patch.dict(
         os.environ,
         {
-            ContainerCredentialsResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
-            ContainerCredentialsResolver.ENV_VAR_AUTH_TOKEN_FILE: str(token_file),
+            AsyncContainerCredentialsResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
+            AsyncContainerCredentialsResolver.ENV_VAR_AUTH_TOKEN_FILE: str(token_file),
         },
         clear=True,
     ):
-        resolver = ContainerCredentialsResolver(http_client)
+        resolver = AsyncContainerCredentialsResolver(http_client)
         identity = await resolver.get_identity(properties={})
 
     # Ensure we derive the correct destination and fields
@@ -277,12 +277,12 @@ async def test_resolver_env_token_file_invalid_bytes(tmp_path: pathlib.Path):
     with patch.dict(
         os.environ,
         {
-            ContainerCredentialsResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
-            ContainerCredentialsResolver.ENV_VAR_AUTH_TOKEN_FILE: str(token_file),
+            AsyncContainerCredentialsResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
+            AsyncContainerCredentialsResolver.ENV_VAR_AUTH_TOKEN_FILE: str(token_file),
         },
         clear=True,
     ):
-        resolver = ContainerCredentialsResolver(http_client)
+        resolver = AsyncContainerCredentialsResolver(http_client)
         with pytest.raises(SmithyIdentityError) as e:
             await resolver.get_identity(properties={})
         assert "Unable to read valid utf-8 bytes from " in str(e.value)
@@ -300,13 +300,13 @@ async def test_resolver_env_token_file_precedence(tmp_path: pathlib.Path):
     with patch.dict(
         os.environ,
         {
-            ContainerCredentialsResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
-            ContainerCredentialsResolver.ENV_VAR_AUTH_TOKEN_FILE: str(token_file),
-            ContainerCredentialsResolver.ENV_VAR_AUTH_TOKEN: "Bearer foobar",
+            AsyncContainerCredentialsResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
+            AsyncContainerCredentialsResolver.ENV_VAR_AUTH_TOKEN_FILE: str(token_file),
+            AsyncContainerCredentialsResolver.ENV_VAR_AUTH_TOKEN: "Bearer foobar",
         },
         clear=True,
     ):
-        resolver = ContainerCredentialsResolver(http_client)
+        resolver = AsyncContainerCredentialsResolver(http_client)
         identity = await resolver.get_identity(properties={})
 
     # Ensure we derive the correct destination and fields
@@ -335,9 +335,9 @@ async def test_resolver_valid_credentials_reused():
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
 
     with patch.dict(
-        os.environ, {ContainerCredentialsResolver.ENV_VAR: "/test"}, clear=True
+        os.environ, {AsyncContainerCredentialsResolver.ENV_VAR: "/test"}, clear=True
     ):
-        resolver = ContainerCredentialsResolver(http_client)
+        resolver = AsyncContainerCredentialsResolver(http_client)
         identity_one = await resolver.get_identity(properties={})
         identity_two = await resolver.get_identity(properties={})
 
@@ -356,9 +356,9 @@ async def test_resolver_expired_credentials_refreshed():
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
 
     with patch.dict(
-        os.environ, {ContainerCredentialsResolver.ENV_VAR: "/test"}, clear=True
+        os.environ, {AsyncContainerCredentialsResolver.ENV_VAR: "/test"}, clear=True
     ):
-        resolver = ContainerCredentialsResolver(http_client)
+        resolver = AsyncContainerCredentialsResolver(http_client)
         identity_one = await resolver.get_identity(properties={})
         identity_two = await resolver.get_identity(properties={})
 
@@ -381,6 +381,6 @@ async def test_resolver_missing_env():
         {},
         clear=True,
     ):
-        resolver = ContainerCredentialsResolver(http_client)
+        resolver = AsyncContainerCredentialsResolver(http_client)
         with pytest.raises(SmithyIdentityError):
             await resolver.get_identity(properties={})
