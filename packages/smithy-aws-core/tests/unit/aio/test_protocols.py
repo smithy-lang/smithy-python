@@ -2,12 +2,12 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 from dataclasses import dataclass
+from json import JSONDecodeError
 from typing import Any, cast
 from unittest.mock import Mock, patch
 from xml.etree import ElementTree
 
 import pytest
-from ijson.common import IncompleteJSONError  # type: ignore[reportMissingTypeStubs]
 from smithy_aws_core.aio.protocols import (
     AWSErrorIdentifier,
     AwsJson11ClientProtocol,
@@ -476,10 +476,9 @@ async def test_aws_json11_raises_parse_error_for_invalid_error_body() -> None:
         body=b'{"__type":',
     )
 
-    # The message depends on which ijson backend is in use.
     with pytest.raises(
-        IncompleteJSONError,
-        match=r"premature EOF|parse error|Incomplete JSON content",
+        JSONDecodeError,
+        match="Expecting value",
     ):
         await protocol.deserialize_response(
             operation=operation,

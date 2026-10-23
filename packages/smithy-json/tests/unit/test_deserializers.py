@@ -3,6 +3,8 @@
 import math
 from datetime import datetime
 from decimal import Decimal
+from io import BytesIO
+from json import JSONDecodeError
 from typing import Any
 
 import pytest
@@ -19,6 +21,7 @@ from smithy_core.prelude import (
     TIMESTAMP,
 )
 from smithy_json import JSONCodec, JSONDocument
+from smithy_json._private.deserializers import JSONShapeDeserializer
 
 from . import (
     JSON_SERDE_CASES,
@@ -108,3 +111,30 @@ def test_uses_custom_document() -> None:
     codec = JSONCodec(document_class=CustomDocument)
     actual = codec.create_deserializer(b'{"foo": "bar"}').read_document(DOCUMENT)
     assert isinstance(actual, CustomDocument)
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        b"{}",
+        BytesIO(b"{}"),
+    ],
+)
+def test_deserializer_is_eager(source: bytes | BytesIO) -> None:
+    deserializer = JSONCodec().create_deserializer(source)
+    assert isinstance(deserializer, JSONShapeDeserializer)
+
+
+def test_ignores_unknown_structure_members() -> None:
+    actual = JSONCodec().deserialize(
+        b'{"unknown":{"nested":[1,2,3]},"stringMember":"value"}',
+        SerdeShape,
+    )
+
+    assert actual.string_member == "value"
+
+
+def test_invalid_json_raises_json_decode_error() -> None:
+    with pytest.raises(JSONDecodeError):
+        deserializer = JSONCodec().create_deserializer(b'{"incomplete":')
+        deserializer.read_document(DOCUMENT)
