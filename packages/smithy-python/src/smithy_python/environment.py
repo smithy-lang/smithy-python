@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Self
 
+__all__ = ["PluginEnvironment"]
+
 
 @dataclass(frozen=True, slots=True)
 class PluginEnvironment:

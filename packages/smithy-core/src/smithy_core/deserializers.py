@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from .schemas import Schema
 
 
+__all__ = ["DeserializeableShape", "ShapeDeserializer", "SpecificShapeDeserializer"]
+
+
 @runtime_checkable
 class ShapeDeserializer(Protocol):
     """Protocol used for deserializing shapes based on the Smithy data model.

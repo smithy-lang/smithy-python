@@ -7,6 +7,11 @@ from ...static import StaticCredentialsResolver
 from ..ordering import Standard, StandardProvider
 from ..provider import ChainSetup
 
+__all__ = [
+    "ProfileSessionCredentialsProvider",
+    "ProfileStaticCredentialsProvider",
+]
+
 _ACCESS_KEY_ID = "aws_access_key_id"
 _SECRET_ACCESS_KEY = "aws_secret_access_key"  # noqa: S105
 _SESSION_TOKEN = "aws_session_token"  # noqa: S105

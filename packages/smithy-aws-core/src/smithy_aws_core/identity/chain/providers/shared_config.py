@@ -9,6 +9,8 @@ from ...components import AWSCredentialsIdentity
 from ..ordering import Standard, StandardProvider
 from ..provider import ChainSetup
 
+__all__ = ["SharedConfigProvider"]
+
 
 class SharedConfigProvider:
     """Loads and selects the active AWS profile for downstream providers."""

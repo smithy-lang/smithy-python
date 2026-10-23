@@ -4,6 +4,8 @@ from typing import NamedTuple
 
 from smithy_core.documents import DocumentValue
 
+__all__ = ["RestJsonErrorInfo"]
+
 _REST_JSON_CODE_HEADER = "x-amzn-errortype"
 
 _REST_JSON_CODE_KEYS = {"__type", "code"}

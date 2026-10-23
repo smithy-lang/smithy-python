@@ -13,6 +13,12 @@ from smithy_http.aio.interfaces import HTTPClient
 from ...config.merged_config import MergedConfig
 from .ordering import OrderingConstraint
 
+__all__ = [
+    "ChainIdentityProvider",
+    "ChainSetup",
+    "NamedResolver",
+]
+
 
 @dataclass(frozen=True, kw_only=True)
 class NamedResolver:

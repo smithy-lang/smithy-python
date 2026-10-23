@@ -9,6 +9,8 @@ from smithy_core.exceptions import EndpointResolutionError
 
 from . import REGIONAL_ENDPOINT_CONFIG
 
+__all__ = ["StandardRegionalEndpointsResolver"]
+
 
 class StandardRegionalEndpointsResolver(EndpointResolver):
     """Resolves endpoints for services with standard regional endpoints."""

@@ -8,6 +8,8 @@ from urllib.parse import urlunparse
 from . import interfaces, rfc3986
 from .exceptions import SmithyError
 
+__all__ = ["URI", "HostType", "SmithyError", "interfaces", "rfc3986"]
+
 __version__ = "0.9.0"
 
 

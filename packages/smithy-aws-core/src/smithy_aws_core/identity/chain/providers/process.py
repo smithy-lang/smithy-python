@@ -11,6 +11,11 @@ from ...process import ProcessCredentialsResolver
 from ..ordering import Standard, StandardProvider
 from ..provider import ChainSetup
 
+__all__ = [
+    "ProcessConfigurationError",
+    "ProfileCredentialProcessProvider",
+]
+
 _CREDENTIAL_PROCESS = "credential_process"
 _ACCOUNT_ID = "aws_account_id"
 

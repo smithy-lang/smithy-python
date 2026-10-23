@@ -5,6 +5,13 @@
 from dataclasses import dataclass, field
 from string import ascii_letters, digits
 
+__all__ = [
+    "RawStringUserAgentComponent",
+    "UserAgent",
+    "UserAgentComponent",
+    "sanitize_user_agent_string_component",
+]
+
 _USERAGENT_ALLOWED_CHARACTERS = ascii_letters + digits + "!$%&'*+-.^_`|~"
 
 

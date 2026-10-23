@@ -6,6 +6,20 @@ from typing import Any
 
 from smithy_core.exceptions import SmithyError
 
+__all__ = [
+    "ChecksumMismatch",
+    "DuplicateHeader",
+    "EventError",
+    "InvalidEventBytes",
+    "InvalidHeaderValue",
+    "InvalidHeaderValueLength",
+    "InvalidHeadersLength",
+    "InvalidIntegerValue",
+    "InvalidPayloadLength",
+    "MissingInitialResponse",
+    "UnmodeledEventError",
+]
+
 _MAX_HEADERS_LENGTH = 128 * 1024  # 128 Kb
 _MAX_PAYLOAD_LENGTH = 16 * 1024**2  # 16 Mb
 

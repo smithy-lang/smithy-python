@@ -13,6 +13,8 @@ from smithy_http.user_agent import UserAgent, UserAgentComponent
 
 USER_AGENT = PropertyKey(key="user_agent", value_type=UserAgent)
 
+__all__ = ["USER_AGENT", "UserAgentInterceptor"]
+
 
 class UserAgentInterceptor(Interceptor[Any, Any, HTTPRequest, None]):
     """Adds interceptors that initialize UserAgent in the context and add the user-agent

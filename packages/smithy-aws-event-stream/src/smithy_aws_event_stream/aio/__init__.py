@@ -20,6 +20,8 @@ from .._private.serializers import EventSerializer as _EventSerializer
 from ..events import Event, EventMessage
 from ..exceptions import EventError
 
+__all__ = ["AWSEventPublisher", "AWSEventReceiver", "SigningConfig"]
+
 logger = logging.getLogger(__name__)
 
 

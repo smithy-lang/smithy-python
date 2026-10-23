@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
+__all__ = ["ErrorRetryInfo", "RetryBackoffStrategy", "RetryToken"]
+
 
 @runtime_checkable
 class ErrorRetryInfo(Protocol):

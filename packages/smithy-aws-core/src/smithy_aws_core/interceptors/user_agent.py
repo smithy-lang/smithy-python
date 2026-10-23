@@ -10,6 +10,8 @@ from smithy_http.user_agent import RawStringUserAgentComponent, UserAgentCompone
 
 from .. import __version__
 
+__all__ = ["UserAgentInterceptor"]
+
 _USERAGENT_SDK_NAME = "aws-sdk-python"
 
 

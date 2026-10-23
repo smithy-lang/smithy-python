@@ -2,6 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 """Exceptions raised by Smithy Python code generation."""
 
+__all__ = [
+    "CodegenError",
+    "InvalidInvocationError",
+    "InvalidShapeIdError",
+    "ModelError",
+    "ShapeNotFoundError",
+    "SmithyPythonError",
+]
+
 
 class SmithyPythonError(Exception):
     """Base exception for errors raised by the Smithy Python generator."""

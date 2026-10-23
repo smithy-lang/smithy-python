@@ -1,5 +1,7 @@
 .DEFAULT_GOAL:=help
 
+.PHONY: help install format-java check-java build-java test-protocols typecheck-protocols generate-protocol-tests api-snapshot ci lint-py check-py test-py benchmark build-py clean
+
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
@@ -61,6 +63,10 @@ generate-protocol-tests: ## Generates protocol-test clients, copies them to ./co
 	@echo "codegen-output is up to date."
 
 
+api-snapshot: ## Records the public API surface of each package and asserts no git diff.
+	uv run python scripts/api-snapshot/api_snapshot.py
+
+
 lint-py: ## Runs linters and formatters on the python packages.
 	uv run ruff check packages --fix --config pyproject.toml
 	uv run ruff format packages --config pyproject.toml
@@ -70,6 +76,16 @@ check-py: ## Runs checks (formatting, lints, type-checking) on the python packag
 	uv run ruff check packages --config pyproject.toml
 	uv run ruff format --check --config pyproject.toml
 	uv run pyright packages
+
+
+ci: ## Runs the full CI sequence locally (mirrors the CI workflow steps).
+	make check-py
+	make api-snapshot
+	make test-py
+	make build-py
+	make build-java
+	make generate-protocol-tests test-protocols
+	make typecheck-protocols
 
 
 test-py: ## Runs tests for the python packages.

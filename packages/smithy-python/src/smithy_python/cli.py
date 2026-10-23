@@ -17,6 +17,8 @@ from .exceptions import CodegenError, InvalidInvocationError
 from .model import load_model
 from .selection import select_shapes
 
+__all__ = ["main"]
+
 _GENERATION_NOT_IMPLEMENTED: Final = (
     "smithy-python: error: {artifact} generation is not implemented yet\n"
 )

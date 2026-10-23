@@ -18,6 +18,8 @@ from .serializers import (
 from .shapes import ShapeID, ShapeType
 from .utils import expect_type
 
+__all__ = ["Document", "DocumentValue", "TypeRegistry"]
+
 _DOCUMENT = Schema(id=ShapeID("smithy.api#Document"), shape_type=ShapeType.DOCUMENT)
 
 

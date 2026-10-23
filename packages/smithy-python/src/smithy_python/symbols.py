@@ -21,6 +21,8 @@ from .model import (
 )
 from .selection import Selection
 
+__all__ = ["SymbolProvider", "TypeReference"]
+
 # Union of Python 3.12-3.15 hard keywords, independent of the host interpreter.
 # Soft keywords (match, case, type, lazy, _) remain ordinary identifiers here.
 # Update this when adding support for another Python version.

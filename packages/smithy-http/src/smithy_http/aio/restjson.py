@@ -13,6 +13,8 @@ from ..restjson import (
 )
 from .interfaces import HTTPResponse
 
+__all__ = ["parse_rest_json_error_info"]
+
 
 async def parse_rest_json_error_info(
     http_response: HTTPResponse, check_body: bool = True

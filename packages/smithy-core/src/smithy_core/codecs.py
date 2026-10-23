@@ -10,6 +10,9 @@ if TYPE_CHECKING:
     from .serializers import SerializeableShape, ShapeSerializer
 
 
+__all__ = ["Codec"]
+
+
 @runtime_checkable
 class Codec(Protocol):
     """A protocol for Smithy codecs.

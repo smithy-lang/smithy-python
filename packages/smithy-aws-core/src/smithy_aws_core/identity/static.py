@@ -5,6 +5,8 @@ from smithy_core.exceptions import SmithyIdentityError
 
 from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
+__all__ = ["StaticCredentialsResolver"]
+
 
 class StaticCredentialsResolver(
     IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]

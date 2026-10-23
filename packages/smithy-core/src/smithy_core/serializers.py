@@ -15,6 +15,16 @@ if TYPE_CHECKING:
     from .schemas import Schema
 
 
+__all__ = [
+    "InterceptingSerializer",
+    "MapSerializer",
+    "SerializeableShape",
+    "SerializeableStruct",
+    "ShapeSerializer",
+    "SpecificShapeSerializer",
+]
+
+
 @runtime_checkable
 class ShapeSerializer(Protocol):
     """Protocol for serializing shapes based on the Smithy data model.

@@ -7,6 +7,8 @@ from ..deserializers import DeserializeableShape
 from ..serializers import SerializeableShape
 from .interfaces.eventstream import EventPublisher, EventReceiver
 
+__all__ = ["DuplexEventStream", "InputEventStream", "OutputEventStream"]
+
 
 class DuplexEventStream[
     IE: SerializeableShape,

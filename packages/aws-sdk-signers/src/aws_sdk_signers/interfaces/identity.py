@@ -6,6 +6,11 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
 
+__all__ = (
+    "AWSCredentialsIdentity",
+    "Identity",
+)
+
 
 @runtime_checkable
 class Identity(Protocol):

@@ -45,6 +45,15 @@ from .. import interfaces as http_interfaces
 from ..exceptions import SmithyHTTPError
 from . import interfaces as http_aio_interfaces
 
+__all__ = [
+    "DEFAULT_READ_BUFFER_SIZE",
+    "AWSCRTHTTPClient",
+    "AWSCRTHTTPClientConfig",
+    "AWSCRTHTTPResponse",
+    "ConnectionPoolDict",
+    "ConnectionPoolKey",
+]
+
 # Default buffer size for reading from streams (8 KB)
 DEFAULT_READ_BUFFER_SIZE = 8192
 

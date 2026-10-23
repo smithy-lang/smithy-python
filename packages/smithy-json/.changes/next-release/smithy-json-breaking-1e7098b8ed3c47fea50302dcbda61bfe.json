@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Declared explicit `__all__` exports on all public modules. Names that were previously importable only incidentally (via `from module import *` or as un-annotated module attributes) are no longer part of the public API; import public symbols by name from their documented module."
+}

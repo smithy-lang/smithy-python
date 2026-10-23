@@ -5,6 +5,8 @@ from typing import Protocol, runtime_checkable
 
 from ..utils import ensure_utc
 
+__all__ = ["Identity"]
+
 
 @runtime_checkable
 class Identity(Protocol):

@@ -14,6 +14,18 @@ from smithy_core.documents import DocumentValue
 from smithy_core.shapes import ShapeID
 from smithy_core.traits import DynamicTrait, Trait
 
+__all__ = [
+    "AwsJson1_0Trait",
+    "AwsJson1_1Trait",
+    "AwsQueryErrorTrait",
+    "AwsQueryTrait",
+    "Ec2QueryNameTrait",
+    "Ec2QueryTrait",
+    "RestJson1Trait",
+    "RestXmlTrait",
+    "SigV4Trait",
+]
+
 
 def _parse_http_protocol_values(
     value: DocumentValue | DynamicTrait | None,

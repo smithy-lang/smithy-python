@@ -8,6 +8,13 @@ from smithy_core.shapes import ShapeID, ShapeType
 from smithy_http.aio.interfaces import HTTPResponse
 from smithy_http.interfaces import Field
 
+__all__ = [
+    "parse_document_discriminator",
+    "parse_error_code",
+    "parse_response_metadata",
+    "parse_retry_after",
+]
+
 _LOGGER = logging.getLogger(__name__)
 
 _RETRY_AFTER_HEADER = "x-amz-retry-after"

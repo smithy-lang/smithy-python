@@ -6,6 +6,8 @@ from smithy_core import URI
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPRequest
 
+__all__ = ["create_test_request"]
+
 
 def create_test_request(
     method: str = "GET",

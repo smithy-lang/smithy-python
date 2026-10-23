@@ -22,6 +22,20 @@ from .interfaces.io import AsyncSeekable, ConditionallySeekable, Seekable
 if TYPE_CHECKING:
     from .interfaces.events import EventHeaderEncoder, EventMessage
 
+__all__ = (
+    "DEFAULT_PORTS",
+    "EMPTY_SHA256_HASH",
+    "EVENT_STREAM_CONTENT_TYPE",
+    "EVENT_STREAM_HASH",
+    "HEADERS_EXCLUDED_FROM_SIGNING",
+    "SIGV4_TIMESTAMP_FORMAT",
+    "UNSIGNED_PAYLOAD",
+    "AsyncEventSigner",
+    "AsyncSigV4Signer",
+    "SigV4Signer",
+    "SigV4SigningProperties",
+)
+
 HEADERS_EXCLUDED_FROM_SIGNING: tuple[str, ...] = (
     "accept",
     "accept-encoding",

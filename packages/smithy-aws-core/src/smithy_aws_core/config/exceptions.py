@@ -3,6 +3,13 @@
 
 from smithy_core.exceptions import SmithyError
 
+__all__ = [
+    "ConfigError",
+    "ConfigParseError",
+    "ConfigValidationError",
+    "ProfileNotFoundError",
+]
+
 
 class ConfigError(SmithyError):
     """Base error for AWS shared configuration failures."""

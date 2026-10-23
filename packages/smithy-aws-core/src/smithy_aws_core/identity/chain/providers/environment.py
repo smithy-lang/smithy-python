@@ -9,6 +9,8 @@ from ...environment import EnvironmentCredentialsResolver
 from ..ordering import Standard, StandardProvider
 from ..provider import ChainSetup
 
+__all__ = ["EnvironmentCredentialsProvider"]
+
 _ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID"
 _SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"  # noqa: S105
 

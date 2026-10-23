@@ -15,6 +15,12 @@ from .filesystem import DefaultFileSystem, FileSystem
 from .merged_config import MergedConfig
 from .types import ConfigSource
 
+__all__ = [
+    "SharedConfigContext",
+    "load_config",
+    "shared_config_files_exist",
+]
+
 logger = logging.getLogger(__name__)
 
 _DEFAULT_CONFIG_FILE = "~/.aws/config"

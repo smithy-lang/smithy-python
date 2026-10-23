@@ -20,6 +20,14 @@ from smithy_http.aio.interfaces import HTTPClient
 from .. import __version__
 from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
+__all__ = [
+    "Config",
+    "EC2Metadata",
+    "IMDSCredentialsResolver",
+    "Token",
+    "TokenCache",
+]
+
 _USER_AGENT_FIELD = Field(
     name="User-Agent",
     values=[f"aws-sdk-python-imds-client/{__version__}"],

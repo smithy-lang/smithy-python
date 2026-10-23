@@ -8,6 +8,12 @@ from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import Identity
 
+__all__ = [
+    "APIKeyIdentity",
+    "APIKeyIdentityProperties",
+    "APIKeyIdentityResolver",
+]
+
 
 @dataclass(kw_only=True)
 class APIKeyIdentity(Identity):

@@ -4,6 +4,15 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
+__all__ = [
+    "Field",
+    "FieldPosition",
+    "Fields",
+    "HTTPClientConfiguration",
+    "HTTPRequestConfiguration",
+    "QueryParamsList",
+]
+
 FieldPosition = Literal["header", "trailer"]
 """The type of a field.
 

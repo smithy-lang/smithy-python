@@ -6,6 +6,13 @@ from typing import Any
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyError, SmithyIdentityError
 
+__all__ = [
+    "IdentityChainConfigurationError",
+    "IdentityChainError",
+    "IdentityResolverFailure",
+    "UnclaimedSource",
+]
+
 
 class IdentityChainConfigurationError(SmithyError):
     """Raised when discovered providers violate an assembly invariant."""

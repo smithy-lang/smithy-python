@@ -5,6 +5,24 @@ from typing import Literal
 
 from .response import EMPTY_RESPONSE_METADATA, ResponseMetadata
 
+__all__ = [
+    "AsyncBodyError",
+    "CallError",
+    "ClientTimeoutError",
+    "DiscriminatorError",
+    "EndpointResolutionError",
+    "ExpectationNotMetError",
+    "Fault",
+    "MissingDependencyError",
+    "ModeledError",
+    "RetryError",
+    "SerializationError",
+    "SmithyError",
+    "SmithyIdentityError",
+    "UnsupportedStreamError",
+    "UnsupportedTransportError",
+]
+
 
 class SmithyError(Exception):
     """Base exception type for all exceptions raised by smithy-python."""

@@ -9,6 +9,15 @@ from .context import SharedConfigContext
 from .exceptions import ConfigValidationError
 from .types import UNSET, ConfigSource, Resolved
 
+__all__ = [
+    "EndpointUriResolver",
+    "resolve_endpoint_uri",
+    "resolve_max_attempts",
+    "resolve_region",
+    "resolve_retry_mode",
+    "resolve_sdk_ua_app_id",
+]
+
 
 async def _resolve_str(
     ctx: SharedConfigContext,
