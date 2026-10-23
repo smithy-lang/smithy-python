@@ -11,13 +11,13 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from smithy_core.aio.client import RequestPipeline
+from smithy_core.aio.client import AsyncRequestPipeline
 from smithy_core.aio.retries import (
-    AdaptiveRetryStrategy,
-    ClientRateLimiter,
-    RequestRateTracker,
-    RetryStrategyResolver,
-    TokenBucket,
+    AsyncAdaptiveRetryStrategy,
+    AsyncClientRateLimiter,
+    AsyncRequestRateTracker,
+    AsyncRetryStrategyResolver,
+    AsyncTokenBucket,
 )
 from smithy_core.exceptions import CallError, RetryError
 from smithy_core.retries import (
@@ -151,14 +151,14 @@ def test_retry_quota_acquire_throttling_error(
 class TestTokenBucket:
     @pytest.mark.asyncio
     async def test_initial_state(self):
-        token_bucket = TokenBucket()
+        token_bucket = AsyncTokenBucket()
         assert token_bucket.current_capacity == 0
         assert token_bucket.max_capacity == token_bucket.MIN_CAPACITY
         assert token_bucket.fill_rate == token_bucket.MIN_FILL_RATE
 
     @pytest.mark.asyncio
     async def test_acquire_succeeds_immediately_within_capacity(self):
-        token_bucket = TokenBucket(curr_capacity=1)
+        token_bucket = AsyncTokenBucket(curr_capacity=1)
 
         with patch("smithy_core.aio.retries.asyncio.wait_for") as mock_wait_for:
             await token_bucket.acquire(1)
@@ -168,7 +168,7 @@ class TestTokenBucket:
 
     @pytest.mark.asyncio
     async def test_acquire_waits_when_capacity_insufficient(self):
-        token_bucket = TokenBucket(fill_rate=100.0)
+        token_bucket = AsyncTokenBucket(fill_rate=100.0)
         await token_bucket.acquire(1)
 
         with patch(
@@ -181,7 +181,7 @@ class TestTokenBucket:
 
     @pytest.mark.asyncio
     async def test_update_bucket_updates_rate(self):
-        token_bucket = TokenBucket(curr_capacity=1)
+        token_bucket = AsyncTokenBucket(curr_capacity=1)
 
         await token_bucket.update_rate(5.0)
         assert token_bucket.fill_rate == 5.0
@@ -190,17 +190,17 @@ class TestTokenBucket:
 
     @pytest.mark.asyncio
     async def test_rate_can_never_be_zero(self):
-        token_bucket = TokenBucket()
+        token_bucket = AsyncTokenBucket()
         await token_bucket.update_rate(0.0)
 
-        assert token_bucket.fill_rate == TokenBucket.MIN_FILL_RATE
-        assert token_bucket.max_capacity == TokenBucket.MIN_CAPACITY
+        assert token_bucket.fill_rate == AsyncTokenBucket.MIN_FILL_RATE
+        assert token_bucket.max_capacity == AsyncTokenBucket.MIN_CAPACITY
 
     @pytest.mark.asyncio
     async def test_refill_caps_at_max_capacity(self):
         # 100s at 4 tokens/s would refill 400 tokens, far more than the capacity of 4
         with patch("time.monotonic", side_effect=[0.0, 0.0, 100.0]):
-            token_bucket = TokenBucket()
+            token_bucket = AsyncTokenBucket()
             await token_bucket.update_rate(4.0)
             with token_bucket._lock:  # type: ignore
                 token_bucket._refill()  # type: ignore
@@ -223,7 +223,7 @@ class TestTokenBucket:
         time_values = [0.0, 1.0, 1.0, 1.5, 1.5, 4.0, 4.0, 5.0]
 
         with patch("time.monotonic", side_effect=time_values):
-            token_bucket = TokenBucket(curr_capacity=0, fill_rate=2.0)
+            token_bucket = AsyncTokenBucket(curr_capacity=0, fill_rate=2.0)
 
             for action, value in actions:
                 if action == "acquire":
@@ -234,7 +234,7 @@ class TestTokenBucket:
             assert token_bucket.current_capacity == expected_capacity
 
     async def test_update_rate_wakes_waiting_acquirers(self):
-        token_bucket = TokenBucket(fill_rate=0.01)
+        token_bucket = AsyncTokenBucket(fill_rate=0.01)
 
         acquired = False
 
@@ -257,7 +257,7 @@ class TestTokenBucket:
     async def test_acquire_does_not_wait_past_timeout(self):
         # The bucket starts empty, and at the minimum fill rate a token takes 2s to
         # refill, far past the timeout
-        token_bucket = TokenBucket(timeout=0.05)
+        token_bucket = AsyncTokenBucket(timeout=0.05)
 
         start = time.monotonic()
         with pytest.raises(TimeoutError):
@@ -266,7 +266,7 @@ class TestTokenBucket:
 
     def test_acquire_works_across_event_loops(self):
         # A client, and so its bucket, can outlive the event loop it was first used on
-        token_bucket = TokenBucket(fill_rate=20.0)
+        token_bucket = AsyncTokenBucket(fill_rate=20.0)
 
         async def contended_acquires():
             # The bucket starts empty, so both acquires have to wait
@@ -313,7 +313,7 @@ class TestSharedAcrossThreads:
         return errors
 
     def test_rate_tracker(self, frequent_thread_switches: None):
-        tracker = RequestRateTracker()
+        tracker = AsyncRequestRateTracker()
 
         async def measure_many() -> None:
             for _ in range(3000):
@@ -324,7 +324,7 @@ class TestSharedAcrossThreads:
     def test_token_bucket_rate_updates_and_acquires(
         self, frequent_thread_switches: None
     ):
-        bucket = TokenBucket(fill_rate=100000.0)
+        bucket = AsyncTokenBucket(fill_rate=100000.0)
 
         async def update_and_acquire() -> None:
             await bucket.update_rate(100000.0)
@@ -339,7 +339,7 @@ class TestSharedAcrossThreads:
     ):
         acquires_per_thread = 500
         # Exactly enough tokens for every acquire, so no thread has to wait
-        bucket = TokenBucket(curr_capacity=self._THREADS * acquires_per_thread)
+        bucket = AsyncTokenBucket(curr_capacity=self._THREADS * acquires_per_thread)
 
         async def spend() -> None:
             for _ in range(acquires_per_thread):
@@ -365,11 +365,11 @@ class TestRateLimiter:
         current_bucket_capacity: float,
         expected_bucket_capacity_after_acquire: float,
     ):
-        token_bucket = TokenBucket(curr_capacity=current_bucket_capacity)
+        token_bucket = AsyncTokenBucket(curr_capacity=current_bucket_capacity)
         calculator = CubicCalculator(starting_max_rate=1.0, start_time=0.0)
-        tracker = RequestRateTracker()
+        tracker = AsyncRequestRateTracker()
 
-        limiter = ClientRateLimiter(
+        limiter = AsyncClientRateLimiter(
             token_bucket=token_bucket,
             cubic_calculator=calculator,
             rate_tracker=tracker,
@@ -398,11 +398,11 @@ class TestRateLimiter:
     ):
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [0.0, 0.1, 0.2, 0.3]
-            token_bucket = TokenBucket()
+            token_bucket = AsyncTokenBucket()
             calculator = CubicCalculator(starting_max_rate=10.0, start_time=0.0)
-            tracker = RequestRateTracker()
+            tracker = AsyncRequestRateTracker()
 
-            limiter = ClientRateLimiter(
+            limiter = AsyncClientRateLimiter(
                 token_bucket=token_bucket,
                 cubic_calculator=calculator,
                 rate_tracker=tracker,
@@ -419,11 +419,11 @@ class TestRateLimiter:
     async def test_throttling_response_enables_rate_limiter(self):
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [0.0, 0.1, 0.2, 0.3, 0.4]
-            token_bucket = TokenBucket()
+            token_bucket = AsyncTokenBucket()
             calculator = CubicCalculator(starting_max_rate=10.0, start_time=0.0)
-            tracker = RequestRateTracker()
+            tracker = AsyncRequestRateTracker()
 
-            limiter = ClientRateLimiter(
+            limiter = AsyncClientRateLimiter(
                 token_bucket=token_bucket,
                 cubic_calculator=calculator,
                 rate_tracker=tracker,
@@ -436,10 +436,10 @@ class TestRateLimiter:
     async def test_raises_timeout_error_when_token_acquisition_takes_30_secs(self):
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 31]
-            token_bucket = TokenBucket(curr_capacity=1)
+            token_bucket = AsyncTokenBucket(curr_capacity=1)
             calculator = CubicCalculator()
-            tracker = RequestRateTracker()
-            limiter = ClientRateLimiter(
+            tracker = AsyncRequestRateTracker()
+            limiter = AsyncClientRateLimiter(
                 token_bucket=token_bucket,
                 cubic_calculator=calculator,
                 rate_tracker=tracker,
@@ -453,10 +453,10 @@ class TestRateLimiter:
     async def test_tokens_accumulation_after_numerous_successful_responses(self):
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [i * 0.01 for i in range(5000)]
-            token_bucket = TokenBucket(curr_capacity=1)
+            token_bucket = AsyncTokenBucket(curr_capacity=1)
             calculator = CubicCalculator()
-            tracker = RequestRateTracker()
-            limiter = ClientRateLimiter(
+            tracker = AsyncRequestRateTracker()
+            limiter = AsyncClientRateLimiter(
                 token_bucket=token_bucket,
                 cubic_calculator=calculator,
                 rate_tracker=tracker,
@@ -497,9 +497,9 @@ class TestRateLimiter:
         with patch(
             "smithy_core.aio.retries.time", SimpleNamespace(monotonic=lambda: now)
         ):
-            token_bucket = TokenBucket()
-            tracker = RequestRateTracker()
-            limiter = ClientRateLimiter(
+            token_bucket = AsyncTokenBucket()
+            tracker = AsyncRequestRateTracker()
+            limiter = AsyncClientRateLimiter(
                 token_bucket=token_bucket,
                 cubic_calculator=CubicCalculator(start_time=0.0),
                 rate_tracker=tracker,
@@ -518,11 +518,11 @@ class TestRateLimiter:
     async def test_calculated_rate_is_capped_at_2x_measured_rate(self):
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [0.0, 0.1, 0.2, 0.3, 0.4]
-            token_bucket = TokenBucket()
+            token_bucket = AsyncTokenBucket()
             calculator = CubicCalculator(starting_max_rate=10.0, start_time=0.0)
-            tracker = RequestRateTracker()
+            tracker = AsyncRequestRateTracker()
 
-            limiter = ClientRateLimiter(
+            limiter = AsyncClientRateLimiter(
                 token_bucket=token_bucket,
                 cubic_calculator=calculator,
                 rate_tracker=tracker,
@@ -543,11 +543,11 @@ class TestRateLimiter:
 
     async def test_new_rate_is_set_while_holding_the_lock(self):
         # Two threads could otherwise calculate rates A then B but apply B then A
-        token_bucket = TokenBucket()
-        limiter = ClientRateLimiter(
+        token_bucket = AsyncTokenBucket()
+        limiter = AsyncClientRateLimiter(
             token_bucket=token_bucket,
             cubic_calculator=CubicCalculator(),
-            rate_tracker=RequestRateTracker(),
+            rate_tracker=AsyncRequestRateTracker(),
             rate_limiter_enabled=True,
         )
         lock_held: list[bool] = []
@@ -628,7 +628,7 @@ class TestRequestRateTracker:
     async def test_measure_rate_same_bucket(self):
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [0.0, 0.3, 0.4]
-            tracker = RequestRateTracker()
+            tracker = AsyncRequestRateTracker()
             rate1 = await tracker.measure_rate()
             rate2 = await tracker.measure_rate()
 
@@ -639,7 +639,7 @@ class TestRequestRateTracker:
     async def test_measure_rate_new_bucket(self):
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [0.0, 0.1, 0.7]
-            tracker = RequestRateTracker()
+            tracker = AsyncRequestRateTracker()
 
             await tracker.measure_rate()
             rate = await tracker.measure_rate()
@@ -650,27 +650,27 @@ class TestRequestRateTracker:
 
 
 class TestAdaptiveRetryStrategy:
-    """Tests for AdaptiveRetryStrategy with rate limiting."""
+    """Tests for AsyncAdaptiveRetryStrategy with rate limiting."""
 
     def test_initialization_with_default_rate_limiter(self):
-        strategy = AdaptiveRetryStrategy()
+        strategy = AsyncAdaptiveRetryStrategy()
 
         assert strategy.rate_limiter is not None
-        assert isinstance(strategy.rate_limiter, ClientRateLimiter)
+        assert isinstance(strategy.rate_limiter, AsyncClientRateLimiter)
         assert strategy.rate_limiter.rate_limit_enabled is False
 
     def test_initialization_with_custom_rate_limiter(self):
-        token_bucket = TokenBucket()
+        token_bucket = AsyncTokenBucket()
         calculator = CubicCalculator(starting_max_rate=5.0, start_time=0.0)
-        tracker = RequestRateTracker()
-        custom_limiter = ClientRateLimiter(
+        tracker = AsyncRequestRateTracker()
+        custom_limiter = AsyncClientRateLimiter(
             token_bucket=token_bucket,
             cubic_calculator=calculator,
             rate_tracker=tracker,
             rate_limiter_enabled=True,
         )
 
-        strategy = AdaptiveRetryStrategy(rate_limiter=custom_limiter)
+        strategy = AsyncAdaptiveRetryStrategy(rate_limiter=custom_limiter)
 
         assert strategy.rate_limiter is custom_limiter
         assert strategy.rate_limiter.rate_limit_enabled is True
@@ -685,21 +685,21 @@ class TestAdaptiveRetryStrategy:
         ids=["throttling", "not_throttling", "not_a_call_error"],
     )
     def test_is_throttling_error(self, error: Exception, expected: bool):
-        assert AdaptiveRetryStrategy().is_throttling_error(error) is expected
+        assert AsyncAdaptiveRetryStrategy().is_throttling_error(error) is expected
 
     @pytest.mark.asyncio
     async def test_resolver_creates_adaptive_strategy(self):
-        resolver = RetryStrategyResolver()
+        resolver = AsyncRetryStrategyResolver()
         option1 = RetryStrategyOptions(retry_mode="adaptive")
 
         strategy = await resolver.resolve_retry_strategy(retry_strategy=option1)
 
-        assert isinstance(strategy, AdaptiveRetryStrategy)
+        assert isinstance(strategy, AsyncAdaptiveRetryStrategy)
         assert strategy.max_attempts == 3
 
     @pytest.mark.parametrize("max_attempts", [2, 3, 10])
     async def test_adaptive_retry_strategy(self, max_attempts: int) -> None:
-        strategy = AdaptiveRetryStrategy(max_attempts=max_attempts)
+        strategy = AsyncAdaptiveRetryStrategy(max_attempts=max_attempts)
         error = CallError(is_retry_safe=True)
         token = await strategy.acquire_initial_retry_token()
         for _ in range(max_attempts - 1):
@@ -712,16 +712,16 @@ class TestAdaptiveRetryStrategy:
             )
 
     def test_deepcopy_returns_adaptive_strategy_with_rate_limiter(self) -> None:
-        strategy = AdaptiveRetryStrategy()
+        strategy = AsyncAdaptiveRetryStrategy()
         copied = deepcopy(strategy)
 
         assert copied is strategy
-        assert isinstance(copied, AdaptiveRetryStrategy)
+        assert isinstance(copied, AsyncAdaptiveRetryStrategy)
         assert copied.rate_limiter is strategy.rate_limiter
 
 
 class TestRequestPipelineRateLimiting:
-    def _non_retryable_call(self, strategy: AdaptiveRetryStrategy) -> Any:
+    def _non_retryable_call(self, strategy: AsyncAdaptiveRetryStrategy) -> Any:
         # A call whose input stream can't be resent, so it skips the retry loop
         call = MagicMock()
         call.retryable.return_value = False
@@ -730,21 +730,21 @@ class TestRequestPipelineRateLimiting:
 
     def _adaptive_strategy_with_mocked_limiter(
         self,
-    ) -> tuple[AdaptiveRetryStrategy, ClientRateLimiter]:
-        limiter = ClientRateLimiter(
-            token_bucket=TokenBucket(),
+    ) -> tuple[AsyncAdaptiveRetryStrategy, AsyncClientRateLimiter]:
+        limiter = AsyncClientRateLimiter(
+            token_bucket=AsyncTokenBucket(),
             cubic_calculator=CubicCalculator(),
-            rate_tracker=RequestRateTracker(),
+            rate_tracker=AsyncRequestRateTracker(),
             rate_limiter_enabled=True,
         )
         limiter.before_sending_request = AsyncMock()  # type: ignore[method-assign]
         limiter.after_receiving_response = AsyncMock()  # type: ignore[method-assign]
-        return AdaptiveRetryStrategy(rate_limiter=limiter), limiter
+        return AsyncAdaptiveRetryStrategy(rate_limiter=limiter), limiter
 
     @pytest.mark.asyncio
     async def test_non_retryable_call_applies_rate_limiting_on_success(self):
         strategy, limiter = self._adaptive_strategy_with_mocked_limiter()
-        pipeline: RequestPipeline[Any, Any] = RequestPipeline(
+        pipeline: AsyncRequestPipeline[Any, Any] = AsyncRequestPipeline(
             protocol=MagicMock(), transport=MagicMock()
         )
         handle_attempt = AsyncMock(
@@ -765,7 +765,7 @@ class TestRequestPipelineRateLimiting:
     @pytest.mark.asyncio
     async def test_non_retryable_call_reports_throttle_without_retrying(self):
         strategy, limiter = self._adaptive_strategy_with_mocked_limiter()
-        pipeline: RequestPipeline[Any, Any] = RequestPipeline(
+        pipeline: AsyncRequestPipeline[Any, Any] = AsyncRequestPipeline(
             protocol=MagicMock(), transport=MagicMock()
         )
         error = CallError(is_retry_safe=True, is_throttling_error=True)
@@ -787,7 +787,7 @@ class TestRequestPipelineRateLimiting:
     @pytest.mark.asyncio
     async def test_failure_without_response_does_not_update_rate_limiter(self):
         strategy, limiter = self._adaptive_strategy_with_mocked_limiter()
-        pipeline: RequestPipeline[Any, Any] = RequestPipeline(
+        pipeline: AsyncRequestPipeline[Any, Any] = AsyncRequestPipeline(
             protocol=MagicMock(), transport=MagicMock()
         )
         # Fails before sending, e.g. endpoint resolution or signing, so no response

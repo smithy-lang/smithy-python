@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 from urllib.parse import parse_qsl
 
 from pytest import fail, mark, raises
-from smithy_aws_core.identity import StaticCredentialsResolver
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
+from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import async_list
 from smithy_http import tuples_to_fields
@@ -90,7 +90,7 @@ async def test_ec2_query_date_time_with_negative_offset_response_datetime_offset
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -126,7 +126,7 @@ async def test_ec2_query_date_time_with_positive_offset_response_datetime_offset
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -152,11 +152,11 @@ async def test_ec2_query_empty_input_and_empty_output_request_empty_input_and_em
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -239,7 +239,7 @@ async def test_ec2_query_empty_input_and_empty_output_response_empty_input_and_e
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -265,11 +265,11 @@ async def test_ec2_query_endpoint_trait_request_endpoint_operation() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -350,11 +350,11 @@ async def test_ec2_query_endpoint_trait_with_host_label_request_endpoint_with_ho
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -442,7 +442,7 @@ async def test_ec2_query_date_time_with_fractional_seconds_response_fractional_s
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -476,7 +476,7 @@ async def test_ec2_greeting_with_errors_response_greeting_with_errors() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -505,7 +505,7 @@ async def test_ec2_invalid_greeting_error_error_greeting_with_errors() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -533,7 +533,7 @@ async def test_ec2_complex_error_error_greeting_with_errors() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -555,11 +555,11 @@ async def test_ec2_query_host_with_path_request_host_with_path_operation() -> No
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/custom",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -634,7 +634,7 @@ async def test_ec2_ignores_wrapping_xml_name_response_ignores_wrapping_xml_name(
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -656,11 +656,11 @@ async def test_ec2_nested_structures_request_nested_structures() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -738,11 +738,11 @@ async def test_ec2_query_no_input_and_output_request_no_input_and_output() -> No
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -823,7 +823,7 @@ async def test_ec2_query_no_input_and_output_response_no_input_and_output() -> N
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -851,11 +851,11 @@ async def test_sdk_applied_content_encoding_ec2_query_request_put_with_content_e
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -927,11 +927,11 @@ async def test_sdk_appends_gzip_and_ignores_http_provided_encoding_ec2_query_req
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -999,11 +999,11 @@ async def test_ec2_protocol_idempotency_token_auto_fill_request_query_idempotenc
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1079,11 +1079,11 @@ async def test_ec2_protocol_idempotency_token_auto_fill_is_set_request_query_ide
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1159,11 +1159,11 @@ async def test_ec2_lists_request_query_lists() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1240,11 +1240,11 @@ async def test_ec2_empty_query_lists_request_query_lists() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1321,11 +1321,11 @@ async def test_ec2_list_arg_with_xml_name_member_request_query_lists() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1399,11 +1399,11 @@ async def test_ec2_list_member_with_xml_name_request_query_lists() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1477,11 +1477,11 @@ async def test_ec2_list_nested_struct_with_list_request_query_lists() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1555,11 +1555,11 @@ async def test_ec2_timestamps_input_request_query_timestamps() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1644,7 +1644,7 @@ async def test_ec2_recursive_shapes_response_recursive_xml_shapes() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1676,11 +1676,11 @@ async def test_ec2_simple_input_params_strings_request_simple_input_params() -> 
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1758,11 +1758,11 @@ async def test_ec2_simple_input_params_string_and_boolean_true_request_simple_in
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1840,11 +1840,11 @@ async def test_ec2_simple_input_params_strings_and_boolean_false_request_simple_
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1918,11 +1918,11 @@ async def test_ec2_simple_input_params_integer_request_simple_input_params() -> 
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1996,11 +1996,11 @@ async def test_ec2_simple_input_params_float_request_simple_input_params() -> No
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2074,11 +2074,11 @@ async def test_ec2_simple_input_params_blob_request_simple_input_params() -> Non
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2154,11 +2154,11 @@ async def test_ec2_enums_request_simple_input_params() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2234,11 +2234,11 @@ async def test_ec2_query_request_simple_input_params() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2314,11 +2314,11 @@ async def test_ec2_query_is_preferred_request_simple_input_params() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2397,11 +2397,11 @@ async def test_ec2_xml_name_is_uppercased_request_simple_input_params() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2482,11 +2482,11 @@ async def test_ec2_query_name_distinct_from_xml_name_and_member_name_request_sim
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2566,11 +2566,11 @@ async def test_ec2_query_supports_na_n_float_inputs_request_simple_input_params(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2648,11 +2648,11 @@ async def test_ec2_query_supports_infinity_float_inputs_request_simple_input_par
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2728,11 +2728,11 @@ async def test_ec2_query_supports_negative_infinity_float_inputs_request_simple_
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2815,7 +2815,7 @@ async def test_ec2_simple_scalar_properties_response_simple_scalar_xml_propertie
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2857,7 +2857,7 @@ async def test_ec2_query_supports_na_n_float_outputs_response_simple_scalar_xml_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2890,7 +2890,7 @@ async def test_ec2_query_supports_infinity_float_outputs_response_simple_scalar_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2923,7 +2923,7 @@ async def test_ec2_query_supports_negative_infinity_float_outputs_response_simpl
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2954,7 +2954,7 @@ async def test_ec2_xml_blobs_response_xml_blobs() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2983,7 +2983,7 @@ async def test_ec2_xml_empty_blobs_response_xml_empty_blobs() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3012,7 +3012,7 @@ async def test_ec2_xml_empty_self_closed_blobs_response_xml_empty_blobs() -> Non
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3041,7 +3041,7 @@ async def test_ec2_xml_empty_lists_response_xml_empty_lists() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3070,7 +3070,7 @@ async def test_ec2_xml_enums_response_xml_enums() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3106,7 +3106,7 @@ async def test_ec2_xml_int_enums_response_xml_int_enums() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3142,7 +3142,7 @@ async def test_ec2_xml_lists_response_xml_lists() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3192,7 +3192,7 @@ async def test_ec2_xml_namespaces_response_xml_namespaces() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3223,7 +3223,7 @@ async def test_ec2_xml_timestamps_response_xml_timestamps() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3259,7 +3259,7 @@ async def test_ec2_xml_timestamps_with_date_time_format_response_xml_timestamps(
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3295,7 +3295,7 @@ async def test_ec2_xml_timestamps_with_date_time_on_target_format_response_xml_t
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3328,7 +3328,7 @@ async def test_ec2_xml_timestamps_with_epoch_seconds_format_response_xml_timesta
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3364,7 +3364,7 @@ async def test_ec2_xml_timestamps_with_epoch_seconds_on_target_format_response_x
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3397,7 +3397,7 @@ async def test_ec2_xml_timestamps_with_http_date_format_response_xml_timestamps(
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3430,7 +3430,7 @@ async def test_ec2_xml_timestamps_with_http_date_on_target_format_response_xml_t
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 

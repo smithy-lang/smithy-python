@@ -1,0 +1,163 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+import logging
+import os
+from pathlib import Path
+from typing import Any
+
+from ...config.context import _resolve_config_paths  # type: ignore[reportPrivateUsage]
+from ...config.file_parser import (
+    FileType,
+    standardize,
+)
+from ...config.merged_config import MergedConfig
+from ...config.types import ConfigSource
+from .file_parser import parse_config_file_async
+from .filesystem import AsyncDefaultFileSystem, AsyncFileSystem
+
+logger = logging.getLogger(__name__)
+
+_PROFILE_ENV_VAR = "AWS_PROFILE"
+_DEFAULT_PROFILE = "default"
+
+
+async def load_config_async(
+    config_file_path: Path | None = None,
+    credentials_file_path: Path | None = None,
+    fs: AsyncFileSystem | None = None,
+) -> MergedConfig:
+    """Load and merge AWS config and credentials files.
+
+    Parses both files, standardizes them, and returns a merged
+    MergedConfig ready for querying.
+
+    :param config_file_path: Override path for config file.
+        Defaults to AWS_CONFIG_FILE env var or ~/.aws/config.
+    :param credentials_file_path: Override path for credentials file.
+        Defaults to AWS_SHARED_CREDENTIALS_FILE env var or ~/.aws/credentials.
+    :param fs: AsyncFileSystem to use for reading files.
+        Defaults to AsyncDefaultFileSystem (real disk I/O).
+    :returns: A MergedConfig with merged profiles from both files.
+    """
+    filesystem = fs or AsyncDefaultFileSystem()
+    config_path, credentials_path = _resolve_config_paths(
+        config_file_path, credentials_file_path
+    )
+
+    raw_config = await parse_config_file_async(str(config_path), filesystem)
+    raw_credentials = await parse_config_file_async(str(credentials_path), filesystem)
+
+    std_config = standardize(raw_config, FileType.CONFIG)
+    std_credentials = standardize(raw_credentials, FileType.CREDENTIALS)
+
+    return MergedConfig(std_config, std_credentials)
+
+
+class AsyncSharedConfigContext:
+    """Resolution context shared across resolvers during config construction.
+
+    Holds environment state and cached file data that resolvers use to
+    look up values. Created once per resolve() call.
+    """
+
+    def __init__(
+        self,
+        *,
+        profile_name: str | None = None,
+        fs: AsyncFileSystem | None = None,
+        http_client: Any | None = None,
+        config_file_path: str | Path | None = None,
+        credentials_file_path: str | Path | None = None,
+    ) -> None:
+        """Initialize the resolution context.
+
+        :param profile_name: The active profile to use. Defaults to
+            AWS_PROFILE env var, then "default".
+        :param fs: Filesystem abstraction for reading config files.
+            Defaults to real disk I/O.
+        :param http_client: HTTP client for network-based resolvers
+            (e.g., IMDS).
+        :param config_file_path: Override path for config file.
+        :param credentials_file_path: Override path for credentials file.
+        """
+        self._fs: AsyncFileSystem = fs if fs is not None else AsyncDefaultFileSystem()
+        self._http_client: Any | None = http_client
+        self._profile_name, self._profile_source = self._resolve_profile_name(
+            profile_name
+        )
+        self._config_file_path: Path | None = (
+            Path(config_file_path) if config_file_path is not None else None
+        )
+        self._credentials_file_path: Path | None = (
+            Path(credentials_file_path) if credentials_file_path is not None else None
+        )
+        self._cached_config_file: MergedConfig | None = None
+
+    @property
+    def profile_name(self) -> str:
+        """The active profile name."""
+        return self._profile_name
+
+    @property
+    def profile_source(self) -> ConfigSource:
+        """The source of the active profile name."""
+        return self._profile_source
+
+    @property
+    def fs(self) -> AsyncFileSystem:
+        """The filesystem abstraction."""
+        return self._fs
+
+    @property
+    def http_client(self) -> Any | None:
+        """HTTP client for network-based resolvers."""
+        return self._http_client
+
+    def __deepcopy__(self, memo: Any) -> "AsyncSharedConfigContext":
+        """Return self rather than a copy.
+
+        The context is read-only once resolution finishes: resolvers have
+        already pulled their values onto the config's fields, and nothing on
+        the request path reads it again. Generated clients deep-copy the
+        config on every operation call to keep plugin mutations scoped to
+        that call, which would otherwise rebuild the whole parsed profile
+        tree per request — work proportional to the size of the caller's
+        shared config files. Sharing this instead keeps that cost flat
+        without weakening the isolation of the fields plugins actually write.
+        """
+        return self
+
+    async def parsed_profiles(self) -> MergedConfig:
+        """Get the parsed and merged config/credentials file data.
+
+        The result is cached after the first call so files are only
+        read from disk once per context.
+        """
+        if self._cached_config_file is None:
+            self._cached_config_file = await load_config_async(
+                config_file_path=self._config_file_path,
+                credentials_file_path=self._credentials_file_path,
+                fs=self._fs,
+            )
+        return self._cached_config_file
+
+    def _resolve_profile_name(
+        self, explicit_profile: str | None
+    ) -> tuple[str, ConfigSource]:
+        """Determine the active profile name and where it came from.
+
+        Priority: explicit argument > AWS_PROFILE env var > "default"
+
+        :returns: Tuple of (profile_name, source), where source is the
+            provenance of the name: ``OVERRIDE`` for the explicit argument,
+            ``ENV`` for ``AWS_PROFILE``, and ``DEFAULT`` for the fallback.
+        """
+        if explicit_profile is not None:
+            return explicit_profile, ConfigSource.OVERRIDE
+
+        env_profile = os.environ.get(_PROFILE_ENV_VAR)
+        if env_profile:
+            return env_profile, ConfigSource.ENV
+
+        return _DEFAULT_PROFILE, ConfigSource.DEFAULT

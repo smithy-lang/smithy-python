@@ -5,9 +5,9 @@ import os
 import warnings
 from collections.abc import Sequence
 
-from .context import SharedConfigContext
-from .exceptions import ConfigValidationError
-from .types import UNSET, ConfigSource, Resolved
+from ...config.exceptions import ConfigValidationError
+from ...config.types import UNSET, ConfigSource, Resolved
+from .context import AsyncSharedConfigContext
 
 __all__ = [
     "EndpointUriResolver",
@@ -20,7 +20,7 @@ __all__ = [
 
 
 async def _resolve_str(
-    ctx: SharedConfigContext,
+    ctx: AsyncSharedConfigContext,
     *,
     env_vars: Sequence[str] = (),
     profile_keys: Sequence[str] = (),
@@ -52,7 +52,7 @@ async def _resolve_str(
 
 
 async def _resolve_int(
-    ctx: SharedConfigContext,
+    ctx: AsyncSharedConfigContext,
     *,
     env_vars: Sequence[str] = (),
     profile_keys: Sequence[str] = (),
@@ -76,7 +76,7 @@ async def _resolve_int(
         ) from e
 
 
-async def resolve_region(ctx: SharedConfigContext) -> Resolved[str | None]:
+async def resolve_region(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
     """Resolve the AWS region from environment or config file.
 
     :param ctx: The shared resolution context.
@@ -89,7 +89,7 @@ async def resolve_region(ctx: SharedConfigContext) -> Resolved[str | None]:
     )
 
 
-async def resolve_retry_mode(ctx: SharedConfigContext) -> Resolved[str | None]:
+async def resolve_retry_mode(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
     """
     Resolve the AWS retry mode from environment or config file.
 
@@ -112,7 +112,7 @@ async def resolve_retry_mode(ctx: SharedConfigContext) -> Resolved[str | None]:
     return result
 
 
-async def resolve_max_attempts(ctx: SharedConfigContext) -> Resolved[int | None]:
+async def resolve_max_attempts(ctx: AsyncSharedConfigContext) -> Resolved[int | None]:
     """Resolve the maximum number of retry attempts from environment or config file.
 
     :param ctx: The shared resolution context.
@@ -125,7 +125,7 @@ async def resolve_max_attempts(ctx: SharedConfigContext) -> Resolved[int | None]
     )
 
 
-async def resolve_endpoint_uri(ctx: SharedConfigContext) -> Resolved[str | None]:
+async def resolve_endpoint_uri(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
     """Resolve the endpoint URI from global environment or config file.
 
     This is the base resolver that only checks global sources.
@@ -141,7 +141,7 @@ async def resolve_endpoint_uri(ctx: SharedConfigContext) -> Resolved[str | None]
     )
 
 
-async def resolve_sdk_ua_app_id(ctx: SharedConfigContext) -> Resolved[str | None]:
+async def resolve_sdk_ua_app_id(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
     """Resolve the SDK user-agent app ID from environment or config file.
 
     :param ctx: The shared resolution context.
@@ -176,7 +176,7 @@ class EndpointUriResolver:
 
         self._service_key = service_id.replace(" ", "_").replace("-", "_").lower()
 
-    async def __call__(self, ctx: SharedConfigContext) -> Resolved[str | None]:
+    async def __call__(self, ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
         """Resolve the endpoint URI from all sources.
 
         :param ctx: The shared resolution context.

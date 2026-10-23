@@ -5,10 +5,10 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
-from smithy_aws_core.endpoints import REGIONAL_ENDPOINT_CONFIG
-from smithy_aws_core.endpoints.standard_regional import (
-    StandardRegionalEndpointsResolver,
+from smithy_aws_core.aio.endpoints.standard_regional import (
+    AsyncStandardRegionalEndpointsResolver,
 )
+from smithy_aws_core.endpoints import REGIONAL_ENDPOINT_CONFIG
 from smithy_core import URI
 from smithy_core.endpoints import EndpointResolverParams
 from smithy_core.exceptions import EndpointResolutionError
@@ -37,7 +37,7 @@ class EndpointConfig:
 
 
 async def test_resolve_endpoint_with_valid_sdk_endpoint_string():
-    resolver = StandardRegionalEndpointsResolver(endpoint_prefix="service")
+    resolver = AsyncStandardRegionalEndpointsResolver(endpoint_prefix="service")
     params = EndpointConfig.params("https://example.com/path?query=123")
 
     endpoint = await resolver.resolve_endpoint(params)
@@ -49,7 +49,7 @@ async def test_resolve_endpoint_with_valid_sdk_endpoint_string():
 
 
 async def test_resolve_endpoint_with_sdk_endpoint_uri():
-    resolver = StandardRegionalEndpointsResolver(endpoint_prefix="service")
+    resolver = AsyncStandardRegionalEndpointsResolver(endpoint_prefix="service")
     parsed_uri = URI(
         host="example.com", path="/path", scheme="https", query="query=123", port=443
     )
@@ -61,7 +61,7 @@ async def test_resolve_endpoint_with_sdk_endpoint_uri():
 
 
 async def test_resolve_endpoint_with_invalid_sdk_endpoint():
-    resolver = StandardRegionalEndpointsResolver(endpoint_prefix="service")
+    resolver = AsyncStandardRegionalEndpointsResolver(endpoint_prefix="service")
     params = EndpointConfig.params("invalid_uri")
 
     with pytest.raises(EndpointResolutionError):
@@ -69,7 +69,7 @@ async def test_resolve_endpoint_with_invalid_sdk_endpoint():
 
 
 async def test_resolve_endpoint_with_region():
-    resolver = StandardRegionalEndpointsResolver(endpoint_prefix="service")
+    resolver = AsyncStandardRegionalEndpointsResolver(endpoint_prefix="service")
     params = EndpointConfig.params(region="us-west-2")
 
     endpoint = await resolver.resolve_endpoint(params)
@@ -78,7 +78,7 @@ async def test_resolve_endpoint_with_region():
 
 
 async def test_resolve_endpoint_with_no_sdk_endpoint_or_region():
-    resolver = StandardRegionalEndpointsResolver(endpoint_prefix="service")
+    resolver = AsyncStandardRegionalEndpointsResolver(endpoint_prefix="service")
     params = EndpointConfig.params()
 
     with pytest.raises(EndpointResolutionError):
@@ -86,7 +86,7 @@ async def test_resolve_endpoint_with_no_sdk_endpoint_or_region():
 
 
 async def test_resolve_endpoint_with_sdk_endpoint_and_region():
-    resolver = StandardRegionalEndpointsResolver(endpoint_prefix="service")
+    resolver = AsyncStandardRegionalEndpointsResolver(endpoint_prefix="service")
     params = EndpointConfig.params(
         endpoint_uri="https://example.com", region="us-west-2"
     )

@@ -2,7 +2,9 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import pytest
-from smithy_aws_core.identity.environment import EnvironmentCredentialsResolver
+from smithy_aws_core.aio.identity.environment import (
+    AsyncEnvironmentCredentialsResolver,
+)
 from smithy_core.exceptions import SmithyIdentityError
 
 
@@ -16,35 +18,37 @@ def clear_environment(monkeypatch: pytest.MonkeyPatch) -> None:
 
 async def test_no_values_set():
     with pytest.raises(SmithyIdentityError):
-        await EnvironmentCredentialsResolver().get_identity(properties={})
+        await AsyncEnvironmentCredentialsResolver().get_identity(properties={})
 
 
 async def test_required_values_missing(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("AWS_ACCOUNT_ID", "123456789012")
 
     with pytest.raises(SmithyIdentityError):
-        await EnvironmentCredentialsResolver().get_identity(properties={})
+        await AsyncEnvironmentCredentialsResolver().get_identity(properties={})
 
 
 async def test_akid_missing(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret")
 
     with pytest.raises(SmithyIdentityError):
-        await EnvironmentCredentialsResolver().get_identity(properties={})
+        await AsyncEnvironmentCredentialsResolver().get_identity(properties={})
 
 
 async def test_secret_missing(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "akid")
 
     with pytest.raises(SmithyIdentityError):
-        await EnvironmentCredentialsResolver().get_identity(properties={})
+        await AsyncEnvironmentCredentialsResolver().get_identity(properties={})
 
 
 async def test_minimum_required(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "akid")
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret")
 
-    credentials = await EnvironmentCredentialsResolver().get_identity(properties={})
+    credentials = await AsyncEnvironmentCredentialsResolver().get_identity(
+        properties={}
+    )
     assert credentials.access_key_id == "akid"
     assert credentials.secret_access_key == "secret"
 
@@ -55,7 +59,9 @@ async def test_all_values(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("AWS_SESSION_TOKEN", "session")
     monkeypatch.setenv("AWS_ACCOUNT_ID", "123456789012")
 
-    credentials = await EnvironmentCredentialsResolver().get_identity(properties={})
+    credentials = await AsyncEnvironmentCredentialsResolver().get_identity(
+        properties={}
+    )
     assert credentials.access_key_id == "akid"
     assert credentials.secret_access_key == "secret"
     assert credentials.session_token == "session"

@@ -3,10 +3,10 @@
 from unittest.mock import AsyncMock
 
 import pytest
+from smithy_aws_core.aio.identity.chain.provider import ChainSetup
 from smithy_aws_core.config.file_parser import StandardizedOutput
 from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.identity.chain.ordering import Standard, StandardProvider
-from smithy_aws_core.identity.chain.provider import ChainSetup
 from smithy_core.interfaces.identity import Identity
 
 

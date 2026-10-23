@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from typing import Any, Self, cast
 
 from smithy_core import URI
-from smithy_core.aio.client import ClientCall, RequestPipeline
-from smithy_core.aio.interfaces import ClientProtocol
-from smithy_core.aio.interfaces.retries import RetryStrategy
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_core.aio.client import AsyncClientCall, AsyncRequestPipeline
+from smithy_core.aio.interfaces import AsyncClientProtocol
+from smithy_core.aio.interfaces.retries import AsyncRetryStrategy
+from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.endpoints import EndpointResolverParams
 from smithy_core.interceptors import InterceptorChain
@@ -125,7 +125,7 @@ DATA_STREAM_OPERATION: APIOperation[StubInput, StubOutput] = APIOperation(
     effective_auth_schemes=[],
 )
 
-# ``ClientCall.retryable()`` is False for operations with an input event stream, so
+# ``AsyncClientCall.retryable()`` is False for operations with an input event stream, so
 # OPERATION above never enters the retry loop. This one has no input stream and so
 # exercises it.
 UNARY_OPERATION: APIOperation[StubInput, StubOutput] = APIOperation(
@@ -275,27 +275,27 @@ class DuplexTransport(UndeclaredTransport):
 class PipelineHarness:
     protocol: StubProtocol
     transport: UndeclaredTransport
-    pipeline: RequestPipeline[Any, Any]
+    pipeline: AsyncRequestPipeline[Any, Any]
 
 
 def pipeline_harness(transport: UndeclaredTransport) -> PipelineHarness:
     protocol = StubProtocol()
-    pipeline = RequestPipeline(
-        protocol=cast("ClientProtocol[Any, Any]", protocol),
+    pipeline = AsyncRequestPipeline(
+        protocol=cast("AsyncClientProtocol[Any, Any]", protocol),
         transport=transport,
     )
     return PipelineHarness(protocol=protocol, transport=transport, pipeline=pipeline)
 
 
 def retryable_client_call(
-    retry_strategy: RetryStrategy | None = None,
-) -> ClientCall[Any, Any]:
+    retry_strategy: AsyncRetryStrategy | None = None,
+) -> AsyncClientCall[Any, Any]:
     """A call that goes through the retry loop, unlike :py:func:`client_call`.
 
     Defaults to a strategy that allows a single attempt, so the loop gives up after
     the first failure rather than sleeping through retries.
     """
-    return ClientCall(
+    return AsyncClientCall(
         input=StubInput(),
         operation=UNARY_OPERATION,
         context=TypedProperties(),
@@ -303,12 +303,12 @@ def retryable_client_call(
         auth_scheme_resolver=StubAuthResolver(),
         supported_auth_schemes={},
         endpoint_resolver=StubEndpointResolver(),
-        retry_strategy=retry_strategy or SimpleRetryStrategy(max_attempts=1),
+        retry_strategy=retry_strategy or AsyncSimpleRetryStrategy(max_attempts=1),
     )
 
 
-def client_call() -> ClientCall[Any, Any]:
-    return ClientCall(
+def client_call() -> AsyncClientCall[Any, Any]:
+    return AsyncClientCall(
         input=StubInput(),
         operation=OPERATION,
         context=TypedProperties(),

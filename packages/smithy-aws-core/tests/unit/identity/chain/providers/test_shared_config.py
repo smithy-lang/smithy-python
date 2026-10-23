@@ -4,12 +4,14 @@ from collections.abc import Awaitable, Callable
 from unittest.mock import AsyncMock
 
 import pytest
-from smithy_aws_core.config.merged_config import MergedConfig
-from smithy_aws_core.identity.chain.provider import ChainSetup
-from smithy_aws_core.identity.chain.providers import (
+from smithy_aws_core.aio.identity.chain.provider import ChainSetup
+from smithy_aws_core.aio.identity.chain.providers import (
     shared_config as shared_config_module,
 )
-from smithy_aws_core.identity.chain.providers.shared_config import SharedConfigProvider
+from smithy_aws_core.aio.identity.chain.providers.shared_config import (
+    AsyncSharedConfigProvider,
+)
+from smithy_aws_core.config.merged_config import MergedConfig
 
 from .conftest import OtherIdentity
 
@@ -19,9 +21,11 @@ async def test_ignores_non_aws_identity_type(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     load_config = AsyncMock()
-    monkeypatch.setattr(shared_config_module, "load_config", load_config)
+    monkeypatch.setattr(shared_config_module, "load_config_async", load_config)
 
-    setup = await setup_provider(SharedConfigProvider(), identity_type=OtherIdentity)
+    setup = await setup_provider(
+        AsyncSharedConfigProvider(), identity_type=OtherIdentity
+    )
 
     assert setup.resolvers == ()
     assert not setup.terminal
@@ -52,10 +56,10 @@ async def test_selects_profile_without_reloading(
     else:
         monkeypatch.setenv("AWS_PROFILE", environment_profile)
     load_config = AsyncMock()
-    monkeypatch.setattr(shared_config_module, "load_config", load_config)
+    monkeypatch.setattr(shared_config_module, "load_config_async", load_config)
 
     setup = await setup_provider(
-        SharedConfigProvider(),
+        AsyncSharedConfigProvider(),
         config_file=config_file,
         profile_name=profile_name,
     )
@@ -73,10 +77,10 @@ async def test_loads_when_not_preloaded(
 ) -> None:
     loaded = merged_config({"default": {"name": "loaded"}})
     load_config = AsyncMock(return_value=loaded)
-    monkeypatch.setattr(shared_config_module, "load_config", load_config)
+    monkeypatch.setattr(shared_config_module, "load_config_async", load_config)
     monkeypatch.delenv("AWS_PROFILE", raising=False)
 
-    setup = await setup_provider(SharedConfigProvider())
+    setup = await setup_provider(AsyncSharedConfigProvider())
 
     assert setup.config_file is loaded
     assert setup.profile_name == "default"

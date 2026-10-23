@@ -7,15 +7,15 @@ from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 __all__ = [
-    "DefaultFileSystem",
-    "FileSystem",
+    "AsyncDefaultFileSystem",
+    "AsyncFileSystem",
 ]
 
 logger = logging.getLogger(__name__)
 
 
 @runtime_checkable
-class FileSystem(Protocol):
+class AsyncFileSystem(Protocol):
     """Protocol for filesystem operations.
 
     Abstraction over file I/O so tests can provide mock implementations
@@ -31,7 +31,7 @@ class FileSystem(Protocol):
         ...
 
 
-class DefaultFileSystem:
+class AsyncDefaultFileSystem:
     """Default filesystem implementation using real disk I/O."""
 
     async def read_file(self, path: str) -> str | None:

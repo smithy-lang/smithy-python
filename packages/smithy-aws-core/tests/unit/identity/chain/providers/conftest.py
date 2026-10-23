@@ -4,10 +4,10 @@ from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
 import pytest
+from smithy_aws_core.aio.identity.chain.provider import ChainSetup
 from smithy_aws_core.config.file_parser import Section, StandardizedOutput
 from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.identity import AWSCredentialsIdentity
-from smithy_aws_core.identity.chain.provider import ChainSetup
 from smithy_core.interfaces.identity import Identity
 
 

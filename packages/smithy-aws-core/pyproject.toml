@@ -39,11 +39,11 @@ dependencies = [
 "Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
 
 [project.entry-points."smithy_aws_core.identity.chain_providers"]
-Environment = "smithy_aws_core.identity.chain.providers.environment:EnvironmentCredentialsProvider"
-SharedConfig = "smithy_aws_core.identity.chain.providers.shared_config:SharedConfigProvider"
-ProfileSessionKeys = "smithy_aws_core.identity.chain.providers.profile:ProfileSessionCredentialsProvider"
-ProfileStaticKeys = "smithy_aws_core.identity.chain.providers.profile:ProfileStaticCredentialsProvider"
-ProfileCredentialProcess = "smithy_aws_core.identity.chain.providers.process:ProfileCredentialProcessProvider"
+Environment = "smithy_aws_core.aio.identity.chain.providers.environment:AsyncEnvironmentCredentialsProvider"
+SharedConfig = "smithy_aws_core.aio.identity.chain.providers.shared_config:AsyncSharedConfigProvider"
+ProfileSessionKeys = "smithy_aws_core.aio.identity.chain.providers.profile:AsyncProfileSessionCredentialsProvider"
+ProfileStaticKeys = "smithy_aws_core.aio.identity.chain.providers.profile:AsyncProfileStaticCredentialsProvider"
+ProfileCredentialProcess = "smithy_aws_core.aio.identity.chain.providers.process:AsyncProfileCredentialProcessProvider"
 
 [build-system]
 requires = ["hatchling"]
