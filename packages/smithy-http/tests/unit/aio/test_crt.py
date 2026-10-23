@@ -420,6 +420,29 @@ async def test_validate_connection_http2_success() -> None:
     await client._validate_connection(mock_connection)
 
 
+async def _captured_alpn(force_http_2: bool) -> list[str]:
+    client = AWSCRTHTTPClient(
+        client_config=AWSCRTHTTPClientConfig(force_http_2=force_http_2)
+    )
+    tls_options = Mock()
+    client._tls_ctx = Mock()
+    client._tls_ctx.new_connection_options.return_value = tls_options
+    with patch("smithy_http.aio.crt.AIOHttpClientConnectionUnified.new", AsyncMock()):
+        await client._build_new_connection(URI(scheme="https", host="example.com"))
+    (alpn_list,), _ = tls_options.set_alpn_list.call_args
+    return alpn_list
+
+
+async def test_alpn_h2_only_when_force_http_2() -> None:
+    # force_http_2 must advertise only h2 so an endpoint that prefers http/1.1 cannot
+    # negotiate down below the required HTTP/2.
+    assert await _captured_alpn(force_http_2=True) == ["h2"]
+
+
+async def test_alpn_offers_both_by_default() -> None:
+    assert await _captured_alpn(force_http_2=False) == ["h2", "http/1.1"]
+
+
 async def test_connection_pooling() -> None:
     """Test that connections are pooled and reused."""
     client = AWSCRTHTTPClient()

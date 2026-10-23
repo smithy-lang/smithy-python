@@ -102,21 +102,30 @@ _STREAM_IO_SCHEMA = Schema.collection(
     },
 )
 
+# A non-streaming IO schema, for the quiet side of a one-way stream operation.
+_PLAIN_IO_SCHEMA = Schema.collection(
+    id=ShapeID("smithy.example#PlainIO"),
+    members={"message": {"target": STRING}},
+)
+
 
 class _StubRegistry:
     def build(self, name: str) -> type:
         return InitialMessage
 
 
-def _operation() -> APIOperation[Any, Any]:
+def _operation(
+    input_schema: Schema = _STREAM_IO_SCHEMA,
+    output_schema: Schema = _STREAM_IO_SCHEMA,
+) -> APIOperation[Any, Any]:
     return APIOperation(
         static_schema=(
             ShapeType.OPERATION.value,
             "smithy.example",
             "StreamOp",
             {},
-            _STREAM_IO_SCHEMA,
-            _STREAM_IO_SCHEMA,
+            input_schema,
+            output_schema,
             (),
         ),
         model_registry=_StubRegistry(),
@@ -151,14 +160,16 @@ def _request() -> HTTPRequest:
     )
 
 
-async def test_serialize_request_writes_initial_request_frame() -> None:
+async def test_serialize_request_defers_initial_request_to_publisher() -> None:
+    # The frame is NOT poured into the body: it is stashed for the publisher, which
+    # writes (and would sign) it as the first event. The serialized body starts empty.
+    context = TypedProperties()
     request = _protocol().serialize_request(
         operation=_operation(),
         input=InitialMessage(message="hello"),
         endpoint=URI(host="example.com"),
-        context=TypedProperties(),
+        context=context,
     )
-
     assert (
         request.fields["Content-Type"].as_string()
         == "application/vnd.amazon.eventstream"
@@ -167,6 +178,16 @@ async def test_serialize_request_writes_initial_request_frame() -> None:
     assert isinstance(body, AsyncBytesProvider)
     assert isinstance(body, AsyncWriter)
 
+    publisher = await _protocol().create_event_publisher(
+        operation=_operation(),
+        request=request,
+        event_type=Any,
+        context=context,
+    )
+    assert publisher is not None
+
+    # prepare() ran inside create_event_publisher, so the initial-request frame is now
+    # the first (and only) thing on the body.
     frame_bytes = await anext(aiter(body))
     event = Event.decode(BytesIO(frame_bytes))
     assert event is not None
@@ -224,3 +245,103 @@ async def test_deserialize_response_peels_initial_response_then_streams() -> Non
     received = await receiver.receive()
     assert received is not None
     assert received.body == "first event"
+
+
+def _serialize(operation: APIOperation[Any, Any]):
+    return _protocol().serialize_request(
+        operation=operation,
+        input=InitialMessage(message="hello"),
+        endpoint=URI(host="example.com"),
+        context=TypedProperties(),
+    )
+
+
+async def test_duplex_advertises_event_stream_both_ways() -> None:
+    # Both input and output stream: Accept and Content-Type are the event-stream type.
+    request = _serialize(_operation())
+    assert request.fields["Accept"].as_string() == "application/vnd.amazon.eventstream"
+    assert (
+        request.fields["Content-Type"].as_string()
+        == "application/vnd.amazon.eventstream"
+    )
+
+
+async def test_input_only_stream_keeps_normal_accept() -> None:
+    # PublishEvents shape: streaming request, non-streaming response. Content-Type is
+    # the event-stream type (request body is a stream); Accept is the codec type.
+    request = _serialize(
+        _operation(input_schema=_STREAM_IO_SCHEMA, output_schema=_PLAIN_IO_SCHEMA)
+    )
+    assert request.fields["Accept"].as_string() == "application/cbor"
+    assert (
+        request.fields["Content-Type"].as_string()
+        == "application/vnd.amazon.eventstream"
+    )
+
+
+async def test_output_only_stream_advertises_event_stream_accept() -> None:
+    # SubscribeToEvents shape: non-streaming request, streaming response. Accept is the
+    # event-stream type (response is a stream); Content-Type is the codec type.
+    request = _serialize(
+        _operation(input_schema=_PLAIN_IO_SCHEMA, output_schema=_STREAM_IO_SCHEMA)
+    )
+    assert request.fields["Accept"].as_string() == "application/vnd.amazon.eventstream"
+    assert request.fields["Content-Type"].as_string() == "application/cbor"
+
+
+async def test_deserialize_response_without_initial_response_replays_first_event() -> (
+    None
+):
+    # The output members are all optional, so the stream may omit initial-response and
+    # start with a real event. The output defaults, and that first event is not lost --
+    # the receiver replays it.
+    operation = _operation()
+    event = EventMessage(
+        headers={
+            ":message-type": "event",
+            ":event-type": "message",
+            ":content-type": "application/cbor",
+        },
+        payload=_CODEC.serialize(shape=_MessageEvent("first event")),
+    )
+    response = HTTPResponse(
+        status=200, fields=Fields(), body=AsyncBytesReader(event.encode())
+    )
+
+    context = TypedProperties()
+    output = await _protocol().deserialize_response(
+        operation=operation,
+        request=_request(),
+        response=response,
+        error_registry=TypeRegistry({}),
+        context=context,
+    )
+    assert isinstance(output, InitialMessage)
+    assert output.message is None
+
+    receiver = _protocol().create_event_receiver(
+        operation=operation,
+        request=_request(),
+        response=response,
+        event_type=Any,
+        event_deserializer=_message_event_deserializer,
+        context=context,
+    )
+    received = await receiver.receive()
+    assert received is not None
+    assert received.body == "first event"
+
+
+async def test_deserialize_response_empty_stream_defaults_output() -> None:
+    # An empty stream with no initial-response yields the default output rather than
+    # raising, because every output member is optional.
+    response = HTTPResponse(status=200, fields=Fields(), body=AsyncBytesReader(b""))
+    output = await _protocol().deserialize_response(
+        operation=_operation(),
+        request=_request(),
+        response=response,
+        error_registry=TypeRegistry({}),
+        context=TypedProperties(),
+    )
+    assert isinstance(output, InitialMessage)
+    assert output.message is None

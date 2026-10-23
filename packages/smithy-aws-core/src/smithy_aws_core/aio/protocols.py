@@ -72,7 +72,13 @@ try:
 except ImportError:
     _HAS_XML = False  # type: ignore
 
+try:
+    from smithy_aws_event_stream.exceptions import MissingInitialResponse
+except ImportError:
+    pass
+
 if TYPE_CHECKING:
+    from smithy_aws_event_stream.exceptions import MissingInitialResponse
     from smithy_json import JSONCodec, JSONDocument
     from smithy_xml import XMLCodec
 
@@ -395,7 +401,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
                         ),
                     ]
                 ),
-                body=self._build_initial_request_body(input),
+                body=self._build_initial_request_body(input, context),
             )
 
         payload = self.payload_codec.serialize(shape=input)
@@ -446,6 +452,20 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
         if len(body) == 0:
             body = b"{}"
         return self.payload_codec.deserialize(source=body, shape=operation.output)
+
+    def _default_output[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self, operation: APIOperation[OperationInput, OperationOutput]
+    ) -> OperationOutput:
+        # No initial-response: an empty JSON document fills all-optional outputs; the
+        # codec raises if a required member lacks a default, signaling the operation
+        # required an initial-response.
+        try:
+            return self.payload_codec.deserialize(source=b"{}", shape=operation.output)
+        except Exception as e:
+            raise MissingInitialResponse() from e
 
     def _is_success(
         self,

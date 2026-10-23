@@ -74,6 +74,7 @@ try:
         SigningConfig,
     )
     from smithy_aws_event_stream.events import Event as _Event
+    from smithy_aws_event_stream.events import EventMessage as _EventMessage
     from smithy_aws_event_stream.exceptions import MissingInitialResponse
     from smithy_core.aio.types import AsyncBytesProvider
 
@@ -94,6 +95,7 @@ if TYPE_CHECKING:
         SigningConfig,
     )
     from smithy_aws_event_stream.events import Event as _Event
+    from smithy_aws_event_stream.events import EventMessage as _EventMessage
     from smithy_aws_event_stream.exceptions import MissingInitialResponse
     from smithy_core.aio.types import AsyncBytesProvider
     from typing_extensions import TypeForm
@@ -109,6 +111,24 @@ _EVENT_STREAM_SOURCE = PropertyKey(
 RPC output streams read their initial response off the first event frame in
 ``deserialize_response``; the receiver then continues from this same reader so the
 frames stay in order.
+"""
+
+_PREFETCHED_EVENT = PropertyKey(
+    key="smithy_http_event_stream_prefetched", value_type=object
+)
+"""Carries a first stream event already decoded off the body in ``deserialize_response``.
+
+When the output has no ``initial-response`` the first frame is a real event, not the
+output; it is stashed here so the receiver replays it before reading the next frame.
+"""
+
+_INITIAL_REQUEST_EVENT = PropertyKey(
+    key="smithy_http_event_stream_initial_request", value_type=object
+)
+"""Carries the serialized ``initial-request`` event awaiting the publisher.
+
+The frame is NOT poured into the request body: it must be signed as the first event
+in the signature chain (off the request signature), so the publisher writes it.
 """
 
 
@@ -174,7 +194,7 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         """
         return ResponseMetadata(http_status_code=response.status)
 
-    def create_event_publisher[
+    async def create_event_publisher[
         OperationInput: SerializeableShape,
         OperationOutput: DeserializeableShape,
         Event: SerializeableShape,
@@ -210,11 +230,19 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
                 "on the serialized HTTP request."
             )
 
-        return AWSEventPublisher[Event](
+        initial_message = cast(
+            "_EventMessage | None", context.get(_INITIAL_REQUEST_EVENT)
+        )
+        publisher = AWSEventPublisher[Event](
             payload_codec=self.payload_codec,
             async_writer=body,
             signing_config=signing_config,
+            initial_message=initial_message,
         )
+        # Flush initial-request now so a duplex peer that gates its initial-response on
+        # it isn't deadlocked waiting for a frame the publisher would defer.
+        await publisher.prepare()
+        return publisher
 
     def create_event_receiver[
         OperationInput: SerializeableShape,
@@ -507,12 +535,13 @@ class RpcClientProtocol(HttpClientProtocol):
     """
 
     def _build_initial_request_body(
-        self, input: SerializeableShape
+        self, input: SerializeableShape, context: TypedProperties
     ) -> "AsyncBytesProvider":
-        """Serialize the input as an ``initial-request`` event seeding a writable body.
+        """Serialize the ``initial-request`` event and stash it for the publisher.
 
-        The returned body is an async writer that the event publisher appends
-        subsequent input events to.
+        The frame is not written into the returned body: the publisher must write it
+        as its first (signed) frame. The body is an empty async writer the publisher
+        appends to.
         """
         _assert_event_stream()
         serializer = _EventSerializer(
@@ -524,7 +553,8 @@ class RpcClientProtocol(HttpClientProtocol):
             raise ExpectationNotMetError(
                 "Expected an initial-request event to be serialized, but was None."
             )
-        return AsyncBytesProvider(intial_data=initial.encode())
+        context[_INITIAL_REQUEST_EVENT] = initial
+        return AsyncBytesProvider()
 
     async def _deserialize_event_stream_response[
         OperationInput: SerializeableShape,
@@ -536,20 +566,38 @@ class RpcClientProtocol(HttpClientProtocol):
         response: HTTPResponse,
         context: TypedProperties,
     ) -> OperationOutput:
-        # The initial output is the first event on the stream (``initial-response``).
-        # It is read here off a reader over the response body; the same reader is then
-        # handed to the event receiver via context so it continues from the next event.
+        # initial-response is optional: the spec omits it when every non-stream output
+        # member is optional. Peek the first frame's :event-type -- consume it as the
+        # output only when it IS the initial-response; otherwise synthesize the default
+        # output and stash the frame so the receiver replays it as the stream's first
+        # event rather than dropping it.
         _assert_event_stream()
         source = AsyncBytesReader(response.body)
         event = await _Event.decode_async(source)
-        if event is None:
-            raise MissingInitialResponse()
-        deserializer = _EventDeserializer(
-            event=event, payload_codec=self.payload_codec, is_client_mode=True
-        )
-        output = operation.output.deserialize(deserializer)
         context[_EVENT_STREAM_SOURCE] = source
-        return output
+        if event is not None and event.message.headers.get(":event-type") == (
+            "initial-response"
+        ):
+            deserializer = _EventDeserializer(
+                event=event, payload_codec=self.payload_codec, is_client_mode=True
+            )
+            return operation.output.deserialize(deserializer)
+        if event is not None:
+            context[_PREFETCHED_EVENT] = event
+        return self._default_output(operation)
+
+    def _default_output[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self, operation: APIOperation[OperationInput, OperationOutput]
+    ) -> OperationOutput:
+        """Build the output when no ``initial-response`` precedes the stream.
+
+        :raises MissingInitialResponse: when the output has required members, so an
+            absent initial-response cannot be filled by defaults.
+        """
+        raise NotImplementedError
 
     def create_event_receiver[
         OperationInput: SerializeableShape,
@@ -569,6 +617,10 @@ class RpcClientProtocol(HttpClientProtocol):
         # Continue from the reader that already consumed the initial-response frame in
         # deserialize_response, so subsequent events stay in order.
         source = context.get(_EVENT_STREAM_SOURCE) or AsyncBytesReader(response.body)
+        prefetched = context.get(_PREFETCHED_EVENT)
+        if prefetched is not None:
+            # No initial-response: replay the first frame ahead of the live stream.
+            source = _PrependedEventStream(cast("_Event", prefetched), source)
         return AWSEventReceiver(
             payload_codec=self.payload_codec,
             source=source,
@@ -625,29 +677,33 @@ class _RpcV2ClientProtocol(RpcClientProtocol):
         operation_name = operation.schema.id.name
         path = f"/service/{self._service_name}/operation/{operation_name}"
 
+        # Accept describes the RESPONSE and Content-Type the REQUEST body, so they turn
+        # on output_stream_member and input_stream_member independently: a one-way
+        # stream advertises the event-stream media type on only the streaming side.
+        accept = (
+            _EVENT_STREAM_CONTENT_TYPE
+            if operation.output_stream_member is not None
+            else self._content_type
+        )
+        fields: list[tuple[str, str]] = [
+            ("Smithy-Protocol", self._smithy_protocol),
+            ("Accept", accept),
+        ]
+
         if operation.input_stream_member is not None:
             # RPC event streams carry the input as an initial-request event at the head
             # of the stream body; the HTTP envelope is otherwise a normal RPC request.
+            fields.append(("Content-Type", _EVENT_STREAM_CONTENT_TYPE))
             return _HTTPRequest(
                 method="POST",
                 destination=_URI(host="", path=path),
-                fields=tuples_to_fields(
-                    [
-                        ("Smithy-Protocol", self._smithy_protocol),
-                        ("Accept", _EVENT_STREAM_CONTENT_TYPE),
-                        ("Content-Type", _EVENT_STREAM_CONTENT_TYPE),
-                    ]
-                ),
-                body=self._build_initial_request_body(input),
+                fields=tuples_to_fields(fields),
+                body=self._build_initial_request_body(input, context),
             )
 
         # The protocol omits the body AND the Content-Type header for operations whose
         # input is the unit type (no modeled input). Every other operation serializes
         # the input shape, even when it has no members.
-        fields: list[tuple[str, str]] = [
-            ("Smithy-Protocol", self._smithy_protocol),
-            ("Accept", self._content_type),
-        ]
         if _is_unit(operation.input_schema):
             payload = b""
         else:
@@ -693,6 +749,22 @@ class _RpcV2ClientProtocol(RpcClientProtocol):
         if not body or _is_unit(operation.output_schema):
             body = self._empty_document
         return self._codec.deserialize(source=body, shape=operation.output)
+
+    def _default_output[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self, operation: APIOperation[OperationInput, OperationOutput]
+    ) -> OperationOutput:
+        # No initial-response: the output is whatever an empty document yields. The
+        # codec raises if a required member has no default, which is the spec-correct
+        # signal that this operation required an initial-response.
+        try:
+            return self._codec.deserialize(
+                source=self._empty_document, shape=operation.output
+            )
+        except Exception as e:
+            raise MissingInitialResponse() from e
 
     def _create_error(
         self,
@@ -764,3 +836,26 @@ class RpcV2CborClientProtocol(_RpcV2ClientProtocol):
 
     def _decode_document(self, body: bytes) -> object:
         return _cbor_loads(body)  # type: ignore[possibly-unbound]
+
+
+class _PrependedEventStream:
+    """Serves one already-decoded event's bytes ahead of a live byte stream.
+
+    Lets the receiver read a first event that ``deserialize_response`` pre-fetched
+    (an output with no initial-response) as though it were still on the wire, then
+    continues from the real source.
+    """
+
+    def __init__(self, event: "_Event", source: AsyncByteStream) -> None:
+        self._buffer = event.message.encode()
+        self._source = source
+
+    async def read(self, size: int = -1) -> bytes:
+        if self._buffer:
+            if size < 0:
+                head, self._buffer = self._buffer, b""
+                return head + await self._source.read(size)
+            head = self._buffer[:size]
+            self._buffer = self._buffer[size:]
+            return head
+        return await self._source.read(size)

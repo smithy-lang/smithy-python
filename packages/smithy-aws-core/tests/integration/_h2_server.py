@@ -6,6 +6,7 @@ to assert) live in the test modules that use this harness."""
 
 import asyncio
 import ssl
+from collections.abc import Awaitable, Callable
 from io import BytesIO
 
 import h2.config
@@ -28,17 +29,41 @@ def encode_event(event_type: str, payload: bytes) -> bytes:
     ).encode()
 
 
-class H2BidiServer:
-    """A localhost HTTP/2 server that echoes an event stream over one stream.
+# A referee drives the turn-based exchange. It is called once with ``None`` to open
+# the game (after the client's initial-request lands), then once per subsequent client
+# event frame. It sends server frames through the ServerStream and returns True when
+# the game is over.
+Referee = Callable[["Event | None", "ServerStream"], Awaitable[bool]]
 
-    On the request stream it reads the client's initial-request frame, records its
-    ``:event-type``, then writes ``response_frames`` back on the response stream,
-    exercising a real concurrent bidirectional exchange. ``response_frames`` is the
-    already-encoded event-stream body the test wants the server to reply with.
+
+class ServerStream:
+    """The server's writable side of one event stream, handed to the referee."""
+
+    def __init__(self, conn: h2.connection.H2Connection, stream_id: int) -> None:
+        self._conn = conn
+        self._stream_id = stream_id
+
+    def send(self, event_type: str, payload: bytes) -> None:
+        self._conn.send_data(
+            self._stream_id, encode_event(event_type, payload), end_stream=False
+        )
+
+    def end(self) -> None:
+        self._conn.send_data(self._stream_id, b"", end_stream=True)
+
+
+class H2BidiServer:
+    """A localhost HTTP/2 server that runs a referee over one duplex event stream.
+
+    After the client's ``initial-request`` arrives, the referee is opened (``None``)
+    and thereafter handed each client event frame, deciding what to send back. The
+    ``initial-request`` itself is recorded in ``received_event_types`` but not passed
+    to the referee -- it is request setup, not a game move. ``received_event_types``
+    records every client frame's ``:event-type`` for post-hoc assertions.
     """
 
-    def __init__(self, response_frames: bytes) -> None:
-        self._response_frames = response_frames
+    def __init__(self, referee: Referee) -> None:
+        self._referee = referee
         self._ca = trustme.CA()
         self._server_cert = self._ca.issue_cert("localhost", "127.0.0.1")
         self._ca_cert_ctx = self._ca.cert_pem.tempfile()
@@ -84,30 +109,35 @@ class H2BidiServer:
         writer.write(conn.data_to_send())
         await writer.drain()
 
-        request_buffer = bytearray()
-        stream_id: int | None = None
-        responded = False
+        decoder = _FrameDecoder()
+        stream: ServerStream | None = None
+        done = False
 
         try:
-            while not writer.is_closing():
+            while not writer.is_closing() and not done:
                 data = await reader.read(65536)
                 if not data:
                     break
-                for event in conn.receive_data(data):
-                    if isinstance(event, h2.events.RequestReceived):
-                        stream_id = event.stream_id
-                    elif isinstance(event, h2.events.DataReceived):
-                        request_buffer.extend(event.data)
-                        conn.acknowledge_received_data(len(event.data), event.stream_id)
-
-                if stream_id is not None and not responded:
-                    initial = Event.decode(BytesIO(bytes(request_buffer)))
-                    if initial is not None:
-                        self.received_event_types.append(
-                            str(initial.message.headers[":event-type"])
+                for h2_event in conn.receive_data(data):
+                    if isinstance(h2_event, h2.events.RequestReceived):
+                        stream = ServerStream(conn, h2_event.stream_id)
+                        self._respond_headers(conn, stream)
+                    elif isinstance(h2_event, h2.events.DataReceived):
+                        conn.acknowledge_received_data(
+                            len(h2_event.data), h2_event.stream_id
                         )
-                        self._respond(conn, stream_id)
-                        responded = True
+                        if stream is None:
+                            continue
+                        for frame in decoder.feed(h2_event.data):
+                            event_type = str(frame.message.headers.get(":event-type"))
+                            self.received_event_types.append(event_type)
+                            if event_type == "initial-request":
+                                # Request setup, not a move: open the game off it.
+                                done = await self._referee(None, stream)
+                            else:
+                                done = await self._referee(frame, stream)
+                            if done:
+                                break
 
                 to_send = conn.data_to_send()
                 if to_send:
@@ -118,12 +148,39 @@ class H2BidiServer:
         finally:
             writer.close()
 
-    def _respond(self, conn: h2.connection.H2Connection, stream_id: int) -> None:
+    def _respond_headers(
+        self, conn: h2.connection.H2Connection, stream: ServerStream
+    ) -> None:
         conn.send_headers(
-            stream_id,
-            [
-                (":status", "200"),
-                ("content-type", EVENT_STREAM_CONTENT_TYPE),
-            ],
+            stream._stream_id,
+            [(":status", "200"), ("content-type", EVENT_STREAM_CONTENT_TYPE)],
         )
-        conn.send_data(stream_id, self._response_frames, end_stream=True)
+
+
+class _FrameDecoder:
+    """Decodes whole event-stream frames out of a growing byte buffer.
+
+    ``Event.decode`` needs a complete frame; feeding it a half-arrived frame raises.
+    This buffers bytes across reads and yields only frames whose prelude-declared
+    length has fully landed, leaving any trailing partial frame for the next read.
+    """
+
+    def __init__(self) -> None:
+        self._buffer = bytearray()
+
+    def feed(self, data: bytes) -> list[Event]:
+        self._buffer.extend(data)
+        frames: list[Event] = []
+        while (frame := self._take_frame()) is not None:
+            frames.append(frame)
+        return frames
+
+    def _take_frame(self) -> Event | None:
+        if len(self._buffer) < 12:
+            return None
+        total_length = int.from_bytes(self._buffer[:4], "big")
+        if len(self._buffer) < total_length:
+            return None
+        frame = Event.decode(BytesIO(bytes(self._buffer[:total_length])))
+        del self._buffer[:total_length]
+        return frame
