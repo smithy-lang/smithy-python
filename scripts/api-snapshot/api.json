@@ -481,7 +481,7 @@
     "AWSIdentityConfig": "rex-protocol",
     "AWSIdentityProperties": "rex-class",
     "AWS_IDENTITY_CONFIG": "PropertyKey",
-    "EnvironmentCredentialsResolver": "rex-class",
+    "EnvironmentCredentialsResolver": "rex-class[async]",
     "IdentityChainError": "rex-exception",
     "PropertyKey": "rex-class",
     "StaticCredentialsResolver": "rex-class",
