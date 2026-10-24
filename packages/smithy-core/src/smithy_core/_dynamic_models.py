@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import datetime
 from base64 import b64decode
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 from dataclasses import field as _field
 from dataclasses import make_dataclass
 from decimal import Decimal
@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Any, cast, dataclass_transform
 from ._model_naming import member_field_name, union_unknown_name, variant_class_name
 from ._schema_compact import hydrate
 from .deserializers import ShapeDeserializer
-from .exceptions import ModeledError
+from .exceptions import ModeledError, SerializationError
 from .schemas import Schema, SchemaExtension
 from .serializers import ShapeSerializer
 from .shapes import ShapeID, ShapeType
@@ -151,14 +151,15 @@ class ModelRegistry:
     def __init__(
         self,
         schemas_module: ModuleType,
-        renames: dict[str, str] | None = None,
+        renames: Mapping[str, str] | None = None,
         *,
-        index: dict[str, str] | None = None,
+        index: Mapping[str, str] | None = None,
+        target_names: Mapping[str, str] | None = None,
         shape_names: Collection[str] | None = None,
         service_error: str | None = None,
     ) -> None:
         self._schemas = schemas_module
-        self._renames = renames or {}
+        self._renames = dict(renames or {})
         self._classes: dict[str, type] = {}
         self._union_schemas: dict[str, Schema] = {}
         # Reentrant because build() recurses: unions build their variants, and a
@@ -169,13 +170,22 @@ class ModelRegistry:
         # A codegen-supplied index (name -> schema-const, variant/unknown names already
         # disambiguated) lets the registry resolve a build() without hydrating every
         # schema in the module just to map names; the scanning fallback hydrates all.
-        self._index: dict[str, str] | None = index
+        self._index = dict(index) if index is not None else None
+        # Full shape ID -> generated public model name. Full IDs keep member-target
+        # resolution unambiguous when service renames distinguish same-named shapes
+        # from different namespaces.
+        self._target_names = dict(target_names or {})
+        self._renamed_schemas = {
+            schema_name: model_name for model_name, schema_name in self._renames.items()
+        }
         self._shape_names: set[str] = set(shape_names) if shape_names else set()
         # Generated clients name their per-service error base (a ModeledError subclass
         # emitted into the models module). Modeled errors extend it so `except
         # ServiceError` catches them; a hand-built registry omits it and falls back to
         # ModeledError.
         self._service_error_name = service_error
+        if service_error is not None:
+            self._shape_names.add(service_error)
         self._codec = SchemaExtension(self._resolve_member_codec)
         self._field_names_ext = SchemaExtension(self._compute_field_names)
 
@@ -230,7 +240,7 @@ class ModelRegistry:
             # Event-stream union deserializer helper: _<Union>Deserializer().deserialize(d).
             if name.startswith("_") and name.endswith("Deserializer"):
                 union_name = name[1 : -len("Deserializer")]
-                if union_name in index:
+                if union_name in index or union_name in self._renames:
                     built = self._build_union_deserializer(union_name)
                     self._classes[name] = built
                     return built
@@ -253,14 +263,26 @@ class ModelRegistry:
                     return built
                 raise AttributeError(name)
             schema = hydrate(getattr(self._schemas, const))
+            canonical = self._renamed_schemas.get(const)
             if schema.shape_type == ShapeType.UNION:
-                self._build_union(schema.id.name, schema)
-                return self._classes[name]
+                self._build_union(canonical or schema.id.name, schema)
+                built = self._classes.get(name)
+                if built is None and name == schema.id.name:
+                    built = self._classes[canonical or schema.id.name]
+                if built is None:
+                    raise AttributeError(name)
+                self._classes[name] = built
+                return built
+            canonical = canonical or name
+            if cached := self._classes.get(canonical):
+                self._classes[name] = cached
+                return cached
             if schema.shape_type in (ShapeType.ENUM, ShapeType.INT_ENUM):
-                built = self._build_enum(name, schema)
+                built = self._build_enum(canonical, schema)
             else:
-                built = self._build_struct(name, schema)
+                built = self._build_struct(canonical, schema)
             built.__module__ = module
+            self._classes[canonical] = built
             self._classes[name] = built
             return built
 
@@ -323,15 +345,16 @@ class ModelRegistry:
     def _correction_default(self, member: Schema) -> Any:
         st = member.shape_type
         if st == ShapeType.STRUCTURE:
-            target = member.expect_member_target().id.name
+            target = self._target_name(member.expect_member_target())
             return self.build(target)._smithy_default()  # type: ignore[attr-defined]
         if st == ShapeType.UNION:
-            target = member.expect_member_target().id.name
-            return self.build(union_unknown_name(target, self._shape_names))(tag="")
+            target = self._target_name(member.expect_member_target())
+            return self.build(self._union_unknown_name(target))(tag="")
         return _CORRECTION_SCALARS[st]()
 
     def _build_struct(self, name: str, schema: Schema) -> type:
-        is_error = schema.get_trait(ErrorTrait) is not None
+        error_trait = schema.get_trait(ErrorTrait)
+        is_error = error_trait is not None
         # Per Smithy @input structure constraints, every member of an input
         # structure is effectively optional regardless of @required; only
         # non-input structures make a @required, non-@default member mandatory.
@@ -339,11 +362,25 @@ class ModelRegistry:
         field_names = self._field_names(schema)
         fields: list[Any] = []
         for i, member in enumerate(schema.members_by_index):
+            if is_error and field_names[i] == "message":
+                if member.get_trait(SensitiveTrait) is not None:
+                    fields.append(
+                        (
+                            "message",
+                            str,
+                            _field(default="", kw_only=False, repr=False),
+                        )
+                    )
+                continue
             spec = self._field_spec(member, input_nullable)
             if spec is _MANDATORY:
                 fields.append((field_names[i], _py_type(member)))
             else:
                 fields.append((field_names[i], _py_type(member), spec))
+        if error_trait is not None:
+            fields.append(
+                ("fault", str | None, _field(default=error_trait.fault.value))
+            )
         bases: tuple[type, ...] = (self._error_base(),) if is_error else ()
         # Operation outputs carry a non-modeled response_metadata attribute, excluded
         # from eq and repr. Errors inherit it from ModeledError instead.
@@ -456,16 +493,32 @@ class ModelRegistry:
         return None
 
     def _build_union(self, name: str, schema: Schema) -> None:
+        if name in self._union_schemas:
+            return
         module = self._models_module_name
         for member in schema.members_by_index:
-            vname = variant_class_name(
-                name, member.expect_member_name(), self._shape_names
-            )
+            vname = self._union_variant_name(name, member.expect_member_name())
             variant = self._build_variant(vname, schema, member.expect_member_index())
             variant.__module__ = module
             self._classes[vname] = variant
-        unknown = union_unknown_name(name, self._shape_names)
-        unknown_cls = make_dataclass(unknown, [("tag", str)])
+        unknown = self._union_unknown_name(name)
+
+        def reject_serialization(self: Any, serializer: ShapeSerializer) -> None:
+            raise SerializationError("Unknown union variants may not be serialized.")
+
+        @classmethod  # type: ignore[misc]
+        def deserialize(cls: type, deserializer: ShapeDeserializer) -> Any:
+            raise NotImplementedError
+
+        unknown_cls = make_dataclass(
+            unknown,
+            [("tag", str)],
+            namespace={
+                "serialize": reject_serialization,
+                "serialize_members": reject_serialization,
+                "deserialize": deserialize,
+            },
+        )
         unknown_cls.__module__ = module
         self._classes[unknown] = unknown_cls
         self._union_schemas[name] = schema
@@ -474,6 +527,55 @@ class ModelRegistry:
         marker = make_dataclass(name, [])
         marker.__module__ = module
         self._classes[name] = marker
+        original = schema.id.name
+        index = self._ensure_index()
+        const = self._renames.get(name, index.get(name))
+        if (
+            original != name
+            and original not in self._renames
+            and const is not None
+            and index.get(original) == const
+        ):
+            self._classes.setdefault(original, marker)
+            self._union_schemas.setdefault(original, schema)
+            for member in schema.members_by_index:
+                member_name = member.expect_member_name()
+                canonical_variant = self._union_variant_name(name, member_name)
+                original_variant = self._union_variant_name(original, member_name)
+                if (
+                    original_variant not in self._renames
+                    and index.get(original_variant, const) == const
+                ):
+                    self._classes.setdefault(
+                        original_variant, self._classes[canonical_variant]
+                    )
+            original_unknown = self._union_unknown_name(original)
+            if (
+                original_unknown not in self._renames
+                and index.get(original_unknown, const) == const
+            ):
+                self._classes.setdefault(original_unknown, unknown_cls)
+
+    def _union_variant_name(self, container: str, member: str) -> str:
+        capitalized = member[:1].upper() + member[1:]
+        return self._union_synthetic_name(container, capitalized)
+
+    def _union_unknown_name(self, container: str) -> str:
+        return self._union_synthetic_name(container, "Unknown")
+
+    def _union_synthetic_name(self, container: str, suffix: str) -> str:
+        base = container + suffix
+        disambiguated = container + "_" + suffix
+        index = self._ensure_index()
+        const = self._renames.get(container, index.get(container))
+        if const is not None:
+            for candidate in (base, disambiguated):
+                if self._renames.get(candidate, index.get(candidate)) == const:
+                    return candidate
+            owner = self._renames.get(base, index.get(base))
+            if owner is not None and owner != const:
+                return disambiguated
+        return disambiguated if base in self._shape_names else base
 
     def _build_variant(self, vname: str, union_schema: Schema, index: int) -> type:
         registry = self
@@ -539,15 +641,13 @@ class ModelRegistry:
             member = by_index[member_schema.expect_member_index()]
             _, reader = member.get_extension(self._codec)
             variant = self.build(
-                variant_class_name(name, member.expect_member_name(), self._shape_names)
+                self._union_variant_name(name, member.expect_member_name())
             )
             result[0] = variant(value=reader(de, member))
 
         deserializer.read_struct(schema, consumer=consume)
         if result[0] is None:
-            result[0] = self.build(union_unknown_name(name, self._shape_names))(
-                tag="unknown"
-            )
+            result[0] = self.build(self._union_unknown_name(name))(tag="unknown")
         return result[0]
 
     def _is_streaming(self, member: Schema) -> bool:
@@ -566,7 +666,7 @@ class ModelRegistry:
             # coerce the raw primitive back through the enum class (matching the eager
             # EnumGenerator's `EnumClass(read_string(...))`).
             is_int = st == ShapeType.INT_ENUM
-            enum_cls = self.build(member.expect_member_target().id.name)
+            enum_cls = self.build(self._target_name(member.expect_member_target()))
             write_name = "write_integer" if is_int else "write_string"
             read_name = "read_integer" if is_int else "read_string"
 
@@ -581,7 +681,7 @@ class ModelRegistry:
         if scalar is not None:
             return scalar
         if st == ShapeType.STRUCTURE:
-            target = member.expect_member_target().id.name
+            target = self._target_name(member.expect_member_target())
 
             def wr(s: ShapeSerializer, m: Schema, v: Any) -> None:
                 s.write_struct(m, v)
@@ -597,7 +697,7 @@ class ModelRegistry:
 
             return wr, rr
         if st == ShapeType.UNION:
-            target = member.expect_member_target().id.name
+            target = self._target_name(member.expect_member_target())
             self.build(target)  # ensure union schema is registered
 
             def wu(s: ShapeSerializer, m: Schema, v: Any) -> None:
@@ -618,6 +718,17 @@ class ModelRegistry:
                 value_member, collection.get_trait(SparseTrait) is not None
             )
         raise NotImplementedError(f"no codec for shape type {st}")
+
+    def _target_name(self, schema: Schema) -> str:
+        if generated := self._target_names.get(str(schema.id)):
+            return generated
+        index = self._ensure_index()
+        const = index.get(schema.id.name)
+        return (
+            self._renamed_schemas.get(const, schema.id.name)
+            if const is not None
+            else schema.id.name
+        )
 
     def _list_codec(self, elem: Schema, sparse: bool) -> tuple[_Writer, _Reader]:
         def w(s: ShapeSerializer, m: Schema, v: list[Any]) -> None:

@@ -137,6 +137,68 @@ public class PythonSymbolProviderTest {
         assertEquals("retry_after", memberName(provider, model, "ThingError$retryAfter"));
     }
 
+    @Test
+    public void testDataclassHooksAreEscaped() {
+        Model model = loadModel("""
+                $version: "2"
+                namespace smithy.example
+
+                service TestService {
+                    version: "2024-01-01"
+                    operations: [GetThing]
+                }
+
+                operation GetThing {
+                    input: GetThingInput
+                }
+
+                structure GetThingInput {
+                    __init__: String
+                    __post_init__: String
+                    _smithy_default: String
+                    __repr__: String
+                    __annotations__: String
+                    __value: String
+                }
+                """);
+        PythonSymbolProvider provider = createProvider(model);
+
+        assertEquals("__init___", memberName(provider, model, "GetThingInput$__init__"));
+        assertEquals("__post_init___", memberName(provider, model, "GetThingInput$__post_init__"));
+        assertEquals("_smithy_default_", memberName(provider, model, "GetThingInput$_smithy_default"));
+        assertEquals("__repr___", memberName(provider, model, "GetThingInput$__repr__"));
+        assertEquals("__annotations___", memberName(provider, model, "GetThingInput$__annotations__"));
+        assertEquals("__value___", memberName(provider, model, "GetThingInput$__value"));
+    }
+
+    @Test
+    public void testEnumSunderNamesAreEscaped() {
+        Model model = loadModel("""
+                $version: "2"
+                namespace smithy.example
+
+                service TestService {
+                    version: "2024-01-01"
+                }
+
+                enum StringValues {
+                    _VALUE_ = "value"
+                    __DUNDER__ = "dunder"
+                }
+
+                intEnum IntValues {
+                    _VALUE_ = 1
+                    __DUNDER__ = 2
+                }
+                """);
+        PythonSymbolProvider provider = createProvider(model);
+
+        assertEquals("_VALUE__", memberName(provider, model, "StringValues$_VALUE_"));
+        assertEquals("_VALUE__", memberName(provider, model, "IntValues$_VALUE_"));
+        assertEquals("__DUNDER___", memberName(provider, model, "StringValues$__DUNDER__"));
+        assertEquals("__DUNDER___", memberName(provider, model, "IntValues$__DUNDER__"));
+    }
+
     private static final String RESPONSE_METADATA_MODEL = """
             $version: "2"
             namespace smithy.example
