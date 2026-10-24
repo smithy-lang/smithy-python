@@ -54,11 +54,13 @@ class SymbolProvider:
         package: str,
         reserved_member_names: Callable[[Shape], Collection[str]] | None = None,
     ) -> None:
-        if any(
+        if not _DISTRIBUTION_NAME.fullmatch(package) or any(
             not part.isidentifier() or unicodedata.normalize("NFKC", part) in _KEYWORDS
             for part in package.split(".")
         ):
-            raise ValueError(f"Invalid Python package name: {package!r}")
+            raise ValueError(
+                f"Invalid Python package or distribution name: {package!r}"
+            )
         self._model = model
         self._selection = selection
         self._package = package
@@ -287,6 +289,7 @@ _KEYWORDS = frozenset(
 _ENUMS = frozenset({ShapeType.ENUM, ShapeType.INT_ENUM})
 _RESERVED_DECLARATIONS = frozenset({"ServiceError"})
 _UNIT = ShapeId("smithy.api", "Unit")
+_DISTRIBUTION_NAME = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?")
 _ACRONYM_BOUNDARY = re.compile(r"([A-Z]+)([A-Z][a-z])")
 _WORD_BOUNDARY = re.compile(r"([a-z0-9])([A-Z])")
 
