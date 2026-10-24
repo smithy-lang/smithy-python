@@ -164,9 +164,11 @@ class AIOHTTPClient(HTTPClient):
             return body
 
         position = await body.seek(0, 1)
-        end = await body.seek(0, 2)
-        await body.seek(position)
-        return None if position == end else body
+        try:
+            has_data = bool(await body.read(1))
+        finally:
+            await body.seek(position)
+        return body if has_data else None
 
     def _serialize_uri(self, uri: URI) -> yarl.URL:
         """Serialize the URI, preserving the already-encoded query string as-is."""

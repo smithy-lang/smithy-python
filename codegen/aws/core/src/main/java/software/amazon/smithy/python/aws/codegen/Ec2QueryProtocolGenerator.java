@@ -18,10 +18,6 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public final class Ec2QueryProtocolGenerator implements ProtocolGenerator {
     private static final Set<String> TESTS_TO_SKIP = Set.of(
-            // TODO: support the request compression trait
-            // https://smithy.io/2.0/spec/behavior-traits.html#smithy-api-requestcompression-trait
-            "SDKAppliedContentEncoding_ec2Query",
-            "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_ec2Query",
 
             // TODO: support idempotency token autofill
             "Ec2ProtocolIdempotencyTokenAutoFill",

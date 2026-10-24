@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Features
+
+* Generated HTTP clients expose request compression controls for operations marked with the `requestCompression` trait.
+
 ## v0.6.0
 
 ### Breaking Changes

@@ -110,3 +110,29 @@ def validate_profile(
         raise ProfileNotFoundError(
             f"Profile {profile_name!r} from {source_str} was not found in config file."
         )
+
+
+def validate_disable_request_compression(value: object) -> None:
+    """Require an explicit boolean for the compression disable switch."""
+    if not isinstance(value, bool):
+        raise ConfigValidationError("disable_request_compression must be a boolean")
+
+
+def validate_request_min_compression_size_bytes(value: object) -> None:
+    """Validate the standard inclusive compression threshold range."""
+    if (
+        not isinstance(value, int)
+        or isinstance(value, bool)
+        or not 0 <= value <= 10485760
+    ):
+        raise ConfigValidationError(
+            "request_min_compression_size_bytes must be an integer between 0 and 10485760"
+        )
+
+
+def validate_request_compression_encoding(value: object) -> None:
+    """Only the gzip codec is currently modeled by Smithy."""
+    if value not in (None, "gzip"):
+        raise ConfigValidationError(
+            "request_compression_encoding must be None or 'gzip'"
+        )

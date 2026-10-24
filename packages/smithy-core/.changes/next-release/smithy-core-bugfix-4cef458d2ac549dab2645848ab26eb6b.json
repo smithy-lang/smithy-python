@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Close asynchronous request-body generators through aclose and await general close awaitables so partial streamed requests release their sources."
+}

@@ -29,6 +29,62 @@ class _AsyncIteratorWrapper:
         raise StopAsyncIteration
 
 
+class _SeekableAsyncIteratorWrapper(_AsyncIteratorWrapper):
+    async def seek(self, offset: int, whence: int = 0) -> int:
+        return self._source.seek(offset, whence)
+
+    def tell(self) -> int:
+        return self._source.tell()
+
+
+async def test_seekable_async_iterator_rewind_discards_buffered_remainder() -> None:
+    reader = AsyncBytesReader(_SeekableAsyncIteratorWrapper(BytesIO(b"payload")))
+    assert await reader.read(1) == b"p"
+    assert await reader.seek(0) == 0
+    assert await reader.read() == b"payload"
+
+
+async def test_seekable_async_iterator_reports_logical_position() -> None:
+    reader = AsyncBytesReader(_SeekableAsyncIteratorWrapper(BytesIO(b"payload")))
+    assert await reader.read(1) == b"p"
+    assert reader.tell() == 1
+    assert await reader.seek(0, 1) == 1
+    assert await reader.read() == b"ayload"
+
+
+@pytest.mark.parametrize(
+    "offset, whence, expected", [(1, 1, 2), (-1, 1, 0), (-2, 2, 5)]
+)
+async def test_seekable_async_iterator_seek_uses_logical_position(
+    offset: int, whence: int, expected: int
+) -> None:
+    payload = b"payload"
+    reader = AsyncBytesReader(_SeekableAsyncIteratorWrapper(BytesIO(payload)))
+    assert await reader.read(1) == b"p"
+    assert await reader.seek(offset, whence) == expected
+    assert reader.tell() == expected
+    assert await reader.read() == payload[expected:]
+
+
+async def test_seekable_async_iterator_failed_seek_preserves_buffer() -> None:
+    reader = AsyncBytesReader(_SeekableAsyncIteratorWrapper(BytesIO(b"payload")))
+    assert await reader.read(1) == b"p"
+    with pytest.raises(ValueError):
+        await reader.seek(-1)
+    assert reader.tell() == 1
+    assert await reader.read() == b"ayload"
+
+
+async def test_seekable_async_iterator_rewinds_nonzero_source_origin() -> None:
+    source = BytesIO(b"prefixpayload")
+    source.seek(6)
+    reader = AsyncBytesReader(_SeekableAsyncIteratorWrapper(source))
+    assert await reader.read(1) == b"p"
+    assert reader.tell() == 7
+    assert await reader.seek(6) == 6
+    assert await reader.read() == b"payload"
+
+
 async def test_read_bytes() -> None:
     reader = AsyncBytesReader(b"foo")
     assert reader.seekable()

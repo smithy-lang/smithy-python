@@ -8,3 +8,5 @@ software.amazon.smithy.python.codegen.integrations.Rpcv2CborIntegration
 software.amazon.smithy.python.codegen.integrations.HttpApiKeyAuth
 software.amazon.smithy.python.codegen.integrations.UserAgentIntegration
 software.amazon.smithy.python.codegen.integrations.EndpointBddIntegration
+
+software.amazon.smithy.python.codegen.integrations.RequestCompressionIntegration

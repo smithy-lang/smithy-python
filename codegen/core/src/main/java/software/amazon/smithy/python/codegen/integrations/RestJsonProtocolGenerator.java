@@ -41,11 +41,6 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
             "RestJsonEndpointTraitWithHostLabel",
             "RestJsonEndpointTrait",
 
-            // TODO: support the request compression trait
-            // https://smithy.io/2.0/spec/behavior-traits.html#smithy-api-requestcompression-trait
-            "SDKAppliedContentEncoding_restJson1",
-            "SDKAppendedGzipAfterProvidedEncoding_restJson1",
-
             // TODO: These tests require a payload even when the httpPayload member is null. Should it?
             "RestJsonHttpWithHeadersButNoPayload",
             "RestJsonHttpWithEmptyStructurePayload",

@@ -19,9 +19,6 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public final class AwsJson11ProtocolGenerator implements ProtocolGenerator {
     private static final Set<String> TESTS_TO_SKIP = Set.of(
-            // TODO: support the request compression trait.
-            "SDKAppliedContentEncoding_awsJson1_1",
-            "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_awsJson1_1",
 
             // TODO: support the endpoint trait.
             "AwsJson11EndpointTrait",

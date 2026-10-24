@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Probe seekable request bodies with a bounded read and restore their positions instead of scanning to EOF before transmission."
+}

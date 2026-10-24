@@ -1,35 +1,53 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
+import gzip
 from dataclasses import dataclass
+from hashlib import sha256
+from io import BytesIO
+from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import Mock, patch
 from xml.etree import ElementTree
 
 import pytest
+from aws_sdk_signers import AsyncSigV4Signer, AWSRequest, SigV4SigningProperties
 from ijson.common import IncompleteJSONError  # type: ignore[reportMissingTypeStubs]
 from smithy_aws_core.aio.protocols import (
     AWSErrorIdentifier,
     AwsJson11ClientProtocol,
     AWSJSONDocument,
     AwsQueryClientProtocol,
-    ProtocolSettings,
     RestXmlClientProtocol,
 )
+from smithy_aws_core.auth import SigV4AuthScheme
+from smithy_aws_core.auth.sigv4 import SigV4Signer
+from smithy_aws_core.identity import AWSCredentialsIdentity
+from smithy_aws_core.identity.static import StaticCredentialsResolver
 from smithy_aws_event_stream.events import EventMessage
 from smithy_core import URI as _URI
+from smithy_core.aio.client import ClientCall, RequestPipeline
+from smithy_core.aio.interfaces import ProtocolSettings
+from smithy_core.aio.retries import StandardRetryStrategy
+from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.aio.utils import close
+from smithy_core.auth import DefaultAuthResolver
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
+from smithy_core.endpoints import Endpoint
 from smithy_core.exceptions import CallError, DiscriminatorError, ModeledError
+from smithy_core.interceptors import InterceptorChain
 from smithy_core.interfaces import URI
 from smithy_core.prelude import INTEGER, STRING
+from smithy_core.retries import ExponentialRetryBackoffStrategy
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import Trait
+from smithy_core.traits import RequestCompressionTrait, Trait
 from smithy_core.types import TypedProperties
 from smithy_http import Fields, tuples_to_fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
+from smithy_http.compression import RequestCompression
 from smithy_json import JSONSettings
 
 
@@ -208,6 +226,7 @@ def _mock_operation(
     operation = Mock(spec=APIOperation)
     operation.schema = schema
     operation.error_schemas = error_schemas or []
+    operation.input_stream_member = None
     return cast("APIOperation[Any, Any]", operation)
 
 
@@ -232,6 +251,227 @@ async def test_aws_json11_serializes_base_request_shape() -> None:
     assert request.fields["x-amz-target"].as_string() == "JsonService.EmptyOperation"
     assert request.fields["content-length"].as_string() == "2"
     assert await request.consume_body_async() == b"{}"
+
+
+@pytest.mark.parametrize("kind", ["json", "query"])
+@pytest.mark.parametrize("explicit", [None, "gzip"])
+async def test_aws_protocol_compresses_serialized_request(
+    kind: str, explicit: str | None
+) -> None:
+    protocol = (
+        _aws_json11_protocol()
+        if kind == "json"
+        else AwsQueryClientProtocol(
+            ProtocolSettings(
+                namespace="com.test",
+                service_target="QueryService",
+                version="2020-01-08",
+            )
+        )
+    )
+    schema = Schema(
+        id=ShapeID("com.test#TestOperation"),
+        shape_type=ShapeType.OPERATION,
+        traits=[RequestCompressionTrait({"encodings": ["gzip"]})],
+    )
+    operation = _mock_operation(schema)
+    request = protocol.serialize_request(
+        operation=operation,
+        input=_TestInput(name="example"),
+        endpoint=_URI(host="example.com"),
+        context=TypedProperties(
+            {
+                "config": SimpleNamespace(
+                    disable_request_compression=False,
+                    request_min_compression_size_bytes=0
+                    if explicit is None
+                    else 10485760,
+                    request_compression_encoding=explicit,
+                )
+            }
+        ),
+    )
+    compressed = await request.consume_body_async()
+    assert request.fields["content-encoding"].as_string() == "gzip"
+    assert request.fields["content-length"].as_string() == str(len(compressed))
+    expected = (
+        b'{"name":"example"}'
+        if kind == "json"
+        else b"Action=TestOperation&Version=2020-01-08&name=example"
+    )
+    assert gzip.decompress(compressed) == expected
+
+
+async def test_compressed_request_is_signed_and_replayed_by_pipeline() -> None:
+    canonical_payloads: list[str] = []
+    transmitted: list[bytes] = []
+
+    class RecordingSigner(AsyncSigV4Signer):
+        async def canonical_request(
+            self, *, signing_properties: SigV4SigningProperties, request: AWSRequest
+        ) -> str:
+            canonical = await super().canonical_request(
+                signing_properties=signing_properties, request=request
+            )
+            canonical_payloads.append(canonical.splitlines()[-1])
+            return canonical
+
+    class EndpointResolver:
+        async def resolve_endpoint(self, params: Any) -> Endpoint:
+            return Endpoint(uri=_URI(scheme="https", host="example.com"))
+
+    class RetryTransport:
+        TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...] = ()
+
+        async def send(self, request: Any, **kwargs: Any) -> HTTPResponse:
+            wire = await request.consume_body_async()
+            transmitted.append(wire)
+            assert request.fields["content-encoding"].as_string() == "gzip"
+            assert "content-encoding" in request.fields["authorization"].as_string()
+            assert int(request.fields["content-length"].as_string()) == len(wire)
+            return HTTPResponse(
+                status=429 if len(transmitted) == 1 else 200,
+                fields=Fields(),
+                body=b'{"__type":"ThrottlingException"}'
+                if len(transmitted) == 1
+                else b"{}",
+            )
+
+    scheme = SigV4AuthScheme(
+        service="testservice", signer=cast(SigV4Signer, RecordingSigner())
+    )
+    config = SimpleNamespace(
+        region="us-west-2",
+        aws_access_key_id=None,
+        aws_secret_access_key=None,
+        aws_session_token=None,
+        aws_credentials_identity_resolver=StaticCredentialsResolver(
+            AWSCredentialsIdentity(
+                access_key_id="test-access-key", secret_access_key="test-secret-key"
+            )
+        ),
+        disable_request_compression=False,
+        request_min_compression_size_bytes=10240,
+        request_compression_encoding="gzip",
+    )
+    operation = APIOperation(
+        input=_TestInput,
+        output=_EmptyOutput,
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "com.test",
+            "TestOperation",
+            {"smithy.api#requestCompression": {"encodings": ["gzip"]}},
+            _INPUT_SCHEMA,
+            _EMPTY_OUTPUT_SCHEMA,
+            (),
+        ),
+        error_registry=TypeRegistry({}),
+        effective_auth_schemes=[scheme.scheme_id],
+    )
+    call = ClientCall(
+        input=_TestInput(name="example"),
+        operation=operation,
+        context=TypedProperties({"config": config}),
+        interceptor=InterceptorChain([]),
+        auth_scheme_resolver=DefaultAuthResolver(),
+        supported_auth_schemes={scheme.scheme_id: scheme},
+        endpoint_resolver=EndpointResolver(),
+        retry_strategy=StandardRetryStrategy(
+            max_attempts=2,
+            backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=0),
+        ),
+    )
+    output = await RequestPipeline(
+        protocol=_aws_json11_protocol(), transport=RetryTransport()
+    )(call)
+    assert isinstance(output, _EmptyOutput)
+    assert len(transmitted) == 2
+    assert transmitted[0] == transmitted[1]
+    assert gzip.decompress(transmitted[0]) == b'{"name":"example"}'
+    assert canonical_payloads == [sha256(transmitted[0]).hexdigest()] * 2
+
+
+@pytest.mark.parametrize("source_kind", ["sync", "async_no_tell"])
+async def test_signed_compressed_seekable_stream_is_not_fully_buffered(
+    source_kind: str,
+) -> None:
+    class AsyncSeekableNoTell:
+        def __init__(self, data: bytes) -> None:
+            self.buffer = BytesIO(data)
+
+        async def read(self, size: int = -1) -> bytes:
+            return self.buffer.read(size)
+
+        async def seek(self, offset: int, whence: int = 0) -> int:
+            return self.buffer.seek(offset, whence)
+
+        async def close(self) -> None:
+            self.buffer.close()
+
+        @property
+        def closed(self) -> bool:
+            return self.buffer.closed
+
+    payload = b"".join(
+        sha256(index.to_bytes(4, "big")).digest() for index in range(8192)
+    )
+    if source_kind == "sync":
+        source = BytesIO(b"prefix" + payload)
+        source.seek(6)
+    else:
+        source = AsyncSeekableNoTell(b"prefix" + payload)
+        await source.seek(6)
+    fields = Fields()
+    body = RequestCompression(encoding="gzip", minimum_size=0).compress(
+        source, fields, streaming=True
+    )
+    assert isinstance(body, AsyncBytesReader)
+    request = HTTPRequest(
+        destination=_URI(scheme="https", host="example.com"),
+        method="POST",
+        fields=fields,
+        body=body,
+    )
+    signed = await AsyncSigV4Signer().sign(
+        request=cast(AWSRequest, request),
+        identity=AWSCredentialsIdentity(
+            access_key_id="test-key", secret_access_key="test-secret"
+        ),
+        properties={
+            "region": "us-west-2",
+            "service": "testservice",
+            "payload_signing_enabled": True,
+            "content_checksum_enabled": True,
+        },
+    )
+    assert signed.body is body
+    assert body.seekable()
+    assert body.tell() == 0
+    wire = await body.read()
+    assert gzip.decompress(wire) == payload
+    assert signed.fields["X-Amz-Content-SHA256"].as_string() == sha256(wire).hexdigest()
+    await body.seek(0)
+    assert await body.read() == wire
+    await body.seek(17)
+    assert body.tell() == 17
+    assert await body.read(31) == wire[17:48]
+    assert await body.seek(5, 1) == 53
+    assert await body.read(3) == wire[53:56]
+    assert await body.seek(-19, 2) == len(wire) - 19
+    assert await body.read() == wire[-19:]
+    assert await body.seek(len(wire) + 100) == len(wire)
+    assert await body.read() == b""
+    with pytest.raises(ValueError, match="Negative"):
+        await body.seek(-1)
+    with pytest.raises(ValueError, match="whence"):
+        await body.seek(0, 99)
+    await body.seek(0)
+    assert await body.read() == wire
+    await close(body)
+    assert source.closed
+    with pytest.raises(ValueError, match="closed"):
+        await body.seek(0)
 
 
 async def test_aws_json11_resolves_body_error_with_content_type_parameters() -> None:

@@ -1,7 +1,9 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from collections.abc import AsyncIterator, Awaitable, Generator
 from io import BytesIO
 
+import pytest
 from smithy_core.aio.types import AsyncBytesProvider
 from smithy_core.aio.utils import close, seek
 
@@ -22,6 +24,42 @@ async def test_close_async_closeable() -> None:
 
 async def test_close_non_closeable() -> None:
     await close(b"foo")
+
+
+async def test_close_async_generator_runs_finalizer() -> None:
+    closed = False
+
+    async def source() -> AsyncIterator[bytes]:
+        nonlocal closed
+        try:
+            yield b"first"
+            yield b"second"
+        finally:
+            closed = True
+
+    stream = source()
+    assert await anext(stream) == b"first"
+    await close(stream)
+    assert closed
+    with pytest.raises(StopAsyncIteration):
+        await anext(stream)
+
+
+async def test_close_awaits_non_coroutine_awaitable() -> None:
+    closed = False
+
+    class Finalizer:
+        def __await__(self) -> Generator[None, None, None]:
+            nonlocal closed
+            yield
+            closed = True
+
+    class Stream:
+        def close(self) -> Awaitable[None]:
+            return Finalizer()
+
+    await close(Stream())
+    assert closed
 
 
 async def test_seek_sync_seekable() -> None:

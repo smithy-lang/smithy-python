@@ -5714,7 +5714,6 @@ async def test_rest_xml_serializes_empty_string_request_omits_null_serializes_em
         )
 
 
-@mark.xfail()
 async def test_sdk_applied_content_encoding_rest_xml_request_put_with_content_encoding() -> (
     None
 ):
@@ -5788,7 +5787,6 @@ async def test_sdk_applied_content_encoding_rest_xml_request_put_with_content_en
         )
 
 
-@mark.xfail()
 async def test_sdk_appended_gzip_after_provided_encoding_rest_xml_request_put_with_content_encoding() -> (
     None
 ):
