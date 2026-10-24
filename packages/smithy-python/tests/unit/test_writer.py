@@ -13,9 +13,44 @@ from types import ModuleType
 from typing import get_type_hints
 
 import pytest
+from smithy_python.dependencies import Dependency, DependencySet
 from smithy_python.exceptions import CodegenError
 from smithy_python.symbols import TypeReference
 from smithy_python.writer import PythonWriter
+
+
+def test_writer_records_direct_and_nested_dependencies() -> None:
+    dependencies = DependencySet()
+    runtime = Dependency("runtime", "~=1.0", "runtime")
+    nested = Dependency("nested", "~=2.0", "runtime")
+    writer = PythonWriter("models", dependencies=dependencies)
+    writer.line(
+        "value: ",
+        TypeReference(
+            "list",
+            "builtins",
+            (
+                TypeReference(
+                    "Value",
+                    "external",
+                    dependencies=(nested,),
+                ),
+            ),
+            dependencies=(runtime,),
+        ),
+    )
+
+    assert tuple(dependencies) == (nested, runtime)
+
+
+def test_standalone_writer_does_not_require_dependency_collection() -> None:
+    dependency = Dependency("runtime", "~=1.0", "runtime")
+    writer = PythonWriter("models")
+    writer.line(
+        "value: ",
+        TypeReference("Value", "external", dependencies=(dependency,)),
+    )
+    assert "from external import Value" in writer.render()
 
 
 def load_written_module(

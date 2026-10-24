@@ -2,8 +2,9 @@
 
 `PythonWriter` turns lines of Python text and `TypeReference` values into the
 source of one module. Pass references from `SymbolProvider.type_reference()`
-or construct them directly. The writer chooses annotation spellings and imports.
-The caller decides which declarations, fields and defaults to write.
+or construct them directly. The writer chooses annotation spellings and
+imports, and can record package dependencies from references. The caller
+decides which declarations, fields, and defaults to write.
 
 ```python
 from smithy_python.symbols import TypeReference
@@ -33,8 +34,9 @@ class Node:
 
 ## Writing a module
 
-`PythonWriter(module)` takes the destination module name. `render()` finds the
-names bound by the written lines and follows Python's scoping rules.
+`PythonWriter(module, dependencies=None)` takes the destination module name and
+an optional shared `DependencySet`. `render()` finds the names bound by the
+written lines and follows Python's scoping rules.
 Module-level names, such as classes, functions, assignments, imports and
 `global` assignments, apply to every reference. A local name, such as a field,
 parameter or local variable, applies only to references that can see it. A
@@ -115,6 +117,22 @@ alias. Referenced packages don't have to be installed in the generator's environ
 For example, rendering a reference to `smithy_core.documents.Document` does not
 import `smithy_core`.
 
+## Dependencies
+
+When a dependency set is provided, `line()` records dependencies from each
+`TypeReference` and its nested arguments. Recording happens when the reference
+is written so package metadata can be generated before source rendering.
+Repeated dependency records are deduplicated by `DependencySet`.
+
+Imports and package requirements remain separate. A module name controls the
+generated import, while a dependency record controls the generated package
+metadata. Annotation-only references still contribute dependencies because
+type checking a generated package must resolve them.
+
+Writers created by `FileManifest.python_module()` share the generation
+context's dependency set. A standalone writer without a dependency set renders
+without recording dependencies.
+
 ## Names that collide
 
 An import uses a module-derived alias when its name matches a module-level
@@ -140,8 +158,8 @@ Equivalent references share one import, using the lexicographically smallest
 supplied module/name pair so the choice does not depend on reference order.
 
 A same-module reference whose name is a local name visible where it is
-referenced raises `CodegenError`. This first version does not add self-imports
-or aliases for local declarations.
+referenced raises `CodegenError`. The writer does not add self-imports or aliases
+for local declarations.
 
 The writer returns source in memory. File output, documentation conversion and
 actual declaration generation remain separate follow-ups.

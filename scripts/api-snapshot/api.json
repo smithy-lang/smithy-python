@@ -1487,6 +1487,13 @@
     "main": "function",
     "select_shapes": "rex-function"
   },
+  "smithy_python.dependencies": {
+    "Dependency": "class",
+    "DependencyGroup": "rex-type_alias",
+    "DependencySet": "class",
+    "HATCHLING": "Dependency",
+    "SMITHY_CORE": "Dependency"
+  },
   "smithy_python.environment": {
     "PluginEnvironment": "class"
   },
@@ -1495,8 +1502,20 @@
     "InvalidInvocationError": "exception",
     "InvalidShapeIdError": "exception",
     "ModelError": "exception",
+    "SelectorSyntaxError": "exception",
     "ShapeNotFoundError": "exception",
     "SmithyPythonError": "exception"
+  },
+  "smithy_python.files": {
+    "FileManifest": "class"
+  },
+  "smithy_python.generation": {
+    "ArtifactGenerator": "protocol",
+    "ArtifactSettings": "class",
+    "GenerationContext": "class",
+    "GenerationPlan": "class",
+    "ModelPlan": "class",
+    "TypesSettings": "class"
   },
   "smithy_python.model": {
     "EnumShape": "rex-class",
@@ -1522,6 +1541,10 @@
     "load_model": "rex-function",
     "to_json": "rex-function"
   },
+  "smithy_python.schemas": {
+    "SchemaGenerator": "class",
+    "SchemaPlan": "class"
+  },
   "smithy_python.selection": {
     "InvalidInvocationError": "rex-exception",
     "InvalidShapeIdError": "rex-exception",
@@ -1531,12 +1554,14 @@
     "OperationShape": "rex-class",
     "ResourceShape": "rex-class",
     "Selection": "class",
+    "Selector": "rex-class",
     "ServiceShape": "rex-class",
     "Shape": "rex-class",
     "ShapeId": "rex-class",
     "ShapeType": "rex-class",
     "resolve_service": "function",
-    "select_shapes": "function"
+    "select_shapes": "function",
+    "select_type_shapes": "function"
   },
   "smithy_python.symbols": {
     "ListShape": "rex-class",

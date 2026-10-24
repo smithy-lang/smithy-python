@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added native generation of compact, lazily hydrated schemas with Java-compatible trait filtering, string interning, and recursive references."
+}
