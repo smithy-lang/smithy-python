@@ -44,6 +44,15 @@ class TypesSettings(ArtifactSettings):
 
     selector: _selection.Selector = field(default_factory=_selection.Selector.identity)
     generate_inputs_and_outputs: bool = False
+    schema_partition_size: int | None = 250
+    stub_partition_size: int | None = 250
+
+    def __post_init__(self) -> None:
+        if any(
+            size is not None and size < 1
+            for size in (self.schema_partition_size, self.stub_partition_size)
+        ):
+            raise ValueError("Partition sizes must be positive")
 
 
 @dataclass(frozen=True, slots=True)

@@ -100,11 +100,15 @@ class ArtifactSettings:
 class TypesSettings(ArtifactSettings):
     selector: Selector = field(default_factory=Selector.identity)
     generate_inputs_and_outputs: bool = False
+    schema_partition_size: int | None = 250
+    stub_partition_size: int | None = 250
 ```
 
 The resolved service remains on `Selection`. It is not duplicated in settings.
 The CLI subcommand identifies the artifact, so settings do not duplicate that
 value. Artifact-specific settings extend the shared frozen dataclass.
+Partition targets and their output layout are defined in
+[Code Generation Partitioning](partitioning.md).
 
 The `types` command accepts:
 
@@ -416,26 +420,12 @@ Package setup renders the dependency set collected during generation.
 
 ## Large Models
 
-Schema and stub partitioning must not change public imports. The output API and
-generation plan allow private content to move behind stable facade modules.
+Large standalone types packages partition compact schemas and model stubs
+behind stable facade modules. Schema partitions use source-size weighting and
+keep recursive components together. Stub partitions use declaration counts.
 
-smithy-java partitions schema classes after a model reaches 500 schema fields
-and then targets about 50 KB of generated schema content per class. smithy-php
-uses a centralized lazy schema registry. Python can combine those approaches:
-
-* Keep `<package>._private.schemas` as the stable facade.
-* Place compact schema tuples in private partition modules.
-* Keep every recursive strongly connected component in one partition.
-* Route schema constant access through generated indexes.
-* Partition large type stubs behind the public `models.pyi` facade.
-
-Python partitioning thresholds must be based on Python measurements. Relevant inputs include writer render time, peak generator memory, generated import time, and type
-checker time.
-
-Partitioning bounds the syntax tree analyzed by `PythonWriter` and prevents a
-single EC2-sized source file from dominating codegen memory. Measurements
-establish the partitioning thresholds. Facade modules preserve generated
-imports.
+[Code Generation Partitioning](partitioning.md) defines the output layout,
+thresholds, and compatibility requirements.
 
 ## Performance
 
