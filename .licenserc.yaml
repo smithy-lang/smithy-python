@@ -8,6 +8,8 @@ header:
     
   paths:
     - '**/*.py'
+    - '**/*.pyi'
+    - '**/*.rs'
 
   paths-ignore:
     - '**/*.md'
@@ -22,3 +24,4 @@ header:
     Python:
       extensions:
         - ".py"
+        - ".pyi"

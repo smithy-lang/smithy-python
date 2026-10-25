@@ -1,0 +1,11 @@
+# Configuration for cargo-about, which generates LICENSE-THIRD-PARTY.
+accepted = [
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "MIT",
+    "Unicode-3.0",
+]
+ignore-build-dependencies = true
+ignore-dev-dependencies = true
+# Our own crate is covered by the package license.
+private = { ignore = true }

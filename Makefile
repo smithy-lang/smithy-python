@@ -1,6 +1,6 @@
 .DEFAULT_GOAL:=help
 
-.PHONY: help install format-java check-java build-java generate-protocol-tests generate-codegen-output-py api-snapshot aio-check ci lint-py check-py test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
+.PHONY: help install format-java check-java build-java generate-protocol-tests generate-codegen-output-py api-snapshot aio-check ci lint-py check-py lint-rust check-rust third-party-licenses test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
 
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -35,6 +35,7 @@ test-integration: ## Builds and tests the Java codegen and asserts the regenerat
 
 ci: ## Runs the full CI sequence locally.
 	$(MAKE) static-analysis
+	$(MAKE) check-rust
 	$(MAKE) test-unit
 	$(MAKE) test-functional
 	$(MAKE) build-py
@@ -114,6 +115,41 @@ check-py: ## Runs checks (formatting, lints, type-checking) on the python packag
 	uv run ruff check packages --config pyproject.toml
 	uv run ruff format --check --config pyproject.toml
 	uv run pyright packages
+
+
+# Packages with a native extension, each built from a Cargo.toml in the package root.
+RUST_MANIFESTS := $(wildcard packages/*/Cargo.toml)
+
+lint-rust: ## Formats and fixes lints in the Rust extensions.
+	@set -e; for manifest in $(RUST_MANIFESTS); do \
+		cargo fmt --manifest-path "$$manifest"; \
+		cargo clippy --manifest-path "$$manifest" --all-targets --fix --allow-dirty --allow-staged; \
+	done
+
+
+check-rust: ## Checks formatting, lints, dependencies, and license attribution of the Rust extensions.
+	@set -e; for manifest in $(RUST_MANIFESTS); do \
+		dir=$$(dirname "$$manifest"); \
+		cargo fmt --manifest-path "$$manifest" --check; \
+		cargo clippy --manifest-path "$$manifest" --all-targets --locked -- -D warnings; \
+		cargo deny --manifest-path "$$manifest" check; \
+		cargo about generate --manifest-path "$$manifest" \
+			--output-file "$$dir/LICENSE-THIRD-PARTY.expected" "$$dir/about.hbs"; \
+		if ! diff -u "$$dir/LICENSE-THIRD-PARTY" "$$dir/LICENSE-THIRD-PARTY.expected"; then \
+			rm "$$dir/LICENSE-THIRD-PARTY.expected"; \
+			echo "$$dir/LICENSE-THIRD-PARTY is out of date. Run 'make third-party-licenses'."; \
+			exit 1; \
+		fi; \
+		rm "$$dir/LICENSE-THIRD-PARTY.expected"; \
+	done
+
+
+third-party-licenses: ## Regenerates the third-party license file of each Rust extension from its Cargo.lock.
+	@set -e; for manifest in $(RUST_MANIFESTS); do \
+		dir=$$(dirname "$$manifest"); \
+		cargo about generate --manifest-path "$$manifest" \
+			--output-file "$$dir/LICENSE-THIRD-PARTY" "$$dir/about.hbs"; \
+	done
 
 
 test-py: ## Runs tests for the python packages.

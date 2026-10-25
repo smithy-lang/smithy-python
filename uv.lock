@@ -8,6 +8,7 @@ members = [
     "smithy-aws-core",
     "smithy-aws-event-stream",
     "smithy-cbor",
+    "smithy-checksums",
     "smithy-core",
     "smithy-http",
     "smithy-json",
@@ -714,6 +715,11 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
+
+[[package]]
+name = "smithy-checksums"
+version = "0.0.0"
+source = { editable = "packages/smithy-checksums" }
 
 [[package]]
 name = "smithy-core"

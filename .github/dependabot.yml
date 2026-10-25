@@ -12,6 +12,19 @@ updates:
           - "patch"
     cooldown:
       default-days: 7
+  - package-ecosystem: "cargo"
+    directories:
+      - "/packages/smithy-checksums"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+    groups:
+      cargo:
+        update-types:
+          - "minor"
+          - "patch"
+    cooldown:
+      default-days: 7
   - package-ecosystem: "gradle"
     directory: "/codegen"
     schedule:
