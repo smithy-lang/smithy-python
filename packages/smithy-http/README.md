@@ -30,7 +30,7 @@ config = Config(transport=mock_client)
 client = TestSmithyServiceClient(config=config)
 
 # Test your client logic
-result = await client.some_operation({"input": "data"})
+result = await client.some_operation(input="data")
 
 # Inspect what requests were made
 assert mock_client.call_count == 1

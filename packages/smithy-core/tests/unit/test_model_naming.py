@@ -26,6 +26,7 @@ def test_enum_names_escape_before_uppercasing() -> None:
             is_error=False,
             carries_response_metadata=False,
             is_enum=True,
+            is_operation_input=False,
         )
         == "CLASS_"
     )
@@ -38,6 +39,7 @@ def test_enum_sunder_names_are_escaped() -> None:
             is_error=False,
             carries_response_metadata=False,
             is_enum=True,
+            is_operation_input=False,
         )
         == "_VALUE__"
     )
@@ -50,6 +52,7 @@ def test_enum_dunder_names_are_escaped() -> None:
             is_error=False,
             carries_response_metadata=False,
             is_enum=True,
+            is_operation_input=False,
         )
         == "__VALUE___"
     )
@@ -63,6 +66,7 @@ def test_runtime_method_names_are_reserved() -> None:
         "__init__",
         "__post_init__",
         "_smithy_default",
+        "toDict",
         "__repr__",
         "__annotations__",
     ):
@@ -71,6 +75,7 @@ def test_runtime_method_names_are_reserved() -> None:
             is_error=False,
             carries_response_metadata=False,
             is_enum=False,
+            is_operation_input=False,
         ).endswith("_")
 
 
@@ -81,6 +86,7 @@ def test_double_leading_underscore_names_avoid_name_mangling() -> None:
             is_error=False,
             carries_response_metadata=False,
             is_enum=False,
+            is_operation_input=False,
         )
         == "__value___"
     )
@@ -111,3 +117,19 @@ def test_union_unknown_name_default() -> None:
 
 def test_union_unknown_name_disambiguates_shape_collision() -> None:
     assert union_unknown_name("Foo", {"FooUnknown"}) == "Foo_Unknown"
+
+
+def test_member_field_name_escapes_operation_method_args() -> None:
+    def name(wire: str, is_operation_input: bool) -> str:
+        return member_field_name(
+            wire,
+            is_error=False,
+            carries_response_metadata=False,
+            is_enum=False,
+            is_operation_input=is_operation_input,
+        )
+
+    assert name("Self", True) == "self_"
+    assert name("plugins", True) == "plugins_"
+    assert name("Plugins", False) == "plugins"
+    assert name("self", False) == "self"

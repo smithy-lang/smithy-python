@@ -1725,6 +1725,7 @@
   "smithy_test": {
     "ConformanceError": "rex-exception",
     "deep_equal": "rex-function",
+    "verify_client": "rex-function",
     "verify_models": "rex-function",
     "xml_equal": "rex-function"
   },

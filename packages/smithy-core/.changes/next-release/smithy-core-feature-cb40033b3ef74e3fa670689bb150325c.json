@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added support for generated clients that take an operation's input members as keyword-only parameters. Nested structures and unions can be passed as dictionaries or models, and required members are checked before a request is sent. Generated structures, errors, and union variants also have a `to_dict()` method that returns the same dictionary form."
+}

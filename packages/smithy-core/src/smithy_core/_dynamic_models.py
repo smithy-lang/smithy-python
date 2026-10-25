@@ -12,6 +12,14 @@ The per-member reader/writer is resolved once and cached on the member schema vi
 a :py:class:`SchemaExtension`, so steady-state serde does the same work as
 straight-line generated code reached through a cached callable rather than a type
 match on every call.
+
+The registry also converts between models and their dictionary form. A generated
+client passes an operation method's keyword arguments to
+:py:meth:`ModelRegistry.input_from_params`, which builds the input model and
+accepts each nested structure or union as either a model or a dictionary. Every
+built structure, error, and union variant class gets a ``to_dict`` method
+returning that same dictionary form. Both
+directions use per-member converters cached the same way as the serde codecs.
 """
 
 from __future__ import annotations
@@ -27,7 +35,13 @@ from threading import RLock
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, cast, dataclass_transform
 
-from ._model_naming import member_field_name, union_unknown_name, variant_class_name
+from ._model_naming import (
+    OPERATION_METHOD_ARGS,
+    member_field_name,
+    to_snake_case,
+    union_unknown_name,
+    variant_class_name,
+)
 from ._schema_compact import hydrate
 from .deserializers import ShapeDeserializer
 from .exceptions import ModeledError, SerializationError
@@ -38,6 +52,7 @@ from .traits import (
     DefaultTrait,
     EnumValueTrait,
     ErrorTrait,
+    IdempotencyTokenTrait,
     RequiredTrait,
     SensitiveTrait,
     SparseTrait,
@@ -50,6 +65,8 @@ if TYPE_CHECKING:
 
 type _Writer = "Callable[[ShapeSerializer, Schema, Any], None]"
 type _Reader = "Callable[[ShapeDeserializer, Schema], Any]"
+# Converts one member value. None when the value needs no conversion.
+type _Converter = "Callable[[Any], Any] | None"
 
 
 def _scalar(write_name: str, read_name: str) -> tuple[_Writer, _Reader]:
@@ -188,6 +205,11 @@ class ModelRegistry:
             self._shape_names.add(service_error)
         self._codec = SchemaExtension(self._resolve_member_codec)
         self._field_names_ext = SchemaExtension(self._compute_field_names)
+        # Parameter and dict-form conversion: per member, and per structure/union.
+        self._member_forms = SchemaExtension(self._resolve_member_forms)
+        self._shape_forms = SchemaExtension(self._compute_shape_forms)
+        # Shape id -> class name for renamed shapes, built on first use.
+        self._renamed_ids: dict[ShapeID, str] | None = None
 
     def _error_base(self) -> type:
         if self._service_error_name is None:
@@ -218,12 +240,14 @@ class ModelRegistry:
         is_error = schema.get_trait(ErrorTrait) is not None
         is_enum = schema.shape_type in (ShapeType.ENUM, ShapeType.INT_ENUM)
         carries_md = is_error or self._is_output(schema)
+        is_input = self._is_input(schema)
         return tuple(
             member_field_name(
                 member.expect_member_name(),
                 is_error=is_error,
                 carries_response_metadata=carries_md,
                 is_enum=is_enum,
+                is_operation_input=is_input,
             )
             for member in schema.members_by_index
         )
@@ -261,6 +285,11 @@ class ModelRegistry:
                     built.__module__ = module
                     self._classes[name] = built
                     return built
+                if self.is_params_name(name):
+                    # The Params TypedDicts are stub-only; at runtime a dictionary
+                    # form is a plain dict, which keeps the names importable.
+                    self._classes[name] = dict
+                    return dict
                 raise AttributeError(name)
             schema = hydrate(getattr(self._schemas, const))
             canonical = self._renamed_schemas.get(const)
@@ -285,6 +314,224 @@ class ModelRegistry:
             self._classes[canonical] = built
             self._classes[name] = built
             return built
+
+    def params_name(self, name: str) -> str:
+        """The name of a structure's, union's, or variant's dictionary form.
+
+        ``<Name>Params``, or ``<Name>_Params`` when ``<Name>Params`` is already the
+        name of a generated class. MUST match the Java ``ParamsIndex``;
+        ``smithy_test.verify_models`` checks generated ``_params.pyi`` files
+        against it.
+        """
+        candidate = name + "Params"
+        if candidate in self._ensure_index() or candidate in self._renames:
+            return name + "_Params"
+        return candidate
+
+    def is_params_name(self, name: str) -> bool:
+        """Whether ``name`` is the dictionary form of a structure, union, or variant.
+
+        Codegen declares these only for shapes reachable from an operation input;
+        this accepts the name of any such form, since at runtime each is a plain
+        ``dict`` and type checkers enforce the declared set.
+        """
+        for suffix in ("_Params", "Params"):
+            if name.endswith(suffix) and self._has_params(name[: -len(suffix)], name):
+                return True
+        return False
+
+    def _has_params(self, base: str, name: str) -> bool:
+        if not base or self.params_name(base) != name:
+            return False
+        if base == "Unit":
+            return True
+        const = self._renames.get(base) or self._ensure_index().get(base)
+        if const is None:
+            return False
+        schema = hydrate(getattr(self._schemas, const))
+        if schema.shape_type == ShapeType.STRUCTURE:
+            return True
+        return schema.shape_type == ShapeType.UNION and base != (
+            self._union_unknown_name(self._target_name(schema))
+        )
+
+    def input_from_params(self, schema: Schema, params: Mapping[str, Any]) -> Any:
+        """Build an operation input from an operation method's keyword arguments.
+
+        ``params`` maps Python member names to values; the method's own ``self``
+        and ``plugins`` arguments are ignored. ``None`` means unset. A nested
+        structure or union may be a model or its dictionary form.
+
+        :raises TypeError: If a required member is unset, a dictionary has an
+            unknown key, a union dictionary doesn't set exactly one member, or a
+            ``str``, ``bytes``, or ``bytearray`` is given for a list member.
+        """
+        forms = self._struct_forms(schema)
+        try:
+            return self._struct_from_mapping(forms, params, OPERATION_METHOD_ARGS)
+        except _InvalidParam as e:
+            path = "".join(reversed(e.segments)).removeprefix(".")
+            raise TypeError(e.render(path)) from None
+
+    def to_dict(self, instance: Any, schema: Schema) -> dict[str, Any]:
+        """Return the dictionary form of a structure instance.
+
+        This is the form input parameters accept: Python member names as keys,
+        single-key dictionaries for unions, and unset members left out. Unlike
+        ``repr``, it includes ``@sensitive`` members.
+        """
+        result: dict[str, Any] = {}
+        for name, converter in self._struct_forms(schema).dict_plan:
+            value = getattr(instance, name)
+            if value is None:
+                continue
+            result[name] = value if converter is None else converter(value)
+        return result
+
+    def _struct_forms(self, schema: Schema) -> _StructForms:
+        return cast(_StructForms, schema.get_extension(self._shape_forms))
+
+    def _union_forms(self, schema: Schema) -> _UnionForms:
+        return cast(_UnionForms, schema.get_extension(self._shape_forms))
+
+    def _compute_shape_forms(self, schema: Schema) -> _StructForms | _UnionForms:
+        # One extension for both kinds keeps the per-registry extension count low:
+        # every schema's extension slots are sized by the highest extension id.
+        if schema.shape_type == ShapeType.UNION:
+            return self._compute_union_forms(schema)
+        return self._compute_struct_forms(schema)
+
+    def _compute_struct_forms(self, schema: Schema) -> _StructForms:
+        is_input = self._is_input(schema)
+        field_names = self._field_names(schema)
+        converters: dict[str, _Converter] = {}
+        required: list[str] = []
+        dict_plan: list[tuple[str, _Converter]] = []
+        for i, member in enumerate(schema.members_by_index):
+            if self._is_event_stream_member(member):
+                # Not a field: events go through the stream the operation returns.
+                continue
+            name = field_names[i]
+            from_params, to_dict = member.get_extension(self._member_forms)
+            dict_plan.append((name, to_dict))
+            converters[name] = from_params
+            if _is_required_param(member, is_input):
+                required.append(name)
+        name = self._target_name(schema)
+        return _StructForms(
+            self.build(name), name, converters, tuple(required), tuple(dict_plan)
+        )
+
+    def _compute_union_forms(self, schema: Schema) -> _UnionForms:
+        name = self._target_name(schema)
+        self.build(name)  # registers the variant classes
+        keys = self._field_names(schema)
+        variants: _UnionForms = {}
+        for i, member in enumerate(schema.members_by_index):
+            variant = self.build(
+                self._union_variant_name(name, member.expect_member_name())
+            )
+            variants[keys[i]] = (variant, member.get_extension(self._member_forms)[0])
+        return variants
+
+    def _resolve_member_forms(self, member: Schema) -> tuple[_Converter, _Converter]:
+        """A member's converters: from its parameter form, and to its dict form."""
+        st = member.shape_type
+        if st == ShapeType.STRUCTURE:
+            return self._struct_converter(member.expect_member_target()), _to_dict
+        if st == ShapeType.UNION:
+            return self._union_converter(member.expect_member_target()), _to_dict
+        if st == ShapeType.DOCUMENT:
+            return _document_converters()
+        if st == ShapeType.LIST:
+            element = member.expect_member_target().members_by_index[0]
+            from_params, to_dict = element.get_extension(self._member_forms)
+            return _list_from_params(from_params), _list_to_dict(to_dict)
+        if st == ShapeType.MAP:
+            value_member = member.expect_member_target().members["value"]
+            from_params, to_dict = value_member.get_extension(self._member_forms)
+            return _map_from_params(from_params), _map_to_dict(to_dict)
+        return None, None
+
+    def _struct_converter(self, schema: Schema) -> Callable[[Any], Any]:
+        forms: _StructForms | None = None
+
+        def convert(value: Any) -> Any:
+            # Models (and anything else that isn't a mapping) pass through unchanged.
+            if type(value) is not _DICT and not isinstance(value, _MAPPING):
+                return value
+            nonlocal forms
+            if forms is None:
+                forms = self._struct_forms(schema)
+            return self._struct_from_mapping(forms, value, _NO_ARGS)
+
+        return convert
+
+    def _struct_from_mapping(
+        self, forms: _StructForms, params: Mapping[str, Any], ignored: frozenset[str]
+    ) -> Any:
+        converters = forms.converters
+        kwargs: dict[str, Any] = {}
+        for key, value in params.items():
+            try:
+                converter = converters[key]
+            except KeyError:
+                if key in ignored:
+                    continue
+                raise _unknown_key(key, forms.name, converters) from None
+            if value is None:
+                continue
+            if converter is not None:
+                try:
+                    value = converter(value)
+                except _InvalidParam as e:
+                    e.segments.append("." + key)
+                    raise
+            kwargs[key] = value
+        for name in forms.required:
+            if name not in kwargs:
+                raise _missing(forms.required, kwargs)
+        return forms.cls(**kwargs)
+
+    def _union_converter(self, schema: Schema) -> Callable[[Any], Any]:
+        variants: _UnionForms | None = None
+        name = self._target_name(schema)
+
+        def convert(value: Any) -> Any:
+            # Variant instances (and anything else that isn't a mapping) pass through.
+            if type(value) is not _DICT and not isinstance(value, _MAPPING):
+                return value
+            nonlocal variants
+            if variants is None:
+                variants = self._union_forms(schema)
+            params: Mapping[str, Any] = value
+            if len(params) == 1:
+                key, member_value = next(iter(params.items()))
+                if key not in variants:
+                    raise _unknown_key(key, name, variants, union=True)
+                if member_value is None:
+                    raise _union_count(name, [])
+            else:
+                set_keys: list[str] = []
+                for key, member_value in params.items():
+                    if key not in variants:
+                        raise _unknown_key(key, name, variants, union=True)
+                    if member_value is not None:
+                        set_keys.append(key)
+                if len(set_keys) != 1:
+                    raise _union_count(name, set_keys)
+                key = set_keys[0]
+                member_value = params[key]
+            variant, converter = variants[key]
+            if converter is not None:
+                try:
+                    member_value = converter(member_value)
+                except _InvalidParam as e:
+                    e.segments.append("." + key)
+                    raise
+            return variant(member_value)
+
+        return convert
 
     def _build_union_deserializer(self, union_name: str) -> type:
         # Ensure the union (and its variants + schema) are registered.
@@ -428,6 +675,7 @@ class ModelRegistry:
                     is_error=False,
                     carries_response_metadata=False,
                     is_enum=True,
+                    is_operation_input=False,
                 )
             ] = value
         bases = (UnknownEnumMixin, base)
@@ -526,6 +774,9 @@ class ModelRegistry:
                 "serialize": reject_serialization,
                 "serialize_members": reject_serialization,
                 "deserialize": deserialize,
+                # An unknown variant has no dictionary form; an empty dict, like a
+                # union dict that sets no member, is rejected if it's sent back.
+                "to_dict": _unknown_to_dict,
             },
         )
         unknown_cls.__module__ = module
@@ -597,6 +848,14 @@ class ModelRegistry:
             writer, _ = member.get_extension(registry._codec)
             writer(serializer, member, self.value)
 
+        member = union_schema.members_by_index[index]
+        key = self._field_names(union_schema)[index]
+
+        def to_dict(self: Any) -> dict[str, Any]:
+            converter = member.get_extension(registry._member_forms)[1]
+            value = self.value
+            return {key: value if converter is None else converter(value)}
+
         @classmethod  # type: ignore[misc]
         def deserialize(cls: type, deserializer: ShapeDeserializer) -> Any:
             member = union_schema.members_by_index[index]
@@ -610,6 +869,7 @@ class ModelRegistry:
                 "serialize": serialize,
                 "serialize_members": serialize_members,
                 "deserialize": deserialize,
+                "to_dict": to_dict,
             },
         )
 
@@ -626,6 +886,9 @@ class ModelRegistry:
         def deserialize(cls: type, deserializer: ShapeDeserializer) -> Any:
             return cls(**registry.deserialize_kwargs(deserializer, schema))
 
+        def to_dict(self: Any) -> dict[str, Any]:
+            return registry.to_dict(self, schema)
+
         @classmethod  # type: ignore[misc]
         def _smithy_default(cls: type) -> Any:
             field_names = registry._field_names(schema)
@@ -638,6 +901,7 @@ class ModelRegistry:
             "serialize": serialize,
             "serialize_members": serialize_members,
             "deserialize": deserialize,
+            "to_dict": to_dict,
             "_smithy_default": _smithy_default,
         }
 
@@ -741,6 +1005,17 @@ class ModelRegistry:
     def _target_name(self, schema: Schema) -> str:
         if generated := self._target_names.get(str(schema.id)):
             return generated
+        # A renamed shape can share its id name with another shape, so match it by
+        # its full id before falling back to the id name.
+        renamed = self._renamed_ids
+        if renamed is None:
+            renamed = {
+                hydrate(getattr(self._schemas, const)).id: name
+                for name, const in self._renames.items()
+            }
+            self._renamed_ids = renamed
+        if (name := renamed.get(schema.id)) is not None:
+            return name
         index = self._ensure_index()
         const = index.get(schema.id.name)
         return (
@@ -833,6 +1108,228 @@ class ModelRegistry:
                     )
             self._index = index
         return self._index
+
+
+_NO_ARGS: frozenset[str] = frozenset()
+
+# Typed Any so the converters' type checks leave an Any value Any, rather than
+# narrowing it to a partially unknown dict or Mapping; a typing.cast would cost a
+# call per value.
+_DICT: Any = dict
+_LIST: Any = list
+_MAPPING: Any = Mapping
+# Sequences that type checkers accept for a list member but are never meant as one.
+_NOT_LISTS = (str, bytes, bytearray)
+
+
+class _StructForms:
+    """How to build one structure from its dictionary form, and back."""
+
+    __slots__ = ("cls", "converters", "dict_plan", "name", "required")
+
+    def __init__(
+        self,
+        cls: type,
+        name: str,
+        converters: dict[str, _Converter],
+        required: tuple[str, ...],
+        dict_plan: tuple[tuple[str, _Converter], ...],
+    ) -> None:
+        self.cls = cls
+        self.name = name
+        # Field name -> converter from its parameter form, for every member that
+        # is a parameter (all but an operation input's event stream).
+        self.converters = converters
+        self.required = required
+        # (field name, converter to its dict form) for every member.
+        self.dict_plan = dict_plan
+
+
+# Union dict key -> (variant class, converter from the member's parameter form).
+type _UnionForms = dict[str, tuple[type, _Converter]]
+
+
+class _InvalidParam(Exception):
+    """An invalid parameter, raised as a TypeError by input_from_params.
+
+    Each enclosing container appends its path segment as the error propagates, so
+    the path costs nothing unless a parameter is invalid.
+    """
+
+    def __init__(self, render: Callable[[str], str]) -> None:
+        super().__init__()
+        self.render = render
+        self.segments: list[str] = []
+
+
+def _is_required_param(member: Schema, is_input: bool) -> bool:
+    """Whether a member must be set when building a model from parameters.
+
+    This is ``@required`` without ``@default``, and it applies to ``@input``
+    structures too, whose model fields are all optional. An operation input's
+    idempotency token may be omitted. MUST match the Java
+    ``CodegenUtils.isRequiredParameter``; ``smithy_test.verify_client`` checks
+    generated clients against it.
+    """
+    if member.get_trait(RequiredTrait) is None:
+        return False
+    if member.get_trait(DefaultTrait) is not None:
+        return False
+    return not (is_input and member.get_trait(IdempotencyTokenTrait) is not None)
+
+
+def _list_from_params(converter: _Converter) -> Callable[[Any], Any]:
+    def convert(value: Any) -> Any:
+        if isinstance(value, _NOT_LISTS):
+            # A str is a Sequence[str], so type checkers allow it for a list member.
+            raise _InvalidParam(
+                lambda path: (
+                    f"Invalid parameter {path}: expected a sequence for a "
+                    f"list member, got {type(value).__name__}"
+                )
+            )
+        if value is None:
+            return None
+        if converter is None:
+            # Models declare lists, so any other sequence becomes one.
+            return value if type(value) is _LIST else list(value)
+        result: list[Any] = []
+        append = result.append
+        try:
+            for element in value:
+                append(converter(element))
+        except _InvalidParam as e:
+            e.segments.append(f"[{len(result)}]")
+            raise
+        return result
+
+    return convert
+
+
+def _map_from_params(converter: _Converter) -> Callable[[Any], Any]:
+    def convert(value: Any) -> Any:
+        if type(value) is not _DICT:
+            if not isinstance(value, _MAPPING):
+                return value
+            if converter is None:
+                # Models declare dicts, so any other mapping becomes one.
+                return dict(value)
+        elif converter is None:
+            return value
+        result: dict[Any, Any] = {}
+        key: Any = None
+        try:
+            for key, element in value.items():
+                result[key] = converter(element)
+        except _InvalidParam as e:
+            e.segments.append(f"[{key!r}]")
+            raise
+        return result
+
+    return convert
+
+
+def _document_converters() -> tuple[_Converter, _Converter]:
+    from .documents import Document
+
+    def from_params(value: Any) -> Any:
+        if value is None or isinstance(value, Document):
+            return value
+        return Document(value)
+
+    def to_dict(value: Any) -> Any:
+        if not isinstance(value, Document):
+            return value
+        raw = value.as_value()
+        # A JSON null stays a Document: as a parameter, None would mean unset.
+        return value if raw is None else _copy_document_value(raw)
+
+    return from_params, to_dict
+
+
+def _copy_document_value(value: Any) -> Any:
+    # as_value() returns the document's own containers; to_dict returns fresh ones.
+    if isinstance(value, Mapping):
+        return {
+            k: _copy_document_value(v)
+            for k, v in cast(Mapping[str, Any], value).items()
+        }
+    if isinstance(value, list | tuple):
+        return [_copy_document_value(v) for v in cast(Collection[Any], value)]
+    return value
+
+
+def _list_to_dict(converter: _Converter) -> Callable[[Any], Any]:
+    if converter is None:
+        return list
+    return lambda value: [None if e is None else converter(e) for e in value]
+
+
+def _map_to_dict(converter: _Converter) -> Callable[[Any], Any]:
+    if converter is None:
+        return dict
+    return lambda value: {
+        k: None if v is None else converter(v) for k, v in value.items()
+    }
+
+
+def _unknown_key(
+    key: Any, shape: str, known: Collection[str], *, union: bool = False
+) -> _InvalidParam:
+    kind = "union " if union else ""
+    if not isinstance(key, str):
+        return _InvalidParam(
+            lambda path: f"Unknown parameter key {key!r} in {path} for {kind}{shape}"
+        )
+    suggestion = _suggest(key, known)
+    hint = f"; did you mean {suggestion!r}?" if suggestion else ""
+    error = _InvalidParam(
+        lambda path: f"Unknown parameter {path} for {kind}{shape}{hint}"
+    )
+    error.segments.append("." + key)
+    return error
+
+
+def _suggest(key: str, known: Collection[str]) -> str | None:
+    # Names from boto3 or the model (RoleArn, S, BOOL) differ from the Python
+    # names only in case and escaping, which difflib's ratio misses for short keys.
+    snake = to_snake_case(key)
+    for candidate in (snake, snake + "_"):
+        if candidate in known:
+            return candidate
+    from difflib import get_close_matches
+
+    matches = get_close_matches(key, list(known), n=1)
+    return matches[0] if matches else None
+
+
+def _missing(required: tuple[str, ...], kwargs: dict[str, Any]) -> _InvalidParam:
+    missing = [name for name in required if name not in kwargs]
+
+    def render(path: str) -> str:
+        names = ", ".join(f"{path}.{name}" if path else name for name in missing)
+        plural = "s" if len(missing) > 1 else ""
+        return f"Missing required parameter{plural}: {names}"
+
+    return _InvalidParam(render)
+
+
+def _union_count(shape: str, set_keys: list[str]) -> _InvalidParam:
+    got = f"{len(set_keys)} ({', '.join(sorted(set_keys))})" if set_keys else "0"
+    return _InvalidParam(
+        lambda path: (
+            f"Invalid parameter {path}: a {shape} dict must set exactly "
+            f"one member, got {got}"
+        )
+    )
+
+
+def _to_dict(value: Any) -> Any:
+    return value.to_dict()
+
+
+def _unknown_to_dict(self: Any) -> dict[str, Any]:
+    return {}
 
 
 def _py_type(member: Schema) -> Any:

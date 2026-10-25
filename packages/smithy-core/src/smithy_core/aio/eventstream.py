@@ -31,9 +31,9 @@ class AsyncDuplexEventStream[
 
         async def main():
             client = ChatClient()
-            input = StreamMessagesInput(chat_room="aws-python-sdk", username="hunter7")
-
-            async with client.stream_messages(input=input) as stream:
+            async with await client.stream_messages(
+                chat_room="aws-python-sdk", username="hunter7"
+            ) as stream:
                 stream.input_stream.send(
                     MessageStreamMessage("Chat logger starting up.")
                 )
@@ -137,9 +137,9 @@ class AsyncInputEventStream[IE: SerializeableShape, O]:
 
         async def main():
             client = ChatClient()
-            input = PublishMessagesInput(chat_room="aws-python-sdk", username="hunter7")
-
-            async with client.publish_messages(input=input) as stream:
+            async with await client.publish_messages(
+                chat_room="aws-python-sdk", username="hunter7"
+            ) as stream:
                 stream.input_stream.send(
                     MessageStreamMessage("High severity ticket alert!")
                 )
@@ -203,9 +203,9 @@ class AsyncOutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
 
         async def main():
             client = ChatClient()
-            input = ReceiveMessagesInput(chat_room="aws-python-sdk")
-
-            async with client.receive_messages(input=input) as stream:
+            async with await client.receive_messages(
+                chat_room="aws-python-sdk"
+            ) as stream:
                 async for event in stream.output_stream:
                     match event:
                         case MessageStreamMessage():

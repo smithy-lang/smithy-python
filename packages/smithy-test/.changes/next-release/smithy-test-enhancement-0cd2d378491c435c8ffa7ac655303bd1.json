@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Added `verify_client`, and a `params_pyi_path` option to `verify_models`, to check that generated clients and their dictionary forms match the runtime."
+}

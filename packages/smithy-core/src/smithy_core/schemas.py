@@ -466,6 +466,18 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
 
         return operation_error_schemas(self.static_schema)
 
+    def input_from_params(self, params: Mapping[str, Any]) -> I:
+        """Build the operation's input from its keyword parameters.
+
+        :param params: The generated operation method's keyword arguments, keyed by
+            Python member name. The ``self`` and ``plugins`` arguments are ignored.
+            Nested structures and unions may be dictionaries or model instances.
+        :raises TypeError: If a required member is missing, a dictionary has an
+            unknown key, a union dictionary doesn't set exactly one member, or a
+            ``str``, ``bytes``, or ``bytearray`` is given for a list member.
+        """
+        return self.model_registry.input_from_params(self.input_schema, params)
+
     @property
     def idempotency_token_member(self) -> Schema | None:
         """The input schema member that serves as the idempotency token."""

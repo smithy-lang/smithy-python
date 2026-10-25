@@ -19,7 +19,7 @@ _RESERVED_MEMBERS = frozenset(
     finally for from global if import in is lambda nonlocal not or pass raise
     return try while with yield bool bytes bytearray dict float int list str
     datetime serialize serialize_members deserialize __init__ __post_init__
-    _smithy_default __repr__ __annotations__""".split()
+    _smithy_default to_dict __repr__ __annotations__""".split()
 )
 # reserved-error-member-names.txt
 _RESERVED_ERROR_MEMBERS = frozenset(
@@ -27,6 +27,9 @@ _RESERVED_ERROR_MEMBERS = frozenset(
 )
 _ERROR_MESSAGE_MEMBER_NAMES = frozenset({"errormessage", "error_message", "message"})
 _RESPONSE_METADATA_MEMBER = "response_metadata"
+# An operation input member becomes a keyword parameter of the operation method,
+# where these names are taken by the method's own `self` and `plugins` parameters.
+OPERATION_METHOD_ARGS = frozenset({"self", "plugins"})
 
 
 def to_snake_case(word: str) -> str:
@@ -44,12 +47,15 @@ def member_field_name(
     is_error: bool,
     carries_response_metadata: bool,
     is_enum: bool,
+    is_operation_input: bool,
 ) -> str:
     """Derive the generated python field name for a member.
 
     :param carries_response_metadata: True if the container is an error or an
         operation output structure (which the generator gives a response_metadata
         attribute).
+    :param is_operation_input: True if the container is an operation input
+        structure, whose members are also the operation method's parameters.
     """
     if is_error and wire_name.lower() in _ERROR_MESSAGE_MEMBER_NAMES:
         return "message"
@@ -62,6 +68,8 @@ def member_field_name(
     if is_error and name in _RESERVED_ERROR_MEMBERS:
         name += "_"
     if name == _RESPONSE_METADATA_MEMBER and carries_response_metadata:
+        name += "_"
+    if is_operation_input and name in OPERATION_METHOD_ARGS:
         name += "_"
     if is_enum:
         name = _escape_enum_underscores(name).upper()
