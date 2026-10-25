@@ -98,6 +98,24 @@ def test_attributes_projections_scopes_and_comparators() -> None:
     assert _select(model, "[id|name ^= match i]") == {"example#Match"}
 
 
+def test_null_trait_value_is_present() -> None:
+    model = _model(
+        {
+            "example#Container": {
+                "type": "structure",
+                "members": {
+                    "value": {
+                        "target": "smithy.api#Document",
+                        "traits": {"smithy.api#default": None},
+                    }
+                },
+            }
+        }
+    )
+
+    assert _select(model, "member [trait|default]") == {"example#Container$value"}
+
+
 def test_neighbors_recursive_functions_and_variables() -> None:
     model = _model(
         {

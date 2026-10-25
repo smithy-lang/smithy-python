@@ -272,13 +272,19 @@ Publication uses `os.replace` to atomically update each file. Commit requires
 exclusive access to the configured output directory.
 
 The output directory contains a generated artifact manifest with normalized
-paths and content hashes. On a later run, the generator may delete a stale file
-only when the previous manifest owns it and its content still matches the
-recorded hash. Modified generated files and files absent from the manifest are
-retained.
+paths and content hashes. Current generated paths are authoritative. Commit
+replaces a current path when the previous manifest owns it, even if its contents
+changed. If a current path already exists and the previous manifest does not own
+it, commit fails with an output collision.
 
-When no previous artifact manifest exists, the generator does not delete
-existing files.
+On a later run, the generator may delete a stale file only when the previous
+manifest owns it and its content still matches the recorded hash. Modified stale
+files are retained and are no longer owned by the manifest. Files absent from
+the manifest are retained unless they collide with a current generated path.
+
+Callers use a dedicated, generator-managed output directory and keep custom
+files at non-conflicting paths. Initial generation starts with no files at
+generated destinations.
 
 The Smithy `run` plugin output restriction still applies. Symlinks or resolved
 ancestors that escape the output root are rejected.

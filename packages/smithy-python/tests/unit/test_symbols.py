@@ -6,7 +6,7 @@ import keyword
 
 import pytest
 from smithy_python.dependencies import SMITHY_CORE
-from smithy_python.model import MemberShape, Model, load_model
+from smithy_python.model import MemberShape, Model, ShapeId, load_model
 from smithy_python.selection import select_shapes
 from smithy_python.symbols import SymbolProvider
 
@@ -333,6 +333,49 @@ def test_collections_and_recursive_named_types(sparse: bool) -> None:
     for member in ("required", "defaulted"):
         target = model.expect_shape(f"example#Node${member}", MemberShape).target
         assert symbols.type_reference(target) == TypeReference("str", "builtins")
+
+
+def test_type_reference_override_applies_within_collections() -> None:
+    from smithy_python.symbols import TypeReference
+
+    model = model_with(
+        {
+            "example#Times": {
+                "type": "list",
+                "member": {"target": "smithy.api#Timestamp"},
+            },
+            "example#NestedTimes": {
+                "type": "list",
+                "member": {"target": "example#Times"},
+            },
+            "example#TimeMap": {
+                "type": "map",
+                "key": {"target": "smithy.api#String"},
+                "value": {"target": "smithy.api#Timestamp"},
+            },
+        }
+    )
+
+    class CustomSymbolProvider(SymbolProvider):
+        def type_reference(self, shape_id: ShapeId | str) -> TypeReference:
+            if str(shape_id) == "smithy.api#Timestamp":
+                return TypeReference("CustomTimestamp", "example.timestamps")
+            return super().type_reference(shape_id)
+
+    symbols = CustomSymbolProvider(model, select_shapes(model), package="pkg")
+    timestamp = TypeReference("CustomTimestamp", "example.timestamps")
+    times = TypeReference("list", "builtins", (timestamp,))
+
+    assert symbols.type_reference("smithy.api#Timestamp") == timestamp
+    assert symbols.type_reference("example#Times") == times
+    assert symbols.type_reference("example#NestedTimes") == TypeReference(
+        "list", "builtins", (times,)
+    )
+    assert symbols.type_reference("example#TimeMap") == TypeReference(
+        "dict",
+        "builtins",
+        (TypeReference("str", "builtins"), timestamp),
+    )
 
 
 @pytest.mark.parametrize("mutual", [False, True])

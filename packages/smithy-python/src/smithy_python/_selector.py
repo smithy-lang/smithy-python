@@ -681,8 +681,6 @@ class _Value:
     def present(self) -> bool:
         if self.kind == "empty":
             return False
-        if self.kind == "node" and self.value is None:
-            return False
         if self.kind == "projection":
             return bool(self.value)
         return True

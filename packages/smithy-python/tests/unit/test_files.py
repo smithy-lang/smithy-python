@@ -100,12 +100,42 @@ def test_validation_failure_leaves_existing_output_untouched(tmp_path: Path) -> 
     existing.write_text("value = 'original'\n", encoding="utf-8")
 
     files = FileManifest()
-    files.python_module("existing.py", "existing").line("if")
+    files.python_module("invalid.py", "invalid").line("if")
     with pytest.raises(CodegenError, match="not valid Python"):
         files.commit(output)
 
     assert existing.read_text(encoding="utf-8") == "value = 'original'\n"
+    assert not output.joinpath("invalid.py").exists()
     assert not output.joinpath(_OWNERSHIP_MANIFEST).exists()
+
+
+def test_unowned_current_file_is_not_overwritten(tmp_path: Path) -> None:
+    output = tmp_path / "output"
+    output.mkdir()
+    existing = output / "current.txt"
+    existing.write_text("user\n", encoding="utf-8")
+
+    files = FileManifest()
+    files.text_file("current.txt", "generated\n")
+    with pytest.raises(CodegenError, match="not owned"):
+        files.commit(output)
+
+    assert existing.read_text(encoding="utf-8") == "user\n"
+    assert not output.joinpath(_OWNERSHIP_MANIFEST).exists()
+
+
+def test_owned_current_file_is_replaced_even_when_modified(tmp_path: Path) -> None:
+    output = tmp_path / "output"
+    first = FileManifest()
+    first.text_file("current.txt", "first\n")
+    first.commit(output)
+    output.joinpath("current.txt").write_text("modified\n", encoding="utf-8")
+
+    second = FileManifest()
+    second.text_file("current.txt", "second\n")
+    second.commit(output)
+
+    assert output.joinpath("current.txt").read_text(encoding="utf-8") == "second\n"
 
 
 def test_stale_owned_files_are_deleted_only_when_unmodified(tmp_path: Path) -> None:

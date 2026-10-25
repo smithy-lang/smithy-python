@@ -80,7 +80,7 @@ class FileManifest:
 
         previous = self._load_previous_manifest(output)
         for path in self._files:
-            self._validate_destination(output, path)
+            self._validate_destination(output, path, owned=path in previous)
         for path in previous:
             self._validate_safe_path(output, path)
 
@@ -130,7 +130,7 @@ class FileManifest:
                     )
 
     @classmethod
-    def _validate_destination(cls, output: Path, path: str) -> None:
+    def _validate_destination(cls, output: Path, path: str, *, owned: bool) -> None:
         cls._validate_safe_path(output, path)
         parts = PurePosixPath(path).parts
         current = output
@@ -147,6 +147,11 @@ class FileManifest:
                 ):
                     raise _exceptions.CodegenError(
                         f"Generated path {path!r} conflicts with {current}"
+                    )
+                if is_target and not owned:
+                    raise _exceptions.CodegenError(
+                        f"Generated path {path!r} already exists but is not owned "
+                        "by the output manifest"
                     )
 
     @staticmethod

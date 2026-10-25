@@ -189,7 +189,7 @@ class SymbolProvider:
                     else (shape.key.target, shape.value.target)
                 )
                 if expanded:
-                    arguments = tuple(resolved[target] for target in targets)
+                    arguments = tuple(self.type_reference(target) for target in targets)
                     if shape.has_trait("sparse"):
                         arguments = (
                             *arguments[:-1],
