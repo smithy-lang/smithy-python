@@ -525,13 +525,39 @@ def test_rename_normalization(name: str, expected: str) -> None:
     )
 
 
-@pytest.mark.parametrize("kind", ["blob", "union"])
-def test_streaming_rejected_when_resolved(kind: str) -> None:
+def test_streaming_blob_type_reference() -> None:
+    from smithy_python.symbols import TypeReference
+
+    model = model_with(
+        {
+            "example#Stream": {
+                "type": "blob",
+                "traits": {"smithy.api#streaming": {}},
+            },
+            "example#Streams": {"type": "list", "member": {"target": "example#Stream"}},
+        }
+    )
+    symbols = SymbolProvider(model, select_shapes(model), package="pkg")
+    stream = TypeReference(
+        "StreamingBlob",
+        "smithy_core.aio.interfaces",
+        dependencies=(SMITHY_CORE,),
+    )
+    assert symbols.type_reference("example#Stream") == stream
+    assert symbols.type_reference("example#Streams") == TypeReference(
+        "list", "builtins", (stream,)
+    )
+
+
+def test_streaming_union_rejected_when_resolved() -> None:
     from smithy_python.model import ModelError
 
     model = model_with(
         {
-            "example#Stream": {"type": kind, "traits": {"smithy.api#streaming": {}}},
+            "example#Stream": {
+                "type": "union",
+                "traits": {"smithy.api#streaming": {}},
+            },
             "example#Streams": {"type": "list", "member": {"target": "example#Stream"}},
         }
     )

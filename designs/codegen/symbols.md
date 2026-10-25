@@ -193,9 +193,9 @@ Collection expansion does not use Python recursion. A cycle made entirely of
 collections, such as two lists containing each other, raises `ModelError` with
 the IDs in the cycle. A failed lookup does not affect later lookups.
 
-Streaming types are deferred until their Python interfaces are defined. The
-provider rejects streaming blobs and event-stream unions rather than treating
-them as ordinary values.
+Streaming blobs resolve to `smithy_core.aio.interfaces.StreamingBlob`, including
+when nested in collections. Event-stream unions retain schema names for
+protocol integration and do not produce model declarations.
 
 ## Inputs and errors
 

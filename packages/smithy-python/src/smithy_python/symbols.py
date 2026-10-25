@@ -216,6 +216,8 @@ class SymbolProvider:
                 resolved[current] = TypeReference(
                     self.declaration_name(current), f"{self._package}.models"
                 )
+            elif shape.type is ShapeType.BLOB and shape.has_trait("streaming"):
+                resolved[current] = _STREAMING_BLOB
             elif shape.type in _FIXED_TYPES:
                 resolved[current] = _FIXED_TYPES[shape.type]
             else:
@@ -263,9 +265,7 @@ class SymbolProvider:
             in (ShapeType.SERVICE, ShapeType.OPERATION, ShapeType.RESOURCE)
         ):
             raise ModelError(f"No data symbol for {shape.id} ({shape.type})")
-        if shape.type in (ShapeType.BLOB, ShapeType.UNION) and shape.has_trait(
-            "streaming"
-        ):
+        if shape.type is ShapeType.UNION and shape.has_trait("streaming"):
             raise ModelError(f"Unsupported streaming {shape.type}: {shape.id}")
         return shape
 
@@ -281,6 +281,12 @@ _KEYWORDS = frozenset(
 _ENUMS = frozenset({ShapeType.ENUM, ShapeType.INT_ENUM})
 _ACRONYM_BOUNDARY = re.compile(r"([A-Z]+)([A-Z][a-z])")
 _WORD_BOUNDARY = re.compile(r"([a-z0-9])([A-Z])")
+
+_STREAMING_BLOB = TypeReference(
+    "StreamingBlob",
+    "smithy_core.aio.interfaces",
+    dependencies=(_dependencies.SMITHY_CORE,),
+)
 
 # Types whose reference never depends on the shape: Smithy's simple types, with
 # enums widened to str/int so unknown values remain representable.
