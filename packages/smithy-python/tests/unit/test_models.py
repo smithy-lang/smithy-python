@@ -44,6 +44,7 @@ def _context(
     *,
     service_id: str | None = "example#Service",
     package: str = _PACKAGE,
+    stub_partition_size: int | None = 250,
 ) -> GenerationContext[TypesSettings]:
     model = load_model(model_data)
     selection = select_type_shapes(
@@ -51,7 +52,12 @@ def _context(
         service_id=service_id,
         generate_inputs_and_outputs=True,
     )
-    settings = TypesSettings(package, "1.0.0", None)
+    settings = TypesSettings(
+        package,
+        "1.0.0",
+        None,
+        stub_partition_size=stub_partition_size,
+    )
     symbols = SymbolProvider(
         model,
         selection,
@@ -191,8 +197,15 @@ def _model() -> dict[str, object]:
     }
 
 
-def _generate(tmp_path: Path) -> tuple[GenerationContext[TypesSettings], Path]:
-    context = _context(_model())
+def _generate(
+    tmp_path: Path,
+    *,
+    stub_partition_size: int | None = 250,
+) -> tuple[GenerationContext[TypesSettings], Path]:
+    context = _context(
+        _model(),
+        stub_partition_size=stub_partition_size,
+    )
     SchemaGenerator().generate(context)
     ModelGenerator().generate(context)
     context.files.text_file(f"src/{_PACKAGE}/__init__.py", "")
@@ -431,6 +444,68 @@ def test_generated_models_are_lazy_and_runtime_compatible(
     assert "Original" not in models.__all__
     with pytest.raises(AttributeError):
         models.Original
+
+
+def test_partitioned_stub_preserves_public_models(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _, source_root = _generate(
+        tmp_path,
+        stub_partition_size=2,
+    )
+    package = source_root / _PACKAGE
+    facade = (package / "models.pyi").read_text()
+    partitions = sorted((package / "_private").glob("models_*.pyi"))
+    assert len(partitions) == 4
+    assert "class Input(" not in facade
+    assert "from ._private.models_0 import (" in facade
+    assert "Input," in facade
+    assert "Input as Input" not in facade
+    assert "_SelectionDeserializer" not in facade
+    assert any("class Input(" in path.read_text() for path in partitions)
+
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(source_root)
+    )
+    models = importlib.import_module(f"{_PACKAGE}.models")
+    assert models.Renamed(value="value").value == "value"
+    assert models.SelectionText(value="value").value == "value"
+
+    generated = tuple(
+        str(path)
+        for path in sorted(package.rglob("*"))
+        if path.suffix in {".py", ".pyi"}
+    )
+    result = _run_tool("ruff", "check", "--isolated", *generated)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize(("declaration_count", "partition_count"), [(250, 0), (251, 2)])
+def test_stub_partition_threshold(
+    tmp_path: Path,
+    declaration_count: int,
+    partition_count: int,
+) -> None:
+    package = "generated_threshold"
+    context = _context(
+        {
+            "smithy": "2.0",
+            "shapes": {
+                f"example#Shape{index}": {"type": "structure"}
+                for index in range(declaration_count)
+            },
+        },
+        service_id=None,
+        package=package,
+    )
+    ModelGenerator().generate(context)
+    context.files.commit(tmp_path)
+
+    source = tmp_path / f"src/{package}"
+    assert len(tuple((source / "_private").glob("models_*.pyi"))) == partition_count
+    facade = (source / "models.pyi").read_text()
+    assert ("._private.models_0" in facade) is bool(partition_count)
 
 
 def test_generated_model_names_do_not_shadow_runtime_helpers(
@@ -750,10 +825,12 @@ def test_modeled_unit_does_not_shadow_prelude_unit(
     assert isinstance(decoded.action.value, models.Unit)
 
 
+@pytest.mark.parametrize("stub_partition_size", [None, 2])
 def test_generated_stub_passes_strict_pyright(
     tmp_path: Path,
+    stub_partition_size: int | None,
 ) -> None:
-    _, source_root = _generate(tmp_path)
+    _, source_root = _generate(tmp_path, stub_partition_size=stub_partition_size)
     (tmp_path / "check.py").write_text(
         (
             f"from {_PACKAGE}.models import Input, Problem, Renamed, SelectionText, Tone\n\n"

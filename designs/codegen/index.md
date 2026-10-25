@@ -65,3 +65,4 @@ behavior of generated packages.
 * [Python Symbols](symbols.md)
 * [Python Writer](writer.md)
 * [Standalone Types Generation](types.md)
+* [Code Generation Partitioning](partitioning.md)
