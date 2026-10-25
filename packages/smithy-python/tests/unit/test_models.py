@@ -101,6 +101,7 @@ def _model() -> dict[str, object]:
                     "renamed": {"target": "example#Original"},
                     "choice": {"target": "example#Choice"},
                     "color": {"target": "example#Color"},
+                    "stream": {"target": "example#Stream"},
                 },
             },
             "example#Output": {
@@ -174,6 +175,10 @@ def _model() -> dict[str, object]:
                         "traits": {"smithy.api#enumValue": 200},
                     }
                 },
+            },
+            "example#Stream": {
+                "type": "blob",
+                "traits": {"smithy.api#streaming": {}},
             },
         },
     }
@@ -264,10 +269,12 @@ def test_model_generator_emits_runtime_and_stub(tmp_path: Path) -> None:
     assert "def __dir__() -> list[str]:" in runtime
 
     assert "class Input(_SerdeShape):" in stub
+    assert "from smithy_core.aio.interfaces import StreamingBlob" in stub
     assert service_error_doc in stub
     assert '"Input docs."' in stub
     assert "required: str | None = ..." in stub
     assert "list_: str | None = ..." in stub
+    assert "stream: StreamingBlob | None = ..." in stub
     assert "class Problem(ServiceError, _SerdeShape):" in stub
     assert "message:" not in stub
     assert "fault_: str | None = ..." in stub
@@ -321,6 +328,36 @@ def test_generated_models_are_lazy_and_runtime_compatible(
     )
     assert input_.list_ == "value"
     assert input_.renamed is value
+
+    stream = b"stream"
+    stream_input = models.Input(stream=stream)
+    assert stream_input.stream is stream
+
+    class StreamSerializer:
+        value: object | None = None
+
+        def write_data_stream(self, schema: Any, value: object) -> None:
+            self.value = value
+
+    serializer = StreamSerializer()
+    stream_input.serialize_members(serializer)
+    assert serializer.value is stream
+
+    class StreamDeserializer:
+        def read_struct(self, schema: Any, consumer: Any) -> None:
+            member = next(
+                member
+                for member in schema.members_by_index
+                if member.expect_member_name() == "stream"
+            )
+            consumer(member, self)
+
+        def read_data_stream(self, schema: Any) -> bytes:
+            return stream
+
+    decoded_stream = models.Input.deserialize(StreamDeserializer())
+    assert decoded_stream.stream is stream
+
     decoded = JSONCodec().deserialize(
         (
             b'{"required":"yes","renamed":{"value":"hello"},'
@@ -689,7 +726,7 @@ def test_generated_stub_passes_strict_pyright(
             f"from {_PACKAGE}.models import Input, Problem, Renamed, SelectionText, Tone\n\n"
             "renamed = Renamed(value='value')\n"
             "Input(required='required', renamed=renamed, "
-            "choice=SelectionText(value='x'), color=Tone.RED)\n"
+            "choice=SelectionText(value='x'), color=Tone.RED, stream=b'payload')\n"
             "problem = Problem('bad')\n"
             "message: str = problem.message\n"
         ),
