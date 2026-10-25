@@ -1,4 +1,4 @@
-# Native Python symbols
+# Python symbols
 
 `SymbolProvider` answers three questions for the Python generator:
 

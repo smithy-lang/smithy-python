@@ -63,7 +63,7 @@ generate-protocol-tests: ## Generates protocol-test clients, copies them to ./co
 	@echo "codegen-output is up to date."
 
 
-generate-codegen-output-py: ## Generates native Python output and asserts no snapshot diff.
+generate-codegen-output-py: ## Generates Python output and asserts no snapshot diff.
 	rm -rf codegen-output-py
 	uv run python scripts/codegen-output-py/generate.py
 	@if ! git diff --quiet --exit-code -- codegen-output-py || [ -n "$$(git ls-files --others --exclude-standard -- codegen-output-py)" ]; then \

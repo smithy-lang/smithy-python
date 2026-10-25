@@ -1,4 +1,4 @@
-# Native Python writer
+# Python writer
 
 `PythonWriter` turns lines of Python text and `TypeReference` values into the
 source of one module. Pass references from `SymbolProvider.type_reference()`

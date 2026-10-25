@@ -1,6 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Regenerate the committed native Python codegen snapshot."""
+"""Regenerate the committed Python codegen snapshot."""
 
 import hashlib
 import json
@@ -33,7 +33,7 @@ def main() -> None:
     settings = TypesSettings(
         package=_PACKAGE,
         package_version="1.0.0",
-        package_description="Example native Python codegen output",
+        package_description="Example Python codegen output",
     )
     symbols = SymbolProvider(model, selection, package=settings.package)
     dependencies = DependencySet()
