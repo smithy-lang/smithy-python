@@ -686,6 +686,9 @@
     "CRC64NVME": "class",
     "Checksum": "protocol",
     "HAS_NATIVE_EXTENSION": "bool",
+    "XXHash128": "class",
+    "XXHash3": "class",
+    "XXHash64": "class",
     "new": "function"
   },
   "smithy_core": {

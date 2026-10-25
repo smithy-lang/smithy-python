@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from types import ModuleType
 
 import pytest
-from smithy_checksums._private import crc
+from smithy_checksums._private import crc, xxhash
 from smithy_checksums._private.selection import ChecksumImpl
 
 from .vectors import ALGORITHMS, KNOWN_ANSWERS, PATTERN_DIGESTS, pattern
@@ -24,6 +24,9 @@ PURE: dict[str, Factory] = {
     "crc32": crc.Crc32,
     "crc32c": crc.Crc32C,
     "crc64nvme": crc.Crc64Nvme,
+    "xxhash64": xxhash.XxHash64,
+    "xxhash3": xxhash.XxHash3,
+    "xxhash128": xxhash.XxHash128,
 }
 
 
@@ -43,6 +46,9 @@ NATIVE: dict[str, Factory] = (
         "crc32": _NATIVE_MODULE.Crc32,
         "crc32c": _NATIVE_MODULE.Crc32C,
         "crc64nvme": _NATIVE_MODULE.Crc64Nvme,
+        "xxhash64": _NATIVE_MODULE.XxHash64,
+        "xxhash3": _NATIVE_MODULE.XxHash3,
+        "xxhash128": _NATIVE_MODULE.XxHash128,
     }
 )
 requires_native = pytest.mark.skipif(
@@ -176,6 +182,9 @@ def test_matches_crt(impls: dict[str, Factory], algorithm: str) -> None:
         "crc32": lambda data: crt.crc32(data).to_bytes(4, "big"),
         "crc32c": lambda data: crt.crc32c(data).to_bytes(4, "big"),
         "crc64nvme": lambda data: crt.crc64nvme(data).to_bytes(8, "big"),
+        "xxhash64": crt.XXHash.compute_xxhash64,
+        "xxhash3": crt.XXHash.compute_xxhash3_64,
+        "xxhash128": crt.XXHash.compute_xxhash3_128,
     }
     data = os.urandom(3000)
     for length in [*range(0, 300, 7), 1023, 1024, 1025, 3000]:

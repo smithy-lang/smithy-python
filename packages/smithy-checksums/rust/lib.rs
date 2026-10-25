@@ -4,8 +4,10 @@
 //! Native checksum implementations for `smithy_checksums`.
 //!
 //! Each class mirrors the pure-Python implementation of the same name in
-//! `smithy_checksums._private.crc`, so the two are interchangeable.
+//! `smithy_checksums._private.crc` or `smithy_checksums._private.xxhash`, so
+//! the two are interchangeable.
 
+use std::hash::Hasher as _;
 use std::sync::{Mutex, MutexGuard};
 
 use pyo3::buffer::PyBuffer;
@@ -55,6 +57,63 @@ macro_rules! crc_state {
 crc_state!(Crc32State, Crc32IsoHdlc, u32);
 crc_state!(Crc32cState, Crc32Iscsi, u32);
 crc_state!(Crc64NvmeState, Crc64Nvme, u64);
+
+#[derive(Clone)]
+struct XxHash64State(twox_hash::XxHash64);
+
+impl State for XxHash64State {
+    type Digest = [u8; 8];
+
+    fn new() -> Self {
+        Self(twox_hash::XxHash64::with_seed(0))
+    }
+
+    fn update(&mut self, data: &[u8]) {
+        self.0.write(data);
+    }
+
+    fn digest(&self) -> Self::Digest {
+        self.0.finish().to_be_bytes()
+    }
+}
+
+#[derive(Clone)]
+struct XxHash3State(twox_hash::XxHash3_64);
+
+impl State for XxHash3State {
+    type Digest = [u8; 8];
+
+    fn new() -> Self {
+        Self(twox_hash::XxHash3_64::new())
+    }
+
+    fn update(&mut self, data: &[u8]) {
+        self.0.write(data);
+    }
+
+    fn digest(&self) -> Self::Digest {
+        self.0.finish().to_be_bytes()
+    }
+}
+
+#[derive(Clone)]
+struct XxHash128State(twox_hash::XxHash3_128);
+
+impl State for XxHash128State {
+    type Digest = [u8; 16];
+
+    fn new() -> Self {
+        Self(twox_hash::XxHash3_128::new())
+    }
+
+    fn update(&mut self, data: &[u8]) {
+        self.0.write(data);
+    }
+
+    fn digest(&self) -> Self::Digest {
+        self.0.finish_128().to_be_bytes()
+    }
+}
 
 fn lock<S>(state: &Mutex<S>) -> MutexGuard<'_, S> {
     // A panic while holding the lock can't leave a checksum half-updated in a
@@ -124,9 +183,12 @@ macro_rules! checksum_class {
 checksum_class!(Crc32, Crc32State);
 checksum_class!(Crc32C, Crc32cState);
 checksum_class!(Crc64Nvme, Crc64NvmeState);
+checksum_class!(XxHash64, XxHash64State);
+checksum_class!(XxHash3, XxHash3State);
+checksum_class!(XxHash128, XxHash128State);
 
 #[pymodule]
 mod _native {
     #[pymodule_export]
-    use super::{Crc32, Crc32C, Crc64Nvme};
+    use super::{Crc32, Crc32C, Crc64Nvme, XxHash3, XxHash64, XxHash128};
 }
