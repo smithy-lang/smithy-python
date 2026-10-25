@@ -109,6 +109,12 @@ def test_new_rejects_unknown_algorithms() -> None:
         new("crc16")
 
 
+def test_checksum_protocol_supports_isinstance() -> None:
+    assert isinstance(CRC32C(), Checksum)
+    assert isinstance(hashlib.sha256(), Checksum)
+    assert not isinstance(object(), Checksum)
+
+
 def test_has_native_extension() -> None:
     built = importlib.util.find_spec("smithy_checksums._native") is not None
     assert smithy_checksums.HAS_NATIVE_EXTENSION is built

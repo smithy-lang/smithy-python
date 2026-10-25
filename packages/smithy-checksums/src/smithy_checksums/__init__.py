@@ -11,7 +11,7 @@ through :func:`new` and always use :mod:`hashlib`.
 import hashlib
 from collections.abc import Buffer
 from importlib.metadata import version
-from typing import ClassVar, Final, Protocol, Self
+from typing import ClassVar, Final, Protocol, Self, runtime_checkable
 
 from ._private.backend import IMPLEMENTATIONS as _IMPLEMENTATIONS
 from ._private.backend import NATIVE as _NATIVE
@@ -34,6 +34,7 @@ When it isn't, CRC32C is computed in pure Python.
 """
 
 
+@runtime_checkable
 class Checksum(Protocol):
     """A streaming checksum.
 
