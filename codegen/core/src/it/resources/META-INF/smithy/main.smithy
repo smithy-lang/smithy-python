@@ -24,6 +24,8 @@ service Weather {
         GetCurrentTime
         TestUnionListOperation
         StreamAtmosphericConditions
+        ShadowedNames
+        RequiredParameters
     ]
 }
 
@@ -54,6 +56,82 @@ operation TestUnionListOperation {
         responseMetadata: String
     }
 }
+
+// Members named like the operation method's own parameters and body locals, which
+// the generated method must neither shadow nor be shadowed by.
+@http(method: "POST", uri: "/shadowed-names")
+operation ShadowedNames {
+    input := {
+        pipeline: String
+        call: String
+        locals: String
+        self: String
+        plugins: String
+    }
+}
+
+// A required member of each kind. Response tests pass a placeholder for each one.
+@http(method: "POST", uri: "/required-parameters/{label}")
+operation RequiredParameters {
+    input := {
+        @required
+        @httpLabel
+        label: String
+
+        @required
+        blob: Blob
+
+        @required
+        yesNo: StringYesNo
+
+        @required
+        intYesNo: IntYesNo
+
+        @required
+        amount: BigDecimal
+
+        @required
+        time: Timestamp
+
+        @required
+        document: Document
+
+        @required
+        names: StringList
+
+        @required
+        tags: StringMap
+
+        @required
+        image: PNGImage
+
+        @required
+        imageType: ImageType
+
+        // The union's first member leads back here, so the placeholder uses the other.
+        @required
+        chain: Chain
+    }
+}
+
+structure Chain {
+    @required
+    next: ChainLink
+}
+
+union ChainLink {
+    again: Chain
+    end: String
+}
+
+apply RequiredParameters @httpResponseTests([
+    {
+        id: "RequiredParametersPlaceholders"
+        documentation: "Passes a placeholder for each required parameter."
+        protocol: restJson1
+        code: 200
+    }
+])
 
 list UnionList {
     member: UnionListMember

@@ -6,6 +6,7 @@ package software.amazon.smithy.python.codegen.writer;
 
 import static software.amazon.smithy.python.codegen.SymbolProperties.IMPORTABLE;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,6 +39,11 @@ import software.amazon.smithy.utils.StringUtils;
  * {@link #toString()} time, the writer detects name collisions between imported symbols
  * and locally-defined names, aliases colliding imports with a {@code _} prefix, and
  * replaces all placeholder tokens with the resolved (possibly aliased) names.
+ *
+ * <p>Use the {@code $A} formatter to refer to {@link Symbol}s that are only used in
+ * annotations. It resolves names like {@code $T}, but imports the symbol (and the
+ * symbols it uses) inside an {@code if TYPE_CHECKING:} block and enables
+ * {@code from __future__ import annotations}, so importing the file doesn't import them.
  *
  * <p>Use the {@code $N} formatter to render {@link Node}s.
  */
@@ -87,7 +93,8 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         this.filename = filename;
         trimBlankLines();
         trimTrailingSpaces();
-        putFormatter('T', new PythonSymbolFormatter());
+        putFormatter('T', new PythonSymbolFormatter(false));
+        putFormatter('A', new PythonSymbolFormatter(true));
         putFormatter('N', new PythonNodeFormatter(this));
     }
 
@@ -349,6 +356,29 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     }
 
     /**
+     * Writes {@code from namespace import (X as X, ...)} in place, for names this file
+     * re-exports.
+     *
+     * <p>The redundant alias is what marks a name as re-exported: a stub only re-exports
+     * names imported that way, and pyright and ruff don't report them as unused. The
+     * import container drops an alias that equals the name, so these bypass it.
+     *
+     * @param namespace Module to import the names from, written as given.
+     * @param names Names to re-export. Nothing is written if this is empty.
+     * @return Returns the writer.
+     */
+    public PythonWriter writeReexports(String namespace, Collection<String> names) {
+        if (names.isEmpty()) {
+            return this;
+        }
+        return openBlock("from $L import (", ")\n", namespace, () -> {
+            for (String name : names) {
+                write("$1L as $1L,", name);
+            }
+        });
+    }
+
+    /**
      * Conditionally write text.
      *
      * <p>Useful for short-handing a conditional write when
@@ -378,7 +408,21 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * @return Returns the writer.
      */
     public PythonWriter addLocallyDefinedSymbol(Symbol symbol) {
-        locallyDefinedNames.add(symbol.getName());
+        return addLocallyDefinedName(symbol.getName());
+    }
+
+    /**
+     * Records a name as locally defined in this file, such as a function parameter that
+     * shadows module-level names inside the function body.
+     *
+     * <p>Imported symbols with the same name are aliased, as with
+     * {@link #addLocallyDefinedSymbol}.
+     *
+     * @param name The name being defined locally in this file.
+     * @return Returns the writer.
+     */
+    public PythonWriter addLocallyDefinedName(String name) {
+        locallyDefinedNames.add(name);
         return this;
     }
 
@@ -490,28 +534,56 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     }
 
     /**
-     * Implements Python symbol formatting for the {@code $T} formatter.
+     * Implements Python symbol formatting for the {@code $T} and {@code $A} formatters.
      *
      * <p>Instead of returning the symbol's name directly, this formatter writes a placeholder
      * token and registers the symbol in the symbol table. The placeholder is resolved at
      * {@link PythonWriter#toString()} time, where collision detection determines the final name.
+     *
+     * <p>{@code $A} imports the symbol and its use references under {@code TYPE_CHECKING}.
      */
     private final class PythonSymbolFormatter implements BiFunction<Object, String, String> {
+        private final boolean typeCheckingOnly;
+
+        PythonSymbolFormatter(boolean typeCheckingOnly) {
+            this.typeCheckingOnly = typeCheckingOnly;
+        }
+
         @Override
         public String apply(Object type, String indent) {
             if (type instanceof Symbol typeSymbol) {
                 // If a symbol has the IMPORTABLE property set to false, don't import it and
                 // treat the lack of the property being set as true
                 if (typeSymbol.getProperty(IMPORTABLE).orElse(true)) {
-                    addUseImports(typeSymbol);
+                    if (typeCheckingOnly) {
+                        addTypeCheckingImport(typeSymbol, typeSymbol.getName());
+                    } else {
+                        addUseImports(typeSymbol);
+                    }
                 }
                 return resolvePlaceholder(typeSymbol);
             } else if (type instanceof SymbolReference typeSymbol) {
-                addImport(typeSymbol.getSymbol(), typeSymbol.getAlias(), SymbolReference.ContextOption.USE);
+                if (typeCheckingOnly) {
+                    addTypeCheckingImport(typeSymbol.getSymbol(), typeSymbol.getAlias());
+                } else {
+                    addImport(typeSymbol.getSymbol(), typeSymbol.getAlias(), SymbolReference.ContextOption.USE);
+                }
                 return typeSymbol.getAlias();
             } else {
                 throw new CodegenException(
-                        "Invalid type provided to $T. Expected a Symbol, but found `" + type + "`");
+                        "Invalid type provided to $" + (typeCheckingOnly ? "A" : "T")
+                                + ". Expected a Symbol, but found `" + type + "`");
+            }
+        }
+
+        // Mirrors SymbolWriter.addImport(symbol, alias, USE), but into the TYPE_CHECKING block.
+        private void addTypeCheckingImport(Symbol symbol, String alias) {
+            addDependency(symbol);
+            getImportContainer().importTypeCheckingSymbol(symbol, alias);
+            for (SymbolReference reference : symbol.getReferences()) {
+                if (reference.hasOption(SymbolReference.ContextOption.USE)) {
+                    addTypeCheckingImport(reference.getSymbol(), reference.getAlias());
+                }
             }
         }
 

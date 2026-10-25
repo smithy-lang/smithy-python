@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Generated `models.pyi` files declare the `to_dict()` method that the runtime attaches to every model, and a member named `to_dict` is escaped to `to_dict_`."
+}

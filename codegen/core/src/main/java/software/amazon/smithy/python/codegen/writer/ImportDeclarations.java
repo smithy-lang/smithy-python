@@ -4,6 +4,7 @@
  */
 package software.amazon.smithy.python.codegen.writer;
 
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -22,13 +23,17 @@ import software.amazon.smithy.utils.StringUtils;
 @SmithyInternalApi
 public final class ImportDeclarations implements ImportContainer {
     private static final String MODULE_IMPORT_TEMPLATE = "import %s%n";
+    // Relative imports sort last inside the TYPE_CHECKING block, as they do outside it.
+    private static final Comparator<String> TYPE_CHECKING_ORDER =
+            Comparator.comparing((String namespace) -> namespace.startsWith("."))
+                    .thenComparing(Comparator.naturalOrder());
 
     private final Map<String, Map<String, String>> stdlibImports = new TreeMap<>();
     private final Map<String, Map<String, String>> externalImports = new TreeMap<>();
     private final Map<String, Map<String, String>> localImports = new TreeMap<>();
     // Imports emitted inside `if TYPE_CHECKING:` -- used only in annotations, never at
     // runtime. Requires `from __future__ import annotations` so annotations stay strings.
-    private final Map<String, Map<String, String>> typeCheckingImports = new TreeMap<>();
+    private final Map<String, Map<String, String>> typeCheckingImports = new TreeMap<>(TYPE_CHECKING_ORDER);
     private boolean futureAnnotations = false;
 
     private final PythonSettings settings;
@@ -50,13 +55,22 @@ public final class ImportDeclarations implements ImportContainer {
         }
     }
 
+    /**
+     * Imports a symbol inside {@code if TYPE_CHECKING:}, skipping builtins and symbols
+     * defined in this file as {@link #importSymbol} does.
+     *
+     * @param symbol The symbol to import.
+     * @param alias The name to import the symbol as.
+     */
+    public void importTypeCheckingSymbol(Symbol symbol, String alias) {
+        if (!symbol.getNamespace().isEmpty() && !symbol.getNamespace().equals(localNamespace)) {
+            addTypeCheckingImport(symbol.getNamespace(), symbol.getName(), alias);
+        }
+    }
+
     public ImportDeclarations addImport(String namespace, String name, String alias) {
-        var isTestModule = this.localNamespace.startsWith("tests");
         if (namespace.startsWith(settings.moduleName())) {
-            // if the module is for tests, we shouldn't relativize the imports
-            //  as python will complain that the imports are beyond the top-level package
-            var ns = isTestModule ? namespace : relativize(namespace);
-            return addImportToMap(ns, name, alias, localImports);
+            return addImportToMap(importKey(namespace), name, alias, localImports);
         }
         return addImportToMap(namespace, name, alias, externalImports);
     }
@@ -68,12 +82,17 @@ public final class ImportDeclarations implements ImportContainer {
 
     /** Add an import that is emitted only inside `if TYPE_CHECKING:` (annotation-only). */
     public ImportDeclarations addTypeCheckingImport(String namespace, String name, String alias) {
-        var isTestModule = this.localNamespace.startsWith("tests");
-        var ns = namespace.startsWith(settings.moduleName()) && !isTestModule
-                ? relativize(namespace)
-                : namespace;
         enableFutureAnnotations();
-        return addImportToMap(ns, name, alias, typeCheckingImports);
+        return addImportToMap(importKey(namespace), name, alias, typeCheckingImports);
+    }
+
+    // The key an import's namespace is stored under: relative within the package, except
+    // in test modules, where Python rejects relative imports beyond the top-level package.
+    private String importKey(String namespace) {
+        if (namespace.startsWith(settings.moduleName()) && !localNamespace.startsWith("tests")) {
+            return relativize(namespace);
+        }
+        return namespace;
     }
 
     private String relativize(String namespace) {
@@ -131,11 +150,12 @@ public final class ImportDeclarations implements ImportContainer {
      * to {@code from namespace import name as alias}.
      *
      * <p>The lookup mirrors the dispatch logic in {@link #addImport} so that aliasing works
-     * for all three import maps:
+     * for every import map:
      * <ul>
      *   <li>{@code stdlibImports} — keyed by absolute namespace.</li>
      *   <li>{@code externalImports} — keyed by absolute namespace.</li>
-     *   <li>{@code localImports} — keyed by relativized namespace for same-package imports.</li>
+     *   <li>{@code localImports} — keyed by {@code importKey}, relative for same-package imports.</li>
+     *   <li>{@code typeCheckingImports} — keyed by {@code importKey}.</li>
      * </ul>
      *
      * @param namespace The module namespace of the import (absolute).
@@ -149,12 +169,10 @@ public final class ImportDeclarations implements ImportContainer {
         // external imports are stored with absolute namespaces.
         aliasImportInMap(namespace, name, alias, externalImports);
 
-        // local imports may be stored with relativized namespaces (mirroring addImport).
-        if (namespace.startsWith(settings.moduleName())) {
-            var isTestModule = this.localNamespace.startsWith("tests");
-            var ns = isTestModule ? namespace : relativize(namespace);
-            aliasImportInMap(ns, name, alias, localImports);
-        }
+        // local and type-checking imports are keyed by importKey, as their add methods store them.
+        var key = importKey(namespace);
+        aliasImportInMap(key, name, alias, localImports);
+        aliasImportInMap(key, name, alias, typeCheckingImports);
     }
 
     private void aliasImportInMap(
@@ -191,11 +209,12 @@ public final class ImportDeclarations implements ImportContainer {
         if (!localImports.isEmpty()) {
             formatImportList(builder, localImports);
         }
-        if (!typeCheckingImports.isEmpty()) {
+        var typeCheckingOnlyImports = withoutRuntimeImports(typeCheckingImports);
+        if (!typeCheckingOnlyImports.isEmpty()) {
             builder.append("from typing import TYPE_CHECKING\n\n");
             builder.append("if TYPE_CHECKING:\n");
             var block = new StringBuilder();
-            formatImportList(block, typeCheckingImports);
+            formatImportList(block, typeCheckingOnlyImports);
             // indent the rendered imports into the TYPE_CHECKING block
             for (var line : block.toString().split("\n", -1)) {
                 if (line.isEmpty()) {
@@ -207,6 +226,33 @@ public final class ImportDeclarations implements ImportContainer {
         }
         builder.append("\n");
         return builder.toString();
+    }
+
+    // A name the file already imports at runtime is usable in annotations as-is.
+    private Map<String, Map<String, String>> withoutRuntimeImports(Map<String, Map<String, String>> importMap) {
+        Map<String, Map<String, String>> result = new TreeMap<>(TYPE_CHECKING_ORDER);
+        for (var namespaceEntry : importMap.entrySet()) {
+            var namespace = namespaceEntry.getKey();
+            for (var nameEntry : namespaceEntry.getValue().entrySet()) {
+                var name = nameEntry.getKey();
+                if (isRuntimeImport(namespace, name, stdlibImports)
+                        || isRuntimeImport(namespace, name, externalImports)
+                        || isRuntimeImport(namespace, name, localImports)) {
+                    continue;
+                }
+                result.computeIfAbsent(namespace, ns -> new TreeMap<>()).put(name, nameEntry.getValue());
+            }
+        }
+        return result;
+    }
+
+    private static boolean isRuntimeImport(
+            String namespace,
+            String name,
+            Map<String, Map<String, String>> importMap
+    ) {
+        var namespaceImports = importMap.get(namespace);
+        return namespaceImports != null && namespaceImports.containsKey(name);
     }
 
     private void formatImportList(StringBuilder builder, Map<String, Map<String, String>> importMap) {

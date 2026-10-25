@@ -95,3 +95,4 @@ __annotations__
 
 # Generated model runtime methods.
 _smithy_default
+to_dict

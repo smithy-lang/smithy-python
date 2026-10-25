@@ -199,6 +199,65 @@ public class PythonSymbolProviderTest {
         assertEquals("__DUNDER___", memberName(provider, model, "IntValues$__DUNDER__"));
     }
 
+    @Test
+    public void testInputMembersNamedLikeOperationParametersAreEscaped() {
+        Model model = loadModel(OPERATION_PARAMETER_MODEL);
+        PythonSymbolProvider provider = createProvider(model);
+
+        assertEquals("self_", memberName(provider, model, "DoThingInput$self"));
+        assertEquals("plugins_", memberName(provider, model, "DoThingInput$plugins"));
+        assertEquals("plugins_", memberName(provider, model, "OtherThingInput$Plugins"));
+    }
+
+    @Test
+    public void testOperationParameterNamesAreNotEscapedOutsideInputs() {
+        // Only the input's members become keyword parameters.
+        Model model = loadModel(OPERATION_PARAMETER_MODEL);
+        PythonSymbolProvider provider = createProvider(model);
+
+        assertEquals("self", memberName(provider, model, "Nested$self"));
+        assertEquals("plugins", memberName(provider, model, "Nested$plugins"));
+        assertEquals("plugins", memberName(provider, model, "DoThingOutput$plugins"));
+    }
+
+    private static final String OPERATION_PARAMETER_MODEL = """
+            $version: "2"
+            namespace smithy.example
+
+            service TestService {
+                version: "2024-01-01"
+                operations: [DoThing, OtherThing]
+            }
+
+            operation DoThing {
+                input: DoThingInput
+                output: DoThingOutput
+            }
+
+            operation OtherThing {
+                input: OtherThingInput
+            }
+
+            structure DoThingInput {
+                self: String
+                plugins: String
+                nested: Nested
+            }
+
+            structure DoThingOutput {
+                plugins: String
+            }
+
+            structure OtherThingInput {
+                Plugins: String
+            }
+
+            structure Nested {
+                self: String
+                plugins: String
+            }
+            """;
+
     private static final String RESPONSE_METADATA_MODEL = """
             $version: "2"
             namespace smithy.example

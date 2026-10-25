@@ -5,6 +5,8 @@
 package software.amazon.smithy.python.codegen;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -89,6 +91,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private final ServiceShape service;
     private final PythonWriter writer;
     private final GenerationContext context;
+    private final ParamsIndex paramsIndex;
     private final BiPredicate<Shape, HttpMessageTestCase> testFilter;
 
     /**
@@ -111,6 +114,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         this.service = settings.service(model);
         this.writer = writer;
         this.context = context;
+        this.paramsIndex = ParamsIndex.of(context);
         this.testFilter = testFilter;
 
         writer.putFormatter('J', new JavaToPythonFormatter());
@@ -200,18 +204,15 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
 
-                    // Generate the input using the expected shape and params
-                    var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
-                    writer.write("input_ = $C\n",
-                            (Runnable) () -> testCase.getParams().accept(new ValueNodeVisitor(inputShape)));
-
                     // Execute the command, and catch the expected exception
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail");
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "raises");
                     writer.addStdlibImport("urllib.parse", "parse_qsl");
                     writer.write("""
                             try:
-                                await client.$1T(input_)
+                                await client.$1T(
+                                    ${13C|}
+                                )
                                 fail("Expected '$2T' exception to be thrown!")
                             except $2T as err:
                                 actual = err.request
@@ -274,8 +275,83 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             (Runnable) () -> writeExpectedHeaders(testCase, operation),
                             toLowerCase(testCase.getForbidHeaders()),
                             toLowerCase(testCase.getRequireHeaders()),
-                            writer.consumer(w -> writeRequestBodyComparison(testCase, w)));
+                            writer.consumer(w -> writeRequestBodyComparison(testCase, w)),
+                            (Runnable) () -> writeArguments(operation, testCase.getParams()));
                 });
+    }
+
+    // Top-level input members are keyword arguments; nested values are models.
+    private void writeArguments(OperationShape operation, ObjectNode params) {
+        var input = model.expectShape(operation.getInputShape(), StructureShape.class);
+        new ValueNodeVisitor(input).structureMemberShapes(input, paramsIndex.getMembers(input), params);
+    }
+
+    // The client rejects a call that is missing a required parameter before sending
+    // it, so response and error tests pass a placeholder for each one.
+    private ObjectNode requiredPlaceholders(StructureShape shape) {
+        return requiredPlaceholders(shape, new HashSet<>())
+                .orElseThrow(() -> new CodegenException("No finite placeholder value for " + shape.getId()));
+    }
+
+    // Each placeholder is built only from shapes not already on `path`, so a union
+    // whose first member leads back to an enclosing shape uses another member.
+    // Smithy requires every recursive shape to have a finite value, so one exists.
+    private Optional<ObjectNode> requiredPlaceholders(StructureShape shape, Set<ShapeId> path) {
+        if (!path.add(shape.getId())) {
+            return Optional.empty();
+        }
+        try {
+            var builder = ObjectNode.builder();
+            for (MemberShape member : paramsIndex.getMembers(shape)) {
+                if (CodegenUtils.isRequiredParameter(model, member)) {
+                    var value = placeholder(model.expectShape(member.getTarget()), path);
+                    if (value.isEmpty()) {
+                        return Optional.empty();
+                    }
+                    builder.withMember(member.getMemberName(), value.get());
+                }
+            }
+            return Optional.of(builder.build());
+        } finally {
+            path.remove(shape.getId());
+        }
+    }
+
+    private Optional<? extends Node> placeholder(Shape shape, Set<ShapeId> path) {
+        return switch (shape.getType()) {
+            // Non-empty, so that a placeholder bound to a label or host label serializes.
+            case STRING, BLOB -> Optional.of(Node.from("placeholder"));
+            case ENUM -> Optional.of(Node.from(shape.asEnumShape().get().getEnumValues().values().iterator().next()));
+            case INT_ENUM -> Optional.of(
+                    Node.from(shape.asIntEnumShape().get().getEnumValues().values().iterator().next()));
+            case BOOLEAN -> Optional.of(Node.from(false));
+            case BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE, BIG_INTEGER, BIG_DECIMAL, TIMESTAMP ->
+                Optional.of(Node.from(0));
+            case LIST, SET -> Optional.of(Node.arrayNode());
+            case MAP -> Optional.of(Node.objectNode());
+            // Renders as Document(None), which is set, unlike None.
+            case DOCUMENT -> Optional.of(Node.nullNode());
+            case STRUCTURE -> requiredPlaceholders(shape.asStructureShape().get(), path);
+            case UNION -> unionPlaceholder(shape.asUnionShape().get(), path);
+            default -> throw new CodegenException("No placeholder value for " + shape.getId());
+        };
+    }
+
+    private Optional<ObjectNode> unionPlaceholder(UnionShape shape, Set<ShapeId> path) {
+        if (!path.add(shape.getId())) {
+            return Optional.empty();
+        }
+        try {
+            for (MemberShape member : shape.members()) {
+                var value = placeholder(model.expectShape(member.getTarget()), path);
+                if (value.isPresent()) {
+                    return Optional.of(Node.objectNode().withMember(member.getMemberName(), value.get()));
+                }
+            }
+            return Optional.empty();
+        } finally {
+            path.remove(shape.getId());
+        }
     }
 
     private List<String> toLowerCase(List<String> given) {
@@ -504,17 +580,16 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 (Runnable) () -> writeTestBody(testCase, writer),
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
-                    // Create an empty input object to pass
                     var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
                     var outputShape = model.expectShape(operation.getOutputShape(), StructureShape.class);
-                    writer.write("input_ = $C\n",
-                            (Runnable) () -> (ObjectNode.builder().build()).accept(new ValueNodeVisitor(inputShape)));
 
                     // Execute the command, fail if unexpected exception
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
                     writer.write("""
                             try:
-                                actual = await client.$T(input_)
+                                actual = await client.$T(
+                                    ${C|}
+                                )
                             except Exception as err:
                                 fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
                             else:
@@ -525,6 +600,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             context.symbolProvider()
                                     .toSymbol(operation)
                                     .expectProperty(SymbolProperties.OPERATION_METHOD),
+                            (Runnable) () -> writeArguments(operation, requiredPlaceholders(inputShape)),
                             (Runnable) () -> testCase.getParams().accept(new ValueNodeVisitor(outputShape)),
                             (Runnable) () -> assertResponseEqual(testCase, operation));
                 });
@@ -560,16 +636,15 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 (Runnable) () -> writeTestBody(testCase, writer),
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
-                    // Create an empty input object to pass
                     var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
-                    writer.write("input_ = $C\n",
-                            (Runnable) () -> (Node.objectNode()).accept(new ValueNodeVisitor(inputShape)));
                     // Execute the command, fail if unexpected exception
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
                     writer.write(
                             """
                                     try:
-                                        await client.$1T(input_)
+                                        await client.$1T(
+                                            ${3C|}
+                                        )
                                         fail("Expected '$2L' exception to be thrown!")
                                     except Exception as err:
                                         if type(err).__name__ != $2S:
@@ -578,7 +653,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             context.symbolProvider()
                                     .toSymbol(operation)
                                     .expectProperty(SymbolProperties.OPERATION_METHOD),
-                            error.getId().getName());
+                            error.getId().getName(),
+                            (Runnable) () -> writeArguments(operation, requiredPlaceholders(inputShape)));
                     // TODO: Correctly assert the status code and other values
                 });
     }
@@ -834,6 +910,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 writer.writeInline(CodegenUtils.getDatetimeConstructor(writer, parsed));
             } else if (inputShape.isFloatShape() || inputShape.isDoubleShape()) {
                 writer.writeInline("float($L)", node.getValue());
+            } else if (inputShape.isBigDecimalShape()) {
+                writer.writeInline("$T($S)", context.symbolProvider().toSymbol(inputShape), node.getValue().toString());
             } else {
                 writer.writeInline("$L", node.getValue());
             }
@@ -875,12 +953,16 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writer.openBlock("$T(",
                     ")",
                     context.symbolProvider().toSymbol(shape),
-                    () -> structureMemberShapes(shape, node));
+                    () -> structureMemberShapes(shape, shape.members(), node));
             return null;
         }
 
-        private Void structureMemberShapes(StructureShape container, ObjectNode node) {
-            for (MemberShape member : container.members()) {
+        private Void structureMemberShapes(
+                StructureShape container,
+                Collection<MemberShape> members,
+                ObjectNode node
+        ) {
+            for (MemberShape member : members) {
                 var optionalValueNode = node.getMember(member.getMemberName());
                 if (optionalValueNode.isEmpty()) {
                     if (isStringLikeOutputPayload(container, member)) {

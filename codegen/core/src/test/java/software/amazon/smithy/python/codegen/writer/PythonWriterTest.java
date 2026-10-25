@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
@@ -90,6 +91,98 @@ public class PythonWriterTest {
     }
 
     @Test
+    public void testTypeCheckingSymbolIsImportedOnlyUnderTypeChecking() {
+        PythonWriter writer = createWriter("aws_sdk_example.client");
+        writer.write("value: $A", generatedSymbol("aws_sdk_example.models", "MyStruct"));
+        String out = writer.toString();
+
+        assertTrue(out.contains("from __future__ import annotations"));
+        assertFalse(beforeTypeChecking(out).contains("MyStruct"));
+        assertTrue(normalize(afterTypeChecking(out)).contains("from .models import MyStruct"));
+        assertTrue(out.contains("value: MyStruct"));
+    }
+
+    @Test
+    public void testTypeCheckingSymbolCollidingWithLocalIsAliased() {
+        PythonWriter writer = createWriter(CURRENT_PACKAGE);
+        writer.addLocallyDefinedSymbol(generatedSymbol(CURRENT_PACKAGE, "Document"));
+
+        writer.write("value: $A", frameworkSymbol("smithy_core.documents", "Document"));
+        String out = writer.toString();
+
+        assertTrue(normalize(afterTypeChecking(out))
+                .contains("from smithy_core.documents import Document as _Document"));
+        assertTrue(out.contains("value: _Document"));
+    }
+
+    @Test
+    public void testSymbolImportedAtRuntimeIsNotRepeatedUnderTypeChecking() {
+        PythonWriter writer = createWriter("aws_sdk_example.client");
+        Symbol symbol = generatedSymbol("aws_sdk_example.models", "MyStruct");
+
+        writer.write("value: $A = $T()", symbol, symbol);
+        String out = writer.toString();
+
+        assertTrue(normalize(out).contains("from .models import MyStruct"));
+        assertFalse(out.contains("TYPE_CHECKING"));
+    }
+
+    @Test
+    public void testTypeCheckingSymbolReferencesAreImportedUnderTypeChecking() {
+        PythonWriter writer = createWriter("aws_sdk_example.client");
+        Symbol jsonString = frameworkSymbol("smithy_core.types", "JsonString");
+        Symbol union = Symbol.builder().name("str | JsonString").addReference(jsonString).build();
+
+        writer.write("value: $A", union);
+        String out = writer.toString();
+
+        assertTrue(normalize(afterTypeChecking(out)).contains("from smithy_core.types import JsonString"));
+        assertFalse(beforeTypeChecking(out).contains("JsonString"));
+        assertTrue(out.contains("value: str | JsonString"));
+    }
+
+    @Test
+    public void testBuiltinTypeCheckingSymbolIsNotImported() {
+        PythonWriter writer = createWriter("aws_sdk_example.client");
+
+        writer.write("value: $A", Symbol.builder().name("str").build());
+        String out = writer.toString();
+
+        assertFalse(out.contains("TYPE_CHECKING"));
+        assertTrue(out.contains("value: str"));
+    }
+
+    @Test
+    public void testLocallyDefinedNameAliasesImport() {
+        // A parameter named like an imported function shadows it in the body.
+        PythonWriter writer = createWriter("aws_sdk_example.client");
+        writer.addLocallyDefinedName("user_agent_plugin");
+
+        writer.write("plugins = [$T]", frameworkSymbol("smithy_http.plugins", "user_agent_plugin"));
+        String out = writer.toString();
+
+        assertTrue(normalize(out).contains("from smithy_http.plugins import user_agent_plugin as _user_agent_plugin"));
+        assertTrue(out.contains("plugins = [_user_agent_plugin]"));
+    }
+
+    @Test
+    public void testWriteReexportsKeepsRedundantAliases() {
+        PythonWriter writer = createWriter(CURRENT_PACKAGE);
+        writer.writeReexports("._params", List.of("AParams", "BParams"));
+        String out = writer.toString();
+
+        assertTrue(out.contains("from ._params import (\n    AParams as AParams,\n    BParams as BParams,\n)"), out);
+    }
+
+    @Test
+    public void testWriteReexportsWritesNothingWithoutNames() {
+        PythonWriter writer = createWriter(CURRENT_PACKAGE);
+        writer.writeReexports("._params", List.of());
+
+        assertFalse(writer.toString().contains("import"));
+    }
+
+    @Test
     public void testWriteDocsKeepsTripleQuotesInsideDocstring() {
         // S3 documents QuoteEscapeCharacter with the example """ a , b """, which
         // must not close the generated docstring early.
@@ -132,6 +225,18 @@ public class PythonWriterTest {
                 .namespace(namespace, ".")
                 .definitionFile("./src/" + namespace.replace('.', '/') + ".py")
                 .build();
+    }
+
+    // The runtime imports all come before the TYPE_CHECKING block.
+    private static String beforeTypeChecking(String output) {
+        var index = output.indexOf("if TYPE_CHECKING:");
+        return index < 0 ? output : output.substring(0, index);
+    }
+
+    private static String afterTypeChecking(String output) {
+        var index = output.indexOf("if TYPE_CHECKING:");
+        assertTrue(index >= 0, "missing TYPE_CHECKING block in:\n" + output);
+        return output.substring(index);
     }
 
     /**

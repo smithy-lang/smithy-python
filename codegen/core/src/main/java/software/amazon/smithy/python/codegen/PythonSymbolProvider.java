@@ -68,6 +68,9 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     private static final String SHAPES_FILE = "models";
     private static final String SCHEMAS_FILE = "_private/schemas";
     private static final Set<String> CLIENT_RESERVED_METHOD_NAMES = Set.of("close");
+    // The operation method's own parameters, which an input member's name must not
+    // take. MUST match OPERATION_METHOD_ARGS in smithy-core's _model_naming.py.
+    static final Set<String> OPERATION_PARAMETER_NAMES = Set.of("self", "plugins");
 
     private final Model model;
     private final ReservedWordSymbolProvider.Escaper escaper;
@@ -170,6 +173,19 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
                     CodegenUtils.RESPONSE_METADATA_MEMBER,
                     escapeWord(CodegenUtils.RESPONSE_METADATA_MEMBER),
                     CodegenUtils.RESPONSE_METADATA_MEMBER));
+        }
+
+        // Operation input members are also the operation method's keyword parameters,
+        // so they must not collide with its `self` or per-call `plugins` parameter.
+        if (OPERATION_PARAMETER_NAMES.contains(memberName) && operationIndex.isInputStructure(container)) {
+            var parameterName = memberName;
+            memberName = escapeWord(memberName);
+            LOGGER.warning(() -> format(
+                    "Escaped generated Python name for Smithy member %s from \"%s\" to \"%s\" because it would collide with the operation method's \"%s\" parameter.",
+                    shape.getId(),
+                    parameterName,
+                    escapeWord(parameterName),
+                    parameterName));
         }
 
         if (container.isEnumShape() || container.isIntEnumShape()) {

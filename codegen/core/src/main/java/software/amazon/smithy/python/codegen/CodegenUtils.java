@@ -29,11 +29,14 @@ import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
+import software.amazon.smithy.model.knowledge.OperationIndex;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
+import software.amazon.smithy.model.traits.IdempotencyTokenTrait;
+import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
@@ -216,6 +219,29 @@ public final class CodegenUtils {
      */
     public static boolean isRequiredMember(NullableIndex index, MemberShape member) {
         return !index.isMemberNullable(member) && !member.hasTrait(DefaultTrait.class);
+    }
+
+    /**
+     * Determines whether a member must be set when it is passed as an operation
+     * parameter or as a key of a {@code Params} dictionary.
+     *
+     * <p>Unlike {@link #isRequiredMember}, this enforces {@code @required} even on
+     * {@code @input} structures and {@code @clientOptional} members, because the client
+     * validates parameters before sending a request. Members with a {@code @default}
+     * may be omitted, and so may an operation input's idempotency token. This MUST
+     * match {@code _is_required_param} in smithy-core's {@code _dynamic_models.py};
+     * {@code smithy_test.verify_client} checks generated clients against it.
+     *
+     * @param model The model containing the member.
+     * @param member The member to check.
+     * @return Returns whether the member is a required parameter.
+     */
+    public static boolean isRequiredParameter(Model model, MemberShape member) {
+        if (!member.hasTrait(RequiredTrait.class) || member.hasTrait(DefaultTrait.class)) {
+            return false;
+        }
+        return !member.hasTrait(IdempotencyTokenTrait.class)
+                || !OperationIndex.of(model).isInputStructure(member.getContainer());
     }
 
     /**

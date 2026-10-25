@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 
@@ -32,6 +33,82 @@ public class CodegenUtilsTest {
 
         // Should return false for non-AWS services
         assertFalse(CodegenUtils.isAwsService(context));
+    }
+
+    @Test
+    public void testRequiredParameterEnforcesRequiredOnInputsAndClientOptionalMembers() {
+        Model model = loadModel(REQUIRED_PARAMETER_MODEL);
+
+        assertTrue(isRequiredParameter(model, "PutThingInput$name"));
+        assertTrue(isRequiredParameter(model, "PutThingInput$clientOptional"));
+        assertTrue(isRequiredParameter(model, "Nested$name"));
+    }
+
+    @Test
+    public void testRequiredParameterExemptsDefaultsAndInputIdempotencyTokens() {
+        Model model = loadModel(REQUIRED_PARAMETER_MODEL);
+
+        assertFalse(isRequiredParameter(model, "PutThingInput$optional"));
+        assertFalse(isRequiredParameter(model, "PutThingInput$withDefault"));
+        assertFalse(isRequiredParameter(model, "PutThingInput$token"));
+    }
+
+    @Test
+    public void testRequiredParameterKeepsIdempotencyTokensOutsideInputsRequired() {
+        // Only the operation input's idempotency token is exempt.
+        Model model = loadModel(REQUIRED_PARAMETER_MODEL);
+
+        assertTrue(isRequiredParameter(model, "Nested$token"));
+    }
+
+    private static final String REQUIRED_PARAMETER_MODEL = """
+            $version: "2"
+            namespace smithy.example
+
+            service TestService {
+                version: "2024-01-01"
+                operations: [PutThing]
+            }
+
+            operation PutThing {
+                input := {
+                    @required
+                    name: String
+
+                    @required
+                    @clientOptional
+                    clientOptional: String
+
+                    @required
+                    withDefault: String = "default"
+
+                    @required
+                    @idempotencyToken
+                    token: String
+
+                    optional: String
+
+                    nested: Nested
+                }
+            }
+
+            structure Nested {
+                @required
+                name: String
+
+                @required
+                @idempotencyToken
+                token: String
+            }
+            """;
+
+    private static boolean isRequiredParameter(Model model, String relativeId) {
+        var member = model.expectShape(ShapeId.from("smithy.example#" + relativeId), MemberShape.class);
+        return CodegenUtils.isRequiredParameter(model, member);
+    }
+
+    private static Model loadModel(String smithyIdl) {
+        return Model.assembler().addUnparsedModel("test.smithy", smithyIdl).assemble().unwrap();
     }
 
     /**

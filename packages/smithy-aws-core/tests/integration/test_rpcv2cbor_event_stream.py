@@ -32,7 +32,6 @@ from my_handwritten_model.models import (
     Alpha,
     TradeEventsAlpha,
     TradeEventsBeta,
-    TradeEventStreamInput,
     TradeEventStreamOutput,
     Unit,
 )
@@ -136,9 +135,7 @@ async def test_simon_says_duplex() -> None:
     async with H2BidiServer(referee) as server:
         client, transport = await _client(server)
 
-        stream = await client.trade_event_stream(
-            TradeEventStreamInput(session_id="player-1")
-        )
+        stream = await client.trade_event_stream(session_id="player-1")
         output, output_stream = await stream.await_output()
         assert output.greeting == "lets play"
 

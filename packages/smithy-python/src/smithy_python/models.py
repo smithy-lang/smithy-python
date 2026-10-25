@@ -58,6 +58,14 @@ _UNKNOWN_ENUM_MIXIN: Final = _core_reference("UnknownEnumMixin", "types")
 _RESPONSE_METADATA: Final = _core_reference("ResponseMetadata", "response")
 _DATACLASS: Final = _symbols.TypeReference("dataclass", "dataclasses")
 _SELF: Final = _symbols.TypeReference("Self", "typing")
+_ANY: Final = _symbols.TypeReference("Any", "typing")
+_TO_DICT_DOC: Final = (
+    "Returns the dictionary form that operation parameters accept.\n\n"
+    "Members use their Python names, unions are dictionaries with a single key, "
+    "and unset members and `response_metadata` are left out. An unknown union "
+    "variant converts to an empty dictionary. Unlike `repr`, it includes "
+    "`@sensitive` members."
+)
 _STR_ENUM: Final = _symbols.TypeReference("StrEnum", "enum")
 _INT_ENUM: Final = _symbols.TypeReference("IntEnum", "enum")
 _SCHEMAS: Final = _symbols.TypeReference("schemas", "._private")
@@ -81,6 +89,7 @@ _MODEL_MEMBER_NAMES: Final = frozenset(
         "__init__",
         "__post_init__",
         "_smithy_default",
+        "to_dict",
         "__repr__",
         "__annotations__",
     }
@@ -207,6 +216,9 @@ class _StubEmitter:
                 _SELF,
                 ": ...",
             )
+            writer.line("def to_dict(self) -> dict[str, ", _ANY, "]:")
+            with writer.indent():
+                _write_docstring(writer, _TO_DICT_DOC)
         writer.line()
         writer.line("class ServiceError(", _MODELED_ERROR, "):")
         with writer.indent():

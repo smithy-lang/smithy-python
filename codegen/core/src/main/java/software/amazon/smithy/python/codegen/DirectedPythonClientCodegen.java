@@ -34,6 +34,7 @@ import software.amazon.smithy.python.codegen.generators.InitGenerator;
 import software.amazon.smithy.python.codegen.generators.ModelModuleGenerator;
 import software.amazon.smithy.python.codegen.generators.ModelStubGenerator;
 import software.amazon.smithy.python.codegen.generators.OperationGenerator;
+import software.amazon.smithy.python.codegen.generators.ParamsGenerator;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.generators.SchemaGenerator;
 import software.amazon.smithy.python.codegen.generators.ServiceErrorGenerator;
@@ -109,6 +110,7 @@ final class DirectedPythonClientCodegen
         var modelShapes = new java.util.ArrayList<>(directive.connectedShapes().values());
         new ModelModuleGenerator(directive.context(), modelShapes).run();
         new ModelStubGenerator(directive.context(), modelShapes).run();
+        new ParamsGenerator(directive.context()).run();
         new ConformanceTestGenerator(directive.context(), modelShapes).run();
 
         new ConfigGenerator(directive.settings(), directive.context()).run();

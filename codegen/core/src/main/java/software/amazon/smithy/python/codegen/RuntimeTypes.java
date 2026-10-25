@@ -49,6 +49,8 @@ public final class RuntimeTypes {
 
     // smithy_core.documents
     public static final Symbol DOCUMENT = createSymbol("documents", "Document", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol DOCUMENT_VALUE =
+            createSymbol("documents", "DocumentValue", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol TYPE_REGISTRY =
             createSymbol("documents", "TypeRegistry", SmithyPythonDependency.SMITHY_CORE);
 
@@ -190,7 +192,21 @@ public final class RuntimeTypes {
             "AsyncStaticCredentialsResolver",
             SmithyPythonDependency.SMITHY_AWS_CORE);
 
+    // Standard library types, so that a model shape of the same name gets them aliased.
+    public static final Symbol SEQUENCE = createStdlibSymbol("collections.abc", "Sequence");
+    public static final Symbol MAPPING = createStdlibSymbol("collections.abc", "Mapping");
+    public static final Symbol TYPED_DICT = createStdlibSymbol("typing", "TypedDict");
+    public static final Symbol REQUIRED = createStdlibSymbol("typing", "Required");
+
     private RuntimeTypes() {}
+
+    private static Symbol createStdlibSymbol(String module, String name) {
+        return Symbol.builder()
+                .name(name)
+                .namespace(module, ".")
+                .putProperty(SymbolProperties.STDLIB, true)
+                .build();
+    }
 
     private static Symbol createSymbol(String module, String name, PythonDependency dependency) {
         var namespace = module.isEmpty() ? dependency.packageName() : dependency.packageName() + "." + module;

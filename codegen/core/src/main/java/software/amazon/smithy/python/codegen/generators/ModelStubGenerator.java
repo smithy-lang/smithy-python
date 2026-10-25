@@ -21,6 +21,7 @@ import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.ParamsIndex;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SymbolProperties;
@@ -58,11 +59,14 @@ public final class ModelStubGenerator implements Runnable {
 
         context.writerDelegator().useFileWriter(filename, namespace, writer -> {
             writer.addStdlibImport("dataclasses", "dataclass");
-            writer.addStdlibImports("typing", java.util.Set.of("Union", "Self"));
+            writer.addStdlibImports("typing", java.util.Set.of("Any", "Union", "Self"));
             writer.addImport("smithy_core.schemas", "APIOperation");
             writer.addImport("smithy_core.exceptions", "ModeledError");
             writer.addImport("smithy_core.serializers", "ShapeSerializer");
             writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
+
+            // Users import the Params TypedDicts from models.
+            writer.writeReexports("._params", ParamsIndex.of(context).getNames());
 
             // Concrete serde base: the runtime attaches these methods to every built
             // model class, so declaring them here (implemented, not abstract) lets the
@@ -74,6 +78,16 @@ public final class ModelStubGenerator implements Runnable {
                         def serialize_members(self, serializer: ShapeSerializer) -> None: ...
                         @classmethod
                         def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
+                        def to_dict(self) -> dict[str, Any]:
+                            \"""
+                            Returns the dictionary form that operation parameters accept.
+
+                            Members use their Python names, unions are dictionaries with a
+                            single key, and unset members and `response_metadata` are left
+                            out. An unknown union variant converts to an empty dictionary.
+                            Unlike `repr`, it includes `@sensitive` members.
+                            \"""
+                            ...
 
                     class ServiceError(ModeledError):
                         \"""
