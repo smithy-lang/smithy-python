@@ -2,10 +2,11 @@
 #  SPDX-License-Identifier: Apache-2.0
 """Checksum algorithms for Smithy clients.
 
-CRC32 and CRC32C use a native extension when one is available for the platform
-and fall back to pure Python otherwise. The fallback produces identical results
-but is orders of magnitude slower, except for CRC32, which uses :mod:`zlib`. SHA-1, SHA-256, SHA-512, and MD5 are available
-through :func:`new` and always use :mod:`hashlib`.
+CRC32, CRC32C, and CRC64NVME use a native extension when one is available for the
+platform and fall back to pure Python otherwise. The fallback produces identical
+results but is orders of magnitude slower, except for CRC32, which uses :mod:`zlib`.
+SHA-1, SHA-256, SHA-512, and MD5 are available through :func:`new` and always use
+:mod:`hashlib`.
 """
 
 import hashlib
@@ -22,6 +23,7 @@ __version__ = version("smithy-checksums")
 __all__ = (
     "CRC32",
     "CRC32C",
+    "CRC64NVME",
     "HAS_NATIVE_EXTENSION",
     "Checksum",
     "new",
@@ -30,7 +32,7 @@ __all__ = (
 HAS_NATIVE_EXTENSION: Final[bool] = _NATIVE
 """Whether the native extension is in use.
 
-When it isn't, CRC32C is computed in pure Python.
+When it isn't, CRC32C and CRC64NVME are computed in pure Python.
 """
 
 
@@ -121,7 +123,16 @@ class CRC32C(_BaseChecksum):
     digest_size = 4
 
 
-_CHECKSUMS: Final = {cls.name: cls for cls in (CRC32, CRC32C)}
+class CRC64NVME(_BaseChecksum):
+    """CRC-64/NVME."""
+
+    __slots__ = ()
+
+    name = "crc64nvme"
+    digest_size = 8
+
+
+_CHECKSUMS: Final = {cls.name: cls for cls in (CRC32, CRC32C, CRC64NVME)}
 _HASHLIB_ALGORITHMS: Final = frozenset(("sha1", "sha256", "sha512", "md5"))
 
 
@@ -129,10 +140,10 @@ def new(name: str) -> Checksum:
     """Creates a checksum from the name of its algorithm.
 
     Names are case-insensitive, so the values of a checksum algorithm enum such as
-    ``CRC32C`` or ``SHA256`` can be passed directly.
+    ``CRC64NVME`` or ``SHA256`` can be passed directly.
 
-    :param name: One of ``crc32``, ``crc32c``, ``sha1``, ``sha256``, ``sha512``, or
-        ``md5``.
+    :param name: One of ``crc32``, ``crc32c``, ``crc64nvme``, ``sha1``, ``sha256``,
+        ``sha512``, or ``md5``.
     :raises ValueError: If the algorithm isn't supported, or isn't available in this
         Python build.
     """

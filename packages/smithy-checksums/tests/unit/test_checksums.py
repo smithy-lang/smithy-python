@@ -11,6 +11,7 @@ import smithy_checksums
 from smithy_checksums import (
     CRC32,
     CRC32C,
+    CRC64NVME,
     Checksum,
     new,
 )
@@ -20,6 +21,7 @@ from .vectors import ALGORITHMS, KNOWN_ANSWERS, PATTERN_DIGESTS, pattern
 CLASSES = {
     "crc32": CRC32,
     "crc32c": CRC32C,
+    "crc64nvme": CRC64NVME,
 }
 
 
@@ -99,6 +101,7 @@ def test_concurrent_checksums(algorithm: str) -> None:
     [
         ("crc32", CRC32),
         ("CRC32C", CRC32C),
+        ("CRC64NVME", CRC64NVME),
     ],
 )
 def test_new_returns_checksum_classes(name: str, expected: type[Checksum]) -> None:

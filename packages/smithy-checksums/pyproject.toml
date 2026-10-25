@@ -9,7 +9,7 @@ authors = [
 description = "Checksum algorithms for Smithy tooling, with native acceleration."
 readme = "README.md"
 license = {text = "Apache License 2.0"}
-keywords = ["smithy", "sdk", "checksum", "crc32c"]
+keywords = ["smithy", "sdk", "checksum", "crc32c", "crc64nvme"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Developers",

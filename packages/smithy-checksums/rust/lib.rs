@@ -54,6 +54,7 @@ macro_rules! crc_state {
 
 crc_state!(Crc32State, Crc32IsoHdlc, u32);
 crc_state!(Crc32cState, Crc32Iscsi, u32);
+crc_state!(Crc64NvmeState, Crc64Nvme, u64);
 
 fn lock<S>(state: &Mutex<S>) -> MutexGuard<'_, S> {
     // A panic while holding the lock can't leave a checksum half-updated in a
@@ -122,9 +123,10 @@ macro_rules! checksum_class {
 
 checksum_class!(Crc32, Crc32State);
 checksum_class!(Crc32C, Crc32cState);
+checksum_class!(Crc64Nvme, Crc64NvmeState);
 
 #[pymodule]
 mod _native {
     #[pymodule_export]
-    use super::{Crc32, Crc32C};
+    use super::{Crc32, Crc32C, Crc64Nvme};
 }
