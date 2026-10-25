@@ -3,7 +3,7 @@
 [project]
 name = "example_types"
 version = "1.0.0"
-description = "Example native Python codegen output"
+description = "Example Python codegen output"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["smithy", "example_types"]

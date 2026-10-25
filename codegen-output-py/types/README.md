@@ -2,4 +2,4 @@
 
 ## example_types Types Package
 
-Example native Python codegen output
+Example Python codegen output

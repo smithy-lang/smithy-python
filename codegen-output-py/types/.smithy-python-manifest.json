@@ -1,12 +1,12 @@
 {
   "files": {
-    "README.md": "03146affd4cdec7675387b787ff852400641bad4c0cfc5e80bb860d576acee4b",
-    "pyproject.toml": "8b49dfb34a75d368f1c264a8369fb4093af3b9618ec4a93173b28315578c808e",
+    "README.md": "b070865ebb1dc46192ea8a45f0961e1b0f812dfccd069537cfc04311b3327660",
+    "pyproject.toml": "c419d5bcb7e49329ae50cab3b1a766446d3d14d40a422328788f93e8b2bbeb2b",
     "src/example_types/__init__.py": "6d153749d98df8adfe6264fb74d642917cbf2d6922b9211719dee35483dab943",
     "src/example_types/_private/__init__.py": "5384bfdb2df380b6557cc7a71d16891415bccaa87699406e236f752c6415389f",
-    "src/example_types/_private/schemas.py": "d0f35e8979c4aa9d49a1d9c0c8efeb860420bc0ceab3ba3edcc9488c053e9110",
-    "src/example_types/models.py": "6042e2e6454b40fef929d96cb7608ae8c591ac7205577f14337435718bb7c077",
-    "src/example_types/models.pyi": "bb3d59e91999a62438fce52fe3be551c63f998565e4f9640e4fb1e275b972b14",
+    "src/example_types/_private/schemas.py": "1d708d275049f3f4a86b343c3f38104ef4a7e5bf749a27cd1a490c95c8f9db59",
+    "src/example_types/models.py": "51aadd47e9971f2b44fabd47e81e4b04d7156aa61b64454b39f4b6d47603ab45",
+    "src/example_types/models.pyi": "31c14804662d43c11fc6c61d0a49244e5e606b65aadb774df913f6a26e1b135a",
     "src/example_types/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1
