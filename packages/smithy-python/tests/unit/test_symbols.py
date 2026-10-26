@@ -5,7 +5,8 @@ import json
 import keyword
 
 import pytest
-from smithy_python.model import MemberShape, Model, load_model
+from smithy_python.dependencies import SMITHY_CORE
+from smithy_python.model import MemberShape, Model, ShapeId, load_model
 from smithy_python.selection import select_shapes
 from smithy_python.symbols import SymbolProvider
 
@@ -89,14 +90,33 @@ def test_type_references(kind: str, name: str, module: str) -> None:
     model = model_with({"example#HTTPServer": {"type": kind}})
     symbols = SymbolProvider(model, select_shapes(model), package="example.client")
     ref = symbols.type_reference("example#HTTPServer")
-    assert ref == TypeReference(name, module)
-    assert hash(ref) == hash(TypeReference(name, module))
+    dependencies = (SMITHY_CORE,) if kind == "document" else ()
+    expected = TypeReference(name, module, dependencies=dependencies)
+    assert ref == expected
+    assert hash(ref) == hash(expected)
     with pytest.raises(FrozenInstanceError):
         setattr(ref, "name", "Changed")
     if module != "example.client.models" and kind not in ("enum", "intEnum"):
         prelude_name = kind[0].upper() + kind[1:]
         assert symbols.type_reference(f"smithy.api#{prelude_name}") == ref
     assert symbols.type_reference("smithy.api#Unit") == TypeReference("None")
+
+
+def test_streaming_union_has_a_schema_name_without_a_model_symbol() -> None:
+    from smithy_python.model import ModelError
+
+    model = model_with(
+        {
+            "example#Events": {
+                "type": "union",
+                "traits": {"smithy.api#streaming": {}},
+            }
+        }
+    )
+    symbols = SymbolProvider(model, select_shapes(model), package="example")
+    assert symbols.schema_name("example#Events") == "EVENTS"
+    with pytest.raises(ModelError, match="Unsupported streaming union"):
+        symbols.declaration_name("example#Events")
 
 
 @pytest.mark.parametrize("kind,value_type", [("enum", "str"), ("intEnum", "int")])
@@ -186,6 +206,68 @@ def test_service_rename_only_changes_declaration() -> None:
     assert str(selection.shapes[0].id) == "example#Original"
 
 
+def test_union_names_disambiguate_generated_declaration_names() -> None:
+    model = model_with(
+        {
+            "example#Choice": {
+                "type": "union",
+                "members": {"foo": {"target": "smithy.api#String"}},
+            },
+            "example#Choice_Foo": {"type": "structure"},
+            "example#Choice_Unknown": {"type": "structure"},
+        }
+    )
+    symbols = SymbolProvider(model, select_shapes(model), package="pkg")
+
+    assert symbols.declaration_name("example#Choice_Foo") == "ChoiceFoo"
+    assert symbols.union_variant_name("example#Choice$foo") == "Choice_Foo"
+    assert symbols.declaration_name("example#Choice_Unknown") == "ChoiceUnknown"
+    assert symbols.union_unknown_name("example#Choice") == "Choice_Unknown"
+
+
+def test_union_names_disambiguate_service_renames() -> None:
+    from smithy_python.model import ServiceShape
+    from smithy_python.selection import Selection
+
+    model = model_with(
+        {
+            "example#Service": {
+                "type": "service",
+                "rename": {"example#Other": "ChoiceFoo"},
+            },
+            "example#Choice": {
+                "type": "union",
+                "members": {"foo": {"target": "smithy.api#String"}},
+            },
+            "example#Other": {"type": "structure"},
+        }
+    )
+    selection = Selection(
+        model.expect_shape("example#Service", ServiceShape),
+        (model.get_shape("example#Choice"), model.get_shape("example#Other")),
+        0,
+    )
+    symbols = SymbolProvider(model, selection, package="pkg")
+
+    assert symbols.declaration_name("example#Other") == "ChoiceFoo"
+    assert symbols.union_variant_name("example#Choice$foo") == "Choice_Foo"
+
+
+def test_synthesized_union_name_collisions_are_rejected() -> None:
+    from smithy_python.model import ModelError
+
+    model = model_with(
+        {
+            "example#Choice": {
+                "type": "union",
+                "members": {"unknown": {"target": "smithy.api#String"}},
+            }
+        }
+    )
+    with pytest.raises(ModelError, match="ChoiceUnknown"):
+        SymbolProvider(model, select_shapes(model), package="pkg")
+
+
 @pytest.mark.parametrize("sparse", [False, True])
 def test_collections_and_recursive_named_types(sparse: bool) -> None:
     from smithy_python.symbols import TypeReference
@@ -251,6 +333,49 @@ def test_collections_and_recursive_named_types(sparse: bool) -> None:
     for member in ("required", "defaulted"):
         target = model.expect_shape(f"example#Node${member}", MemberShape).target
         assert symbols.type_reference(target) == TypeReference("str", "builtins")
+
+
+def test_type_reference_override_applies_within_collections() -> None:
+    from smithy_python.symbols import TypeReference
+
+    model = model_with(
+        {
+            "example#Times": {
+                "type": "list",
+                "member": {"target": "smithy.api#Timestamp"},
+            },
+            "example#NestedTimes": {
+                "type": "list",
+                "member": {"target": "example#Times"},
+            },
+            "example#TimeMap": {
+                "type": "map",
+                "key": {"target": "smithy.api#String"},
+                "value": {"target": "smithy.api#Timestamp"},
+            },
+        }
+    )
+
+    class CustomSymbolProvider(SymbolProvider):
+        def type_reference(self, shape_id: ShapeId | str) -> TypeReference:
+            if str(shape_id) == "smithy.api#Timestamp":
+                return TypeReference("CustomTimestamp", "example.timestamps")
+            return super().type_reference(shape_id)
+
+    symbols = CustomSymbolProvider(model, select_shapes(model), package="pkg")
+    timestamp = TypeReference("CustomTimestamp", "example.timestamps")
+    times = TypeReference("list", "builtins", (timestamp,))
+
+    assert symbols.type_reference("smithy.api#Timestamp") == timestamp
+    assert symbols.type_reference("example#Times") == times
+    assert symbols.type_reference("example#NestedTimes") == TypeReference(
+        "list", "builtins", (times,)
+    )
+    assert symbols.type_reference("example#TimeMap") == TypeReference(
+        "dict",
+        "builtins",
+        (TypeReference("str", "builtins"), timestamp),
+    )
 
 
 @pytest.mark.parametrize("mutual", [False, True])
@@ -348,7 +473,7 @@ def test_only_emitted_declarations_collide() -> None:
         "Document", "pkg.models"
     )
     assert symbols.type_reference("smithy.api#Document") == TypeReference(
-        "Document", "smithy_core.documents"
+        "Document", "smithy_core.documents", dependencies=(SMITHY_CORE,)
     )
     assert symbols.member_name("example#Document$list") == "list"
     assert symbols.member_name("example#Document$dict") == "dict"
@@ -400,13 +525,39 @@ def test_rename_normalization(name: str, expected: str) -> None:
     )
 
 
-@pytest.mark.parametrize("kind", ["blob", "union"])
-def test_streaming_rejected_when_resolved(kind: str) -> None:
+def test_streaming_blob_type_reference() -> None:
+    from smithy_python.symbols import TypeReference
+
+    model = model_with(
+        {
+            "example#Stream": {
+                "type": "blob",
+                "traits": {"smithy.api#streaming": {}},
+            },
+            "example#Streams": {"type": "list", "member": {"target": "example#Stream"}},
+        }
+    )
+    symbols = SymbolProvider(model, select_shapes(model), package="pkg")
+    stream = TypeReference(
+        "StreamingBlob",
+        "smithy_core.aio.interfaces",
+        dependencies=(SMITHY_CORE,),
+    )
+    assert symbols.type_reference("example#Stream") == stream
+    assert symbols.type_reference("example#Streams") == TypeReference(
+        "list", "builtins", (stream,)
+    )
+
+
+def test_streaming_union_rejected_when_resolved() -> None:
     from smithy_python.model import ModelError
 
     model = model_with(
         {
-            "example#Stream": {"type": kind, "traits": {"smithy.api#streaming": {}}},
+            "example#Stream": {
+                "type": "union",
+                "traits": {"smithy.api#streaming": {}},
+            },
             "example#Streams": {"type": "list", "member": {"target": "example#Stream"}},
         }
     )

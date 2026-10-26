@@ -15,6 +15,7 @@ header:
     - 'LICENSE'
     - 'NOTICE'
     - 'codegen-output/**'
+    - 'codegen-output-py/**'
     - '**/smithy_core/rfc3986.py'
 
   language:

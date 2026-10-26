@@ -1,4 +1,4 @@
-# Native Python symbols
+# Python symbols
 
 `SymbolProvider` answers three questions for the Python generator:
 
@@ -123,19 +123,30 @@ identically named types from different modules also remain distinct.
 
 ## Type references
 
-`TypeReference(name, module=None, arguments=(), nullable=False)` is an immutable,
-hashable description of a type, not a Python annotation string. `name` and
-`module` identify the type; `arguments` holds its element, key or value types.
-`nullable=True` means the value can also be `None`. `module` is the public module
-users import the type from. If the writer later places a definition in a different
-physical module, that placement is the writer's concern and does not change the
-reference. Resolved references are cached for the provider's lifetime.
+`TypeReference(name, module=None, arguments=(), nullable=False,
+dependencies=())` is an immutable, hashable description of a type, not a Python
+annotation string. `name` and `module` identify the type. `arguments` holds its
+element, key, or value types. `nullable=True` means the value can also be
+`None`. `dependencies` contains the package requirements needed to use the
+reference.
+
+`module` is the public module users import the type from. Dependency records
+supply package names and versions. Module names only control imports. If the
+writer later places a definition in a different physical module, that placement
+is the writer's concern and does not change the reference. Resolved references
+are cached for the provider's lifetime.
 
 For example, `list[str]` is represented as:
 
 ```python
 TypeReference("list", "builtins", (TypeReference("str", "builtins"),))
 ```
+
+References to standard-library and generated modules have no dependencies. A
+runtime reference such as `smithy_core.documents.Document` carries the
+compatible `smithy-core` dependency from the generator's runtime package
+catalog. Collection references retain the dependencies of their nested
+arguments.
 
 | Smithy type                                     | Python value type                |
 | ----------------------------------------------- | -------------------------------- |
@@ -182,9 +193,9 @@ Collection expansion does not use Python recursion. A cycle made entirely of
 collections, such as two lists containing each other, raises `ModelError` with
 the IDs in the cycle. A failed lookup does not affect later lookups.
 
-Streaming types are deferred until their Python interfaces are defined. The
-provider rejects streaming blobs and event-stream unions rather than treating
-them as ordinary values.
+Streaming blobs resolve to `smithy_core.aio.interfaces.StreamingBlob`, including
+when nested in collections. Event-stream unions retain schema names for
+protocol integration and do not produce model declarations.
 
 ## Inputs and errors
 

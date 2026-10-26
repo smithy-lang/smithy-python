@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 from unicodedata import normalize
 
+from . import dependencies as _dependencies
 from .exceptions import CodegenError
 from .symbols import TypeReference
 
@@ -51,6 +52,218 @@ _BUILTINS = frozenset(
 
 type _Kind = Literal["module", "class", "function", "comprehension", "annotation"]
 _COMPREHENSIONS = (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
+
+
+class PythonWriter:
+    """Write trusted Python lines, retaining type references until rendering."""
+
+    def __init__(
+        self, module: str, *, dependencies: _dependencies.DependencySet | None = None
+    ) -> None:
+        _validate_module(module, relative=False)
+        self._module = _binding(module)
+        self._dependencies = dependencies
+        self._depth = 0
+        self._lines: list[tuple[int, tuple[str | TypeReference, ...]]] = []
+
+    def line(self, *parts: str | TypeReference) -> None:
+        """Append one line, concatenating its parts without separators."""
+        if self._dependencies is not None:
+            pending = [part for part in parts if isinstance(part, TypeReference)]
+            while pending:
+                reference = pending.pop()
+                for dependency in reference.dependencies:
+                    self._dependencies.add(dependency)
+                pending.extend(reference.arguments)
+        self._lines.append((self._depth, parts))
+
+    @contextmanager
+    def indent(self) -> Generator[None]:
+        """Indent by four spaces for the duration of the block."""
+        self._depth += 1
+        try:
+            yield
+        finally:
+            self._depth -= 1
+
+    def render(self) -> str:
+        """Return complete source without changing the recorded lines."""
+        names, imports = self._plan_imports(*self._names())
+        header = "from __future__ import annotations\n"
+        if imports:
+            header += "\n" + "\n".join(item.statement() for item in imports) + "\n"
+        body = self._body(lambda reference: self._annotation(reference, names))
+        return header + ("\n\n" + "\n".join(body) + "\n" if body else "")
+
+    def _body(self, reference: Callable[[TypeReference], str]) -> list[str]:
+        body: list[str] = []
+        for depth, parts in self._lines:
+            text = "".join(
+                part if isinstance(part, str) else reference(part) for part in parts
+            )
+            body.append("    " * depth + text if text else "")
+        return body
+
+    def _references(self) -> list[TypeReference]:
+        return [
+            part
+            for _, parts in self._lines
+            for part in parts
+            if isinstance(part, TypeReference)
+        ]
+
+    def _names(self) -> tuple[frozenset[str], list[frozenset[str]]]:
+        """Return module-level names and the local names each reference sees."""
+        prefix = _placeholder_prefix("".join(self._body(lambda _: "")))
+        numbers = itertools.count()
+        source = "\n".join(self._body(lambda _: f"{prefix}{next(numbers)}_"))
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", SyntaxWarning)
+            try:
+                tree = ast.parse(source, feature_version=(3, 12))
+            except SyntaxError as error:
+                raise CodegenError(
+                    f"Written lines are not valid Python 3.12 (line {error.lineno}): "
+                    f"{error.msg}"
+                ) from error
+        for warning in caught:
+            # Invalid escape sequences become errors in future Python versions.
+            if issubclass(warning.category, SyntaxWarning):
+                raise CodegenError(
+                    f"Written lines raise SyntaxWarning (line {warning.lineno}): "
+                    f"{warning.message}"
+                )
+        return _analyze(tree, prefix, len(self._references()))
+
+    def _plan_imports(
+        self, module_names: frozenset[str], shadows: list[frozenset[str]]
+    ) -> tuple[dict[tuple[str | None, str], str], list[_Import]]:
+        identities: set[tuple[str | None, str]] = set()
+        # The local names visible where each identity is referenced. References
+        # in one scope share a set, so keep the distinct sets, not their union.
+        local_names: dict[tuple[str | None, str], set[frozenset[str]]] = {}
+        for reference, shadow in zip(self._references(), shadows, strict=True):
+            pending = [reference]
+            while pending:
+                ref = pending.pop()
+                if ref.module is None and (ref.name != "None" or ref.arguments):
+                    raise CodegenError(
+                        f"Only the None literal may omit its module: {ref.name!r}"
+                    )
+                if ref.module is not None:
+                    _validate_identifier(ref.name, "reference name")
+                    _validate_module(ref.module, relative=True)
+                identities.add((ref.module, ref.name))
+                key = _identity(ref.module, ref.name)
+                local_names.setdefault(key, set()).add(shadow)
+                pending.extend(ref.arguments)
+        # Equivalent Python identifiers share one import. Pick a supplied spelling
+        # deterministically, without rewriting the caller's source names.
+        representatives: dict[tuple[str | None, str], tuple[str | None, str]] = {}
+        for module, name in sorted(
+            identities, key=lambda item: (item[0] or "", item[1])
+        ):
+            representatives.setdefault(_identity(module, name), (module, name))
+        current_names = {
+            name for module, name in representatives if module == self._module
+        }
+        for name in sorted(current_names):
+            if _is_local(name, local_names[(self._module, name)]):
+                raise CodegenError(
+                    f"Same-module reference {self._module}.{name} conflicts with local name {name!r}"
+                )
+        reserved = module_names | current_names
+        external = sorted(
+            (module, name)
+            for (module_binding, _), (module, name) in representatives.items()
+            if module is not None and module_binding not in ("builtins", self._module)
+        )
+        counts = Counter(_binding(name) for _, name in external)
+        names: dict[tuple[str | None, str], str] = {}
+        # Each import with the local names of the places that use it.
+        imports: list[tuple[_Import, set[frozenset[str]]]] = []
+        for module, name in external:
+            binding = _binding(name)
+            scoped = local_names[_identity(module, name)]
+            alias = (
+                f"_{module.replace('.', '_')}_{name}"
+                if binding in reserved
+                or _is_local(binding, scoped)
+                or binding in _BUILTINS
+                or binding == "annotations"
+                or counts[binding] > 1
+                else name
+            )
+            names[(module, name)] = alias
+            imports.append((_Import(module, name, alias), scoped))
+        qualified: set[frozenset[str]] = set()
+        for key, (module, name) in representatives.items():
+            module_binding, name_binding = key
+            if module is None:
+                names[(module, name)] = "None"
+            elif module_binding == "builtins":
+                scoped = local_names[key]
+                if name_binding in reserved or _is_local(name_binding, scoped):
+                    names[(module, name)] = f"_builtins.{name}"
+                    qualified |= scoped
+                else:
+                    names[(module, name)] = name
+            elif module_binding == self._module:
+                names[(module, name)] = name
+        if qualified:
+            imports.append((_Import("builtins", None, "_builtins"), qualified))
+
+        # Check the complete plan, including unaliased imports. No binding gets
+        # priority merely because its reference was encountered first.
+        bindings = dict.fromkeys(reserved, "a module-level name")
+        imports.sort(
+            key=lambda item: (item[0].module, item[0].name or "", item[0].alias)
+        )
+        for item, scoped in imports:
+            owner = f"{item.module}.{item.name}" if item.name else item.module
+            binding = _binding(item.alias)
+            if binding in bindings:
+                conflict = bindings[binding]
+            elif binding in _BUILTINS:
+                conflict = "a builtin"
+            elif _is_local(binding, scoped):
+                conflict = "a local name"
+            else:
+                bindings[binding] = owner
+                continue
+            raise CodegenError(
+                f"Import binding {item.alias!r} for {owner} conflicts with {conflict}"
+            )
+        for module, name in identities:
+            names[(module, name)] = names[representatives[_identity(module, name)]]
+        return names, [item for item, _ in imports]
+
+    @staticmethod
+    def _annotation(
+        reference: TypeReference, names: dict[tuple[str | None, str], str]
+    ) -> str:
+        # Emit tokens rather than recursing through potentially deep collections.
+        pending: list[str | TypeReference] = [reference]
+        result: list[str] = []
+        while pending:
+            part = pending.pop()
+            if isinstance(part, str):
+                result.append(part)
+                continue
+            if part.module is None:
+                result.append("None")
+                continue
+            result.append(names[(part.module, part.name)])
+            if part.nullable:
+                pending.append(" | None")
+            if part.arguments:
+                pending.append("]")
+                for index in range(len(part.arguments) - 1, -1, -1):
+                    pending.append(part.arguments[index])
+                    if index:
+                        pending.append(", ")
+                pending.append("[")
+        return "".join(result)
 
 
 @dataclass(frozen=True, slots=True)
@@ -342,205 +555,3 @@ def _analyze(
             visible[scope] = frozenset(scope.visible_names())
         shadows.append(visible[scope])
     return frozenset(module.names), shadows
-
-
-class PythonWriter:
-    """Write trusted Python lines, retaining type references until rendering."""
-
-    def __init__(self, module: str) -> None:
-        _validate_module(module, relative=False)
-        self._module = _binding(module)
-        self._depth = 0
-        self._lines: list[tuple[int, tuple[str | TypeReference, ...]]] = []
-
-    def line(self, *parts: str | TypeReference) -> None:
-        """Append one line, concatenating its parts without separators."""
-        self._lines.append((self._depth, parts))
-
-    @contextmanager
-    def indent(self) -> Generator[None]:
-        """Indent by four spaces for the duration of the block."""
-        self._depth += 1
-        try:
-            yield
-        finally:
-            self._depth -= 1
-
-    def _body(self, reference: Callable[[TypeReference], str]) -> list[str]:
-        body: list[str] = []
-        for depth, parts in self._lines:
-            text = "".join(
-                part if isinstance(part, str) else reference(part) for part in parts
-            )
-            body.append("    " * depth + text if text else "")
-        return body
-
-    def _references(self) -> list[TypeReference]:
-        return [
-            part
-            for _, parts in self._lines
-            for part in parts
-            if isinstance(part, TypeReference)
-        ]
-
-    def _names(self) -> tuple[frozenset[str], list[frozenset[str]]]:
-        """Return module-level names and the local names each reference sees."""
-        prefix = _placeholder_prefix("".join(self._body(lambda _: "")))
-        numbers = itertools.count()
-        source = "\n".join(self._body(lambda _: f"{prefix}{next(numbers)}_"))
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always", SyntaxWarning)
-            try:
-                tree = ast.parse(source, feature_version=(3, 12))
-            except SyntaxError as error:
-                raise CodegenError(
-                    f"Written lines are not valid Python 3.12 (line {error.lineno}): "
-                    f"{error.msg}"
-                ) from error
-        for warning in caught:
-            # Invalid escape sequences become errors in future Python versions.
-            if issubclass(warning.category, SyntaxWarning):
-                raise CodegenError(
-                    f"Written lines raise SyntaxWarning (line {warning.lineno}): "
-                    f"{warning.message}"
-                )
-        return _analyze(tree, prefix, len(self._references()))
-
-    def _plan_imports(
-        self, module_names: frozenset[str], shadows: list[frozenset[str]]
-    ) -> tuple[dict[tuple[str | None, str], str], list[_Import]]:
-        identities: set[tuple[str | None, str]] = set()
-        # The local names visible where each identity is referenced. References
-        # in one scope share a set, so keep the distinct sets, not their union.
-        local_names: dict[tuple[str | None, str], set[frozenset[str]]] = {}
-        for reference, shadow in zip(self._references(), shadows, strict=True):
-            pending = [reference]
-            while pending:
-                ref = pending.pop()
-                if ref.module is None and (ref.name != "None" or ref.arguments):
-                    raise CodegenError(
-                        f"Only the None literal may omit its module: {ref.name!r}"
-                    )
-                if ref.module is not None:
-                    _validate_identifier(ref.name, "reference name")
-                    _validate_module(ref.module, relative=True)
-                identities.add((ref.module, ref.name))
-                key = _identity(ref.module, ref.name)
-                local_names.setdefault(key, set()).add(shadow)
-                pending.extend(ref.arguments)
-        # Equivalent Python identifiers share one import. Pick a supplied spelling
-        # deterministically, without rewriting the caller's source names.
-        representatives: dict[tuple[str | None, str], tuple[str | None, str]] = {}
-        for module, name in sorted(
-            identities, key=lambda item: (item[0] or "", item[1])
-        ):
-            representatives.setdefault(_identity(module, name), (module, name))
-        current_names = {
-            name for module, name in representatives if module == self._module
-        }
-        for name in sorted(current_names):
-            if _is_local(name, local_names[(self._module, name)]):
-                raise CodegenError(
-                    f"Same-module reference {self._module}.{name} conflicts with local name {name!r}"
-                )
-        reserved = module_names | current_names
-        external = sorted(
-            (module, name)
-            for (module_binding, _), (module, name) in representatives.items()
-            if module is not None and module_binding not in ("builtins", self._module)
-        )
-        counts = Counter(_binding(name) for _, name in external)
-        names: dict[tuple[str | None, str], str] = {}
-        # Each import with the local names of the places that use it.
-        imports: list[tuple[_Import, set[frozenset[str]]]] = []
-        for module, name in external:
-            binding = _binding(name)
-            scoped = local_names[_identity(module, name)]
-            alias = (
-                f"_{module.replace('.', '_')}_{name}"
-                if binding in reserved
-                or _is_local(binding, scoped)
-                or binding in _BUILTINS
-                or binding == "annotations"
-                or counts[binding] > 1
-                else name
-            )
-            names[(module, name)] = alias
-            imports.append((_Import(module, name, alias), scoped))
-        qualified: set[frozenset[str]] = set()
-        for key, (module, name) in representatives.items():
-            module_binding, name_binding = key
-            if module is None:
-                names[(module, name)] = "None"
-            elif module_binding == "builtins":
-                scoped = local_names[key]
-                if name_binding in reserved or _is_local(name_binding, scoped):
-                    names[(module, name)] = f"_builtins.{name}"
-                    qualified |= scoped
-                else:
-                    names[(module, name)] = name
-            elif module_binding == self._module:
-                names[(module, name)] = name
-        if qualified:
-            imports.append((_Import("builtins", None, "_builtins"), qualified))
-
-        # Check the complete plan, including unaliased imports. No binding gets
-        # priority merely because its reference was encountered first.
-        bindings = dict.fromkeys(reserved, "a module-level name")
-        imports.sort(
-            key=lambda item: (item[0].module, item[0].name or "", item[0].alias)
-        )
-        for item, scoped in imports:
-            owner = f"{item.module}.{item.name}" if item.name else item.module
-            binding = _binding(item.alias)
-            if binding in bindings:
-                conflict = bindings[binding]
-            elif binding in _BUILTINS:
-                conflict = "a builtin"
-            elif _is_local(binding, scoped):
-                conflict = "a local name"
-            else:
-                bindings[binding] = owner
-                continue
-            raise CodegenError(
-                f"Import binding {item.alias!r} for {owner} conflicts with {conflict}"
-            )
-        for module, name in identities:
-            names[(module, name)] = names[representatives[_identity(module, name)]]
-        return names, [item for item, _ in imports]
-
-    @staticmethod
-    def _annotation(
-        reference: TypeReference, names: dict[tuple[str | None, str], str]
-    ) -> str:
-        # Emit tokens rather than recursing through potentially deep collections.
-        pending: list[str | TypeReference] = [reference]
-        result: list[str] = []
-        while pending:
-            part = pending.pop()
-            if isinstance(part, str):
-                result.append(part)
-                continue
-            if part.module is None:
-                result.append("None")
-                continue
-            result.append(names[(part.module, part.name)])
-            if part.nullable:
-                pending.append(" | None")
-            if part.arguments:
-                pending.append("]")
-                for index in range(len(part.arguments) - 1, -1, -1):
-                    pending.append(part.arguments[index])
-                    if index:
-                        pending.append(", ")
-                pending.append("[")
-        return "".join(result)
-
-    def render(self) -> str:
-        """Return complete source without changing the recorded lines."""
-        names, imports = self._plan_imports(*self._names())
-        header = "from __future__ import annotations\n"
-        if imports:
-            header += "\n" + "\n".join(item.statement() for item in imports) + "\n"
-        body = self._body(lambda reference: self._annotation(reference, names))
-        return header + ("\n\n" + "\n".join(body) + "\n" if body else "")

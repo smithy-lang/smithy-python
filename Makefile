@@ -1,6 +1,6 @@
 .DEFAULT_GOAL:=help
 
-.PHONY: help install format-java check-java build-java test-protocols typecheck-protocols generate-protocol-tests api-snapshot ci lint-py check-py test-py benchmark build-py clean
+.PHONY: help install format-java check-java build-java test-protocols typecheck-protocols generate-protocol-tests generate-codegen-output-py api-snapshot ci lint-py check-py test-py benchmark build-py clean
 
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -63,6 +63,19 @@ generate-protocol-tests: ## Generates protocol-test clients, copies them to ./co
 	@echo "codegen-output is up to date."
 
 
+generate-codegen-output-py: ## Generates Python output and asserts no snapshot diff.
+	rm -rf codegen-output-py
+	uv run python scripts/codegen-output-py/generate.py
+	@if ! git diff --quiet --exit-code -- codegen-output-py || [ -n "$$(git ls-files --others --exclude-standard -- codegen-output-py)" ]; then \
+		echo "ERROR: generated codegen-output-py differs from the committed snapshot."; \
+		echo "Review the diff and commit it if the change is intended:"; \
+		git --no-pager status --short -- codegen-output-py; \
+		git --no-pager diff -- codegen-output-py; \
+		exit 1; \
+	fi
+	@echo "codegen-output-py is up to date."
+
+
 api-snapshot: ## Records the public API surface of each package and asserts no git diff.
 	uv run python scripts/api-snapshot/api_snapshot.py
 
@@ -84,6 +97,7 @@ ci: ## Runs the full CI sequence locally (mirrors the CI workflow steps).
 	make test-py
 	make build-py
 	make build-java
+	make generate-codegen-output-py
 	make generate-protocol-tests test-protocols
 	make typecheck-protocols
 

@@ -9,7 +9,9 @@ import unicodedata
 from collections.abc import Callable, Collection
 from dataclasses import dataclass, replace
 
+from . import dependencies as _dependencies
 from .model import (
+    DECLARATION_TYPES,
     ListShape,
     MapShape,
     MemberShape,
@@ -23,17 +25,6 @@ from .selection import Selection
 
 __all__ = ["SymbolProvider", "TypeReference"]
 
-# Union of Python 3.12-3.15 hard keywords, independent of the host interpreter.
-# Soft keywords (match, case, type, lazy, _) remain ordinary identifiers here.
-# Update this when adding support for another Python version.
-_KEYWORDS = frozenset(
-    "False None True and as assert async await break class continue def del "
-    "elif else except finally for from global if import in is lambda nonlocal "
-    "not or pass raise return try while with yield".split()
-)
-_ENUMS = frozenset({ShapeType.ENUM, ShapeType.INT_ENUM})
-_NAMED = _ENUMS | {ShapeType.STRUCTURE, ShapeType.UNION}
-
 
 @dataclass(frozen=True, slots=True)
 class TypeReference:
@@ -41,61 +32,15 @@ class TypeReference:
 
     ``module=None`` denotes the None literal. ``nullable`` permits None in
     addition to this reference, and is used only for sparse collection entries.
-    No imports or annotation rendering are performed.
+    Dependencies are recorded when a writer consumes the reference. No imports
+    or annotation rendering are performed here.
     """
 
     name: str
     module: str | None = None
     arguments: tuple[TypeReference, ...] = ()
     nullable: bool = False
-
-
-# Types whose reference never depends on the shape: Smithy's simple types, with
-# enums widened to str/int so unknown values remain representable.
-_FIXED_TYPES = {
-    ShapeType.BOOLEAN: TypeReference("bool", "builtins"),
-    ShapeType.STRING: TypeReference("str", "builtins"),
-    ShapeType.ENUM: TypeReference("str", "builtins"),
-    ShapeType.INT_ENUM: TypeReference("int", "builtins"),
-    **dict.fromkeys(
-        (
-            ShapeType.BYTE,
-            ShapeType.SHORT,
-            ShapeType.INTEGER,
-            ShapeType.LONG,
-            ShapeType.BIG_INTEGER,
-        ),
-        TypeReference("int", "builtins"),
-    ),
-    ShapeType.FLOAT: TypeReference("float", "builtins"),
-    ShapeType.DOUBLE: TypeReference("float", "builtins"),
-    ShapeType.BLOB: TypeReference("bytes", "builtins"),
-    ShapeType.BIG_DECIMAL: TypeReference("Decimal", "decimal"),
-    ShapeType.TIMESTAMP: TypeReference("datetime", "datetime"),
-    ShapeType.DOCUMENT: TypeReference("Document", "smithy_core.documents"),
-}
-
-
-def _name(
-    value: str,
-    *,
-    pascal: bool = False,
-    constant: bool = False,
-    reserved: Collection[str] = (),
-) -> str:
-    if pascal:
-        result = "".join(word[:1].upper() + word[1:] for word in value.split("_"))
-    else:
-        value = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", value)
-        value = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", value)
-        result = "_".join(word.lower() for word in value.split("_") if word)
-    if constant:
-        result = result.upper()
-    if result[:1].isdigit():
-        result = "_" + result
-    if result in _KEYWORDS or result in reserved:
-        result += "_"
-    return result
+    dependencies: tuple[_dependencies.Dependency, ...] = ()
 
 
 class SymbolProvider:
@@ -119,10 +64,15 @@ class SymbolProvider:
         self._package = package
         self._reserved_member_names: dict[ShapeId, frozenset[str]] = {}
         self._type_references: dict[ShapeId, TypeReference] = {}
+        self._declaration_names: dict[ShapeId, str] = {}
+        self._schema_names = _plan_schema_names(selection)
+        self._union_variant_names: dict[ShapeId, str] = {}
+        self._union_unknown_names: dict[ShapeId, str] = {}
         self._selected = frozenset(shape.id for shape in selection.shapes)
+        self._shape_names: frozenset[str] = frozenset()
         declarations: dict[str, ShapeId] = {}
         for shape in selection.shapes:
-            if shape.type not in _NAMED or shape.has_trait("streaming"):
+            if shape.type not in DECLARATION_TYPES or shape.has_trait("streaming"):
                 continue
             self._check_collision(
                 declarations, self.declaration_name(shape.id), shape.id
@@ -134,38 +84,25 @@ class SymbolProvider:
             members: dict[str, ShapeId] = {}
             for member in shape.members.values():
                 self._check_collision(members, self.member_name(member.id), member.id)
-
-    @staticmethod
-    def _check_collision(
-        scope: dict[str, ShapeId], name: str, shape_id: ShapeId
-    ) -> None:
-        if name in scope:
-            raise ModelError(
-                f"Python name collision {name!r}: {scope[name]}, {shape_id}"
+        self._shape_names = frozenset(declarations)
+        for shape in selection.shapes:
+            if shape.type is not ShapeType.UNION or shape.has_trait("streaming"):
+                continue
+            for member in shape.members.values():
+                self._check_collision(
+                    declarations, self.union_variant_name(member.id), member.id
+                )
+            self._check_collision(
+                declarations, self.union_unknown_name(shape.id), shape.id
             )
-        scope[name] = shape_id
-
-    def _shape(self, shape_id: ShapeId | str) -> Shape:
-        shape = self._model.get_shape(shape_id)
-        if shape.id.root not in self._selected and not self._model.is_prelude(shape):
-            raise ModelError(f"Shape {shape.id} is not selected")
-        if (
-            shape.is_mixin
-            or shape.has_trait("trait")
-            or shape.type
-            in (ShapeType.SERVICE, ShapeType.OPERATION, ShapeType.RESOURCE)
-        ):
-            raise ModelError(f"No data symbol for {shape.id} ({shape.type})")
-        if shape.type in (ShapeType.BLOB, ShapeType.UNION) and shape.has_trait(
-            "streaming"
-        ):
-            raise ModelError(f"Unsupported streaming {shape.type}: {shape.id}")
-        return shape
 
     def declaration_name(self, shape_id: ShapeId | str) -> str:
         """Return a generated type's PascalCase name; aliases have no declaration."""
         shape = self._shape(shape_id)
-        if shape.type not in _NAMED or self._model.is_prelude(shape):
+        cached = self._declaration_names.get(shape.id)
+        if cached is not None:
+            return cached
+        if shape.type not in DECLARATION_TYPES or self._model.is_prelude(shape):
             raise ModelError(f"No generated declaration for {shape.id}")
         service = self._selection.service
         name = service.rename.get(shape.id, shape.id.name) if service else shape.id.name
@@ -174,6 +111,59 @@ class SymbolProvider:
             raise ModelError(
                 f"Invalid Python declaration name {result!r} for {shape.id}"
             )
+        self._declaration_names[shape.id] = result
+        return result
+
+    def schema_name(self, shape_id: ShapeId | str) -> str:
+        """Return the module-level compact schema constant name."""
+        shape = self._selected_shape(shape_id)
+        if (
+            shape.id.is_member
+            or shape.is_mixin
+            or shape.has_trait("trait")
+            or shape.type
+            in (ShapeType.SERVICE, ShapeType.OPERATION, ShapeType.RESOURCE)
+        ):
+            raise ModelError(f"No data schema for {shape.id} ({shape.type})")
+        cached = self._schema_names.get(shape.id)
+        if cached is not None:
+            return cached
+        if self._model.is_prelude(shape):
+            return _name(shape.id.name, constant=True)
+        raise ModelError(f"No schema name planned for {shape.id}")
+
+    def union_variant_name(self, shape_id: ShapeId | str) -> str:
+        """Return the generated class name for a union member."""
+        member = self._shape(shape_id)
+        if not isinstance(member, MemberShape):
+            raise ModelError(f"Union variant naming requires a member ID: {member.id}")
+        cached = self._union_variant_names.get(member.id)
+        if cached is not None:
+            return cached
+        container = self._shape(member.container)
+        if container.type is not ShapeType.UNION:
+            raise ModelError(f"{member.id} is not a union member")
+        container_name = self.declaration_name(container.id)
+        capitalized = member.name[:1].upper() + member.name[1:]
+        result = container_name + capitalized
+        if result in self._shape_names:
+            result = container_name + "_" + capitalized
+        self._union_variant_names[member.id] = result
+        return result
+
+    def union_unknown_name(self, shape_id: ShapeId | str) -> str:
+        """Return the generated unknown-variant class name for a union."""
+        shape = self._shape(shape_id)
+        cached = self._union_unknown_names.get(shape.id)
+        if cached is not None:
+            return cached
+        if shape.type is not ShapeType.UNION:
+            raise ModelError(f"{shape.id} is not a union")
+        container_name = self.declaration_name(shape.id)
+        result = container_name + "Unknown"
+        if result in self._shape_names:
+            result = container_name + "_Unknown"
+        self._union_unknown_names[shape.id] = result
         return result
 
     def type_reference(self, shape_id: ShapeId | str) -> TypeReference:
@@ -199,7 +189,7 @@ class SymbolProvider:
                     else (shape.key.target, shape.value.target)
                 )
                 if expanded:
-                    arguments = tuple(resolved[target] for target in targets)
+                    arguments = tuple(self.type_reference(target) for target in targets)
                     if shape.has_trait("sparse"):
                         arguments = (
                             *arguments[:-1],
@@ -226,6 +216,8 @@ class SymbolProvider:
                 resolved[current] = TypeReference(
                     self.declaration_name(current), f"{self._package}.models"
                 )
+            elif shape.type is ShapeType.BLOB and shape.has_trait("streaming"):
+                resolved[current] = _STREAMING_BLOB
             elif shape.type in _FIXED_TYPES:
                 resolved[current] = _FIXED_TYPES[shape.type]
             else:
@@ -240,10 +232,127 @@ class SymbolProvider:
         if not isinstance(member, MemberShape):
             raise ModelError(f"Member naming requires a member ID: {member.id}")
         container = self._shape(member.container)
-        if container.type not in _NAMED or self._model.is_prelude(container):
+        if container.type not in DECLARATION_TYPES or self._model.is_prelude(container):
             raise ModelError(f"No generated member name for {member.id}")
         return _name(
             member.name,
             constant=container.type in _ENUMS,
             reserved=self._reserved_member_names.get(container.id, ()),
         )
+
+    @staticmethod
+    def _check_collision(
+        scope: dict[str, ShapeId], name: str, shape_id: ShapeId
+    ) -> None:
+        if name in scope:
+            raise ModelError(
+                f"Python name collision {name!r}: {scope[name]}, {shape_id}"
+            )
+        scope[name] = shape_id
+
+    def _selected_shape(self, shape_id: ShapeId | str) -> Shape:
+        shape = self._model.get_shape(shape_id)
+        if shape.id.root not in self._selected and not self._model.is_prelude(shape):
+            raise ModelError(f"Shape {shape.id} is not selected")
+        return shape
+
+    def _shape(self, shape_id: ShapeId | str) -> Shape:
+        shape = self._selected_shape(shape_id)
+        if (
+            shape.is_mixin
+            or shape.has_trait("trait")
+            or shape.type
+            in (ShapeType.SERVICE, ShapeType.OPERATION, ShapeType.RESOURCE)
+        ):
+            raise ModelError(f"No data symbol for {shape.id} ({shape.type})")
+        if shape.type is ShapeType.UNION and shape.has_trait("streaming"):
+            raise ModelError(f"Unsupported streaming {shape.type}: {shape.id}")
+        return shape
+
+
+# Union of Python 3.12-3.15 hard keywords, independent of the host interpreter.
+# Soft keywords (match, case, type, lazy, _) remain ordinary identifiers here.
+# Update this when adding support for another Python version.
+_KEYWORDS = frozenset(
+    "False None True and as assert async await break class continue def del "
+    "elif else except finally for from global if import in is lambda nonlocal "
+    "not or pass raise return try while with yield".split()
+)
+_ENUMS = frozenset({ShapeType.ENUM, ShapeType.INT_ENUM})
+_ACRONYM_BOUNDARY = re.compile(r"([A-Z]+)([A-Z][a-z])")
+_WORD_BOUNDARY = re.compile(r"([a-z0-9])([A-Z])")
+
+_STREAMING_BLOB = TypeReference(
+    "StreamingBlob",
+    "smithy_core.aio.interfaces",
+    dependencies=(_dependencies.SMITHY_CORE,),
+)
+
+# Types whose reference never depends on the shape: Smithy's simple types, with
+# enums widened to str/int so unknown values remain representable.
+_FIXED_TYPES = {
+    ShapeType.BOOLEAN: TypeReference("bool", "builtins"),
+    ShapeType.STRING: TypeReference("str", "builtins"),
+    ShapeType.ENUM: TypeReference("str", "builtins"),
+    ShapeType.INT_ENUM: TypeReference("int", "builtins"),
+    **dict.fromkeys(
+        (
+            ShapeType.BYTE,
+            ShapeType.SHORT,
+            ShapeType.INTEGER,
+            ShapeType.LONG,
+            ShapeType.BIG_INTEGER,
+        ),
+        TypeReference("int", "builtins"),
+    ),
+    ShapeType.FLOAT: TypeReference("float", "builtins"),
+    ShapeType.DOUBLE: TypeReference("float", "builtins"),
+    ShapeType.BLOB: TypeReference("bytes", "builtins"),
+    ShapeType.BIG_DECIMAL: TypeReference("Decimal", "decimal"),
+    ShapeType.TIMESTAMP: TypeReference("datetime", "datetime"),
+    ShapeType.DOCUMENT: TypeReference(
+        "Document", "smithy_core.documents", dependencies=(_dependencies.SMITHY_CORE,)
+    ),
+}
+
+
+def _name(
+    value: str,
+    *,
+    pascal: bool = False,
+    constant: bool = False,
+    reserved: Collection[str] = (),
+) -> str:
+    if pascal:
+        result = "".join(word[:1].upper() + word[1:] for word in value.split("_"))
+    else:
+        value = _ACRONYM_BOUNDARY.sub(r"\1_\2", value)
+        value = _WORD_BOUNDARY.sub(r"\1_\2", value)
+        result = "_".join(word.lower() for word in value.split("_") if word)
+    if constant:
+        result = result.upper()
+    if result[:1].isdigit():
+        result = "_" + result
+    if result in _KEYWORDS or result in reserved:
+        result += "_"
+    return result
+
+
+def _plan_schema_names(selection: Selection) -> dict[ShapeId, str]:
+    names: dict[ShapeId, str] = {}
+    used: set[str] = set()
+    for shape in selection.shapes:
+        selected = (
+            selection.service.rename.get(shape.id, shape.id.name)
+            if selection.service
+            else shape.id.name
+        )
+        base = _name(selected, constant=True)
+        name = base
+        suffix = 2
+        while name in used:
+            name = f"{base}_{suffix}"
+            suffix += 1
+        used.add(name)
+        names[shape.id] = name
+    return names
