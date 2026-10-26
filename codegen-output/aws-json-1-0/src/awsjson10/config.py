@@ -34,6 +34,7 @@ from smithy_core.interfaces.auth import AuthSchemeResolver
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
 
+from ._private.schemas import JSON_RPC10
 from .auth import HTTPAuthSchemeResolver
 
 
@@ -124,7 +125,9 @@ else:
     _ServiceInterceptor = Any
 
 _PROTOCOL_SETTINGS = ProtocolSettings(
-    namespace="aws.protocoltests.json10", service_target="JsonRpc10"
+    namespace="aws.protocoltests.json10",
+    service_target="JsonRpc10",
+    service_schema=JSON_RPC10,
 )
 
 

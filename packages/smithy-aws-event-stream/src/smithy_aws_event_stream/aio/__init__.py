@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import asyncio
+import contextlib
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -45,46 +46,42 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
         async_writer: AsyncWriter,
         signing_config: SigningConfig | None = None,
         is_client_mode: bool = True,
+        initial_message: EventMessage | None = None,
     ):
         self._writer = async_writer
         self._signing_config = signing_config
         self._serializer = _EventSerializer(
             payload_codec=payload_codec, is_client_mode=is_client_mode
         )
+        self._initial_message = initial_message
         self._closed = False
+
+    async def prepare(self) -> None:
+        """Flush the initial-request event, if any, before the first user event.
+
+        Duplex peers may gate their initial-response on it, so the caller flushes it
+        at stream creation rather than leaving it until the first ``send``.
+        """
+        await self._write_initial()
 
     async def send(self, event: E) -> None:
         if self._closed:
             raise OSError("Attempted to write to closed stream.")
-        logger.debug("Preparing to publish event: %s", event)
+        await self._write_initial()
         event.serialize(self._serializer)
         result = self._serializer.get_result()
         if result is None:
             raise ExpectationNotMetError(
                 "Expected an event message to be serialized, but was None."
             )
-
-        if self._signing_config is not None:
-            identity = await self._signing_config.identity_resolver.get_identity(
-                properties=self._signing_config.identity_properties
-            )
-            result = await self._signing_config.signer.sign(
-                event=result,
-                identity=identity,
-                properties=self._signing_config.signing_properties,
-            )
-
-        encoded_result = result.encode()
-        try:
-            logger.debug("Publishing serialized event: %s", result)
-            await self._writer.write(encoded_result)
-        except Exception as e:
-            await self.close()
-            raise OSError("Failed to write to stream.") from e
+        await self._write(result)
 
     async def close(self) -> None:
         if self._closed:
             return
+        # The initial-request is part of the stream even if no user event follows, so
+        # it must go out before the terminating frame.
+        await self._write_initial()
         self._closed = True
 
         try:
@@ -111,6 +108,41 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
     @property
     def closed(self) -> bool:
         return self._closed
+
+    async def _write_initial(self) -> None:
+        # The initial-request seeds the event signature chain off the request
+        # signature, so it must be the first frame signed and written -- not poured
+        # into the body unsigned ahead of the signer.
+        if (initial := self._initial_message) is not None:
+            # Clear only after a successful write: signing or the socket write can
+            # fail, and the frame must stay pending rather than be silently skipped.
+            await self._write(initial)
+            self._initial_message = None
+
+    async def _write(self, message: EventMessage) -> None:
+        if self._signing_config is not None:
+            identity = await self._signing_config.identity_resolver.get_identity(
+                properties=self._signing_config.identity_properties
+            )
+            message = await self._signing_config.signer.sign(
+                event=message,
+                identity=identity,
+                properties=self._signing_config.signing_properties,
+            )
+        try:
+            logger.debug("Publishing serialized event: %s", message)
+            await self._writer.write(message.encode())
+        except Exception as e:
+            # The stream is broken. Abort the underlying writer directly rather than
+            # routing through close(), which re-flushes the pending initial frame onto
+            # the dead writer and tries to send a signed terminator that would also fail.
+            self._closed = True
+            self._initial_message = None
+            if (close := getattr(self._writer, "close", None)) is not None:
+                with contextlib.suppress(Exception):
+                    if asyncio.iscoroutine(result := close()):
+                        await result
+            raise OSError("Failed to write to stream.") from e
 
 
 class AWSEventReceiver[E: DeserializeableShape](EventReceiver[E]):

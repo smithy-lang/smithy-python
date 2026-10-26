@@ -13,6 +13,7 @@ import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
+import software.amazon.smithy.python.codegen.generators.ProtocolSettingsField;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -48,6 +49,13 @@ public final class AwsJson11ProtocolGenerator implements ProtocolGenerator {
         writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("json"));
         writer.addImport("smithy_aws_core.aio.protocols", "AwsJson11ClientProtocol");
         writer.write("AwsJson11ClientProtocol(_PROTOCOL_SETTINGS)");
+    }
+
+    @Override
+    public Set<ProtocolSettingsField> requiredProtocolSettings(GenerationContext context) {
+        return Set.of(
+                ProtocolSettingsField.NAMESPACE,
+                ProtocolSettingsField.SERVICE_TARGET);
     }
 
     @Override

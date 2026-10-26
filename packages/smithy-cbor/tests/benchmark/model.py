@@ -95,7 +95,14 @@ SERVICE = Schema(
     shape_type=ShapeType.SERVICE,
 )
 
-SETTINGS = ProtocolSettings(namespace=_NS, service_target="BenchmarkService")
+SETTINGS = ProtocolSettings(
+    namespace=_NS,
+    service_target="BenchmarkService",
+    service_schema=Schema.collection(
+        id=ShapeID(f"{_NS}#BenchmarkService"),
+        shape_type=ShapeType.SERVICE,
+    ),
+)
 
 
 # --- Shape dataclasses (mirroring models.py) -----------------------------------

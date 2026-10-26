@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Added a trust_store_path option to AWSCRTHTTPClientConfig for overriding the TLS trust store with a custom CA bundle."
+}

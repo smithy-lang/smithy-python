@@ -14,9 +14,10 @@ from .eventstream import EventPublisher, EventReceiver
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
+    from ..._schema_compact import StaticSchema
     from ...deserializers import DeserializeableShape, ShapeDeserializer
     from ...response import ResponseMetadata
-    from ...schemas import APIOperation
+    from ...schemas import APIOperation, Schema
     from ...serializers import SerializeableShape
     from ...shapes import ShapeID
     from .auth import AuthScheme
@@ -132,6 +133,16 @@ class ProtocolSettings:
     """The URI of the service's ``@xmlNamespace``, applied by restXml to request
     payloads that don't declare their own namespace."""
 
+    service_schema: "StaticSchema | Schema"
+    """The service shape's schema.
+
+    Carries the service's traits, including the protocol trait whose ``eventStreamHttp``
+    the RPC protocols read to negotiate HTTP/2 for event streams. The protocol reads its
+    own trait off this schema, so the value is inherently per-protocol rather than a
+    single flattened field. Codegen passes the compact schema form; it is hydrated on
+    first read.
+    """
+
 
 type ProtocolConstructor[T] = Callable[[ProtocolSettings], T]
 """A callable that builds a protocol instance from ``ProtocolSettings``.
@@ -225,7 +236,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         """
         ...
 
-    def create_event_publisher[
+    async def create_event_publisher[
         OperationInput: "SerializeableShape",
         OperationOutput: "DeserializeableShape",
         Event: "SerializeableShape",

@@ -1,6 +1,6 @@
 .DEFAULT_GOAL:=help
 
-.PHONY: help install format-java check-java build-java test-protocols typecheck-protocols generate-protocol-tests generate-codegen-output-py api-snapshot ci lint-py check-py test-py benchmark build-py clean
+.PHONY: help install format-java check-java build-java test-protocols typecheck-protocols generate-protocol-tests generate-codegen-output-py api-snapshot ci lint-py check-py test-py test-integration benchmark build-py clean
 
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -98,12 +98,17 @@ ci: ## Runs the full CI sequence locally (mirrors the CI workflow steps).
 	make build-py
 	make build-java
 	make generate-codegen-output-py
-	make generate-protocol-tests test-protocols
+	make generate-protocol-tests test-protocols test-integration
 	make typecheck-protocols
 
 
 test-py: ## Runs tests for the python packages.
 	uv run pytest packages
+
+
+test-integration: ## Runs integration tests that drive generated clients over a real transport. Requires `make test-protocols` (or generate-protocol-tests) to have installed the generated clients first.
+	uv pip install h2 trustme "packages/smithy-http[awscrt]"
+	uv run pytest packages/*/tests/integration --no-cov
 
 
 benchmark: ## Runs ser/deser throughput benchmarks (coverage disabled; not part of CI or the default test run).

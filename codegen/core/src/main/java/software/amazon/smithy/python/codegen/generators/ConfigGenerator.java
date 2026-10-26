@@ -346,6 +346,14 @@ public final class ConfigGenerator implements Runnable {
             params.append(", xml_namespace=$S");
             args.add(xmlNamespace.get().getUri());
         }
+        // The protocol reads its own eventStreamHttp off the service schema's protocol
+        // trait, so pass the schema rather than a flattened per-service value.
+        var serviceSchema = context.symbolProvider()
+                .toSymbol(service)
+                .expectProperty(SymbolProperties.SCHEMA)
+                .getSymbol();
+        params.append(", service_schema=$T");
+        args.add(serviceSchema);
 
         args.add(0, RuntimeTypes.PROTOCOL_SETTINGS);
         writer.write("_PROTOCOL_SETTINGS = $T(" + params + ")", args.toArray());

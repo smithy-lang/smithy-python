@@ -34,6 +34,7 @@ from smithy_core.interfaces.auth import AuthSchemeResolver
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
 
+from ._private.schemas import REST_XML_WITH_NAMESPACE
 from .auth import HTTPAuthSchemeResolver
 
 
@@ -53,6 +54,7 @@ _PROTOCOL_SETTINGS = ProtocolSettings(
     namespace="aws.protocoltests.restxml.xmlns",
     service_target="RestXmlWithNamespace",
     xml_namespace="https://example.com",
+    service_schema=REST_XML_WITH_NAMESPACE,
 )
 
 
