@@ -125,9 +125,6 @@ class Config:
     the service endpoint.
     """
 
-    request_compression_encoding: str | None
-    """Explicitly request gzip regardless of size; unsupported operations fail."""
-
     request_min_compression_size_bytes: int
     """
     Minimum buffered request size for automatic compression; zero compresses
@@ -171,7 +168,6 @@ class Config:
         | ProtocolConstructor[ClientProtocol[Any, Any]]
         | None = None,
         region: str | None = None,
-        request_compression_encoding: str | None = None,
         request_min_compression_size_bytes: int | None = None,
         retry_strategy: RetryStrategy | RetryStrategyOptions | None = None,
         sdk_ua_app_id: str | None = None,
@@ -197,7 +193,6 @@ class Config:
             "ClientProtocol[Any, Any]", protocol
         ) or RpcV2CborClientProtocol(_PROTOCOL_SETTINGS)
         self.region = region
-        self.request_compression_encoding = request_compression_encoding
         self.request_min_compression_size_bytes = (
             request_min_compression_size_bytes
             if request_min_compression_size_bytes is not None

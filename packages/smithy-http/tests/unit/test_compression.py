@@ -27,7 +27,6 @@ def make_policy(
     *,
     encodings: list[str] | None = None,
     modeled: bool = True,
-    explicit: str | None = None,
     disabled: bool = False,
     threshold: int = 10240,
     stream: Schema | None = None,
@@ -49,7 +48,6 @@ def make_policy(
     context = TypedProperties(
         {
             "config": SimpleNamespace(
-                request_compression_encoding=explicit,
                 disable_request_compression=disabled,
                 request_min_compression_size_bytes=threshold,
             )
@@ -63,12 +61,12 @@ def make_policy(
 @pytest.mark.parametrize(
     "payload", [b"", b"hello", bytearray(b"hello"), BytesIO(b"hello")]
 )
-async def test_explicit_gzip_round_trip_below_threshold(
+async def test_zero_threshold_gzip_round_trip(
     payload: bytes | bytearray | BytesIO,
 ) -> None:
     expected = payload.getvalue() if isinstance(payload, BytesIO) else payload
     fields = Fields([Field(name="Content-Length", values=["999"])])
-    result = make_policy(explicit="gzip").compress(payload, fields)
+    result = make_policy(threshold=0).compress(payload, fields)
     wire = await AsyncBytesReader(result).read()
     assert gzip.decompress(wire) == expected
     assert fields["Content-Encoding"].as_string() == "gzip"
@@ -94,33 +92,22 @@ async def test_automatic_compression_threshold(size: int, compressed: bool) -> N
 @pytest.mark.parametrize(
     "kwargs", [{"modeled": False}, {"disabled": True}, {"encodings": ["unknown"]}]
 )
+@pytest.mark.parametrize("threshold", [0, 10240])
 async def test_automatic_compression_skips_ineligible_request(
     kwargs: dict[str, Any],
+    threshold: int,
 ) -> None:
     payload = b"x" * 11000
     fields = Fields()
-    result = make_policy(**kwargs).compress(payload, fields)
+    result = make_policy(threshold=threshold, **kwargs).compress(payload, fields)
     assert await AsyncBytesReader(result).read() == payload
     assert "Content-Encoding" not in fields
-
-
-@pytest.mark.parametrize(
-    "kwargs", [{"modeled": False}, {"disabled": True}, {"encodings": ["unknown"]}]
-)
-def test_explicit_gzip_fails_instead_of_silent_fallback(kwargs: dict[str, Any]) -> None:
-    with pytest.raises(ValueError, match=r"gzip|compression"):
-        make_policy(explicit="gzip", **kwargs).compress(b"hello", Fields())
-
-
-def test_unknown_explicit_codec_is_rejected() -> None:
-    with pytest.raises(ValueError, match=r"zstd|encoding"):
-        make_policy(explicit="zstd").compress(b"hello", Fields())
 
 
 async def test_gzip_appends_existing_content_encoding() -> None:
     fields = Fields([Field(name="Content-Encoding", values=["identity"])])
     wire = await AsyncBytesReader(
-        make_policy(explicit="gzip").compress(b"hello", fields)
+        make_policy(threshold=0).compress(b"hello", fields)
     ).read()
     assert gzip.decompress(wire) == b"hello"
     assert "identity" in fields["Content-Encoding"].as_string()
@@ -175,7 +162,7 @@ async def test_closing_partially_read_compressed_async_generator_closes_source()
 
 
 @pytest.mark.parametrize("kind", ["requires_length", "eventstream"])
-async def test_incompatible_streams_are_skipped_or_rejected(kind: str) -> None:
+async def test_incompatible_streams_are_skipped(kind: str) -> None:
     target = Schema(
         id=ShapeID("example#Stream"),
         shape_type=ShapeType.BLOB if kind == "requires_length" else ShapeType.UNION,
@@ -191,5 +178,3 @@ async def test_incompatible_streams_are_skipped_or_rejected(kind: str) -> None:
         == body
     )
     assert "Content-Encoding" not in fields
-    with pytest.raises(ValueError, match="gzip"):
-        make_policy(explicit="gzip", stream=stream)

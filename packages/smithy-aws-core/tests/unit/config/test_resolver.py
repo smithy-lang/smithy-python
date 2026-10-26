@@ -59,7 +59,6 @@ class TestRequestCompressionConfig:
             )
         assert config.disable_request_compression is False
         assert config.request_min_compression_size_bytes == 10240
-        assert config.request_compression_encoding is None
 
     async def test_shared_profile_settings(self) -> None:
         fs = FakeFileSystem(
@@ -109,11 +108,9 @@ class TestRequestCompressionConfig:
                 credentials_file_path="/fake/credentials",
                 disable_request_compression=False,
                 request_min_compression_size_bytes=0,
-                request_compression_encoding="gzip",
             )
         assert explicit.disable_request_compression is False
         assert explicit.request_min_compression_size_bytes == 0
-        assert explicit.request_compression_encoding == "gzip"
 
     @pytest.mark.parametrize("minimum", [-1, 10485761, True, 1.5, "large"])
     async def test_invalid_threshold(self, minimum: Any) -> None:
@@ -127,18 +124,8 @@ class TestRequestCompressionConfig:
                     request_min_compression_size_bytes=minimum,
                 )
 
-    async def test_explicit_gzip_conflicts_with_environment_disable(self) -> None:
-        with patch.dict(
-            os.environ, {"AWS_DISABLE_REQUEST_COMPRESSION": "true"}, clear=True
-        ):
-            with pytest.raises(
-                ConfigValidationError, match="disable_request_compression"
-            ):
-                await AsyncAwsConfig.resolve(
-                    region="us-west-2",
-                    fs=NullFileSystem(),
-                    request_compression_encoding="gzip",
-                )
+    def test_custom_compression_encoding_is_not_a_config_option(self) -> None:
+        assert "request_compression_encoding" not in AsyncAwsConfig.__dataclass_fields__
 
     async def test_invalid_environment_threshold_is_rejected(self) -> None:
         with patch.dict(

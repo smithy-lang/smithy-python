@@ -23,12 +23,8 @@ AWS client configuration accepts these settings:
 
 - `disable_request_compression=True` disables automatic compression.
 - `request_min_compression_size_bytes=0` compresses every eligible buffered request.
-- `request_compression_encoding="gzip"` explicitly requests gzip regardless of size.
-  An unsupported operation raises an error, as does combining this option with
-  `disable_request_compression=True`.
 
 The standard settings also resolve from `AWS_DISABLE_REQUEST_COMPRESSION` and
 `AWS_REQUEST_MIN_COMPRESSION_SIZE_BYTES`, or the corresponding lowercase keys in
 the shared AWS configuration file. Explicit client settings take precedence.
-The explicit encoding option is a client setting only. Zstd is not currently an
-encoding supported by Smithy's request-compression trait.
+Operations without gzip compression metadata remain uncompressed.

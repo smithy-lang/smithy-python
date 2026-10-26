@@ -34,7 +34,6 @@ class RequestCompression:
         config = context.get("config")
         disabled = getattr(config, "disable_request_compression", False)
         minimum_size = getattr(config, "request_min_compression_size_bytes", 10240)
-        explicit = getattr(config, "request_compression_encoding", None)
         if not isinstance(disabled, bool):
             raise ValueError("disable_request_compression must be a boolean")
         if (
@@ -45,19 +44,9 @@ class RequestCompression:
             raise ValueError(
                 "request_min_compression_size_bytes must be an integer between 0 and 10485760"
             )
-        if explicit not in (None, "gzip"):
-            raise ValueError("request_compression_encoding must be None or 'gzip'")
-        if disabled and explicit is not None:
-            raise ValueError(
-                "request_compression_encoding conflicts with disable_request_compression"
-            )
         trait = operation.schema.get_trait(RequestCompressionTrait)
         encodings = trait.encodings if trait is not None else []
         supported = any(encoding.lower() == "gzip" for encoding in encodings)
-        if explicit is not None and not supported:
-            raise ValueError(
-                f"Operation {operation.schema.id.name} does not support gzip request compression"
-            )
         if disabled or not supported:
             return cls()
         stream = operation.input_stream_member
@@ -68,13 +57,9 @@ class RequestCompression:
                 and stream.member_target.shape_type == ShapeType.UNION
             )
         )
-        if explicit is not None and unsafe_stream:
-            raise ValueError(
-                f"Operation {operation.schema.id.name} does not support gzip request compression"
-            )
         if unsafe_stream:
             return cls()
-        return cls(encoding="gzip", minimum_size=0 if explicit else minimum_size)
+        return cls(encoding="gzip", minimum_size=minimum_size)
 
     def compress(
         self, body: StreamingBlob, fields: Fields, *, streaming: bool = False

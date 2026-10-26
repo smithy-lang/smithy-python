@@ -121,11 +121,3 @@ def validate_request_min_compression_size_bytes(value: object) -> None:
         raise ConfigValidationError(
             "request_min_compression_size_bytes must be an integer between 0 and 10485760"
         )
-
-
-def validate_request_compression_encoding(value: object) -> None:
-    """Only the gzip codec is currently modeled by Smithy."""
-    if value not in (None, "gzip"):
-        raise ConfigValidationError(
-            "request_compression_encoding must be None or 'gzip'"
-        )

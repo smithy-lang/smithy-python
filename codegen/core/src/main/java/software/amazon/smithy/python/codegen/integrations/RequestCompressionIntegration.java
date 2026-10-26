@@ -39,11 +39,6 @@ public final class RequestCompressionIntegration implements PythonIntegration {
                                 + "request_min_compression_size_bytes if request_min_compression_size_bytes is not None "
                                 + "else 10240"))
                         .build())
-                .addConfigProperty(ConfigProperty.builder()
-                        .name("request_compression_encoding")
-                        .type(Symbol.builder().name("str").build())
-                        .documentation("Explicitly request gzip regardless of size; unsupported operations fail.")
-                        .build())
                 .build());
     }
 }

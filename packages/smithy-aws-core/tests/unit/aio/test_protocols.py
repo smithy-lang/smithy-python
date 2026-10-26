@@ -246,10 +246,7 @@ async def test_aws_json11_serializes_base_request_shape() -> None:
 
 
 @pytest.mark.parametrize("kind", ["json", "query"])
-@pytest.mark.parametrize("explicit", [None, "gzip"])
-async def test_aws_protocol_compresses_serialized_request(
-    kind: str, explicit: str | None
-) -> None:
+async def test_aws_protocol_compresses_serialized_request(kind: str) -> None:
     protocol = (
         _aws_json11_protocol()
         if kind == "json"
@@ -275,10 +272,7 @@ async def test_aws_protocol_compresses_serialized_request(
             {
                 "config": SimpleNamespace(
                     disable_request_compression=False,
-                    request_min_compression_size_bytes=0
-                    if explicit is None
-                    else 10485760,
-                    request_compression_encoding=explicit,
+                    request_min_compression_size_bytes=0,
                 )
             }
         ),
@@ -343,8 +337,7 @@ async def test_compressed_request_is_signed_and_replayed_by_pipeline() -> None:
             )
         ),
         disable_request_compression=False,
-        request_min_compression_size_bytes=10240,
-        request_compression_encoding="gzip",
+        request_min_compression_size_bytes=0,
     )
     operation = APIOperation(
         input=_TestInput,

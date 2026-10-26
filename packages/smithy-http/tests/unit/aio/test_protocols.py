@@ -195,7 +195,7 @@ async def test_http_binding_compresses_absent_optional_payload_as_empty() -> Non
         input=OptionalPayloadInput(),
         endpoint=URI(host="example.com"),
         context=TypedProperties(
-            {"config": SimpleNamespace(request_compression_encoding="gzip")}
+            {"config": SimpleNamespace(request_min_compression_size_bytes=0)}
         ),
     )
     assert request.fields["Content-Encoding"].as_string() == "gzip"
@@ -204,10 +204,7 @@ async def test_http_binding_compresses_absent_optional_payload_as_empty() -> Non
     assert int(request.fields["Content-Length"].as_string()) == len(wire)
 
 
-@pytest.mark.parametrize("explicit", [None, "gzip"])
-async def test_http_binding_protocol_compresses_modeled_request(
-    explicit: str | None,
-) -> None:
+async def test_http_binding_protocol_compresses_modeled_request() -> None:
     operation = APIOperation(
         input=StructInput,
         output=MockOutput,
@@ -231,9 +228,8 @@ async def test_http_binding_protocol_compresses_modeled_request(
         effective_auth_schemes=[],
     )
     config = SimpleNamespace(
-        request_compression_encoding=explicit,
         disable_request_compression=False,
-        request_min_compression_size_bytes=0 if explicit is None else 10240,
+        request_min_compression_size_bytes=0,
     )
     request = MockBindingProtocol().serialize_request(
         operation=operation,

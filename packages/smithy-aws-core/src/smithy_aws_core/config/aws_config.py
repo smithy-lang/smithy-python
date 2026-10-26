@@ -38,7 +38,6 @@ from .validators import (
     validate_max_attempts,
     validate_profile,
     validate_region,
-    validate_request_compression_encoding,
     validate_request_min_compression_size_bytes,
     validate_retry_mode,
 )
@@ -54,7 +53,6 @@ class AwsConfigOverrides(TypedDict, total=False):
     max_attempts: int | None
     disable_request_compression: bool
     request_min_compression_size_bytes: int
-    request_compression_encoding: str | None
     endpoint_uri: "str | URI | None"
     aws_access_key_id: str | None
     aws_secret_access_key: str | None
@@ -101,9 +99,6 @@ class AsyncAwsConfig:
 
     request_min_compression_size_bytes: int = 10240
     """Minimum buffered request size for automatic compression; zero compresses all."""
-
-    request_compression_encoding: str | None = None
-    """Explicitly request gzip regardless of size; unsupported operations fail."""
 
     endpoint_uri: "str | URI | None" = None
     """A static URI to route requests to."""
@@ -189,10 +184,6 @@ class AsyncAwsConfig:
             default=10240,
             resolver=resolve_request_min_compression_size_bytes,
             validator=validate_request_min_compression_size_bytes,
-        ),
-        "request_compression_encoding": FieldSpec(
-            default=None,
-            validator=validate_request_compression_encoding,
         ),
         "endpoint_uri": FieldSpec(
             default=None,
@@ -382,14 +373,6 @@ class AsyncAwsConfig:
             # Run validator for all sources
             if spec.validator is not None:
                 spec.validator(getattr(self, field_name))
-
-        if (
-            self.disable_request_compression
-            and self.request_compression_encoding is not None
-        ):
-            raise ConfigValidationError(
-                "request_compression_encoding conflicts with disable_request_compression"
-            )
 
     def _apply_default(self, field_name: str, spec: FieldSpec) -> None:
         """Apply the default value for a field."""
