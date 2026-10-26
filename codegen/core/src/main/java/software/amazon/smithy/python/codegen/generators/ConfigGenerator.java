@@ -326,15 +326,10 @@ public final class ConfigGenerator implements Runnable {
                 ProtocolSettingsField.SERVICE_TARGET);
         var service = context.settings().service(context.model());
         var resolved = ServiceIndex.of(context.model()).getProtocols(service).keySet();
-        java.util.List<String> eventStreamHttp = java.util.List.of();
         for (var protocolId : resolved) {
             var g = generators.get(protocolId);
             if (g != null) {
                 required.addAll(g.requiredProtocolSettings(context));
-                var versions = g.eventStreamHttp(context);
-                if (!versions.isEmpty()) {
-                    eventStreamHttp = versions;
-                }
             }
         }
 
@@ -351,14 +346,14 @@ public final class ConfigGenerator implements Runnable {
             params.append(", xml_namespace=$S");
             args.add(xmlNamespace.get().getUri());
         }
-        if (required.contains(ProtocolSettingsField.EVENT_STREAM_HTTP) && !eventStreamHttp.isEmpty()) {
-            var entries = new ArrayList<String>();
-            for (var v : eventStreamHttp) {
-                entries.add("\"" + v + "\"");
-            }
-            // Trailing comma keeps a single-element value a tuple, not a parenthesized str.
-            params.append(", event_stream_http=(").append(String.join(", ", entries)).append(",)");
-        }
+        // The protocol reads its own eventStreamHttp off the service schema's protocol
+        // trait, so pass the schema rather than a flattened per-service value.
+        var serviceSchema = context.symbolProvider()
+                .toSymbol(service)
+                .expectProperty(SymbolProperties.SCHEMA)
+                .getSymbol();
+        params.append(", service_schema=$T");
+        args.add(serviceSchema);
 
         args.add(0, RuntimeTypes.PROTOCOL_SETTINGS);
         writer.write("_PROTOCOL_SETTINGS = $T(" + params + ")", args.toArray());

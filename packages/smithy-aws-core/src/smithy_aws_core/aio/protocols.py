@@ -352,7 +352,9 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
     def __init__(self, settings: ProtocolSettings) -> None:
         _assert_json()
         self._service_name: Final = settings.service_target
-        self._event_stream_http = tuple(settings.event_stream_http)
+        self._event_stream_http = self._resolve_event_stream_http(
+            settings.service_schema, self._id
+        )
         self._codec: Final = JSONCodec(
             document_class=AWSJSONDocument,
             default_namespace=settings.namespace,

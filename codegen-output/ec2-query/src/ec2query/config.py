@@ -34,6 +34,7 @@ from smithy_core.interfaces.auth import AuthSchemeResolver
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
 
+from ._private.schemas import AWS_EC2
 from .auth import HTTPAuthSchemeResolver
 
 
@@ -141,7 +142,10 @@ else:
     _ServiceInterceptor = Any
 
 _PROTOCOL_SETTINGS = ProtocolSettings(
-    namespace="aws.protocoltests.ec2", service_target="AwsEc2", version="2020-01-08"
+    namespace="aws.protocoltests.ec2",
+    service_target="AwsEc2",
+    version="2020-01-08",
+    service_schema=AWS_EC2,
 )
 
 

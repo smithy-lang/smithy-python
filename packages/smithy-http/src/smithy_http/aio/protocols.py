@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import asyncio
 import os
-from collections.abc import AsyncIterable, Callable
+from collections.abc import AsyncIterable, Callable, Mapping, Sequence
 from inspect import iscoroutinefunction
 from typing import TYPE_CHECKING, Any, cast
 
@@ -100,6 +100,7 @@ if TYPE_CHECKING:
     from smithy_aws_event_stream.events import Event as _Event
     from smithy_aws_event_stream.events import EventMessage as _EventMessage
     from smithy_aws_event_stream.exceptions import MissingInitialResponse
+    from smithy_core._schema_compact import StaticSchema
     from smithy_core.aio.types import AsyncBytesProvider
     from typing_extensions import TypeForm
 
@@ -541,6 +542,29 @@ class RpcClientProtocol(HttpClientProtocol):
     _event_stream_http: tuple[str, ...] = ()
 
     @staticmethod
+    def _resolve_event_stream_http(
+        service_schema: "StaticSchema | Schema", protocol_id: ShapeID
+    ) -> tuple[str, ...]:
+        """Read this protocol's ``eventStreamHttp`` ALPN list off the service schema.
+
+        Keyed by the protocol's own id, so a service carrying several protocol traits
+        yields each protocol its own value rather than a flattened one. The compact
+        schema codegen emits is hydrated on first read (cached thereafter).
+        """
+        from smithy_core._schema_compact import hydrate
+
+        trait = hydrate(service_schema).get_trait(protocol_id)
+        if trait is None:
+            return ()
+        value = trait.document_value
+        if not isinstance(value, Mapping):
+            return ()
+        versions = value.get("eventStreamHttp")
+        if not isinstance(versions, Sequence) or isinstance(versions, str | bytes):
+            return ()
+        return tuple(str(v) for v in versions)
+
+    @staticmethod
     def _is_event_stream_member(member: Schema | None) -> bool:
         """Whether a ``@streaming`` member is an EVENT stream (union), not a data stream.
 
@@ -889,7 +913,9 @@ class RpcV2CborClientProtocol(_RpcV2ClientProtocol):
     def __init__(self, settings: ProtocolSettings) -> None:
         _assert_cbor()
         self._service_name = settings.service_target
-        self._event_stream_http = tuple(settings.event_stream_http)
+        self._event_stream_http = self._resolve_event_stream_http(
+            settings.service_schema, self._id
+        )
         self._codec = CBORCodec(default_namespace=settings.namespace)
 
     def _decode_document(self, body: bytes) -> object:

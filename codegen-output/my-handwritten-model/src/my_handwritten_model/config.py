@@ -24,6 +24,8 @@ from smithy_http.aio.aiohttp import AIOHTTPClient
 from smithy_http.aio.protocols import RpcV2CborClientProtocol
 from smithy_http.interfaces import HTTPRequestConfiguration
 
+from ._private.schemas import MY_HANDWRITTEN_MODEL
+
 
 if TYPE_CHECKING:
     from smithy_core.interceptors import Interceptor
@@ -47,7 +49,7 @@ else:
 _PROTOCOL_SETTINGS = ProtocolSettings(
     namespace="smithy.python.tests.handwritten",
     service_target="MyHandwrittenModel",
-    event_stream_http=("h2",),
+    service_schema=MY_HANDWRITTEN_MODEL,
 )
 
 

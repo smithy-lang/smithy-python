@@ -32,6 +32,11 @@ from smithy_http import Fields, tuples_to_fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
 from smithy_json import JSONSettings
 
+_SERVICE_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#Service"),
+    shape_type=ShapeType.SERVICE,
+)
+
 
 class _StubRegistry:
     def __init__(self, classes: dict[str, type]) -> None:
@@ -215,7 +220,11 @@ def _mock_operation(
 
 def _aws_json11_protocol() -> AwsJson11ClientProtocol:
     return AwsJson11ClientProtocol(
-        ProtocolSettings(namespace="com.test", service_target="JsonService")
+        ProtocolSettings(
+            namespace="com.test",
+            service_target="JsonService",
+            service_schema=_SERVICE_SCHEMA,
+        )
     )
 
 
@@ -495,7 +504,10 @@ async def test_aws_json11_raises_parse_error_for_invalid_error_body() -> None:
 async def test_aws_query_serializes_base_request_shape() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     request = protocol.serialize_request(
@@ -519,7 +531,10 @@ async def test_aws_query_serializes_base_request_shape() -> None:
 async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     with patch(
@@ -554,7 +569,10 @@ async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None
 async def test_aws_query_parses_success_body_once() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     operation = _mock_operation(_operation_schema("EmptyOperation"))
@@ -586,7 +604,10 @@ async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback(
 ):
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     with pytest.raises(_ModeledQueryError) as exc_info:
@@ -613,7 +634,10 @@ async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback(
 async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     with pytest.raises(CallError) as exc_info:
@@ -642,7 +666,10 @@ async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
 async def test_aws_query_parses_invalid_error_body_once() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
 
@@ -669,7 +696,10 @@ async def test_aws_query_parses_invalid_error_body_once() -> None:
 async def test_aws_query_reports_request_id_from_the_response_body() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     context = TypedProperties()
@@ -704,7 +734,10 @@ async def test_aws_query_reports_request_id_from_the_response_body() -> None:
 async def test_aws_query_prefers_a_request_id_header_when_one_is_sent() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     context = TypedProperties()
@@ -726,7 +759,10 @@ async def test_aws_query_prefers_a_request_id_header_when_one_is_sent() -> None:
 async def test_aws_query_reports_no_request_id_when_the_body_has_none() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     response = HTTPResponse(
@@ -742,7 +778,10 @@ async def test_aws_query_reports_no_request_id_when_the_body_has_none() -> None:
 async def test_aws_query_does_not_report_a_previous_attempts_request_id() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     context = TypedProperties()
@@ -781,7 +820,10 @@ async def test_aws_query_does_not_report_a_previous_attempts_request_id_when_des
 ):
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     context = TypedProperties()
@@ -856,6 +898,7 @@ def _rest_xml_protocol() -> RestXmlClientProtocol:
             namespace="com.test",
             service_target="XmlService",
             xml_namespace="https://xml.example.com",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
 

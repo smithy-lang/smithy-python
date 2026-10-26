@@ -24,6 +24,8 @@ from smithy_http.aio.aiohttp import AIOHTTPClient
 from smithy_http.aio.protocols import RpcV2CborClientProtocol
 from smithy_http.interfaces import HTTPRequestConfiguration
 
+from ._private.schemas import RPC_V2_PROTOCOL
+
 
 if TYPE_CHECKING:
     from smithy_core.interceptors import Interceptor
@@ -80,7 +82,9 @@ else:
     _ServiceInterceptor = Any
 
 _PROTOCOL_SETTINGS = ProtocolSettings(
-    namespace="smithy.protocoltests.rpcv2Cbor", service_target="RpcV2Protocol"
+    namespace="smithy.protocoltests.rpcv2Cbor",
+    service_target="RpcV2Protocol",
+    service_schema=RPC_V2_PROTOCOL,
 )
 
 

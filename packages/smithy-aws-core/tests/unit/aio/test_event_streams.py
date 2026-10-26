@@ -125,7 +125,14 @@ def _operation() -> APIOperation[Any, Any]:
 
 def _protocol() -> AwsJson11ClientProtocol:
     return AwsJson11ClientProtocol(
-        ProtocolSettings(namespace="smithy.example", service_target="StreamService")
+        ProtocolSettings(
+            namespace="smithy.example",
+            service_target="StreamService",
+            service_schema=Schema.collection(
+                id=ShapeID("smithy.example#StreamService"),
+                shape_type=ShapeType.SERVICE,
+            ),
+        )
     )
 
 

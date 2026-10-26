@@ -34,6 +34,7 @@ from smithy_core.interfaces.auth import AuthSchemeResolver
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
 
+from ._private.schemas import REST_XML
 from .auth import HTTPAuthSchemeResolver
 
 
@@ -340,7 +341,9 @@ else:
     _ServiceInterceptor = Any
 
 _PROTOCOL_SETTINGS = ProtocolSettings(
-    namespace="aws.protocoltests.restxml", service_target="RestXml"
+    namespace="aws.protocoltests.restxml",
+    service_target="RestXml",
+    service_schema=REST_XML,
 )
 
 

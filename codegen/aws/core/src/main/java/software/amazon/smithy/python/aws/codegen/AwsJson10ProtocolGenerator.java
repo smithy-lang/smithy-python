@@ -4,7 +4,6 @@
  */
 package software.amazon.smithy.python.aws.codegen;
 
-import java.util.List;
 import java.util.Set;
 import software.amazon.smithy.aws.traits.protocols.AwsJson1_0Trait;
 import software.amazon.smithy.model.node.ArrayNode;
@@ -62,14 +61,7 @@ public final class AwsJson10ProtocolGenerator implements ProtocolGenerator {
     public Set<ProtocolSettingsField> requiredProtocolSettings(GenerationContext context) {
         return Set.of(
                 ProtocolSettingsField.NAMESPACE,
-                ProtocolSettingsField.SERVICE_TARGET,
-                ProtocolSettingsField.EVENT_STREAM_HTTP);
-    }
-
-    @Override
-    public List<String> eventStreamHttp(GenerationContext context) {
-        var service = context.settings().service(context.model());
-        return service.expectTrait(AwsJson1_0Trait.class).getEventStreamHttp();
+                ProtocolSettingsField.SERVICE_TARGET);
     }
 
     @Override

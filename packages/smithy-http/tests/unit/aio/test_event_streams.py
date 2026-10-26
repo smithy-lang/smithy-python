@@ -21,7 +21,7 @@ from smithy_core.prelude import STRING
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import RequiredTrait, StreamingTrait
+from smithy_core.traits import RequiredTrait, RpcV2CborTrait, StreamingTrait
 from smithy_core.types import TypedProperties
 from smithy_http import Fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
@@ -170,9 +170,21 @@ def _message_event_deserializer(deserializer: ShapeDeserializer) -> _MessageEven
     return result
 
 
-def _protocol() -> RpcV2CborClientProtocol:
+def _service_schema(trait: RpcV2CborTrait | None = None) -> Schema:
+    return Schema.collection(
+        id=ShapeID("smithy.example#StreamService"),
+        shape_type=ShapeType.SERVICE,
+        traits=[trait] if trait is not None else None,
+    )
+
+
+def _protocol(service_schema: Schema | None = None) -> RpcV2CborClientProtocol:
     return RpcV2CborClientProtocol(
-        ProtocolSettings(namespace="smithy.example", service_target="StreamService")
+        ProtocolSettings(
+            namespace="smithy.example",
+            service_target="StreamService",
+            service_schema=service_schema or _service_schema(),
+        )
     )
 
 
@@ -340,6 +352,23 @@ async def test_output_data_stream_keeps_normal_accept() -> None:
 async def test_non_streaming_does_not_require_http2() -> None:
     request = _serialize(
         _operation(input_schema=_PLAIN_IO_SCHEMA, output_schema=_PLAIN_IO_SCHEMA)
+    )
+    assert getattr(request, "http2_required") is False
+
+
+async def test_event_stream_http_opt_out_read_from_service_schema() -> None:
+    # eventStreamHttp is read off the service schema's protocol trait, keyed by the
+    # protocol id. An h1-only list opts the event stream out of forced HTTP/2.
+    protocol = _protocol(
+        service_schema=_service_schema(
+            RpcV2CborTrait({"eventStreamHttp": ["http/1.1"]})
+        )
+    )
+    request = protocol.serialize_request(
+        operation=_operation(),
+        input=InitialMessage(message="hello"),
+        endpoint=URI(host="example.com"),
+        context=TypedProperties(),
     )
     assert getattr(request, "http2_required") is False
     # The output members are all optional, so the stream may omit initial-response and

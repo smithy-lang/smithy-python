@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "ProtocolSettings now requires a service_schema field; the event_stream_http field was removed and RPC protocols read eventStreamHttp from the service schema's protocol trait."
+}

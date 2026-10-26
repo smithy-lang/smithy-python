@@ -4,7 +4,6 @@
  */
 package software.amazon.smithy.python.codegen.generators;
 
-import java.util.List;
 import java.util.Set;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
@@ -53,16 +52,6 @@ public interface ProtocolGenerator {
      */
     default Set<ProtocolSettingsField> requiredProtocolSettings(GenerationContext context) {
         return Set.of();
-    }
-
-    /**
-     * The protocol trait's {@code eventStreamHttp} ALPN priority list for the service.
-     *
-     * @param context Generation context
-     * @return The eventStreamHttp versions, or an empty list if the protocol has none.
-     */
-    default List<String> eventStreamHttp(GenerationContext context) {
-        return List.of();
     }
 
     /**
