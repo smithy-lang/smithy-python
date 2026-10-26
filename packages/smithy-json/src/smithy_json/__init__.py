@@ -1,7 +1,5 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from io import BytesIO
-
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.interfaces import BytesReader, BytesWriter
@@ -56,6 +54,4 @@ class JSONCodec(Codec):
         return _JSONShapeSerializer(sink, settings=self._settings)
 
     def create_deserializer(self, source: bytes | BytesReader) -> "ShapeDeserializer":
-        if isinstance(source, bytes):
-            source = BytesIO(source)
         return _JSONShapeDeserializer(source, settings=self._settings)
