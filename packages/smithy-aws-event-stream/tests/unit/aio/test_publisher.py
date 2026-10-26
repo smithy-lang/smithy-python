@@ -10,6 +10,7 @@ request signature, so a user event must never precede or outrank it.
 from io import BytesIO
 from typing import Any
 
+import pytest
 from smithy_aws_event_stream._private.serializers import EventSerializer
 from smithy_aws_event_stream.aio import AWSEventPublisher, SigningConfig
 from smithy_aws_event_stream.events import Event, EventMessage
@@ -116,3 +117,29 @@ async def test_initial_request_is_signed_first() -> None:
     # Chain order: initial-request signed first, then the user event, then the empty
     # terminating frame.
     assert signed_order == ["initial-request", "message", "<empty>"]
+
+
+async def test_write_failure_aborts_without_reflushing() -> None:
+    # A failed write must abort: close the underlying writer and mark the publisher
+    # closed, NOT route through close() (which would re-flush the pending initial frame
+    # onto the dead writer and attempt a terminator).
+    class _FailingWriter:
+        def __init__(self) -> None:
+            self.frames: list[bytes] = []
+            self.closed = False
+
+        async def write(self, data: bytes) -> None:
+            raise OSError("socket is down")
+
+        async def close(self) -> None:
+            self.closed = True
+
+    writer = _FailingWriter()
+    publisher = _publisher(writer)  # type: ignore[arg-type]
+
+    with pytest.raises(OSError, match=r"Failed to write to stream\."):
+        await publisher.send(_user_event())
+
+    assert writer.frames == []  # nothing reached the wire
+    assert writer.closed is True  # underlying writer torn down
+    assert publisher.closed is True  # subsequent send/close no-op

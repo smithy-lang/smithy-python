@@ -391,7 +391,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
         # transport does so per operation, leaving non-streaming calls on HTTP/1.1.
         http2_required = self._requires_http2(operation)
 
-        if operation.input_stream_member is not None:
+        if self._is_event_stream_member(operation.input_stream_member):
             # RPC event streams carry the input as an initial-request event at the head
             # of the stream body; the envelope keeps x-amz-target as a normal request.
             return _HTTPRequest(
@@ -440,7 +440,10 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
         error_registry: TypeRegistry,
         context: TypedProperties,
     ) -> OperationOutput:
-        if operation.output_stream_member is not None and response.status == 200:
+        if (
+            self._is_event_stream_member(operation.output_stream_member)
+            and response.status == 200
+        ):
             return await self._deserialize_event_stream_response(
                 operation=operation, response=response, context=context
             )

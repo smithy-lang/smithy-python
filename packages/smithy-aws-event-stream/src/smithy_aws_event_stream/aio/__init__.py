@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import asyncio
+import contextlib
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -132,7 +133,15 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
             logger.debug("Publishing serialized event: %s", message)
             await self._writer.write(message.encode())
         except Exception as e:
-            await self.close()
+            # The stream is broken. Abort the underlying writer directly rather than
+            # routing through close(), which re-flushes the pending initial frame onto
+            # the dead writer and tries to send a signed terminator that would also fail.
+            self._closed = True
+            self._initial_message = None
+            if (close := getattr(self._writer, "close", None)) is not None:
+                with contextlib.suppress(Exception):
+                    if asyncio.iscoroutine(result := close()):
+                        await result
             raise OSError("Failed to write to stream.") from e
 
 

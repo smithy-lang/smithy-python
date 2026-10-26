@@ -522,17 +522,6 @@ def _is_unit(schema: Schema | None) -> bool:
     return original is not None and original.document_value == str(UNIT.id)
 
 
-def _is_event_stream_member(member: Schema | None) -> bool:
-    """Whether a ``@streaming`` member is an EVENT stream (union), not a data stream.
-
-    ``input_stream_member``/``output_stream_member`` match any ``@streaming`` member;
-    a blob target is a data stream, only a union target is an event stream.
-    """
-    return member is not None and member.expect_member_target().shape_type is (
-        ShapeType.UNION
-    )
-
-
 class RpcClientProtocol(HttpClientProtocol):
     """Base for the RPC-based protocols (awsJson, awsQuery, rpcv2).
 
@@ -551,13 +540,24 @@ class RpcClientProtocol(HttpClientProtocol):
     # The protocol trait's eventStreamHttp ALPN list (empty if the trait left it unset).
     _event_stream_http: tuple[str, ...] = ()
 
+    @staticmethod
+    def _is_event_stream_member(member: Schema | None) -> bool:
+        """Whether a ``@streaming`` member is an EVENT stream (union), not a data stream.
+
+        ``input_stream_member``/``output_stream_member`` match any ``@streaming``
+        member; a blob target is a data stream, only a union target is an event stream.
+        """
+        return member is not None and member.expect_member_target().shape_type is (
+            ShapeType.UNION
+        )
+
     def _requires_http2(self, operation: APIOperation[Any, Any]) -> bool:
         # Only EVENT streams (a @streaming UNION member) force HTTP/2 -- a @streaming
         # blob is a data stream and runs fine over HTTP/1.1. input_stream_member /
         # output_stream_member match either, so check the target is a union here.
         if not (
-            _is_event_stream_member(operation.input_stream_member)
-            or _is_event_stream_member(operation.output_stream_member)
+            self._is_event_stream_member(operation.input_stream_member)
+            or self._is_event_stream_member(operation.output_stream_member)
         ):
             return False
         # Require HTTP/2 unless the model EXPLICITLY allows only HTTP/1.1: no list, or
@@ -730,9 +730,11 @@ class _RpcV2ClientProtocol(RpcClientProtocol):
         # Accept describes the RESPONSE and Content-Type the REQUEST body, so they turn
         # on output_stream_member and input_stream_member independently: a one-way
         # stream advertises the event-stream media type on only the streaming side.
+        # Only an EVENT stream (union member) counts; a @streaming blob is a data stream
+        # and takes the normal media type.
         accept = (
             _EVENT_STREAM_CONTENT_TYPE
-            if operation.output_stream_member is not None
+            if self._is_event_stream_member(operation.output_stream_member)
             else self._content_type
         )
         fields: list[tuple[str, str]] = [
@@ -740,7 +742,7 @@ class _RpcV2ClientProtocol(RpcClientProtocol):
             ("Accept", accept),
         ]
 
-        if operation.input_stream_member is not None:
+        if self._is_event_stream_member(operation.input_stream_member):
             # RPC event streams carry the input as an initial-request event at the head
             # of the stream body; the HTTP envelope is otherwise a normal RPC request.
             fields.append(("Content-Type", _EVENT_STREAM_CONTENT_TYPE))
@@ -782,7 +784,10 @@ class _RpcV2ClientProtocol(RpcClientProtocol):
         error_registry: TypeRegistry,
         context: TypedProperties,
     ) -> OperationOutput:
-        if operation.output_stream_member is not None and response.status == 200:
+        if (
+            self._is_event_stream_member(operation.output_stream_member)
+            and response.status == 200
+        ):
             return await self._deserialize_event_stream_response(
                 operation=operation, response=response, context=context
             )

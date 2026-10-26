@@ -327,6 +327,16 @@ async def test_data_stream_does_not_require_http2() -> None:
     assert getattr(request, "http2_required") is False
 
 
+async def test_output_data_stream_keeps_normal_accept() -> None:
+    # A @streaming BLOB output is a data stream: Accept must stay the codec type, not
+    # the event-stream media type. output_stream_member matches a blob too, so this
+    # guards the Accept header against treating a data stream as an event stream.
+    request = _serialize(
+        _operation(input_schema=_PLAIN_IO_SCHEMA, output_schema=_DATA_STREAM_IO_SCHEMA)
+    )
+    assert request.fields["Accept"].as_string() == "application/cbor"
+
+
 async def test_non_streaming_does_not_require_http2() -> None:
     request = _serialize(
         _operation(input_schema=_PLAIN_IO_SCHEMA, output_schema=_PLAIN_IO_SCHEMA)
