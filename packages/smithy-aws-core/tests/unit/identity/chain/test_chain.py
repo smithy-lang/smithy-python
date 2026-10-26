@@ -116,7 +116,7 @@ def test_discovers_and_constructs_entry_point_providers(
             return _Provider
 
     def _entry_points(*, group: str) -> tuple[_EntryPoint, ...]:
-        assert group == "smithy_aws_core.identity.chain_providers"
+        assert group == "smithy_aws_core.aio.identity.chain_providers"
         return (_EntryPoint(),)
 
     monkeypatch.setattr(

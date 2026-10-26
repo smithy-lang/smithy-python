@@ -1,4 +1,4 @@
 {
   "type": "breaking",
-  "description": "Move symbol names to prepare for dual sync/async signatures"
+  "description": "Moved async implementations to `smithy_core.aio` and added the `Async` prefix to their names, for example `AsyncClientProtocol`, `AsyncRpcClientProtocol`, `AsyncEndpointResolver`, `AsyncStandardRetryStrategy`, `AsyncSigner` and the event-stream types `AsyncDuplexEventStream`/`AsyncInputEventStream`/`AsyncOutputEventStream`. The unprefixed names are reserved for sync implementations. `ProtocolSettings` and `ProtocolConstructor` moved to `smithy_core.interfaces`. Update imports to the `aio` paths."
 }

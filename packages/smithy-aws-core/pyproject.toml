@@ -38,7 +38,7 @@ dependencies = [
 "Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-aws-core/"
 "Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
 
-[project.entry-points."smithy_aws_core.identity.chain_providers"]
+[project.entry-points."smithy_aws_core.aio.identity.chain_providers"]
 Environment = "smithy_aws_core.aio.identity.chain.providers.environment:AsyncEnvironmentCredentialsProvider"
 SharedConfig = "smithy_aws_core.aio.identity.chain.providers.shared_config:AsyncSharedConfigProvider"
 ProfileSessionKeys = "smithy_aws_core.aio.identity.chain.providers.profile:AsyncProfileSessionCredentialsProvider"

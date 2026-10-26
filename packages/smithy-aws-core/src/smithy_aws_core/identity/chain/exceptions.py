@@ -39,7 +39,6 @@ class IdentityResolverFailure:
     """A failed identity resolution attempt."""
 
     provider_name: str
-    resolver: object
     error: SmithyIdentityError
 
 

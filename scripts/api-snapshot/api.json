@@ -554,6 +554,7 @@
   "smithy_aws_core.identity.static": {
     "AWSCredentialsIdentity": "rex-class",
     "AWSIdentityProperties": "rex-class",
+    "IdentityResolver": "rex-protocol",
     "SmithyIdentityError": "rex-exception",
     "StaticCredentialsResolver": "class"
   },

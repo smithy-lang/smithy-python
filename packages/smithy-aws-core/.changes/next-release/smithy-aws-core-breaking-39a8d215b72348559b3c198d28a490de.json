@@ -1,4 +1,4 @@
 {
   "type": "breaking",
-  "description": "Move symbol names to prepare for dual sync/async signatures"
+  "description": "Moved async implementations to `smithy_aws_core.aio` and added the `Async` prefix to their names, for example `AsyncAwsJson10ClientProtocol`, `AsyncSigV4AuthScheme`, `AsyncIdentityChain`, `AsyncAwsConfig` and the credential resolvers (`AsyncContainerCredentialsResolver`, `AsyncIMDSCredentialsResolver`, `AsyncProcessCredentialsResolver`). The unprefixed names are reserved for sync implementations, and some, like `StaticCredentialsResolver`, are already sync. Update imports to the `aio` paths."
 }

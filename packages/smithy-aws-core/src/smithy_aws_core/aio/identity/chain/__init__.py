@@ -27,7 +27,7 @@ from .provider import ChainIdentityProvider, ChainSetup, NamedResolver
 
 __all__ = ("AsyncIdentityChain",)
 
-_CHAIN_PROVIDER_ENTRY_POINT_GROUP = "smithy_aws_core.identity.chain_providers"
+_CHAIN_PROVIDER_ENTRY_POINT_GROUP = "smithy_aws_core.aio.identity.chain_providers"
 logger = logging.getLogger(__name__)
 
 
@@ -119,14 +119,11 @@ class AsyncIdentityChain[I: Identity](AsyncIdentityResolver[I, Mapping[str, Any]
             except SmithyIdentityError as error:
                 if isinstance(resolver, NamedResolver):
                     provider_name = resolver.provider_name
-                    failed_resolver = resolver.resolver
                 else:
                     provider_name = type(resolver).__name__
-                    failed_resolver = resolver
                 failures.append(
                     IdentityResolverFailure(
                         provider_name=provider_name,
-                        resolver=failed_resolver,
                         error=error,
                     )
                 )

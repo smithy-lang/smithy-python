@@ -1,4 +1,4 @@
 {
   "type": "breaking",
-  "description": "Move symbol names to prepare for dual sync/async signatures"
+  "description": "Added the `Async` prefix to the async event-stream implementations, for example `AsyncEventSigner`. The unprefixed names are reserved for sync implementations. Update imports to the `aio` paths."
 }
