@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Compress eligible HTTP request bodies with gzip before signing, with configurable thresholds and streaming support that preserves seekable sources without buffering the entire compressed payload."
+}

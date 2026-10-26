@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Preserve the logical cursor and unread bytes when seeking asynchronous iterable request bodies."
+}

@@ -39,6 +39,7 @@ from .aio import HTTPRequest as _HTTPRequest
 from .aio import HTTPResponse as _HTTPResponse
 from .aio.interfaces import HTTPRequest, HTTPResponse
 from .bindings import Binding, RequestBindingMatcher
+from .compression import RequestCompression
 from .schema_extensions import (
     HTTP_BINDING_SCHEMA_EXTENSION,
     HTTPBindingSchemaMetadata,
@@ -73,6 +74,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         endpoint_trait: EndpointTrait | None = None,
         omit_empty_payload: bool = True,
         operation_metadata: HTTPOperationSchemaMetadata | None = None,
+        request_compression: RequestCompression | None = None,
     ) -> None:
         """Initialize an HTTPRequestSerializer.
 
@@ -89,6 +91,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         self._payload_codec = payload_codec
         self._omit_empty_payload = omit_empty_payload
         self._operation_metadata = operation_metadata
+        self._request_compression = request_compression
         self.result: HTTPRequest | None = None
 
     @contextmanager
@@ -100,6 +103,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
             endpoint_trait=self._endpoint_trait,
             omit_empty_payload=self._omit_empty_payload,
             operation_metadata=self._operation_metadata,
+            request_compression=self._request_compression,
         )
         try:
             yield binding_serializer
@@ -198,6 +202,7 @@ class HTTPBindingSerializer(InterceptingSerializer):
         endpoint_trait: EndpointTrait | None = None,
         omit_empty_payload: bool = True,
         operation_metadata: HTTPOperationSchemaMetadata | None = None,
+        request_compression: RequestCompression | None = None,
     ) -> None:
         """Initialize an HTTPBindingSerializer.
 
@@ -208,6 +213,7 @@ class HTTPBindingSerializer(InterceptingSerializer):
         :param omit_empty_payload: Whether an empty document payload should be omitted.
         :param operation_metadata: Optional cached operation binding metadata.
         """
+        self._request_compression = request_compression
         self._operation_metadata = operation_metadata or (
             HTTPOperationSchemaMetadata.from_traits(http_trait, endpoint_trait)
         )
@@ -332,6 +338,24 @@ class HTTPBindingSerializer(InterceptingSerializer):
             payload = AsyncBytesReader(raw_payload or b"")
 
         assert payload is not None  # noqa: S101
+
+        if self._request_compression is not None:
+            raw_body = (
+                self._raw_payload_serializer.payload or b""
+                if self._raw_payload_serializer is not None
+                else self._sync_payload
+            )
+            if raw_body is not None:
+                payload = AsyncBytesReader(
+                    self._request_compression.compress(
+                        raw_body,
+                        fields,
+                        streaming=(
+                            self._binding_metadata.request.payload is not None
+                            and self._binding_metadata.request.payload.is_streaming
+                        ),
+                    )
+                )
 
         self._result = _HTTPRequest(
             method=self._operation_metadata.method,

@@ -1,8 +1,12 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 #  pyright: reportPrivateUsage=false
+import gzip
+from asyncio import CancelledError
 from collections.abc import AsyncIterator
-from typing import Any, cast
+from hashlib import sha256
+from io import BytesIO
+from typing import Any, Self, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -11,6 +15,7 @@ from smithy_core.aio.types import AsyncBytesReader
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.aiohttp import AIOHTTPClient, _AIOHTTPStreamingBody
+from smithy_http.compression import RequestCompression
 from smithy_http.exceptions import SmithyHTTPError
 
 
@@ -84,6 +89,178 @@ async def test_send_preserves_explicitly_framed_empty_body() -> None:
     await client.send(request)
 
     assert session.request.call_args.kwargs["data"] is body
+
+
+@pytest.mark.parametrize("position", [0, 17])
+async def test_send_prepares_compressed_seekable_body_with_bounded_reads(
+    position: int,
+) -> None:
+    class CountingSource(BytesIO):
+        bytes_read = 0
+
+        def read(self, size: int | None = -1) -> bytes:
+            data = super().read(size)
+            self.bytes_read += len(data)
+            return data
+
+    payload = b"".join(
+        sha256(index.to_bytes(4, "big")).digest() for index in range(32768)
+    )
+    source = CountingSource(payload)
+    fields = Fields()
+    body = RequestCompression(encoding="gzip", minimum_size=0).compress(
+        source, fields, streaming=True
+    )
+    assert isinstance(body, AsyncBytesReader)
+    await body.seek(position)
+    source.bytes_read = 0
+    client, session = _create_client()
+    request = HTTPRequest(
+        method="POST",
+        destination=URI(scheme="https", host="example.com"),
+        body=body,
+        fields=fields,
+    )
+
+    await client.send(request)
+
+    assert source.bytes_read <= 128 * 1024
+    assert session.request.call_args.kwargs["data"] is body
+    assert body.tell() == position
+    await body.seek(0)
+    assert gzip.decompress(await body.read()) == payload
+    await body.close()
+    await client.close()
+
+
+async def test_send_omits_body_at_nonzero_end_position() -> None:
+    client, session = _create_client()
+    body = AsyncBytesReader(b"prefix")
+    await body.seek(6)
+    request = _create_request()
+    request.body = body
+    await client.send(request)
+    assert session.request.call_args.kwargs["data"] is None
+    assert body.tell() == 6
+    await body.close()
+    await client.close()
+
+
+@pytest.mark.parametrize("error", [OSError, CancelledError])
+async def test_send_restores_position_when_body_probe_fails(
+    error: type[BaseException],
+) -> None:
+    class FailingProbeReader(AsyncBytesReader):
+        async def read(self, size: int = -1) -> bytes:
+            await super().read(size)
+            raise error("probe failed")
+
+    client, session = _create_client()
+    body = FailingProbeReader(b"payload")
+    await body.seek(2)
+    request = _create_request()
+    request.body = body
+    with pytest.raises(error, match="probe failed"):
+        await client.send(request)
+    assert body.tell() == 2
+    session.request.assert_not_awaited()
+    await body.close()
+    await client.close()
+
+
+@pytest.mark.parametrize("error", [OSError, CancelledError])
+async def test_send_rewinds_gzip_source_after_probe_consumes_then_fails(
+    error: type[BaseException],
+) -> None:
+    class FailOnceSource(BytesIO):
+        failed = False
+
+        def read(self, size: int | None = -1) -> bytes:
+            if not self.failed:
+                self.failed = True
+                super().read(1)
+                raise error("source probe failed")
+            return super().read(size)
+
+    payload = b"complete gzip source after retry"
+    source = FailOnceSource(b"prefix" + payload)
+    source.seek(6)
+    fields = Fields()
+    body = RequestCompression(encoding="gzip", minimum_size=0).compress(
+        source, fields, streaming=True
+    )
+    assert isinstance(body, AsyncBytesReader)
+    client, session = _create_client()
+    request = HTTPRequest(
+        method="POST",
+        destination=URI(scheme="https", host="example.com"),
+        body=body,
+        fields=fields,
+    )
+    with pytest.raises(error, match="source probe failed"):
+        await client.send(request)
+    session.request.assert_not_awaited()
+    assert source.tell() == 6
+    assert body.tell() == 0
+    assert gzip.decompress(await body.read()) == payload
+    await body.close()
+    await client.close()
+
+
+@pytest.mark.parametrize("compressed", [False, True])
+async def test_send_preserves_seekable_async_iterable_payload(compressed: bool) -> None:
+    class SeekableChunks:
+        def __init__(self, payload: bytes) -> None:
+            self.source = BytesIO(payload)
+
+        def __aiter__(self) -> Self:
+            return self
+
+        async def __anext__(self) -> bytes:
+            chunk = self.source.read()
+            if not chunk:
+                raise StopAsyncIteration
+            return chunk
+
+        async def seek(self, offset: int, whence: int = 0) -> int:
+            return self.source.seek(offset, whence)
+
+        def tell(self) -> int:
+            return self.source.tell()
+
+        async def close(self) -> None:
+            self.source.close()
+
+    payload = b"".join(
+        sha256(index.to_bytes(4, "big")).digest() for index in range(8192)
+    )
+    source = SeekableChunks(payload)
+    fields = Fields()
+    body = (
+        RequestCompression(encoding="gzip", minimum_size=0).compress(
+            source, fields, streaming=True
+        )
+        if compressed
+        else AsyncBytesReader(source)
+    )
+    assert isinstance(body, AsyncBytesReader)
+    client, session = _create_client()
+    request = HTTPRequest(
+        method="POST",
+        destination=URI(scheme="https", host="example.com"),
+        body=body,
+        fields=fields,
+    )
+    await client.send(request)
+    assert session.request.call_args.kwargs["data"] is body
+    wire = await body.read()
+    actual = gzip.decompress(wire) if compressed else wire
+    assert actual == payload
+    await body.seek(0)
+    replay = await body.read()
+    assert replay == wire
+    await body.close()
+    await client.close()
 
 
 async def test_send_disables_redirects() -> None:

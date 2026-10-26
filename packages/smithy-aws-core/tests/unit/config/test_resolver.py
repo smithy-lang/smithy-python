@@ -11,6 +11,7 @@ import warnings
 from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -48,6 +49,92 @@ class FakeFileSystem:
 
     async def read_file(self, path: str) -> str | None:
         return self._files.get(path)
+
+
+class TestRequestCompressionConfig:
+    async def test_defaults(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            config = await AsyncAwsConfig.resolve(
+                region="us-west-2", fs=NullFileSystem()
+            )
+        assert config.disable_request_compression is False
+        assert config.request_min_compression_size_bytes == 10240
+
+    async def test_shared_profile_settings(self) -> None:
+        fs = FakeFileSystem(
+            {
+                "/fake/config": "[profile compression]\ndisable_request_compression = true\nrequest_min_compression_size_bytes = 256\n"
+            }
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            config = await AsyncAwsConfig.resolve(
+                region="us-west-2",
+                profile="compression",
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/credentials",
+            )
+        assert config.disable_request_compression is True
+        assert config.request_min_compression_size_bytes == 256
+
+    async def test_environment_overrides_profile_and_explicit_overrides_environment(
+        self,
+    ) -> None:
+        fs = FakeFileSystem(
+            {
+                "/fake/config": "[default]\ndisable_request_compression = false\nrequest_min_compression_size_bytes = 100\n"
+            }
+        )
+        with patch.dict(
+            os.environ,
+            {
+                "AWS_DISABLE_REQUEST_COMPRESSION": "true",
+                "AWS_REQUEST_MIN_COMPRESSION_SIZE_BYTES": "200",
+            },
+            clear=True,
+        ):
+            config = await AsyncAwsConfig.resolve(
+                region="us-west-2",
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/credentials",
+            )
+            assert config.disable_request_compression is True
+            assert config.request_min_compression_size_bytes == 200
+            explicit = await AsyncAwsConfig.resolve(
+                region="us-west-2",
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/credentials",
+                disable_request_compression=False,
+                request_min_compression_size_bytes=0,
+            )
+        assert explicit.disable_request_compression is False
+        assert explicit.request_min_compression_size_bytes == 0
+
+    @pytest.mark.parametrize("minimum", [-1, 10485761, True, 1.5, "large"])
+    async def test_invalid_threshold(self, minimum: Any) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            with pytest.raises(
+                ConfigValidationError, match="request_min_compression_size_bytes"
+            ):
+                await AsyncAwsConfig.resolve(
+                    region="us-west-2",
+                    fs=NullFileSystem(),
+                    request_min_compression_size_bytes=minimum,
+                )
+
+    def test_custom_compression_encoding_is_not_a_config_option(self) -> None:
+        assert "request_compression_encoding" not in AsyncAwsConfig.__dataclass_fields__
+
+    async def test_invalid_environment_threshold_is_rejected(self) -> None:
+        with patch.dict(
+            os.environ,
+            {"AWS_REQUEST_MIN_COMPRESSION_SIZE_BYTES": "invalid"},
+            clear=True,
+        ):
+            with pytest.raises(ConfigValidationError, match="Invalid integer"):
+                await AsyncAwsConfig.resolve(region="us-west-2", fs=NullFileSystem())
 
 
 class TestResolveRegion:

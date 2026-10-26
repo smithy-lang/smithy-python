@@ -11,6 +11,7 @@ from smithy_core.traits import (
     ErrorFault,
     ErrorTrait,
     JSONNameTrait,
+    RequestCompressionTrait,
     Trait,
     UnitTypeTrait,
 )
@@ -69,3 +70,9 @@ def test_cant_construct_trait_from_non_matching_dynamic_trait():
     dynamic = DynamicTrait(id=JSONNameTrait.id, document_value="client")
     with pytest.raises(ValueError):
         ErrorTrait(dynamic)
+
+
+def test_request_compression_trait_hydrates_encodings():
+    trait = Trait.new(ShapeID("smithy.api#requestCompression"), {"encodings": ["gzip"]})
+    assert isinstance(trait, RequestCompressionTrait)
+    assert trait.encodings == ["gzip"]

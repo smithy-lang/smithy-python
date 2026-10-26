@@ -203,6 +203,19 @@ class StreamingTrait(Trait, id=ShapeID("smithy.api#streaming")):
 
 
 @dataclass(init=False, frozen=True)
+class RequestCompressionTrait(Trait, id=ShapeID("smithy.api#requestCompression")):
+    """The priority-ordered content encodings supported by an operation."""
+
+    @property
+    def encodings(self) -> list[str]:
+        assert isinstance(self.document_value, Mapping)
+        encodings = self.document_value["encodings"]
+        assert isinstance(encodings, Sequence) and not isinstance(encodings, str)
+        assert all(isinstance(encoding, str) for encoding in encodings)
+        return list(encodings)  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
 class RequiresLengthTrait(Trait, id=ShapeID("smithy.api#requiresLength")):
     def __post_init__(self):
         assert self.document_value is None

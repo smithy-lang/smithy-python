@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from asyncio import iscoroutine, sleep
 from collections.abc import AsyncIterable, Iterable
+from inspect import isawaitable
 from typing import Any
 
 from ..exceptions import AsyncBodyError
@@ -62,9 +63,13 @@ def read_streaming_blob(body: StreamingBlob) -> bytes:
 
 
 async def close(stream: Any) -> None:
-    """Close a stream, awaiting it if it's async."""
-    if (close := getattr(stream, "close", None)) is not None:
-        if iscoroutine(result := close()):
+    """Close a stream or async generator, awaiting any returned awaitable."""
+    closer = getattr(stream, "close", None)
+    if closer is None:
+        closer = getattr(stream, "aclose", None)
+    if closer is not None:
+        result = closer()
+        if isawaitable(result):
             await result
 
 

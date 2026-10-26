@@ -24,17 +24,21 @@ from .context import SharedConfigContext
 from .exceptions import ConfigError, ConfigValidationError
 from .filesystem import FileSystem
 from .resolvers import (
+    resolve_disable_request_compression,
     resolve_endpoint_uri,
     resolve_max_attempts,
     resolve_region,
+    resolve_request_min_compression_size_bytes,
     resolve_retry_mode,
     resolve_sdk_ua_app_id,
 )
 from .types import UNSET, ConfigSource, FieldSpec, Resolved
 from .validators import (
+    validate_disable_request_compression,
     validate_max_attempts,
     validate_profile,
     validate_region,
+    validate_request_min_compression_size_bytes,
     validate_retry_mode,
 )
 
@@ -52,6 +56,8 @@ class AwsConfigOverrides(TypedDict, total=False):
     region: str | None
     retry_mode: RetryStrategyType | None
     max_attempts: int | None
+    disable_request_compression: bool
+    request_min_compression_size_bytes: int
     endpoint_uri: "str | URI | None"
     aws_access_key_id: str | None
     aws_secret_access_key: str | None
@@ -92,6 +98,12 @@ class AsyncAwsConfig:
     max_attempts: int | None = None
     """The maximum number of attempts to make per request, including the initial
     attempt. Must be an integer of at least 1."""
+
+    disable_request_compression: bool = False
+    """Disable automatic compression on operations that advertise support."""
+
+    request_min_compression_size_bytes: int = 10240
+    """Minimum buffered request size for automatic compression; zero compresses all."""
 
     endpoint_uri: "str | URI | None" = None
     """A static URI to route requests to."""
@@ -167,6 +179,16 @@ class AsyncAwsConfig:
             default=RetryStrategyOptions.max_attempts,
             resolver=resolve_max_attempts,
             validator=validate_max_attempts,
+        ),
+        "disable_request_compression": FieldSpec(
+            default=False,
+            resolver=resolve_disable_request_compression,
+            validator=validate_disable_request_compression,
+        ),
+        "request_min_compression_size_bytes": FieldSpec(
+            default=10240,
+            resolver=resolve_request_min_compression_size_bytes,
+            validator=validate_request_min_compression_size_bytes,
         ),
         "endpoint_uri": FieldSpec(
             default=None,

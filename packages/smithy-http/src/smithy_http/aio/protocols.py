@@ -36,6 +36,7 @@ from smithy_core.traits import (
 )
 
 from .. import tuples_to_fields
+from ..compression import RequestCompression
 from ..deserializers import HTTPResponseDeserializer
 from ..schema_extensions import (
     HTTP_BINDING_SCHEMA_EXTENSION,
@@ -141,6 +142,9 @@ class HttpBindingClientProtocol(HttpClientProtocol):
                 schema=operation.input_schema,
                 http_trait=operation_metadata.http_trait,
                 operation_metadata=operation_metadata,
+                request_compression=RequestCompression.from_operation(
+                    operation, context
+                ),
             )
             try:
                 input.serialize_members(serializer)
@@ -153,6 +157,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             payload_codec=self.payload_codec,
             http_trait=operation_metadata.http_trait,
             operation_metadata=operation_metadata,
+            request_compression=RequestCompression.from_operation(operation, context),
         )
         input.serialize(serializer)
         if serializer.result is None:
@@ -401,6 +406,7 @@ class _RpcV2ClientProtocol(HttpClientProtocol):
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
+        compression = RequestCompression.from_operation(operation, context)
         operation_name = operation.schema.id.name
         path = f"/service/{self._service_name}/operation/{operation_name}"
 
@@ -418,11 +424,13 @@ class _RpcV2ClientProtocol(HttpClientProtocol):
             fields.append(("Content-Type", self._content_type))
             fields.append(("Content-Length", str(len(payload))))
 
+        http_fields = tuples_to_fields(fields)
+        body = compression.compress(payload, http_fields)
         return _HTTPRequest(
             method="POST",
             destination=_URI(host="", path=path),
-            fields=tuples_to_fields(fields),
-            body=AsyncBytesReader(payload),
+            fields=http_fields,
+            body=AsyncBytesReader(body),
         )
 
     async def deserialize_response[
