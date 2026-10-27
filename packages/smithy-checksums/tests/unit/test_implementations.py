@@ -180,3 +180,39 @@ def test_matches_crt(impls: dict[str, Factory], algorithm: str) -> None:
             _digest(impls[algorithm], data[:length])
             == compute[algorithm](data[:length]).hex()
         ), length
+
+
+def _bitwise_crc(poly: int, width: int, data: bytes) -> str:
+    """Computes a reflected CRC with all-ones init and final XOR, a bit at a time."""
+    mask = (1 << width) - 1
+    value = mask
+    for byte in data:
+        value ^= byte
+        for _ in range(8):
+            value = (value >> 1) ^ poly if value & 1 else value >> 1
+    return (value ^ mask).to_bytes(width // 8, "big").hex()
+
+
+@pytest.mark.parametrize(
+    ("algorithm", "poly", "width"),
+    [("crc32c", 0x82F63B78, 32)],
+)
+def test_chunked_crc_matches_bitwise(algorithm: str, poly: int, width: int) -> None:
+    # The pure CRCs hash whole chunks with masks, short tails with a table, and
+    # long tails with the masks again, so check lengths on either side of each.
+    chunk = crc._CHUNK_SIZE  # pyright: ignore[reportPrivateUsage]
+    tail = crc._MIN_MASKED_TAIL  # pyright: ignore[reportPrivateUsage]
+    data = os.urandom(2 * chunk + tail + 1)
+    for length in [0, 1, 8, tail - 1, tail, chunk - 1, chunk, chunk + 1, len(data)]:
+        assert _digest(PURE[algorithm], data[:length]) == _bitwise_crc(
+            poly, width, data[:length]
+        ), length
+
+    rng = random.Random(algorithm)
+    chunks: list[bytes] = []
+    offset = 0
+    while offset < len(data):
+        size = rng.choice((1, 100, tail, chunk - 1, chunk, chunk + 1))
+        chunks.append(data[offset : offset + size])
+        offset += size
+    assert _digest(PURE[algorithm], *chunks) == _bitwise_crc(poly, width, data)
