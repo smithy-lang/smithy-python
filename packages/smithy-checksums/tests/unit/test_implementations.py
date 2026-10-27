@@ -198,7 +198,7 @@ def _bitwise_crc(poly: int, width: int, data: bytes) -> str:
 
 @pytest.mark.parametrize(
     ("algorithm", "poly", "width"),
-    [("crc32c", 0x82F63B78, 32)],
+    [("crc32c", 0x82F63B78, 32), ("crc64nvme", 0x9A6C9329AC4BC9B5, 64)],
 )
 def test_chunked_crc_matches_bitwise(algorithm: str, poly: int, width: int) -> None:
     # The pure CRCs hash whole chunks with masks, short tails with a table, and
