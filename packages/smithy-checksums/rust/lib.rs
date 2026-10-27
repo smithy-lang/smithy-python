@@ -9,8 +9,8 @@
 use std::sync::{Mutex, MutexGuard};
 
 use pyo3::buffer::PyBuffer;
-use pyo3::prelude::*;
-use pyo3::types::PyBytes;
+use pyo3::types::{PyAny, PyBytes, PyBytesMethods};
+use pyo3::{Bound, PyResult, Python, pyclass, pymethods, pymodule};
 
 /// Inputs at least this large are hashed with the interpreter detached so
 /// other threads can run. Below it, detaching costs more than it saves. This
@@ -19,17 +19,22 @@ const DETACH_THRESHOLD: usize = 2048;
 
 /// Streaming checksum state shared by every class in this module.
 trait State: Clone + Send {
+    /// The digest, a byte array as long as the algorithm's output.
+    type Digest: AsRef<[u8]>;
+
     fn new() -> Self;
     fn update(&mut self, data: &[u8]);
-    fn digest(&self) -> Vec<u8>;
+    fn digest(&self) -> Self::Digest;
 }
 
 macro_rules! crc_state {
-    ($state:ident, $algorithm:ident, $size:literal) => {
+    ($state:ident, $algorithm:ident, $width:ty) => {
         #[derive(Clone)]
         struct $state(crc_fast::Digest);
 
         impl State for $state {
+            type Digest = [u8; size_of::<$width>()];
+
             fn new() -> Self {
                 Self(crc_fast::Digest::new(crc_fast::CrcAlgorithm::$algorithm))
             }
@@ -38,16 +43,17 @@ macro_rules! crc_state {
                 self.0.update(data);
             }
 
-            fn digest(&self) -> Vec<u8> {
-                // The digest is a u64 regardless of the CRC's width.
-                self.0.finalize().to_be_bytes()[8 - $size..].to_vec()
+            fn digest(&self) -> Self::Digest {
+                // `finalize` returns a u64 regardless of the CRC's width, and
+                // the CRC is in its low bits.
+                (self.0.finalize() as $width).to_be_bytes()
             }
         }
     };
 }
 
-crc_state!(Crc32State, Crc32IsoHdlc, 4);
-crc_state!(Crc32cState, Crc32Iscsi, 4);
+crc_state!(Crc32State, Crc32IsoHdlc, u32);
+crc_state!(Crc32cState, Crc32Iscsi, u32);
 
 fn lock<S>(state: &Mutex<S>) -> MutexGuard<'_, S> {
     // A panic while holding the lock can't leave a checksum half-updated in a
@@ -59,26 +65,15 @@ fn lock<S>(state: &Mutex<S>) -> MutexGuard<'_, S> {
 
 /// Feeds the bytes of `data` to `state`.
 ///
-/// `bytes` and other read-only buffers are hashed in place. Writable buffers
-/// (such as `bytearray`) are copied first, because another thread could
-/// otherwise modify them while they're being read.
+/// `bytes` is immutable, so it's hashed in place. Other buffers are copied
+/// first, because another thread could modify them while they're being read.
+/// That includes read-only buffers: the flag only stops this reader from
+/// writing, and a read-only `memoryview` of a `bytearray` can still change.
 fn update<S: State>(py: Python<'_>, state: &Mutex<S>, data: &Bound<'_, PyAny>) -> PyResult<()> {
-    if let Ok(bytes) = data.cast::<PyBytes>() {
-        hash_slice(py, state, bytes.as_bytes());
-        return Ok(());
-    }
-
-    let buffer = PyBuffer::<u8>::get(data)?;
-    if buffer.readonly() && buffer.is_c_contiguous() {
-        // SAFETY: the buffer is read-only and C-contiguous, and `buffer`
-        // keeps the exporter alive and its memory pinned until it's dropped
-        // at the end of this function.
-        let slice = unsafe {
-            std::slice::from_raw_parts(buffer.buf_ptr().cast::<u8>(), buffer.len_bytes())
-        };
-        hash_slice(py, state, slice);
+    if let Ok(data) = data.cast::<PyBytes>() {
+        hash_slice(py, state, data.as_bytes());
     } else {
-        let copy = buffer.to_vec(py)?;
+        let copy = PyBuffer::<u8>::get(data)?.to_vec(py)?;
         hash_slice(py, state, &copy);
     }
     Ok(())
@@ -113,7 +108,7 @@ macro_rules! checksum_class {
             }
 
             fn digest<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-                PyBytes::new(py, &lock(&self.state).digest())
+                PyBytes::new(py, lock(&self.state).digest().as_ref())
             }
 
             fn copy(&self) -> Self {
