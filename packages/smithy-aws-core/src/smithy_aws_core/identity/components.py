@@ -4,8 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol, TypedDict
 
-from smithy_core.aio.interfaces.identity import IdentityResolver
-from smithy_core.interfaces.identity import Identity
+from smithy_core.interfaces.identity import Identity, IdentityResolver
 
 __all__ = [
     "AWSCredentialsIdentity",

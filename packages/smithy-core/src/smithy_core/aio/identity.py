@@ -6,16 +6,16 @@ from typing import Any, Final
 
 from ..exceptions import SmithyIdentityError
 from ..interfaces.identity import Identity
-from .interfaces.identity import IdentityResolver
+from .interfaces.identity import AsyncIdentityResolver
 
-__all__ = ["CachingIdentityResolver", "ChainedIdentityResolver"]
+__all__ = ["AsyncCachingIdentityResolver", "AsyncChainedIdentityResolver"]
 
 logger: Final = logging.getLogger(__name__)
 
 
 # TODO: turn this into a decorator
-class CachingIdentityResolver[I: Identity, IP: Mapping[str, Any]](
-    IdentityResolver[I, IP]
+class AsyncCachingIdentityResolver[I: Identity, IP: Mapping[str, Any]](
+    AsyncIdentityResolver[I, IP]
 ):
     def __init__(self) -> None:
         self._cached: I | None = None
@@ -33,8 +33,8 @@ class CachingIdentityResolver[I: Identity, IP: Mapping[str, Any]](
         self._cached = None
 
 
-class ChainedIdentityResolver[I: Identity, IP: Mapping[str, Any]](
-    CachingIdentityResolver[I, IP]
+class AsyncChainedIdentityResolver[I: Identity, IP: Mapping[str, Any]](
+    AsyncCachingIdentityResolver[I, IP]
 ):
     """Attempts to resolve an identity by checking a sequence of sub-resolvers.
 
@@ -42,8 +42,8 @@ class ChainedIdentityResolver[I: Identity, IP: Mapping[str, Any]](
     resolver in the chain will be attempted.
     """
 
-    def __init__(self, resolvers: Sequence[IdentityResolver[I, IP]]) -> None:
-        """Construct a ChainedIdentityResolver.
+    def __init__(self, resolvers: Sequence[AsyncIdentityResolver[I, IP]]) -> None:
+        """Construct a AsyncChainedIdentityResolver.
 
         :param resolvers: The sequence of resolvers to resolve identity from.
         """

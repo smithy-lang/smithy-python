@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from typing import Any, Protocol
 
-from smithy_core.aio.interfaces import ClientTransport, Request, Response
+from smithy_core.aio.interfaces import AsyncClientTransport, Request, Response
 from smithy_core.aio.utils import read_streaming_blob, read_streaming_blob_async
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
@@ -14,6 +14,7 @@ from ...interfaces import (
 )
 
 __all__ = [
+    "AsyncHTTPClient",
     "HTTPClient",
     "HTTPErrorIdentifier",
     "HTTPRequest",
@@ -70,11 +71,11 @@ class HTTPResponse(Response, Protocol):
         return read_streaming_blob(self.body)
 
 
-class HTTPClient(ClientTransport[HTTPRequest, HTTPResponse], Protocol):
+class AsyncHTTPClient(AsyncClientTransport[HTTPRequest, HTTPResponse], Protocol):
     """An asynchronous HTTP client interface.
 
     Header field names and values are not validated before reaching this
-    layer. Implementations of ``HTTPClient`` are responsible for
+    layer. Implementations of ``AsyncHTTPClient`` are responsible for
     validating and handling those invalid and dangerous characters (such
     as CR, LF, or NUL) as defined in `RFC 9110, Section 5.5
     <https://www.rfc-editor.org/rfc/rfc9110#section-5.5>`_.
@@ -99,6 +100,11 @@ class HTTPClient(ClientTransport[HTTPRequest, HTTPResponse], Protocol):
         :param request_config: Configuration specific to this request.
         """
         ...
+
+
+# TODO(sync-renames): drop once aws-sdk-python's hand-written integration test
+# harness imports AsyncHTTPClient instead of the pre-rename HTTPClient name.
+HTTPClient = AsyncHTTPClient
 
 
 class HTTPErrorIdentifier:

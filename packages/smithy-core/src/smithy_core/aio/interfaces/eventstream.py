@@ -6,7 +6,7 @@ from ...deserializers import DeserializeableShape
 from ...serializers import SerializeableShape
 
 
-class EventPublisher[E: SerializeableShape](Protocol):
+class AsyncEventPublisher[E: SerializeableShape](Protocol):
     """Asynchronously sends events to a service.
 
     This may be used as a context manager to ensure the stream is closed before exiting.
@@ -30,7 +30,7 @@ class EventPublisher[E: SerializeableShape](Protocol):
         await self.close()
 
 
-class EventReceiver[E: DeserializeableShape](Protocol):
+class AsyncEventReceiver[E: DeserializeableShape](Protocol):
     """Asynchronously receives events from a service.
 
     Events may be received via the ``receive`` method or by using this class as

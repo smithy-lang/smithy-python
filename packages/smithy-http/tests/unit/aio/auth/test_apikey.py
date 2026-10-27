@@ -5,18 +5,19 @@ from dataclasses import dataclass
 
 import pytest
 from smithy_core import URI
-from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.types import TypedProperties
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.auth.apikey import (
-    APIKeyAuthScheme,
     APIKeyIdentityProperties,
     APIKeyLocation,
-    APIKeySigner,
+    AsyncAPIKeyAuthScheme,
+    AsyncAPIKeySigner,
 )
-from smithy_http.aio.identity.apikey import APIKeyIdentity, APIKeyIdentityResolver
+from smithy_http.aio.identity.apikey import AsyncAPIKeyIdentityResolver
+from smithy_http.identity import APIKeyIdentity
 
 
 class _FakeBody(AsyncIterable[bytes]):
@@ -42,7 +43,7 @@ def request(query: str | None = None, fields: Fields | None = None) -> HTTPReque
 async def test_sign_empty_query() -> None:
     api_key = "spam"
     identity = APIKeyIdentity(api_key=api_key)
-    signer = APIKeySigner(name="eggs", location=APIKeyLocation.QUERY)
+    signer = AsyncAPIKeySigner(name="eggs", location=APIKeyLocation.QUERY)
 
     given = request()
     expected = request(query="eggs=spam")
@@ -59,7 +60,7 @@ async def test_sign_empty_query() -> None:
 async def test_sign_non_empty_query() -> None:
     api_key = "spam"
     identity = APIKeyIdentity(api_key=api_key)
-    signer = APIKeySigner(name="eggs", location=APIKeyLocation.QUERY)
+    signer = AsyncAPIKeySigner(name="eggs", location=APIKeyLocation.QUERY)
 
     given = request(query="spam=eggs")
     expected = request(query="spam=eggs&eggs=spam")
@@ -76,7 +77,7 @@ async def test_sign_non_empty_query() -> None:
 async def test_sign_header() -> None:
     api_key = "spam"
     identity = APIKeyIdentity(api_key=api_key)
-    signer = APIKeySigner(name="eggs", location=APIKeyLocation.HEADER)
+    signer = AsyncAPIKeySigner(name="eggs", location=APIKeyLocation.HEADER)
 
     given = request()
     expected = request(fields=Fields([Field(name="eggs", values=["spam"])]))
@@ -93,7 +94,9 @@ async def test_sign_header() -> None:
 async def test_sign_header_with_scheme() -> None:
     api_key = "spam"
     identity = APIKeyIdentity(api_key=api_key)
-    signer = APIKeySigner(name="eggs", location=APIKeyLocation.HEADER, scheme="Bearer")
+    signer = AsyncAPIKeySigner(
+        name="eggs", location=APIKeyLocation.HEADER, scheme="Bearer"
+    )
 
     given = request()
     expected = request(fields=Fields([Field(name="eggs", values=["Bearer spam"])]))
@@ -110,13 +113,13 @@ async def test_sign_header_with_scheme() -> None:
 @dataclass
 class ApiKeyConfig:
     api_key_identity_resolver: (
-        IdentityResolver[APIKeyIdentity, APIKeyIdentityProperties] | None
+        AsyncIdentityResolver[APIKeyIdentity, APIKeyIdentityProperties] | None
     ) = None
 
 
 async def test_auth_scheme_gets_resolver() -> None:
-    scheme = APIKeyAuthScheme(name="eggs", location=APIKeyLocation.QUERY)
-    resolver = APIKeyIdentityResolver()
+    scheme = AsyncAPIKeyAuthScheme(name="eggs", location=APIKeyLocation.QUERY)
+    resolver = AsyncAPIKeyIdentityResolver()
     config = ApiKeyConfig(api_key_identity_resolver=resolver)
     properties = TypedProperties({"config": config})
 
@@ -124,6 +127,6 @@ async def test_auth_scheme_gets_resolver() -> None:
 
 
 async def test_auth_scheme_missing_resolver() -> None:
-    scheme = APIKeyAuthScheme(name="eggs", location=APIKeyLocation.QUERY)
+    scheme = AsyncAPIKeyAuthScheme(name="eggs", location=APIKeyLocation.QUERY)
     with pytest.raises(SmithyIdentityError):
         scheme.identity_resolver(context=TypedProperties())

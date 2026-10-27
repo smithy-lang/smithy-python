@@ -7,7 +7,7 @@ from urllib.parse import parse_qsl
 
 from pytest import fail, mark, raises
 from smithy_cbor import loads as _cbor_loads
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import async_list
 from smithy_http import tuples_to_fields
@@ -68,7 +68,7 @@ async def test_empty_input_request_empty_input_output() -> None:
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -467,7 +467,7 @@ async def test_no_input_request_no_input_output() -> None:
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -625,7 +625,7 @@ async def test_rpc_v2_cbor_client_populates_default_values_in_input_request_oper
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -709,7 +709,7 @@ async def test_rpc_v2_cbor_client_skips_top_level_default_values_in_input_reques
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -791,7 +791,7 @@ async def test_rpc_v2_cbor_client_uses_explicitly_provided_member_values_over_de
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -903,7 +903,7 @@ async def test_rpc_v2_cbor_client_uses_explicitly_provided_values_in_top_level_r
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -992,7 +992,7 @@ async def test_rpc_v2_cbor_client_ignores_non_top_level_defaults_on_members_with
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -1188,7 +1188,7 @@ async def test_optional_input_request_optional_input_output() -> None:
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -1295,7 +1295,7 @@ async def test_rpc_v2_cbor_recursive_shapes_request_recursive_shapes() -> None:
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -1471,7 +1471,7 @@ async def test_rpc_v2_cbor_maps_request_rpc_v2_cbor_dense_maps() -> None:
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -1559,7 +1559,7 @@ async def test_rpc_v2_cbor_serializes_zero_values_in_maps_request_rpc_v2_cbor_de
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -1644,7 +1644,7 @@ async def test_rpc_v2_cbor_serializes_dense_set_map_request_rpc_v2_cbor_dense_ma
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -1822,7 +1822,7 @@ async def test_rpc_v2_cbor_lists_request_rpc_v2_cbor_lists() -> None:
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -1919,7 +1919,7 @@ async def test_rpc_v2_cbor_lists_empty_request_rpc_v2_cbor_lists() -> None:
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -1999,7 +1999,7 @@ async def test_rpc_v2_cbor_lists_empty_using_definite_length_request_rpc_v2_cbor
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -2234,7 +2234,7 @@ async def test_rpc_v2_cbor_sparse_maps_request_rpc_v2_cbor_sparse_maps() -> None
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -2322,7 +2322,7 @@ async def test_rpc_v2_cbor_serializes_null_map_values_request_rpc_v2_cbor_sparse
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -2410,7 +2410,7 @@ async def test_rpc_v2_cbor_serializes_sparse_set_map_request_rpc_v2_cbor_sparse_
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -2493,7 +2493,7 @@ async def test_rpc_v2_cbor_serializes_sparse_set_map_and_retains_null_request_rp
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -2578,7 +2578,7 @@ async def test_rpc_v2_cbor_serializes_zero_values_in_sparse_maps_request_rpc_v2_
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -2829,7 +2829,7 @@ async def test_rpc_v2_cbor_serializes_union_value_request_rpc_v2_cbor_unions() -
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -2914,7 +2914,7 @@ async def test_rpc_v2_cbor_serializes_nested_union_value_request_rpc_v2_cbor_uni
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -3073,7 +3073,7 @@ async def test_rpc_v2_cbor_simple_scalar_properties_request_simple_scalar_proper
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -3167,7 +3167,7 @@ async def test_rpc_v2_cbor_client_doesnt_serialize_null_structure_values_request
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -3248,7 +3248,7 @@ async def test_rpc_v2_cbor_supports_na_n_float_inputs_request_simple_scalar_prop
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -3333,7 +3333,7 @@ async def test_rpc_v2_cbor_supports_infinity_float_inputs_request_simple_scalar_
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -3418,7 +3418,7 @@ async def test_rpc_v2_cbor_supports_negative_infinity_float_inputs_request_simpl
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -3811,7 +3811,7 @@ async def test_rpc_v2_cbor_sparse_maps_serialize_null_values_request_sparse_null
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 
@@ -3894,7 +3894,7 @@ async def test_rpc_v2_cbor_sparse_lists_serialize_null_request_sparse_nulls_oper
         config=Config(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
         )
     )
 

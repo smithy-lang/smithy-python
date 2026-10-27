@@ -9,7 +9,7 @@ before the receiver continues.
 
 from typing import Any
 
-from smithy_aws_core.aio.protocols import AwsJson11ClientProtocol
+from smithy_aws_core.aio.protocols import AsyncAwsJson11ClientProtocol
 from smithy_aws_event_stream.aio import AWSEventReceiver
 from smithy_aws_event_stream.events import Event, EventMessage
 from smithy_core import URI
@@ -123,8 +123,8 @@ def _operation() -> APIOperation[Any, Any]:
     )
 
 
-def _protocol() -> AwsJson11ClientProtocol:
-    return AwsJson11ClientProtocol(
+def _protocol() -> AsyncAwsJson11ClientProtocol:
+    return AsyncAwsJson11ClientProtocol(
         ProtocolSettings(
             namespace="smithy.example",
             service_target="StreamService",

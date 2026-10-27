@@ -8,14 +8,16 @@ from collections.abc import Awaitable, Callable
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from smithy_aws_core.aio.identity.chain.provider import ChainSetup
+from smithy_aws_core.aio.identity.chain.providers.process import (
+    AsyncProfileCredentialProcessProvider,
+)
+from smithy_aws_core.aio.identity.process import AsyncProcessCredentialsResolver
 from smithy_aws_core.config.merged_config import MergedConfig
-from smithy_aws_core.identity.chain.provider import ChainSetup
 from smithy_aws_core.identity.chain.providers.process import (
     ProcessConfigurationError,
-    ProfileCredentialProcessProvider,
     _split_process_command,
 )
-from smithy_aws_core.identity.process import ProcessCredentialsResolver
 
 from .conftest import OtherIdentity
 
@@ -95,7 +97,7 @@ async def test_ignores_non_aws_identity_type(
     setup_provider: Callable[..., Awaitable[ChainSetup]],
     merged_config: Callable[..., MergedConfig],
 ) -> None:
-    provider = ProfileCredentialProcessProvider()
+    provider = AsyncProfileCredentialProcessProvider()
 
     setup = await setup_provider(
         provider,
@@ -113,7 +115,7 @@ async def test_ignores_non_aws_identity_type(
 async def test_requires_active_profile(
     setup_provider: Callable[..., Awaitable[ChainSetup]],
 ) -> None:
-    setup = await setup_provider(ProfileCredentialProcessProvider())
+    setup = await setup_provider(AsyncProfileCredentialProcessProvider())
 
     assert setup.resolvers == ()
     assert not setup.terminal
@@ -124,7 +126,7 @@ async def test_missing_process_does_not_register(
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
-        ProfileCredentialProcessProvider(),
+        AsyncProfileCredentialProcessProvider(),
         config_file=merged_config({"default": {}}),
         profile_name="default",
     )
@@ -138,7 +140,7 @@ async def test_registers_terminal_resolver(
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
-        ProfileCredentialProcessProvider(),
+        AsyncProfileCredentialProcessProvider(),
         config_file=merged_config(
             {
                 "default": {
@@ -154,7 +156,7 @@ async def test_registers_terminal_resolver(
     assert setup.terminal
     assert len(setup.resolvers) == 1
     assert setup.resolvers[0].provider_name == "ProfileCredentialProcess"
-    assert isinstance(setup.resolvers[0].resolver, ProcessCredentialsResolver)
+    assert isinstance(setup.resolvers[0].resolver, AsyncProcessCredentialsResolver)
 
     process = AsyncMock()
     process.returncode = 0
@@ -188,7 +190,7 @@ async def test_account_id_falls_back_to_profile_config(
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
-        ProfileCredentialProcessProvider(),
+        AsyncProfileCredentialProcessProvider(),
         config_file=merged_config(
             {
                 "default": {

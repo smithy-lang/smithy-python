@@ -4,11 +4,11 @@ from copy import deepcopy
 import logging
 from typing import Any
 
-from smithy_core.aio.client import AsyncClient, ClientCall, RequestPipeline
+from smithy_core.aio.client import AsyncClient, AsyncClientCall, AsyncRequestPipeline
 from smithy_core.aio.eventstream import (
-    DuplexEventStream,
-    InputEventStream,
-    OutputEventStream,
+    AsyncDuplexEventStream,
+    AsyncInputEventStream,
+    AsyncOutputEventStream,
 )
 from smithy_core.deserializers import DeserializeableShape
 from smithy_core.exceptions import ExpectationNotMetError
@@ -98,7 +98,7 @@ class MyHandwrittenModel(AsyncClient):
         operation: APIOperation[I, O],
         default_plugins: list[Plugin],
         plugins: list[Plugin] | None,
-    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+    ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
@@ -132,7 +132,7 @@ class MyHandwrittenModel(AsyncClient):
 
     async def publish_events(
         self, input: PublishEventsInput, plugins: list[Plugin] | None = None
-    ) -> InputEventStream[PublishEventStream, PublishEventsOutput]:
+    ) -> AsyncInputEventStream[PublishEventStream, PublishEventsOutput]:
         """
         Input-only stream: the client sends events, the server returns a
         summary.
@@ -154,7 +154,7 @@ class MyHandwrittenModel(AsyncClient):
 
     async def subscribe_to_events(
         self, input: SubscribeToEventsInput, plugins: list[Plugin] | None = None
-    ) -> OutputEventStream[SubscribeEventStream, SubscribeToEventsOutput]:
+    ) -> AsyncOutputEventStream[SubscribeEventStream, SubscribeToEventsOutput]:
         """
         Output-only stream: the client subscribes, the server streams events.
 
@@ -179,7 +179,7 @@ class MyHandwrittenModel(AsyncClient):
 
     async def trade_event_stream(
         self, input: TradeEventStreamInput, plugins: list[Plugin] | None = None
-    ) -> DuplexEventStream[TradeEvents, TradeEvents, TradeEventStreamOutput]:
+    ) -> AsyncDuplexEventStream[TradeEvents, TradeEvents, TradeEventStreamOutput]:
         """
         Bidirectional (duplex) stream. The non-stream members (sessionId,
         greeting) are carried as the initial-request and initial-response

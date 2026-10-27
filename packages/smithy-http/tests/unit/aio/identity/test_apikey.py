@@ -2,19 +2,19 @@
 #  SPDX-License-Identifier: Apache-2.0
 import pytest
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_http.aio.identity.apikey import APIKeyIdentityResolver
+from smithy_http.aio.identity.apikey import AsyncAPIKeyIdentityResolver
 
 
 async def test_identity_resolver() -> None:
     api_key = "spam"
-    resolver = APIKeyIdentityResolver()
+    resolver = AsyncAPIKeyIdentityResolver()
     identity = await resolver.get_identity(properties={"api_key": api_key})
 
     assert identity.api_key == api_key
 
 
 async def test_missing_api_key() -> None:
-    resolver = APIKeyIdentityResolver()
+    resolver = AsyncAPIKeyIdentityResolver()
 
     with pytest.raises(SmithyIdentityError):
         await resolver.get_identity(properties={})

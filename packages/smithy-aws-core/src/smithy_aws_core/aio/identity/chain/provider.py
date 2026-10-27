@@ -6,12 +6,12 @@ from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.interfaces.identity import Identity
-from smithy_http.aio.interfaces import HTTPClient
+from smithy_http.aio.interfaces import AsyncHTTPClient
 
-from ...config.merged_config import MergedConfig
-from .ordering import OrderingConstraint
+from ....config.merged_config import MergedConfig
+from ....identity.chain.ordering import OrderingConstraint
 
 __all__ = [
     "ChainIdentityProvider",
@@ -25,7 +25,7 @@ class NamedResolver:
     """Associates an identity resolver with its provider's metadata."""
 
     provider_name: str
-    resolver: IdentityResolver[Any, Any]
+    resolver: AsyncIdentityResolver[Any, Any]
 
     async def get_identity(self, *, properties: Mapping[str, Any]) -> Any:
         """Resolve an identity using the underlying resolver."""
@@ -45,7 +45,7 @@ class ChainSetup:
         config_file: MergedConfig | None = None,
         profile_name: str | None = None,
         region_override: str | None = None,
-        http_client: HTTPClient | None = None,
+        http_client: AsyncHTTPClient | None = None,
         properties: MutableMapping[str, Any] | None = None,
     ) -> None:
         self._config_file = config_file
@@ -75,7 +75,7 @@ class ChainSetup:
         return self._region_override
 
     @property
-    def http_client(self) -> HTTPClient | None:
+    def http_client(self) -> AsyncHTTPClient | None:
         """Return the HTTP client to use for network calls, if provided."""
         return self._http_client
 
@@ -110,7 +110,7 @@ class ChainSetup:
         """Set the resolved name of the active profile."""
         self._profile_name = profile_name
 
-    def add_resolver(self, resolver: IdentityResolver[Any, Any]) -> None:
+    def add_resolver(self, resolver: AsyncIdentityResolver[Any, Any]) -> None:
         """Add a named resolver and continue assembly."""
         if self._terminal:
             raise RuntimeError("Cannot add a resolver after a terminal resolver.")
@@ -123,7 +123,7 @@ class ChainSetup:
             )
         )
 
-    def add_terminal_resolver(self, resolver: IdentityResolver[Any, Any]) -> None:
+    def add_terminal_resolver(self, resolver: AsyncIdentityResolver[Any, Any]) -> None:
         """Add a named resolver and stop assembly."""
         self.add_resolver(resolver)
         self._terminal = True

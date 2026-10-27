@@ -55,9 +55,9 @@ public final class ConfigGenerator implements Runnable {
             ConfigProperty.builder()
                     .name("retry_strategy")
                     .type(Symbol.builder()
-                            .name("RetryStrategy | RetryStrategyOptions")
+                            .name("AsyncRetryStrategy | RetryStrategyOptions")
                             .addReference(Symbol.builder()
-                                    .name("RetryStrategy")
+                                    .name("AsyncRetryStrategy")
                                     .namespace("smithy_core.aio.interfaces.retries", ".")
                                     .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                     .build())
@@ -123,48 +123,48 @@ public final class ConfigGenerator implements Runnable {
         var protocolBuilder = ConfigProperty.builder()
                 .name("protocol")
                 .type(Symbol.builder()
-                        .name("ClientProtocol[Any, Any]")
+                        .name("AsyncClientProtocol[Any, Any]")
                         .addReference(Symbol.builder()
-                                .name("ClientProtocol")
+                                .name("AsyncClientProtocol")
                                 .namespace("smithy_core.aio.interfaces", ".")
                                 .build())
                         .build())
                 .inputType(Symbol.builder()
-                        .name("ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]]")
+                        .name("AsyncClientProtocol[Any, Any] | ProtocolConstructor[AsyncClientProtocol[Any, Any]]")
                         .addReference(Symbol.builder()
-                                .name("ClientProtocol")
+                                .name("AsyncClientProtocol")
                                 .namespace("smithy_core.aio.interfaces", ".")
                                 .build())
                         .addReference(Symbol.builder()
                                 .name("ProtocolConstructor")
-                                .namespace("smithy_core.aio.interfaces", ".")
+                                .namespace("smithy_core.interfaces", ".")
                                 .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                 .build())
                         .build())
                 .documentation("Pass a protocol class reference from smithy_aws_core.aio.protocols "
-                        + "to select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom "
+                        + "to select the protocol, e.g. protocol=AsyncAwsJson10ClientProtocol. For custom "
                         + "protocols a protocol instance may also be passed.")
                 .initialize(w -> {
                     w.addStdlibImport("typing", "cast");
                     w.write("""
                             if isinstance(protocol, type):
                                 protocol = protocol(_PROTOCOL_SETTINGS)
-                            self.protocol = cast("ClientProtocol[Any, Any]", protocol) or ${C|}""",
+                            self.protocol = cast("AsyncClientProtocol[Any, Any]", protocol) or ${C|}""",
                             w.consumer(writer -> context.protocolGenerator().initializeProtocol(context, writer)));
                 });
 
         var transportBuilder = ConfigProperty.builder()
                 .name("transport")
                 .type(Symbol.builder()
-                        .name("ClientTransport[Any, Any]")
+                        .name("AsyncClientTransport[Any, Any]")
                         .addReference(Symbol.builder()
-                                .name("ClientTransport")
+                                .name("AsyncClientTransport")
                                 .namespace("smithy_core.aio.interfaces", ".")
                                 .build())
                         .build())
                 .documentation("The transport to use to send requests (e.g. an HTTP client). "
                         + "Operations with bidirectional event streams require a "
-                        + "DuplexClientTransport, such as AWSCRTHTTPClient. Transports are "
+                        + "AsyncDuplexClientTransport, such as AWSCRTHTTPClient. Transports are "
                         + "assumed not to support duplex streaming unless they explicitly set "
                         + "SUPPORTS_DUPLEX_STREAMING to True.");
 
@@ -209,14 +209,14 @@ public final class ConfigGenerator implements Runnable {
                 ConfigProperty.builder()
                         .name("auth_schemes")
                         .type(Symbol.builder()
-                                .name("dict[ShapeID, AuthScheme[Any, Any, Any, Any]]")
+                                .name("dict[ShapeID, AsyncAuthScheme[Any, Any, Any, Any]]")
                                 .addReference(Symbol.builder()
                                         .name("ShapeID")
                                         .namespace("smithy_core.shapes", ".")
                                         .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                         .build())
                                 .addReference(Symbol.builder()
-                                        .name("AuthScheme")
+                                        .name("AsyncAuthScheme")
                                         .namespace("smithy_core.aio.interfaces.auth", ".")
                                         .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                         .build())
@@ -506,7 +506,7 @@ public final class ConfigGenerator implements Runnable {
             // Note that this is indented to keep it at the proper indentation level.
             writer.write("""
 
-                        def set_auth_scheme(self, scheme: AuthScheme[Any, Any, Any, Any]) -> None:
+                        def set_auth_scheme(self, scheme: AsyncAuthScheme[Any, Any, Any, Any]) -> None:
                             \"""
                             Sets the implementation of an auth scheme.
 

@@ -137,3 +137,12 @@ class HTTPRequestConfiguration:
     """
 
     read_timeout: float | None = None
+
+
+class HTTPClient(Protocol):
+    """A synchronous HTTP client interface.
+
+    Placeholder; populated alongside the sync client implementation.
+    """
+
+    # TODO(sync-api): implement alongside the sync client

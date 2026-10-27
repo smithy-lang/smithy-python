@@ -5,12 +5,12 @@ from typing import Any
 from ..endpoints import Endpoint, EndpointResolverParams, resolve_static_uri
 from ..exceptions import EndpointResolutionError
 from ..interfaces import Endpoint as _Endpoint
-from .interfaces import EndpointResolver
+from .interfaces import AsyncEndpointResolver
 
-__all__ = ["StaticEndpointResolver"]
+__all__ = ["AsyncStaticEndpointResolver"]
 
 
-class StaticEndpointResolver(EndpointResolver):
+class AsyncStaticEndpointResolver(AsyncEndpointResolver):
     """A basic endpoint resolver that forwards a static URI."""
 
     async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> _Endpoint:

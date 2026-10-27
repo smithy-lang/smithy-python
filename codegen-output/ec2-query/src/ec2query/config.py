@@ -12,24 +12,20 @@ from typing import (
     Unpack,
 )
 
-from smithy_aws_core.aio.protocols import Ec2QueryClientProtocol
-from smithy_aws_core.auth import SigV4AuthScheme
-from smithy_aws_core.config import AwsConfigOverrides, FileSystem
-from smithy_aws_core.config.aws_config import AsyncAwsConfig
-from smithy_aws_core.config.resolvers import EndpointUriResolver
+from smithy_aws_core.aio.auth.sigv4 import AsyncSigV4AuthScheme
+from smithy_aws_core.aio.config import AsyncFileSystem
+from smithy_aws_core.aio.config.aws_config import AsyncAwsConfig, AwsConfigOverrides
+from smithy_aws_core.aio.config.resolvers import EndpointUriResolver
+from smithy_aws_core.aio.endpoints.standard_regional import (
+    AsyncStandardRegionalEndpointsResolver,
+)
+from smithy_aws_core.aio.protocols import AsyncEc2QueryClientProtocol
 from smithy_aws_core.config.types import FieldSpec
-from smithy_aws_core.endpoints.standard_regional import (
-    StandardRegionalEndpointsResolver,
-)
 from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
-from smithy_core.aio.interfaces import (
-    ClientProtocol,
-    EndpointResolver,
-    ProtocolConstructor,
-    ProtocolSettings,
-)
-from smithy_core.aio.interfaces.auth import AuthScheme
-from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces import AsyncClientProtocol, AsyncEndpointResolver
+from smithy_core.aio.interfaces.auth import AsyncAuthScheme
+from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
+from smithy_core.interfaces import ProtocolConstructor, ProtocolSettings
 from smithy_core.interfaces.auth import AuthSchemeResolver
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
@@ -150,11 +146,13 @@ _PROTOCOL_SETTINGS = ProtocolSettings(
 
 
 class _AsyncEC2ProtocolConfigOverrides(AwsConfigOverrides, total=False):
-    endpoint_resolver: EndpointResolver | None
+    endpoint_resolver: AsyncEndpointResolver | None
     protocol: (
-        ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]] | None
+        AsyncClientProtocol[Any, Any]
+        | ProtocolConstructor[AsyncClientProtocol[Any, Any]]
+        | None
     )
-    auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None
+    auth_schemes: dict[ShapeID, AsyncAuthScheme[Any, Any, Any, Any]] | None
     auth_scheme_resolver: AuthSchemeResolver | None
 
 
@@ -162,17 +160,17 @@ class _AsyncEC2ProtocolConfigOverrides(AwsConfigOverrides, total=False):
 class AsyncEC2ProtocolConfig(AsyncAwsConfig):
     """EC2 Protocol configuration (async-resolved)."""
 
-    endpoint_resolver: EndpointResolver | None = None
+    endpoint_resolver: AsyncEndpointResolver | None = None
     """
     The endpoint resolver used to resolve the final endpoint per-operation
     based on the configuration.
     """
 
-    protocol: ClientProtocol[Any, Any] | None = None
+    protocol: AsyncClientProtocol[Any, Any] | None = None
     """
     Pass a protocol class reference from smithy_aws_core.aio.protocols to
-    select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom
-    protocols a protocol instance may also be passed.
+    select the protocol, e.g. protocol=AsyncAwsJson10ClientProtocol. For
+    custom protocols a protocol instance may also be passed.
     """
 
     interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])
@@ -181,7 +179,7 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
     execution of a request.
     """
 
-    auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None = None
+    auth_schemes: dict[ShapeID, AsyncAuthScheme[Any, Any, Any, Any]] | None = None
     """A map of auth scheme ids to auth schemes."""
 
     auth_scheme_resolver: AuthSchemeResolver | None = None
@@ -191,7 +189,7 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
     """
 
     aws_credentials_identity_resolver: (
-        IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties] | None
+        AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties] | None
     ) = None
     """Resolves AWS Credentials. Required for operations that use Sigv4 Auth."""
 
@@ -232,24 +230,24 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
             default=None, resolver=EndpointUriResolver("ec2_protocol")
         ),
         "endpoint_resolver": FieldSpec(
-            default_factory=lambda: StandardRegionalEndpointsResolver(
+            default_factory=lambda: AsyncStandardRegionalEndpointsResolver(
                 endpoint_prefix="awsec2"
             )
         ),
         "protocol": FieldSpec(
-            default_factory=lambda: Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            default_factory=lambda: AsyncEc2QueryClientProtocol(_PROTOCOL_SETTINGS),
             converter=lambda p: p(_PROTOCOL_SETTINGS) if isinstance(p, type) else p,
         ),
         "auth_schemes": FieldSpec(
             default_factory=lambda: {
-                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+                ShapeID("aws.auth#sigv4"): AsyncSigV4AuthScheme(service="ec2query")
             }
         ),
         "auth_scheme_resolver": FieldSpec(default_factory=HTTPAuthSchemeResolver),
         "transport": FieldSpec(default_factory=lambda: AIOHTTPClient()),
     }
 
-    def set_auth_scheme(self, scheme: AuthScheme[Any, Any, Any, Any]) -> None:
+    def set_auth_scheme(self, scheme: AsyncAuthScheme[Any, Any, Any, Any]) -> None:
         """
         Set an auth scheme implementation using its scheme ID. :param scheme:
         The auth scheme to add or replace.
@@ -263,7 +261,7 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
         cls,
         *,
         profile: str | None = None,
-        fs: FileSystem | None = None,
+        fs: AsyncFileSystem | None = None,
         config_file_path: str | None = None,
         credentials_file_path: str | None = None,
         **overrides: Unpack[_AsyncEC2ProtocolConfigOverrides],

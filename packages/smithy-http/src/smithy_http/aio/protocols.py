@@ -9,13 +9,15 @@ from typing import TYPE_CHECKING, Any, cast
 from smithy_core import URI as _URI
 from smithy_core.aio.interfaces import (
     AsyncByteStream,
+    AsyncClientProtocol,
     AsyncWriter,
-    ClientProtocol,
-    ProtocolSettings,
 )
 from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
-from smithy_core.aio.interfaces.auth import AuthScheme
-from smithy_core.aio.interfaces.eventstream import EventPublisher, EventReceiver
+from smithy_core.aio.interfaces.auth import AsyncAuthScheme
+from smithy_core.aio.interfaces.eventstream import (
+    AsyncEventPublisher,
+    AsyncEventReceiver,
+)
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
@@ -29,6 +31,7 @@ from smithy_core.exceptions import (
 )
 from smithy_core.interfaces import (
     Endpoint,
+    ProtocolSettings,
     SeekableBytesReader,
     TypedProperties,
     URI,
@@ -58,10 +61,10 @@ from . import HTTPRequest as _HTTPRequest
 from .interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 
 __all__ = [
-    "HttpBindingClientProtocol",
-    "HttpClientProtocol",
-    "RpcClientProtocol",
-    "RpcV2CborClientProtocol",
+    "AsyncHttpBindingClientProtocol",
+    "AsyncHttpClientProtocol",
+    "AsyncRpcClientProtocol",
+    "AsyncRpcV2CborClientProtocol",
 ]
 
 try:
@@ -144,7 +147,7 @@ def _assert_event_stream() -> None:
         )
 
 
-class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
+class AsyncHttpClientProtocol(AsyncClientProtocol[HTTPRequest, HTTPResponse]):
     """An HTTP-based protocol."""
 
     @property
@@ -209,8 +212,8 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         request: HTTPRequest,
         event_type: "TypeForm[Event]",
         context: TypedProperties,
-        auth_scheme: AuthScheme[Any, Any, Any, Any] | None = None,
-    ) -> EventPublisher[Event]:
+        auth_scheme: AsyncAuthScheme[Any, Any, Any, Any] | None = None,
+    ) -> AsyncEventPublisher[Event]:
         _assert_event_stream()
         signing_config: SigningConfig | None = None
         if auth_scheme is not None:
@@ -261,7 +264,7 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         event_type: "TypeForm[Event]",
         event_deserializer: Callable[[ShapeDeserializer], Event],
         context: TypedProperties,
-    ) -> EventReceiver[Event]:
+    ) -> AsyncEventReceiver[Event]:
         _assert_event_stream()
         return AWSEventReceiver(
             payload_codec=self.payload_codec,
@@ -270,7 +273,7 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         )
 
 
-class HttpBindingClientProtocol(HttpClientProtocol):
+class AsyncHttpBindingClientProtocol(AsyncHttpClientProtocol):
     """An HTTP-based protocol that uses HTTP binding traits."""
 
     @property
@@ -523,7 +526,7 @@ def _is_unit(schema: Schema | None) -> bool:
     return original is not None and original.document_value == str(UNIT.id)
 
 
-class RpcClientProtocol(HttpClientProtocol):
+class AsyncRpcClientProtocol(AsyncHttpClientProtocol):
     """Base for the RPC-based protocols (awsJson, awsQuery, rpcv2).
 
     RPC protocols serialize the whole operation input through a codec rather than via
@@ -681,7 +684,7 @@ class RpcClientProtocol(HttpClientProtocol):
         event_type: "TypeForm[Event]",
         event_deserializer: Callable[[ShapeDeserializer], Event],
         context: TypedProperties,
-    ) -> EventReceiver[Event]:
+    ) -> AsyncEventReceiver[Event]:
         _assert_event_stream()
         # Continue from the reader that already consumed the initial-response frame in
         # deserialize_response, so subsequent events stay in order.
@@ -697,7 +700,7 @@ class RpcClientProtocol(HttpClientProtocol):
         )
 
 
-class _RpcV2ClientProtocol(RpcClientProtocol):
+class _RpcV2ClientProtocol(AsyncRpcClientProtocol):
     """Shared framing for the Smithy RPC v2 protocol family (rpcv2Cbor, rpcv2Json).
 
     Subclasses supply the codec-specific pieces: the protocol id, content type,
@@ -901,7 +904,7 @@ class _RpcV2ClientProtocol(RpcClientProtocol):
         return candidate
 
 
-class RpcV2CborClientProtocol(_RpcV2ClientProtocol):
+class AsyncRpcV2CborClientProtocol(_RpcV2ClientProtocol):
     """An implementation of the smithy.protocols#rpcv2Cbor protocol."""
 
     _id: ShapeID = RpcV2CborTrait.id

@@ -3,25 +3,23 @@
 from dataclasses import dataclass
 from typing import Any, Callable, TYPE_CHECKING, TypeAlias, Union, cast
 
-from smithy_aws_core.endpoints.standard_regional import (
-    StandardRegionalEndpointsResolver,
+from smithy_aws_core.aio.endpoints.standard_regional import (
+    AsyncStandardRegionalEndpointsResolver,
 )
 from smithy_core.aio.interfaces import (
-    ClientProtocol,
-    ClientTransport,
-    EndpointResolver,
-    ProtocolConstructor,
-    ProtocolSettings,
+    AsyncClientProtocol,
+    AsyncClientTransport,
+    AsyncEndpointResolver,
 )
-from smithy_core.aio.interfaces.auth import AuthScheme
-from smithy_core.aio.interfaces.retries import RetryStrategy
+from smithy_core.aio.interfaces.auth import AsyncAuthScheme
+from smithy_core.aio.interfaces.retries import AsyncRetryStrategy
 from smithy_core.auth import DefaultAuthResolver
-from smithy_core.interfaces import URI
+from smithy_core.interfaces import ProtocolConstructor, ProtocolSettings, URI
 from smithy_core.interfaces.auth import AuthSchemeResolver
 from smithy_core.retries import RetryStrategyOptions
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
-from smithy_http.aio.protocols import RpcV2CborClientProtocol
+from smithy_http.aio.protocols import AsyncRpcV2CborClientProtocol
 from smithy_http.interfaces import HTTPRequestConfiguration
 
 from ._private.schemas import MY_HANDWRITTEN_MODEL
@@ -63,10 +61,10 @@ class Config:
     operation.
     """
 
-    auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]]
+    auth_schemes: dict[ShapeID, AsyncAuthScheme[Any, Any, Any, Any]]
     """A map of auth scheme ids to auth schemes."""
 
-    endpoint_resolver: EndpointResolver
+    endpoint_resolver: AsyncEndpointResolver
     """
     The endpoint resolver used to resolve the final endpoint per-operation
     based on the configuration.
@@ -84,11 +82,11 @@ class Config:
     execution of a request.
     """
 
-    protocol: ClientProtocol[Any, Any] | None
+    protocol: AsyncClientProtocol[Any, Any] | None
     """
     Pass a protocol class reference from smithy_aws_core.aio.protocols to
-    select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom
-    protocols a protocol instance may also be passed.
+    select the protocol, e.g. protocol=AsyncAwsJson10ClientProtocol. For
+    custom protocols a protocol instance may also be passed.
     """
 
     region: str | None
@@ -97,7 +95,7 @@ class Config:
     the service endpoint.
     """
 
-    retry_strategy: RetryStrategy | RetryStrategyOptions | None
+    retry_strategy: AsyncRetryStrategy | RetryStrategyOptions | None
     """
     The retry strategy or options for configuring retry behavior. Can be
     either a configured RetryStrategy or RetryStrategyOptions to create one.
@@ -109,11 +107,11 @@ class Config:
     header.
     """
 
-    transport: ClientTransport[Any, Any] | None
+    transport: AsyncClientTransport[Any, Any] | None
     """
     The transport to use to send requests (e.g. an HTTP client). Operations
-    with bidirectional event streams require a DuplexClientTransport, such
-    as AWSCRTHTTPClient. Transports are assumed not to support duplex
+    with bidirectional event streams require a AsyncDuplexClientTransport,
+    such as AWSCRTHTTPClient. Transports are assumed not to support duplex
     streaming unless they explicitly set SUPPORTS_DUPLEX_STREAMING to True.
     """
 
@@ -124,24 +122,27 @@ class Config:
         self,
         *,
         auth_scheme_resolver: AuthSchemeResolver | None = None,
-        auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None = None,
-        endpoint_resolver: EndpointResolver | None = None,
+        auth_schemes: dict[ShapeID, AsyncAuthScheme[Any, Any, Any, Any]] | None = None,
+        endpoint_resolver: AsyncEndpointResolver | None = None,
         endpoint_uri: str | URI | None = None,
         http_request_config: HTTPRequestConfiguration | None = None,
         interceptors: list[_ServiceInterceptor] | None = None,
-        protocol: ClientProtocol[Any, Any]
-        | ProtocolConstructor[ClientProtocol[Any, Any]]
+        protocol: AsyncClientProtocol[Any, Any]
+        | ProtocolConstructor[AsyncClientProtocol[Any, Any]]
         | None = None,
         region: str | None = None,
-        retry_strategy: RetryStrategy | RetryStrategyOptions | None = None,
+        retry_strategy: AsyncRetryStrategy | RetryStrategyOptions | None = None,
         sdk_ua_app_id: str | None = None,
-        transport: ClientTransport[Any, Any] | None = None,
+        transport: AsyncClientTransport[Any, Any] | None = None,
         user_agent_extra: str | None = None,
     ):
         self.auth_scheme_resolver = auth_scheme_resolver or DefaultAuthResolver()
         self.auth_schemes = auth_schemes or {}
-        self.endpoint_resolver = endpoint_resolver or StandardRegionalEndpointsResolver(
-            endpoint_prefix="MyHandwrittenModel"
+        self.endpoint_resolver = (
+            endpoint_resolver
+            or AsyncStandardRegionalEndpointsResolver(
+                endpoint_prefix="MyHandwrittenModel"
+            )
         )
         self.endpoint_uri = endpoint_uri
         self.http_request_config = http_request_config
@@ -149,8 +150,8 @@ class Config:
         if isinstance(protocol, type):
             protocol = protocol(_PROTOCOL_SETTINGS)
         self.protocol = cast(
-            "ClientProtocol[Any, Any]", protocol
-        ) or RpcV2CborClientProtocol(_PROTOCOL_SETTINGS)
+            "AsyncClientProtocol[Any, Any]", protocol
+        ) or AsyncRpcV2CborClientProtocol(_PROTOCOL_SETTINGS)
         self.region = region
         self.retry_strategy = retry_strategy
         self.sdk_ua_app_id = sdk_ua_app_id

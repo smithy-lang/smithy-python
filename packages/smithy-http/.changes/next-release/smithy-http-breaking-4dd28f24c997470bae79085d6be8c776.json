@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Moved async implementations to `smithy_http.aio` and added the `Async` prefix to their names, for example `AsyncHTTPClient`, `AsyncHttpClientProtocol`, `AsyncHttpBindingClientProtocol`, `AsyncRpcV2CborClientProtocol` and `AsyncAPIKeyAuthScheme`. The unprefixed names are reserved for sync implementations. Update imports to the `aio` paths."
+}

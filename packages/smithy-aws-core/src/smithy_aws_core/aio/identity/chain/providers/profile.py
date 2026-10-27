@@ -2,14 +2,14 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.interfaces.identity import Identity
 
-from ...components import AWSCredentialsIdentity
-from ...static import StaticCredentialsResolver
-from ..ordering import Standard, StandardProvider
+from .....identity.chain.ordering import Standard, StandardProvider
+from .....identity.components import AWSCredentialsIdentity
+from ...static import AsyncStaticCredentialsResolver
 from ..provider import ChainSetup
 
 __all__ = [
-    "ProfileSessionCredentialsProvider",
-    "ProfileStaticCredentialsProvider",
+    "AsyncProfileSessionCredentialsProvider",
+    "AsyncProfileStaticCredentialsProvider",
 ]
 
 _ACCESS_KEY_ID = "aws_access_key_id"
@@ -19,7 +19,7 @@ _ACCOUNT_ID = "aws_account_id"
 _ROLE_ARN = "role_arn"
 
 
-class ProfileSessionCredentialsProvider:
+class AsyncProfileSessionCredentialsProvider:
     """Adds a resolver for session credentials from the active profile."""
 
     @property
@@ -57,10 +57,10 @@ class ProfileSessionCredentialsProvider:
             session_token=session_token,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        setup.add_terminal_resolver(StaticCredentialsResolver(identity))
+        setup.add_terminal_resolver(AsyncStaticCredentialsResolver(identity))
 
 
-class ProfileStaticCredentialsProvider:
+class AsyncProfileStaticCredentialsProvider:
     """Adds a resolver for static credentials from the active profile."""
 
     @property
@@ -96,4 +96,4 @@ class ProfileStaticCredentialsProvider:
             secret_access_key=secret_access_key,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        setup.add_terminal_resolver(StaticCredentialsResolver(identity))
+        setup.add_terminal_resolver(AsyncStaticCredentialsResolver(identity))
