@@ -301,6 +301,8 @@ class ModelRegistry:
     ) -> None:
         field_names = self._field_names(schema)
         for i, member in enumerate(schema.members_by_index):
+            if self._is_event_stream_member(member):
+                continue
             value = getattr(instance, field_names[i])
             if value is None:
                 continue
@@ -316,8 +318,11 @@ class ModelRegistry:
 
         def consume(member_schema: Schema, de: ShapeDeserializer) -> None:
             idx = member_schema.expect_member_index()
-            _, reader = by_index[idx].get_extension(self._codec)
-            kwargs[field_names[idx]] = reader(de, by_index[idx])
+            member = by_index[idx]
+            if self._is_event_stream_member(member):
+                return
+            _, reader = member.get_extension(self._codec)
+            kwargs[field_names[idx]] = reader(de, member)
 
         deserializer.read_struct(schema, consumer=consume)
         if not self._is_input(schema):
@@ -333,6 +338,8 @@ class ModelRegistry:
     ) -> None:
         """Fill @required members a non-compliant server omitted (Smithy client error correction)."""
         for i, member in enumerate(by_index):
+            if self._is_event_stream_member(member):
+                continue
             fname = field_names[i]
             if fname in kwargs:
                 continue
@@ -362,6 +369,8 @@ class ModelRegistry:
         field_names = self._field_names(schema)
         fields: list[Any] = []
         for i, member in enumerate(schema.members_by_index):
+            if self._is_event_stream_member(member):
+                continue
             if is_error and field_names[i] == "message":
                 if member.get_trait(SensitiveTrait) is not None:
                     fields.append(
@@ -656,6 +665,16 @@ class ModelRegistry:
         except Exception:
             return False
         return target.get_trait(StreamingTrait) is not None
+
+    def _is_event_stream_member(self, member: Schema) -> bool:
+        try:
+            target = member.expect_member_target()
+        except Exception:
+            return False
+        return (
+            target.shape_type is ShapeType.UNION
+            and target.get_trait(StreamingTrait) is not None
+        )
 
     def _resolve_member_codec(self, member: Schema) -> tuple[_Writer, _Reader]:
         st = member.shape_type

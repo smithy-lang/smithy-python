@@ -37,6 +37,18 @@ class _ModeledErrorClass(Protocol):
     def deserialize(self, deserializer: ShapeDeserializer) -> ModeledError: ...
 
 
+class _Request(Protocol):
+    name: str
+
+    def serialize_members(self, serializer: ShapeSerializer) -> None: ...
+
+
+class _RequestClass(Protocol):
+    def __call__(self, *, name: str) -> _Request: ...
+
+    def deserialize(self, deserializer: ShapeDeserializer) -> _Request: ...
+
+
 def _struct(name: str, members: tuple[tuple[str, object], ...]) -> StaticSchema:
     return (
         ShapeType.STRUCTURE.value,
@@ -73,6 +85,17 @@ def _union(name: str, members: tuple[tuple[str, object], ...]) -> StaticSchema:
         NS,
         name,
         0,
+        tuple(m[0] for m in members),
+        tuple((m[1], 0) for m in members),
+    )
+
+
+def _event_stream(name: str, members: tuple[tuple[str, object], ...]) -> StaticSchema:
+    return (
+        ShapeType.UNION.value,
+        NS,
+        name,
+        {"smithy.api#streaming": {}},
         tuple(m[0] for m in members),
         tuple((m[1], 0) for m in members),
     )
@@ -152,6 +175,58 @@ def test_supplied_index_matches_scanning_fallback() -> None:
         shape_names={"Foo", "Bar"},
     ).build("Foo")
     assert _fields(scanned) == _fields(supplied)
+
+
+def test_event_stream_member_is_not_a_model_field_or_serde_member() -> None:
+    _schema_compact._cache.clear()
+    events = _event_stream("Events", (("message", ShapeType.STRING.value),))
+    request = _struct(
+        "Request",
+        (
+            ("name", ShapeType.STRING.value),
+            ("events", lambda: events),
+        ),
+    )
+    registry = ModelRegistry(
+        _module(EVENTS=events, REQUEST=request),
+        index={
+            "Events": "EVENTS",
+            "EventsMessage": "EVENTS",
+            "EventsUnknown": "EVENTS",
+            "Request": "REQUEST",
+        },
+        shape_names={"Events", "Request"},
+    )
+    request_type = registry.build("Request")
+    request_cls = cast(_RequestClass, request_type)
+    assert _fields(request_type) == ["name"]
+    assert registry.build("EventsMessage").__name__ == "EventsMessage"
+
+    class _Serializer:
+        def __init__(self) -> None:
+            self.values: list[object] = []
+
+        def write_string(self, schema: Schema, value: object) -> None:
+            self.values.append(value)
+
+    value = request_cls(name="test")
+    serializer = _Serializer()
+    value.serialize_members(cast(ShapeSerializer, serializer))
+    assert serializer.values == ["test"]
+
+    class _Deserializer:
+        def read_struct(self, schema: Schema, consumer: Any) -> None:
+            for member in schema.members_by_index:
+                consumer(member, self)
+
+        def read_string(self, schema: Schema) -> str:
+            if schema.id.name == "events":
+                pytest.fail("event stream member should not be deserialized")
+            return "test"
+
+    decoded = request_cls.deserialize(cast(ShapeDeserializer, _Deserializer()))
+    assert decoded.name == "test"
+    assert not hasattr(decoded, "events")
 
 
 def test_supplied_index_preserves_distinct_same_named_structures() -> None:

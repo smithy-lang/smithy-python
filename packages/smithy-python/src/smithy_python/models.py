@@ -240,7 +240,8 @@ class _StubEmitter:
             members = tuple(
                 member
                 for member in shape.members.values()
-                if not error or member.name.lower() not in _ERROR_MESSAGE_NAMES
+                if not _is_event_stream_member(self.model, member)
+                and (not error or member.name.lower() not in _ERROR_MESSAGE_NAMES)
             )
             carries_metadata = error or shape.id in self.outputs
             _write_docstring(
@@ -420,12 +421,19 @@ def _documentation(shape: _model.Shape) -> str | None:
     return value if isinstance(value, str) else None
 
 
+def _is_event_stream_member(model: _model.Model, member: _model.MemberShape) -> bool:
+    target = model.get_target(member)
+    return target.type is _model.ShapeType.UNION and target.has_trait("streaming")
+
+
 def _validate_member_names(context: GenerationContext[TypesSettings]) -> None:
     reserved = _model_reserved_member_names(context.model)
     for shape in context.plan.models.shapes:
         names: set[str] = set()
         shape_reserved = reserved(shape)
         for member in shape.members.values():
+            if _is_event_stream_member(context.model, member):
+                continue
             name = context.symbols.member_name(member.id)
             if name in shape_reserved:
                 raise _exceptions.CodegenError(

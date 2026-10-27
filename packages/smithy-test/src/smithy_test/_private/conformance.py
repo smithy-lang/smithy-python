@@ -20,7 +20,7 @@ from typing import Any, cast
 
 from smithy_core._schema_compact import hydrate
 from smithy_core.shapes import ShapeType
-from smithy_core.traits import DefaultTrait, RequiredTrait
+from smithy_core.traits import DefaultTrait, RequiredTrait, StreamingTrait
 
 _SHAPE_CONSTS = ("STRUCTURE", "UNION", "ENUM", "INT_ENUM")
 
@@ -91,6 +91,8 @@ def _assert_fields_match_schema(name: str, cls: type, schema: Any) -> None:
         raise ConformanceError(f"{name}: built class is not a dataclass")
     field_names = {f.name for f in dataclasses.fields(cls)}
     for member in schema.members_by_index:
+        if _is_event_stream_member(member):
+            continue
         # a runtime field must exist for every modeled member (name derived by the
         # same ported namer the registry uses)
         from smithy_core._model_naming import member_field_name
@@ -129,6 +131,8 @@ def _build_instance(cls: type, schema: Any, models: ModuleType) -> Any:
     kwargs: dict[str, Any] = {}
     is_error = _is_error(schema)
     for member in schema.members_by_index:
+        if _is_event_stream_member(member):
+            continue
         required = member.get_trait(RequiredTrait) is not None
         has_default = member.get_trait(DefaultTrait) is not None
         if not required or has_default or _is_input(schema):
@@ -230,3 +234,11 @@ def _is_input(schema: Any) -> bool:
     from smithy_core.shapes import ShapeID
 
     return schema.get_trait(ShapeID("smithy.api#input")) is not None
+
+
+def _is_event_stream_member(member: Any) -> bool:
+    target = member.expect_member_target()
+    return (
+        target.shape_type is ShapeType.UNION
+        and target.get_trait(StreamingTrait) is not None
+    )

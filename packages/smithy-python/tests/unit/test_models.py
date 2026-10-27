@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from smithy_core._schema_compact import hydrate
 from smithy_core.types import UnknownEnumMixin
 from smithy_json import JSONCodec
 from smithy_python.dependencies import SMITHY_CORE, DependencySet
@@ -285,7 +286,7 @@ def test_model_generator_emits_runtime_and_stub(tmp_path: Path) -> None:
     assert "required: str | None = ..." in stub
     assert "list_: str | None = ..." in stub
     assert "stream: StreamingBlob | None = ..." in stub
-    assert "events: Events | None = ..." in stub
+    assert "events: Events | None = ..." not in stub
     assert "class EventsItem(_SerdeShape):" in stub
     assert "Events = EventsItem | EventsUnknown" in stub
     assert "class _EventsDeserializer:" in stub
@@ -348,9 +349,13 @@ def test_generated_models_are_lazy_and_runtime_compatible(
     assert stream_input.stream is stream
 
     event = models.EventsItem(value=value)
-    event_input = models.Input(events=event)
-    assert event_input.events is event
+    with pytest.raises(TypeError):
+        models.Input(events=event)
     assert models._EventsDeserializer.__name__ == "_EventsDeserializer"
+
+    schemas = importlib.import_module(f"{_PACKAGE}._private.schemas")
+    input_schema = hydrate(schemas.INPUT)
+    assert input_schema.members["events"].expect_member_target().id.name == "Events"
 
     class StreamSerializer:
         value: object | None = None
@@ -376,6 +381,15 @@ def test_generated_models_are_lazy_and_runtime_compatible(
 
     decoded_stream = models.Input.deserialize(StreamDeserializer())
     assert decoded_stream.stream is stream
+
+    class EventStreamDeserializer:
+        def read_struct(self, schema: Any, consumer: Any) -> None:
+            if schema.id.name != "Input":
+                pytest.fail("event stream member should not be deserialized")
+            consumer(schema.members["events"], self)
+
+    decoded_event_stream = models.Input.deserialize(EventStreamDeserializer())
+    assert not hasattr(decoded_event_stream, "events")
 
     decoded = JSONCodec().deserialize(
         (
