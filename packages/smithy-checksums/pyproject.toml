@@ -47,6 +47,7 @@ backend-path = ["build_backend"]
 python-source = "src"
 module-name = "smithy_checksums._native"
 features = ["pyo3/extension-module"]
+exclude = ["**/__pycache__/**", "**/*.pyc"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/smithy_checksums"]
