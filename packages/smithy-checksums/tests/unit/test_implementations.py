@@ -167,8 +167,10 @@ def test_shared_instance_updates_are_atomic(
 @requires_native
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 def test_native_matches_pure(algorithm: str) -> None:
-    data = os.urandom(5000)
-    for length in [*range(300), 1023, 1024, 1025, 2047, 2048, 2049, 5000]:
+    # 65536 bytes is the size the pure XXH64 spreads its input in.
+    data = os.urandom(140000)
+    lengths = [*range(300), 1023, 1024, 1025, 2047, 2048, 2049, 5000]
+    for length in [*lengths, 65535, 65536, 65537, 140000]:
         assert _digest(NATIVE[algorithm], data[:length]) == _digest(
             PURE[algorithm], data[:length]
         ), length

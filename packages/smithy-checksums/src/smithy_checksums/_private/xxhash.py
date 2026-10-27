@@ -29,6 +29,7 @@ _U32 = Struct("<I")
 _U64 = Struct("<Q")
 _U64X4 = Struct("<4Q")
 _U64X8 = Struct("<8Q")
+_U32X16 = Struct("<16I")
 
 
 def _rotl64(value: int, bits: int) -> int:
@@ -81,6 +82,55 @@ def _xxh64_round(acc: int, lane: int) -> int:
     return (_rotl64(acc, 31) * _PRIME64_1) & _MASK64
 
 
+# Large inputs are hashed with XXH64's four lanes in one integer, 128 bits per
+# lane, so that each step of a round is one operation instead of four. A lane
+# times a 64-bit prime is under 2**128, so products don't spill into the next
+# lane. Spreading the input into lanes has a fixed cost, so inputs shorter than
+# _MIN_SPREAD bytes are hashed a lane at a time instead.
+_MIN_SPREAD = 512
+_LANE_BYTES = b"\xff" * 8 + b"\0" * 8
+_LANE_MASK = int.from_bytes(_LANE_BYTES * 4, "little")
+# Input is spread into lanes this many bytes at a time, which bounds the memory
+# the spread copies take.
+_SPREAD_SIZE = 65536
+
+
+def _xxh64_stripes(acc: list[int], data: memoryview) -> list[int]:
+    """Returns the accumulators after hashing ``data``, a whole number of stripes."""
+    if len(data) < _MIN_SPREAD:
+        v1, v2, v3, v4 = acc
+        for l1, l2, l3, l4 in _U64X4.iter_unpack(data):
+            v1 = (v1 + l1 * _PRIME64_2) & _MASK64
+            v1 = (((v1 << 31) | (v1 >> 33)) * _PRIME64_1) & _MASK64
+            v2 = (v2 + l2 * _PRIME64_2) & _MASK64
+            v2 = (((v2 << 31) | (v2 >> 33)) * _PRIME64_1) & _MASK64
+            v3 = (v3 + l3 * _PRIME64_2) & _MASK64
+            v3 = (((v3 << 31) | (v3 >> 33)) * _PRIME64_1) & _MASK64
+            v4 = (v4 + l4 * _PRIME64_2) & _MASK64
+            v4 = (((v4 << 31) | (v4 >> 33)) * _PRIME64_1) & _MASK64
+        return [v1, v2, v3, v4]
+
+    lanes = sum(value << (128 * lane) for lane, value in enumerate(acc))
+    mask = _LANE_MASK
+    prime = _PRIME64_1
+    from_bytes = int.from_bytes
+    for start in range(0, len(data), _SPREAD_SIZE):
+        piece = data[start : start + _SPREAD_SIZE]
+        spread = bytearray(2 * len(piece))
+        for byte in range(8):
+            spread[byte::16] = piece[byte::8]
+        # Multiplying every lane of the input by the prime at once is faster than
+        # doing it per stripe.
+        keyed = (from_bytes(spread, "little") * _PRIME64_2) & from_bytes(
+            _LANE_BYTES * (len(piece) // 8), "little"
+        )
+        stripes = memoryview(keyed.to_bytes(len(spread), "little"))
+        for offset in range(0, len(spread), 64):
+            lanes = (lanes + from_bytes(stripes[offset : offset + 64], "little")) & mask
+            lanes = ((((lanes << 31) | (lanes >> 33)) & mask) * prime) & mask
+    return [(lanes >> (128 * lane)) & _MASK64 for lane in range(4)]
+
+
 def _xxh64_merge_round(acc: int, value: int) -> int:
     acc ^= _xxh64_round(0, value)
     return (acc * _PRIME64_1 + _PRIME64_4) & _MASK64
@@ -105,16 +155,10 @@ class XxHash64(PureChecksum):
     def _update(self, data: bytes | bytearray | memoryview) -> None:
         data = self._buffer + data
         self._length += len(data) - len(self._buffer)
-        stripes = len(data) // 32
-        if stripes:
-            v1, v2, v3, v4 = self._acc
-            for l1, l2, l3, l4 in _U64X4.iter_unpack(memoryview(data)[: stripes * 32]):
-                v1 = _xxh64_round(v1, l1)
-                v2 = _xxh64_round(v2, l2)
-                v3 = _xxh64_round(v3, l3)
-                v4 = _xxh64_round(v4, l4)
-            self._acc = [v1, v2, v3, v4]
-        self._buffer = bytes(data[stripes * 32 :])
+        end = len(data) // 32 * 32
+        if end:
+            self._acc = _xxh64_stripes(self._acc, memoryview(data)[:end])
+        self._buffer = bytes(data[end:])
 
     def _digest(self) -> bytes:
         if self._length >= 32:
@@ -172,11 +216,14 @@ _MIDSIZE_MAX = 240
 # processed in chunks of at least this many bytes.
 _BUFFER_SIZE = 1024
 
-# The secret words each stripe is keyed with, and the ones used to scramble the
-# accumulators at the end of a block and to key the last stripe.
-_STRIPE_SECRETS = tuple(
-    _U64X8.unpack_from(_SECRET, stripe * 8) for stripe in range(_STRIPES_PER_BLOCK)
+# The secret bytes each stripe of a block is keyed with, in order, so that a
+# block can be keyed with one XOR. The words after them scramble the
+# accumulators at the end of a block and key the last stripe.
+_BLOCK_SECRET = b"".join(
+    _SECRET[stripe * 8 : stripe * 8 + _STRIPE_LEN]
+    for stripe in range(_STRIPES_PER_BLOCK)
 )
+_BLOCK_SECRET_INT = int.from_bytes(_BLOCK_SECRET, "little")
 _SCRAMBLE_SECRET = _U64X8.unpack_from(_SECRET, _SECRET_SIZE - _STRIPE_LEN)
 _LAST_STRIPE_SECRET = _U64X8.unpack_from(_SECRET, _SECRET_SIZE - _STRIPE_LEN - 7)
 
@@ -262,14 +309,45 @@ class _Xxh3Base(PureChecksum):
         if not stripes:
             return data
         end = stripes * _STRIPE_LEN
-        acc = self._acc
+        view = memoryview(data)
+        a0, a1, a2, a3, a4, a5, a6, a7 = self._acc
         current = self._stripes
-        for stripe in _U64X8.iter_unpack(memoryview(data)[:end]):
-            _accumulate_stripe(acc, stripe, _STRIPE_SECRETS[current])
-            current += 1
+        offset = 0
+        while offset < end:
+            size = min(_STRIPES_PER_BLOCK - current, (end - offset) // _STRIPE_LEN)
+            size *= _STRIPE_LEN
+            segment = view[offset : offset + size]
+            if size == len(_BLOCK_SECRET):
+                secret = _BLOCK_SECRET_INT
+            else:
+                start = current * _STRIPE_LEN
+                secret = int.from_bytes(_BLOCK_SECRET[start : start + size], "little")
+            keyed = (int.from_bytes(segment, "little") ^ secret).to_bytes(
+                size, "little"
+            )
+            # This is _accumulate_stripe unrolled, with the keyed words read as
+            # 32-bit halves. The accumulators are masked once per segment.
+            for words, halves in zip(
+                _U64X8.iter_unpack(segment), _U32X16.iter_unpack(keyed)
+            ):
+                d0, d1, d2, d3, d4, d5, d6, d7 = words
+                l0, h0, l1, h1, l2, h2, l3, h3, l4, h4, l5, h5, l6, h6, l7, h7 = halves
+                a0 += l0 * h0 + d1
+                a1 += l1 * h1 + d0
+                a2 += l2 * h2 + d3
+                a3 += l3 * h3 + d2
+                a4 += l4 * h4 + d5
+                a5 += l5 * h5 + d4
+                a6 += l6 * h6 + d7
+                a7 += l7 * h7 + d6
+            acc = [value & _MASK64 for value in (a0, a1, a2, a3, a4, a5, a6, a7)]
+            current += size // _STRIPE_LEN
             if current == _STRIPES_PER_BLOCK:
                 _scramble(acc)
                 current = 0
+            a0, a1, a2, a3, a4, a5, a6, a7 = acc
+            offset += size
+        self._acc = [a0, a1, a2, a3, a4, a5, a6, a7]
         self._stripes = current
         self._last_consumed = bytes(data[end - _STRIPE_LEN : end])
         return data[end:]
