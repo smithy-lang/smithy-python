@@ -197,11 +197,7 @@ def select_type_shapes(
 
     shapes = tuple(shape for shape in model.iter_shapes() if shape.id in closure)
     _check_names(
-        tuple(
-            shape
-            for shape in shapes
-            if shape.type in DECLARATION_TYPES and not shape.has_trait("streaming")
-        ),
+        tuple(shape for shape in shapes if shape.type in DECLARATION_TYPES),
         service=service,
     )
     return Selection(service=service, shapes=shapes, excluded_count=excluded_count)

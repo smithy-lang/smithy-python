@@ -50,6 +50,9 @@
         },
         "value": {
           "target": "example#Value"
+        },
+        "events": {
+          "target": "example#EventStream"
         }
       }
     },
@@ -130,6 +133,17 @@
         },
         "empty": {
           "target": "smithy.api#Unit"
+        }
+      }
+    },
+    "example#EventStream": {
+      "type": "union",
+      "traits": {
+        "smithy.api#streaming": {}
+      },
+      "members": {
+        "example": {
+          "target": "example#Example"
         }
       }
     },

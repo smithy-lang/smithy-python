@@ -122,8 +122,8 @@ def test_type_references(kind: str, name: str, module: str) -> None:
     )
 
 
-def test_streaming_union_has_a_schema_name_without_a_model_symbol() -> None:
-    from smithy_python.model import ModelError
+def test_streaming_union_has_schema_and_model_symbols() -> None:
+    from smithy_python.symbols import TypeReference
 
     model = model_with(
         {
@@ -135,8 +135,10 @@ def test_streaming_union_has_a_schema_name_without_a_model_symbol() -> None:
     )
     symbols = SymbolProvider(model, select_shapes(model), package="example")
     assert symbols.schema_name("example#Events") == "EVENTS"
-    with pytest.raises(ModelError, match="Unsupported streaming union"):
-        symbols.declaration_name("example#Events")
+    assert symbols.declaration_name("example#Events") == "Events"
+    assert symbols.type_reference("example#Events") == TypeReference(
+        "Events", "example.models"
+    )
 
 
 @pytest.mark.parametrize("kind,value_type", [("enum", "str"), ("intEnum", "int")])
@@ -570,8 +572,8 @@ def test_streaming_blob_type_reference() -> None:
     )
 
 
-def test_streaming_union_rejected_when_resolved() -> None:
-    from smithy_python.model import ModelError
+def test_streaming_union_type_reference() -> None:
+    from smithy_python.symbols import TypeReference
 
     model = model_with(
         {
@@ -583,11 +585,12 @@ def test_streaming_union_rejected_when_resolved() -> None:
         }
     )
     symbols = SymbolProvider(model, select_shapes(model), package="pkg")
-    for shape_id in ("example#Stream", "example#Streams"):
-        with pytest.raises(ModelError, match=r"Unsupported streaming.*example#Stream"):
-            symbols.type_reference(shape_id)
-    with pytest.raises(ModelError, match="Unsupported streaming"):
-        symbols.declaration_name("example#Stream")
+    stream = TypeReference("Stream", "pkg.models")
+    assert symbols.declaration_name("example#Stream") == "Stream"
+    assert symbols.type_reference("example#Stream") == stream
+    assert symbols.type_reference("example#Streams") == TypeReference(
+        "list", "builtins", (stream,)
+    )
 
 
 def test_request_boundaries() -> None:

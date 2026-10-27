@@ -79,7 +79,7 @@ class SymbolProvider:
         self._shape_names: frozenset[str] = frozenset()
         declarations: dict[str, ShapeId] = {}
         for shape in selection.shapes:
-            if shape.type not in DECLARATION_TYPES or shape.has_trait("streaming"):
+            if shape.type not in DECLARATION_TYPES:
                 continue
             self._check_collision(
                 declarations, self.declaration_name(shape.id), shape.id
@@ -93,7 +93,7 @@ class SymbolProvider:
                 self._check_collision(members, self.member_name(member.id), member.id)
         self._shape_names = frozenset((*declarations, *self._reserved_declarations))
         for shape in selection.shapes:
-            if shape.type is not ShapeType.UNION or shape.has_trait("streaming"):
+            if shape.type is not ShapeType.UNION:
                 continue
             for member in shape.members.values():
                 self._check_collision(
@@ -273,8 +273,6 @@ class SymbolProvider:
             in (ShapeType.SERVICE, ShapeType.OPERATION, ShapeType.RESOURCE)
         ):
             raise ModelError(f"No data symbol for {shape.id} ({shape.type})")
-        if shape.type is ShapeType.UNION and shape.has_trait("streaming"):
-            raise ModelError(f"Unsupported streaming {shape.type}: {shape.id}")
         return shape
 
 

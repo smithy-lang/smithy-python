@@ -25,6 +25,9 @@ _MODEL_INDEX = {
     "ExampleValueNumber": "EXAMPLE_VALUE",
     "ExampleValueEmpty": "EXAMPLE_VALUE",
     "ExampleValueUnknown": "EXAMPLE_VALUE",
+    "EventStream": "EVENT_STREAM",
+    "EventStreamExample": "EVENT_STREAM",
+    "EventStreamUnknown": "EVENT_STREAM",
     "Status": "STATUS",
     "Code": "CODE",
 }
@@ -51,6 +54,7 @@ _registry = ModelRegistry(
     shape_names=frozenset(
         {
             "Code",
+            "EventStream",
             "ExampleError",
             "ExampleValue",
             "GetExampleInput",

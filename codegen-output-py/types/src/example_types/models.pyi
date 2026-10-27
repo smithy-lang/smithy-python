@@ -13,6 +13,9 @@ from smithy_core.types import UnknownEnumMixin
 
 __all__ = [
     "Code",
+    "EventStream",
+    "EventStreamExample",
+    "EventStreamUnknown",
     "ExampleError",
     "ExampleValue",
     "ExampleValueEmpty",
@@ -53,6 +56,7 @@ class GetExampleOutput(_SerdeShape):
 
     example: RenamedExample | None = ...
     value: ExampleValue | None = ...
+    events: EventStream | None = ...
     response_metadata: ResponseMetadata = ...
     """
     Metadata about the response that produced this output.
@@ -121,6 +125,28 @@ ExampleValue = (
 
 class _ExampleValueDeserializer:
     def deserialize(self, deserializer: ShapeDeserializer) -> ExampleValue: ...
+
+@dataclass
+class EventStreamExample(_SerdeShape):
+    value: RenamedExample
+
+@dataclass
+class EventStreamUnknown(_SerdeShape):
+    """
+    Represents an unknown variant.
+
+    If you receive this value, you will need to update your library to
+    receive the parsed value.
+
+    This value may not be deliberately sent.
+    """
+
+    tag: str
+
+EventStream = EventStreamExample | EventStreamUnknown
+
+class _EventStreamDeserializer:
+    def deserialize(self, deserializer: ShapeDeserializer) -> EventStream: ...
 
 class Status(UnknownEnumMixin, StrEnum):
     ACTIVE = "active"

@@ -102,6 +102,7 @@ def _model() -> dict[str, object]:
                     "choice": {"target": "example#Choice"},
                     "color": {"target": "example#Color"},
                     "stream": {"target": "example#Stream"},
+                    "events": {"target": "example#Events"},
                 },
             },
             "example#Output": {
@@ -180,6 +181,11 @@ def _model() -> dict[str, object]:
                 "type": "blob",
                 "traits": {"smithy.api#streaming": {}},
             },
+            "example#Events": {
+                "type": "union",
+                "traits": {"smithy.api#streaming": {}},
+                "members": {"item": {"target": "example#Original"}},
+            },
         },
     }
 
@@ -233,6 +239,9 @@ def test_model_plan_precomputes_registry_metadata() -> None:
         "SelectionUnknown",
         "Tone",
         "Code",
+        "Events",
+        "EventsItem",
+        "EventsUnknown",
     )
     assert plan.shape_names == {
         "Input",
@@ -242,6 +251,7 @@ def test_model_plan_precomputes_registry_metadata() -> None:
         "Selection",
         "Tone",
         "Code",
+        "Events",
     }
 
 
@@ -275,6 +285,10 @@ def test_model_generator_emits_runtime_and_stub(tmp_path: Path) -> None:
     assert "required: str | None = ..." in stub
     assert "list_: str | None = ..." in stub
     assert "stream: StreamingBlob | None = ..." in stub
+    assert "events: Events | None = ..." in stub
+    assert "class EventsItem(_SerdeShape):" in stub
+    assert "Events = EventsItem | EventsUnknown" in stub
+    assert "class _EventsDeserializer:" in stub
     assert "class Problem(ServiceError, _SerdeShape):" in stub
     assert "message:" not in stub
     assert "fault_: str | None = ..." in stub
@@ -332,6 +346,11 @@ def test_generated_models_are_lazy_and_runtime_compatible(
     stream = b"stream"
     stream_input = models.Input(stream=stream)
     assert stream_input.stream is stream
+
+    event = models.EventsItem(value=value)
+    event_input = models.Input(events=event)
+    assert event_input.events is event
+    assert models._EventsDeserializer.__name__ == "_EventsDeserializer"
 
     class StreamSerializer:
         value: object | None = None

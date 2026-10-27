@@ -404,7 +404,7 @@ def test_type_selection_checks_only_selected_declaration_names() -> None:
         select_type_shapes(model)
 
 
-def test_type_selection_excludes_streaming_unions_from_name_checks() -> None:
+def test_type_selection_checks_streaming_union_names() -> None:
     model = _model(
         {
             "a#Events": {
@@ -415,12 +415,8 @@ def test_type_selection_excludes_streaming_unions_from_name_checks() -> None:
         }
     )
 
-    result = select_type_shapes(model)
-
-    assert result.shapes == (
-        model.get_shape("a#Events"),
-        model.get_shape("b#Events"),
-    )
+    with pytest.raises(ModelError, match="a#Events, b#Events"):
+        select_type_shapes(model)
 
 
 def test_type_selection_uses_service_renames_for_name_conflicts() -> None:

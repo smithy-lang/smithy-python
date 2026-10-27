@@ -1,8 +1,8 @@
 {
   "files": {
-    "src/example_types/_private/schemas.py": "d0f35e8979c4aa9d49a1d9c0c8efeb860420bc0ceab3ba3edcc9488c053e9110",
-    "src/example_types/models.py": "6042e2e6454b40fef929d96cb7608ae8c591ac7205577f14337435718bb7c077",
-    "src/example_types/models.pyi": "bb3d59e91999a62438fce52fe3be551c63f998565e4f9640e4fb1e275b972b14"
+    "src/example_types/_private/schemas.py": "1d708d275049f3f4a86b343c3f38104ef4a7e5bf749a27cd1a490c95c8f9db59",
+    "src/example_types/models.py": "51aadd47e9971f2b44fabd47e81e4b04d7156aa61b64454b39f4b6d47603ab45",
+    "src/example_types/models.pyi": "a841db3c47698f1cd5236a73ed4b9d4a40fcab3fbcef0ee7b4957e6a9df74952"
   },
   "version": 1
 }

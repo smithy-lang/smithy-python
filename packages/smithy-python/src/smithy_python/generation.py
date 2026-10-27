@@ -81,9 +81,7 @@ class ModelPlan:
             for shape in shapes
         )
         for shape in shapes:
-            if shape.type not in _model.DECLARATION_TYPES or shape.has_trait(
-                "streaming"
-            ):
+            if shape.type not in _model.DECLARATION_TYPES:
                 continue
             model_shapes.append(shape)
             declaration = symbols.declaration_name(shape.id)
