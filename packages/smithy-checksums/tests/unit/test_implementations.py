@@ -14,7 +14,7 @@ from types import ModuleType
 
 import pytest
 from smithy_checksums._private import crc
-from smithy_checksums._private.backend import ChecksumImpl
+from smithy_checksums._private.selection import ChecksumImpl
 
 from .vectors import ALGORITHMS, KNOWN_ANSWERS, PATTERN_DIGESTS, pattern
 

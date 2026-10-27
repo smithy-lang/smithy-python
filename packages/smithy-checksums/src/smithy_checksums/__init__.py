@@ -13,9 +13,9 @@ from collections.abc import Buffer
 from importlib.metadata import version
 from typing import ClassVar, Final, Protocol, Self, runtime_checkable
 
-from ._private.backend import IMPLEMENTATIONS as _IMPLEMENTATIONS
-from ._private.backend import NATIVE as _NATIVE
-from ._private.backend import ChecksumImpl as _ChecksumImpl
+from ._private.selection import IMPLEMENTATIONS as _IMPLEMENTATIONS
+from ._private.selection import NATIVE as _NATIVE
+from ._private.selection import ChecksumImpl as _ChecksumImpl
 from ._private.buffers import as_byte_view as _as_byte_view
 
 __version__ = version("smithy-checksums")
@@ -71,7 +71,7 @@ class Checksum(Protocol):
         ...
 
 
-class _BackendChecksum:
+class _BaseChecksum:
     __slots__ = ("_impl",)
 
     name: ClassVar[str]
@@ -103,7 +103,7 @@ class _BackendChecksum:
         return new
 
 
-class CRC32(_BackendChecksum):
+class CRC32(_BaseChecksum):
     """CRC-32 (ISO-HDLC), the variant used by zlib and gzip."""
 
     __slots__ = ()
@@ -112,7 +112,7 @@ class CRC32(_BackendChecksum):
     digest_size = 4
 
 
-class CRC32C(_BackendChecksum):
+class CRC32C(_BaseChecksum):
     """CRC-32C (Castagnoli)."""
 
     __slots__ = ()
