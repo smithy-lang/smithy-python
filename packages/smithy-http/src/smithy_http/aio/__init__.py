@@ -34,7 +34,7 @@ class HTTPRequest(http_aio_interfaces.HTTPRequest):
 class HTTPResponse:
     """Basic implementation of :py:class:`.interfaces.HTTPResponse`.
 
-    Implementations of :py:class:`.interfaces.HTTPClient` may return instances of this
+    Implementations of :py:class:`.interfaces.AsyncHTTPClient` may return instances of this
     class or of custom response implementations.
     """
 

@@ -406,11 +406,6 @@
     "SigV4AuthScheme": "class"
   },
   "smithy_aws_core.config": {
-    "AsyncAwsConfig": "rex-class[async]",
-    "AsyncDefaultFileSystem": "rex-class[async]",
-    "AsyncFileSystem": "rex-protocol[async]",
-    "AsyncSharedConfigContext": "rex-class[async]",
-    "AwsConfigOverrides": "rex-class",
     "ConfigError": "rex-exception",
     "ConfigParseError": "rex-exception",
     "ConfigSource": "rex-class",
@@ -420,7 +415,6 @@
     "context": "rex-module",
     "exceptions": "rex-module",
     "file_parser": "rex-module",
-    "load_config_async": "rex-function[async]",
     "merged_config": "rex-module",
     "shared_config_files_exist": "rex-function",
     "types": "rex-module",
@@ -482,7 +476,7 @@
     "AWSIdentityConfig": "rex-protocol",
     "AWSIdentityProperties": "rex-class",
     "AWS_IDENTITY_CONFIG": "PropertyKey",
-    "EnvironmentCredentialsResolver": "rex-class[async]",
+    "EnvironmentCredentialsResolver": "rex-class",
     "IdentityChainError": "rex-exception",
     "PropertyKey": "rex-class",
     "StaticCredentialsResolver": "rex-class",
@@ -766,9 +760,6 @@
     "AsyncInputEventStream": "class[async]",
     "AsyncOutputEventStream": "class[async]",
     "DeserializeableShape": "rex-protocol",
-    "DuplexEventStream": "class[async]",
-    "InputEventStream": "class[async]",
-    "OutputEventStream": "class[async]",
     "SerializeableShape": "rex-protocol"
   },
   "smithy_core.aio.identity": {
@@ -1277,7 +1268,6 @@
     "AsyncClientTransport": "rex-protocol[async]",
     "AsyncHTTPClient": "protocol[async]",
     "Fields": "rex-protocol",
-    "HTTPClient": "protocol[async]",
     "HTTPClientConfiguration": "rex-class",
     "HTTPErrorIdentifier": "class",
     "HTTPRequest": "protocol[async]",

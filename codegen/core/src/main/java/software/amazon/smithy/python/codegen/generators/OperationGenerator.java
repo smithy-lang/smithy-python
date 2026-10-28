@@ -40,21 +40,30 @@ public final class OperationGenerator implements Runnable {
         writer.addLocallyDefinedSymbol(opSymbol);
 
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        // The model classes exist only in the generated .pyi (models.py builds them
+        // lazily), so they are imported for type checking alone, which resolves to it.
+        var inputSymbol = symbolProvider.toSymbol(model.expectShape(shape.getInputShape()));
+        var outputSymbol = symbolProvider.toSymbol(model.expectShape(shape.getOutputShape()));
+        var imports = writer.getImportContainer();
+        imports.addTypeCheckingImport(inputSymbol.getNamespace(), inputSymbol.getName(), inputSymbol.getName());
+        imports.addTypeCheckingImport(outputSymbol.getNamespace(), outputSymbol.getName(), outputSymbol.getName());
 
         writer.write("""
-                $1L = $2T(
-                        static_schema = $3T,
+                $1L: $2T[$3L, $4L] = $2T(
+                        static_schema = $5T,
                         model_registry = _registry,
                         error_ids = [
-                            $4C
+                            $6C
                         ],
                         effective_auth_schemes = [
-                            $5C
+                            $7C
                         ],
                 )
                 """,
                 opSymbol.getName(),
                 RuntimeTypes.API_OPERATION,
+                inputSymbol.getName(),
+                outputSymbol.getName(),
                 opSymbol.expectProperty(SymbolProperties.SCHEMA),
                 writer.consumer(this::writeErrorIds),
                 writer.consumer(this::writeAuthSchemes));

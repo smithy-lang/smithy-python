@@ -7,7 +7,10 @@ from decimal import Decimal
 from inspect import iscoroutinefunction
 from typing import TYPE_CHECKING, Any, TypeGuard
 
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from smithy_core.aio.interfaces import AsyncByteStream
+
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer, SpecificShapeDeserializer
@@ -23,6 +26,7 @@ from smithy_core.traits import (
 from smithy_core.types import TimestampFormat
 from smithy_core.utils import ensure_utc, strict_parse_bool, strict_parse_float
 
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from .aio.interfaces import HTTPResponse
 from .bindings import Binding
 from .interfaces import Field, Fields
@@ -30,6 +34,7 @@ from .schema_extensions import HTTP_BINDING_SCHEMA_EXTENSION, HTTPPayloadMetadat
 from .utils import split_header
 
 if TYPE_CHECKING:
+    # TODO(sync-api): root module imports aio; move once a sync counterpart exists.
     from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
     from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 

@@ -77,6 +77,10 @@ public final class ImportDeclarations implements ImportContainer {
     }
 
     private String relativize(String namespace) {
+        if (namespace.equals(localNamespace)) {
+            // A bare "." would name the package, not this module.
+            return "." + namespace.substring(namespace.lastIndexOf('.') + 1);
+        }
         if (namespace.startsWith(localNamespace)) {
             return "." + namespace.substring(localNamespace.length());
         }

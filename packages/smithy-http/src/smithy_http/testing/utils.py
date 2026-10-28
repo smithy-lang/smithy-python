@@ -4,6 +4,8 @@
 from smithy_core import URI
 
 from smithy_http import tuples_to_fields
+
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from smithy_http.aio import HTTPRequest
 
 __all__ = ["create_test_request"]

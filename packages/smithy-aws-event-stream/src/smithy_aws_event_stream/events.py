@@ -18,6 +18,7 @@ from struct import pack, unpack
 from types import MappingProxyType
 from typing import Literal, Self
 
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from smithy_core.aio.interfaces import AsyncByteStream
 from smithy_core.interfaces import BytesReader
 from smithy_core.types import TimestampFormat

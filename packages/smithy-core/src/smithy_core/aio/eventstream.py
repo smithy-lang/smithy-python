@@ -11,9 +11,6 @@ __all__ = [
     "AsyncDuplexEventStream",
     "AsyncInputEventStream",
     "AsyncOutputEventStream",
-    "DuplexEventStream",
-    "InputEventStream",
-    "OutputEventStream",
 ]
 
 
@@ -240,10 +237,3 @@ class AsyncOutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
 
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
         await self.close()
-
-
-# TODO(sync-renames): drop once aws-sdk-python's hand-written integration test
-# harness imports the Async*-prefixed names instead of these pre-rename ones.
-DuplexEventStream = AsyncDuplexEventStream
-InputEventStream = AsyncInputEventStream
-OutputEventStream = AsyncOutputEventStream
