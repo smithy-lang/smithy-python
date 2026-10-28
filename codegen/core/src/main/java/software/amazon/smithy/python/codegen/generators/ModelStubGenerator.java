@@ -19,7 +19,6 @@ import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
-import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
@@ -117,7 +116,7 @@ public final class ModelStubGenerator implements Runnable {
             var members = shape.members()
                     .stream()
                     .filter(m -> !CodegenUtils.isErrorMessage(model, m))
-                    .filter(m -> !isEventStreamMember(m))
+                    .filter(m -> !CodegenUtils.isEventStreamMember(model, m))
                     .toList();
             if (members.isEmpty() && !carriesResponseMetadata(shape)) {
                 return;
@@ -162,11 +161,6 @@ public final class ModelStubGenerator implements Runnable {
 
     private boolean carriesResponseMetadata(Shape shape) {
         return shape.hasTrait(ErrorTrait.class) || OperationIndex.of(model).isOutputStructure(shape);
-    }
-
-    private boolean isEventStreamMember(MemberShape member) {
-        var target = model.expectShape(member.getTarget());
-        return target.isUnionShape() && target.hasTrait(StreamingTrait.class);
     }
 
     private void writeUnion(PythonWriter writer, UnionShape shape) {

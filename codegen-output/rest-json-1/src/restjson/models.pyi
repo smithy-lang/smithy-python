@@ -275,13 +275,10 @@ class DocumentTypeOutput(_SerdeShape):
 class DuplexStreamInput(_SerdeShape):
     """Dataclass for DuplexStreamInput structure."""
 
-    stream: EventStream | None = ...
-
 @dataclass(kw_only=True)
 class DuplexStreamOutput(_SerdeShape):
     """Dataclass for DuplexStreamOutput structure."""
 
-    stream: EventStream | None = ...
     response_metadata: ResponseMetadata = ...
     """
     Metadata about the response that produced this output. Use this to
@@ -293,8 +290,6 @@ class DuplexStreamOutput(_SerdeShape):
 @dataclass(kw_only=True)
 class DuplexStreamWithDistinctStreamsInput(_SerdeShape):
     """Dataclass for DuplexStreamWithDistinctStreamsInput structure."""
-
-    stream: EventStream | None = ...
 
 @dataclass(kw_only=True)
 class DuplexStreamWithDistinctStreamsOutput(_SerdeShape):
@@ -314,14 +309,12 @@ class DuplexStreamWithInitialMessagesInput(_SerdeShape):
     """Dataclass for DuplexStreamWithInitialMessagesInput structure."""
 
     initial_request_member: str | None = ...
-    stream: EventStream | None = ...
 
 @dataclass(kw_only=True)
 class DuplexStreamWithInitialMessagesOutput(_SerdeShape):
     """Dataclass for DuplexStreamWithInitialMessagesOutput structure."""
 
     initial_response_member: str
-    stream: EventStream | None = ...
     response_metadata: ResponseMetadata = ...
     """
     Metadata about the response that produced this output. Use this to
@@ -962,8 +955,6 @@ class InputAndOutputWithHeadersOutput(_SerdeShape):
 class InputStreamInput(_SerdeShape):
     """Dataclass for InputStreamInput structure."""
 
-    stream: EventStream | None = ...
-
 @dataclass(kw_only=True)
 class InputStreamOutput(_SerdeShape):
     """Dataclass for InputStreamOutput structure."""
@@ -981,7 +972,6 @@ class InputStreamWithInitialRequestInput(_SerdeShape):
     """Dataclass for InputStreamWithInitialRequestInput structure."""
 
     initial_request_member: str | None = ...
-    stream: EventStream | None = ...
 
 @dataclass(kw_only=True)
 class InputStreamWithInitialRequestOutput(_SerdeShape):
@@ -2131,7 +2121,6 @@ class OutputStreamInput(_SerdeShape):
 class OutputStreamOutput(_SerdeShape):
     """Dataclass for OutputStreamOutput structure."""
 
-    stream: EventStream | None = ...
     response_metadata: ResponseMetadata = ...
     """
     Metadata about the response that produced this output. Use this to
@@ -2149,7 +2138,6 @@ class OutputStreamWithInitialResponseOutput(_SerdeShape):
     """Dataclass for OutputStreamWithInitialResponseOutput structure."""
 
     initial_response_member: str
-    stream: EventStream | None = ...
     response_metadata: ResponseMetadata = ...
     """
     Metadata about the response that produced this output. Use this to
