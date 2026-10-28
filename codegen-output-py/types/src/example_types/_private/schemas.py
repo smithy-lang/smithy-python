@@ -32,13 +32,16 @@ _s25 = "attributes"
 _s26 = "choice"
 _s27 = "status"
 _s28 = "code"
-_s29 = "GetExampleOutput"
-_s30 = "smithy.api#output"
-_s31 = "ExampleError"
-_s32 = "smithy.api#error"
-_s33 = "client"
-_s34 = "message"
-_s35 = "retryAfterSeconds"
+_s29 = "EventStream"
+_s30 = "smithy.api#streaming"
+_s31 = "GetExampleOutput"
+_s32 = "smithy.api#output"
+_s33 = "events"
+_s34 = "ExampleError"
+_s35 = "smithy.api#error"
+_s36 = "client"
+_s37 = "message"
+_s38 = "retryAfterSeconds"
 
 GET_EXAMPLE_INPUT: StaticSchema = (
     18,
@@ -145,29 +148,40 @@ RENAMED_EXAMPLE: StaticSchema = (
     ),
 )
 
-GET_EXAMPLE_OUTPUT: StaticSchema = (
-    18,
+EVENT_STREAM: StaticSchema = (
+    19,
     n0,
     _s29,
     {_s30: None},
+    (n0,),
+    ((RENAMED_EXAMPLE, 0),),
+)
+
+GET_EXAMPLE_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _s31,
+    {_s32: None},
     (
         n0,
         _s7,
+        _s33,
     ),
     (
         (RENAMED_EXAMPLE, 0),
         (EXAMPLE_VALUE, 0),
+        (EVENT_STREAM, 0),
     ),
 )
 
 EXAMPLE_ERROR: StaticSchema = (
     18,
     n0,
-    _s31,
-    {_s32: _s33},
+    _s34,
+    {_s35: _s36},
     (
-        _s34,
-        _s35,
+        _s37,
+        _s38,
     ),
     (
         (3, 0),

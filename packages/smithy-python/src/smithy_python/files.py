@@ -53,7 +53,11 @@ class FileManifest:
             raise _exceptions.CodegenError(
                 f"Generated path {path!r} is already a text file"
             )
-        writer = _writer.PythonWriter(module, dependencies=self._dependencies)
+        writer = _writer.PythonWriter(
+            module,
+            dependencies=self._dependencies,
+            stub=path.endswith(".pyi"),
+        )
         self._files[path] = _PythonFile(module, writer)
         return writer
 

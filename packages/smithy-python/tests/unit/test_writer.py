@@ -13,7 +13,7 @@ from types import ModuleType
 from typing import get_type_hints
 
 import pytest
-from smithy_python.dependencies import Dependency, DependencySet
+from smithy_python.dependencies import SMITHY_CORE, Dependency, DependencySet
 from smithy_python.exceptions import CodegenError
 from smithy_python.symbols import TypeReference
 from smithy_python.writer import PythonWriter
@@ -220,7 +220,7 @@ def test_class_body_references_load(
                 ")",
             )
     source = writer.render()
-    assert "from dataclasses import field as _dataclasses_field" in source
+    assert "field as _dataclasses_field" in source
     assert "default_factory=_builtins.list" in source
     module = load_written_module(writer, tmp_path, monkeypatch)
     node: type = module.Node
@@ -600,7 +600,7 @@ def test_builtin_names_cover_running_interpreter() -> None:
         writer.line("value: ", TypeReference(name, "external"))
     source = writer.render()
     for name in names:
-        assert f"from external import {name} as _external_{name}\n" in source
+        assert f"    {name} as _external_{name},\n" in source
 
 
 @pytest.mark.parametrize("module", ["written_models", "\uff57ritten_models"])
@@ -789,3 +789,28 @@ def test_import_identity_and_order() -> None:
         assert prefix.index("from datetime") < prefix.index("from decimal")
         prefixes.append(prefix)
     assert prefixes[0] == prefixes[1]
+
+
+def test_imports_are_grouped_and_combined() -> None:
+    writer = PythonWriter("package.models")
+    writer.line("first: ", TypeReference("StrEnum", "enum"))
+    writer.line("second: ", TypeReference("IntEnum", "enum"))
+    writer.line(
+        "third: ",
+        TypeReference(
+            "Document",
+            "smithy_core.documents",
+            dependencies=(SMITHY_CORE,),
+        ),
+    )
+    writer.line("fourth: ", TypeReference("Thing", "._private"))
+
+    assert writer.render().startswith(
+        "from __future__ import annotations\n"
+        "\n"
+        "from enum import IntEnum, StrEnum\n"
+        "\n"
+        "from smithy_core.documents import Document\n"
+        "\n"
+        "from ._private import Thing\n"
+    )

@@ -121,7 +121,8 @@ public final class ConformanceTestGenerator implements Runnable {
         if (!operationIndex.isInputStructure(shape)) {
             for (var member : shape.members()) {
                 if (CodegenUtils.isRequiredMember(index, member)
-                        && !CodegenUtils.isErrorMessage(model, member)) {
+                        && !CodegenUtils.isErrorMessage(model, member)
+                        && !CodegenUtils.isEventStreamMember(model, member)) {
                     var memberName = symbolProvider.toMemberName(member);
                     if (args.length() > 0) {
                         args.append(", ");

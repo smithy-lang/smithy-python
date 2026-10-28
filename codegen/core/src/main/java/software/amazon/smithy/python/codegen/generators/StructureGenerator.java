@@ -29,7 +29,6 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.RetryableTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
-import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
@@ -302,19 +301,16 @@ public final class StructureGenerator implements Runnable {
 
     private List<MemberShape> filterPropertyMembers(List<MemberShape> members) {
         if (!shape.hasTrait(ErrorTrait.class)) {
-            return members.stream().filter(this::filterEventStreamMember).toList();
+            return members.stream()
+                    .filter(member -> !CodegenUtils.isEventStreamMember(model, member))
+                    .toList();
         }
         // We replace modeled message members with a static `message` member. Serialization
         // and deserialization will handle assigning them properly.
         return members.stream()
                 .filter(member -> !isErrorMessage(model, member))
-                .filter(this::filterEventStreamMember)
+                .filter(member -> !CodegenUtils.isEventStreamMember(model, member))
                 .collect(Collectors.toList());
-    }
-
-    private boolean filterEventStreamMember(MemberShape member) {
-        var target = model.expectShape(member.getTarget());
-        return !(target.isUnionShape() && target.hasTrait(StreamingTrait.class));
     }
 
     private String getDefaultValue(PythonWriter writer, MemberShape member) {
@@ -412,10 +408,7 @@ public final class StructureGenerator implements Runnable {
     private List<MemberShape> filterMembers() {
         return shape.members()
                 .stream()
-                .filter(member -> {
-                    var target = model.expectShape(member.getTarget());
-                    return !(target.hasTrait(StreamingTrait.class) && target.isUnionShape());
-                })
+                .filter(member -> !CodegenUtils.isEventStreamMember(model, member))
                 .toList();
     }
 
@@ -441,10 +434,7 @@ public final class StructureGenerator implements Runnable {
         // index tuple would be an unused local.
         boolean hasMembers = shape.members()
                 .stream()
-                .anyMatch(m -> {
-                    var t = model.expectShape(m.getTarget());
-                    return !(t.hasTrait(StreamingTrait.class) && t.isUnionShape());
-                });
+                .anyMatch(member -> !CodegenUtils.isEventStreamMember(model, member));
         writer.putContext("hasMembers", hasMembers);
 
         // TODO: either formalize deserialize_kwargs or remove it when http serde is converted
@@ -558,7 +548,7 @@ public final class StructureGenerator implements Runnable {
         for (MemberShape member : members) {
             index++;
             var target = model.expectShape(member.getTarget());
-            if (target.hasTrait(StreamingTrait.class) && target.isUnionShape()) {
+            if (CodegenUtils.isEventStreamMember(model, member)) {
                 continue;
             }
             writer.write("""

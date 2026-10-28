@@ -194,8 +194,9 @@ collections, such as two lists containing each other, raises `ModelError` with
 the IDs in the cycle. A failed lookup does not affect later lookups.
 
 Streaming blobs resolve to `smithy_core.aio.interfaces.StreamingBlob`, including
-when nested in collections. Event-stream unions retain schema names for
-protocol integration and do not produce model declarations.
+when nested in collections. Event-stream unions produce the same model
+declarations, variant classes, unknown class, and type references as other
+unions. Their streaming behavior is handled by the client and protocol layers.
 
 ## Inputs and errors
 

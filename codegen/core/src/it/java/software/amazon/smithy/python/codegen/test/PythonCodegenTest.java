@@ -62,6 +62,10 @@ public class PythonCodegenTest {
         assertTrue(models.contains("response_metadata: ResponseMetadata"));
         assertTrue(models.contains("response_metadata_:"));
 
+        // Event streams are passed through the stream API, not model constructors.
+        var typecheck = Files.readString(tempDir.resolve("tests/_typecheck.py"));
+        assertFalse(typecheck.contains("stream=_"));
+
         var schemas = Files.readString(tempDir.resolve("src/weather/_private/schemas.py"));
         assertTrue(schemas.contains("example.weather#fakeProtocol"));
         assertTrue(schemas.contains("aws.protocols#restJson1"));

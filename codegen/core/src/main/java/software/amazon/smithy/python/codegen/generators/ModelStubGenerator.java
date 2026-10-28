@@ -116,6 +116,7 @@ public final class ModelStubGenerator implements Runnable {
             var members = shape.members()
                     .stream()
                     .filter(m -> !CodegenUtils.isErrorMessage(model, m))
+                    .filter(m -> !CodegenUtils.isEventStreamMember(model, m))
                     .toList();
             if (members.isEmpty() && !carriesResponseMetadata(shape)) {
                 return;

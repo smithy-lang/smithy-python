@@ -58,11 +58,16 @@ class PythonWriter:
     """Write trusted Python lines, retaining type references until rendering."""
 
     def __init__(
-        self, module: str, *, dependencies: _dependencies.DependencySet | None = None
+        self,
+        module: str,
+        *,
+        dependencies: _dependencies.DependencySet | None = None,
+        stub: bool = False,
     ) -> None:
         _validate_module(module, relative=False)
         self._module = _binding(module)
         self._dependencies = dependencies
+        self._stub = stub
         self._depth = 0
         self._lines: list[tuple[int, tuple[str | TypeReference, ...]]] = []
 
@@ -91,9 +96,10 @@ class PythonWriter:
         names, imports = self._plan_imports(*self._names())
         header = "from __future__ import annotations\n"
         if imports:
-            header += "\n" + "\n".join(item.statement() for item in imports) + "\n"
+            header += "\n" + _render_imports(imports) + "\n"
         body = self._body(lambda reference: self._annotation(reference, names))
-        return header + ("\n\n" + "\n".join(body) + "\n" if body else "")
+        separator = "\n" if self._stub else "\n\n"
+        return header + (separator + "\n".join(body) + "\n" if body else "")
 
     def _body(self, reference: Callable[[TypeReference], str]) -> list[str]:
         body: list[str] = []
@@ -139,6 +145,7 @@ class PythonWriter:
         self, module_names: frozenset[str], shadows: list[frozenset[str]]
     ) -> tuple[dict[tuple[str | None, str], str], list[_Import]]:
         identities: set[tuple[str | None, str]] = set()
+        third_party_roots: set[str] = set()
         # The local names visible where each identity is referenced. References
         # in one scope share a set, so keep the distinct sets, not their union.
         local_names: dict[tuple[str | None, str], set[frozenset[str]]] = {}
@@ -153,6 +160,8 @@ class PythonWriter:
                 if ref.module is not None:
                     _validate_identifier(ref.name, "reference name")
                     _validate_module(ref.module, relative=True)
+                    if ref.dependencies and not ref.module.startswith("."):
+                        third_party_roots.add(_module_root(ref.module))
                 identities.add((ref.module, ref.name))
                 key = _identity(ref.module, ref.name)
                 local_names.setdefault(key, set()).add(shadow)
@@ -195,7 +204,17 @@ class PythonWriter:
                 else name
             )
             names[(module, name)] = alias
-            imports.append((_Import(module, name, alias), scoped))
+            imports.append(
+                (
+                    _Import(
+                        module,
+                        name,
+                        alias,
+                        third_party=_module_root(module) in third_party_roots,
+                    ),
+                    scoped,
+                )
+            )
         qualified: set[frozenset[str]] = set()
         for key, (module, name) in representatives.items():
             module_binding, name_binding = key
@@ -211,7 +230,9 @@ class PythonWriter:
             elif module_binding == self._module:
                 names[(module, name)] = name
         if qualified:
-            imports.append((_Import("builtins", None, "_builtins"), qualified))
+            imports.append(
+                (_Import("builtins", None, "_builtins", third_party=False), qualified)
+            )
 
         # Check the complete plan, including unaliased imports. No binding gets
         # priority merely because its reference was encountered first.
@@ -273,12 +294,7 @@ class _Import:
     module: str
     name: str | None
     alias: str
-
-    def statement(self) -> str:
-        if self.name is None:
-            return f"import {self.module} as {self.alias}"
-        suffix = f" as {self.alias}" if self.alias != self.name else ""
-        return f"from {self.module} import {self.name}{suffix}"
+    third_party: bool
 
 
 @dataclass(eq=False, slots=True)
@@ -319,9 +335,48 @@ def _binding(name: str) -> str:
     return normalize("NFKC", name)
 
 
+def _render_imports(imports: list[_Import]) -> str:
+    sections: dict[int, dict[str, list[_Import]]] = {}
+    for item in imports:
+        section = 2 if item.module.startswith(".") else 1 if item.third_party else 0
+        sections.setdefault(section, {}).setdefault(item.module, []).append(item)
+
+    rendered: list[str] = []
+    for section in sorted(sections):
+        lines: list[str] = []
+        for module, items in sections[section].items():
+            for item in items:
+                if item.name is None:
+                    lines.append(f"import {module} as {item.alias}")
+            named = [item for item in items if item.name is not None]
+            if named:
+                lines.extend(_render_from_import(module, named))
+        rendered.append("\n".join(lines))
+    return "\n\n".join(rendered)
+
+
+def _render_from_import(module: str, imports: list[_Import]) -> list[str]:
+    names: list[str] = []
+    for item in imports:
+        if item.name is None:
+            continue
+        names.append(
+            item.name if item.alias == item.name else f"{item.name} as {item.alias}"
+        )
+    prefix = f"from {module} import "
+    joined = ", ".join(names)
+    if len(prefix) + len(joined) <= 88:
+        return [prefix + joined]
+    return [prefix + "(", *(f"    {name}," for name in names), ")"]
+
+
 def _identity(module: str | None, name: str) -> tuple[str | None, str]:
     """Return a reference's module and name as Python binds them."""
     return (None if module is None else _binding(module), _binding(name))
+
+
+def _module_root(module: str) -> str:
+    return _binding(module.lstrip(".").split(".", 1)[0])
 
 
 def _validate_identifier(value: str, kind: str) -> None:

@@ -116,7 +116,7 @@ def test_generation_plan_orders_schemas_and_plans_names() -> None:
     assert plan.schemas.strings["example"] == "n0"
 
 
-def test_generation_plan_keeps_streaming_schemas_out_of_model_declarations() -> None:
+def test_generation_plan_includes_streaming_union_models() -> None:
     model = load_model(
         {
             "smithy": "2.0",
@@ -124,6 +124,7 @@ def test_generation_plan_keeps_streaming_schemas_out_of_model_declarations() -> 
                 "example#Events": {
                     "type": "union",
                     "traits": {"smithy.api#streaming": {}},
+                    "members": {"message": {"target": "smithy.api#String"}},
                 }
             },
         }
@@ -133,4 +134,9 @@ def test_generation_plan_keeps_streaming_schemas_out_of_model_declarations() -> 
     plan = GenerationPlan.from_selection(model, selection, symbols)
     shape_id = model.get_shape("example#Events").id
     assert plan.schemas.names[shape_id] == "EVENTS"
-    assert shape_id not in plan.models.declaration_names
+    assert plan.models.declaration_names[shape_id] == "Events"
+    assert (
+        plan.models.union_variant_names[model.get_shape("example#Events$message").id]
+        == "EventsMessage"
+    )
+    assert plan.models.union_unknown_names[shape_id] == "EventsUnknown"

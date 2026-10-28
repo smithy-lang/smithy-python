@@ -25,10 +25,13 @@ def model_with(shapes: dict[str, object]) -> Model:
         ("http_server", "HttpServer", "http_server", "HTTP_SERVER"),
         ("HTTP2Server", "HTTP2Server", "http2_server", "HTTP2_SERVER"),
         ("getURL2Value", "GetURL2Value", "get_url2_value", "GET_URL2_VALUE"),
-        ("__some__name__", "SomeName", "some_name", "SOME_NAME"),
-        ("__init__", "Init", "init", "INIT"),
-        ("_value", "Value", "value", "VALUE"),
-        ("class", "Class", "class_", "CLASS"),
+        ("__some__name__", "SomeName", "__some__name__", "__SOME__NAME___"),
+        ("__init__", "Init", "__init__", "__INIT___"),
+        ("__post_init__", "PostInit", "__post_init__", "__POST_INIT___"),
+        ("__value", "Value", "__value___", "__VALUE___"),
+        ("_value", "Value", "_value", "_VALUE"),
+        ("_VALUE_", "VALUE", "_value_", "_VALUE__"),
+        ("class", "Class", "class_", "CLASS_"),
         ("None", "None_", "none", "NONE"),
         ("match", "Match", "match", "MATCH"),
     ],
@@ -57,6 +60,21 @@ def test_names(source: str, declaration: str, field: str, constant: str) -> None
     assert symbols.member_name(f"example#Choice${source}") == constant
     assert model.get_shape(f"example#{source}").id.name == source
     assert model.get_shape(f"example#Choice${source}").get_trait("enumValue") == "wire"
+
+
+def test_service_error_is_reserved_for_the_synthetic_error_base() -> None:
+    model = model_with(
+        {
+            "example#ServiceError": {"type": "structure"},
+            "example#Service": {
+                "type": "union",
+                "members": {"error": {"target": "smithy.api#String"}},
+            },
+        }
+    )
+    symbols = SymbolProvider(model, select_shapes(model), package="example.client")
+    assert symbols.declaration_name("example#ServiceError") == "ServiceError_"
+    assert symbols.union_variant_name("example#Service$error") == "Service_Error"
 
 
 @pytest.mark.parametrize(
@@ -99,11 +117,13 @@ def test_type_references(kind: str, name: str, module: str) -> None:
     if module != "example.client.models" and kind not in ("enum", "intEnum"):
         prelude_name = kind[0].upper() + kind[1:]
         assert symbols.type_reference(f"smithy.api#{prelude_name}") == ref
-    assert symbols.type_reference("smithy.api#Unit") == TypeReference("None")
+    assert symbols.type_reference("smithy.api#Unit") == TypeReference(
+        "Unit", "example.client.models"
+    )
 
 
-def test_streaming_union_has_a_schema_name_without_a_model_symbol() -> None:
-    from smithy_python.model import ModelError
+def test_streaming_union_has_schema_and_model_symbols() -> None:
+    from smithy_python.symbols import TypeReference
 
     model = model_with(
         {
@@ -115,8 +135,10 @@ def test_streaming_union_has_a_schema_name_without_a_model_symbol() -> None:
     )
     symbols = SymbolProvider(model, select_shapes(model), package="example")
     assert symbols.schema_name("example#Events") == "EVENTS"
-    with pytest.raises(ModelError, match="Unsupported streaming union"):
-        symbols.declaration_name("example#Events")
+    assert symbols.declaration_name("example#Events") == "Events"
+    assert symbols.type_reference("example#Events") == TypeReference(
+        "Events", "example.models"
+    )
 
 
 @pytest.mark.parametrize("kind,value_type", [("enum", "str"), ("intEnum", "int")])
@@ -403,7 +425,8 @@ def test_collection_only_cycles(mutual: bool) -> None:
 
 @pytest.mark.parametrize("kind", ["structure", "union", "enum", "intEnum"])
 @pytest.mark.parametrize(
-    "names", [("getURL", "get_url"), ("class", "class_"), ("__init__", "init")]
+    "names",
+    [("getURL", "get_url"), ("class", "class_"), ("HTTPServer", "http_server")],
 )
 def test_member_collisions(kind: str, names: tuple[str, str]) -> None:
     from smithy_python.model import ModelError
@@ -420,7 +443,7 @@ def test_member_collisions(kind: str, names: tuple[str, str]) -> None:
         SymbolProvider(model, select_shapes(model), package="pkg")
     for name in names:
         assert f"example#Container${name}" in str(error.value)
-    result = "CLASS" if kind in ("enum", "intEnum") else "class_"
+    result = "CLASS_" if kind in ("enum", "intEnum") else "class_"
     if names[0] == "class":
         assert repr(result) in str(error.value)
 
@@ -549,8 +572,8 @@ def test_streaming_blob_type_reference() -> None:
     )
 
 
-def test_streaming_union_rejected_when_resolved() -> None:
-    from smithy_python.model import ModelError
+def test_streaming_union_type_reference() -> None:
+    from smithy_python.symbols import TypeReference
 
     model = model_with(
         {
@@ -562,11 +585,12 @@ def test_streaming_union_rejected_when_resolved() -> None:
         }
     )
     symbols = SymbolProvider(model, select_shapes(model), package="pkg")
-    for shape_id in ("example#Stream", "example#Streams"):
-        with pytest.raises(ModelError, match=r"Unsupported streaming.*example#Stream"):
-            symbols.type_reference(shape_id)
-    with pytest.raises(ModelError, match="Unsupported streaming"):
-        symbols.declaration_name("example#Stream")
+    stream = TypeReference("Stream", "pkg.models")
+    assert symbols.declaration_name("example#Stream") == "Stream"
+    assert symbols.type_reference("example#Stream") == stream
+    assert symbols.type_reference("example#Streams") == TypeReference(
+        "list", "builtins", (stream,)
+    )
 
 
 def test_request_boundaries() -> None:
@@ -784,6 +808,54 @@ def test_reserved_member_names_still_collide() -> None:
             reserved_member_names=lambda _: {"serialize"},
         )
     assert "'serialize_'" in str(error.value)
+
+
+def test_enum_sunder_escaping_still_detects_collisions() -> None:
+    from smithy_python.model import ModelError
+
+    model = model_with(
+        {
+            "example#Values": {
+                "type": "enum",
+                "members": {
+                    "_VALUE_": {
+                        "target": "smithy.api#Unit",
+                        "traits": {"smithy.api#enumValue": "first"},
+                    },
+                    "_VALUE__": {
+                        "target": "smithy.api#Unit",
+                        "traits": {"smithy.api#enumValue": "second"},
+                    },
+                },
+            }
+        }
+    )
+    with pytest.raises(ModelError, match="_VALUE__"):
+        SymbolProvider(model, select_shapes(model), package="pkg")
+
+
+def test_enum_dunder_escaping_still_detects_collisions() -> None:
+    from smithy_python.model import ModelError
+
+    model = model_with(
+        {
+            "example#Values": {
+                "type": "enum",
+                "members": {
+                    "__VALUE__": {
+                        "target": "smithy.api#Unit",
+                        "traits": {"smithy.api#enumValue": "first"},
+                    },
+                    "__VALUE___": {
+                        "target": "smithy.api#Unit",
+                        "traits": {"smithy.api#enumValue": "second"},
+                    },
+                },
+            }
+        }
+    )
+    with pytest.raises(ModelError, match="__VALUE___"):
+        SymbolProvider(model, select_shapes(model), package="pkg")
 
 
 def test_type_references_are_cached() -> None:

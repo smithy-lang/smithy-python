@@ -34,6 +34,7 @@ import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
+import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -191,6 +192,18 @@ public final class CodegenUtils {
     public static boolean isErrorMessage(Model model, MemberShape shape) {
         return ERROR_MESSAGE_MEMBER_NAMES.contains(shape.getMemberName().toLowerCase(Locale.US))
                 && model.expectShape(shape.getContainer()).hasTrait(ErrorTrait.class);
+    }
+
+    /**
+     * Determines whether a member targets an event stream.
+     *
+     * @param model The whole service model.
+     * @param member The member to check.
+     * @return Returns whether the member targets a streaming union.
+     */
+    public static boolean isEventStreamMember(Model model, MemberShape member) {
+        var target = model.expectShape(member.getTarget());
+        return target.isUnionShape() && target.hasTrait(StreamingTrait.class);
     }
 
     /**

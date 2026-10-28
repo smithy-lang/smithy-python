@@ -18,7 +18,8 @@ _RESERVED_MEMBERS = frozenset(
     """and as assert async await break class continue def del elif else except
     finally for from global if import in is lambda nonlocal not or pass raise
     return try while with yield bool bytes bytearray dict float int list str
-    datetime""".split()
+    datetime serialize serialize_members deserialize __init__ __post_init__
+    _smithy_default __repr__ __annotations__""".split()
 )
 # reserved-error-member-names.txt
 _RESERVED_ERROR_MEMBERS = frozenset(
@@ -54,14 +55,24 @@ def member_field_name(
         return "message"
 
     name = to_snake_case(wire_name)
-    if name in _RESERVED_MEMBERS:
+    if name.startswith("__") and not name.endswith("__"):
+        name += "___"
+    elif name in _RESERVED_MEMBERS:
         name += "_"
     if is_error and name in _RESERVED_ERROR_MEMBERS:
         name += "_"
     if name == _RESPONSE_METADATA_MEMBER and carries_response_metadata:
         name += "_"
     if is_enum:
-        name = name.upper()
+        name = _escape_enum_underscores(name).upper()
+    return name
+
+
+def _escape_enum_underscores(name: str) -> str:
+    if name.startswith("__"):
+        return name + "_" if name.endswith("__") and not name.endswith("___") else name
+    if name.startswith("_") and name.endswith("_") and not name.endswith("__"):
+        return name + "_"
     return name
 
 
