@@ -34,13 +34,6 @@ _GENERATED_MARKDOWN_COMMENT = (
 _PYPROJECT_SUFFIX = """
 [tool.pyright]
 typeCheckingMode = "strict"
-reportPrivateUsage = false
-reportUnusedFunction = false
-reportUnusedVariable = false
-reportUnnecessaryComparison = false
-reportUnusedClass = false
-enableExperimentalFeatures = true
-exclude = ["**/models.py"]
 
 [tool.ruff]
 target-version = "py312"

@@ -186,7 +186,7 @@ def test_types_generation_applies_selector_and_input_output_settings(
     assert (
         _run_types(
             complete,
-            "--generate-inputs-and-outputs",
+            "--include-operation-io",
             source=source,
         )
         == 0
@@ -322,7 +322,7 @@ def test_types_generation_requires_package_settings(
         ("--package", "_example", "Invalid Python package or distribution name"),
         ("--package", "example_", "Invalid Python package or distribution name"),
         ("--package", "café", "Invalid Python package or distribution name"),
-        ("--package-version", "", "expected a non-empty value"),
+        ("--package-version", "", "Invalid version"),
         ("--package-version", "not-a-version", "Invalid version"),
         ("--selector", "[", "Expected an attribute path segment"),
     ],

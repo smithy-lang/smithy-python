@@ -71,7 +71,7 @@ def load_written_module(
 def test_nested_forward_and_mutual_annotations(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    writer = PythonWriter("written_models")
+    writer = PythonWriter("written_models", future_annotations=True)
     writer.line("class Node:")
     with writer.indent():
         writer.line(
@@ -607,7 +607,7 @@ def test_builtin_names_cover_running_interpreter() -> None:
 def test_equivalent_current_module_names(
     module: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    writer = PythonWriter(module)
+    writer = PythonWriter(module, future_annotations=True)
     writer.line("class Node:")
     with writer.indent():
         writer.line(
@@ -685,10 +685,17 @@ def test_deep_collection_rendering() -> None:
 
 
 def test_future_import_name_is_reserved() -> None:
-    writer = PythonWriter("models")
+    writer = PythonWriter("models", future_annotations=True)
     writer.line("value: ", TypeReference("annotations", "external"))
     assert (
         "from external import annotations as _external_annotations" in writer.render()
+    )
+
+
+def test_future_annotations_are_opt_in() -> None:
+    assert PythonWriter("models").render() == ""
+    assert PythonWriter("models", future_annotations=True).render() == (
+        "from __future__ import annotations\n"
     )
 
 
@@ -767,7 +774,7 @@ def test_generation_without_runtime_packages() -> None:
 
 def test_empty_writer_and_trusted_text() -> None:
     writer = PythonWriter("models")
-    assert writer.render() == "from __future__ import annotations\n"
+    assert writer.render() == ""
     writer.line("value = '$T {not_a_template}'")
     assert writer.render().endswith("value = '$T {not_a_template}'\n")
 
@@ -806,8 +813,6 @@ def test_imports_are_grouped_and_combined() -> None:
     writer.line("fourth: ", TypeReference("Thing", "._private"))
 
     assert writer.render().startswith(
-        "from __future__ import annotations\n"
-        "\n"
         "from enum import IntEnum, StrEnum\n"
         "\n"
         "from smithy_core.documents import Document\n"

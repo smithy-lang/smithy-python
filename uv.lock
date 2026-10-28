@@ -771,12 +771,6 @@ requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 [[package]]
 name = "smithy-python"
 source = { editable = "packages/smithy-python" }
-dependencies = [
-    { name = "packaging" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "packaging" }]
 
 [[package]]
 name = "smithy-python-workspace"

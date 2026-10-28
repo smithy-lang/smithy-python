@@ -62,14 +62,20 @@ class PythonWriter:
         module: str,
         *,
         dependencies: _dependencies.DependencySet | None = None,
+        future_annotations: bool = False,
         stub: bool = False,
     ) -> None:
         _validate_module(module, relative=False)
         self._module = _binding(module)
         self._dependencies = dependencies
+        self._future_annotations = future_annotations
         self._stub = stub
         self._depth = 0
         self._lines: list[tuple[int, tuple[str | TypeReference, ...]]] = []
+
+    def add_future_annotations(self) -> None:
+        """Include ``from __future__ import annotations`` in rendered source."""
+        self._future_annotations = True
 
     def line(self, *parts: str | TypeReference) -> None:
         """Append one line, concatenating its parts without separators."""
@@ -94,12 +100,16 @@ class PythonWriter:
     def render(self) -> str:
         """Return complete source without changing the recorded lines."""
         names, imports = self._plan_imports(*self._names())
-        header = "from __future__ import annotations\n"
+        header = (
+            "from __future__ import annotations\n" if self._future_annotations else ""
+        )
         if imports:
-            header += "\n" + _render_imports(imports) + "\n"
+            header += ("\n" if header else "") + _render_imports(imports) + "\n"
         body = self._body(lambda reference: self._annotation(reference, names))
         separator = "\n" if self._stub else "\n\n"
-        return header + (separator + "\n".join(body) + "\n" if body else "")
+        return header + (
+            (separator if header else "") + "\n".join(body) + "\n" if body else ""
+        )
 
     def _body(self, reference: Callable[[TypeReference], str]) -> list[str]:
         body: list[str] = []
@@ -199,7 +209,7 @@ class PythonWriter:
                 if binding in reserved
                 or _is_local(binding, scoped)
                 or binding in _BUILTINS
-                or binding == "annotations"
+                or (self._future_annotations and binding == "annotations")
                 or counts[binding] > 1
                 else name
             )

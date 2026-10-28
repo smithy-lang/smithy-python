@@ -5,13 +5,12 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO, Final
-
-from packaging.version import InvalidVersion, Version
 
 from . import __version__
 from . import dependencies as _dependencies
@@ -32,6 +31,14 @@ __all__ = ["main"]
 
 _GENERATION_NOT_IMPLEMENTED: Final = (
     "smithy-python: error: {artifact} generation is not implemented yet\n"
+)
+_PACKAGE_VERSION: Final = re.compile(
+    r"v?[0-9]+(?:\.[0-9]+)*"
+    r"(?:(?:a|b|rc)[0-9]+)?"
+    r"(?:\.post[0-9]+)?"
+    r"(?:\.dev[0-9]+)?"
+    r"(?:\+[a-z0-9]+(?:[._-][a-z0-9]+)*)?",
+    re.IGNORECASE,
 )
 
 
@@ -125,7 +132,8 @@ def _create_parser() -> argparse.ArgumentParser:
         help="Smithy selector used to narrow generated declaration roots.",
     )
     types.add_argument(
-        "--generate-inputs-and-outputs",
+        "--include-operation-io",
+        dest="generate_inputs_and_outputs",
         action="store_true",
         help="Include operation input and output structures as generation roots.",
     )
@@ -265,9 +273,6 @@ def _parse_selector(value: str) -> _selection.Selector:
 
 
 def _package_version(value: str) -> str:
-    if not value:
-        raise argparse.ArgumentTypeError("expected a non-empty value")
-    try:
-        return str(Version(value))
-    except InvalidVersion as error:
-        raise argparse.ArgumentTypeError(str(error)) from error
+    if _PACKAGE_VERSION.fullmatch(value) is None:
+        raise argparse.ArgumentTypeError(f"Invalid version: {value!r}")
+    return value[1:] if value[:1].lower() == "v" else value

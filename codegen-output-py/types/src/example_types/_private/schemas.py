@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from smithy_core._schema_compact import StaticSchema
 
 n0 = "example"

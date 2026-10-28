@@ -37,7 +37,13 @@ class FileManifest:
         """Dependencies recorded by writers owned by this manifest."""
         return self._dependencies
 
-    def python_module(self, path: str, module: str) -> _writer.PythonWriter:
+    def python_module(
+        self,
+        path: str,
+        module: str,
+        *,
+        future_annotations: bool = False,
+    ) -> _writer.PythonWriter:
         """Return the shared writer for a generated Python module."""
         path = _normalize_path(path)
         self._claim_public_path(path)
@@ -48,6 +54,8 @@ class FileManifest:
                     f"Generated path {path!r} already uses module "
                     f"{existing.module!r}, not {module!r}"
                 )
+            if future_annotations:
+                existing.writer.add_future_annotations()
             return existing.writer
         if existing is not None:
             raise _exceptions.CodegenError(
@@ -56,6 +64,7 @@ class FileManifest:
         writer = _writer.PythonWriter(
             module,
             dependencies=self._dependencies,
+            future_annotations=future_annotations,
             stub=path.endswith(".pyi"),
         )
         self._files[path] = _PythonFile(module, writer)

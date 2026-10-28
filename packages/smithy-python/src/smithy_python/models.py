@@ -129,7 +129,11 @@ def _write_runtime(writer: PythonWriter, plan: ModelPlan) -> None:
         )
     else:
         writer.line("_MODEL_NAMES = tuple(_MODEL_INDEX)")
-    writer.line("__all__ = (", _quote(exports[0]), ", *_MODEL_NAMES)")
+    writer.line(
+        "__all__ = (",
+        _quote(exports[0]),
+        ", *_MODEL_NAMES)  # pyright: ignore[reportUnsupportedDunderAll]",
+    )
     writer.line()
     writer.line()
     writer.line("_registry = ", _MODEL_REGISTRY, "(")

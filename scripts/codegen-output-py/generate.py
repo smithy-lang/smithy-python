@@ -35,7 +35,7 @@ def main() -> None:
             "1.0.0",
             "--package-description",
             "Example Python codegen output",
-            "--generate-inputs-and-outputs",
+            "--include-operation-io",
         ),
         environ={},
     )
