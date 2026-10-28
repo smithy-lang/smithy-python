@@ -1,6 +1,6 @@
 .DEFAULT_GOAL:=help
 
-.PHONY: help install format-java check-java build-java test-protocols typecheck-protocols generate-protocol-tests generate-codegen-output-py api-snapshot ci lint-py check-py test-py test-integration benchmark build-py clean
+.PHONY: help install format-java check-java build-java test-protocols typecheck-protocols generate-protocol-tests generate-codegen-output-py api-snapshot aio-check ci lint-py check-py test-py test-integration benchmark build-py clean
 
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -78,6 +78,9 @@ generate-codegen-output-py: ## Generates Python output and asserts no snapshot d
 
 api-snapshot: ## Records the public API surface of each package and asserts no git diff.
 	uv run python scripts/api-snapshot/api_snapshot.py
+
+aio-check: ## Enforces aio naming and separation in package sources.
+	uv run python scripts/aio-naming/aio_naming.py
 
 
 lint-py: ## Runs linters and formatters on the python packages.
