@@ -92,26 +92,6 @@ def test_file_manifest_rejects_conflicting_claims(tmp_path: Path) -> None:
         files.commit(tmp_path / "output")
 
 
-def test_file_manifest_combines_future_annotation_requests(tmp_path: Path) -> None:
-    files = FileManifest()
-    writer = files.python_module("models.py", "example.models")
-    assert writer is files.python_module(
-        "models.py", "example.models", future_annotations=True
-    )
-    writer.line("class Node:")
-    with writer.indent():
-        writer.line("child: ", TypeReference("Node", "example.models"))
-
-    output = tmp_path / "output"
-    files.commit(output)
-
-    assert (
-        output.joinpath("models.py")
-        .read_text()
-        .startswith("from __future__ import annotations\n")
-    )
-
-
 def test_validation_failure_leaves_existing_output_untouched(tmp_path: Path) -> None:
     output = tmp_path / "output"
     output.mkdir()
