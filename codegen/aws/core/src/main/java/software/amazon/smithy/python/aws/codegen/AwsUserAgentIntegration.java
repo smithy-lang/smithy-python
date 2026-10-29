@@ -11,6 +11,7 @@ import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.SyncVariant;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -118,6 +119,12 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                                                                 userAgentInterceptor,
                                                                 versionSymbol,
                                                                 serviceId);
+                                                        writeSyncPlugin(c,
+                                                                userAgentPlugin.getSymbol(),
+                                                                asyncConfig.get(),
+                                                                userAgentInterceptor,
+                                                                versionSymbol,
+                                                                serviceId);
                                                     } else {
                                                         writer.write(USER_AGENT_PLUGIN_SYNC_ONLY,
                                                                 CodegenUtils.getConfigSymbol(c.settings()),
@@ -126,7 +133,13 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                                                                 serviceId);
                                                     }
                                                 });
-                                return List.of(filename);
+                                if (CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model()).isEmpty()) {
+                                    return List.of(filename);
+                                }
+                                var syncFile = SyncVariant.mapper(c.settings())
+                                        .apply(userAgentPlugin.getSymbol())
+                                        .getDefinitionFile();
+                                return List.of(filename, syncFile);
                             })
                             .build());
         } else {
@@ -134,4 +147,21 @@ public class AwsUserAgentIntegration implements PythonIntegration {
         }
     }
 
+    // The sync client's plugins take the sync config, so it gets its own plugin module.
+    private static void writeSyncPlugin(
+            GenerationContext context,
+            Symbol plugin,
+            Symbol asyncConfig,
+            SymbolReference userAgentInterceptor,
+            SymbolReference versionSymbol,
+            String serviceId
+    ) {
+        var mapper = SyncVariant.mapper(context.settings());
+        var syncPlugin = mapper.apply(plugin);
+        context.writerDelegator()
+                .useFileWriter(syncPlugin.getDefinitionFile(), syncPlugin.getNamespace(), writer -> {
+                    writer.setSymbolMapper(mapper);
+                    writer.write(USER_AGENT_PLUGIN, asyncConfig, userAgentInterceptor, versionSymbol, serviceId);
+                });
+    }
 }

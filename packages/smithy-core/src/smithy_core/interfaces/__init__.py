@@ -3,7 +3,15 @@
 from collections.abc import Callable, ItemsView, Iterator, KeysView, ValuesView
 from dataclasses import dataclass
 from inspect import iscoroutinefunction
-from typing import TYPE_CHECKING, Any, Protocol, TypeGuard, overload, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    Protocol,
+    TypeGuard,
+    overload,
+    runtime_checkable,
+)
 
 __all__ = [
     "URI",
@@ -22,7 +30,13 @@ if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
     from .._schema_compact import StaticSchema
-    from ..schemas import Schema
+    from ..deserializers import DeserializeableShape
+    from ..documents import TypeRegistry
+    from ..endpoints import EndpointResolverParams
+    from ..response import ResponseMetadata
+    from ..schemas import APIOperation, Schema
+    from ..serializers import SerializeableShape
+    from ..shapes import ShapeID
 
 
 class URI(Protocol):
@@ -282,37 +296,100 @@ A protocol class satisfies this, since calling the class constructs an instance.
 
 
 class EndpointResolver(Protocol):
-    """Resolves an operation's endpoint given parameters.
+    """Resolves an operation's endpoint based given parameters."""
 
-    Placeholder for the synchronous endpoint resolver; populated alongside the sync
-    client implementation.
-    """
+    def resolve_endpoint(self, params: "EndpointResolverParams[Any]") -> Endpoint:
+        """Resolve an endpoint for the given operation.
 
-    # TODO(sync-api): implement alongside the sync client
-
-
-class ClientTransport(Protocol):
-    """Protocol-agnostic representation of a synchronous client transport.
-
-    Placeholder; populated alongside the sync client implementation.
-    """
-
-    # TODO(sync-api): implement alongside the sync client
+        :param params: The parameters available to resolve the endpoint.
+        """
+        ...
 
 
-class DuplexClientTransport(Protocol):
-    """A synchronous client transport that supports duplex event streaming.
+class ClientTransport[I, O](Protocol):
+    """Protocol-agnostic representation of a synchronous client transport (e.g. an
+    HTTP client)."""
 
-    Placeholder; populated alongside the sync client implementation.
-    """
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
 
-    # TODO(sync-api): implement alongside the sync client
+    def send(self, request: I) -> O:
+        """Send a request over the transport and receive the response."""
+        ...
 
 
-class ClientProtocol(Protocol):
-    """A protocol used by a synchronous client to communicate with a server.
+class DuplexClientTransport[I, O](ClientTransport[I, O], Protocol):
+    """A synchronous client transport that supports duplex event streaming."""
 
-    Placeholder; populated alongside the sync client implementation.
-    """
+    SUPPORTS_DUPLEX_STREAMING: Literal[True]
 
-    # TODO(sync-api): implement alongside the sync client
+
+class ClientProtocol[I, O](Protocol):
+    """A protocol used by a synchronous client to communicate with a server."""
+
+    @property
+    def id(self) -> "ShapeID":
+        """The ID of the protocol."""
+        ...
+
+    def serialize_request[
+        OperationInput: "SerializeableShape",
+        OperationOutput: "DeserializeableShape",
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        input: OperationInput,
+        endpoint: URI,
+        context: TypedProperties,
+    ) -> I:
+        """Serialize an operation input into a transport request.
+
+        :param operation: The operation whose request is being serialized.
+        :param input: The input shape to be serialized.
+        :param endpoint: The base endpoint to serialize.
+        :param context: A context bag for the request.
+        """
+        ...
+
+    def set_service_endpoint(self, *, request: I, endpoint: Endpoint) -> I:
+        """Update the endpoint of a transport request.
+
+        :param request: The request whose endpoint should be updated.
+        :param endpoint: The endpoint to set on the request.
+        """
+        ...
+
+    def deserialize_response[
+        OperationInput: "SerializeableShape",
+        OperationOutput: "DeserializeableShape",
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        request: I,
+        response: O,
+        error_registry: "TypeRegistry",
+        context: TypedProperties,
+    ) -> OperationOutput:
+        """Deserializes the output from the tranport response or throws an exception.
+
+        :param operation: The operation whose response is being deserialized.
+        :param request: The transport request that was sent for this response.
+        :param response: The response to deserialize.
+        :param error_registry: A TypeRegistry used to deserialize errors.
+        :param context: A context bag for the request.
+        """
+        ...
+
+    def extract_response_metadata(
+        self, *, response: O, context: TypedProperties
+    ) -> "ResponseMetadata":
+        """Extract metadata about a transport response.
+
+        Implementations MUST NOT raise: metadata is diagnostic, so any value that
+        cannot be determined is left unset instead.
+
+        :param response: The response to extract metadata from.
+        :param context: Per-call storage shared with this protocol's other methods.
+        """
+        ...

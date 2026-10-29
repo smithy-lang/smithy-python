@@ -1,9 +1,10 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from ...config.exceptions import ConfigParseError
+from smithy_core.aio._program import run_program_async
+
 from ...config.file_parser import (
     RawParsedSections,
-    _parse_content,  # type: ignore[reportPrivateUsage]
+    _parse_config_file,  # type: ignore[reportPrivateUsage]
 )
 from .filesystem import AsyncFileSystem
 
@@ -20,10 +21,4 @@ async def parse_config_file_async(
     :returns: Raw sections dict {section_name: {key: value}}.
     :raises ConfigParseError: If the file has invalid syntax.
     """
-    content = await filesystem.read_file(file_path)
-    if content is None:
-        return {}
-    try:
-        return _parse_content(content)
-    except ConfigParseError as e:
-        raise ConfigParseError(f"Unable to parse config file '{file_path}': {e}") from e
+    return await run_program_async(_parse_config_file(file_path, filesystem))

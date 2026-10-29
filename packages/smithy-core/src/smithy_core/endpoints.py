@@ -18,6 +18,7 @@ __all__ = [
     "Endpoint",
     "EndpointResolverParams",
     "StaticEndpointConfig",
+    "StaticEndpointResolver",
     "resolve_static_uri",
 ]
 
@@ -97,3 +98,15 @@ def resolve_static_uri(
         query=parsed.query,
         port=parsed.port,
     )
+
+
+class StaticEndpointResolver:
+    """A basic endpoint resolver that forwards a static URI."""
+
+    def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> _Endpoint:
+        static_uri = resolve_static_uri(params)
+        if static_uri is None:
+            raise EndpointResolutionError(
+                "Unable to resolve endpoint: endpoint_uri is required"
+            )
+        return Endpoint(uri=static_uri)

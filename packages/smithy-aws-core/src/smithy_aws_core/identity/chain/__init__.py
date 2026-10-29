@@ -13,10 +13,12 @@ from .ordering import (
     Standard,
     StandardProvider,
 )
+from .resolver import IdentityChain
 
 __all__ = (
     "After",
     "Before",
+    "IdentityChain",
     "IdentityChainConfigurationError",
     "IdentityChainError",
     "IdentityResolverFailure",

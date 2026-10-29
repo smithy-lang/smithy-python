@@ -4,13 +4,14 @@ import asyncio
 import sys
 import threading
 import time
-from collections.abc import Callable, Coroutine, Iterator
+from collections.abc import Callable, Coroutine, Generator, Iterator
 from copy import deepcopy
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from smithy_core.aio._program import run_program_async
 from smithy_core.aio.client import AsyncRequestPipeline
 from smithy_core.aio.retries import (
     AsyncAdaptiveRetryStrategy,
@@ -27,6 +28,15 @@ from smithy_core.retries import (
     StandardRetryQuota,
 )
 from smithy_core.retries import ExponentialBackoffJitterType as EBJT
+
+
+def _program_of(mock: Any) -> Any:
+    """Stand in for a pipeline program step with an awaitable mock."""
+
+    def program(*args: Any, **kwargs: Any) -> Generator[Any, Any, Any]:
+        return (yield lambda: mock(*args, **kwargs))
+
+    return program
 
 
 @pytest.mark.parametrize(
@@ -494,9 +504,7 @@ class TestRateLimiter:
             (False, 3.4, 4.333056, 3.452226),
         ]
         now = 0.0
-        with patch(
-            "smithy_core.aio.retries.time", SimpleNamespace(monotonic=lambda: now)
-        ):
+        with patch("smithy_core.retries.time", SimpleNamespace(monotonic=lambda: now)):
             token_bucket = AsyncTokenBucket()
             tracker = AsyncRequestRateTracker()
             limiter = AsyncClientRateLimiter(
@@ -751,9 +759,11 @@ class TestRequestPipelineRateLimiting:
             return_value=SimpleNamespace(transport_response=MagicMock(), response="ok")
         )
 
-        with patch.object(pipeline, "_handle_attempt", handle_attempt):
-            await pipeline._retry(  # type: ignore[reportPrivateUsage]
-                self._non_retryable_call(strategy), MagicMock(), None
+        with patch.object(pipeline, "_handle_attempt", _program_of(handle_attempt)):
+            await run_program_async(
+                pipeline._retry(  # type: ignore[reportPrivateUsage]
+                    self._non_retryable_call(strategy), MagicMock(), None
+                )
             )
 
         handle_attempt.assert_awaited_once()
@@ -773,9 +783,11 @@ class TestRequestPipelineRateLimiting:
             return_value=SimpleNamespace(transport_response=MagicMock(), response=error)
         )
 
-        with patch.object(pipeline, "_handle_attempt", handle_attempt):
-            output_context = await pipeline._retry(  # type: ignore[reportPrivateUsage]
-                self._non_retryable_call(strategy), MagicMock(), None
+        with patch.object(pipeline, "_handle_attempt", _program_of(handle_attempt)):
+            output_context = await run_program_async(
+                pipeline._retry(  # type: ignore[reportPrivateUsage]
+                    self._non_retryable_call(strategy), MagicMock(), None
+                )
             )
 
         # Sent once and returned as-is, even though the error is retry-safe
@@ -796,9 +808,11 @@ class TestRequestPipelineRateLimiting:
             return_value=SimpleNamespace(transport_response=None, response=error)
         )
 
-        with patch.object(pipeline, "_handle_attempt", handle_attempt):
-            output_context = await pipeline._retry(  # type: ignore[reportPrivateUsage]
-                self._non_retryable_call(strategy), MagicMock(), None
+        with patch.object(pipeline, "_handle_attempt", _program_of(handle_attempt)):
+            output_context = await run_program_async(
+                pipeline._retry(  # type: ignore[reportPrivateUsage]
+                    self._non_retryable_call(strategy), MagicMock(), None
+                )
             )
 
         assert output_context.response is error

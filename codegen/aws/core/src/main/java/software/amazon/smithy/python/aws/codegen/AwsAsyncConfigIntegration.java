@@ -7,6 +7,7 @@ package software.amazon.smithy.python.aws.codegen;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
@@ -15,6 +16,7 @@ import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.SyncVariant;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.sections.AsyncConfigSection;
@@ -88,6 +90,11 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                 return;
             }
             var asyncConfigSymbol = maybeAsyncConfigSymbol.get();
+            var sync = section.sync();
+            UnaryOperator<String> code = sync ? SyncVariant::toSyncCode : UnaryOperator.identity();
+            var configName = sync
+                    ? SyncVariant.toSyncName(asyncConfigSymbol.getName())
+                    : asyncConfigSymbol.getName();
 
             final String serviceId = service.getTrait(ServiceTrait.class)
                     .map(ServiceTrait::getSdkId)
@@ -165,7 +172,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                     .namespace("smithy_core.interfaces.auth", ".")
                     .addDependency(SmithyPythonDependency.SMITHY_CORE)
                     .build();
-            var overridesTypeName = "_" + asyncConfigSymbol.getName() + "Overrides";
+            var overridesTypeName = "_" + configName + "Overrides";
 
             writer.addStdlibImport("typing", "ClassVar");
             writer.addStdlibImport("typing", "Any");
@@ -198,8 +205,8 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // credential fields, and a generated __repr__ on this subclass would shadow it
             // and leak secrets.
             writer.write("@dataclass(kw_only=True, repr=False, init=False)");
-            writer.openBlock("class $L($T):", asyncConfigSymbol.getName(), asyncAwsConfigSymbol);
-            writer.writeDocs(serviceId + " configuration (async-resolved).", context);
+            writer.openBlock("class $L($T):", configName, asyncAwsConfigSymbol);
+            writer.writeDocs(serviceId + (sync ? " configuration." : " configuration (async-resolved)."), context);
             writer.write("");
 
             // Write service-specific field declarations
@@ -209,9 +216,12 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.write("");
 
             writer.write("protocol: $T | None = None", protocolSymbol);
-            writer.writeDocs("Pass a protocol class reference from smithy_aws_core.aio.protocols "
+            var protocolDocs = "Pass a protocol class reference from smithy_aws_core.aio.protocols "
                     + "to select the protocol, e.g. protocol=AsyncAwsJson10ClientProtocol. For custom "
-                    + "protocols a protocol instance may also be passed.", context);
+                    + "protocols a protocol instance may also be passed.";
+            writer.writeDocs(sync
+                    ? SyncVariant.toSyncName(protocolDocs.replace(".aio.", "."))
+                    : protocolDocs, context);
             writer.write("");
 
             writer.write("interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])");
@@ -313,7 +323,9 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // transport FieldSpec
             writer.write("\"transport\": $T(", fieldSpecSymbol);
             writer.indent();
-            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
+            if (!sync) {
+                writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
+            }
             writer.write("default_factory=lambda: $T(),", RuntimeTypes.AIOHTTP_CLIENT);
             writer.dedent();
             writer.write("),");
@@ -335,7 +347,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                 writer.write("");
             }
             writer.write("@classmethod");
-            writer.write("async def resolve(  # pyright: ignore[reportIncompatibleMethodOverride]");
+            writer.write(code.apply("async def resolve(  # pyright: ignore[reportIncompatibleMethodOverride]"));
             writer.indent();
             writer.write("cls,");
             writer.write("*,");
@@ -350,7 +362,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.writeDocs(
                     "Resolve config from environment, config files, defaults, and explicit overrides.",
                     context);
-            writer.write("return await cls._resolve(");
+            writer.write(code.apply("return await cls._resolve("));
             writer.indent();
             writer.write("profile=profile,");
             writer.write("fs=fs,");

@@ -198,6 +198,7 @@ class HTTPBindingSerializer(InterceptingSerializer):
         endpoint_trait: EndpointTrait | None = None,
         omit_empty_payload: bool = True,
         operation_metadata: HTTPOperationSchemaMetadata | None = None,
+        async_body: bool = True,
     ) -> None:
         """Initialize an HTTPBindingSerializer.
 
@@ -207,7 +208,9 @@ class HTTPBindingSerializer(InterceptingSerializer):
         :param endpoint_trait: The optional endpoint trait of the operation.
         :param omit_empty_payload: Whether an empty document payload should be omitted.
         :param operation_metadata: Optional cached operation binding metadata.
+        :param async_body: Whether to wrap the request body for async reads.
         """
+        self._async_body = async_body
         self._operation_metadata = operation_metadata or (
             HTTPOperationSchemaMetadata.from_traits(http_trait, endpoint_trait)
         )
@@ -218,7 +221,7 @@ class HTTPBindingSerializer(InterceptingSerializer):
         self._body_context: AbstractContextManager[ShapeSerializer] | None = None
         self._sync_payload: BytesIO | None = None
         self._raw_payload_serializer: RawPayloadSerializer | None = None
-        self._payload: AsyncBytesReader | AsyncBytesProvider | None = None
+        self._payload: AsyncStreamingBlob | None = None
         self._content_type: str | None = payload_codec.media_type
         self._content_length_required = False
         self._writes_document_body = False
@@ -315,7 +318,11 @@ class HTTPBindingSerializer(InterceptingSerializer):
             ):
                 content_length = self._sync_payload.tell()
             self._sync_payload.seek(0)
-            payload = AsyncBytesReader(self._sync_payload)
+            payload = (
+                AsyncBytesReader(self._sync_payload)
+                if self._async_body
+                else self._sync_payload
+            )
 
         headers = self.header_serializer.headers
         if self._content_type is not None and (
@@ -329,7 +336,12 @@ class HTTPBindingSerializer(InterceptingSerializer):
             fields, content_length, raw_payload, required=self._content_length_required
         )
         if self._raw_payload_serializer is not None:
-            payload = AsyncBytesReader(raw_payload or b"")
+            if self._async_body:
+                payload = AsyncBytesReader(raw_payload or b"")
+            elif isinstance(raw_payload, bytes | bytearray) or raw_payload is None:
+                payload = BytesIO(raw_payload or b"")
+            else:
+                payload = raw_payload
 
         assert payload is not None  # noqa: S101
 

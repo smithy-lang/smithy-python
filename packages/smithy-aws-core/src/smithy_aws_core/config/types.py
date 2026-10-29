@@ -58,8 +58,11 @@ class FieldSpec:
     default_factory: Callable[[], Any] | None = None
     """Factory for mutable defaults (lists, dicts) that need a fresh instance per config."""
 
-    resolver: Callable[..., Awaitable[Resolved[Any]]] | None = None
-    """Async function that resolves the field from env/profile/etc."""
+    resolver: Callable[..., Resolved[Any] | Awaitable[Resolved[Any]]] | None = None
+    """Function that resolves the field from env/profile/etc.
+
+    Sync configs take a sync function; async configs may take either.
+    """
 
     validator: Callable[[Any], None] | None = None
     """Function that validates the resolved value. Raises on invalid input."""

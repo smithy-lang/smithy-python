@@ -3,13 +3,15 @@
 
 from typing import TYPE_CHECKING, Any
 
-from .context import shared_config_files_exist
+from .aws_config import AwsConfig
+from .context import SharedConfigContext, load_config, shared_config_files_exist
 from .exceptions import (
     ConfigError,
     ConfigParseError,
     ConfigValidationError,
     ProfileNotFoundError,
 )
+from .filesystem import DefaultFileSystem, FileSystem
 from .merged_config import MergedConfig
 from .types import ConfigSource
 
@@ -23,13 +25,18 @@ __all__ = [
     "AsyncDefaultFileSystem",
     "AsyncFileSystem",
     "AsyncSharedConfigContext",
+    "AwsConfig",
     "AwsConfigOverrides",
     "ConfigError",
     "ConfigParseError",
     "ConfigSource",
     "ConfigValidationError",
+    "DefaultFileSystem",
+    "FileSystem",
     "MergedConfig",
     "ProfileNotFoundError",
+    "SharedConfigContext",
+    "load_config",
     "load_config_async",
     "shared_config_files_exist",
 ]

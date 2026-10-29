@@ -1,25 +1,33 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import math
 import random
 import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Literal
+from typing import Any, ClassVar, Literal, Self
 
 from .exceptions import RetryError
 from .interfaces import retries as retries_interface
 
 __all__ = [
+    "AdaptiveRetryStrategy",
+    "ClientRateLimiter",
     "CubicCalculator",
     "ExponentialBackoffJitterType",
     "ExponentialRetryBackoffStrategy",
+    "RequestRateTracker",
     "RetryStrategyOptions",
+    "RetryStrategyResolver",
     "RetryStrategyType",
+    "SimpleRetryStrategy",
     "SimpleRetryToken",
     "StandardRetryQuota",
+    "StandardRetryStrategy",
     "StandardRetryToken",
+    "TokenBucket",
 ]
 
 RetryStrategyType = Literal["simple", "standard", "adaptive"]
@@ -367,3 +375,675 @@ class CubicCalculator:
     @property
     def last_throttle_time(self) -> float:
         return self._last_throttle_time
+
+
+class _RetryStrategyResolverBase[S]:
+    """Caches retry strategies by configuration, one cache per client."""
+
+    _STRATEGY_TYPES: ClassVar[dict[RetryStrategyType, Any]]
+
+    def __init__(self) -> None:
+        self._strategies: dict[tuple[RetryStrategyType, int | None], S] = {}
+
+    def _resolve(
+        self,
+        *,
+        retry_strategy: object,
+        retry_mode: RetryStrategyType | None,
+        max_attempts: int | None,
+        strategy_protocol: type,
+    ) -> S:
+        if isinstance(retry_strategy, strategy_protocol):
+            return retry_strategy  # type: ignore[return-value]
+        elif retry_strategy is None:
+            # Fall back to the separately-resolved config values.
+            retry_strategy = RetryStrategyOptions(
+                retry_mode=retry_mode if retry_mode is not None else "standard",
+                max_attempts=max_attempts,
+            )
+        elif not isinstance(retry_strategy, RetryStrategyOptions):
+            raise TypeError(
+                f"retry_strategy must be {strategy_protocol.__name__}, "
+                f"RetryStrategyOptions, or None, got {type(retry_strategy).__name__}"
+            )
+        return self._create_retry_strategy(
+            retry_strategy.retry_mode, retry_strategy.max_attempts
+        )
+
+    def _create_retry_strategy(
+        self, retry_mode: RetryStrategyType, max_attempts: int | None
+    ) -> S:
+        key = (retry_mode, max_attempts)
+        if key not in self._strategies:
+            self._strategies[key] = self._new_retry_strategy(retry_mode, max_attempts)
+        return self._strategies[key]
+
+    def _new_retry_strategy(
+        self, retry_mode: RetryStrategyType, max_attempts: int | None
+    ) -> S:
+        kwargs: dict[str, Any] = {}
+        if max_attempts is not None:
+            kwargs["max_attempts"] = max_attempts
+        strategy_type = self._STRATEGY_TYPES.get(retry_mode)
+        if strategy_type is None:
+            raise ValueError(f"Unknown retry mode: {retry_mode}")
+        return strategy_type(**kwargs)
+
+
+class _SimpleRetryStrategyBase:
+    """Retry strategy that simply invokes the given backoff strategy."""
+
+    def __init__(
+        self,
+        *,
+        backoff_strategy: retries_interface.RetryBackoffStrategy | None = None,
+        max_attempts: int = 5,
+    ):
+        """Retry strategy that simply invokes the given backoff strategy.
+
+        :param backoff_strategy: The backoff strategy used by returned tokens to compute
+            the retry delay. Defaults to :py:class:`ExponentialRetryBackoffStrategy`.
+
+        :param max_attempts: Upper limit on total number of attempts made, including
+            initial attempt and retries.
+        """
+        self.backoff_strategy = backoff_strategy or ExponentialRetryBackoffStrategy()
+        self.max_attempts = max_attempts
+
+    def _initial_token(self) -> SimpleRetryToken:
+        retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
+        return SimpleRetryToken(retry_count=0, retry_delay=retry_delay)
+
+    def _refresh_token(
+        self, token_to_renew: retries_interface.RetryToken, error: Exception
+    ) -> SimpleRetryToken:
+        if isinstance(error, retries_interface.ErrorRetryInfo) and error.is_retry_safe:
+            retry_count = token_to_renew.retry_count + 1
+            if retry_count >= self.max_attempts:
+                raise RetryError(
+                    f"Reached maximum number of allowed attempts: {self.max_attempts}"
+                ) from error
+            retry_delay = self.backoff_strategy.compute_next_backoff_delay(retry_count)
+            return SimpleRetryToken(retry_count=retry_count, retry_delay=retry_delay)
+        else:
+            raise RetryError(f"Error is not retryable: {error}") from error
+
+    def __deepcopy__(self, memo: Any) -> Self:
+        return self
+
+
+class _StandardRetryStrategyBase:
+    """Standard retry strategy using truncated binary exponential backoff with full
+    jitter."""
+
+    _RETRY_AFTER_MAX_ADDITIONAL: float = 5
+    """Upper bound (seconds) for additional delay beyond the computed backoff."""
+
+    _NON_THROTTLING_BACKOFF_SCALE: float = 0.05
+    """Base backoff scale (seconds) for non-throttling errors (50ms)."""
+
+    _THROTTLING_BACKOFF_SCALE: float = 1
+    """Base backoff scale (seconds) for throttling errors (1000ms)."""
+
+    _MAX_BACKOFF: float = 20
+    """Upper bound (seconds) for the computed backoff, applied before jitter."""
+
+    def __init__(
+        self,
+        *,
+        backoff_strategy: retries_interface.RetryBackoffStrategy | None = None,
+        throttling_backoff_strategy: retries_interface.RetryBackoffStrategy
+        | None = None,
+        max_attempts: int = 3,
+        retry_quota: StandardRetryQuota | None = None,
+    ):
+        """Standard retry strategy using truncated binary exponential backoff
+        with full jitter.
+
+        :param backoff_strategy: The backoff strategy used to compute the retry delay
+            for non-throttling errors. Defaults to a 50ms-base
+            :py:class:`ExponentialRetryBackoffStrategy`.
+
+        :param throttling_backoff_strategy: The backoff strategy used to compute the
+            retry delay for throttling errors. Defaults to a 1000ms-base
+            :py:class:`ExponentialRetryBackoffStrategy`.
+
+        :param max_attempts: Upper limit on total number of attempts made, including
+            initial attempt and retries.
+
+        :param retry_quota: The retry quota to use for managing retry capacity. Defaults
+            to a new :py:class:`StandardRetryQuota` instance.
+        """
+        if max_attempts < 0:
+            raise ValueError(
+                f"max_attempts must be a non-negative integer, got {max_attempts}"
+            )
+
+        self.backoff_strategy = backoff_strategy or ExponentialRetryBackoffStrategy(
+            backoff_scale_value=self._NON_THROTTLING_BACKOFF_SCALE,
+            max_backoff=self._MAX_BACKOFF,
+            jitter_type=ExponentialBackoffJitterType.FULL,
+        )
+        self.throttling_backoff_strategy = (
+            throttling_backoff_strategy
+            or ExponentialRetryBackoffStrategy(
+                backoff_scale_value=self._THROTTLING_BACKOFF_SCALE,
+                max_backoff=self._MAX_BACKOFF,
+                jitter_type=ExponentialBackoffJitterType.FULL,
+            )
+        )
+        self.max_attempts = max_attempts
+        self._retry_quota = retry_quota or StandardRetryQuota()
+
+    def _initial_token(self) -> StandardRetryToken:
+        retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
+        return StandardRetryToken(retry_count=0, retry_delay=retry_delay)
+
+    def _refresh_token(
+        self, token_to_renew: retries_interface.RetryToken, error: Exception
+    ) -> StandardRetryToken:
+        if not isinstance(token_to_renew, StandardRetryToken):
+            raise TypeError(
+                f"{type(self).__name__} requires StandardRetryToken, got {type(token_to_renew).__name__}"
+            )
+
+        if isinstance(error, retries_interface.ErrorRetryInfo) and error.is_retry_safe:
+            retry_count = token_to_renew.retry_count + 1
+            if retry_count >= self.max_attempts:
+                raise RetryError(
+                    f"Reached maximum number of allowed attempts: {self.max_attempts}"
+                ) from error
+
+            # Throttling errors use a larger base backoff than other errors.
+            backoff_strategy = (
+                self.throttling_backoff_strategy
+                if error.is_throttling_error
+                else self.backoff_strategy
+            )
+            t_i = backoff_strategy.compute_next_backoff_delay(retry_count)
+
+            if error.retry_after is not None:
+                # Bound a server-directed backoff to [t_i, t_i + 5] seconds.
+                retry_delay = max(
+                    t_i, min(error.retry_after, self._RETRY_AFTER_MAX_ADDITIONAL + t_i)
+                )
+            else:
+                retry_delay = t_i
+
+            try:
+                quota_acquired = self._retry_quota.acquire(error=error)
+            except RetryError as quota_error:
+                # Surface the computed delay so callers can back off before giving
+                # up; long-polling operations sleep for it before returning.
+                raise RetryError(str(quota_error), retry_after=retry_delay) from error
+
+            return StandardRetryToken(
+                retry_count=retry_count,
+                retry_delay=retry_delay,
+                quota_acquired=quota_acquired,
+            )
+        else:
+            raise RetryError(f"Error is not retryable: {error}") from error
+
+    def _release_quota(self, token: retries_interface.RetryToken) -> None:
+        if not isinstance(token, StandardRetryToken):
+            raise TypeError(
+                f"{type(self).__name__} requires StandardRetryToken, got {type(token).__name__}"
+            )
+        self._retry_quota.release(release_amount=token.quota_acquired)
+
+    def __deepcopy__(self, memo: Any) -> Self:
+        return self
+
+
+class _TokenBucketBase:
+    """Token bucket state for rate limiting with configurable fill rate.
+
+    A threading.Lock guards the token count and rate. The lock only covers short
+    arithmetic and is never held while waiting.
+    """
+
+    MIN_FILL_RATE = 0.5  # Minimum allowed fill rate (0.5 tokens/second)
+    MIN_CAPACITY = 1.0  # Minimum allowed bucket capacity (1.0 tokens)
+    DEFAULT_TIMEOUT = 30.0  # Default timeout for token acquisition (30.0 seconds)
+
+    def __init__(
+        self,
+        *,
+        curr_capacity: float = 0,
+        fill_rate: float = MIN_FILL_RATE,
+        timeout: float = DEFAULT_TIMEOUT,
+    ):
+        """Initialize a new token bucket.
+
+        :param curr_capacity: Initial number of tokens in the bucket. The bucket can
+            hold at least MIN_CAPACITY tokens, but starts empty by default.
+        :param fill_rate: Rate at which tokens are added to the bucket (tokens/second).
+        :param timeout: Maximum time to wait for token acquisition before
+        raising TimeoutError.
+        """
+        self._curr_capacity: float = curr_capacity
+        self._max_capacity: float = max(curr_capacity, self.MIN_CAPACITY)
+        self._fill_rate: float = max(fill_rate, self.MIN_FILL_RATE)
+        self._timeout = timeout
+        self._last_timestamp: float = time.monotonic()
+        self._lock = threading.Lock()
+
+    def _monotonic(self) -> float:
+        return time.monotonic()
+
+    def _try_acquire(self, amount: float, start_time: float) -> float | None:
+        """Take ``amount`` tokens, or return how long to wait before trying again.
+
+        :raises TimeoutError: Acquisition took longer than the configured timeout.
+        """
+        with self._lock:
+            self._refill()
+            if self._curr_capacity >= amount:
+                self._curr_capacity -= amount
+                return None
+            wait_time = (amount - self._curr_capacity) / self._fill_rate
+
+        elapsed = time.monotonic() - start_time
+        if elapsed >= self._timeout:
+            # Fails the request; this is not counted as a retry attempt
+            raise TimeoutError(
+                f"Failed to acquire {amount} tokens within {self._timeout}s"
+            )
+        # Never wait past the timeout
+        return min(wait_time, self._timeout - elapsed)
+
+    def _refill(self) -> None:
+        curr_time = time.monotonic()
+        elapsed = curr_time - self._last_timestamp
+        refill_amount = elapsed * self._fill_rate
+        self._curr_capacity = min(
+            self._max_capacity, self._curr_capacity + refill_amount
+        )
+        self._last_timestamp = curr_time
+
+    def _set_rate(self, rate: float) -> None:
+        with self._lock:
+            self._refill()
+            self._fill_rate = max(rate, self.MIN_FILL_RATE)
+            self._max_capacity = max(rate, self.MIN_CAPACITY)
+            self._curr_capacity = min(self._curr_capacity, self._max_capacity)
+
+    @property
+    def current_capacity(self) -> float:
+        """Get the current number of tokens in the bucket.
+
+        :return: The current token count as of the last refill operation.
+        """
+        return self._curr_capacity
+
+    @property
+    def max_capacity(self) -> float:
+        """Get the maximum capacity of the bucket.
+
+        :return: The maximum number of tokens the bucket can hold.
+        """
+        return self._max_capacity
+
+    @property
+    def fill_rate(self) -> float:
+        """Get the current fill rate of the bucket.
+
+        :return: The rate at which tokens are added to the bucket (tokens/second).
+        """
+        return self._fill_rate
+
+
+class _RequestRateTrackerBase:
+    """Tracks the client's request sending rate.
+
+    Uses time-bucketed sampling with exponential smoothing, tracking requests in
+    half-second intervals by default.
+    """
+
+    _DEFAULT_SMOOTHING = 0.8
+    _TIME_BUCKET_RANGE = 0.5
+
+    def __init__(
+        self,
+        smoothing: float = _DEFAULT_SMOOTHING,
+        time_bucket_range: float = _TIME_BUCKET_RANGE,
+    ):
+        """Initialize a new request rate tracker.
+
+        :param smoothing: Exponential smoothing factor. This constant
+        represents how much weight is given to recent measurements.
+        Higher values place more emphasis on the most recent observations.
+        :param time_bucket_range: Time bucket duration in seconds. Rate
+        calculations are updated when transitioning between buckets.
+        """
+        self._smoothing = smoothing
+        self._time_bucket_scale = 1 / time_bucket_range
+        self._request_count = 0
+        self._last_calculated_time_bucket = math.floor(time.monotonic())
+        self._measured_rate = 0
+        # The update never waits, so it only needs protecting across threads
+        self._lock = threading.Lock()
+
+    def _measure(self) -> float:
+        with self._lock:
+            curr_time = time.monotonic()
+            current_time_bucket = (
+                math.floor(curr_time * self._time_bucket_scale)
+                / self._time_bucket_scale
+            )
+            self._request_count += 1
+            if current_time_bucket > self._last_calculated_time_bucket:
+                current_rate = self._request_count / (
+                    current_time_bucket - self._last_calculated_time_bucket
+                )
+                self._measured_rate = (current_rate * self._smoothing) + (
+                    self._measured_rate * (1 - self._smoothing)
+                )
+                self._request_count = 0
+                self._last_calculated_time_bucket = current_time_bucket
+            return self._measured_rate
+
+    @property
+    def request_count(self) -> int:
+        """Get current request count. For testing only."""
+        return self._request_count
+
+    @property
+    def measured_client_rate(self) -> float:
+        """Get the client's sending rate. For testing only."""
+        return self._measured_rate
+
+
+class _ClientRateLimiterBase[B: _TokenBucketBase, T: _RequestRateTrackerBase]:
+    """Adaptive rate limiting using a token bucket and the CUBIC algorithm."""
+
+    _REQUEST_COST = 1.0
+
+    def __init__(
+        self,
+        token_bucket: B,
+        cubic_calculator: CubicCalculator,
+        rate_tracker: T,
+        rate_limiter_enabled: bool,
+    ):
+        """Initialize a new rate limiter.
+
+        :param token_bucket: Token bucket for controlling request sending rates.
+        :param cubic_calculator: CUBIC algorithm calculator for rate adjustments.
+        :param rate_tracker: Tracker for measuring actual client request rates.
+        :param rate_limiter_enabled: Whether rate limiting is enabled.
+        """
+
+        self._rate_tracker = rate_tracker
+        self._token_bucket = token_bucket
+        self._cubic_calculator = cubic_calculator
+        self._rate_limiter_enabled = rate_limiter_enabled
+        self._lock = threading.Lock()
+
+    def _update_rate(self, measured_rate: float, throttling_error: bool) -> None:
+        """Reduce the rate by 30% when throttled, or scale it up with CUBIC otherwise,
+        capped at 2x the measured client rate."""
+        with self._lock:
+            timestamp = time.monotonic()
+            if throttling_error:
+                if not self._rate_limiter_enabled:
+                    rate_to_use = measured_rate
+                else:
+                    fill_rate = self._token_bucket.fill_rate
+                    rate_to_use = min(measured_rate, fill_rate)
+
+                cubic_calculated_rate = (
+                    self._cubic_calculator.calculate_throttled_request_rate(
+                        rate_to_use, timestamp
+                    )
+                )
+                self._rate_limiter_enabled = True
+            else:
+                cubic_calculated_rate = (
+                    self._cubic_calculator.calculate_scaled_request_rate(timestamp)
+                )
+
+            new_rate = min(cubic_calculated_rate, 2 * measured_rate)
+            # Set under the lock so rates reach the bucket in the order they're
+            # calculated. Waking waiters happens after the lock.
+            self._token_bucket._set_rate(new_rate)  # pyright: ignore[reportPrivateUsage]
+
+    @property
+    def rate_limit_enabled(self) -> bool:
+        return self._rate_limiter_enabled
+
+
+class _AdaptiveRetryStrategyBase(_StandardRetryStrategyBase):
+    """Standard retry strategy with client-side rate limiting."""
+
+    STARTING_MAX_RATE = 0
+
+    def is_throttling_error(self, error: Exception) -> bool:
+        """Check if error is a throttling error using existing ErrorRetryInfo."""
+        if isinstance(error, retries_interface.ErrorRetryInfo):
+            return error.is_throttling_error
+        return False
+
+    def _new_cubic_calculator(self) -> CubicCalculator:
+        return CubicCalculator(
+            starting_max_rate=self.STARTING_MAX_RATE, start_time=time.monotonic()
+        )
+
+
+class SimpleRetryStrategy(_SimpleRetryStrategyBase):
+    """Retry strategy that simply invokes the given backoff strategy."""
+
+    def acquire_initial_retry_token(
+        self, *, token_scope: str | None = None
+    ) -> SimpleRetryToken:
+        """Create a base retry token for the start of a request.
+
+        :param token_scope: This argument is ignored by this retry strategy.
+        """
+        return self._initial_token()
+
+    def refresh_retry_token_for_retry(
+        self, *, token_to_renew: retries_interface.RetryToken, error: Exception
+    ) -> SimpleRetryToken:
+        """Replace an existing retry token from a failed attempt with a new token.
+
+        :param token_to_renew: The token used for the previous failed attempt.
+        :param error: The error that triggered the need for a retry.
+        :raises RetryError: If no further retry attempts are allowed.
+        """
+        return self._refresh_token(token_to_renew, error)
+
+    def record_success(self, *, token: retries_interface.RetryToken) -> None:
+        """Not used by this retry strategy."""
+
+
+class StandardRetryStrategy(_StandardRetryStrategyBase):
+    """Standard retry strategy using truncated binary exponential backoff with full
+    jitter."""
+
+    def acquire_initial_retry_token(
+        self, *, token_scope: str | None = None
+    ) -> StandardRetryToken:
+        """Create a base retry token for the start of a request.
+
+        :param token_scope: This argument is ignored by this retry strategy.
+        """
+        return self._initial_token()
+
+    def refresh_retry_token_for_retry(
+        self, *, token_to_renew: retries_interface.RetryToken, error: Exception
+    ) -> StandardRetryToken:
+        """Replace an existing retry token from a failed attempt with a new token.
+
+        :param token_to_renew: The token used for the previous failed attempt.
+        :param error: The error that triggered the need for a retry.
+        :raises RetryError: If no further retry attempts are allowed. When the retry
+            quota is exhausted, the raised error carries ``retry_after``.
+        """
+        return self._refresh_token(token_to_renew, error)
+
+    def record_success(self, *, token: retries_interface.RetryToken) -> None:
+        """Release retry quota back based on the amount consumed by the last retry.
+
+        :param token: The token used for the previous successful attempt.
+        """
+        self._release_quota(token)
+
+
+class TokenBucket(_TokenBucketBase):
+    """Token bucket for rate limiting with configurable fill rate.
+
+    When tokens aren't available, acquiring blocks the calling thread until enough
+    tokens are refilled or the timeout is reached.
+    """
+
+    def __init__(
+        self,
+        *,
+        curr_capacity: float = 0,
+        fill_rate: float = _TokenBucketBase.MIN_FILL_RATE,
+        timeout: float = _TokenBucketBase.DEFAULT_TIMEOUT,
+    ):
+        """Initialize a new TokenBucket.
+
+        :param curr_capacity: Initial number of tokens in the bucket.
+        :param fill_rate: Rate at which tokens are added to the bucket (tokens/second).
+        :param timeout: Maximum time to wait for token acquisition before
+            raising TimeoutError.
+        """
+        super().__init__(
+            curr_capacity=curr_capacity, fill_rate=fill_rate, timeout=timeout
+        )
+        self._condition = threading.Condition()
+
+    def acquire(self, amount: float) -> None:
+        """Acquire tokens from the bucket, blocking until they are available.
+
+        :param amount: Number of tokens to acquire.
+        :raises TimeoutError: Acquisition took longer than the configured timeout.
+        """
+        start_time = self._monotonic()
+        with self._condition:
+            while (wait := self._try_acquire(amount, start_time)) is not None:
+                self._condition.wait(timeout=wait)
+
+    def update_rate(self, rate: float) -> None:
+        """Update the bucket's fill rate, maximum capacity and current capacity.
+
+        :param rate: New fill rate (tokens/second). It won't be less than MIN_FILL_RATE.
+        """
+        self._set_rate(rate)
+        self._notify_waiters()
+
+    def _notify_waiters(self) -> None:
+        with self._condition:
+            self._condition.notify_all()
+
+
+class RequestRateTracker(_RequestRateTrackerBase):
+    """Tracks the client's request sending rate."""
+
+    def measure_rate(self) -> float:
+        """Measure and return the current request rate in requests per second."""
+        return self._measure()
+
+
+class ClientRateLimiter(_ClientRateLimiterBase[TokenBucket, RequestRateTracker]):
+    """Limits the rate of requests using a token bucket and the CUBIC algorithm."""
+
+    def before_sending_request(self) -> None:
+        """Acquire a token before making a request."""
+        if self._rate_limiter_enabled:
+            self._token_bucket.acquire(self._REQUEST_COST)
+
+    def after_receiving_response(self, throttling_error: bool) -> None:
+        """Update the request rate based on the response using CUBIC algorithm.
+
+        :param throttling_error: True if the response was a throttling error.
+        """
+        self._update_rate(self._rate_tracker.measure_rate(), throttling_error)
+        self._token_bucket._notify_waiters()  # pyright: ignore[reportPrivateUsage]
+
+
+class AdaptiveRetryStrategy(_AdaptiveRetryStrategyBase, StandardRetryStrategy):
+    """Adaptive retry strategy with client-side rate limiting using CUBIC algorithm."""
+
+    def __init__(
+        self,
+        *,
+        backoff_strategy: retries_interface.RetryBackoffStrategy | None = None,
+        throttling_backoff_strategy: retries_interface.RetryBackoffStrategy
+        | None = None,
+        max_attempts: int = 3,
+        retry_quota: StandardRetryQuota | None = None,
+        rate_limiter: ClientRateLimiter | None = None,
+    ):
+        """Initialize AdaptiveRetryStrategy.
+
+        :param backoff_strategy: The backoff strategy used to compute the retry delay
+            for non-throttling errors.
+        :param throttling_backoff_strategy: The backoff strategy used to compute the
+            retry delay for throttling errors.
+        :param max_attempts: Upper limit on total number of attempts made, including
+            initial attempt and retries.
+        :param retry_quota: The retry quota to use for managing retry capacity.
+        :param rate_limiter: Optional pre-configured rate limiter. If None, creates
+            default components with rate limiting initially disabled.
+        """
+        super().__init__(
+            backoff_strategy=backoff_strategy,
+            throttling_backoff_strategy=throttling_backoff_strategy,
+            max_attempts=max_attempts,
+            retry_quota=retry_quota,
+        )
+        self._rate_limiter = rate_limiter or ClientRateLimiter(
+            token_bucket=TokenBucket(),
+            cubic_calculator=self._new_cubic_calculator(),
+            rate_tracker=RequestRateTracker(),
+            rate_limiter_enabled=False,  # Disabled until first throttle
+        )
+
+    @property
+    def rate_limiter(self) -> ClientRateLimiter:
+        """Get the rate limiter for integration with request pipeline."""
+        return self._rate_limiter
+
+    def acquire_from_token_bucket(self) -> None:
+        if self._rate_limiter.rate_limit_enabled:
+            self._rate_limiter.before_sending_request()
+
+
+class RetryStrategyResolver(
+    _RetryStrategyResolverBase[retries_interface.RetryStrategy]
+):
+    """Retry strategy resolver that caches retry strategies based on configuration
+    options, one cache per client."""
+
+    _STRATEGY_TYPES: ClassVar[dict[RetryStrategyType, Any]] = {
+        "simple": SimpleRetryStrategy,
+        "standard": StandardRetryStrategy,
+        "adaptive": AdaptiveRetryStrategy,
+    }
+
+    def resolve_retry_strategy(
+        self,
+        *,
+        retry_strategy: retries_interface.RetryStrategy | RetryStrategyOptions | None,
+        retry_mode: RetryStrategyType | None = None,
+        max_attempts: int | None = None,
+    ) -> retries_interface.RetryStrategy:
+        """Resolve a retry strategy from the provided options, using cache when possible.
+
+        :param retry_strategy: An explicitly configured retry strategy or options for
+            creating one. Takes precedence over ``retry_mode``/``max_attempts``.
+        :param retry_mode: Retry mode to fall back on when ``retry_strategy`` is None.
+        :param max_attempts: Maximum attempts to fall back on when ``retry_strategy`` is
+            None.
+        """
+        return self._resolve(
+            retry_strategy=retry_strategy,
+            retry_mode=retry_mode,
+            max_attempts=max_attempts,
+            strategy_protocol=retries_interface.RetryStrategy,
+        )

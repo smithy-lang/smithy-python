@@ -2,12 +2,16 @@
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import TYPE_CHECKING, Literal, Protocol
+
+if TYPE_CHECKING:
+    from ..aio.interfaces import HTTPRequest, HTTPResponse
 
 __all__ = [
     "Field",
     "FieldPosition",
     "Fields",
+    "HTTPClient",
     "HTTPClientConfiguration",
     "HTTPRequestConfiguration",
     "QueryParamsList",
@@ -142,7 +146,30 @@ class HTTPRequestConfiguration:
 class HTTPClient(Protocol):
     """A synchronous HTTP client interface.
 
-    Placeholder; populated alongside the sync client implementation.
+    Header field names and values are not validated before reaching this layer.
+    Implementations of ``HTTPClient`` are responsible for validating and handling those
+    invalid and dangerous characters (such as CR, LF, or NUL) as defined in `RFC 9110,
+    Section 5.5 <https://www.rfc-editor.org/rfc/rfc9110#section-5.5>`_.
     """
 
-    # TODO(sync-api): implement alongside the sync client
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
+
+    def __init__(self, *, client_config: HTTPClientConfiguration | None) -> None:
+        """
+        :param client_config: Configuration that applies to all requests made with this
+        client.
+        """
+        ...
+
+    def send(
+        self,
+        request: "HTTPRequest",
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> "HTTPResponse":
+        """Send HTTP request over the wire and return the response.
+
+        :param request: The request including destination URI, fields, payload.
+        :param request_config: Configuration specific to this request.
+        """
+        ...

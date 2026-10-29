@@ -1,39 +1,25 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import os
+from typing import Any
 
+from smithy_core.aio._program import run_program_async
 from smithy_core.interfaces.identity import Identity
 
-from .....identity.chain.ordering import Standard, StandardProvider
-from .....identity.components import AWSCredentialsIdentity
+from .....identity.chain.providers.shared_config import (
+    _SharedConfigProviderBase,  # pyright: ignore[reportPrivateUsage]
+)
 from ....config import load_config_async
 from ..provider import ChainSetup
 
 __all__ = ["AsyncSharedConfigProvider"]
 
 
-class AsyncSharedConfigProvider:
+class AsyncSharedConfigProvider(_SharedConfigProviderBase):
     """Loads and selects the active AWS profile for downstream providers."""
 
-    @property
-    def name(self) -> str:
-        """Return the canonical provider name."""
-        return StandardProvider.SHARED_CONFIG.canonical_name
-
-    @property
-    def ordering(self) -> Standard:
-        """Return the provider's standard chain position."""
-        return Standard(slot=StandardProvider.SHARED_CONFIG)
+    def _load_config(self) -> Any:
+        return load_config_async()
 
     async def setup(self, identity_type: type[Identity], setup: ChainSetup) -> None:
         """Load and select the active profile for AWS credentials."""
-        if identity_type is not AWSCredentialsIdentity:
-            return
-
-        config_file = setup.config_file
-        if config_file is None:
-            config_file = await load_config_async()
-            setup.set_config_file(config_file)
-
-        profile_name = setup.profile_name or os.getenv("AWS_PROFILE") or "default"
-        setup.set_profile_name(profile_name)
+        await run_program_async(self._setup(identity_type, setup))

@@ -9,6 +9,7 @@ import software.amazon.smithy.aws.traits.auth.SigV4Trait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.SyncVariant;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.sections.ClientSetupSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -52,7 +53,7 @@ public class AwsIdentityIntegration implements PythonIntegration {
                 writer.write(previousText);
             }
             writer.addStdlibImport("typing", "cast");
-            writer.write("""
+            var template = """
                     if config.aws_credentials_identity_resolver is None:
                         config_context = config.resolution_context()
                         config_file = None
@@ -67,7 +68,8 @@ public class AwsIdentityIntegration implements PythonIntegration {
                             profile_name=profile_name,
                             region_override=config.region,
                             http_client=cast($3T | None, config.transport),
-                        )""",
+                        )""";
+            writer.write(section.sync() ? SyncVariant.toSyncCode(template) : template,
                     Symbol.builder()
                             .name("AsyncIdentityChain")
                             .namespace("smithy_aws_core.aio.identity.chain", ".")
