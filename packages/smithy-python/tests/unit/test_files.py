@@ -43,8 +43,7 @@ def test_file_manifest_reuses_python_writer_and_records_dependencies(
 
     assert (
         output.joinpath("example/models.py").read_text(encoding="utf-8")
-        == "from __future__ import annotations\n\n"
-        "from smithy_core.documents import Document\n\n\n"
+        == "from smithy_core.documents import Document\n\n\n"
         "value: list[Document]\n"
     )
     assert output.joinpath("example/py.typed").read_text(encoding="utf-8") == ""

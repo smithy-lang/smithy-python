@@ -10,11 +10,15 @@ decides which declarations, fields, and defaults to write.
 from smithy_python.symbols import TypeReference
 from smithy_python.writer import PythonWriter
 
-node = TypeReference("Node", "example.models", nullable=True)
+leaf = TypeReference("Leaf", "example.models", nullable=True)
 writer = PythonWriter("example.models")
+writer.line("class Leaf:")
+with writer.indent():
+    writer.line("pass")
+writer.line()
 writer.line("class Node:")
 with writer.indent():
-    writer.line("children: ", TypeReference("list", "builtins", (node,)))
+    writer.line("children: ", TypeReference("list", "builtins", (leaf,)))
     writer.line("amount: ", TypeReference("Decimal", "decimal"))
 source = writer.render()
 ```
@@ -22,13 +26,14 @@ source = writer.render()
 The result is:
 
 ```python
-from __future__ import annotations
-
 from decimal import Decimal
 
 
+class Leaf:
+    pass
+
 class Node:
-    children: list[Node | None]
+    children: list[Leaf | None]
     amount: Decimal
 ```
 
@@ -56,9 +61,9 @@ symbol provider ensures that declaration and field names are unique.
   current indentation. `line()` writes a blank line without spaces.
 * `indent()` adds four spaces inside a context manager and restores indentation
   even when the block raises an exception.
-* `render()` returns source ending in a newline, with a future-annotations
-  header, sorted imports and the body in written order. It does not modify the
-  writer. Adding another reference can change aliases in the next render.
+* `render()` returns source ending in a newline, with sorted imports and the body
+  in written order. It does not modify the writer. Adding another reference can
+  change aliases in the next render.
 
 Raw text is trusted Python, not a template. To find names, `render()` parses
 the written lines with the Python 3.12 grammar, with a unique placeholder
@@ -69,9 +74,8 @@ later Python versions will reject them. Callers supply blank lines between
 declarations.
 
 The analysis reads the syntax tree rather than `symtable`, whose results change
-between Python versions and omit annotations under `from __future__ import
-annotations`. A reference joined to raw text, such as `obj.` followed by a
-reference, has no scope of its own. It is treated as visible to every local
+between Python versions. A reference joined to raw text, such as `obj.` followed
+by a reference, has no scope of its own. It is treated as visible to every local
 name.
 
 Pass every builtin or imported name as a type reference, not just annotations.
@@ -104,9 +108,9 @@ level: `list[str | None]` differs from `list[str] | None`. The `None` literal
 stays `None`, including when marked nullable. Only that literal can omit its
 module. Other module-less references raise `CodegenError`.
 
-Generated source targets Python 3.12+. The future import permits references to
-classes defined later, including recursive types. These are annotations, not
-expressions to evaluate while defining classes.
+Generated source targets Python 3.12+. References in runtime annotations must
+name classes that have already been defined. Stub annotations can refer to
+classes defined later.
 
 * Builtins normally use `str`, `int`, `list[T]` and `dict[K, V]`.
 * Types in the current module use their bare names without imports.
@@ -135,9 +139,9 @@ without recording dependencies.
 
 ## Names that collide
 
-An import uses a module-derived alias when its name matches a module-level
-name, a local name visible where it is referenced, a builtin, the future
-import's `annotations` name, or another imported type.
+An import uses a module-derived alias when its name matches a module-level name,
+a local name visible where it is referenced, a builtin, or another imported
+type.
 For example, `decimal.Decimal` becomes `_decimal_Decimal`. Dots in a module
 path become underscores. All imports sharing a short name receive aliases,
 regardless of the order they were written.

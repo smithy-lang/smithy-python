@@ -68,10 +68,18 @@ def load_written_module(
     return module
 
 
-def test_nested_forward_and_mutual_annotations(
+def test_nested_same_module_annotations(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     writer = PythonWriter("written_models")
+    writer.line("class Leaf:")
+    with writer.indent():
+        writer.line("pass")
+    writer.line()
+    writer.line("class _2HTTPServer:")
+    with writer.indent():
+        writer.line("pass")
+    writer.line()
     writer.line("class Node:")
     with writer.indent():
         writer.line(
@@ -84,7 +92,7 @@ def test_nested_forward_and_mutual_annotations(
                     TypeReference(
                         "list",
                         "builtins",
-                        (TypeReference("Node", "written_models", nullable=True),),
+                        (TypeReference("Leaf", "written_models", nullable=True),),
                         nullable=True,
                     ),
                 ),
@@ -94,26 +102,20 @@ def test_nested_forward_and_mutual_annotations(
         writer.line("server: ", TypeReference("_2HTTPServer", "written_models"))
         writer.line("amount: ", TypeReference("Decimal", "decimal"))
         writer.line("nothing: ", TypeReference("None"))
-    writer.line()
-    writer.line("class _2HTTPServer:")
-    with writer.indent():
-        writer.line("node: ", TypeReference("Node", "written_models"))
     source = writer.render()
-    assert source.startswith("from __future__ import annotations\n")
     assert "from written_models" not in source
-    assert "dict[str, list[Node | None] | None] | None" in source
+    assert "dict[str, list[Leaf | None] | None] | None" in source
     assert source == writer.render()
     assert source.endswith("\n")
     module = load_written_module(writer, tmp_path, monkeypatch)
     node = module.Node
     server = module._2HTTPServer
     assert get_type_hints(node) == {
-        "children": dict[str, list[node | None] | None] | None,
+        "children": dict[str, list[module.Leaf | None] | None] | None,
         "server": server,
         "amount": Decimal,
         "nothing": type(None),
     }
-    assert get_type_hints(server) == {"node": node}
 
 
 @pytest.mark.parametrize(
@@ -608,13 +610,17 @@ def test_equivalent_current_module_names(
     module: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     writer = PythonWriter(module)
+    writer.line("class Child:")
+    with writer.indent():
+        writer.line("pass")
+    writer.line()
     writer.line("class Node:")
     with writer.indent():
         writer.line(
-            "child: ", TypeReference("Node", "\uff57ritten_models", nullable=True)
+            "child: ", TypeReference("Child", "\uff57ritten_models", nullable=True)
         )
     result = load_written_module(writer, tmp_path, monkeypatch)
-    assert get_type_hints(result.Node) == {"child": result.Node | None}
+    assert get_type_hints(result.Node) == {"child": result.Child | None}
 
 
 def test_equivalent_external_identities_are_deduplicated(
@@ -681,14 +687,6 @@ def test_deep_collection_rendering() -> None:
     writer.line("value: ", ref)
     assert writer.render().endswith(
         "value: " + "list[" * 1200 + "str" + "]" * 1200 + "\n"
-    )
-
-
-def test_future_import_name_is_reserved() -> None:
-    writer = PythonWriter("models")
-    writer.line("value: ", TypeReference("annotations", "external"))
-    assert (
-        "from external import annotations as _external_annotations" in writer.render()
     )
 
 
@@ -767,7 +765,7 @@ def test_generation_without_runtime_packages() -> None:
 
 def test_empty_writer_and_trusted_text() -> None:
     writer = PythonWriter("models")
-    assert writer.render() == "from __future__ import annotations\n"
+    assert writer.render() == ""
     writer.line("value = '$T {not_a_template}'")
     assert writer.render().endswith("value = '$T {not_a_template}'\n")
 
@@ -806,8 +804,6 @@ def test_imports_are_grouped_and_combined() -> None:
     writer.line("fourth: ", TypeReference("Thing", "._private"))
 
     assert writer.render().startswith(
-        "from __future__ import annotations\n"
-        "\n"
         "from enum import IntEnum, StrEnum\n"
         "\n"
         "from smithy_core.documents import Document\n"

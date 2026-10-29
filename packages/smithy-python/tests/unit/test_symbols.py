@@ -514,6 +514,9 @@ def test_only_emitted_declarations_collide() -> None:
         "pkg.class",
         "None",
         "pkg/child",
+        "_example",
+        "example_",
+        "café",
         "pkg.\uff43\uff4c\uff41\uff53\uff53",
     ],
 )

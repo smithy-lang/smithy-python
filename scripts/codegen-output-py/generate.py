@@ -9,14 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from smithy_python.dependencies import DependencySet
-from smithy_python.files import FileManifest
-from smithy_python.generation import GenerationContext, GenerationPlan, TypesSettings
-from smithy_python.model import load_model
-from smithy_python.models import ModelGenerator, _model_reserved_member_names
-from smithy_python.schemas import SchemaGenerator
-from smithy_python.selection import select_type_shapes
-from smithy_python.symbols import SymbolProvider
+from smithy_python.cli import main as generate
 
 _ROOT = Path(__file__).resolve().parents[2]
 _MODEL = Path(__file__).with_name("model.json")
@@ -26,36 +19,28 @@ _SERVICE = "example#ExampleService"
 
 
 def main() -> None:
-    model = load_model(_MODEL.read_bytes())
-    selection = select_type_shapes(
-        model,
-        service_id=_SERVICE,
-        generate_inputs_and_outputs=True,
+    result = generate(
+        (
+            "generate",
+            "types",
+            "--model",
+            str(_MODEL),
+            "--output",
+            str(_OUTPUT),
+            "--service",
+            _SERVICE,
+            "--package",
+            _PACKAGE,
+            "--package-version",
+            "1.0.0",
+            "--package-description",
+            "Example Python codegen output",
+            "--include-operation-io",
+        ),
+        environ={},
     )
-    settings = TypesSettings(
-        package=_PACKAGE,
-        package_version="1.0.0",
-        package_description="Example Python codegen output",
-    )
-    symbols = SymbolProvider(
-        model,
-        selection,
-        package=settings.package,
-        reserved_member_names=_model_reserved_member_names(model),
-    )
-    dependencies = DependencySet()
-    context = GenerationContext(
-        model=model,
-        selection=selection,
-        settings=settings,
-        symbols=symbols,
-        plan=GenerationPlan.from_selection(model, selection, symbols),
-        dependencies=dependencies,
-        files=FileManifest(dependencies),
-    )
-    SchemaGenerator().generate(context)
-    ModelGenerator().generate(context)
-    context.files.commit(_OUTPUT)
+    if result:
+        raise SystemExit(result)
     _format_output()
 
 

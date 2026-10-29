@@ -1700,6 +1700,9 @@
     "SymbolProvider": "class",
     "TypeReference": "class"
   },
+  "smithy_python.types": {
+    "TypesGenerator": "class"
+  },
   "smithy_python.writer": {
     "CodegenError": "rex-exception",
     "PythonWriter": "class",

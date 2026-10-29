@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from smithy_core._dynamic_models import ModelRegistry
 from smithy_core.exceptions import ModeledError
 
@@ -43,7 +41,7 @@ _TARGET_NAMES = {
 }
 
 _MODEL_NAMES = (*tuple(_MODEL_INDEX), "Unit")
-__all__ = ("ServiceError", *_MODEL_NAMES)
+__all__ = ("ServiceError", *_MODEL_NAMES)  # pyright: ignore[reportUnsupportedDunderAll]
 
 
 _registry = ModelRegistry(

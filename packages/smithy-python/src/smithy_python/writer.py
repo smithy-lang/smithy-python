@@ -94,12 +94,12 @@ class PythonWriter:
     def render(self) -> str:
         """Return complete source without changing the recorded lines."""
         names, imports = self._plan_imports(*self._names())
-        header = "from __future__ import annotations\n"
-        if imports:
-            header += "\n" + _render_imports(imports) + "\n"
+        header = _render_imports(imports) + "\n" if imports else ""
         body = self._body(lambda reference: self._annotation(reference, names))
         separator = "\n" if self._stub else "\n\n"
-        return header + (separator + "\n".join(body) + "\n" if body else "")
+        return header + (
+            (separator if header else "") + "\n".join(body) + "\n" if body else ""
+        )
 
     def _body(self, reference: Callable[[TypeReference], str]) -> list[str]:
         body: list[str] = []
@@ -199,7 +199,6 @@ class PythonWriter:
                 if binding in reserved
                 or _is_local(binding, scoped)
                 or binding in _BUILTINS
-                or binding == "annotations"
                 or counts[binding] > 1
                 else name
             )

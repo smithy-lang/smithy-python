@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -12,6 +13,15 @@ from pathlib import Path
 from typing import BinaryIO, Final
 
 from . import __version__
+from . import dependencies as _dependencies
+from . import exceptions as _exceptions
+from . import files as _files
+from . import generation as _generation
+from . import model as _model
+from . import models as _models
+from . import selection as _selection
+from . import symbols as _symbols
+from . import types as _types
 from .environment import PluginEnvironment
 from .exceptions import CodegenError, InvalidInvocationError
 from .model import load_model
@@ -22,14 +32,20 @@ __all__ = ["main"]
 _GENERATION_NOT_IMPLEMENTED: Final = (
     "smithy-python: error: {artifact} generation is not implemented yet\n"
 )
+_PACKAGE_VERSION: Final = re.compile(
+    r"v?[0-9]+(?:\.[0-9]+)*"
+    r"(?:(?:a|b|rc)[0-9]+)?"
+    r"(?:\.post[0-9]+)?"
+    r"(?:\.dev[0-9]+)?"
+    r"(?:\+[a-z0-9]+(?:[._-][a-z0-9]+)*)?",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True, slots=True)
 class _Invocation:
-    artifact: str
     model_source: bytes
     output_dir: Path
-    environment: PluginEnvironment
 
 
 def main(
@@ -48,24 +64,19 @@ def main(
 
     try:
         invocation = _resolve_invocation(args, environ=environ, stdin=stdin)
+        model = load_model(invocation.model_source)
+        if args.artifact == "types":
+            selection = _generate_types(args, invocation.output_dir, model)
+        else:
+            selection = select_shapes(
+                model,
+                service_id=args.service,
+                require_service=True,
+            )
     except InvalidInvocationError as error:
         sys.stderr.write(f"smithy-python: error: {error}\n")
         return 2
     except (CodegenError, OSError) as error:
-        sys.stderr.write(f"smithy-python: error: {error}\n")
-        return 1
-
-    try:
-        model = load_model(invocation.model_source)
-        selection = select_shapes(
-            model,
-            service_id=args.service,
-            require_service=invocation.artifact == "client",
-        )
-    except InvalidInvocationError as error:
-        sys.stderr.write(f"smithy-python: error: {error}\n")
-        return 2
-    except CodegenError as error:
         sys.stderr.write(f"smithy-python: error: {error}\n")
         return 1
 
@@ -74,6 +85,8 @@ def main(
             f"smithy-python: excluded {selection.excluded_count} eligible data shape(s) "
             f"outside the closure of service {selection.service.id}\n"
         )
+    if args.artifact == "types":
+        return 0
     sys.stderr.write(_GENERATION_NOT_IMPLEMENTED.format(artifact=args.artifact))
     return 1
 
@@ -93,11 +106,37 @@ def _create_parser() -> argparse.ArgumentParser:
     generate = commands.add_parser("generate", help="Generate Python source")
     artifacts = generate.add_subparsers(dest="artifact", required=True)
     common = _common_artifact_options()
-    for name, help_text in (
-        ("client", "Generate a client package"),
-        ("types", "Generate a standalone types package"),
-    ):
-        artifacts.add_parser(name, help=help_text, parents=[common])
+    artifacts.add_parser("client", help="Generate a client package", parents=[common])
+    types = artifacts.add_parser(
+        "types", help="Generate a standalone types package", parents=[common]
+    )
+    types.add_argument(
+        "--package",
+        required=True,
+        help="Import package and distribution name for the generated artifact.",
+    )
+    types.add_argument(
+        "--package-version",
+        required=True,
+        type=_package_version,
+        help="Version for the generated package.",
+    )
+    types.add_argument(
+        "--package-description",
+        help='Package description; defaults to "<package> types package".',
+    )
+    types.add_argument(
+        "--selector",
+        type=_parse_selector,
+        default=_selection.Selector.identity(),
+        help="Smithy selector used to narrow generated declaration roots.",
+    )
+    types.add_argument(
+        "--include-operation-io",
+        dest="generate_inputs_and_outputs",
+        action="store_true",
+        help="Include operation input and output structures as generation roots.",
+    )
 
     return parser
 
@@ -175,8 +214,65 @@ def _resolve_invocation(
         raise InvalidInvocationError("Expected a Smithy JSON AST model")
 
     return _Invocation(
-        artifact=args.artifact,
         model_source=model_source,
         output_dir=output_dir,
-        environment=environment,
     )
+
+
+def _generate_types(
+    args: argparse.Namespace,
+    output_dir: Path,
+    model: _model.Model,
+) -> _selection.Selection:
+    description = args.package_description or f"{args.package} types package"
+    settings = _generation.TypesSettings(
+        package=args.package,
+        package_version=args.package_version,
+        package_description=description,
+        selector=args.selector,
+        generate_inputs_and_outputs=args.generate_inputs_and_outputs,
+    )
+    selection = _selection.select_type_shapes(
+        model,
+        service_id=args.service,
+        selector=settings.selector,
+        generate_inputs_and_outputs=settings.generate_inputs_and_outputs,
+    )
+    try:
+        symbols = _symbols.SymbolProvider(
+            model,
+            selection,
+            package=settings.package,
+            reserved_member_names=_models._model_reserved_member_names(  # pyright: ignore[reportPrivateUsage]
+                model
+            ),
+        )
+    except ValueError as error:
+        raise InvalidInvocationError(str(error)) from error
+
+    dependencies = _dependencies.DependencySet()
+    context = _generation.GenerationContext(
+        model=model,
+        selection=selection,
+        settings=settings,
+        symbols=symbols,
+        plan=_generation.GenerationPlan.from_selection(model, selection, symbols),
+        dependencies=dependencies,
+        files=_files.FileManifest(dependencies),
+    )
+    _types.TypesGenerator().generate(context)
+    context.files.commit(output_dir)
+    return selection
+
+
+def _parse_selector(value: str) -> _selection.Selector:
+    try:
+        return _selection.Selector.parse(value)
+    except _exceptions.SelectorSyntaxError as error:
+        raise argparse.ArgumentTypeError(str(error)) from error
+
+
+def _package_version(value: str) -> str:
+    if _PACKAGE_VERSION.fullmatch(value) is None:
+        raise argparse.ArgumentTypeError(f"Invalid version: {value!r}")
+    return value[1:] if value[:1].lower() == "v" else value

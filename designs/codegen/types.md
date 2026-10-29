@@ -112,7 +112,7 @@ The `types` command accepts:
 * `--package-version`
 * `--package-description`
 * `--selector`
-* `--generate-inputs-and-outputs`
+* `--include-operation-io`
 
 `package` and `package-version` are required. The package identifies the
 generated import package and follows the validation rules in `SymbolProvider`.
@@ -129,7 +129,7 @@ Types generation never infers a service. The options apply in this order:
 2. `--selector` narrows those declaration shapes. The default identity selector
    keeps every candidate.
 3. Input and output structures are removed as roots unless
-   `--generate-inputs-and-outputs` is set.
+   `--include-operation-io` is set.
 4. Member-target dependencies of the remaining declarations are added
    transitively.
 
@@ -382,16 +382,17 @@ model names:
 
 ```python
 _MODEL_NAMES = tuple(_MODEL_INDEX)
-__all__ = ("ServiceError", *_MODEL_NAMES)
+__all__ = ("ServiceError", *_MODEL_NAMES)  # pyright: ignore[reportUnsupportedDunderAll]
 
 
 def __dir__() -> list[str]:
     return sorted({*globals(), *__all__})
 ```
 
-This keeps Ruff from reporting `F822` for lazy exports. Star imports read
-`__all__` and resolve each model through module `__getattr__`. Computing
-`__dir__` from the index does not construct model classes.
+This keeps Ruff from reporting `F822` for lazy exports. The targeted Pyright
+suppression replaces excluding the complete runtime module from analysis. Star
+imports read `__all__` and resolve each model through module `__getattr__`.
+Computing `__dir__` from the index does not construct model classes.
 
 Model member access uses the schema's dense member indexes where positional
 dispatch is required. Name maps remain dictionaries where lookup is by a wire
