@@ -1,10 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import Buffer
 from threading import Lock
 from typing import Self
-
-from .buffers import as_bytes
 
 
 class PureChecksum:
@@ -20,9 +17,9 @@ class PureChecksum:
     def __init__(self) -> None:
         self._lock = Lock()
 
-    def update(self, data: Buffer, /) -> None:
+    def update(self, data: bytes | bytearray | memoryview, /) -> None:
         with self._lock:
-            self._update(as_bytes(data))
+            self._update(data)
 
     def digest(self) -> bytes:
         with self._lock:
@@ -32,7 +29,7 @@ class PureChecksum:
         with self._lock:
             return self._copy()
 
-    def _update(self, data: bytes | bytearray) -> None:
+    def _update(self, data: bytes | bytearray | memoryview) -> None:
         raise NotImplementedError
 
     def _digest(self) -> bytes:

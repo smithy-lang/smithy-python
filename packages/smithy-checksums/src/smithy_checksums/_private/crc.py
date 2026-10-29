@@ -79,7 +79,7 @@ class Crc32(PureChecksum):
         super().__init__()
         self._crc = 0
 
-    def _update(self, data: bytes | bytearray) -> None:
+    def _update(self, data: bytes | bytearray | memoryview) -> None:
         self._crc = zlib.crc32(data, self._crc)
 
     def _digest(self) -> bytes:
@@ -110,7 +110,7 @@ class _ReflectedCrc(PureChecksum):
         self._crc = self._mask
         self._buffer = bytearray()
 
-    def _update(self, data: bytes | bytearray) -> None:
+    def _update(self, data: bytes | bytearray | memoryview) -> None:
         buffer = self._buffer
         view = memoryview(data)
         if buffer:

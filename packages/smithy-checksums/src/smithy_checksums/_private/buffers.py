@@ -3,13 +3,6 @@
 from collections.abc import Buffer
 
 
-def as_bytes(data: Buffer) -> bytes | bytearray:
-    """Returns the bytes of ``data``, copying only if it isn't already bytes-like."""
-    if isinstance(data, bytes | bytearray):
-        return data
-    return memoryview(data).tobytes()
-
-
 def as_byte_view(data: Buffer) -> bytes | bytearray | memoryview:
     """Returns ``data`` as a C-contiguous buffer of bytes, without copying.
 
