@@ -13,10 +13,10 @@ from collections.abc import Buffer
 from importlib.metadata import version
 from typing import ClassVar, Final, Protocol, Self, runtime_checkable
 
+from ._private.buffers import as_byte_view as _as_byte_view
 from ._private.selection import IMPLEMENTATIONS as _IMPLEMENTATIONS
 from ._private.selection import NATIVE as _NATIVE
 from ._private.selection import ChecksumImpl as _ChecksumImpl
-from ._private.buffers import as_byte_view as _as_byte_view
 
 __version__ = version("smithy-checksums")
 __all__ = (
