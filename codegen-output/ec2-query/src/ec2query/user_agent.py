@@ -3,10 +3,10 @@
 from smithy_aws_core.interceptors.user_agent import UserAgentInterceptor
 
 from . import __version__
-from .config import AsyncEC2ProtocolConfig
+from .config import EC2ProtocolConfig
 
 
-def aws_user_agent_plugin(config: AsyncEC2ProtocolConfig):
+def aws_user_agent_plugin(config: EC2ProtocolConfig):
     config.interceptors.append(
         UserAgentInterceptor(
             ua_suffix=config.user_agent_extra,

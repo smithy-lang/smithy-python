@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 from smithy_aws_event_stream._private.deserializers import EventDeserializer
-from smithy_aws_event_stream.aio import AWSEventReceiver
+from smithy_aws_event_stream.aio import AsyncAWSEventReceiver
 from smithy_aws_event_stream.events import Event, EventMessage
 from smithy_aws_event_stream.exceptions import UnmodeledEventError
 from smithy_core.aio.types import AsyncBytesReader
@@ -28,7 +28,7 @@ from . import (
 async def test_event_receiver(expected: DeserializeableShape, given: EventMessage):
     source = AsyncBytesReader(given.encode())
     deserializer = EventStreamDeserializer()
-    receiver = AWSEventReceiver[Any](
+    receiver = AsyncAWSEventReceiver[Any](
         payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
     )
 
@@ -92,7 +92,7 @@ def test_deserialize_unmodeled_error():
 async def test_receiver_closes_source() -> None:
     source = AsyncBytesReader(b"")
     deserializer = EventStreamDeserializer()
-    receiver = AWSEventReceiver[Any](
+    receiver = AsyncAWSEventReceiver[Any](
         payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
     )
     assert not receiver.closed
@@ -105,7 +105,7 @@ async def test_receiver_closes_source() -> None:
 async def test_read_closed_receiver() -> None:
     source = AsyncBytesReader(b"")
     deserializer = EventStreamDeserializer()
-    receiver = AWSEventReceiver[Any](
+    receiver = AsyncAWSEventReceiver[Any](
         payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
     )
 
@@ -117,7 +117,7 @@ async def test_read_closed_receiver() -> None:
 async def test_read_closed_receiver_source() -> None:
     source = AsyncBytesReader(b"")
     deserializer = EventStreamDeserializer()
-    receiver = AWSEventReceiver[Any](
+    receiver = AsyncAWSEventReceiver[Any](
         payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
     )
 

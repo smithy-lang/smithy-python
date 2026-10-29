@@ -15,18 +15,17 @@ from smithy_aws_core.business_metrics import (
 from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_aws_core.interceptors.user_agent import UserAgentInterceptor
 from smithy_core import URI
-from smithy_core.aio.retries import (
-    RETRY_STRATEGY,
-    AsyncAdaptiveRetryStrategy,
-    AsyncSimpleRetryStrategy,
-    AsyncStandardRetryStrategy,
-)
 from smithy_core.auth import RESOLVED_IDENTITY
 from smithy_core.endpoints import STATIC_ENDPOINT_CONFIG
 from smithy_core.interceptors import InputContext, RequestContext
+from smithy_core.retries import (
+    RETRY_STRATEGY,
+    AdaptiveRetryStrategy,
+    SimpleRetryStrategy,
+    StandardRetryStrategy,
+)
 from smithy_core.types import TypedProperties
-from smithy_http import Field, Fields
-from smithy_http.aio import HTTPRequest
+from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.interceptors.user_agent import USER_AGENT
 from smithy_http.interceptors.user_agent import (
     UserAgentInterceptor as GenericUserAgentInterceptor,
@@ -168,9 +167,9 @@ def test_retry_with_generic_interceptor_sends_business_metrics_once() -> None:
 @pytest.mark.parametrize(
     ("retry_strategy", "expected"),
     [
-        (AsyncStandardRetryStrategy(), [AwsFeatureId.RETRY_MODE_STANDARD]),
-        (AsyncAdaptiveRetryStrategy(), [AwsFeatureId.RETRY_MODE_ADAPTIVE]),
-        (AsyncSimpleRetryStrategy(), []),
+        (StandardRetryStrategy(), [AwsFeatureId.RETRY_MODE_STANDARD]),
+        (AdaptiveRetryStrategy(), [AwsFeatureId.RETRY_MODE_ADAPTIVE]),
+        (SimpleRetryStrategy(), []),
         (None, []),
     ],
 )
@@ -190,7 +189,7 @@ def test_registers_retry_mode(
 
 def test_registers_retry_mode_without_user_agent() -> None:
     properties = TypedProperties()
-    properties[RETRY_STRATEGY] = AsyncStandardRetryStrategy()
+    properties[RETRY_STRATEGY] = StandardRetryStrategy()
     context = RequestContext[Any, Any](
         request=Mock(), transport_request=Mock(), properties=properties
     )

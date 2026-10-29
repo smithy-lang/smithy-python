@@ -4,10 +4,64 @@ import shlex
 import sys
 
 from smithy_core.exceptions import SmithyError
+from smithy_core.interfaces.identity import Identity
+
+from ....business_metrics import AwsFeatureId
+from ...components import AWSCredentialsIdentity
+from ..ordering import Standard, StandardProvider
+from ..provider import _ChainSetupBase  # pyright: ignore[reportPrivateUsage]
+
+__all__ = ["ProcessConfigurationError", "ProfileCredentialProcessProvider"]
+
+_CREDENTIAL_PROCESS = "credential_process"
+_ACCOUNT_ID = "aws_account_id"
 
 
 class ProcessConfigurationError(SmithyError):
     """Raised when a profile's credential process command is misconfigured."""
+
+
+class ProfileCredentialProcessProvider:
+    """Adds a process credential resolver configured by the active profile."""
+
+    feature_ids = (
+        AwsFeatureId.CREDENTIALS_PROFILE_PROCESS,
+        AwsFeatureId.CREDENTIALS_PROCESS,
+    )
+    """The features recorded when this provider's resolver returns credentials."""
+
+    @property
+    def name(self) -> str:
+        """Return the canonical provider name."""
+        return StandardProvider.PROFILE_CREDENTIAL_PROCESS.canonical_name
+
+    @property
+    def ordering(self) -> Standard:
+        """Return the provider's standard chain position."""
+        return Standard(slot=StandardProvider.PROFILE_CREDENTIAL_PROCESS)
+
+    def setup(self, identity_type: type[Identity], setup: _ChainSetupBase) -> None:
+        """Add a resolver when the active profile configures a credential process."""
+        if identity_type is not AWSCredentialsIdentity:
+            return
+
+        config_file = setup.config_file
+        profile_name = setup.profile_name
+        if config_file is None or profile_name is None:
+            return
+
+        command = config_file.get(profile_name, _CREDENTIAL_PROCESS)
+        if not command:
+            return
+
+        # The process output's AccountId takes precedence; the profile's
+        # aws_account_id is only used as a fallback.
+        setup._add_terminal(  # pyright: ignore[reportPrivateUsage]
+            setup._process_resolver(  # pyright: ignore[reportPrivateUsage]
+                _split_process_command(command),
+                config_file.get(profile_name, _ACCOUNT_ID),
+            )
+        )
 
 
 def _split_process_command(  # type: ignore[reportUnusedFunction]

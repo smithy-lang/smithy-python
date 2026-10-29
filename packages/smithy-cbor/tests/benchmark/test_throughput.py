@@ -19,14 +19,16 @@ import string
 import time
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
+from typing import Any
 
 from smithy_aws_core.aio.protocols import AsyncAwsJson10ClientProtocol
 from smithy_core import URI
+from smithy_core.aio.program import run_program_async
 from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_core.interfaces import TypedProperties as _TypedPropertiesInterface
 from smithy_core.types import TypedProperties
-from smithy_http import tuples_to_fields
-from smithy_http.aio import HTTPResponse
+from smithy_http import HTTPResponse, tuples_to_fields
 from smithy_http.aio.protocols import AsyncRpcV2CborClientProtocol
 
 from .model import (
@@ -140,7 +142,7 @@ def _bench_protocol(
         endpoint=_ENDPOINT,
         context=ctx,  # type: ignore[arg-type]
     )
-    request_body = asyncio.run(request.consume_body_async())
+    request_body = asyncio.run(read_streaming_blob_async(request.body))
     payload_bytes = len(request_body)
 
     # The output shape is identical to the input shape, so the wire body a server would
@@ -151,7 +153,7 @@ def _bench_protocol(
         endpoint=_ENDPOINT,
         context=ctx,  # type: ignore[arg-type]
     )
-    response_body = asyncio.run(response_request.consume_body_async())
+    response_body = asyncio.run(read_streaming_blob_async(response_request.body))
     response_bytes = len(response_body)
 
     # --- serialize throughput ---
@@ -170,7 +172,8 @@ def _bench_protocol(
     # --- deserialize throughput ---
     async def _deserialize() -> object:
         response = _make_response(response_body, content_type)
-        return await protocol.deserialize_response(
+        return await _deserialize_response(
+            protocol,
             operation=PUT_RECORDS_OPERATION,
             request=request,
             response=response,
@@ -239,3 +242,11 @@ def test_protocol_throughput() -> None:
     for r in results:
         assert r.ops_per_sec > 0
         assert r.mb_per_sec > 0
+
+
+async def _deserialize_response(protocol: Any, **kwargs: Any) -> Any:
+    return await run_program_async(
+        protocol.deserialize_response_program(
+            **kwargs, read_body=read_streaming_blob_async
+        )
+    )

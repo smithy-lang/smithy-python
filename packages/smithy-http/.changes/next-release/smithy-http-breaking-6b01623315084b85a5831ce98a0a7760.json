@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Added the `Async` prefix to the async transports: `AIOHTTPClient`, `AIOHTTPClientConfig`, `AWSCRTHTTPClient`, `AWSCRTHTTPClientConfig` and `AWSCRTHTTPResponse` are now `AsyncAIOHTTPClient`, `AsyncAIOHTTPClientConfig`, `AsyncAWSCRTHTTPClient`, `AsyncAWSCRTHTTPClientConfig` and `AsyncAWSCRTHTTPResponse`. `smithy_http.aio.auth.apikey.APIKeyResolverConfig` is now `AsyncAPIKeyResolverConfig`."
+}

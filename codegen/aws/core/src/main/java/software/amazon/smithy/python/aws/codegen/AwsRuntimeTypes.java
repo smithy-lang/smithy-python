@@ -17,14 +17,24 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 public final class AwsRuntimeTypes {
 
     // smithy_aws_core.aio.protocols
-    public static final Symbol AWS_QUERY_CLIENT_PROTOCOL = createSymbol(
+    public static final Symbol AWS_JSON_10_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
-            "AsyncAwsQueryClientProtocol");
+            "AsyncAwsJson10ClientProtocol");
 
     // smithy_aws_core.aio.protocols
-    public static final Symbol EC2_QUERY_CLIENT_PROTOCOL = createSymbol(
+    public static final Symbol AWS_JSON_11_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
-            "AsyncEc2QueryClientProtocol");
+            "AsyncAwsJson11ClientProtocol");
+
+    // smithy_aws_core.protocols
+    public static final Symbol AWS_QUERY_CLIENT_PROTOCOL = createSymbol(
+            "protocols",
+            "AwsQueryClientProtocol");
+
+    // smithy_aws_core.protocols
+    public static final Symbol EC2_QUERY_CLIENT_PROTOCOL = createSymbol(
+            "protocols",
+            "Ec2QueryClientProtocol");
 
     // smithy_aws_core.aio.protocols
     public static final Symbol REST_XML_CLIENT_PROTOCOL = createSymbol(

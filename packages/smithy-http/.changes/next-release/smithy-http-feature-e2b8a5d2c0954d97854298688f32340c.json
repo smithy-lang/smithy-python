@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added synchronous HTTP support: `smithy_http.urllib3.Urllib3HTTPClient`, the sync protocols in `smithy_http.protocols`, `smithy_http.restjson.parse_rest_json_error_info` and `smithy_http.identity.apikey.APIKeyIdentityResolver`."
+}

@@ -1,13 +1,17 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
-from smithy_aws_core.aio.identity.chain.provider import ChainSetup, NamedResolver
+from smithy_aws_core.aio.identity.chain.provider import (
+    AsyncChainSetup,
+    AsyncNamedResolver,
+)
 from smithy_aws_core.business_metrics import AwsFeatureId
 from smithy_aws_core.config.file_parser import StandardizedOutput
 from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.identity.chain.ordering import Standard, StandardProvider
+from smithy_aws_core.identity.chain.provider import ChainSetup
 from smithy_core.interfaces.identity import Identity
 
 
@@ -16,7 +20,9 @@ class _FakeProvider:
         self.name = name
         self.ordering = Standard(slot=StandardProvider.ENVIRONMENT)
 
-    async def setup(self, identity_type: type[Identity], setup: ChainSetup) -> None:
+    async def setup(
+        self, identity_type: type[Identity], setup: AsyncChainSetup
+    ) -> None:
         pass
 
 
@@ -26,7 +32,7 @@ def _empty_config() -> MergedConfig:
 
 def test_add_resolver_tags_with_current_provider() -> None:
     resolver = AsyncMock()
-    setup = ChainSetup()
+    setup = AsyncChainSetup()
     setup.set_current_provider(_FakeProvider("Environment"))
 
     setup.add_resolver(resolver)
@@ -40,7 +46,7 @@ def test_add_resolver_tags_with_current_provider() -> None:
 def test_add_resolver_tags_with_provider_feature_ids() -> None:
     provider = _FakeProvider("Environment")
     provider.feature_ids = (AwsFeatureId.CREDENTIALS_ENV_VARS,)  # type: ignore[attr-defined]
-    setup = ChainSetup()
+    setup = AsyncChainSetup()
     setup.set_current_provider(provider)
 
     setup.add_resolver(AsyncMock())
@@ -48,10 +54,21 @@ def test_add_resolver_tags_with_provider_feature_ids() -> None:
     assert setup.resolvers[0].feature_ids == (AwsFeatureId.CREDENTIALS_ENV_VARS,)
 
 
+def test_sync_add_resolver_tags_with_provider_feature_ids() -> None:
+    provider = _FakeProvider("Environment")
+    provider.feature_ids = (AwsFeatureId.CREDENTIALS_ENV_VARS,)  # type: ignore[attr-defined]
+    setup = ChainSetup()
+    setup.set_current_provider(provider)
+
+    setup.add_resolver(Mock())
+
+    assert setup.resolvers[0].feature_ids == (AwsFeatureId.CREDENTIALS_ENV_VARS,)
+
+
 def test_add_resolver_accepts_single_feature_id() -> None:
     provider = _FakeProvider("Environment")
     provider.feature_ids = AwsFeatureId.CREDENTIALS_ENV_VARS  # type: ignore[attr-defined]
-    setup = ChainSetup()
+    setup = AsyncChainSetup()
     setup.set_current_provider(provider)
 
     setup.add_resolver(AsyncMock())
@@ -62,7 +79,7 @@ def test_add_resolver_accepts_single_feature_id() -> None:
 
 
 def test_add_resolver_without_provider_feature_ids() -> None:
-    setup = ChainSetup()
+    setup = AsyncChainSetup()
     setup.set_current_provider(_FakeProvider("Environment"))
 
     setup.add_resolver(AsyncMock())
@@ -72,7 +89,7 @@ def test_add_resolver_without_provider_feature_ids() -> None:
 
 def test_add_resolver_stacks_multiple() -> None:
     first, second = AsyncMock(), AsyncMock()
-    setup = ChainSetup()
+    setup = AsyncChainSetup()
     setup.set_current_provider(_FakeProvider())
 
     setup.add_resolver(first)
@@ -83,7 +100,7 @@ def test_add_resolver_stacks_multiple() -> None:
 
 
 def test_add_terminal_resolver_stops_assembly() -> None:
-    setup = ChainSetup()
+    setup = AsyncChainSetup()
     setup.set_current_provider(_FakeProvider())
 
     setup.add_terminal_resolver(AsyncMock())
@@ -96,7 +113,7 @@ def test_add_terminal_resolver_stops_assembly() -> None:
 
 
 def test_cannot_change_provider_after_terminal() -> None:
-    setup = ChainSetup()
+    setup = AsyncChainSetup()
     setup.set_current_provider(_FakeProvider())
     setup.add_terminal_resolver(AsyncMock())
 
@@ -107,7 +124,7 @@ def test_cannot_change_provider_after_terminal() -> None:
 
 
 def test_cannot_add_without_current_provider() -> None:
-    setup = ChainSetup()
+    setup = AsyncChainSetup()
 
     with pytest.raises(
         RuntimeError, match="Cannot add a resolver without a current provider"
@@ -116,7 +133,7 @@ def test_cannot_add_without_current_provider() -> None:
 
 
 def test_set_config_file_cannot_overwrite() -> None:
-    setup = ChainSetup(config_file=_empty_config())
+    setup = AsyncChainSetup(config_file=_empty_config())
 
     with pytest.raises(
         RuntimeError, match="Cannot overwrite a config file already present"
@@ -125,7 +142,7 @@ def test_set_config_file_cannot_overwrite() -> None:
 
 
 def test_properties_bag_is_shared_and_mutable() -> None:
-    setup = ChainSetup()
+    setup = AsyncChainSetup()
 
     setup.properties["key"] = "value"
 
@@ -134,7 +151,7 @@ def test_properties_bag_is_shared_and_mutable() -> None:
 
 async def test_named_resolver_records_feature_ids() -> None:
     resolver = AsyncMock()
-    named = NamedResolver(
+    named = AsyncNamedResolver(
         provider_name="Environment",
         resolver=resolver,
         feature_ids=(AwsFeatureId.CREDENTIALS_ENV_VARS,),
@@ -149,7 +166,7 @@ async def test_named_resolver_records_feature_ids() -> None:
 
 async def test_named_resolver_resolves_without_feature_record() -> None:
     resolver = AsyncMock()
-    named = NamedResolver(
+    named = AsyncNamedResolver(
         provider_name="Environment",
         resolver=resolver,
         feature_ids=(AwsFeatureId.CREDENTIALS_ENV_VARS,),

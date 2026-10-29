@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from smithy_aws_core.aio.identity.container import (
     AsyncContainerCredentialsResolver,
-    ContainerMetadataClient,
+    AsyncContainerMetadataClient,
 )
 from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_aws_core.identity.container import ContainerCredentialsConfig
@@ -45,7 +45,7 @@ def mock_http_client_response(status: int, body: bytes):
     http_client = AsyncMock()
     response = AsyncMock()
     response.status = status
-    response.consume_body_async.return_value = body
+    response.body = body
     http_client.send.return_value = response
     return http_client
 
@@ -67,7 +67,7 @@ async def test_metadata_client_valid_host(host: str):
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
     config = ContainerCredentialsConfig()
-    client = ContainerMetadataClient(http_client, config)
+    client = AsyncContainerMetadataClient(http_client, config)
 
     # Valid Host
     uri = URI(scheme="http", host=host)
@@ -81,7 +81,7 @@ async def test_metadata_client_https_host():
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
     config = ContainerCredentialsConfig()
-    client = ContainerMetadataClient(http_client, config)
+    client = AsyncContainerMetadataClient(http_client, config)
 
     # Valid HTTPS Host
     uri = URI(scheme="https", host="169.254.170.2")
@@ -95,7 +95,7 @@ async def test_metadata_client_invalid_host():
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
     config = ContainerCredentialsConfig(retries=0)
-    client = ContainerMetadataClient(http_client, config)
+    client = AsyncContainerMetadataClient(http_client, config)
 
     # Invalid Host
     uri = URI(scheme="http", host="169.254.169.254")
@@ -108,7 +108,7 @@ async def test_metadata_client_invalid_host():
 async def test_metadata_client_non_200_response():
     http_client = mock_http_client_response(404, b"not found")
     config = ContainerCredentialsConfig(retries=1)
-    client = ContainerMetadataClient(http_client, config)
+    client = AsyncContainerMetadataClient(http_client, config)
 
     uri = URI(scheme="http", host="169.254.170.2")
     with pytest.raises(SmithyIdentityError) as e:
@@ -125,7 +125,7 @@ async def test_metadata_client_invalid_json():
         200, b"<!DOCTYPE html><head><title>proxy</title>"
     )
     config = ContainerCredentialsConfig(retries=1)
-    client = ContainerMetadataClient(http_client, config)
+    client = AsyncContainerMetadataClient(http_client, config)
 
     uri = URI(scheme="http", host="169.254.170.2")
     with pytest.raises(SmithyIdentityError):
@@ -142,7 +142,7 @@ def _assert_expected_identity(identity: AWSCredentialsIdentity) -> None:
 async def test_metadata_client_retries():
     http_client = AsyncMock()
     config = ContainerCredentialsConfig(retries=2)
-    client = ContainerMetadataClient(http_client, config)
+    client = AsyncContainerMetadataClient(http_client, config)
     uri = URI(scheme="http", host="169.254.170.2", path="/task")
     http_client.send.side_effect = Exception()
 

@@ -235,7 +235,7 @@ public final class SetupGenerator {
     ) {
         var extras = new LinkedHashMap<String, List<String>>();
 
-        // Let users opt into the CRT transport (AWSCRTHTTPClient) without guessing a compatible
+        // Let users opt into the CRT transport (AsyncAWSCRTHTTPClient) without guessing a compatible
         // awscrt version, by re-exporting smithy_http's awscrt extra. This keeps the version
         // constraint sourced from smithy-http, the single source of truth. Skipped when the client
         // already requires awscrt as a hard dependency, where there is nothing to opt into. No

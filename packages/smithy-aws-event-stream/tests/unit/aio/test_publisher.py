@@ -12,8 +12,9 @@ from typing import Any
 
 import pytest
 from smithy_aws_event_stream._private.serializers import EventSerializer
-from smithy_aws_event_stream.aio import AWSEventPublisher, SigningConfig
+from smithy_aws_event_stream.aio import AsyncAWSEventPublisher
 from smithy_aws_event_stream.events import Event, EventMessage
+from smithy_aws_event_stream.signing import SigningConfig
 from smithy_json import JSONCodec
 
 from .._private import (
@@ -52,8 +53,8 @@ def _user_event() -> EventStreamMessageEvent:
     return EventStreamMessageEvent(value=MessageEvent(body_member="one"))
 
 
-def _publisher(writer: _CollectingWriter, **kwargs: Any) -> AWSEventPublisher[Any]:
-    return AWSEventPublisher[Any](
+def _publisher(writer: _CollectingWriter, **kwargs: Any) -> AsyncAWSEventPublisher[Any]:
+    return AsyncAWSEventPublisher[Any](
         payload_codec=JSONCodec(),
         async_writer=writer,
         initial_message=_initial(),
@@ -85,13 +86,13 @@ async def test_initial_request_is_signed_first() -> None:
     signed_order: list[str] = []
 
     class _RecordingSigner:
-        async def sign(
+        def sign(
             self, *, event: EventMessage, identity: Any, properties: Any
         ) -> EventMessage:
             signed_order.append(str(event.headers.get(":event-type")))
             return event
 
-        async def sign_empty(
+        def sign_empty(
             self, *, event: EventMessage, identity: Any, properties: Any
         ) -> EventMessage:
             signed_order.append("<empty>")

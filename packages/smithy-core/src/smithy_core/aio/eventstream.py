@@ -11,9 +11,6 @@ __all__ = [
     "AsyncDuplexEventStream",
     "AsyncInputEventStream",
     "AsyncOutputEventStream",
-    "DuplexEventStream",
-    "InputEventStream",
-    "OutputEventStream",
 ]
 
 
@@ -87,6 +84,12 @@ class AsyncDuplexEventStream[
         self.input_stream = input_stream
         self._output_future = output_future
 
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+        await self.close()
+
     async def await_output(self) -> tuple[O, AsyncEventReceiver[OE]]:
         """Await the operation's output.
 
@@ -119,12 +122,6 @@ class AsyncDuplexEventStream[
 
         await self.input_stream.close()
         await self.output_stream.close()
-
-    async def __aenter__(self) -> Self:
-        return self
-
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        await self.close()
 
 
 class AsyncInputEventStream[IE: SerializeableShape, O]:
@@ -167,6 +164,12 @@ class AsyncInputEventStream[IE: SerializeableShape, O]:
         self.input_stream = input_stream
         self._output_future = output_future
 
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+        await self.close()
+
     async def await_output(self) -> O:
         """Await the operation's initial response.
 
@@ -185,12 +188,6 @@ class AsyncInputEventStream[IE: SerializeableShape, O]:
     async def close(self) -> None:
         """Closes the event stream."""
         await self.input_stream.close()
-
-    async def __aenter__(self) -> Self:
-        return self
-
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        await self.close()
 
 
 class AsyncOutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
@@ -231,19 +228,12 @@ class AsyncOutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
         self.output_stream = output_stream
         self.output = output
 
-    async def close(self) -> None:
-        """Closes the event stream."""
-        await self.output_stream.close()
-
     async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
         await self.close()
 
-
-# TODO(sync-renames): drop once aws-sdk-python's hand-written integration test
-# harness imports the Async*-prefixed names instead of these pre-rename ones.
-DuplexEventStream = AsyncDuplexEventStream
-InputEventStream = AsyncInputEventStream
-OutputEventStream = AsyncOutputEventStream
+    async def close(self) -> None:
+        """Closes the event stream."""
+        await self.output_stream.close()

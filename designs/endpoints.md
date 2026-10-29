@@ -20,7 +20,7 @@ host is wrong in partitions with other DNS suffixes, such as China and the ISO
 Regions. Clients also can't bind some parameters the rules need yet: the config
 has no FIPS or dual-stack fields, and the identity's account ID, which
 DynamoDB's account-based endpoints read, resolves after the endpoint. Generic
-clients default to `AsyncStaticEndpointResolver`, which only forwards
+clients default to `StaticEndpointResolver`, which only forwards
 `endpoint_uri`. Code generation already embeds the raw `endpointBdd` trait in
 every service schema, but nothing reads it yet.
 
@@ -135,8 +135,7 @@ flowchart LR
     end
 
     subgraph core["smithy-core"]
-        resolver["AsyncBddEndpointResolver"]
-        sync_resolver["BddEndpointResolver"]
+        resolver["BddEndpointResolver"]
         binding["Parameter binding"]
         engine["Rules engine and<br/>standard library"]
     end
@@ -171,8 +170,7 @@ These are the new public names. Everything else is private:
 
 | Name                                                                             | Module                                            | Purpose                                                                                       |
 | -------------------------------------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `BddEndpointResolver`                                                            | `smithy_core.endpoints`                           | The sync resolver, which holds the resolution logic                                           |
-| `AsyncBddEndpointResolver`                                                       | `smithy_core.aio.endpoints`                       | The async resolver that generated config constructs, which delegates to `BddEndpointResolver` |
+| `BddEndpointResolver`                                                            | `smithy_core.endpoints`                           | The resolver that generated config constructs, for sync and async clients                     |
 | `EndpointBdd`                                                                    | `smithy_core.endpoints`                           | The BDD data that generated modules hold and the resolver takes                               |
 | `RulesExtension`, `BuiltinBinding`, `BuiltinGetter`, `EndpointAuthSchemeFactory` | `smithy_core.endpoints`                           | Add rules functions, built-in bindings, and auth schemes                                      |
 | `Endpoint.auth_schemes`, `EndpointAuthScheme`, `ENDPOINT_HEADERS`                | `smithy_core.endpoints`, `smithy_core.interfaces` | An endpoint's auth schemes, and the endpoint property for the headers the rules add           |
@@ -187,8 +185,7 @@ Resolution never awaits, so the engine, `ParamPlan`, and the rules libraries are
 sync code under `smithy_core.endpoints` and `smithy_aws_core.endpoints`. This
 design defines the sync `EndpointResolver` protocol in `smithy_core.interfaces`,
 which is a placeholder today. `BddEndpointResolver` implements it and holds the
-resolution logic. `AsyncBddEndpointResolver` implements `AsyncEndpointResolver`,
-and its `resolve_endpoint` delegates to a `BddEndpointResolver`.
+resolution logic, and sync and async clients both call it.
 
 ### What a Generated Client Gets
 
@@ -203,11 +200,11 @@ A generated client gets data and config, and no endpoint logic:
   at runtime. They no longer embed the raw `endpointBdd` trait.
 
 AWS clients pass the AWS extension to the default resolver, and other clients
-construct `AsyncBddEndpointResolver(BDD)` with no extensions:
+construct `BddEndpointResolver(BDD)` with no extensions:
 
 ```python
 "endpoint_resolver": FieldSpec(
-    default_factory=lambda: AsyncBddEndpointResolver(
+    default_factory=lambda: BddEndpointResolver(
         BDD, extensions=[AWS_RULES_EXTENSION]
     )
 ),
@@ -276,7 +273,7 @@ of a generated package, and uses the same runtime pieces as a generated client:
   `EndpointBdd` that code generation writes (see
   [Follow-Up Work](#follow-up-work)).
 - The client builds
-  `AsyncBddEndpointResolver(bdd, extensions=[AWS_RULES_EXTENSION])` and keeps it
+  `BddEndpointResolver(bdd, extensions=[AWS_RULES_EXTENSION])` and keeps it
   with the loaded model.
 - Parameter binding reads the same context parameter traits from the runtime
   schemas, and reads input members by the same Python names that dynamic models
@@ -296,9 +293,7 @@ packages/smithy-core/src/smithy_core/
 ├── auth.py                     # RESOLVED_IDENTITY
 ├── traits.py                   # The three context parameter traits
 ├── interfaces/__init__.py      # Defines the sync EndpointResolver protocol
-├── aio/
-│   ├── client.py               # Resolves the identity before the endpoint
-│   └── endpoints.py            # AsyncBddEndpointResolver, which delegates to BddEndpointResolver
+├── _pipeline.py                # Resolves the identity before the endpoint
 └── endpoints/                  # NEW: replaces endpoints.py
     ├── __init__.py             # Re-exports BddEndpointResolver, EndpointBdd, RulesExtension
     ├── _engine.py              # RulesEngine
@@ -577,9 +572,9 @@ fields are set in code only.
 
 ### Request Pipeline
 
-`AsyncRequestPipeline` now resolves the auth scheme and the identity before the
-endpoint. Green marks the steps that move. Today, they resolve after the
-endpoint, just before signing:
+The shared request pipeline now resolves the auth scheme and the identity
+before the endpoint. Green marks the steps that move. Today, they resolve after
+the endpoint, just before signing:
 
 ```mermaid
 flowchart LR
@@ -610,7 +605,7 @@ errors surface before endpoint errors.
 apply `ENDPOINT_HEADERS` yet, and in the AWS models only S3 Control's rules add
 headers. Setting `endpoint_uri` supplies `SDK::Endpoint`, so the rules apply
 their custom-endpoint behavior, such as rejecting FIPS with a custom endpoint.
-Setting `endpoint_resolver=AsyncStaticEndpointResolver()` bypasses the rules.
+Setting `endpoint_resolver=StaticEndpointResolver()` bypasses the rules.
 
 ### Endpoint Auth Schemes
 

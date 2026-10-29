@@ -7,18 +7,14 @@ from typing import Any
 
 import pytest
 from smithy_core import URI
-from smithy_core.aio.endpoints import AsyncBddEndpointResolver
 from smithy_core.endpoints import (
-    ENDPOINT_PARAMETERS,
     BddEndpointResolver,
     EndpointBdd,
-    EndpointResolverParams,
     RulesExtension,
 )
 from smithy_core.endpoints._types import Tag
 from smithy_core.exceptions import EndpointResolutionError
 from smithy_core.shapes import ShapeType
-from smithy_core.types import TypedProperties
 
 from ._bdds import (
     Config,
@@ -26,10 +22,8 @@ from ._bdds import (
     chain,
     echo,
     endpoint,
-    error,
     make_operation,
     resolve,
-    string,
 )
 
 STRING = ShapeType.STRING.value
@@ -323,19 +317,3 @@ def test_bdds_without_sdk_endpoint_use_endpoint_uri_as_given() -> None:
     uri = URI(host="given")
     assert resolve(resolver, config=Config(endpoint_uri=uri)).uri is uri
     assert resolve(resolver).uri == URI(host="r.example.com")
-
-
-async def test_async_resolver() -> None:
-    upper = chain(
-        [string("S")],
-        [((Tag.CALL, "x.upper", (Tag.REF, "S")), "u")],
-        [endpoint("https://{u}"), error("no")],
-    )
-    extension = RulesExtension(functions={"x.upper": str.upper})
-    resolver = AsyncBddEndpointResolver(upper, extensions=[extension])
-    context = TypedProperties({"config": Config()})
-    context[ENDPOINT_PARAMETERS] = {"S": "h"}
-    params = EndpointResolverParams(
-        operation=make_operation(), input=None, context=context
-    )
-    assert (await resolver.resolve_endpoint(params)).uri == URI(host="H")

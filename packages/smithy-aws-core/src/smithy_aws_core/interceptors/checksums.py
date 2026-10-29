@@ -2,17 +2,17 @@
 #  SPDX-License-Identifier: Apache-2.0
 import logging
 from dataclasses import replace
-from typing import Any
+from typing import Any, Protocol
 
 from smithy_core._model_naming import member_field_name
-from smithy_core.aio.client import OPERATION
+from smithy_core.client import OPERATION
 from smithy_core.interceptors import InputContext, Interceptor, ResponseContext
 from smithy_core.interfaces import TypedProperties
 from smithy_core.schemas import APIOperation
 from smithy_core.types import PropertyKey
-from smithy_http.aio import HTTPResponse
-from smithy_http.aio.interfaces import HTTPRequest
-from smithy_http.aio.interfaces import HTTPResponse as HTTPResponseInterface
+from smithy_http import HTTPResponse
+from smithy_http.interfaces import HTTPRequest
+from smithy_http.interfaces import HTTPResponse as HTTPResponseInterface
 
 from .._private.checksums import (
     assert_checksums_installed,
@@ -20,13 +20,21 @@ from .._private.checksums import (
     decode_checksum,
     response_validation_order,
 )
-from ..aio.checksums import AsyncChecksumStream
 from ..business_metrics import AwsFeatureId, register_feature_id
+from ..checksums import ChecksumStream
 from ..traits import HTTPChecksumTrait
 
-__all__ = ["FlexibleChecksumsInterceptor"]
+__all__ = ["ChecksumStreamFactory", "FlexibleChecksumsInterceptor"]
 
 logger = logging.getLogger(__name__)
+
+
+class ChecksumStreamFactory(Protocol):
+    """Wraps a response payload in a stream that validates its checksum."""
+
+    def __call__(
+        self, source: Any, /, *, checksum_algorithm: str, expected: bytes
+    ) -> Any: ...
 
 
 class FlexibleChecksumsInterceptor(
@@ -39,12 +47,15 @@ class FlexibleChecksumsInterceptor(
     trait are passed through unchanged.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, stream: ChecksumStreamFactory = ChecksumStream) -> None:
         """Initialize the interceptor.
 
+        :param stream: Wraps validated response payloads. Async clients pass
+            ``AsyncChecksumStream``.
         :raises MissingDependencyError: If smithy-checksums isn't installed.
         """
         assert_checksums_installed()
+        self._stream = stream
 
     def modify_before_serialization(self, context: InputContext[Any]) -> Any:
         operation = context.properties.get(OPERATION)
@@ -96,7 +107,7 @@ class FlexibleChecksumsInterceptor(
                 status=response.status,
                 fields=response.fields,
                 reason=response.reason,
-                body=AsyncChecksumStream(
+                body=self._stream(
                     response.body, checksum_algorithm=algorithm, expected=expected
                 ),
             )

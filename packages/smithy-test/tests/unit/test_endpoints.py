@@ -5,10 +5,10 @@ from typing import Any
 
 import pytest
 from smithy_core import URI
-from smithy_core.aio.endpoints import AsyncBddEndpointResolver
 from smithy_core.documents import Document
 from smithy_core.endpoints import (
     RESOLVED_ENDPOINT,
+    BddEndpointResolver,
     Endpoint,
     EndpointAuthScheme,
     EndpointBdd,
@@ -19,7 +19,8 @@ from smithy_core.exceptions import EndpointResolutionError
 from smithy_core.interceptors import Interceptor, RequestContext
 from smithy_core.shapes import ShapeID
 from smithy_core.types import TypedProperties
-from smithy_test.aio import check_client_case_async, check_rules_case_async
+from smithy_test import check_rules_case
+from smithy_test.aio import check_client_case_async
 
 # isSet(Region) gives a regional endpoint with properties and headers, else an error.
 BDD = EndpointBdd(
@@ -73,18 +74,18 @@ EXTENSION = RulesExtension(
 )
 
 
-def _resolver() -> AsyncBddEndpointResolver:
-    return AsyncBddEndpointResolver(BDD, extensions=[EXTENSION])
+def _resolver() -> BddEndpointResolver:
+    return BddEndpointResolver(BDD, extensions=[EXTENSION])
 
 
-async def test_rules_cases_resolve_only_the_given_values() -> None:
-    await check_rules_case_async(
+def test_rules_cases_resolve_only_the_given_values() -> None:
+    check_rules_case(
         _resolver(),
         {"Region": "us-west-2", "Bucket": "b"},
         ENDPOINT,
         extensions=[EXTENSION],
     )
-    await check_rules_case_async(_resolver(), {}, {"error": "Missing Region"})
+    check_rules_case(_resolver(), {}, {"error": "Missing Region"})
 
 
 @pytest.mark.parametrize(
@@ -110,13 +111,11 @@ async def test_rules_cases_resolve_only_the_given_values() -> None:
         ({}, {"error": "Other"}, "Expected error 'Other'"),
     ],
 )
-async def test_rules_cases_fail_on_mismatches(
+def test_rules_cases_fail_on_mismatches(
     params: dict[str, Any], expect: dict[str, Any], message: str
 ) -> None:
     with pytest.raises(AssertionError, match=message):
-        await check_rules_case_async(
-            _resolver(), params, expect, extensions=[EXTENSION]
-        )
+        check_rules_case(_resolver(), params, expect, extensions=[EXTENSION])
 
 
 class _Request:

@@ -5,8 +5,7 @@ import logging
 from smithy_core.documents import Document
 from smithy_core.response import ResponseMetadata
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_http.aio.interfaces import HTTPResponse
-from smithy_http.interfaces import Field
+from smithy_http.interfaces import Field, HTTPResponse
 
 __all__ = [
     "parse_document_discriminator",
@@ -51,15 +50,6 @@ def parse_retry_after(response: HTTPResponse) -> float | None:
             error,
         )
         return None
-
-
-def _first_value(field: Field) -> str | None:
-    """The field's first value, or None if it has none or the first is empty.
-
-    Identifiers are single opaque tokens, so a repeated header is read as its
-    first value rather than joined the way ``as_string`` would.
-    """
-    return field.values[0] or None if field.values else None
 
 
 def parse_response_metadata(response: HTTPResponse) -> ResponseMetadata:
@@ -116,3 +106,12 @@ def parse_error_code(code: str, default_namespace: str | None) -> ShapeID | None
         return None
 
     return ShapeID.from_parts(name=code, namespace=default_namespace)
+
+
+def _first_value(field: Field) -> str | None:
+    """The field's first value, or None if it has none or the first is empty.
+
+    Identifiers are single opaque tokens, so a repeated header is read as its
+    first value rather than joined the way ``as_string`` would.
+    """
+    return field.values[0] or None if field.values else None

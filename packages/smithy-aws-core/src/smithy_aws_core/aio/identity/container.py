@@ -10,10 +10,11 @@ from urllib.parse import urlparse
 
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
+from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_http import Field, Fields
-from smithy_http.aio import HTTPRequest
-from smithy_http.aio.interfaces import AsyncHTTPClient, HTTPResponse
+from smithy_http import Field, Fields, HTTPRequest
+from smithy_http.aio.interfaces import AsyncHTTPClient
+from smithy_http.interfaces import HTTPResponse
 
 from smithy_aws_core.identity.components import (
     AWSCredentialsIdentity,
@@ -31,7 +32,7 @@ _CONTAINER_METADATA_ALLOWED_HOSTS = {
 _SLEEP_SECONDS = 1
 
 
-class ContainerMetadataClient:
+class AsyncContainerMetadataClient:
     """Client for remote credential retrieval in Container environments like ECS/EKS."""
 
     def __init__(
@@ -39,17 +40,6 @@ class ContainerMetadataClient:
     ):
         self._http_client = http_client
         self._config = config
-
-    def _validate_allowed_url(self, uri: URI) -> None:
-        if self._is_loopback(uri.host):
-            return
-
-        if not self._is_allowed_container_metadata_host(uri.host):
-            raise SmithyIdentityError(
-                f"Unsupported host '{uri.host}'. "
-                f"Can only retrieve metadata from a loopback address or "
-                f"one of: {', '.join(_CONTAINER_METADATA_ALLOWED_HOSTS)}"
-            )
 
     async def get_credentials(self, uri: URI, fields: Fields) -> dict[str, str]:
         self._validate_allowed_url(uri)
@@ -65,7 +55,7 @@ class ContainerMetadataClient:
                     fields=fields,
                 )
                 response: HTTPResponse = await self._http_client.send(request)
-                body = await response.consume_body_async()
+                body = await read_streaming_blob_async(response.body)
                 if response.status != 200:
                     raise SmithyIdentityError(
                         f"Container metadata service returned {response.status}: "
@@ -85,6 +75,17 @@ class ContainerMetadataClient:
         raise SmithyIdentityError(
             f"Failed to retrieve container metadata after {self._config.retries} attempt(s)"
         ) from last_exc
+
+    def _validate_allowed_url(self, uri: URI) -> None:
+        if self._is_loopback(uri.host):
+            return
+
+        if not self._is_allowed_container_metadata_host(uri.host):
+            raise SmithyIdentityError(
+                f"Unsupported host '{uri.host}'. "
+                f"Can only retrieve metadata from a loopback address or "
+                f"one of: {', '.join(_CONTAINER_METADATA_ALLOWED_HOSTS)}"
+            )
 
     def _is_loopback(self, hostname: str) -> bool:
         try:
@@ -124,7 +125,48 @@ class AsyncContainerCredentialsResolver(
         )
         self._http_client = http_client
         self._config = config or ContainerCredentialsConfig()
-        self._client = ContainerMetadataClient(http_client, self._config)
+        self._client = AsyncContainerMetadataClient(http_client, self._config)
+        self._credentials = None
+
+    async def get_identity(
+        self, *, properties: AWSIdentityProperties
+    ) -> AWSCredentialsIdentity:
+        if (
+            self._credentials is not None
+            and self._credentials.expiration
+            and datetime.now(UTC) < self._credentials.expiration
+        ):
+            return self._credentials
+
+        uri = await self._resolve_uri_from_env()
+        fields = await self._resolve_fields_from_env()
+        creds = await self._client.get_credentials(uri, fields)
+
+        access_key_id = creds.get("AccessKeyId")
+        secret_access_key = creds.get("SecretAccessKey")
+        session_token = creds.get("Token")
+        expiration = creds.get("Expiration")
+        account_id = creds.get("AccountId")
+
+        if isinstance(expiration, str):
+            expiration = datetime.fromisoformat(expiration).replace(tzinfo=UTC)
+
+        if access_key_id is None or secret_access_key is None:
+            raise SmithyIdentityError(
+                "AccessKeyId and SecretAccessKey are required for container credentials"
+            )
+
+        self._credentials = AWSCredentialsIdentity(
+            access_key_id=access_key_id,
+            secret_access_key=secret_access_key,
+            session_token=session_token,
+            expiration=expiration,
+            account_id=account_id,
+        )
+        return self._credentials
+
+    async def invalidate(self) -> None:
+        """Discard cached credentials so the next resolution re-queries the endpoint."""
         self._credentials = None
 
     async def _resolve_uri_from_env(self) -> URI:
@@ -174,44 +216,3 @@ class AsyncContainerCredentialsResolver(
                 raise SmithyIdentityError(
                     f"Unable to read valid utf-8 bytes from {filename}."
                 ) from e
-
-    async def get_identity(
-        self, *, properties: AWSIdentityProperties
-    ) -> AWSCredentialsIdentity:
-        if (
-            self._credentials is not None
-            and self._credentials.expiration
-            and datetime.now(UTC) < self._credentials.expiration
-        ):
-            return self._credentials
-
-        uri = await self._resolve_uri_from_env()
-        fields = await self._resolve_fields_from_env()
-        creds = await self._client.get_credentials(uri, fields)
-
-        access_key_id = creds.get("AccessKeyId")
-        secret_access_key = creds.get("SecretAccessKey")
-        session_token = creds.get("Token")
-        expiration = creds.get("Expiration")
-        account_id = creds.get("AccountId")
-
-        if isinstance(expiration, str):
-            expiration = datetime.fromisoformat(expiration).replace(tzinfo=UTC)
-
-        if access_key_id is None or secret_access_key is None:
-            raise SmithyIdentityError(
-                "AccessKeyId and SecretAccessKey are required for container credentials"
-            )
-
-        self._credentials = AWSCredentialsIdentity(
-            access_key_id=access_key_id,
-            secret_access_key=secret_access_key,
-            session_token=session_token,
-            expiration=expiration,
-            account_id=account_id,
-        )
-        return self._credentials
-
-    async def invalidate(self) -> None:
-        """Discard cached credentials so the next resolution re-queries the endpoint."""
-        self._credentials = None

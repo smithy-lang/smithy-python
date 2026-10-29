@@ -1,4 +1,4 @@
 {
   "type": "feature",
-  "description": "Added response checksum validation for operations with the `httpChecksum` trait, configured with the new `response_checksum_validation` setting (`AWS_RESPONSE_CHECKSUM_VALIDATION`). Validation happens when the response payload is read to the end, and a mismatch raises `ChecksumMismatchError`."
+  "description": "Added response checksum validation for operations with the `httpChecksum` trait, for sync and async clients, configured with the new `response_checksum_validation` setting (`AWS_RESPONSE_CHECKSUM_VALIDATION`). Validation happens when the response payload is read to the end, through `smithy_aws_core.checksums.ChecksumStream` or `smithy_aws_core.aio.checksums.AsyncChecksumStream`, and a mismatch raises `ChecksumMismatchError`."
 }

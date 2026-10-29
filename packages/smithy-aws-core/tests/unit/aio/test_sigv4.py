@@ -1,8 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
+from typing import Any
 
+import pytest
 from smithy_aws_core.aio.auth.sigv4 import AsyncSigV4AuthScheme
+from smithy_aws_core.auth.sigv4 import SigV4AuthScheme
 from smithy_aws_core.business_metrics import (
     FEATURE_IDS,
     AwsFeatureId,
@@ -19,15 +22,23 @@ class _Config:
     aws_session_token: str | None = None
 
 
-def _identity_properties(context: TypedProperties) -> dict[str, object]:
-    scheme = AsyncSigV4AuthScheme(service="svc")
+_SCHEMES = pytest.mark.parametrize(
+    "scheme_type", [SigV4AuthScheme, AsyncSigV4AuthScheme], ids=["sync", "async"]
+)
+
+
+def _identity_properties(
+    scheme_type: Any, context: TypedProperties
+) -> dict[str, object]:
+    scheme = scheme_type(service="svc")
     return dict(scheme.identity_properties(context=context))
 
 
-def test_identity_properties_share_the_call_feature_record() -> None:
+@_SCHEMES
+def test_identity_properties_share_the_call_feature_record(scheme_type: Any) -> None:
     context = TypedProperties({"config": _Config()})
 
-    features = _identity_properties(context)["_feature_ids"]
+    features = _identity_properties(scheme_type, context)["_feature_ids"]
     add_feature_id(features, AwsFeatureId.CREDENTIALS_ENV_VARS)  # type: ignore[arg-type]
 
     # Resolvers add to the same dict the call sends in the User-Agent header.
@@ -35,11 +46,12 @@ def test_identity_properties_share_the_call_feature_record() -> None:
     assert list(context[FEATURE_IDS]) == [AwsFeatureId.CREDENTIALS_ENV_VARS]
 
 
-def test_identity_properties_keep_features_already_recorded() -> None:
+@_SCHEMES
+def test_identity_properties_keep_features_already_recorded(scheme_type: Any) -> None:
     context = TypedProperties({"config": _Config()})
     register_feature_id(context, AwsFeatureId.RETRY_MODE_STANDARD)
 
-    features = _identity_properties(context)["_feature_ids"]
+    features = _identity_properties(scheme_type, context)["_feature_ids"]
 
     assert features is context[FEATURE_IDS]
     assert list(context[FEATURE_IDS]) == [AwsFeatureId.RETRY_MODE_STANDARD]

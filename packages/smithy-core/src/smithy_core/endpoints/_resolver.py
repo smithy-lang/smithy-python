@@ -1,6 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""The endpoint resolver that evaluates an endpoint BDD."""
+"""The endpoint resolvers: one that evaluates an endpoint BDD, one for a static URI."""
 
 from collections.abc import Sequence
 from typing import Any
@@ -89,3 +89,15 @@ class BddEndpointResolver(_EndpointResolver):
         endpoint = self._engine.evaluate(param_values)
         self._last = (param_values, endpoint)
         return endpoint
+
+
+class StaticEndpointResolver(_EndpointResolver):
+    """A basic endpoint resolver that forwards a static URI."""
+
+    def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Endpoint:
+        static_uri = resolve_static_uri(params)
+        if static_uri is None:
+            raise EndpointResolutionError(
+                "Unable to resolve endpoint: endpoint_uri is required"
+            )
+        return Endpoint(uri=static_uri)

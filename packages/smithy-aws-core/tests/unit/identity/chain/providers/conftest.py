@@ -1,10 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import Awaitable, Callable, Mapping
+from inspect import isawaitable
 from typing import Any
 
 import pytest
-from smithy_aws_core.aio.identity.chain.provider import ChainSetup
+from smithy_aws_core.aio.identity.chain.provider import AsyncChainSetup
 from smithy_aws_core.config.file_parser import Section, StandardizedOutput
 from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.identity import AWSCredentialsIdentity
@@ -32,8 +33,8 @@ def merged_config() -> Callable[..., MergedConfig]:
 
 
 @pytest.fixture
-def setup_provider() -> Callable[..., Awaitable[ChainSetup]]:
-    """Setup a provider with a configured ChainSetup."""
+def setup_provider() -> Callable[..., Awaitable[AsyncChainSetup]]:
+    """Setup a provider with a configured AsyncChainSetup."""
 
     async def _setup(
         provider: Any,
@@ -41,13 +42,14 @@ def setup_provider() -> Callable[..., Awaitable[ChainSetup]]:
         identity_type: type[Identity] = AWSCredentialsIdentity,
         config_file: MergedConfig | None = None,
         profile_name: str | None = None,
-    ) -> ChainSetup:
-        setup = ChainSetup(
+    ) -> AsyncChainSetup:
+        setup = AsyncChainSetup(
             config_file=config_file,
             profile_name=profile_name,
         )
         setup.set_current_provider(provider)
-        await provider.setup(identity_type, setup)
+        if isawaitable(result := provider.setup(identity_type, setup)):
+            await result
         return setup
 
     return _setup

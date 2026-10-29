@@ -4,24 +4,24 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 import pytest
-from smithy_aws_core.aio.identity.chain.provider import ChainSetup
-from smithy_aws_core.aio.identity.chain.providers.profile import (
-    AsyncProfileSessionCredentialsProvider,
-    AsyncProfileStaticCredentialsProvider,
-)
+from smithy_aws_core.aio.identity.chain.provider import AsyncChainSetup
 from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.identity import AWSCredentialsIdentity
+from smithy_aws_core.identity.chain.providers.profile import (
+    ProfileSessionCredentialsProvider,
+    ProfileStaticCredentialsProvider,
+)
 
 from .conftest import OtherIdentity
 
 
 @pytest.mark.parametrize(
     "provider",
-    [AsyncProfileSessionCredentialsProvider(), AsyncProfileStaticCredentialsProvider()],
+    [ProfileSessionCredentialsProvider(), ProfileStaticCredentialsProvider()],
 )
 async def test_ignores_non_aws_identity_type(
     provider: Any,
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
 ) -> None:
     setup = await setup_provider(provider, identity_type=OtherIdentity)
 
@@ -31,11 +31,11 @@ async def test_ignores_non_aws_identity_type(
 
 @pytest.mark.parametrize(
     "provider",
-    [AsyncProfileSessionCredentialsProvider(), AsyncProfileStaticCredentialsProvider()],
+    [ProfileSessionCredentialsProvider(), ProfileStaticCredentialsProvider()],
 )
 async def test_requires_active_profile(
     provider: Any,
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
 ) -> None:
     setup = await setup_provider(provider)
 
@@ -45,11 +45,11 @@ async def test_requires_active_profile(
 
 @pytest.mark.parametrize(
     "provider",
-    [AsyncProfileSessionCredentialsProvider(), AsyncProfileStaticCredentialsProvider()],
+    [ProfileSessionCredentialsProvider(), ProfileStaticCredentialsProvider()],
 )
 async def test_missing_profile_does_not_register(
     provider: Any,
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
@@ -66,7 +66,7 @@ async def test_missing_profile_does_not_register(
     "provider, profile, expected",
     [
         (
-            AsyncProfileSessionCredentialsProvider(),
+            ProfileSessionCredentialsProvider(),
             {
                 "aws_access_key_id": "akid",
                 "aws_secret_access_key": "secret",
@@ -81,7 +81,7 @@ async def test_missing_profile_does_not_register(
             ),
         ),
         (
-            AsyncProfileStaticCredentialsProvider(),
+            ProfileStaticCredentialsProvider(),
             {
                 "aws_access_key_id": "akid",
                 "aws_secret_access_key": "secret",
@@ -99,7 +99,7 @@ async def test_registers_terminal_resolver_for_complete_profile(
     provider: Any,
     profile: dict[str, str | dict[str, str]],
     expected: AWSCredentialsIdentity,
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
@@ -116,11 +116,11 @@ async def test_registers_terminal_resolver_for_complete_profile(
 
 @pytest.mark.parametrize(
     "provider",
-    [AsyncProfileSessionCredentialsProvider(), AsyncProfileStaticCredentialsProvider()],
+    [ProfileSessionCredentialsProvider(), ProfileStaticCredentialsProvider()],
 )
 async def test_defers_when_selected_profile_declares_assume_role(
     provider: Any,
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
@@ -147,12 +147,12 @@ async def test_defers_when_selected_profile_declares_assume_role(
     "provider, properties",
     [
         (
-            AsyncProfileSessionCredentialsProvider(),
+            ProfileSessionCredentialsProvider(),
             {"aws_access_key_id": "akid", "aws_secret_access_key": "secret"},
         ),
-        (AsyncProfileStaticCredentialsProvider(), {"aws_access_key_id": "akid"}),
+        (ProfileStaticCredentialsProvider(), {"aws_access_key_id": "akid"}),
         (
-            AsyncProfileStaticCredentialsProvider(),
+            ProfileStaticCredentialsProvider(),
             {
                 "aws_access_key_id": {"nested": "value"},
                 "aws_secret_access_key": "secret",
@@ -163,7 +163,7 @@ async def test_defers_when_selected_profile_declares_assume_role(
 async def test_rejects_incomplete_or_non_string_keys(
     provider: Any,
     properties: dict[str, Any],
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(

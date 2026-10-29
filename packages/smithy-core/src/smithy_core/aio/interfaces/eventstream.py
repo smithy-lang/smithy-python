@@ -12,6 +12,12 @@ class AsyncEventPublisher[E: SerializeableShape](Protocol):
     This may be used as a context manager to ensure the stream is closed before exiting.
     """
 
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+        await self.close()
+
     async def send(self, event: E) -> None:
         """Sends an event to the service.
 
@@ -22,12 +28,6 @@ class AsyncEventPublisher[E: SerializeableShape](Protocol):
     async def close(self) -> None:
         """Closes the event stream."""
         ...
-
-    async def __aenter__(self) -> Self:
-        return self
-
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        await self.close()
 
 
 class AsyncEventReceiver[E: DeserializeableShape](Protocol):
@@ -40,6 +40,22 @@ class AsyncEventReceiver[E: DeserializeableShape](Protocol):
     exiting.
     """
 
+    async def __anext__(self) -> E:
+        result = await self.receive()
+        if result is None:
+            await self.close()
+            raise StopAsyncIteration
+        return result
+
+    def __aiter__(self) -> Self:
+        return self
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+        await self.close()
+
     async def receive(self) -> E | None:
         """Receive a single event from the service.
 
@@ -51,19 +67,3 @@ class AsyncEventReceiver[E: DeserializeableShape](Protocol):
     async def close(self) -> None:
         """Closes the event stream."""
         ...
-
-    async def __anext__(self) -> E:
-        result = await self.receive()
-        if result is None:
-            await self.close()
-            raise StopAsyncIteration
-        return result
-
-    def __aiter__(self) -> Self:
-        return self
-
-    async def __enter__(self) -> Self:
-        return self
-
-    async def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        await self.close()

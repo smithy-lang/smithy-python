@@ -1,0 +1,94 @@
+Dual-mode symbols (async in aio, sync twin outside):
+  aws_sdk_signers/
+    aio/
+      interfaces/
+        io.py
+          AsyncByteStream  ByteStream
+          AsyncSeekable    Seekable
+      signers.py
+        AsyncSigV4Signer  SigV4Signer
+  smithy_aws_core/
+    aio/
+      auth/
+        sigv4.py
+          AsyncSigV4AuthScheme  SigV4AuthScheme
+      checksums.py
+        AsyncChecksumStream  ChecksumStream
+      config/
+        aws_config.py
+          AsyncAwsConfig           AwsConfig
+          AsyncAwsConfigOverrides  AwsConfigOverrides
+        context.py
+          AsyncSharedConfigContext  SharedConfigContext
+          load_config_async         load_config
+        file_parser.py
+          parse_config_file_async  parse_config_file
+        filesystem.py
+          AsyncDefaultFileSystem  DefaultFileSystem
+          AsyncFileSystem         FileSystem
+      identity/
+        chain/
+          __init__.py
+            AsyncIdentityChain  IdentityChain  (smithy_aws_core.identity.chain.resolver)
+          provider.py
+            AsyncChainIdentityProvider  ChainIdentityProvider
+            AsyncChainSetup             ChainSetup
+            AsyncNamedResolver          NamedResolver
+        environment.py
+          AsyncEnvironmentCredentialsResolver  EnvironmentCredentialsResolver
+        process.py
+          AsyncProcessCredentialsResolver  ProcessCredentialsResolver
+        static.py
+          AsyncStaticCredentialsResolver  StaticCredentialsResolver
+      protocols.py
+        AsyncAwsJson10ClientProtocol  AwsJson10ClientProtocol
+        AsyncAwsJson11ClientProtocol  AwsJson11ClientProtocol
+        AsyncRestJsonClientProtocol   RestJsonClientProtocol
+        AsyncRestXmlClientProtocol    RestXmlClientProtocol
+  smithy_core/
+    aio/
+      client.py
+        AsyncClient           Client
+        AsyncRequestPipeline  RequestPipeline
+      identity.py
+        AsyncCachingIdentityResolver  CachingIdentityResolver
+        AsyncChainedIdentityResolver  ChainedIdentityResolver
+      interfaces/
+        __init__.py
+          AsyncClientProtocol         ClientProtocol
+          AsyncClientTransport        ClientTransport
+          AsyncDuplexClientTransport  DuplexClientTransport
+        auth.py
+          AsyncAuthScheme  AuthScheme
+          AsyncSigner      Signer
+        eventstream.py
+          AsyncEventPublisher  EventPublisher
+          AsyncEventReceiver   EventReceiver
+        identity.py
+          AsyncIdentityResolver  IdentityResolver
+      program.py
+        run_program_async  run_program
+      types.py
+        AsyncBytesReader          BytesReader  (smithy_core.interfaces)
+        AsyncSeekableBytesReader  SeekableBytesReader  (smithy_core.interfaces)
+      utils.py
+        read_streaming_blob_async  read_streaming_blob
+  smithy_http/
+    aio/
+      auth/
+        apikey.py
+          AsyncAPIKeyAuthScheme      APIKeyAuthScheme
+          AsyncAPIKeyResolverConfig  APIKeyResolverConfig
+      identity/
+        apikey.py
+          AsyncAPIKeyIdentityResolver  APIKeyIdentityResolver
+      interfaces/
+        __init__.py
+          AsyncHTTPClient  HTTPClient
+      protocols.py
+        AsyncRpcV2CborClientProtocol  RpcV2CborClientProtocol
+      restjson.py
+        parse_rest_json_error_info_async  parse_rest_json_error_info
+      testing.py
+        AsyncMockHTTPClient  MockHTTPClient  (smithy_http.testing.mockhttp)
+46 dual-mode symbol(s).

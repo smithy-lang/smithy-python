@@ -11,23 +11,22 @@ import pytest
 from awscrt import http as crt_http  # type: ignore
 from smithy_core import URI
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_http import Field, Fields
-from smithy_http.aio import HTTPRequest
+from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.aio.crt import (
-    AWSCRTHTTPClient,
-    AWSCRTHTTPResponse,
+    AsyncAWSCRTHTTPClient,
+    AsyncAWSCRTHTTPResponse,
 )
 from smithy_http.exceptions import SmithyHTTPError
 
 
 def test_deepcopy_client() -> None:
-    """Test that AWSCRTHTTPClient can be deep copied."""
-    client = AWSCRTHTTPClient()
+    """Test that AsyncAWSCRTHTTPClient can be deep copied."""
+    client = AsyncAWSCRTHTTPClient()
     deepcopy(client)
 
 
 async def test_close_closes_and_clears_pooled_connections() -> None:
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     connections = [AsyncMock(), AsyncMock()]
     client._connections = {
         ("https", "one.example.com", None, False): connections[0],
@@ -43,11 +42,11 @@ async def test_close_closes_and_clears_pooled_connections() -> None:
 
 
 def test_supports_duplex_streaming() -> None:
-    assert AWSCRTHTTPClient.SUPPORTS_DUPLEX_STREAMING is True
+    assert AsyncAWSCRTHTTPClient.SUPPORTS_DUPLEX_STREAMING is True
 
 
 async def test_send_after_close_raises() -> None:
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     await client.close()
 
     with pytest.raises(SmithyHTTPError, match="has been closed"):
@@ -55,7 +54,7 @@ async def test_send_after_close_raises() -> None:
 
 
 async def test_context_manager_cannot_be_reentered() -> None:
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
 
     async with client as entered:
         assert entered is client
@@ -67,7 +66,7 @@ async def test_context_manager_cannot_be_reentered() -> None:
 
 def test_client_marshal_request() -> None:
     """Test that HTTPRequest is correctly marshaled to CRT HttpRequest."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     request = HTTPRequest(
         method="GET",
         destination=URI(
@@ -91,7 +90,7 @@ def test_client_marshal_request() -> None:
     ],
 )
 async def test_port_included_in_host_header(host: str, expected: str) -> None:
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     request = HTTPRequest(
         method="GET",
         destination=URI(
@@ -106,7 +105,7 @@ async def test_port_included_in_host_header(host: str, expected: str) -> None:
 
 async def test_send_http1_uses_body_stream() -> None:
     """Test HTTP/1.1 requests use the CRT body stream."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     request = HTTPRequest(
         method="POST",
         destination=URI(scheme="https", host="example.com", path="/"),
@@ -136,7 +135,7 @@ async def test_send_http1_uses_body_stream() -> None:
 
 async def test_send_http2_uses_body_generator() -> None:
     """Test HTTP/2 requests use the CRT body generator."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     request = HTTPRequest(
         method="POST",
         destination=URI(scheme="https", host="example.com", path="/"),
@@ -169,7 +168,7 @@ async def test_send_http2_uses_body_generator() -> None:
 
 async def test_body_generator_bytes() -> None:
     """Test body generator with bytes input."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     body = b"Hello, World!"
 
     chunks: list[bytes] = []
@@ -181,7 +180,7 @@ async def test_body_generator_bytes() -> None:
 
 async def test_body_generator_bytearray() -> None:
     """Test body generator with bytearray input (should convert to bytes)."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     body = bytearray(b"mutable data")
 
     chunks: list[bytes] = []
@@ -194,7 +193,7 @@ async def test_body_generator_bytearray() -> None:
 
 async def test_body_generator_bytesio() -> None:
     """Test body generator with BytesIO (sync reader)."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     body = BytesIO(b"data from BytesIO")
 
     chunks: list[bytes] = []
@@ -207,7 +206,7 @@ async def test_body_generator_bytesio() -> None:
 
 async def test_body_generator_async_bytes_reader() -> None:
     """Test body generator with AsyncBytesReader."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     body = AsyncBytesReader(b"async reader data")
 
     chunks: list[bytes] = []
@@ -226,7 +225,7 @@ async def test_body_generator_async_iterable() -> None:
         yield b"chunk2"
         yield b"chunk3"
 
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     body = custom_generator()
 
     chunks: list[bytes] = []
@@ -244,7 +243,7 @@ async def test_body_generator_async_iterable_with_bytearray() -> None:
         yield bytearray(b"bytearray chunk")
         yield b"more bytes"
 
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     body = generator_with_bytearray()
 
     chunks: list[bytes] = []
@@ -267,7 +266,7 @@ async def test_body_generator_async_byte_stream() -> None:
             await asyncio.sleep(0)
             return self._data.read(size)
 
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     body = CustomAsyncStream(b"x" * 100000)  # 100KB of data
 
     chunks: list[bytes] = []
@@ -282,7 +281,7 @@ async def test_body_generator_async_byte_stream() -> None:
 
 async def test_body_generator_empty_bytes() -> None:
     """Test body generator with empty bytes."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     body = b""
 
     chunks: list[bytes] = []
@@ -294,7 +293,7 @@ async def test_body_generator_empty_bytes() -> None:
 
 async def test_body_stream_bytes() -> None:
     """Test body stream with bytes input."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
 
     body_stream = await client._create_body_stream(b"Hello, World!")
 
@@ -304,7 +303,7 @@ async def test_body_stream_bytes() -> None:
 
 async def test_body_stream_bytesio() -> None:
     """Test body stream with BytesIO."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     body = BytesIO(b"data from BytesIO")
 
     body_stream = await client._create_body_stream(body)
@@ -322,7 +321,7 @@ async def test_body_stream_async_iterable() -> None:
         yield b"chunk2"
         yield b"chunk3"
 
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
 
     body_stream = await client._create_body_stream(custom_generator())
 
@@ -332,7 +331,7 @@ async def test_body_stream_async_iterable() -> None:
 
 async def test_body_stream_empty_bytes() -> None:
     """Test body stream with empty bytes."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
 
     body_stream = await client._create_body_stream(b"")
 
@@ -341,7 +340,7 @@ async def test_body_stream_empty_bytes() -> None:
 
 async def test_build_connection_http() -> None:
     """Test building HTTP connection."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     url = URI(scheme="http", host="example.com", port=8080)
 
     with patch("smithy_http.aio.crt.AIOHttpClientConnectionUnified.new") as mock_new:
@@ -362,7 +361,7 @@ async def test_build_connection_http() -> None:
 
 async def test_build_connection_https() -> None:
     """Test building HTTPS connection with TLS."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     url = URI(scheme="https", host="secure.example.com")
 
     with patch("smithy_http.aio.crt.AIOHttpClientConnectionUnified.new") as mock_new:
@@ -383,7 +382,7 @@ async def test_build_connection_https() -> None:
 
 async def test_build_connection_unsupported_scheme() -> None:
     """Test that unsupported URL schemes raise error."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     url = URI(scheme="ftp", host="example.com")
 
     with pytest.raises(SmithyHTTPError, match="does not support URL scheme ftp"):
@@ -392,7 +391,7 @@ async def test_build_connection_unsupported_scheme() -> None:
 
 async def test_validate_connection_http2_required() -> None:
     """A non-HTTP/2 connection is rejected when HTTP/2 is required."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     mock_connection = AsyncMock()
     mock_connection.version = crt_http.HttpVersion.Http1_1
     mock_connection.close = AsyncMock()
@@ -405,7 +404,7 @@ async def test_validate_connection_http2_required() -> None:
 
 async def test_validate_connection_http2_success() -> None:
     """Validation passes for an HTTP/2 connection when HTTP/2 is required."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     mock_connection = AsyncMock()
     mock_connection.version = crt_http.HttpVersion.Http2
 
@@ -415,7 +414,7 @@ async def test_validate_connection_http2_success() -> None:
 
 async def test_validate_connection_http1_allowed_when_not_required() -> None:
     """An HTTP/1.1 connection is fine when HTTP/2 is not required."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     mock_connection = AsyncMock()
     mock_connection.version = crt_http.HttpVersion.Http1_1
 
@@ -424,7 +423,7 @@ async def test_validate_connection_http1_allowed_when_not_required() -> None:
 
 
 async def _captured_alpn(require_http2: bool) -> list[str]:
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     tls_options = Mock()
     client._tls_ctx = Mock()
     client._tls_ctx.new_connection_options.return_value = tls_options
@@ -449,7 +448,7 @@ async def test_alpn_offers_both_when_not_required() -> None:
 async def test_pool_separates_http2_required_connections() -> None:
     # An h2-required request must not reuse a pooled HTTP/1.1 connection to the same
     # host, nor vice versa.
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     url = URI(scheme="https", host="example.com")
     h1 = AsyncMock()
     h1.version = crt_http.HttpVersion.Http1_1
@@ -474,7 +473,7 @@ async def test_pool_separates_http2_required_connections() -> None:
 
 async def test_connection_pooling() -> None:
     """Test that connections are pooled and reused."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     url = URI(scheme="https", host="example.com")
 
     # Mock connection
@@ -498,7 +497,7 @@ async def test_connection_pooling() -> None:
 
 async def test_connection_pooling_different_hosts() -> None:
     """Test that different hosts get different connections."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     url1 = URI(scheme="https", host="example1.com")
     url2 = URI(scheme="https", host="example2.com")
 
@@ -525,7 +524,7 @@ async def test_connection_pooling_different_hosts() -> None:
 
 async def test_connection_pooling_closed_connection() -> None:
     """Test that closed connections are replaced."""
-    client = AWSCRTHTTPClient()
+    client = AsyncAWSCRTHTTPClient()
     url = URI(scheme="https", host="example.com")
 
     mock_connection1 = AsyncMock()
@@ -559,7 +558,7 @@ async def test_response_chunks() -> None:
         b"",  # End of stream
     ]
 
-    response = AWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
+    response = AsyncAWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
 
     chunks: list[bytes] = []
     async for chunk in response.chunks():
@@ -573,7 +572,7 @@ async def test_response_body_property() -> None:
     mock_stream = AsyncMock()
     mock_stream.get_next_response_chunk.side_effect = [b"data", b""]
 
-    response = AWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
+    response = AsyncAWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
 
     chunks: list[bytes] = []
     async for chunk in response.body:
@@ -588,7 +587,7 @@ def test_response_properties() -> None:
     fields.set_field(Field(name="content-type", values=["application/json"]))
 
     mock_stream = Mock()
-    response = AWSCRTHTTPResponse(status=404, fields=fields, stream=mock_stream)
+    response = AsyncAWSCRTHTTPResponse(status=404, fields=fields, stream=mock_stream)
 
     assert response.status == 404
     assert response.fields == fields

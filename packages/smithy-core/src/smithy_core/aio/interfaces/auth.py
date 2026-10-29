@@ -3,10 +3,12 @@
 from collections.abc import Mapping
 from typing import Any, Protocol
 
+from smithy_core.interfaces import Request
+
 from ...interfaces import TypedProperties as _TypedProperties
+from ...interfaces.auth import EventSigner, Signer
 from ...interfaces.identity import Identity
 from ...shapes import ShapeID
-from . import Request
 from .identity import AsyncIdentityResolver
 
 
@@ -19,29 +21,6 @@ class AsyncSigner[R: Request, I, SP: Mapping[str, Any]](Protocol):
         :param request: The request to be signed.
         :param identity: The identity to use to sign the request.
         :param properties: Additional properties used to sign the request.
-        """
-        ...
-
-
-class AsyncEventSigner[I, SP: Mapping[str, Any]](Protocol):
-    """A class that signs requests before they are sent."""
-
-    # TODO: add a protocol type for events
-    async def sign(self, *, event: Any, identity: I, properties: SP) -> Any:
-        """Get a signed version of the event.
-
-        :param event: The event to be signed.
-        :param identity: The identity to use to sign the event.
-        :param properties: Additional properties used to sign the event.
-        """
-        ...
-
-    async def sign_empty(self, *, event: Any, identity: I, properties: SP) -> Any:
-        """Get a signed version of an empty event.
-
-        :param event: The empty event to be signed.
-        :param identity: The identity to use to sign the event.
-        :param properties: Additional properties used to sign the event.
         """
         ...
 
@@ -89,11 +68,14 @@ class AsyncAuthScheme[
         """
         ...
 
-    def signer(self) -> AsyncSigner[R, I, SP]:
-        """Get a signer for the request."""
+    def signer(self) -> AsyncSigner[R, I, SP] | Signer[R, I, SP]:
+        """Get a signer for the request.
+
+        Signers that do no I/O may be synchronous.
+        """
         ...
 
-    def event_signer(self, *, request: R) -> AsyncEventSigner[I, SP] | None:
+    def event_signer(self, *, request: R) -> EventSigner[I, SP] | None:
         """Construct a signer for event stream events.
 
         :param request: The request that will initiate the event stream. The request

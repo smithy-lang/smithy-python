@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Literal
@@ -59,8 +59,13 @@ class FieldSpec:
     default_factory: Callable[[], Any] | None = None
     """Factory for mutable defaults (lists, dicts) that need a fresh instance per config."""
 
-    resolver: Callable[..., Awaitable[Resolved[Any]]] | None = None
-    """Async function that resolves the field from env/profile/etc."""
+    resolver: Callable[..., Any] | None = None
+    """Function that resolves the field from env/profile/etc.
+
+    It returns a :py:data:`smithy_core.program.Program` of a ``Resolved`` value,
+    which both sync and async configs drive. Sync configs also take a function that
+    returns ``Resolved``; async configs also take one that returns an awaitable.
+    """
 
     validator: Callable[[Any], None] | None = None
     """Function that validates the resolved value. Raises on invalid input."""

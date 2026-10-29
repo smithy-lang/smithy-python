@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Replaced `AsyncEventSigner` with the synchronous `EventSigner`, which is thread-safe."
+}

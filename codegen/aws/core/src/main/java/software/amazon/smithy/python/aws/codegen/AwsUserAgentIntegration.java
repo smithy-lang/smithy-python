@@ -11,6 +11,7 @@ import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.SyncVariant;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -34,17 +35,6 @@ public class AwsUserAgentIntegration implements PythonIntegration {
             """;
 
     // Variant for services without a generated async config, which uses old Config.
-    private static final String USER_AGENT_PLUGIN_SYNC_ONLY = """
-            def aws_user_agent_plugin(config: $1T):
-                config.interceptors.append(
-                    $2T(
-                        ua_suffix=config.user_agent_extra,
-                        ua_app_id=config.sdk_ua_app_id,
-                        sdk_version=$3T,
-                        service_id=$4S,
-                    )
-                )
-            """;
 
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
@@ -68,14 +58,10 @@ public class AwsUserAgentIntegration implements PythonIntegration {
 
             final String moduleName = context.settings().moduleName();
             final SymbolReference userAgentPlugin = SymbolReference.builder()
-                    .symbol(Symbol.builder()
-                            .namespace(String.format("%s.%s",
-                                    moduleName,
-                                    user_agent_plugin_file.replace('/', '.')), ".")
-                            .definitionFile(String
-                                    .format("./src/%s/%s.py", moduleName, user_agent_plugin_file))
-                            .name("aws_user_agent_plugin")
-                            .build())
+                    .symbol(CodegenUtils.aioSymbol(
+                            context.settings(),
+                            user_agent_plugin_file,
+                            "aws_user_agent_plugin"))
                     .build();
             final SymbolReference userAgentInterceptor = SymbolReference.builder()
                     .symbol(Symbol.builder()
@@ -103,35 +89,29 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                             .addConfigProperty(uaAppId)
                             .pythonPlugin(userAgentPlugin)
                             .writeAdditionalFiles((c) -> {
-                                String filename = "src/%s/%s.py".formatted(moduleName, user_agent_plugin_file);
+                                String filename = userAgentPlugin.getSymbol().getDefinitionFile();
+                                var asyncConfig = CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model());
                                 c.writerDelegator()
                                         .useFileWriter(
                                                 filename,
-                                                moduleName + ".",
-                                                writer -> {
-                                                    var asyncConfig = CodegenUtils.getAsyncConfigSymbol(
-                                                            c.settings(),
-                                                            c.model());
-                                                    if (asyncConfig.isPresent()) {
-                                                        writer.write(USER_AGENT_PLUGIN,
-                                                                asyncConfig.get(),
-                                                                userAgentInterceptor,
-                                                                versionSymbol,
-                                                                serviceId);
-                                                    } else {
-                                                        writer.write(USER_AGENT_PLUGIN_SYNC_ONLY,
-                                                                CodegenUtils.getConfigSymbol(c.settings()),
-                                                                userAgentInterceptor,
-                                                                versionSymbol,
-                                                                serviceId);
-                                                    }
-                                                });
-                                return List.of(filename);
+                                                userAgentPlugin.getSymbol().getNamespace(),
+                                                writer -> writer.write(USER_AGENT_PLUGIN,
+                                                        asyncConfig,
+                                                        userAgentInterceptor,
+                                                        versionSymbol,
+                                                        serviceId));
+                                var syncFile = SyncVariant.writeSyncTwin(c,
+                                        userAgentPlugin.getSymbol(),
+                                        USER_AGENT_PLUGIN,
+                                        asyncConfig,
+                                        userAgentInterceptor,
+                                        versionSymbol,
+                                        serviceId);
+                                return List.of(filename, syncFile);
                             })
                             .build());
         } else {
             return List.of();
         }
     }
-
 }

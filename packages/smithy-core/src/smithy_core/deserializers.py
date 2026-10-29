@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Never, Protocol, Self, runtime_checkable
 from .exceptions import SmithyError, UnsupportedStreamError
 
 if TYPE_CHECKING:
-    from .aio.interfaces import StreamingBlob as _Stream
     from .documents import Document
+    from .interfaces import AnyStreamingBlob as _Stream
     from .schemas import Schema
 
 
@@ -198,13 +198,6 @@ class SpecificShapeDeserializer(ShapeDeserializer):
     """Expects to deserialize a specific kind of shape, failing if other shapes are
     deserialized."""
 
-    def _invalid_state(
-        self, schema: "Schema | None" = None, message: str | None = None
-    ) -> Never:
-        if message is None:
-            message = f"Unexpected schema type: {schema}"
-        raise SmithyError(message)
-
     def read_struct(
         self,
         schema: "Schema",
@@ -271,6 +264,13 @@ class SpecificShapeDeserializer(ShapeDeserializer):
 
     def read_data_stream(self, schema: "Schema") -> "_Stream":
         self._invalid_state(schema)
+
+    def _invalid_state(
+        self, schema: "Schema | None" = None, message: str | None = None
+    ) -> Never:
+        if message is None:
+            message = f"Unexpected schema type: {schema}"
+        raise SmithyError(message)
 
 
 @runtime_checkable

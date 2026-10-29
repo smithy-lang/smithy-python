@@ -1,4 +1,4 @@
 {
   "type": "feature",
-  "description": "Added async checks for client endpoint tests in `smithy_test.aio`: `check_rules_case_async` resolves a case's parameter values with a client's endpoint resolver and `check_client_case_async` calls a case's operation through a client."
+  "description": "Added checks for client endpoint tests: `smithy_test.check_rules_case` resolves a case's parameter values with a client's endpoint resolver and `smithy_test.aio.check_client_case_async` calls a case's operation through a client."
 }

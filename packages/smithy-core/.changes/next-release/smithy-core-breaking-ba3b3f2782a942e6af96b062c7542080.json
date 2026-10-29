@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Removed the async retry strategies (`smithy_core.aio.retries` and `smithy_core.aio.interfaces.retries`). Async clients use the strategies in `smithy_core.retries`; adaptive rate limiting waits through the client, so it never blocks the event loop."
+}

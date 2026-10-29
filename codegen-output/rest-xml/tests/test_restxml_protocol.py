@@ -5,20 +5,19 @@ from urllib.parse import parse_qsl
 
 from pytest import fail, mark, raises
 from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
-from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_core.aio.utils import async_list
-from smithy_http import tuples_to_fields
-from smithy_http.aio import HTTPResponse as _smithy_http_aio_HTTPResponse
-from smithy_http.aio.interfaces import (
+from smithy_core.retries import SimpleRetryStrategy
+from smithy_http import HTTPResponse as _smithy_http_HTTPResponse, tuples_to_fields
+from smithy_http.interfaces import (
+    HTTPClientConfiguration,
     HTTPRequest,
-    HTTPResponse as _smithy_http_aio_interfaces_HTTPResponse,
+    HTTPRequestConfiguration,
+    HTTPResponse as _smithy_http_interfaces_HTTPResponse,
 )
-from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 from smithy_test import deep_equal, xml_equal
 
-from restxml.client import AsyncRestXmlProtocolClient
-from restxml.config import AsyncRestXmlProtocolConfig
+from restxml.aio.client import AsyncRestXmlProtocolClient
+from restxml.aio.config import AsyncRestXmlProtocolConfig
 from restxml.models import (
     AllQueryStringTypesInput,
     BodyWithXmlNameInput,
@@ -159,7 +158,7 @@ async def test_all_query_string_types_request_all_query_string_types() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -292,7 +291,7 @@ async def test_rest_xml_query_string_map_request_all_query_string_types() -> Non
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -370,7 +369,7 @@ async def test_rest_xml_query_string_escaping_request_all_query_string_types() -
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -444,7 +443,7 @@ async def test_rest_xml_supports_na_n_float_query_values_request_all_query_strin
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -518,7 +517,7 @@ async def test_rest_xml_supports_infinity_float_query_values_request_all_query_s
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -592,7 +591,7 @@ async def test_rest_xml_supports_negative_infinity_float_query_values_request_al
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -666,7 +665,7 @@ async def test_rest_xml_zero_and_false_query_values_request_all_query_string_typ
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -736,7 +735,7 @@ async def test_body_with_xml_name_request_body_with_xml_name() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -837,7 +836,7 @@ async def test_constant_and_variable_query_string_missing_one_value_request_cons
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -909,7 +908,7 @@ async def test_constant_and_variable_query_string_all_values_request_constant_an
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -979,7 +978,7 @@ async def test_constant_query_string_request_constant_query_string() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1123,7 +1122,7 @@ async def test_empty_input_and_empty_output_request_empty_input_and_empty_output
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1224,7 +1223,7 @@ async def test_rest_xml_endpoint_trait_request_endpoint_operation() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1303,7 +1302,7 @@ async def test_rest_xml_endpoint_trait_with_host_label_and_http_binding_request_
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1380,7 +1379,7 @@ async def test_rest_xml_endpoint_trait_with_host_label_request_endpoint_with_hos
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1450,7 +1449,7 @@ async def test_flattened_xml_map_request_flattened_xml_map() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1551,7 +1550,7 @@ async def test_flattened_xml_map_with_xml_name_request_flattened_xml_map_with_xm
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1811,7 +1810,7 @@ async def test_http_empty_prefix_headers_request_client_request_http_empty_prefi
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1913,7 +1912,7 @@ async def test_rest_xml_enum_payload_request_request_http_enum_payload() -> None
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2009,7 +2008,7 @@ async def test_http_payload_traits_with_blob_request_http_payload_traits() -> No
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2081,7 +2080,7 @@ async def test_http_payload_traits_with_no_blob_body_request_http_payload_traits
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2209,7 +2208,7 @@ async def test_http_payload_traits_with_media_type_with_blob_request_http_payloa
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2320,7 +2319,7 @@ async def test_http_payload_with_member_xml_name_request_http_payload_with_membe
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2430,7 +2429,7 @@ async def test_http_payload_with_structure_request_http_payload_with_structure()
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2537,7 +2536,7 @@ async def test_rest_xml_http_payload_with_union_request_http_payload_with_union(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2611,7 +2610,7 @@ async def test_rest_xml_http_payload_with_unset_union_request_http_payload_with_
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2746,7 +2745,7 @@ async def test_http_payload_with_xml_name_request_http_payload_with_xml_name() -
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2855,7 +2854,7 @@ async def test_http_payload_with_xml_namespace_request_http_payload_with_xml_nam
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2968,7 +2967,7 @@ async def test_http_payload_with_xml_namespace_and_prefix_request_http_payload_w
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3076,7 +3075,7 @@ async def test_http_prefix_headers_are_present_request_http_prefix_headers() -> 
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3154,7 +3153,7 @@ async def test_http_prefix_headers_are_not_present_request_http_prefix_headers()
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3224,7 +3223,7 @@ async def test_http_prefix_empty_headers_request_http_prefix_headers() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3360,7 +3359,7 @@ async def test_rest_xml_supports_na_n_float_labels_request_http_request_with_flo
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3432,7 +3431,7 @@ async def test_rest_xml_supports_infinity_float_labels_request_http_request_with
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3504,7 +3503,7 @@ async def test_rest_xml_supports_negative_infinity_float_labels_request_http_req
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3576,7 +3575,7 @@ async def test_http_request_with_greedy_label_in_path_request_http_request_with_
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3651,7 +3650,7 @@ async def test_input_with_headers_and_all_params_request_http_request_with_label
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3733,7 +3732,7 @@ async def test_http_request_label_escaping_request_http_request_with_labels() ->
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3817,7 +3816,7 @@ async def test_http_request_with_labels_and_timestamp_format_request_http_reques
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3924,7 +3923,7 @@ async def test_rest_xml_string_payload_request_request_http_string_payload() -> 
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4056,7 +4055,7 @@ async def test_input_and_output_with_string_headers_request_input_and_output_wit
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4140,7 +4139,7 @@ async def test_input_and_output_with_numeric_headers_request_input_and_output_wi
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4230,7 +4229,7 @@ async def test_input_and_output_with_boolean_headers_request_input_and_output_wi
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4312,7 +4311,7 @@ async def test_input_and_output_with_timestamp_headers_request_input_and_output_
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4392,7 +4391,7 @@ async def test_input_and_output_with_enum_headers_request_input_and_output_with_
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4471,7 +4470,7 @@ async def test_rest_xml_supports_na_n_float_header_inputs_request_input_and_outp
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4548,7 +4547,7 @@ async def test_rest_xml_supports_infinity_float_header_inputs_request_input_and_
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4625,7 +4624,7 @@ async def test_rest_xml_supports_negative_infinity_float_header_inputs_request_i
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4996,7 +4995,7 @@ async def test_nested_xml_map_request_request_nested_xml_maps() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5069,7 +5068,7 @@ async def test_flat_nested_xml_map_request_request_nested_xml_maps() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5202,7 +5201,7 @@ async def test_nested_xml_map_with_xml_name_serializes_request_nested_xml_map_wi
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5313,7 +5312,7 @@ async def test_no_input_and_no_output_request_no_input_and_no_output() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5408,7 +5407,7 @@ async def test_no_input_and_output_request_no_input_and_output() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5506,7 +5505,7 @@ async def test_null_and_empty_headers_request_null_and_empty_headers_client() ->
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5578,7 +5577,7 @@ async def test_rest_xml_omits_null_query_request_omits_null_serializes_empty_str
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5650,7 +5649,7 @@ async def test_rest_xml_serializes_empty_string_request_omits_null_serializes_em
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5726,7 +5725,7 @@ async def test_sdk_applied_content_encoding_rest_xml_request_put_with_content_en
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5802,7 +5801,7 @@ async def test_sdk_appended_gzip_after_provided_encoding_rest_xml_request_put_wi
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5874,7 +5873,7 @@ async def test_query_idempotency_token_auto_fill_request_query_idempotency_token
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5948,7 +5947,7 @@ async def test_query_idempotency_token_auto_fill_is_set_request_query_idempotenc
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6024,7 +6023,7 @@ async def test_rest_xml_query_params_string_list_map_request_query_params_as_str
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6094,7 +6093,7 @@ async def test_rest_xml_query_precedence_request_query_precedence() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6166,7 +6165,7 @@ async def test_recursive_shapes_request_recursive_shapes() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6285,7 +6284,7 @@ async def test_simple_scalar_properties_request_simple_scalar_properties() -> No
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6371,7 +6370,7 @@ async def test_simple_scalar_properties_with_escaped_character_request_simple_sc
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6446,7 +6445,7 @@ async def test_simple_scalar_properties_with_white_space_request_simple_scalar_p
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6523,7 +6522,7 @@ async def test_simple_scalar_properties_pure_white_space_request_simple_scalar_p
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6598,7 +6597,7 @@ async def test_rest_xml_supports_na_n_float_inputs_request_simple_scalar_propert
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6672,7 +6671,7 @@ async def test_rest_xml_supports_infinity_float_inputs_request_simple_scalar_pro
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6746,7 +6745,7 @@ async def test_rest_xml_supports_negative_infinity_float_inputs_request_simple_s
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -7126,7 +7125,7 @@ async def test_timestamp_format_headers_request_timestamp_format_headers() -> No
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -7257,7 +7256,7 @@ async def test_xml_attributes_request_xml_attributes() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -7330,7 +7329,7 @@ async def test_xml_attributes_with_escaping_request_xml_attributes() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -7432,7 +7431,7 @@ async def test_xml_attributes_in_middle_request_xml_attributes_in_middle() -> No
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -7542,7 +7541,7 @@ async def test_xml_attributes_on_payload_request_xml_attributes_on_payload() -> 
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -7645,7 +7644,7 @@ async def test_xml_blobs_request_xml_blobs() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -7804,7 +7803,7 @@ async def test_xml_empty_lists_request_xml_empty_lists() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -7903,7 +7902,7 @@ async def test_xml_empty_maps_request_xml_empty_maps() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -8033,7 +8032,7 @@ async def test_xml_empty_strings_request_xml_empty_strings() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -8161,7 +8160,7 @@ async def test_xml_enums_request_xml_enums() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -8274,7 +8273,7 @@ async def test_xml_int_enums_request_xml_int_enums() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -8387,7 +8386,7 @@ async def test_xml_lists_request_xml_lists() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -8534,7 +8533,7 @@ async def test_xml_maps_request_xml_maps() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -8637,7 +8636,7 @@ async def test_xml_maps_xml_name_request_xml_maps_xml_name() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -8745,7 +8744,7 @@ async def test_rest_xml_xml_map_with_xml_namespace_request_xml_map_with_xml_name
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -8849,7 +8848,7 @@ async def test_xml_namespaces_request_xml_namespaces() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -8952,7 +8951,7 @@ async def test_xml_timestamps_request_xml_timestamps() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -9027,7 +9026,7 @@ async def test_xml_timestamps_with_date_time_format_request_xml_timestamps() -> 
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -9104,7 +9103,7 @@ async def test_xml_timestamps_with_date_time_on_target_format_request_xml_timest
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -9178,7 +9177,7 @@ async def test_xml_timestamps_with_epoch_seconds_format_request_xml_timestamps()
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -9255,7 +9254,7 @@ async def test_xml_timestamps_with_epoch_seconds_on_target_format_request_xml_ti
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -9327,7 +9326,7 @@ async def test_xml_timestamps_with_http_date_format_request_xml_timestamps() -> 
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -9401,7 +9400,7 @@ async def test_xml_timestamps_with_http_date_on_target_format_request_xml_timest
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -9707,7 +9706,7 @@ async def test_xml_unions_with_struct_member_request_xml_unions() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -9790,7 +9789,7 @@ async def test_xml_unions_with_string_member_request_xml_unions() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -9860,7 +9859,7 @@ async def test_xml_unions_with_boolean_member_request_xml_unions() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -9930,7 +9929,7 @@ async def test_xml_unions_with_union_member_request_xml_unions() -> None:
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -10152,7 +10151,7 @@ class RequestTestHTTPClient:
         request: HTTPRequest,
         *,
         request_config: HTTPRequestConfiguration | None = None,
-    ) -> _smithy_http_aio_interfaces_HTTPResponse:
+    ) -> _smithy_http_interfaces_HTTPResponse:
         # Raise the exception with the request object to bypass actual request handling
         raise TestHttpServiceError(request)
 
@@ -10181,8 +10180,8 @@ class ResponseTestHTTPClient:
         request: HTTPRequest,
         *,
         request_config: HTTPRequestConfiguration | None = None,
-    ) -> _smithy_http_aio_HTTPResponse:
+    ) -> _smithy_http_HTTPResponse:
         # Pre-construct the response from the request and return it
-        return _smithy_http_aio_HTTPResponse(
-            status=self.status, fields=self.fields, body=async_list([self.body])
+        return _smithy_http_HTTPResponse(
+            status=self.status, fields=self.fields, body=AsyncBytesReader(self.body)
         )

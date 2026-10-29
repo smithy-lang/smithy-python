@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Renamed `AWSEventPublisher` and `AWSEventReceiver` to `AsyncAWSEventPublisher` and `AsyncAWSEventReceiver`, and replaced `Event.decode_async` with `smithy_aws_event_stream.aio.decode_event_async`. `SigningConfig` moved to `smithy_aws_event_stream.signing`, is generic in its identity resolver, and takes a synchronous `EventSigner`."
+}

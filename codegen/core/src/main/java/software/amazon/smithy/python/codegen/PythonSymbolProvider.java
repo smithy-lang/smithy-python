@@ -346,7 +346,7 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         if (CLIENT_RESERVED_METHOD_NAMES.contains(methodName)) {
             methodName = escapeWord(methodName);
         }
-        var methodSymbol = createGeneratedSymbolBuilder(shape, methodName, "client", false)
+        var methodSymbol = createGeneratedSymbolBuilder(shape, methodName, "aio/client", false)
                 .putProperty(SymbolProperties.IMPORTABLE, false)
                 .build();
 
@@ -366,8 +366,8 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
 
     @Override
     public Symbol serviceShape(ServiceShape shape) {
-        var name = getDefaultShapeName(shape);
-        return createGeneratedSymbolBuilder(shape, name, "client").build();
+        var name = "Async" + getDefaultShapeName(shape);
+        return createGeneratedSymbolBuilder(shape, name, "aio/client").build();
     }
 
     @Override

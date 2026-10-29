@@ -4,15 +4,17 @@ from dataclasses import dataclass
 from typing import Any, Self, cast
 
 from smithy_core import URI
-from smithy_core.aio.client import AsyncClientCall, AsyncRequestPipeline
+from smithy_core.aio.client import AsyncRequestPipeline
 from smithy_core.aio.interfaces import AsyncClientProtocol
-from smithy_core.aio.interfaces.retries import AsyncRetryStrategy
-from smithy_core.aio.retries import AsyncSimpleRetryStrategy
+from smithy_core.client import ClientCall
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.endpoints import EndpointAuthScheme, EndpointResolverParams
 from smithy_core.interceptors import InterceptorChain
+from smithy_core.interfaces.retries import RetryStrategy
 from smithy_core.prelude import BLOB
+from smithy_core.program import Program
 from smithy_core.response import EMPTY_RESPONSE_METADATA, ResponseMetadata
+from smithy_core.retries import SimpleRetryStrategy
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
@@ -125,7 +127,7 @@ DATA_STREAM_OPERATION: APIOperation[StubInput, StubOutput] = APIOperation(
     effective_auth_schemes=[],
 )
 
-# ``AsyncClientCall.retryable()`` is False for operations with an input event stream, so
+# ``ClientCall.retryable()`` is False for operations with an input event stream, so
 # OPERATION above never enters the retry loop. This one has no input stream and so
 # exercises it.
 UNARY_OPERATION: APIOperation[StubInput, StubOutput] = APIOperation(
@@ -148,18 +150,12 @@ class StubRequest:
         self.destination = URI(host="example.com")
         self.body = b""
 
-    async def consume_body_async(self) -> bytes:
-        return b""
-
     def consume_body(self) -> bytes:
         return b""
 
 
 class StubResponse:
     body = b""
-
-    async def consume_body_async(self) -> bytes:
-        return b""
 
     def consume_body(self) -> bytes:
         return b""
@@ -211,6 +207,10 @@ class StubProtocol:
         self.set_service_endpoint_calls += 1
         return request
 
+    def deserialize_response_program(self, **kwargs: Any) -> Program[StubOutput]:
+        del kwargs["read_body"]
+        return (yield lambda: self.deserialize_response(**kwargs))
+
     async def deserialize_response(self, **kwargs: Any) -> StubOutput:
         self.deserialize_response_calls += 1
         return StubOutput()
@@ -241,7 +241,7 @@ class StubEndpointResolver:
     def __init__(self) -> None:
         self.resolved_inputs: list[Any] = []
 
-    async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Any:
+    def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Any:
         self.resolved_inputs.append(params.input)
         return StubEndpoint()
 
@@ -289,14 +289,14 @@ def pipeline_harness(transport: UndeclaredTransport) -> PipelineHarness:
 
 
 def retryable_client_call(
-    retry_strategy: AsyncRetryStrategy | None = None,
-) -> AsyncClientCall[Any, Any]:
+    retry_strategy: RetryStrategy | None = None,
+) -> ClientCall[Any, Any]:
     """A call that goes through the retry loop, unlike :py:func:`client_call`.
 
     Defaults to a strategy that allows a single attempt, so the loop gives up after
     the first failure rather than sleeping through retries.
     """
-    return AsyncClientCall(
+    return ClientCall(
         input=StubInput(),
         operation=UNARY_OPERATION,
         context=TypedProperties(),
@@ -304,12 +304,12 @@ def retryable_client_call(
         auth_scheme_resolver=StubAuthResolver(),
         supported_auth_schemes={},
         endpoint_resolver=StubEndpointResolver(),
-        retry_strategy=retry_strategy or AsyncSimpleRetryStrategy(max_attempts=1),
+        retry_strategy=retry_strategy or SimpleRetryStrategy(max_attempts=1),
     )
 
 
-def client_call() -> AsyncClientCall[Any, Any]:
-    return AsyncClientCall(
+def client_call() -> ClientCall[Any, Any]:
+    return ClientCall(
         input=StubInput(),
         operation=OPERATION,
         context=TypedProperties(),
