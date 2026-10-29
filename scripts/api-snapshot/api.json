@@ -126,7 +126,8 @@
     "validate_max_attempts": "rex-function",
     "validate_profile": "rex-function",
     "validate_region": "rex-function",
-    "validate_retry_mode": "rex-function"
+    "validate_retry_mode": "rex-function",
+    "validate_sdk_ua_app_id": "rex-function"
   },
   "smithy_aws_core.aio.config.context": {
     "AsyncDefaultFileSystem": "rex-class[async]",
@@ -465,10 +466,12 @@
     "ConfigSource": "rex-class",
     "ConfigValidationError": "rex-exception",
     "ProfileNotFoundError": "rex-exception",
+    "logger": "Logger",
     "validate_max_attempts": "function",
     "validate_profile": "function",
     "validate_region": "function",
-    "validate_retry_mode": "function"
+    "validate_retry_mode": "function",
+    "validate_sdk_ua_app_id": "function"
   },
   "smithy_aws_core.endpoints": {
     "PropertyKey": "rex-class",

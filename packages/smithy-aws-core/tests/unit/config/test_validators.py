@@ -9,6 +9,7 @@ from smithy_aws_core.config.validators import (
     validate_max_attempts,
     validate_region,
     validate_retry_mode,
+    validate_sdk_ua_app_id,
 )
 
 
@@ -89,3 +90,14 @@ class TestValidateMaxAttempts:
     def test_invalid_values(self, value: int):
         with pytest.raises(ConfigValidationError, match="max_attempts"):
             validate_max_attempts(value)
+
+
+class TestValidateSdkUaAppId:
+    def test_warns_when_too_long(self, caplog: pytest.LogCaptureFixture):
+        validate_sdk_ua_app_id("a" * 51)
+        assert "exceeds the recommended maximum length of 50" in caplog.text
+
+    @pytest.mark.parametrize("value", [None, "a" * 50])
+    def test_no_warning(self, value: str | None, caplog: pytest.LogCaptureFixture):
+        validate_sdk_ua_app_id(value)
+        assert caplog.text == ""
