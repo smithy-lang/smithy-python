@@ -11,13 +11,16 @@ def as_bytes(data: Buffer) -> bytes | bytearray:
 
 
 def as_byte_view(data: Buffer) -> bytes | bytearray | memoryview:
-    """Returns ``data`` as an object the native extension accepts, without copying.
+    """Returns ``data`` as a C-contiguous buffer of bytes, without copying.
 
-    The native extension reads any buffer with a byte format. Other formats (such
-    as an ``array('I')``) are recast to bytes, which requires a C-contiguous buffer,
-    the same requirement :mod:`hashlib` has.
+    Both implementations accept the result. Buffers with other formats (such as an
+    ``array('I')``) are recast to bytes.
+
+    :raises BufferError: If ``data`` isn't C-contiguous, as :mod:`hashlib` does.
     """
     if isinstance(data, bytes | bytearray):
         return data
     view = memoryview(data)
+    if not view.c_contiguous:
+        raise BufferError("memoryview: underlying buffer is not C-contiguous")
     return view if view.format == "B" else view.cast("B")

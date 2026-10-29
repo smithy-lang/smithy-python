@@ -59,9 +59,17 @@ def test_accepts_non_byte_formats(algorithm: str) -> None:
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
-def test_rejects_non_contiguous_buffers(algorithm: str) -> None:
-    with pytest.raises(TypeError):
-        CLASSES[algorithm]().update(memoryview(array.array("I", range(8)))[::2])
+@pytest.mark.parametrize(
+    "data",
+    [memoryview(b"abcdefgh")[::2], memoryview(array.array("I", range(8)))[::2]],
+    ids=["bytes", "array"],
+)
+def test_rejects_non_contiguous_buffers(algorithm: str, data: memoryview) -> None:
+    # Matching hashlib keeps every algorithm from new() consistent.
+    with pytest.raises(BufferError):
+        hashlib.sha256().update(data)
+    with pytest.raises(BufferError, match="C-contiguous"):
+        CLASSES[algorithm]().update(data)
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
