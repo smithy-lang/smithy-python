@@ -4,8 +4,12 @@ import logging
 from collections.abc import Mapping, Sequence
 from typing import Any, Final
 
-from ..exceptions import SmithyIdentityError
+from ..identity import (
+    _invalidate_all,  # pyright: ignore[reportPrivateUsage]
+    _resolve_from_chain,  # pyright: ignore[reportPrivateUsage]
+)
 from ..interfaces.identity import Identity
+from ._program import run_program_async
 from .interfaces.identity import AsyncIdentityResolver
 
 __all__ = ["AsyncCachingIdentityResolver", "AsyncChainedIdentityResolver"]
@@ -51,20 +55,11 @@ class AsyncChainedIdentityResolver[I: Identity, IP: Mapping[str, Any]](
         self._resolvers = resolvers
 
     async def _get_identity(self, *, properties: IP) -> I:
-        logger.debug("Attempting to resolve identity from resolver chain.")
-        for resolver in self._resolvers:
-            try:
-                logger.debug("Attempting to resolve identity from %s.", type(resolver))
-                return await resolver.get_identity(properties=properties)
-            except SmithyIdentityError as e:
-                logger.debug(
-                    "Failed to resolve identity from %s: %s", type(resolver), e
-                )
-
-        raise SmithyIdentityError("Failed to resolve identity from resolver chain.")
+        return await run_program_async(
+            _resolve_from_chain(self._resolvers, properties)  # pyright: ignore[reportPrivateUsage]
+        )
 
     async def invalidate(self) -> None:
         """Discard this chain's cached identity and invalidate every sub-resolver."""
         await super().invalidate()
-        for resolver in self._resolvers:
-            await resolver.invalidate()
+        await run_program_async(_invalidate_all(self._resolvers))  # pyright: ignore[reportPrivateUsage]

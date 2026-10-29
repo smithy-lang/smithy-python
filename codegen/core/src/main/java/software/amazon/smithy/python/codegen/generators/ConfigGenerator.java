@@ -23,6 +23,7 @@ import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
+import software.amazon.smithy.python.codegen.SyncVariant;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.sections.AsyncConfigSection;
@@ -280,6 +281,8 @@ public final class ConfigGenerator implements Runnable {
             writer.popState();
         });
 
+        asyncConfigForPlugin.ifPresent(this::generateSyncConfig);
+
         // Generate the plugin symbol. This is just a callable. We could do something
         // like have a class to implement, but that seems unnecessarily burdensome for
         // a single function.
@@ -296,6 +299,29 @@ public final class ConfigGenerator implements Runnable {
             } else {
                 writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
             }
+            writer.writeDocs("""
+                    A callable that customizes a client configuration. Service-level plugins are
+                    applied once to the base configuration inherited by every operation.
+                    Operation-level plugins apply only to a single operation invocation.
+                    """, context);
+        });
+    }
+
+    // The sync config lives in its own module so the async config module stays as is.
+    private void generateSyncConfig(Symbol asyncConfig) {
+        var mapper = SyncVariant.mapper(settings);
+        var syncConfig = mapper.apply(asyncConfig);
+        var plugin = mapper.apply(CodegenUtils.getPluginSymbol(settings));
+        context.writerDelegator().useFileWriter(syncConfig.getDefinitionFile(), syncConfig.getNamespace(), writer -> {
+            writer.setSymbolMapper(mapper);
+            writeInterceptorsType(writer, "..models");
+            stageProtocolSettings(context, writer);
+            writer.pushState(new AsyncConfigSection(true));
+            writer.popState();
+
+            writer.addStdlibImport("typing", "Callable");
+            writer.addStdlibImport("typing", "TypeAlias");
+            writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), asyncConfig);
             writer.writeDocs("""
                     A callable that customizes a client configuration. Service-level plugins are
                     applied once to the base configuration inherited by every operation.
@@ -360,6 +386,10 @@ public final class ConfigGenerator implements Runnable {
     }
 
     private void writeInterceptorsType(PythonWriter writer) {
+        writeInterceptorsType(writer, ".models");
+    }
+
+    private void writeInterceptorsType(PythonWriter writer, String modelsModule) {
         var symbolProvider = context.symbolProvider();
         var operationShapes = TopDownIndex.of(context.model())
                 .getContainedOperations(settings.service());
@@ -386,7 +416,7 @@ public final class ConfigGenerator implements Runnable {
 
         writer.write("if TYPE_CHECKING:").indent();
         writer.write("from smithy_core.interceptors import Interceptor");
-        writer.openBlock("from .models import (", ")", () -> {
+        writer.openBlock("from $L import (", ")", modelsModule, () -> {
             for (var name : names) {
                 writer.write("$L,", name);
             }

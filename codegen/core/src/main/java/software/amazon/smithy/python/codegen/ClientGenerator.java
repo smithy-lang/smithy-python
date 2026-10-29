@@ -9,6 +9,8 @@ import static software.amazon.smithy.python.codegen.SymbolProperties.OPERATION_M
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.function.UnaryOperator;
+import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.Model;
@@ -19,6 +21,7 @@ import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
+import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
@@ -46,11 +49,58 @@ final class ClientGenerator implements Runnable {
 
     @Override
     public void run() {
-        context.writerDelegator().useShapeWriter(service, this::generateService);
+        context.writerDelegator().useShapeWriter(service, writer -> generateService(writer, false));
+        // The sync variant needs a generated config to resolve; other services stay async-only.
+        if (CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model()).isPresent()) {
+            var mapper = SyncVariant.mapper(context.settings());
+            var syncClient = mapper.apply(symbolProvider.toSymbol(service));
+            context.writerDelegator()
+                    .useFileWriter(syncClient.getDefinitionFile(), syncClient.getNamespace(), writer -> {
+                        writer.setSymbolMapper(mapper);
+                        generateService(writer, true);
+                    });
+            writeSyncExports(syncClient, mapper);
+        }
     }
 
-    private void generateService(PythonWriter writer) {
-        var serviceSymbol = symbolProvider.toSymbol(service);
+    private void writeSyncExports(Symbol syncClient, UnaryOperator<Symbol> mapper) {
+        var syncConfig = mapper.apply(CodegenUtils.getAsyncConfigSymbol(context.settings(), model).get());
+        var syncPackage = context.settings().moduleName() + ".sync";
+        var syncInit = "./src/" + context.settings().moduleName() + "/sync/__init__.py";
+        context.writerDelegator().useFileWriter(syncInit, syncPackage, writer -> {
+            writer.write("from .client import $L", syncClient.getName());
+            writer.write("from .config import $L, Plugin", syncConfig.getName());
+            writer.write("");
+            writer.write("__all__ = [$S, $S, \"Plugin\"]", syncClient.getName(), syncConfig.getName());
+        });
+
+        // Lazily exported from the package root so importing the package, or the async
+        // client, does not import the sync client.
+        var init = "./src/" + context.settings().moduleName() + "/__init__.py";
+        context.writerDelegator().useFileWriter(init, context.settings().moduleName(), writer -> {
+            writer.addStdlibImport("typing", "TYPE_CHECKING");
+            writer.addStdlibImport("typing", "Any");
+            writer.write("""
+                    if TYPE_CHECKING:
+                        from .sync import $1L, $2L
+
+                    __all__ = [$1S, $2S]
+
+
+                    def __getattr__(name: str) -> Any:
+                        if name in __all__:
+                            from . import sync
+
+                            return getattr(sync, name)
+                        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+                    """, syncClient.getName(), syncConfig.getName());
+        });
+    }
+
+    private void generateService(PythonWriter writer, boolean sync) {
+        UnaryOperator<String> code = sync ? SyncVariant::toSyncCode : UnaryOperator.identity();
+        var serviceSymbol = writer.getSymbolMapper().apply(symbolProvider.toSymbol(service));
         writer.addLocallyDefinedSymbol(serviceSymbol);
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
@@ -87,7 +137,7 @@ final class ClientGenerator implements Runnable {
 
                     writer.addStdlibImport("copy", "deepcopy");
 
-                    writer.write("""
+                    writer.write(code.apply("""
                             def __init__(
                                 self,
                                 config: $1T | None = None,
@@ -175,20 +225,20 @@ final class ClientGenerator implements Runnable {
                                     config=config,
                                     retry_strategy=retry_strategy,
                                 )
-                            """,
+                            """),
                             configSym,
                             pluginSymbol,
                             writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
                             writer.consumer(w -> writeDefaultPlugins(w, servicePlugins)),
                             writer.consumer(w -> {
                                 if (isAsyncConfig) {
-                                    w.write("config = await $T.resolve()", configSym);
+                                    w.write(code.apply("config = await $T.resolve()"), configSym);
                                 } else {
                                     w.write("config = $T()", configSym);
                                 }
                             }),
                             writer.consumer(w -> {
-                                w.pushState(new ClientSetupSection());
+                                w.pushState(new ClientSetupSection(sync));
                                 w.write("pass");
                                 w.popState();
                             }),
@@ -210,9 +260,12 @@ final class ClientGenerator implements Runnable {
                     for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
                         if (eventStreamIndex.getInputInfo(operation).isPresent()
                                 || eventStreamIndex.getOutputInfo(operation).isPresent()) {
-                            generateEventStreamOperation(writer, operation);
+                            // Sync clients don't support event streams.
+                            if (!sync) {
+                                generateEventStreamOperation(writer, operation);
+                            }
                         } else {
-                            generateOperation(writer, operation);
+                            generateOperation(writer, operation, sync);
                         }
                     }
                 });
@@ -244,7 +297,7 @@ final class ClientGenerator implements Runnable {
     /**
      * Generates the function for a single operation.
      */
-    private void generateOperation(PythonWriter writer, OperationShape operation) {
+    private void generateOperation(PythonWriter writer, OperationShape operation, boolean sync) {
         var operationSymbol = symbolProvider.toSymbol(operation);
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
@@ -276,23 +329,30 @@ final class ClientGenerator implements Runnable {
         writer.putContext("plugin", pluginSymbol);
         writer.putContext("operationName", operationMethodSymbol.getName());
         writer.putContext("operation", symbolProvider.toSymbol(operation));
-        writer.write("""
-                async def ${operationName:L}(
-                    self,
-                    input: ${input:L},
-                    plugins: list[${plugin:T}] | None = None
-                ) -> ${output:L}:
-                    ${C|}
-                    pipeline, call = await self._prepare_call(
-                        input,
-                        ${operation:T},
-                        [
+        // Sync callers may omit an input that has no required members.
+        var optionalInput = sync && input.members().stream().noneMatch(m -> m.hasTrait(RequiredTrait.class));
+        writer.putContext("optionalInput", optionalInput);
+        var template =
+                """
+                        async def ${operationName:L}(
+                            self,
+                            ${?optionalInput}input: ${input:L} | None = None,${/optionalInput}${^optionalInput}input: ${input:L},${/optionalInput}
+                            plugins: list[${plugin:T}] | None = None
+                        ) -> ${output:L}:
                             ${C|}
-                        ],
-                        plugins,
-                    )
-                    return await pipeline(call)
-                """,
+                            ${?optionalInput}if input is None:
+                                input = ${operation:T}.input()
+                            ${/optionalInput}pipeline, call = await self._prepare_call(
+                                input,
+                                ${operation:T},
+                                [
+                                    ${C|}
+                                ],
+                                plugins,
+                            )
+                            return await pipeline(call)
+                        """;
+        writer.write(sync ? SyncVariant.toSyncCode(template) : template,
                 writer.consumer(w -> writeOperationDocs(w, operation, input, output)),
                 writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
     }

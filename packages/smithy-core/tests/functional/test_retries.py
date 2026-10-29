@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from asyncio import gather, sleep, wait_for
-from collections.abc import Coroutine
+from collections.abc import Coroutine, Generator
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from smithy_core.aio._program import run_program_async
 from smithy_core.aio.client import AsyncRequestPipeline
 from smithy_core.aio.interfaces import retries as retries_interface
 from smithy_core.aio.retries import (
@@ -163,6 +164,15 @@ async def test_retry_quota_handles_timeout_errors():
     assert quota.available_capacity == 486
 
 
+def _program_of(mock: Any) -> Any:
+    """Stand in for a pipeline program step with an awaitable mock."""
+
+    def program(*args: Any, **kwargs: Any) -> Generator[Any, Any, Any]:
+        return (yield lambda: mock(*args, **kwargs))
+
+    return program
+
+
 class FakeClock:
     """Simulated time for the adaptive retry pipeline.
 
@@ -198,7 +208,7 @@ class TestAdaptiveRetryPipeline:
         clock = FakeClock()
         with (
             patch(
-                "smithy_core.aio.retries.time",
+                "smithy_core.retries.time",
                 SimpleNamespace(monotonic=clock.monotonic),
             ),
             patch("smithy_core.aio.client.sleep", clock.sleep),
@@ -284,22 +294,26 @@ class TestAdaptiveRetryPipeline:
                 transport_response=MagicMock(), response=self._response(status)
             )
 
-        original_pre_request = pipeline._handle_pre_request_rate_limiting  # type: ignore[reportPrivateUsage]
+        original_acquire = strategy.acquire_from_token_bucket
 
-        async def pre_request(retry_strategy: Any) -> None:
+        async def acquire() -> None:
             nonlocal attempt_start
             attempt_start = clock.now
-            await original_pre_request(retry_strategy)
+            await original_acquire()
 
         with (
             patch.object(
-                pipeline, "_handle_attempt", AsyncMock(side_effect=handle_attempt)
+                pipeline,
+                "_handle_attempt",
+                _program_of(AsyncMock(side_effect=handle_attempt)),
             ),
-            patch.object(pipeline, "_handle_pre_request_rate_limiting", pre_request),
+            patch.object(strategy, "acquire_from_token_bucket", acquire),
         ):
             try:
-                await pipeline._retry(  # type: ignore[reportPrivateUsage]
-                    self._call(strategy), self._request_context(), None
+                await run_program_async(
+                    pipeline._retry(  # type: ignore[reportPrivateUsage]
+                        self._call(strategy), self._request_context(), None
+                    )
                 )
             except CallError:
                 pass
@@ -348,12 +362,16 @@ class TestAdaptiveRetryPipeline:
             )
 
         with patch.object(
-            pipeline, "_handle_attempt", AsyncMock(side_effect=handle_attempt)
+            pipeline,
+            "_handle_attempt",
+            _program_of(AsyncMock(side_effect=handle_attempt)),
         ):
             while clock.now < duration:
                 try:
-                    await pipeline._retry(  # type: ignore[reportPrivateUsage]
-                        self._call(strategy), self._request_context(), None
+                    await run_program_async(
+                        pipeline._retry(  # type: ignore[reportPrivateUsage]
+                            self._call(strategy), self._request_context(), None
+                        )
                     )
                 except CallError:
                     pass
@@ -398,7 +416,7 @@ class TestAdaptiveRetryPipeline:
             )
         )
         patches = (
-            patch.object(pipeline, "_handle_attempt", attempt),
+            patch.object(pipeline, "_handle_attempt", _program_of(attempt)),
             patch.object(
                 strategy,
                 "acquire_from_token_bucket",
@@ -417,8 +435,10 @@ class TestAdaptiveRetryPipeline:
 
         with p1, p2, p3:
             with pytest.raises(TimeoutError, match="Failed to acquire"):
-                await pipeline._retry(  # type: ignore[reportPrivateUsage]
-                    self._call(strategy), self._request_context(), None
+                await run_program_async(
+                    pipeline._retry(  # type: ignore[reportPrivateUsage]
+                        self._call(strategy), self._request_context(), None
+                    )
                 )
 
         # Nothing was sent, so no retry quota was spent

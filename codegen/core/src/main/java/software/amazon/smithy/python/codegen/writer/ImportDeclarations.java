@@ -91,7 +91,7 @@ public final class ImportDeclarations implements ImportContainer {
         var prefix = StringUtils.repeat(".", localParts.length - commonSegments);
         String[] segments = namespace.split("\\.", commonSegments + 1);
         if (commonSegments >= segments.length) {
-            return ".";
+            return prefix.isEmpty() ? "." : prefix;
         } else {
             return prefix + segments[commonSegments];
         }

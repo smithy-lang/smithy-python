@@ -45,6 +45,13 @@ ProfileSessionKeys = "smithy_aws_core.aio.identity.chain.providers.profile:Async
 ProfileStaticKeys = "smithy_aws_core.aio.identity.chain.providers.profile:AsyncProfileStaticCredentialsProvider"
 ProfileCredentialProcess = "smithy_aws_core.aio.identity.chain.providers.process:AsyncProfileCredentialProcessProvider"
 
+[project.entry-points."smithy_aws_core.identity.chain_providers"]
+Environment = "smithy_aws_core.identity.chain.providers.environment:EnvironmentCredentialsProvider"
+SharedConfig = "smithy_aws_core.identity.chain.providers.shared_config:SharedConfigProvider"
+ProfileSessionKeys = "smithy_aws_core.identity.chain.providers.profile:ProfileSessionCredentialsProvider"
+ProfileStaticKeys = "smithy_aws_core.identity.chain.providers.profile:ProfileStaticCredentialsProvider"
+ProfileCredentialProcess = "smithy_aws_core.identity.chain.providers.process:ProfileCredentialProcessProvider"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

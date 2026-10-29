@@ -6,6 +6,7 @@ from typing import Any, assert_type
 
 import pytest
 import smithy_aws_core.aio.identity.chain as chain_module
+import smithy_aws_core.identity.chain.resolver as resolver_module
 from smithy_aws_core.aio.identity import AsyncIdentityChain
 from smithy_aws_core.identity import (
     AWSCredentialsIdentity,
@@ -142,7 +143,7 @@ def test_sort_orders_standards_by_slot_declaration() -> None:
     env = _StubProvider("env", Standard(slot=StandardProvider.ENVIRONMENT))
     shared = _StubProvider("shared", Standard(slot=StandardProvider.SHARED_CONFIG))
 
-    ordered = chain_module._sort_by_ordering(
+    ordered = resolver_module._sort_by_ordering(
         (static, session, env, assume_role, shared)
     )
 
@@ -160,7 +161,7 @@ def test_sort_places_before_and_after_around_slot() -> None:
     shared = _StubProvider("shared", Standard(slot=StandardProvider.SHARED_CONFIG))
     after = _StubProvider("after", After(slot=StandardProvider.SHARED_CONFIG))
 
-    ordered = chain_module._sort_by_ordering((after, shared, before))
+    ordered = resolver_module._sort_by_ordering((after, shared, before))
 
     assert [p.name for p in ordered] == ["before", "shared", "after"]
 
@@ -174,7 +175,7 @@ def test_sort_resolves_relative_constraints_without_a_claiming_provider() -> Non
         "static", Standard(slot=StandardProvider.PROFILE_STATIC_KEYS)
     )
 
-    ordered = chain_module._sort_by_ordering((static, before, env))
+    ordered = resolver_module._sort_by_ordering((static, before, env))
 
     assert [p.name for p in ordered] == ["env", "before", "static"]
 
@@ -183,7 +184,7 @@ def test_sort_keeps_discovery_order_for_same_constraint() -> None:
     first = _StubProvider("first", Before(slot=StandardProvider.ENVIRONMENT))
     second = _StubProvider("second", Before(slot=StandardProvider.ENVIRONMENT))
 
-    ordered = chain_module._sort_by_ordering((first, second))
+    ordered = resolver_module._sort_by_ordering((first, second))
 
     assert [p.name for p in ordered] == ["first", "second"]
 
@@ -197,7 +198,7 @@ def test_validate_rejects_duplicate_names() -> None:
         match="Credential providers _StubProvider and _StubProvider use the "
         "same name: dup",
     ):
-        chain_module._validate_providers((first, second))
+        resolver_module._validate_providers((first, second))
 
 
 def test_validate_rejects_case_insensitive_duplicate_names() -> None:
@@ -209,7 +210,7 @@ def test_validate_rejects_case_insensitive_duplicate_names() -> None:
         match="Credential providers _StubProvider and _StubProvider use the "
         "same name: duplicate",
     ):
-        chain_module._validate_providers((first, second))
+        resolver_module._validate_providers((first, second))
 
 
 def test_validate_rejects_duplicate_standard_slots() -> None:
@@ -221,7 +222,7 @@ def test_validate_rejects_duplicate_standard_slots() -> None:
         match="Credential providers _StubProvider and _StubProvider both claim "
         "standard slot: ENVIRONMENT",
     ):
-        chain_module._validate_providers((first, second))
+        resolver_module._validate_providers((first, second))
 
 
 def test_sort_rejects_unsupported_ordering_constraint() -> None:
@@ -234,7 +235,7 @@ def test_sort_rejects_unsupported_ordering_constraint() -> None:
         IdentityChainConfigurationError,
         match="Provider _StubProvider returned an unsupported ordering constraint",
     ):
-        chain_module._sort_by_ordering((provider,))
+        resolver_module._sort_by_ordering((provider,))
 
 
 async def test_all_miss_raises_with_per_provider_failures() -> None:

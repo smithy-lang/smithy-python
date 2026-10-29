@@ -2,22 +2,17 @@
 #  SPDX-License-Identifier: Apache-2.0
 from typing import Any
 
-from ..endpoints import Endpoint, EndpointResolverParams, resolve_static_uri
-from ..exceptions import EndpointResolutionError
+from ..endpoints import EndpointResolverParams, StaticEndpointResolver
 from ..interfaces import Endpoint as _Endpoint
 from .interfaces import AsyncEndpointResolver
 
 __all__ = ["AsyncStaticEndpointResolver"]
+
+_STATIC = StaticEndpointResolver()
 
 
 class AsyncStaticEndpointResolver(AsyncEndpointResolver):
     """A basic endpoint resolver that forwards a static URI."""
 
     async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> _Endpoint:
-        static_uri = resolve_static_uri(params)
-        if static_uri is None:
-            raise EndpointResolutionError(
-                "Unable to resolve endpoint: endpoint_uri is required"
-            )
-
-        return Endpoint(uri=static_uri)
+        return _STATIC.resolve_endpoint(params)

@@ -1,25 +1,16 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-
-import logging
-import os
 from pathlib import Path
 from typing import Any
 
-from ...config.context import _resolve_config_paths  # type: ignore[reportPrivateUsage]
-from ...config.file_parser import (
-    FileType,
-    standardize,
+from smithy_core.aio._program import run_program_async
+
+from ...config.context import (
+    _load_config,  # type: ignore[reportPrivateUsage]
+    _SharedConfigContextBase,  # type: ignore[reportPrivateUsage]
 )
 from ...config.merged_config import MergedConfig
-from ...config.types import ConfigSource
-from .file_parser import parse_config_file_async
 from .filesystem import AsyncDefaultFileSystem, AsyncFileSystem
-
-logger = logging.getLogger(__name__)
-
-_PROFILE_ENV_VAR = "AWS_PROFILE"
-_DEFAULT_PROFILE = "default"
 
 
 async def load_config_async(
@@ -40,21 +31,14 @@ async def load_config_async(
         Defaults to AsyncDefaultFileSystem (real disk I/O).
     :returns: A MergedConfig with merged profiles from both files.
     """
-    filesystem = fs or AsyncDefaultFileSystem()
-    config_path, credentials_path = _resolve_config_paths(
-        config_file_path, credentials_file_path
+    return await run_program_async(
+        _load_config(
+            config_file_path, credentials_file_path, fs or AsyncDefaultFileSystem()
+        )
     )
 
-    raw_config = await parse_config_file_async(str(config_path), filesystem)
-    raw_credentials = await parse_config_file_async(str(credentials_path), filesystem)
 
-    std_config = standardize(raw_config, FileType.CONFIG)
-    std_credentials = standardize(raw_credentials, FileType.CREDENTIALS)
-
-    return MergedConfig(std_config, std_credentials)
-
-
-class AsyncSharedConfigContext:
+class AsyncSharedConfigContext(_SharedConfigContextBase):
     """Resolution context shared across resolvers during config construction.
 
     Holds environment state and cached file data that resolvers use to
@@ -81,52 +65,18 @@ class AsyncSharedConfigContext:
         :param config_file_path: Override path for config file.
         :param credentials_file_path: Override path for credentials file.
         """
-        self._fs: AsyncFileSystem = fs if fs is not None else AsyncDefaultFileSystem()
-        self._http_client: Any | None = http_client
-        self._profile_name, self._profile_source = self._resolve_profile_name(
-            profile_name
+        super().__init__(
+            profile_name=profile_name,
+            fs=fs if fs is not None else AsyncDefaultFileSystem(),
+            http_client=http_client,
+            config_file_path=config_file_path,
+            credentials_file_path=credentials_file_path,
         )
-        self._config_file_path: Path | None = (
-            Path(config_file_path) if config_file_path is not None else None
-        )
-        self._credentials_file_path: Path | None = (
-            Path(credentials_file_path) if credentials_file_path is not None else None
-        )
-        self._cached_config_file: MergedConfig | None = None
-
-    @property
-    def profile_name(self) -> str:
-        """The active profile name."""
-        return self._profile_name
-
-    @property
-    def profile_source(self) -> ConfigSource:
-        """The source of the active profile name."""
-        return self._profile_source
 
     @property
     def fs(self) -> AsyncFileSystem:
         """The filesystem abstraction."""
         return self._fs
-
-    @property
-    def http_client(self) -> Any | None:
-        """HTTP client for network-based resolvers."""
-        return self._http_client
-
-    def __deepcopy__(self, memo: Any) -> "AsyncSharedConfigContext":
-        """Return self rather than a copy.
-
-        The context is read-only once resolution finishes: resolvers have
-        already pulled their values onto the config's fields, and nothing on
-        the request path reads it again. Generated clients deep-copy the
-        config on every operation call to keep plugin mutations scoped to
-        that call, which would otherwise rebuild the whole parsed profile
-        tree per request — work proportional to the size of the caller's
-        shared config files. Sharing this instead keeps that cost flat
-        without weakening the isolation of the fields plugins actually write.
-        """
-        return self
 
     async def parsed_profiles(self) -> MergedConfig:
         """Get the parsed and merged config/credentials file data.
@@ -134,30 +84,4 @@ class AsyncSharedConfigContext:
         The result is cached after the first call so files are only
         read from disk once per context.
         """
-        if self._cached_config_file is None:
-            self._cached_config_file = await load_config_async(
-                config_file_path=self._config_file_path,
-                credentials_file_path=self._credentials_file_path,
-                fs=self._fs,
-            )
-        return self._cached_config_file
-
-    def _resolve_profile_name(
-        self, explicit_profile: str | None
-    ) -> tuple[str, ConfigSource]:
-        """Determine the active profile name and where it came from.
-
-        Priority: explicit argument > AWS_PROFILE env var > "default"
-
-        :returns: Tuple of (profile_name, source), where source is the
-            provenance of the name: ``OVERRIDE`` for the explicit argument,
-            ``ENV`` for ``AWS_PROFILE``, and ``DEFAULT`` for the fallback.
-        """
-        if explicit_profile is not None:
-            return explicit_profile, ConfigSource.OVERRIDE
-
-        env_profile = os.environ.get(_PROFILE_ENV_VAR)
-        if env_profile:
-            return env_profile, ConfigSource.ENV
-
-        return _DEFAULT_PROFILE, ConfigSource.DEFAULT
+        return await run_program_async(self._parsed_profiles())

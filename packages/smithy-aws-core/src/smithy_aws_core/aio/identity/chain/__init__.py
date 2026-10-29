@@ -5,25 +5,18 @@ from collections.abc import Callable, Mapping, Sequence
 from importlib import metadata
 from typing import Any, cast
 
+from smithy_core.aio._program import run_program_async
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
-from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import Identity
 from smithy_http.aio.interfaces import AsyncHTTPClient
 
 from ....config.merged_config import MergedConfig
-from ....identity.chain.exceptions import (
-    IdentityChainConfigurationError,
-    IdentityChainError,
-    IdentityResolverFailure,
-    UnclaimedSource,
+from ....identity.chain.exceptions import UnclaimedSource
+from ....identity.chain.resolver import (
+    _assemble,  # pyright: ignore[reportPrivateUsage]
+    _IdentityChainBase,  # pyright: ignore[reportPrivateUsage]
 )
-from ....identity.chain.ordering import (
-    After,
-    Before,
-    Standard,
-    StandardProvider,
-)
-from .provider import ChainIdentityProvider, ChainSetup, NamedResolver
+from .provider import ChainIdentityProvider, ChainSetup
 
 __all__ = ("AsyncIdentityChain",)
 
@@ -31,12 +24,10 @@ _CHAIN_PROVIDER_ENTRY_POINT_GROUP = "smithy_aws_core.aio.identity.chain_provider
 logger = logging.getLogger(__name__)
 
 
-class AsyncIdentityChain[I: Identity](AsyncIdentityResolver[I, Mapping[str, Any]]):
+class AsyncIdentityChain[I: Identity](
+    _IdentityChainBase[I], AsyncIdentityResolver[I, Mapping[str, Any]]
+):
     """Resolves identities from an assembled sequence of resolvers."""
-
-    _resolvers: tuple[AsyncIdentityResolver[I, Any], ...]
-    _identity_type: type[I] | None
-    _unclaimed_sources: tuple[UnclaimedSource, ...]
 
     def __init__(
         self,
@@ -54,14 +45,9 @@ class AsyncIdentityChain[I: Identity](AsyncIdentityResolver[I, Mapping[str, Any]
             chain assembly. This parameter is used by :meth:`create`; omit it when
             constructing a chain directly.
         """
-        self._resolvers = tuple(resolvers)
-        self._identity_type = identity_type
-        self._unclaimed_sources = tuple(unclaimed_sources)
-
-    @property
-    def identity_type(self) -> type[I] | None:
-        """The identity type this chain resolves, or None if not declared."""
-        return self._identity_type
+        super().__init__(
+            resolvers, identity_type=identity_type, unclaimed_sources=unclaimed_sources
+        )
 
     @staticmethod
     async def create[ChainIdentity: Identity](
@@ -86,24 +72,15 @@ class AsyncIdentityChain[I: Identity](AsyncIdentityResolver[I, Mapping[str, Any]
             network calls.
         """
         discovered_providers = _discover_chain_identity_providers()
-        _validate_providers(discovered_providers)
-        providers = _sort_by_ordering(discovered_providers)
         setup = ChainSetup(
             config_file=config_file,
             profile_name=profile_name,
             region_override=region_override,
             http_client=http_client,
         )
-        unclaimed_sources = _find_unclaimed_sources(discovered_providers)
-
-        for provider in providers:
-            setup.set_current_provider(provider)
-            await provider.setup(identity_type, setup)
-            if setup.terminal:
-                break
-
-        for source in unclaimed_sources:
-            logger.warning(str(source))
+        unclaimed_sources = await run_program_async(
+            _assemble(identity_type, discovered_providers, setup, logger)
+        )
         return AsyncIdentityChain(
             setup.resolvers,
             identity_type=identity_type,
@@ -112,31 +89,11 @@ class AsyncIdentityChain[I: Identity](AsyncIdentityResolver[I, Mapping[str, Any]
 
     async def get_identity(self, *, properties: Mapping[str, Any]) -> I:
         """Return the first identity resolved by the chain."""
-        failures: list[IdentityResolverFailure] = []
-        for resolver in self._resolvers:
-            try:
-                return await resolver.get_identity(properties=properties)
-            except SmithyIdentityError as error:
-                if isinstance(resolver, NamedResolver):
-                    provider_name = resolver.provider_name
-                else:
-                    provider_name = type(resolver).__name__
-                failures.append(
-                    IdentityResolverFailure(
-                        provider_name=provider_name,
-                        error=error,
-                    )
-                )
-
-        raise IdentityChainError(
-            failures=tuple(failures),
-            unclaimed_sources=self._unclaimed_sources,
-        )
+        return await run_program_async(self._get_identity(properties))
 
     async def invalidate(self) -> None:
         """Invalidate every resolver in the chain."""
-        for resolver in self._resolvers:
-            await resolver.invalidate()
+        await run_program_async(self._invalidate())
 
 
 def _discover_chain_identity_providers() -> tuple[ChainIdentityProvider, ...]:
@@ -148,82 +105,3 @@ def _discover_chain_identity_providers() -> tuple[ChainIdentityProvider, ...]:
         )
         discovered.append(provider_factory())
     return tuple(discovered)
-
-
-def _sort_by_ordering(
-    providers: Sequence[ChainIdentityProvider],
-) -> tuple[ChainIdentityProvider, ...]:
-    if not providers:
-        return ()
-    slot_indexes = {slot: index for index, slot in enumerate(StandardProvider)}
-
-    def sort_key(
-        indexed_provider: tuple[int, ChainIdentityProvider],
-    ) -> tuple[int, int, int]:
-        discovery_index, provider = indexed_provider
-        ordering = provider.ordering
-
-        match ordering:
-            case Before():
-                constraint_precedence = 0
-            case Standard():
-                constraint_precedence = 1
-            case After():
-                constraint_precedence = 2
-            case _:
-                raise IdentityChainConfigurationError(
-                    f"Provider {type(provider).__name__} returned an unsupported "
-                    f"ordering constraint: {ordering!r}."
-                )
-
-        return (slot_indexes[ordering.slot], constraint_precedence, discovery_index)
-
-    indexed_providers = enumerate(providers)
-    ordered_providers = sorted(indexed_providers, key=sort_key)
-    return tuple(provider for _, provider in ordered_providers)
-
-
-def _validate_providers(providers: Sequence[ChainIdentityProvider]) -> None:
-    discovered_names: dict[str, ChainIdentityProvider] = {}
-    discovered_standard_slots: dict[StandardProvider, ChainIdentityProvider] = {}
-
-    for provider in providers:
-        normalized_name = provider.name.casefold()
-        if (previous := discovered_names.get(normalized_name)) is not None:
-            raise IdentityChainConfigurationError(
-                f"Credential providers {type(previous).__name__} and "
-                f"{type(provider).__name__} use the same name: {provider.name}."
-            )
-        discovered_names[normalized_name] = provider
-
-        ordering = provider.ordering
-        if isinstance(ordering, Standard):
-            if (previous := discovered_standard_slots.get(ordering.slot)) is not None:
-                raise IdentityChainConfigurationError(
-                    f"Credential providers {type(previous).__name__} and "
-                    f"{type(provider).__name__} both claim standard slot: "
-                    f"{ordering.slot.name}."
-                )
-            discovered_standard_slots[ordering.slot] = provider
-
-
-def _find_unclaimed_sources(
-    providers: Sequence[ChainIdentityProvider],
-) -> tuple[UnclaimedSource, ...]:
-    claimed_slots = {
-        provider.ordering.slot
-        for provider in providers
-        if isinstance(provider.ordering, Standard)
-    }
-    unclaimed_sources: list[UnclaimedSource] = []
-
-    for slot in StandardProvider:
-        if slot in claimed_slots or not slot.is_detected():
-            continue
-        package = slot.module_suggestion
-        if package:
-            unclaimed_sources.append(
-                UnclaimedSource(source_name=slot.canonical_name, package=package)
-            )
-
-    return tuple(unclaimed_sources)

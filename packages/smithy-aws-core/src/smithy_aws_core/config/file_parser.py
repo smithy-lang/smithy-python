@@ -5,8 +5,14 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import TYPE_CHECKING, Any
+
+from smithy_core._program import Program, run_program
 
 from .exceptions import ConfigParseError
+
+if TYPE_CHECKING:
+    from .filesystem import FileSystem
 
 __all__ = [
     "FileType",
@@ -14,6 +20,7 @@ __all__ = [
     "Section",
     "SectionMap",
     "StandardizedOutput",
+    "parse_config_file",
     "standardize",
 ]
 
@@ -98,6 +105,27 @@ def standardize(
         sso_sessions=sso_sessions,
         services=services,
     )
+
+
+def parse_config_file(file_path: str, filesystem: "FileSystem") -> RawParsedSections:
+    """Parse an AWS config or credentials file.
+
+    :param file_path: Resolved path to the file.
+    :param filesystem: FileSystem object to use.
+    :returns: Raw sections dict {section_name: {key: value}}.
+    :raises ConfigParseError: If the file has invalid syntax.
+    """
+    return run_program(_parse_config_file(file_path, filesystem))
+
+
+def _parse_config_file(file_path: str, filesystem: Any) -> Program[RawParsedSections]:  # type: ignore[reportUnusedFunction]
+    content: str | None = yield lambda: filesystem.read_file(file_path)
+    if content is None:
+        return {}
+    try:
+        return _parse_content(content)
+    except ConfigParseError as e:
+        raise ConfigParseError(f"Unable to parse config file '{file_path}': {e}") from e
 
 
 def _parse_content(content: str) -> RawParsedSections:  # type: ignore[reportUnusedFunction]

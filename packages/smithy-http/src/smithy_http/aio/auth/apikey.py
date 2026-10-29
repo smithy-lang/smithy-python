@@ -1,16 +1,17 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from typing import Any, Protocol, Self
+from typing import Any, Protocol
 
-from smithy_core import URI
 from smithy_core.aio.interfaces.auth import AsyncAuthScheme, AsyncSigner
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
-from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces import TypedProperties as _TypedProperties
-from smithy_core.traits import APIKeyLocation, HTTPAPIKeyAuthTrait
+from smithy_core.traits import APIKeyLocation
 from smithy_core.types import PropertyKey
 
-from ... import Field
+from ...auth.apikey import (
+    APIKeySigner,
+    _APIKeyAuthSchemeBase,  # pyright: ignore[reportPrivateUsage]
+)
 from ...identity import APIKeyIdentity, APIKeyIdentityProperties
 from ..interfaces import HTTPRequest
 
@@ -50,9 +51,7 @@ class AsyncAPIKeySigner(AsyncSigner[HTTPRequest, APIKeyIdentity, Any]):
     def __init__(
         self, *, name: str, location: APIKeyLocation, scheme: str | None = None
     ) -> None:
-        self._name = name
-        self._location = location
-        self._scheme = scheme
+        self._sync = APIKeySigner(name=name, location=location, scheme=scheme)
 
     async def sign(
         self,
@@ -61,69 +60,29 @@ class AsyncAPIKeySigner(AsyncSigner[HTTPRequest, APIKeyIdentity, Any]):
         identity: APIKeyIdentity,
         properties: Any,
     ) -> HTTPRequest:
-        match self._location:
-            case APIKeyLocation.QUERY:
-                query = request.destination.query or ""
-                if query:
-                    query += "&"
-                query += f"{self._name}={identity.api_key}"
-                request.destination = URI(
-                    scheme=request.destination.scheme,
-                    username=request.destination.username,
-                    password=request.destination.password,
-                    host=request.destination.host,
-                    port=request.destination.port,
-                    path=request.destination.password,
-                    query=query,
-                    fragment=request.destination.fragment,
-                )
-            case APIKeyLocation.HEADER:
-                value = identity.api_key
-                if self._scheme is not None:
-                    value = f"{self._scheme} {value}"
-                request.fields.set_field(Field(name=self._name, values=[value]))
-
-        return request
+        return self._sync.sign(
+            request=request, identity=identity, properties=properties
+        )
 
 
 class AsyncAPIKeyAuthScheme(
-    AsyncAuthScheme[HTTPRequest, APIKeyIdentity, APIKeyIdentityProperties, Any]
+    _APIKeyAuthSchemeBase,
+    AsyncAuthScheme[HTTPRequest, APIKeyIdentity, APIKeyIdentityProperties, Any],
 ):
     """An auth scheme containing necessary data and tools for api key auth."""
 
-    scheme_id = HTTPAPIKeyAuthTrait.id
     _signer: AsyncAPIKeySigner
 
     def __init__(
         self, *, name: str, location: APIKeyLocation, scheme: str | None = None
     ) -> None:
+        super().__init__(name=name, location=location, scheme=scheme)
         self._signer = AsyncAPIKeySigner(name=name, location=location, scheme=scheme)
-
-    def identity_properties(
-        self, *, context: _TypedProperties
-    ) -> APIKeyIdentityProperties:
-        config = context.get(API_KEY_RESOLVER_CONFIG)
-        if config is not None and config.api_key is not None:
-            return {"api_key": config.api_key}
-        return {}
 
     def identity_resolver(
         self, *, context: _TypedProperties
     ) -> AsyncIdentityResolver[APIKeyIdentity, APIKeyIdentityProperties]:
-        config = context.get(API_KEY_RESOLVER_CONFIG)
-        if config is None or config.api_key_identity_resolver is None:
-            raise SmithyIdentityError(
-                "Attempted to use API key auth, but api_key_identity_resolver was not "
-                "set on the config."
-            )
-        return config.api_key_identity_resolver
-
-    def signer_properties(self, *, context: _TypedProperties) -> Any:
-        return {}
+        return super().identity_resolver(context=context)
 
     def signer(self) -> AsyncSigner[HTTPRequest, APIKeyIdentity, Any]:
         return self._signer
-
-    @classmethod
-    def from_trait(cls, trait: HTTPAPIKeyAuthTrait, /) -> Self:
-        return cls(name=trait.name, location=trait.location, scheme=trait.scheme)

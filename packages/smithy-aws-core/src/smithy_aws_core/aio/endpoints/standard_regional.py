@@ -2,12 +2,10 @@
 #  SPDX-License-Identifier: Apache-2.0
 from typing import Any
 
-from smithy_core import URI
 from smithy_core.aio.interfaces import AsyncEndpointResolver
-from smithy_core.endpoints import Endpoint, EndpointResolverParams, resolve_static_uri
-from smithy_core.exceptions import EndpointResolutionError
+from smithy_core.endpoints import Endpoint, EndpointResolverParams
 
-from ...endpoints import REGIONAL_ENDPOINT_CONFIG
+from ...endpoints.standard_regional import StandardRegionalEndpointsResolver
 
 __all__ = ["AsyncStandardRegionalEndpointsResolver"]
 
@@ -16,20 +14,7 @@ class AsyncStandardRegionalEndpointsResolver(AsyncEndpointResolver):
     """Resolves endpoints for services with standard regional endpoints."""
 
     def __init__(self, endpoint_prefix: str = "bedrock-runtime"):
-        self._endpoint_prefix = endpoint_prefix
+        self._sync = StandardRegionalEndpointsResolver(endpoint_prefix)
 
     async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Endpoint:
-        if (static_uri := resolve_static_uri(params)) is not None:
-            return Endpoint(uri=static_uri)
-
-        region_config = params.context.get(REGIONAL_ENDPOINT_CONFIG)
-        if region_config is not None and region_config.region is not None:
-            # TODO: use dns suffix determined from partition metadata
-            dns_suffix = "amazonaws.com"
-            hostname = f"{self._endpoint_prefix}.{region_config.region}.{dns_suffix}"
-
-            return Endpoint(uri=URI(host=hostname))
-
-        raise EndpointResolutionError(
-            "Unable to resolve endpoint - either endpoint_url or region are required."
-        )
+        return self._sync.resolve_endpoint(params)

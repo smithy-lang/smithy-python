@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
@@ -53,6 +54,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     private final String fullPackageName;
     private final String filename;
     private boolean addLogger = false;
+    private UnaryOperator<Symbol> symbolMapper = UnaryOperator.identity();
 
     /**
      * Tracks all symbols referenced via {@code $T}, keyed by simple name.
@@ -89,6 +91,27 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         trimTrailingSpaces();
         putFormatter('T', new PythonSymbolFormatter());
         putFormatter('N', new PythonNodeFormatter(this));
+    }
+
+    /**
+     * Rewrites every symbol formatted with {@code $T} before it is imported and written.
+     *
+     * <p>Lets one generator emit both the async and the sync variant of a file: the sync
+     * pass maps each async runtime symbol to its sync twin.
+     *
+     * @param symbolMapper The mapping to apply.
+     * @return Returns the writer.
+     */
+    public PythonWriter setSymbolMapper(UnaryOperator<Symbol> symbolMapper) {
+        this.symbolMapper = symbolMapper;
+        return this;
+    }
+
+    /**
+     * @return Returns the mapping applied to symbols formatted with {@code $T}.
+     */
+    public UnaryOperator<Symbol> getSymbolMapper() {
+        return symbolMapper;
     }
 
     /**
@@ -499,7 +522,8 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     private final class PythonSymbolFormatter implements BiFunction<Object, String, String> {
         @Override
         public String apply(Object type, String indent) {
-            if (type instanceof Symbol typeSymbol) {
+            if (type instanceof Symbol unmappedSymbol) {
+                var typeSymbol = symbolMapper.apply(unmappedSymbol);
                 // If a symbol has the IMPORTABLE property set to false, don't import it and
                 // treat the lack of the property being set as true
                 if (typeSymbol.getProperty(IMPORTABLE).orElse(true)) {
@@ -507,8 +531,12 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
                 }
                 return resolvePlaceholder(typeSymbol);
             } else if (type instanceof SymbolReference typeSymbol) {
-                addImport(typeSymbol.getSymbol(), typeSymbol.getAlias(), SymbolReference.ContextOption.USE);
-                return typeSymbol.getAlias();
+                var mapped = symbolMapper.apply(typeSymbol.getSymbol());
+                var alias = typeSymbol.getAlias().equals(typeSymbol.getSymbol().getName())
+                        ? mapped.getName()
+                        : typeSymbol.getAlias();
+                addImport(mapped, alias, SymbolReference.ContextOption.USE);
+                return alias;
             } else {
                 throw new CodegenException(
                         "Invalid type provided to $T. Expected a Symbol, but found `" + type + "`");
