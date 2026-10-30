@@ -49,6 +49,8 @@ public class PythonCodegenTest {
         assertFalse(client.contains("max_attempts="));
         assertTrue(client.contains("(AsyncClient):"));
         assertTrue(client.contains("await self._prepare_call("));
+        assertTrue(client.contains("from . import models as _models"));
+        assertTrue(client.contains("_models.GET_CITY,"));
 
         var config = Files.readString(tempDir.resolve("src/weather/config.py"));
         assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
@@ -61,6 +63,13 @@ public class PythonCodegenTest {
         var models = Files.readString(tempDir.resolve("src/weather/models.pyi"));
         assertTrue(models.contains("response_metadata: ResponseMetadata"));
         assertTrue(models.contains("response_metadata_:"));
+
+        var runtimeModels = Files.readString(tempDir.resolve("src/weather/models.py"));
+        assertTrue(runtimeModels.contains("_operation_names = ("));
+        assertTrue(runtimeModels.contains("_operation_data[\"GET_CITY\"]"));
+        assertTrue(runtimeModels.contains("__all__.extend(_operation_names)"));
+        assertTrue(runtimeModels.contains("globals()[name] = operation"));
+        assertFalse(runtimeModels.contains("GET_CITY = APIOperation("));
 
         // Event streams are passed through the stream API, not model constructors.
         var typecheck = Files.readString(tempDir.resolve("tests/_typecheck.py"));

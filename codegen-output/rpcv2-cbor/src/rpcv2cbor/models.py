@@ -6,23 +6,6 @@ from smithy_core.exceptions import ModeledError
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
 
-from ._private.schemas import (
-    EMPTY_INPUT_OUTPUT as _SCHEMA_EMPTY_INPUT_OUTPUT,
-    FLOAT16 as _SCHEMA_FLOAT16,
-    FRACTIONAL_SECONDS as _SCHEMA_FRACTIONAL_SECONDS,
-    GREETING_WITH_ERRORS as _SCHEMA_GREETING_WITH_ERRORS,
-    NO_INPUT_OUTPUT as _SCHEMA_NO_INPUT_OUTPUT,
-    OPERATION_WITH_DEFAULTS as _SCHEMA_OPERATION_WITH_DEFAULTS,
-    OPTIONAL_INPUT_OUTPUT as _SCHEMA_OPTIONAL_INPUT_OUTPUT,
-    RECURSIVE_SHAPES as _SCHEMA_RECURSIVE_SHAPES,
-    RPC_V2_CBOR_DENSE_MAPS as _SCHEMA_RPC_V2_CBOR_DENSE_MAPS,
-    RPC_V2_CBOR_LISTS as _SCHEMA_RPC_V2_CBOR_LISTS,
-    RPC_V2_CBOR_SPARSE_MAPS as _SCHEMA_RPC_V2_CBOR_SPARSE_MAPS,
-    RPC_V2_CBOR_UNIONS as _SCHEMA_RPC_V2_CBOR_UNIONS,
-    SIMPLE_SCALAR_PROPERTIES as _SCHEMA_SIMPLE_SCALAR_PROPERTIES,
-    SPARSE_NULLS_OPERATION as _SCHEMA_SPARSE_NULLS_OPERATION,
-)
-
 
 class ServiceError(ModeledError):
     """
@@ -140,108 +123,119 @@ _registry = ModelRegistry(
     service_error="ServiceError",
 )
 
+_operation_data = {}
+_operation_names = (
+    "EMPTY_INPUT_OUTPUT",
+    "FLOAT16",
+    "FRACTIONAL_SECONDS",
+    "GREETING_WITH_ERRORS",
+    "NO_INPUT_OUTPUT",
+    "OPERATION_WITH_DEFAULTS",
+    "OPTIONAL_INPUT_OUTPUT",
+    "RECURSIVE_SHAPES",
+    "RPC_V2_CBOR_DENSE_MAPS",
+    "RPC_V2_CBOR_LISTS",
+    "RPC_V2_CBOR_SPARSE_MAPS",
+    "RPC_V2_CBOR_UNIONS",
+    "SIMPLE_SCALAR_PROPERTIES",
+    "SPARSE_NULLS_OPERATION",
+)
+for _operation_name in _operation_names:
+    globals().pop(_operation_name, None)
+
+__all__ = [name for name in globals() if not name.startswith("_")]
+__all__.extend(_operation_names)
+
 
 def __getattr__(name: str):
+    if (data := _operation_data.get(name)) is not None:
+        schema_name, error_ids, auth_scheme_ids = data
+        operation = APIOperation(
+            static_schema=getattr(_schemas, schema_name),
+            model_registry=_registry,
+            error_ids=[ShapeID(shape_id) for shape_id in error_ids],
+            effective_auth_schemes=[ShapeID(shape_id) for shape_id in auth_scheme_ids],
+        )
+        globals()[name] = operation
+        return operation
     return _registry.build(name)
 
 
-EMPTY_INPUT_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_EMPTY_INPUT_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+def __dir__():
+    return sorted({*globals(), *_operation_names})
+
+
+_operation_data["EMPTY_INPUT_OUTPUT"] = (
+    "EMPTY_INPUT_OUTPUT",
+    (),
+    ("smithy.api#noAuth",),
 )
 
-FLOAT16 = APIOperation(
-    static_schema=_SCHEMA_FLOAT16,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+_operation_data["FLOAT16"] = ("FLOAT16", (), ("smithy.api#noAuth",))
+
+_operation_data["FRACTIONAL_SECONDS"] = (
+    "FRACTIONAL_SECONDS",
+    (),
+    ("smithy.api#noAuth",),
 )
 
-FRACTIONAL_SECONDS = APIOperation(
-    static_schema=_SCHEMA_FRACTIONAL_SECONDS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+_operation_data["GREETING_WITH_ERRORS"] = (
+    "GREETING_WITH_ERRORS",
+    (
+        "smithy.protocoltests.rpcv2Cbor#InvalidGreeting",
+        "smithy.protocoltests.rpcv2Cbor#ComplexError",
+    ),
+    ("smithy.api#noAuth",),
 )
 
-GREETING_WITH_ERRORS = APIOperation(
-    static_schema=_SCHEMA_GREETING_WITH_ERRORS,
-    model_registry=_registry,
-    error_ids=[
-        ShapeID("smithy.protocoltests.rpcv2Cbor#InvalidGreeting"),
-        ShapeID("smithy.protocoltests.rpcv2Cbor#ComplexError"),
-    ],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+_operation_data["NO_INPUT_OUTPUT"] = ("NO_INPUT_OUTPUT", (), ("smithy.api#noAuth",))
+
+_operation_data["OPERATION_WITH_DEFAULTS"] = (
+    "OPERATION_WITH_DEFAULTS",
+    ("smithy.framework#ValidationException",),
+    ("smithy.api#noAuth",),
 )
 
-NO_INPUT_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_NO_INPUT_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+_operation_data["OPTIONAL_INPUT_OUTPUT"] = (
+    "OPTIONAL_INPUT_OUTPUT",
+    (),
+    ("smithy.api#noAuth",),
 )
 
-OPERATION_WITH_DEFAULTS = APIOperation(
-    static_schema=_SCHEMA_OPERATION_WITH_DEFAULTS,
-    model_registry=_registry,
-    error_ids=[ShapeID("smithy.framework#ValidationException")],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+_operation_data["RPC_V2_CBOR_DENSE_MAPS"] = (
+    "RPC_V2_CBOR_DENSE_MAPS",
+    ("smithy.framework#ValidationException",),
+    ("smithy.api#noAuth",),
 )
 
-OPTIONAL_INPUT_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_OPTIONAL_INPUT_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+_operation_data["RPC_V2_CBOR_LISTS"] = (
+    "RPC_V2_CBOR_LISTS",
+    ("smithy.framework#ValidationException",),
+    ("smithy.api#noAuth",),
 )
 
-RPC_V2_CBOR_DENSE_MAPS = APIOperation(
-    static_schema=_SCHEMA_RPC_V2_CBOR_DENSE_MAPS,
-    model_registry=_registry,
-    error_ids=[ShapeID("smithy.framework#ValidationException")],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+_operation_data["RPC_V2_CBOR_SPARSE_MAPS"] = (
+    "RPC_V2_CBOR_SPARSE_MAPS",
+    ("smithy.framework#ValidationException",),
+    ("smithy.api#noAuth",),
 )
 
-RPC_V2_CBOR_LISTS = APIOperation(
-    static_schema=_SCHEMA_RPC_V2_CBOR_LISTS,
-    model_registry=_registry,
-    error_ids=[ShapeID("smithy.framework#ValidationException")],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+_operation_data["RPC_V2_CBOR_UNIONS"] = (
+    "RPC_V2_CBOR_UNIONS",
+    (),
+    ("smithy.api#noAuth",),
 )
 
-RPC_V2_CBOR_SPARSE_MAPS = APIOperation(
-    static_schema=_SCHEMA_RPC_V2_CBOR_SPARSE_MAPS,
-    model_registry=_registry,
-    error_ids=[ShapeID("smithy.framework#ValidationException")],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+_operation_data["SIMPLE_SCALAR_PROPERTIES"] = (
+    "SIMPLE_SCALAR_PROPERTIES",
+    (),
+    ("smithy.api#noAuth",),
 )
 
-RPC_V2_CBOR_UNIONS = APIOperation(
-    static_schema=_SCHEMA_RPC_V2_CBOR_UNIONS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+_operation_data["SPARSE_NULLS_OPERATION"] = (
+    "SPARSE_NULLS_OPERATION",
+    (),
+    ("smithy.api#noAuth",),
 )
 
-SIMPLE_SCALAR_PROPERTIES = APIOperation(
-    static_schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
-)
-
-SPARSE_NULLS_OPERATION = APIOperation(
-    static_schema=_SCHEMA_SPARSE_NULLS_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
-)
-
-RECURSIVE_SHAPES = APIOperation(
-    static_schema=_SCHEMA_RECURSIVE_SHAPES,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
-)
+_operation_data["RECURSIVE_SHAPES"] = ("RECURSIVE_SHAPES", (), ("smithy.api#noAuth",))
