@@ -13,23 +13,8 @@ from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
 from smithy_http.plugins import user_agent_plugin
 
+from . import models as _models
 from .config import Config, Plugin
-from .models import (
-    EMPTY_INPUT_OUTPUT,
-    FLOAT16,
-    FRACTIONAL_SECONDS,
-    GREETING_WITH_ERRORS,
-    NO_INPUT_OUTPUT,
-    OPERATION_WITH_DEFAULTS,
-    OPTIONAL_INPUT_OUTPUT,
-    RECURSIVE_SHAPES,
-    RPC_V2_CBOR_DENSE_MAPS,
-    RPC_V2_CBOR_LISTS,
-    RPC_V2_CBOR_SPARSE_MAPS,
-    RPC_V2_CBOR_UNIONS,
-    SIMPLE_SCALAR_PROPERTIES,
-    SPARSE_NULLS_OPERATION,
-)
 from .user_agent import aws_user_agent_plugin
 
 from typing import TYPE_CHECKING
@@ -180,7 +165,7 @@ class RpcV2Protocol(AsyncClient):
             An instance of `EmptyInputOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, EMPTY_INPUT_OUTPUT, [], plugins
+            input, _models.EMPTY_INPUT_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -202,7 +187,7 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `Float16Output`.
         """
-        pipeline, call = await self._prepare_call(input, FLOAT16, [], plugins)
+        pipeline, call = await self._prepare_call(input, _models.FLOAT16, [], plugins)
         return await pipeline(call)
 
     async def fractional_seconds(
@@ -224,7 +209,7 @@ class RpcV2Protocol(AsyncClient):
             An instance of `FractionalSecondsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, FRACTIONAL_SECONDS, [], plugins
+            input, _models.FRACTIONAL_SECONDS, [], plugins
         )
         return await pipeline(call)
 
@@ -254,7 +239,7 @@ class RpcV2Protocol(AsyncClient):
             An instance of `GreetingWithErrorsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, [], plugins
+            input, _models.GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
@@ -276,7 +261,9 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `NoInputOutputOutput`.
         """
-        pipeline, call = await self._prepare_call(input, NO_INPUT_OUTPUT, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.NO_INPUT_OUTPUT, [], plugins
+        )
         return await pipeline(call)
 
     async def operation_with_defaults(
@@ -298,7 +285,7 @@ class RpcV2Protocol(AsyncClient):
             An instance of `OperationWithDefaultsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_DEFAULTS, [], plugins
+            input, _models.OPERATION_WITH_DEFAULTS, [], plugins
         )
         return await pipeline(call)
 
@@ -321,7 +308,7 @@ class RpcV2Protocol(AsyncClient):
             An instance of `OptionalInputOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OPTIONAL_INPUT_OUTPUT, [], plugins
+            input, _models.OPTIONAL_INPUT_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -343,7 +330,9 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        pipeline, call = await self._prepare_call(input, RECURSIVE_SHAPES, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.RECURSIVE_SHAPES, [], plugins
+        )
         return await pipeline(call)
 
     async def rpc_v2_cbor_dense_maps(
@@ -365,7 +354,7 @@ class RpcV2Protocol(AsyncClient):
             An instance of `RpcV2CborDenseMapsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, RPC_V2_CBOR_DENSE_MAPS, [], plugins
+            input, _models.RPC_V2_CBOR_DENSE_MAPS, [], plugins
         )
         return await pipeline(call)
 
@@ -393,7 +382,9 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RpcV2CborListsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, RPC_V2_CBOR_LISTS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.RPC_V2_CBOR_LISTS, [], plugins
+        )
         return await pipeline(call)
 
     async def rpc_v2_cbor_sparse_maps(
@@ -415,7 +406,7 @@ class RpcV2Protocol(AsyncClient):
             An instance of `RpcV2CborSparseMapsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, RPC_V2_CBOR_SPARSE_MAPS, [], plugins
+            input, _models.RPC_V2_CBOR_SPARSE_MAPS, [], plugins
         )
         return await pipeline(call)
 
@@ -438,7 +429,7 @@ class RpcV2Protocol(AsyncClient):
             An instance of `RpcV2CborUnionsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, RPC_V2_CBOR_UNIONS, [], plugins
+            input, _models.RPC_V2_CBOR_UNIONS, [], plugins
         )
         return await pipeline(call)
 
@@ -461,7 +452,7 @@ class RpcV2Protocol(AsyncClient):
             An instance of `SimpleScalarPropertiesOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+            input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
 
@@ -484,6 +475,6 @@ class RpcV2Protocol(AsyncClient):
             An instance of `SparseNullsOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, SPARSE_NULLS_OPERATION, [], plugins
+            input, _models.SPARSE_NULLS_OPERATION, [], plugins
         )
         return await pipeline(call)

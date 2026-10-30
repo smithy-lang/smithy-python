@@ -6,74 +6,6 @@ from smithy_core.exceptions import ModeledError
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
 
-from ._private.schemas import (
-    ALL_QUERY_STRING_TYPES as _SCHEMA_ALL_QUERY_STRING_TYPES,
-    BODY_WITH_XML_NAME as _SCHEMA_BODY_WITH_XML_NAME,
-    CONSTANT_AND_VARIABLE_QUERY_STRING as _SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING,
-    CONSTANT_QUERY_STRING as _SCHEMA_CONSTANT_QUERY_STRING,
-    CONTENT_TYPE_PARAMETERS as _SCHEMA_CONTENT_TYPE_PARAMETERS,
-    DATETIME_OFFSETS as _SCHEMA_DATETIME_OFFSETS,
-    EMPTY_INPUT_AND_EMPTY_OUTPUT as _SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT,
-    ENDPOINT_OPERATION as _SCHEMA_ENDPOINT_OPERATION,
-    ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION as _SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION,
-    ENDPOINT_WITH_HOST_LABEL_OPERATION as _SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION,
-    FLATTENED_XML_MAP as _SCHEMA_FLATTENED_XML_MAP,
-    FLATTENED_XML_MAP_WITH_XML_NAME as _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME,
-    FLATTENED_XML_MAP_WITH_XML_NAMESPACE as _SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
-    FRACTIONAL_SECONDS as _SCHEMA_FRACTIONAL_SECONDS,
-    GREETING_WITH_ERRORS as _SCHEMA_GREETING_WITH_ERRORS,
-    HTTP_EMPTY_PREFIX_HEADERS as _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS,
-    HTTP_ENUM_PAYLOAD as _SCHEMA_HTTP_ENUM_PAYLOAD,
-    HTTP_PAYLOAD_TRAITS as _SCHEMA_HTTP_PAYLOAD_TRAITS,
-    HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE as _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
-    HTTP_PAYLOAD_WITH_MEMBER_XML_NAME as _SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME,
-    HTTP_PAYLOAD_WITH_STRUCTURE as _SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE,
-    HTTP_PAYLOAD_WITH_UNION as _SCHEMA_HTTP_PAYLOAD_WITH_UNION,
-    HTTP_PAYLOAD_WITH_XML_NAME as _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME,
-    HTTP_PAYLOAD_WITH_XML_NAMESPACE as _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE,
-    HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX as _SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX,
-    HTTP_PREFIX_HEADERS as _SCHEMA_HTTP_PREFIX_HEADERS,
-    HTTP_REQUEST_WITH_FLOAT_LABELS as _SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS,
-    HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH as _SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
-    HTTP_REQUEST_WITH_LABELS as _SCHEMA_HTTP_REQUEST_WITH_LABELS,
-    HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT as _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
-    HTTP_RESPONSE_CODE as _SCHEMA_HTTP_RESPONSE_CODE,
-    HTTP_STRING_PAYLOAD as _SCHEMA_HTTP_STRING_PAYLOAD,
-    IGNORE_QUERY_PARAMS_IN_RESPONSE as _SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE,
-    INPUT_AND_OUTPUT_WITH_HEADERS as _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS,
-    NESTED_XML_MAPS as _SCHEMA_NESTED_XML_MAPS,
-    NESTED_XML_MAP_WITH_XML_NAME as _SCHEMA_NESTED_XML_MAP_WITH_XML_NAME,
-    NO_INPUT_AND_NO_OUTPUT as _SCHEMA_NO_INPUT_AND_NO_OUTPUT,
-    NO_INPUT_AND_OUTPUT as _SCHEMA_NO_INPUT_AND_OUTPUT,
-    NULL_AND_EMPTY_HEADERS_CLIENT as _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT,
-    NULL_AND_EMPTY_HEADERS_SERVER as _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER,
-    OMITS_NULL_SERIALIZES_EMPTY_STRING as _SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING,
-    PUT_WITH_CONTENT_ENCODING as _SCHEMA_PUT_WITH_CONTENT_ENCODING,
-    QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL as _SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
-    QUERY_PARAMS_AS_STRING_LIST_MAP as _SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP,
-    QUERY_PRECEDENCE as _SCHEMA_QUERY_PRECEDENCE,
-    RECURSIVE_SHAPES as _SCHEMA_RECURSIVE_SHAPES,
-    SIMPLE_SCALAR_PROPERTIES as _SCHEMA_SIMPLE_SCALAR_PROPERTIES,
-    TIMESTAMP_FORMAT_HEADERS as _SCHEMA_TIMESTAMP_FORMAT_HEADERS,
-    XML_ATTRIBUTES as _SCHEMA_XML_ATTRIBUTES,
-    XML_ATTRIBUTES_IN_MIDDLE as _SCHEMA_XML_ATTRIBUTES_IN_MIDDLE,
-    XML_ATTRIBUTES_ON_PAYLOAD as _SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD,
-    XML_BLOBS as _SCHEMA_XML_BLOBS,
-    XML_EMPTY_BLOBS as _SCHEMA_XML_EMPTY_BLOBS,
-    XML_EMPTY_LISTS as _SCHEMA_XML_EMPTY_LISTS,
-    XML_EMPTY_MAPS as _SCHEMA_XML_EMPTY_MAPS,
-    XML_EMPTY_STRINGS as _SCHEMA_XML_EMPTY_STRINGS,
-    XML_ENUMS as _SCHEMA_XML_ENUMS,
-    XML_INT_ENUMS as _SCHEMA_XML_INT_ENUMS,
-    XML_LISTS as _SCHEMA_XML_LISTS,
-    XML_MAPS as _SCHEMA_XML_MAPS,
-    XML_MAPS_XML_NAME as _SCHEMA_XML_MAPS_XML_NAME,
-    XML_MAP_WITH_XML_NAMESPACE as _SCHEMA_XML_MAP_WITH_XML_NAMESPACE,
-    XML_NAMESPACES as _SCHEMA_XML_NAMESPACES,
-    XML_TIMESTAMPS as _SCHEMA_XML_TIMESTAMPS,
-    XML_UNIONS as _SCHEMA_XML_UNIONS,
-)
-
 
 class ServiceError(ModeledError):
     """
@@ -413,465 +345,392 @@ _registry = ModelRegistry(
     service_error="ServiceError",
 )
 
+_operation_data = {}
+_operation_names = (
+    "ALL_QUERY_STRING_TYPES",
+    "BODY_WITH_XML_NAME",
+    "CONSTANT_AND_VARIABLE_QUERY_STRING",
+    "CONSTANT_QUERY_STRING",
+    "CONTENT_TYPE_PARAMETERS",
+    "DATETIME_OFFSETS",
+    "EMPTY_INPUT_AND_EMPTY_OUTPUT",
+    "ENDPOINT_OPERATION",
+    "ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION",
+    "ENDPOINT_WITH_HOST_LABEL_OPERATION",
+    "FLATTENED_XML_MAP",
+    "FLATTENED_XML_MAP_WITH_XML_NAME",
+    "FLATTENED_XML_MAP_WITH_XML_NAMESPACE",
+    "FRACTIONAL_SECONDS",
+    "GREETING_WITH_ERRORS",
+    "HTTP_EMPTY_PREFIX_HEADERS",
+    "HTTP_ENUM_PAYLOAD",
+    "HTTP_PAYLOAD_TRAITS",
+    "HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE",
+    "HTTP_PAYLOAD_WITH_MEMBER_XML_NAME",
+    "HTTP_PAYLOAD_WITH_STRUCTURE",
+    "HTTP_PAYLOAD_WITH_UNION",
+    "HTTP_PAYLOAD_WITH_XML_NAME",
+    "HTTP_PAYLOAD_WITH_XML_NAMESPACE",
+    "HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX",
+    "HTTP_PREFIX_HEADERS",
+    "HTTP_REQUEST_WITH_FLOAT_LABELS",
+    "HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH",
+    "HTTP_REQUEST_WITH_LABELS",
+    "HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT",
+    "HTTP_RESPONSE_CODE",
+    "HTTP_STRING_PAYLOAD",
+    "IGNORE_QUERY_PARAMS_IN_RESPONSE",
+    "INPUT_AND_OUTPUT_WITH_HEADERS",
+    "NESTED_XML_MAPS",
+    "NESTED_XML_MAP_WITH_XML_NAME",
+    "NO_INPUT_AND_NO_OUTPUT",
+    "NO_INPUT_AND_OUTPUT",
+    "NULL_AND_EMPTY_HEADERS_CLIENT",
+    "NULL_AND_EMPTY_HEADERS_SERVER",
+    "OMITS_NULL_SERIALIZES_EMPTY_STRING",
+    "PUT_WITH_CONTENT_ENCODING",
+    "QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL",
+    "QUERY_PARAMS_AS_STRING_LIST_MAP",
+    "QUERY_PRECEDENCE",
+    "RECURSIVE_SHAPES",
+    "SIMPLE_SCALAR_PROPERTIES",
+    "TIMESTAMP_FORMAT_HEADERS",
+    "XML_ATTRIBUTES",
+    "XML_ATTRIBUTES_IN_MIDDLE",
+    "XML_ATTRIBUTES_ON_PAYLOAD",
+    "XML_BLOBS",
+    "XML_EMPTY_BLOBS",
+    "XML_EMPTY_LISTS",
+    "XML_EMPTY_MAPS",
+    "XML_EMPTY_STRINGS",
+    "XML_ENUMS",
+    "XML_INT_ENUMS",
+    "XML_LISTS",
+    "XML_MAPS",
+    "XML_MAPS_XML_NAME",
+    "XML_MAP_WITH_XML_NAMESPACE",
+    "XML_NAMESPACES",
+    "XML_TIMESTAMPS",
+    "XML_UNIONS",
+)
+for _operation_name in _operation_names:
+    globals().pop(_operation_name, None)
+
+__all__ = [name for name in globals() if not name.startswith("_")]
+__all__.extend(_operation_names)
+
 
 def __getattr__(name: str):
+    if (data := _operation_data.get(name)) is not None:
+        schema_name, error_ids, auth_scheme_ids = data
+        operation = APIOperation(
+            static_schema=getattr(_schemas, schema_name),
+            model_registry=_registry,
+            error_ids=[ShapeID(shape_id) for shape_id in error_ids],
+            effective_auth_schemes=[ShapeID(shape_id) for shape_id in auth_scheme_ids],
+        )
+        globals()[name] = operation
+        return operation
     return _registry.build(name)
 
 
-ALL_QUERY_STRING_TYPES = APIOperation(
-    static_schema=_SCHEMA_ALL_QUERY_STRING_TYPES,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+def __dir__():
+    return sorted({*globals(), *_operation_names})
 
-BODY_WITH_XML_NAME = APIOperation(
-    static_schema=_SCHEMA_BODY_WITH_XML_NAME,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
 
-CONSTANT_AND_VARIABLE_QUERY_STRING = APIOperation(
-    static_schema=_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["ALL_QUERY_STRING_TYPES"] = (
+    "ALL_QUERY_STRING_TYPES",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-CONSTANT_QUERY_STRING = APIOperation(
-    static_schema=_SCHEMA_CONSTANT_QUERY_STRING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["BODY_WITH_XML_NAME"] = ("BODY_WITH_XML_NAME", (), ("aws.auth#sigv4",))
 
-CONTENT_TYPE_PARAMETERS = APIOperation(
-    static_schema=_SCHEMA_CONTENT_TYPE_PARAMETERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["CONSTANT_AND_VARIABLE_QUERY_STRING"] = (
+    "CONSTANT_AND_VARIABLE_QUERY_STRING",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-DATETIME_OFFSETS = APIOperation(
-    static_schema=_SCHEMA_DATETIME_OFFSETS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["CONSTANT_QUERY_STRING"] = (
+    "CONSTANT_QUERY_STRING",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["CONTENT_TYPE_PARAMETERS"] = (
+    "CONTENT_TYPE_PARAMETERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-ENDPOINT_OPERATION = APIOperation(
-    static_schema=_SCHEMA_ENDPOINT_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["DATETIME_OFFSETS"] = ("DATETIME_OFFSETS", (), ("aws.auth#sigv4",))
 
-ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION = APIOperation(
-    static_schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["EMPTY_INPUT_AND_EMPTY_OUTPUT"] = (
+    "EMPTY_INPUT_AND_EMPTY_OUTPUT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION = APIOperation(
-    static_schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["ENDPOINT_OPERATION"] = ("ENDPOINT_OPERATION", (), ("aws.auth#sigv4",))
 
-FLATTENED_XML_MAP = APIOperation(
-    static_schema=_SCHEMA_FLATTENED_XML_MAP,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION"] = (
+    "ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-FLATTENED_XML_MAP_WITH_XML_NAME = APIOperation(
-    static_schema=_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAME,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["ENDPOINT_WITH_HOST_LABEL_OPERATION"] = (
+    "ENDPOINT_WITH_HOST_LABEL_OPERATION",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-FLATTENED_XML_MAP_WITH_XML_NAMESPACE = APIOperation(
-    static_schema=_SCHEMA_FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["FLATTENED_XML_MAP"] = ("FLATTENED_XML_MAP", (), ("aws.auth#sigv4",))
 
-FRACTIONAL_SECONDS = APIOperation(
-    static_schema=_SCHEMA_FRACTIONAL_SECONDS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["FLATTENED_XML_MAP_WITH_XML_NAME"] = (
+    "FLATTENED_XML_MAP_WITH_XML_NAME",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-GREETING_WITH_ERRORS = APIOperation(
-    static_schema=_SCHEMA_GREETING_WITH_ERRORS,
-    model_registry=_registry,
-    error_ids=[
-        ShapeID("aws.protocoltests.restxml#InvalidGreeting"),
-        ShapeID("aws.protocoltests.restxml#ComplexError"),
-    ],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["FLATTENED_XML_MAP_WITH_XML_NAMESPACE"] = (
+    "FLATTENED_XML_MAP_WITH_XML_NAMESPACE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_EMPTY_PREFIX_HEADERS = APIOperation(
-    static_schema=_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["FRACTIONAL_SECONDS"] = ("FRACTIONAL_SECONDS", (), ("aws.auth#sigv4",))
 
-HTTP_ENUM_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_HTTP_ENUM_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["GREETING_WITH_ERRORS"] = (
+    "GREETING_WITH_ERRORS",
+    (
+        "aws.protocoltests.restxml#InvalidGreeting",
+        "aws.protocoltests.restxml#ComplexError",
+    ),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PAYLOAD_TRAITS = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_TRAITS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_EMPTY_PREFIX_HEADERS"] = (
+    "HTTP_EMPTY_PREFIX_HEADERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["HTTP_ENUM_PAYLOAD"] = ("HTTP_ENUM_PAYLOAD", (), ("aws.auth#sigv4",))
 
-HTTP_PAYLOAD_WITH_MEMBER_XML_NAME = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_MEMBER_XML_NAME,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_TRAITS"] = (
+    "HTTP_PAYLOAD_TRAITS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PAYLOAD_WITH_STRUCTURE = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE"] = (
+    "HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PAYLOAD_WITH_UNION = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_UNION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_WITH_MEMBER_XML_NAME"] = (
+    "HTTP_PAYLOAD_WITH_MEMBER_XML_NAME",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAME = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAME,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_WITH_STRUCTURE"] = (
+    "HTTP_PAYLOAD_WITH_STRUCTURE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAMESPACE = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_WITH_UNION"] = (
+    "HTTP_PAYLOAD_WITH_UNION",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_WITH_XML_NAME"] = (
+    "HTTP_PAYLOAD_WITH_XML_NAME",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PREFIX_HEADERS = APIOperation(
-    static_schema=_SCHEMA_HTTP_PREFIX_HEADERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_WITH_XML_NAMESPACE"] = (
+    "HTTP_PAYLOAD_WITH_XML_NAMESPACE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_REQUEST_WITH_FLOAT_LABELS = APIOperation(
-    static_schema=_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX"] = (
+    "HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = APIOperation(
-    static_schema=_SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PREFIX_HEADERS"] = (
+    "HTTP_PREFIX_HEADERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_REQUEST_WITH_LABELS = APIOperation(
-    static_schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_REQUEST_WITH_FLOAT_LABELS"] = (
+    "HTTP_REQUEST_WITH_FLOAT_LABELS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = APIOperation(
-    static_schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH"] = (
+    "HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_RESPONSE_CODE = APIOperation(
-    static_schema=_SCHEMA_HTTP_RESPONSE_CODE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_REQUEST_WITH_LABELS"] = (
+    "HTTP_REQUEST_WITH_LABELS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_STRING_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_HTTP_STRING_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT"] = (
+    "HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-IGNORE_QUERY_PARAMS_IN_RESPONSE = APIOperation(
-    static_schema=_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["HTTP_RESPONSE_CODE"] = ("HTTP_RESPONSE_CODE", (), ("aws.auth#sigv4",))
 
-INPUT_AND_OUTPUT_WITH_HEADERS = APIOperation(
-    static_schema=_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_STRING_PAYLOAD"] = (
+    "HTTP_STRING_PAYLOAD",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-NESTED_XML_MAPS = APIOperation(
-    static_schema=_SCHEMA_NESTED_XML_MAPS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["IGNORE_QUERY_PARAMS_IN_RESPONSE"] = (
+    "IGNORE_QUERY_PARAMS_IN_RESPONSE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-NESTED_XML_MAP_WITH_XML_NAME = APIOperation(
-    static_schema=_SCHEMA_NESTED_XML_MAP_WITH_XML_NAME,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["INPUT_AND_OUTPUT_WITH_HEADERS"] = (
+    "INPUT_AND_OUTPUT_WITH_HEADERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-NO_INPUT_AND_NO_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_NO_INPUT_AND_NO_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["NESTED_XML_MAPS"] = ("NESTED_XML_MAPS", (), ("aws.auth#sigv4",))
 
-NO_INPUT_AND_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_NO_INPUT_AND_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["NESTED_XML_MAP_WITH_XML_NAME"] = (
+    "NESTED_XML_MAP_WITH_XML_NAME",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-NULL_AND_EMPTY_HEADERS_CLIENT = APIOperation(
-    static_schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["NO_INPUT_AND_NO_OUTPUT"] = (
+    "NO_INPUT_AND_NO_OUTPUT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-NULL_AND_EMPTY_HEADERS_SERVER = APIOperation(
-    static_schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["NO_INPUT_AND_OUTPUT"] = (
+    "NO_INPUT_AND_OUTPUT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-OMITS_NULL_SERIALIZES_EMPTY_STRING = APIOperation(
-    static_schema=_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["NULL_AND_EMPTY_HEADERS_CLIENT"] = (
+    "NULL_AND_EMPTY_HEADERS_CLIENT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-PUT_WITH_CONTENT_ENCODING = APIOperation(
-    static_schema=_SCHEMA_PUT_WITH_CONTENT_ENCODING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["NULL_AND_EMPTY_HEADERS_SERVER"] = (
+    "NULL_AND_EMPTY_HEADERS_SERVER",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = APIOperation(
-    static_schema=_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["OMITS_NULL_SERIALIZES_EMPTY_STRING"] = (
+    "OMITS_NULL_SERIALIZES_EMPTY_STRING",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-QUERY_PARAMS_AS_STRING_LIST_MAP = APIOperation(
-    static_schema=_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["PUT_WITH_CONTENT_ENCODING"] = (
+    "PUT_WITH_CONTENT_ENCODING",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-QUERY_PRECEDENCE = APIOperation(
-    static_schema=_SCHEMA_QUERY_PRECEDENCE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL"] = (
+    "QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-SIMPLE_SCALAR_PROPERTIES = APIOperation(
-    static_schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["QUERY_PARAMS_AS_STRING_LIST_MAP"] = (
+    "QUERY_PARAMS_AS_STRING_LIST_MAP",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-TIMESTAMP_FORMAT_HEADERS = APIOperation(
-    static_schema=_SCHEMA_TIMESTAMP_FORMAT_HEADERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["QUERY_PRECEDENCE"] = ("QUERY_PRECEDENCE", (), ("aws.auth#sigv4",))
 
-XML_ATTRIBUTES = APIOperation(
-    static_schema=_SCHEMA_XML_ATTRIBUTES,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["SIMPLE_SCALAR_PROPERTIES"] = (
+    "SIMPLE_SCALAR_PROPERTIES",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-XML_ATTRIBUTES_IN_MIDDLE = APIOperation(
-    static_schema=_SCHEMA_XML_ATTRIBUTES_IN_MIDDLE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["TIMESTAMP_FORMAT_HEADERS"] = (
+    "TIMESTAMP_FORMAT_HEADERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-XML_ATTRIBUTES_ON_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_XML_ATTRIBUTES_ON_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_ATTRIBUTES"] = ("XML_ATTRIBUTES", (), ("aws.auth#sigv4",))
 
-XML_BLOBS = APIOperation(
-    static_schema=_SCHEMA_XML_BLOBS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["XML_ATTRIBUTES_IN_MIDDLE"] = (
+    "XML_ATTRIBUTES_IN_MIDDLE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-XML_EMPTY_BLOBS = APIOperation(
-    static_schema=_SCHEMA_XML_EMPTY_BLOBS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["XML_ATTRIBUTES_ON_PAYLOAD"] = (
+    "XML_ATTRIBUTES_ON_PAYLOAD",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-XML_EMPTY_LISTS = APIOperation(
-    static_schema=_SCHEMA_XML_EMPTY_LISTS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_BLOBS"] = ("XML_BLOBS", (), ("aws.auth#sigv4",))
 
-XML_EMPTY_MAPS = APIOperation(
-    static_schema=_SCHEMA_XML_EMPTY_MAPS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_EMPTY_BLOBS"] = ("XML_EMPTY_BLOBS", (), ("aws.auth#sigv4",))
 
-XML_EMPTY_STRINGS = APIOperation(
-    static_schema=_SCHEMA_XML_EMPTY_STRINGS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_EMPTY_LISTS"] = ("XML_EMPTY_LISTS", (), ("aws.auth#sigv4",))
 
-XML_ENUMS = APIOperation(
-    static_schema=_SCHEMA_XML_ENUMS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_EMPTY_MAPS"] = ("XML_EMPTY_MAPS", (), ("aws.auth#sigv4",))
 
-XML_INT_ENUMS = APIOperation(
-    static_schema=_SCHEMA_XML_INT_ENUMS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_EMPTY_STRINGS"] = ("XML_EMPTY_STRINGS", (), ("aws.auth#sigv4",))
 
-XML_LISTS = APIOperation(
-    static_schema=_SCHEMA_XML_LISTS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_ENUMS"] = ("XML_ENUMS", (), ("aws.auth#sigv4",))
 
-XML_MAPS = APIOperation(
-    static_schema=_SCHEMA_XML_MAPS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_INT_ENUMS"] = ("XML_INT_ENUMS", (), ("aws.auth#sigv4",))
 
-XML_MAPS_XML_NAME = APIOperation(
-    static_schema=_SCHEMA_XML_MAPS_XML_NAME,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_LISTS"] = ("XML_LISTS", (), ("aws.auth#sigv4",))
 
-XML_MAP_WITH_XML_NAMESPACE = APIOperation(
-    static_schema=_SCHEMA_XML_MAP_WITH_XML_NAMESPACE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_MAPS"] = ("XML_MAPS", (), ("aws.auth#sigv4",))
 
-XML_NAMESPACES = APIOperation(
-    static_schema=_SCHEMA_XML_NAMESPACES,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_MAPS_XML_NAME"] = ("XML_MAPS_XML_NAME", (), ("aws.auth#sigv4",))
 
-XML_TIMESTAMPS = APIOperation(
-    static_schema=_SCHEMA_XML_TIMESTAMPS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["XML_MAP_WITH_XML_NAMESPACE"] = (
+    "XML_MAP_WITH_XML_NAMESPACE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-XML_UNIONS = APIOperation(
-    static_schema=_SCHEMA_XML_UNIONS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_NAMESPACES"] = ("XML_NAMESPACES", (), ("aws.auth#sigv4",))
 
-RECURSIVE_SHAPES = APIOperation(
-    static_schema=_SCHEMA_RECURSIVE_SHAPES,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["XML_TIMESTAMPS"] = ("XML_TIMESTAMPS", (), ("aws.auth#sigv4",))
+
+_operation_data["XML_UNIONS"] = ("XML_UNIONS", (), ("aws.auth#sigv4",))
+
+_operation_data["RECURSIVE_SHAPES"] = ("RECURSIVE_SHAPES", (), ("aws.auth#sigv4",))

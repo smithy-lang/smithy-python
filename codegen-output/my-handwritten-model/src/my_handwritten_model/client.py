@@ -16,17 +16,15 @@ from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
 from smithy_http.plugins import user_agent_plugin
 
+from . import models as _models
 from .config import Config, Plugin
 from .models import (
-    PUBLISH_EVENTS,
     PublishEventStream,
     PublishEventsInput,
     PublishEventsOutput,
-    SUBSCRIBE_TO_EVENTS,
     SubscribeEventStream,
     SubscribeToEventsInput,
     SubscribeToEventsOutput,
-    TRADE_EVENT_STREAM,
     TradeEventStreamInput,
     TradeEventStreamOutput,
     TradeEvents,
@@ -149,7 +147,9 @@ class MyHandwrittenModel(AsyncClient):
         Returns:
             An `InputEventStream` for client-to-server streaming.
         """
-        pipeline, call = await self._prepare_call(input, PUBLISH_EVENTS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.PUBLISH_EVENTS, [], plugins
+        )
         return await pipeline.input_stream(call, PublishEventStream)
 
     async def subscribe_to_events(
@@ -171,7 +171,7 @@ class MyHandwrittenModel(AsyncClient):
             An `OutputEventStream` for server-to-client streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, SUBSCRIBE_TO_EVENTS, [], plugins
+            input, _models.SUBSCRIBE_TO_EVENTS, [], plugins
         )
         return await pipeline.output_stream(
             call, SubscribeEventStream, _SubscribeEventStreamDeserializer().deserialize
@@ -198,7 +198,7 @@ class MyHandwrittenModel(AsyncClient):
             A `DuplexEventStream` for bidirectional streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, TRADE_EVENT_STREAM, [], plugins
+            input, _models.TRADE_EVENT_STREAM, [], plugins
         )
         return await pipeline.duplex_stream(
             call, TradeEvents, TradeEvents, _TradeEventsDeserializer().deserialize

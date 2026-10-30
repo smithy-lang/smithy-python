@@ -17,74 +17,8 @@ from smithy_core.serializers import SerializeableShape
 from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.plugins import user_agent_plugin
 
+from . import models as _models
 from .config import AsyncRestXmlProtocolConfig, Plugin
-from .models import (
-    ALL_QUERY_STRING_TYPES,
-    BODY_WITH_XML_NAME,
-    CONSTANT_AND_VARIABLE_QUERY_STRING,
-    CONSTANT_QUERY_STRING,
-    CONTENT_TYPE_PARAMETERS,
-    DATETIME_OFFSETS,
-    EMPTY_INPUT_AND_EMPTY_OUTPUT,
-    ENDPOINT_OPERATION,
-    ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION,
-    ENDPOINT_WITH_HOST_LABEL_OPERATION,
-    FLATTENED_XML_MAP,
-    FLATTENED_XML_MAP_WITH_XML_NAME,
-    FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
-    FRACTIONAL_SECONDS,
-    GREETING_WITH_ERRORS,
-    HTTP_EMPTY_PREFIX_HEADERS,
-    HTTP_ENUM_PAYLOAD,
-    HTTP_PAYLOAD_TRAITS,
-    HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
-    HTTP_PAYLOAD_WITH_MEMBER_XML_NAME,
-    HTTP_PAYLOAD_WITH_STRUCTURE,
-    HTTP_PAYLOAD_WITH_UNION,
-    HTTP_PAYLOAD_WITH_XML_NAME,
-    HTTP_PAYLOAD_WITH_XML_NAMESPACE,
-    HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX,
-    HTTP_PREFIX_HEADERS,
-    HTTP_REQUEST_WITH_FLOAT_LABELS,
-    HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
-    HTTP_REQUEST_WITH_LABELS,
-    HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
-    HTTP_RESPONSE_CODE,
-    HTTP_STRING_PAYLOAD,
-    IGNORE_QUERY_PARAMS_IN_RESPONSE,
-    INPUT_AND_OUTPUT_WITH_HEADERS,
-    NESTED_XML_MAPS,
-    NESTED_XML_MAP_WITH_XML_NAME,
-    NO_INPUT_AND_NO_OUTPUT,
-    NO_INPUT_AND_OUTPUT,
-    NULL_AND_EMPTY_HEADERS_CLIENT,
-    NULL_AND_EMPTY_HEADERS_SERVER,
-    OMITS_NULL_SERIALIZES_EMPTY_STRING,
-    PUT_WITH_CONTENT_ENCODING,
-    QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
-    QUERY_PARAMS_AS_STRING_LIST_MAP,
-    QUERY_PRECEDENCE,
-    RECURSIVE_SHAPES,
-    SIMPLE_SCALAR_PROPERTIES,
-    TIMESTAMP_FORMAT_HEADERS,
-    XML_ATTRIBUTES,
-    XML_ATTRIBUTES_IN_MIDDLE,
-    XML_ATTRIBUTES_ON_PAYLOAD,
-    XML_BLOBS,
-    XML_EMPTY_BLOBS,
-    XML_EMPTY_LISTS,
-    XML_EMPTY_MAPS,
-    XML_EMPTY_STRINGS,
-    XML_ENUMS,
-    XML_INT_ENUMS,
-    XML_LISTS,
-    XML_MAPS,
-    XML_MAPS_XML_NAME,
-    XML_MAP_WITH_XML_NAMESPACE,
-    XML_NAMESPACES,
-    XML_TIMESTAMPS,
-    XML_UNIONS,
-)
 from .user_agent import aws_user_agent_plugin
 
 from typing import TYPE_CHECKING
@@ -355,7 +289,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `AllQueryStringTypesOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ALL_QUERY_STRING_TYPES, [], plugins
+            input, _models.ALL_QUERY_STRING_TYPES, [], plugins
         )
         return await pipeline(call)
 
@@ -379,7 +313,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `BodyWithXmlNameOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, BODY_WITH_XML_NAME, [], plugins
+            input, _models.BODY_WITH_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
@@ -406,7 +340,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `ConstantAndVariableQueryStringOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
+            input, _models.CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -432,7 +366,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `ConstantQueryStringOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, CONSTANT_QUERY_STRING, [], plugins
+            input, _models.CONSTANT_QUERY_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -456,7 +390,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `ContentTypeParametersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, CONTENT_TYPE_PARAMETERS, [], plugins
+            input, _models.CONTENT_TYPE_PARAMETERS, [], plugins
         )
         return await pipeline(call)
 
@@ -478,7 +412,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, DATETIME_OFFSETS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.DATETIME_OFFSETS, [], plugins
+        )
         return await pipeline(call)
 
     async def empty_input_and_empty_output(
@@ -503,7 +439,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -526,7 +462,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `EndpointOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_OPERATION, [], plugins
+            input, _models.ENDPOINT_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -551,7 +487,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `EndpointWithHostLabelHeaderOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION, [], plugins
+            input, _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -576,7 +512,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -598,7 +534,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `FlattenedXmlMapOutput`.
         """
-        pipeline, call = await self._prepare_call(input, FLATTENED_XML_MAP, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.FLATTENED_XML_MAP, [], plugins
+        )
         return await pipeline(call)
 
     async def flattened_xml_map_with_xml_name(
@@ -622,7 +560,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins
+            input, _models.FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
@@ -647,7 +585,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            input, _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
         )
         return await pipeline(call)
 
@@ -670,7 +608,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `FractionalSecondsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, FRACTIONAL_SECONDS, [], plugins
+            input, _models.FRACTIONAL_SECONDS, [], plugins
         )
         return await pipeline(call)
 
@@ -697,7 +635,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `GreetingWithErrorsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, [], plugins
+            input, _models.GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
@@ -720,7 +658,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpEmptyPrefixHeadersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_EMPTY_PREFIX_HEADERS, [], plugins
+            input, _models.HTTP_EMPTY_PREFIX_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -742,7 +680,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpEnumPayloadOutput`.
         """
-        pipeline, call = await self._prepare_call(input, HTTP_ENUM_PAYLOAD, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.HTTP_ENUM_PAYLOAD, [], plugins
+        )
         return await pipeline(call)
 
     async def http_payload_traits(
@@ -766,7 +706,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpPayloadTraitsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_TRAITS, [], plugins
+            input, _models.HTTP_PAYLOAD_TRAITS, [], plugins
         )
         return await pipeline(call)
 
@@ -792,7 +732,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
+            input, _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
         )
         return await pipeline(call)
 
@@ -818,7 +758,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpPayloadWithMemberXmlNameOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, [], plugins
+            input, _models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
@@ -843,7 +783,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpPayloadWithStructureOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
+            input, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
@@ -866,7 +806,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpPayloadWithUnionOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_UNION, [], plugins
+            input, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins
         )
         return await pipeline(call)
 
@@ -890,7 +830,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpPayloadWithXmlNameOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_XML_NAME, [], plugins
+            input, _models.HTTP_PAYLOAD_WITH_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
@@ -915,7 +855,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpPayloadWithXmlNamespaceOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_XML_NAMESPACE, [], plugins
+            input, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE, [], plugins
         )
         return await pipeline(call)
 
@@ -940,7 +880,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpPayloadWithXmlNamespaceAndPrefixOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, [], plugins
+            input, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, [], plugins
         )
         return await pipeline(call)
 
@@ -964,7 +904,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpPrefixHeadersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PREFIX_HEADERS, [], plugins
+            input, _models.HTTP_PREFIX_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -989,7 +929,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpRequestWithFloatLabelsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins
+            input, _models.HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins
         )
         return await pipeline(call)
 
@@ -1014,7 +954,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
+            input, _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
         )
         return await pipeline(call)
 
@@ -1038,7 +978,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpRequestWithLabelsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_LABELS, [], plugins
+            input, _models.HTTP_REQUEST_WITH_LABELS, [], plugins
         )
         return await pipeline(call)
 
@@ -1064,7 +1004,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
+            input, _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
         )
         return await pipeline(call)
 
@@ -1087,7 +1027,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpResponseCodeOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_RESPONSE_CODE, [], plugins
+            input, _models.HTTP_RESPONSE_CODE, [], plugins
         )
         return await pipeline(call)
 
@@ -1110,7 +1050,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `HttpStringPayloadOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_STRING_PAYLOAD, [], plugins
+            input, _models.HTTP_STRING_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -1137,7 +1077,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `IgnoreQueryParamsInResponseOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
+            input, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
         )
         return await pipeline(call)
 
@@ -1161,7 +1101,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `InputAndOutputWithHeadersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins
+            input, _models.INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -1183,7 +1123,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `NestedXmlMapsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, NESTED_XML_MAPS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.NESTED_XML_MAPS, [], plugins
+        )
         return await pipeline(call)
 
     async def nested_xml_map_with_xml_name(
@@ -1205,7 +1147,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `NestedXmlMapWithXmlNameOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NESTED_XML_MAP_WITH_XML_NAME, [], plugins
+            input, _models.NESTED_XML_MAP_WITH_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
@@ -1231,7 +1173,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `NoInputAndNoOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_NO_OUTPUT, [], plugins
+            input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -1257,7 +1199,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `NoInputAndOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_OUTPUT, [], plugins
+            input, _models.NO_INPUT_AND_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -1281,7 +1223,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `NullAndEmptyHeadersClientOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
+            input, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
         )
         return await pipeline(call)
 
@@ -1305,7 +1247,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `NullAndEmptyHeadersServerOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
+            input, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
         )
         return await pipeline(call)
 
@@ -1330,7 +1272,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
+            input, _models.OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -1353,7 +1295,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `PutWithContentEncodingOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, PUT_WITH_CONTENT_ENCODING, [], plugins
+            input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins
         )
         return await pipeline(call)
 
@@ -1378,7 +1320,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            input, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
         return await pipeline(call)
 
@@ -1403,7 +1345,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `QueryParamsAsStringListMapOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins
+            input, _models.QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins
         )
         return await pipeline(call)
 
@@ -1425,7 +1367,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryPrecedenceOutput`.
         """
-        pipeline, call = await self._prepare_call(input, QUERY_PRECEDENCE, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.QUERY_PRECEDENCE, [], plugins
+        )
         return await pipeline(call)
 
     async def recursive_shapes(
@@ -1446,7 +1390,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        pipeline, call = await self._prepare_call(input, RECURSIVE_SHAPES, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.RECURSIVE_SHAPES, [], plugins
+        )
         return await pipeline(call)
 
     async def simple_scalar_properties(
@@ -1468,7 +1414,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `SimpleScalarPropertiesOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+            input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
 
@@ -1492,7 +1438,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `TimestampFormatHeadersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, TIMESTAMP_FORMAT_HEADERS, [], plugins
+            input, _models.TIMESTAMP_FORMAT_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -1514,7 +1460,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlAttributesOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_ATTRIBUTES, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_ATTRIBUTES, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_attributes_in_middle(
@@ -1540,7 +1488,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `XmlAttributesInMiddleOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, XML_ATTRIBUTES_IN_MIDDLE, [], plugins
+            input, _models.XML_ATTRIBUTES_IN_MIDDLE, [], plugins
         )
         return await pipeline(call)
 
@@ -1564,7 +1512,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `XmlAttributesOnPayloadOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, XML_ATTRIBUTES_ON_PAYLOAD, [], plugins
+            input, _models.XML_ATTRIBUTES_ON_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -1586,7 +1534,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlBlobsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_BLOBS, [], plugins)
+        pipeline, call = await self._prepare_call(input, _models.XML_BLOBS, [], plugins)
         return await pipeline(call)
 
     async def xml_empty_blobs(
@@ -1607,7 +1555,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_EMPTY_BLOBS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_EMPTY_BLOBS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_empty_lists(
@@ -1628,7 +1578,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_EMPTY_LISTS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_EMPTY_LISTS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_empty_maps(
@@ -1649,7 +1601,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyMapsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_EMPTY_MAPS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_EMPTY_MAPS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_empty_strings(
@@ -1670,7 +1624,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyStringsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_EMPTY_STRINGS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_EMPTY_STRINGS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_enums(
@@ -1692,7 +1648,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_ENUMS, [], plugins)
+        pipeline, call = await self._prepare_call(input, _models.XML_ENUMS, [], plugins)
         return await pipeline(call)
 
     async def xml_int_enums(
@@ -1714,7 +1670,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_INT_ENUMS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_INT_ENUMS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_lists(
@@ -1740,7 +1698,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlListsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_LISTS, [], plugins)
+        pipeline, call = await self._prepare_call(input, _models.XML_LISTS, [], plugins)
         return await pipeline(call)
 
     async def xml_maps(
@@ -1761,7 +1719,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlMapsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_MAPS, [], plugins)
+        pipeline, call = await self._prepare_call(input, _models.XML_MAPS, [], plugins)
         return await pipeline(call)
 
     async def xml_maps_xml_name(
@@ -1782,7 +1740,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlMapsXmlNameOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_MAPS_XML_NAME, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_MAPS_XML_NAME, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_map_with_xml_namespace(
@@ -1804,7 +1764,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
             An instance of `XmlMapWithXmlNamespaceOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            input, _models.XML_MAP_WITH_XML_NAMESPACE, [], plugins
         )
         return await pipeline(call)
 
@@ -1826,7 +1786,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_NAMESPACES, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_NAMESPACES, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_timestamps(
@@ -1848,7 +1810,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_TIMESTAMPS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_TIMESTAMPS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_unions(
@@ -1869,5 +1833,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlUnionsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_UNIONS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_UNIONS, [], plugins
+        )
         return await pipeline(call)

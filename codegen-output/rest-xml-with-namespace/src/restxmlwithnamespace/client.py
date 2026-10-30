@@ -17,8 +17,8 @@ from smithy_core.serializers import SerializeableShape
 from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.plugins import user_agent_plugin
 
+from . import models as _models
 from .config import AsyncRestXmlProtocolNamespaceConfig, Plugin
-from .models import SIMPLE_SCALAR_PROPERTIES
 from .user_agent import aws_user_agent_plugin
 
 from typing import TYPE_CHECKING
@@ -164,6 +164,6 @@ class AsyncRestXmlProtocolNamespaceClient(AsyncClient):
             An instance of `SimpleScalarPropertiesOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+            input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
