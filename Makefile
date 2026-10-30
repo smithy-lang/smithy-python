@@ -1,9 +1,47 @@
 .DEFAULT_GOAL:=help
 
-.PHONY: help install format-java check-java build-java test-protocols typecheck-protocols generate-protocol-tests generate-codegen-output-py api-snapshot aio-check ci lint-py check-py test-py test-integration benchmark build-py clean
+.PHONY: help install format-java check-java build-java generate-protocol-tests generate-codegen-output-py api-snapshot aio-check ci lint-py check-py test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
 
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
+
+# CI runs this target on 3.12 only; see typecheck-protocols.
+static-analysis: ## Runs check-py, typecheck-protocols, and api-snapshot.
+	$(MAKE) check-py
+	$(MAKE) typecheck-protocols
+	$(MAKE) api-snapshot
+	# TODO: enable once aws-sdk-signers passes the aio naming rules.
+	# $(MAKE) aio-check
+
+
+test-unit: ## Runs the python unit tests.
+	uv run pytest packages/*/tests/unit
+
+
+# The packages/*/tests/integration suites drive generated clients against
+# in-process servers, so they are functional, not live-service, tests.
+test-functional: ## Runs the python functional tests and test-protocols.
+	$(MAKE) test-protocols
+	uv pip install h2 trustme -e "packages/smithy-http[awscrt]"
+	uv run pytest packages/*/tests/functional packages/*/tests/integration --no-cov
+
+
+test-integration: ## Builds and tests the Java codegen and asserts the regenerated snapshots match.
+	$(MAKE) build-java
+	$(MAKE) generate-protocol-tests
+	$(MAKE) generate-codegen-output-py
+
+
+ci: ## Runs the full CI sequence locally.
+	$(MAKE) static-analysis
+	$(MAKE) test-unit
+	$(MAKE) test-functional
+	$(MAKE) build-py
+	$(MAKE) test-integration
+
+
+########################## Granular targets below ##########################
 
 
 install: ## Sets up workspace (* you should run this first! *)
@@ -22,23 +60,6 @@ check-java: ## Checks Java and Gradle formatting without modifying source.
 
 build-java: ## Builds and tests the Java code generation packages without modifying source.
 	cd codegen && ./gradlew clean build
-
-
-test-protocols: ## Generates and runs protocol tests for all supported protocols.
-	cd codegen && ./gradlew :protocol-test:clean :protocol-test:build
-	uv pip install -e packages/smithy-test
-	@set -e; for projection_dir in codegen/protocol-test/build/smithyprojections/protocol-test/*/python-client-codegen; do \
-		uv pip install "$$projection_dir"; \
-		uv run pytest "$$projection_dir"; \
-	done
-
-# pyright's wrapper imports typing_extensions, which fails to import on 3.15
-# (removed typing.no_type_check_decorator); run the stub type-check on 3.12 only.
-typecheck-protocols: ## Type-checks the generated protocol-test stub fixtures with pyright.
-	@set -e; for projection_dir in codegen/protocol-test/build/smithyprojections/protocol-test/*/python-client-codegen; do \
-		uv pip install "$$projection_dir"; \
-		uv run pyright "$$projection_dir/tests/_typecheck.py"; \
-	done
 
 
 generate-protocol-tests: ## Generates protocol-test clients, copies them to ./codegen-output, and asserts no git diff.
@@ -79,6 +100,7 @@ generate-codegen-output-py: ## Generates Python output and asserts no snapshot d
 api-snapshot: ## Records the public API surface of each package and asserts no git diff.
 	uv run python scripts/api-snapshot/api_snapshot.py
 
+
 aio-check: ## Enforces aio naming and separation in package sources.
 	uv run python scripts/aio-naming/aio_naming.py
 
@@ -94,24 +116,25 @@ check-py: ## Runs checks (formatting, lints, type-checking) on the python packag
 	uv run pyright packages
 
 
-ci: ## Runs the full CI sequence locally (mirrors the CI workflow steps).
-	make check-py
-	make api-snapshot
-	make test-py
-	make build-py
-	make build-java
-	make generate-codegen-output-py
-	make generate-protocol-tests test-protocols test-integration
-	make typecheck-protocols
-
-
 test-py: ## Runs tests for the python packages.
 	uv run pytest packages
 
 
-test-integration: ## Runs integration tests that drive generated clients over a real transport. Requires `make test-protocols` (or generate-protocol-tests) to have installed the generated clients first.
-	uv pip install h2 trustme "packages/smithy-http[awscrt]"
-	uv run pytest packages/*/tests/integration --no-cov
+test-protocols: ## Runs the generated protocol-test clients in ./codegen-output; run generate-protocol-tests first after codegen changes.
+	uv pip install -e packages/smithy-test
+	@set -e; for projection_dir in codegen-output/*/; do \
+		uv pip install "$$projection_dir"; \
+		uv run pytest "$$projection_dir" --no-cov; \
+	done
+
+
+# pyright's wrapper imports typing_extensions, which fails to import on 3.15
+# (removed typing.no_type_check_decorator); run the stub type-check on 3.12 only.
+typecheck-protocols: ## Type-checks the generated protocol-test stub fixtures in ./codegen-output with pyright.
+	@set -e; for projection_dir in codegen-output/*/; do \
+		uv pip install "$$projection_dir"; \
+		uv run pyright "$$projection_dir/tests/_typecheck.py"; \
+	done
 
 
 benchmark: ## Runs ser/deser throughput benchmarks (coverage disabled; not part of CI or the default test run).
