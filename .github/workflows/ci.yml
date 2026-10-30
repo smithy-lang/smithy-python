@@ -53,38 +53,23 @@ jobs:
         run: |
           make install
 
-      - name: Check python packages
+      - name: Static analysis
         if: ${{ matrix.python-version == '3.12' }}
         run: |
-          make check-py
+          make static-analysis
 
-      - name: Check API snapshot
-        if: ${{ matrix.python-version == '3.12' }}
+      - name: Unit tests
         run: |
-          make api-snapshot
+          make test-unit
 
-      - name: Test python packages
+      - name: Functional tests
         run: |
-          make test-py
+          make test-functional
 
       - name: Build python packages
         run: |
           make build-py
 
-      - name: Check Python codegen output
-        if: ${{ matrix.python-version == '3.12' }}
+      - name: Integration tests
         run: |
-          make generate-codegen-output-py
-
-      - name: Build (and test) java packages
-        run: |
-          make build-java
-
-      - name: Run protocol tests
-        run: |
-          make generate-protocol-tests test-protocols test-integration
-
-      - name: Type-check protocol test stubs
-        if: ${{ matrix.python-version == '3.12' }}
-        run: |
-          make typecheck-protocols
+          make test-integration
