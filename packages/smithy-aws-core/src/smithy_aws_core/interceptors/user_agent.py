@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 # pyright: reportMissingTypeStubs=false
+import os
 from typing import Any
 
 import smithy_core
@@ -39,6 +40,7 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
         self._ua_app_id = ua_app_id
         self._sdk_version = sdk_version
         self._service_id = service_id
+        self._execution_env = os.environ.get("AWS_EXECUTION_ENV")
 
     def read_after_serialization(self, context: RequestContext[Any, Any]) -> None:
         if USER_AGENT in context.properties:
@@ -47,6 +49,11 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
             user_agent.api_metadata.append(
                 UserAgentComponent("api", self._service_id, self._sdk_version)
             )
+
+            if self._execution_env:
+                user_agent.env_metadata.append(
+                    UserAgentComponent("exec-env", self._execution_env)
+                )
 
             if self._ua_app_id is not None:
                 user_agent.additional_metadata.append(

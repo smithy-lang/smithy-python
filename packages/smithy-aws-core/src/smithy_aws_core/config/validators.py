@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+import logging
 import re
 from collections.abc import Collection
 from typing import get_args
@@ -15,7 +16,12 @@ __all__ = [
     "validate_profile",
     "validate_region",
     "validate_retry_mode",
+    "validate_sdk_ua_app_id",
 ]
+
+logger = logging.getLogger(__name__)
+
+_SDK_UA_APP_ID_MAX_LENGTH = 50
 
 _REGION_PATTERN = re.compile(r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$")
 
@@ -109,4 +115,19 @@ def validate_profile(
         )
         raise ProfileNotFoundError(
             f"Profile {profile_name!r} from {source_str} was not found in config file."
+        )
+
+
+def validate_sdk_ua_app_id(value: object) -> None:
+    """Warn when the SDK user agent app ID is longer than recommended.
+
+    The app ID is still used. Config is resolved once, so the warning is logged once.
+
+    :param value: The resolved app ID value.
+    """
+    if isinstance(value, str) and len(value) > _SDK_UA_APP_ID_MAX_LENGTH:
+        logger.warning(
+            "The configured value for sdk_ua_app_id exceeds the recommended maximum "
+            "length of %d characters.",
+            _SDK_UA_APP_ID_MAX_LENGTH,
         )

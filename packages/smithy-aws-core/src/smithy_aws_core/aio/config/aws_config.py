@@ -27,6 +27,7 @@ from ...config.validators import (
     validate_profile,
     validate_region,
     validate_retry_mode,
+    validate_sdk_ua_app_id,
 )
 from .context import AsyncSharedConfigContext
 from .filesystem import AsyncFileSystem
@@ -184,6 +185,7 @@ class AsyncAwsConfig:
         "sdk_ua_app_id": FieldSpec(
             default=None,
             resolver=resolve_sdk_ua_app_id,
+            validator=validate_sdk_ua_app_id,
         ),
         "user_agent_extra": FieldSpec(
             default=None,
