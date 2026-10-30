@@ -4,6 +4,7 @@ import array
 import hashlib
 import importlib.util
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 import pytest
 import smithy_checksums
@@ -110,6 +111,23 @@ def test_new_returns_hashlib_checksums(name: str) -> None:
     checksum.update(b"Hello world")
     assert checksum.name == name.lower()
     assert checksum.digest() == hashlib.new(name.lower(), b"Hello world").digest()
+
+
+@pytest.mark.parametrize("name", ["sha1", "sha256", "sha512", "md5"])
+def test_new_marks_hashlib_checksums_as_not_for_security(
+    name: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # FIPS mode can block algorithms such as SHA-1 unless they're marked this way.
+    calls: list[dict[str, Any]] = []
+    original = hashlib.new
+
+    def spy(*args: Any, **kwargs: Any) -> Any:
+        calls.append(kwargs)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(hashlib, "new", spy)
+    new(name)
+    assert calls == [{"usedforsecurity": False}]
 
 
 def test_new_rejects_unknown_algorithms() -> None:

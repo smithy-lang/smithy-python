@@ -122,7 +122,7 @@ class CRC32C(_BaseChecksum):
 
 
 _CHECKSUMS: Final = {cls.name: cls for cls in (CRC32, CRC32C)}
-_HASHLIB_ALGORITHMS: Final = frozenset(("sha1", "sha256", "sha512"))
+_HASHLIB_ALGORITHMS: Final = frozenset(("sha1", "sha256", "sha512", "md5"))
 
 
 def new(name: str) -> Checksum:
@@ -133,13 +133,14 @@ def new(name: str) -> Checksum:
 
     :param name: One of ``crc32``, ``crc32c``, ``sha1``, ``sha256``, ``sha512``, or
         ``md5``.
-    :raises ValueError: If the algorithm isn't supported.
+    :raises ValueError: If the algorithm isn't supported, or isn't available in this
+        Python build.
     """
     key = name.lower()
     if (checksum := _CHECKSUMS.get(key)) is not None:
         return checksum()
     if key in _HASHLIB_ALGORITHMS:
-        return hashlib.new(key)
-    if key == "md5":
-        return hashlib.md5(usedforsecurity=False)
+        # Checksums verify integrity rather than provide security, so they
+        # shouldn't be blocked where FIPS mode restricts algorithms like SHA-1.
+        return hashlib.new(key, usedforsecurity=False)
     raise ValueError(f"Unsupported checksum algorithm: {name!r}")
