@@ -33,6 +33,15 @@ def test_types_settings_default_to_identity_selection() -> None:
     )
     assert settings.selector == Selector.identity()
     assert not settings.generate_inputs_and_outputs
+    assert settings.schema_partition_size == 250
+    assert settings.stub_partition_size == 250
+
+
+def test_types_settings_require_positive_partition_size() -> None:
+    with pytest.raises(ValueError, match="Partition sizes must be positive"):
+        TypesSettings("example", "1.0.0", None, schema_partition_size=0)
+    with pytest.raises(ValueError, match="Partition sizes must be positive"):
+        TypesSettings("example", "1.0.0", None, stub_partition_size=0)
 
 
 def test_generation_context_shares_manifest_dependencies() -> None:

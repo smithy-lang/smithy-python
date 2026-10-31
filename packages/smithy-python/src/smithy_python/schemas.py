@@ -27,6 +27,7 @@ class SchemaPlan:
     """Derived semantic data used to emit compact schemas."""
 
     shapes: tuple[_model.Shape, ...]
+    partition_groups: tuple[tuple[_model.Shape, ...], ...]
     names: Mapping[_model.ShapeId, str]
     strings: Mapping[str, str]
     traits: Mapping[_model.ShapeId, _TraitPlan]
@@ -39,7 +40,7 @@ class SchemaPlan:
         symbols: _symbols.SymbolProvider,
     ) -> SchemaPlan:
         """Plan schema order, filtered traits, names, and interned strings."""
-        emitted = _schema_order(shapes)
+        emitted, partition_groups = _schema_order(shapes)
         included = _included_traits(model)
         inputs = {
             operation.input for operation in model.iter_shapes(_model.OperationShape)
@@ -69,6 +70,7 @@ class SchemaPlan:
 
         return cls(
             shapes=emitted,
+            partition_groups=partition_groups,
             names=MappingProxyType(
                 {shape.id: symbols.schema_name(shape.id) for shape in emitted}
             ),
@@ -83,18 +85,111 @@ class SchemaGenerator:
     def generate(self, context: GenerationContext[TypesSettings]) -> None:
         """Register ``<package>._private.schemas`` with the file manifest."""
         package = context.settings.package
-        path = f"src/{package.replace('.', '/')}/_private/schemas.py"
-        writer = context.files.python_module(path, f"{package}._private.schemas")
+        directory = package.replace(".", "/")
         plan = context.plan.schemas
-        for value, name in plan.strings.items():
-            writer.line(name, " = ", repr(value))
-        if plan.strings:
-            writer.line()
+        size = context.settings.schema_partition_size
+        if size is None or len(plan.shapes) <= size:
+            writer = context.files.python_module(
+                f"src/{directory}/_private/schemas.py",
+                f"{package}._private.schemas",
+            )
+            _write_schema_module(writer, plan, plan.shapes)
+            return
 
-        written: set[_model.ShapeId] = set()
-        for shape in plan.shapes:
-            _write_shape(writer, plan, shape, written)
-            written.add(shape.id)
+        partitions = _schema_partitions(plan, size)
+        _write_schema_facade(
+            context.files.python_module(
+                f"src/{directory}/_private/schemas.py",
+                f"{package}._private.schemas",
+            ),
+            plan,
+            partitions,
+        )
+        for index, shapes in enumerate(partitions):
+            _write_schema_module(
+                context.files.python_module(
+                    f"src/{directory}/_private/schemas_{index}.py",
+                    f"{package}._private.schemas_{index}",
+                ),
+                plan,
+                shapes,
+                facade="schemas",
+            )
+
+
+_IMPORT_MODULE: Final = _symbols.TypeReference("import_module", "importlib")
+
+
+def _write_schema_facade(
+    writer: PythonWriter,
+    plan: SchemaPlan,
+    partitions: tuple[tuple[_model.Shape, ...], ...],
+) -> None:
+    writer.line("_PARTITION_NAMES: tuple[tuple[str, ...], ...] = (")
+    with writer.indent():
+        for shapes in partitions:
+            writer.line("(")
+            with writer.indent():
+                for shape in shapes:
+                    writer.line(repr(plan.names[shape.id]), ",")
+            writer.line("),")
+    writer.line(")")
+    writer.line("_PARTITIONS = {")
+    with writer.indent():
+        writer.line("name: index")
+        writer.line("for index, names in enumerate(_PARTITION_NAMES)")
+        writer.line("for name in names")
+    writer.line("}")
+    writer.line("del _PARTITION_NAMES")
+    writer.line("def __getattr__(name: str):")
+    with writer.indent():
+        writer.line("try:")
+        with writer.indent():
+            writer.line("partition = _PARTITIONS[name]")
+        writer.line("except KeyError as error:")
+        with writer.indent():
+            writer.line("raise AttributeError(name) from error")
+        writer.line(
+            "module = ",
+            _IMPORT_MODULE,
+            '(f".schemas_{partition}", __package__)',
+        )
+        writer.line("value = getattr(module, name)")
+        writer.line("globals()[name] = value")
+        writer.line("return value")
+    writer.line()
+    writer.line()
+    writer.line("def __dir__() -> list[str]:")
+    with writer.indent():
+        writer.line("return sorted({*globals(), *_PARTITIONS})")
+
+
+def _write_schema_module(
+    writer: PythonWriter,
+    plan: SchemaPlan,
+    shapes: tuple[_model.Shape, ...],
+    *,
+    facade: str | None = None,
+) -> None:
+    local = frozenset(shape.id for shape in shapes)
+    if facade is not None and any(
+        member.target in plan.names and member.target not in local
+        for shape in shapes
+        for member in shape.members.values()
+    ):
+        writer.line("from . import ", facade)
+        writer.line()
+    strings = _schema_strings(plan, shapes)
+    for value, name in plan.strings.items():
+        if value in strings:
+            writer.line(name, " = ", repr(value))
+    if strings:
+        writer.line()
+
+    written: set[_model.ShapeId] = set()
+    for shape in shapes:
+        _write_shape(writer, plan, shape, written, local=local, facade=facade)
+        written.add(shape.id)
 
 
 # This contract is intentionally local to the generator. It must match
@@ -264,6 +359,9 @@ def _write_shape(
     plan: SchemaPlan,
     shape: _model.Shape,
     written: set[_model.ShapeId],
+    *,
+    local: Collection[_model.ShapeId],
+    facade: str | None,
 ) -> None:
     writer.line(plan.names[shape.id], ": ", _STATIC_SCHEMA, " = (")
     with writer.indent():
@@ -284,7 +382,13 @@ def _write_shape(
                 for member in shape.members.values():
                     writer.line(
                         "(",
-                        _schema_ref(plan, member.target, written),
+                        *_schema_ref(
+                            plan,
+                            member.target,
+                            written,
+                            local=local,
+                            facade=facade,
+                        ),
                         ", ",
                         *_trait_parts(plan, plan.traits[member.id]),
                         "),",
@@ -406,23 +510,36 @@ def _node_parts(
 
 
 def _schema_ref(
-    plan: SchemaPlan, target: _model.ShapeId, written: set[_model.ShapeId]
-) -> str:
+    plan: SchemaPlan,
+    target: _model.ShapeId,
+    written: set[_model.ShapeId],
+    *,
+    local: Collection[_model.ShapeId],
+    facade: str | None,
+) -> tuple[_SourcePart, ...]:
     if (prelude := _PRELUDE_INTS.get(target)) is not None:
-        return str(prelude)
+        return (str(prelude),)
     try:
         name = plan.names[target]
     except KeyError as error:
         raise _exceptions.CodegenError(
             f"Schema target {target} was not selected"
         ) from error
-    return name if target in written else f"lambda: {name}"
+    if target in local:
+        return (name if target in written else f"lambda: {name}",)
+    if facade is None:
+        raise _exceptions.CodegenError(f"Schema target {target} is not in this module")
+    return ("lambda: ", facade, ".", name)
 
 
 def _schema_order(
     shapes: tuple[_model.Shape, ...],
-) -> tuple[_model.Shape, ...]:
+) -> tuple[
+    tuple[_model.Shape, ...],
+    tuple[tuple[_model.Shape, ...], ...],
+]:
     by_id = {shape.id: shape for shape in shapes}
+    positions = {shape.id: index for index, shape in enumerate(shapes)}
     graph = {
         shape.id: tuple(
             member.target for member in shape.members.values() if member.target in by_id
@@ -457,6 +574,7 @@ def _schema_order(
                 pending.append((target, 0))
 
     recursive: set[_model.ShapeId] = set()
+    recursive_components: dict[_model.ShapeId, tuple[_model.ShapeId, ...]] = {}
     visited.clear()
     for root in reversed(finished):
         if root in visited:
@@ -473,10 +591,96 @@ def _schema_order(
                     component_pending.append(target)
         if len(component) > 1 or root in graph[root]:
             recursive.update(component)
+            ordered_component = tuple(sorted(component, key=positions.__getitem__))
+            for shape_id in component:
+                recursive_components[shape_id] = ordered_component
 
-    return (
+    emitted = (
         *(by_id[shape_id] for shape_id in finished if shape_id not in recursive),
         *(shape for shape in shapes if shape.id in recursive),
+    )
+    groups: list[tuple[_model.Shape, ...]] = []
+    grouped: set[_model.ShapeId] = set()
+    for shape in emitted:
+        if shape.id in grouped:
+            continue
+        group_ids = recursive_components.get(shape.id, (shape.id,))
+        groups.append(tuple(by_id[shape_id] for shape_id in group_ids))
+        grouped.update(group_ids)
+    return emitted, tuple(groups)
+
+
+def _schema_partitions(
+    plan: SchemaPlan,
+    size: int,
+) -> tuple[tuple[_model.Shape, ...], ...]:
+    groups = plan.partition_groups
+    partitions: list[tuple[_model.Shape, ...]] = []
+    current: list[_model.Shape] = []
+    for group in groups:
+        if current and len(current) + len(group) > size:
+            partitions.append(tuple(current))
+            current.clear()
+        current.extend(group)
+    if current:
+        partitions.append(tuple(current))
+    partition_count = len(partitions)
+    if partition_count < 2:
+        return tuple(partitions)
+
+    weights = tuple(_schema_group_weight(plan, group) for group in groups)
+    partitions.clear()
+    start = 0
+    remaining_weight = sum(weights)
+    for remaining_parts in range(partition_count, 1, -1):
+        target = remaining_weight / remaining_parts
+        end = start
+        weight = 0
+        last_end = len(groups) - remaining_parts + 1
+        while end < last_end:
+            next_weight = weight + weights[end]
+            if weight and abs(target - weight) <= abs(target - next_weight):
+                break
+            weight = next_weight
+            end += 1
+        partitions.append(
+            tuple(shape for group in groups[start:end] for shape in group)
+        )
+        start = end
+        remaining_weight -= weight
+    partitions.append(tuple(shape for group in groups[start:] for shape in group))
+    return tuple(partitions)
+
+
+def _schema_group_weight(plan: SchemaPlan, group: tuple[_model.Shape, ...]) -> int:
+    declarations = sum(
+        len(plan.strings[value]) + len(repr(value)) + 4
+        for value in _schema_strings(plan, group)
+    )
+    return declarations + sum(_schema_shape_weight(plan, shape) for shape in group)
+
+
+def _schema_shape_weight(plan: SchemaPlan, shape: _model.Shape) -> int:
+    """Estimate compact-schema source bytes without rendering shapes twice."""
+    return (
+        60
+        + len(shape.id.namespace)
+        + 2 * len(shape.id.name)
+        + _source_size(_trait_parts(plan, plan.traits[shape.id]))
+        + sum(
+            40
+            + 2 * len(member.name)
+            + len(plan.names.get(member.target, member.target.name))
+            + _source_size(_trait_parts(plan, plan.traits[member.id]))
+            for member in shape.members.values()
+        )
+    )
+
+
+def _source_size(parts: Collection[_SourcePart]) -> int:
+    return sum(
+        len(part.name if isinstance(part, _symbols.TypeReference) else part)
+        for part in parts
     )
 
 
@@ -487,6 +691,28 @@ def _intern_traits(strings: _StringStore, traits: _TraitPlan) -> None:
         strings.intern(str(trait_id))
         if isinstance(value, str):
             strings.intern(value)
+
+
+def _schema_strings(
+    plan: SchemaPlan, shapes: Collection[_model.Shape]
+) -> frozenset[str]:
+    values: set[str] = set()
+    for shape in shapes:
+        values.update((shape.id.namespace, shape.id.name))
+        _collect_trait_strings(values, plan.traits[shape.id])
+        for member in shape.members.values():
+            values.add(member.name)
+            _collect_trait_strings(values, plan.traits[member.id])
+    return frozenset(values)
+
+
+def _collect_trait_strings(values: set[str], traits: _TraitPlan) -> None:
+    if isinstance(traits, int):
+        return
+    for trait_id, value in traits.items():
+        values.add(str(trait_id))
+        if isinstance(value, str):
+            values.add(value)
 
 
 class _StringStore:

@@ -36,12 +36,31 @@ class ModelGenerator:
             ),
             context.plan.models,
         )
-        _StubEmitter(
+        facade = _StubEmitter(
             context.files.python_module(
                 f"src/{directory}/models.pyi", f"{package}.models"
             ),
             context,
-        ).write()
+        )
+        shapes = context.plan.models.shapes
+        size = context.settings.stub_partition_size
+        if size is None or len(shapes) <= size:
+            facade.write()
+            return
+
+        partitions = tuple(
+            shapes[index : index + size] for index in range(0, len(shapes), size)
+        )
+        facade.write_facade(partitions)
+        for index, shapes in enumerate(partitions):
+            _StubEmitter(
+                context.files.python_module(
+                    f"src/{directory}/_private/models_{index}.pyi",
+                    f"{package}._private.models_{index}",
+                ),
+                context,
+                external_bases=True,
+            ).write_partition(shapes)
 
 
 def _core_reference(name: str, module: str) -> _symbols.TypeReference:
@@ -165,12 +184,25 @@ class _StubEmitter:
         self,
         writer: PythonWriter,
         context: GenerationContext[TypesSettings],
+        *,
+        external_bases: bool = False,
     ) -> None:
         self.writer = writer
         self.model = context.model
         self.plan = context.plan.models
         self.symbols = context.symbols
         self.module = f"{context.settings.package}.models"
+        self.external_bases = external_bases
+        self.serde_shape: str | _symbols.TypeReference = (
+            _symbols.TypeReference("_SerdeShape", "..models")
+            if external_bases
+            else "_SerdeShape"
+        )
+        self.service_error: str | _symbols.TypeReference = (
+            _symbols.TypeReference("ServiceError", "..models")
+            if external_bases
+            else "ServiceError"
+        )
         operations = tuple(context.model.iter_shapes(_model.OperationShape))
         self.inputs = {operation.input for operation in operations} | {
             shape.id for shape in self.plan.shapes if shape.has_trait("input")
@@ -180,6 +212,30 @@ class _StubEmitter:
         }
 
     def write(self) -> None:
+        """Write the complete unpartitioned public stub."""
+        self._write_preamble()
+        self._write_shapes(self.plan.shapes)
+        self._write_unit()
+
+    def write_facade(self, partitions: tuple[tuple[_model.Shape, ...], ...]) -> None:
+        """Write the public stub facade and re-export private declarations."""
+        writer = self.writer
+        for index, shapes in enumerate(partitions):
+            writer.line(f"from ._private.models_{index} import (")
+            with writer.indent():
+                for shape in shapes:
+                    for name in _stub_shape_names(self.plan, shape):
+                        writer.line(name, ",")
+            writer.line(")")
+            writer.line()
+        self._write_preamble()
+        self._write_unit()
+
+    def write_partition(self, shapes: tuple[_model.Shape, ...]) -> None:
+        """Write declarations assigned to one private stub partition."""
+        self._write_shapes(shapes)
+
+    def _write_preamble(self) -> None:
         writer = self.writer
         writer.line("__all__ = [")
         with writer.indent():
@@ -212,7 +268,9 @@ class _StubEmitter:
         with writer.indent():
             _write_docstring(writer, _SERVICE_ERROR_DOC)
 
-        for shape in self.plan.shapes:
+    def _write_shapes(self, shapes: Collection[_model.Shape]) -> None:
+        writer = self.writer
+        for shape in shapes:
             writer.line()
             match shape.type:
                 case _model.ShapeType.STRUCTURE:
@@ -223,10 +281,13 @@ class _StubEmitter:
                     self._write_enum(shape)
                 case _:
                     pass
+
+    def _write_unit(self) -> None:
+        writer = self.writer
         if self.plan.includes_unit:
             writer.line()
             writer.line("@", _DATACLASS, "(kw_only=True)")
-            writer.line("class Unit(_SerdeShape):")
+            writer.line("class Unit(", self.serde_shape, "):")
             with writer.indent():
                 writer.line("pass")
 
@@ -235,10 +296,17 @@ class _StubEmitter:
         name = self.plan.declaration_names[shape.id]
         error = shape.has_trait("error")
         writer.line("@", _DATACLASS, "(kw_only=True)")
+        bases: tuple[str | _symbols.TypeReference, ...] = (
+            (self.service_error, ", ", self.serde_shape)
+            if error
+            else (self.serde_shape,)
+        )
         writer.line(
             "class ",
             name,
-            "(ServiceError, _SerdeShape):" if error else "(_SerdeShape):",
+            "(",
+            *bases,
+            "):",
         )
         with writer.indent():
             members = tuple(
@@ -255,7 +323,7 @@ class _StubEmitter:
             if members or carries_metadata:
                 writer.line()
             for member in members:
-                reference = self.symbols.type_reference(member.target)
+                reference = self._type_reference(member.target)
                 has_default = member.has_trait("default") or self.model.get_target(
                     member
                 ).has_trait("default")
@@ -283,20 +351,20 @@ class _StubEmitter:
         variants: list[_symbols.TypeReference] = []
         for member in shape.members.values():
             name = self.plan.union_variant_names[member.id]
-            variants.append(_symbols.TypeReference(name, self.module))
+            variants.append(self._public_reference(name))
             writer.line("@", _DATACLASS)
-            writer.line("class ", name, "(_SerdeShape):")
+            writer.line("class ", name, "(", self.serde_shape, "):")
             with writer.indent():
                 if docs := _documentation(member):
                     _write_docstring(writer, docs)
                     writer.line()
-                writer.line("value: ", self.symbols.type_reference(member.target))
+                writer.line("value: ", self._type_reference(member.target))
             writer.line()
 
         unknown = self.plan.union_unknown_names[shape.id]
-        variants.append(_symbols.TypeReference(unknown, self.module))
+        variants.append(self._public_reference(unknown))
         writer.line("@", _DATACLASS)
-        writer.line("class ", unknown, "(_SerdeShape):")
+        writer.line("class ", unknown, "(", self.serde_shape, "):")
         with writer.indent():
             _write_docstring(writer, _UNKNOWN_UNION_DOC)
             writer.line()
@@ -314,7 +382,7 @@ class _StubEmitter:
                 "def deserialize(self, deserializer: ",
                 _SHAPE_DESERIALIZER,
                 ") -> ",
-                _symbols.TypeReference(name, self.module),
+                self._public_reference(name),
                 ": ...",
             )
 
@@ -341,10 +409,42 @@ class _StubEmitter:
             if not docs and not shape.members:
                 writer.line("pass")
 
+    def _type_reference(self, shape_id: _model.ShapeId) -> _symbols.TypeReference:
+        return self._partition_reference(self.symbols.type_reference(shape_id))
+
+    def _public_reference(self, name: str) -> _symbols.TypeReference:
+        return _symbols.TypeReference(
+            name, "..models" if self.external_bases else self.module
+        )
+
+    def _partition_reference(
+        self, reference: _symbols.TypeReference
+    ) -> _symbols.TypeReference:
+        arguments = tuple(map(self._partition_reference, reference.arguments))
+        module = (
+            "..models"
+            if self.external_bases and reference.module == self.module
+            else reference.module
+        )
+        if module == reference.module and arguments == reference.arguments:
+            return reference
+        return replace(reference, module=module, arguments=arguments)
+
 
 def _model_exports(plan: ModelPlan) -> tuple[str, ...]:
     exports = ("ServiceError", *plan.registry_index)
     return (*exports, "Unit") if plan.includes_unit else exports
+
+
+def _stub_shape_names(plan: ModelPlan, shape: _model.Shape) -> tuple[str, ...]:
+    declaration = plan.declaration_names[shape.id]
+    if shape.type is not _model.ShapeType.UNION:
+        return (declaration,)
+    return (
+        *(plan.union_variant_names[member.id] for member in shape.members.values()),
+        plan.union_unknown_names[shape.id],
+        declaration,
+    )
 
 
 def _write_mapping(writer: PythonWriter, name: str, values: Mapping[str, str]) -> None:
