@@ -732,8 +732,7 @@ def __getattr__(name: str):
             error_ids=[ShapeID(shape_id) for shape_id in error_ids],
             effective_auth_schemes=[ShapeID(shape_id) for shape_id in auth_scheme_ids],
         )
-        globals()[name] = operation
-        return operation
+        return globals().setdefault(name, operation)
     return _registry.build(name)
 
 
