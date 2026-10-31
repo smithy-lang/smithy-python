@@ -68,7 +68,7 @@ public class PythonCodegenTest {
         assertTrue(runtimeModels.contains("_operation_names = ("));
         assertTrue(runtimeModels.contains("_operation_data[\"GET_CITY\"]"));
         assertTrue(runtimeModels.contains("__all__.extend(_operation_names)"));
-        assertTrue(runtimeModels.contains("globals()[name] = operation"));
+        assertTrue(runtimeModels.contains("return globals().setdefault(name, operation)"));
         assertFalse(runtimeModels.contains("GET_CITY = APIOperation("));
 
         // Event streams are passed through the stream API, not model constructors.

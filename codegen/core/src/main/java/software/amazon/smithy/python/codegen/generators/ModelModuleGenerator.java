@@ -146,8 +146,7 @@ public final class ModelModuleGenerator implements Runnable {
                                     ShapeID(shape_id) for shape_id in auth_scheme_ids
                                 ],
                             )
-                            globals()[name] = operation
-                            return operation
+                            return globals().setdefault(name, operation)
                         return _registry.build(name)
 
 
