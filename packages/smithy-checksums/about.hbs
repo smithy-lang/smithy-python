@@ -1,0 +1,16 @@
+Third-party software compiled into the smithy-checksums native extension.
+
+This file is generated from Cargo.lock by `make third-party-licenses`. Don't edit
+it by hand.
+{{#each licenses}}
+
+================================================================================
+{{{name}}} ({{{id}}})
+
+Used by:
+{{#each used_by}}
+  - {{{crate.name}}} {{{crate.version}}}{{#if crate.repository}} ({{{crate.repository}}}){{/if}}
+{{/each}}
+
+{{{text}}}
+{{/each}}

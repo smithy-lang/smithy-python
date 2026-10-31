@@ -680,6 +680,13 @@
   "smithy_cbor.settings": {
     "CBORSettings": "class"
   },
+  "smithy_checksums": {
+    "CRC32": "class",
+    "CRC32C": "class",
+    "Checksum": "protocol",
+    "HAS_NATIVE_EXTENSION": "bool",
+    "new": "function"
+  },
   "smithy_core": {
     "HostType": "class",
     "SmithyError": "rex-exception",

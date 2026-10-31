@@ -1,0 +1,82 @@
+[project]
+name = "smithy-checksums"
+# The version must stay static: both build backends read it from here.
+version = "0.0.0"
+requires-python = ">=3.12"
+authors = [
+  {name = "Amazon Web Services"},
+]
+description = "Checksum algorithms for Smithy tooling, with native acceleration."
+readme = "README.md"
+license = {text = "Apache License 2.0"}
+keywords = ["smithy", "sdk", "checksum", "crc32c"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Natural Language :: English",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Free Threading :: 2 - Beta",
+  "Programming Language :: Rust",
+  "Topic :: Software Development :: Libraries"
+]
+dependencies = []
+
+[project.urls]
+"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-checksums/CHANGELOG.md"
+"Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-checksums/"
+"Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
+
+# Wheels are built with maturin when a Rust toolchain is available and with
+# hatchling (pure Python) otherwise. See build_backend/smithy_checksums_build.py.
+[build-system]
+requires = []
+build-backend = "smithy_checksums_build"
+backend-path = ["build_backend"]
+
+[tool.maturin]
+python-source = "src"
+module-name = "smithy_checksums._native"
+features = ["pyo3/extension-module"]
+exclude = ["**/__pycache__/**", "**/*.pyc"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/smithy_checksums"]
+exclude = ["*.so", "*.pyd"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "src",
+  "rust",
+  "build_backend",
+  "Cargo.toml",
+  "Cargo.lock",
+  "CHANGELOG.md",
+  "LICENSE-THIRD-PARTY",
+  "NOTICE",
+  "README.md",
+]
+exclude = ["*.so", "*.pyd"]
+
+[tool.uv]
+# Rebuild the native extension in the workspace when the Rust sources change.
+cache-keys = [
+  { file = "pyproject.toml" },
+  { file = "Cargo.toml" },
+  { file = "Cargo.lock" },
+  { file = "rust/**/*.rs" },
+  { file = "build_backend/*.py" },
+  { env = "SMITHY_PYTHON_NATIVE_BUILD" },
+]
+
+[tool.ruff]
+src = ["src"]

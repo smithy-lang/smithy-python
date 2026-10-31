@@ -21,6 +21,9 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.12", "3.13", "3.14", "3.14t", "3.15"]
+    env:
+      # Fail rather than fall back to pure Python if a native extension can't be built.
+      SMITHY_PYTHON_NATIVE_BUILD: always
 
     steps:
       - name: Checkout Repository
@@ -49,6 +52,19 @@ jobs:
         with:
           version: 3.8.2
 
+      - name: Set up Rust
+        # Installs the toolchain pinned in rust-toolchain.toml.
+        run: |
+          rustup toolchain install
+
+      - name: Cache Rust builds
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: packages/smithy-checksums
+          key: ${{ matrix.python-version }}
+          # Pull requests restore the caches develop saves, without adding their own.
+          save-if: ${{ github.ref == 'refs/heads/develop' }}
+
       - name: Setup workspace
         run: |
           make install
@@ -57,6 +73,17 @@ jobs:
         if: ${{ matrix.python-version == '3.12' }}
         run: |
           make static-analysis
+
+      - name: Install Rust dependency tools
+        if: ${{ matrix.python-version == '3.12' }}
+        uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # v2.87.31
+        with:
+          tool: cargo-about@0.9.2,cargo-deny@0.20.2
+
+      - name: Check rust extensions
+        if: ${{ matrix.python-version == '3.12' }}
+        run: |
+          make check-rust
 
       - name: Unit tests
         run: |
@@ -73,3 +100,130 @@ jobs:
       - name: Integration tests
         run: |
           make test-integration
+
+  # Builds each native extension as a wheel on every platform and tests the
+  # installed wheel. The release pipeline builds the published wheels; this
+  # catches platform-specific build or test failures before then.
+  native-wheels:
+    name: Native wheels (${{ matrix.package }}, ${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        # 3.12 builds the abi3 wheel, 3.14t a version-specific free-threaded
+        # wheel, and 3.15t the abi3t wheel.
+        python-version: ["3.12", "3.14t", "3.15t"]
+        package: [smithy-checksums]
+    env:
+      SMITHY_PYTHON_NATIVE_BUILD: always
+      PACKAGE: ${{ matrix.package }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          activate-environment: true
+          enable-cache: true
+
+      - name: Set up Rust
+        # Installs the toolchain pinned in rust-toolchain.toml.
+        run: |
+          rustup toolchain install
+
+      - name: Cache Rust builds
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: packages/${{ matrix.package }}
+          key: ${{ matrix.python-version }}
+          # Pull requests restore the caches develop saves, without adding their own.
+          save-if: ${{ github.ref == 'refs/heads/develop' }}
+
+      - name: Build wheel
+        run: |
+          uv build "packages/$PACKAGE" --wheel --out-dir dist
+
+      - name: Test wheel
+        run: |
+          uv pip install pytest dist/*.whl
+          python -c "import smithy_checksums; assert smithy_checksums.HAS_NATIVE_EXTENSION"
+          python -m pytest "packages/$PACKAGE/tests" --import-mode=importlib -o addopts=""
+
+  # Tests the pure-Python wheel, and installing from the sdist without a Rust
+  # toolchain, which should fall back to the same pure-Python build.
+  pure-python-fallback:
+    name: Pure-Python fallback (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [smithy-checksums]
+    env:
+      PACKAGE: ${{ matrix.package }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.12"
+          activate-environment: true
+          enable-cache: true
+
+      - name: Build sdist and pure-Python wheel
+        env:
+          SMITHY_PYTHON_NATIVE_BUILD: never
+        run: |
+          uv build "packages/$PACKAGE" --out-dir dist
+
+      - name: Test pure-Python wheel
+        run: |
+          uv pip install pytest awscrt dist/*-py3-none-any.whl
+          python -c "import smithy_checksums; assert not smithy_checksums.HAS_NATIVE_EXTENSION"
+          python -m pytest "packages/$PACKAGE/tests" --import-mode=importlib -o addopts=""
+
+      - name: Test sdist install without Rust
+        run: |
+          PATH="$(echo "$PATH" | tr ':' '\n' | grep -v '/\.cargo/bin' | paste -sd: -)"
+          if command -v cargo; then echo "cargo is still on the PATH"; exit 1; fi
+          uv venv .venv-sdist
+          uv pip install --python .venv-sdist --no-cache pytest awscrt dist/*.tar.gz
+          .venv-sdist/bin/python -c "import smithy_checksums; assert not smithy_checksums.HAS_NATIVE_EXTENSION"
+          .venv-sdist/bin/python -m pytest "packages/$PACKAGE/tests" --import-mode=importlib -o addopts=""
+
+  # Checks each native extension builds with the minimum Rust version it declares,
+  # which source builds require.
+  rust-minimum-version:
+    name: Rust minimum version (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [smithy-checksums]
+    env:
+      PACKAGE: ${{ matrix.package }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check with the minimum Rust version
+        run: |
+          version="$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' "packages/$PACKAGE/Cargo.toml")"
+          rustup toolchain install "$version" --profile minimal
+          cargo "+$version" check --manifest-path "packages/$PACKAGE/Cargo.toml" --locked --all-targets

@@ -1,0 +1,20 @@
+[package]
+name = "smithy-checksums"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.89"
+publish = false
+license = "Apache-2.0"
+
+[lib]
+name = "_native"
+crate-type = ["cdylib"]
+path = "rust/lib.rs"
+
+[dependencies]
+crc-fast = { version = "1.10", default-features = false, features = ["std"] }
+pyo3 = { version = "0.30", features = ["abi3-py312", "abi3t-py315"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
