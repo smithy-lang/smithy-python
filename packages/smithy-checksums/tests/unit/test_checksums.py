@@ -13,6 +13,9 @@ from smithy_checksums import (
     CRC32C,
     CRC64NVME,
     Checksum,
+    XXHash3,
+    XXHash64,
+    XXHash128,
     new,
 )
 
@@ -22,6 +25,9 @@ CLASSES = {
     "crc32": CRC32,
     "crc32c": CRC32C,
     "crc64nvme": CRC64NVME,
+    "xxhash64": XXHash64,
+    "xxhash3": XXHash3,
+    "xxhash128": XXHash128,
 }
 
 
@@ -102,6 +108,9 @@ def test_concurrent_checksums(algorithm: str) -> None:
         ("crc32", CRC32),
         ("CRC32C", CRC32C),
         ("CRC64NVME", CRC64NVME),
+        ("XXHASH64", XXHash64),
+        ("xxhash3", XXHash3),
+        ("XxHash128", XXHash128),
     ],
 )
 def test_new_returns_checksum_classes(name: str, expected: type[Checksum]) -> None:

@@ -1,7 +1,8 @@
 # smithy-checksums
 
 This package provides the checksum algorithms used by Smithy clients: CRC32,
-CRC32C, CRC64NVME, and, through `new()`, SHA-1, SHA-256, SHA-512, and MD5.
+CRC32C, CRC64NVME, XXHash64, XXHash3, XXHash128, and, through `new()`, SHA-1,
+SHA-256, SHA-512, and MD5.
 
 ```python
 import smithy_checksums
@@ -13,7 +14,7 @@ checksum.digest()
 
 ## Native acceleration
 
-The CRC algorithms are implemented in Rust and published as wheels for
+The CRC and XXHash algorithms are implemented in Rust and published as wheels for
 common platforms. Where no wheel is available, the package installs as pure Python
 and produces identical results, much more slowly. `HAS_NATIVE_EXTENSION` reports
 which implementation is in use. CRC32 always uses `zlib` in pure Python, and the

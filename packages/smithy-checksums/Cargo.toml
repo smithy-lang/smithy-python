@@ -14,6 +14,7 @@ path = "rust/lib.rs"
 [dependencies]
 crc-fast = { version = "1.10", default-features = false, features = ["std"] }
 pyo3 = { version = "0.30", features = ["abi3-py312", "abi3t-py315"] }
+twox-hash = { version = "2.1", default-features = false, features = ["std", "xxhash64", "xxhash3_64", "xxhash3_128"] }
 
 [profile.release]
 codegen-units = 1

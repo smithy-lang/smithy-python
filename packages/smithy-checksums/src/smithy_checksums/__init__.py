@@ -2,11 +2,11 @@
 #  SPDX-License-Identifier: Apache-2.0
 """Checksum algorithms for Smithy clients.
 
-CRC32, CRC32C, and CRC64NVME use a native extension when one is available for the
-platform and fall back to pure Python otherwise. The fallback produces identical
-results but is orders of magnitude slower, except for CRC32, which uses :mod:`zlib`.
-SHA-1, SHA-256, SHA-512, and MD5 are available through :func:`new` and always use
-:mod:`hashlib`.
+CRC32, CRC32C, CRC64NVME, XXHash64, XXHash3, and XXHash128 use a native extension when
+one is available for the platform and fall back to pure Python otherwise. The
+fallback produces identical results but is orders of magnitude slower, except for
+CRC32, which uses :mod:`zlib`. SHA-1, SHA-256, SHA-512, and MD5 are available
+through :func:`new` and always use :mod:`hashlib`.
 """
 
 import hashlib
@@ -26,13 +26,17 @@ __all__ = (
     "CRC64NVME",
     "HAS_NATIVE_EXTENSION",
     "Checksum",
+    "XXHash3",
+    "XXHash64",
+    "XXHash128",
     "new",
 )
 
 HAS_NATIVE_EXTENSION: Final[bool] = _NATIVE
 """Whether the native extension is in use.
 
-When it isn't, CRC32C and CRC64NVME are computed in pure Python.
+When it isn't, CRC32C, CRC64NVME, XXHash64, XXHash3, and XXHash128 are computed in
+pure Python.
 """
 
 
@@ -132,7 +136,36 @@ class CRC64NVME(_BaseChecksum):
     digest_size = 8
 
 
-_CHECKSUMS: Final = {cls.name: cls for cls in (CRC32, CRC32C, CRC64NVME)}
+class XXHash64(_BaseChecksum):
+    """XXH64 with a seed of zero."""
+
+    __slots__ = ()
+
+    name = "xxhash64"
+    digest_size = 8
+
+
+class XXHash3(_BaseChecksum):
+    """XXH3 (64-bit) with a seed of zero and the default secret."""
+
+    __slots__ = ()
+
+    name = "xxhash3"
+    digest_size = 8
+
+
+class XXHash128(_BaseChecksum):
+    """XXH3 (128-bit) with a seed of zero and the default secret."""
+
+    __slots__ = ()
+
+    name = "xxhash128"
+    digest_size = 16
+
+
+_CHECKSUMS: Final = {
+    cls.name: cls for cls in (CRC32, CRC32C, CRC64NVME, XXHash64, XXHash3, XXHash128)
+}
 _HASHLIB_ALGORITHMS: Final = frozenset(("sha1", "sha256", "sha512", "md5"))
 
 
@@ -142,8 +175,8 @@ def new(name: str) -> Checksum:
     Names are case-insensitive, so the values of a checksum algorithm enum such as
     ``CRC64NVME`` or ``SHA256`` can be passed directly.
 
-    :param name: One of ``crc32``, ``crc32c``, ``crc64nvme``, ``sha1``, ``sha256``,
-        ``sha512``, or ``md5``.
+    :param name: One of ``crc32``, ``crc32c``, ``crc64nvme``, ``xxhash64``,
+        ``xxhash3``, ``xxhash128``, ``sha1``, ``sha256``, ``sha512``, or ``md5``.
     :raises ValueError: If the algorithm isn't supported, or isn't available in this
         Python build.
     """

@@ -26,18 +26,24 @@ def _load() -> tuple[bool, Mapping[str, ImplFactory]]:
     try:
         from smithy_checksums import _native
     except ImportError:
-        from smithy_checksums._private import crc
+        from smithy_checksums._private import crc, xxhash
 
         return False, {
             "crc32": crc.Crc32,
             "crc32c": crc.Crc32C,
             "crc64nvme": crc.Crc64Nvme,
+            "xxhash64": xxhash.XxHash64,
+            "xxhash3": xxhash.XxHash3,
+            "xxhash128": xxhash.XxHash128,
         }
 
     return True, {
         "crc32": _native.Crc32,
         "crc32c": _native.Crc32C,
         "crc64nvme": _native.Crc64Nvme,
+        "xxhash64": _native.XxHash64,
+        "xxhash3": _native.XxHash3,
+        "xxhash128": _native.XxHash128,
     }
 
 
