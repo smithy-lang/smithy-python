@@ -17,34 +17,8 @@ from smithy_core.serializers import SerializeableShape
 from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.plugins import user_agent_plugin
 
+from . import models as _models
 from .config import AsyncEC2ProtocolConfig, Plugin
-from .models import (
-    DATETIME_OFFSETS,
-    EMPTY_INPUT_AND_EMPTY_OUTPUT,
-    ENDPOINT_OPERATION,
-    ENDPOINT_WITH_HOST_LABEL_OPERATION,
-    FRACTIONAL_SECONDS,
-    GREETING_WITH_ERRORS,
-    HOST_WITH_PATH_OPERATION,
-    IGNORES_WRAPPING_XML_NAME,
-    NESTED_STRUCTURES,
-    NO_INPUT_AND_OUTPUT,
-    PUT_WITH_CONTENT_ENCODING,
-    QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
-    QUERY_LISTS,
-    QUERY_TIMESTAMPS,
-    RECURSIVE_XML_SHAPES,
-    SIMPLE_INPUT_PARAMS,
-    SIMPLE_SCALAR_XML_PROPERTIES,
-    XML_BLOBS,
-    XML_EMPTY_BLOBS,
-    XML_EMPTY_LISTS,
-    XML_ENUMS,
-    XML_INT_ENUMS,
-    XML_LISTS,
-    XML_NAMESPACES,
-    XML_TIMESTAMPS,
-)
 from .user_agent import aws_user_agent_plugin
 
 from typing import TYPE_CHECKING
@@ -234,7 +208,9 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, DATETIME_OFFSETS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.DATETIME_OFFSETS, [], plugins
+        )
         return await pipeline(call)
 
     async def empty_input_and_empty_output(
@@ -258,7 +234,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -281,7 +257,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `EndpointOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_OPERATION, [], plugins
+            input, _models.ENDPOINT_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -306,7 +282,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -329,7 +305,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `FractionalSecondsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, FRACTIONAL_SECONDS, [], plugins
+            input, _models.FRACTIONAL_SECONDS, [], plugins
         )
         return await pipeline(call)
 
@@ -354,7 +330,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `GreetingWithErrorsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, [], plugins
+            input, _models.GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
@@ -377,7 +353,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `HostWithPathOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HOST_WITH_PATH_OPERATION, [], plugins
+            input, _models.HOST_WITH_PATH_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -401,7 +377,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `IgnoresWrappingXmlNameOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, IGNORES_WRAPPING_XML_NAME, [], plugins
+            input, _models.IGNORES_WRAPPING_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
@@ -423,7 +399,9 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `NestedStructuresOutput`.
         """
-        pipeline, call = await self._prepare_call(input, NESTED_STRUCTURES, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.NESTED_STRUCTURES, [], plugins
+        )
         return await pipeline(call)
 
     async def no_input_and_output(
@@ -447,7 +425,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `NoInputAndOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_OUTPUT, [], plugins
+            input, _models.NO_INPUT_AND_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -470,7 +448,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `PutWithContentEncodingOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, PUT_WITH_CONTENT_ENCODING, [], plugins
+            input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins
         )
         return await pipeline(call)
 
@@ -495,7 +473,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            input, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
         return await pipeline(call)
 
@@ -517,7 +495,9 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryListsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, QUERY_LISTS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.QUERY_LISTS, [], plugins
+        )
         return await pipeline(call)
 
     async def query_timestamps(
@@ -541,7 +521,9 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryTimestampsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, QUERY_TIMESTAMPS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.QUERY_TIMESTAMPS, [], plugins
+        )
         return await pipeline(call)
 
     async def recursive_xml_shapes(
@@ -563,7 +545,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `RecursiveXmlShapesOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, RECURSIVE_XML_SHAPES, [], plugins
+            input, _models.RECURSIVE_XML_SHAPES, [], plugins
         )
         return await pipeline(call)
 
@@ -586,7 +568,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `SimpleInputParamsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_INPUT_PARAMS, [], plugins
+            input, _models.SIMPLE_INPUT_PARAMS, [], plugins
         )
         return await pipeline(call)
 
@@ -609,7 +591,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
             An instance of `SimpleScalarXmlPropertiesOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_XML_PROPERTIES, [], plugins
+            input, _models.SIMPLE_SCALAR_XML_PROPERTIES, [], plugins
         )
         return await pipeline(call)
 
@@ -631,7 +613,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlBlobsOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_BLOBS, [], plugins)
+        pipeline, call = await self._prepare_call(input, _models.XML_BLOBS, [], plugins)
         return await pipeline(call)
 
     async def xml_empty_blobs(
@@ -652,7 +634,9 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_EMPTY_BLOBS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_EMPTY_BLOBS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_empty_lists(
@@ -673,7 +657,9 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_EMPTY_LISTS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_EMPTY_LISTS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_enums(
@@ -695,7 +681,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_ENUMS, [], plugins)
+        pipeline, call = await self._prepare_call(input, _models.XML_ENUMS, [], plugins)
         return await pipeline(call)
 
     async def xml_int_enums(
@@ -717,7 +703,9 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_INT_ENUMS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_INT_ENUMS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_lists(
@@ -742,7 +730,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlListsOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_LISTS, [], plugins)
+        pipeline, call = await self._prepare_call(input, _models.XML_LISTS, [], plugins)
         return await pipeline(call)
 
     async def xml_namespaces(
@@ -763,7 +751,9 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_NAMESPACES, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_NAMESPACES, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_timestamps(
@@ -785,5 +775,7 @@ class AsyncEC2ProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, XML_TIMESTAMPS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.XML_TIMESTAMPS, [], plugins
+        )
         return await pipeline(call)

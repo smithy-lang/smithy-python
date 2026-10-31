@@ -17,27 +17,8 @@ from smithy_core.serializers import SerializeableShape
 from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.plugins import user_agent_plugin
 
+from . import models as _models
 from .config import AsyncJsonProtocolConfig, Plugin
-from .models import (
-    CONTENT_TYPE_PARAMETERS,
-    DATETIME_OFFSETS,
-    EMPTY_OPERATION,
-    ENDPOINT_OPERATION,
-    ENDPOINT_WITH_HOST_LABEL_OPERATION,
-    FRACTIONAL_SECONDS,
-    GREETING_WITH_ERRORS,
-    HOST_WITH_PATH_OPERATION,
-    JSON_ENUMS,
-    JSON_INT_ENUMS,
-    JSON_UNIONS,
-    KITCHEN_SINK_OPERATION,
-    NULL_OPERATION,
-    OPERATION_WITH_OPTIONAL_INPUT_OUTPUT,
-    PUT_AND_GET_INLINE_DOCUMENTS,
-    PUT_WITH_CONTENT_ENCODING,
-    SIMPLE_SCALAR_PROPERTIES,
-    SPARSE_NULLS_OPERATION,
-)
 from .user_agent import aws_user_agent_plugin
 
 from typing import TYPE_CHECKING
@@ -215,7 +196,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `ContentTypeParametersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, CONTENT_TYPE_PARAMETERS, [], plugins
+            input, _models.CONTENT_TYPE_PARAMETERS, [], plugins
         )
         return await pipeline(call)
 
@@ -237,7 +218,9 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, DATETIME_OFFSETS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.DATETIME_OFFSETS, [], plugins
+        )
         return await pipeline(call)
 
     async def empty_operation(
@@ -258,7 +241,9 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `EmptyOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(input, EMPTY_OPERATION, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.EMPTY_OPERATION, [], plugins
+        )
         return await pipeline(call)
 
     async def endpoint_operation(
@@ -280,7 +265,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `EndpointOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_OPERATION, [], plugins
+            input, _models.ENDPOINT_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -305,7 +290,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -328,7 +313,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `FractionalSecondsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, FRACTIONAL_SECONDS, [], plugins
+            input, _models.FRACTIONAL_SECONDS, [], plugins
         )
         return await pipeline(call)
 
@@ -355,7 +340,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `GreetingWithErrorsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, [], plugins
+            input, _models.GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
@@ -378,7 +363,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `HostWithPathOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HOST_WITH_PATH_OPERATION, [], plugins
+            input, _models.HOST_WITH_PATH_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -401,7 +386,9 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, JSON_ENUMS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.JSON_ENUMS, [], plugins
+        )
         return await pipeline(call)
 
     async def json_int_enums(
@@ -423,7 +410,9 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonIntEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, JSON_INT_ENUMS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.JSON_INT_ENUMS, [], plugins
+        )
         return await pipeline(call)
 
     async def json_unions(
@@ -444,7 +433,9 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, JSON_UNIONS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.JSON_UNIONS, [], plugins
+        )
         return await pipeline(call)
 
     async def kitchen_sink_operation(
@@ -466,7 +457,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `KitchenSinkOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, KITCHEN_SINK_OPERATION, [], plugins
+            input, _models.KITCHEN_SINK_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -488,7 +479,9 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `NullOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(input, NULL_OPERATION, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.NULL_OPERATION, [], plugins
+        )
         return await pipeline(call)
 
     async def operation_with_optional_input_output(
@@ -512,7 +505,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `OperationWithOptionalInputOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_OPTIONAL_INPUT_OUTPUT, [], plugins
+            input, _models.OPERATION_WITH_OPTIONAL_INPUT_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -535,7 +528,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `PutAndGetInlineDocumentsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, PUT_AND_GET_INLINE_DOCUMENTS, [], plugins
+            input, _models.PUT_AND_GET_INLINE_DOCUMENTS, [], plugins
         )
         return await pipeline(call)
 
@@ -558,7 +551,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `PutWithContentEncodingOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, PUT_WITH_CONTENT_ENCODING, [], plugins
+            input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins
         )
         return await pipeline(call)
 
@@ -581,7 +574,7 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `SimpleScalarPropertiesOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+            input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
 
@@ -604,6 +597,6 @@ class AsyncJsonProtocolClient(AsyncClient):
             An instance of `SparseNullsOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, SPARSE_NULLS_OPERATION, [], plugins
+            input, _models.SPARSE_NULLS_OPERATION, [], plugins
         )
         return await pipeline(call)

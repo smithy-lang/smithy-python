@@ -4,6 +4,7 @@
  */
 package software.amazon.smithy.python.codegen.generators;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeType;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
+import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -45,7 +47,10 @@ public final class ModelModuleGenerator implements Runnable {
         context.writerDelegator().useFileWriter(filename, namespace, writer -> {
             // addImport hoists these into the file's import block so they land at the
             // top even though ServiceError/operations also write into this file.
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
             writer.addImport("smithy_core._dynamic_models", "ModelRegistry");
+            writer.addImport("smithy_core.schemas", "APIOperation");
+            writer.addImport("smithy_core.shapes", "ShapeID");
             writer.addImport("._private", "schemas", "_schemas");
 
             var symbolProvider = context.symbolProvider();
@@ -62,8 +67,13 @@ public final class ModelModuleGenerator implements Runnable {
             // every real shape-id name, so the registry reproduces the symbol provider's
             // variant-name collision disambiguation at build time.
             var shapeNames = new TreeSet<String>();
+            var operationNames = new ArrayList<String>();
 
             for (var shape : shapes) {
+                if (shape.isOperationShape()) {
+                    operationNames.add(symbolProvider.toSymbol(shape).getName());
+                    continue;
+                }
                 if (!isModelShape(shape) || Prelude.isPreludeShape(shape)) {
                     continue;
                 }
@@ -110,11 +120,38 @@ public final class ModelModuleGenerator implements Runnable {
                 writer.write("service_error=\"ServiceError\",");
             });
 
-            // No runtime __all__: names are provided lazily by __getattr__ (a static
-            // __all__ would trip F822). The typed __all__Lives in models.pyi.
+            writer.write("_operation_data = {}");
+            writer.openBlock("_operation_names = (", ")", () -> {
+                for (var name : operationNames) {
+                    writer.write("$S,", name);
+                }
+            });
+            writer.write("""
+                    for _operation_name in _operation_names:
+                        globals().pop(_operation_name, None)
+
+                    __all__ = [name for name in globals() if not name.startswith("_")]
+                    __all__.extend(_operation_names)
+                    """);
+
             writer.write("""
                     def __getattr__(name: str):
+                        if (data := _operation_data.get(name)) is not None:
+                            schema_name, error_ids, auth_scheme_ids = data
+                            operation = APIOperation(
+                                static_schema=getattr(_schemas, schema_name),
+                                model_registry=_registry,
+                                error_ids=[ShapeID(shape_id) for shape_id in error_ids],
+                                effective_auth_schemes=[
+                                    ShapeID(shape_id) for shape_id in auth_scheme_ids
+                                ],
+                            )
+                            return globals().setdefault(name, operation)
                         return _registry.build(name)
+
+
+                    def __dir__():
+                        return sorted({*globals(), *_operation_names})
                     """);
         });
     }
