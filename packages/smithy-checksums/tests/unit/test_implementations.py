@@ -23,6 +23,7 @@ type Factory = Callable[[], ChecksumImpl]
 PURE: dict[str, Factory] = {
     "crc32": crc.Crc32,
     "crc32c": crc.Crc32C,
+    "crc64nvme": crc.Crc64Nvme,
 }
 
 
@@ -41,6 +42,7 @@ NATIVE: dict[str, Factory] = (
     else {
         "crc32": _NATIVE_MODULE.Crc32,
         "crc32c": _NATIVE_MODULE.Crc32C,
+        "crc64nvme": _NATIVE_MODULE.Crc64Nvme,
     }
 )
 requires_native = pytest.mark.skipif(
@@ -173,6 +175,7 @@ def test_matches_crt(impls: dict[str, Factory], algorithm: str) -> None:
     compute: dict[str, Callable[[bytes], bytes]] = {
         "crc32": lambda data: crt.crc32(data).to_bytes(4, "big"),
         "crc32c": lambda data: crt.crc32c(data).to_bytes(4, "big"),
+        "crc64nvme": lambda data: crt.crc64nvme(data).to_bytes(8, "big"),
     }
     data = os.urandom(3000)
     for length in [*range(0, 300, 7), 1023, 1024, 1025, 3000]:
@@ -195,7 +198,7 @@ def _bitwise_crc(poly: int, width: int, data: bytes) -> str:
 
 @pytest.mark.parametrize(
     ("algorithm", "poly", "width"),
-    [("crc32c", 0x82F63B78, 32)],
+    [("crc32c", 0x82F63B78, 32), ("crc64nvme", 0x9A6C9329AC4BC9B5, 64)],
 )
 def test_chunked_crc_matches_bitwise(algorithm: str, poly: int, width: int) -> None:
     # The pure CRCs hash whole chunks with masks, short tails with a table, and

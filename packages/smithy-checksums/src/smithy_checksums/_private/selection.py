@@ -31,11 +31,13 @@ def _load() -> tuple[bool, Mapping[str, ImplFactory]]:
         return False, {
             "crc32": crc.Crc32,
             "crc32c": crc.Crc32C,
+            "crc64nvme": crc.Crc64Nvme,
         }
 
     return True, {
         "crc32": _native.Crc32,
         "crc32c": _native.Crc32C,
+        "crc64nvme": _native.Crc64Nvme,
     }
 
 

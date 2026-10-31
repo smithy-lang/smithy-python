@@ -1,7 +1,7 @@
 # smithy-checksums
 
-This package provides the checksum algorithms used by Smithy clients: CRC32 and
-CRC32C, and, through `new()`, SHA-1, SHA-256, SHA-512, and MD5.
+This package provides the checksum algorithms used by Smithy clients: CRC32,
+CRC32C, CRC64NVME, and, through `new()`, SHA-1, SHA-256, SHA-512, and MD5.
 
 ```python
 import smithy_checksums

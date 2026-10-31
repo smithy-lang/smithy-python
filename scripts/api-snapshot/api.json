@@ -683,6 +683,7 @@
   "smithy_checksums": {
     "CRC32": "class",
     "CRC32C": "class",
+    "CRC64NVME": "class",
     "Checksum": "protocol",
     "HAS_NATIVE_EXTENSION": "bool",
     "new": "function"

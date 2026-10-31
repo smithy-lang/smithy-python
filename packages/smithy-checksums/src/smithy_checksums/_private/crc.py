@@ -169,3 +169,13 @@ class Crc32C(_ReflectedCrc):
     _table = _reflected_table(0x82F63B78)
     _mask = 0xFFFFFFFF
     _size = 4
+
+
+class Crc64Nvme(_ReflectedCrc):
+    """CRC-64/NVME."""
+
+    __slots__ = ()
+
+    _table = _reflected_table(0x9A6C9329AC4BC9B5)
+    _mask = 0xFFFFFFFFFFFFFFFF
+    _size = 8

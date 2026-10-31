@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 """Expected digests shared by the checksum tests."""
 
-ALGORITHMS = ("crc32", "crc32c")
+ALGORITHMS = ("crc32", "crc32c", "crc64nvme")
 
 # Digests from independent sources: the standard check value of each CRC (the
-# digest of "123456789"), the CRC32C test vectors from RFC 3720, and "Hello world"
-# digests that match the ones the CRT produces.
+# digest of "123456789"), the CRC32C test vectors from RFC 3720, the CRC64NVME test
+# cases from the NVMe NVM Command Set specification, and "Hello world" digests that
+# match the ones the CRT produces.
 KNOWN_ANSWERS: dict[str, dict[bytes, str]] = {
     "crc32": {b"123456789": "cbf43926", b"Hello world": "8bd69e52"},
     "crc32c": {
@@ -18,6 +19,15 @@ KNOWN_ANSWERS: dict[str, dict[bytes, str]] = {
         b"\xff" * 32: "62a8ab43",
         bytes(range(32)): "46dd794e",
         bytes(range(31, -1, -1)): "113fdb5c",
+    },
+    "crc64nvme": {
+        b"123456789": "ae8b14860a799888",
+        b"Hello world": "38e259d03f312adb",
+        # The 64b CRC test cases in the NVMe NVM Command Set specification.
+        bytes(4096): "6482d367eb22b64e",
+        b"\xff" * 4096: "c0ddba7302eca3ac",
+        bytes(i % 256 for i in range(4096)): "3e729f5f6750449c",
+        bytes(255 - i % 256 for i in range(4096)): "9a2df64b8e9e517e",
     },
 }
 
@@ -63,5 +73,22 @@ PATTERN_DIGESTS: dict[str, dict[int, str]] = {
         1024: "2af62c0c",
         1025: "c8d03add",
         16385: "896b2de8",
+    },
+    "crc64nvme": {
+        0: "0000000000000000",
+        1: "d5da5047efec8728",
+        3: "3f3990291e6454d7",
+        4: "29513a0b0028dea8",
+        8: "7703cc98ac9209d7",
+        9: "0eb6fdbb89d04d0b",
+        16: "cf6454c75df95620",
+        17: "5c34355fb173cefd",
+        128: "a5296136625de4f7",
+        129: "c3d556fcf23d6a24",
+        240: "717e94e4fd87236d",
+        241: "2737bbceef8467bc",
+        1024: "fee95dc7adac063f",
+        1025: "034aba81017791d2",
+        16385: "9c0531959bc1eacf",
     },
 }
