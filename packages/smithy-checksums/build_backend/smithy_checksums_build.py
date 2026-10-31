@@ -36,7 +36,8 @@ _HATCHLING = "hatchling"
 _CARGO_TOML = Path(__file__).parent.parent / "Cargo.toml"
 _PURE_PYTHON_HINT = (
     f"To install the pure-Python implementation instead, set {_ENV_VAR}=never. It "
-    "produces identical checksums, but CRC32C and CRC64NVME are much slower."
+    "produces identical checksums, but CRC32C, CRC64NVME, and the XXHash algorithms "
+    "are much slower."
 )
 
 
