@@ -1,5 +1,8 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+#
+#  Ported from xxHash (https://github.com/Cyan4973/xxHash), Copyright (C) 2012-2023
+#  Yann Collet, under the BSD 2-Clause License. See LICENSE-THIRD-PARTY.
 """Pure-Python XXH64, XXH3-64, and XXH3-128, used when the native extension is unavailable.
 
 These follow the reference implementation (https://github.com/Cyan4973/xxHash) with
