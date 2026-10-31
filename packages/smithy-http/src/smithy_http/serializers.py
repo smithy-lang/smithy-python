@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 from urllib.parse import quote as urlquote
 
 from smithy_core import URI
+
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from smithy_core.aio.types import AsyncBytesProvider, AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.exceptions import SerializationError
@@ -35,8 +37,14 @@ from smithy_core.types import PathPattern, TimestampFormat
 from smithy_core.utils import serialize_float
 
 from . import Field, Fields, tuples_to_fields
+
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from .aio import HTTPRequest as _HTTPRequest
+
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from .aio import HTTPResponse as _HTTPResponse
+
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from .aio.interfaces import HTTPRequest, HTTPResponse
 from .bindings import Binding, RequestBindingMatcher
 from .schema_extensions import (
@@ -48,6 +56,7 @@ from .schema_extensions import (
 from .utils import join_query_params
 
 if TYPE_CHECKING:
+    # TODO(sync-api): root module imports aio; move once a sync counterpart exists.
     from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
 
 

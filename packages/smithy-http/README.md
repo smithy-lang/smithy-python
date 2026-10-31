@@ -10,7 +10,7 @@ The `smithy_http.testing` module provides shared utilities for testing HTTP func
 
 ### MockHTTPClient
 
-The `MockHTTPClient` allows you to test smithy-python clients without making actual network calls. It implements the `HTTPClient` interface and provides configurable responses for functional testing.
+The `MockHTTPClient` allows you to test smithy-python clients without making actual network calls. It implements the `AsyncHTTPClient` interface and provides configurable responses for functional testing.
 
 #### Basic Usage                                                                                                                                                                                      
 

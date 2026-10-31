@@ -393,7 +393,7 @@ final class ClientGenerator implements Runnable {
         if (inputStreamSymbol.isPresent()) {
             if (outputStreamSymbol.isPresent()) {
                 writer.putContext("duplexEventStream", RuntimeTypes.DUPLEX_EVENT_STREAM);
-                var outputDocs = "A `DuplexEventStream` for bidirectional streaming.";
+                var outputDocs = "An `AsyncDuplexEventStream` for bidirectional streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
@@ -420,7 +420,7 @@ final class ClientGenerator implements Runnable {
                         writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
             } else {
                 writer.putContext("inputEventStream", RuntimeTypes.INPUT_EVENT_STREAM);
-                var outputDocs = "An `InputEventStream` for client-to-server streaming.";
+                var outputDocs = "An `AsyncInputEventStream` for client-to-server streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
@@ -446,7 +446,7 @@ final class ClientGenerator implements Runnable {
             }
         } else {
             writer.putContext("outputEventStream", RuntimeTypes.OUTPUT_EVENT_STREAM);
-            var outputDocs = "An `OutputEventStream` for server-to-client streaming.";
+            var outputDocs = "An `AsyncOutputEventStream` for server-to-client streaming.";
             writer.write("""
                     async def ${operationName:L}(
                         self,

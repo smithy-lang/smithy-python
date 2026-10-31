@@ -147,7 +147,7 @@ class MyHandwrittenModel(AsyncClient):
                 invocations.
 
         Returns:
-            An `InputEventStream` for client-to-server streaming.
+            An `AsyncInputEventStream` for client-to-server streaming.
         """
         pipeline, call = await self._prepare_call(input, PUBLISH_EVENTS, [], plugins)
         return await pipeline.input_stream(call, PublishEventStream)
@@ -168,7 +168,7 @@ class MyHandwrittenModel(AsyncClient):
                 invocations.
 
         Returns:
-            An `OutputEventStream` for server-to-client streaming.
+            An `AsyncOutputEventStream` for server-to-client streaming.
         """
         pipeline, call = await self._prepare_call(
             input, SUBSCRIBE_TO_EVENTS, [], plugins
@@ -195,7 +195,7 @@ class MyHandwrittenModel(AsyncClient):
                 invocations.
 
         Returns:
-            A `DuplexEventStream` for bidirectional streaming.
+            An `AsyncDuplexEventStream` for bidirectional streaming.
         """
         pipeline, call = await self._prepare_call(
             input, TRADE_EVENT_STREAM, [], plugins

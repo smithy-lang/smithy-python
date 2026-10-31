@@ -5,6 +5,8 @@ import logging
 from smithy_core.documents import Document
 from smithy_core.response import ResponseMetadata
 from smithy_core.shapes import ShapeID, ShapeType
+
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from smithy_http.aio.interfaces import HTTPResponse
 from smithy_http.interfaces import Field
 

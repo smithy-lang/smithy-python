@@ -16,6 +16,7 @@ import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
+import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
@@ -127,6 +128,8 @@ public final class ModelStubGenerator implements Runnable {
                         && !OperationIndex.of(model).isInputStructure(shape);
                 if (mandatory) {
                     writer.write("$L: $T", memberName, memberTypeSymbol(member));
+                } else if (hasNonNullDefault(member)) {
+                    writer.write("$L: $T = ...", memberName, memberTypeSymbol(member));
                 } else {
                     writer.write("$L: $T | None = ...", memberName, memberTypeSymbol(member));
                 }
@@ -143,6 +146,17 @@ public final class ModelStubGenerator implements Runnable {
             }
         });
         writer.write("");
+    }
+
+    // Must agree with StructureGenerator: a defaulted member is never None at runtime,
+    // except a non-document `@default: null`; a document default is a Document(None).
+    private boolean hasNonNullDefault(MemberShape member) {
+        var defaultTrait = member.getTrait(DefaultTrait.class);
+        if (defaultTrait.isEmpty()) {
+            return false;
+        }
+        return model.expectShape(member.getTarget()).isDocumentShape()
+                || !defaultTrait.get().toNode().isNullNode();
     }
 
     // The runtime attaches the DocumentationTrait text at build time; the stub is the

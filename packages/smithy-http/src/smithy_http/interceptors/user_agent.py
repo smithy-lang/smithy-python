@@ -8,6 +8,8 @@ from smithy_core.interceptors import InputContext, Interceptor, RequestContext
 from smithy_core.types import PropertyKey
 
 from smithy_http import Field
+
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from smithy_http.aio.interfaces import HTTPRequest
 from smithy_http.user_agent import UserAgent, UserAgentComponent
 

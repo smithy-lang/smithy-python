@@ -15,7 +15,6 @@ from ...interfaces import (
 
 __all__ = [
     "AsyncHTTPClient",
-    "HTTPClient",
     "HTTPErrorIdentifier",
     "HTTPRequest",
     "HTTPResponse",
@@ -100,11 +99,6 @@ class AsyncHTTPClient(AsyncClientTransport[HTTPRequest, HTTPResponse], Protocol)
         :param request_config: Configuration specific to this request.
         """
         ...
-
-
-# TODO(sync-renames): drop once aws-sdk-python's hand-written integration test
-# harness imports AsyncHTTPClient instead of the pre-rename HTTPClient name.
-HTTPClient = AsyncHTTPClient
 
 
 class HTTPErrorIdentifier:

@@ -5,10 +5,15 @@ from collections import deque
 from copy import copy
 from typing import Any
 
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from smithy_core.aio.utils import async_list
 
 from smithy_http import tuples_to_fields
+
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from smithy_http.aio import HTTPResponse
+
+# TODO(sync-api): root module imports aio; move once a sync counterpart exists.
 from smithy_http.aio.interfaces import AsyncHTTPClient, HTTPRequest
 from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 
@@ -16,7 +21,7 @@ __all__ = ["MockHTTPClient", "MockHTTPClientError"]
 
 
 class MockHTTPClient(AsyncHTTPClient):
-    """Implementation of :py:class:`.interfaces.HTTPClient` solely for testing purposes.
+    """Implementation of :py:class:`.interfaces.AsyncHTTPClient` solely for testing purposes.
 
     Simulates HTTP request/response behavior. Responses are queued in FIFO order and
     requests are captured for inspection.

@@ -691,7 +691,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
                 invocations.
 
         Returns:
-            A `DuplexEventStream` for bidirectional streaming.
+            An `AsyncDuplexEventStream` for bidirectional streaming.
         """
         pipeline, call = await self._prepare_call(input, DUPLEX_STREAM, [], plugins)
         return await pipeline.duplex_stream(
@@ -716,7 +716,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
                 invocations.
 
         Returns:
-            An `InputEventStream` for client-to-server streaming.
+            An `AsyncInputEventStream` for client-to-server streaming.
         """
         pipeline, call = await self._prepare_call(
             input, DUPLEX_STREAM_WITH_DISTINCT_STREAMS, [], plugins
@@ -743,7 +743,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
                 invocations.
 
         Returns:
-            A `DuplexEventStream` for bidirectional streaming.
+            An `AsyncDuplexEventStream` for bidirectional streaming.
         """
         pipeline, call = await self._prepare_call(
             input, DUPLEX_STREAM_WITH_INITIAL_MESSAGES, [], plugins
@@ -1377,7 +1377,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
                 invocations.
 
         Returns:
-            An `InputEventStream` for client-to-server streaming.
+            An `AsyncInputEventStream` for client-to-server streaming.
         """
         pipeline, call = await self._prepare_call(input, INPUT_STREAM, [], plugins)
         return await pipeline.input_stream(call, EventStream)
@@ -1400,7 +1400,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
                 invocations.
 
         Returns:
-            An `InputEventStream` for client-to-server streaming.
+            An `AsyncInputEventStream` for client-to-server streaming.
         """
         pipeline, call = await self._prepare_call(
             input, INPUT_STREAM_WITH_INITIAL_REQUEST, [], plugins
@@ -2570,7 +2570,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
                 invocations.
 
         Returns:
-            An `OutputEventStream` for server-to-client streaming.
+            An `AsyncOutputEventStream` for server-to-client streaming.
         """
         pipeline, call = await self._prepare_call(input, OUTPUT_STREAM, [], plugins)
         return await pipeline.output_stream(
@@ -2595,7 +2595,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
                 invocations.
 
         Returns:
-            An `OutputEventStream` for server-to-client streaming.
+            An `AsyncOutputEventStream` for server-to-client streaming.
         """
         pipeline, call = await self._prepare_call(
             input, OUTPUT_STREAM_WITH_INITIAL_RESPONSE, [], plugins

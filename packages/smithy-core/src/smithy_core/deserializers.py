@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Never, Protocol, Self, runtime_checkable
 from .exceptions import SmithyError, UnsupportedStreamError
 
 if TYPE_CHECKING:
+    # TODO(sync-api): root module imports aio; move once a sync counterpart exists.
     from .aio.interfaces import StreamingBlob as _Stream
     from .documents import Document
     from .schemas import Schema
