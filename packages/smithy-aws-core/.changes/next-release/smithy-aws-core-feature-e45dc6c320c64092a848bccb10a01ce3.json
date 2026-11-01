@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Add User Agent business metrics to the `User-Agent` header (`m/`), tracking the retry mode and endpoint override."
+}

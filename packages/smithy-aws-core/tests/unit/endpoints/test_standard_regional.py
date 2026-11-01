@@ -8,6 +8,7 @@ import pytest
 from smithy_aws_core.aio.endpoints.standard_regional import (
     AsyncStandardRegionalEndpointsResolver,
 )
+from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
 from smithy_aws_core.endpoints import REGIONAL_ENDPOINT_CONFIG
 from smithy_core import URI
 from smithy_core.endpoints import EndpointResolverParams
@@ -94,3 +95,21 @@ async def test_resolve_endpoint_with_sdk_endpoint_and_region():
     endpoint = await resolver.resolve_endpoint(params)
 
     assert endpoint.uri.host == "example.com"
+
+
+async def test_resolve_endpoint_registers_endpoint_override():
+    resolver = AsyncStandardRegionalEndpointsResolver(endpoint_prefix="service")
+    params = EndpointConfig.params("https://example.com")
+
+    await resolver.resolve_endpoint(params)
+
+    assert AwsFeatureId.ENDPOINT_OVERRIDE in params.context.get(FEATURE_IDS, {})
+
+
+async def test_resolve_regional_endpoint_does_not_register_endpoint_override():
+    resolver = AsyncStandardRegionalEndpointsResolver(endpoint_prefix="service")
+    params = EndpointConfig.params(region="us-west-2")
+
+    await resolver.resolve_endpoint(params)
+
+    assert AwsFeatureId.ENDPOINT_OVERRIDE not in params.context.get(FEATURE_IDS, {})
