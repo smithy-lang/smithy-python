@@ -75,7 +75,7 @@ public class PythonCodegenTest {
         var typecheck = Files.readString(tempDir.resolve("tests/_typecheck.py"));
         assertFalse(typecheck.contains("stream=_"));
 
-        var schemas = Files.readString(tempDir.resolve("src/weather/_private/schemas.py"));
+        var schemas = readSchemaModules(tempDir.resolve("src/weather/_private"));
         assertTrue(schemas.contains("example.weather#fakeProtocol"));
         assertTrue(schemas.contains("aws.protocols#restJson1"));
         assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
@@ -84,5 +84,87 @@ public class PythonCodegenTest {
         assertTrue(schemas.contains("(default endpointRuleSet) endpoint is not set"));
         assertTrue(schemas.contains("smithy.api#longPoll"));
         assertTrue(schemas.contains("\"timeoutMillis\": 20000"));
+    }
+
+    @Test
+    public void partitionsLargeModels(@TempDir Path tempDir) throws IOException {
+        var source = new StringBuilder("""
+                $version: "2"
+                namespace example.large
+
+                use aws.protocols#restJson1
+
+                @restJson1
+                service Large {
+                    version: "1",
+                    operations: [GetLarge]
+                }
+
+                @http(method: "POST", uri: "/", code: 200)
+                operation GetLarge {
+                    input: GetLargeInput,
+                    output: GetLargeOutput
+                }
+
+                @input
+                structure GetLargeInput {
+                    root: Shape0
+                }
+
+                @output
+                structure GetLargeOutput {}
+
+                """);
+        for (int i = 0; i < 250; i++) {
+            source.append("structure Shape")
+                    .append(i)
+                    .append(" { next: Shape")
+                    .append(i + 1)
+                    .append(" }\n");
+        }
+        source.append("structure Shape250 {}\n");
+
+        var model = Model.assembler(PythonCodegenTest.class.getClassLoader())
+                .discoverModels(PythonCodegenTest.class.getClassLoader())
+                .addUnparsedModel("large.smithy", source.toString())
+                .assemble()
+                .unwrap();
+        var context = PluginContext.builder()
+                .fileManifest(FileManifest.create(tempDir))
+                .settings(
+                        ObjectNode.builder()
+                                .withMember("service", "example.large#Large")
+                                .withMember("module", "large")
+                                .withMember("moduleVersion", "0.0.1")
+                                .build())
+                .model(model)
+                .build();
+
+        new PythonClientCodegenPlugin().execute(context);
+
+        var schemas = Files.readString(tempDir.resolve("src/large/_private/schemas.py"));
+        assertTrue(schemas.contains("__all__ = list(_PARTITIONS)  # pyright: ignore[reportUnsupportedDunderAll]"));
+        assertTrue(schemas.contains("\"SHAPE0\","));
+        assertTrue(schemas.contains("\"SHAPE250\","));
+        assertTrue(Files.exists(tempDir.resolve("src/large/_private/schemas_0.py")));
+        assertTrue(Files.exists(tempDir.resolve("src/large/_private/schemas_1.py")));
+        assertTrue(Files.exists(tempDir.resolve("src/large/_private/schemas_5.py")));
+
+        var models = Files.readString(tempDir.resolve("src/large/models.pyi"));
+        assertTrue(models.contains("from ._private.models_0 import ("));
+        assertTrue(models.contains("Shape0 as Shape0,"));
+        assertTrue(models.contains("Shape250 as Shape250,"));
+        assertTrue(Files.exists(tempDir.resolve("src/large/_private/models_0.pyi")));
+        assertTrue(Files.exists(tempDir.resolve("src/large/_private/models_1.pyi")));
+    }
+
+    private static String readSchemaModules(Path directory) throws IOException {
+        var result = new StringBuilder();
+        try (var files = Files.newDirectoryStream(directory, "schemas*.py")) {
+            for (var file : files) {
+                result.append(Files.readString(file));
+            }
+        }
+        return result.toString();
     }
 }
