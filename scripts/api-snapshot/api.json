@@ -169,11 +169,13 @@
   "smithy_aws_core.aio.endpoints.standard_regional": {
     "AsyncEndpointResolver": "rex-protocol[async]",
     "AsyncStandardRegionalEndpointsResolver": "class[async]",
+    "AwsFeatureId": "rex-class",
     "Endpoint": "rex-class",
     "EndpointResolutionError": "rex-exception",
     "EndpointResolverParams": "rex-class",
     "REGIONAL_ENDPOINT_CONFIG": "rex-PropertyKey",
     "URI": "rex-class",
+    "register_feature_id": "rex-function",
     "resolve_static_uri": "rex-function"
   },
   "smithy_aws_core.aio.identity": {
@@ -406,6 +408,16 @@
   "smithy_aws_core.auth.sigv4": {
     "SigV4AuthScheme": "class"
   },
+  "smithy_aws_core.business_metrics": {
+    "AwsFeatureId": "class",
+    "FEATURE_IDS": "PropertyKey",
+    "MAX_ENCODED_FEATURE_IDS_BYTES": "int",
+    "PropertyKey": "rex-class",
+    "TypedProperties": "rex-protocol",
+    "encode_feature_ids": "function",
+    "logger": "Logger",
+    "register_feature_id": "function"
+  },
   "smithy_aws_core.config": {
     "AsyncAwsConfig": "rex-class[async]",
     "AsyncDefaultFileSystem": "rex-class[async]",
@@ -563,12 +575,23 @@
   },
   "smithy_aws_core.interceptors": {},
   "smithy_aws_core.interceptors.user_agent": {
+    "AsyncAdaptiveRetryStrategy": "rex-class[async]",
+    "AsyncStandardRetryStrategy": "rex-class[async]",
+    "AwsFeatureId": "rex-class",
+    "FEATURE_IDS": "rex-PropertyKey",
+    "Field": "rex-class",
+    "HTTPRequest": "rex-protocol[async]",
     "Interceptor": "rex-class",
+    "PropertyKey": "rex-class",
+    "RETRY_STRATEGY": "rex-PropertyKey",
     "RawStringUserAgentComponent": "rex-class",
     "RequestContext": "rex-class",
+    "TypedProperties": "rex-protocol",
     "USER_AGENT": "rex-PropertyKey",
     "UserAgentComponent": "rex-class",
     "UserAgentInterceptor": "class",
+    "encode_feature_ids": "rex-function",
+    "register_feature_id": "rex-function",
     "smithy_core": "rex-module"
   },
   "smithy_aws_core.interfaces": {},
@@ -749,6 +772,7 @@
     "InterceptorChain": "rex-class",
     "OutputContext": "rex-class",
     "PropertyKey": "rex-class",
+    "RETRY_STRATEGY": "rex-PropertyKey",
     "Request": "rex-protocol[async]",
     "RequestContext": "rex-class",
     "Response": "rex-protocol[async]",
@@ -855,6 +879,8 @@
     "CubicCalculator": "rex-class",
     "ExponentialBackoffJitterType": "rex-class",
     "ExponentialRetryBackoffStrategy": "rex-class",
+    "PropertyKey": "rex-class",
+    "RETRY_STRATEGY": "PropertyKey",
     "RetryError": "rex-exception",
     "RetryStrategyOptions": "rex-class",
     "SimpleRetryToken": "rex-class",
