@@ -8,8 +8,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -52,6 +55,8 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
  */
 @SmithyUnstableApi
 public final class SchemaGenerator implements Consumer<Shape> {
+
+    private static final int SCHEMA_PARTITION_SIZE = 50;
 
     // Bit index -> trait id. MUST match smithy_core._schema_compact._TRAIT_BITS.
     private static final List<String> TRAIT_BITS = List.of(
@@ -97,6 +102,8 @@ public final class SchemaGenerator implements Consumer<Shape> {
 
     // Shapes already emitted in file order; a target not yet here is a forward ref.
     private final Set<ShapeId> written = new HashSet<>();
+    private Set<ShapeId> localShapes = Set.of();
+    private boolean partitioned;
 
     // Interned string -> short constant symbol (StringStore).
     private final Map<String, String> stringStore = new LinkedHashMap<>();
@@ -138,9 +145,6 @@ public final class SchemaGenerator implements Consumer<Shape> {
     }
 
     private void writeFile(List<Shape> shapes) {
-        var filename = String.format("src/%s/_private/schemas.py", context.settings().moduleName());
-        var namespace = String.format("%s._private.schemas", context.settings().moduleName());
-
         for (var shape : shapes) {
             intern(shape.getId().getNamespace(), "n");
             intern(shape.getId().getName());
@@ -151,13 +155,314 @@ public final class SchemaGenerator implements Consumer<Shape> {
             }
         }
 
+        var module = context.settings().moduleName();
+        var filename = String.format("src/%s/_private/schemas.py", module);
+        var namespace = String.format("%s._private.schemas", module);
+        if (shapes.size() <= SCHEMA_PARTITION_SIZE) {
+            writeSchemaModule(filename, namespace, shapes, false);
+            return;
+        }
+
+        var partitions = partitionSchemas(shapes);
+        context.writerDelegator().useFileWriter(filename, namespace, writer -> writeFacade(writer, partitions));
+        for (int i = 0; i < partitions.size(); i++) {
+            var partitionFilename = String.format("src/%s/_private/schemas_%d.py", module, i);
+            var partitionNamespace = String.format("%s._private.schemas_%d", module, i);
+            writeSchemaModule(partitionFilename, partitionNamespace, partitions.get(i), true);
+        }
+    }
+
+    private void writeSchemaModule(
+            String filename,
+            String namespace,
+            List<Shape> shapes,
+            boolean isPartitioned
+    ) {
+        var ids = shapes.stream().map(Shape::getId).collect(Collectors.toSet());
         context.writerDelegator().useFileWriter(filename, namespace, writer -> {
-            writeStringStore(writer);
+            if (isPartitioned && shapes.stream()
+                    .flatMap(shape -> references(shape).stream())
+                    .anyMatch(target -> !ids.contains(target)
+                            && !isInlineSchemaReference(target))) {
+                writer.addImport(context.settings().moduleName() + "._private", "schemas");
+            }
+
+            writeStringStore(writer, schemaStrings(shapes));
+            written.clear();
+            localShapes = ids;
+            partitioned = isPartitioned;
             for (var shape : shapes) {
                 writeShape(writer, shape);
             }
+            localShapes = Set.of();
+            partitioned = false;
         });
     }
+
+    private void writeFacade(PythonWriter writer, List<List<Shape>> partitions) {
+        writer.addStdlibImport("importlib", "import_module");
+        writer.openBlock("_PARTITION_NAMES: tuple[tuple[str, ...], ...] = (", ")", () -> {
+            for (var shapes : partitions) {
+                writer.openBlock("(", "),", () -> {
+                    for (var shape : shapes) {
+                        writer.write("$S,", schemaName(shape));
+                    }
+                });
+            }
+        });
+        writer.write("""
+                _PARTITIONS = {
+                    name: index
+                    for index, names in enumerate(_PARTITION_NAMES)
+                    for name in names
+                }
+                __all__ = list(_PARTITIONS)  # pyright: ignore[reportUnsupportedDunderAll]
+                del _PARTITION_NAMES
+                """);
+        writer.write("""
+                def __getattr__(name: str):
+                    try:
+                        partition = _PARTITIONS[name]
+                    except KeyError as error:
+                        raise AttributeError(name) from error
+                    module = import_module(f".schemas_{partition}", __package__)
+                    value = getattr(module, name)
+                    globals()[name] = value
+                    return value
+
+
+                def __dir__() -> list[str]:
+                    return sorted({*globals(), *__all__})
+                """);
+    }
+
+    private List<List<Shape>> partitionSchemas(List<Shape> shapes) {
+        var groups = recursiveGroups(shapes);
+        var countPartitions = new ArrayList<List<Shape>>();
+        var current = new ArrayList<Shape>();
+        for (var group : groups) {
+            if (!current.isEmpty() && current.size() + group.size() > SCHEMA_PARTITION_SIZE) {
+                countPartitions.add(List.copyOf(current));
+                current.clear();
+            }
+            current.addAll(group);
+        }
+        if (!current.isEmpty()) {
+            countPartitions.add(List.copyOf(current));
+        }
+        var partitionCount = countPartitions.size();
+        if (partitionCount < 2) {
+            return countPartitions;
+        }
+
+        var weights = groups.stream().mapToLong(this::schemaGroupWeight).toArray();
+        var partitions = new ArrayList<List<Shape>>(partitionCount);
+        int start = 0;
+        long remainingWeight = Arrays.stream(weights).sum();
+        for (int remainingParts = partitionCount; remainingParts > 1; remainingParts--) {
+            double target = (double) remainingWeight / remainingParts;
+            int end = start;
+            long weight = 0;
+            int lastEnd = groups.size() - remainingParts + 1;
+            while (end < lastEnd) {
+                long nextWeight = weight + weights[end];
+                if (weight > 0 && Math.abs(target - weight) <= Math.abs(target - nextWeight)) {
+                    break;
+                }
+                weight = nextWeight;
+                end++;
+            }
+            partitions.add(flatten(groups.subList(start, end)));
+            start = end;
+            remainingWeight -= weight;
+        }
+        partitions.add(flatten(groups.subList(start, groups.size())));
+        return partitions;
+    }
+
+    private List<List<Shape>> recursiveGroups(List<Shape> shapes) {
+        var byId = shapes.stream()
+                .collect(Collectors.toMap(
+                        Shape::getId,
+                        Function.identity(),
+                        (left, right) -> left,
+                        LinkedHashMap::new));
+        var positions = new HashMap<ShapeId, Integer>();
+        var graph = new LinkedHashMap<ShapeId, List<ShapeId>>();
+        var reverse = new LinkedHashMap<ShapeId, List<ShapeId>>();
+        for (int i = 0; i < shapes.size(); i++) {
+            var id = shapes.get(i).getId();
+            positions.put(id, i);
+            reverse.put(id, new ArrayList<>());
+        }
+        for (var shape : shapes) {
+            var targets = references(shape).stream().filter(byId::containsKey).toList();
+            graph.put(shape.getId(), targets);
+            for (var target : targets) {
+                reverse.get(target).add(shape.getId());
+            }
+        }
+
+        var finished = new ArrayList<ShapeId>();
+        var visited = new HashSet<ShapeId>();
+        for (var root : graph.keySet()) {
+            if (!visited.add(root)) {
+                continue;
+            }
+            var pending = new ArrayDeque<SearchFrame>();
+            pending.push(new SearchFrame(root, 0));
+            while (!pending.isEmpty()) {
+                var frame = pending.pop();
+                var targets = graph.get(frame.id());
+                if (frame.nextTarget() == targets.size()) {
+                    finished.add(frame.id());
+                    continue;
+                }
+                pending.push(new SearchFrame(frame.id(), frame.nextTarget() + 1));
+                var target = targets.get(frame.nextTarget());
+                if (visited.add(target)) {
+                    pending.push(new SearchFrame(target, 0));
+                }
+            }
+        }
+
+        var recursiveComponents = new HashMap<ShapeId, List<ShapeId>>();
+        visited.clear();
+        Collections.reverse(finished);
+        for (var root : finished) {
+            if (!visited.add(root)) {
+                continue;
+            }
+            var component = new ArrayList<ShapeId>();
+            var pending = new ArrayDeque<ShapeId>();
+            pending.push(root);
+            while (!pending.isEmpty()) {
+                var current = pending.pop();
+                component.add(current);
+                for (var target : reverse.get(current)) {
+                    if (visited.add(target)) {
+                        pending.push(target);
+                    }
+                }
+            }
+            if (component.size() > 1 || graph.get(root).contains(root)) {
+                component.sort((left, right) -> Integer.compare(positions.get(left), positions.get(right)));
+                var immutable = List.copyOf(component);
+                for (var id : component) {
+                    recursiveComponents.put(id, immutable);
+                }
+            }
+        }
+
+        var groups = new ArrayList<List<Shape>>();
+        var grouped = new HashSet<ShapeId>();
+        for (var shape : shapes) {
+            if (grouped.contains(shape.getId())) {
+                continue;
+            }
+            var component = recursiveComponents.getOrDefault(shape.getId(), List.of(shape.getId()));
+            groups.add(component.stream().map(byId::get).toList());
+            grouped.addAll(component);
+        }
+        return groups;
+    }
+
+    private List<ShapeId> references(Shape shape) {
+        var references = new LinkedHashSet<ShapeId>();
+        for (var member : shape.members()) {
+            references.add(member.getTarget());
+        }
+        shape.asOperationShape().ifPresent(operation -> {
+            references.add(operation.getInputShape());
+            references.add(operation.getOutputShape());
+            references.addAll(operation.getErrors());
+        });
+        return List.copyOf(references);
+    }
+
+    private List<Shape> flatten(List<List<Shape>> groups) {
+        return groups.stream().flatMap(Collection::stream).toList();
+    }
+
+    private long schemaGroupWeight(List<Shape> group) {
+        long declarations = schemaStrings(group).stream()
+                .mapToLong(value -> stringStore.get(value).length() + value.length() + 4L)
+                .sum();
+        return declarations + group.stream().mapToLong(this::schemaShapeWeight).sum();
+    }
+
+    private long schemaShapeWeight(Shape shape) {
+        long weight = 60L
+                + shape.getId().getNamespace().length()
+                + 2L * shape.getId().getName().length()
+                + traitsWeight(filterTraits(shape));
+        for (var member : shape.members()) {
+            weight += 40L
+                    + 2L * member.getMemberName().length()
+                    + schemaReferenceWeight(member.getTarget())
+                    + traitsWeight(filterTraits(member));
+        }
+        if (shape.isOperationShape()) {
+            var operation = shape.asOperationShape().orElseThrow();
+            weight += schemaReferenceWeight(operation.getInputShape());
+            weight += schemaReferenceWeight(operation.getOutputShape());
+            for (var error : operation.getErrors()) {
+                weight += schemaReferenceWeight(error);
+            }
+        }
+        return weight;
+    }
+
+    private long schemaReferenceWeight(ShapeId target) {
+        return isInlineSchemaReference(target)
+                ? 4L
+                : schemaName(context.model().expectShape(target)).length();
+    }
+
+    private boolean isInlineSchemaReference(ShapeId target) {
+        return target.equals(UnitTypeTrait.UNIT) || PRELUDE_INTS.containsKey(target.toString());
+    }
+
+    private long traitsWeight(Map<ShapeId, Optional<Node>> traits) {
+        long weight = 2;
+        for (var entry : traits.entrySet()) {
+            weight += stringStore.get(entry.getKey().toString()).length() + 4L;
+            if (entry.getValue().isPresent()) {
+                var value = entry.getValue().get();
+                weight += value.isStringNode()
+                        ? stringStore.get(value.expectStringNode().getValue()).length()
+                        : value.toString().length();
+            }
+        }
+        return weight;
+    }
+
+    private Set<String> schemaStrings(Collection<Shape> shapes) {
+        var values = new HashSet<String>();
+        for (var shape : shapes) {
+            values.add(shape.getId().getNamespace());
+            values.add(shape.getId().getName());
+            collectTraitStrings(values, filterTraits(shape));
+            for (var member : shape.members()) {
+                values.add(member.getMemberName());
+                collectTraitStrings(values, filterTraits(member));
+            }
+        }
+        return values;
+    }
+
+    private void collectTraitStrings(Set<String> values, Map<ShapeId, Optional<Node>> traits) {
+        for (var entry : traits.entrySet()) {
+            values.add(entry.getKey().toString());
+            entry.getValue()
+                    .filter(Node::isStringNode)
+                    .map(Node::expectStringNode)
+                    .map(node -> node.getValue())
+                    .ifPresent(values::add);
+        }
+    }
+
+    private record SearchFrame(ShapeId id, int nextTarget) {}
 
     // String interning follows smithy-typescript's StringStore: a general literal
     // becomes `_` + its initials (uppercase/word-start letters), deconflicted with its
@@ -240,9 +545,11 @@ public final class SchemaGenerator implements Consumer<Shape> {
         }
     }
 
-    private void writeStringStore(PythonWriter writer) {
+    private void writeStringStore(PythonWriter writer, Set<String> values) {
         for (var entry : stringStore.entrySet()) {
-            writer.write("$L = $S", entry.getValue(), entry.getKey());
+            if (values.contains(entry.getKey())) {
+                writer.write("$L = $S", entry.getValue(), entry.getKey());
+            }
         }
         writer.write("");
     }
@@ -354,6 +661,10 @@ public final class SchemaGenerator implements Consumer<Shape> {
             return;
         }
         var targetName = schemaName(context.model().expectShape(target));
+        if (partitioned && !localShapes.contains(target)) {
+            writer.writeInline("lambda: schemas.$L", targetName);
+            return;
+        }
         if (written.contains(target)) {
             writer.writeInline("$L", targetName);
         } else {
