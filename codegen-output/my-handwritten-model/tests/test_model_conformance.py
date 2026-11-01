@@ -2,12 +2,31 @@
 
 from pathlib import Path
 
-from smithy_test import verify_models
+from smithy_test import verify_client, verify_models
 
+from my_handwritten_model import client as _client
 from my_handwritten_model import models as _models
 from my_handwritten_model._private import schemas as _schemas
 
 
 def test_model_conformance() -> None:
     pyi = Path(_models.__file__).with_suffix(".pyi")
-    verify_models(_models, _schemas, pyi_path=str(pyi) if pyi.exists() else None)
+    params_pyi = Path(_models.__file__).with_name("_params.pyi")
+    verify_models(
+        _models,
+        _schemas,
+        pyi_path=str(pyi) if pyi.exists() else None,
+        params_pyi_path=str(params_pyi) if params_pyi.exists() else None,
+    )
+
+
+def test_client_conformance() -> None:
+    verify_client(
+        _client.MyHandwrittenModel,
+        {
+            "publish_events": _models.PUBLISH_EVENTS,
+            "subscribe_to_events": _models.SUBSCRIBE_TO_EVENTS,
+            "trade_event_stream": _models.TRADE_EVENT_STREAM,
+        },
+        pyi_path=str(Path(_client.__file__).with_suffix(".pyi")),
+    )

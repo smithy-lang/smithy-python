@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from restxmlwithnamespace.client import AsyncRestXmlProtocolNamespaceClient
 from restxmlwithnamespace.models import (
     NestedWithNamespace,
     SimpleScalarPropertiesInput,
@@ -9,11 +10,23 @@ from restxmlwithnamespace.models import (
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi, _params.pyi,
+# and client.pyi. Not executed as a test; it only needs to type-check.
+
+from restxmlwithnamespace.models import (
+    NestedWithNamespaceParams as NestedWithNamespaceParams,
+    SimpleScalarPropertiesInputParams as SimpleScalarPropertiesInputParams,
+)
 
 _: Any = ...
 
 NestedWithNamespace()
 SimpleScalarPropertiesInput()
 SimpleScalarPropertiesOutput()
+
+
+async def check_simple_scalar_properties(
+    client: AsyncRestXmlProtocolNamespaceClient,
+) -> None:
+    params: SimpleScalarPropertiesInputParams = {}
+    await client.simple_scalar_properties(**params)

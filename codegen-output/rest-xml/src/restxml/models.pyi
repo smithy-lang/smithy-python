@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum
-from typing import Self, Union
+from typing import Any, Self, Union
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
@@ -12,11 +12,114 @@ from smithy_core.schemas import APIOperation
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.types import UnknownEnumMixin
 
+from ._params import (
+    AllQueryStringTypesInputParams as AllQueryStringTypesInputParams,
+    BodyWithXmlNameInputParams as BodyWithXmlNameInputParams,
+    ConstantAndVariableQueryStringInputParams as ConstantAndVariableQueryStringInputParams,
+    ConstantQueryStringInputParams as ConstantQueryStringInputParams,
+    ContentTypeParametersInputParams as ContentTypeParametersInputParams,
+    DatetimeOffsetsInputParams as DatetimeOffsetsInputParams,
+    EmptyInputAndEmptyOutputInputParams as EmptyInputAndEmptyOutputInputParams,
+    EndpointOperationInputParams as EndpointOperationInputParams,
+    EndpointWithHostLabelHeaderOperationInputParams as EndpointWithHostLabelHeaderOperationInputParams,
+    EndpointWithHostLabelOperationInputParams as EndpointWithHostLabelOperationInputParams,
+    FlattenedXmlMapInputParams as FlattenedXmlMapInputParams,
+    FlattenedXmlMapWithXmlNameInputParams as FlattenedXmlMapWithXmlNameInputParams,
+    FlattenedXmlMapWithXmlNamespaceInputParams as FlattenedXmlMapWithXmlNamespaceInputParams,
+    FractionalSecondsInputParams as FractionalSecondsInputParams,
+    GreetingStructParams as GreetingStructParams,
+    GreetingWithErrorsInputParams as GreetingWithErrorsInputParams,
+    HttpEmptyPrefixHeadersInputParams as HttpEmptyPrefixHeadersInputParams,
+    HttpEnumPayloadInputParams as HttpEnumPayloadInputParams,
+    HttpPayloadTraitsInputParams as HttpPayloadTraitsInputParams,
+    HttpPayloadTraitsWithMediaTypeInputParams as HttpPayloadTraitsWithMediaTypeInputParams,
+    HttpPayloadWithMemberXmlNameInputParams as HttpPayloadWithMemberXmlNameInputParams,
+    HttpPayloadWithStructureInputParams as HttpPayloadWithStructureInputParams,
+    HttpPayloadWithUnionInputParams as HttpPayloadWithUnionInputParams,
+    HttpPayloadWithXmlNameInputParams as HttpPayloadWithXmlNameInputParams,
+    HttpPayloadWithXmlNamespaceAndPrefixInputParams as HttpPayloadWithXmlNamespaceAndPrefixInputParams,
+    HttpPayloadWithXmlNamespaceInputParams as HttpPayloadWithXmlNamespaceInputParams,
+    HttpPrefixHeadersInputParams as HttpPrefixHeadersInputParams,
+    HttpRequestWithFloatLabelsInputParams as HttpRequestWithFloatLabelsInputParams,
+    HttpRequestWithGreedyLabelInPathInputParams as HttpRequestWithGreedyLabelInPathInputParams,
+    HttpRequestWithLabelsAndTimestampFormatInputParams as HttpRequestWithLabelsAndTimestampFormatInputParams,
+    HttpRequestWithLabelsInputParams as HttpRequestWithLabelsInputParams,
+    HttpResponseCodeInputParams as HttpResponseCodeInputParams,
+    HttpStringPayloadInputParams as HttpStringPayloadInputParams,
+    IgnoreQueryParamsInResponseInputParams as IgnoreQueryParamsInResponseInputParams,
+    InputAndOutputWithHeadersInputParams as InputAndOutputWithHeadersInputParams,
+    NestedPayloadParams as NestedPayloadParams,
+    NestedXmlMapWithXmlNameInputParams as NestedXmlMapWithXmlNameInputParams,
+    NestedXmlMapsInputParams as NestedXmlMapsInputParams,
+    NoInputAndNoOutputInputParams as NoInputAndNoOutputInputParams,
+    NoInputAndOutputInputParams as NoInputAndOutputInputParams,
+    NullAndEmptyHeadersClientInputParams as NullAndEmptyHeadersClientInputParams,
+    NullAndEmptyHeadersServerInputParams as NullAndEmptyHeadersServerInputParams,
+    OmitsNullSerializesEmptyStringInputParams as OmitsNullSerializesEmptyStringInputParams,
+    PayloadWithXmlNameParams as PayloadWithXmlNameParams,
+    PayloadWithXmlNamespaceAndPrefixParams as PayloadWithXmlNamespaceAndPrefixParams,
+    PayloadWithXmlNamespaceParams as PayloadWithXmlNamespaceParams,
+    PutWithContentEncodingInputParams as PutWithContentEncodingInputParams,
+    QueryIdempotencyTokenAutoFillInputParams as QueryIdempotencyTokenAutoFillInputParams,
+    QueryParamsAsStringListMapInputParams as QueryParamsAsStringListMapInputParams,
+    QueryPrecedenceInputParams as QueryPrecedenceInputParams,
+    RecursiveShapesInputOutputNested1Params as RecursiveShapesInputOutputNested1Params,
+    RecursiveShapesInputOutputNested2Params as RecursiveShapesInputOutputNested2Params,
+    RecursiveShapesInputParams as RecursiveShapesInputParams,
+    SimpleScalarPropertiesInputParams as SimpleScalarPropertiesInputParams,
+    StructureListMemberParams as StructureListMemberParams,
+    TimestampFormatHeadersInputParams as TimestampFormatHeadersInputParams,
+    UnionPayloadGreetingParams as UnionPayloadGreetingParams,
+    UnionPayloadParams as UnionPayloadParams,
+    XmlAttributesInMiddleInputParams as XmlAttributesInMiddleInputParams,
+    XmlAttributesInMiddlePayloadRequestParams as XmlAttributesInMiddlePayloadRequestParams,
+    XmlAttributesInputParams as XmlAttributesInputParams,
+    XmlAttributesOnPayloadInputParams as XmlAttributesOnPayloadInputParams,
+    XmlAttributesPayloadRequestParams as XmlAttributesPayloadRequestParams,
+    XmlBlobsInputParams as XmlBlobsInputParams,
+    XmlEmptyBlobsInputParams as XmlEmptyBlobsInputParams,
+    XmlEmptyListsInputParams as XmlEmptyListsInputParams,
+    XmlEmptyMapsInputParams as XmlEmptyMapsInputParams,
+    XmlEmptyStringsInputParams as XmlEmptyStringsInputParams,
+    XmlEnumsInputParams as XmlEnumsInputParams,
+    XmlIntEnumsInputParams as XmlIntEnumsInputParams,
+    XmlListsInputParams as XmlListsInputParams,
+    XmlMapWithXmlNamespaceInputParams as XmlMapWithXmlNamespaceInputParams,
+    XmlMapsInputParams as XmlMapsInputParams,
+    XmlMapsXmlNameInputParams as XmlMapsXmlNameInputParams,
+    XmlNamespaceNestedParams as XmlNamespaceNestedParams,
+    XmlNamespacesInputParams as XmlNamespacesInputParams,
+    XmlNestedUnionStructParams as XmlNestedUnionStructParams,
+    XmlTimestampsInputParams as XmlTimestampsInputParams,
+    XmlUnionShapeBooleanValueParams as XmlUnionShapeBooleanValueParams,
+    XmlUnionShapeByteValueParams as XmlUnionShapeByteValueParams,
+    XmlUnionShapeDoubleValueParams as XmlUnionShapeDoubleValueParams,
+    XmlUnionShapeFloatValueParams as XmlUnionShapeFloatValueParams,
+    XmlUnionShapeIntegerValueParams as XmlUnionShapeIntegerValueParams,
+    XmlUnionShapeLongValueParams as XmlUnionShapeLongValueParams,
+    XmlUnionShapeParams as XmlUnionShapeParams,
+    XmlUnionShapeShortValueParams as XmlUnionShapeShortValueParams,
+    XmlUnionShapeStringValueParams as XmlUnionShapeStringValueParams,
+    XmlUnionShapeStructValueParams as XmlUnionShapeStructValueParams,
+    XmlUnionShapeUnionValueParams as XmlUnionShapeUnionValueParams,
+    XmlUnionsInputParams as XmlUnionsInputParams,
+)
+
 class _SerdeShape:
     def serialize(self, serializer: ShapeSerializer) -> None: ...
     def serialize_members(self, serializer: ShapeSerializer) -> None: ...
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Returns the dictionary form that operation parameters accept.
+
+        Members use their Python names, unions are dictionaries with a
+        single key, and unset members and `response_metadata` are left
+        out. An unknown union variant converts to an empty dictionary.
+        Unlike `repr`, it includes `@sensitive` members.
+        """
+        ...
 
 class ServiceError(ModeledError):
     """

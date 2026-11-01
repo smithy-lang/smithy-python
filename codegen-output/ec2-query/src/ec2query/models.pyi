@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum
-from typing import Self
+from typing import Any, Self
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
@@ -12,11 +12,52 @@ from smithy_core.schemas import APIOperation
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.types import UnknownEnumMixin
 
+from ._params import (
+    DatetimeOffsetsInputParams as DatetimeOffsetsInputParams,
+    EmptyInputAndEmptyOutputInputParams as EmptyInputAndEmptyOutputInputParams,
+    EndpointOperationInputParams as EndpointOperationInputParams,
+    EndpointWithHostLabelOperationInputParams as EndpointWithHostLabelOperationInputParams,
+    FractionalSecondsInputParams as FractionalSecondsInputParams,
+    GreetingStructParams as GreetingStructParams,
+    GreetingWithErrorsInputParams as GreetingWithErrorsInputParams,
+    HostWithPathOperationInputParams as HostWithPathOperationInputParams,
+    IgnoresWrappingXmlNameInputParams as IgnoresWrappingXmlNameInputParams,
+    NestedStructWithListParams as NestedStructWithListParams,
+    NestedStructuresInputParams as NestedStructuresInputParams,
+    NoInputAndOutputInputParams as NoInputAndOutputInputParams,
+    PutWithContentEncodingInputParams as PutWithContentEncodingInputParams,
+    QueryIdempotencyTokenAutoFillInputParams as QueryIdempotencyTokenAutoFillInputParams,
+    QueryListsInputParams as QueryListsInputParams,
+    QueryTimestampsInputParams as QueryTimestampsInputParams,
+    RecursiveXmlShapesInputParams as RecursiveXmlShapesInputParams,
+    SimpleInputParamsInputParams as SimpleInputParamsInputParams,
+    SimpleScalarXmlPropertiesInputParams as SimpleScalarXmlPropertiesInputParams,
+    StructArgParams as StructArgParams,
+    XmlBlobsInputParams as XmlBlobsInputParams,
+    XmlEmptyBlobsInputParams as XmlEmptyBlobsInputParams,
+    XmlEmptyListsInputParams as XmlEmptyListsInputParams,
+    XmlEnumsInputParams as XmlEnumsInputParams,
+    XmlIntEnumsInputParams as XmlIntEnumsInputParams,
+    XmlListsInputParams as XmlListsInputParams,
+    XmlNamespacesInputParams as XmlNamespacesInputParams,
+    XmlTimestampsInputParams as XmlTimestampsInputParams,
+)
+
 class _SerdeShape:
     def serialize(self, serializer: ShapeSerializer) -> None: ...
     def serialize_members(self, serializer: ShapeSerializer) -> None: ...
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Returns the dictionary form that operation parameters accept.
+
+        Members use their Python names, unions are dictionaries with a
+        single key, and unset members and `response_metadata` are left
+        out. An unknown union variant converts to an empty dictionary.
+        Unlike `repr`, it includes `@sensitive` members.
+        """
+        ...
 
 class ServiceError(ModeledError):
     """

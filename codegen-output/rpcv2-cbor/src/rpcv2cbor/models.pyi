@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum
-from typing import Self, Union
+from typing import Any, Self, Union
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
@@ -12,11 +12,49 @@ from smithy_core.schemas import APIOperation
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.types import UnknownEnumMixin
 
+from ._params import (
+    ClientOptionalDefaultsParams as ClientOptionalDefaultsParams,
+    DefaultsParams as DefaultsParams,
+    EmptyInputOutputInputParams as EmptyInputOutputInputParams,
+    Float16InputParams as Float16InputParams,
+    FractionalSecondsInputParams as FractionalSecondsInputParams,
+    GreetingStructParams as GreetingStructParams,
+    GreetingWithErrorsInputParams as GreetingWithErrorsInputParams,
+    NoInputOutputInputParams as NoInputOutputInputParams,
+    OperationWithDefaultsInputParams as OperationWithDefaultsInputParams,
+    OptionalInputOutputInputParams as OptionalInputOutputInputParams,
+    RecursiveShapesInputOutputNested1Params as RecursiveShapesInputOutputNested1Params,
+    RecursiveShapesInputOutputNested2Params as RecursiveShapesInputOutputNested2Params,
+    RecursiveShapesInputParams as RecursiveShapesInputParams,
+    RpcV2CborDenseMapsInputParams as RpcV2CborDenseMapsInputParams,
+    RpcV2CborListsInputParams as RpcV2CborListsInputParams,
+    RpcV2CborNestedUnionParams as RpcV2CborNestedUnionParams,
+    RpcV2CborNestedUnionStringValueParams as RpcV2CborNestedUnionStringValueParams,
+    RpcV2CborSparseMapsInputParams as RpcV2CborSparseMapsInputParams,
+    RpcV2CborUnionParams as RpcV2CborUnionParams,
+    RpcV2CborUnionStringValueParams as RpcV2CborUnionStringValueParams,
+    RpcV2CborUnionUnionValueParams as RpcV2CborUnionUnionValueParams,
+    RpcV2CborUnionsInputParams as RpcV2CborUnionsInputParams,
+    SimpleScalarPropertiesInputParams as SimpleScalarPropertiesInputParams,
+    SparseNullsOperationInputParams as SparseNullsOperationInputParams,
+    StructureListMemberParams as StructureListMemberParams,
+)
+
 class _SerdeShape:
     def serialize(self, serializer: ShapeSerializer) -> None: ...
     def serialize_members(self, serializer: ShapeSerializer) -> None: ...
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Returns the dictionary form that operation parameters accept.
+
+        Members use their Python names, unions are dictionaries with a
+        single key, and unset members and `response_metadata` are left
+        out. An unknown union variant converts to an empty dictionary.
+        Unlike `repr`, it includes `@sensitive` members.
+        """
+        ...
 
 class ServiceError(ModeledError):
     """

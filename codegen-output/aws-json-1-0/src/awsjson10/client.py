@@ -41,39 +41,34 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from ._params import (
+        ClientOptionalDefaultsParams,
+        DefaultsParams,
+        MyUnionParams,
+        TopLevelParams,
+    )
     from .models import (
-        ContentTypeParametersInput,
+        ClientOptionalDefaults,
         ContentTypeParametersOutput,
-        EmptyInputAndEmptyOutputInput,
+        Defaults,
         EmptyInputAndEmptyOutputOutput,
-        EndpointOperationInput,
         EndpointOperationOutput,
-        EndpointWithHostLabelOperationInput,
         EndpointWithHostLabelOperationOutput,
-        GreetingWithErrorsInput,
         GreetingWithErrorsOutput,
-        HostWithPathOperationInput,
         HostWithPathOperationOutput,
-        JsonUnionsInput,
         JsonUnionsOutput,
-        NoInputAndNoOutputInput,
+        MyUnion,
         NoInputAndNoOutputOutput,
-        NoInputAndOutputInput,
         NoInputAndOutputOutput,
-        OperationWithDefaultsInput,
         OperationWithDefaultsOutput,
-        OperationWithNestedStructureInput,
         OperationWithNestedStructureOutput,
-        OperationWithRequiredMembersInput,
         OperationWithRequiredMembersOutput,
-        OperationWithRequiredMembersWithDefaultsInput,
         OperationWithRequiredMembersWithDefaultsOutput,
-        PutWithContentEncodingInput,
         PutWithContentEncodingOutput,
-        QueryIncompatibleOperationInput,
         QueryIncompatibleOperationOutput,
-        SimpleScalarPropertiesInput,
         SimpleScalarPropertiesOutput,
+        TopLevel,
     )
 
 
@@ -87,7 +82,7 @@ class AsyncJSONRPC10Client(AsyncClient):
         self,
         config: AsyncJSONRPC10Config | None = None,
         plugins: list[Plugin] | None = None,
-    ):
+    ) -> None:
         """
         Constructor for `AsyncJSONRPC10Client`.
 
@@ -151,11 +146,15 @@ class AsyncJSONRPC10Client(AsyncClient):
 
     async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
         self,
-        input: I,
+        # The operation method's locals(), i.e. its keyword arguments.
+        params: Mapping[str, Any],
         operation: APIOperation[I, O],
         default_plugins: list[Plugin],
         plugins: list[Plugin] | None,
     ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
+        # Build the input first, so invalid parameters raise before
+        # any client setup.
+        input = operation.input_from_params(params)
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
@@ -190,391 +189,149 @@ class AsyncJSONRPC10Client(AsyncClient):
         )
 
     async def content_type_parameters(
-        self, input: ContentTypeParametersInput, plugins: list[Plugin] | None = None
+        self, *, value: int | None = None, plugins: list[Plugin] | None = None
     ) -> ContentTypeParametersOutput:
-        """
-        The example tests how servers must support requests containing a
-        `Content-Type` header with parameters.
-
-        Args:
-            input:
-                An instance of `ContentTypeParametersInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `ContentTypeParametersOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, CONTENT_TYPE_PARAMETERS, [], plugins
+            locals(), CONTENT_TYPE_PARAMETERS, [], plugins
         )
         return await pipeline(call)
 
     async def empty_input_and_empty_output(
-        self, input: EmptyInputAndEmptyOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputAndEmptyOutputOutput:
-        """
-        The example tests how requests and responses are serialized when
-        there's no request or response payload because the operation has an
-        empty input and empty output structure that reuses the same shape. While
-        this should be rare, code generators must support this.
-
-        Args:
-            input:
-                An instance of `EmptyInputAndEmptyOutputInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `EmptyInputAndEmptyOutputOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            locals(), EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
     async def endpoint_operation(
-        self, input: EndpointOperationInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
-        """
-        Invokes the EndpointOperation operation.
-
-        Args:
-            input:
-                An instance of `EndpointOperationInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `EndpointOperationOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_OPERATION, [], plugins
+            locals(), ENDPOINT_OPERATION, [], plugins
         )
         return await pipeline(call)
 
     async def endpoint_with_host_label_operation(
-        self,
-        input: EndpointWithHostLabelOperationInput,
-        plugins: list[Plugin] | None = None,
+        self, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
-        """
-        Invokes the EndpointWithHostLabelOperation operation.
-
-        Args:
-            input:
-                An instance of `EndpointWithHostLabelOperationInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `EndpointWithHostLabelOperationOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            locals(), ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
         return await pipeline(call)
 
     async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+        self, *, greeting: str | None = None, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
-        """
-        This operation has three possible return values: 1. A successful
-        response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting
-        error. 3. A ComplexError error. Implementations must be able to
-        successfully take a response and properly deserialize successful and
-        error responses.
-
-        Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `GreetingWithErrorsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, [], plugins
+            locals(), GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
     async def host_with_path_operation(
-        self, input: HostWithPathOperationInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> HostWithPathOperationOutput:
-        """
-        Invokes the HostWithPathOperation operation.
-
-        Args:
-            input:
-                An instance of `HostWithPathOperationInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HostWithPathOperationOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HOST_WITH_PATH_OPERATION, [], plugins
+            locals(), HOST_WITH_PATH_OPERATION, [], plugins
         )
         return await pipeline(call)
 
     async def json_unions(
-        self, input: JsonUnionsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        contents: MyUnion | MyUnionParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> JsonUnionsOutput:
-        """
-        This operation uses unions for inputs and outputs.
-
-        Args:
-            input:
-                An instance of `JsonUnionsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `JsonUnionsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, JSON_UNIONS, [], plugins)
+        pipeline, call = await self._prepare_call(locals(), JSON_UNIONS, [], plugins)
         return await pipeline(call)
 
     async def no_input_and_no_output(
-        self, input: NoInputAndNoOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndNoOutputOutput:
-        """
-        The example tests how requests and responses are serialized when
-        there's no request or response payload because the operation has no
-        input or output. While this should be rare, code generators must support
-        this.
-
-        Args:
-            input:
-                An instance of `NoInputAndNoOutputInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `NoInputAndNoOutputOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_NO_OUTPUT, [], plugins
+            locals(), NO_INPUT_AND_NO_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
     async def no_input_and_output(
-        self, input: NoInputAndOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndOutputOutput:
-        """
-        The example tests how requests and responses are serialized when
-        there's no request or response payload because the operation has no
-        input and the output is empty. While this should be rare, code
-        generators must support this.
-
-        Args:
-            input:
-                An instance of `NoInputAndOutputInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `NoInputAndOutputOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_OUTPUT, [], plugins
+            locals(), NO_INPUT_AND_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
     async def operation_with_defaults(
-        self, input: OperationWithDefaultsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        defaults: Defaults | DefaultsParams | None = None,
+        client_optional_defaults: ClientOptionalDefaults
+        | ClientOptionalDefaultsParams
+        | None = None,
+        top_level_default: str | None = None,
+        other_top_level_default: int | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> OperationWithDefaultsOutput:
-        """
-        Invokes the OperationWithDefaults operation.
-
-        Args:
-            input:
-                An instance of `OperationWithDefaultsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `OperationWithDefaultsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_DEFAULTS, [], plugins
+            locals(), OPERATION_WITH_DEFAULTS, [], plugins
         )
         return await pipeline(call)
 
     async def operation_with_nested_structure(
         self,
-        input: OperationWithNestedStructureInput,
+        *,
+        top_level: TopLevel | TopLevelParams,
         plugins: list[Plugin] | None = None,
     ) -> OperationWithNestedStructureOutput:
-        """
-        Invokes the OperationWithNestedStructure operation.
-
-        Args:
-            input:
-                An instance of `OperationWithNestedStructureInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `OperationWithNestedStructureOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_NESTED_STRUCTURE, [], plugins
+            locals(), OPERATION_WITH_NESTED_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
     async def operation_with_required_members(
-        self,
-        input: OperationWithRequiredMembersInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> OperationWithRequiredMembersOutput:
-        """
-        Invokes the OperationWithRequiredMembers operation.
-
-        Args:
-            input:
-                An instance of `OperationWithRequiredMembersInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `OperationWithRequiredMembersOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_REQUIRED_MEMBERS, [], plugins
+            locals(), OPERATION_WITH_REQUIRED_MEMBERS, [], plugins
         )
         return await pipeline(call)
 
     async def operation_with_required_members_with_defaults(
-        self,
-        input: OperationWithRequiredMembersWithDefaultsInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> OperationWithRequiredMembersWithDefaultsOutput:
-        """
-        Invokes the OperationWithRequiredMembersWithDefaults operation.
-
-        Args:
-            input:
-                An instance of `OperationWithRequiredMembersWithDefaultsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `OperationWithRequiredMembersWithDefaultsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS, [], plugins
+            locals(), OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS, [], plugins
         )
         return await pipeline(call)
 
     async def put_with_content_encoding(
-        self, input: PutWithContentEncodingInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        encoding: str | None = None,
+        data: str | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> PutWithContentEncodingOutput:
-        """
-        Invokes the PutWithContentEncoding operation.
-
-        Args:
-            input:
-                An instance of `PutWithContentEncodingInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `PutWithContentEncodingOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, PUT_WITH_CONTENT_ENCODING, [], plugins
+            locals(), PUT_WITH_CONTENT_ENCODING, [], plugins
         )
         return await pipeline(call)
 
     async def query_incompatible_operation(
-        self,
-        input: QueryIncompatibleOperationInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> QueryIncompatibleOperationOutput:
-        """
-        Invokes the QueryIncompatibleOperation operation.
-
-        Args:
-            input:
-                An instance of `QueryIncompatibleOperationInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `QueryIncompatibleOperationOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, QUERY_INCOMPATIBLE_OPERATION, [], plugins
+            locals(), QUERY_INCOMPATIBLE_OPERATION, [], plugins
         )
         return await pipeline(call)
 
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        float_value: float | None = None,
+        double_value: float | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
-        """
-        Invokes the SimpleScalarProperties operation.
-
-        Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `SimpleScalarPropertiesOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+            locals(), SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)

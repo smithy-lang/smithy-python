@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from my_handwritten_model.client import MyHandwrittenModel
 from my_handwritten_model.models import (
     Alpha,
     DifferentShapeName,
@@ -21,8 +22,14 @@ from my_handwritten_model.models import (
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi, _params.pyi,
+# and client.pyi. Not executed as a test; it only needs to type-check.
+
+from my_handwritten_model.models import (
+    PublishEventsInputParams as PublishEventsInputParams,
+    SubscribeToEventsInputParams as SubscribeToEventsInputParams,
+    TradeEventStreamInputParams as TradeEventStreamInputParams,
+)
 
 _: Any = ...
 
@@ -41,3 +48,18 @@ SubscribeToEventsInput()
 SubscribeToEventsOutput()
 TradeEventStreamInput()
 TradeEventStreamOutput()
+
+
+async def check_publish_events(client: MyHandwrittenModel) -> None:
+    params: PublishEventsInputParams = {}
+    await client.publish_events(**params)
+
+
+async def check_subscribe_to_events(client: MyHandwrittenModel) -> None:
+    params: SubscribeToEventsInputParams = {}
+    await client.subscribe_to_events(**params)
+
+
+async def check_trade_event_stream(client: MyHandwrittenModel) -> None:
+    params: TradeEventStreamInputParams = {}
+    await client.trade_event_stream(**params)

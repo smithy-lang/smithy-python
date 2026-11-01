@@ -2,12 +2,93 @@
 
 from pathlib import Path
 
-from smithy_test import verify_models
+from smithy_test import verify_client, verify_models
 
+from restxml import client as _client
 from restxml import models as _models
 from restxml._private import schemas as _schemas
 
 
 def test_model_conformance() -> None:
     pyi = Path(_models.__file__).with_suffix(".pyi")
-    verify_models(_models, _schemas, pyi_path=str(pyi) if pyi.exists() else None)
+    params_pyi = Path(_models.__file__).with_name("_params.pyi")
+    verify_models(
+        _models,
+        _schemas,
+        pyi_path=str(pyi) if pyi.exists() else None,
+        params_pyi_path=str(params_pyi) if params_pyi.exists() else None,
+    )
+
+
+def test_client_conformance() -> None:
+    verify_client(
+        _client.AsyncRestXmlProtocolClient,
+        {
+            "all_query_string_types": _models.ALL_QUERY_STRING_TYPES,
+            "body_with_xml_name": _models.BODY_WITH_XML_NAME,
+            "constant_and_variable_query_string": _models.CONSTANT_AND_VARIABLE_QUERY_STRING,
+            "constant_query_string": _models.CONSTANT_QUERY_STRING,
+            "content_type_parameters": _models.CONTENT_TYPE_PARAMETERS,
+            "datetime_offsets": _models.DATETIME_OFFSETS,
+            "empty_input_and_empty_output": _models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            "endpoint_operation": _models.ENDPOINT_OPERATION,
+            "endpoint_with_host_label_header_operation": _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION,
+            "endpoint_with_host_label_operation": _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            "flattened_xml_map": _models.FLATTENED_XML_MAP,
+            "flattened_xml_map_with_xml_name": _models.FLATTENED_XML_MAP_WITH_XML_NAME,
+            "flattened_xml_map_with_xml_namespace": _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
+            "fractional_seconds": _models.FRACTIONAL_SECONDS,
+            "greeting_with_errors": _models.GREETING_WITH_ERRORS,
+            "http_empty_prefix_headers": _models.HTTP_EMPTY_PREFIX_HEADERS,
+            "http_enum_payload": _models.HTTP_ENUM_PAYLOAD,
+            "http_payload_traits": _models.HTTP_PAYLOAD_TRAITS,
+            "http_payload_traits_with_media_type": _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
+            "http_payload_with_member_xml_name": _models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME,
+            "http_payload_with_structure": _models.HTTP_PAYLOAD_WITH_STRUCTURE,
+            "http_payload_with_union": _models.HTTP_PAYLOAD_WITH_UNION,
+            "http_payload_with_xml_name": _models.HTTP_PAYLOAD_WITH_XML_NAME,
+            "http_payload_with_xml_namespace": _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE,
+            "http_payload_with_xml_namespace_and_prefix": _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX,
+            "http_prefix_headers": _models.HTTP_PREFIX_HEADERS,
+            "http_request_with_float_labels": _models.HTTP_REQUEST_WITH_FLOAT_LABELS,
+            "http_request_with_greedy_label_in_path": _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
+            "http_request_with_labels": _models.HTTP_REQUEST_WITH_LABELS,
+            "http_request_with_labels_and_timestamp_format": _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
+            "http_response_code": _models.HTTP_RESPONSE_CODE,
+            "http_string_payload": _models.HTTP_STRING_PAYLOAD,
+            "ignore_query_params_in_response": _models.IGNORE_QUERY_PARAMS_IN_RESPONSE,
+            "input_and_output_with_headers": _models.INPUT_AND_OUTPUT_WITH_HEADERS,
+            "nested_xml_maps": _models.NESTED_XML_MAPS,
+            "nested_xml_map_with_xml_name": _models.NESTED_XML_MAP_WITH_XML_NAME,
+            "no_input_and_no_output": _models.NO_INPUT_AND_NO_OUTPUT,
+            "no_input_and_output": _models.NO_INPUT_AND_OUTPUT,
+            "null_and_empty_headers_client": _models.NULL_AND_EMPTY_HEADERS_CLIENT,
+            "null_and_empty_headers_server": _models.NULL_AND_EMPTY_HEADERS_SERVER,
+            "omits_null_serializes_empty_string": _models.OMITS_NULL_SERIALIZES_EMPTY_STRING,
+            "put_with_content_encoding": _models.PUT_WITH_CONTENT_ENCODING,
+            "query_idempotency_token_auto_fill": _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
+            "query_params_as_string_list_map": _models.QUERY_PARAMS_AS_STRING_LIST_MAP,
+            "query_precedence": _models.QUERY_PRECEDENCE,
+            "recursive_shapes": _models.RECURSIVE_SHAPES,
+            "simple_scalar_properties": _models.SIMPLE_SCALAR_PROPERTIES,
+            "timestamp_format_headers": _models.TIMESTAMP_FORMAT_HEADERS,
+            "xml_attributes": _models.XML_ATTRIBUTES,
+            "xml_attributes_in_middle": _models.XML_ATTRIBUTES_IN_MIDDLE,
+            "xml_attributes_on_payload": _models.XML_ATTRIBUTES_ON_PAYLOAD,
+            "xml_blobs": _models.XML_BLOBS,
+            "xml_empty_blobs": _models.XML_EMPTY_BLOBS,
+            "xml_empty_lists": _models.XML_EMPTY_LISTS,
+            "xml_empty_maps": _models.XML_EMPTY_MAPS,
+            "xml_empty_strings": _models.XML_EMPTY_STRINGS,
+            "xml_enums": _models.XML_ENUMS,
+            "xml_int_enums": _models.XML_INT_ENUMS,
+            "xml_lists": _models.XML_LISTS,
+            "xml_maps": _models.XML_MAPS,
+            "xml_maps_xml_name": _models.XML_MAPS_XML_NAME,
+            "xml_map_with_xml_namespace": _models.XML_MAP_WITH_XML_NAMESPACE,
+            "xml_namespaces": _models.XML_NAMESPACES,
+            "xml_timestamps": _models.XML_TIMESTAMPS,
+            "xml_unions": _models.XML_UNIONS,
+        },
+        pyi_path=str(Path(_client.__file__).with_suffix(".pyi")),
+    )

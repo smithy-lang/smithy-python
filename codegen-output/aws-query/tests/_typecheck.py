@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from awsquery.client import AsyncQueryProtocolClient
 from awsquery.models import (
     ComplexNestedErrorData,
     DatetimeOffsetsInput,
@@ -81,8 +82,48 @@ from awsquery.models import (
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi, _params.pyi,
+# and client.pyi. Not executed as a test; it only needs to type-check.
+
+from awsquery.models import (
+    DatetimeOffsetsInputParams as DatetimeOffsetsInputParams,
+    EmptyInputAndEmptyOutputInputParams as EmptyInputAndEmptyOutputInputParams,
+    EndpointOperationInputParams as EndpointOperationInputParams,
+    EndpointWithHostLabelOperationInputParams as EndpointWithHostLabelOperationInputParams,
+    FlattenedXmlMapInputParams as FlattenedXmlMapInputParams,
+    FlattenedXmlMapWithXmlNameInputParams as FlattenedXmlMapWithXmlNameInputParams,
+    FlattenedXmlMapWithXmlNamespaceInputParams as FlattenedXmlMapWithXmlNamespaceInputParams,
+    FractionalSecondsInputParams as FractionalSecondsInputParams,
+    GreetingStructParams as GreetingStructParams,
+    GreetingWithErrorsInputParams as GreetingWithErrorsInputParams,
+    HostWithPathOperationInputParams as HostWithPathOperationInputParams,
+    IgnoresWrappingXmlNameInputParams as IgnoresWrappingXmlNameInputParams,
+    NestedStructWithListParams as NestedStructWithListParams,
+    NestedStructWithMapParams as NestedStructWithMapParams,
+    NestedStructuresInputParams as NestedStructuresInputParams,
+    NoInputAndNoOutputInputParams as NoInputAndNoOutputInputParams,
+    NoInputAndOutputInputParams as NoInputAndOutputInputParams,
+    PutWithContentEncodingInputParams as PutWithContentEncodingInputParams,
+    QueryIdempotencyTokenAutoFillInputParams as QueryIdempotencyTokenAutoFillInputParams,
+    QueryListsInputParams as QueryListsInputParams,
+    QueryMapsInputParams as QueryMapsInputParams,
+    QueryTimestampsInputParams as QueryTimestampsInputParams,
+    RecursiveXmlShapesInputParams as RecursiveXmlShapesInputParams,
+    SimpleInputParamsInputParams as SimpleInputParamsInputParams,
+    SimpleScalarXmlPropertiesInputParams as SimpleScalarXmlPropertiesInputParams,
+    StructArgParams as StructArgParams,
+    XmlBlobsInputParams as XmlBlobsInputParams,
+    XmlEmptyBlobsInputParams as XmlEmptyBlobsInputParams,
+    XmlEmptyListsInputParams as XmlEmptyListsInputParams,
+    XmlEmptyMapsInputParams as XmlEmptyMapsInputParams,
+    XmlEnumsInputParams as XmlEnumsInputParams,
+    XmlIntEnumsInputParams as XmlIntEnumsInputParams,
+    XmlListsInputParams as XmlListsInputParams,
+    XmlMapsInputParams as XmlMapsInputParams,
+    XmlMapsXmlNameInputParams as XmlMapsXmlNameInputParams,
+    XmlNamespacesInputParams as XmlNamespacesInputParams,
+    XmlTimestampsInputParams as XmlTimestampsInputParams,
+)
 
 _: Any = ...
 
@@ -161,3 +202,176 @@ XmlNamespacesOutput()
 XmlTimestampsInput()
 XmlTimestampsOutput()
 GreetingStruct()
+
+
+async def check_datetime_offsets(client: AsyncQueryProtocolClient) -> None:
+    params: DatetimeOffsetsInputParams = {}
+    await client.datetime_offsets(**params)
+
+
+async def check_empty_input_and_empty_output(client: AsyncQueryProtocolClient) -> None:
+    params: EmptyInputAndEmptyOutputInputParams = {}
+    await client.empty_input_and_empty_output(**params)
+
+
+async def check_endpoint_operation(client: AsyncQueryProtocolClient) -> None:
+    params: EndpointOperationInputParams = {}
+    await client.endpoint_operation(**params)
+
+
+async def check_endpoint_with_host_label_operation(
+    client: AsyncQueryProtocolClient,
+) -> None:
+    params: EndpointWithHostLabelOperationInputParams = {"label": _}
+    await client.endpoint_with_host_label_operation(**params)
+
+
+async def check_flattened_xml_map(client: AsyncQueryProtocolClient) -> None:
+    params: FlattenedXmlMapInputParams = {}
+    await client.flattened_xml_map(**params)
+
+
+async def check_flattened_xml_map_with_xml_name(
+    client: AsyncQueryProtocolClient,
+) -> None:
+    params: FlattenedXmlMapWithXmlNameInputParams = {}
+    await client.flattened_xml_map_with_xml_name(**params)
+
+
+async def check_flattened_xml_map_with_xml_namespace(
+    client: AsyncQueryProtocolClient,
+) -> None:
+    params: FlattenedXmlMapWithXmlNamespaceInputParams = {}
+    await client.flattened_xml_map_with_xml_namespace(**params)
+
+
+async def check_fractional_seconds(client: AsyncQueryProtocolClient) -> None:
+    params: FractionalSecondsInputParams = {}
+    await client.fractional_seconds(**params)
+
+
+async def check_greeting_with_errors(client: AsyncQueryProtocolClient) -> None:
+    params: GreetingWithErrorsInputParams = {}
+    await client.greeting_with_errors(**params)
+
+
+async def check_host_with_path_operation(client: AsyncQueryProtocolClient) -> None:
+    params: HostWithPathOperationInputParams = {}
+    await client.host_with_path_operation(**params)
+
+
+async def check_ignores_wrapping_xml_name(client: AsyncQueryProtocolClient) -> None:
+    params: IgnoresWrappingXmlNameInputParams = {}
+    await client.ignores_wrapping_xml_name(**params)
+
+
+async def check_nested_structures(client: AsyncQueryProtocolClient) -> None:
+    params: NestedStructuresInputParams = {}
+    await client.nested_structures(**params)
+
+
+async def check_no_input_and_no_output(client: AsyncQueryProtocolClient) -> None:
+    params: NoInputAndNoOutputInputParams = {}
+    await client.no_input_and_no_output(**params)
+
+
+async def check_no_input_and_output(client: AsyncQueryProtocolClient) -> None:
+    params: NoInputAndOutputInputParams = {}
+    await client.no_input_and_output(**params)
+
+
+async def check_put_with_content_encoding(client: AsyncQueryProtocolClient) -> None:
+    params: PutWithContentEncodingInputParams = {}
+    await client.put_with_content_encoding(**params)
+
+
+async def check_query_idempotency_token_auto_fill(
+    client: AsyncQueryProtocolClient,
+) -> None:
+    params: QueryIdempotencyTokenAutoFillInputParams = {}
+    await client.query_idempotency_token_auto_fill(**params)
+
+
+async def check_query_lists(client: AsyncQueryProtocolClient) -> None:
+    params: QueryListsInputParams = {}
+    await client.query_lists(**params)
+
+
+async def check_query_maps(client: AsyncQueryProtocolClient) -> None:
+    params: QueryMapsInputParams = {}
+    await client.query_maps(**params)
+
+
+async def check_query_timestamps(client: AsyncQueryProtocolClient) -> None:
+    params: QueryTimestampsInputParams = {}
+    await client.query_timestamps(**params)
+
+
+async def check_recursive_xml_shapes(client: AsyncQueryProtocolClient) -> None:
+    params: RecursiveXmlShapesInputParams = {}
+    await client.recursive_xml_shapes(**params)
+
+
+async def check_simple_input_params(client: AsyncQueryProtocolClient) -> None:
+    params: SimpleInputParamsInputParams = {}
+    await client.simple_input_params(**params)
+
+
+async def check_simple_scalar_xml_properties(client: AsyncQueryProtocolClient) -> None:
+    params: SimpleScalarXmlPropertiesInputParams = {}
+    await client.simple_scalar_xml_properties(**params)
+
+
+async def check_xml_blobs(client: AsyncQueryProtocolClient) -> None:
+    params: XmlBlobsInputParams = {}
+    await client.xml_blobs(**params)
+
+
+async def check_xml_empty_blobs(client: AsyncQueryProtocolClient) -> None:
+    params: XmlEmptyBlobsInputParams = {}
+    await client.xml_empty_blobs(**params)
+
+
+async def check_xml_empty_lists(client: AsyncQueryProtocolClient) -> None:
+    params: XmlEmptyListsInputParams = {}
+    await client.xml_empty_lists(**params)
+
+
+async def check_xml_empty_maps(client: AsyncQueryProtocolClient) -> None:
+    params: XmlEmptyMapsInputParams = {}
+    await client.xml_empty_maps(**params)
+
+
+async def check_xml_enums(client: AsyncQueryProtocolClient) -> None:
+    params: XmlEnumsInputParams = {}
+    await client.xml_enums(**params)
+
+
+async def check_xml_int_enums(client: AsyncQueryProtocolClient) -> None:
+    params: XmlIntEnumsInputParams = {}
+    await client.xml_int_enums(**params)
+
+
+async def check_xml_lists(client: AsyncQueryProtocolClient) -> None:
+    params: XmlListsInputParams = {}
+    await client.xml_lists(**params)
+
+
+async def check_xml_maps(client: AsyncQueryProtocolClient) -> None:
+    params: XmlMapsInputParams = {}
+    await client.xml_maps(**params)
+
+
+async def check_xml_maps_xml_name(client: AsyncQueryProtocolClient) -> None:
+    params: XmlMapsXmlNameInputParams = {}
+    await client.xml_maps_xml_name(**params)
+
+
+async def check_xml_namespaces(client: AsyncQueryProtocolClient) -> None:
+    params: XmlNamespacesInputParams = {}
+    await client.xml_namespaces(**params)
+
+
+async def check_xml_timestamps(client: AsyncQueryProtocolClient) -> None:
+    params: XmlTimestampsInputParams = {}
+    await client.xml_timestamps(**params)

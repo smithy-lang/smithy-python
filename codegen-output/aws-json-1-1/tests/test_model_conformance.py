@@ -2,12 +2,46 @@
 
 from pathlib import Path
 
-from smithy_test import verify_models
+from smithy_test import verify_client, verify_models
 
+from awsjson11 import client as _client
 from awsjson11 import models as _models
 from awsjson11._private import schemas as _schemas
 
 
 def test_model_conformance() -> None:
     pyi = Path(_models.__file__).with_suffix(".pyi")
-    verify_models(_models, _schemas, pyi_path=str(pyi) if pyi.exists() else None)
+    params_pyi = Path(_models.__file__).with_name("_params.pyi")
+    verify_models(
+        _models,
+        _schemas,
+        pyi_path=str(pyi) if pyi.exists() else None,
+        params_pyi_path=str(params_pyi) if params_pyi.exists() else None,
+    )
+
+
+def test_client_conformance() -> None:
+    verify_client(
+        _client.AsyncJsonProtocolClient,
+        {
+            "content_type_parameters": _models.CONTENT_TYPE_PARAMETERS,
+            "datetime_offsets": _models.DATETIME_OFFSETS,
+            "empty_operation": _models.EMPTY_OPERATION,
+            "endpoint_operation": _models.ENDPOINT_OPERATION,
+            "endpoint_with_host_label_operation": _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            "fractional_seconds": _models.FRACTIONAL_SECONDS,
+            "greeting_with_errors": _models.GREETING_WITH_ERRORS,
+            "host_with_path_operation": _models.HOST_WITH_PATH_OPERATION,
+            "json_enums": _models.JSON_ENUMS,
+            "json_int_enums": _models.JSON_INT_ENUMS,
+            "json_unions": _models.JSON_UNIONS,
+            "kitchen_sink_operation": _models.KITCHEN_SINK_OPERATION,
+            "null_operation": _models.NULL_OPERATION,
+            "operation_with_optional_input_output": _models.OPERATION_WITH_OPTIONAL_INPUT_OUTPUT,
+            "put_and_get_inline_documents": _models.PUT_AND_GET_INLINE_DOCUMENTS,
+            "put_with_content_encoding": _models.PUT_WITH_CONTENT_ENCODING,
+            "simple_scalar_properties": _models.SIMPLE_SCALAR_PROPERTIES,
+            "sparse_nulls_operation": _models.SPARSE_NULLS_OPERATION,
+        },
+        pyi_path=str(Path(_client.__file__).with_suffix(".pyi")),
+    )

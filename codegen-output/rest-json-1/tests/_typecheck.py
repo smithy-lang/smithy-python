@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from restjson.client import AsyncRestJsonProtocolClient
 from restjson.models import (
     AllQueryStringTypesInput,
     AllQueryStringTypesOutput,
@@ -256,8 +257,163 @@ from restjson.models import (
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi, _params.pyi,
+# and client.pyi. Not executed as a test; it only needs to type-check.
+
+from restjson.models import (
+    AllQueryStringTypesInputParams as AllQueryStringTypesInputParams,
+    ClientOptionalDefaultsParams as ClientOptionalDefaultsParams,
+    ConstantAndVariableQueryStringInputParams as ConstantAndVariableQueryStringInputParams,
+    ConstantQueryStringInputParams as ConstantQueryStringInputParams,
+    ContentTypeParametersInputParams as ContentTypeParametersInputParams,
+    DatetimeOffsetsInputParams as DatetimeOffsetsInputParams,
+    DefaultsParams as DefaultsParams,
+    DialogParams as DialogParams,
+    DocumentTypeAsMapValueInputParams as DocumentTypeAsMapValueInputParams,
+    DocumentTypeAsPayloadInputParams as DocumentTypeAsPayloadInputParams,
+    DocumentTypeInputParams as DocumentTypeInputParams,
+    DuplexStreamInputParams as DuplexStreamInputParams,
+    DuplexStreamWithDistinctStreamsInputParams as DuplexStreamWithDistinctStreamsInputParams,
+    DuplexStreamWithInitialMessagesInputParams as DuplexStreamWithInitialMessagesInputParams,
+    EmptyInputAndEmptyOutputInputParams as EmptyInputAndEmptyOutputInputParams,
+    EndpointOperationInputParams as EndpointOperationInputParams,
+    EndpointWithHostLabelOperationInputParams as EndpointWithHostLabelOperationInputParams,
+    FarewellParams as FarewellParams,
+    FractionalSecondsInputParams as FractionalSecondsInputParams,
+    GreetingStructParams as GreetingStructParams,
+    GreetingWithErrorsInputParams as GreetingWithErrorsInputParams,
+    HostWithPathOperationInputParams as HostWithPathOperationInputParams,
+    HttpChecksumRequiredInputParams as HttpChecksumRequiredInputParams,
+    HttpEmptyPrefixHeadersInputParams as HttpEmptyPrefixHeadersInputParams,
+    HttpEnumPayloadInputParams as HttpEnumPayloadInputParams,
+    HttpPayloadTraitsInputParams as HttpPayloadTraitsInputParams,
+    HttpPayloadTraitsWithMediaTypeInputParams as HttpPayloadTraitsWithMediaTypeInputParams,
+    HttpPayloadWithStructureInputParams as HttpPayloadWithStructureInputParams,
+    HttpPayloadWithUnionInputParams as HttpPayloadWithUnionInputParams,
+    HttpPrefixHeadersInResponseInputParams as HttpPrefixHeadersInResponseInputParams,
+    HttpPrefixHeadersInputParams as HttpPrefixHeadersInputParams,
+    HttpQueryParamsOnlyOperationInputParams as HttpQueryParamsOnlyOperationInputParams,
+    HttpRequestWithFloatLabelsInputParams as HttpRequestWithFloatLabelsInputParams,
+    HttpRequestWithGreedyLabelInPathInputParams as HttpRequestWithGreedyLabelInPathInputParams,
+    HttpRequestWithLabelsAndTimestampFormatInputParams as HttpRequestWithLabelsAndTimestampFormatInputParams,
+    HttpRequestWithLabelsInputParams as HttpRequestWithLabelsInputParams,
+    HttpRequestWithRegexLiteralInputParams as HttpRequestWithRegexLiteralInputParams,
+    HttpResponseCodeInputParams as HttpResponseCodeInputParams,
+    HttpStringPayloadInputParams as HttpStringPayloadInputParams,
+    IgnoreQueryParamsInResponseInputParams as IgnoreQueryParamsInResponseInputParams,
+    InputAndOutputWithHeadersInputParams as InputAndOutputWithHeadersInputParams,
+    InputStreamInputParams as InputStreamInputParams,
+    InputStreamWithInitialRequestInputParams as InputStreamWithInitialRequestInputParams,
+    JsonBlobsInputParams as JsonBlobsInputParams,
+    JsonEnumsInputParams as JsonEnumsInputParams,
+    JsonIntEnumsInputParams as JsonIntEnumsInputParams,
+    JsonListsInputParams as JsonListsInputParams,
+    JsonMapsInputParams as JsonMapsInputParams,
+    JsonTimestampsInputParams as JsonTimestampsInputParams,
+    JsonUnionsInputParams as JsonUnionsInputParams,
+    MalformedAcceptWithBodyInputParams as MalformedAcceptWithBodyInputParams,
+    MalformedAcceptWithGenericStringInputParams as MalformedAcceptWithGenericStringInputParams,
+    MalformedAcceptWithPayloadInputParams as MalformedAcceptWithPayloadInputParams,
+    MalformedBlobInputParams as MalformedBlobInputParams,
+    MalformedBooleanInputParams as MalformedBooleanInputParams,
+    MalformedByteInputParams as MalformedByteInputParams,
+    MalformedContentTypeWithBodyInputParams as MalformedContentTypeWithBodyInputParams,
+    MalformedContentTypeWithGenericStringInputParams as MalformedContentTypeWithGenericStringInputParams,
+    MalformedContentTypeWithPayloadInputParams as MalformedContentTypeWithPayloadInputParams,
+    MalformedContentTypeWithoutBodyEmptyInputInputParams as MalformedContentTypeWithoutBodyEmptyInputInputParams,
+    MalformedContentTypeWithoutBodyInputParams as MalformedContentTypeWithoutBodyInputParams,
+    MalformedDoubleInputParams as MalformedDoubleInputParams,
+    MalformedFloatInputParams as MalformedFloatInputParams,
+    MalformedIntegerInputParams as MalformedIntegerInputParams,
+    MalformedListInputParams as MalformedListInputParams,
+    MalformedLongInputParams as MalformedLongInputParams,
+    MalformedMapInputParams as MalformedMapInputParams,
+    MalformedRequestBodyInputParams as MalformedRequestBodyInputParams,
+    MalformedShortInputParams as MalformedShortInputParams,
+    MalformedStringInputParams as MalformedStringInputParams,
+    MalformedTimestampBodyDateTimeInputParams as MalformedTimestampBodyDateTimeInputParams,
+    MalformedTimestampBodyDefaultInputParams as MalformedTimestampBodyDefaultInputParams,
+    MalformedTimestampBodyHttpDateInputParams as MalformedTimestampBodyHttpDateInputParams,
+    MalformedTimestampHeaderDateTimeInputParams as MalformedTimestampHeaderDateTimeInputParams,
+    MalformedTimestampHeaderDefaultInputParams as MalformedTimestampHeaderDefaultInputParams,
+    MalformedTimestampHeaderEpochInputParams as MalformedTimestampHeaderEpochInputParams,
+    MalformedTimestampPathDefaultInputParams as MalformedTimestampPathDefaultInputParams,
+    MalformedTimestampPathEpochInputParams as MalformedTimestampPathEpochInputParams,
+    MalformedTimestampPathHttpDateInputParams as MalformedTimestampPathHttpDateInputParams,
+    MalformedTimestampQueryDefaultInputParams as MalformedTimestampQueryDefaultInputParams,
+    MalformedTimestampQueryEpochInputParams as MalformedTimestampQueryEpochInputParams,
+    MalformedTimestampQueryHttpDateInputParams as MalformedTimestampQueryHttpDateInputParams,
+    MalformedUnionInputParams as MalformedUnionInputParams,
+    MediaTypeHeaderInputParams as MediaTypeHeaderInputParams,
+    MyUnionBlobValueParams as MyUnionBlobValueParams,
+    MyUnionBooleanValueParams as MyUnionBooleanValueParams,
+    MyUnionEnumValueParams as MyUnionEnumValueParams,
+    MyUnionListValueParams as MyUnionListValueParams,
+    MyUnionMapValueParams as MyUnionMapValueParams,
+    MyUnionNumberValueParams as MyUnionNumberValueParams,
+    MyUnionParams as MyUnionParams,
+    MyUnionRenamedStructureValueParams as MyUnionRenamedStructureValueParams,
+    MyUnionStringValueParams as MyUnionStringValueParams,
+    MyUnionStructureValueParams as MyUnionStructureValueParams,
+    MyUnionTimestampValueParams as MyUnionTimestampValueParams,
+    MyUnionUnionValueParams as MyUnionUnionValueParams,
+    NestedPayloadParams as NestedPayloadParams,
+    NestedUnionParams as NestedUnionParams,
+    NestedUnionStringValueParams as NestedUnionStringValueParams,
+    NoInputAndNoOutputInputParams as NoInputAndNoOutputInputParams,
+    NoInputAndOutputInputParams as NoInputAndOutputInputParams,
+    NullAndEmptyHeadersClientInputParams as NullAndEmptyHeadersClientInputParams,
+    NullAndEmptyHeadersServerInputParams as NullAndEmptyHeadersServerInputParams,
+    OmitsNullSerializesEmptyStringInputParams as OmitsNullSerializesEmptyStringInputParams,
+    OmitsSerializingEmptyListsInputParams as OmitsSerializingEmptyListsInputParams,
+    OperationWithDefaultsInputParams as OperationWithDefaultsInputParams,
+    OperationWithNestedStructureInputParams as OperationWithNestedStructureInputParams,
+    OutputStreamInputParams as OutputStreamInputParams,
+    OutputStreamWithInitialResponseInputParams as OutputStreamWithInitialResponseInputParams,
+    PayloadConfigParams as PayloadConfigParams,
+    PlayerActionParams as PlayerActionParams,
+    PlayerActionQuitParams as PlayerActionQuitParams,
+    PostPlayerActionInputParams as PostPlayerActionInputParams,
+    PostUnionWithJsonNameInputParams as PostUnionWithJsonNameInputParams,
+    PutWithContentEncodingInputParams as PutWithContentEncodingInputParams,
+    QueryIdempotencyTokenAutoFillInputParams as QueryIdempotencyTokenAutoFillInputParams,
+    QueryParamsAsStringListMapInputParams as QueryParamsAsStringListMapInputParams,
+    QueryPrecedenceInputParams as QueryPrecedenceInputParams,
+    RecursiveShapesInputOutputNested1Params as RecursiveShapesInputOutputNested1Params,
+    RecursiveShapesInputOutputNested2Params as RecursiveShapesInputOutputNested2Params,
+    RecursiveShapesInputParams as RecursiveShapesInputParams,
+    RenamedGreetingParams as RenamedGreetingParams,
+    ResponseCodeHttpFallbackInputParams as ResponseCodeHttpFallbackInputParams,
+    ResponseCodeRequiredInputParams as ResponseCodeRequiredInputParams,
+    SimpleScalarPropertiesInputParams as SimpleScalarPropertiesInputParams,
+    SimpleUnionIntParams as SimpleUnionIntParams,
+    SimpleUnionParams as SimpleUnionParams,
+    SimpleUnionStringParams as SimpleUnionStringParams,
+    SparseJsonListsInputParams as SparseJsonListsInputParams,
+    SparseJsonMapsInputParams as SparseJsonMapsInputParams,
+    StreamingTraitsInputParams as StreamingTraitsInputParams,
+    StreamingTraitsRequireLengthInputParams as StreamingTraitsRequireLengthInputParams,
+    StreamingTraitsWithMediaTypeInputParams as StreamingTraitsWithMediaTypeInputParams,
+    StructureListMemberParams as StructureListMemberParams,
+    TestBodyStructureInputParams as TestBodyStructureInputParams,
+    TestConfigParams as TestConfigParams,
+    TestGetNoInputNoPayloadInputParams as TestGetNoInputNoPayloadInputParams,
+    TestGetNoPayloadInputParams as TestGetNoPayloadInputParams,
+    TestPayloadBlobInputParams as TestPayloadBlobInputParams,
+    TestPayloadStructureInputParams as TestPayloadStructureInputParams,
+    TestPostNoInputNoPayloadInputParams as TestPostNoInputNoPayloadInputParams,
+    TestPostNoPayloadInputParams as TestPostNoPayloadInputParams,
+    TimestampFormatHeadersInputParams as TimestampFormatHeadersInputParams,
+    TopLevelParams as TopLevelParams,
+    UnionPayloadGreetingParams as UnionPayloadGreetingParams,
+    UnionPayloadParams as UnionPayloadParams,
+    UnionWithJsonNameBarParams as UnionWithJsonNameBarParams,
+    UnionWithJsonNameBazParams as UnionWithJsonNameBazParams,
+    UnionWithJsonNameFooParams as UnionWithJsonNameFooParams,
+    UnionWithJsonNameParams as UnionWithJsonNameParams,
+    UnitInputAndOutputInputParams as UnitInputAndOutputInputParams,
+    UnitParams as UnitParams,
+)
 
 _: Any = ...
 
@@ -511,3 +667,681 @@ UnitInputAndOutputOutput()
 RenamedGreeting()
 GreetingStruct()
 Unit()
+
+
+async def check_all_query_string_types(client: AsyncRestJsonProtocolClient) -> None:
+    params: AllQueryStringTypesInputParams = {}
+    await client.all_query_string_types(**params)
+
+
+async def check_constant_and_variable_query_string(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: ConstantAndVariableQueryStringInputParams = {}
+    await client.constant_and_variable_query_string(**params)
+
+
+async def check_constant_query_string(client: AsyncRestJsonProtocolClient) -> None:
+    params: ConstantQueryStringInputParams = {"hello": _}
+    await client.constant_query_string(**params)
+
+
+async def check_content_type_parameters(client: AsyncRestJsonProtocolClient) -> None:
+    params: ContentTypeParametersInputParams = {}
+    await client.content_type_parameters(**params)
+
+
+async def check_datetime_offsets(client: AsyncRestJsonProtocolClient) -> None:
+    params: DatetimeOffsetsInputParams = {}
+    await client.datetime_offsets(**params)
+
+
+async def check_document_type(client: AsyncRestJsonProtocolClient) -> None:
+    params: DocumentTypeInputParams = {}
+    await client.document_type(**params)
+
+
+async def check_document_type_as_map_value(client: AsyncRestJsonProtocolClient) -> None:
+    params: DocumentTypeAsMapValueInputParams = {}
+    await client.document_type_as_map_value(**params)
+
+
+async def check_document_type_as_payload(client: AsyncRestJsonProtocolClient) -> None:
+    params: DocumentTypeAsPayloadInputParams = {}
+    await client.document_type_as_payload(**params)
+
+
+async def check_duplex_stream(client: AsyncRestJsonProtocolClient) -> None:
+    params: DuplexStreamInputParams = {}
+    await client.duplex_stream(**params)
+
+
+async def check_duplex_stream_with_distinct_streams(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: DuplexStreamWithDistinctStreamsInputParams = {}
+    await client.duplex_stream_with_distinct_streams(**params)
+
+
+async def check_duplex_stream_with_initial_messages(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: DuplexStreamWithInitialMessagesInputParams = {"initial_request_member": _}
+    await client.duplex_stream_with_initial_messages(**params)
+
+
+async def check_empty_input_and_empty_output(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: EmptyInputAndEmptyOutputInputParams = {}
+    await client.empty_input_and_empty_output(**params)
+
+
+async def check_endpoint_operation(client: AsyncRestJsonProtocolClient) -> None:
+    params: EndpointOperationInputParams = {}
+    await client.endpoint_operation(**params)
+
+
+async def check_endpoint_with_host_label_operation(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: EndpointWithHostLabelOperationInputParams = {"label": _}
+    await client.endpoint_with_host_label_operation(**params)
+
+
+async def check_fractional_seconds(client: AsyncRestJsonProtocolClient) -> None:
+    params: FractionalSecondsInputParams = {}
+    await client.fractional_seconds(**params)
+
+
+async def check_greeting_with_errors(client: AsyncRestJsonProtocolClient) -> None:
+    params: GreetingWithErrorsInputParams = {}
+    await client.greeting_with_errors(**params)
+
+
+async def check_host_with_path_operation(client: AsyncRestJsonProtocolClient) -> None:
+    params: HostWithPathOperationInputParams = {}
+    await client.host_with_path_operation(**params)
+
+
+async def check_http_checksum_required(client: AsyncRestJsonProtocolClient) -> None:
+    params: HttpChecksumRequiredInputParams = {}
+    await client.http_checksum_required(**params)
+
+
+async def check_http_empty_prefix_headers(client: AsyncRestJsonProtocolClient) -> None:
+    params: HttpEmptyPrefixHeadersInputParams = {}
+    await client.http_empty_prefix_headers(**params)
+
+
+async def check_http_enum_payload(client: AsyncRestJsonProtocolClient) -> None:
+    params: HttpEnumPayloadInputParams = {}
+    await client.http_enum_payload(**params)
+
+
+async def check_http_payload_traits(client: AsyncRestJsonProtocolClient) -> None:
+    params: HttpPayloadTraitsInputParams = {}
+    await client.http_payload_traits(**params)
+
+
+async def check_http_payload_traits_with_media_type(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: HttpPayloadTraitsWithMediaTypeInputParams = {}
+    await client.http_payload_traits_with_media_type(**params)
+
+
+async def check_http_payload_with_structure(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: HttpPayloadWithStructureInputParams = {}
+    await client.http_payload_with_structure(**params)
+
+
+async def check_http_payload_with_union(client: AsyncRestJsonProtocolClient) -> None:
+    params: HttpPayloadWithUnionInputParams = {}
+    await client.http_payload_with_union(**params)
+
+
+async def check_http_prefix_headers(client: AsyncRestJsonProtocolClient) -> None:
+    params: HttpPrefixHeadersInputParams = {}
+    await client.http_prefix_headers(**params)
+
+
+async def check_http_prefix_headers_in_response(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: HttpPrefixHeadersInResponseInputParams = {}
+    await client.http_prefix_headers_in_response(**params)
+
+
+async def check_http_query_params_only_operation(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: HttpQueryParamsOnlyOperationInputParams = {}
+    await client.http_query_params_only_operation(**params)
+
+
+async def check_http_request_with_float_labels(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: HttpRequestWithFloatLabelsInputParams = {"float_": _, "double": _}
+    await client.http_request_with_float_labels(**params)
+
+
+async def check_http_request_with_greedy_label_in_path(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: HttpRequestWithGreedyLabelInPathInputParams = {"foo": _, "baz": _}
+    await client.http_request_with_greedy_label_in_path(**params)
+
+
+async def check_http_request_with_labels(client: AsyncRestJsonProtocolClient) -> None:
+    params: HttpRequestWithLabelsInputParams = {
+        "string": _,
+        "short": _,
+        "integer": _,
+        "long": _,
+        "float_": _,
+        "double": _,
+        "boolean": _,
+        "timestamp": _,
+    }
+    await client.http_request_with_labels(**params)
+
+
+async def check_http_request_with_labels_and_timestamp_format(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: HttpRequestWithLabelsAndTimestampFormatInputParams = {
+        "member_epoch_seconds": _,
+        "member_http_date": _,
+        "member_date_time": _,
+        "default_format": _,
+        "target_epoch_seconds": _,
+        "target_http_date": _,
+        "target_date_time": _,
+    }
+    await client.http_request_with_labels_and_timestamp_format(**params)
+
+
+async def check_http_request_with_regex_literal(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: HttpRequestWithRegexLiteralInputParams = {"str_": _}
+    await client.http_request_with_regex_literal(**params)
+
+
+async def check_http_response_code(client: AsyncRestJsonProtocolClient) -> None:
+    params: HttpResponseCodeInputParams = {}
+    await client.http_response_code(**params)
+
+
+async def check_http_string_payload(client: AsyncRestJsonProtocolClient) -> None:
+    params: HttpStringPayloadInputParams = {}
+    await client.http_string_payload(**params)
+
+
+async def check_ignore_query_params_in_response(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: IgnoreQueryParamsInResponseInputParams = {}
+    await client.ignore_query_params_in_response(**params)
+
+
+async def check_input_and_output_with_headers(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: InputAndOutputWithHeadersInputParams = {}
+    await client.input_and_output_with_headers(**params)
+
+
+async def check_input_stream(client: AsyncRestJsonProtocolClient) -> None:
+    params: InputStreamInputParams = {}
+    await client.input_stream(**params)
+
+
+async def check_input_stream_with_initial_request(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: InputStreamWithInitialRequestInputParams = {"initial_request_member": _}
+    await client.input_stream_with_initial_request(**params)
+
+
+async def check_json_blobs(client: AsyncRestJsonProtocolClient) -> None:
+    params: JsonBlobsInputParams = {}
+    await client.json_blobs(**params)
+
+
+async def check_json_enums(client: AsyncRestJsonProtocolClient) -> None:
+    params: JsonEnumsInputParams = {}
+    await client.json_enums(**params)
+
+
+async def check_json_int_enums(client: AsyncRestJsonProtocolClient) -> None:
+    params: JsonIntEnumsInputParams = {}
+    await client.json_int_enums(**params)
+
+
+async def check_json_lists(client: AsyncRestJsonProtocolClient) -> None:
+    params: JsonListsInputParams = {}
+    await client.json_lists(**params)
+
+
+async def check_json_maps(client: AsyncRestJsonProtocolClient) -> None:
+    params: JsonMapsInputParams = {}
+    await client.json_maps(**params)
+
+
+async def check_json_timestamps(client: AsyncRestJsonProtocolClient) -> None:
+    params: JsonTimestampsInputParams = {}
+    await client.json_timestamps(**params)
+
+
+async def check_json_unions(client: AsyncRestJsonProtocolClient) -> None:
+    params: JsonUnionsInputParams = {}
+    await client.json_unions(**params)
+
+
+async def check_malformed_accept_with_body(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedAcceptWithBodyInputParams = {}
+    await client.malformed_accept_with_body(**params)
+
+
+async def check_malformed_accept_with_generic_string(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedAcceptWithGenericStringInputParams = {}
+    await client.malformed_accept_with_generic_string(**params)
+
+
+async def check_malformed_accept_with_payload(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedAcceptWithPayloadInputParams = {}
+    await client.malformed_accept_with_payload(**params)
+
+
+async def check_malformed_blob(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedBlobInputParams = {}
+    await client.malformed_blob(**params)
+
+
+async def check_malformed_boolean(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedBooleanInputParams = {"boolean_in_path": _}
+    await client.malformed_boolean(**params)
+
+
+async def check_malformed_byte(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedByteInputParams = {"byte_in_path": _}
+    await client.malformed_byte(**params)
+
+
+async def check_malformed_content_type_with_body(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedContentTypeWithBodyInputParams = {}
+    await client.malformed_content_type_with_body(**params)
+
+
+async def check_malformed_content_type_with_generic_string(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedContentTypeWithGenericStringInputParams = {}
+    await client.malformed_content_type_with_generic_string(**params)
+
+
+async def check_malformed_content_type_without_body(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedContentTypeWithoutBodyInputParams = {}
+    await client.malformed_content_type_without_body(**params)
+
+
+async def check_malformed_content_type_without_body_empty_input(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedContentTypeWithoutBodyEmptyInputInputParams = {}
+    await client.malformed_content_type_without_body_empty_input(**params)
+
+
+async def check_malformed_content_type_with_payload(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedContentTypeWithPayloadInputParams = {}
+    await client.malformed_content_type_with_payload(**params)
+
+
+async def check_malformed_double(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedDoubleInputParams = {"double_in_path": _}
+    await client.malformed_double(**params)
+
+
+async def check_malformed_float(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedFloatInputParams = {"float_in_path": _}
+    await client.malformed_float(**params)
+
+
+async def check_malformed_integer(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedIntegerInputParams = {"integer_in_path": _}
+    await client.malformed_integer(**params)
+
+
+async def check_malformed_list(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedListInputParams = {}
+    await client.malformed_list(**params)
+
+
+async def check_malformed_long(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedLongInputParams = {"long_in_path": _}
+    await client.malformed_long(**params)
+
+
+async def check_malformed_map(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedMapInputParams = {}
+    await client.malformed_map(**params)
+
+
+async def check_malformed_request_body(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedRequestBodyInputParams = {}
+    await client.malformed_request_body(**params)
+
+
+async def check_malformed_short(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedShortInputParams = {"short_in_path": _}
+    await client.malformed_short(**params)
+
+
+async def check_malformed_string(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedStringInputParams = {}
+    await client.malformed_string(**params)
+
+
+async def check_malformed_timestamp_body_date_time(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampBodyDateTimeInputParams = {"timestamp": _}
+    await client.malformed_timestamp_body_date_time(**params)
+
+
+async def check_malformed_timestamp_body_default(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampBodyDefaultInputParams = {"timestamp": _}
+    await client.malformed_timestamp_body_default(**params)
+
+
+async def check_malformed_timestamp_body_http_date(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampBodyHttpDateInputParams = {"timestamp": _}
+    await client.malformed_timestamp_body_http_date(**params)
+
+
+async def check_malformed_timestamp_header_date_time(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampHeaderDateTimeInputParams = {"timestamp": _}
+    await client.malformed_timestamp_header_date_time(**params)
+
+
+async def check_malformed_timestamp_header_default(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampHeaderDefaultInputParams = {"timestamp": _}
+    await client.malformed_timestamp_header_default(**params)
+
+
+async def check_malformed_timestamp_header_epoch(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampHeaderEpochInputParams = {"timestamp": _}
+    await client.malformed_timestamp_header_epoch(**params)
+
+
+async def check_malformed_timestamp_path_default(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampPathDefaultInputParams = {"timestamp": _}
+    await client.malformed_timestamp_path_default(**params)
+
+
+async def check_malformed_timestamp_path_epoch(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampPathEpochInputParams = {"timestamp": _}
+    await client.malformed_timestamp_path_epoch(**params)
+
+
+async def check_malformed_timestamp_path_http_date(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampPathHttpDateInputParams = {"timestamp": _}
+    await client.malformed_timestamp_path_http_date(**params)
+
+
+async def check_malformed_timestamp_query_default(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampQueryDefaultInputParams = {"timestamp": _}
+    await client.malformed_timestamp_query_default(**params)
+
+
+async def check_malformed_timestamp_query_epoch(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampQueryEpochInputParams = {"timestamp": _}
+    await client.malformed_timestamp_query_epoch(**params)
+
+
+async def check_malformed_timestamp_query_http_date(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: MalformedTimestampQueryHttpDateInputParams = {"timestamp": _}
+    await client.malformed_timestamp_query_http_date(**params)
+
+
+async def check_malformed_union(client: AsyncRestJsonProtocolClient) -> None:
+    params: MalformedUnionInputParams = {}
+    await client.malformed_union(**params)
+
+
+async def check_media_type_header(client: AsyncRestJsonProtocolClient) -> None:
+    params: MediaTypeHeaderInputParams = {}
+    await client.media_type_header(**params)
+
+
+async def check_no_input_and_no_output(client: AsyncRestJsonProtocolClient) -> None:
+    params: NoInputAndNoOutputInputParams = {}
+    await client.no_input_and_no_output(**params)
+
+
+async def check_no_input_and_output(client: AsyncRestJsonProtocolClient) -> None:
+    params: NoInputAndOutputInputParams = {}
+    await client.no_input_and_output(**params)
+
+
+async def check_null_and_empty_headers_client(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: NullAndEmptyHeadersClientInputParams = {}
+    await client.null_and_empty_headers_client(**params)
+
+
+async def check_null_and_empty_headers_server(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: NullAndEmptyHeadersServerInputParams = {}
+    await client.null_and_empty_headers_server(**params)
+
+
+async def check_omits_null_serializes_empty_string(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: OmitsNullSerializesEmptyStringInputParams = {}
+    await client.omits_null_serializes_empty_string(**params)
+
+
+async def check_omits_serializing_empty_lists(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: OmitsSerializingEmptyListsInputParams = {}
+    await client.omits_serializing_empty_lists(**params)
+
+
+async def check_operation_with_defaults(client: AsyncRestJsonProtocolClient) -> None:
+    params: OperationWithDefaultsInputParams = {}
+    await client.operation_with_defaults(**params)
+
+
+async def check_operation_with_nested_structure(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: OperationWithNestedStructureInputParams = {"top_level": _}
+    await client.operation_with_nested_structure(**params)
+
+
+async def check_output_stream(client: AsyncRestJsonProtocolClient) -> None:
+    params: OutputStreamInputParams = {}
+    await client.output_stream(**params)
+
+
+async def check_output_stream_with_initial_response(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: OutputStreamWithInitialResponseInputParams = {}
+    await client.output_stream_with_initial_response(**params)
+
+
+async def check_post_player_action(client: AsyncRestJsonProtocolClient) -> None:
+    params: PostPlayerActionInputParams = {}
+    await client.post_player_action(**params)
+
+
+async def check_post_union_with_json_name(client: AsyncRestJsonProtocolClient) -> None:
+    params: PostUnionWithJsonNameInputParams = {}
+    await client.post_union_with_json_name(**params)
+
+
+async def check_put_with_content_encoding(client: AsyncRestJsonProtocolClient) -> None:
+    params: PutWithContentEncodingInputParams = {}
+    await client.put_with_content_encoding(**params)
+
+
+async def check_query_idempotency_token_auto_fill(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: QueryIdempotencyTokenAutoFillInputParams = {}
+    await client.query_idempotency_token_auto_fill(**params)
+
+
+async def check_query_params_as_string_list_map(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: QueryParamsAsStringListMapInputParams = {}
+    await client.query_params_as_string_list_map(**params)
+
+
+async def check_query_precedence(client: AsyncRestJsonProtocolClient) -> None:
+    params: QueryPrecedenceInputParams = {}
+    await client.query_precedence(**params)
+
+
+async def check_recursive_shapes(client: AsyncRestJsonProtocolClient) -> None:
+    params: RecursiveShapesInputParams = {}
+    await client.recursive_shapes(**params)
+
+
+async def check_response_code_http_fallback(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: ResponseCodeHttpFallbackInputParams = {}
+    await client.response_code_http_fallback(**params)
+
+
+async def check_response_code_required(client: AsyncRestJsonProtocolClient) -> None:
+    params: ResponseCodeRequiredInputParams = {}
+    await client.response_code_required(**params)
+
+
+async def check_simple_scalar_properties(client: AsyncRestJsonProtocolClient) -> None:
+    params: SimpleScalarPropertiesInputParams = {}
+    await client.simple_scalar_properties(**params)
+
+
+async def check_sparse_json_lists(client: AsyncRestJsonProtocolClient) -> None:
+    params: SparseJsonListsInputParams = {}
+    await client.sparse_json_lists(**params)
+
+
+async def check_sparse_json_maps(client: AsyncRestJsonProtocolClient) -> None:
+    params: SparseJsonMapsInputParams = {}
+    await client.sparse_json_maps(**params)
+
+
+async def check_streaming_traits(client: AsyncRestJsonProtocolClient) -> None:
+    params: StreamingTraitsInputParams = {}
+    await client.streaming_traits(**params)
+
+
+async def check_streaming_traits_require_length(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: StreamingTraitsRequireLengthInputParams = {}
+    await client.streaming_traits_require_length(**params)
+
+
+async def check_streaming_traits_with_media_type(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: StreamingTraitsWithMediaTypeInputParams = {}
+    await client.streaming_traits_with_media_type(**params)
+
+
+async def check_test_body_structure(client: AsyncRestJsonProtocolClient) -> None:
+    params: TestBodyStructureInputParams = {}
+    await client.test_body_structure(**params)
+
+
+async def check_test_get_no_input_no_payload(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: TestGetNoInputNoPayloadInputParams = {}
+    await client.test_get_no_input_no_payload(**params)
+
+
+async def check_test_get_no_payload(client: AsyncRestJsonProtocolClient) -> None:
+    params: TestGetNoPayloadInputParams = {}
+    await client.test_get_no_payload(**params)
+
+
+async def check_test_payload_blob(client: AsyncRestJsonProtocolClient) -> None:
+    params: TestPayloadBlobInputParams = {}
+    await client.test_payload_blob(**params)
+
+
+async def check_test_payload_structure(client: AsyncRestJsonProtocolClient) -> None:
+    params: TestPayloadStructureInputParams = {}
+    await client.test_payload_structure(**params)
+
+
+async def check_test_post_no_input_no_payload(
+    client: AsyncRestJsonProtocolClient,
+) -> None:
+    params: TestPostNoInputNoPayloadInputParams = {}
+    await client.test_post_no_input_no_payload(**params)
+
+
+async def check_test_post_no_payload(client: AsyncRestJsonProtocolClient) -> None:
+    params: TestPostNoPayloadInputParams = {}
+    await client.test_post_no_payload(**params)
+
+
+async def check_timestamp_format_headers(client: AsyncRestJsonProtocolClient) -> None:
+    params: TimestampFormatHeadersInputParams = {}
+    await client.timestamp_format_headers(**params)
+
+
+async def check_unit_input_and_output(client: AsyncRestJsonProtocolClient) -> None:
+    params: UnitInputAndOutputInputParams = {}
+    await client.unit_input_and_output(**params)

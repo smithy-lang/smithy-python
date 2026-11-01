@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from awsjson11.client import AsyncJsonProtocolClient
 from awsjson11.models import (
     ComplexNestedErrorData,
     ContentTypeParametersInput,
@@ -48,8 +49,44 @@ from awsjson11.models import (
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi, _params.pyi,
+# and client.pyi. Not executed as a test; it only needs to type-check.
+
+from awsjson11.models import (
+    ContentTypeParametersInputParams as ContentTypeParametersInputParams,
+    DatetimeOffsetsInputParams as DatetimeOffsetsInputParams,
+    EmptyOperationInputParams as EmptyOperationInputParams,
+    EmptyStructParams as EmptyStructParams,
+    EndpointOperationInputParams as EndpointOperationInputParams,
+    EndpointWithHostLabelOperationInputParams as EndpointWithHostLabelOperationInputParams,
+    FractionalSecondsInputParams as FractionalSecondsInputParams,
+    GreetingStructParams as GreetingStructParams,
+    GreetingWithErrorsInputParams as GreetingWithErrorsInputParams,
+    HostWithPathOperationInputParams as HostWithPathOperationInputParams,
+    JsonEnumsInputParams as JsonEnumsInputParams,
+    JsonIntEnumsInputParams as JsonIntEnumsInputParams,
+    JsonUnionsInputParams as JsonUnionsInputParams,
+    KitchenSinkOperationInputParams as KitchenSinkOperationInputParams,
+    KitchenSinkParams as KitchenSinkParams,
+    MyUnionBlobValueParams as MyUnionBlobValueParams,
+    MyUnionBooleanValueParams as MyUnionBooleanValueParams,
+    MyUnionEnumValueParams as MyUnionEnumValueParams,
+    MyUnionListValueParams as MyUnionListValueParams,
+    MyUnionMapValueParams as MyUnionMapValueParams,
+    MyUnionNumberValueParams as MyUnionNumberValueParams,
+    MyUnionParams as MyUnionParams,
+    MyUnionStringValueParams as MyUnionStringValueParams,
+    MyUnionStructureValueParams as MyUnionStructureValueParams,
+    MyUnionTimestampValueParams as MyUnionTimestampValueParams,
+    NullOperationInputParams as NullOperationInputParams,
+    OperationWithOptionalInputOutputInputParams as OperationWithOptionalInputOutputInputParams,
+    PutAndGetInlineDocumentsInputParams as PutAndGetInlineDocumentsInputParams,
+    PutWithContentEncodingInputParams as PutWithContentEncodingInputParams,
+    SimpleScalarPropertiesInputParams as SimpleScalarPropertiesInputParams,
+    SimpleStructParams as SimpleStructParams,
+    SparseNullsOperationInputParams as SparseNullsOperationInputParams,
+    StructWithJsonNameParams as StructWithJsonNameParams,
+)
 
 _: Any = ...
 
@@ -95,3 +132,97 @@ SparseNullsOperationInput()
 SparseNullsOperationOutput()
 StructWithJsonName()
 GreetingStruct()
+
+
+async def check_content_type_parameters(client: AsyncJsonProtocolClient) -> None:
+    params: ContentTypeParametersInputParams = {}
+    await client.content_type_parameters(**params)
+
+
+async def check_datetime_offsets(client: AsyncJsonProtocolClient) -> None:
+    params: DatetimeOffsetsInputParams = {}
+    await client.datetime_offsets(**params)
+
+
+async def check_empty_operation(client: AsyncJsonProtocolClient) -> None:
+    params: EmptyOperationInputParams = {}
+    await client.empty_operation(**params)
+
+
+async def check_endpoint_operation(client: AsyncJsonProtocolClient) -> None:
+    params: EndpointOperationInputParams = {}
+    await client.endpoint_operation(**params)
+
+
+async def check_endpoint_with_host_label_operation(
+    client: AsyncJsonProtocolClient,
+) -> None:
+    params: EndpointWithHostLabelOperationInputParams = {"label": _}
+    await client.endpoint_with_host_label_operation(**params)
+
+
+async def check_fractional_seconds(client: AsyncJsonProtocolClient) -> None:
+    params: FractionalSecondsInputParams = {}
+    await client.fractional_seconds(**params)
+
+
+async def check_greeting_with_errors(client: AsyncJsonProtocolClient) -> None:
+    params: GreetingWithErrorsInputParams = {}
+    await client.greeting_with_errors(**params)
+
+
+async def check_host_with_path_operation(client: AsyncJsonProtocolClient) -> None:
+    params: HostWithPathOperationInputParams = {}
+    await client.host_with_path_operation(**params)
+
+
+async def check_json_enums(client: AsyncJsonProtocolClient) -> None:
+    params: JsonEnumsInputParams = {}
+    await client.json_enums(**params)
+
+
+async def check_json_int_enums(client: AsyncJsonProtocolClient) -> None:
+    params: JsonIntEnumsInputParams = {}
+    await client.json_int_enums(**params)
+
+
+async def check_json_unions(client: AsyncJsonProtocolClient) -> None:
+    params: JsonUnionsInputParams = {}
+    await client.json_unions(**params)
+
+
+async def check_kitchen_sink_operation(client: AsyncJsonProtocolClient) -> None:
+    params: KitchenSinkOperationInputParams = {}
+    await client.kitchen_sink_operation(**params)
+
+
+async def check_null_operation(client: AsyncJsonProtocolClient) -> None:
+    params: NullOperationInputParams = {}
+    await client.null_operation(**params)
+
+
+async def check_operation_with_optional_input_output(
+    client: AsyncJsonProtocolClient,
+) -> None:
+    params: OperationWithOptionalInputOutputInputParams = {}
+    await client.operation_with_optional_input_output(**params)
+
+
+async def check_put_and_get_inline_documents(client: AsyncJsonProtocolClient) -> None:
+    params: PutAndGetInlineDocumentsInputParams = {}
+    await client.put_and_get_inline_documents(**params)
+
+
+async def check_put_with_content_encoding(client: AsyncJsonProtocolClient) -> None:
+    params: PutWithContentEncodingInputParams = {}
+    await client.put_with_content_encoding(**params)
+
+
+async def check_simple_scalar_properties(client: AsyncJsonProtocolClient) -> None:
+    params: SimpleScalarPropertiesInputParams = {}
+    await client.simple_scalar_properties(**params)
+
+
+async def check_sparse_nulls_operation(client: AsyncJsonProtocolClient) -> None:
+    params: SparseNullsOperationInputParams = {}
+    await client.sparse_nulls_operation(**params)

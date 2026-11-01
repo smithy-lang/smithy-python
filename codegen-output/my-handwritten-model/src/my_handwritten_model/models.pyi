@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Self, Union
+from typing import Any, Self, Union
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
@@ -10,11 +10,27 @@ from smithy_core.response import ResponseMetadata
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import ShapeSerializer
 
+from ._params import (
+    PublishEventsInputParams as PublishEventsInputParams,
+    SubscribeToEventsInputParams as SubscribeToEventsInputParams,
+    TradeEventStreamInputParams as TradeEventStreamInputParams,
+)
+
 class _SerdeShape:
     def serialize(self, serializer: ShapeSerializer) -> None: ...
     def serialize_members(self, serializer: ShapeSerializer) -> None: ...
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Returns the dictionary form that operation parameters accept.
+
+        Members use their Python names, unions are dictionaries with a
+        single key, and unset members and `response_metadata` are left
+        out. An unknown union variant converts to an empty dictionary.
+        Unlike `repr`, it includes `@sensitive` members.
+        """
+        ...
 
 class ServiceError(ModeledError):
     """

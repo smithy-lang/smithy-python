@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from rpcv2cbor.client import RpcV2Protocol
 from rpcv2cbor.models import (
     ClientOptionalDefaults,
     ComplexNestedErrorData,
@@ -42,8 +43,36 @@ from rpcv2cbor.models import (
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi, _params.pyi,
+# and client.pyi. Not executed as a test; it only needs to type-check.
+
+from rpcv2cbor.models import (
+    ClientOptionalDefaultsParams as ClientOptionalDefaultsParams,
+    DefaultsParams as DefaultsParams,
+    EmptyInputOutputInputParams as EmptyInputOutputInputParams,
+    Float16InputParams as Float16InputParams,
+    FractionalSecondsInputParams as FractionalSecondsInputParams,
+    GreetingStructParams as GreetingStructParams,
+    GreetingWithErrorsInputParams as GreetingWithErrorsInputParams,
+    NoInputOutputInputParams as NoInputOutputInputParams,
+    OperationWithDefaultsInputParams as OperationWithDefaultsInputParams,
+    OptionalInputOutputInputParams as OptionalInputOutputInputParams,
+    RecursiveShapesInputOutputNested1Params as RecursiveShapesInputOutputNested1Params,
+    RecursiveShapesInputOutputNested2Params as RecursiveShapesInputOutputNested2Params,
+    RecursiveShapesInputParams as RecursiveShapesInputParams,
+    RpcV2CborDenseMapsInputParams as RpcV2CborDenseMapsInputParams,
+    RpcV2CborListsInputParams as RpcV2CborListsInputParams,
+    RpcV2CborNestedUnionParams as RpcV2CborNestedUnionParams,
+    RpcV2CborNestedUnionStringValueParams as RpcV2CborNestedUnionStringValueParams,
+    RpcV2CborSparseMapsInputParams as RpcV2CborSparseMapsInputParams,
+    RpcV2CborUnionParams as RpcV2CborUnionParams,
+    RpcV2CborUnionStringValueParams as RpcV2CborUnionStringValueParams,
+    RpcV2CborUnionUnionValueParams as RpcV2CborUnionUnionValueParams,
+    RpcV2CborUnionsInputParams as RpcV2CborUnionsInputParams,
+    SimpleScalarPropertiesInputParams as SimpleScalarPropertiesInputParams,
+    SparseNullsOperationInputParams as SparseNullsOperationInputParams,
+    StructureListMemberParams as StructureListMemberParams,
+)
 
 _: Any = ...
 
@@ -83,3 +112,73 @@ SparseNullsOperationInput()
 SparseNullsOperationOutput()
 StructureListMember()
 GreetingStruct()
+
+
+async def check_empty_input_output(client: RpcV2Protocol) -> None:
+    params: EmptyInputOutputInputParams = {}
+    await client.empty_input_output(**params)
+
+
+async def check_float16(client: RpcV2Protocol) -> None:
+    params: Float16InputParams = {}
+    await client.float16(**params)
+
+
+async def check_fractional_seconds(client: RpcV2Protocol) -> None:
+    params: FractionalSecondsInputParams = {}
+    await client.fractional_seconds(**params)
+
+
+async def check_greeting_with_errors(client: RpcV2Protocol) -> None:
+    params: GreetingWithErrorsInputParams = {}
+    await client.greeting_with_errors(**params)
+
+
+async def check_no_input_output(client: RpcV2Protocol) -> None:
+    params: NoInputOutputInputParams = {}
+    await client.no_input_output(**params)
+
+
+async def check_operation_with_defaults(client: RpcV2Protocol) -> None:
+    params: OperationWithDefaultsInputParams = {}
+    await client.operation_with_defaults(**params)
+
+
+async def check_optional_input_output(client: RpcV2Protocol) -> None:
+    params: OptionalInputOutputInputParams = {}
+    await client.optional_input_output(**params)
+
+
+async def check_recursive_shapes(client: RpcV2Protocol) -> None:
+    params: RecursiveShapesInputParams = {}
+    await client.recursive_shapes(**params)
+
+
+async def check_rpc_v2_cbor_dense_maps(client: RpcV2Protocol) -> None:
+    params: RpcV2CborDenseMapsInputParams = {}
+    await client.rpc_v2_cbor_dense_maps(**params)
+
+
+async def check_rpc_v2_cbor_lists(client: RpcV2Protocol) -> None:
+    params: RpcV2CborListsInputParams = {}
+    await client.rpc_v2_cbor_lists(**params)
+
+
+async def check_rpc_v2_cbor_sparse_maps(client: RpcV2Protocol) -> None:
+    params: RpcV2CborSparseMapsInputParams = {}
+    await client.rpc_v2_cbor_sparse_maps(**params)
+
+
+async def check_rpc_v2_cbor_unions(client: RpcV2Protocol) -> None:
+    params: RpcV2CborUnionsInputParams = {}
+    await client.rpc_v2_cbor_unions(**params)
+
+
+async def check_simple_scalar_properties(client: RpcV2Protocol) -> None:
+    params: SimpleScalarPropertiesInputParams = {}
+    await client.simple_scalar_properties(**params)
+
+
+async def check_sparse_nulls_operation(client: RpcV2Protocol) -> None:
+    params: SparseNullsOperationInputParams = {}
+    await client.sparse_nulls_operation(**params)

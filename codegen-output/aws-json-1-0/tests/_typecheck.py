@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from awsjson10.client import AsyncJSONRPC10Client
 from awsjson10.models import (
     ClientOptionalDefaults,
     ComplexNestedErrorData,
@@ -45,8 +46,44 @@ from awsjson10.models import (
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi, _params.pyi,
+# and client.pyi. Not executed as a test; it only needs to type-check.
+
+from awsjson10.models import (
+    ClientOptionalDefaultsParams as ClientOptionalDefaultsParams,
+    ContentTypeParametersInputParams as ContentTypeParametersInputParams,
+    DefaultsParams as DefaultsParams,
+    DialogParams as DialogParams,
+    EmptyInputAndEmptyOutputInputParams as EmptyInputAndEmptyOutputInputParams,
+    EndpointOperationInputParams as EndpointOperationInputParams,
+    EndpointWithHostLabelOperationInputParams as EndpointWithHostLabelOperationInputParams,
+    FarewellParams as FarewellParams,
+    GreetingStructParams as GreetingStructParams,
+    GreetingWithErrorsInputParams as GreetingWithErrorsInputParams,
+    HostWithPathOperationInputParams as HostWithPathOperationInputParams,
+    JsonUnionsInputParams as JsonUnionsInputParams,
+    MyUnionBlobValueParams as MyUnionBlobValueParams,
+    MyUnionBooleanValueParams as MyUnionBooleanValueParams,
+    MyUnionEnumValueParams as MyUnionEnumValueParams,
+    MyUnionIntEnumValueParams as MyUnionIntEnumValueParams,
+    MyUnionListValueParams as MyUnionListValueParams,
+    MyUnionMapValueParams as MyUnionMapValueParams,
+    MyUnionNumberValueParams as MyUnionNumberValueParams,
+    MyUnionParams as MyUnionParams,
+    MyUnionStringValueParams as MyUnionStringValueParams,
+    MyUnionStructureValueParams as MyUnionStructureValueParams,
+    MyUnionTimestampValueParams as MyUnionTimestampValueParams,
+    NoInputAndNoOutputInputParams as NoInputAndNoOutputInputParams,
+    NoInputAndOutputInputParams as NoInputAndOutputInputParams,
+    OperationWithDefaultsInputParams as OperationWithDefaultsInputParams,
+    OperationWithNestedStructureInputParams as OperationWithNestedStructureInputParams,
+    OperationWithRequiredMembersInputParams as OperationWithRequiredMembersInputParams,
+    OperationWithRequiredMembersWithDefaultsInputParams as OperationWithRequiredMembersWithDefaultsInputParams,
+    PutWithContentEncodingInputParams as PutWithContentEncodingInputParams,
+    QueryIncompatibleOperationInputParams as QueryIncompatibleOperationInputParams,
+    SimpleScalarPropertiesInputParams as SimpleScalarPropertiesInputParams,
+    TopLevelParams as TopLevelParams,
+)
 
 _: Any = ...
 
@@ -102,3 +139,87 @@ SimpleScalarPropertiesInput()
 SimpleScalarPropertiesOutput()
 TopLevel(dialog=_)
 GreetingStruct()
+
+
+async def check_content_type_parameters(client: AsyncJSONRPC10Client) -> None:
+    params: ContentTypeParametersInputParams = {}
+    await client.content_type_parameters(**params)
+
+
+async def check_empty_input_and_empty_output(client: AsyncJSONRPC10Client) -> None:
+    params: EmptyInputAndEmptyOutputInputParams = {}
+    await client.empty_input_and_empty_output(**params)
+
+
+async def check_endpoint_operation(client: AsyncJSONRPC10Client) -> None:
+    params: EndpointOperationInputParams = {}
+    await client.endpoint_operation(**params)
+
+
+async def check_endpoint_with_host_label_operation(
+    client: AsyncJSONRPC10Client,
+) -> None:
+    params: EndpointWithHostLabelOperationInputParams = {"label": _}
+    await client.endpoint_with_host_label_operation(**params)
+
+
+async def check_greeting_with_errors(client: AsyncJSONRPC10Client) -> None:
+    params: GreetingWithErrorsInputParams = {}
+    await client.greeting_with_errors(**params)
+
+
+async def check_host_with_path_operation(client: AsyncJSONRPC10Client) -> None:
+    params: HostWithPathOperationInputParams = {}
+    await client.host_with_path_operation(**params)
+
+
+async def check_json_unions(client: AsyncJSONRPC10Client) -> None:
+    params: JsonUnionsInputParams = {}
+    await client.json_unions(**params)
+
+
+async def check_no_input_and_no_output(client: AsyncJSONRPC10Client) -> None:
+    params: NoInputAndNoOutputInputParams = {}
+    await client.no_input_and_no_output(**params)
+
+
+async def check_no_input_and_output(client: AsyncJSONRPC10Client) -> None:
+    params: NoInputAndOutputInputParams = {}
+    await client.no_input_and_output(**params)
+
+
+async def check_operation_with_defaults(client: AsyncJSONRPC10Client) -> None:
+    params: OperationWithDefaultsInputParams = {}
+    await client.operation_with_defaults(**params)
+
+
+async def check_operation_with_nested_structure(client: AsyncJSONRPC10Client) -> None:
+    params: OperationWithNestedStructureInputParams = {"top_level": _}
+    await client.operation_with_nested_structure(**params)
+
+
+async def check_operation_with_required_members(client: AsyncJSONRPC10Client) -> None:
+    params: OperationWithRequiredMembersInputParams = {}
+    await client.operation_with_required_members(**params)
+
+
+async def check_operation_with_required_members_with_defaults(
+    client: AsyncJSONRPC10Client,
+) -> None:
+    params: OperationWithRequiredMembersWithDefaultsInputParams = {}
+    await client.operation_with_required_members_with_defaults(**params)
+
+
+async def check_put_with_content_encoding(client: AsyncJSONRPC10Client) -> None:
+    params: PutWithContentEncodingInputParams = {}
+    await client.put_with_content_encoding(**params)
+
+
+async def check_query_incompatible_operation(client: AsyncJSONRPC10Client) -> None:
+    params: QueryIncompatibleOperationInputParams = {}
+    await client.query_incompatible_operation(**params)
+
+
+async def check_simple_scalar_properties(client: AsyncJSONRPC10Client) -> None:
+    params: SimpleScalarPropertiesInputParams = {}
+    await client.simple_scalar_properties(**params)

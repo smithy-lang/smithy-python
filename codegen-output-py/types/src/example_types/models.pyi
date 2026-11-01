@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum
-from typing import Self
+from typing import Any, Self
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
@@ -33,6 +33,15 @@ class _SerdeShape:
     def serialize_members(self, serializer: ShapeSerializer) -> None: ...
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Returns the dictionary form that operation parameters accept.
+
+        Members use their Python names, unions are dictionaries with a single
+        key, and unset members and `response_metadata` are left out. An unknown
+        union variant converts to an empty dictionary. Unlike `repr`, it
+        includes `@sensitive` members.
+        """
 
 class ServiceError(ModeledError):
     """

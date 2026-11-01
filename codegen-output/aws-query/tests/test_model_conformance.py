@@ -2,12 +2,61 @@
 
 from pathlib import Path
 
-from smithy_test import verify_models
+from smithy_test import verify_client, verify_models
 
+from awsquery import client as _client
 from awsquery import models as _models
 from awsquery._private import schemas as _schemas
 
 
 def test_model_conformance() -> None:
     pyi = Path(_models.__file__).with_suffix(".pyi")
-    verify_models(_models, _schemas, pyi_path=str(pyi) if pyi.exists() else None)
+    params_pyi = Path(_models.__file__).with_name("_params.pyi")
+    verify_models(
+        _models,
+        _schemas,
+        pyi_path=str(pyi) if pyi.exists() else None,
+        params_pyi_path=str(params_pyi) if params_pyi.exists() else None,
+    )
+
+
+def test_client_conformance() -> None:
+    verify_client(
+        _client.AsyncQueryProtocolClient,
+        {
+            "datetime_offsets": _models.DATETIME_OFFSETS,
+            "empty_input_and_empty_output": _models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            "endpoint_operation": _models.ENDPOINT_OPERATION,
+            "endpoint_with_host_label_operation": _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            "flattened_xml_map": _models.FLATTENED_XML_MAP,
+            "flattened_xml_map_with_xml_name": _models.FLATTENED_XML_MAP_WITH_XML_NAME,
+            "flattened_xml_map_with_xml_namespace": _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
+            "fractional_seconds": _models.FRACTIONAL_SECONDS,
+            "greeting_with_errors": _models.GREETING_WITH_ERRORS,
+            "host_with_path_operation": _models.HOST_WITH_PATH_OPERATION,
+            "ignores_wrapping_xml_name": _models.IGNORES_WRAPPING_XML_NAME,
+            "nested_structures": _models.NESTED_STRUCTURES,
+            "no_input_and_no_output": _models.NO_INPUT_AND_NO_OUTPUT,
+            "no_input_and_output": _models.NO_INPUT_AND_OUTPUT,
+            "put_with_content_encoding": _models.PUT_WITH_CONTENT_ENCODING,
+            "query_idempotency_token_auto_fill": _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
+            "query_lists": _models.QUERY_LISTS,
+            "query_maps": _models.QUERY_MAPS,
+            "query_timestamps": _models.QUERY_TIMESTAMPS,
+            "recursive_xml_shapes": _models.RECURSIVE_XML_SHAPES,
+            "simple_input_params": _models.SIMPLE_INPUT_PARAMS,
+            "simple_scalar_xml_properties": _models.SIMPLE_SCALAR_XML_PROPERTIES,
+            "xml_blobs": _models.XML_BLOBS,
+            "xml_empty_blobs": _models.XML_EMPTY_BLOBS,
+            "xml_empty_lists": _models.XML_EMPTY_LISTS,
+            "xml_empty_maps": _models.XML_EMPTY_MAPS,
+            "xml_enums": _models.XML_ENUMS,
+            "xml_int_enums": _models.XML_INT_ENUMS,
+            "xml_lists": _models.XML_LISTS,
+            "xml_maps": _models.XML_MAPS,
+            "xml_maps_xml_name": _models.XML_MAPS_XML_NAME,
+            "xml_namespaces": _models.XML_NAMESPACES,
+            "xml_timestamps": _models.XML_TIMESTAMPS,
+        },
+        pyi_path=str(Path(_client.__file__).with_suffix(".pyi")),
+    )

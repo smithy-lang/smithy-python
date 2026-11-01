@@ -35,35 +35,37 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+    from datetime import datetime
+    from ._params import (
+        ClientOptionalDefaultsParams,
+        DefaultsParams,
+        GreetingStructParams,
+        RecursiveShapesInputOutputNested1Params,
+        RpcV2CborUnionParams,
+        StructureListMemberParams,
+    )
     from .models import (
-        EmptyInputOutputInput,
+        ClientOptionalDefaults,
+        Defaults,
         EmptyInputOutputOutput,
-        Float16Input,
         Float16Output,
-        FractionalSecondsInput,
         FractionalSecondsOutput,
-        GreetingWithErrorsInput,
+        GreetingStruct,
         GreetingWithErrorsOutput,
-        NoInputOutputInput,
         NoInputOutputOutput,
-        OperationWithDefaultsInput,
         OperationWithDefaultsOutput,
-        OptionalInputOutputInput,
         OptionalInputOutputOutput,
-        RecursiveShapesInput,
+        RecursiveShapesInputOutputNested1,
         RecursiveShapesOutput,
-        RpcV2CborDenseMapsInput,
         RpcV2CborDenseMapsOutput,
-        RpcV2CborListsInput,
         RpcV2CborListsOutput,
-        RpcV2CborSparseMapsInput,
         RpcV2CborSparseMapsOutput,
-        RpcV2CborUnionsInput,
+        RpcV2CborUnion,
         RpcV2CborUnionsOutput,
-        SimpleScalarPropertiesInput,
         SimpleScalarPropertiesOutput,
-        SparseNullsOperationInput,
         SparseNullsOperationOutput,
+        StructureListMember,
     )
 
 
@@ -75,7 +77,7 @@ class RpcV2Protocol(AsyncClient):
 
     def __init__(
         self, config: Config | None = None, plugins: list[Plugin] | None = None
-    ):
+    ) -> None:
         """
         Constructor for `RpcV2Protocol`.
 
@@ -125,11 +127,15 @@ class RpcV2Protocol(AsyncClient):
 
     async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
         self,
-        input: I,
+        # The operation method's locals(), i.e. its keyword arguments.
+        params: Mapping[str, Any],
         operation: APIOperation[I, O],
         default_plugins: list[Plugin],
         plugins: list[Plugin] | None,
     ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
+        # Build the input first, so invalid parameters raise before
+        # any client setup.
+        input = operation.input_from_params(params)
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
@@ -162,328 +168,171 @@ class RpcV2Protocol(AsyncClient):
         )
 
     async def empty_input_output(
-        self, input: EmptyInputOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputOutputOutput:
-        """
-        Invokes the EmptyInputOutput operation.
-
-        Args:
-            input:
-                An instance of `EmptyInputOutputInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `EmptyInputOutputOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, EMPTY_INPUT_OUTPUT, [], plugins
+            locals(), EMPTY_INPUT_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
-    async def float16(
-        self, input: Float16Input, plugins: list[Plugin] | None = None
-    ) -> Float16Output:
-        """
-        Invokes the Float16 operation.
-
-        Args:
-            input:
-                An instance of `Float16Input`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `Float16Output`.
-        """
-        pipeline, call = await self._prepare_call(input, FLOAT16, [], plugins)
+    async def float16(self, *, plugins: list[Plugin] | None = None) -> Float16Output:
+        pipeline, call = await self._prepare_call(locals(), FLOAT16, [], plugins)
         return await pipeline(call)
 
     async def fractional_seconds(
-        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
-        """
-        Invokes the FractionalSeconds operation.
-
-        Args:
-            input:
-                An instance of `FractionalSecondsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `FractionalSecondsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, FRACTIONAL_SECONDS, [], plugins
+            locals(), FRACTIONAL_SECONDS, [], plugins
         )
         return await pipeline(call)
 
     async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
-        """
-        This operation has three possible return values:
-
-        1.  A successful response in the form of GreetingWithErrorsOutput
-        2.  An InvalidGreeting error.
-        3.  A ComplexError error.
-
-        Implementations must be able to successfully take a response and
-        properly deserialize successful and error responses.
-
-        Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `GreetingWithErrorsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, [], plugins
+            locals(), GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
     async def no_input_output(
-        self, input: NoInputOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> NoInputOutputOutput:
-        """
-        Invokes the NoInputOutput operation.
-
-        Args:
-            input:
-                An instance of `NoInputOutputInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `NoInputOutputOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, NO_INPUT_OUTPUT, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), NO_INPUT_OUTPUT, [], plugins
+        )
         return await pipeline(call)
 
     async def operation_with_defaults(
-        self, input: OperationWithDefaultsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        defaults: Defaults | DefaultsParams | None = None,
+        client_optional_defaults: ClientOptionalDefaults
+        | ClientOptionalDefaultsParams
+        | None = None,
+        top_level_default: str | None = None,
+        other_top_level_default: int | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> OperationWithDefaultsOutput:
-        """
-        Invokes the OperationWithDefaults operation.
-
-        Args:
-            input:
-                An instance of `OperationWithDefaultsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `OperationWithDefaultsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_DEFAULTS, [], plugins
+            locals(), OPERATION_WITH_DEFAULTS, [], plugins
         )
         return await pipeline(call)
 
     async def optional_input_output(
-        self, input: OptionalInputOutputInput, plugins: list[Plugin] | None = None
+        self, *, value: str | None = None, plugins: list[Plugin] | None = None
     ) -> OptionalInputOutputOutput:
-        """
-        Invokes the OptionalInputOutput operation.
-
-        Args:
-            input:
-                An instance of `OptionalInputOutputInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `OptionalInputOutputOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, OPTIONAL_INPUT_OUTPUT, [], plugins
+            locals(), OPTIONAL_INPUT_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
     async def recursive_shapes(
-        self, input: RecursiveShapesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: RecursiveShapesInputOutputNested1
+        | RecursiveShapesInputOutputNested1Params
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RecursiveShapesOutput:
-        """
-        Invokes the RecursiveShapes operation.
-
-        Args:
-            input:
-                An instance of `RecursiveShapesInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `RecursiveShapesOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, RECURSIVE_SHAPES, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), RECURSIVE_SHAPES, [], plugins
+        )
         return await pipeline(call)
 
     async def rpc_v2_cbor_dense_maps(
-        self, input: RpcV2CborDenseMapsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        dense_struct_map: Mapping[str, GreetingStruct | GreetingStructParams]
+        | None = None,
+        dense_number_map: Mapping[str, int] | None = None,
+        dense_boolean_map: Mapping[str, bool] | None = None,
+        dense_string_map: Mapping[str, str] | None = None,
+        dense_set_map: Mapping[str, Sequence[str]] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborDenseMapsOutput:
-        """
-        The example tests basic map serialization.
-
-        Args:
-            input:
-                An instance of `RpcV2CborDenseMapsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `RpcV2CborDenseMapsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, RPC_V2_CBOR_DENSE_MAPS, [], plugins
+            locals(), RPC_V2_CBOR_DENSE_MAPS, [], plugins
         )
         return await pipeline(call)
 
     async def rpc_v2_cbor_lists(
-        self, input: RpcV2CborListsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        string_list: Sequence[str] | None = None,
+        string_set: Sequence[str] | None = None,
+        integer_list: Sequence[int] | None = None,
+        boolean_list: Sequence[bool] | None = None,
+        timestamp_list: Sequence[datetime] | None = None,
+        enum_list: Sequence[str] | None = None,
+        int_enum_list: Sequence[int] | None = None,
+        nested_string_list: Sequence[Sequence[str]] | None = None,
+        structure_list: Sequence[StructureListMember | StructureListMemberParams]
+        | None = None,
+        blob_list: Sequence[bytes] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborListsOutput:
-        """
-        This test case serializes JSON lists for the following cases for both
-        input and output:
-
-        1.  Normal lists.
-        2.  Normal sets.
-        3.  Lists of lists.
-        4.  Lists of structures.
-
-        Args:
-            input:
-                An instance of `RpcV2CborListsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `RpcV2CborListsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, RPC_V2_CBOR_LISTS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), RPC_V2_CBOR_LISTS, [], plugins
+        )
         return await pipeline(call)
 
     async def rpc_v2_cbor_sparse_maps(
-        self, input: RpcV2CborSparseMapsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        sparse_struct_map: Mapping[str, GreetingStruct | GreetingStructParams | None]
+        | None = None,
+        sparse_number_map: Mapping[str, int | None] | None = None,
+        sparse_boolean_map: Mapping[str, bool | None] | None = None,
+        sparse_string_map: Mapping[str, str | None] | None = None,
+        sparse_set_map: Mapping[str, Sequence[str] | None] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborSparseMapsOutput:
-        """
-        Invokes the RpcV2CborSparseMaps operation.
-
-        Args:
-            input:
-                An instance of `RpcV2CborSparseMapsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `RpcV2CborSparseMapsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, RPC_V2_CBOR_SPARSE_MAPS, [], plugins
+            locals(), RPC_V2_CBOR_SPARSE_MAPS, [], plugins
         )
         return await pipeline(call)
 
     async def rpc_v2_cbor_unions(
-        self, input: RpcV2CborUnionsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        contents: RpcV2CborUnion | RpcV2CborUnionParams | None = None,
+        other_value: str | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborUnionsOutput:
-        """
-        This operation uses unions for inputs and outputs.
-
-        Args:
-            input:
-                An instance of `RpcV2CborUnionsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `RpcV2CborUnionsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, RPC_V2_CBOR_UNIONS, [], plugins
+            locals(), RPC_V2_CBOR_UNIONS, [], plugins
         )
         return await pipeline(call)
 
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        true_boolean_value: bool | None = None,
+        false_boolean_value: bool | None = None,
+        byte_value: int | None = None,
+        double_value: float | None = None,
+        float_value: float | None = None,
+        integer_value: int | None = None,
+        long_value: int | None = None,
+        short_value: int | None = None,
+        string_value: str | None = None,
+        blob_value: bytes | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
-        """
-        Invokes the SimpleScalarProperties operation.
-
-        Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `SimpleScalarPropertiesOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+            locals(), SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
 
     async def sparse_nulls_operation(
-        self, input: SparseNullsOperationInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        sparse_string_list: Sequence[str | None] | None = None,
+        sparse_string_map: Mapping[str, str | None] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SparseNullsOperationOutput:
-        """
-        Invokes the SparseNullsOperation operation.
-
-        Args:
-            input:
-                An instance of `SparseNullsOperationInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `SparseNullsOperationOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, SPARSE_NULLS_OPERATION, [], plugins
+            locals(), SPARSE_NULLS_OPERATION, [], plugins
         )
         return await pipeline(call)

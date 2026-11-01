@@ -2,12 +2,42 @@
 
 from pathlib import Path
 
-from smithy_test import verify_models
+from smithy_test import verify_client, verify_models
 
+from rpcv2cbor import client as _client
 from rpcv2cbor import models as _models
 from rpcv2cbor._private import schemas as _schemas
 
 
 def test_model_conformance() -> None:
     pyi = Path(_models.__file__).with_suffix(".pyi")
-    verify_models(_models, _schemas, pyi_path=str(pyi) if pyi.exists() else None)
+    params_pyi = Path(_models.__file__).with_name("_params.pyi")
+    verify_models(
+        _models,
+        _schemas,
+        pyi_path=str(pyi) if pyi.exists() else None,
+        params_pyi_path=str(params_pyi) if params_pyi.exists() else None,
+    )
+
+
+def test_client_conformance() -> None:
+    verify_client(
+        _client.RpcV2Protocol,
+        {
+            "empty_input_output": _models.EMPTY_INPUT_OUTPUT,
+            "float16": _models.FLOAT16,
+            "fractional_seconds": _models.FRACTIONAL_SECONDS,
+            "greeting_with_errors": _models.GREETING_WITH_ERRORS,
+            "no_input_output": _models.NO_INPUT_OUTPUT,
+            "operation_with_defaults": _models.OPERATION_WITH_DEFAULTS,
+            "optional_input_output": _models.OPTIONAL_INPUT_OUTPUT,
+            "recursive_shapes": _models.RECURSIVE_SHAPES,
+            "rpc_v2_cbor_dense_maps": _models.RPC_V2_CBOR_DENSE_MAPS,
+            "rpc_v2_cbor_lists": _models.RPC_V2_CBOR_LISTS,
+            "rpc_v2_cbor_sparse_maps": _models.RPC_V2_CBOR_SPARSE_MAPS,
+            "rpc_v2_cbor_unions": _models.RPC_V2_CBOR_UNIONS,
+            "simple_scalar_properties": _models.SIMPLE_SCALAR_PROPERTIES,
+            "sparse_nulls_operation": _models.SPARSE_NULLS_OPERATION,
+        },
+        pyi_path=str(Path(_client.__file__).with_suffix(".pyi")),
+    )

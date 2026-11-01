@@ -2,12 +2,27 @@
 
 from pathlib import Path
 
-from smithy_test import verify_models
+from smithy_test import verify_client, verify_models
 
+from restxmlwithnamespace import client as _client
 from restxmlwithnamespace import models as _models
 from restxmlwithnamespace._private import schemas as _schemas
 
 
 def test_model_conformance() -> None:
     pyi = Path(_models.__file__).with_suffix(".pyi")
-    verify_models(_models, _schemas, pyi_path=str(pyi) if pyi.exists() else None)
+    params_pyi = Path(_models.__file__).with_name("_params.pyi")
+    verify_models(
+        _models,
+        _schemas,
+        pyi_path=str(pyi) if pyi.exists() else None,
+        params_pyi_path=str(params_pyi) if params_pyi.exists() else None,
+    )
+
+
+def test_client_conformance() -> None:
+    verify_client(
+        _client.AsyncRestXmlProtocolNamespaceClient,
+        {"simple_scalar_properties": _models.SIMPLE_SCALAR_PROPERTIES},
+        pyi_path=str(Path(_client.__file__).with_suffix(".pyi")),
+    )

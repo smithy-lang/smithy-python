@@ -24,7 +24,9 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .models import SimpleScalarPropertiesInput, SimpleScalarPropertiesOutput
+    from collections.abc import Mapping
+    from ._params import NestedWithNamespaceParams
+    from .models import NestedWithNamespace, SimpleScalarPropertiesOutput
 
 
 logger = logging.getLogger(__name__)
@@ -43,7 +45,7 @@ class AsyncRestXmlProtocolNamespaceClient(AsyncClient):
         self,
         config: AsyncRestXmlProtocolNamespaceConfig | None = None,
         plugins: list[Plugin] | None = None,
-    ):
+    ) -> None:
         """
         Constructor for `AsyncRestXmlProtocolNamespaceClient`.
 
@@ -107,11 +109,15 @@ class AsyncRestXmlProtocolNamespaceClient(AsyncClient):
 
     async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
         self,
-        input: I,
+        # The operation method's locals(), i.e. its keyword arguments.
+        params: Mapping[str, Any],
         operation: APIOperation[I, O],
         default_plugins: list[Plugin],
         plugins: list[Plugin] | None,
     ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
+        # Build the input first, so invalid parameters raise before
+        # any client setup.
+        input = operation.input_from_params(params)
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
@@ -146,24 +152,22 @@ class AsyncRestXmlProtocolNamespaceClient(AsyncClient):
         )
 
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        string_value: str | None = None,
+        true_boolean_value: bool | None = None,
+        false_boolean_value: bool | None = None,
+        byte_value: int | None = None,
+        short_value: int | None = None,
+        integer_value: int | None = None,
+        long_value: int | None = None,
+        float_value: float | None = None,
+        nested: NestedWithNamespace | NestedWithNamespaceParams | None = None,
+        double_value: float | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
-        """
-        Invokes the SimpleScalarProperties operation.
-
-        Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `SimpleScalarPropertiesOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+            locals(), SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)

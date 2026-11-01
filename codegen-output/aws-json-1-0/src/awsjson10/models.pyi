@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum
-from typing import Self, Union
+from typing import Any, Self, Union
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
@@ -13,11 +13,57 @@ from smithy_core.schemas import APIOperation
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.types import UnknownEnumMixin
 
+from ._params import (
+    ClientOptionalDefaultsParams as ClientOptionalDefaultsParams,
+    ContentTypeParametersInputParams as ContentTypeParametersInputParams,
+    DefaultsParams as DefaultsParams,
+    DialogParams as DialogParams,
+    EmptyInputAndEmptyOutputInputParams as EmptyInputAndEmptyOutputInputParams,
+    EndpointOperationInputParams as EndpointOperationInputParams,
+    EndpointWithHostLabelOperationInputParams as EndpointWithHostLabelOperationInputParams,
+    FarewellParams as FarewellParams,
+    GreetingStructParams as GreetingStructParams,
+    GreetingWithErrorsInputParams as GreetingWithErrorsInputParams,
+    HostWithPathOperationInputParams as HostWithPathOperationInputParams,
+    JsonUnionsInputParams as JsonUnionsInputParams,
+    MyUnionBlobValueParams as MyUnionBlobValueParams,
+    MyUnionBooleanValueParams as MyUnionBooleanValueParams,
+    MyUnionEnumValueParams as MyUnionEnumValueParams,
+    MyUnionIntEnumValueParams as MyUnionIntEnumValueParams,
+    MyUnionListValueParams as MyUnionListValueParams,
+    MyUnionMapValueParams as MyUnionMapValueParams,
+    MyUnionNumberValueParams as MyUnionNumberValueParams,
+    MyUnionParams as MyUnionParams,
+    MyUnionStringValueParams as MyUnionStringValueParams,
+    MyUnionStructureValueParams as MyUnionStructureValueParams,
+    MyUnionTimestampValueParams as MyUnionTimestampValueParams,
+    NoInputAndNoOutputInputParams as NoInputAndNoOutputInputParams,
+    NoInputAndOutputInputParams as NoInputAndOutputInputParams,
+    OperationWithDefaultsInputParams as OperationWithDefaultsInputParams,
+    OperationWithNestedStructureInputParams as OperationWithNestedStructureInputParams,
+    OperationWithRequiredMembersInputParams as OperationWithRequiredMembersInputParams,
+    OperationWithRequiredMembersWithDefaultsInputParams as OperationWithRequiredMembersWithDefaultsInputParams,
+    PutWithContentEncodingInputParams as PutWithContentEncodingInputParams,
+    QueryIncompatibleOperationInputParams as QueryIncompatibleOperationInputParams,
+    SimpleScalarPropertiesInputParams as SimpleScalarPropertiesInputParams,
+    TopLevelParams as TopLevelParams,
+)
+
 class _SerdeShape:
     def serialize(self, serializer: ShapeSerializer) -> None: ...
     def serialize_members(self, serializer: ShapeSerializer) -> None: ...
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Returns the dictionary form that operation parameters accept.
+
+        Members use their Python names, unions are dictionaries with a
+        single key, and unset members and `response_metadata` are left
+        out. An unknown union variant converts to an empty dictionary.
+        Unlike `repr`, it includes `@sensitive` members.
+        """
+        ...
 
 class ServiceError(ModeledError):
     """

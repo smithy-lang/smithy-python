@@ -6,7 +6,7 @@
     "src/example_types/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/example_types/_private/schemas.py": "b3c1dd3b1ab8511ef45cca22cf415726aec599edfd457b30cdb22482bcd5b799",
     "src/example_types/models.py": "262a8c40dce4fb282aca6b17214296db0c4fc1da526a50a3155cde0fe7344b6b",
-    "src/example_types/models.pyi": "36be0dc7d1d9402394e531d782fab2392d55cc60a949a1bcae4c4f469de6cc11",
+    "src/example_types/models.pyi": "64c5d362e65ca8d1afe83982f972111324a3b04a80e1a489680b7368b8127424",
     "src/example_types/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

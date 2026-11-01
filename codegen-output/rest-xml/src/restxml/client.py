@@ -90,136 +90,99 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+    from datetime import datetime
+    from ._params import (
+        GreetingStructParams,
+        NestedPayloadParams,
+        PayloadWithXmlNameParams,
+        PayloadWithXmlNamespaceAndPrefixParams,
+        PayloadWithXmlNamespaceParams,
+        RecursiveShapesInputOutputNested1Params,
+        StructureListMemberParams,
+        UnionPayloadParams,
+        XmlAttributesInMiddlePayloadRequestParams,
+        XmlAttributesPayloadRequestParams,
+        XmlNamespaceNestedParams,
+        XmlUnionShapeParams,
+    )
     from .models import (
-        AllQueryStringTypesInput,
         AllQueryStringTypesOutput,
-        BodyWithXmlNameInput,
         BodyWithXmlNameOutput,
-        ConstantAndVariableQueryStringInput,
         ConstantAndVariableQueryStringOutput,
-        ConstantQueryStringInput,
         ConstantQueryStringOutput,
-        ContentTypeParametersInput,
         ContentTypeParametersOutput,
-        DatetimeOffsetsInput,
         DatetimeOffsetsOutput,
-        EmptyInputAndEmptyOutputInput,
         EmptyInputAndEmptyOutputOutput,
-        EndpointOperationInput,
         EndpointOperationOutput,
-        EndpointWithHostLabelHeaderOperationInput,
         EndpointWithHostLabelHeaderOperationOutput,
-        EndpointWithHostLabelOperationInput,
         EndpointWithHostLabelOperationOutput,
-        FlattenedXmlMapInput,
         FlattenedXmlMapOutput,
-        FlattenedXmlMapWithXmlNameInput,
         FlattenedXmlMapWithXmlNameOutput,
-        FlattenedXmlMapWithXmlNamespaceInput,
         FlattenedXmlMapWithXmlNamespaceOutput,
-        FractionalSecondsInput,
         FractionalSecondsOutput,
-        GreetingWithErrorsInput,
+        GreetingStruct,
         GreetingWithErrorsOutput,
-        HttpEmptyPrefixHeadersInput,
         HttpEmptyPrefixHeadersOutput,
-        HttpEnumPayloadInput,
         HttpEnumPayloadOutput,
-        HttpPayloadTraitsInput,
         HttpPayloadTraitsOutput,
-        HttpPayloadTraitsWithMediaTypeInput,
         HttpPayloadTraitsWithMediaTypeOutput,
-        HttpPayloadWithMemberXmlNameInput,
         HttpPayloadWithMemberXmlNameOutput,
-        HttpPayloadWithStructureInput,
         HttpPayloadWithStructureOutput,
-        HttpPayloadWithUnionInput,
         HttpPayloadWithUnionOutput,
-        HttpPayloadWithXmlNameInput,
         HttpPayloadWithXmlNameOutput,
-        HttpPayloadWithXmlNamespaceAndPrefixInput,
         HttpPayloadWithXmlNamespaceAndPrefixOutput,
-        HttpPayloadWithXmlNamespaceInput,
         HttpPayloadWithXmlNamespaceOutput,
-        HttpPrefixHeadersInput,
         HttpPrefixHeadersOutput,
-        HttpRequestWithFloatLabelsInput,
         HttpRequestWithFloatLabelsOutput,
-        HttpRequestWithGreedyLabelInPathInput,
         HttpRequestWithGreedyLabelInPathOutput,
-        HttpRequestWithLabelsAndTimestampFormatInput,
         HttpRequestWithLabelsAndTimestampFormatOutput,
-        HttpRequestWithLabelsInput,
         HttpRequestWithLabelsOutput,
-        HttpResponseCodeInput,
         HttpResponseCodeOutput,
-        HttpStringPayloadInput,
         HttpStringPayloadOutput,
-        IgnoreQueryParamsInResponseInput,
         IgnoreQueryParamsInResponseOutput,
-        InputAndOutputWithHeadersInput,
         InputAndOutputWithHeadersOutput,
-        NestedXmlMapWithXmlNameInput,
+        NestedPayload,
         NestedXmlMapWithXmlNameOutput,
-        NestedXmlMapsInput,
         NestedXmlMapsOutput,
-        NoInputAndNoOutputInput,
         NoInputAndNoOutputOutput,
-        NoInputAndOutputInput,
         NoInputAndOutputOutput,
-        NullAndEmptyHeadersClientInput,
         NullAndEmptyHeadersClientOutput,
-        NullAndEmptyHeadersServerInput,
         NullAndEmptyHeadersServerOutput,
-        OmitsNullSerializesEmptyStringInput,
         OmitsNullSerializesEmptyStringOutput,
-        PutWithContentEncodingInput,
+        PayloadWithXmlName,
+        PayloadWithXmlNamespace,
+        PayloadWithXmlNamespaceAndPrefix,
         PutWithContentEncodingOutput,
-        QueryIdempotencyTokenAutoFillInput,
         QueryIdempotencyTokenAutoFillOutput,
-        QueryParamsAsStringListMapInput,
         QueryParamsAsStringListMapOutput,
-        QueryPrecedenceInput,
         QueryPrecedenceOutput,
-        RecursiveShapesInput,
+        RecursiveShapesInputOutputNested1,
         RecursiveShapesOutput,
-        SimpleScalarPropertiesInput,
         SimpleScalarPropertiesOutput,
-        TimestampFormatHeadersInput,
+        StructureListMember,
         TimestampFormatHeadersOutput,
-        XmlAttributesInMiddleInput,
+        UnionPayload,
         XmlAttributesInMiddleOutput,
-        XmlAttributesInput,
-        XmlAttributesOnPayloadInput,
+        XmlAttributesInMiddlePayloadRequest,
         XmlAttributesOnPayloadOutput,
         XmlAttributesOutput,
-        XmlBlobsInput,
+        XmlAttributesPayloadRequest,
         XmlBlobsOutput,
-        XmlEmptyBlobsInput,
         XmlEmptyBlobsOutput,
-        XmlEmptyListsInput,
         XmlEmptyListsOutput,
-        XmlEmptyMapsInput,
         XmlEmptyMapsOutput,
-        XmlEmptyStringsInput,
         XmlEmptyStringsOutput,
-        XmlEnumsInput,
         XmlEnumsOutput,
-        XmlIntEnumsInput,
         XmlIntEnumsOutput,
-        XmlListsInput,
         XmlListsOutput,
-        XmlMapWithXmlNamespaceInput,
         XmlMapWithXmlNamespaceOutput,
-        XmlMapsInput,
         XmlMapsOutput,
-        XmlMapsXmlNameInput,
         XmlMapsXmlNameOutput,
-        XmlNamespacesInput,
+        XmlNamespaceNested,
         XmlNamespacesOutput,
-        XmlTimestampsInput,
         XmlTimestampsOutput,
-        XmlUnionsInput,
+        XmlUnionShape,
         XmlUnionsOutput,
     )
 
@@ -234,7 +197,7 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         self,
         config: AsyncRestXmlProtocolConfig | None = None,
         plugins: list[Plugin] | None = None,
-    ):
+    ) -> None:
         """
         Constructor for `AsyncRestXmlProtocolClient`.
 
@@ -298,11 +261,15 @@ class AsyncRestXmlProtocolClient(AsyncClient):
 
     async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
         self,
-        input: I,
+        # The operation method's locals(), i.e. its keyword arguments.
+        params: Mapping[str, Any],
         operation: APIOperation[I, O],
         default_plugins: list[Plugin],
         plugins: list[Plugin] | None,
     ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
+        # Build the input first, so invalid parameters raise before
+        # any client setup.
+        input = operation.input_from_params(params)
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
@@ -337,1537 +304,768 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         )
 
     async def all_query_string_types(
-        self, input: AllQueryStringTypesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        query_string: str | None = None,
+        query_string_list: Sequence[str] | None = None,
+        query_string_set: Sequence[str] | None = None,
+        query_byte: int | None = None,
+        query_short: int | None = None,
+        query_integer: int | None = None,
+        query_integer_list: Sequence[int] | None = None,
+        query_integer_set: Sequence[int] | None = None,
+        query_long: int | None = None,
+        query_float: float | None = None,
+        query_double: float | None = None,
+        query_double_list: Sequence[float] | None = None,
+        query_boolean: bool | None = None,
+        query_boolean_list: Sequence[bool] | None = None,
+        query_timestamp: datetime | None = None,
+        query_timestamp_list: Sequence[datetime] | None = None,
+        query_enum: str | None = None,
+        query_enum_list: Sequence[str] | None = None,
+        query_integer_enum: int | None = None,
+        query_integer_enum_list: Sequence[int] | None = None,
+        query_params_map_of_strings: Mapping[str, str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> AllQueryStringTypesOutput:
-        """
-        This example uses all query string types.
-
-        Args:
-            input:
-                An instance of `AllQueryStringTypesInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `AllQueryStringTypesOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, ALL_QUERY_STRING_TYPES, [], plugins
+            locals(), ALL_QUERY_STRING_TYPES, [], plugins
         )
         return await pipeline(call)
 
     async def body_with_xml_name(
-        self, input: BodyWithXmlNameInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: PayloadWithXmlName | PayloadWithXmlNameParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> BodyWithXmlNameOutput:
-        """
-        The following example serializes a body that uses an XML name, changing
-        the wrapper name.
-
-        Args:
-            input:
-                An instance of `BodyWithXmlNameInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `BodyWithXmlNameOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, BODY_WITH_XML_NAME, [], plugins
+            locals(), BODY_WITH_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
     async def constant_and_variable_query_string(
         self,
-        input: ConstantAndVariableQueryStringInput,
+        *,
+        baz: str | None = None,
+        maybe_set: str | None = None,
         plugins: list[Plugin] | None = None,
     ) -> ConstantAndVariableQueryStringOutput:
-        """
-        This example uses fixed query string params and variable query string
-        params. The fixed query string parameters and variable parameters must
-        both be serialized (implementations may need to merge them together).
-
-        Args:
-            input:
-                An instance of `ConstantAndVariableQueryStringInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `ConstantAndVariableQueryStringOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
+            locals(), CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
         )
         return await pipeline(call)
 
     async def constant_query_string(
-        self, input: ConstantQueryStringInput, plugins: list[Plugin] | None = None
+        self, *, hello: str, plugins: list[Plugin] | None = None
     ) -> ConstantQueryStringOutput:
-        """
-        This example uses a constant query string parameters and a label. This
-        simply tests that labels and query string parameters are compatible. The
-        fixed query string parameter named \"hello\" should in no way conflict
-        with the label, `{hello}`.
-
-        Args:
-            input:
-                An instance of `ConstantQueryStringInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `ConstantQueryStringOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, CONSTANT_QUERY_STRING, [], plugins
+            locals(), CONSTANT_QUERY_STRING, [], plugins
         )
         return await pipeline(call)
 
     async def content_type_parameters(
-        self, input: ContentTypeParametersInput, plugins: list[Plugin] | None = None
+        self, *, value: int | None = None, plugins: list[Plugin] | None = None
     ) -> ContentTypeParametersOutput:
-        """
-        The example tests how servers must support requests containing a
-        `Content-Type` header with parameters.
-
-        Args:
-            input:
-                An instance of `ContentTypeParametersInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `ContentTypeParametersOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, CONTENT_TYPE_PARAMETERS, [], plugins
+            locals(), CONTENT_TYPE_PARAMETERS, [], plugins
         )
         return await pipeline(call)
 
     async def datetime_offsets(
-        self, input: DatetimeOffsetsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> DatetimeOffsetsOutput:
-        """
-        Invokes the DatetimeOffsets operation.
-
-        Args:
-            input:
-                An instance of `DatetimeOffsetsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `DatetimeOffsetsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, DATETIME_OFFSETS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), DATETIME_OFFSETS, [], plugins
+        )
         return await pipeline(call)
 
     async def empty_input_and_empty_output(
-        self, input: EmptyInputAndEmptyOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputAndEmptyOutputOutput:
-        """
-        The example tests how requests and responses are serialized when
-        there's no request or response payload because the operation has an
-        empty input and empty output structure that reuses the same shape. While
-        this should be rare, code generators must support this.
-
-        Args:
-            input:
-                An instance of `EmptyInputAndEmptyOutputInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `EmptyInputAndEmptyOutputOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            locals(), EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
     async def endpoint_operation(
-        self, input: EndpointOperationInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
-        """
-        Invokes the EndpointOperation operation.
-
-        Args:
-            input:
-                An instance of `EndpointOperationInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `EndpointOperationOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_OPERATION, [], plugins
+            locals(), ENDPOINT_OPERATION, [], plugins
         )
         return await pipeline(call)
 
     async def endpoint_with_host_label_header_operation(
-        self,
-        input: EndpointWithHostLabelHeaderOperationInput,
-        plugins: list[Plugin] | None = None,
+        self, *, account_id: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelHeaderOperationOutput:
-        """
-        Invokes the EndpointWithHostLabelHeaderOperation operation.
-
-        Args:
-            input:
-                An instance of `EndpointWithHostLabelHeaderOperationInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `EndpointWithHostLabelHeaderOperationOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION, [], plugins
+            locals(), ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION, [], plugins
         )
         return await pipeline(call)
 
     async def endpoint_with_host_label_operation(
-        self,
-        input: EndpointWithHostLabelOperationInput,
-        plugins: list[Plugin] | None = None,
+        self, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
-        """
-        Invokes the EndpointWithHostLabelOperation operation.
-
-        Args:
-            input:
-                An instance of `EndpointWithHostLabelOperationInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `EndpointWithHostLabelOperationOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            locals(), ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
         return await pipeline(call)
 
     async def flattened_xml_map(
-        self, input: FlattenedXmlMapInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        my_map: Mapping[str, str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> FlattenedXmlMapOutput:
-        """
-        Flattened maps
-
-        Args:
-            input:
-                An instance of `FlattenedXmlMapInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `FlattenedXmlMapOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, FLATTENED_XML_MAP, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), FLATTENED_XML_MAP, [], plugins
+        )
         return await pipeline(call)
 
     async def flattened_xml_map_with_xml_name(
         self,
-        input: FlattenedXmlMapWithXmlNameInput,
+        *,
+        my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> FlattenedXmlMapWithXmlNameOutput:
-        """
-        Flattened maps with @xmlName
-
-        Args:
-            input:
-                An instance of `FlattenedXmlMapWithXmlNameInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `FlattenedXmlMapWithXmlNameOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins
+            locals(), FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
     async def flattened_xml_map_with_xml_namespace(
-        self,
-        input: FlattenedXmlMapWithXmlNamespaceInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> FlattenedXmlMapWithXmlNamespaceOutput:
-        """
-        Flattened maps with @xmlNamespace and @xmlName
-
-        Args:
-            input:
-                An instance of `FlattenedXmlMapWithXmlNamespaceInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            locals(), FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
         )
         return await pipeline(call)
 
     async def fractional_seconds(
-        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
-        """
-        Invokes the FractionalSeconds operation.
-
-        Args:
-            input:
-                An instance of `FractionalSecondsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `FractionalSecondsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, FRACTIONAL_SECONDS, [], plugins
+            locals(), FRACTIONAL_SECONDS, [], plugins
         )
         return await pipeline(call)
 
     async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
-        """
-        This operation has three possible return values: 1. A successful
-        response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting
-        error. 3. A BadRequest error. Implementations must be able to
-        successfully take a response and properly (de)serialize successful and
-        error responses based on the the presence of the
-
-        Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `GreetingWithErrorsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, [], plugins
+            locals(), GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
     async def http_empty_prefix_headers(
-        self, input: HttpEmptyPrefixHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        prefix_headers: Mapping[str, str] | None = None,
+        specific_header: str | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpEmptyPrefixHeadersOutput:
-        """
-        Clients that perform this test extract all headers from the response.
-
-        Args:
-            input:
-                An instance of `HttpEmptyPrefixHeadersInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpEmptyPrefixHeadersOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_EMPTY_PREFIX_HEADERS, [], plugins
+            locals(), HTTP_EMPTY_PREFIX_HEADERS, [], plugins
         )
         return await pipeline(call)
 
     async def http_enum_payload(
-        self, input: HttpEnumPayloadInput, plugins: list[Plugin] | None = None
+        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpEnumPayloadOutput:
-        """
-        Invokes the HttpEnumPayload operation.
-
-        Args:
-            input:
-                An instance of `HttpEnumPayloadInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpEnumPayloadOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, HTTP_ENUM_PAYLOAD, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), HTTP_ENUM_PAYLOAD, [], plugins
+        )
         return await pipeline(call)
 
     async def http_payload_traits(
-        self, input: HttpPayloadTraitsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        blob: bytes | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPayloadTraitsOutput:
-        """
-        This example serializes a blob shape in the payload. In this example, no
-        XML document is synthesized because the payload is not a structure or a
-        union type.
-
-        Args:
-            input:
-                An instance of `HttpPayloadTraitsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpPayloadTraitsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_TRAITS, [], plugins
+            locals(), HTTP_PAYLOAD_TRAITS, [], plugins
         )
         return await pipeline(call)
 
     async def http_payload_traits_with_media_type(
         self,
-        input: HttpPayloadTraitsWithMediaTypeInput,
+        *,
+        foo: str | None = None,
+        blob: bytes | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadTraitsWithMediaTypeOutput:
-        """
-        This example uses a `@mediaType` trait on the payload to force a
-        custom content-type to be serialized.
-
-        Args:
-            input:
-                An instance of `HttpPayloadTraitsWithMediaTypeInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
+            locals(), HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
         )
         return await pipeline(call)
 
     async def http_payload_with_member_xml_name(
         self,
-        input: HttpPayloadWithMemberXmlNameInput,
+        *,
+        nested: PayloadWithXmlName | PayloadWithXmlNameParams | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithMemberXmlNameOutput:
-        """
-        The following example serializes a payload that uses an XML name on the
-        member, changing the wrapper name.
-
-        Args:
-            input:
-                An instance of `HttpPayloadWithMemberXmlNameInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpPayloadWithMemberXmlNameOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, [], plugins
+            locals(), HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
     async def http_payload_with_structure(
-        self, input: HttpPayloadWithStructureInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: NestedPayload | NestedPayloadParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithStructureOutput:
-        """
-        This example serializes a structure in the payload. Note that
-        serializing a structure changes the wrapper element name to match the
-        targeted structure.
-
-        Args:
-            input:
-                An instance of `HttpPayloadWithStructureInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpPayloadWithStructureOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
+            locals(), HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
     async def http_payload_with_union(
-        self, input: HttpPayloadWithUnionInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: UnionPayload | UnionPayloadParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithUnionOutput:
-        """
-        This example serializes a union in the payload.
-
-        Args:
-            input:
-                An instance of `HttpPayloadWithUnionInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpPayloadWithUnionOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_UNION, [], plugins
+            locals(), HTTP_PAYLOAD_WITH_UNION, [], plugins
         )
         return await pipeline(call)
 
     async def http_payload_with_xml_name(
-        self, input: HttpPayloadWithXmlNameInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: PayloadWithXmlName | PayloadWithXmlNameParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithXmlNameOutput:
-        """
-        The following example serializes a payload that uses an XML name,
-        changing the wrapper name.
-
-        Args:
-            input:
-                An instance of `HttpPayloadWithXmlNameInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpPayloadWithXmlNameOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_XML_NAME, [], plugins
+            locals(), HTTP_PAYLOAD_WITH_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
     async def http_payload_with_xml_namespace(
         self,
-        input: HttpPayloadWithXmlNamespaceInput,
+        *,
+        nested: PayloadWithXmlNamespace | PayloadWithXmlNamespaceParams | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithXmlNamespaceOutput:
-        """
-        The following example serializes a payload that uses an XML namespace.
-
-        Args:
-            input:
-                An instance of `HttpPayloadWithXmlNamespaceInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpPayloadWithXmlNamespaceOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_XML_NAMESPACE, [], plugins
+            locals(), HTTP_PAYLOAD_WITH_XML_NAMESPACE, [], plugins
         )
         return await pipeline(call)
 
     async def http_payload_with_xml_namespace_and_prefix(
         self,
-        input: HttpPayloadWithXmlNamespaceAndPrefixInput,
+        *,
+        nested: PayloadWithXmlNamespaceAndPrefix
+        | PayloadWithXmlNamespaceAndPrefixParams
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput:
-        """
-        The following example serializes a payload that uses an XML namespace.
-
-        Args:
-            input:
-                An instance of `HttpPayloadWithXmlNamespaceAndPrefixInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpPayloadWithXmlNamespaceAndPrefixOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, [], plugins
+            locals(), HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, [], plugins
         )
         return await pipeline(call)
 
     async def http_prefix_headers(
-        self, input: HttpPrefixHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        foo_map: Mapping[str, str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPrefixHeadersOutput:
-        """
-        This examples adds headers to the input of a request and response by
-        prefix.
-
-        Args:
-            input:
-                An instance of `HttpPrefixHeadersInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpPrefixHeadersOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PREFIX_HEADERS, [], plugins
+            locals(), HTTP_PREFIX_HEADERS, [], plugins
         )
         return await pipeline(call)
 
     async def http_request_with_float_labels(
-        self,
-        input: HttpRequestWithFloatLabelsInput,
-        plugins: list[Plugin] | None = None,
+        self, *, float_: float, double: float, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithFloatLabelsOutput:
-        """
-        Invokes the HttpRequestWithFloatLabels operation.
-
-        Args:
-            input:
-                An instance of `HttpRequestWithFloatLabelsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpRequestWithFloatLabelsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins
+            locals(), HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins
         )
         return await pipeline(call)
 
     async def http_request_with_greedy_label_in_path(
-        self,
-        input: HttpRequestWithGreedyLabelInPathInput,
-        plugins: list[Plugin] | None = None,
+        self, *, foo: str, baz: str, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithGreedyLabelInPathOutput:
-        """
-        Invokes the HttpRequestWithGreedyLabelInPath operation.
-
-        Args:
-            input:
-                An instance of `HttpRequestWithGreedyLabelInPathInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpRequestWithGreedyLabelInPathOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
+            locals(), HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
         )
         return await pipeline(call)
 
     async def http_request_with_labels(
-        self, input: HttpRequestWithLabelsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        string: str,
+        short: int,
+        integer: int,
+        long: int,
+        float_: float,
+        double: float,
+        boolean: bool,
+        timestamp: datetime,
+        plugins: list[Plugin] | None = None,
     ) -> HttpRequestWithLabelsOutput:
-        """
-        The example tests how requests are serialized when there's no input
-        payload but there are HTTP labels.
-
-        Args:
-            input:
-                An instance of `HttpRequestWithLabelsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpRequestWithLabelsOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_LABELS, [], plugins
+            locals(), HTTP_REQUEST_WITH_LABELS, [], plugins
         )
         return await pipeline(call)
 
     async def http_request_with_labels_and_timestamp_format(
         self,
-        input: HttpRequestWithLabelsAndTimestampFormatInput,
+        *,
+        member_epoch_seconds: datetime,
+        member_http_date: datetime,
+        member_date_time: datetime,
+        default_format: datetime,
+        target_epoch_seconds: datetime,
+        target_http_date: datetime,
+        target_date_time: datetime,
         plugins: list[Plugin] | None = None,
     ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
-        """
-        The example tests how requests serialize different timestamp formats in
-        the URI path.
-
-        Args:
-            input:
-                An instance of `HttpRequestWithLabelsAndTimestampFormatInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
+            locals(), HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
         )
         return await pipeline(call)
 
     async def http_response_code(
-        self, input: HttpResponseCodeInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> HttpResponseCodeOutput:
-        """
-        Invokes the HttpResponseCode operation.
-
-        Args:
-            input:
-                An instance of `HttpResponseCodeInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpResponseCodeOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_RESPONSE_CODE, [], plugins
+            locals(), HTTP_RESPONSE_CODE, [], plugins
         )
         return await pipeline(call)
 
     async def http_string_payload(
-        self, input: HttpStringPayloadInput, plugins: list[Plugin] | None = None
+        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpStringPayloadOutput:
-        """
-        Invokes the HttpStringPayload operation.
-
-        Args:
-            input:
-                An instance of `HttpStringPayloadInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `HttpStringPayloadOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, HTTP_STRING_PAYLOAD, [], plugins
+            locals(), HTTP_STRING_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
     async def ignore_query_params_in_response(
-        self,
-        input: IgnoreQueryParamsInResponseInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> IgnoreQueryParamsInResponseOutput:
-        """
-        This example ensures that query string bound request parameters are
-        serialized in the body of responses if the structure is used in both the
-        request and response.
-
-        Args:
-            input:
-                An instance of `IgnoreQueryParamsInResponseInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `IgnoreQueryParamsInResponseOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
+            locals(), IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
         )
         return await pipeline(call)
 
     async def input_and_output_with_headers(
-        self, input: InputAndOutputWithHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        header_string: str | None = None,
+        header_byte: int | None = None,
+        header_short: int | None = None,
+        header_integer: int | None = None,
+        header_long: int | None = None,
+        header_float: float | None = None,
+        header_double: float | None = None,
+        header_true_bool: bool | None = None,
+        header_false_bool: bool | None = None,
+        header_string_list: Sequence[str] | None = None,
+        header_string_set: Sequence[str] | None = None,
+        header_integer_list: Sequence[int] | None = None,
+        header_boolean_list: Sequence[bool] | None = None,
+        header_timestamp_list: Sequence[datetime] | None = None,
+        header_enum: str | None = None,
+        header_enum_list: Sequence[str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> InputAndOutputWithHeadersOutput:
-        """
-        The example tests how requests and responses are serialized when there
-        is no input or output payload but there are HTTP header bindings.
-
-        Args:
-            input:
-                An instance of `InputAndOutputWithHeadersInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `InputAndOutputWithHeadersOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins
+            locals(), INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins
         )
         return await pipeline(call)
 
     async def nested_xml_maps(
-        self, input: NestedXmlMapsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested_map: Mapping[str, Mapping[str, str]] | None = None,
+        flat_nested_map: Mapping[str, Mapping[str, str]] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NestedXmlMapsOutput:
-        """
-        Invokes the NestedXmlMaps operation.
-
-        Args:
-            input:
-                An instance of `NestedXmlMapsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `NestedXmlMapsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, NESTED_XML_MAPS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), NESTED_XML_MAPS, [], plugins
+        )
         return await pipeline(call)
 
     async def nested_xml_map_with_xml_name(
-        self, input: NestedXmlMapWithXmlNameInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested_xml_map_with_xml_name_map: Mapping[str, Mapping[str, str]] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NestedXmlMapWithXmlNameOutput:
-        """
-        Nested Xml Maps with key/values with @xmlName
-
-        Args:
-            input:
-                An instance of `NestedXmlMapWithXmlNameInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `NestedXmlMapWithXmlNameOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, NESTED_XML_MAP_WITH_XML_NAME, [], plugins
+            locals(), NESTED_XML_MAP_WITH_XML_NAME, [], plugins
         )
         return await pipeline(call)
 
     async def no_input_and_no_output(
-        self, input: NoInputAndNoOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndNoOutputOutput:
-        """
-        The example tests how requests and responses are serialized when
-        there's no request or response payload because the operation has no
-        input or output. While this should be rare, code generators must support
-        this.
-
-        Args:
-            input:
-                An instance of `NoInputAndNoOutputInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `NoInputAndNoOutputOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_NO_OUTPUT, [], plugins
+            locals(), NO_INPUT_AND_NO_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
     async def no_input_and_output(
-        self, input: NoInputAndOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndOutputOutput:
-        """
-        The example tests how requests and responses are serialized when
-        there's no request or response payload because the operation has no
-        input and the output is empty. While this should be rare, code
-        generators must support this.
-
-        Args:
-            input:
-                An instance of `NoInputAndOutputInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `NoInputAndOutputOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_OUTPUT, [], plugins
+            locals(), NO_INPUT_AND_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
     async def null_and_empty_headers_client(
-        self, input: NullAndEmptyHeadersClientInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        a: str | None = None,
+        b: str | None = None,
+        c: Sequence[str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NullAndEmptyHeadersClientOutput:
-        """
-        Null headers are not sent over the wire, empty headers are serialized to
-        \"\"
-
-        Args:
-            input:
-                An instance of `NullAndEmptyHeadersClientInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `NullAndEmptyHeadersClientOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
+            locals(), NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
         )
         return await pipeline(call)
 
     async def null_and_empty_headers_server(
-        self, input: NullAndEmptyHeadersServerInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        a: str | None = None,
+        b: str | None = None,
+        c: Sequence[str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NullAndEmptyHeadersServerOutput:
-        """
-        Null headers are not sent over the wire, empty headers are serialized to
-        \"\"
-
-        Args:
-            input:
-                An instance of `NullAndEmptyHeadersServerInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `NullAndEmptyHeadersServerOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
+            locals(), NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
         )
         return await pipeline(call)
 
     async def omits_null_serializes_empty_string(
         self,
-        input: OmitsNullSerializesEmptyStringInput,
+        *,
+        null_value: str | None = None,
+        empty_string: str | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OmitsNullSerializesEmptyStringOutput:
-        """
-        Omits null, but serializes empty string value.
-
-        Args:
-            input:
-                An instance of `OmitsNullSerializesEmptyStringInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `OmitsNullSerializesEmptyStringOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
+            locals(), OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
         )
         return await pipeline(call)
 
     async def put_with_content_encoding(
-        self, input: PutWithContentEncodingInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        encoding: str | None = None,
+        data: str | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> PutWithContentEncodingOutput:
-        """
-        Invokes the PutWithContentEncoding operation.
-
-        Args:
-            input:
-                An instance of `PutWithContentEncodingInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `PutWithContentEncodingOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, PUT_WITH_CONTENT_ENCODING, [], plugins
+            locals(), PUT_WITH_CONTENT_ENCODING, [], plugins
         )
         return await pipeline(call)
 
     async def query_idempotency_token_auto_fill(
-        self,
-        input: QueryIdempotencyTokenAutoFillInput,
-        plugins: list[Plugin] | None = None,
+        self, *, token: str | None = None, plugins: list[Plugin] | None = None
     ) -> QueryIdempotencyTokenAutoFillOutput:
-        """
-        Automatically adds idempotency tokens.
-
-        Args:
-            input:
-                An instance of `QueryIdempotencyTokenAutoFillInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `QueryIdempotencyTokenAutoFillOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            locals(), QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
         return await pipeline(call)
 
     async def query_params_as_string_list_map(
         self,
-        input: QueryParamsAsStringListMapInput,
+        *,
+        qux: str | None = None,
+        foo: Mapping[str, Sequence[str]] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryParamsAsStringListMapOutput:
-        """
-        Invokes the QueryParamsAsStringListMap operation.
-
-        Args:
-            input:
-                An instance of `QueryParamsAsStringListMapInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `QueryParamsAsStringListMapOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins
+            locals(), QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins
         )
         return await pipeline(call)
 
     async def query_precedence(
-        self, input: QueryPrecedenceInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        baz: Mapping[str, str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> QueryPrecedenceOutput:
-        """
-        Invokes the QueryPrecedence operation.
-
-        Args:
-            input:
-                An instance of `QueryPrecedenceInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `QueryPrecedenceOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, QUERY_PRECEDENCE, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), QUERY_PRECEDENCE, [], plugins
+        )
         return await pipeline(call)
 
     async def recursive_shapes(
-        self, input: RecursiveShapesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: RecursiveShapesInputOutputNested1
+        | RecursiveShapesInputOutputNested1Params
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RecursiveShapesOutput:
-        """
-        Recursive shapes
-
-        Args:
-            input:
-                An instance of `RecursiveShapesInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `RecursiveShapesOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, RECURSIVE_SHAPES, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), RECURSIVE_SHAPES, [], plugins
+        )
         return await pipeline(call)
 
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        string_value: str | None = None,
+        true_boolean_value: bool | None = None,
+        false_boolean_value: bool | None = None,
+        byte_value: int | None = None,
+        short_value: int | None = None,
+        integer_value: int | None = None,
+        long_value: int | None = None,
+        float_value: float | None = None,
+        double_value: float | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
-        """
-        Invokes the SimpleScalarProperties operation.
-
-        Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `SimpleScalarPropertiesOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+            locals(), SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
 
     async def timestamp_format_headers(
-        self, input: TimestampFormatHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        member_epoch_seconds: datetime | None = None,
+        member_http_date: datetime | None = None,
+        member_date_time: datetime | None = None,
+        default_format: datetime | None = None,
+        target_epoch_seconds: datetime | None = None,
+        target_http_date: datetime | None = None,
+        target_date_time: datetime | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> TimestampFormatHeadersOutput:
-        """
-        The example tests how timestamp request and response headers are
-        serialized.
-
-        Args:
-            input:
-                An instance of `TimestampFormatHeadersInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `TimestampFormatHeadersOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, TIMESTAMP_FORMAT_HEADERS, [], plugins
+            locals(), TIMESTAMP_FORMAT_HEADERS, [], plugins
         )
         return await pipeline(call)
 
     async def xml_attributes(
-        self, input: XmlAttributesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        attr: str | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlAttributesOutput:
-        """
-        This example serializes an XML attributes on synthesized document.
-
-        Args:
-            input:
-                An instance of `XmlAttributesInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlAttributesOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_ATTRIBUTES, [], plugins)
+        pipeline, call = await self._prepare_call(locals(), XML_ATTRIBUTES, [], plugins)
         return await pipeline(call)
 
     async def xml_attributes_in_middle(
-        self, input: XmlAttributesInMiddleInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        payload: XmlAttributesInMiddlePayloadRequest
+        | XmlAttributesInMiddlePayloadRequestParams
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlAttributesInMiddleOutput:
-        """
-        This example serializes an XML attribute on a payload when it's defined
-        in the middle of the member list. This tests that implementations
-        correctly write attributes immediately after the element start tag,
-        which is critical for languages like C# where attribute writing must
-        happen before child elements.
-
-        Args:
-            input:
-                An instance of `XmlAttributesInMiddleInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlAttributesInMiddleOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, XML_ATTRIBUTES_IN_MIDDLE, [], plugins
+            locals(), XML_ATTRIBUTES_IN_MIDDLE, [], plugins
         )
         return await pipeline(call)
 
     async def xml_attributes_on_payload(
-        self, input: XmlAttributesOnPayloadInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        payload: XmlAttributesPayloadRequest
+        | XmlAttributesPayloadRequestParams
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlAttributesOnPayloadOutput:
-        """
-        This example serializes an XML attributes on a document targeted by
-        httpPayload.
-
-        Args:
-            input:
-                An instance of `XmlAttributesOnPayloadInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlAttributesOnPayloadOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, XML_ATTRIBUTES_ON_PAYLOAD, [], plugins
+            locals(), XML_ATTRIBUTES_ON_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
     async def xml_blobs(
-        self, input: XmlBlobsInput, plugins: list[Plugin] | None = None
+        self, *, data: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> XmlBlobsOutput:
-        """
-        Blobs are base64 encoded
-
-        Args:
-            input:
-                An instance of `XmlBlobsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlBlobsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_BLOBS, [], plugins)
+        pipeline, call = await self._prepare_call(locals(), XML_BLOBS, [], plugins)
         return await pipeline(call)
 
     async def xml_empty_blobs(
-        self, input: XmlEmptyBlobsInput, plugins: list[Plugin] | None = None
+        self, *, data: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> XmlEmptyBlobsOutput:
-        """
-        Blobs are base64 encoded
-
-        Args:
-            input:
-                An instance of `XmlEmptyBlobsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlEmptyBlobsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_EMPTY_BLOBS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), XML_EMPTY_BLOBS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_empty_lists(
-        self, input: XmlEmptyListsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        string_list: Sequence[str] | None = None,
+        string_set: Sequence[str] | None = None,
+        integer_list: Sequence[int] | None = None,
+        boolean_list: Sequence[bool] | None = None,
+        timestamp_list: Sequence[datetime] | None = None,
+        enum_list: Sequence[str] | None = None,
+        int_enum_list: Sequence[int] | None = None,
+        nested_string_list: Sequence[Sequence[str]] | None = None,
+        renamed_list_members: Sequence[str] | None = None,
+        flattened_list: Sequence[str] | None = None,
+        flattened_list2: Sequence[str] | None = None,
+        flattened_list_with_member_namespace: Sequence[str] | None = None,
+        flattened_list_with_namespace: Sequence[str] | None = None,
+        structure_list: Sequence[StructureListMember | StructureListMemberParams]
+        | None = None,
+        flattened_structure_list: Sequence[
+            StructureListMember | StructureListMemberParams
+        ]
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlEmptyListsOutput:
-        """
-        Invokes the XmlEmptyLists operation.
-
-        Args:
-            input:
-                An instance of `XmlEmptyListsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlEmptyListsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_EMPTY_LISTS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), XML_EMPTY_LISTS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_empty_maps(
-        self, input: XmlEmptyMapsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        my_map: Mapping[str, GreetingStruct | GreetingStructParams] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlEmptyMapsOutput:
-        """
-        Invokes the XmlEmptyMaps operation.
-
-        Args:
-            input:
-                An instance of `XmlEmptyMapsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlEmptyMapsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_EMPTY_MAPS, [], plugins)
+        pipeline, call = await self._prepare_call(locals(), XML_EMPTY_MAPS, [], plugins)
         return await pipeline(call)
 
     async def xml_empty_strings(
-        self, input: XmlEmptyStringsInput, plugins: list[Plugin] | None = None
+        self, *, empty_string: str | None = None, plugins: list[Plugin] | None = None
     ) -> XmlEmptyStringsOutput:
-        """
-        Invokes the XmlEmptyStrings operation.
-
-        Args:
-            input:
-                An instance of `XmlEmptyStringsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlEmptyStringsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_EMPTY_STRINGS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), XML_EMPTY_STRINGS, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_enums(
-        self, input: XmlEnumsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo_enum1: str | None = None,
+        foo_enum2: str | None = None,
+        foo_enum3: str | None = None,
+        foo_enum_list: Sequence[str] | None = None,
+        foo_enum_set: Sequence[str] | None = None,
+        foo_enum_map: Mapping[str, str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlEnumsOutput:
-        """
-        This example serializes enums as top level properties, in lists, sets,
-        and maps.
-
-        Args:
-            input:
-                An instance of `XmlEnumsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlEnumsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_ENUMS, [], plugins)
+        pipeline, call = await self._prepare_call(locals(), XML_ENUMS, [], plugins)
         return await pipeline(call)
 
     async def xml_int_enums(
-        self, input: XmlIntEnumsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        int_enum1: int | None = None,
+        int_enum2: int | None = None,
+        int_enum3: int | None = None,
+        int_enum_list: Sequence[int] | None = None,
+        int_enum_set: Sequence[int] | None = None,
+        int_enum_map: Mapping[str, int] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlIntEnumsOutput:
-        """
-        This example serializes enums as top level properties, in lists, sets,
-        and maps.
-
-        Args:
-            input:
-                An instance of `XmlIntEnumsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlIntEnumsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_INT_ENUMS, [], plugins)
+        pipeline, call = await self._prepare_call(locals(), XML_INT_ENUMS, [], plugins)
         return await pipeline(call)
 
     async def xml_lists(
-        self, input: XmlListsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        string_list: Sequence[str] | None = None,
+        string_set: Sequence[str] | None = None,
+        integer_list: Sequence[int] | None = None,
+        boolean_list: Sequence[bool] | None = None,
+        timestamp_list: Sequence[datetime] | None = None,
+        enum_list: Sequence[str] | None = None,
+        int_enum_list: Sequence[int] | None = None,
+        nested_string_list: Sequence[Sequence[str]] | None = None,
+        renamed_list_members: Sequence[str] | None = None,
+        flattened_list: Sequence[str] | None = None,
+        flattened_list2: Sequence[str] | None = None,
+        flattened_list_with_member_namespace: Sequence[str] | None = None,
+        flattened_list_with_namespace: Sequence[str] | None = None,
+        structure_list: Sequence[StructureListMember | StructureListMemberParams]
+        | None = None,
+        flattened_structure_list: Sequence[
+            StructureListMember | StructureListMemberParams
+        ]
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlListsOutput:
-        """
-        This test case serializes XML lists for the following cases for both
-        input and output: 1. Normal XML lists. 2. Normal XML sets. 3. XML lists
-        of lists. 4. XML lists with @xmlName on its members 5. Flattened XML
-        lists. 6. Flattened XML lists with @xmlName. 7. Flattened XML lists
-        with @xmlNamespace. 8. Lists of structures. 9. Flattened XML list of
-        structures
-
-        Args:
-            input:
-                An instance of `XmlListsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlListsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_LISTS, [], plugins)
+        pipeline, call = await self._prepare_call(locals(), XML_LISTS, [], plugins)
         return await pipeline(call)
 
     async def xml_maps(
-        self, input: XmlMapsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        my_map: Mapping[str, GreetingStruct | GreetingStructParams] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlMapsOutput:
-        """
-        The example tests basic map serialization.
-
-        Args:
-            input:
-                An instance of `XmlMapsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlMapsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_MAPS, [], plugins)
+        pipeline, call = await self._prepare_call(locals(), XML_MAPS, [], plugins)
         return await pipeline(call)
 
     async def xml_maps_xml_name(
-        self, input: XmlMapsXmlNameInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        my_map: Mapping[str, GreetingStruct | GreetingStructParams] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlMapsXmlNameOutput:
-        """
-        Invokes the XmlMapsXmlName operation.
-
-        Args:
-            input:
-                An instance of `XmlMapsXmlNameInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlMapsXmlNameOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_MAPS_XML_NAME, [], plugins)
+        pipeline, call = await self._prepare_call(
+            locals(), XML_MAPS_XML_NAME, [], plugins
+        )
         return await pipeline(call)
 
     async def xml_map_with_xml_namespace(
-        self, input: XmlMapWithXmlNamespaceInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        my_map: Mapping[str, str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlMapWithXmlNamespaceOutput:
-        """
-        Maps with @xmlNamespace and @xmlName
-
-        Args:
-            input:
-                An instance of `XmlMapWithXmlNamespaceInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlMapWithXmlNamespaceOutput`.
-        """
         pipeline, call = await self._prepare_call(
-            input, XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            locals(), XML_MAP_WITH_XML_NAMESPACE, [], plugins
         )
         return await pipeline(call)
 
     async def xml_namespaces(
-        self, input: XmlNamespacesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: XmlNamespaceNested | XmlNamespaceNestedParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlNamespacesOutput:
-        """
-        Invokes the XmlNamespaces operation.
-
-        Args:
-            input:
-                An instance of `XmlNamespacesInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlNamespacesOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_NAMESPACES, [], plugins)
+        pipeline, call = await self._prepare_call(locals(), XML_NAMESPACES, [], plugins)
         return await pipeline(call)
 
     async def xml_timestamps(
-        self, input: XmlTimestampsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        normal: datetime | None = None,
+        date_time: datetime | None = None,
+        date_time_on_target: datetime | None = None,
+        epoch_seconds: datetime | None = None,
+        epoch_seconds_on_target: datetime | None = None,
+        http_date: datetime | None = None,
+        http_date_on_target: datetime | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlTimestampsOutput:
-        """
-        This tests how timestamps are serialized, including using the default
-        format of date-time and various @timestampFormat trait values.
-
-        Args:
-            input:
-                An instance of `XmlTimestampsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlTimestampsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_TIMESTAMPS, [], plugins)
+        pipeline, call = await self._prepare_call(locals(), XML_TIMESTAMPS, [], plugins)
         return await pipeline(call)
 
     async def xml_unions(
-        self, input: XmlUnionsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        union_value: XmlUnionShape | XmlUnionShapeParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlUnionsOutput:
-        """
-        Invokes the XmlUnions operation.
-
-        Args:
-            input:
-                An instance of `XmlUnionsInput`.
-            plugins:
-                A list of callables that modify the configuration dynamically.
-                Changes made by these plugins only apply for the duration of the
-                operation execution and will not affect any other operation
-                invocations.
-
-        Returns:
-            An instance of `XmlUnionsOutput`.
-        """
-        pipeline, call = await self._prepare_call(input, XML_UNIONS, [], plugins)
+        pipeline, call = await self._prepare_call(locals(), XML_UNIONS, [], plugins)
         return await pipeline(call)

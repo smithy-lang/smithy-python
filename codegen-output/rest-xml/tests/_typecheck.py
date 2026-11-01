@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from restxml.client import AsyncRestXmlProtocolClient
 from restxml.models import (
     AllQueryStringTypesInput,
     AllQueryStringTypesOutput,
@@ -151,8 +152,101 @@ from restxml.models import (
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi, _params.pyi,
+# and client.pyi. Not executed as a test; it only needs to type-check.
+
+from restxml.models import (
+    AllQueryStringTypesInputParams as AllQueryStringTypesInputParams,
+    BodyWithXmlNameInputParams as BodyWithXmlNameInputParams,
+    ConstantAndVariableQueryStringInputParams as ConstantAndVariableQueryStringInputParams,
+    ConstantQueryStringInputParams as ConstantQueryStringInputParams,
+    ContentTypeParametersInputParams as ContentTypeParametersInputParams,
+    DatetimeOffsetsInputParams as DatetimeOffsetsInputParams,
+    EmptyInputAndEmptyOutputInputParams as EmptyInputAndEmptyOutputInputParams,
+    EndpointOperationInputParams as EndpointOperationInputParams,
+    EndpointWithHostLabelHeaderOperationInputParams as EndpointWithHostLabelHeaderOperationInputParams,
+    EndpointWithHostLabelOperationInputParams as EndpointWithHostLabelOperationInputParams,
+    FlattenedXmlMapInputParams as FlattenedXmlMapInputParams,
+    FlattenedXmlMapWithXmlNameInputParams as FlattenedXmlMapWithXmlNameInputParams,
+    FlattenedXmlMapWithXmlNamespaceInputParams as FlattenedXmlMapWithXmlNamespaceInputParams,
+    FractionalSecondsInputParams as FractionalSecondsInputParams,
+    GreetingStructParams as GreetingStructParams,
+    GreetingWithErrorsInputParams as GreetingWithErrorsInputParams,
+    HttpEmptyPrefixHeadersInputParams as HttpEmptyPrefixHeadersInputParams,
+    HttpEnumPayloadInputParams as HttpEnumPayloadInputParams,
+    HttpPayloadTraitsInputParams as HttpPayloadTraitsInputParams,
+    HttpPayloadTraitsWithMediaTypeInputParams as HttpPayloadTraitsWithMediaTypeInputParams,
+    HttpPayloadWithMemberXmlNameInputParams as HttpPayloadWithMemberXmlNameInputParams,
+    HttpPayloadWithStructureInputParams as HttpPayloadWithStructureInputParams,
+    HttpPayloadWithUnionInputParams as HttpPayloadWithUnionInputParams,
+    HttpPayloadWithXmlNameInputParams as HttpPayloadWithXmlNameInputParams,
+    HttpPayloadWithXmlNamespaceAndPrefixInputParams as HttpPayloadWithXmlNamespaceAndPrefixInputParams,
+    HttpPayloadWithXmlNamespaceInputParams as HttpPayloadWithXmlNamespaceInputParams,
+    HttpPrefixHeadersInputParams as HttpPrefixHeadersInputParams,
+    HttpRequestWithFloatLabelsInputParams as HttpRequestWithFloatLabelsInputParams,
+    HttpRequestWithGreedyLabelInPathInputParams as HttpRequestWithGreedyLabelInPathInputParams,
+    HttpRequestWithLabelsAndTimestampFormatInputParams as HttpRequestWithLabelsAndTimestampFormatInputParams,
+    HttpRequestWithLabelsInputParams as HttpRequestWithLabelsInputParams,
+    HttpResponseCodeInputParams as HttpResponseCodeInputParams,
+    HttpStringPayloadInputParams as HttpStringPayloadInputParams,
+    IgnoreQueryParamsInResponseInputParams as IgnoreQueryParamsInResponseInputParams,
+    InputAndOutputWithHeadersInputParams as InputAndOutputWithHeadersInputParams,
+    NestedPayloadParams as NestedPayloadParams,
+    NestedXmlMapWithXmlNameInputParams as NestedXmlMapWithXmlNameInputParams,
+    NestedXmlMapsInputParams as NestedXmlMapsInputParams,
+    NoInputAndNoOutputInputParams as NoInputAndNoOutputInputParams,
+    NoInputAndOutputInputParams as NoInputAndOutputInputParams,
+    NullAndEmptyHeadersClientInputParams as NullAndEmptyHeadersClientInputParams,
+    NullAndEmptyHeadersServerInputParams as NullAndEmptyHeadersServerInputParams,
+    OmitsNullSerializesEmptyStringInputParams as OmitsNullSerializesEmptyStringInputParams,
+    PayloadWithXmlNameParams as PayloadWithXmlNameParams,
+    PayloadWithXmlNamespaceAndPrefixParams as PayloadWithXmlNamespaceAndPrefixParams,
+    PayloadWithXmlNamespaceParams as PayloadWithXmlNamespaceParams,
+    PutWithContentEncodingInputParams as PutWithContentEncodingInputParams,
+    QueryIdempotencyTokenAutoFillInputParams as QueryIdempotencyTokenAutoFillInputParams,
+    QueryParamsAsStringListMapInputParams as QueryParamsAsStringListMapInputParams,
+    QueryPrecedenceInputParams as QueryPrecedenceInputParams,
+    RecursiveShapesInputOutputNested1Params as RecursiveShapesInputOutputNested1Params,
+    RecursiveShapesInputOutputNested2Params as RecursiveShapesInputOutputNested2Params,
+    RecursiveShapesInputParams as RecursiveShapesInputParams,
+    SimpleScalarPropertiesInputParams as SimpleScalarPropertiesInputParams,
+    StructureListMemberParams as StructureListMemberParams,
+    TimestampFormatHeadersInputParams as TimestampFormatHeadersInputParams,
+    UnionPayloadGreetingParams as UnionPayloadGreetingParams,
+    UnionPayloadParams as UnionPayloadParams,
+    XmlAttributesInMiddleInputParams as XmlAttributesInMiddleInputParams,
+    XmlAttributesInMiddlePayloadRequestParams as XmlAttributesInMiddlePayloadRequestParams,
+    XmlAttributesInputParams as XmlAttributesInputParams,
+    XmlAttributesOnPayloadInputParams as XmlAttributesOnPayloadInputParams,
+    XmlAttributesPayloadRequestParams as XmlAttributesPayloadRequestParams,
+    XmlBlobsInputParams as XmlBlobsInputParams,
+    XmlEmptyBlobsInputParams as XmlEmptyBlobsInputParams,
+    XmlEmptyListsInputParams as XmlEmptyListsInputParams,
+    XmlEmptyMapsInputParams as XmlEmptyMapsInputParams,
+    XmlEmptyStringsInputParams as XmlEmptyStringsInputParams,
+    XmlEnumsInputParams as XmlEnumsInputParams,
+    XmlIntEnumsInputParams as XmlIntEnumsInputParams,
+    XmlListsInputParams as XmlListsInputParams,
+    XmlMapWithXmlNamespaceInputParams as XmlMapWithXmlNamespaceInputParams,
+    XmlMapsInputParams as XmlMapsInputParams,
+    XmlMapsXmlNameInputParams as XmlMapsXmlNameInputParams,
+    XmlNamespaceNestedParams as XmlNamespaceNestedParams,
+    XmlNamespacesInputParams as XmlNamespacesInputParams,
+    XmlNestedUnionStructParams as XmlNestedUnionStructParams,
+    XmlTimestampsInputParams as XmlTimestampsInputParams,
+    XmlUnionShapeBooleanValueParams as XmlUnionShapeBooleanValueParams,
+    XmlUnionShapeByteValueParams as XmlUnionShapeByteValueParams,
+    XmlUnionShapeDoubleValueParams as XmlUnionShapeDoubleValueParams,
+    XmlUnionShapeFloatValueParams as XmlUnionShapeFloatValueParams,
+    XmlUnionShapeIntegerValueParams as XmlUnionShapeIntegerValueParams,
+    XmlUnionShapeLongValueParams as XmlUnionShapeLongValueParams,
+    XmlUnionShapeParams as XmlUnionShapeParams,
+    XmlUnionShapeShortValueParams as XmlUnionShapeShortValueParams,
+    XmlUnionShapeStringValueParams as XmlUnionShapeStringValueParams,
+    XmlUnionShapeStructValueParams as XmlUnionShapeStructValueParams,
+    XmlUnionShapeUnionValueParams as XmlUnionShapeUnionValueParams,
+    XmlUnionsInputParams as XmlUnionsInputParams,
+)
 
 _: Any = ...
 
@@ -301,3 +395,387 @@ XmlTimestampsOutput()
 XmlUnionsInput()
 XmlUnionsOutput()
 GreetingStruct()
+
+
+async def check_all_query_string_types(client: AsyncRestXmlProtocolClient) -> None:
+    params: AllQueryStringTypesInputParams = {}
+    await client.all_query_string_types(**params)
+
+
+async def check_body_with_xml_name(client: AsyncRestXmlProtocolClient) -> None:
+    params: BodyWithXmlNameInputParams = {}
+    await client.body_with_xml_name(**params)
+
+
+async def check_constant_and_variable_query_string(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: ConstantAndVariableQueryStringInputParams = {}
+    await client.constant_and_variable_query_string(**params)
+
+
+async def check_constant_query_string(client: AsyncRestXmlProtocolClient) -> None:
+    params: ConstantQueryStringInputParams = {"hello": _}
+    await client.constant_query_string(**params)
+
+
+async def check_content_type_parameters(client: AsyncRestXmlProtocolClient) -> None:
+    params: ContentTypeParametersInputParams = {}
+    await client.content_type_parameters(**params)
+
+
+async def check_datetime_offsets(client: AsyncRestXmlProtocolClient) -> None:
+    params: DatetimeOffsetsInputParams = {}
+    await client.datetime_offsets(**params)
+
+
+async def check_empty_input_and_empty_output(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: EmptyInputAndEmptyOutputInputParams = {}
+    await client.empty_input_and_empty_output(**params)
+
+
+async def check_endpoint_operation(client: AsyncRestXmlProtocolClient) -> None:
+    params: EndpointOperationInputParams = {}
+    await client.endpoint_operation(**params)
+
+
+async def check_endpoint_with_host_label_header_operation(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: EndpointWithHostLabelHeaderOperationInputParams = {"account_id": _}
+    await client.endpoint_with_host_label_header_operation(**params)
+
+
+async def check_endpoint_with_host_label_operation(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: EndpointWithHostLabelOperationInputParams = {"label": _}
+    await client.endpoint_with_host_label_operation(**params)
+
+
+async def check_flattened_xml_map(client: AsyncRestXmlProtocolClient) -> None:
+    params: FlattenedXmlMapInputParams = {}
+    await client.flattened_xml_map(**params)
+
+
+async def check_flattened_xml_map_with_xml_name(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: FlattenedXmlMapWithXmlNameInputParams = {}
+    await client.flattened_xml_map_with_xml_name(**params)
+
+
+async def check_flattened_xml_map_with_xml_namespace(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: FlattenedXmlMapWithXmlNamespaceInputParams = {}
+    await client.flattened_xml_map_with_xml_namespace(**params)
+
+
+async def check_fractional_seconds(client: AsyncRestXmlProtocolClient) -> None:
+    params: FractionalSecondsInputParams = {}
+    await client.fractional_seconds(**params)
+
+
+async def check_greeting_with_errors(client: AsyncRestXmlProtocolClient) -> None:
+    params: GreetingWithErrorsInputParams = {}
+    await client.greeting_with_errors(**params)
+
+
+async def check_http_empty_prefix_headers(client: AsyncRestXmlProtocolClient) -> None:
+    params: HttpEmptyPrefixHeadersInputParams = {}
+    await client.http_empty_prefix_headers(**params)
+
+
+async def check_http_enum_payload(client: AsyncRestXmlProtocolClient) -> None:
+    params: HttpEnumPayloadInputParams = {}
+    await client.http_enum_payload(**params)
+
+
+async def check_http_payload_traits(client: AsyncRestXmlProtocolClient) -> None:
+    params: HttpPayloadTraitsInputParams = {}
+    await client.http_payload_traits(**params)
+
+
+async def check_http_payload_traits_with_media_type(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: HttpPayloadTraitsWithMediaTypeInputParams = {}
+    await client.http_payload_traits_with_media_type(**params)
+
+
+async def check_http_payload_with_member_xml_name(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: HttpPayloadWithMemberXmlNameInputParams = {}
+    await client.http_payload_with_member_xml_name(**params)
+
+
+async def check_http_payload_with_structure(client: AsyncRestXmlProtocolClient) -> None:
+    params: HttpPayloadWithStructureInputParams = {}
+    await client.http_payload_with_structure(**params)
+
+
+async def check_http_payload_with_union(client: AsyncRestXmlProtocolClient) -> None:
+    params: HttpPayloadWithUnionInputParams = {}
+    await client.http_payload_with_union(**params)
+
+
+async def check_http_payload_with_xml_name(client: AsyncRestXmlProtocolClient) -> None:
+    params: HttpPayloadWithXmlNameInputParams = {}
+    await client.http_payload_with_xml_name(**params)
+
+
+async def check_http_payload_with_xml_namespace(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: HttpPayloadWithXmlNamespaceInputParams = {}
+    await client.http_payload_with_xml_namespace(**params)
+
+
+async def check_http_payload_with_xml_namespace_and_prefix(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: HttpPayloadWithXmlNamespaceAndPrefixInputParams = {}
+    await client.http_payload_with_xml_namespace_and_prefix(**params)
+
+
+async def check_http_prefix_headers(client: AsyncRestXmlProtocolClient) -> None:
+    params: HttpPrefixHeadersInputParams = {}
+    await client.http_prefix_headers(**params)
+
+
+async def check_http_request_with_float_labels(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: HttpRequestWithFloatLabelsInputParams = {"float_": _, "double": _}
+    await client.http_request_with_float_labels(**params)
+
+
+async def check_http_request_with_greedy_label_in_path(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: HttpRequestWithGreedyLabelInPathInputParams = {"foo": _, "baz": _}
+    await client.http_request_with_greedy_label_in_path(**params)
+
+
+async def check_http_request_with_labels(client: AsyncRestXmlProtocolClient) -> None:
+    params: HttpRequestWithLabelsInputParams = {
+        "string": _,
+        "short": _,
+        "integer": _,
+        "long": _,
+        "float_": _,
+        "double": _,
+        "boolean": _,
+        "timestamp": _,
+    }
+    await client.http_request_with_labels(**params)
+
+
+async def check_http_request_with_labels_and_timestamp_format(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: HttpRequestWithLabelsAndTimestampFormatInputParams = {
+        "member_epoch_seconds": _,
+        "member_http_date": _,
+        "member_date_time": _,
+        "default_format": _,
+        "target_epoch_seconds": _,
+        "target_http_date": _,
+        "target_date_time": _,
+    }
+    await client.http_request_with_labels_and_timestamp_format(**params)
+
+
+async def check_http_response_code(client: AsyncRestXmlProtocolClient) -> None:
+    params: HttpResponseCodeInputParams = {}
+    await client.http_response_code(**params)
+
+
+async def check_http_string_payload(client: AsyncRestXmlProtocolClient) -> None:
+    params: HttpStringPayloadInputParams = {}
+    await client.http_string_payload(**params)
+
+
+async def check_ignore_query_params_in_response(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: IgnoreQueryParamsInResponseInputParams = {}
+    await client.ignore_query_params_in_response(**params)
+
+
+async def check_input_and_output_with_headers(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: InputAndOutputWithHeadersInputParams = {}
+    await client.input_and_output_with_headers(**params)
+
+
+async def check_nested_xml_maps(client: AsyncRestXmlProtocolClient) -> None:
+    params: NestedXmlMapsInputParams = {}
+    await client.nested_xml_maps(**params)
+
+
+async def check_nested_xml_map_with_xml_name(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: NestedXmlMapWithXmlNameInputParams = {}
+    await client.nested_xml_map_with_xml_name(**params)
+
+
+async def check_no_input_and_no_output(client: AsyncRestXmlProtocolClient) -> None:
+    params: NoInputAndNoOutputInputParams = {}
+    await client.no_input_and_no_output(**params)
+
+
+async def check_no_input_and_output(client: AsyncRestXmlProtocolClient) -> None:
+    params: NoInputAndOutputInputParams = {}
+    await client.no_input_and_output(**params)
+
+
+async def check_null_and_empty_headers_client(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: NullAndEmptyHeadersClientInputParams = {}
+    await client.null_and_empty_headers_client(**params)
+
+
+async def check_null_and_empty_headers_server(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: NullAndEmptyHeadersServerInputParams = {}
+    await client.null_and_empty_headers_server(**params)
+
+
+async def check_omits_null_serializes_empty_string(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: OmitsNullSerializesEmptyStringInputParams = {}
+    await client.omits_null_serializes_empty_string(**params)
+
+
+async def check_put_with_content_encoding(client: AsyncRestXmlProtocolClient) -> None:
+    params: PutWithContentEncodingInputParams = {}
+    await client.put_with_content_encoding(**params)
+
+
+async def check_query_idempotency_token_auto_fill(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: QueryIdempotencyTokenAutoFillInputParams = {}
+    await client.query_idempotency_token_auto_fill(**params)
+
+
+async def check_query_params_as_string_list_map(
+    client: AsyncRestXmlProtocolClient,
+) -> None:
+    params: QueryParamsAsStringListMapInputParams = {}
+    await client.query_params_as_string_list_map(**params)
+
+
+async def check_query_precedence(client: AsyncRestXmlProtocolClient) -> None:
+    params: QueryPrecedenceInputParams = {}
+    await client.query_precedence(**params)
+
+
+async def check_recursive_shapes(client: AsyncRestXmlProtocolClient) -> None:
+    params: RecursiveShapesInputParams = {}
+    await client.recursive_shapes(**params)
+
+
+async def check_simple_scalar_properties(client: AsyncRestXmlProtocolClient) -> None:
+    params: SimpleScalarPropertiesInputParams = {}
+    await client.simple_scalar_properties(**params)
+
+
+async def check_timestamp_format_headers(client: AsyncRestXmlProtocolClient) -> None:
+    params: TimestampFormatHeadersInputParams = {}
+    await client.timestamp_format_headers(**params)
+
+
+async def check_xml_attributes(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlAttributesInputParams = {}
+    await client.xml_attributes(**params)
+
+
+async def check_xml_attributes_in_middle(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlAttributesInMiddleInputParams = {}
+    await client.xml_attributes_in_middle(**params)
+
+
+async def check_xml_attributes_on_payload(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlAttributesOnPayloadInputParams = {}
+    await client.xml_attributes_on_payload(**params)
+
+
+async def check_xml_blobs(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlBlobsInputParams = {}
+    await client.xml_blobs(**params)
+
+
+async def check_xml_empty_blobs(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlEmptyBlobsInputParams = {}
+    await client.xml_empty_blobs(**params)
+
+
+async def check_xml_empty_lists(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlEmptyListsInputParams = {}
+    await client.xml_empty_lists(**params)
+
+
+async def check_xml_empty_maps(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlEmptyMapsInputParams = {}
+    await client.xml_empty_maps(**params)
+
+
+async def check_xml_empty_strings(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlEmptyStringsInputParams = {}
+    await client.xml_empty_strings(**params)
+
+
+async def check_xml_enums(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlEnumsInputParams = {}
+    await client.xml_enums(**params)
+
+
+async def check_xml_int_enums(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlIntEnumsInputParams = {}
+    await client.xml_int_enums(**params)
+
+
+async def check_xml_lists(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlListsInputParams = {}
+    await client.xml_lists(**params)
+
+
+async def check_xml_maps(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlMapsInputParams = {}
+    await client.xml_maps(**params)
+
+
+async def check_xml_maps_xml_name(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlMapsXmlNameInputParams = {}
+    await client.xml_maps_xml_name(**params)
+
+
+async def check_xml_map_with_xml_namespace(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlMapWithXmlNamespaceInputParams = {}
+    await client.xml_map_with_xml_namespace(**params)
+
+
+async def check_xml_namespaces(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlNamespacesInputParams = {}
+    await client.xml_namespaces(**params)
+
+
+async def check_xml_timestamps(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlTimestampsInputParams = {}
+    await client.xml_timestamps(**params)
+
+
+async def check_xml_unions(client: AsyncRestXmlProtocolClient) -> None:
+    params: XmlUnionsInputParams = {}
+    await client.xml_unions(**params)
