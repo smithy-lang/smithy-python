@@ -11,6 +11,7 @@ from typing import Any, NamedTuple
 from unittest.mock import Mock
 
 import pytest
+from smithy_core import URI
 from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.utils import (
     ensure_utc,
@@ -18,6 +19,7 @@ from smithy_core.utils import (
     expect_type,
     limited_parse_float,
     limited_serialize_float,
+    parse_uri,
     remove_dot_segments,
     serialize_epoch_seconds,
     serialize_float,
@@ -314,3 +316,44 @@ def test_remove_dot_segments(
     input_path: str, remove_consecutive_slashes: bool, expected_path: str
 ) -> None:
     assert remove_dot_segments(input_path, remove_consecutive_slashes) == expected_path
+
+
+@pytest.mark.parametrize(
+    "url, expected",
+    [
+        ("https://example.com", URI(host="example.com")),
+        ("http://example.com:8080", URI(scheme="http", host="example.com", port=8080)),
+        (
+            "https://u:p@example.com/a/b?c=d#e",
+            URI(
+                host="example.com",
+                username="u",
+                password="p",
+                path="/a/b",
+                query="c=d",
+                fragment="e",
+            ),
+        ),
+        ("https://[::1]:8443/x", URI(host="::1", port=8443, path="/x")),
+        # The host keeps its case; endpoint tests compare URLs exactly.
+        ("https://Example.com?x", URI(host="Example.com", query="x")),
+        ("https://Example.com/a/b", URI(host="Example.com", path="/a/b")),
+        ("http://example.com/", URI(scheme="http", host="example.com", path="/")),
+    ],
+)
+def test_parse_uri(url: str, expected: URI) -> None:
+    assert parse_uri(url) == expected
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "example.com",
+        "https://",
+        "https://example.com:99999",
+        "https://[::1/x",
+    ],
+)
+def test_parse_uri_raises(url: str) -> None:
+    with pytest.raises(ExpectationNotMetError):
+        parse_uri(url)

@@ -84,8 +84,25 @@ public class AwsCodegenTest {
         assertTrue(schemas.contains("\"arnNamespace\": \"rest-json\""));
         assertTrue(schemas.contains("\"cloudFormationName\": \"RestJson\""));
         assertTrue(schemas.contains("\"cloudTrailEventSource\": \"rest-json.amazonaws.com\""));
-        assertTrue(schemas.contains("smithy.rules#endpointBdd"));
-        assertTrue(schemas.contains("rest-json-1.{Region}.{PartitionResult#dnsSuffix}"));
+        // Lowering consumes the endpoint rules; the schemas no longer carry them.
+        assertFalse(schemas.contains("smithy.rules#endpointBdd"));
+
+        var endpoints = Files.readString(tempDir.resolve("src/restjson/_private/endpoints.py"));
+        assertTrue(endpoints.contains("\"https://rest-json-1.{Region}.{PartitionResult#dnsSuffix}\""));
+        // Formatting may wrap the call, so match its parts.
+        assertTrue(config.contains("AsyncBddEndpointResolver("));
+        assertTrue(config.contains("BDD, extensions=[AWS_RULES_EXTENSION]"));
+        assertTrue(config.contains("from ._private.endpoints import BDD"));
+        assertTrue(config.contains("from smithy_aws_core.endpoints import AWS_RULES_EXTENSION"));
+        // The default rules declare the FIPS and dual-stack built-ins, so the config gets
+        // their fields; they don't declare the account ID endpoint mode.
+        assertTrue(config.contains("    use_fips_endpoint: bool | None\n"));
+        assertTrue(config.contains("    use_dualstack_endpoint: bool | None\n"));
+        assertTrue(config.contains("use_fips_endpoint: bool | None = None"));
+        assertTrue(config.contains("use_dualstack_endpoint: bool | None = None"));
+        assertTrue(config.contains("\"use_fips_endpoint\": FieldSpec(default=None),"));
+        assertTrue(config.contains("\"use_dualstack_endpoint\": FieldSpec(default=None),"));
+        assertFalse(config.contains("account_id_endpoint_mode"));
     }
 
     private static void assertInOrder(String value, String... fragments) {

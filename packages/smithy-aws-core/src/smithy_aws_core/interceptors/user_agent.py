@@ -10,6 +10,7 @@ from smithy_core.aio.retries import (
     AsyncAdaptiveRetryStrategy,
     AsyncStandardRetryStrategy,
 )
+from smithy_core.endpoints import STATIC_ENDPOINT_CONFIG
 from smithy_core.interceptors import Interceptor, RequestContext
 from smithy_core.interfaces import TypedProperties
 from smithy_http import Field
@@ -80,6 +81,7 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
                 )
 
         self._register_retry_mode(context.properties)
+        self._register_endpoint_override(context.properties)
 
     def modify_before_transmit(
         self, context: RequestContext[Any, HTTPRequest]
@@ -104,6 +106,11 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
             register_feature_id(properties, AwsFeatureId.RETRY_MODE_ADAPTIVE)
         elif isinstance(strategy, AsyncStandardRetryStrategy):
             register_feature_id(properties, AwsFeatureId.RETRY_MODE_STANDARD)
+
+    def _register_endpoint_override(self, properties: TypedProperties) -> None:
+        config = properties.get(STATIC_ENDPOINT_CONFIG)
+        if config is not None and config.endpoint_uri is not None:
+            register_feature_id(properties, AwsFeatureId.ENDPOINT_OVERRIDE)
 
     def _build_sdk_metadata(self) -> list[UserAgentComponent]:
         return [

@@ -4,21 +4,31 @@
  */
 package software.amazon.smithy.python.aws.codegen;
 
+import static software.amazon.smithy.python.aws.codegen.AwsEndpointRulesIntegration.BUILT_IN_FIELDS;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import software.amazon.smithy.aws.traits.ServiceTrait;
+import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
+import software.amazon.smithy.model.shapes.ServiceShape;
+import software.amazon.smithy.python.aws.codegen.AwsEndpointRulesIntegration.BuiltInField;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.generators.ConfigGenerator;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.sections.AsyncConfigSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
+import software.amazon.smithy.rulesengine.language.syntax.parameters.Parameter;
+import software.amazon.smithy.rulesengine.traits.EndpointBddTrait;
 import software.amazon.smithy.utils.CodeInterceptor;
 import software.amazon.smithy.utils.CodeSection;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -50,6 +60,35 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             "protocol",
             "auth_schemes",
             "auth_scheme_resolver");
+
+    // The service's endpoint rules parameters, in trait order.
+    private static List<Parameter> endpointParameters(ServiceShape service) {
+        var parameters = new ArrayList<Parameter>();
+        service.getTrait(EndpointBddTrait.class).ifPresent(trait -> trait.getParameters().forEach(parameters::add));
+        return parameters;
+    }
+
+    // A built-in's config field, typed and documented by its rules parameter.
+    private static ConfigProperty builtInProperty(Parameter parameter, BuiltInField field) {
+        var type = switch (parameter.getType()) {
+            case BOOLEAN -> "bool";
+            case STRING -> "str";
+            default -> throw new CodegenException(String.format(
+                    "Unsupported type %s for built-in %s",
+                    parameter.getType(),
+                    parameter.getBuiltIn().orElseThrow()));
+        };
+        var documentation = parameter.getDocumentation()
+                .orElse("The " + parameter.getName() + " endpoint parameter.");
+        if (field.defaultValue() != null) {
+            documentation += " Defaults to " + field.defaultValue() + ".";
+        }
+        return ConfigProperty.builder()
+                .name(field.name())
+                .type(Symbol.builder().name(type).build())
+                .documentation(documentation)
+                .build();
+    }
 
     @Override
     public List<? extends CodeInterceptor<? extends CodeSection, PythonWriter>> interceptors(
@@ -97,6 +136,20 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             var hasAuth = !serviceIndex.getAuthSchemes(context.settings().service()).isEmpty();
             // Preserve the first declaration when plugins contribute duplicate properties.
             var pluginProperties = new LinkedHashMap<String, ConfigProperty>();
+            for (ConfigProperty property : ConfigGenerator.clientContextProperties(context)) {
+                pluginProperties.putIfAbsent(property.name(), property);
+            }
+            // A field for each built-in the rules declare that the AWS rules extension binds
+            // to config, and the non-None defaults of those fields by name.
+            var builtInDefaults = new HashMap<String, String>();
+            for (Parameter parameter : endpointParameters(service)) {
+                var field = parameter.getBuiltIn().map(BUILT_IN_FIELDS::get).orElse(null);
+                if (field != null
+                        && pluginProperties.putIfAbsent(field.name(), builtInProperty(parameter, field)) == null
+                        && field.defaultValue() != null) {
+                    builtInDefaults.put(field.name(), field.defaultValue());
+                }
+            }
             for (PythonIntegration integration : context.integrations()) {
                 for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
                     if (plugin.matchesService(model, service)) {
@@ -249,7 +302,12 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // below. Fields unique to this service (e.g., api_key from @httpApiKeyAuth)
             // survive and participate in the resolution pipeline.
             for (String propertyName : pluginProperties.keySet()) {
-                writer.write("\"$L\": $T(default=None),", propertyName, fieldSpecSymbol);
+                var builtInDefault = builtInDefaults.get(propertyName);
+                if (builtInDefault != null) {
+                    writer.write("\"$L\": $T(default=$S),", propertyName, fieldSpecSymbol, builtInDefault);
+                } else {
+                    writer.write("\"$L\": $T(default=None),", propertyName, fieldSpecSymbol);
+                }
             }
 
             writer.write("**$T._FIELDS,", asyncAwsConfigSymbol);
@@ -272,14 +330,10 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.write("),");
 
             // endpoint_resolver FieldSpec
-            var endpointPrefix = service.getTrait(ServiceTrait.class)
-                    .map(ServiceTrait::getEndpointPrefix)
-                    .orElse(context.settings().service().getName());
             writer.write("\"endpoint_resolver\": $T(", fieldSpecSymbol);
             writer.indent();
-            writer.write("default_factory=lambda: $T(endpoint_prefix=$S),",
-                    AwsRuntimeTypes.STANDARD_REGIONAL_ENDPOINTS_RESOLVER,
-                    endpointPrefix);
+            writer.write("default_factory=lambda: $C,",
+                    writer.consumer(w -> ConfigGenerator.writeDefaultEndpointResolver(context, w)));
             writer.dedent();
             writer.write("),");
 

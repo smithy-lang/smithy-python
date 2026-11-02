@@ -10,9 +10,9 @@ from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Self
 
 from .. import URI
-from ..auth import AuthParams
+from ..auth import RESOLVED_IDENTITY, AuthParams
 from ..deserializers import DeserializeableShape, ShapeDeserializer
-from ..endpoints import EndpointResolverParams
+from ..endpoints import RESOLVED_ENDPOINT, EndpointResolverParams
 from ..exceptions import (
     ClientTimeoutError,
     RetryError,
@@ -579,6 +579,31 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response]:
             interceptor = call.interceptor
             interceptor.read_before_attempt(request_context)
 
+            # The auth scheme and identity resolve before the endpoint, so endpoint
+            # rules can read the identity.
+            auth_params = AuthParams[I, O](
+                protocol_id=self.protocol.id,
+                operation=call.operation,
+                context=request_context.properties,
+            )
+            auth = self._resolve_auth(call, auth_params)
+            signing = None
+            if auth is not None:
+                option, scheme = auth
+                request_context.properties[AUTH_SCHEME] = scheme
+                identity_resolver = scheme.identity_resolver(context=call.context)
+
+                identity_properties = scheme.identity_properties(
+                    context=request_context.properties
+                )
+                identity_properties.update(option.identity_properties)
+
+                identity = await identity_resolver.get_identity(
+                    properties=identity_properties
+                )
+                request_context.properties[RESOLVED_IDENTITY] = identity
+                signing = option, scheme, identity
+
             endpoint_params = EndpointResolverParams(
                 operation=call.operation,
                 input=request_context.request,
@@ -589,6 +614,7 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response]:
                 endpoint_params
             )
             _LOGGER.debug("Endpoint resolver result: %s", endpoint)
+            request_context.properties[RESOLVED_ENDPOINT] = endpoint
 
             request_context = replace(
                 request_context,
@@ -603,26 +629,8 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response]:
             )
             interceptor.read_before_signing(request_context)
 
-            auth_params = AuthParams[I, O](
-                protocol_id=self.protocol.id,
-                operation=call.operation,
-                context=request_context.properties,
-            )
-            auth = self._resolve_auth(call, auth_params)
-            if auth is not None:
-                option, scheme = auth
-                request_context.properties[AUTH_SCHEME] = scheme
-                identity_resolver = scheme.identity_resolver(context=call.context)
-
-                identity_properties = scheme.identity_properties(
-                    context=request_context.properties
-                )
-                identity_properties.update(option.identity_properties)
-
-                identity = await identity_resolver.get_identity(
-                    properties=identity_properties
-                )
-
+            if signing is not None:
+                option, scheme, identity = signing
                 signer_properties = scheme.signer_properties(
                     context=request_context.properties
                 )

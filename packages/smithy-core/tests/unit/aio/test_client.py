@@ -18,13 +18,19 @@ from smithy_core.aio.retries import (
     AsyncStandardRetryStrategy,
 )
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_core.auth import AuthOption
-from smithy_core.exceptions import CallError, SmithyError, UnsupportedTransportError
+from smithy_core.auth import RESOLVED_IDENTITY, AuthOption
+from smithy_core.endpoints import RESOLVED_ENDPOINT
+from smithy_core.exceptions import (
+    CallError,
+    SmithyError,
+    UnsupportedTransportError,
+)
 from smithy_core.interceptors import (
     InputContext,
     Interceptor,
     InterceptorChain,
     OutputContext,
+    RequestContext,
 )
 from smithy_core.response import EMPTY_RESPONSE_METADATA
 from smithy_core.retries import ExponentialRetryBackoffStrategy
@@ -260,6 +266,82 @@ async def test_modified_input_is_serialized_and_used_to_resolve_endpoint() -> No
 
     assert harness.protocol.serialized_inputs == [interceptor.replacement]
     assert resolver.resolved_inputs == [interceptor.replacement]
+
+
+class _RecordHooks(Interceptor[Any, Any, Any, Any]):
+    def __init__(self, events: list[str]) -> None:
+        self.events = events
+
+    def read_before_attempt(self, context: RequestContext[Any, Any]) -> None:
+        self.events.append("read_before_attempt")
+
+    def modify_before_signing(self, context: RequestContext[Any, Any]) -> Any:
+        self.events.append("modify_before_signing")
+        return context.transport_request
+
+    def read_before_signing(self, context: RequestContext[Any, Any]) -> None:
+        self.events.append("read_before_signing")
+
+    def read_after_signing(self, context: RequestContext[Any, Any]) -> None:
+        self.events.append("read_after_signing")
+
+
+async def test_identity_resolves_before_the_endpoint_and_signing_after_hooks() -> None:
+    events: list[str] = []
+    identity = Mock()
+
+    async def get_identity(**kwargs: Any) -> Any:
+        events.append("get_identity")
+        return identity
+
+    class _Resolver(StubEndpointResolver):
+        async def resolve_endpoint(self, params: Any) -> Any:
+            events.append("resolve_endpoint")
+            assert params.context[RESOLVED_IDENTITY] is identity
+            return await super().resolve_endpoint(params)
+
+    def signer_properties(**kwargs: Any) -> dict[str, Any]:
+        events.append("signer_properties")
+        assert kwargs["context"][RESOLVED_ENDPOINT] is not None
+        return {}
+
+    async def sign(**kwargs: Any) -> Any:
+        events.append("sign")
+        assert kwargs["identity"] is identity
+        return kwargs["request"]
+
+    def resolve_auth_scheme(**kwargs: Any) -> list[AuthOption]:
+        events.append("resolve_auth_scheme")
+        return [option]
+
+    harness = pipeline_harness(NonDuplexTransport())
+    scheme = Mock()
+    scheme.identity_resolver.return_value.get_identity = get_identity
+    scheme.signer_properties = signer_properties
+    scheme.signer.return_value.sign = sign
+    option = AuthOption(scheme_id=ShapeID("com.example#auth"))
+    call = replace(
+        client_call(),
+        interceptor=InterceptorChain([_RecordHooks(events)]),
+        auth_scheme_resolver=Mock(resolve_auth_scheme=resolve_auth_scheme),
+        supported_auth_schemes={option.scheme_id: scheme},
+        endpoint_resolver=_Resolver(),
+    )
+
+    await harness.pipeline(call)
+
+    assert events == [
+        "read_before_attempt",
+        "resolve_auth_scheme",
+        "get_identity",
+        "resolve_endpoint",
+        "modify_before_signing",
+        "read_before_signing",
+        "signer_properties",
+        "sign",
+        "read_after_signing",
+    ]
+    assert call.context[RESOLVED_IDENTITY] is identity
 
 
 async def test_modified_input_reaches_completion_when_serialization_fails() -> None:

@@ -165,19 +165,6 @@
     "resolve_retry_mode": "function[async]",
     "resolve_sdk_ua_app_id": "function[async]"
   },
-  "smithy_aws_core.aio.endpoints": {},
-  "smithy_aws_core.aio.endpoints.standard_regional": {
-    "AsyncEndpointResolver": "rex-protocol[async]",
-    "AsyncStandardRegionalEndpointsResolver": "class[async]",
-    "AwsFeatureId": "rex-class",
-    "Endpoint": "rex-class",
-    "EndpointResolutionError": "rex-exception",
-    "EndpointResolverParams": "rex-class",
-    "REGIONAL_ENDPOINT_CONFIG": "rex-PropertyKey",
-    "URI": "rex-class",
-    "register_feature_id": "rex-function",
-    "resolve_static_uri": "rex-function"
-  },
   "smithy_aws_core.aio.identity": {
     "AWSCredentialsIdentity": "rex-class",
     "AWSIdentityProperties": "rex-class",
@@ -486,10 +473,7 @@
     "validate_sdk_ua_app_id": "function"
   },
   "smithy_aws_core.endpoints": {
-    "PropertyKey": "rex-class",
-    "REGIONAL_ENDPOINT_CONFIG": "PropertyKey",
-    "RegionalEndpointConfig": "class",
-    "StaticEndpointConfig": "rex-protocol"
+    "AWS_RULES_EXTENSION": "rex-RulesExtension"
   },
   "smithy_aws_core.identity": {
     "AWSCredentialsIdentity": "rex-class",
@@ -585,6 +569,7 @@
     "RETRY_STRATEGY": "rex-PropertyKey",
     "RawStringUserAgentComponent": "rex-class",
     "RequestContext": "rex-class",
+    "STATIC_ENDPOINT_CONFIG": "rex-PropertyKey",
     "TypedProperties": "rex-protocol",
     "USER_AGENT": "rex-PropertyKey",
     "UserAgentComponent": "rex-class",
@@ -718,6 +703,7 @@
     "SmithyError": "rex-exception",
     "URI": "class",
     "aio": "rex-module",
+    "auth": "rex-module",
     "codecs": "rex-module",
     "deserializers": "rex-module",
     "documents": "rex-module",
@@ -771,6 +757,8 @@
     "InterceptorChain": "rex-class",
     "OutputContext": "rex-class",
     "PropertyKey": "rex-class",
+    "RESOLVED_ENDPOINT": "rex-PropertyKey",
+    "RESOLVED_IDENTITY": "rex-PropertyKey",
     "RETRY_STRATEGY": "rex-PropertyKey",
     "Request": "rex-protocol[async]",
     "RequestContext": "rex-class",
@@ -789,11 +777,13 @@
     "seek": "rex-function[async]"
   },
   "smithy_core.aio.endpoints": {
-    "AsyncEndpointResolver": "rex-protocol[async]",
+    "AsyncBddEndpointResolver": "class[async]",
     "AsyncStaticEndpointResolver": "class[async]",
     "Endpoint": "rex-class",
+    "EndpointBdd": "rex-class",
     "EndpointResolutionError": "rex-exception",
     "EndpointResolverParams": "rex-class",
+    "RulesExtension": "rex-class",
     "resolve_static_uri": "rex-function"
   },
   "smithy_core.aio.eventstream": {
@@ -917,6 +907,8 @@
     "DefaultAuthResolver": "class",
     "DeserializeableShape": "rex-protocol",
     "NoAuthResolver": "class",
+    "PropertyKey": "rex-class",
+    "RESOLVED_IDENTITY": "PropertyKey",
     "SerializeableShape": "rex-protocol",
     "ShapeID": "rex-class",
     "TypedProperties": "rex-class"
@@ -952,17 +944,20 @@
     "expect_type": "rex-function"
   },
   "smithy_core.endpoints": {
-    "APIOperation": "rex-class",
-    "Endpoint": "class",
-    "EndpointResolutionError": "rex-exception",
-    "EndpointResolverParams": "class",
-    "PropertyKey": "rex-class",
-    "STATIC_ENDPOINT_CONFIG": "PropertyKey",
-    "SerializeableShape": "rex-protocol",
-    "StaticEndpointConfig": "protocol",
-    "TypedProperties": "rex-class",
-    "URI": "rex-class",
-    "resolve_static_uri": "function"
+    "BddEndpointResolver": "rex-class",
+    "BuiltinBinding": "rex-type_alias",
+    "BuiltinGetter": "rex-type_alias",
+    "ENDPOINT_HEADERS": "rex-PropertyKey",
+    "ENDPOINT_PARAMETERS": "rex-PropertyKey",
+    "Endpoint": "rex-class",
+    "EndpointAuthScheme": "rex-class",
+    "EndpointBdd": "rex-class",
+    "EndpointResolverParams": "rex-class",
+    "RESOLVED_ENDPOINT": "rex-PropertyKey",
+    "RulesExtension": "rex-class",
+    "STATIC_ENDPOINT_CONFIG": "rex-PropertyKey",
+    "StaticEndpointConfig": "rex-protocol",
+    "resolve_static_uri": "rex-function"
   },
   "smithy_core.exceptions": {
     "AsyncBodyError": "exception",
@@ -1109,6 +1104,7 @@
     "REGULAR_NAME_RE": "str",
     "REG_NAME": "str",
     "SUB_DELIMITERS_RE": "str",
+    "UNRESERVED_HOST_MATCHER": "Pattern",
     "UNRESERVED_RE": "str",
     "ZONE_ID": "str",
     "variations": "list"
@@ -1146,6 +1142,7 @@
   },
   "smithy_core.traits": {
     "APIKeyLocation": "class",
+    "ContextParamTrait": "class",
     "DefaultTrait": "class",
     "DynamicTrait": "class",
     "EndpointTrait": "class",
@@ -1172,6 +1169,7 @@
     "LongPollTrait": "class",
     "MediaTypeTrait": "class",
     "ORIGINAL_SHAPE_ID": "ShapeID",
+    "OperationContextParamsTrait": "class",
     "PathPattern": "rex-class",
     "RequiredTrait": "class",
     "RequiresLengthTrait": "class",
@@ -1179,6 +1177,7 @@
     "SensitiveTrait": "class",
     "ShapeID": "rex-class",
     "SparseTrait": "class",
+    "StaticContextParamsTrait": "class",
     "StreamingTrait": "class",
     "TimestampFormat": "rex-class",
     "TimestampFormatTrait": "class",
@@ -1214,6 +1213,7 @@
     "expect_type": "function",
     "limited_parse_float": "function",
     "limited_serialize_float": "function",
+    "parse_uri": "function",
     "remove_dot_segments": "function",
     "serialize_epoch_seconds": "function",
     "serialize_float": "function",
@@ -1752,6 +1752,10 @@
     "deep_equal": "rex-function",
     "verify_models": "rex-function",
     "xml_equal": "rex-function"
+  },
+  "smithy_test.aio": {
+    "check_client_case_async": "rex-function[async]",
+    "check_rules_case_async": "rex-function[async]"
   },
   "smithy_xml": {
     "BytesReader": "rex-protocol",

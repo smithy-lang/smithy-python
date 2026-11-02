@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 import software.amazon.smithy.aws.traits.ServiceTrait;
+import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
@@ -23,12 +24,15 @@ import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
+import software.amazon.smithy.python.codegen.integrations.EndpointRulesExtension;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.sections.AsyncConfigSection;
 import software.amazon.smithy.python.codegen.sections.ConfigSection;
 import software.amazon.smithy.python.codegen.sections.InitDefaultEndpointResolverSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
+import software.amazon.smithy.rulesengine.traits.ClientContextParamsTrait;
+import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.CodeInterceptor;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -81,20 +85,6 @@ public final class ConfigGenerator implements Runnable {
                                     .build())
                             .build())
                     .documentation("A static URI to route requests to.")
-                    .build(),
-            ConfigProperty.builder()
-                    .name("endpoint_resolver")
-                    .type(RuntimeTypes.ENDPOINT_RESOLVER)
-                    .documentation("""
-                            The endpoint resolver used to resolve the final endpoint per-operation based on the \
-                            configuration.""")
-                    .nullable(false)
-                    .initialize(writer -> {
-                        writer.pushState(new InitDefaultEndpointResolverSection());
-                        writer.write("self.endpoint_resolver = endpoint_resolver or $T()",
-                                RuntimeTypes.STATIC_ENDPOINT_RESOLVER);
-                        writer.popState();
-                    })
                     .build());
 
     // This list contains any properties that must be added to any http-based
@@ -116,6 +106,102 @@ public final class ConfigGenerator implements Runnable {
     public ConfigGenerator(PythonSettings settings, GenerationContext context) {
         this.context = context;
         this.settings = settings;
+    }
+
+    /**
+     * One config field per {@code clientContextParams} entry, named {@code to_snake_case(name)},
+     * which is the attribute endpoint parameter plans read. Fields default to None and have no
+     * environment or profile sources.
+     *
+     * @param context the generation context.
+     * @return the fields, in trait order.
+     */
+    public static List<ConfigProperty> clientContextProperties(GenerationContext context) {
+        // TODO: when porting to Python codegen, fail on a field name that is a Python keyword or
+        // collides with another config field. No model does today, but a collision is dropped
+        // silently and the rules read the other field's value.
+        var service = context.settings().service(context.model());
+        var trait = service.getTrait(ClientContextParamsTrait.class);
+        if (trait.isEmpty()) {
+            return List.of();
+        }
+        var properties = new ArrayList<ConfigProperty>();
+        for (var entry : trait.get().getParameters().entrySet()) {
+            var definition = entry.getValue();
+            var type = switch (definition.getType()) {
+                case BOOLEAN -> "bool";
+                case STRING -> "str";
+                default -> throw new CodegenException(String.format(
+                        "Unsupported type %s for client context parameter %s",
+                        definition.getType(),
+                        entry.getKey()));
+            };
+            properties.add(ConfigProperty.builder()
+                    .name(CaseUtils.toSnakeCase(entry.getKey()))
+                    .type(Symbol.builder().name(type).build())
+                    .documentation(definition.getDocumentation()
+                            .orElse("The " + entry.getKey() + " endpoint parameter."))
+                    .build());
+        }
+        return properties;
+    }
+
+    /**
+     * The endpoint rules extensions that client plugins register for the service, in
+     * integration order. The default endpoint resolver gets them.
+     *
+     * @param context the generation context.
+     * @return the extensions.
+     */
+    public static List<EndpointRulesExtension> endpointRulesExtensions(GenerationContext context) {
+        var service = context.settings().service(context.model());
+        var extensions = new ArrayList<EndpointRulesExtension>();
+        for (PythonIntegration integration : context.integrations()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
+                if (plugin.matchesService(context.model(), service)) {
+                    plugin.getEndpointRulesExtension().ifPresent(extensions::add);
+                }
+            }
+        }
+        return extensions;
+    }
+
+    /**
+     * Writes the expression that builds the default endpoint resolver, which evaluates
+     * the service's endpoint BDD with the registered rules extensions.
+     *
+     * @param context the generation context.
+     * @param writer the writer to write the expression with, inline.
+     */
+    public static void writeDefaultEndpointResolver(GenerationContext context, PythonWriter writer) {
+        var bdd = EndpointBddGenerator.bddSymbol(context.settings());
+        var extensions = endpointRulesExtensions(context);
+        if (extensions.isEmpty()) {
+            writer.writeInline("$T($T)", RuntimeTypes.ASYNC_BDD_ENDPOINT_RESOLVER, bdd);
+            return;
+        }
+        writer.writeInline("$T($T, extensions=[", RuntimeTypes.ASYNC_BDD_ENDPOINT_RESOLVER, bdd);
+        for (int i = 0; i < extensions.size(); i++) {
+            writer.writeInline(i == 0 ? "$T" : ", $T", extensions.get(i).getRulesExtensionSymbol(context));
+        }
+        writer.writeInline("])");
+    }
+
+    private static ConfigProperty endpointResolverProperty(GenerationContext context) {
+        return ConfigProperty.builder()
+                .name("endpoint_resolver")
+                .type(RuntimeTypes.ENDPOINT_RESOLVER)
+                .documentation("""
+                        The endpoint resolver used to resolve the final endpoint per-operation based on the \
+                        configuration.""")
+                .nullable(false)
+                .initialize(writer -> {
+                    writer.pushState(new InitDefaultEndpointResolverSection());
+                    writer.write("self.endpoint_resolver = endpoint_resolver or $C",
+                            writer.consumer(w -> writeDefaultEndpointResolver(context, w)));
+                    writer.popState();
+                })
+                .build();
     }
 
     private static List<ConfigProperty> getProtocolProperties(GenerationContext context) {
@@ -413,7 +499,9 @@ public final class ConfigGenerator implements Runnable {
         // Initialize a set of config properties with our base properties.
         var properties = new TreeSet<>(Comparator.comparing(ConfigProperty::name));
         properties.addAll(BASE_PROPERTIES);
+        properties.add(endpointResolverProperty(context));
         properties.addAll(getProtocolProperties(context));
+        properties.addAll(clientContextProperties(context));
 
         var serviceIndex = ServiceIndex.of(context.model());
         boolean hasAuth = !serviceIndex.getAuthSchemes(settings.service()).isEmpty();
