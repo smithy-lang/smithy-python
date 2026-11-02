@@ -1,4 +1,4 @@
 {
-  "type": "enhancement",
+  "type": "feature",
   "description": "Add the retry strategy chosen for a call to its request properties under `RETRY_STRATEGY`."
 }
