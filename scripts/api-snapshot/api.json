@@ -582,7 +582,6 @@
     "Field": "rex-class",
     "HTTPRequest": "rex-protocol[async]",
     "Interceptor": "rex-class",
-    "PropertyKey": "rex-class",
     "RETRY_STRATEGY": "rex-PropertyKey",
     "RawStringUserAgentComponent": "rex-class",
     "RequestContext": "rex-class",

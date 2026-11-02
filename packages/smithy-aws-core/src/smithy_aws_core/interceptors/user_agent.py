@@ -12,7 +12,6 @@ from smithy_core.aio.retries import (
 )
 from smithy_core.interceptors import Interceptor, RequestContext
 from smithy_core.interfaces import TypedProperties
-from smithy_core.types import PropertyKey
 from smithy_http import Field
 from smithy_http.aio.interfaces import HTTPRequest
 from smithy_http.interceptors.user_agent import USER_AGENT
@@ -29,15 +28,6 @@ from ..business_metrics import (
 __all__ = ["UserAgentInterceptor"]
 
 _USERAGENT_SDK_NAME = "aws-sdk-python"
-
-_WRITTEN_USER_AGENT = PropertyKey(
-    key="aws_written_user_agent", value_type=tuple[str, str]
-)
-"""
-The User-Agent this attempt started with (without m/) and the one it wrote (with m/).
-
-The next attempt uses them, if there is one, so that m/ isn't added twice.
-"""
 
 
 class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
@@ -100,17 +90,10 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
         request = context.transport_request
         encoded = encode_feature_ids(context.properties.get(FEATURE_IDS, {}))
         if encoded and "User-Agent" in request.fields:
-            current = request.fields["User-Agent"].as_string()
-            # In generated clients each attempt gets a fresh User-Agent. The signer
-            # copies the headers and the generic interceptor rewrites them. As a
-            # fallback, for example with a signer that doesn't copy them, if a retry
-            # still has the header written here, start from its value before m/ was
-            # added, so m/ is never added twice and nothing else is removed.
-            previous = context.properties.get(_WRITTEN_USER_AGENT)
-            base = previous[0] if previous and current == previous[1] else current
-            written = f"{base} m/{encoded}"
-            request.fields.set_field(Field(name="User-Agent", values=[written]))
-            context.properties[_WRITTEN_USER_AGENT] = (base, written)
+            user_agent = request.fields["User-Agent"].as_string()
+            request.fields.set_field(
+                Field(name="User-Agent", values=[f"{user_agent} m/{encoded}"])
+            )
         return request
 
     def _register_retry_mode(self, properties: TypedProperties) -> None:

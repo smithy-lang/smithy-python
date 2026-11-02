@@ -112,34 +112,6 @@ def test_leaves_header_unchanged_without_features() -> None:
     assert _transmit(_interceptor(), TypedProperties()) == _BASE_USER_AGENT
 
 
-def test_retry_does_not_duplicate_business_metrics() -> None:
-    # A retry shallow-copies the request, so it starts with the previous attempt's
-    # User-Agent, m/ included. The header must not have duplicate m/.
-    interceptor = _interceptor()
-    properties = TypedProperties()
-    register_feature_id(properties, AwsFeatureId.ENDPOINT_OVERRIDE)
-    request = _request()
-    _transmit(interceptor, properties, request)
-    retry = copy(request)
-
-    user_agent = _transmit(interceptor, properties, retry)
-
-    assert user_agent == f"{_BASE_USER_AGENT} m/N"
-
-
-def test_retry_with_more_features_replaces_previous_business_metrics() -> None:
-    interceptor = _interceptor()
-    properties = TypedProperties()
-    register_feature_id(properties, AwsFeatureId.ENDPOINT_OVERRIDE)
-    request = _request()
-    _transmit(interceptor, properties, request)
-    register_feature_id(properties, AwsFeatureId.RETRY_MODE_STANDARD)
-
-    user_agent = _transmit(interceptor, properties, copy(request))
-
-    assert user_agent == f"{_BASE_USER_AGENT} m/N,E"
-
-
 def test_keeps_m_prefixed_text_from_the_user() -> None:
     interceptor = _interceptor()
     properties = TypedProperties()
