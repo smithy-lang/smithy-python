@@ -1,7 +1,7 @@
 name: Build smithy-python
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize]
     branches: [develop]
 
 concurrency:
