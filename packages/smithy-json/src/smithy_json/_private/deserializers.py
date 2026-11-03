@@ -9,7 +9,6 @@ from decimal import Decimal
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
-from smithy_core.exceptions import SmithyError
 from smithy_core.interfaces import BytesReader
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
@@ -17,26 +16,12 @@ from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 from smithy_core.types import TimestampFormat
 
 from ..settings import JSONSettings
-
-type JSONValue = (
-    Mapping[str, "JSONValue"]
-    | Sequence["JSONValue"]
-    | str
-    | int
-    | Decimal
-    | bool
-    | None
+from . import (
+    JSONValue,
+    JSONValueError,
+    parse_big_decimal_string,
+    parse_big_integer_string,
 )
-
-
-class JSONValueError(SmithyError):
-    """Raised when a parsed JSON value does not match the requested Smithy type."""
-
-    def __init__(self, expected: str, value: JSONValue) -> None:
-        super().__init__(
-            f"Error parsing JSON. Expected value of type `{expected}`, "
-            f"but found: `{type(value).__name__}`: {value}"
-        )
 
 
 def _reject_constant(value: str) -> None:
@@ -94,7 +79,14 @@ class JSONShapeDeserializer(ShapeDeserializer):
             case _:
                 raise JSONValueError("number", self._value)
 
+    def read_big_integer(self, schema: Schema) -> int:
+        if self._settings.arbitrary_precision_as_string:
+            return parse_big_integer_string(self._value)
+        return self.read_integer(schema)
+
     def read_big_decimal(self, schema: Schema) -> Decimal:
+        if self._settings.arbitrary_precision_as_string:
+            return parse_big_decimal_string(self._value)
         match self._value:
             case Decimal():
                 return self._value

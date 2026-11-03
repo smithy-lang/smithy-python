@@ -9,6 +9,7 @@ from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.prelude import (
     BIG_DECIMAL,
+    BIG_INTEGER,
     BLOB,
     BOOLEAN,
     DOCUMENT,
@@ -122,6 +123,9 @@ SCHEMA: Schema = Schema.collection(
         "sparseMapMember": {
             "target": SPARSE_STRING_MAP_SCHEMA,
         },
+        "bigIntegerMember": {
+            "target": BIG_INTEGER,
+        },
     },
 )
 SCHEMA.members["structMember"] = Schema.member(
@@ -150,6 +154,7 @@ class SerdeShape:
     struct_member: "SerdeShape | None" = None
     sparse_list_member: list[str | None] | None = None
     sparse_map_member: dict[str, str | None] | None = None
+    big_integer_member: int | None = None
 
     def serialize(self, serializer: ShapeSerializer):
         with serializer.begin_struct(SCHEMA) as s:
@@ -234,6 +239,10 @@ class SerdeShape:
                         ms.entry(key, lambda vs: vs.write_null(target_schema))
                     else:
                         ms.entry(key, lambda vs: vs.write_string(target_schema, value))  # type: ignore
+        if self.big_integer_member is not None:
+            serializer.write_big_integer(
+                SCHEMA.members["bigIntegerMember"], self.big_integer_member
+            )
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -333,6 +342,10 @@ class SerdeShape:
                         _read_optional_map,
                     )
                     kwargs["sparse_map_member"] = sparse_map_value
+                case 17:
+                    kwargs["big_integer_member"] = de.read_big_integer(
+                        SCHEMA.members["bigIntegerMember"]
+                    )
                 case _:
                     # In actual generated code, this will just log in order to ignore
                     # unknown members.
@@ -453,6 +466,12 @@ JSON_SERDE_CASES = [
     (Document({"foo": "bar"}, schema=DOCUMENT), b'{"foo":"bar"}'),
     (Document({"jsonNameMember": "foo"}, schema=SCHEMA), b'{"jsonName":"foo"}'),
     (Document({"jsonNameMember": "foo"}, schema=DOCUMENT), b'{"jsonNameMember":"foo"}'),
+    # With default settings, bigInteger is written and read as a JSON number.
+    (SerdeShape(big_integer_member=1), b'{"bigIntegerMember":1}'),
+    (
+        SerdeShape(big_integer_member=-123456789012345678901234567890),
+        b'{"bigIntegerMember":-123456789012345678901234567890}',
+    ),
 ]
 
 JSON_SERIALIZATION_CASES = JSON_SERDE_CASES.copy()

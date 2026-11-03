@@ -12,7 +12,7 @@ from ._private.serializers import JSONShapeSerializer as _JSONShapeSerializer
 from .settings import JSONSettings
 
 __version__ = "0.3.0"
-__all__ = ("JSONCodec", "JSONDocument", "JSONSettings")
+__all__ = ("JSONCodec", "JSONDocument", "JSONSettings", "RpcV2JSONCodec")
 
 
 class JSONCodec(Codec):
@@ -25,6 +25,7 @@ class JSONCodec(Codec):
         default_timestamp_format: TimestampFormat = TimestampFormat.DATE_TIME,
         default_namespace: str | None = None,
         document_class: type[JSONDocument] = JSONDocument,
+        arbitrary_precision_as_string: bool = False,
     ) -> None:
         """Initializes a JSONCodec.
 
@@ -37,6 +38,9 @@ class JSONCodec(Codec):
         :param default_namespace: The default namespace to use when determining a
             document's discriminator.
         :param document_class: The document class to deserialize to.
+        :param arbitrary_precision_as_string: Whether bigInteger and bigDecimal values
+            are written and read as JSON strings to preserve arbitrary precision, as
+            required by `smithy.protocols#rpcv2Json`.
         """
         self._settings = JSONSettings(
             use_json_name=use_json_name,
@@ -44,6 +48,7 @@ class JSONCodec(Codec):
             default_timestamp_format=default_timestamp_format,
             default_namespace=default_namespace,
             document_class=document_class,
+            arbitrary_precision_as_string=arbitrary_precision_as_string,
         )
 
     @property
@@ -55,3 +60,32 @@ class JSONCodec(Codec):
 
     def create_deserializer(self, source: bytes | BytesReader) -> "ShapeDeserializer":
         return _JSONShapeDeserializer(source, settings=self._settings)
+
+
+class RpcV2JSONCodec(JSONCodec):
+    """A JSONCodec preconfigured for the `smithy.protocols#rpcv2Json` protocol.
+
+    Member names are used as-is (`smithy.api#jsonName` is ignored), timestamps are
+    always epoch-seconds (`smithy.api#timestampFormat` is ignored), and bigInteger and
+    bigDecimal values are written and read as JSON strings.
+    """
+
+    def __init__(
+        self,
+        default_namespace: str | None = None,
+        document_class: type[JSONDocument] = JSONDocument,
+    ) -> None:
+        """Initializes an RpcV2JSONCodec.
+
+        :param default_namespace: The default namespace to use when determining a
+            document's discriminator.
+        :param document_class: The document class to deserialize to.
+        """
+        super().__init__(
+            use_json_name=False,
+            use_timestamp_format=False,
+            default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
+            default_namespace=default_namespace,
+            document_class=document_class,
+            arbitrary_precision_as_string=True,
+        )
