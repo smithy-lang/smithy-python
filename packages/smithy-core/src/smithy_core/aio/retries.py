@@ -19,9 +19,11 @@ from ..retries import (
     StandardRetryQuota,
     StandardRetryToken,
 )
+from ..types import PropertyKey
 from .interfaces.retries import AsyncRetryStrategy
 
 __all__ = [
+    "RETRY_STRATEGY",
     "AsyncAdaptiveRetryStrategy",
     "AsyncClientRateLimiter",
     "AsyncRequestRateTracker",
@@ -30,6 +32,9 @@ __all__ = [
     "AsyncStandardRetryStrategy",
     "AsyncTokenBucket",
 ]
+
+RETRY_STRATEGY = PropertyKey(key="retry_strategy", value_type=AsyncRetryStrategy)
+"""The retry strategy the client chose for the call."""
 
 
 class AsyncRetryStrategyResolver:

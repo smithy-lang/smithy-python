@@ -7,6 +7,7 @@ from smithy_core.aio.interfaces import AsyncEndpointResolver
 from smithy_core.endpoints import Endpoint, EndpointResolverParams, resolve_static_uri
 from smithy_core.exceptions import EndpointResolutionError
 
+from ...business_metrics import AwsFeatureId, register_feature_id
 from ...endpoints import REGIONAL_ENDPOINT_CONFIG
 
 __all__ = ["AsyncStandardRegionalEndpointsResolver"]
@@ -20,6 +21,7 @@ class AsyncStandardRegionalEndpointsResolver(AsyncEndpointResolver):
 
     async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Endpoint:
         if (static_uri := resolve_static_uri(params)) is not None:
+            register_feature_id(params.context, AwsFeatureId.ENDPOINT_OVERRIDE)
             return Endpoint(uri=static_uri)
 
         region_config = params.context.get(REGIONAL_ENDPOINT_CONFIG)

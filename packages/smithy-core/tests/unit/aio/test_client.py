@@ -11,7 +11,12 @@ import pytest
 from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.eventstream import AsyncDuplexEventStream, AsyncInputEventStream
 from smithy_core.aio.interfaces import AsyncClientTransport
-from smithy_core.aio.retries import AsyncAdaptiveRetryStrategy, AsyncSimpleRetryStrategy
+from smithy_core.aio.retries import (
+    RETRY_STRATEGY,
+    AsyncAdaptiveRetryStrategy,
+    AsyncSimpleRetryStrategy,
+    AsyncStandardRetryStrategy,
+)
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.auth import AuthOption
 from smithy_core.exceptions import CallError, SmithyError, UnsupportedTransportError
@@ -289,6 +294,21 @@ class _StubClient(AsyncClient):
     @property
     def closed(self) -> bool:
         return self._closed
+
+
+def test_build_call_adds_retry_strategy_to_request_properties() -> None:
+    retry_strategy = AsyncStandardRetryStrategy()
+    config = Mock(interceptors=[])
+    client = _StubClient()
+    _, call = client._build_call(  # pyright: ignore[reportPrivateUsage]
+        cast(Any, Mock()),
+        cast(Any, Mock()),
+        config=config,
+        retry_strategy=retry_strategy,
+    )
+
+    assert call.context[RETRY_STRATEGY] is retry_strategy
+    assert call.retry_strategy is retry_strategy
 
 
 async def test_close_is_idempotent() -> None:

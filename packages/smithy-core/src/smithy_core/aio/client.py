@@ -49,7 +49,11 @@ from .interfaces import (
 from .interfaces.auth import AsyncAuthScheme
 from .interfaces.eventstream import AsyncEventReceiver
 from .interfaces.retries import AsyncRetryStrategy
-from .retries import AsyncAdaptiveRetryStrategy, AsyncRetryStrategyResolver
+from .retries import (
+    RETRY_STRATEGY,
+    AsyncAdaptiveRetryStrategy,
+    AsyncRetryStrategyResolver,
+)
 from .utils import close, seek
 
 if TYPE_CHECKING:
@@ -806,10 +810,12 @@ class AsyncClient:
         pipeline = AsyncRequestPipeline(
             protocol=config.protocol, transport=config.transport
         )
+        context = _TypedProperties({"config": config})
+        context[RETRY_STRATEGY] = retry_strategy
         call = AsyncClientCall(
             input=input,
             operation=operation,
-            context=_TypedProperties({"config": config}),
+            context=context,
             interceptor=InterceptorChain(config.interceptors),
             auth_scheme_resolver=config.auth_scheme_resolver,
             supported_auth_schemes=config.auth_schemes,
