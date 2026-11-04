@@ -48,8 +48,3 @@ For protocol, codec, or serde changes, also read the
   version in `codegen/build.gradle.kts`.
 - In your handoff, report only the checks you actually ran and their results.
   Name any checks that failed, were skipped, or could not run, and why.
-- When asked only to review, report findings. Do not edit files, commit, push,
-  or post comments unless asked.
-- When asked to draft a PR description, explain why the change is needed and
-  what reviewers should focus on. Leave out test results and Testing sections;
-  CI already shows the checks.
