@@ -22,6 +22,9 @@ For protocol, codec, or serde changes, also read the
 
 ## Reminders
 
+- When switching checkouts or worktrees, deactivate the previous environment,
+  activate this checkout's `.venv`, and verify that runtime imports resolve to
+  the checkout being tested.
 - Change the package or generator that owns the behavior. The Java generator in
   `codegen/` generates service clients. The native generator in
   `packages/smithy-python` generates standalone types only, and must not depend
@@ -36,9 +39,10 @@ For protocol, codec, or serde changes, also read the
   generator change, run `make generate-protocol-tests` before
   `make typecheck-protocols` and `make test-protocols`, which check whatever is
   currently in `codegen-output/`.
-- Snapshot targets fail when their output changes. If the change is intended,
-  follow [the snapshot update steps](CONTRIBUTING.md#generated-output-and-snapshots)
-  so the remaining checks still run.
+- Snapshot targets fail when their output changes, and composite targets stop
+  there. If the change is intended, review the diff and run the remaining
+  checks separately; see
+  [Generated output and snapshots](CONTRIBUTING.md#generated-output-and-snapshots).
 - Add one changelog fragment per affected package for each user-visible change
   under `packages/`. When generated clients change, also bump the generator
   version in `codegen/build.gradle.kts`.
