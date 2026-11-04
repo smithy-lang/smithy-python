@@ -27,6 +27,7 @@ from smithy_core.interfaces import TypedProperties as _TypedPropertiesInterface
 from smithy_core.types import TypedProperties
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPResponse
+from smithy_http.aio.interfaces import HTTPRequest
 from smithy_http.aio.protocols import AsyncRpcV2CborClientProtocol
 
 from .model import (
@@ -105,12 +106,23 @@ def _time_ops_async(
     return asyncio.run(_run())
 
 
-def _make_response(body: bytes, content_type: str) -> HTTPResponse:
+def _make_response(
+    body: bytes, content_type: str, request: HTTPRequest
+) -> HTTPResponse:
     """A success HTTPResponse stub carrying the wire body, mirroring the response-stub
-    pattern in the generated protocol tests (status 200 + fields + body bytes)."""
+    pattern in the generated protocol tests (status 200 + fields + body bytes).
+
+    Echoes the request's ``Smithy-Protocol`` header, as an RPC v2 server must; the
+    protocol rejects a response without it as malformed.
+    """
+    fields = [("content-type", content_type)]
+    if "Smithy-Protocol" in request.fields:
+        fields.append(
+            ("smithy-protocol", request.fields["Smithy-Protocol"].as_string())
+        )
     return HTTPResponse(
         status=200,
-        fields=tuples_to_fields([("content-type", content_type)]),
+        fields=tuples_to_fields(fields),
         body=AsyncBytesReader(body),
     )
 
@@ -169,7 +181,7 @@ def _bench_protocol(
 
     # --- deserialize throughput ---
     async def _deserialize() -> object:
-        response = _make_response(response_body, content_type)
+        response = _make_response(response_body, content_type, request)
         return await protocol.deserialize_response(
             operation=PUT_RECORDS_OPERATION,
             request=request,

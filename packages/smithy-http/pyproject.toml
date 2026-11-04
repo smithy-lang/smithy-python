@@ -43,6 +43,9 @@ awscrt = [
 cbor = [
     "smithy-cbor~=0.1.0",
 ]
+json = [
+    "smithy-json~=0.3.0",
+]
 aiohttp = [
     "aiohttp>=3.11.12, <4.0",
     "yarl"

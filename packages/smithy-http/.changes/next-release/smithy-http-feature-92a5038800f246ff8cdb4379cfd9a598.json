@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `AsyncRpcV2JsonClientProtocol`, an implementation of the `smithy.protocols#rpcv2Json` protocol, and a `json` extra that installs `smithy-json`."
+}

@@ -753,6 +753,9 @@ awscrt = [
 cbor = [
     { name = "smithy-cbor" },
 ]
+json = [
+    { name = "smithy-json" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -760,9 +763,10 @@ requires-dist = [
     { name = "awscrt", marker = "extra == 'awscrt'", specifier = "~=0.32.0" },
     { name = "smithy-cbor", marker = "extra == 'cbor'", editable = "packages/smithy-cbor" },
     { name = "smithy-core", editable = "packages/smithy-core" },
+    { name = "smithy-json", marker = "extra == 'json'", editable = "packages/smithy-json" },
     { name = "yarl", marker = "extra == 'aiohttp'" },
 ]
-provides-extras = ["aiohttp", "awscrt", "cbor"]
+provides-extras = ["aiohttp", "awscrt", "cbor", "json"]
 
 [[package]]
 name = "smithy-json"
