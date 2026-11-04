@@ -32,3 +32,7 @@ class JSONSettings:
 
     default_namespace: str | None = None
     """The default namespace to use when determining a document's discriminator."""
+
+    arbitrary_precision_as_string: bool = False
+    """Whether bigInteger and bigDecimal values are written and read as JSON strings to
+    preserve arbitrary precision, as required by smithy.protocols#rpcv2Json."""

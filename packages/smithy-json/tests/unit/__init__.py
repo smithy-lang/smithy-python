@@ -9,6 +9,7 @@ from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.prelude import (
     BIG_DECIMAL,
+    BIG_INTEGER,
     BLOB,
     BOOLEAN,
     DOCUMENT,
@@ -21,6 +22,29 @@ from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import JSONNameTrait, SparseTrait, TimestampFormatTrait
+from smithy_core.types import TimestampFormat
+from smithy_json import JSONCodec, JSONDocument
+
+
+def rpcv2_json_codec(
+    default_namespace: str | None = None,
+    document_class: type[JSONDocument] = JSONDocument,
+) -> JSONCodec:
+    """Create a JSONCodec configured for the smithy.protocols#rpcv2Json protocol.
+
+    This mirrors the configuration the RpcV2JSONProtocol uses: member names are used
+    as-is, timestamps are always epoch-seconds, and bigInteger/bigDecimal values are
+    JSON strings.
+    """
+    return JSONCodec(
+        use_json_name=False,
+        use_timestamp_format=False,
+        default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
+        arbitrary_precision_as_string=True,
+        default_namespace=default_namespace,
+        document_class=document_class,
+    )
+
 
 STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
@@ -122,6 +146,9 @@ SCHEMA: Schema = Schema.collection(
         "sparseMapMember": {
             "target": SPARSE_STRING_MAP_SCHEMA,
         },
+        "bigIntegerMember": {
+            "target": BIG_INTEGER,
+        },
     },
 )
 SCHEMA.members["structMember"] = Schema.member(
@@ -150,6 +177,7 @@ class SerdeShape:
     struct_member: "SerdeShape | None" = None
     sparse_list_member: list[str | None] | None = None
     sparse_map_member: dict[str, str | None] | None = None
+    big_integer_member: int | None = None
 
     def serialize(self, serializer: ShapeSerializer):
         with serializer.begin_struct(SCHEMA) as s:
@@ -234,6 +262,10 @@ class SerdeShape:
                         ms.entry(key, lambda vs: vs.write_null(target_schema))
                     else:
                         ms.entry(key, lambda vs: vs.write_string(target_schema, value))  # type: ignore
+        if self.big_integer_member is not None:
+            serializer.write_big_integer(
+                SCHEMA.members["bigIntegerMember"], self.big_integer_member
+            )
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -333,6 +365,10 @@ class SerdeShape:
                         _read_optional_map,
                     )
                     kwargs["sparse_map_member"] = sparse_map_value
+                case 17:
+                    kwargs["big_integer_member"] = de.read_big_integer(
+                        SCHEMA.members["bigIntegerMember"]
+                    )
                 case _:
                     # In actual generated code, this will just log in order to ignore
                     # unknown members.
@@ -453,6 +489,12 @@ JSON_SERDE_CASES = [
     (Document({"foo": "bar"}, schema=DOCUMENT), b'{"foo":"bar"}'),
     (Document({"jsonNameMember": "foo"}, schema=SCHEMA), b'{"jsonName":"foo"}'),
     (Document({"jsonNameMember": "foo"}, schema=DOCUMENT), b'{"jsonNameMember":"foo"}'),
+    # With default settings, bigInteger is written and read as a JSON number.
+    (SerdeShape(big_integer_member=1), b'{"bigIntegerMember":1}'),
+    (
+        SerdeShape(big_integer_member=-123456789012345678901234567890),
+        b'{"bigIntegerMember":-123456789012345678901234567890}',
+    ),
 ]
 
 JSON_SERIALIZATION_CASES = JSON_SERDE_CASES.copy()

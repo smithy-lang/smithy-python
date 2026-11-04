@@ -25,6 +25,7 @@ class JSONCodec(Codec):
         default_timestamp_format: TimestampFormat = TimestampFormat.DATE_TIME,
         default_namespace: str | None = None,
         document_class: type[JSONDocument] = JSONDocument,
+        arbitrary_precision_as_string: bool = False,
     ) -> None:
         """Initializes a JSONCodec.
 
@@ -37,6 +38,9 @@ class JSONCodec(Codec):
         :param default_namespace: The default namespace to use when determining a
             document's discriminator.
         :param document_class: The document class to deserialize to.
+        :param arbitrary_precision_as_string: Whether bigInteger and bigDecimal values
+            are written and read as JSON strings to preserve arbitrary precision, as
+            required by `smithy.protocols#rpcv2Json`.
         """
         self._settings = JSONSettings(
             use_json_name=use_json_name,
@@ -44,6 +48,7 @@ class JSONCodec(Codec):
             default_timestamp_format=default_timestamp_format,
             default_namespace=default_namespace,
             document_class=document_class,
+            arbitrary_precision_as_string=arbitrary_precision_as_string,
         )
 
     @property

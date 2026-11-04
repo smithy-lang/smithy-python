@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added the `arbitrary_precision_as_string` setting to `JSONCodec` and `JSONSettings` to support the `smithy.protocols#rpcv2Json` protocol, which serializes bigInteger and bigDecimal values as JSON strings."
+}

@@ -10,6 +10,7 @@ import pytest
 from smithy_core.documents import Document
 from smithy_core.prelude import (
     BIG_DECIMAL,
+    BIG_INTEGER,
     BLOB,
     BOOLEAN,
     FLOAT,
@@ -139,3 +140,19 @@ class TestStringControlCharEscaping:
         raw = _serialize_string(value)
         parsed = json.loads(raw)
         assert parsed == value
+
+
+@pytest.mark.parametrize(
+    "given, expected",
+    [
+        (0, b"0"),
+        (-1, b"-1"),
+        (123456789012345678901234567890, b"123456789012345678901234567890"),
+    ],
+)
+def test_default_write_big_integer_is_number(given: int, expected: bytes) -> None:
+    sink = BytesIO()
+    serializer = JSONCodec().create_serializer(sink)
+    serializer.write_big_integer(BIG_INTEGER, given)
+    serializer.flush()
+    assert sink.getvalue() == expected

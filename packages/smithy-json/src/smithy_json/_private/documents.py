@@ -14,6 +14,7 @@ from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 from smithy_core.utils import expect_type
 
 from ..settings import JSONSettings
+from . import parse_big_decimal_string, parse_big_integer_string
 
 
 class JSONDocument(Document):
@@ -40,6 +41,26 @@ class JSONDocument(Document):
 
     def as_blob(self) -> bytes:
         return b64decode(expect_type(str, self._value))
+
+    def as_integer(self) -> int:
+        # With arbitrary_precision_as_string, typed bigInteger values are JSON strings.
+        if (
+            self._settings.arbitrary_precision_as_string
+            and self._schema.shape_type is ShapeType.BIG_INTEGER
+            and isinstance(self._value, str)
+        ):
+            return parse_big_integer_string(self._value)
+        return super().as_integer()
+
+    def as_decimal(self) -> Decimal:
+        # With arbitrary_precision_as_string, typed bigDecimal values are JSON strings.
+        if (
+            self._settings.arbitrary_precision_as_string
+            and self._schema.shape_type is ShapeType.BIG_DECIMAL
+            and isinstance(self._value, str)
+        ):
+            return parse_big_decimal_string(self._value)
+        return super().as_decimal()
 
     def as_float(self) -> float:
         # JSON numbers are parsed as Decimals to preserve their arbitrary precision.
