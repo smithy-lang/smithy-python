@@ -1604,7 +1604,6 @@
     "JSONCodec": "class",
     "JSONDocument": "rex-class",
     "JSONSettings": "rex-class",
-    "RpcV2JSONCodec": "class",
     "ShapeDeserializer": "rex-protocol",
     "ShapeSerializer": "rex-protocol",
     "TimestampFormat": "rex-class",

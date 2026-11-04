@@ -70,7 +70,7 @@ class JSONShapeSerializer(ShapeSerializer):
             and schema.shape_type is ShapeType.BIG_INTEGER
         ):
             # int() unwraps IntEnum members before formatting.
-            self._stream.write_string(str(int(value)))
+            self._stream.write_string(str(value))
         else:
             self._stream.write_int(value)
 

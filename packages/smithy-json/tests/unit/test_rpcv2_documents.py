@@ -12,8 +12,10 @@ from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.prelude import BIG_DECIMAL, BIG_INTEGER, DOCUMENT
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_json import JSONCodec, JSONDocument, JSONSettings, RpcV2JSONCodec
+from smithy_json import JSONCodec, JSONDocument, JSONSettings
 from smithy_json._private import JSONValueError
+
+from . import rpcv2_json_codec
 
 BIG_NUMBERS_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#BigNumbers"),
@@ -76,7 +78,7 @@ def _serialize_document(codec: JSONCodec, document: Document) -> bytes:
 )
 def test_serialize_documents_with_setting(given: Document, expected: bytes) -> None:
     """**Validates: Requirements 2.4, 4.4**"""
-    assert _serialize_document(RpcV2JSONCodec(), given) == expected
+    assert _serialize_document(rpcv2_json_codec(), given) == expected
 
 
 @pytest.mark.parametrize(
@@ -172,14 +174,14 @@ def test_typed_document_rejects_invalid_strings(value: str, schema: Schema) -> N
 def test_deserialized_typed_document_as_value(
     source: bytes, schema: Schema, expected: Any
 ) -> None:
-    document = RpcV2JSONCodec().create_deserializer(source).read_document(schema)
+    document = rpcv2_json_codec().create_deserializer(source).read_document(schema)
     assert isinstance(document, JSONDocument)
     assert document.as_value() == expected
 
 
 def test_deserialized_struct_document_member_accessors() -> None:
     document = (
-        RpcV2JSONCodec()
+        rpcv2_json_codec()
         .create_deserializer(b'{"bigIntegerMember":"123","bigDecimalMember":"1.5"}')
         .read_document(BIG_NUMBERS_SCHEMA)
     )
@@ -189,7 +191,7 @@ def test_deserialized_struct_document_member_accessors() -> None:
 
 def test_deserialized_struct_document_invalid_member_raises() -> None:
     document = (
-        RpcV2JSONCodec()
+        rpcv2_json_codec()
         .create_deserializer(b'{"bigDecimalMember":"1."}')
         .read_document(BIG_NUMBERS_SCHEMA)
     )
@@ -200,7 +202,7 @@ def test_deserialized_struct_document_invalid_member_raises() -> None:
 def test_untyped_document_keeps_numbers() -> None:
     """**Validates: Requirements 4.4**"""
     document = (
-        RpcV2JSONCodec()
+        rpcv2_json_codec()
         .create_deserializer(b'{"x":1.5,"y":"1.5"}')
         .read_document(DOCUMENT)
     )

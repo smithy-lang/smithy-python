@@ -22,6 +22,29 @@ from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import JSONNameTrait, SparseTrait, TimestampFormatTrait
+from smithy_core.types import TimestampFormat
+from smithy_json import JSONCodec, JSONDocument
+
+
+def rpcv2_json_codec(
+    default_namespace: str | None = None,
+    document_class: type[JSONDocument] = JSONDocument,
+) -> JSONCodec:
+    """Create a JSONCodec configured for the smithy.protocols#rpcv2Json protocol.
+
+    This mirrors the configuration the RpcV2JSONProtocol uses: member names are used
+    as-is, timestamps are always epoch-seconds, and bigInteger/bigDecimal values are
+    JSON strings.
+    """
+    return JSONCodec(
+        use_json_name=False,
+        use_timestamp_format=False,
+        default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
+        arbitrary_precision_as_string=True,
+        default_namespace=default_namespace,
+        document_class=document_class,
+    )
+
 
 STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),

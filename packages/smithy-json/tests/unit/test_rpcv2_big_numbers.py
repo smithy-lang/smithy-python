@@ -1,6 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Round-trip and grammar-conformance tests for big numbers with RpcV2JSONCodec.
+"""Round-trip and grammar-conformance tests for big numbers under rpcv2Json.
 
 Property 1: Big-number round trip.
 Property 2: Grammar conformance of output.
@@ -18,9 +18,8 @@ from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.prelude import BIG_DECIMAL, BIG_INTEGER, STRING
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_json import RpcV2JSONCodec
 
-from . import SerdeShape
+from . import SerdeShape, rpcv2_json_codec
 
 # Grammars from the rpcv2Json specification, written independently of the
 # implementation's private patterns.
@@ -87,7 +86,7 @@ def _assert_same_decimal(actual: Decimal, expected: Decimal) -> None:
 
 def _serialize_list(schema: Schema, values: list[int] | list[Decimal]) -> bytes:
     sink = BytesIO()
-    serializer = RpcV2JSONCodec().create_serializer(sink)
+    serializer = rpcv2_json_codec().create_serializer(sink)
     member = schema.members["member"]
     with serializer.begin_list(schema, len(values)) as ls:
         for value in values:
@@ -103,7 +102,7 @@ def _serialize_map(
     schema: Schema, values: dict[str, int] | dict[str, Decimal]
 ) -> bytes:
     sink = BytesIO()
-    serializer = RpcV2JSONCodec().create_serializer(sink)
+    serializer = rpcv2_json_codec().create_serializer(sink)
     member = schema.members["value"]
     with serializer.begin_map(schema, len(values)) as ms:
         for key, value in values.items():
@@ -120,7 +119,7 @@ def _serialize_map(
 
 @pytest.mark.parametrize("value, raw", BIG_INTEGER_CASES)
 def test_top_level_big_integer_round_trip(value: int, raw: str) -> None:
-    codec = RpcV2JSONCodec()
+    codec = rpcv2_json_codec()
     sink = BytesIO()
     serializer = codec.create_serializer(sink)
     serializer.write_big_integer(BIG_INTEGER, value)
@@ -137,7 +136,7 @@ def test_top_level_big_integer_round_trip(value: int, raw: str) -> None:
 
 @pytest.mark.parametrize("value, raw", BIG_DECIMAL_CASES)
 def test_top_level_big_decimal_round_trip(value: Decimal, raw: str) -> None:
-    codec = RpcV2JSONCodec()
+    codec = rpcv2_json_codec()
     sink = BytesIO()
     serializer = codec.create_serializer(sink)
     serializer.write_big_decimal(BIG_DECIMAL, value)
@@ -158,7 +157,7 @@ def test_top_level_big_decimal_round_trip(value: Decimal, raw: str) -> None:
 
 @pytest.mark.parametrize("value, raw", BIG_INTEGER_CASES)
 def test_struct_member_big_integer_round_trip(value: int, raw: str) -> None:
-    codec = RpcV2JSONCodec()
+    codec = rpcv2_json_codec()
     shape = SerdeShape(big_integer_member=value)
     actual = codec.serialize(shape)
 
@@ -170,7 +169,7 @@ def test_struct_member_big_integer_round_trip(value: int, raw: str) -> None:
 
 @pytest.mark.parametrize("value, raw", BIG_DECIMAL_CASES)
 def test_struct_member_big_decimal_round_trip(value: Decimal, raw: str) -> None:
-    codec = RpcV2JSONCodec()
+    codec = rpcv2_json_codec()
     actual = codec.serialize(SerdeShape(big_decimal_member=value))
 
     assert actual == b'{"bigDecimalMember":' + _json_string(raw) + b"}"
@@ -182,7 +181,7 @@ def test_struct_member_big_decimal_round_trip(value: Decimal, raw: str) -> None:
 
 
 def test_nested_struct_member_round_trip() -> None:
-    codec = RpcV2JSONCodec()
+    codec = rpcv2_json_codec()
     shape = SerdeShape(
         struct_member=SerdeShape(
             big_integer_member=123456789012345678901234567890,
@@ -223,7 +222,7 @@ def test_list_element_big_integer_round_trip() -> None:
 
     result: list[int] = []
     member = BIG_INTEGER_LIST_SCHEMA.members["member"]
-    RpcV2JSONCodec().create_deserializer(actual).read_list(
+    rpcv2_json_codec().create_deserializer(actual).read_list(
         BIG_INTEGER_LIST_SCHEMA,
         lambda d: result.append(d.read_big_integer(member)),
     )
@@ -241,7 +240,7 @@ def test_list_element_big_decimal_round_trip() -> None:
 
     result: list[Decimal] = []
     member = BIG_DECIMAL_LIST_SCHEMA.members["member"]
-    RpcV2JSONCodec().create_deserializer(actual).read_list(
+    rpcv2_json_codec().create_deserializer(actual).read_list(
         BIG_DECIMAL_LIST_SCHEMA,
         lambda d: result.append(d.read_big_decimal(member)),
     )
@@ -270,7 +269,9 @@ def test_map_value_big_integer_round_trip() -> None:
     def _read(key: str, d: ShapeDeserializer) -> None:
         result[key] = d.read_big_integer(member)
 
-    RpcV2JSONCodec().create_deserializer(actual).read_map(BIG_INTEGER_MAP_SCHEMA, _read)
+    rpcv2_json_codec().create_deserializer(actual).read_map(
+        BIG_INTEGER_MAP_SCHEMA, _read
+    )
     assert result == values
 
 
@@ -291,7 +292,9 @@ def test_map_value_big_decimal_round_trip() -> None:
     def _read(key: str, d: ShapeDeserializer) -> None:
         result[key] = d.read_big_decimal(member)
 
-    RpcV2JSONCodec().create_deserializer(actual).read_map(BIG_DECIMAL_MAP_SCHEMA, _read)
+    rpcv2_json_codec().create_deserializer(actual).read_map(
+        BIG_DECIMAL_MAP_SCHEMA, _read
+    )
     assert result.keys() == values.keys()
     for key, expected_value in values.items():
         _assert_same_decimal(result[key], expected_value)
