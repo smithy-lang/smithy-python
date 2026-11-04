@@ -6,122 +6,6 @@ from smithy_core.exceptions import ModeledError
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
 
-from ._private.schemas import (
-    ALL_QUERY_STRING_TYPES as _SCHEMA_ALL_QUERY_STRING_TYPES,
-    CONSTANT_AND_VARIABLE_QUERY_STRING as _SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING,
-    CONSTANT_QUERY_STRING as _SCHEMA_CONSTANT_QUERY_STRING,
-    CONTENT_TYPE_PARAMETERS as _SCHEMA_CONTENT_TYPE_PARAMETERS,
-    DATETIME_OFFSETS as _SCHEMA_DATETIME_OFFSETS,
-    DOCUMENT_TYPE as _SCHEMA_DOCUMENT_TYPE,
-    DOCUMENT_TYPE_AS_MAP_VALUE as _SCHEMA_DOCUMENT_TYPE_AS_MAP_VALUE,
-    DOCUMENT_TYPE_AS_PAYLOAD as _SCHEMA_DOCUMENT_TYPE_AS_PAYLOAD,
-    DUPLEX_STREAM as _SCHEMA_DUPLEX_STREAM,
-    DUPLEX_STREAM_WITH_DISTINCT_STREAMS as _SCHEMA_DUPLEX_STREAM_WITH_DISTINCT_STREAMS,
-    DUPLEX_STREAM_WITH_INITIAL_MESSAGES as _SCHEMA_DUPLEX_STREAM_WITH_INITIAL_MESSAGES,
-    EMPTY_INPUT_AND_EMPTY_OUTPUT as _SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT,
-    ENDPOINT_OPERATION as _SCHEMA_ENDPOINT_OPERATION,
-    ENDPOINT_WITH_HOST_LABEL_OPERATION as _SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION,
-    FRACTIONAL_SECONDS as _SCHEMA_FRACTIONAL_SECONDS,
-    GREETING_WITH_ERRORS as _SCHEMA_GREETING_WITH_ERRORS,
-    HOST_WITH_PATH_OPERATION as _SCHEMA_HOST_WITH_PATH_OPERATION,
-    HTTP_CHECKSUM_REQUIRED as _SCHEMA_HTTP_CHECKSUM_REQUIRED,
-    HTTP_EMPTY_PREFIX_HEADERS as _SCHEMA_HTTP_EMPTY_PREFIX_HEADERS,
-    HTTP_ENUM_PAYLOAD as _SCHEMA_HTTP_ENUM_PAYLOAD,
-    HTTP_PAYLOAD_TRAITS as _SCHEMA_HTTP_PAYLOAD_TRAITS,
-    HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE as _SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
-    HTTP_PAYLOAD_WITH_STRUCTURE as _SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE,
-    HTTP_PAYLOAD_WITH_UNION as _SCHEMA_HTTP_PAYLOAD_WITH_UNION,
-    HTTP_PREFIX_HEADERS as _SCHEMA_HTTP_PREFIX_HEADERS,
-    HTTP_PREFIX_HEADERS_IN_RESPONSE as _SCHEMA_HTTP_PREFIX_HEADERS_IN_RESPONSE,
-    HTTP_QUERY_PARAMS_ONLY_OPERATION as _SCHEMA_HTTP_QUERY_PARAMS_ONLY_OPERATION,
-    HTTP_REQUEST_WITH_FLOAT_LABELS as _SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS,
-    HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH as _SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
-    HTTP_REQUEST_WITH_LABELS as _SCHEMA_HTTP_REQUEST_WITH_LABELS,
-    HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT as _SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
-    HTTP_REQUEST_WITH_REGEX_LITERAL as _SCHEMA_HTTP_REQUEST_WITH_REGEX_LITERAL,
-    HTTP_RESPONSE_CODE as _SCHEMA_HTTP_RESPONSE_CODE,
-    HTTP_STRING_PAYLOAD as _SCHEMA_HTTP_STRING_PAYLOAD,
-    IGNORE_QUERY_PARAMS_IN_RESPONSE as _SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE,
-    INPUT_AND_OUTPUT_WITH_HEADERS as _SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS,
-    INPUT_STREAM as _SCHEMA_INPUT_STREAM,
-    INPUT_STREAM_WITH_INITIAL_REQUEST as _SCHEMA_INPUT_STREAM_WITH_INITIAL_REQUEST,
-    JSON_BLOBS as _SCHEMA_JSON_BLOBS,
-    JSON_ENUMS as _SCHEMA_JSON_ENUMS,
-    JSON_INT_ENUMS as _SCHEMA_JSON_INT_ENUMS,
-    JSON_LISTS as _SCHEMA_JSON_LISTS,
-    JSON_MAPS as _SCHEMA_JSON_MAPS,
-    JSON_TIMESTAMPS as _SCHEMA_JSON_TIMESTAMPS,
-    JSON_UNIONS as _SCHEMA_JSON_UNIONS,
-    MALFORMED_ACCEPT_WITH_BODY as _SCHEMA_MALFORMED_ACCEPT_WITH_BODY,
-    MALFORMED_ACCEPT_WITH_GENERIC_STRING as _SCHEMA_MALFORMED_ACCEPT_WITH_GENERIC_STRING,
-    MALFORMED_ACCEPT_WITH_PAYLOAD as _SCHEMA_MALFORMED_ACCEPT_WITH_PAYLOAD,
-    MALFORMED_BLOB as _SCHEMA_MALFORMED_BLOB,
-    MALFORMED_BOOLEAN as _SCHEMA_MALFORMED_BOOLEAN,
-    MALFORMED_BYTE as _SCHEMA_MALFORMED_BYTE,
-    MALFORMED_CONTENT_TYPE_WITHOUT_BODY as _SCHEMA_MALFORMED_CONTENT_TYPE_WITHOUT_BODY,
-    MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT as _SCHEMA_MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT,
-    MALFORMED_CONTENT_TYPE_WITH_BODY as _SCHEMA_MALFORMED_CONTENT_TYPE_WITH_BODY,
-    MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING as _SCHEMA_MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING,
-    MALFORMED_CONTENT_TYPE_WITH_PAYLOAD as _SCHEMA_MALFORMED_CONTENT_TYPE_WITH_PAYLOAD,
-    MALFORMED_DOUBLE as _SCHEMA_MALFORMED_DOUBLE,
-    MALFORMED_FLOAT as _SCHEMA_MALFORMED_FLOAT,
-    MALFORMED_INTEGER as _SCHEMA_MALFORMED_INTEGER,
-    MALFORMED_LIST as _SCHEMA_MALFORMED_LIST,
-    MALFORMED_LONG as _SCHEMA_MALFORMED_LONG,
-    MALFORMED_MAP as _SCHEMA_MALFORMED_MAP,
-    MALFORMED_REQUEST_BODY as _SCHEMA_MALFORMED_REQUEST_BODY,
-    MALFORMED_SHORT as _SCHEMA_MALFORMED_SHORT,
-    MALFORMED_STRING as _SCHEMA_MALFORMED_STRING,
-    MALFORMED_TIMESTAMP_BODY_DATE_TIME as _SCHEMA_MALFORMED_TIMESTAMP_BODY_DATE_TIME,
-    MALFORMED_TIMESTAMP_BODY_DEFAULT as _SCHEMA_MALFORMED_TIMESTAMP_BODY_DEFAULT,
-    MALFORMED_TIMESTAMP_BODY_HTTP_DATE as _SCHEMA_MALFORMED_TIMESTAMP_BODY_HTTP_DATE,
-    MALFORMED_TIMESTAMP_HEADER_DATE_TIME as _SCHEMA_MALFORMED_TIMESTAMP_HEADER_DATE_TIME,
-    MALFORMED_TIMESTAMP_HEADER_DEFAULT as _SCHEMA_MALFORMED_TIMESTAMP_HEADER_DEFAULT,
-    MALFORMED_TIMESTAMP_HEADER_EPOCH as _SCHEMA_MALFORMED_TIMESTAMP_HEADER_EPOCH,
-    MALFORMED_TIMESTAMP_PATH_DEFAULT as _SCHEMA_MALFORMED_TIMESTAMP_PATH_DEFAULT,
-    MALFORMED_TIMESTAMP_PATH_EPOCH as _SCHEMA_MALFORMED_TIMESTAMP_PATH_EPOCH,
-    MALFORMED_TIMESTAMP_PATH_HTTP_DATE as _SCHEMA_MALFORMED_TIMESTAMP_PATH_HTTP_DATE,
-    MALFORMED_TIMESTAMP_QUERY_DEFAULT as _SCHEMA_MALFORMED_TIMESTAMP_QUERY_DEFAULT,
-    MALFORMED_TIMESTAMP_QUERY_EPOCH as _SCHEMA_MALFORMED_TIMESTAMP_QUERY_EPOCH,
-    MALFORMED_TIMESTAMP_QUERY_HTTP_DATE as _SCHEMA_MALFORMED_TIMESTAMP_QUERY_HTTP_DATE,
-    MALFORMED_UNION as _SCHEMA_MALFORMED_UNION,
-    MEDIA_TYPE_HEADER as _SCHEMA_MEDIA_TYPE_HEADER,
-    NO_INPUT_AND_NO_OUTPUT as _SCHEMA_NO_INPUT_AND_NO_OUTPUT,
-    NO_INPUT_AND_OUTPUT as _SCHEMA_NO_INPUT_AND_OUTPUT,
-    NULL_AND_EMPTY_HEADERS_CLIENT as _SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT,
-    NULL_AND_EMPTY_HEADERS_SERVER as _SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER,
-    OMITS_NULL_SERIALIZES_EMPTY_STRING as _SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING,
-    OMITS_SERIALIZING_EMPTY_LISTS as _SCHEMA_OMITS_SERIALIZING_EMPTY_LISTS,
-    OPERATION_WITH_DEFAULTS as _SCHEMA_OPERATION_WITH_DEFAULTS,
-    OPERATION_WITH_NESTED_STRUCTURE as _SCHEMA_OPERATION_WITH_NESTED_STRUCTURE,
-    OUTPUT_STREAM as _SCHEMA_OUTPUT_STREAM,
-    OUTPUT_STREAM_WITH_INITIAL_RESPONSE as _SCHEMA_OUTPUT_STREAM_WITH_INITIAL_RESPONSE,
-    POST_PLAYER_ACTION as _SCHEMA_POST_PLAYER_ACTION,
-    POST_UNION_WITH_JSON_NAME as _SCHEMA_POST_UNION_WITH_JSON_NAME,
-    PUT_WITH_CONTENT_ENCODING as _SCHEMA_PUT_WITH_CONTENT_ENCODING,
-    QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL as _SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
-    QUERY_PARAMS_AS_STRING_LIST_MAP as _SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP,
-    QUERY_PRECEDENCE as _SCHEMA_QUERY_PRECEDENCE,
-    RECURSIVE_SHAPES as _SCHEMA_RECURSIVE_SHAPES,
-    RESPONSE_CODE_HTTP_FALLBACK as _SCHEMA_RESPONSE_CODE_HTTP_FALLBACK,
-    RESPONSE_CODE_REQUIRED as _SCHEMA_RESPONSE_CODE_REQUIRED,
-    SIMPLE_SCALAR_PROPERTIES as _SCHEMA_SIMPLE_SCALAR_PROPERTIES,
-    SPARSE_JSON_LISTS as _SCHEMA_SPARSE_JSON_LISTS,
-    SPARSE_JSON_MAPS as _SCHEMA_SPARSE_JSON_MAPS,
-    STREAMING_TRAITS as _SCHEMA_STREAMING_TRAITS,
-    STREAMING_TRAITS_REQUIRE_LENGTH as _SCHEMA_STREAMING_TRAITS_REQUIRE_LENGTH,
-    STREAMING_TRAITS_WITH_MEDIA_TYPE as _SCHEMA_STREAMING_TRAITS_WITH_MEDIA_TYPE,
-    TEST_BODY_STRUCTURE as _SCHEMA_TEST_BODY_STRUCTURE,
-    TEST_GET_NO_INPUT_NO_PAYLOAD as _SCHEMA_TEST_GET_NO_INPUT_NO_PAYLOAD,
-    TEST_GET_NO_PAYLOAD as _SCHEMA_TEST_GET_NO_PAYLOAD,
-    TEST_PAYLOAD_BLOB as _SCHEMA_TEST_PAYLOAD_BLOB,
-    TEST_PAYLOAD_STRUCTURE as _SCHEMA_TEST_PAYLOAD_STRUCTURE,
-    TEST_POST_NO_INPUT_NO_PAYLOAD as _SCHEMA_TEST_POST_NO_INPUT_NO_PAYLOAD,
-    TEST_POST_NO_PAYLOAD as _SCHEMA_TEST_POST_NO_PAYLOAD,
-    TIMESTAMP_FORMAT_HEADERS as _SCHEMA_TIMESTAMP_FORMAT_HEADERS,
-    UNIT_INPUT_AND_OUTPUT as _SCHEMA_UNIT_INPUT_AND_OUTPUT,
-)
-
 
 class ServiceError(ModeledError):
     """
@@ -716,802 +600,684 @@ _registry = ModelRegistry(
     service_error="ServiceError",
 )
 
+_operation_data = {}
+_operation_names = (
+    "ALL_QUERY_STRING_TYPES",
+    "CONSTANT_AND_VARIABLE_QUERY_STRING",
+    "CONSTANT_QUERY_STRING",
+    "CONTENT_TYPE_PARAMETERS",
+    "DATETIME_OFFSETS",
+    "DOCUMENT_TYPE",
+    "DOCUMENT_TYPE_AS_MAP_VALUE",
+    "DOCUMENT_TYPE_AS_PAYLOAD",
+    "DUPLEX_STREAM",
+    "DUPLEX_STREAM_WITH_DISTINCT_STREAMS",
+    "DUPLEX_STREAM_WITH_INITIAL_MESSAGES",
+    "EMPTY_INPUT_AND_EMPTY_OUTPUT",
+    "ENDPOINT_OPERATION",
+    "ENDPOINT_WITH_HOST_LABEL_OPERATION",
+    "FRACTIONAL_SECONDS",
+    "GREETING_WITH_ERRORS",
+    "HOST_WITH_PATH_OPERATION",
+    "HTTP_CHECKSUM_REQUIRED",
+    "HTTP_EMPTY_PREFIX_HEADERS",
+    "HTTP_ENUM_PAYLOAD",
+    "HTTP_PAYLOAD_TRAITS",
+    "HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE",
+    "HTTP_PAYLOAD_WITH_STRUCTURE",
+    "HTTP_PAYLOAD_WITH_UNION",
+    "HTTP_PREFIX_HEADERS",
+    "HTTP_PREFIX_HEADERS_IN_RESPONSE",
+    "HTTP_QUERY_PARAMS_ONLY_OPERATION",
+    "HTTP_REQUEST_WITH_FLOAT_LABELS",
+    "HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH",
+    "HTTP_REQUEST_WITH_LABELS",
+    "HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT",
+    "HTTP_REQUEST_WITH_REGEX_LITERAL",
+    "HTTP_RESPONSE_CODE",
+    "HTTP_STRING_PAYLOAD",
+    "IGNORE_QUERY_PARAMS_IN_RESPONSE",
+    "INPUT_AND_OUTPUT_WITH_HEADERS",
+    "INPUT_STREAM",
+    "INPUT_STREAM_WITH_INITIAL_REQUEST",
+    "JSON_BLOBS",
+    "JSON_ENUMS",
+    "JSON_INT_ENUMS",
+    "JSON_LISTS",
+    "JSON_MAPS",
+    "JSON_TIMESTAMPS",
+    "JSON_UNIONS",
+    "MALFORMED_ACCEPT_WITH_BODY",
+    "MALFORMED_ACCEPT_WITH_GENERIC_STRING",
+    "MALFORMED_ACCEPT_WITH_PAYLOAD",
+    "MALFORMED_BLOB",
+    "MALFORMED_BOOLEAN",
+    "MALFORMED_BYTE",
+    "MALFORMED_CONTENT_TYPE_WITH_BODY",
+    "MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING",
+    "MALFORMED_CONTENT_TYPE_WITHOUT_BODY",
+    "MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT",
+    "MALFORMED_CONTENT_TYPE_WITH_PAYLOAD",
+    "MALFORMED_DOUBLE",
+    "MALFORMED_FLOAT",
+    "MALFORMED_INTEGER",
+    "MALFORMED_LIST",
+    "MALFORMED_LONG",
+    "MALFORMED_MAP",
+    "MALFORMED_REQUEST_BODY",
+    "MALFORMED_SHORT",
+    "MALFORMED_STRING",
+    "MALFORMED_TIMESTAMP_BODY_DATE_TIME",
+    "MALFORMED_TIMESTAMP_BODY_DEFAULT",
+    "MALFORMED_TIMESTAMP_BODY_HTTP_DATE",
+    "MALFORMED_TIMESTAMP_HEADER_DATE_TIME",
+    "MALFORMED_TIMESTAMP_HEADER_DEFAULT",
+    "MALFORMED_TIMESTAMP_HEADER_EPOCH",
+    "MALFORMED_TIMESTAMP_PATH_DEFAULT",
+    "MALFORMED_TIMESTAMP_PATH_EPOCH",
+    "MALFORMED_TIMESTAMP_PATH_HTTP_DATE",
+    "MALFORMED_TIMESTAMP_QUERY_DEFAULT",
+    "MALFORMED_TIMESTAMP_QUERY_EPOCH",
+    "MALFORMED_TIMESTAMP_QUERY_HTTP_DATE",
+    "MALFORMED_UNION",
+    "MEDIA_TYPE_HEADER",
+    "NO_INPUT_AND_NO_OUTPUT",
+    "NO_INPUT_AND_OUTPUT",
+    "NULL_AND_EMPTY_HEADERS_CLIENT",
+    "NULL_AND_EMPTY_HEADERS_SERVER",
+    "OMITS_NULL_SERIALIZES_EMPTY_STRING",
+    "OMITS_SERIALIZING_EMPTY_LISTS",
+    "OPERATION_WITH_DEFAULTS",
+    "OPERATION_WITH_NESTED_STRUCTURE",
+    "OUTPUT_STREAM",
+    "OUTPUT_STREAM_WITH_INITIAL_RESPONSE",
+    "POST_PLAYER_ACTION",
+    "POST_UNION_WITH_JSON_NAME",
+    "PUT_WITH_CONTENT_ENCODING",
+    "QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL",
+    "QUERY_PARAMS_AS_STRING_LIST_MAP",
+    "QUERY_PRECEDENCE",
+    "RECURSIVE_SHAPES",
+    "RESPONSE_CODE_HTTP_FALLBACK",
+    "RESPONSE_CODE_REQUIRED",
+    "SIMPLE_SCALAR_PROPERTIES",
+    "SPARSE_JSON_LISTS",
+    "SPARSE_JSON_MAPS",
+    "STREAMING_TRAITS",
+    "STREAMING_TRAITS_REQUIRE_LENGTH",
+    "STREAMING_TRAITS_WITH_MEDIA_TYPE",
+    "TEST_BODY_STRUCTURE",
+    "TEST_GET_NO_INPUT_NO_PAYLOAD",
+    "TEST_GET_NO_PAYLOAD",
+    "TEST_PAYLOAD_BLOB",
+    "TEST_PAYLOAD_STRUCTURE",
+    "TEST_POST_NO_INPUT_NO_PAYLOAD",
+    "TEST_POST_NO_PAYLOAD",
+    "TIMESTAMP_FORMAT_HEADERS",
+    "UNIT_INPUT_AND_OUTPUT",
+)
+for _operation_name in _operation_names:
+    globals().pop(_operation_name, None)
+
+__all__ = [name for name in globals() if not name.startswith("_")]
+__all__.extend(_operation_names)
+
 
 def __getattr__(name: str):
+    if (data := _operation_data.get(name)) is not None:
+        schema_name, error_ids, auth_scheme_ids = data
+        operation = APIOperation(
+            static_schema=getattr(_schemas, schema_name),
+            model_registry=_registry,
+            error_ids=[ShapeID(shape_id) for shape_id in error_ids],
+            effective_auth_schemes=[ShapeID(shape_id) for shape_id in auth_scheme_ids],
+        )
+        return globals().setdefault(name, operation)
     return _registry.build(name)
 
 
-ALL_QUERY_STRING_TYPES = APIOperation(
-    static_schema=_SCHEMA_ALL_QUERY_STRING_TYPES,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+def __dir__():
+    return sorted({*globals(), *_operation_names})
 
-CONSTANT_AND_VARIABLE_QUERY_STRING = APIOperation(
-    static_schema=_SCHEMA_CONSTANT_AND_VARIABLE_QUERY_STRING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
 
-CONSTANT_QUERY_STRING = APIOperation(
-    static_schema=_SCHEMA_CONSTANT_QUERY_STRING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["ALL_QUERY_STRING_TYPES"] = (
+    "ALL_QUERY_STRING_TYPES",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-CONTENT_TYPE_PARAMETERS = APIOperation(
-    static_schema=_SCHEMA_CONTENT_TYPE_PARAMETERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["CONSTANT_AND_VARIABLE_QUERY_STRING"] = (
+    "CONSTANT_AND_VARIABLE_QUERY_STRING",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-DATETIME_OFFSETS = APIOperation(
-    static_schema=_SCHEMA_DATETIME_OFFSETS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["CONSTANT_QUERY_STRING"] = (
+    "CONSTANT_QUERY_STRING",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-DOCUMENT_TYPE = APIOperation(
-    static_schema=_SCHEMA_DOCUMENT_TYPE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["CONTENT_TYPE_PARAMETERS"] = (
+    "CONTENT_TYPE_PARAMETERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-DOCUMENT_TYPE_AS_MAP_VALUE = APIOperation(
-    static_schema=_SCHEMA_DOCUMENT_TYPE_AS_MAP_VALUE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["DATETIME_OFFSETS"] = ("DATETIME_OFFSETS", (), ("aws.auth#sigv4",))
 
-DOCUMENT_TYPE_AS_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_DOCUMENT_TYPE_AS_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["DOCUMENT_TYPE"] = ("DOCUMENT_TYPE", (), ("aws.auth#sigv4",))
 
-DUPLEX_STREAM = APIOperation(
-    static_schema=_SCHEMA_DUPLEX_STREAM,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["DOCUMENT_TYPE_AS_MAP_VALUE"] = (
+    "DOCUMENT_TYPE_AS_MAP_VALUE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-DUPLEX_STREAM_WITH_DISTINCT_STREAMS = APIOperation(
-    static_schema=_SCHEMA_DUPLEX_STREAM_WITH_DISTINCT_STREAMS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["DOCUMENT_TYPE_AS_PAYLOAD"] = (
+    "DOCUMENT_TYPE_AS_PAYLOAD",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-DUPLEX_STREAM_WITH_INITIAL_MESSAGES = APIOperation(
-    static_schema=_SCHEMA_DUPLEX_STREAM_WITH_INITIAL_MESSAGES,
-    model_registry=_registry,
-    error_ids=[ShapeID("aws.protocoltests.restjson#ServiceUnavailableError")],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["DUPLEX_STREAM"] = ("DUPLEX_STREAM", (), ("aws.auth#sigv4",))
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["DUPLEX_STREAM_WITH_DISTINCT_STREAMS"] = (
+    "DUPLEX_STREAM_WITH_DISTINCT_STREAMS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-ENDPOINT_OPERATION = APIOperation(
-    static_schema=_SCHEMA_ENDPOINT_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["DUPLEX_STREAM_WITH_INITIAL_MESSAGES"] = (
+    "DUPLEX_STREAM_WITH_INITIAL_MESSAGES",
+    ("aws.protocoltests.restjson#ServiceUnavailableError",),
+    ("aws.auth#sigv4",),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION = APIOperation(
-    static_schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["EMPTY_INPUT_AND_EMPTY_OUTPUT"] = (
+    "EMPTY_INPUT_AND_EMPTY_OUTPUT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-FRACTIONAL_SECONDS = APIOperation(
-    static_schema=_SCHEMA_FRACTIONAL_SECONDS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["ENDPOINT_OPERATION"] = ("ENDPOINT_OPERATION", (), ("aws.auth#sigv4",))
 
-GREETING_WITH_ERRORS = APIOperation(
-    static_schema=_SCHEMA_GREETING_WITH_ERRORS,
-    model_registry=_registry,
-    error_ids=[
-        ShapeID("aws.protocoltests.restjson#InvalidGreeting"),
-        ShapeID("aws.protocoltests.restjson#ComplexError"),
-        ShapeID("aws.protocoltests.restjson#FooError"),
-    ],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["ENDPOINT_WITH_HOST_LABEL_OPERATION"] = (
+    "ENDPOINT_WITH_HOST_LABEL_OPERATION",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HOST_WITH_PATH_OPERATION = APIOperation(
-    static_schema=_SCHEMA_HOST_WITH_PATH_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["FRACTIONAL_SECONDS"] = ("FRACTIONAL_SECONDS", (), ("aws.auth#sigv4",))
 
-HTTP_CHECKSUM_REQUIRED = APIOperation(
-    static_schema=_SCHEMA_HTTP_CHECKSUM_REQUIRED,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["GREETING_WITH_ERRORS"] = (
+    "GREETING_WITH_ERRORS",
+    (
+        "aws.protocoltests.restjson#InvalidGreeting",
+        "aws.protocoltests.restjson#ComplexError",
+        "aws.protocoltests.restjson#FooError",
+    ),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_EMPTY_PREFIX_HEADERS = APIOperation(
-    static_schema=_SCHEMA_HTTP_EMPTY_PREFIX_HEADERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HOST_WITH_PATH_OPERATION"] = (
+    "HOST_WITH_PATH_OPERATION",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_ENUM_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_HTTP_ENUM_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_CHECKSUM_REQUIRED"] = (
+    "HTTP_CHECKSUM_REQUIRED",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PAYLOAD_TRAITS = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_TRAITS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_EMPTY_PREFIX_HEADERS"] = (
+    "HTTP_EMPTY_PREFIX_HEADERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["HTTP_ENUM_PAYLOAD"] = ("HTTP_ENUM_PAYLOAD", (), ("aws.auth#sigv4",))
 
-HTTP_PAYLOAD_WITH_STRUCTURE = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_STRUCTURE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_TRAITS"] = (
+    "HTTP_PAYLOAD_TRAITS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PAYLOAD_WITH_UNION = APIOperation(
-    static_schema=_SCHEMA_HTTP_PAYLOAD_WITH_UNION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE"] = (
+    "HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PREFIX_HEADERS = APIOperation(
-    static_schema=_SCHEMA_HTTP_PREFIX_HEADERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_WITH_STRUCTURE"] = (
+    "HTTP_PAYLOAD_WITH_STRUCTURE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_PREFIX_HEADERS_IN_RESPONSE = APIOperation(
-    static_schema=_SCHEMA_HTTP_PREFIX_HEADERS_IN_RESPONSE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PAYLOAD_WITH_UNION"] = (
+    "HTTP_PAYLOAD_WITH_UNION",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_QUERY_PARAMS_ONLY_OPERATION = APIOperation(
-    static_schema=_SCHEMA_HTTP_QUERY_PARAMS_ONLY_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PREFIX_HEADERS"] = (
+    "HTTP_PREFIX_HEADERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_REQUEST_WITH_FLOAT_LABELS = APIOperation(
-    static_schema=_SCHEMA_HTTP_REQUEST_WITH_FLOAT_LABELS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_PREFIX_HEADERS_IN_RESPONSE"] = (
+    "HTTP_PREFIX_HEADERS_IN_RESPONSE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = APIOperation(
-    static_schema=_SCHEMA_HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_QUERY_PARAMS_ONLY_OPERATION"] = (
+    "HTTP_QUERY_PARAMS_ONLY_OPERATION",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_REQUEST_WITH_LABELS = APIOperation(
-    static_schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_REQUEST_WITH_FLOAT_LABELS"] = (
+    "HTTP_REQUEST_WITH_FLOAT_LABELS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = APIOperation(
-    static_schema=_SCHEMA_HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH"] = (
+    "HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_REQUEST_WITH_REGEX_LITERAL = APIOperation(
-    static_schema=_SCHEMA_HTTP_REQUEST_WITH_REGEX_LITERAL,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_REQUEST_WITH_LABELS"] = (
+    "HTTP_REQUEST_WITH_LABELS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_RESPONSE_CODE = APIOperation(
-    static_schema=_SCHEMA_HTTP_RESPONSE_CODE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT"] = (
+    "HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HTTP_STRING_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_HTTP_STRING_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_REQUEST_WITH_REGEX_LITERAL"] = (
+    "HTTP_REQUEST_WITH_REGEX_LITERAL",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-IGNORE_QUERY_PARAMS_IN_RESPONSE = APIOperation(
-    static_schema=_SCHEMA_IGNORE_QUERY_PARAMS_IN_RESPONSE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["HTTP_RESPONSE_CODE"] = ("HTTP_RESPONSE_CODE", (), ("aws.auth#sigv4",))
 
-INPUT_AND_OUTPUT_WITH_HEADERS = APIOperation(
-    static_schema=_SCHEMA_INPUT_AND_OUTPUT_WITH_HEADERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HTTP_STRING_PAYLOAD"] = (
+    "HTTP_STRING_PAYLOAD",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-INPUT_STREAM = APIOperation(
-    static_schema=_SCHEMA_INPUT_STREAM,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["IGNORE_QUERY_PARAMS_IN_RESPONSE"] = (
+    "IGNORE_QUERY_PARAMS_IN_RESPONSE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-INPUT_STREAM_WITH_INITIAL_REQUEST = APIOperation(
-    static_schema=_SCHEMA_INPUT_STREAM_WITH_INITIAL_REQUEST,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["INPUT_AND_OUTPUT_WITH_HEADERS"] = (
+    "INPUT_AND_OUTPUT_WITH_HEADERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-JSON_BLOBS = APIOperation(
-    static_schema=_SCHEMA_JSON_BLOBS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["INPUT_STREAM"] = ("INPUT_STREAM", (), ("aws.auth#sigv4",))
 
-JSON_ENUMS = APIOperation(
-    static_schema=_SCHEMA_JSON_ENUMS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["INPUT_STREAM_WITH_INITIAL_REQUEST"] = (
+    "INPUT_STREAM_WITH_INITIAL_REQUEST",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-JSON_INT_ENUMS = APIOperation(
-    static_schema=_SCHEMA_JSON_INT_ENUMS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["JSON_BLOBS"] = ("JSON_BLOBS", (), ("aws.auth#sigv4",))
 
-JSON_LISTS = APIOperation(
-    static_schema=_SCHEMA_JSON_LISTS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["JSON_ENUMS"] = ("JSON_ENUMS", (), ("aws.auth#sigv4",))
 
-JSON_MAPS = APIOperation(
-    static_schema=_SCHEMA_JSON_MAPS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["JSON_INT_ENUMS"] = ("JSON_INT_ENUMS", (), ("aws.auth#sigv4",))
 
-JSON_TIMESTAMPS = APIOperation(
-    static_schema=_SCHEMA_JSON_TIMESTAMPS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["JSON_LISTS"] = ("JSON_LISTS", (), ("aws.auth#sigv4",))
 
-JSON_UNIONS = APIOperation(
-    static_schema=_SCHEMA_JSON_UNIONS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["JSON_MAPS"] = ("JSON_MAPS", (), ("aws.auth#sigv4",))
 
-MALFORMED_ACCEPT_WITH_BODY = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_ACCEPT_WITH_BODY,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["JSON_TIMESTAMPS"] = ("JSON_TIMESTAMPS", (), ("aws.auth#sigv4",))
 
-MALFORMED_ACCEPT_WITH_GENERIC_STRING = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_ACCEPT_WITH_GENERIC_STRING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["JSON_UNIONS"] = ("JSON_UNIONS", (), ("aws.auth#sigv4",))
 
-MALFORMED_ACCEPT_WITH_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_ACCEPT_WITH_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_ACCEPT_WITH_BODY"] = (
+    "MALFORMED_ACCEPT_WITH_BODY",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_BLOB = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_BLOB,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_ACCEPT_WITH_GENERIC_STRING"] = (
+    "MALFORMED_ACCEPT_WITH_GENERIC_STRING",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_BOOLEAN = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_BOOLEAN,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_ACCEPT_WITH_PAYLOAD"] = (
+    "MALFORMED_ACCEPT_WITH_PAYLOAD",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_BYTE = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_BYTE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_BLOB"] = ("MALFORMED_BLOB", (), ("aws.auth#sigv4",))
 
-MALFORMED_CONTENT_TYPE_WITH_BODY = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_CONTENT_TYPE_WITH_BODY,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_BOOLEAN"] = ("MALFORMED_BOOLEAN", (), ("aws.auth#sigv4",))
 
-MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_BYTE"] = ("MALFORMED_BYTE", (), ("aws.auth#sigv4",))
 
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_CONTENT_TYPE_WITHOUT_BODY,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_CONTENT_TYPE_WITH_BODY"] = (
+    "MALFORMED_CONTENT_TYPE_WITH_BODY",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING"] = (
+    "MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_CONTENT_TYPE_WITH_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_CONTENT_TYPE_WITH_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_CONTENT_TYPE_WITHOUT_BODY"] = (
+    "MALFORMED_CONTENT_TYPE_WITHOUT_BODY",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_DOUBLE = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_DOUBLE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT"] = (
+    "MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_FLOAT = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_FLOAT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_CONTENT_TYPE_WITH_PAYLOAD"] = (
+    "MALFORMED_CONTENT_TYPE_WITH_PAYLOAD",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_INTEGER = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_INTEGER,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_DOUBLE"] = ("MALFORMED_DOUBLE", (), ("aws.auth#sigv4",))
 
-MALFORMED_LIST = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_LIST,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_FLOAT"] = ("MALFORMED_FLOAT", (), ("aws.auth#sigv4",))
 
-MALFORMED_LONG = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_LONG,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_INTEGER"] = ("MALFORMED_INTEGER", (), ("aws.auth#sigv4",))
 
-MALFORMED_MAP = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_MAP,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_LIST"] = ("MALFORMED_LIST", (), ("aws.auth#sigv4",))
 
-MALFORMED_REQUEST_BODY = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_REQUEST_BODY,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_LONG"] = ("MALFORMED_LONG", (), ("aws.auth#sigv4",))
 
-MALFORMED_SHORT = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_SHORT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_MAP"] = ("MALFORMED_MAP", (), ("aws.auth#sigv4",))
 
-MALFORMED_STRING = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_STRING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_REQUEST_BODY"] = (
+    "MALFORMED_REQUEST_BODY",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_TIMESTAMP_BODY_DATE_TIME = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_BODY_DATE_TIME,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_SHORT"] = ("MALFORMED_SHORT", (), ("aws.auth#sigv4",))
 
-MALFORMED_TIMESTAMP_BODY_DEFAULT = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_BODY_DEFAULT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_STRING"] = ("MALFORMED_STRING", (), ("aws.auth#sigv4",))
 
-MALFORMED_TIMESTAMP_BODY_HTTP_DATE = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_BODY_HTTP_DATE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_BODY_DATE_TIME"] = (
+    "MALFORMED_TIMESTAMP_BODY_DATE_TIME",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_TIMESTAMP_HEADER_DATE_TIME = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_HEADER_DATE_TIME,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_BODY_DEFAULT"] = (
+    "MALFORMED_TIMESTAMP_BODY_DEFAULT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_TIMESTAMP_HEADER_DEFAULT = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_HEADER_DEFAULT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_BODY_HTTP_DATE"] = (
+    "MALFORMED_TIMESTAMP_BODY_HTTP_DATE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_TIMESTAMP_HEADER_EPOCH = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_HEADER_EPOCH,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_HEADER_DATE_TIME"] = (
+    "MALFORMED_TIMESTAMP_HEADER_DATE_TIME",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_TIMESTAMP_PATH_DEFAULT = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_PATH_DEFAULT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_HEADER_DEFAULT"] = (
+    "MALFORMED_TIMESTAMP_HEADER_DEFAULT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_TIMESTAMP_PATH_EPOCH = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_PATH_EPOCH,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_HEADER_EPOCH"] = (
+    "MALFORMED_TIMESTAMP_HEADER_EPOCH",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_TIMESTAMP_PATH_HTTP_DATE = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_PATH_HTTP_DATE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_PATH_DEFAULT"] = (
+    "MALFORMED_TIMESTAMP_PATH_DEFAULT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_TIMESTAMP_QUERY_DEFAULT = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_QUERY_DEFAULT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_PATH_EPOCH"] = (
+    "MALFORMED_TIMESTAMP_PATH_EPOCH",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_TIMESTAMP_QUERY_EPOCH = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_QUERY_EPOCH,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_PATH_HTTP_DATE"] = (
+    "MALFORMED_TIMESTAMP_PATH_HTTP_DATE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_TIMESTAMP_QUERY_HTTP_DATE = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_TIMESTAMP_QUERY_HTTP_DATE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_QUERY_DEFAULT"] = (
+    "MALFORMED_TIMESTAMP_QUERY_DEFAULT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MALFORMED_UNION = APIOperation(
-    static_schema=_SCHEMA_MALFORMED_UNION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_QUERY_EPOCH"] = (
+    "MALFORMED_TIMESTAMP_QUERY_EPOCH",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-MEDIA_TYPE_HEADER = APIOperation(
-    static_schema=_SCHEMA_MEDIA_TYPE_HEADER,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["MALFORMED_TIMESTAMP_QUERY_HTTP_DATE"] = (
+    "MALFORMED_TIMESTAMP_QUERY_HTTP_DATE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-NO_INPUT_AND_NO_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_NO_INPUT_AND_NO_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MALFORMED_UNION"] = ("MALFORMED_UNION", (), ("aws.auth#sigv4",))
 
-NO_INPUT_AND_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_NO_INPUT_AND_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["MEDIA_TYPE_HEADER"] = ("MEDIA_TYPE_HEADER", (), ("aws.auth#sigv4",))
 
-NULL_AND_EMPTY_HEADERS_CLIENT = APIOperation(
-    static_schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_CLIENT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["NO_INPUT_AND_NO_OUTPUT"] = (
+    "NO_INPUT_AND_NO_OUTPUT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-NULL_AND_EMPTY_HEADERS_SERVER = APIOperation(
-    static_schema=_SCHEMA_NULL_AND_EMPTY_HEADERS_SERVER,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["NO_INPUT_AND_OUTPUT"] = (
+    "NO_INPUT_AND_OUTPUT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-OMITS_NULL_SERIALIZES_EMPTY_STRING = APIOperation(
-    static_schema=_SCHEMA_OMITS_NULL_SERIALIZES_EMPTY_STRING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["NULL_AND_EMPTY_HEADERS_CLIENT"] = (
+    "NULL_AND_EMPTY_HEADERS_CLIENT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-OMITS_SERIALIZING_EMPTY_LISTS = APIOperation(
-    static_schema=_SCHEMA_OMITS_SERIALIZING_EMPTY_LISTS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["NULL_AND_EMPTY_HEADERS_SERVER"] = (
+    "NULL_AND_EMPTY_HEADERS_SERVER",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-OPERATION_WITH_DEFAULTS = APIOperation(
-    static_schema=_SCHEMA_OPERATION_WITH_DEFAULTS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["OMITS_NULL_SERIALIZES_EMPTY_STRING"] = (
+    "OMITS_NULL_SERIALIZES_EMPTY_STRING",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-OPERATION_WITH_NESTED_STRUCTURE = APIOperation(
-    static_schema=_SCHEMA_OPERATION_WITH_NESTED_STRUCTURE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["OMITS_SERIALIZING_EMPTY_LISTS"] = (
+    "OMITS_SERIALIZING_EMPTY_LISTS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-OUTPUT_STREAM = APIOperation(
-    static_schema=_SCHEMA_OUTPUT_STREAM,
-    model_registry=_registry,
-    error_ids=[ShapeID("aws.protocoltests.restjson#ServiceUnavailableError")],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["OPERATION_WITH_DEFAULTS"] = (
+    "OPERATION_WITH_DEFAULTS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-OUTPUT_STREAM_WITH_INITIAL_RESPONSE = APIOperation(
-    static_schema=_SCHEMA_OUTPUT_STREAM_WITH_INITIAL_RESPONSE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["OPERATION_WITH_NESTED_STRUCTURE"] = (
+    "OPERATION_WITH_NESTED_STRUCTURE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-POST_PLAYER_ACTION = APIOperation(
-    static_schema=_SCHEMA_POST_PLAYER_ACTION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["OUTPUT_STREAM"] = (
+    "OUTPUT_STREAM",
+    ("aws.protocoltests.restjson#ServiceUnavailableError",),
+    ("aws.auth#sigv4",),
 )
 
-POST_UNION_WITH_JSON_NAME = APIOperation(
-    static_schema=_SCHEMA_POST_UNION_WITH_JSON_NAME,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["OUTPUT_STREAM_WITH_INITIAL_RESPONSE"] = (
+    "OUTPUT_STREAM_WITH_INITIAL_RESPONSE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-PUT_WITH_CONTENT_ENCODING = APIOperation(
-    static_schema=_SCHEMA_PUT_WITH_CONTENT_ENCODING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["POST_PLAYER_ACTION"] = ("POST_PLAYER_ACTION", (), ("aws.auth#sigv4",))
 
-QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = APIOperation(
-    static_schema=_SCHEMA_QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["POST_UNION_WITH_JSON_NAME"] = (
+    "POST_UNION_WITH_JSON_NAME",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-QUERY_PARAMS_AS_STRING_LIST_MAP = APIOperation(
-    static_schema=_SCHEMA_QUERY_PARAMS_AS_STRING_LIST_MAP,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["PUT_WITH_CONTENT_ENCODING"] = (
+    "PUT_WITH_CONTENT_ENCODING",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-QUERY_PRECEDENCE = APIOperation(
-    static_schema=_SCHEMA_QUERY_PRECEDENCE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL"] = (
+    "QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-RESPONSE_CODE_HTTP_FALLBACK = APIOperation(
-    static_schema=_SCHEMA_RESPONSE_CODE_HTTP_FALLBACK,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["QUERY_PARAMS_AS_STRING_LIST_MAP"] = (
+    "QUERY_PARAMS_AS_STRING_LIST_MAP",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-RESPONSE_CODE_REQUIRED = APIOperation(
-    static_schema=_SCHEMA_RESPONSE_CODE_REQUIRED,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["QUERY_PRECEDENCE"] = ("QUERY_PRECEDENCE", (), ("aws.auth#sigv4",))
 
-SIMPLE_SCALAR_PROPERTIES = APIOperation(
-    static_schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["RESPONSE_CODE_HTTP_FALLBACK"] = (
+    "RESPONSE_CODE_HTTP_FALLBACK",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-SPARSE_JSON_LISTS = APIOperation(
-    static_schema=_SCHEMA_SPARSE_JSON_LISTS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["RESPONSE_CODE_REQUIRED"] = (
+    "RESPONSE_CODE_REQUIRED",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-SPARSE_JSON_MAPS = APIOperation(
-    static_schema=_SCHEMA_SPARSE_JSON_MAPS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["SIMPLE_SCALAR_PROPERTIES"] = (
+    "SIMPLE_SCALAR_PROPERTIES",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-STREAMING_TRAITS = APIOperation(
-    static_schema=_SCHEMA_STREAMING_TRAITS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["SPARSE_JSON_LISTS"] = ("SPARSE_JSON_LISTS", (), ("aws.auth#sigv4",))
 
-STREAMING_TRAITS_REQUIRE_LENGTH = APIOperation(
-    static_schema=_SCHEMA_STREAMING_TRAITS_REQUIRE_LENGTH,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["SPARSE_JSON_MAPS"] = ("SPARSE_JSON_MAPS", (), ("aws.auth#sigv4",))
 
-STREAMING_TRAITS_WITH_MEDIA_TYPE = APIOperation(
-    static_schema=_SCHEMA_STREAMING_TRAITS_WITH_MEDIA_TYPE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
+_operation_data["STREAMING_TRAITS"] = ("STREAMING_TRAITS", (), ("aws.auth#sigv4",))
 
-TEST_BODY_STRUCTURE = APIOperation(
-    static_schema=_SCHEMA_TEST_BODY_STRUCTURE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["STREAMING_TRAITS_REQUIRE_LENGTH"] = (
+    "STREAMING_TRAITS_REQUIRE_LENGTH",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-TEST_GET_NO_INPUT_NO_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_TEST_GET_NO_INPUT_NO_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["STREAMING_TRAITS_WITH_MEDIA_TYPE"] = (
+    "STREAMING_TRAITS_WITH_MEDIA_TYPE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-TEST_GET_NO_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_TEST_GET_NO_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["TEST_BODY_STRUCTURE"] = (
+    "TEST_BODY_STRUCTURE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-TEST_PAYLOAD_BLOB = APIOperation(
-    static_schema=_SCHEMA_TEST_PAYLOAD_BLOB,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["TEST_GET_NO_INPUT_NO_PAYLOAD"] = (
+    "TEST_GET_NO_INPUT_NO_PAYLOAD",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-TEST_PAYLOAD_STRUCTURE = APIOperation(
-    static_schema=_SCHEMA_TEST_PAYLOAD_STRUCTURE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["TEST_GET_NO_PAYLOAD"] = (
+    "TEST_GET_NO_PAYLOAD",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-TEST_POST_NO_INPUT_NO_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_TEST_POST_NO_INPUT_NO_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["TEST_PAYLOAD_BLOB"] = ("TEST_PAYLOAD_BLOB", (), ("aws.auth#sigv4",))
+
+_operation_data["TEST_PAYLOAD_STRUCTURE"] = (
+    "TEST_PAYLOAD_STRUCTURE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-TEST_POST_NO_PAYLOAD = APIOperation(
-    static_schema=_SCHEMA_TEST_POST_NO_PAYLOAD,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["TEST_POST_NO_INPUT_NO_PAYLOAD"] = (
+    "TEST_POST_NO_INPUT_NO_PAYLOAD",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-TIMESTAMP_FORMAT_HEADERS = APIOperation(
-    static_schema=_SCHEMA_TIMESTAMP_FORMAT_HEADERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["TEST_POST_NO_PAYLOAD"] = (
+    "TEST_POST_NO_PAYLOAD",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-UNIT_INPUT_AND_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_UNIT_INPUT_AND_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["TIMESTAMP_FORMAT_HEADERS"] = (
+    "TIMESTAMP_FORMAT_HEADERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-RECURSIVE_SHAPES = APIOperation(
-    static_schema=_SCHEMA_RECURSIVE_SHAPES,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["UNIT_INPUT_AND_OUTPUT"] = (
+    "UNIT_INPUT_AND_OUTPUT",
+    (),
+    ("aws.auth#sigv4",),
 )
+
+_operation_data["RECURSIVE_SHAPES"] = ("RECURSIVE_SHAPES", (), ("aws.auth#sigv4",))

@@ -22,136 +22,24 @@ from smithy_core.serializers import SerializeableShape
 from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.plugins import user_agent_plugin
 
+from . import models as _models
 from .config import AsyncRestJsonProtocolConfig, Plugin
 from .models import (
-    ALL_QUERY_STRING_TYPES,
-    CONSTANT_AND_VARIABLE_QUERY_STRING,
-    CONSTANT_QUERY_STRING,
-    CONTENT_TYPE_PARAMETERS,
-    DATETIME_OFFSETS,
-    DOCUMENT_TYPE,
-    DOCUMENT_TYPE_AS_MAP_VALUE,
-    DOCUMENT_TYPE_AS_PAYLOAD,
-    DUPLEX_STREAM,
-    DUPLEX_STREAM_WITH_DISTINCT_STREAMS,
-    DUPLEX_STREAM_WITH_INITIAL_MESSAGES,
     DuplexStreamInput,
     DuplexStreamOutput,
     DuplexStreamWithDistinctStreamsInput,
     DuplexStreamWithDistinctStreamsOutput,
     DuplexStreamWithInitialMessagesInput,
     DuplexStreamWithInitialMessagesOutput,
-    EMPTY_INPUT_AND_EMPTY_OUTPUT,
-    ENDPOINT_OPERATION,
-    ENDPOINT_WITH_HOST_LABEL_OPERATION,
     EventStream,
-    FRACTIONAL_SECONDS,
-    GREETING_WITH_ERRORS,
-    HOST_WITH_PATH_OPERATION,
-    HTTP_CHECKSUM_REQUIRED,
-    HTTP_EMPTY_PREFIX_HEADERS,
-    HTTP_ENUM_PAYLOAD,
-    HTTP_PAYLOAD_TRAITS,
-    HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
-    HTTP_PAYLOAD_WITH_STRUCTURE,
-    HTTP_PAYLOAD_WITH_UNION,
-    HTTP_PREFIX_HEADERS,
-    HTTP_PREFIX_HEADERS_IN_RESPONSE,
-    HTTP_QUERY_PARAMS_ONLY_OPERATION,
-    HTTP_REQUEST_WITH_FLOAT_LABELS,
-    HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
-    HTTP_REQUEST_WITH_LABELS,
-    HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
-    HTTP_REQUEST_WITH_REGEX_LITERAL,
-    HTTP_RESPONSE_CODE,
-    HTTP_STRING_PAYLOAD,
-    IGNORE_QUERY_PARAMS_IN_RESPONSE,
-    INPUT_AND_OUTPUT_WITH_HEADERS,
-    INPUT_STREAM,
-    INPUT_STREAM_WITH_INITIAL_REQUEST,
     InputStreamInput,
     InputStreamOutput,
     InputStreamWithInitialRequestInput,
     InputStreamWithInitialRequestOutput,
-    JSON_BLOBS,
-    JSON_ENUMS,
-    JSON_INT_ENUMS,
-    JSON_LISTS,
-    JSON_MAPS,
-    JSON_TIMESTAMPS,
-    JSON_UNIONS,
-    MALFORMED_ACCEPT_WITH_BODY,
-    MALFORMED_ACCEPT_WITH_GENERIC_STRING,
-    MALFORMED_ACCEPT_WITH_PAYLOAD,
-    MALFORMED_BLOB,
-    MALFORMED_BOOLEAN,
-    MALFORMED_BYTE,
-    MALFORMED_CONTENT_TYPE_WITHOUT_BODY,
-    MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT,
-    MALFORMED_CONTENT_TYPE_WITH_BODY,
-    MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING,
-    MALFORMED_CONTENT_TYPE_WITH_PAYLOAD,
-    MALFORMED_DOUBLE,
-    MALFORMED_FLOAT,
-    MALFORMED_INTEGER,
-    MALFORMED_LIST,
-    MALFORMED_LONG,
-    MALFORMED_MAP,
-    MALFORMED_REQUEST_BODY,
-    MALFORMED_SHORT,
-    MALFORMED_STRING,
-    MALFORMED_TIMESTAMP_BODY_DATE_TIME,
-    MALFORMED_TIMESTAMP_BODY_DEFAULT,
-    MALFORMED_TIMESTAMP_BODY_HTTP_DATE,
-    MALFORMED_TIMESTAMP_HEADER_DATE_TIME,
-    MALFORMED_TIMESTAMP_HEADER_DEFAULT,
-    MALFORMED_TIMESTAMP_HEADER_EPOCH,
-    MALFORMED_TIMESTAMP_PATH_DEFAULT,
-    MALFORMED_TIMESTAMP_PATH_EPOCH,
-    MALFORMED_TIMESTAMP_PATH_HTTP_DATE,
-    MALFORMED_TIMESTAMP_QUERY_DEFAULT,
-    MALFORMED_TIMESTAMP_QUERY_EPOCH,
-    MALFORMED_TIMESTAMP_QUERY_HTTP_DATE,
-    MALFORMED_UNION,
-    MEDIA_TYPE_HEADER,
-    NO_INPUT_AND_NO_OUTPUT,
-    NO_INPUT_AND_OUTPUT,
-    NULL_AND_EMPTY_HEADERS_CLIENT,
-    NULL_AND_EMPTY_HEADERS_SERVER,
-    OMITS_NULL_SERIALIZES_EMPTY_STRING,
-    OMITS_SERIALIZING_EMPTY_LISTS,
-    OPERATION_WITH_DEFAULTS,
-    OPERATION_WITH_NESTED_STRUCTURE,
-    OUTPUT_STREAM,
-    OUTPUT_STREAM_WITH_INITIAL_RESPONSE,
     OutputStreamInput,
     OutputStreamOutput,
     OutputStreamWithInitialResponseInput,
     OutputStreamWithInitialResponseOutput,
-    POST_PLAYER_ACTION,
-    POST_UNION_WITH_JSON_NAME,
-    PUT_WITH_CONTENT_ENCODING,
-    QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
-    QUERY_PARAMS_AS_STRING_LIST_MAP,
-    QUERY_PRECEDENCE,
-    RECURSIVE_SHAPES,
-    RESPONSE_CODE_HTTP_FALLBACK,
-    RESPONSE_CODE_REQUIRED,
-    SIMPLE_SCALAR_PROPERTIES,
-    SPARSE_JSON_LISTS,
-    SPARSE_JSON_MAPS,
-    STREAMING_TRAITS,
-    STREAMING_TRAITS_REQUIRE_LENGTH,
-    STREAMING_TRAITS_WITH_MEDIA_TYPE,
-    TEST_BODY_STRUCTURE,
-    TEST_GET_NO_INPUT_NO_PAYLOAD,
-    TEST_GET_NO_PAYLOAD,
-    TEST_PAYLOAD_BLOB,
-    TEST_PAYLOAD_STRUCTURE,
-    TEST_POST_NO_INPUT_NO_PAYLOAD,
-    TEST_POST_NO_PAYLOAD,
-    TIMESTAMP_FORMAT_HEADERS,
-    UNIT_INPUT_AND_OUTPUT,
     _EventStreamDeserializer,
 )
 from .user_agent import aws_user_agent_plugin
@@ -506,7 +394,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `AllQueryStringTypesOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ALL_QUERY_STRING_TYPES, [], plugins
+            input, _models.ALL_QUERY_STRING_TYPES, [], plugins
         )
         return await pipeline(call)
 
@@ -533,7 +421,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `ConstantAndVariableQueryStringOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
+            input, _models.CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -559,7 +447,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `ConstantQueryStringOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, CONSTANT_QUERY_STRING, [], plugins
+            input, _models.CONSTANT_QUERY_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -583,7 +471,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `ContentTypeParametersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, CONTENT_TYPE_PARAMETERS, [], plugins
+            input, _models.CONTENT_TYPE_PARAMETERS, [], plugins
         )
         return await pipeline(call)
 
@@ -605,7 +493,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, DATETIME_OFFSETS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.DATETIME_OFFSETS, [], plugins
+        )
         return await pipeline(call)
 
     async def document_type(
@@ -626,7 +516,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `DocumentTypeOutput`.
         """
-        pipeline, call = await self._prepare_call(input, DOCUMENT_TYPE, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.DOCUMENT_TYPE, [], plugins
+        )
         return await pipeline(call)
 
     async def document_type_as_map_value(
@@ -648,7 +540,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `DocumentTypeAsMapValueOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, DOCUMENT_TYPE_AS_MAP_VALUE, [], plugins
+            input, _models.DOCUMENT_TYPE_AS_MAP_VALUE, [], plugins
         )
         return await pipeline(call)
 
@@ -671,7 +563,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `DocumentTypeAsPayloadOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, DOCUMENT_TYPE_AS_PAYLOAD, [], plugins
+            input, _models.DOCUMENT_TYPE_AS_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -693,7 +585,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             A `DuplexEventStream` for bidirectional streaming.
         """
-        pipeline, call = await self._prepare_call(input, DUPLEX_STREAM, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.DUPLEX_STREAM, [], plugins
+        )
         return await pipeline.duplex_stream(
             call, EventStream, EventStream, _EventStreamDeserializer().deserialize
         )
@@ -719,7 +613,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An `InputEventStream` for client-to-server streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, DUPLEX_STREAM_WITH_DISTINCT_STREAMS, [], plugins
+            input, _models.DUPLEX_STREAM_WITH_DISTINCT_STREAMS, [], plugins
         )
         return await pipeline.input_stream(call, EventStream)
 
@@ -746,7 +640,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             A `DuplexEventStream` for bidirectional streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, DUPLEX_STREAM_WITH_INITIAL_MESSAGES, [], plugins
+            input, _models.DUPLEX_STREAM_WITH_INITIAL_MESSAGES, [], plugins
         )
         return await pipeline.duplex_stream(
             call, EventStream, EventStream, _EventStreamDeserializer().deserialize
@@ -774,7 +668,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -797,7 +691,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `EndpointOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_OPERATION, [], plugins
+            input, _models.ENDPOINT_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -822,7 +716,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -845,7 +739,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `FractionalSecondsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, FRACTIONAL_SECONDS, [], plugins
+            input, _models.FRACTIONAL_SECONDS, [], plugins
         )
         return await pipeline(call)
 
@@ -872,7 +766,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `GreetingWithErrorsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, [], plugins
+            input, _models.GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
@@ -895,7 +789,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HostWithPathOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HOST_WITH_PATH_OPERATION, [], plugins
+            input, _models.HOST_WITH_PATH_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -918,7 +812,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpChecksumRequiredOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_CHECKSUM_REQUIRED, [], plugins
+            input, _models.HTTP_CHECKSUM_REQUIRED, [], plugins
         )
         return await pipeline(call)
 
@@ -941,7 +835,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpEmptyPrefixHeadersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_EMPTY_PREFIX_HEADERS, [], plugins
+            input, _models.HTTP_EMPTY_PREFIX_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -963,7 +857,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpEnumPayloadOutput`.
         """
-        pipeline, call = await self._prepare_call(input, HTTP_ENUM_PAYLOAD, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.HTTP_ENUM_PAYLOAD, [], plugins
+        )
         return await pipeline(call)
 
     async def http_payload_traits(
@@ -987,7 +883,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpPayloadTraitsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_TRAITS, [], plugins
+            input, _models.HTTP_PAYLOAD_TRAITS, [], plugins
         )
         return await pipeline(call)
 
@@ -1013,7 +909,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
+            input, _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
         )
         return await pipeline(call)
 
@@ -1038,7 +934,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpPayloadWithStructureOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
+            input, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
@@ -1061,7 +957,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpPayloadWithUnionOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PAYLOAD_WITH_UNION, [], plugins
+            input, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins
         )
         return await pipeline(call)
 
@@ -1085,7 +981,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpPrefixHeadersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PREFIX_HEADERS, [], plugins
+            input, _models.HTTP_PREFIX_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -1110,7 +1006,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpPrefixHeadersInResponseOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_PREFIX_HEADERS_IN_RESPONSE, [], plugins
+            input, _models.HTTP_PREFIX_HEADERS_IN_RESPONSE, [], plugins
         )
         return await pipeline(call)
 
@@ -1135,7 +1031,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpQueryParamsOnlyOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_QUERY_PARAMS_ONLY_OPERATION, [], plugins
+            input, _models.HTTP_QUERY_PARAMS_ONLY_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -1160,7 +1056,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpRequestWithFloatLabelsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins
+            input, _models.HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins
         )
         return await pipeline(call)
 
@@ -1185,7 +1081,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
+            input, _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
         )
         return await pipeline(call)
 
@@ -1209,7 +1105,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpRequestWithLabelsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_LABELS, [], plugins
+            input, _models.HTTP_REQUEST_WITH_LABELS, [], plugins
         )
         return await pipeline(call)
 
@@ -1235,7 +1131,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
+            input, _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
         )
         return await pipeline(call)
 
@@ -1260,7 +1156,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpRequestWithRegexLiteralOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_REQUEST_WITH_REGEX_LITERAL, [], plugins
+            input, _models.HTTP_REQUEST_WITH_REGEX_LITERAL, [], plugins
         )
         return await pipeline(call)
 
@@ -1283,7 +1179,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpResponseCodeOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_RESPONSE_CODE, [], plugins
+            input, _models.HTTP_RESPONSE_CODE, [], plugins
         )
         return await pipeline(call)
 
@@ -1306,7 +1202,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `HttpStringPayloadOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HTTP_STRING_PAYLOAD, [], plugins
+            input, _models.HTTP_STRING_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -1333,7 +1229,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `IgnoreQueryParamsInResponseOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
+            input, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
         )
         return await pipeline(call)
 
@@ -1357,7 +1253,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `InputAndOutputWithHeadersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins
+            input, _models.INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -1379,7 +1275,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An `InputEventStream` for client-to-server streaming.
         """
-        pipeline, call = await self._prepare_call(input, INPUT_STREAM, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.INPUT_STREAM, [], plugins
+        )
         return await pipeline.input_stream(call, EventStream)
 
     async def input_stream_with_initial_request(
@@ -1403,7 +1301,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An `InputEventStream` for client-to-server streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, INPUT_STREAM_WITH_INITIAL_REQUEST, [], plugins
+            input, _models.INPUT_STREAM_WITH_INITIAL_REQUEST, [], plugins
         )
         return await pipeline.input_stream(call, EventStream)
 
@@ -1425,7 +1323,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonBlobsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, JSON_BLOBS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.JSON_BLOBS, [], plugins
+        )
         return await pipeline(call)
 
     async def json_enums(
@@ -1447,7 +1347,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, JSON_ENUMS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.JSON_ENUMS, [], plugins
+        )
         return await pipeline(call)
 
     async def json_int_enums(
@@ -1469,7 +1371,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonIntEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, JSON_INT_ENUMS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.JSON_INT_ENUMS, [], plugins
+        )
         return await pipeline(call)
 
     async def json_lists(
@@ -1492,7 +1396,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonListsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, JSON_LISTS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.JSON_LISTS, [], plugins
+        )
         return await pipeline(call)
 
     async def json_maps(
@@ -1513,7 +1419,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonMapsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, JSON_MAPS, [], plugins)
+        pipeline, call = await self._prepare_call(input, _models.JSON_MAPS, [], plugins)
         return await pipeline(call)
 
     async def json_timestamps(
@@ -1535,7 +1441,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonTimestampsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, JSON_TIMESTAMPS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.JSON_TIMESTAMPS, [], plugins
+        )
         return await pipeline(call)
 
     async def json_unions(
@@ -1556,7 +1464,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, JSON_UNIONS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.JSON_UNIONS, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_accept_with_body(
@@ -1578,7 +1488,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedAcceptWithBodyOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_ACCEPT_WITH_BODY, [], plugins
+            input, _models.MALFORMED_ACCEPT_WITH_BODY, [], plugins
         )
         return await pipeline(call)
 
@@ -1603,7 +1513,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedAcceptWithGenericStringOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_ACCEPT_WITH_GENERIC_STRING, [], plugins
+            input, _models.MALFORMED_ACCEPT_WITH_GENERIC_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -1628,7 +1538,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedAcceptWithPayloadOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_ACCEPT_WITH_PAYLOAD, [], plugins
+            input, _models.MALFORMED_ACCEPT_WITH_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -1650,7 +1560,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedBlobOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_BLOB, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_BLOB, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_boolean(
@@ -1671,7 +1583,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedBooleanOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_BOOLEAN, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_BOOLEAN, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_byte(
@@ -1692,7 +1606,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedByteOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_BYTE, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_BYTE, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_content_type_with_body(
@@ -1716,7 +1632,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedContentTypeWithBodyOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_CONTENT_TYPE_WITH_BODY, [], plugins
+            input, _models.MALFORMED_CONTENT_TYPE_WITH_BODY, [], plugins
         )
         return await pipeline(call)
 
@@ -1741,7 +1657,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedContentTypeWithGenericStringOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING, [], plugins
+            input, _models.MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -1766,7 +1682,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedContentTypeWithoutBodyOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_CONTENT_TYPE_WITHOUT_BODY, [], plugins
+            input, _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY, [], plugins
         )
         return await pipeline(call)
 
@@ -1791,7 +1707,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedContentTypeWithoutBodyEmptyInputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT, [], plugins
+            input, _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -1816,7 +1732,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedContentTypeWithPayloadOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_CONTENT_TYPE_WITH_PAYLOAD, [], plugins
+            input, _models.MALFORMED_CONTENT_TYPE_WITH_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -1838,7 +1754,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedDoubleOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_DOUBLE, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_DOUBLE, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_float(
@@ -1859,7 +1777,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedFloatOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_FLOAT, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_FLOAT, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_integer(
@@ -1880,7 +1800,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedIntegerOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_INTEGER, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_INTEGER, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_list(
@@ -1901,7 +1823,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedListOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_LIST, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_LIST, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_long(
@@ -1922,7 +1846,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedLongOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_LONG, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_LONG, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_map(
@@ -1943,7 +1869,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedMapOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_MAP, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_MAP, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_request_body(
@@ -1965,7 +1893,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedRequestBodyOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_REQUEST_BODY, [], plugins
+            input, _models.MALFORMED_REQUEST_BODY, [], plugins
         )
         return await pipeline(call)
 
@@ -1987,7 +1915,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedShortOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_SHORT, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_SHORT, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_string(
@@ -2008,7 +1938,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedStringOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_STRING, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_STRING, [], plugins
+        )
         return await pipeline(call)
 
     async def malformed_timestamp_body_date_time(
@@ -2032,7 +1964,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampBodyDateTimeOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_BODY_DATE_TIME, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_BODY_DATE_TIME, [], plugins
         )
         return await pipeline(call)
 
@@ -2057,7 +1989,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampBodyDefaultOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_BODY_DEFAULT, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_BODY_DEFAULT, [], plugins
         )
         return await pipeline(call)
 
@@ -2082,7 +2014,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampBodyHttpDateOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_BODY_HTTP_DATE, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_BODY_HTTP_DATE, [], plugins
         )
         return await pipeline(call)
 
@@ -2107,7 +2039,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampHeaderDateTimeOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_HEADER_DATE_TIME, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_HEADER_DATE_TIME, [], plugins
         )
         return await pipeline(call)
 
@@ -2132,7 +2064,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampHeaderDefaultOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_HEADER_DEFAULT, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_HEADER_DEFAULT, [], plugins
         )
         return await pipeline(call)
 
@@ -2157,7 +2089,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampHeaderEpochOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_HEADER_EPOCH, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_HEADER_EPOCH, [], plugins
         )
         return await pipeline(call)
 
@@ -2182,7 +2114,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampPathDefaultOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_PATH_DEFAULT, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_PATH_DEFAULT, [], plugins
         )
         return await pipeline(call)
 
@@ -2207,7 +2139,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampPathEpochOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_PATH_EPOCH, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_PATH_EPOCH, [], plugins
         )
         return await pipeline(call)
 
@@ -2232,7 +2164,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampPathHttpDateOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_PATH_HTTP_DATE, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_PATH_HTTP_DATE, [], plugins
         )
         return await pipeline(call)
 
@@ -2257,7 +2189,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampQueryDefaultOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_QUERY_DEFAULT, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_QUERY_DEFAULT, [], plugins
         )
         return await pipeline(call)
 
@@ -2282,7 +2214,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampQueryEpochOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_QUERY_EPOCH, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_QUERY_EPOCH, [], plugins
         )
         return await pipeline(call)
 
@@ -2307,7 +2239,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `MalformedTimestampQueryHttpDateOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, MALFORMED_TIMESTAMP_QUERY_HTTP_DATE, [], plugins
+            input, _models.MALFORMED_TIMESTAMP_QUERY_HTTP_DATE, [], plugins
         )
         return await pipeline(call)
 
@@ -2329,7 +2261,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MalformedUnionOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MALFORMED_UNION, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MALFORMED_UNION, [], plugins
+        )
         return await pipeline(call)
 
     async def media_type_header(
@@ -2351,7 +2285,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `MediaTypeHeaderOutput`.
         """
-        pipeline, call = await self._prepare_call(input, MEDIA_TYPE_HEADER, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.MEDIA_TYPE_HEADER, [], plugins
+        )
         return await pipeline(call)
 
     async def no_input_and_no_output(
@@ -2376,7 +2312,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `NoInputAndNoOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_NO_OUTPUT, [], plugins
+            input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -2402,7 +2338,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `NoInputAndOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_OUTPUT, [], plugins
+            input, _models.NO_INPUT_AND_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -2426,7 +2362,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `NullAndEmptyHeadersClientOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
+            input, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
         )
         return await pipeline(call)
 
@@ -2450,7 +2386,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `NullAndEmptyHeadersServerOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
+            input, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
         )
         return await pipeline(call)
 
@@ -2475,7 +2411,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
+            input, _models.OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
         )
         return await pipeline(call)
 
@@ -2502,7 +2438,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `OmitsSerializingEmptyListsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OMITS_SERIALIZING_EMPTY_LISTS, [], plugins
+            input, _models.OMITS_SERIALIZING_EMPTY_LISTS, [], plugins
         )
         return await pipeline(call)
 
@@ -2525,7 +2461,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `OperationWithDefaultsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_DEFAULTS, [], plugins
+            input, _models.OPERATION_WITH_DEFAULTS, [], plugins
         )
         return await pipeline(call)
 
@@ -2550,7 +2486,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `OperationWithNestedStructureOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_NESTED_STRUCTURE, [], plugins
+            input, _models.OPERATION_WITH_NESTED_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
@@ -2572,7 +2508,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An `OutputEventStream` for server-to-client streaming.
         """
-        pipeline, call = await self._prepare_call(input, OUTPUT_STREAM, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.OUTPUT_STREAM, [], plugins
+        )
         return await pipeline.output_stream(
             call, EventStream, _EventStreamDeserializer().deserialize
         )
@@ -2598,7 +2536,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An `OutputEventStream` for server-to-client streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, OUTPUT_STREAM_WITH_INITIAL_RESPONSE, [], plugins
+            input, _models.OUTPUT_STREAM_WITH_INITIAL_RESPONSE, [], plugins
         )
         return await pipeline.output_stream(
             call, EventStream, _EventStreamDeserializer().deserialize
@@ -2623,7 +2561,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `PostPlayerActionOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, POST_PLAYER_ACTION, [], plugins
+            input, _models.POST_PLAYER_ACTION, [], plugins
         )
         return await pipeline(call)
 
@@ -2646,7 +2584,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `PostUnionWithJsonNameOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, POST_UNION_WITH_JSON_NAME, [], plugins
+            input, _models.POST_UNION_WITH_JSON_NAME, [], plugins
         )
         return await pipeline(call)
 
@@ -2669,7 +2607,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `PutWithContentEncodingOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, PUT_WITH_CONTENT_ENCODING, [], plugins
+            input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins
         )
         return await pipeline(call)
 
@@ -2694,7 +2632,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            input, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
         return await pipeline(call)
 
@@ -2719,7 +2657,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `QueryParamsAsStringListMapOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins
+            input, _models.QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins
         )
         return await pipeline(call)
 
@@ -2741,7 +2679,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryPrecedenceOutput`.
         """
-        pipeline, call = await self._prepare_call(input, QUERY_PRECEDENCE, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.QUERY_PRECEDENCE, [], plugins
+        )
         return await pipeline(call)
 
     async def recursive_shapes(
@@ -2762,7 +2702,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        pipeline, call = await self._prepare_call(input, RECURSIVE_SHAPES, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.RECURSIVE_SHAPES, [], plugins
+        )
         return await pipeline(call)
 
     async def response_code_http_fallback(
@@ -2784,7 +2726,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `ResponseCodeHttpFallbackOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, RESPONSE_CODE_HTTP_FALLBACK, [], plugins
+            input, _models.RESPONSE_CODE_HTTP_FALLBACK, [], plugins
         )
         return await pipeline(call)
 
@@ -2807,7 +2749,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `ResponseCodeRequiredOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, RESPONSE_CODE_REQUIRED, [], plugins
+            input, _models.RESPONSE_CODE_REQUIRED, [], plugins
         )
         return await pipeline(call)
 
@@ -2830,7 +2772,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `SimpleScalarPropertiesOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+            input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
 
@@ -2852,7 +2794,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `SparseJsonListsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, SPARSE_JSON_LISTS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.SPARSE_JSON_LISTS, [], plugins
+        )
         return await pipeline(call)
 
     async def sparse_json_maps(
@@ -2873,7 +2817,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `SparseJsonMapsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, SPARSE_JSON_MAPS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.SPARSE_JSON_MAPS, [], plugins
+        )
         return await pipeline(call)
 
     async def streaming_traits(
@@ -2896,7 +2842,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `StreamingTraitsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, STREAMING_TRAITS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.STREAMING_TRAITS, [], plugins
+        )
         return await pipeline(call)
 
     async def streaming_traits_require_length(
@@ -2922,7 +2870,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `StreamingTraitsRequireLengthOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, STREAMING_TRAITS_REQUIRE_LENGTH, [], plugins
+            input, _models.STREAMING_TRAITS_REQUIRE_LENGTH, [], plugins
         )
         return await pipeline(call)
 
@@ -2949,7 +2897,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `StreamingTraitsWithMediaTypeOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, STREAMING_TRAITS_WITH_MEDIA_TYPE, [], plugins
+            input, _models.STREAMING_TRAITS_WITH_MEDIA_TYPE, [], plugins
         )
         return await pipeline(call)
 
@@ -2974,7 +2922,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `TestBodyStructureOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, TEST_BODY_STRUCTURE, [], plugins
+            input, _models.TEST_BODY_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
@@ -3000,7 +2948,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `TestGetNoInputNoPayloadOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, TEST_GET_NO_INPUT_NO_PAYLOAD, [], plugins
+            input, _models.TEST_GET_NO_INPUT_NO_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -3026,7 +2974,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `TestGetNoPayloadOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, TEST_GET_NO_PAYLOAD, [], plugins
+            input, _models.TEST_GET_NO_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -3052,7 +3000,9 @@ class AsyncRestJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `TestPayloadBlobOutput`.
         """
-        pipeline, call = await self._prepare_call(input, TEST_PAYLOAD_BLOB, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.TEST_PAYLOAD_BLOB, [], plugins
+        )
         return await pipeline(call)
 
     async def test_payload_structure(
@@ -3076,7 +3026,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `TestPayloadStructureOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, TEST_PAYLOAD_STRUCTURE, [], plugins
+            input, _models.TEST_PAYLOAD_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
@@ -3102,7 +3052,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `TestPostNoInputNoPayloadOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, TEST_POST_NO_INPUT_NO_PAYLOAD, [], plugins
+            input, _models.TEST_POST_NO_INPUT_NO_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -3127,7 +3077,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `TestPostNoPayloadOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, TEST_POST_NO_PAYLOAD, [], plugins
+            input, _models.TEST_POST_NO_PAYLOAD, [], plugins
         )
         return await pipeline(call)
 
@@ -3151,7 +3101,7 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `TimestampFormatHeadersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, TIMESTAMP_FORMAT_HEADERS, [], plugins
+            input, _models.TIMESTAMP_FORMAT_HEADERS, [], plugins
         )
         return await pipeline(call)
 
@@ -3175,6 +3125,6 @@ class AsyncRestJsonProtocolClient(AsyncClient):
             An instance of `UnitInputAndOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, UNIT_INPUT_AND_OUTPUT, [], plugins
+            input, _models.UNIT_INPUT_AND_OUTPUT, [], plugins
         )
         return await pipeline(call)

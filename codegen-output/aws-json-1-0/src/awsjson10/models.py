@@ -6,25 +6,6 @@ from smithy_core.exceptions import ModeledError
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
 
-from ._private.schemas import (
-    CONTENT_TYPE_PARAMETERS as _SCHEMA_CONTENT_TYPE_PARAMETERS,
-    EMPTY_INPUT_AND_EMPTY_OUTPUT as _SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT,
-    ENDPOINT_OPERATION as _SCHEMA_ENDPOINT_OPERATION,
-    ENDPOINT_WITH_HOST_LABEL_OPERATION as _SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION,
-    GREETING_WITH_ERRORS as _SCHEMA_GREETING_WITH_ERRORS,
-    HOST_WITH_PATH_OPERATION as _SCHEMA_HOST_WITH_PATH_OPERATION,
-    JSON_UNIONS as _SCHEMA_JSON_UNIONS,
-    NO_INPUT_AND_NO_OUTPUT as _SCHEMA_NO_INPUT_AND_NO_OUTPUT,
-    NO_INPUT_AND_OUTPUT as _SCHEMA_NO_INPUT_AND_OUTPUT,
-    OPERATION_WITH_DEFAULTS as _SCHEMA_OPERATION_WITH_DEFAULTS,
-    OPERATION_WITH_NESTED_STRUCTURE as _SCHEMA_OPERATION_WITH_NESTED_STRUCTURE,
-    OPERATION_WITH_REQUIRED_MEMBERS as _SCHEMA_OPERATION_WITH_REQUIRED_MEMBERS,
-    OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS as _SCHEMA_OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS,
-    PUT_WITH_CONTENT_ENCODING as _SCHEMA_PUT_WITH_CONTENT_ENCODING,
-    QUERY_INCOMPATIBLE_OPERATION as _SCHEMA_QUERY_INCOMPATIBLE_OPERATION,
-    SIMPLE_SCALAR_PROPERTIES as _SCHEMA_SIMPLE_SCALAR_PROPERTIES,
-)
-
 
 class ServiceError(ModeledError):
     """
@@ -156,123 +137,137 @@ _registry = ModelRegistry(
     service_error="ServiceError",
 )
 
+_operation_data = {}
+_operation_names = (
+    "CONTENT_TYPE_PARAMETERS",
+    "EMPTY_INPUT_AND_EMPTY_OUTPUT",
+    "ENDPOINT_OPERATION",
+    "ENDPOINT_WITH_HOST_LABEL_OPERATION",
+    "GREETING_WITH_ERRORS",
+    "HOST_WITH_PATH_OPERATION",
+    "JSON_UNIONS",
+    "NO_INPUT_AND_NO_OUTPUT",
+    "NO_INPUT_AND_OUTPUT",
+    "OPERATION_WITH_DEFAULTS",
+    "OPERATION_WITH_NESTED_STRUCTURE",
+    "OPERATION_WITH_REQUIRED_MEMBERS",
+    "OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS",
+    "PUT_WITH_CONTENT_ENCODING",
+    "QUERY_INCOMPATIBLE_OPERATION",
+    "SIMPLE_SCALAR_PROPERTIES",
+)
+for _operation_name in _operation_names:
+    globals().pop(_operation_name, None)
+
+__all__ = [name for name in globals() if not name.startswith("_")]
+__all__.extend(_operation_names)
+
 
 def __getattr__(name: str):
+    if (data := _operation_data.get(name)) is not None:
+        schema_name, error_ids, auth_scheme_ids = data
+        operation = APIOperation(
+            static_schema=getattr(_schemas, schema_name),
+            model_registry=_registry,
+            error_ids=[ShapeID(shape_id) for shape_id in error_ids],
+            effective_auth_schemes=[ShapeID(shape_id) for shape_id in auth_scheme_ids],
+        )
+        return globals().setdefault(name, operation)
     return _registry.build(name)
 
 
-CONTENT_TYPE_PARAMETERS = APIOperation(
-    static_schema=_SCHEMA_CONTENT_TYPE_PARAMETERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+def __dir__():
+    return sorted({*globals(), *_operation_names})
+
+
+_operation_data["CONTENT_TYPE_PARAMETERS"] = (
+    "CONTENT_TYPE_PARAMETERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-EMPTY_INPUT_AND_EMPTY_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_EMPTY_INPUT_AND_EMPTY_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["EMPTY_INPUT_AND_EMPTY_OUTPUT"] = (
+    "EMPTY_INPUT_AND_EMPTY_OUTPUT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-ENDPOINT_OPERATION = APIOperation(
-    static_schema=_SCHEMA_ENDPOINT_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["ENDPOINT_OPERATION"] = ("ENDPOINT_OPERATION", (), ("aws.auth#sigv4",))
+
+_operation_data["ENDPOINT_WITH_HOST_LABEL_OPERATION"] = (
+    "ENDPOINT_WITH_HOST_LABEL_OPERATION",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-ENDPOINT_WITH_HOST_LABEL_OPERATION = APIOperation(
-    static_schema=_SCHEMA_ENDPOINT_WITH_HOST_LABEL_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["GREETING_WITH_ERRORS"] = (
+    "GREETING_WITH_ERRORS",
+    (
+        "aws.protocoltests.json10#InvalidGreeting",
+        "aws.protocoltests.json10#ComplexError",
+        "aws.protocoltests.json10#FooError",
+    ),
+    ("aws.auth#sigv4",),
 )
 
-GREETING_WITH_ERRORS = APIOperation(
-    static_schema=_SCHEMA_GREETING_WITH_ERRORS,
-    model_registry=_registry,
-    error_ids=[
-        ShapeID("aws.protocoltests.json10#InvalidGreeting"),
-        ShapeID("aws.protocoltests.json10#ComplexError"),
-        ShapeID("aws.protocoltests.json10#FooError"),
-    ],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["HOST_WITH_PATH_OPERATION"] = (
+    "HOST_WITH_PATH_OPERATION",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-HOST_WITH_PATH_OPERATION = APIOperation(
-    static_schema=_SCHEMA_HOST_WITH_PATH_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["JSON_UNIONS"] = ("JSON_UNIONS", (), ("aws.auth#sigv4",))
+
+_operation_data["NO_INPUT_AND_NO_OUTPUT"] = (
+    "NO_INPUT_AND_NO_OUTPUT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-JSON_UNIONS = APIOperation(
-    static_schema=_SCHEMA_JSON_UNIONS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["NO_INPUT_AND_OUTPUT"] = (
+    "NO_INPUT_AND_OUTPUT",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-NO_INPUT_AND_NO_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_NO_INPUT_AND_NO_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["OPERATION_WITH_DEFAULTS"] = (
+    "OPERATION_WITH_DEFAULTS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-NO_INPUT_AND_OUTPUT = APIOperation(
-    static_schema=_SCHEMA_NO_INPUT_AND_OUTPUT,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["OPERATION_WITH_NESTED_STRUCTURE"] = (
+    "OPERATION_WITH_NESTED_STRUCTURE",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-OPERATION_WITH_DEFAULTS = APIOperation(
-    static_schema=_SCHEMA_OPERATION_WITH_DEFAULTS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["OPERATION_WITH_REQUIRED_MEMBERS"] = (
+    "OPERATION_WITH_REQUIRED_MEMBERS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-OPERATION_WITH_NESTED_STRUCTURE = APIOperation(
-    static_schema=_SCHEMA_OPERATION_WITH_NESTED_STRUCTURE,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS"] = (
+    "OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-OPERATION_WITH_REQUIRED_MEMBERS = APIOperation(
-    static_schema=_SCHEMA_OPERATION_WITH_REQUIRED_MEMBERS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["PUT_WITH_CONTENT_ENCODING"] = (
+    "PUT_WITH_CONTENT_ENCODING",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS = APIOperation(
-    static_schema=_SCHEMA_OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["QUERY_INCOMPATIBLE_OPERATION"] = (
+    "QUERY_INCOMPATIBLE_OPERATION",
+    (),
+    ("aws.auth#sigv4",),
 )
 
-PUT_WITH_CONTENT_ENCODING = APIOperation(
-    static_schema=_SCHEMA_PUT_WITH_CONTENT_ENCODING,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
-
-QUERY_INCOMPATIBLE_OPERATION = APIOperation(
-    static_schema=_SCHEMA_QUERY_INCOMPATIBLE_OPERATION,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
-)
-
-SIMPLE_SCALAR_PROPERTIES = APIOperation(
-    static_schema=_SCHEMA_SIMPLE_SCALAR_PROPERTIES,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("aws.auth#sigv4")],
+_operation_data["SIMPLE_SCALAR_PROPERTIES"] = (
+    "SIMPLE_SCALAR_PROPERTIES",
+    (),
+    ("aws.auth#sigv4",),
 )

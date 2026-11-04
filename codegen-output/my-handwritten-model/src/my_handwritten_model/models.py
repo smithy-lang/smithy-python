@@ -6,12 +6,6 @@ from smithy_core.exceptions import ModeledError
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
 
-from ._private.schemas import (
-    PUBLISH_EVENTS as _SCHEMA_PUBLISH_EVENTS,
-    SUBSCRIBE_TO_EVENTS as _SCHEMA_SUBSCRIBE_TO_EVENTS,
-    TRADE_EVENT_STREAM as _SCHEMA_TRADE_EVENT_STREAM,
-)
-
 
 class ServiceError(ModeledError):
     """
@@ -84,28 +78,42 @@ _registry = ModelRegistry(
     service_error="ServiceError",
 )
 
+_operation_data = {}
+_operation_names = ("PUBLISH_EVENTS", "SUBSCRIBE_TO_EVENTS", "TRADE_EVENT_STREAM")
+for _operation_name in _operation_names:
+    globals().pop(_operation_name, None)
+
+__all__ = [name for name in globals() if not name.startswith("_")]
+__all__.extend(_operation_names)
+
 
 def __getattr__(name: str):
+    if (data := _operation_data.get(name)) is not None:
+        schema_name, error_ids, auth_scheme_ids = data
+        operation = APIOperation(
+            static_schema=getattr(_schemas, schema_name),
+            model_registry=_registry,
+            error_ids=[ShapeID(shape_id) for shape_id in error_ids],
+            effective_auth_schemes=[ShapeID(shape_id) for shape_id in auth_scheme_ids],
+        )
+        return globals().setdefault(name, operation)
     return _registry.build(name)
 
 
-PUBLISH_EVENTS = APIOperation(
-    static_schema=_SCHEMA_PUBLISH_EVENTS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+def __dir__():
+    return sorted({*globals(), *_operation_names})
+
+
+_operation_data["PUBLISH_EVENTS"] = ("PUBLISH_EVENTS", (), ("smithy.api#noAuth",))
+
+_operation_data["SUBSCRIBE_TO_EVENTS"] = (
+    "SUBSCRIBE_TO_EVENTS",
+    (),
+    ("smithy.api#noAuth",),
 )
 
-SUBSCRIBE_TO_EVENTS = APIOperation(
-    static_schema=_SCHEMA_SUBSCRIBE_TO_EVENTS,
-    model_registry=_registry,
-    error_ids=[],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
-)
-
-TRADE_EVENT_STREAM = APIOperation(
-    static_schema=_SCHEMA_TRADE_EVENT_STREAM,
-    model_registry=_registry,
-    error_ids=[ShapeID("smithy.python.tests.handwritten#StreamServiceError")],
-    effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
+_operation_data["TRADE_EVENT_STREAM"] = (
+    "TRADE_EVENT_STREAM",
+    ("smithy.python.tests.handwritten#StreamServiceError",),
+    ("smithy.api#noAuth",),
 )

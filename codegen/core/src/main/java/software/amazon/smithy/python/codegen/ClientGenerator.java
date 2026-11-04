@@ -52,6 +52,7 @@ final class ClientGenerator implements Runnable {
     private void generateService(PythonWriter writer) {
         var serviceSymbol = symbolProvider.toSymbol(service);
         writer.addLocallyDefinedSymbol(serviceSymbol);
+        writer.addImport(context.settings().moduleName(), "models", "_models");
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         writer.addLogger();
@@ -258,7 +259,7 @@ final class ClientGenerator implements Runnable {
         // Input/output types are used ONLY in annotations here. Import them under
         // TYPE_CHECKING and reference by bare name (with future-annotations deferring
         // the annotations) so importing the client does not eagerly build every model
-        // class. The operation constant below is a real runtime import.
+        // class. Operations are resolved through the models module when invoked.
         writer.getImportContainer().enableFutureAnnotations();
         writer.getImportContainer()
                 .addTypeCheckingImport(
@@ -275,7 +276,7 @@ final class ClientGenerator implements Runnable {
         writer.putContext("output", outputSymbol.getName());
         writer.putContext("plugin", pluginSymbol);
         writer.putContext("operationName", operationMethodSymbol.getName());
-        writer.putContext("operation", symbolProvider.toSymbol(operation));
+        writer.putContext("operation", "_models." + operationSymbol.getName());
         writer.write("""
                 async def ${operationName:L}(
                     self,
@@ -285,7 +286,7 @@ final class ClientGenerator implements Runnable {
                     ${C|}
                     pipeline, call = await self._prepare_call(
                         input,
-                        ${operation:T},
+                        ${operation:L},
                         [
                             ${C|}
                         ],
@@ -357,7 +358,7 @@ final class ClientGenerator implements Runnable {
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("eventstream"));
         var operationSymbol = symbolProvider.toSymbol(operation);
-        writer.putContext("operation", operationSymbol);
+        writer.putContext("operation", "_models." + operationSymbol.getName());
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
         writer.putContext("operationName", operationMethodSymbol.getName());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
@@ -403,7 +404,7 @@ final class ClientGenerator implements Runnable {
                             ${C|}
                             pipeline, call = await self._prepare_call(
                                 input,
-                                ${operation:T},
+                                ${operation:L},
                                 [
                                     ${C|}
                                 ],
@@ -430,7 +431,7 @@ final class ClientGenerator implements Runnable {
                             ${C|}
                             pipeline, call = await self._prepare_call(
                                 input,
-                                ${operation:T},
+                                ${operation:L},
                                 [
                                     ${C|}
                                 ],
@@ -456,7 +457,7 @@ final class ClientGenerator implements Runnable {
                         ${C|}
                         pipeline, call = await self._prepare_call(
                             input,
-                            ${operation:T},
+                            ${operation:L},
                             [
                                 ${C|}
                             ],

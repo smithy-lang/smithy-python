@@ -17,25 +17,8 @@ from smithy_core.serializers import SerializeableShape
 from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.plugins import user_agent_plugin
 
+from . import models as _models
 from .config import AsyncJSONRPC10Config, Plugin
-from .models import (
-    CONTENT_TYPE_PARAMETERS,
-    EMPTY_INPUT_AND_EMPTY_OUTPUT,
-    ENDPOINT_OPERATION,
-    ENDPOINT_WITH_HOST_LABEL_OPERATION,
-    GREETING_WITH_ERRORS,
-    HOST_WITH_PATH_OPERATION,
-    JSON_UNIONS,
-    NO_INPUT_AND_NO_OUTPUT,
-    NO_INPUT_AND_OUTPUT,
-    OPERATION_WITH_DEFAULTS,
-    OPERATION_WITH_NESTED_STRUCTURE,
-    OPERATION_WITH_REQUIRED_MEMBERS,
-    OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS,
-    PUT_WITH_CONTENT_ENCODING,
-    QUERY_INCOMPATIBLE_OPERATION,
-    SIMPLE_SCALAR_PROPERTIES,
-)
 from .user_agent import aws_user_agent_plugin
 
 from typing import TYPE_CHECKING
@@ -209,7 +192,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `ContentTypeParametersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, CONTENT_TYPE_PARAMETERS, [], plugins
+            input, _models.CONTENT_TYPE_PARAMETERS, [], plugins
         )
         return await pipeline(call)
 
@@ -235,7 +218,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -258,7 +241,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `EndpointOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_OPERATION, [], plugins
+            input, _models.ENDPOINT_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -283,7 +266,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -310,7 +293,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `GreetingWithErrorsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, GREETING_WITH_ERRORS, [], plugins
+            input, _models.GREETING_WITH_ERRORS, [], plugins
         )
         return await pipeline(call)
 
@@ -333,7 +316,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `HostWithPathOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, HOST_WITH_PATH_OPERATION, [], plugins
+            input, _models.HOST_WITH_PATH_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -355,7 +338,9 @@ class AsyncJSONRPC10Client(AsyncClient):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, JSON_UNIONS, [], plugins)
+        pipeline, call = await self._prepare_call(
+            input, _models.JSON_UNIONS, [], plugins
+        )
         return await pipeline(call)
 
     async def no_input_and_no_output(
@@ -380,7 +365,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `NoInputAndNoOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_NO_OUTPUT, [], plugins
+            input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -406,7 +391,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `NoInputAndOutputOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, NO_INPUT_AND_OUTPUT, [], plugins
+            input, _models.NO_INPUT_AND_OUTPUT, [], plugins
         )
         return await pipeline(call)
 
@@ -429,7 +414,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `OperationWithDefaultsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_DEFAULTS, [], plugins
+            input, _models.OPERATION_WITH_DEFAULTS, [], plugins
         )
         return await pipeline(call)
 
@@ -454,7 +439,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `OperationWithNestedStructureOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_NESTED_STRUCTURE, [], plugins
+            input, _models.OPERATION_WITH_NESTED_STRUCTURE, [], plugins
         )
         return await pipeline(call)
 
@@ -479,7 +464,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `OperationWithRequiredMembersOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_REQUIRED_MEMBERS, [], plugins
+            input, _models.OPERATION_WITH_REQUIRED_MEMBERS, [], plugins
         )
         return await pipeline(call)
 
@@ -504,7 +489,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `OperationWithRequiredMembersWithDefaultsOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS, [], plugins
+            input, _models.OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS, [], plugins
         )
         return await pipeline(call)
 
@@ -527,7 +512,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `PutWithContentEncodingOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, PUT_WITH_CONTENT_ENCODING, [], plugins
+            input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins
         )
         return await pipeline(call)
 
@@ -552,7 +537,7 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `QueryIncompatibleOperationOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, QUERY_INCOMPATIBLE_OPERATION, [], plugins
+            input, _models.QUERY_INCOMPATIBLE_OPERATION, [], plugins
         )
         return await pipeline(call)
 
@@ -575,6 +560,6 @@ class AsyncJSONRPC10Client(AsyncClient):
             An instance of `SimpleScalarPropertiesOutput`.
         """
         pipeline, call = await self._prepare_call(
-            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+            input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
