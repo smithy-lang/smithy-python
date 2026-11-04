@@ -42,9 +42,10 @@ For protocol, codec, or serde changes, also read the
 - Add one changelog fragment per affected package for each user-visible change
   under `packages/`. When generated clients change, also bump the generator
   version in `codegen/build.gradle.kts`.
-- Report only the checks you actually ran and their results. Name any checks
-  that failed, were skipped, or could not run, and why.
+- In your handoff, report only the checks you actually ran and their results.
+  Name any checks that failed, were skipped, or could not run, and why.
 - When asked only to review, report findings. Do not edit files, commit, push,
   or post comments unless asked.
-- The human author writes the final PR description. Give them verified facts
-  and check results; do not draft or post the description yourself.
+- When asked to draft a PR description, explain why the change is needed and
+  what reviewers should focus on. Leave out test results and Testing sections;
+  CI already shows the checks.

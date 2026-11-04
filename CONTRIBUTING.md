@@ -27,11 +27,12 @@ especially those labeled `help wanted`, are a good place to find contributions.
 4. Run the applicable [validation](#validation) and add any required
    [changelog entries and version changes](#changelog-and-versioning).
 5. Commit with clear messages and open a PR using the repository's
-   [PR template](.github/PULL_REQUEST_TEMPLATE.md). The PR author writes the
-   description; a coding agent can supply verified facts and check results for
-   it.
-6. Report the checks you ran and their results, including failures or checks you
-   could not run. Address CI failures and stay involved in the review.
+   [PR template](.github/PULL_REQUEST_TEMPLATE.md). Write the description as
+   described in [Writing and review](#writing-and-review).
+6. When handing off a change, report the checks you ran and their results,
+   including failures and checks you skipped or could not run, and why. Keep
+   these results out of the PR description. Address CI failures and stay
+   involved in the review.
 
 ## Development setup
 
@@ -269,9 +270,9 @@ package versions as part of a contribution. The release process does that.
   behavior.
 - Write commit messages with a short summary line. Use the body, when needed,
   to explain why the change is needed, not to list every edit.
-- The PR author writes the final PR description, focused on why the change is
-  needed and what a reviewer should look at. Coding agents should give the
-  author verified facts and check results, not draft or post the description.
+- In the PR description, explain why the change is needed and what reviewers
+  should focus on. Do not include test results, test summaries, or a Testing
+  section that repeats CI; the PR's CI checks already show them.
 - Add comments that explain behavior or rationale, rather than restating code.
 - Verify factual claims in PRs, reviews, and changelog entries: check current
   behavior on `develop`, actual test results, and measured performance. Identify
