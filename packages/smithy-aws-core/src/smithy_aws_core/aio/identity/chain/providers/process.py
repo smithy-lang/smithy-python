@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.interfaces.identity import Identity
 
+from .....business_metrics import AwsFeatureId
 from .....identity.chain.ordering import Standard, StandardProvider
 from .....identity.chain.providers.process import (
     _split_process_command,  # type: ignore[reportPrivateUsage]
@@ -16,6 +17,12 @@ _ACCOUNT_ID = "aws_account_id"
 
 class AsyncProfileCredentialProcessProvider:
     """Adds a process credential resolver configured by the active profile."""
+
+    feature_ids = (
+        AwsFeatureId.CREDENTIALS_PROFILE_PROCESS,
+        AwsFeatureId.CREDENTIALS_PROCESS,
+    )
+    """The features recorded when this provider's resolver returns credentials."""
 
     @property
     def name(self) -> str:
@@ -47,5 +54,7 @@ class AsyncProfileCredentialProcessProvider:
             AsyncProcessCredentialsResolver(
                 _split_process_command(command),
                 account_id=config_file.get(profile_name, _ACCOUNT_ID),
+                # The chain records this provider's feature IDs.
+                feature_ids=(),
             )
         )

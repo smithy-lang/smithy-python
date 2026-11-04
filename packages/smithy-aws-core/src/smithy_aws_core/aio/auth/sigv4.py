@@ -16,6 +16,7 @@ from smithy_core.interfaces import TypedProperties as _TypedProperties
 from smithy_core.types import PropertyKey
 from smithy_http.aio.interfaces import HTTPRequest
 
+from ...business_metrics import AwsFeatureId, register_feature_id
 from ...identity import (
     AWS_IDENTITY_CONFIG,
     AWSCredentialsIdentity,
@@ -45,6 +46,37 @@ SIGV4_CONFIG = PropertyKey(key="config", value_type=SigV4Config)
 type SigV4Signer = AsyncSigner[
     HTTPRequest, AWSCredentialsIdentity, SigV4SigningProperties
 ]
+
+
+class _AccountIdRecordingResolver:
+    """Records RESOLVED_ACCOUNT_ID when resolved credentials include an account ID.
+
+    Wraps the credentials resolver used for SigV4, so this is recorded for each request
+    whose credentials are resolved with request properties, whether they come from the
+    credential chain or another resolver. Nothing is recorded without request
+    properties, such as when signing event stream messages.
+    """
+
+    def __init__(self, resolver: AsyncAWSCredentialsResolver) -> None:
+        self._resolver = resolver
+
+    async def get_identity(
+        self,
+        *,
+        properties: AWSIdentityProperties,
+        context: _TypedProperties | None = None,
+    ) -> AWSCredentialsIdentity:
+        identity = await self._resolver.get_identity(
+            properties=properties, context=context
+        )
+        # The resolver may return an identity without an account_id field, such as
+        # aws_sdk_signers.AWSCredentialIdentity.
+        if context is not None and getattr(identity, "account_id", None):
+            register_feature_id(context, AwsFeatureId.RESOLVED_ACCOUNT_ID)
+        return identity
+
+    async def invalidate(self) -> None:
+        await self._resolver.invalidate()
 
 
 class AsyncSigV4AuthScheme(
@@ -95,7 +127,7 @@ class AsyncSigV4AuthScheme(
                 "Attempted to use SigV4 auth, but aws_credentials_identity_resolver was not "
                 "set on the config."
             )
-        return config.aws_credentials_identity_resolver
+        return _AccountIdRecordingResolver(config.aws_credentials_identity_resolver)
 
     def signer_properties(self, *, context: _TypedProperties) -> SigV4SigningProperties:
         config = context.get(SIGV4_CONFIG)

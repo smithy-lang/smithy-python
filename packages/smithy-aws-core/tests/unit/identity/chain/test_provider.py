@@ -3,11 +3,13 @@
 from unittest.mock import AsyncMock
 
 import pytest
-from smithy_aws_core.aio.identity.chain.provider import ChainSetup
+from smithy_aws_core.aio.identity.chain.provider import ChainSetup, NamedResolver
+from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
 from smithy_aws_core.config.file_parser import StandardizedOutput
 from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.identity.chain.ordering import Standard, StandardProvider
 from smithy_core.interfaces.identity import Identity
+from smithy_core.types import TypedProperties
 
 
 class _FakeProvider:
@@ -34,6 +36,39 @@ def test_add_resolver_tags_with_current_provider() -> None:
     assert setup.resolvers[0].resolver is resolver
     assert setup.resolvers[0].provider_name == "Environment"
     assert not setup.terminal
+
+
+def test_add_resolver_tags_with_provider_feature_ids() -> None:
+    provider = _FakeProvider("Environment")
+    provider.feature_ids = (AwsFeatureId.CREDENTIALS_ENV_VARS,)  # type: ignore[attr-defined]
+    setup = ChainSetup()
+    setup.set_current_provider(provider)
+
+    setup.add_resolver(AsyncMock())
+
+    assert setup.resolvers[0].feature_ids == (AwsFeatureId.CREDENTIALS_ENV_VARS,)
+
+
+def test_add_resolver_accepts_single_feature_id() -> None:
+    provider = _FakeProvider("Environment")
+    provider.feature_ids = AwsFeatureId.CREDENTIALS_ENV_VARS  # type: ignore[attr-defined]
+    setup = ChainSetup()
+    setup.set_current_provider(provider)
+
+    setup.add_resolver(AsyncMock())
+
+    # Compare members, not just values: a split string would equal ("g",) too.
+    (feature_id,) = setup.resolvers[0].feature_ids
+    assert feature_id is AwsFeatureId.CREDENTIALS_ENV_VARS
+
+
+def test_add_resolver_without_provider_feature_ids() -> None:
+    setup = ChainSetup()
+    setup.set_current_provider(_FakeProvider("Environment"))
+
+    setup.add_resolver(AsyncMock())
+
+    assert setup.resolvers[0].feature_ids == ()
 
 
 def test_add_resolver_stacks_multiple() -> None:
@@ -96,3 +131,29 @@ def test_properties_bag_is_shared_and_mutable() -> None:
     setup.properties["key"] = "value"
 
     assert setup.properties["key"] == "value"
+
+
+async def test_named_resolver_records_feature_ids() -> None:
+    resolver = AsyncMock()
+    named = NamedResolver(
+        provider_name="Environment",
+        resolver=resolver,
+        feature_ids=(AwsFeatureId.CREDENTIALS_ENV_VARS,),
+    )
+    context = TypedProperties()
+
+    result = await named.get_identity(properties={}, context=context)
+
+    assert result is resolver.get_identity.return_value
+    assert list(context[FEATURE_IDS]) == [AwsFeatureId.CREDENTIALS_ENV_VARS]
+
+
+async def test_named_resolver_resolves_without_context() -> None:
+    resolver = AsyncMock()
+    named = NamedResolver(
+        provider_name="Environment",
+        resolver=resolver,
+        feature_ids=(AwsFeatureId.CREDENTIALS_ENV_VARS,),
+    )
+
+    assert await named.get_identity(properties={}) is resolver.get_identity.return_value

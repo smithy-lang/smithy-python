@@ -7,6 +7,8 @@ from typing import Any, assert_type
 import pytest
 import smithy_aws_core.aio.identity.chain as chain_module
 from smithy_aws_core.aio.identity import AsyncIdentityChain
+from smithy_aws_core.aio.identity.chain.provider import NamedResolver
+from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
 from smithy_aws_core.identity import (
     AWSCredentialsIdentity,
     AWSIdentityProperties,
@@ -24,6 +26,7 @@ from smithy_aws_core.identity.chain.ordering import (
 )
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
+from smithy_core.types import TypedProperties
 
 
 class _StubProvider:
@@ -54,7 +57,7 @@ class _FakeResolver(
         self.error = error
 
     async def get_identity(
-        self, *, properties: AWSIdentityProperties
+        self, *, properties: AWSIdentityProperties, context: Any = None
     ) -> AWSCredentialsIdentity:
         if self.error is not None:
             raise self.error
@@ -77,7 +80,7 @@ async def test_non_identity_errors_propagate() -> None:
         AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
     ):
         async def get_identity(
-            self, *, properties: Mapping[str, Any]
+            self, *, properties: Mapping[str, Any], context: Any = None
         ) -> AWSCredentialsIdentity:
             raise RuntimeError("broken")
 
@@ -270,7 +273,7 @@ async def test_chained_invalidate() -> None:
             self.invalidated = False
 
         async def get_identity(
-            self, *, properties: AWSIdentityProperties
+            self, *, properties: AWSIdentityProperties, context: Any = None
         ) -> AWSCredentialsIdentity:
             return _credentials("cached")
 
@@ -285,3 +288,21 @@ async def test_chained_invalidate() -> None:
 
     assert first.invalidated
     assert second.invalidated
+
+
+async def test_registers_feature_ids_of_resolver_that_returned_identity() -> None:
+    miss = NamedResolver(
+        provider_name="Environment",
+        resolver=_FakeResolver(error=SmithyIdentityError("miss")),
+        feature_ids=(AwsFeatureId.CREDENTIALS_ENV_VARS,),
+    )
+    hit = NamedResolver(
+        provider_name="ProfileStaticKeys",
+        resolver=_FakeResolver(identity=_credentials("hit")),
+        feature_ids=(AwsFeatureId.CREDENTIALS_PROFILE,),
+    )
+    context = TypedProperties()
+
+    await AsyncIdentityChain((miss, hit)).get_identity(properties={}, context=context)
+
+    assert list(context[FEATURE_IDS]) == [AwsFeatureId.CREDENTIALS_PROFILE]

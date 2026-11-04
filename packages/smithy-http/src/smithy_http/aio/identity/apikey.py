@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
+from smithy_core.interfaces import TypedProperties
 
 from ...identity import APIKeyIdentity, APIKeyIdentityProperties
 
@@ -18,7 +19,10 @@ class AsyncAPIKeyIdentityResolver(
     """Loads the API key identity from the configuration."""
 
     async def get_identity(
-        self, *, properties: APIKeyIdentityProperties
+        self,
+        *,
+        properties: APIKeyIdentityProperties,
+        context: TypedProperties | None = None,
     ) -> APIKeyIdentity:
         if (api_key := properties.get("api_key")) is not None:
             return APIKeyIdentity(api_key=api_key)

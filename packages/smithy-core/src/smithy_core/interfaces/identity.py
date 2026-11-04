@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
 from ..utils import ensure_utc
+from . import TypedProperties
 
 __all__ = ["Identity", "IdentityResolver"]
 
@@ -38,7 +39,9 @@ class IdentityResolver[I: Identity, IP: Mapping[str, Any]](Protocol):
     client implementation.
     """
 
-    def get_identity(self, *, properties: IP) -> I:
+    def get_identity(
+        self, *, properties: IP, context: TypedProperties | None = None
+    ) -> I:
         # TODO(sync-api): implement alongside the sync client
         ...
 

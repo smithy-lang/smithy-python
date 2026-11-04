@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.exceptions import SmithyIdentityError
+from smithy_core.interfaces import TypedProperties
 from smithy_core.interfaces.identity import IdentityResolver
 
 from .components import AWSCredentialsIdentity, AWSIdentityProperties
@@ -17,7 +18,10 @@ class StaticCredentialsResolver(
         self._identity = identity
 
     def get_identity(
-        self, *, properties: AWSIdentityProperties
+        self,
+        *,
+        properties: AWSIdentityProperties,
+        context: TypedProperties | None = None,
     ) -> AWSCredentialsIdentity:
         if self._identity is not None:
             return self._identity

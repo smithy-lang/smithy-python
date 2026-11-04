@@ -7,9 +7,15 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
+from smithy_core.interfaces import TypedProperties
 from smithy_core.interfaces.identity import Identity
 from smithy_http.aio.interfaces import AsyncHTTPClient
 
+from ....business_metrics import (
+    AwsFeatureId,
+    normalize_feature_ids,
+    register_feature_id,
+)
 from ....config.merged_config import MergedConfig
 from ....identity.chain.ordering import OrderingConstraint
 
@@ -26,10 +32,22 @@ class NamedResolver:
 
     provider_name: str
     resolver: AsyncIdentityResolver[Any, Any]
+    feature_ids: tuple[AwsFeatureId, ...] = ()
 
-    async def get_identity(self, *, properties: Mapping[str, Any]) -> Any:
-        """Resolve an identity using the underlying resolver."""
-        return await self.resolver.get_identity(properties=properties)
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "feature_ids", normalize_feature_ids(self.feature_ids))
+
+    async def get_identity(
+        self, *, properties: Mapping[str, Any], context: TypedProperties | None = None
+    ) -> Any:
+        """Resolve an identity and record the provider's features for the call."""
+        identity = await self.resolver.get_identity(
+            properties=properties, context=context
+        )
+        if context is not None:
+            for feature_id in self.feature_ids:
+                register_feature_id(context, feature_id)
+        return identity
 
     async def invalidate(self) -> None:
         """Invalidate any identity cached by the underlying resolver."""
@@ -116,10 +134,15 @@ class ChainSetup:
             raise RuntimeError("Cannot add a resolver after a terminal resolver.")
         if self._current_provider is None:
             raise RuntimeError("Cannot add a resolver without a current provider.")
+        # A provider's feature_ids may be a tuple of one or more feature IDs, a single
+        # feature ID without a tuple, or None. None is for providers, such as custom
+        # ones, that have no feature ID and set it to None explicitly.
+        feature_ids = getattr(self._current_provider, "feature_ids", ())
         self._resolvers.append(
             NamedResolver(
                 provider_name=self._current_provider.name,
                 resolver=resolver,
+                feature_ids=feature_ids,
             )
         )
 
@@ -130,7 +153,11 @@ class ChainSetup:
 
 
 class ChainIdentityProvider(Protocol):
-    """Inspects setup state and conditionally adds identity resolvers."""
+    """Inspects setup state and conditionally adds identity resolvers.
+
+    Providers may also define ``feature_ids``, the features recorded for a call when
+    one of their resolvers returns its identity.
+    """
 
     @property
     def name(self) -> str:

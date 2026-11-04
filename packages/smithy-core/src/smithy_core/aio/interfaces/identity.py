@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 from typing import Any, Protocol
 
+from ...interfaces import TypedProperties
 from ...interfaces.identity import Identity
 
 
@@ -12,10 +13,14 @@ class AsyncIdentityResolver[I: Identity, IP: Mapping[str, Any]](Protocol):
     Each `Identity` may have one or more resolver implementations.
     """
 
-    async def get_identity(self, *, properties: IP) -> I:
+    async def get_identity(
+        self, *, properties: IP, context: TypedProperties | None = None
+    ) -> I:
         """Load the user's identity from this resolver.
 
         :param properties: Properties used to help determine the identity to return.
+        :param context: The request properties of the call the identity is for, if
+            any. Resolvers may use them, for example, to record the features used.
         """
         ...
 

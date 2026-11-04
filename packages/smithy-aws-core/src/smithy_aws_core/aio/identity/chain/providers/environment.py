@@ -4,6 +4,7 @@ import os
 
 from smithy_core.interfaces.identity import Identity
 
+from .....business_metrics import AwsFeatureId
 from .....identity.chain.ordering import Standard, StandardProvider
 from .....identity.components import AWSCredentialsIdentity
 from ...environment import AsyncEnvironmentCredentialsResolver
@@ -17,6 +18,9 @@ _SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"  # noqa: S105
 
 class AsyncEnvironmentCredentialsProvider:
     """Adds an environment resolver unless an explicit profile is selected."""
+
+    feature_ids = (AwsFeatureId.CREDENTIALS_ENV_VARS,)
+    """The features recorded when this provider's resolver returns credentials."""
 
     @property
     def name(self) -> str:
@@ -43,4 +47,5 @@ class AsyncEnvironmentCredentialsProvider:
         if not os.getenv(_ACCESS_KEY_ID) or not os.getenv(_SECRET_ACCESS_KEY):
             return
 
-        setup.add_terminal_resolver(AsyncEnvironmentCredentialsResolver())
+        # The chain records this provider's feature IDs.
+        setup.add_terminal_resolver(AsyncEnvironmentCredentialsResolver(feature_ids=()))

@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.interfaces.identity import Identity
 
+from .....business_metrics import AwsFeatureId
 from .....identity.chain.ordering import Standard, StandardProvider
 from .....identity.components import AWSCredentialsIdentity
 from ...static import AsyncStaticCredentialsResolver
@@ -21,6 +22,9 @@ _ROLE_ARN = "role_arn"
 
 class AsyncProfileSessionCredentialsProvider:
     """Adds a resolver for session credentials from the active profile."""
+
+    feature_ids = (AwsFeatureId.CREDENTIALS_PROFILE,)
+    """The features recorded when this provider's resolver returns credentials."""
 
     @property
     def name(self) -> str:
@@ -57,11 +61,19 @@ class AsyncProfileSessionCredentialsProvider:
             session_token=session_token,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        setup.add_terminal_resolver(AsyncStaticCredentialsResolver(identity))
+        # The static resolver records CREDENTIALS_CODE by default. Turn that off, because
+        # these keys come from a profile, and the chain records this provider's
+        # CREDENTIALS_PROFILE instead.
+        setup.add_terminal_resolver(
+            AsyncStaticCredentialsResolver(identity, feature_ids=())
+        )
 
 
 class AsyncProfileStaticCredentialsProvider:
     """Adds a resolver for static credentials from the active profile."""
+
+    feature_ids = (AwsFeatureId.CREDENTIALS_PROFILE,)
+    """The features recorded when this provider's resolver returns credentials."""
 
     @property
     def name(self) -> str:
@@ -96,4 +108,9 @@ class AsyncProfileStaticCredentialsProvider:
             secret_access_key=secret_access_key,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        setup.add_terminal_resolver(AsyncStaticCredentialsResolver(identity))
+        # The static resolver records CREDENTIALS_CODE by default. Turn that off, because
+        # these keys come from a profile, and the chain records this provider's
+        # CREDENTIALS_PROFILE instead.
+        setup.add_terminal_resolver(
+            AsyncStaticCredentialsResolver(identity, feature_ids=())
+        )
