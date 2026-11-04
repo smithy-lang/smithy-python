@@ -5,6 +5,7 @@
 package software.amazon.smithy.python.codegen;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -24,6 +25,10 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     private final boolean nullable;
     private final String documentation;
     private final Consumer<PythonWriter> initialize;
+    private final String defaultValue;
+    private final Symbol resolver;
+    private final Symbol validator;
+    private final Symbol converter;
 
     /**
      * Constructor.
@@ -35,6 +40,10 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         this.nullable = builder.nullable;
         this.documentation = Objects.requireNonNull(builder.documentation);
         this.initialize = Objects.requireNonNull(builder.initialize);
+        this.defaultValue = builder.defaultValue;
+        this.resolver = builder.resolver;
+        this.validator = builder.validator;
+        this.converter = builder.converter;
     }
 
     /**
@@ -76,6 +85,36 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     }
 
     /**
+     * @return Returns the Python expression of the field's default value, used when
+     *     the value isn't set or resolved, if any.
+     */
+    public Optional<String> defaultValue() {
+        return Optional.ofNullable(defaultValue);
+    }
+
+    /**
+     * @return Returns the function that resolves the field's value from the
+     *     environment or shared config files, if any.
+     */
+    public Optional<Symbol> resolver() {
+        return Optional.ofNullable(resolver);
+    }
+
+    /**
+     * @return Returns the function that validates the field's value, if any.
+     */
+    public Optional<Symbol> validator() {
+        return Optional.ofNullable(validator);
+    }
+
+    /**
+     * @return Returns the function that normalizes values set in code, if any.
+     */
+    public Optional<Symbol> converter() {
+        return Optional.ofNullable(converter);
+    }
+
+    /**
      * Initializes the config field on the config object.
      *
      * <p>This will be wrapped in an {@link InitializeConfigPropertySection}.
@@ -107,7 +146,11 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
                 .inputType(inputType)
                 .nullable(nullable)
                 .documentation(documentation)
-                .initialize(initialize);
+                .initialize(initialize)
+                .defaultValue(defaultValue)
+                .resolver(resolver)
+                .validator(validator)
+                .converter(converter);
     }
 
     /**
@@ -120,6 +163,10 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         private boolean nullable = true;
         private String documentation;
         private Consumer<PythonWriter> initialize = writer -> writer.write("self.$1L = $1L", name);
+        private String defaultValue;
+        private Symbol resolver;
+        private Symbol validator;
+        private Symbol converter;
 
         @Override
         public ConfigProperty build() {
@@ -207,6 +254,55 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
          */
         public Builder initialize(Consumer<PythonWriter> initialize) {
             this.initialize = initialize;
+            return this;
+        }
+
+        /**
+         * Sets the default value of the config property in configs that are
+         * resolved asynchronously.
+         *
+         * @param defaultValue A Python expression, such as {@code "when_supported"}
+         *     including the quotes.
+         * @return Returns the builder.
+         */
+        public Builder defaultValue(String defaultValue) {
+            this.defaultValue = defaultValue;
+            return this;
+        }
+
+        /**
+         * Sets the function that resolves the config property from the environment
+         * or shared config files, in configs that are resolved asynchronously.
+         *
+         * @param resolver An async function that takes the shared config context.
+         * @return Returns the builder.
+         */
+        public Builder resolver(Symbol resolver) {
+            this.resolver = resolver;
+            return this;
+        }
+
+        /**
+         * Sets the function that validates the config property, in configs that are
+         * resolved asynchronously.
+         *
+         * @param validator A function that takes the value and raises if it's invalid.
+         * @return Returns the builder.
+         */
+        public Builder validator(Symbol validator) {
+            this.validator = validator;
+            return this;
+        }
+
+        /**
+         * Sets the function that normalizes values of the config property that are
+         * set in code, in configs that are resolved asynchronously.
+         *
+         * @param converter A function that takes the value and returns the normalized one.
+         * @return Returns the builder.
+         */
+        public Builder converter(Symbol converter) {
+            this.converter = converter;
             return this;
         }
     }

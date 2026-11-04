@@ -63,6 +63,9 @@ AUTH_SCHEME = PropertyKey(
     key="auth_scheme", value_type=AsyncAuthScheme[Any, Any, Any, Any]
 )
 
+OPERATION = PropertyKey(key="operation", value_type=APIOperation[Any, Any])
+"""The operation being invoked by the call."""
+
 _UNRESOLVED = URI(host="", path="/")
 _LOGGER = logging.getLogger(__name__)
 
@@ -812,6 +815,7 @@ class AsyncClient:
         )
         context = _TypedProperties({"config": config})
         context[RETRY_STRATEGY] = retry_strategy
+        context[OPERATION] = operation
         call = AsyncClientCall(
             input=input,
             operation=operation,

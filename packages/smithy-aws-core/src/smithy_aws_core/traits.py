@@ -21,6 +21,7 @@ __all__ = [
     "AwsQueryTrait",
     "Ec2QueryNameTrait",
     "Ec2QueryTrait",
+    "HttpChecksumTrait",
     "RestJson1Trait",
     "RestXmlTrait",
     "SigV4Trait",
@@ -152,6 +153,38 @@ class Ec2QueryNameTrait(Trait, id=ShapeID("aws.protocols#ec2QueryName")):
     @property
     def value(self) -> str:
         return self.document_value  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class HttpChecksumTrait(Trait, id=ShapeID("aws.protocols#httpChecksum")):
+    """Indicates that an operation supports checksums of its HTTP payloads.
+
+    See the `httpChecksum trait documentation
+    <https://smithy.io/2.0/aws/aws-core.html#aws-protocols-httpchecksum-trait>`_.
+    """
+
+    def __post_init__(self):
+        assert isinstance(self.document_value, Mapping)
+
+    @property
+    def request_checksum_required(self) -> bool:
+        """Whether a checksum of the request payload must be sent."""
+        return self.document_value.get("requestChecksumRequired", False)  # type: ignore
+
+    @property
+    def request_algorithm_member(self) -> str | None:
+        """The input member that names the request checksum algorithm."""
+        return self.document_value.get("requestAlgorithmMember")  # type: ignore
+
+    @property
+    def request_validation_mode_member(self) -> str | None:
+        """The input member that enables validation of the response checksum."""
+        return self.document_value.get("requestValidationModeMember")  # type: ignore
+
+    @property
+    def response_algorithms(self) -> tuple[str, ...]:
+        """The algorithms the service may use for response checksums."""
+        return tuple(self.document_value.get("responseAlgorithms", ()))  # type: ignore
 
 
 @dataclass(init=False, frozen=True)

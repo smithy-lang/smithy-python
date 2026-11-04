@@ -14,6 +14,7 @@ __all__ = [
     "resolve_endpoint_uri",
     "resolve_max_attempts",
     "resolve_region",
+    "resolve_response_checksum_validation",
     "resolve_retry_mode",
     "resolve_sdk_ua_app_id",
 ]
@@ -110,6 +111,26 @@ async def resolve_retry_mode(ctx: AsyncSharedConfigContext) -> Resolved[str | No
         )
         return Resolved(value="standard", source=result.source)
     return result
+
+
+async def resolve_response_checksum_validation(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[str | None]:
+    """Resolve when response checksums are validated from environment or config file.
+
+    Values are case-insensitive and are returned in lowercase.
+
+    :param ctx: The shared resolution context.
+    :returns: Resolved value with source.
+    """
+    result = await _resolve_str(
+        ctx,
+        env_vars=("AWS_RESPONSE_CHECKSUM_VALIDATION",),
+        profile_keys=("response_checksum_validation",),
+    )
+    if result.value is UNSET:
+        return result
+    return Resolved(value=result.value.lower(), source=result.source)
 
 
 async def resolve_max_attempts(ctx: AsyncSharedConfigContext) -> Resolved[int | None]:

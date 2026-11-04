@@ -8,6 +8,7 @@ from typing import Any, cast
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from smithy_core.aio.client import OPERATION as OPERATION_PROPERTY
 from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.eventstream import AsyncDuplexEventStream, AsyncInputEventStream
 from smithy_core.aio.interfaces import AsyncClientTransport
@@ -309,6 +310,20 @@ def test_build_call_adds_retry_strategy_to_request_properties() -> None:
 
     assert call.context[RETRY_STRATEGY] is retry_strategy
     assert call.retry_strategy is retry_strategy
+
+
+def test_build_call_adds_operation_to_request_properties() -> None:
+    operation = cast(Any, Mock())
+    client = _StubClient()
+    _, call = client._build_call(  # pyright: ignore[reportPrivateUsage]
+        cast(Any, Mock()),
+        operation,
+        config=Mock(interceptors=[]),
+        retry_strategy=AsyncStandardRetryStrategy(),
+    )
+
+    assert call.context[OPERATION_PROPERTY] is operation
+    assert call.operation is operation
 
 
 async def test_close_is_idempotent() -> None:

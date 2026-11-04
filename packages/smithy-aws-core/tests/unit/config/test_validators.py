@@ -8,6 +8,7 @@ from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.config.validators import (
     validate_max_attempts,
     validate_region,
+    validate_response_checksum_validation,
     validate_retry_mode,
     validate_sdk_ua_app_id,
 )
@@ -101,3 +102,18 @@ class TestValidateSdkUaAppId:
     def test_no_warning(self, value: str | None, caplog: pytest.LogCaptureFixture):
         validate_sdk_ua_app_id(value)
         assert caplog.text == ""
+
+
+class TestValidateResponseChecksumValidation:
+    @pytest.mark.parametrize("value", ["when_supported", "when_required", None])
+    def test_accepts_valid_values(self, value: str | None) -> None:
+        validate_response_checksum_validation(value)
+
+    @pytest.mark.parametrize("value", ["always", "", "WHEN_SUPPORTED", 1])
+    def test_rejects_invalid_values(self, value: object) -> None:
+        # Values set in code are lowercased by the field's converter first.
+        with pytest.raises(
+            ConfigValidationError,
+            match="Invalid value for 'response_checksum_validation'",
+        ):
+            validate_response_checksum_validation(value)

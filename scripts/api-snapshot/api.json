@@ -162,6 +162,7 @@
     "resolve_endpoint_uri": "function[async]",
     "resolve_max_attempts": "function[async]",
     "resolve_region": "function[async]",
+    "resolve_response_checksum_validation": "function[async]",
     "resolve_retry_mode": "function[async]",
     "resolve_sdk_ua_app_id": "function[async]"
   },
@@ -418,6 +419,19 @@
     "logger": "Logger",
     "register_feature_id": "function"
   },
+  "smithy_aws_core.checksums": {
+    "AsyncBytesReader": "rex-class[async]",
+    "CallError": "rex-exception",
+    "ChecksumMismatchError": "exception",
+    "ChecksumValidatingStream": "class[async]",
+    "Fault": "rex-type_alias",
+    "ResponseChecksumValidation": "rex-type_alias",
+    "StreamingBlob": "rex-type_alias",
+    "create_checksum": "rex-function",
+    "decode_checksum": "rex-function",
+    "encode_digest": "rex-function",
+    "logger": "Logger"
+  },
   "smithy_aws_core.config": {
     "AsyncAwsConfig": "rex-class[async]",
     "AsyncDefaultFileSystem": "rex-class[async]",
@@ -472,16 +486,20 @@
     "ConfigSource": "class",
     "FieldSpec": "class",
     "Resolved": "class",
-    "UNSET": "_UnsetType"
+    "ResponseChecksumValidation": "rex-type_alias",
+    "UNSET": "_UnsetType",
+    "normalize_response_checksum_validation": "function"
   },
   "smithy_aws_core.config.validators": {
     "ConfigSource": "rex-class",
     "ConfigValidationError": "rex-exception",
     "ProfileNotFoundError": "rex-exception",
+    "ResponseChecksumValidation": "rex-type_alias",
     "logger": "Logger",
     "validate_max_attempts": "function",
     "validate_profile": "function",
     "validate_region": "function",
+    "validate_response_checksum_validation": "function",
     "validate_retry_mode": "function",
     "validate_sdk_ua_app_id": "function"
   },
@@ -574,6 +592,28 @@
     "StaticCredentialsResolver": "class"
   },
   "smithy_aws_core.interceptors": {},
+  "smithy_aws_core.interceptors.checksums": {
+    "APIOperation": "rex-class",
+    "AwsFeatureId": "rex-class",
+    "ChecksumValidatingStream": "rex-class[async]",
+    "FlexibleChecksumsInterceptor": "class",
+    "HTTPRequest": "rex-protocol[async]",
+    "HTTPResponse": "rex-class[async]",
+    "HTTPResponseInterface": "rex-protocol[async]",
+    "HttpChecksumTrait": "rex-class",
+    "InputContext": "rex-class",
+    "Interceptor": "rex-class",
+    "OPERATION": "rex-PropertyKey",
+    "PropertyKey": "rex-class",
+    "ResponseContext": "rex-class",
+    "TypedProperties": "rex-protocol",
+    "assert_checksums_installed": "rex-function",
+    "checksum_header": "rex-function",
+    "logger": "Logger",
+    "member_field_name": "rex-function",
+    "register_feature_id": "rex-function",
+    "response_validation_order": "rex-function"
+  },
   "smithy_aws_core.interceptors.user_agent": {
     "AsyncAdaptiveRetryStrategy": "rex-class[async]",
     "AsyncStandardRetryStrategy": "rex-class[async]",
@@ -603,6 +643,7 @@
     "DynamicTrait": "rex-class",
     "Ec2QueryNameTrait": "class",
     "Ec2QueryTrait": "class",
+    "HttpChecksumTrait": "class",
     "RestJson1Trait": "class",
     "RestXmlTrait": "class",
     "ShapeID": "rex-class",
@@ -718,6 +759,7 @@
     "SmithyError": "rex-exception",
     "URI": "class",
     "aio": "rex-module",
+    "auth": "rex-module",
     "codecs": "rex-module",
     "deserializers": "rex-module",
     "documents": "rex-module",
@@ -737,6 +779,8 @@
     "utils": "rex-module"
   },
   "smithy_core.aio": {
+    "client": "rex-module",
+    "eventstream": "rex-module",
     "interfaces": "rex-module",
     "retries": "rex-module",
     "types": "rex-module",
@@ -769,6 +813,7 @@
     "InputContext": "rex-class",
     "Interceptor": "rex-class",
     "InterceptorChain": "rex-class",
+    "OPERATION": "PropertyKey",
     "OutputContext": "rex-class",
     "PropertyKey": "rex-class",
     "RETRY_STRATEGY": "rex-PropertyKey",

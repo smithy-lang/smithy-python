@@ -5,13 +5,15 @@
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 __all__ = [
     "UNSET",
     "ConfigSource",
     "FieldSpec",
     "Resolved",
+    "ResponseChecksumValidation",
+    "normalize_response_checksum_validation",
 ]
 
 
@@ -81,3 +83,23 @@ class FieldSpec:
             raise ValueError(
                 "FieldSpec: exactly one of 'default' or 'default_factory' must be set"
             )
+
+
+type ResponseChecksumValidation = Literal["when_supported", "when_required"]
+"""When to validate the checksums of response payloads.
+
+* ``when_supported``: validate the response payload of every operation that models
+  response checksums, as long as one of the modeled algorithms is supported.
+* ``when_required``: only validate a response payload when the caller enabled
+  validation on the request, such as by setting ``checksum_mode`` to ``ENABLED``.
+
+Values are case-insensitive.
+"""
+
+
+def normalize_response_checksum_validation(value: Any) -> Any:
+    """Lowercase a ``ResponseChecksumValidation`` value, since it's case-insensitive.
+
+    Values that aren't strings are returned unchanged for the validator to reject.
+    """
+    return value.lower() if isinstance(value, str) else value
