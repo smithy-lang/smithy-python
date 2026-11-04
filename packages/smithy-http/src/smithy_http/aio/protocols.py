@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import asyncio
+import json
 import os
 from collections.abc import AsyncIterable, Callable, Mapping, Sequence
 from inspect import iscoroutinefunction
@@ -19,6 +20,7 @@ from smithy_core.aio.interfaces.eventstream import (
     AsyncEventReceiver,
 )
 from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.aio.utils import close as _close
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.documents import TypeRegistry
@@ -29,6 +31,7 @@ from smithy_core.exceptions import (
     ModeledError,
     UnsupportedStreamError,
 )
+from smithy_core.exceptions import SmithyError as _SmithyError
 from smithy_core.interfaces import (
     Endpoint,
     ProtocolSettings,
@@ -47,8 +50,10 @@ from smithy_core.traits import (
     DefaultTrait,
     RequiredTrait,
     RpcV2CborTrait,
+    RpcV2JsonTrait,
 )
 from smithy_core.types import PropertyKey
+from smithy_core.types import TimestampFormat as _TimestampFormat
 
 from .. import tuples_to_fields
 from ..deserializers import HTTPResponseDeserializer
@@ -65,6 +70,7 @@ __all__ = [
     "AsyncHttpClientProtocol",
     "AsyncRpcClientProtocol",
     "AsyncRpcV2CborClientProtocol",
+    "AsyncRpcV2JsonClientProtocol",
 ]
 
 try:
@@ -513,6 +519,24 @@ def _assert_cbor() -> None:
         )
 
 
+try:
+    from smithy_json import JSONCodec as _JSONCodec
+
+    _HAS_JSON = True
+except ImportError:
+    _HAS_JSON = False  # type: ignore
+
+if TYPE_CHECKING:
+    from smithy_json import JSONCodec as _JSONCodec
+
+
+def _assert_json() -> None:
+    if not _HAS_JSON:
+        raise MissingDependencyError(
+            "Attempted to use JSON codec, but smithy-json is not installed."
+        )
+
+
 def _is_unit(schema: Schema | None) -> bool:
     """rpcv2Cbor treats an operation with unit input as having no body, and unit output
     as an empty response. Codegen synthesizes a wrapper struct for a unit member but
@@ -705,7 +729,8 @@ class _RpcV2ClientProtocol(AsyncRpcClientProtocol):
 
     Subclasses supply the codec-specific pieces: the protocol id, content type,
     ``Smithy-Protocol`` header value, the empty-document sentinel, codec construction,
-    and error ``__type`` decoding. All HTTP/RPC framing lives here.
+    and error ``__type`` decoding. All HTTP/RPC framing lives here, including the
+    check that a response echoes the request's ``Smithy-Protocol`` header.
     """
 
     _id: ShapeID
@@ -811,6 +836,26 @@ class _RpcV2ClientProtocol(AsyncRpcClientProtocol):
         error_registry: TypeRegistry,
         context: TypedProperties,
     ) -> OperationOutput:
+        # A response whose Smithy-Protocol header differs from the request's is
+        # malformed: the spec requires handling it on the status code alone, without
+        # interpreting the body or other headers. Checked first, for every status
+        # (including 200) and before the event-stream branch.
+        actual_protocol = (
+            response.fields["Smithy-Protocol"].as_string()
+            if "Smithy-Protocol" in response.fields
+            else None
+        )
+        if actual_protocol != self._smithy_protocol:
+            await self._discard_body(operation, response)
+            raise CallError(
+                message=(
+                    f"Malformed response for operation {operation.schema.id}: "
+                    f"expected Smithy-Protocol header {self._smithy_protocol!r}, "
+                    f"got {actual_protocol!r} - status: {response.status}"
+                ),
+                fault="client" if response.status < 500 else "server",
+            )
+
         if (
             self._is_event_stream_member(operation.output_stream_member)
             and response.status == 200
@@ -833,6 +878,20 @@ class _RpcV2ClientProtocol(AsyncRpcClientProtocol):
         if not body or _is_unit(operation.output_schema):
             body = self._empty_document
         return self._codec.deserialize(source=body, shape=operation.output)
+
+    async def _discard_body(
+        self, operation: APIOperation[Any, Any], response: HTTPResponse
+    ) -> None:
+        """Release a response body that will not be interpreted.
+
+        A bounded body is drained, as the error path does, so the connection can be
+        reused. A response to an event-stream operation may be long-lived, so it is
+        closed instead of drained to avoid blocking on it.
+        """
+        if self._is_event_stream_member(operation.output_stream_member):
+            await _close(response.body)
+            return
+        await response.consume_body_async()
 
     def _default_output[
         OperationInput: SerializeableShape,
@@ -863,8 +922,14 @@ class _RpcV2ClientProtocol(AsyncRpcClientProtocol):
         # holding the absolute error shape id (no error header). Resolve it against the
         # registry, then deserialize the same body into the modeled error shape.
         error_id: ShapeID | None = None
+        raw_type: object = None
         if body:
-            decoded = self._decode_document(body)
+            # A body that cannot be decoded is a malformed error response, which the
+            # spec requires handling on the status code alone.
+            try:
+                decoded = self._decode_document(body)
+            except Exception:
+                decoded = None
             if isinstance(decoded, dict):
                 raw_type = cast("dict[str, object]", decoded).get("__type")
                 if isinstance(raw_type, str):
@@ -885,6 +950,8 @@ class _RpcV2ClientProtocol(AsyncRpcClientProtocol):
         )
         if error_id is not None:
             message += f" - id: {error_id}"
+        elif isinstance(raw_type, str):
+            message += f" - id: {raw_type}"
         return CallError(
             message=message,
             fault="client" if response.status < 500 else "server",
@@ -893,15 +960,20 @@ class _RpcV2ClientProtocol(AsyncRpcClientProtocol):
     @staticmethod
     def _normalize_error_id(
         raw_type: str, operation: APIOperation[Any, Any]
-    ) -> ShapeID:
-        # `__type` may carry a full shape id, or (per spec) a name that may include a
-        # trailing "#"-qualified suffix. Match on the shape name against the operation's
-        # modeled errors so a bare or oddly-qualified name still resolves.
-        candidate = ShapeID(raw_type)
+    ) -> ShapeID | None:
+        # The spec requires `__type` to be the absolute shape id. Tolerate looser forms
+        # servers emit in practice -- a bare name, a different namespace, or an
+        # awsJson-style ":"-delimited suffix -- by matching on the shape name against
+        # the operation's modeled errors. Returns None if nothing usable remains.
+        name = raw_type.split(":", 1)[0]
+        short_name = name.rpartition("#")[2]
         for error_schema in operation.error_schemas:
-            if error_schema.id == candidate or error_schema.id.name == candidate.name:
+            if str(error_schema.id) == name or error_schema.id.name == short_name:
                 return error_schema.id
-        return candidate
+        try:
+            return ShapeID(name)
+        except _SmithyError:
+            return None
 
 
 class AsyncRpcV2CborClientProtocol(_RpcV2ClientProtocol):
@@ -923,6 +995,35 @@ class AsyncRpcV2CborClientProtocol(_RpcV2ClientProtocol):
 
     def _decode_document(self, body: bytes) -> object:
         return _cbor_loads(body)  # type: ignore[possibly-unbound]
+
+
+class AsyncRpcV2JsonClientProtocol(_RpcV2ClientProtocol):
+    """An implementation of the smithy.protocols#rpcv2Json protocol."""
+
+    _id: ShapeID = RpcV2JsonTrait.id
+    _content_type: str = "application/json"
+    _smithy_protocol: str = "rpc-v2-json"
+    _empty_document: bytes = b"{}"
+
+    def __init__(self, settings: ProtocolSettings) -> None:
+        _assert_json()
+        self._service_name = settings.service_target
+        self._event_stream_http = self._resolve_event_stream_http(
+            settings.service_schema, self._id
+        )
+        # The protocol ignores @jsonName and @timestampFormat: members serialize under
+        # their member names and timestamps as epoch-seconds. bigInteger/bigDecimal
+        # travel as JSON strings to preserve arbitrary precision.
+        self._codec = _JSONCodec(
+            use_json_name=False,
+            use_timestamp_format=False,
+            default_timestamp_format=_TimestampFormat.EPOCH_SECONDS,
+            arbitrary_precision_as_string=True,
+            default_namespace=settings.namespace,
+        )
+
+    def _decode_document(self, body: bytes) -> object:
+        return json.loads(body)
 
 
 class _PrependedEventStream:

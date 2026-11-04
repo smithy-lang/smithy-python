@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "RPC v2 protocols now raise a `CallError` instead of an unrelated exception for error responses whose body cannot be decoded or whose `__type` is not an absolute shape ID, and resolve `__type` values with a `:`-delimited suffix to the modeled error."
+}

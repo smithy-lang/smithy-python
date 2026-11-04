@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "RPC v2 protocols (including `AsyncRpcV2CborClientProtocol`) now treat a response whose `Smithy-Protocol` header does not match the request as malformed, raising a `CallError` based solely on the HTTP status code without interpreting the body."
+}
