@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fix `InvalidSignatureException` caused by mismatched list header formatting during signing (e.g., `MyHeader: value1, value2` vs `MyHeader: value1,value2`)."
+}
