@@ -6,6 +6,9 @@ package software.amazon.smithy.python.codegen.generators;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.function.UnaryOperator;
+import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
@@ -36,6 +39,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public final class ModelStubGenerator implements Runnable {
 
+    private static final int STUB_PARTITION_SIZE = 250;
+
     private final GenerationContext context;
     private final PythonSettings settings;
     private final Model model;
@@ -55,54 +60,147 @@ public final class ModelStubGenerator implements Runnable {
         var module = settings.moduleName();
         var filename = String.format("src/%s/models.pyi", module);
         var namespace = String.format("%s.models", module);
+        var modelShapes = shapes.stream()
+                .filter(this::isModelShape)
+                .toList();
 
+        if (modelShapes.size() <= STUB_PARTITION_SIZE) {
+            context.writerDelegator().useFileWriter(filename, namespace, writer -> {
+                writePreamble(writer);
+                writeShapes(writer, modelShapes, UnaryOperator.identity());
+                writeOperations(writer);
+            });
+            return;
+        }
+
+        var partitions = new ArrayList<List<Shape>>();
+        for (int start = 0; start < modelShapes.size(); start += STUB_PARTITION_SIZE) {
+            partitions.add(modelShapes.subList(start, Math.min(start + STUB_PARTITION_SIZE, modelShapes.size())));
+        }
         context.writerDelegator().useFileWriter(filename, namespace, writer -> {
-            writer.addStdlibImport("dataclasses", "dataclass");
-            writer.addStdlibImports("typing", java.util.Set.of("Union", "Self"));
-            writer.addImport("smithy_core.schemas", "APIOperation");
-            writer.addImport("smithy_core.exceptions", "ModeledError");
-            writer.addImport("smithy_core.serializers", "ShapeSerializer");
-            writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
-
-            // Concrete serde base: the runtime attaches these methods to every built
-            // model class, so declaring them here (implemented, not abstract) lets the
-            // classes satisfy SerializeableStruct/DeserializeableShape without listing
-            // the methods per class or appearing abstract to the type checker.
-            writer.write("""
-                    class _SerdeShape:
-                        def serialize(self, serializer: ShapeSerializer) -> None: ...
-                        def serialize_members(self, serializer: ShapeSerializer) -> None: ...
-                        @classmethod
-                        def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
-
-                    class ServiceError(ModeledError):
-                        \"""
-                        Base error for all errors in the service.
-
-                        Some exceptions do not extend from this class, including
-                        synthetic, implicit, and shared exception types.
-                        \"""
-                    """);
-
-            for (var shape : shapes) {
-                switch (shape.getType()) {
-                    case STRUCTURE -> writeStruct(writer, shape.asStructureShape().get());
-                    case UNION -> writeUnion(writer, shape.asUnionShape().get());
-                    case ENUM -> writeEnum(writer, shape.asEnumShape().get());
-                    case INT_ENUM -> writeIntEnum(writer, shape.asIntEnumShape().get());
-                    default -> {
-                    }
-                }
+            for (int i = 0; i < partitions.size(); i++) {
+                var partition = partitions.get(i);
+                writer.openBlock(
+                        String.format("from ._private.models_%d import (", i),
+                        ")",
+                        () -> {
+                            for (var shape : partition) {
+                                for (var name : stubNames(shape)) {
+                                    writer.write("$L as $L,", name, name);
+                                }
+                            }
+                        });
+                writer.write("");
             }
-            for (var shape : shapes) {
-                if (shape.isOperationShape()) {
-                    writeOperation(writer, shape.asOperationShape().get());
-                }
-            }
+            writePreamble(writer);
+            writeOperations(writer);
         });
+
+        for (int i = 0; i < partitions.size(); i++) {
+            var partitionFilename = String.format("src/%s/_private/models_%d.pyi", module, i);
+            var partitionNamespace = String.format("%s._private.models_%d", module, i);
+            var partition = partitions.get(i);
+            context.writerDelegator().useFileWriter(partitionFilename, partitionNamespace, writer -> {
+                writer.addImport(module + ".models", "_SerdeShape");
+                if (partition.stream().anyMatch(shape -> shape.hasTrait(ErrorTrait.class))) {
+                    writer.addImport(module + ".models", "ServiceError");
+                }
+                var localNames = partition.stream()
+                        .flatMap(shape -> stubNames(shape).stream())
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet());
+                writeShapes(
+                        writer,
+                        partition,
+                        symbol -> localizeSymbol(symbol, partitionNamespace, localNames));
+            });
+        }
     }
 
-    private void writeStruct(PythonWriter writer, StructureShape shape) {
+    private void writePreamble(PythonWriter writer) {
+        writer.addStdlibImport("typing", "Self");
+        writer.addImport("smithy_core.exceptions", "ModeledError");
+        writer.addImport("smithy_core.serializers", "ShapeSerializer");
+        writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
+
+        // Concrete serde base: the runtime attaches these methods to every built
+        // model class, so declaring them here (implemented, not abstract) lets the
+        // classes satisfy SerializeableStruct/DeserializeableShape without listing
+        // the methods per class or appearing abstract to the type checker.
+        writer.write("""
+                class _SerdeShape:
+                    def serialize(self, serializer: ShapeSerializer) -> None: ...
+                    def serialize_members(self, serializer: ShapeSerializer) -> None: ...
+                    @classmethod
+                    def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
+
+                class ServiceError(ModeledError):
+                    \"""
+                    Base error for all errors in the service.
+
+                    Some exceptions do not extend from this class, including
+                    synthetic, implicit, and shared exception types.
+                    \"""
+                """);
+    }
+
+    private void writeShapes(
+            PythonWriter writer,
+            List<Shape> modelShapes,
+            UnaryOperator<Symbol> typeResolver
+    ) {
+        for (var shape : modelShapes) {
+            switch (shape.getType()) {
+                case STRUCTURE -> writeStruct(writer, shape.asStructureShape().get(), typeResolver);
+                case UNION -> writeUnion(writer, shape.asUnionShape().get(), typeResolver);
+                case ENUM -> writeEnum(writer, shape.asEnumShape().get());
+                case INT_ENUM -> writeIntEnum(writer, shape.asIntEnumShape().get());
+                default -> {
+                }
+            }
+        }
+    }
+
+    private void writeOperations(PythonWriter writer) {
+        for (var shape : shapes) {
+            if (shape.isOperationShape()) {
+                writeOperation(writer, shape.asOperationShape().get());
+            }
+        }
+    }
+
+    private List<String> stubNames(Shape shape) {
+        if (shape.isUnionShape()) {
+            var symbol = symbolProvider.toSymbol(shape);
+            var names = new ArrayList<String>();
+            for (var member : shape.asUnionShape().get().members()) {
+                names.add(symbolProvider.toSymbol(member).getName());
+            }
+            names.add(symbol.expectProperty(SymbolProperties.UNION_UNKNOWN).getName());
+            names.add(symbol.getName());
+            names.add(symbol.expectProperty(SymbolProperties.DESERIALIZER).getName());
+            return names;
+        }
+        if (shape.isEnumShape() || shape.isIntEnumShape()) {
+            return List.of(symbolProvider.toSymbol(shape)
+                    .expectProperty(SymbolProperties.ENUM_SYMBOL)
+                    .getName());
+        }
+        return List.of(symbolProvider.toSymbol(shape).getName());
+    }
+
+    private boolean isModelShape(Shape shape) {
+        return switch (shape.getType()) {
+            case STRUCTURE, UNION, ENUM, INT_ENUM -> true;
+            default -> false;
+        };
+    }
+
+    private void writeStruct(
+            PythonWriter writer,
+            StructureShape shape,
+            UnaryOperator<Symbol> typeResolver
+    ) {
+        writer.addStdlibImport("dataclasses", "dataclass");
         var symbol = symbolProvider.toSymbol(shape);
         var name = symbol.getName();
         writer.addLocallyDefinedSymbol(symbol);
@@ -126,9 +224,9 @@ public final class ModelStubGenerator implements Runnable {
                 var mandatory = CodegenUtils.isRequiredMember(index, member)
                         && !OperationIndex.of(model).isInputStructure(shape);
                 if (mandatory) {
-                    writer.write("$L: $T", memberName, memberTypeSymbol(member));
+                    writer.write("$L: $T", memberName, typeResolver.apply(memberTypeSymbol(member)));
                 } else {
-                    writer.write("$L: $T | None = ...", memberName, memberTypeSymbol(member));
+                    writer.write("$L: $T | None = ...", memberName, typeResolver.apply(memberTypeSymbol(member)));
                 }
                 writeMemberDocs(writer, member);
             }
@@ -163,7 +261,14 @@ public final class ModelStubGenerator implements Runnable {
         return shape.hasTrait(ErrorTrait.class) || OperationIndex.of(model).isOutputStructure(shape);
     }
 
-    private void writeUnion(PythonWriter writer, UnionShape shape) {
+    private void writeUnion(
+            PythonWriter writer,
+            UnionShape shape,
+            UnaryOperator<Symbol> typeResolver
+    ) {
+        writer.addStdlibImport("dataclasses", "dataclass");
+        writer.addStdlibImport("typing", "Union");
+        writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
         var parentSymbol = symbolProvider.toSymbol(shape);
         var parentName = parentSymbol.getName();
         writer.addLocallyDefinedSymbol(parentSymbol);
@@ -180,7 +285,7 @@ public final class ModelStubGenerator implements Runnable {
                     variantName,
                     () -> {
                         writeMemberDocs(writer, member);
-                        writer.write("value: $T", valueTypeSymbol(target));
+                        writer.write("value: $T", typeResolver.apply(valueTypeSymbol(target)));
                     });
             writer.write("");
         }
@@ -233,6 +338,25 @@ public final class ModelStubGenerator implements Runnable {
         return symbolProvider.toSymbol(member);
     }
 
+    private Symbol localizeSymbol(
+            Symbol symbol,
+            String partitionNamespace,
+            Set<String> localNames
+    ) {
+        var references = symbol.getReferences()
+                .stream()
+                .map(reference -> reference.toBuilder()
+                        .symbol(localizeSymbol(reference.getSymbol(), partitionNamespace, localNames))
+                        .build())
+                .toList();
+        var builder = symbol.toBuilder().references(references);
+        if (symbol.getNamespace().equals(settings.moduleName() + ".models")
+                && localNames.contains(symbol.getName())) {
+            builder.namespace(partitionNamespace, ".");
+        }
+        return builder.build();
+    }
+
     private void writeEnum(PythonWriter writer, EnumShape shape) {
         var enumSymbol = symbolProvider.toSymbol(shape)
                 .expectProperty(SymbolProperties.ENUM_SYMBOL);
@@ -275,6 +399,7 @@ public final class ModelStubGenerator implements Runnable {
     }
 
     private void writeOperation(PythonWriter writer, OperationShape shape) {
+        writer.addImport("smithy_core.schemas", "APIOperation");
         var opName = symbolProvider.toSymbol(shape).getName();
         var inName = symbolProvider.toSymbol(model.expectShape(shape.getInputShape())).getName();
         var outName = symbolProvider.toSymbol(model.expectShape(shape.getOutputShape())).getName();
