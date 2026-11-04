@@ -117,6 +117,23 @@ reaching into another package's private attributes. In packages with a
 `_private/` directory, keep internals there. Put logic shared by all generated
 clients in a runtime package, and do not emit helpers that nothing calls.
 
+### Dependencies
+
+Avoid unnecessary dependencies on third-party packages that we do not own.
+Where practical, reuse existing project code or the standard library instead.
+This is not a ban: add a third-party dependency when it provides clear value.
+
+A generated client should depend only on the runtime packages that its service
+model, the model's traits, and its protocol need. For example, a client should
+depend on `smithy-checksums` only if it uses the related checksum traits or
+features, and on `smithy-json` only if it uses a JSON-based protocol. Do not
+introduce unrelated runtime dependencies transitively through a shared package
+or a broad extra.
+
+When you change how dependencies are selected, inspect the generated package
+metadata, including transitive dependencies, for a model that needs the feature
+and for one that does not.
+
 ## Validation
 
 Run commands from the repository root with the development environment active.

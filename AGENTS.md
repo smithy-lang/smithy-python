@@ -26,6 +26,9 @@ For protocol, codec, or serde changes, also read the
   `codegen/` generates service clients. The native generator in
   `packages/smithy-python` generates standalone types only, and must not depend
   on Java or Gradle.
+- Avoid unnecessary third-party dependencies. Generated clients must depend
+  only on the runtime packages their model, traits, and protocol need. See
+  [Dependencies](CONTRIBUTING.md#dependencies).
 - Do not hand-edit `codegen-output/`, `codegen-output-py/`, or
   `scripts/api-snapshot/api.json`. Regenerate them with their `make` targets
   and review the diff.
