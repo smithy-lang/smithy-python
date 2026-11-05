@@ -46,11 +46,6 @@ class FlexibleChecksumsInterceptor(
         """
         assert_checksums_installed()
 
-    def read_before_execution(self, context: InputContext[Any]) -> None:
-        feature_id = _FEATURE_IDS.get(_response_checksum_validation(context.properties))
-        if feature_id is not None:
-            register_feature_id(context.properties, feature_id)
-
     def modify_before_serialization(self, context: InputContext[Any]) -> Any:
         operation = context.properties.get(OPERATION)
         if operation is None:
@@ -63,9 +58,13 @@ class FlexibleChecksumsInterceptor(
         if not algorithms or field_name is None:
             return context.request
 
+        # The setting is only reported for operations it applies to.
+        validation = _response_checksum_validation(context.properties)
+        if (feature_id := _FEATURE_IDS.get(validation)) is not None:
+            register_feature_id(context.properties, feature_id)
+
         request = context.request
         mode = getattr(request, field_name, None)
-        validation = _response_checksum_validation(context.properties)
         if mode is None and validation == "when_supported":
             # Replace rather than mutate, so the caller's input isn't changed.
             request = replace(request, **{field_name: _VALIDATION_MODE_ENABLED})

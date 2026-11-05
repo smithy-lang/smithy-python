@@ -248,7 +248,26 @@ def test_registers_the_validation_setting_feature_id(
     validation: Any, feature_id: AwsFeatureId
 ) -> None:
     interceptor = FlexibleChecksumsInterceptor()
-    context = _input_context(trait=None, validation=validation)
+    context = _input_context(validation=validation)
+
+    interceptor.modify_before_serialization(context)
+    assert list(context.properties[FEATURE_IDS]) == [feature_id]
+
+
+@pytest.mark.parametrize(
+    "trait",
+    [
+        None,
+        {"requestAlgorithmMember": "ChecksumAlgorithm"},
+        {"requestValidationModeMember": "ChecksumMode", "responseAlgorithms": ["MD5"]},
+    ],
+)
+def test_does_not_register_feature_ids_for_operations_without_response_checksums(
+    trait: dict[str, Any] | None,
+) -> None:
+    interceptor = FlexibleChecksumsInterceptor()
+    context = _input_context(trait)
 
     interceptor.read_before_execution(context)
-    assert list(context.properties[FEATURE_IDS]) == [feature_id]
+    interceptor.modify_before_serialization(context)
+    assert FEATURE_IDS not in context.properties
