@@ -23,9 +23,6 @@ public final class AwsQueryProtocolGenerator implements ProtocolGenerator {
             "SDKAppliedContentEncoding_awsQuery",
             "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_awsQuery",
 
-            // TODO: support idempotency token autofill
-            "QueryProtocolIdempotencyTokenAutoFill",
-
             // TODO: support of the endpoint trait
             "AwsQueryEndpointTraitWithHostLabel",
             "AwsQueryEndpointTrait");

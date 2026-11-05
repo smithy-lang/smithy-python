@@ -111,6 +111,12 @@ class Config:
     http_request_config: HTTPRequestConfiguration | None
     """Configuration for individual HTTP requests."""
 
+    idempotency_token_provider: Callable[[], str] | None
+    """
+    A callable that returns the value used for an unset idempotency token
+    input member. When unset, a random UUID v4 string is used.
+    """
+
     interceptors: list[_ServiceInterceptor]
     """
     The list of interceptors, which are hooks that are called during the
@@ -161,6 +167,7 @@ class Config:
         endpoint_resolver: AsyncEndpointResolver | None = None,
         endpoint_uri: str | URI | None = None,
         http_request_config: HTTPRequestConfiguration | None = None,
+        idempotency_token_provider: Callable[[], str] | None = None,
         interceptors: list[_ServiceInterceptor] | None = None,
         protocol: AsyncClientProtocol[Any, Any]
         | ProtocolConstructor[AsyncClientProtocol[Any, Any]]
@@ -179,6 +186,7 @@ class Config:
         )
         self.endpoint_uri = endpoint_uri
         self.http_request_config = http_request_config
+        self.idempotency_token_provider = idempotency_token_provider
         self.interceptors = interceptors or []
         if isinstance(protocol, type):
             protocol = protocol(_PROTOCOL_SETTINGS)

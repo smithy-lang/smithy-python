@@ -10937,7 +10937,6 @@ async def test_sdk_appended_gzip_after_provided_encoding_rest_json1_request_put_
         )
 
 
-@mark.xfail()
 async def test_rest_json_query_idempotency_token_auto_fill_request_query_idempotency_token_auto_fill() -> (
     None
 ):
@@ -10951,6 +10950,7 @@ async def test_rest_json_query_idempotency_token_auto_fill_request_query_idempot
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
             aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
+            idempotency_token_provider=lambda: "00000000-0000-4000-8000-000000000000",
         )
     )
 
@@ -11025,6 +11025,7 @@ async def test_rest_json_query_idempotency_token_auto_fill_is_set_request_query_
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
             aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
+            idempotency_token_provider=lambda: "00000000-0000-4000-8000-000000000000",
         )
     )
 

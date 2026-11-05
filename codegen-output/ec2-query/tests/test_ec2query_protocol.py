@@ -990,7 +990,6 @@ async def test_sdk_appends_gzip_and_ignores_http_provided_encoding_ec2_query_req
         )
 
 
-@mark.xfail()
 async def test_ec2_protocol_idempotency_token_auto_fill_request_query_idempotency_token_auto_fill() -> (
     None
 ):
@@ -1004,6 +1003,7 @@ async def test_ec2_protocol_idempotency_token_auto_fill_request_query_idempotenc
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
             aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
+            idempotency_token_provider=lambda: "00000000-0000-4000-8000-000000000000",
         )
     )
 
@@ -1084,6 +1084,7 @@ async def test_ec2_protocol_idempotency_token_auto_fill_is_set_request_query_ide
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
             aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
+            idempotency_token_provider=lambda: "00000000-0000-4000-8000-000000000000",
         )
     )
 

@@ -45,6 +45,7 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.HttpPayloadTrait;
+import software.amazon.smithy.model.traits.IdempotencyTokenTrait;
 import software.amazon.smithy.model.traits.OutputTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
@@ -82,6 +83,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private static final Symbol TEST_HTTP_SERVICE_ERR_SYMBOL = Symbol.builder()
             .name("TestHttpServiceError")
             .build();
+    // The idempotency token value protocol tests expect when the caller leaves the member unset.
+    private static final String TEST_IDEMPOTENCY_TOKEN = "00000000-0000-4000-8000-000000000000";
 
     private final PythonSettings settings;
     private final Model model;
@@ -190,6 +193,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                     transport = $T(),
                                     retry_strategy=$T(max_attempts=1),
                                     ${C|}
+                                    ${C|}
                                 )
                                 """,
                                 configPrefix,
@@ -197,7 +201,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 path,
                                 REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 RuntimeTypes.SIMPLE_RETRY_STRATEGY,
-                                (Runnable) this::writeSigV4TestConfig);
+                                (Runnable) this::writeSigV4TestConfig,
+                                (Runnable) () -> writeIdempotencyTokenTestConfig(operation));
                     }));
 
                     // Generate the input using the expected shape and params
@@ -697,6 +702,19 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 aws_secret_access_key="test-secret-access-key",
                 aws_credentials_identity_resolver=$T(),
                 """, RuntimeTypes.STATIC_CREDENTIALS_RESOLVER);
+    }
+
+    /**
+     * Pins the idempotency token provider so request tests can assert the
+     * auto-filled token. Only written for operations whose input has an
+     * {@code @idempotencyToken} member.
+     */
+    private void writeIdempotencyTokenTestConfig(OperationShape operation) {
+        var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
+        if (inputShape.members().stream().noneMatch(member -> member.hasTrait(IdempotencyTokenTrait.class))) {
+            return;
+        }
+        writer.write("idempotency_token_provider=lambda: $S,", TEST_IDEMPOTENCY_TOKEN);
     }
 
     private void writeUtilStubs(Symbol serviceSymbol) {
