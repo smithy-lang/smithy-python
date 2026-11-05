@@ -2,7 +2,9 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 import contextlib
+import dataclasses
 import logging
+import uuid
 from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable, Sequence
 from copy import copy
@@ -10,6 +12,7 @@ from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Self
 
 from .. import URI
+from .._model_naming import member_field_name as _member_field_name
 from ..auth import AuthParams
 from ..deserializers import DeserializeableShape, ShapeDeserializer
 from ..endpoints import EndpointResolverParams
@@ -65,6 +68,7 @@ AUTH_SCHEME = PropertyKey(
 
 _UNRESOLVED = URI(host="", path="/")
 _LOGGER = logging.getLogger(__name__)
+_OUTPUT_TRAIT = ShapeID("smithy.api#output")
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -102,6 +106,12 @@ class AsyncClientCall[I: SerializeableShape, O: DeserializeableShape]:
     retry_scope: str | None = None
     """The retry scope for the operation."""
 
+    idempotency_token_provider: Callable[[], str] | None = None
+    """Generates the value of an unset idempotency token member.
+
+    If None, a random UUID v4 string is used.
+    """
+
     def retryable(self) -> bool:
         """Whether the operation can be retried.
 
@@ -123,6 +133,47 @@ async def _rewind_position(body: Any) -> int | None:
         return await seek(body, 0, 1)
     except (OSError, ValueError, NotImplementedError):
         return None
+
+
+def _default_idempotency_token() -> str:
+    return str(uuid.uuid4())
+
+
+def _fill_idempotency_token[I: SerializeableShape](
+    input: I,
+    operation: APIOperation[I, Any],
+    provider: Callable[[], str] | None,
+) -> I:
+    """Fill the operation's idempotency token member if the caller left it unset.
+
+    The caller's input is never mutated. If a token is generated, a copy of the input
+    carrying it is returned. Otherwise the input itself is returned.
+    """
+    member = operation.idempotency_token_member
+    if member is None:
+        return input
+
+    # Generated inputs are always dataclasses. A hand-written input that isn't one
+    # can't be copied with a new value, so it's sent without a generated token.
+    if not dataclasses.is_dataclass(input) or isinstance(input, type):
+        _LOGGER.debug(
+            "Not filling idempotency token: input %s is not a dataclass instance",
+            type(input).__name__,
+        )
+        return input
+
+    name = _member_field_name(
+        member.expect_member_name(),
+        is_error=False,
+        carries_response_metadata=operation.input_schema.get_trait(_OUTPUT_TRAIT)
+        is not None,
+        is_enum=False,
+    )
+    if getattr(input, name, None) is not None:
+        return input
+
+    token = (provider or _default_idempotency_token)()
+    return dataclasses.replace(input, **{name: token})
 
 
 class AsyncRequestPipeline[TRequest: Request, TResponse: Response]:
@@ -374,6 +425,14 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response]:
         interceptor = call.interceptor
         input_context = InputContext(request=call.input, properties=call.context)
         try:
+            # Filled once per call, before serialization, so every retry attempt
+            # sends the same token.
+            input_context = replace(
+                input_context,
+                request=_fill_idempotency_token(
+                    call.input, call.operation, call.idempotency_token_provider
+                ),
+            )
             interceptor.read_before_execution(input_context)
 
             input_context = replace(
@@ -821,6 +880,9 @@ class AsyncClient:
             supported_auth_schemes=config.auth_schemes,
             endpoint_resolver=config.endpoint_resolver,
             retry_strategy=retry_strategy,
+            idempotency_token_provider=getattr(
+                config, "idempotency_token_provider", None
+            ),
         )
         return pipeline, call
 
