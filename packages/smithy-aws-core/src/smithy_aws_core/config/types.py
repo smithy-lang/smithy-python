@@ -13,7 +13,6 @@ __all__ = [
     "FieldSpec",
     "Resolved",
     "ResponseChecksumValidation",
-    "normalize_response_checksum_validation",
 ]
 
 
@@ -93,13 +92,5 @@ type ResponseChecksumValidation = Literal["when_supported", "when_required"]
 * ``when_required``: only validate a response payload when the caller enabled
   validation on the request, such as by setting ``checksum_mode`` to ``ENABLED``.
 
-Values are case-insensitive.
+Values from the environment and shared config files are case-insensitive.
 """
-
-
-def normalize_response_checksum_validation(value: Any) -> Any:
-    """Lowercase a ``ResponseChecksumValidation`` value, since it's case-insensitive.
-
-    Values that aren't strings are returned unchanged for the validator to reject.
-    """
-    return value.lower() if isinstance(value, str) else value

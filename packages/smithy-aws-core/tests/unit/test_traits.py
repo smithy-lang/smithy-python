@@ -7,7 +7,7 @@ from smithy_aws_core.traits import (
     AwsJson1_1Trait,
     AwsQueryErrorTrait,
     AwsQueryTrait,
-    HttpChecksumTrait,
+    HTTPChecksumTrait,
     RestJson1Trait,
 )
 
@@ -36,7 +36,7 @@ def test_parses_aws_query_error_trait() -> None:
 
 
 def test_parses_http_checksum_trait() -> None:
-    trait = HttpChecksumTrait(
+    trait = HTTPChecksumTrait(
         {
             "requestChecksumRequired": True,
             "requestAlgorithmMember": "ChecksumAlgorithm",
@@ -51,7 +51,7 @@ def test_parses_http_checksum_trait() -> None:
 
 
 def test_http_checksum_trait_defaults() -> None:
-    trait = HttpChecksumTrait({})
+    trait = HTTPChecksumTrait({})
     assert trait.request_checksum_required is False
     assert trait.request_algorithm_member is None
     assert trait.request_validation_mode_member is None

@@ -249,9 +249,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // below. Fields unique to this service (e.g., api_key from @httpApiKeyAuth)
             // survive and participate in the resolution pipeline.
             for (ConfigProperty property : pluginProperties.values()) {
-                if (property.resolver().isEmpty()
-                        && property.validator().isEmpty()
-                        && property.converter().isEmpty()) {
+                if (property.resolver().isEmpty() && property.validator().isEmpty()) {
                     writer.write("\"$L\": $T(default=$L),",
                             property.name(),
                             fieldSpecSymbol,
@@ -262,7 +260,6 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                     writer.write("default=$L,", property.defaultValue().orElse("None"));
                     property.resolver().ifPresent(resolver -> writer.write("resolver=$T,", resolver));
                     property.validator().ifPresent(validator -> writer.write("validator=$T,", validator));
-                    property.converter().ifPresent(converter -> writer.write("converter=$T,", converter));
                 });
             }
 

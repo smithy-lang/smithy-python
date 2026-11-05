@@ -6,10 +6,10 @@ from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
+from smithy_aws_core.aio.checksums import AsyncChecksumStream
 from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
-from smithy_aws_core.checksums import ChecksumValidatingStream
 from smithy_aws_core.interceptors.checksums import FlexibleChecksumsInterceptor
-from smithy_aws_core.traits import HttpChecksumTrait
+from smithy_aws_core.traits import HTTPChecksumTrait
 from smithy_core import URI
 from smithy_core.aio.client import OPERATION
 from smithy_core.interceptors import InputContext, ResponseContext
@@ -34,7 +34,7 @@ def _operation(trait: dict[str, Any] | None) -> Any:
     member = Mock()
     member.expect_member_name.return_value = "ChecksumMode"
     operation = Mock()
-    http_checksum = HttpChecksumTrait(trait) if trait is not None else None
+    http_checksum = HTTPChecksumTrait(trait) if trait is not None else None
     operation.schema.get_trait.return_value = http_checksum
     operation.schema.expect_trait.return_value = http_checksum
     operation.input_schema.members = {"ChecksumMode": member}
@@ -122,7 +122,7 @@ def test_when_required_validates_when_caller_enabled_it() -> None:
     )
     assert isinstance(
         interceptor.modify_before_deserialization(response).body,
-        ChecksumValidatingStream,
+        AsyncChecksumStream,
     )
 
 
@@ -184,7 +184,7 @@ async def test_validates_the_fastest_algorithm_in_the_response() -> None:
     )
 
     body = interceptor.modify_before_deserialization(response).body
-    assert isinstance(body, ChecksumValidatingStream)
+    assert isinstance(body, AsyncChecksumStream)
     assert body.checksum_algorithm == "CRC32C"
     assert await body.read() == DATA
     assert body.validated
@@ -199,7 +199,7 @@ async def test_skips_checksums_that_cannot_be_validated(crc32c: str) -> None:
     )
 
     body = interceptor.modify_before_deserialization(response).body
-    assert isinstance(body, ChecksumValidatingStream)
+    assert isinstance(body, AsyncChecksumStream)
     assert body.checksum_algorithm == "CRC32"
     assert await body.read() == DATA
 
@@ -212,7 +212,7 @@ async def test_skips_composite_checksums() -> None:
     )
 
     body = interceptor.modify_before_deserialization(response).body
-    assert isinstance(body, ChecksumValidatingStream)
+    assert isinstance(body, AsyncChecksumStream)
     assert body.checksum_algorithm == "CRC32"
 
 

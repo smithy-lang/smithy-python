@@ -5,15 +5,16 @@ from collections.abc import AsyncIterator
 from io import BytesIO
 
 import pytest
-from smithy_aws_core.checksums import ChecksumMismatchError, ChecksumValidatingStream
+from smithy_aws_core.aio.checksums import AsyncChecksumStream
+from smithy_aws_core.checksums import ChecksumMismatchError
 
 DATA = b"hello world"
-CRC32 = "DUoRhQ=="
-WRONG = "AAAAAA=="
+CRC32 = b"\x0dJ\x11\x85"
+WRONG = b"\x00\x00\x00\x00"
 
 
-def _stream(source: object = DATA, expected: str = CRC32) -> ChecksumValidatingStream:
-    return ChecksumValidatingStream(
+def _stream(source: object = DATA, expected: bytes = CRC32) -> AsyncChecksumStream:
+    return AsyncChecksumStream(
         source,  # type: ignore[arg-type]
         checksum_algorithm="CRC32",
         expected=expected,
@@ -66,7 +67,10 @@ async def test_mismatch_raises_from_the_read_that_reaches_the_end() -> None:
     assert error.expected == WRONG
     assert error.actual == CRC32
     assert error.is_retry_safe is False
-    assert WRONG in str(error) and CRC32 in str(error)
+    assert str(error) == (
+        "Expected a CRC32 checksum of AAAAAA==, but the payload's checksum was "
+        "DUoRhQ==."
+    )
     assert not stream.validated
 
 
@@ -122,21 +126,12 @@ async def test_has_the_interface_of_an_async_bytes_reader() -> None:
     assert stream.closed
 
 
-@pytest.mark.parametrize(
-    "expected", ["", "DUoRhQ==-3", "DUoRhQ==,DUoRhQ==", "not base64!"]
-)
-def test_rejects_an_expected_value_that_is_not_a_checksum(expected: str) -> None:
-    with pytest.raises(ValueError, match="Invalid CRC32 checksum"):
-        _stream(expected=expected)
-
-
 async def test_wrong_size_checksum_fails_validation() -> None:
-    # The SEP's failure cases send base64 of "not-a-checksum".
-    stream = _stream(expected="bm90LWEtY2hlY2tzdW0=")
+    stream = _stream(expected=b"not-a-checksum")
 
     with pytest.raises(ChecksumMismatchError) as exc_info:
         await stream.read()
-    assert exc_info.value.expected == "bm90LWEtY2hlY2tzdW0="
+    assert exc_info.value.expected == b"not-a-checksum"
     assert exc_info.value.actual == CRC32
 
 

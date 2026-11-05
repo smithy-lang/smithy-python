@@ -137,8 +137,8 @@ def validate_sdk_ua_app_id(value: object) -> None:
 def validate_response_checksum_validation(value: object) -> None:
     """Validate when response checksums are validated.
 
-    Valid values: 'when_supported', 'when_required', or None for the default. Values
-    are lowercased before they're validated.
+    Valid values: 'when_supported', 'when_required', or None for the default. The
+    resolver lowercases values from the environment and shared config files.
 
     :param value: The value to validate.
     :raises ConfigValidationError: If the value is invalid.

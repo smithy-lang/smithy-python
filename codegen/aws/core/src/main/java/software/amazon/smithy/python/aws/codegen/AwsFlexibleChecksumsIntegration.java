@@ -60,11 +60,6 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
                     .name("validate_response_checksum_validation")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build())
-            .converter(Symbol.builder()
-                    .namespace("smithy_aws_core.config.types", ".")
-                    .name("normalize_response_checksum_validation")
-                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                    .build())
             .build();
 
     @Override

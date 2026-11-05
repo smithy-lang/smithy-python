@@ -39,7 +39,6 @@ from smithy_aws_core.config.types import (
     UNSET,
     ConfigSource,
     FieldSpec,
-    normalize_response_checksum_validation,
 )
 from smithy_aws_core.config.validators import validate_response_checksum_validation
 from smithy_core.aio.retries import AsyncStandardRetryStrategy
@@ -1046,7 +1045,6 @@ class _ChecksumServiceConfig(AsyncAwsConfig):
             default="when_supported",
             resolver=resolve_response_checksum_validation,
             validator=validate_response_checksum_validation,
-            converter=normalize_response_checksum_validation,
         ),
         **AsyncAwsConfig._FIELDS,
     }
@@ -1110,24 +1108,20 @@ class TestResolveResponseChecksumValidation:
             assert config.response_checksum_validation == "when_required"
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "value,expected",
-        [
-            ("WHEN_REQUIRED", "when_required"),
-            ("when_supported", "when_supported"),
-            (None, None),
-        ],
-    )
-    async def test_config_normalizes_values_set_in_code(
-        self, value: str | None, expected: str | None
-    ):
+    async def test_config_requires_lowercase_values_set_in_code(self):
         with patch.dict(os.environ, {"AWS_REGION": "us-west-2"}, clear=True):
-            # The base overrides type doesn't have the setting; generated ones do.
-            overrides: Any = {"response_checksum_validation": value}
+            overrides: Any = {"response_checksum_validation": "when_required"}
             config = await _ChecksumServiceConfig.resolve(
                 fs=NullFileSystem(), **overrides
             )
-            assert config.response_checksum_validation == expected
+            assert config.response_checksum_validation == "when_required"
+
+            overrides = {"response_checksum_validation": "WHEN_REQUIRED"}
+            with pytest.raises(
+                ConfigValidationError,
+                match="Invalid value for 'response_checksum_validation'",
+            ):
+                await _ChecksumServiceConfig.resolve(fs=NullFileSystem(), **overrides)
 
     @pytest.mark.asyncio
     async def test_base_config_does_not_have_the_setting(self):

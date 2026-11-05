@@ -28,7 +28,6 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     private final String defaultValue;
     private final Symbol resolver;
     private final Symbol validator;
-    private final Symbol converter;
 
     /**
      * Constructor.
@@ -43,7 +42,6 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         this.defaultValue = builder.defaultValue;
         this.resolver = builder.resolver;
         this.validator = builder.validator;
-        this.converter = builder.converter;
     }
 
     /**
@@ -108,13 +106,6 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     }
 
     /**
-     * @return Returns the function that normalizes values set in code, if any.
-     */
-    public Optional<Symbol> converter() {
-        return Optional.ofNullable(converter);
-    }
-
-    /**
      * Initializes the config field on the config object.
      *
      * <p>This will be wrapped in an {@link InitializeConfigPropertySection}.
@@ -149,8 +140,7 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
                 .initialize(initialize)
                 .defaultValue(defaultValue)
                 .resolver(resolver)
-                .validator(validator)
-                .converter(converter);
+                .validator(validator);
     }
 
     /**
@@ -166,7 +156,6 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         private String defaultValue;
         private Symbol resolver;
         private Symbol validator;
-        private Symbol converter;
 
         @Override
         public ConfigProperty build() {
@@ -294,16 +283,5 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
             return this;
         }
 
-        /**
-         * Sets the function that normalizes values of the config property that are
-         * set in code, in configs that are resolved asynchronously.
-         *
-         * @param converter A function that takes the value and returns the normalized one.
-         * @return Returns the builder.
-         */
-        public Builder converter(Symbol converter) {
-            this.converter = converter;
-            return this;
-        }
     }
 }

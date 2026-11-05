@@ -17,27 +17,16 @@ from smithy_http.aio.interfaces import HTTPResponse as HTTPResponseInterface
 from .._private.checksums import (
     assert_checksums_installed,
     checksum_header,
+    decode_checksum,
     response_validation_order,
 )
+from ..aio.checksums import AsyncChecksumStream
 from ..business_metrics import AwsFeatureId, register_feature_id
-from ..checksums import ChecksumValidatingStream
-from ..traits import HttpChecksumTrait
+from ..traits import HTTPChecksumTrait
 
 __all__ = ["FlexibleChecksumsInterceptor"]
 
 logger = logging.getLogger(__name__)
-
-_VALIDATION_MODE_ENABLED = "ENABLED"
-
-_RESPONSE_ALGORITHMS = PropertyKey(
-    key="response_checksum_algorithms", value_type=tuple[str, ...]
-)
-"""The algorithms to validate the response with, fastest first, if it's validated."""
-
-_FEATURE_IDS = {
-    "when_supported": AwsFeatureId.FLEXIBLE_CHECKSUMS_RES_WHEN_SUPPORTED,
-    "when_required": AwsFeatureId.FLEXIBLE_CHECKSUMS_RES_WHEN_REQUIRED,
-}
 
 
 class FlexibleChecksumsInterceptor(
@@ -66,7 +55,7 @@ class FlexibleChecksumsInterceptor(
         operation = context.properties.get(OPERATION)
         if operation is None:
             return context.request
-        trait = operation.schema.get_trait(HttpChecksumTrait)
+        trait = operation.schema.get_trait(HTTPChecksumTrait)
         if trait is None:
             return context.request
         algorithms = response_validation_order(trait.response_algorithms)
@@ -97,13 +86,8 @@ class FlexibleChecksumsInterceptor(
             header = checksum_header(algorithm)
             if header not in response.fields:
                 continue
-            try:
-                body = ChecksumValidatingStream(
-                    response.body,
-                    checksum_algorithm=algorithm,
-                    expected=response.fields[header].as_string(),
-                )
-            except ValueError:
+            expected = decode_checksum(response.fields[header].as_string())
+            if expected is None:
                 # Empty, malformed, and composite (multipart) checksums can't be
                 # validated, so try the next algorithm.
                 continue
@@ -113,7 +97,9 @@ class FlexibleChecksumsInterceptor(
                 status=response.status,
                 fields=response.fields,
                 reason=response.reason,
-                body=body,
+                body=AsyncChecksumStream(
+                    response.body, checksum_algorithm=algorithm, expected=expected
+                ),
             )
 
         logger.debug(
@@ -122,6 +108,19 @@ class FlexibleChecksumsInterceptor(
             algorithms,
         )
         return response
+
+
+_VALIDATION_MODE_ENABLED = "ENABLED"
+
+_RESPONSE_ALGORITHMS = PropertyKey(
+    key="response_checksum_algorithms", value_type=tuple[str, ...]
+)
+"""The algorithms to validate the response with, fastest first, if it's validated."""
+
+_FEATURE_IDS = {
+    "when_supported": AwsFeatureId.FLEXIBLE_CHECKSUMS_RES_WHEN_SUPPORTED,
+    "when_required": AwsFeatureId.FLEXIBLE_CHECKSUMS_RES_WHEN_REQUIRED,
+}
 
 
 def _response_checksum_validation(properties: TypedProperties) -> str:

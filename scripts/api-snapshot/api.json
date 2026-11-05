@@ -93,6 +93,14 @@
     "SigV4Trait": "rex-class",
     "SmithyIdentityError": "rex-exception"
   },
+  "smithy_aws_core.aio.checksums": {
+    "AsyncBytesReader": "rex-class[async]",
+    "AsyncChecksumStream": "class[async]",
+    "ChecksumMismatchError": "rex-exception",
+    "StreamingBlob": "rex-type_alias",
+    "create_checksum": "rex-function",
+    "logger": "Logger"
+  },
   "smithy_aws_core.aio.config": {
     "AsyncAwsConfig": "rex-class[async]",
     "AsyncDefaultFileSystem": "rex-class[async]",
@@ -420,17 +428,11 @@
     "register_feature_id": "function"
   },
   "smithy_aws_core.checksums": {
-    "AsyncBytesReader": "rex-class[async]",
     "CallError": "rex-exception",
     "ChecksumMismatchError": "exception",
-    "ChecksumValidatingStream": "class[async]",
     "Fault": "rex-type_alias",
     "ResponseChecksumValidation": "rex-type_alias",
-    "StreamingBlob": "rex-type_alias",
-    "create_checksum": "rex-function",
-    "decode_checksum": "rex-function",
-    "encode_digest": "rex-function",
-    "logger": "Logger"
+    "encode_digest": "rex-function"
   },
   "smithy_aws_core.config": {
     "AsyncAwsConfig": "rex-class[async]",
@@ -487,8 +489,7 @@
     "FieldSpec": "class",
     "Resolved": "class",
     "ResponseChecksumValidation": "rex-type_alias",
-    "UNSET": "_UnsetType",
-    "normalize_response_checksum_validation": "function"
+    "UNSET": "_UnsetType"
   },
   "smithy_aws_core.config.validators": {
     "ConfigSource": "rex-class",
@@ -594,13 +595,13 @@
   "smithy_aws_core.interceptors": {},
   "smithy_aws_core.interceptors.checksums": {
     "APIOperation": "rex-class",
+    "AsyncChecksumStream": "rex-class[async]",
     "AwsFeatureId": "rex-class",
-    "ChecksumValidatingStream": "rex-class[async]",
     "FlexibleChecksumsInterceptor": "class",
+    "HTTPChecksumTrait": "rex-class",
     "HTTPRequest": "rex-protocol[async]",
     "HTTPResponse": "rex-class[async]",
     "HTTPResponseInterface": "rex-protocol[async]",
-    "HttpChecksumTrait": "rex-class",
     "InputContext": "rex-class",
     "Interceptor": "rex-class",
     "OPERATION": "rex-PropertyKey",
@@ -609,6 +610,7 @@
     "TypedProperties": "rex-protocol",
     "assert_checksums_installed": "rex-function",
     "checksum_header": "rex-function",
+    "decode_checksum": "rex-function",
     "logger": "Logger",
     "member_field_name": "rex-function",
     "register_feature_id": "rex-function",
@@ -643,7 +645,7 @@
     "DynamicTrait": "rex-class",
     "Ec2QueryNameTrait": "class",
     "Ec2QueryTrait": "class",
-    "HttpChecksumTrait": "class",
+    "HTTPChecksumTrait": "class",
     "RestJson1Trait": "class",
     "RestXmlTrait": "class",
     "ShapeID": "rex-class",

@@ -21,7 +21,7 @@ __all__ = [
     "AwsQueryTrait",
     "Ec2QueryNameTrait",
     "Ec2QueryTrait",
-    "HttpChecksumTrait",
+    "HTTPChecksumTrait",
     "RestJson1Trait",
     "RestXmlTrait",
     "SigV4Trait",
@@ -156,7 +156,7 @@ class Ec2QueryNameTrait(Trait, id=ShapeID("aws.protocols#ec2QueryName")):
 
 
 @dataclass(init=False, frozen=True)
-class HttpChecksumTrait(Trait, id=ShapeID("aws.protocols#httpChecksum")):
+class HTTPChecksumTrait(Trait, id=ShapeID("aws.protocols#httpChecksum")):
     """Indicates that an operation supports checksums of its HTTP payloads.
 
     See the `httpChecksum trait documentation
