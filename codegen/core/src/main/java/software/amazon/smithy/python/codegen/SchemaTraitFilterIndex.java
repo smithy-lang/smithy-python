@@ -55,7 +55,9 @@ import software.amazon.smithy.model.traits.XmlAttributeTrait;
 import software.amazon.smithy.model.traits.XmlFlattenedTrait;
 import software.amazon.smithy.model.traits.XmlNameTrait;
 import software.amazon.smithy.model.traits.XmlNamespaceTrait;
-import software.amazon.smithy.rulesengine.traits.EndpointBddTrait;
+import software.amazon.smithy.rulesengine.traits.ContextParamTrait;
+import software.amazon.smithy.rulesengine.traits.OperationContextParamsTrait;
+import software.amazon.smithy.rulesengine.traits.StaticContextParamsTrait;
 import software.amazon.smithy.utils.SetUtils;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -95,7 +97,9 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     TimestampFormatTrait.ID, // read per-member by smithy_http / smithy_aws_core serde
                     ORIGINAL_SHAPE_ID, // rpcv2Cbor unit detection
                     ServiceTrait.ID, // service metadata, including sdkId used by package docs
-                    EndpointBddTrait.ID, // endpoint resolution data prepared by EndpointBddIntegration
+                    ContextParamTrait.ID, // endpoint parameter plans read these at runtime
+                    StaticContextParamsTrait.ID,
+                    OperationContextParamsTrait.ID,
                     LongPollTrait.ID, // retry backoff when a long-polling operation exhausts its quota
                     RequestCompressionTrait.ID, // read at runtime
                     JsonNameTrait.ID,

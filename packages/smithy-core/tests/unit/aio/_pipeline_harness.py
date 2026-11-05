@@ -9,7 +9,7 @@ from smithy_core.aio.interfaces import AsyncClientProtocol
 from smithy_core.aio.interfaces.retries import AsyncRetryStrategy
 from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.deserializers import ShapeDeserializer
-from smithy_core.endpoints import EndpointResolverParams
+from smithy_core.endpoints import EndpointAuthScheme, EndpointResolverParams
 from smithy_core.interceptors import InterceptorChain
 from smithy_core.prelude import BLOB
 from smithy_core.response import EMPTY_RESPONSE_METADATA, ResponseMetadata
@@ -234,6 +234,7 @@ class StubEndpoint:
     def __init__(self) -> None:
         self.uri = URI(host="example.com")
         self.properties = TypedProperties()
+        self.auth_schemes: tuple[EndpointAuthScheme, ...] = ()
 
 
 class StubEndpointResolver:

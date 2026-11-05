@@ -8,6 +8,7 @@ provenance tracking, and precedence behavior.
 
 import os
 import warnings
+from collections.abc import Awaitable, Callable
 from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
@@ -19,12 +20,16 @@ from smithy_aws_core.aio.config.aws_config import AsyncAwsConfig, AwsConfigOverr
 from smithy_aws_core.aio.config.context import AsyncSharedConfigContext
 from smithy_aws_core.aio.config.resolvers import (
     EndpointUriResolver,
+    resolve_account_id_endpoint_mode,
+    resolve_bool,
     resolve_endpoint_uri,
     resolve_max_attempts,
     resolve_region,
     resolve_response_checksum_validation,
     resolve_retry_mode,
     resolve_sdk_ua_app_id,
+    resolve_use_dualstack_endpoint,
+    resolve_use_fips_endpoint,
 )
 from smithy_aws_core.aio.identity.environment import (
     AsyncEnvironmentCredentialsResolver,
@@ -1170,6 +1175,87 @@ class TestResolveEndpointUri:
         with patch.dict(os.environ, {}, clear=True):
             ctx = AsyncSharedConfigContext(fs=NullFileSystem())
             result = await resolve_endpoint_uri(ctx)
+            assert result.value is UNSET
+
+
+class TestResolveBool:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("raw,expected", [("true", True), ("FALSE", False)])
+    async def test_resolves_from_env(self, raw: str, expected: bool):
+        with patch.dict(os.environ, {"AWS_FLAG": raw}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            result = await resolve_bool(ctx, env_vars=("AWS_FLAG",))
+            assert result.value is expected
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_resolves_from_profile(self):
+        fs = FakeFileSystem({"/fake/config": "[profile default]\nflag = True\n"})
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
+            result = await resolve_bool(ctx, profile_keys=("flag",))
+            assert result.value is True
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_invalid_value_raises_error(self):
+        with patch.dict(os.environ, {"AWS_FLAG": "yes"}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            with pytest.raises(ConfigValidationError, match="'yes' for AWS_FLAG"):
+                await resolve_bool(ctx, env_vars=("AWS_FLAG",))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "resolver,env_var,profile_key",
+    [
+        (resolve_use_fips_endpoint, "AWS_USE_FIPS_ENDPOINT", "use_fips_endpoint"),
+        (
+            resolve_use_dualstack_endpoint,
+            "AWS_USE_DUALSTACK_ENDPOINT",
+            "use_dualstack_endpoint",
+        ),
+    ],
+)
+async def test_endpoint_flags_read_their_settings(
+    resolver: Callable[..., Awaitable[Any]], env_var: str, profile_key: str
+):
+    fs = FakeFileSystem({"/fake/config": f"[profile default]\n{profile_key} = true\n"})
+    with patch.dict(os.environ, {env_var: "false"}, clear=True):
+        ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
+        assert (await resolver(ctx)).value is False
+    with patch.dict(os.environ, {}, clear=True):
+        ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
+        assert (await resolver(ctx)).value is True
+
+
+class TestResolveAccountIdEndpointMode:
+    @pytest.mark.asyncio
+    async def test_resolves_from_env(self):
+        with patch.dict(
+            os.environ, {"AWS_ACCOUNT_ID_ENDPOINT_MODE": "Disabled"}, clear=True
+        ):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            result = await resolve_account_id_endpoint_mode(ctx)
+            assert result.value == "disabled"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_resolves_from_profile(self):
+        fs = FakeFileSystem(
+            {"/fake/config": "[profile default]\naccount_id_endpoint_mode = required\n"}
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
+            result = await resolve_account_id_endpoint_mode(ctx)
+            assert result.value == "required"
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_returns_unset_when_not_configured(self):
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            result = await resolve_account_id_endpoint_mode(ctx)
             assert result.value is UNSET
 
 

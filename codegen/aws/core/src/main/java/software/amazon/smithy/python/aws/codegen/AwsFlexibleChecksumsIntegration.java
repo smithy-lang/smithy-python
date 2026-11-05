@@ -49,12 +49,13 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
                     + "checksums, and ``when_required`` only when validation is enabled on the "
                     + "request, such as with ``checksum_mode``. A payload is validated when it's "
                     + "read to the end, and a mismatch raises ``ChecksumMismatchError``.")
-            .defaultValue("\"when_supported\"")
-            .resolver(Symbol.builder()
-                    .namespace("smithy_aws_core.aio.config.resolvers", ".")
-                    .name("resolve_response_checksum_validation")
-                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                    .build())
+            .defaultValue("when_supported")
+            .resolver(writer -> writer.writeInline("$T",
+                    Symbol.builder()
+                            .namespace("smithy_aws_core.aio.config.resolvers", ".")
+                            .name("resolve_response_checksum_validation")
+                            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                            .build()))
             .validator(Symbol.builder()
                     .namespace("smithy_aws_core.config.validators", ".")
                     .name("validate_response_checksum_validation")

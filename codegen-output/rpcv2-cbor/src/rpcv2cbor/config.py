@@ -3,9 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, TYPE_CHECKING, TypeAlias, Union, cast
 
-from smithy_aws_core.aio.endpoints.standard_regional import (
-    AsyncStandardRegionalEndpointsResolver,
-)
+from smithy_core.aio.endpoints import AsyncBddEndpointResolver
 from smithy_core.aio.interfaces import (
     AsyncClientProtocol,
     AsyncClientTransport,
@@ -22,6 +20,7 @@ from smithy_http.aio.aiohttp import AIOHTTPClient
 from smithy_http.aio.protocols import AsyncRpcV2CborClientProtocol
 from smithy_http.interfaces import HTTPRequestConfiguration
 
+from ._private.endpoints import BDD
 from ._private.schemas import RPC_V2_PROTOCOL
 
 
@@ -173,10 +172,7 @@ class Config:
     ):
         self.auth_scheme_resolver = auth_scheme_resolver or DefaultAuthResolver()
         self.auth_schemes = auth_schemes or {}
-        self.endpoint_resolver = (
-            endpoint_resolver
-            or AsyncStandardRegionalEndpointsResolver(endpoint_prefix="RpcV2Protocol")
-        )
+        self.endpoint_resolver = endpoint_resolver or AsyncBddEndpointResolver(BDD)
         self.endpoint_uri = endpoint_uri
         self.http_request_config = http_request_config
         self.interceptors = interceptors or []

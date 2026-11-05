@@ -42,6 +42,7 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
     private final WriteAdditionalFiles writeAdditionalFiles;
 
     private final AuthScheme authScheme;
+    private final EndpointRulesExtension endpointRulesExtension;
 
     private RuntimeClientPlugin(Builder builder) {
         servicePredicate = builder.servicePredicate;
@@ -49,6 +50,7 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
         configProperties = Collections.unmodifiableList(builder.configProperties);
         this.pythonPlugin = builder.pythonPlugin;
         this.authScheme = builder.authScheme;
+        this.endpointRulesExtension = builder.endpointRulesExtension;
         this.writeAdditionalFiles = builder.writeAdditionalFiles;
     }
 
@@ -138,6 +140,13 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
     }
 
     /**
+     * @return Returns an optional endpoint rules extension to register.
+     */
+    public Optional<EndpointRulesExtension> getEndpointRulesExtension() {
+        return Optional.ofNullable(endpointRulesExtension);
+    }
+
+    /**
      * Write additional files required by this plugin.
      *
      * @param context generation context
@@ -159,6 +168,7 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
         var builder = builder()
                 .pythonPlugin(pythonPlugin)
                 .authScheme(authScheme)
+                .endpointRulesExtension(endpointRulesExtension)
                 .configProperties(configProperties)
                 .writeAdditionalFiles(writeAdditionalFiles);
 
@@ -180,6 +190,7 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
         private List<ConfigProperty> configProperties = new ArrayList<>();
         private SymbolReference pythonPlugin = null;
         private AuthScheme authScheme = null;
+        private EndpointRulesExtension endpointRulesExtension = null;
         private WriteAdditionalFiles writeAdditionalFiles = (context) -> Collections.emptyList();
 
         Builder() {}
@@ -291,6 +302,18 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
          */
         public Builder authScheme(AuthScheme authScheme) {
             this.authScheme = authScheme;
+            return this;
+        }
+
+        /**
+         * Configures an endpoint rules extension which will be passed to the client's
+         * default endpoint resolver.
+         *
+         * @param endpointRulesExtension The endpoint rules extension to register.
+         * @return Returns the builder.
+         */
+        public Builder endpointRulesExtension(EndpointRulesExtension endpointRulesExtension) {
+            this.endpointRulesExtension = endpointRulesExtension;
             return this;
         }
 

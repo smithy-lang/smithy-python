@@ -6,11 +6,14 @@ import pytest
 from smithy_core.prelude import UNIT
 from smithy_core.shapes import ShapeID
 from smithy_core.traits import (
+    ContextParamTrait,
     DefaultTrait,
     DynamicTrait,
     ErrorFault,
     ErrorTrait,
     JSONNameTrait,
+    OperationContextParamsTrait,
+    StaticContextParamsTrait,
     Trait,
     UnitTypeTrait,
 )
@@ -69,3 +72,27 @@ def test_cant_construct_trait_from_non_matching_dynamic_trait():
     dynamic = DynamicTrait(id=JSONNameTrait.id, document_value="client")
     with pytest.raises(ValueError):
         ErrorTrait(dynamic)
+
+
+def test_trait_factory_constructs_context_param_trait():
+    trait = Trait.new(ContextParamTrait.id, {"name": "Bucket"})
+    assert isinstance(trait, ContextParamTrait)
+    assert trait.name == "Bucket"
+
+
+def test_trait_factory_constructs_static_context_params_trait():
+    trait = Trait.new(
+        StaticContextParamsTrait.id,
+        {"UseS3ExpressControlEndpoint": {"value": True}, "Tags": {"value": ["a"]}},
+    )
+    assert isinstance(trait, StaticContextParamsTrait)
+    assert trait.values == {"UseS3ExpressControlEndpoint": True, "Tags": ["a"]}
+
+
+def test_trait_factory_constructs_operation_context_params_trait():
+    trait = Trait.new(
+        OperationContextParamsTrait.id,
+        {"DeleteObjectKeys": {"path": "Delete.Objects[*].Key"}},
+    )
+    assert isinstance(trait, OperationContextParamsTrait)
+    assert trait.paths == {"DeleteObjectKeys": "Delete.Objects[*].Key"}

@@ -11,13 +11,42 @@ from .context import AsyncSharedConfigContext
 
 __all__ = [
     "EndpointUriResolver",
+    "resolve_account_id_endpoint_mode",
+    "resolve_bool",
     "resolve_endpoint_uri",
     "resolve_max_attempts",
     "resolve_region",
     "resolve_response_checksum_validation",
     "resolve_retry_mode",
     "resolve_sdk_ua_app_id",
+    "resolve_use_dualstack_endpoint",
+    "resolve_use_fips_endpoint",
 ]
+
+
+async def _lookup(
+    ctx: AsyncSharedConfigContext,
+    env_vars: Sequence[str],
+    profile_keys: Sequence[str],
+) -> tuple[str, str, ConfigSource] | None:
+    """Find the first set value: env vars first, then config file profile keys.
+
+    :returns: The value, the env var or profile key it was read from, and its source,
+        or None if none is set.
+    """
+    for var_name in env_vars:
+        value: str | None = os.environ.get(var_name)
+        if value:
+            return value, var_name, ConfigSource.ENV
+
+    if profile_keys:
+        config_file = await ctx.parsed_profiles()
+        for key in profile_keys:
+            value = config_file.get(ctx.profile_name, key)
+            if value:
+                return value, key, ConfigSource.PROFILE
+
+    return None
 
 
 async def _resolve_str(
@@ -35,21 +64,11 @@ async def _resolve_str(
     :param profile_keys: Config file profile keys to check, in order.
     :returns: Resolved value with source, or Resolved(value=UNSET) if not found.
     """
-    # Check environment variables first
-    for var_name in env_vars:
-        value: str | None = os.environ.get(var_name)
-        if value:
-            return Resolved(value=value, source=ConfigSource.ENV)
-
-    # Check config file profile keys
-    if profile_keys:
-        config_file = await ctx.parsed_profiles()
-        for key in profile_keys:
-            value = config_file.get(ctx.profile_name, key)
-            if value:
-                return Resolved(value=value, source=ConfigSource.PROFILE)
-
-    return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]
+    found = await _lookup(ctx, env_vars, profile_keys)
+    if found is None:
+        return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]
+    value, _, source = found
+    return Resolved(value=value, source=source)
 
 
 async def _resolve_int(
@@ -75,6 +94,37 @@ async def _resolve_int(
             f"Invalid integer value {result.value!r} for config key. "
             "Expected a valid integer."
         ) from e
+
+
+async def resolve_bool(
+    ctx: AsyncSharedConfigContext,
+    *,
+    env_vars: Sequence[str] = (),
+    profile_keys: Sequence[str] = (),
+) -> Resolved[bool | None]:
+    """Resolve a boolean value from the environment, then the shared config file.
+
+    Accepts ``true`` and ``false`` in any case. Generated clients use it to resolve
+    their service-specific boolean fields.
+
+    :param ctx: The shared resolution context.
+    :param env_vars: Environment variable names to check, in order.
+    :param profile_keys: Config file profile keys to check, in order.
+    :returns: Resolved bool value with source, or Resolved(value=UNSET) if not found.
+    """
+    found = await _lookup(ctx, env_vars, profile_keys)
+    if found is None:
+        return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]
+    value, name, source = found
+    match value.lower():
+        case "true":
+            return Resolved(value=True, source=source)
+        case "false":
+            return Resolved(value=False, source=source)
+        case _:
+            raise ConfigValidationError(
+                f"Invalid boolean value {value!r} for {name}. Expected true or false."
+            )
 
 
 async def resolve_region(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
@@ -173,6 +223,56 @@ async def resolve_sdk_ua_app_id(ctx: AsyncSharedConfigContext) -> Resolved[str |
         env_vars=("AWS_SDK_UA_APP_ID",),
         profile_keys=("sdk_ua_app_id",),
     )
+
+
+async def resolve_use_fips_endpoint(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[bool | None]:
+    """Resolve whether to use FIPS endpoints from environment or config file.
+
+    :param ctx: The shared resolution context.
+    :returns: Resolved use FIPS endpoint value with source.
+    """
+    return await resolve_bool(
+        ctx,
+        env_vars=("AWS_USE_FIPS_ENDPOINT",),
+        profile_keys=("use_fips_endpoint",),
+    )
+
+
+async def resolve_use_dualstack_endpoint(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[bool | None]:
+    """Resolve whether to use dual-stack endpoints from environment or config file.
+
+    :param ctx: The shared resolution context.
+    :returns: Resolved use dual-stack endpoint value with source.
+    """
+    return await resolve_bool(
+        ctx,
+        env_vars=("AWS_USE_DUALSTACK_ENDPOINT",),
+        profile_keys=("use_dualstack_endpoint",),
+    )
+
+
+async def resolve_account_id_endpoint_mode(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[str | None]:
+    """Resolve the account ID endpoint mode from environment or config file.
+
+    The value is read in any case and lowercased.
+
+    :param ctx: The shared resolution context.
+    :returns: Resolved account ID endpoint mode value with source.
+    """
+    result = await _resolve_str(
+        ctx,
+        env_vars=("AWS_ACCOUNT_ID_ENDPOINT_MODE",),
+        profile_keys=("account_id_endpoint_mode",),
+    )
+    if result.value is UNSET:
+        return result
+    return Resolved(value=result.value.lower(), source=result.source)
 
 
 class EndpointUriResolver:

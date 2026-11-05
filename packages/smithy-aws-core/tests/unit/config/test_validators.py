@@ -6,6 +6,7 @@ import pytest
 from smithy_aws_core.config.exceptions import ConfigValidationError
 from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.config.validators import (
+    validate_account_id_endpoint_mode,
     validate_max_attempts,
     validate_region,
     validate_response_checksum_validation,
@@ -111,9 +112,19 @@ class TestValidateResponseChecksumValidation:
 
     @pytest.mark.parametrize("value", ["always", "", "WHEN_SUPPORTED", 1])
     def test_rejects_invalid_values(self, value: object) -> None:
-        # Values set in code are lowercased by the field's converter first.
         with pytest.raises(
             ConfigValidationError,
             match="Invalid value for 'response_checksum_validation'",
         ):
             validate_response_checksum_validation(value)
+
+
+class TestValidateAccountIdEndpointMode:
+    @pytest.mark.parametrize("value", ["preferred", "disabled", "required", None])
+    def test_valid_values(self, value: str | None):
+        validate_account_id_endpoint_mode(value)
+
+    @pytest.mark.parametrize("value", ["", "PREFERRED", "optional", True])
+    def test_invalid_values_raise(self, value: object):
+        with pytest.raises(ConfigValidationError, match="account_id_endpoint_mode"):
+            validate_account_id_endpoint_mode(value)

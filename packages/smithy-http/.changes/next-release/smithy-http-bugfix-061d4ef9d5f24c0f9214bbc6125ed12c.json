@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "`APIKeyIdentity` no longer includes `api_key` in its repr, which keeps it out of debug logs."
+}

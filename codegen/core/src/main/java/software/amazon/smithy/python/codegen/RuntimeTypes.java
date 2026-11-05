@@ -122,8 +122,8 @@ public final class RuntimeTypes {
             createSymbol("aio.interfaces", "AsyncEndpointResolver", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.aio.endpoints
-    public static final Symbol STATIC_ENDPOINT_RESOLVER =
-            createSymbol("aio.endpoints", "AsyncStaticEndpointResolver", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol ASYNC_BDD_ENDPOINT_RESOLVER =
+            createSymbol("aio.endpoints", "AsyncBddEndpointResolver", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.aio.types
     public static final Symbol ASYNC_BYTES_READER =
@@ -131,6 +131,7 @@ public final class RuntimeTypes {
 
     // smithy_core.aio.utils
     public static final Symbol ASYNC_LIST = createSymbol("aio.utils", "async_list", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol ASYNC_CLOSE = createSymbol("aio.utils", "close", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_http
     public static final Symbol TUPLES_TO_FIELDS =

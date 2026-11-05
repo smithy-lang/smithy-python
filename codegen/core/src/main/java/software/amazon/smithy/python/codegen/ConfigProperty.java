@@ -26,7 +26,9 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     private final String documentation;
     private final Consumer<PythonWriter> initialize;
     private final String defaultValue;
-    private final Symbol resolver;
+    private final String endpointParameter;
+    private final Consumer<PythonWriter> resolver;
+    private final Consumer<PythonWriter> definitions;
     private final Symbol validator;
 
     /**
@@ -40,7 +42,9 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         this.documentation = Objects.requireNonNull(builder.documentation);
         this.initialize = Objects.requireNonNull(builder.initialize);
         this.defaultValue = builder.defaultValue;
+        this.endpointParameter = builder.endpointParameter;
         this.resolver = builder.resolver;
+        this.definitions = builder.definitions;
         this.validator = builder.validator;
     }
 
@@ -83,19 +87,37 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     }
 
     /**
-     * @return Returns the Python expression of the field's default value, used when
-     *     the value isn't set or resolved, if any.
+     * @return Returns the field's default value, if any. It's used when the value isn't
+     * set or resolved, in configs that resolve their fields from the environment.
      */
     public Optional<String> defaultValue() {
         return Optional.ofNullable(defaultValue);
     }
 
     /**
-     * @return Returns the function that resolves the field's value from the
-     *     environment or shared config files, if any.
+     * @return Returns the client context parameter whose value the field holds, if any.
+     *
+     * <p>A field that names a parameter replaces the field code generation would add for
+     * it, and the endpoint rules read the parameter from this field.
      */
-    public Optional<Symbol> resolver() {
+    public Optional<String> endpointParameter() {
+        return Optional.ofNullable(endpointParameter);
+    }
+
+    /**
+     * @return Returns the writer of the expression that resolves the field from the
+     * environment and the shared config file, if any.
+     */
+    public Optional<Consumer<PythonWriter>> resolver() {
         return Optional.ofNullable(resolver);
+    }
+
+    /**
+     * @return Returns the writer of the module-level code the field's resolver needs, such
+     * as a function it names, if any. Configs write it above the config class.
+     */
+    public Optional<Consumer<PythonWriter>> definitions() {
+        return Optional.ofNullable(definitions);
     }
 
     /**
@@ -139,7 +161,9 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
                 .documentation(documentation)
                 .initialize(initialize)
                 .defaultValue(defaultValue)
+                .endpointParameter(endpointParameter)
                 .resolver(resolver)
+                .definitions(definitions)
                 .validator(validator);
     }
 
@@ -154,7 +178,9 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         private String documentation;
         private Consumer<PythonWriter> initialize = writer -> writer.write("self.$1L = $1L", name);
         private String defaultValue;
-        private Symbol resolver;
+        private String endpointParameter;
+        private Consumer<PythonWriter> resolver;
+        private Consumer<PythonWriter> definitions;
         private Symbol validator;
 
         @Override
@@ -247,11 +273,11 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         }
 
         /**
-         * Sets the default value of the config property in configs that are
-         * resolved asynchronously.
+         * Sets the field's default value, used when the value isn't set or resolved.
          *
-         * @param defaultValue A Python expression, such as {@code "when_supported"}
-         *     including the quotes.
+         * <p>Only configs that resolve their fields from the environment use it.
+         *
+         * @param defaultValue The default string value.
          * @return Returns the builder.
          */
         public Builder defaultValue(String defaultValue) {
@@ -260,28 +286,57 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         }
 
         /**
-         * Sets the function that resolves the config property from the environment
-         * or shared config files, in configs that are resolved asynchronously.
+         * Sets the client context parameter whose value the field holds.
          *
-         * @param resolver An async function that takes the shared config context.
+         * <p>The field replaces the one code generation would add for the parameter, so it
+         * can have another name, a resolver, or a validator.
+         *
+         * @param endpointParameter The client context parameter's name.
          * @return Returns the builder.
          */
-        public Builder resolver(Symbol resolver) {
+        public Builder endpointParameter(String endpointParameter) {
+            this.endpointParameter = endpointParameter;
+            return this;
+        }
+
+        /**
+         * Sets the writer of the expression that resolves the field from the environment
+         * and the shared config file, such as a resolver function's name.
+         *
+         * <p>Only configs that resolve their fields that way use it.
+         *
+         * @param resolver Writes the resolver expression inline.
+         * @return Returns the builder.
+         */
+        public Builder resolver(Consumer<PythonWriter> resolver) {
             this.resolver = resolver;
             return this;
         }
 
         /**
-         * Sets the function that validates the config property, in configs that are
-         * resolved asynchronously.
+         * Sets the writer of the module-level code the field's resolver needs, such as a
+         * function it names. Configs write it above the config class, since the class
+         * refers to the resolver when it is created.
          *
-         * @param validator A function that takes the value and raises if it's invalid.
+         * @param definitions Writes the module-level code.
+         * @return Returns the builder.
+         */
+        public Builder definitions(Consumer<PythonWriter> definitions) {
+            this.definitions = definitions;
+            return this;
+        }
+
+        /**
+         * Sets the function that validates the field's value.
+         *
+         * <p>Only configs that resolve their fields from the environment use it.
+         *
+         * @param validator The validator function.
          * @return Returns the builder.
          */
         public Builder validator(Symbol validator) {
             this.validator = validator;
             return this;
         }
-
     }
 }

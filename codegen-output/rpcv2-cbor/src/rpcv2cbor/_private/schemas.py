@@ -210,7 +210,6 @@ _RSO = "RecursiveShapesOutput"
 _RS = "RecursiveShapes"
 _RVP = "RpcV2Protocol"
 _sC = "smithy.protocols#rpcv2Cbor"
-_sB = "smithy.rules#endpointBdd"
 
 VALIDATION_EXCEPTION_FIELD: StaticSchema = (18, n0, _VEF, 0, (_p, _m), ((3, 1), (3, 1)))
 
@@ -863,61 +862,4 @@ RECURSIVE_SHAPES: StaticOperationSchema = (
     (),
 )
 
-RPC_V2_PROTOCOL: StaticSchema = (
-    21,
-    n1,
-    _RVP,
-    {
-        _sC: None,
-        _sB: MappingProxyType(
-            {
-                "version": "1.1",
-                "parameters": MappingProxyType(
-                    {
-                        "endpoint": MappingProxyType(
-                            {
-                                "builtIn": "SDK::Endpoint",
-                                "required": False,
-                                "documentation": "Endpoint used for making requests. Should be formatted as a URI.",
-                                "type": "string",
-                            }
-                        )
-                    }
-                ),
-                "conditions": (
-                    MappingProxyType(
-                        {
-                            "fn": "isSet",
-                            "argv": (MappingProxyType({"ref": "endpoint"}),),
-                        }
-                    ),
-                ),
-                "results": (
-                    MappingProxyType(
-                        {
-                            "conditions": (),
-                            "endpoint": MappingProxyType(
-                                {
-                                    "url": MappingProxyType({"ref": "endpoint"}),
-                                    "properties": MappingProxyType[str, object]({}),
-                                    "headers": MappingProxyType[str, object]({}),
-                                }
-                            ),
-                            "type": "endpoint",
-                        }
-                    ),
-                    MappingProxyType(
-                        {
-                            "conditions": (),
-                            "error": "(default endpointRuleSet) endpoint is not set - you must configure an endpoint.",
-                            "type": "error",
-                        }
-                    ),
-                ),
-                "root": 2,
-                "nodeCount": 2,
-                "nodes": "/////wAAAAH/////AAAAAAX14QEF9eEC",
-            }
-        ),
-    },
-)
+RPC_V2_PROTOCOL: StaticSchema = (21, n1, _RVP, {_sC: None})
