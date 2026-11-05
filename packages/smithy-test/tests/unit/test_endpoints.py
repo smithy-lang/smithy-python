@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from collections.abc import Mapping
 from typing import Any
 
 import pytest
@@ -9,6 +10,7 @@ from smithy_core.documents import Document
 from smithy_core.endpoints import (
     RESOLVED_ENDPOINT,
     Endpoint,
+    EndpointAuthScheme,
     EndpointBdd,
     RulesExtension,
 )
@@ -22,8 +24,8 @@ from smithy_test.aio import check_client_case_async, check_rules_case_async
 # isSet(Region) gives a regional endpoint with properties and headers, else an error.
 BDD = EndpointBdd(
     parameters=(
-        ("Region", "string", False, None, "X::Region", False),
-        ("Bucket", "string", False, None, None, False),
+        ("Region", "string", False, None, "X::Region", None),
+        ("Bucket", "string", False, None, None, None),
     ),
     functions=("isSet",),
     conditions=(((Tag.CALL, "isSet", (Tag.REF, "Region")), None),),
@@ -58,9 +60,16 @@ ENDPOINT = {
 }
 
 
+def _sigv4(entry: Mapping[str, Any]) -> EndpointAuthScheme:
+    return EndpointAuthScheme(
+        scheme_id=ShapeID("x.auth#sigv4"),
+        properties=TypedProperties({"region": entry["signingRegion"]}),
+    )
+
+
 # The built-in binding is set so the check shows it binds nothing from config.
 EXTENSION = RulesExtension(
-    builtins={"X::Region": "region"}, auth_schemes={"sigv4": ShapeID("x.auth#sigv4")}
+    builtins={"X::Region": "region"}, auth_schemes={"sigv4": _sigv4}
 )
 
 

@@ -15,7 +15,11 @@ from typing import (
 from smithy_aws_core.aio.auth.sigv4 import AsyncSigV4AuthScheme
 from smithy_aws_core.aio.config import AsyncFileSystem
 from smithy_aws_core.aio.config.aws_config import AsyncAwsConfig, AwsConfigOverrides
-from smithy_aws_core.aio.config.resolvers import EndpointUriResolver
+from smithy_aws_core.aio.config.resolvers import (
+    EndpointUriResolver,
+    resolve_use_dualstack_endpoint,
+    resolve_use_fips_endpoint,
+)
 from smithy_aws_core.aio.protocols import AsyncRestXmlClientProtocol
 from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
@@ -424,8 +428,12 @@ class AsyncRestXmlProtocolConfig(AsyncAwsConfig):
     """
 
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
-        "use_dualstack_endpoint": FieldSpec(default=None),
-        "use_fips_endpoint": FieldSpec(default=None),
+        "use_dualstack_endpoint": FieldSpec(
+            default=None, resolver=resolve_use_dualstack_endpoint
+        ),
+        "use_fips_endpoint": FieldSpec(
+            default=None, resolver=resolve_use_fips_endpoint
+        ),
         "aws_credentials_identity_resolver": FieldSpec(default=None),
         "region": FieldSpec(default=None),
         "aws_access_key_id": FieldSpec(default=None),

@@ -8,7 +8,7 @@ from typing import Any, cast
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from smithy_core.aio.client import AsyncClient
+from smithy_core.aio.client import AsyncClient, AsyncClientCall
 from smithy_core.aio.eventstream import AsyncDuplexEventStream, AsyncInputEventStream
 from smithy_core.aio.interfaces import AsyncClientTransport
 from smithy_core.aio.retries import (
@@ -19,10 +19,11 @@ from smithy_core.aio.retries import (
 )
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.auth import RESOLVED_IDENTITY, AuthOption
-from smithy_core.endpoints import RESOLVED_ENDPOINT
+from smithy_core.endpoints import RESOLVED_ENDPOINT, EndpointAuthScheme
 from smithy_core.exceptions import (
     CallError,
     SmithyError,
+    UnsupportedAuthSchemeError,
     UnsupportedTransportError,
 )
 from smithy_core.interceptors import (
@@ -42,6 +43,7 @@ from ._pipeline_harness import (
     OPERATION,
     DuplexTransport,
     NonDuplexTransport,
+    StubEndpoint,
     StubEndpointResolver,
     StubEvent,
     StubEventReceiver,
@@ -228,6 +230,72 @@ async def test_auth_option_signer_properties_override_scheme_defaults() -> None:
         "region": "us-west-2",
         "service": "override",
     }
+
+
+def _signing_call(
+    scheme: Mock, option: AuthOption, endpoint: StubEndpoint
+) -> AsyncClientCall[Any, Any]:
+    return replace(
+        client_call(),
+        auth_scheme_resolver=Mock(resolve_auth_scheme=Mock(return_value=[option])),
+        supported_auth_schemes={option.scheme_id: scheme},
+        endpoint_resolver=Mock(resolve_endpoint=AsyncMock(return_value=endpoint)),
+    )
+
+
+async def test_endpoint_signer_properties_override_option_and_scheme_defaults() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    scheme = Mock(scheme_id=ShapeID("com.example#auth"))
+    scheme.identity_resolver.return_value.get_identity = AsyncMock()
+    scheme.signer_properties.return_value = {
+        "region": "default",
+        "service": "default",
+        "scope": "default",
+    }
+    sign = scheme.signer.return_value.sign = AsyncMock()
+    option = AuthOption(
+        scheme_id=scheme.scheme_id,
+        identity_properties=TypedProperties(),
+        signer_properties=TypedProperties({"service": "option", "scope": "option"}),
+    )
+    endpoint = StubEndpoint()
+    endpoint.auth_schemes = (
+        EndpointAuthScheme(
+            scheme_id=ShapeID("com.example#other"),
+            properties=TypedProperties({"region": "other"}),
+        ),
+        EndpointAuthScheme(
+            scheme_id=scheme.scheme_id,
+            properties=TypedProperties({"scope": "endpoint"}),
+        ),
+    )
+
+    await harness.pipeline(_signing_call(scheme, option, endpoint))
+
+    assert sign.call_args.kwargs["properties"] == {
+        "region": "default",
+        "service": "option",
+        "scope": "endpoint",
+    }
+
+
+async def test_signing_fails_when_the_endpoint_lists_other_auth_schemes() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    scheme = Mock(scheme_id=ShapeID("com.example#auth"))
+    scheme.identity_resolver.return_value.get_identity = AsyncMock()
+    option = AuthOption(
+        scheme_id=scheme.scheme_id,
+        identity_properties=TypedProperties(),
+        signer_properties=TypedProperties(),
+    )
+    endpoint = StubEndpoint()
+    endpoint.auth_schemes = (
+        EndpointAuthScheme(scheme_id=ShapeID("com.example#other")),
+    )
+
+    with pytest.raises(UnsupportedAuthSchemeError, match=r"com\.example#other"):
+        await harness.pipeline(_signing_call(scheme, option, endpoint))
+    scheme.signer.return_value.sign.assert_not_called()
 
 
 class _ReplaceInput(Interceptor[Any, Any, Any, Any]):

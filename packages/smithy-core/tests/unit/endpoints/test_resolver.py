@@ -40,14 +40,14 @@ REQUIRED = "smithy.api#required"
 
 # One parameter per source, plus parameters several sources feed.
 PARAMETERS: list[tuple[Any, ...]] = [
-    ("Static", "string", False, None, "X::Static", True),
-    ("Context", "string", False, "default", "X::Context", True),
-    ("Path", "string", False, None, "X::Path", True),
-    ("Client", "string", False, None, "X::Client", True),
-    ("Builtin", "string", False, "default", "X::Builtin", False),
-    ("Getter", "string", False, None, "X::Getter", False),
-    ("Default", "string", True, "default", None, False),
-    ("Tables", "stringArray", False, None, None, False),
+    ("Static", "string", False, None, "X::Static", "static"),
+    ("Context", "string", False, "default", "X::Context", "context"),
+    ("Path", "string", False, None, "X::Path", "path"),
+    ("Client", "string", False, None, "X::Client", "client"),
+    ("Builtin", "string", False, "default", "X::Builtin", None),
+    ("Getter", "string", False, None, "X::Getter", None),
+    ("Default", "string", True, "default", None, None),
+    ("Tables", "stringArray", False, None, None, None),
 ]
 
 
@@ -206,7 +206,7 @@ def test_string_arrays_become_tuples_without_none() -> None:
     )
 
 
-REGION: list[tuple[Any, ...]] = [("Region", "string", True, None, "X::Region", False)]
+REGION: list[tuple[Any, ...]] = [("Region", "string", True, None, "X::Region", None)]
 REGION_EXTENSION = RulesExtension(builtins={"X::Region": "region"})
 
 
@@ -221,7 +221,7 @@ def test_required_parameters() -> None:
 
 
 def test_operations_bind_their_own_sources() -> None:
-    resolver = BddEndpointResolver(echo([("Name", "string", False, None, None, False)]))
+    resolver = BddEndpointResolver(echo([("Name", "string", False, None, None, None)]))
     with_name = make_operation(
         "WithName", {"Name": (STRING, {CONTEXT: {"name": "Name"}})}
     )
@@ -233,27 +233,18 @@ def test_operations_bind_their_own_sources() -> None:
         assert bound.properties["Name"] is None
 
 
-@pytest.mark.parametrize(
-    "name, attribute",
-    [
-        # The names codegen gives clientContextParams config fields (CaseUtils.toSnakeCase).
-        ("EnableTracing", "enable_tracing"),
-        ("UseV2Api", "use_v2_api"),
-    ],
-)
-def test_client_context_parameters_read_codegen_field_names(
-    name: str, attribute: str
-) -> None:
-    bdd = echo([(name, "string", False, None, None, True)])
-    assert _bound(Config(**{attribute: "v"}), bdd=bdd) == {name: "v"}
+def test_client_context_parameters_read_the_attribute_the_bdd_names() -> None:
+    bdd = echo([("EnableTracing", "string", False, None, None, "trace_requests")])
+    config = Config(trace_requests="v", enable_tracing="other")
+    assert _bound(config, bdd=bdd) == {"EnableTracing": "v"}
 
 
 # --------------------------------------------------------------- resolving
 
 NAMED = chain(
     [
-        ("Name", "string", True, None, None, False),
-        ("Endpoint", "string", False, None, "SDK::Endpoint", False),
+        ("Name", "string", True, None, None, None),
+        ("Endpoint", "string", False, None, "SDK::Endpoint", None),
     ],
     [((Tag.CALL, "isSet", (Tag.REF, "Endpoint")), None)],
     [
@@ -322,7 +313,7 @@ def test_cached_endpoints_follow_the_parameters_rules_read() -> None:
 
 def test_bdds_without_sdk_endpoint_use_endpoint_uri_as_given() -> None:
     no_endpoint = chain(
-        [("Region", "string", True, "r", None, False)],
+        [("Region", "string", True, "r", None, None)],
         [],
         [endpoint("https://{Region}.example.com")],
     )

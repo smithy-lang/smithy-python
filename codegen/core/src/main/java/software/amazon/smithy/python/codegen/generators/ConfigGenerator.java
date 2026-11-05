@@ -7,7 +7,10 @@ package software.amazon.smithy.python.codegen.generators;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 import software.amazon.smithy.aws.traits.ServiceTrait;
@@ -109,41 +112,87 @@ public final class ConfigGenerator implements Runnable {
     }
 
     /**
-     * One config field per {@code clientContextParams} entry, named {@code to_snake_case(name)},
-     * which is the attribute endpoint parameter plans read. Fields default to None and have no
-     * environment or profile sources.
+     * The config field for each {@code clientContextParams} entry.
      *
      * @param context the generation context.
      * @return the fields, in trait order.
      */
     public static List<ConfigProperty> clientContextProperties(GenerationContext context) {
+        return List.copyOf(clientContextFields(context).values());
+    }
+
+    /**
+     * The config field for each {@code clientContextParams} entry, by parameter name. A
+     * field a client plugin declares for the parameter replaces the default one, named
+     * {@code to_snake_case(name)}, typed and documented from the trait, defaulting to None,
+     * and with no environment or profile sources. The endpoint BDD records each field's
+     * name as the config attribute its parameter reads.
+     *
+     * @param context the generation context.
+     * @return the fields, in trait order.
+     */
+    public static Map<String, ConfigProperty> clientContextFields(GenerationContext context) {
         // TODO: when porting to Python codegen, fail on a field name that is a Python keyword or
         // collides with another config field. No model does today, but a collision is dropped
         // silently and the rules read the other field's value.
-        var service = context.settings().service(context.model());
-        var trait = service.getTrait(ClientContextParamsTrait.class);
-        if (trait.isEmpty()) {
-            return List.of();
+        var model = context.model();
+        var service = context.settings().service(model);
+        var parameters = service.getTrait(ClientContextParamsTrait.class)
+                .map(ClientContextParamsTrait::getParameters)
+                .orElse(Map.of());
+        var declared = new HashMap<String, ConfigProperty>();
+        for (PythonIntegration integration : context.integrations()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
+                if (!plugin.matchesService(model, service)) {
+                    continue;
+                }
+                for (ConfigProperty property : plugin.getConfigProperties()) {
+                    var parameter = property.endpointParameter().orElse(null);
+                    if (parameter == null) {
+                        continue;
+                    }
+                    if (!parameters.containsKey(parameter)) {
+                        throw new CodegenException(String.format(
+                                "Config field %s is for %s, which is not a client context parameter of %s",
+                                property.name(),
+                                parameter,
+                                service.getId()));
+                    }
+                    var previous = declared.putIfAbsent(parameter, property);
+                    if (previous != null) {
+                        throw new CodegenException(String.format(
+                                "Config fields %s and %s are both for the client context parameter %s",
+                                previous.name(),
+                                property.name(),
+                                parameter));
+                    }
+                }
+            }
         }
-        var properties = new ArrayList<ConfigProperty>();
-        for (var entry : trait.get().getParameters().entrySet()) {
-            var definition = entry.getValue();
-            var type = switch (definition.getType()) {
-                case BOOLEAN -> "bool";
-                case STRING -> "str";
-                default -> throw new CodegenException(String.format(
-                        "Unsupported type %s for client context parameter %s",
-                        definition.getType(),
-                        entry.getKey()));
-            };
-            properties.add(ConfigProperty.builder()
-                    .name(CaseUtils.toSnakeCase(entry.getKey()))
-                    .type(Symbol.builder().name(type).build())
-                    .documentation(definition.getDocumentation()
-                            .orElse("The " + entry.getKey() + " endpoint parameter."))
-                    .build());
+        var fields = new LinkedHashMap<String, ConfigProperty>();
+        for (var entry : parameters.entrySet()) {
+            var name = entry.getKey();
+            var property = declared.get(name);
+            if (property == null) {
+                var definition = entry.getValue();
+                var type = switch (definition.getType()) {
+                    case BOOLEAN -> "bool";
+                    case STRING -> "str";
+                    default -> throw new CodegenException(String.format(
+                            "Unsupported type %s for client context parameter %s",
+                            definition.getType(),
+                            name));
+                };
+                property = ConfigProperty.builder()
+                        .name(CaseUtils.toSnakeCase(name))
+                        .type(Symbol.builder().name(type).build())
+                        .documentation(definition.getDocumentation()
+                                .orElse("The " + name + " endpoint parameter."))
+                        .build();
+            }
+            fields.put(name, property);
         }
-        return properties;
+        return fields;
     }
 
     /**

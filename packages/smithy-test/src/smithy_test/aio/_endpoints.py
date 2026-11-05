@@ -47,8 +47,8 @@ async def check_rules_case_async(
     :param resolver: The client's endpoint resolver.
     :param params: The case's parameter values, by rules name.
     :param expect: The case's expected endpoint or error.
-    :param extensions: The rules extensions the resolver uses. They map the auth scheme
-        names in the expected endpoint to scheme IDs.
+    :param extensions: The rules extensions the resolver uses. Their factories build
+        the auth schemes in the expected endpoint.
     :raises AssertionError: If the result isn't the expected endpoint or error.
     """
     context = TypedProperties()
@@ -82,8 +82,8 @@ async def check_client_case_async[C, I](
     :param operation: The client's operation method.
     :param input: The operation input.
     :param expect: The case's expected endpoint or error.
-    :param extensions: The rules extensions the client's endpoint resolver uses. They map
-        the auth scheme names in the expected endpoint to scheme IDs.
+    :param extensions: The rules extensions the client's endpoint resolver uses. Their
+        factories build the auth schemes in the expected endpoint.
     :raises AssertionError: If the call doesn't resolve the expected endpoint or error,
         or doesn't send its request to the endpoint's host, under its path and query.
     """

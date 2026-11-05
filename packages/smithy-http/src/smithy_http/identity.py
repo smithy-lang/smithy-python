@@ -1,6 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TypedDict
 
@@ -11,7 +11,7 @@ from smithy_core.interfaces.identity import Identity
 class APIKeyIdentity(Identity):
     """The identity for auth that uses an api key."""
 
-    api_key: str
+    api_key: str = field(repr=False)
     """The API Key to add to requests."""
 
     expiration: datetime | None = None

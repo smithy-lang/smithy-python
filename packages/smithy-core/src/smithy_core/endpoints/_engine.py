@@ -16,7 +16,6 @@ from typing import Any, TypeGuard
 
 from .. import URI
 from ..exceptions import EndpointResolutionError, ExpectationNotMetError
-from ..shapes import ShapeID
 from ..types import TypedProperties
 from ..utils import parse_uri
 from ._standard_library import STANDARD_FUNCTIONS
@@ -24,6 +23,7 @@ from ._types import (
     ENDPOINT_HEADERS,
     Endpoint,
     EndpointAuthScheme,
+    EndpointAuthSchemeFactory,
     EndpointBdd,
     RulesExtension,
     Tag,
@@ -92,10 +92,10 @@ class RulesEngine:
                 f"Endpoint rules extensions redefine standard functions: {', '.join(redefined)}"
             )
         functions = dict(STANDARD_FUNCTIONS)
-        scheme_ids: dict[str, ShapeID] = {}
+        auth_schemes: dict[str, EndpointAuthSchemeFactory] = {}
         for extension in extensions:
             functions.update(extension.functions)
-            scheme_ids.update(extension.auth_schemes)
+            auth_schemes.update(extension.auth_schemes)
         called = [name for name in bdd.functions if name not in _COMPILED_FUNCTIONS]
         missing = [name for name in called if name not in functions]
         if missing:
@@ -106,7 +106,7 @@ class RulesEngine:
         self._conditions = bdd.conditions
         self._results = bdd.results
         self._compiler = _ClosureCompiler(
-            bdd, {name: functions[name] for name in called}, scheme_ids
+            bdd, {name: functions[name] for name in called}, auth_schemes
         )
         self._root, self._condition_indexes, self._high_refs, self._low_refs = (
             _node_table(bdd.nodes, bdd.root)
@@ -185,7 +185,7 @@ class _ClosureCompiler:
         self,
         bdd: EndpointBdd,
         functions: Mapping[str, Callable[..., Any]],
-        scheme_ids: Mapping[str, ShapeID],
+        auth_schemes: Mapping[str, EndpointAuthSchemeFactory],
     ) -> None:
         slots = {name: slot for slot, (name, *_) in enumerate(bdd.parameters)}
         for _, target in bdd.conditions:
@@ -193,7 +193,7 @@ class _ClosureCompiler:
                 slots.setdefault(target, len(slots))
         self._slots = slots
         self._functions = functions
-        self._scheme_ids = scheme_ids
+        self._auth_schemes = auth_schemes
         self.target_count = len(slots) - len(bdd.parameters)
         """The number of distinct assign targets; their slots follow the parameters'."""
 
@@ -260,7 +260,7 @@ class _ClosureCompiler:
             for name, exprs in headers
         )
 
-        scheme_ids = self._scheme_ids
+        factories = self._auth_schemes
 
         def build(values: _Values) -> Endpoint:
             data: dict[str, Any] = {}
@@ -268,7 +268,7 @@ class _ClosureCompiler:
             if properties_closure is not None:
                 for key, value in properties_closure(values).items():
                     if key == "authSchemes":
-                        auth_schemes = _auth_schemes(value, scheme_ids)
+                        auth_schemes = _auth_schemes(value, factories)
                     else:
                         data[key] = value
             if header_closures:
@@ -569,24 +569,19 @@ def _no_match(values: _Values) -> Any:
 
 
 def _auth_schemes(
-    entries: Any, scheme_ids: Mapping[str, ShapeID]
+    entries: Any, factories: Mapping[str, EndpointAuthSchemeFactory]
 ) -> tuple[EndpointAuthScheme, ...]:
-    """The entries of an ``authSchemes`` property whose names an extension maps.
+    """The auth schemes built from the ``authSchemes`` entries whose names an
+    extension maps.
 
     They keep the rules' order. Rules that list only unmapped names give an endpoint no
     auth scheme can sign for, so that raises.
     """
     schemes: list[EndpointAuthScheme] = []
     for entry in entries:
-        scheme_id = scheme_ids.get(entry["name"])
-        if scheme_id is not None:
-            properties = TypedProperties()
-            properties.data = {
-                key: value for key, value in entry.items() if key != "name"
-            }
-            schemes.append(
-                EndpointAuthScheme(scheme_id=scheme_id, properties=properties)
-            )
+        factory = factories.get(entry["name"])
+        if factory is not None:
+            schemes.append(factory(entry))
     if entries and not schemes:
         names = ", ".join(entry["name"] for entry in entries)
         raise EndpointResolutionError(

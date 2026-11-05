@@ -18,18 +18,15 @@ from ..shapes import ShapeID
 from ..types import PropertyKey, TypedProperties
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class EndpointAuthScheme:
-    """An auth scheme an endpoint supports, with the properties it sets for it."""
+    """An auth scheme an endpoint supports, with the signer properties it overrides."""
 
     scheme_id: ShapeID
     """The ID of the auth scheme."""
 
     properties: _TypedProperties = field(default_factory=TypedProperties)
-    """Properties for the auth scheme at this endpoint.
-
-    Endpoint rules give them by their names in the rules.
-    """
+    """Signer property overrides for the auth scheme at this endpoint."""
 
 
 @dataclass(kw_only=True)
@@ -128,8 +125,10 @@ class EndpointBdd(NamedTuple):
     ``REF`` 0, ``ATTR`` 1, ``CALL`` 2, ``LIST`` 3, ``MAP`` 4, ``ERROR`` 5 and
     ``ENDPOINT`` 6.
 
-    - Parameter: ``(name, type, required, default, builtin, client_context)``, where
-      ``type`` is ``"string"``, ``"boolean"`` or ``"stringArray"``.
+    - Parameter: ``(name, type, required, default, builtin, client_context_attribute)``,
+      where ``type`` is ``"string"``, ``"boolean"`` or ``"stringArray"``, and
+      ``client_context_attribute`` is the config attribute a client context parameter
+      reads, else None.
     - Condition: ``(expression, assign target or None)``.
     - Result: ``(ERROR, message)`` or ``(ENDPOINT, url, properties, headers)``,
       where ``properties`` is a map or None and ``headers`` is a tuple of
@@ -169,10 +168,13 @@ type BuiltinGetter = Callable[[Any, _TypedProperties], Any]
 type BuiltinBinding = str | BuiltinGetter
 """How a built-in parameter gets its value: a config attribute name, or a getter."""
 
+type EndpointAuthSchemeFactory = Callable[[Mapping[str, Any]], EndpointAuthScheme]
+"""Builds an endpoint's auth scheme from an ``authSchemes`` entry of its rules."""
+
 
 @dataclass(frozen=True, slots=True)
 class RulesExtension:
-    """Functions, built-in parameter bindings and auth scheme IDs contributed to the
+    """Functions, built-in parameter bindings and auth schemes contributed to the
     rules engine."""
 
     functions: Mapping[str, Callable[..., Any]] = field(
@@ -195,11 +197,12 @@ class RulesExtension:
     ``SDK::Endpoint`` is reserved: a resolver given an extension that binds it raises.
     """
 
-    auth_schemes: Mapping[str, ShapeID] = field(default_factory=dict[str, ShapeID])
+    auth_schemes: Mapping[str, EndpointAuthSchemeFactory] = field(
+        default_factory=dict[str, EndpointAuthSchemeFactory]
+    )
     """Auth scheme names, as endpoint rules write them in ``authSchemes``, mapped to
-    the scheme IDs they select.
+    factories that build the endpoint's auth scheme from the rules' entry.
 
-    An endpoint keeps the auth schemes its rules list whose names an extension maps, in
-    the rules' order. A resolver raises when an endpoint's rules list auth schemes but
-    no extension maps any of their names.
+    A factory gives the scheme ID and turns the entry's properties into the scheme's
+    signer property overrides.
     """

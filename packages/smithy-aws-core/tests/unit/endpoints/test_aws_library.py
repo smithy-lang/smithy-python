@@ -1,11 +1,14 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
 from smithy_aws_core.identity import AWSCredentialsIdentity
+from smithy_aws_core.traits import SigV4Trait
+from smithy_core.aio.client import AUTH_SCHEME
+from smithy_core.aio.interfaces.auth import AsyncAuthScheme
 from smithy_core.auth import RESOLVED_IDENTITY
 from smithy_core.endpoints import (
     BddEndpointResolver,
@@ -14,7 +17,7 @@ from smithy_core.endpoints import (
 )
 from smithy_core.endpoints._types import Tag
 from smithy_core.schemas import APIOperation
-from smithy_core.shapes import ShapeType
+from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.types import TypedProperties
 
 FUNCTIONS = AWS_RULES_EXTENSION.functions
@@ -118,14 +121,21 @@ def test_is_virtual_hostable_s3_bucket(
 
 # Each AWS built-in, and one that is also a client context parameter.
 PARAMETERS: tuple[tuple[Any, ...], ...] = (
-    ("Region", "string", False, None, "AWS::Region", False),
-    ("UseFIPS", "boolean", True, False, "AWS::UseFIPS", False),
-    ("UseDualStack", "boolean", True, False, "AWS::UseDualStack", False),
-    ("Mode", "string", False, None, "AWS::Auth::AccountIdEndpointMode", False),
-    ("AccountId", "string", False, None, "AWS::Auth::AccountId", False),
-    ("StsGlobal", "boolean", True, False, "AWS::STS::UseGlobalEndpoint", False),
-    ("S3Global", "boolean", True, False, "AWS::S3::UseGlobalEndpoint", False),
-    ("ForcePathStyle", "boolean", False, None, "AWS::S3::ForcePathStyle", True),
+    ("Region", "string", False, None, "AWS::Region", None),
+    ("UseFIPS", "boolean", True, False, "AWS::UseFIPS", None),
+    ("UseDualStack", "boolean", True, False, "AWS::UseDualStack", None),
+    ("Mode", "string", False, None, "AWS::Auth::AccountIdEndpointMode", None),
+    ("AccountId", "string", False, None, "AWS::Auth::AccountId", None),
+    ("StsGlobal", "boolean", True, False, "AWS::STS::UseGlobalEndpoint", None),
+    ("S3Global", "boolean", True, False, "AWS::S3::UseGlobalEndpoint", None),
+    (
+        "ForcePathStyle",
+        "boolean",
+        False,
+        None,
+        "AWS::S3::ForcePathStyle",
+        "force_path_style",
+    ),
 )
 NAMES = tuple(name for name, *_ in PARAMETERS)
 # One endpoint, with each parameter's value as a property of its name.
@@ -158,9 +168,15 @@ OPERATION: APIOperation[Any, Any] = APIOperation(
 )
 
 
-def _bound(config: Any, identity: Any = None) -> dict[str, Any]:
+def _bound(
+    config: Any, identity: Any = None, scheme_id: ShapeID | None = SigV4Trait.id
+) -> dict[str, Any]:
     """The parameter values a call binds, by name."""
     context = TypedProperties({"config": config})
+    if scheme_id is not None:
+        context[AUTH_SCHEME] = cast(
+            AsyncAuthScheme[Any, Any, Any, Any], SimpleNamespace(scheme_id=scheme_id)
+        )
     if identity is not None:
         context[RESOLVED_IDENTITY] = identity
     resolver = BddEndpointResolver(BDD, extensions=[AWS_RULES_EXTENSION])
@@ -207,3 +223,62 @@ def test_unset_builtins_take_their_defaults() -> None:
         "S3Global": False,
         "ForcePathStyle": None,
     }
+
+
+@pytest.mark.parametrize(
+    "scheme_id, mode",
+    [
+        (SigV4Trait.id, "required"),
+        (ShapeID("smithy.api#noAuth"), "disabled"),
+        (None, "disabled"),
+    ],
+)
+def test_unsigned_requests_disable_account_id_endpoint_mode(
+    scheme_id: ShapeID | None, mode: str
+) -> None:
+    config = SimpleNamespace(endpoint_uri=None, account_id_endpoint_mode="required")
+    assert _bound(config, scheme_id=scheme_id)["Mode"] == mode
+
+
+@pytest.mark.parametrize(
+    "entry, scheme_id, properties",
+    [
+        (
+            {
+                "name": "sigv4",
+                "signingName": "s3",
+                "signingRegion": "us-east-1",
+                "disableDoubleEncoding": True,
+                "disableNormalizePath": True,
+            },
+            "aws.auth#sigv4",
+            {
+                "service": "s3",
+                "region": "us-east-1",
+                "uri_encode_path": False,
+                "normalize_path": False,
+            },
+        ),
+        ({"name": "sigv4"}, "aws.auth#sigv4", {}),
+        (
+            {
+                "name": "sigv4a",
+                "signingName": "s3",
+                "signingRegionSet": ("*",),
+                "disableDoubleEncoding": True,
+            },
+            "aws.auth#sigv4a",
+            {},
+        ),
+        (
+            {"name": "sigv4-s3express", "signingName": "s3express"},
+            "aws.auth#sigv4S3express",
+            {},
+        ),
+    ],
+)
+def test_auth_schemes_give_their_signer_properties(
+    entry: dict[str, Any], scheme_id: str, properties: dict[str, Any]
+) -> None:
+    scheme = AWS_RULES_EXTENSION.auth_schemes[entry["name"]](entry)
+    assert (str(scheme.scheme_id), dict(scheme.properties)) == (scheme_id, properties)

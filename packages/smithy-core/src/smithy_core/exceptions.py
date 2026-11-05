@@ -19,6 +19,7 @@ __all__ = [
     "SerializationError",
     "SmithyError",
     "SmithyIdentityError",
+    "UnsupportedAuthSchemeError",
     "UnsupportedStreamError",
     "UnsupportedTransportError",
 ]
@@ -79,7 +80,7 @@ class CallError(SmithyError):
     )
     """Metadata about the response that produced this error.
 
-    Members of the metadata are individually optional, and an 
+    Members of the metadata are individually optional, and an
     ``http_status_code`` of ``None`` indicates that no response
     was received at all.
 
@@ -159,6 +160,11 @@ class UnsupportedStreamError(SmithyError):
 class UnsupportedTransportError(SmithyError):
     """Indicates that an operation requires a transport capability that the configured
     transport does not declare support for (e.g. duplex event streaming)."""
+
+
+class UnsupportedAuthSchemeError(SmithyError):
+    """Indicates that an endpoint lists auth schemes that do not match the scheme the
+    request is signed with."""
 
 
 class EndpointResolutionError(SmithyError):

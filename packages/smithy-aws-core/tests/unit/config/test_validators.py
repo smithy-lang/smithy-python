@@ -6,6 +6,7 @@ import pytest
 from smithy_aws_core.config.exceptions import ConfigValidationError
 from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.config.validators import (
+    validate_account_id_endpoint_mode,
     validate_max_attempts,
     validate_region,
     validate_retry_mode,
@@ -101,3 +102,14 @@ class TestValidateSdkUaAppId:
     def test_no_warning(self, value: str | None, caplog: pytest.LogCaptureFixture):
         validate_sdk_ua_app_id(value)
         assert caplog.text == ""
+
+
+class TestValidateAccountIdEndpointMode:
+    @pytest.mark.parametrize("value", ["preferred", "disabled", "required", None])
+    def test_valid_values(self, value: str | None):
+        validate_account_id_endpoint_mode(value)
+
+    @pytest.mark.parametrize("value", ["", "PREFERRED", "optional", True])
+    def test_invalid_values_raise(self, value: object):
+        with pytest.raises(ConfigValidationError, match="account_id_endpoint_mode"):
+            validate_account_id_endpoint_mode(value)

@@ -6,7 +6,6 @@ package software.amazon.smithy.python.codegen.generators;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -18,7 +17,6 @@ import java.util.TreeSet;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.node.Node;
-import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.rulesengine.language.Endpoint;
@@ -39,7 +37,6 @@ import software.amazon.smithy.rulesengine.language.syntax.rule.EndpointRule;
 import software.amazon.smithy.rulesengine.language.syntax.rule.ErrorRule;
 import software.amazon.smithy.rulesengine.language.syntax.rule.Rule;
 import software.amazon.smithy.rulesengine.logic.bdd.Bdd;
-import software.amazon.smithy.rulesengine.traits.ClientContextParamsTrait;
 import software.amazon.smithy.rulesengine.traits.EndpointBddTrait;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -97,9 +94,8 @@ public final class EndpointBddGenerator implements Runnable {
 
     @Override
     public void run() {
-        var service = context.settings().service(context.model());
         var filename = String.format("src/%s/_private/endpoints.py", context.settings().moduleName());
-        context.fileManifest().writeFile(filename, renderModule(service));
+        context.fileManifest().writeFile(filename, renderModule(context));
     }
 
     /**
@@ -120,27 +116,29 @@ public final class EndpointBddGenerator implements Runnable {
     /**
      * Lowers the service's endpointBdd trait and renders the endpoints module source.
      *
-     * @param service the service carrying the endpointBdd trait.
+     * @param context the generation context of the service carrying the endpointBdd trait.
      * @return the module source.
      */
-    private static String renderModule(ServiceShape service) {
+    private static String renderModule(GenerationContext context) {
+        var service = context.settings().service(context.model());
         var trait = service.getTrait(EndpointBddTrait.class)
                 .orElseThrow(() -> new CodegenException(service.getId() + " has no endpointBdd trait"));
-        var clientContext = service.getTrait(ClientContextParamsTrait.class)
-                .map(t -> t.getParameters().keySet())
-                .orElse(Set.of());
-        return render(service.getId().toString(), trait, lower(trait, clientContext));
+        var clientContextAttributes = new LinkedHashMap<String, String>();
+        ConfigGenerator.clientContextFields(context)
+                .forEach((name, field) -> clientContextAttributes.put(name, field.name()));
+        return render(service.getId().toString(), trait, lower(trait, clientContextAttributes));
     }
 
     /**
      * Lowers an endpointBdd trait into an endpoint BDD.
      *
      * @param trait the trait to lower.
-     * @param clientContextParams the names of the service's clientContextParams.
+     * @param clientContextAttributes the config attribute each of the service's
+     *     clientContextParams reads, by parameter name.
      * @return the BDD.
      */
-    public static EndpointBdd lower(EndpointBddTrait trait, Collection<String> clientContextParams) {
-        return new Lowering(trait, Set.copyOf(clientContextParams)).bdd();
+    public static EndpointBdd lower(EndpointBddTrait trait, Map<String, String> clientContextAttributes) {
+        return new Lowering(trait, Map.copyOf(clientContextAttributes)).bdd();
     }
 
     /**
@@ -161,7 +159,7 @@ public final class EndpointBddGenerator implements Runnable {
         out.append(TAG_LEGEND);
         out.append("BDD = EndpointBdd(\n");
         if (!bdd.parameters().isEmpty()) {
-            out.append("    # (name, type, required, default, builtin, client_context)\n");
+            out.append("    # (name, type, required, default, builtin, client_context_attribute)\n");
         }
         writeLines(out, "parameters", bdd.parameters(), null);
         out.append("    functions=").append(literal(bdd.functions())).append(",\n");
@@ -316,14 +314,14 @@ public final class EndpointBddGenerator implements Runnable {
 
     private static final class Lowering {
         private final EndpointBddTrait trait;
-        private final Set<String> clientContext;
+        private final Map<String, String> clientContextAttributes;
         private final Map<String, Parameter> parameters = new LinkedHashMap<>();
         private final Set<String> references = new HashSet<>();
         private final Set<String> functions = new TreeSet<>(CODE_POINT_ORDER);
 
-        Lowering(EndpointBddTrait trait, Set<String> clientContext) {
+        Lowering(EndpointBddTrait trait, Map<String, String> clientContextAttributes) {
             this.trait = trait;
-            this.clientContext = clientContext;
+            this.clientContextAttributes = clientContextAttributes;
         }
 
         EndpointBdd bdd() {
@@ -370,7 +368,7 @@ public final class EndpointBddGenerator implements Runnable {
                         parameter.isRequired(),
                         parameter.getDefault().map(this::defaultValue).orElse(null),
                         parameter.getBuiltIn().orElse(null),
-                        clientContext.contains(name)));
+                        clientContextAttributes.get(name)));
             }
             return out;
         }

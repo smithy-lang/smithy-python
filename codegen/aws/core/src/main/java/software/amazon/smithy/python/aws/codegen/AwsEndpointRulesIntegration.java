@@ -54,12 +54,21 @@ public final class AwsEndpointRulesIntegration implements PythonIntegration {
      */
     static final Map<String, BuiltInField> BUILT_IN_FIELDS = Map.of(
             "AWS::UseFIPS",
-            new BuiltInField("use_fips_endpoint", null),
+            new BuiltInField("use_fips_endpoint",
+                    null,
+                    resolver("resolve_use_fips_endpoint"),
+                    null),
             "AWS::UseDualStack",
-            new BuiltInField("use_dualstack_endpoint", null),
+            new BuiltInField("use_dualstack_endpoint",
+                    null,
+                    resolver("resolve_use_dualstack_endpoint"),
+                    null),
             // The SDKs and Tools Reference Guide default.
             "AWS::Auth::AccountIdEndpointMode",
-            new BuiltInField("account_id_endpoint_mode", "preferred"));
+            new BuiltInField("account_id_endpoint_mode",
+                    "preferred",
+                    resolver("resolve_account_id_endpoint_mode"),
+                    validator("validate_account_id_endpoint_mode")));
     private static final String REGION_BUILT_IN = "AWS::Region";
     private static final String ACCOUNT_ID = "AWS::Auth::AccountId";
     private static final String TEST_ACCESS_KEY_ID = "test-access-key-id";
@@ -129,8 +138,28 @@ public final class AwsEndpointRulesIntegration implements PythonIntegration {
      *
      * @param name the config field name.
      * @param defaultValue the field's default, or null for None.
+     * @param resolver writes the expression that resolves the field from the environment
+     *     and profile.
+     * @param validator the function that validates the field's value, or null for none.
      */
-    record BuiltInField(String name, String defaultValue) {}
+    record BuiltInField(String name, String defaultValue, Consumer<PythonWriter> resolver, Symbol validator) {}
+
+    private static Consumer<PythonWriter> resolver(String name) {
+        var symbol = Symbol.builder()
+                .name(name)
+                .namespace("smithy_aws_core.aio.config.resolvers", ".")
+                .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                .build();
+        return writer -> writer.writeInline("$T", symbol);
+    }
+
+    private static Symbol validator(String name) {
+        return Symbol.builder()
+                .name(name)
+                .namespace("smithy_aws_core.config.validators", ".")
+                .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                .build();
+    }
 
     /**
      * Whether a service's endpoint rules call AWS functions or read AWS built-ins.
@@ -182,8 +211,8 @@ public final class AwsEndpointRulesIntegration implements PythonIntegration {
             if (CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model()).isEmpty()) {
                 return;
             }
-            // Config resolution requires a region. Explicit values keep endpoint_uri and the
-            // credentials from being read from the environment.
+            // Config resolution requires a region. Explicit values keep endpoint_uri, the
+            // credentials and the built-in fields from being read from the environment.
             writer.write("""
                     "region": "us-east-1",
                     "endpoint_uri": None,
@@ -192,6 +221,18 @@ public final class AwsEndpointRulesIntegration implements PythonIntegration {
                     AwsRuntimeTypes.AWS_CREDENTIALS_IDENTITY,
                     TEST_ACCESS_KEY_ID,
                     TEST_SECRET_ACCESS_KEY);
+            var service = context.settings().service(context.model());
+            service.getTrait(EndpointBddTrait.class).ifPresent(trait -> {
+                for (Parameter parameter : trait.getParameters()) {
+                    parameter.getBuiltIn().map(BUILT_IN_FIELDS::get).ifPresent(field -> {
+                        if (field.defaultValue() == null) {
+                            writer.write("$S: None,", field.name());
+                        } else {
+                            writer.write("$S: $S,", field.name(), field.defaultValue());
+                        }
+                    });
+                }
+            });
         }
 
         @Override

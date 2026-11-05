@@ -83,19 +83,19 @@ def check_endpoint(
 def _expected_auth_schemes(
     entries: Sequence[Mapping[str, Any]], extensions: Sequence[RulesExtension]
 ) -> list[dict[str, Any]]:
-    """A case's expected ``authSchemes`` as resolution gives them: each name mapped to
-    its scheme ID, and names no extension maps left out."""
-    scheme_ids = {
-        name: scheme_id
+    """A case's expected ``authSchemes`` as resolution gives them: each entry built by
+    its name's extension factory, and names no extension maps left out."""
+    factories = {
+        name: factory
         for extension in extensions
-        for name, scheme_id in extension.auth_schemes.items()
+        for name, factory in extension.auth_schemes.items()
     }
     expected: list[dict[str, Any]] = []
     for entry in entries:
-        properties = dict(entry)
-        scheme_id = scheme_ids.get(properties.pop("name"))
-        if scheme_id is not None:
-            expected.append({"scheme_id": str(scheme_id), **properties})
+        factory = factories.get(entry["name"])
+        if factory is not None:
+            scheme = factory(entry)
+            expected.append({"scheme_id": str(scheme.scheme_id), **scheme.properties})
     return expected
 
 

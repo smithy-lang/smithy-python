@@ -12,6 +12,7 @@ from .exceptions import ConfigValidationError, ProfileNotFoundError
 from .types import ConfigSource
 
 __all__ = [
+    "validate_account_id_endpoint_mode",
     "validate_max_attempts",
     "validate_profile",
     "validate_region",
@@ -24,6 +25,8 @@ logger = logging.getLogger(__name__)
 _SDK_UA_APP_ID_MAX_LENGTH = 50
 
 _REGION_PATTERN = re.compile(r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$")
+
+_ACCOUNT_ID_ENDPOINT_MODES = ("preferred", "disabled", "required")
 
 
 def validate_region(value: object) -> None:
@@ -130,4 +133,19 @@ def validate_sdk_ua_app_id(value: object) -> None:
             "The configured value for sdk_ua_app_id exceeds the recommended maximum "
             "length of %d characters.",
             _SDK_UA_APP_ID_MAX_LENGTH,
+        )
+
+
+def validate_account_id_endpoint_mode(value: object) -> None:
+    """Validate the account ID endpoint mode.
+
+    Valid values: 'preferred', 'disabled', 'required', or None.
+
+    :param value: The resolved account ID endpoint mode value.
+    :raises ConfigValidationError: If the value is not a valid mode.
+    """
+    if value is not None and value not in _ACCOUNT_ID_ENDPOINT_MODES:
+        raise ConfigValidationError(
+            f"Invalid value for 'account_id_endpoint_mode': {value!r}. "
+            f"Must be one of {_ACCOUNT_ID_ENDPOINT_MODES}."
         )

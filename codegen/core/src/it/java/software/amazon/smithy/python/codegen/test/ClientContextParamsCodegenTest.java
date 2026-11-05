@@ -50,7 +50,7 @@ public class ClientContextParamsCodegenTest {
         assertTrue(config.contains("self.force_path_style = force_path_style"));
 
         var endpoints = Files.readString(tempDir.resolve("src/ccp/_private/endpoints.py"));
-        assertTrue(endpoints.contains("(\"ForcePathStyle\", \"boolean\", True, False, None, True)"));
-        assertTrue(endpoints.contains("(\"Stage\", \"string\", False, None, None, True)"));
+        assertTrue(endpoints.contains("(\"ForcePathStyle\", \"boolean\", True, False, None, \"force_path_style\")"));
+        assertTrue(endpoints.contains("(\"Stage\", \"string\", False, None, None, \"stage\")"));
     }
 }

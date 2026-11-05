@@ -1,17 +1,21 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-"""The AWS endpoint rules library: AWS functions and built-in parameter bindings."""
+"""The AWS endpoint rules library: AWS functions, built-in parameter bindings and auth
+schemes."""
 
 import json
 import os
 import re
+from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Any
 
+from smithy_core.aio.client import AUTH_SCHEME
 from smithy_core.auth import RESOLVED_IDENTITY
-from smithy_core.endpoints import RulesExtension
-from smithy_core.interfaces import TypedProperties
+from smithy_core.endpoints import EndpointAuthScheme, RulesExtension
+from smithy_core.interfaces import TypedProperties as _TypedProperties
 from smithy_core.shapes import ShapeID
+from smithy_core.types import TypedProperties
 
 from ..traits import SigV4Trait
 
@@ -125,9 +129,52 @@ def _is_virtual_hostable_s3_bucket(
     )
 
 
-def _account_id(config: Any, context: TypedProperties) -> str | None:
+def _account_id(config: Any, context: _TypedProperties) -> str | None:
     """``AWS::Auth::AccountId``: the account ID of the identity resolved for the call."""
     return getattr(context.get(RESOLVED_IDENTITY), "account_id", None)
+
+
+_NO_AUTH = ShapeID("smithy.api#noAuth")
+
+
+def _account_id_endpoint_mode(config: Any, context: _TypedProperties) -> str | None:
+    """``AWS::Auth::AccountIdEndpointMode``: the configured mode, or ``disabled`` when
+    the request is unsigned."""
+    scheme = context.get(AUTH_SCHEME)
+    if scheme is None or scheme.scheme_id == _NO_AUTH:
+        return "disabled"
+    return getattr(config, "account_id_endpoint_mode", None)
+
+
+_SIGV4A = ShapeID("aws.auth#sigv4a")
+# Shape IDs can't hold "-".
+_SIGV4_S3EXPRESS = ShapeID("aws.auth#sigv4S3express")
+
+
+def _sigv4(entry: Mapping[str, Any]) -> EndpointAuthScheme:
+    """The SigV4 endpoint auth scheme, with the entry's signing overrides."""
+    data: dict[str, Any] = {}
+    if (signing_name := entry.get("signingName")) is not None:
+        data["service"] = signing_name
+    if (signing_region := entry.get("signingRegion")) is not None:
+        data["region"] = signing_region
+    if (disable_double_encoding := entry.get("disableDoubleEncoding")) is not None:
+        data["uri_encode_path"] = not disable_double_encoding
+    if (disable_normalize_path := entry.get("disableNormalizePath")) is not None:
+        data["normalize_path"] = not disable_normalize_path
+    properties = TypedProperties()
+    properties.data = data
+    return EndpointAuthScheme(scheme_id=SigV4Trait.id, properties=properties)
+
+
+def _sigv4a(entry: Mapping[str, Any]) -> EndpointAuthScheme:
+    """The SigV4a endpoint auth scheme."""
+    return EndpointAuthScheme(scheme_id=_SIGV4A)
+
+
+def _sigv4_s3express(entry: Mapping[str, Any]) -> EndpointAuthScheme:
+    """The S3 Express endpoint auth scheme."""
+    return EndpointAuthScheme(scheme_id=_SIGV4_S3EXPRESS)
 
 
 AWS_RULES_EXTENSION = RulesExtension(
@@ -143,26 +190,16 @@ AWS_RULES_EXTENSION = RulesExtension(
             "AWS::Region": "region",
             "AWS::UseFIPS": "use_fips_endpoint",
             "AWS::UseDualStack": "use_dualstack_endpoint",
-            "AWS::Auth::AccountIdEndpointMode": "account_id_endpoint_mode",
+            "AWS::Auth::AccountIdEndpointMode": _account_id_endpoint_mode,
             "AWS::Auth::AccountId": _account_id,
         }
     ),
     auth_schemes=MappingProxyType(
         {
-            "sigv4": SigV4Trait.id,
-            "sigv4a": ShapeID("aws.auth#sigv4a"),
-            # Shape IDs can't hold "-".
-            "sigv4-s3express": ShapeID("aws.auth#sigv4S3express"),
+            "sigv4": _sigv4,
+            "sigv4a": _sigv4a,
+            "sigv4-s3express": _sigv4_s3express,
         }
     ),
 )
-"""AWS rules functions, built-in bindings and auth scheme IDs.
-
-``use_fips_endpoint``, ``use_dualstack_endpoint`` and ``account_id_endpoint_mode``
-are generated only on the configs of services whose rules declare their built-ins, and
-``account_id_endpoint_mode`` defaults to ``preferred``. The ``AWS::S3::*`` and
-``AWS::S3Control::*`` built-ins are also client context parameters, so they are read
-from that parameter's generated config field. ``AWS::S3::UseGlobalEndpoint`` and
-``AWS::STS::UseGlobalEndpoint`` are not bound: they select legacy global endpoints,
-so they take their default of false.
-"""
+"""AWS rules functions, built-in bindings and auth schemes."""

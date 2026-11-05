@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any
 
-from .._model_naming import member_field_name, to_snake_case
+from .._model_naming import member_field_name
 from ..exceptions import EndpointResolutionError
 from ..interfaces import TypedProperties as _TypedProperties
 from ..schemas import APIOperation
@@ -41,8 +41,8 @@ class ParamPlan:
     ) -> None:
         """Build the sources every operation shares.
 
-        A client context parameter is read from its own config field, even when it is
-        also a built-in. A built-in no extension binds takes its default.
+        A client context parameter is read from the config attribute the BDD specifies,
+        even when it is also a built-in. A built-in no extension binds takes its default.
 
         :param parameters: The rules parameters, in BDD order.
         :param extensions: Extensions whose built-in bindings apply, beyond the standard
@@ -70,7 +70,9 @@ class ParamPlan:
         builtin_getters: list[tuple[int, BuiltinGetter]] = []
         client_context_attributes: list[tuple[int, str]] = []
         for slot, parameter in enumerate(parameters):
-            name, type_, is_required, default, builtin, client_context = parameter
+            name, type_, is_required, default, builtin, client_context_attribute = (
+                parameter
+            )
             slots[name] = slot
             names.append(name)
             defaults.append(default)
@@ -78,8 +80,8 @@ class ParamPlan:
                 required.append(slot)
             if type_ == "stringArray":
                 arrays.append(slot)
-            if client_context:
-                client_context_attributes.append((slot, _config_attribute(name)))
+            if client_context_attribute is not None:
+                client_context_attributes.append((slot, client_context_attribute))
             elif builtin is not None:
                 binding = builtins.get(builtin)
                 if binding is None:
@@ -262,10 +264,6 @@ class _OperationSources:
 
     static_values: tuple[tuple[int, Any], ...]
     """(slot, value) for staticContextParams."""
-
-
-def _config_attribute(parameter: str) -> str:
-    return to_snake_case(parameter)
 
 
 def _input_attribute(member: str) -> str:

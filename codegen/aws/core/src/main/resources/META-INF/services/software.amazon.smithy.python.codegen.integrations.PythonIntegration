@@ -12,4 +12,5 @@ software.amazon.smithy.python.aws.codegen.AwsUserAgentIntegration
 software.amazon.smithy.python.aws.codegen.AwsEndpointRulesIntegration
 software.amazon.smithy.python.aws.codegen.AwsDefaultEndpointRuleSetIntegration
 software.amazon.smithy.python.aws.codegen.customizations.dynamodb.AwsDynamoDbRetryIntegration
+software.amazon.smithy.python.aws.codegen.customizations.s3.S3EndpointConfigIntegration
 software.amazon.smithy.python.aws.codegen.AwsAsyncConfigIntegration

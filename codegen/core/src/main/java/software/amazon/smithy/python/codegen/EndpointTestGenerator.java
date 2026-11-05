@@ -26,13 +26,11 @@ import software.amazon.smithy.python.codegen.generators.EndpointBddGenerator;
 import software.amazon.smithy.python.codegen.integrations.EndpointRulesExtension;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.rulesengine.language.syntax.parameters.Parameter;
-import software.amazon.smithy.rulesengine.traits.ClientContextParamsTrait;
 import software.amazon.smithy.rulesengine.traits.EndpointBddTrait;
 import software.amazon.smithy.rulesengine.traits.EndpointTestCase;
 import software.amazon.smithy.rulesengine.traits.EndpointTestExpectation;
 import software.amazon.smithy.rulesengine.traits.EndpointTestOperationInput;
 import software.amazon.smithy.rulesengine.traits.EndpointTestsTrait;
-import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
@@ -55,7 +53,7 @@ public final class EndpointTestGenerator implements Runnable {
     private final GenerationContext context;
     private final ServiceShape service;
     private final Map<String, Parameter> parametersByBuiltIn = new HashMap<>();
-    private final Set<String> clientContextParams;
+    private final Map<String, ConfigProperty> clientContextFields;
     private final List<EndpointRulesExtension> rulesExtensions;
 
     /**
@@ -69,9 +67,7 @@ public final class EndpointTestGenerator implements Runnable {
                 parameter.getBuiltIn().ifPresent(builtIn -> parametersByBuiltIn.put(builtIn, parameter));
             }
         });
-        this.clientContextParams = service.getTrait(ClientContextParamsTrait.class)
-                .map(trait -> trait.getParameters().keySet())
-                .orElse(Set.of());
+        this.clientContextFields = ConfigGenerator.clientContextFields(context);
         this.rulesExtensions = ConfigGenerator.endpointRulesExtensions(context);
     }
 
@@ -149,6 +145,13 @@ public final class EndpointTestGenerator implements Runnable {
                     for (EndpointRulesExtension extension : rulesExtensions) {
                         extension.writeEndpointTestConfig(context, w);
                     }
+                    // Explicit values keep client context fields from being read from the
+                    // environment.
+                    for (ConfigProperty field : clientContextFields.values()) {
+                        if (field.resolver().isPresent()) {
+                            w.write("$S: None,", field.name());
+                        }
+                    }
                 }),
                 config,
                 construct,
@@ -161,8 +164,8 @@ public final class EndpointTestGenerator implements Runnable {
                 client);
     }
 
-    // _RULES_EXTENSIONS lets the checks map the auth scheme names a case expects to the
-    // scheme IDs the client's endpoint resolver gives.
+    // _RULES_EXTENSIONS lets the checks build the auth schemes a case expects the way the
+    // client's endpoint resolver builds them.
     private void writeRulesExtensions(PythonWriter writer) {
         if (rulesExtensions.isEmpty()) {
             return;
@@ -320,8 +323,9 @@ public final class EndpointTestGenerator implements Runnable {
             }
         });
         input.getClientParams().getMembers().forEach((name, value) -> {
-            if (clientContextParams.contains(name.getValue())) {
-                entries.add(entry(CaseUtils.toSnakeCase(name.getValue()), value));
+            var field = clientContextFields.get(name.getValue());
+            if (field != null) {
+                entries.add(entry(field.name(), value));
             } else {
                 skips.add(name.getValue() + " is not a client context parameter");
             }
@@ -332,8 +336,9 @@ public final class EndpointTestGenerator implements Runnable {
     private Optional<Consumer<PythonWriter>> builtInEntry(String builtIn, Node value) {
         var parameter = parametersByBuiltIn.get(builtIn);
         // A built-in that is also a client context parameter is read from its config field.
-        if (parameter != null && clientContextParams.contains(parameter.getNameString())) {
-            return Optional.of(entry(CaseUtils.toSnakeCase(parameter.getNameString()), value));
+        var field = parameter == null ? null : clientContextFields.get(parameter.getNameString());
+        if (field != null) {
+            return Optional.of(entry(field.name(), value));
         }
         if (builtIn.equals("SDK::Endpoint")) {
             return Optional.of(entry("endpoint_uri", value));

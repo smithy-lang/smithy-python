@@ -7,9 +7,9 @@ from smithy_core.endpoints import EndpointBdd
 # fmt: off
 # Tags: ref=0, attr=1, call=2, list=3, map=4, error=5, endpoint=6.
 BDD = EndpointBdd(
-    # (name, type, required, default, builtin, client_context)
+    # (name, type, required, default, builtin, client_context_attribute)
     parameters=(
-        ("endpoint", "string", False, None, "SDK::Endpoint", False),
+        ("endpoint", "string", False, None, "SDK::Endpoint", None),
     ),
     functions=("isSet",),
     conditions=(

@@ -12,11 +12,12 @@ from typing import TYPE_CHECKING, Any, Self
 from .. import URI
 from ..auth import RESOLVED_IDENTITY, AuthParams
 from ..deserializers import DeserializeableShape, ShapeDeserializer
-from ..endpoints import RESOLVED_ENDPOINT, EndpointResolverParams
+from ..endpoints import RESOLVED_ENDPOINT, EndpointAuthScheme, EndpointResolverParams
 from ..exceptions import (
     ClientTimeoutError,
     RetryError,
     SmithyError,
+    UnsupportedAuthSchemeError,
     UnsupportedTransportError,
 )
 from ..interceptors import (
@@ -635,6 +636,11 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response]:
                     context=request_context.properties
                 )
                 signer_properties.update(option.signer_properties)
+                endpoint_auth_scheme = self._endpoint_auth_scheme(
+                    call, endpoint, scheme.scheme_id
+                )
+                if endpoint_auth_scheme is not None:
+                    signer_properties.update(endpoint_auth_scheme.properties)
                 _LOGGER.debug("Request to sign: %s", request_context.transport_request)
                 _LOGGER.debug("Signer properties: %s", signer_properties)
 
@@ -750,6 +756,28 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response]:
                 return option, scheme
 
         return None
+
+    def _endpoint_auth_scheme(
+        self, call: AsyncClientCall[Any, Any], endpoint: Endpoint, scheme_id: ShapeID
+    ) -> EndpointAuthScheme | None:
+        """The endpoint's entry for the auth scheme signing the request.
+
+        An endpoint that lists no auth schemes has none. One that lists auth schemes
+        but not the resolved scheme raises.
+        """
+        if not endpoint.auth_schemes:
+            return None
+        for auth_scheme in endpoint.auth_schemes:
+            if auth_scheme.scheme_id == scheme_id:
+                return auth_scheme
+        listed = ", ".join(
+            str(auth_scheme.scheme_id) for auth_scheme in endpoint.auth_schemes
+        )
+        supported = ", ".join(map(str, call.supported_auth_schemes))
+        raise UnsupportedAuthSchemeError(
+            f"The endpoint supports the auth schemes {listed}, but the request is "
+            f"signed with {scheme_id}. The client supports {supported}."
+        )
 
     def _finalize_attempt[I: SerializeableShape, O: DeserializeableShape](
         self,

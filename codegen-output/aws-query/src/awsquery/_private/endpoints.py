@@ -7,12 +7,12 @@ from smithy_core.endpoints import EndpointBdd
 # fmt: off
 # Tags: ref=0, attr=1, call=2, list=3, map=4, error=5, endpoint=6.
 BDD = EndpointBdd(
-    # (name, type, required, default, builtin, client_context)
+    # (name, type, required, default, builtin, client_context_attribute)
     parameters=(
-        ("Region", "string", False, None, "AWS::Region", False),
-        ("UseDualStack", "boolean", True, False, "AWS::UseDualStack", False),
-        ("UseFIPS", "boolean", True, False, "AWS::UseFIPS", False),
-        ("Endpoint", "string", False, None, "SDK::Endpoint", False),
+        ("Region", "string", False, None, "AWS::Region", None),
+        ("UseDualStack", "boolean", True, False, "AWS::UseDualStack", None),
+        ("UseFIPS", "boolean", True, False, "AWS::UseFIPS", None),
+        ("Endpoint", "string", False, None, "SDK::Endpoint", None),
     ),
     functions=("aws.partition", "booleanEquals", "isSet", "stringEquals"),
     conditions=(

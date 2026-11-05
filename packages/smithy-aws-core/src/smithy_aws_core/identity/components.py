@@ -1,6 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Protocol, TypedDict
 
@@ -19,11 +19,11 @@ class AWSCredentialsIdentity(Identity):
     access_key_id: str
     """A unique identifier for an AWS user or role."""
 
-    secret_access_key: str
+    secret_access_key: str = field(repr=False)
     """A secret key used in conjunction with the access key ID to authenticate
     programmatic access to AWS services."""
 
-    session_token: str | None = None
+    session_token: str | None = field(default=None, repr=False)
     """A temporary token used to specify the current session for the supplied
     credentials."""
 

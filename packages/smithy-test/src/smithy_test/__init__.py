@@ -6,9 +6,4 @@ from ._private.equality import deep_equal as deep_equal
 from ._private.equality import xml_equal as xml_equal
 
 __version__ = "0.1.0"
-__all__ = (
-    "ConformanceError",
-    "deep_equal",
-    "verify_models",
-    "xml_equal",
-)
+__all__ = ("ConformanceError", "deep_equal", "verify_models", "xml_equal")

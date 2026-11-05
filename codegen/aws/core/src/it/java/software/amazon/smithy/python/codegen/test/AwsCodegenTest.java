@@ -100,8 +100,14 @@ public class AwsCodegenTest {
         assertTrue(config.contains("    use_dualstack_endpoint: bool | None\n"));
         assertTrue(config.contains("use_fips_endpoint: bool | None = None"));
         assertTrue(config.contains("use_dualstack_endpoint: bool | None = None"));
-        assertTrue(config.contains("\"use_fips_endpoint\": FieldSpec(default=None),"));
-        assertTrue(config.contains("\"use_dualstack_endpoint\": FieldSpec(default=None),"));
+        assertInOrder(config,
+                "\"use_fips_endpoint\": FieldSpec(",
+                "default=None,",
+                "resolver=resolve_use_fips_endpoint");
+        assertInOrder(config,
+                "\"use_dualstack_endpoint\": FieldSpec(",
+                "default=None,",
+                "resolver=resolve_use_dualstack_endpoint");
         assertFalse(config.contains("account_id_endpoint_mode"));
     }
 

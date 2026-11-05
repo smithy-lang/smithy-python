@@ -87,6 +87,8 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                 .name(field.name())
                 .type(Symbol.builder().name(type).build())
                 .documentation(documentation)
+                .resolver(field.resolver())
+                .validator(field.validator())
                 .build();
     }
 
@@ -229,6 +231,14 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
 
             writer.write("");
             writer.write("");
+            // The config class refers to these when it is created, so they come first.
+            for (ConfigProperty property : pluginProperties.values()) {
+                property.definitions().ifPresent(definitions -> {
+                    definitions.accept(writer);
+                    writer.write("");
+                    writer.write("");
+                });
+            }
             writer.openBlock("class $L($T, total=False):", overridesTypeName, awsConfigOverridesSymbol);
             writer.write("endpoint_resolver: $T | None", RuntimeTypes.ENDPOINT_RESOLVER);
             writer.write("protocol: $T | None", protocolInputSymbol);
@@ -301,13 +311,25 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // region, sdk_ua_app_id) — these are harmlessly overwritten by the spread
             // below. Fields unique to this service (e.g., api_key from @httpApiKeyAuth)
             // survive and participate in the resolution pipeline.
-            for (String propertyName : pluginProperties.keySet()) {
-                var builtInDefault = builtInDefaults.get(propertyName);
-                if (builtInDefault != null) {
-                    writer.write("\"$L\": $T(default=$S),", propertyName, fieldSpecSymbol, builtInDefault);
-                } else {
+            for (ConfigProperty property : pluginProperties.values()) {
+                var propertyName = property.name();
+                var defaultValue = builtInDefaults.get(propertyName);
+                if (defaultValue == null && property.resolver().isEmpty() && property.validator().isEmpty()) {
                     writer.write("\"$L\": $T(default=None),", propertyName, fieldSpecSymbol);
+                    continue;
                 }
+                writer.write("\"$L\": $T(", propertyName, fieldSpecSymbol);
+                writer.indent();
+                if (defaultValue != null) {
+                    writer.write("default=$S,", defaultValue);
+                } else {
+                    writer.write("default=None,");
+                }
+                property.resolver()
+                        .ifPresent(resolver -> writer.write("resolver=$C,", (Runnable) () -> resolver.accept(writer)));
+                property.validator().ifPresent(validator -> writer.write("validator=$T,", validator));
+                writer.dedent();
+                writer.write("),");
             }
 
             writer.write("**$T._FIELDS,", asyncAwsConfigSymbol);

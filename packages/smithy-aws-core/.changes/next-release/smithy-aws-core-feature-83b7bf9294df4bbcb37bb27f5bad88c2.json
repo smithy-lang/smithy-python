@@ -1,4 +1,4 @@
 {
   "type": "feature",
-  "description": "Added `smithy_aws_core.endpoints.AWS_RULES_EXTENSION`, which adds AWS support to endpoint rules resolution. It provides the `aws.partition`, `aws.parseArn` and `aws.isVirtualHostableS3Bucket` functions, binds the AWS built-ins to client config, and maps the `sigv4`, `sigv4a` and `sigv4-s3express` auth schemes to their scheme IDs."
+  "description": "Added `smithy_aws_core.endpoints.AWS_RULES_EXTENSION`, which adds AWS support to endpoint rules resolution. It provides the `aws.partition`, `aws.parseArn` and `aws.isVirtualHostableS3Bucket` functions, binds the AWS built-ins to client config, turns the endpoint's `sigv4` auth scheme into signer property overrides, and maps `sigv4a` and `sigv4-s3express` to their scheme IDs."
 }

@@ -159,11 +159,15 @@
     "EndpointUriResolver": "class[async]",
     "Resolved": "rex-class",
     "UNSET": "rex-_UnsetType",
+    "resolve_account_id_endpoint_mode": "function[async]",
+    "resolve_bool": "function[async]",
     "resolve_endpoint_uri": "function[async]",
     "resolve_max_attempts": "function[async]",
     "resolve_region": "function[async]",
     "resolve_retry_mode": "function[async]",
-    "resolve_sdk_ua_app_id": "function[async]"
+    "resolve_sdk_ua_app_id": "function[async]",
+    "resolve_use_dualstack_endpoint": "function[async]",
+    "resolve_use_fips_endpoint": "function[async]"
   },
   "smithy_aws_core.aio.identity": {
     "AWSCredentialsIdentity": "rex-class",
@@ -466,6 +470,7 @@
     "ConfigValidationError": "rex-exception",
     "ProfileNotFoundError": "rex-exception",
     "logger": "Logger",
+    "validate_account_id_endpoint_mode": "function",
     "validate_max_attempts": "function",
     "validate_profile": "function",
     "validate_region": "function",
@@ -723,6 +728,8 @@
     "utils": "rex-module"
   },
   "smithy_core.aio": {
+    "client": "rex-module",
+    "eventstream": "rex-module",
     "interfaces": "rex-module",
     "retries": "rex-module",
     "types": "rex-module",
@@ -751,6 +758,7 @@
     "ClientTimeoutError": "rex-exception",
     "DeserializeableShape": "rex-protocol",
     "Endpoint": "rex-protocol",
+    "EndpointAuthScheme": "rex-class",
     "EndpointResolverParams": "rex-class",
     "InputContext": "rex-class",
     "Interceptor": "rex-class",
@@ -772,6 +780,7 @@
     "SmithyError": "rex-exception",
     "TypedProperties": "rex-protocol",
     "URI": "rex-class",
+    "UnsupportedAuthSchemeError": "rex-exception",
     "UnsupportedTransportError": "rex-exception",
     "close": "rex-function[async]",
     "seek": "rex-function[async]"
@@ -951,6 +960,7 @@
     "ENDPOINT_PARAMETERS": "rex-PropertyKey",
     "Endpoint": "rex-class",
     "EndpointAuthScheme": "rex-class",
+    "EndpointAuthSchemeFactory": "rex-type_alias",
     "EndpointBdd": "rex-class",
     "EndpointResolverParams": "rex-class",
     "RESOLVED_ENDPOINT": "rex-PropertyKey",
@@ -975,6 +985,7 @@
     "SerializationError": "exception",
     "SmithyError": "exception",
     "SmithyIdentityError": "exception",
+    "UnsupportedAuthSchemeError": "exception",
     "UnsupportedStreamError": "exception",
     "UnsupportedTransportError": "exception"
   },

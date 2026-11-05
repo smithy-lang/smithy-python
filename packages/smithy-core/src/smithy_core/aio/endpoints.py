@@ -46,10 +46,10 @@ class AsyncBddEndpointResolver(_AsyncEndpointResolver):
         :param extensions: Functions and built-in bindings beyond the rules standard
             library, which is always included.
         """
-        self._resolver = _BddEndpointResolver(bdd, extensions=extensions)
+        self._sync = _BddEndpointResolver(bdd, extensions=extensions)
 
     def __deepcopy__(self, memo: Any) -> "AsyncBddEndpointResolver":
         return self
 
     async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> _Endpoint:
-        return self._resolver.resolve_endpoint(params)
+        return self._sync.resolve_endpoint(params)

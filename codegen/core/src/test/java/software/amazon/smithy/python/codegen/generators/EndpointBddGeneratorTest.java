@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.node.Node;
@@ -91,16 +91,18 @@ public class EndpointBddGeneratorTest {
 
     @Test
     public void normalizesAndDropsParameters() {
-        var bdd = lower(trait("1.1", PARAMETERS, CONDITIONS, RESULTS, 2, NODES), Set.of("ForcePathStyle"));
+        var bdd = lower(
+                trait("1.1", PARAMETERS, CONDITIONS, RESULTS, 2, NODES),
+                Map.of("ForcePathStyle", "path_style"));
         // Key is optional and unread, so it is dropped; Unused and Tables are required, so they stay.
         assertEquals(
-                "((\"Region\", \"string\", False, None, \"AWS::Region\", False), "
-                        + "(\"UseFIPS\", \"boolean\", True, False, \"AWS::UseFIPS\", False), "
-                        + "(\"Endpoint\", \"string\", False, None, \"SDK::Endpoint\", False), "
-                        + "(\"Bucket\", \"string\", True, None, None, False), "
-                        + "(\"ForcePathStyle\", \"boolean\", False, None, \"AWS::S3::ForcePathStyle\", True), "
-                        + "(\"Tables\", \"stringArray\", True, (\"a\", \"b\"), None, False), "
-                        + "(\"Unused\", \"boolean\", True, True, None, False))",
+                "((\"Region\", \"string\", False, None, \"AWS::Region\", None), "
+                        + "(\"UseFIPS\", \"boolean\", True, False, \"AWS::UseFIPS\", None), "
+                        + "(\"Endpoint\", \"string\", False, None, \"SDK::Endpoint\", None), "
+                        + "(\"Bucket\", \"string\", True, None, None, None), "
+                        + "(\"ForcePathStyle\", \"boolean\", False, None, \"AWS::S3::ForcePathStyle\", \"path_style\"), "
+                        + "(\"Tables\", \"stringArray\", True, (\"a\", \"b\"), None, None), "
+                        + "(\"Unused\", \"boolean\", True, True, None, None))",
                 EndpointBddGenerator.literal(bdd.parameters()));
     }
 
@@ -120,8 +122,8 @@ public class EndpointBddGeneratorTest {
         var bdd = lower(trait("1.1", parameters, conditions, results, 100_000_001, -1, 1, -1));
         // C is optional and unread, so it is dropped.
         assertEquals(
-                "((\"A\", \"string\", False, None, None, False), "
-                        + "(\"T\", \"stringArray\", False, None, None, False))",
+                "((\"A\", \"string\", False, None, None, None), "
+                        + "(\"T\", \"stringArray\", False, None, None, None))",
                 EndpointBddGenerator.literal(bdd.parameters()));
     }
 
@@ -285,9 +287,9 @@ public class EndpointBddGeneratorTest {
                 # fmt: off
                 # Tags: ref=0, attr=1, call=2, list=3, map=4, error=5, endpoint=6.
                 BDD = EndpointBdd(
-                    # (name, type, required, default, builtin, client_context)
+                    # (name, type, required, default, builtin, client_context_attribute)
                     parameters=(
-                        ("Endpoint", "string", False, None, "SDK::Endpoint", False),
+                        ("Endpoint", "string", False, None, "SDK::Endpoint", None),
                     ),
                     functions=("isSet",),
                     conditions=(
@@ -311,11 +313,14 @@ public class EndpointBddGeneratorTest {
     }
 
     private static EndpointBddGenerator.EndpointBdd lower(EndpointBddTrait trait) {
-        return lower(trait, Set.of());
+        return lower(trait, Map.of());
     }
 
-    private static EndpointBddGenerator.EndpointBdd lower(EndpointBddTrait trait, Set<String> clientContext) {
-        return EndpointBddGenerator.lower(trait, clientContext);
+    private static EndpointBddGenerator.EndpointBdd lower(
+            EndpointBddTrait trait,
+            Map<String, String> clientContextAttributes
+    ) {
+        return EndpointBddGenerator.lower(trait, clientContextAttributes);
     }
 
     private static List<String> lines(List<Object> section) {

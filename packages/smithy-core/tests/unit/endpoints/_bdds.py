@@ -152,11 +152,11 @@ def echo(parameters: Sequence[tuple[Any, ...]]) -> EndpointBdd:
 
 
 def string(name: str, required: bool = False, default: Any = None) -> tuple[Any, ...]:
-    return (name, "string", required, default, None, False)
+    return (name, "string", required, default, None, None)
 
 
 def boolean(name: str, required: bool = False, default: Any = None) -> tuple[Any, ...]:
-    return (name, "boolean", required, default, None, False)
+    return (name, "boolean", required, default, None, None)
 
 
 def endpoint(url: Any, properties: Any = None, headers: Any = ()) -> tuple[Any, ...]:

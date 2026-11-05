@@ -67,6 +67,27 @@ public class AwsClientContextParamsCodegenTest {
     }
 
     @Test
+    public void addsS3FieldsForClientContextParams(@TempDir Path tempDir) throws IOException {
+        var config = generateConfig(
+                tempDir,
+                "aws-s3-client-context-params.smithy",
+                "example.awss3ccp#S3ClientContextService",
+                "awss3ccp");
+        assertTrue(config.contains("\"use_accelerate_endpoint\": FieldSpec(default=None),"));
+        assertInOrder(config,
+                "return await resolve_bool(",
+                "env_vars=(\"AWS_S3_USE_ARN_REGION\",)",
+                "profile_keys=(\"s3_use_arn_region\",)");
+        // Defined above the config class, which refers to it.
+        var definition = config.indexOf("async def _resolve_use_arn_region(");
+        assertTrue(definition >= 0 && definition < config.indexOf("resolver=_resolve_use_arn_region"));
+
+        var endpoints = Files.readString(tempDir.resolve("src/awss3ccp/_private/endpoints.py"));
+        assertTrue(endpoints.contains(
+                "(\"Accelerate\", \"boolean\", True, False, \"AWS::S3::Accelerate\", \"use_accelerate_endpoint\")"));
+    }
+
+    @Test
     public void addsAccountIdEndpointModeWhenRulesDeclareIt(@TempDir Path tempDir) throws IOException {
         var config = generateConfig(
                 tempDir,
@@ -76,7 +97,10 @@ public class AwsClientContextParamsCodegenTest {
         assertTrue(config.contains("    account_id_endpoint_mode: str | None\n"));
         assertEquals(1, count(config, "account_id_endpoint_mode: str | None = None"));
         assertTrue(config.contains("Defaults to preferred."));
-        assertTrue(config.contains("\"account_id_endpoint_mode\": FieldSpec(default=\"preferred\"),"));
+        assertTrue(config.contains("\"account_id_endpoint_mode\": FieldSpec("));
+        assertTrue(config.contains("default=\"preferred\","));
+        assertTrue(config.contains("resolver=resolve_account_id_endpoint_mode,"));
+        assertTrue(config.contains("validator=validate_account_id_endpoint_mode,"));
         // Its rules declare no FIPS or dual-stack built-ins.
         assertFalse(config.contains("use_fips_endpoint"));
         assertFalse(config.contains("use_dualstack_endpoint"));
@@ -88,5 +112,14 @@ public class AwsClientContextParamsCodegenTest {
             count++;
         }
         return count;
+    }
+
+    private static void assertInOrder(String value, String... fragments) {
+        var index = 0;
+        for (String fragment : fragments) {
+            index = value.indexOf(fragment, index);
+            assertTrue(index >= 0, "Missing or out-of-order fragment: " + fragment);
+            index += fragment.length();
+        }
     }
 }

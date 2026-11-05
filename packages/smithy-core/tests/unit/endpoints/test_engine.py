@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """The rules engine, through the resolver: BDD walks, results and expressions."""
 
+from collections.abc import Mapping
 from typing import Any
 
 import pytest
@@ -9,11 +10,14 @@ from smithy_core import URI
 from smithy_core.endpoints import (
     ENDPOINT_HEADERS,
     BddEndpointResolver,
+    EndpointAuthScheme,
+    EndpointAuthSchemeFactory,
     RulesExtension,
 )
 from smithy_core.endpoints._types import Tag
 from smithy_core.exceptions import EndpointResolutionError
 from smithy_core.shapes import ShapeID
+from smithy_core.types import TypedProperties
 
 from ._bdds import (
     RESULT_OFFSET,
@@ -165,7 +169,21 @@ def test_function_failures_are_resolution_errors() -> None:
 
 TOKEN = ShapeID("x.auth#token")
 SIGNED = ShapeID("x.auth#signed")
-AUTH = RulesExtension(auth_schemes={"token": TOKEN, "signed": SIGNED})
+
+
+def _scheme(scheme_id: ShapeID) -> EndpointAuthSchemeFactory:
+    """A factory that keeps the entry's properties as the rules give them."""
+
+    def build(entry: Mapping[str, Any]) -> EndpointAuthScheme:
+        properties = {key: value for key, value in entry.items() if key != "name"}
+        return EndpointAuthScheme(
+            scheme_id=scheme_id, properties=TypedProperties(properties)
+        )
+
+    return build
+
+
+AUTH = RulesExtension(auth_schemes={"token": _scheme(TOKEN), "signed": _scheme(SIGNED)})
 
 
 def test_endpoint_properties() -> None:
@@ -231,7 +249,7 @@ def _value_of(expression: Any, values: dict[str, Any]) -> Any:
                 string("S"),
                 string("T"),
                 boolean("B"),
-                ("A", "stringArray", False, None, None, False),
+                ("A", "stringArray", False, None, None, None),
             ],
             [(expression, "v")],
             [endpoint("https://h", (Tag.MAP, ("v",), (Tag.REF, "v"))), error("no")],

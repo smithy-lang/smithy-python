@@ -1,4 +1,4 @@
 {
   "type": "breaking",
-  "description": "Removed `AsyncStandardRegionalEndpointsResolver` and its `smithy_aws_core.aio.endpoints` package, along with `smithy_aws_core.endpoints.RegionalEndpointConfig` and `REGIONAL_ENDPOINT_CONFIG`. Generated AWS clients now resolve endpoints from the service's endpoint rules with `smithy_core.aio.endpoints.AsyncBddEndpointResolver` and `smithy_aws_core.endpoints.AWS_RULES_EXTENSION`."
+  "description": "Removed `AsyncStandardRegionalEndpointsResolver` and its `smithy_aws_core.aio.endpoints` module, along with `smithy_aws_core.endpoints.RegionalEndpointConfig` and `REGIONAL_ENDPOINT_CONFIG`. Generated AWS clients now resolve endpoints from the service's endpoint rules with `smithy_core.aio.endpoints.AsyncBddEndpointResolver` and `smithy_aws_core.endpoints.AWS_RULES_EXTENSION`."
 }
