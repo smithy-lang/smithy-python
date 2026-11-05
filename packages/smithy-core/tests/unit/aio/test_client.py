@@ -8,7 +8,7 @@ from typing import Any, cast
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from smithy_core.aio.client import AsyncClient
+from smithy_core.aio.client import AsyncClient, AsyncClientCall
 from smithy_core.aio.eventstream import AsyncDuplexEventStream, AsyncInputEventStream
 from smithy_core.aio.interfaces import AsyncClientTransport
 from smithy_core.aio.retries import (
@@ -18,13 +18,20 @@ from smithy_core.aio.retries import (
     AsyncStandardRetryStrategy,
 )
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_core.auth import AuthOption
-from smithy_core.exceptions import CallError, SmithyError, UnsupportedTransportError
+from smithy_core.auth import RESOLVED_IDENTITY, AuthOption
+from smithy_core.endpoints import RESOLVED_ENDPOINT, EndpointAuthScheme
+from smithy_core.exceptions import (
+    CallError,
+    SmithyError,
+    UnsupportedAuthSchemeError,
+    UnsupportedTransportError,
+)
 from smithy_core.interceptors import (
     InputContext,
     Interceptor,
     InterceptorChain,
     OutputContext,
+    RequestContext,
 )
 from smithy_core.response import EMPTY_RESPONSE_METADATA
 from smithy_core.retries import ExponentialRetryBackoffStrategy
@@ -36,6 +43,7 @@ from ._pipeline_harness import (
     OPERATION,
     DuplexTransport,
     NonDuplexTransport,
+    StubEndpoint,
     StubEndpointResolver,
     StubEvent,
     StubEventReceiver,
@@ -224,6 +232,72 @@ async def test_auth_option_signer_properties_override_scheme_defaults() -> None:
     }
 
 
+def _signing_call(
+    scheme: Mock, option: AuthOption, endpoint: StubEndpoint
+) -> AsyncClientCall[Any, Any]:
+    return replace(
+        client_call(),
+        auth_scheme_resolver=Mock(resolve_auth_scheme=Mock(return_value=[option])),
+        supported_auth_schemes={option.scheme_id: scheme},
+        endpoint_resolver=Mock(resolve_endpoint=AsyncMock(return_value=endpoint)),
+    )
+
+
+async def test_endpoint_signer_properties_override_option_and_scheme_defaults() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    scheme = Mock(scheme_id=ShapeID("com.example#auth"))
+    scheme.identity_resolver.return_value.get_identity = AsyncMock()
+    scheme.signer_properties.return_value = {
+        "region": "default",
+        "service": "default",
+        "scope": "default",
+    }
+    sign = scheme.signer.return_value.sign = AsyncMock()
+    option = AuthOption(
+        scheme_id=scheme.scheme_id,
+        identity_properties=TypedProperties(),
+        signer_properties=TypedProperties({"service": "option", "scope": "option"}),
+    )
+    endpoint = StubEndpoint()
+    endpoint.auth_schemes = (
+        EndpointAuthScheme(
+            scheme_id=ShapeID("com.example#other"),
+            properties=TypedProperties({"region": "other"}),
+        ),
+        EndpointAuthScheme(
+            scheme_id=scheme.scheme_id,
+            properties=TypedProperties({"scope": "endpoint"}),
+        ),
+    )
+
+    await harness.pipeline(_signing_call(scheme, option, endpoint))
+
+    assert sign.call_args.kwargs["properties"] == {
+        "region": "default",
+        "service": "option",
+        "scope": "endpoint",
+    }
+
+
+async def test_signing_fails_when_the_endpoint_lists_other_auth_schemes() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    scheme = Mock(scheme_id=ShapeID("com.example#auth"))
+    scheme.identity_resolver.return_value.get_identity = AsyncMock()
+    option = AuthOption(
+        scheme_id=scheme.scheme_id,
+        identity_properties=TypedProperties(),
+        signer_properties=TypedProperties(),
+    )
+    endpoint = StubEndpoint()
+    endpoint.auth_schemes = (
+        EndpointAuthScheme(scheme_id=ShapeID("com.example#other")),
+    )
+
+    with pytest.raises(UnsupportedAuthSchemeError, match=r"com\.example#other"):
+        await harness.pipeline(_signing_call(scheme, option, endpoint))
+    scheme.signer.return_value.sign.assert_not_called()
+
+
 class _ReplaceInput(Interceptor[Any, Any, Any, Any]):
     """Replaces the input before serialization and records what later hooks see."""
 
@@ -260,6 +334,82 @@ async def test_modified_input_is_serialized_and_used_to_resolve_endpoint() -> No
 
     assert harness.protocol.serialized_inputs == [interceptor.replacement]
     assert resolver.resolved_inputs == [interceptor.replacement]
+
+
+class _RecordHooks(Interceptor[Any, Any, Any, Any]):
+    def __init__(self, events: list[str]) -> None:
+        self.events = events
+
+    def read_before_attempt(self, context: RequestContext[Any, Any]) -> None:
+        self.events.append("read_before_attempt")
+
+    def modify_before_signing(self, context: RequestContext[Any, Any]) -> Any:
+        self.events.append("modify_before_signing")
+        return context.transport_request
+
+    def read_before_signing(self, context: RequestContext[Any, Any]) -> None:
+        self.events.append("read_before_signing")
+
+    def read_after_signing(self, context: RequestContext[Any, Any]) -> None:
+        self.events.append("read_after_signing")
+
+
+async def test_identity_resolves_before_the_endpoint_and_signing_after_hooks() -> None:
+    events: list[str] = []
+    identity = Mock()
+
+    async def get_identity(**kwargs: Any) -> Any:
+        events.append("get_identity")
+        return identity
+
+    class _Resolver(StubEndpointResolver):
+        async def resolve_endpoint(self, params: Any) -> Any:
+            events.append("resolve_endpoint")
+            assert params.context[RESOLVED_IDENTITY] is identity
+            return await super().resolve_endpoint(params)
+
+    def signer_properties(**kwargs: Any) -> dict[str, Any]:
+        events.append("signer_properties")
+        assert kwargs["context"][RESOLVED_ENDPOINT] is not None
+        return {}
+
+    async def sign(**kwargs: Any) -> Any:
+        events.append("sign")
+        assert kwargs["identity"] is identity
+        return kwargs["request"]
+
+    def resolve_auth_scheme(**kwargs: Any) -> list[AuthOption]:
+        events.append("resolve_auth_scheme")
+        return [option]
+
+    harness = pipeline_harness(NonDuplexTransport())
+    scheme = Mock()
+    scheme.identity_resolver.return_value.get_identity = get_identity
+    scheme.signer_properties = signer_properties
+    scheme.signer.return_value.sign = sign
+    option = AuthOption(scheme_id=ShapeID("com.example#auth"))
+    call = replace(
+        client_call(),
+        interceptor=InterceptorChain([_RecordHooks(events)]),
+        auth_scheme_resolver=Mock(resolve_auth_scheme=resolve_auth_scheme),
+        supported_auth_schemes={option.scheme_id: scheme},
+        endpoint_resolver=_Resolver(),
+    )
+
+    await harness.pipeline(call)
+
+    assert events == [
+        "read_before_attempt",
+        "resolve_auth_scheme",
+        "get_identity",
+        "resolve_endpoint",
+        "modify_before_signing",
+        "read_before_signing",
+        "signer_properties",
+        "sign",
+        "read_after_signing",
+    ]
+    assert call.context[RESOLVED_IDENTITY] is identity
 
 
 async def test_modified_input_reaches_completion_when_serialization_fails() -> None:

@@ -67,7 +67,6 @@ _gr = "greeting"
 _TES = "TradeEventStream"
 _MHM = "MyHandwrittenModel"
 _sC = "smithy.protocols#rpcv2Cbor"
-_sB = "smithy.rules#endpointBdd"
 
 ALPHA: StaticSchema = (18, n0, _A, 0, (_i, _t), ((3, 0), (4, 0)))
 
@@ -213,57 +212,5 @@ MY_HANDWRITTEN_MODEL: StaticSchema = (
     21,
     n0,
     _MHM,
-    {
-        _sC: MappingProxyType({"http": ("h2", "http/1.1"), "eventStreamHttp": ("h2",)}),
-        _sB: MappingProxyType(
-            {
-                "version": "1.1",
-                "parameters": MappingProxyType(
-                    {
-                        "endpoint": MappingProxyType(
-                            {
-                                "builtIn": "SDK::Endpoint",
-                                "required": False,
-                                "documentation": "Endpoint used for making requests. Should be formatted as a URI.",
-                                "type": "string",
-                            }
-                        )
-                    }
-                ),
-                "conditions": (
-                    MappingProxyType(
-                        {
-                            "fn": "isSet",
-                            "argv": (MappingProxyType({"ref": "endpoint"}),),
-                        }
-                    ),
-                ),
-                "results": (
-                    MappingProxyType(
-                        {
-                            "conditions": (),
-                            "endpoint": MappingProxyType(
-                                {
-                                    "url": MappingProxyType({"ref": "endpoint"}),
-                                    "properties": MappingProxyType[str, object]({}),
-                                    "headers": MappingProxyType[str, object]({}),
-                                }
-                            ),
-                            "type": "endpoint",
-                        }
-                    ),
-                    MappingProxyType(
-                        {
-                            "conditions": (),
-                            "error": "(default endpointRuleSet) endpoint is not set - you must configure an endpoint.",
-                            "type": "error",
-                        }
-                    ),
-                ),
-                "root": 2,
-                "nodeCount": 2,
-                "nodes": "/////wAAAAH/////AAAAAAX14QEF9eEC",
-            }
-        ),
-    },
+    {_sC: MappingProxyType({"http": ("h2", "http/1.1"), "eventStreamHttp": ("h2",)})},
 )

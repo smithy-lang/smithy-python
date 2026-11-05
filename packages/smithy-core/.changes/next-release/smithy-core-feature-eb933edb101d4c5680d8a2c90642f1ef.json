@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added endpoint BDD resolution with `smithy_core.endpoints.BddEndpointResolver`, its async counterpart `smithy_core.aio.endpoints.AsyncBddEndpointResolver`, and `smithy_core.endpoints.EndpointBdd`, the endpoint BDD the resolvers evaluate."
+}

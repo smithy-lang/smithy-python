@@ -1,6 +1,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from collections.abc import Callable, ItemsView, Iterator, KeysView, ValuesView
+from collections.abc import (
+    Callable,
+    ItemsView,
+    Iterator,
+    KeysView,
+    Sequence,
+    ValuesView,
+)
 from dataclasses import dataclass
 from inspect import iscoroutinefunction
 from typing import TYPE_CHECKING, Any, Protocol, TypeGuard, overload, runtime_checkable
@@ -10,6 +17,7 @@ __all__ = [
     "BytesReader",
     "BytesWriter",
     "Endpoint",
+    "EndpointResolver",
     "PropertyKey",
     "SeekableBytesReader",
     "StreamingBlob",
@@ -22,6 +30,7 @@ if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
     from .._schema_compact import StaticSchema
+    from ..endpoints import EndpointAuthScheme, EndpointResolverParams
     from ..schemas import Schema
 
 
@@ -125,6 +134,12 @@ class Endpoint(Protocol):
 
     For example, in some AWS use cases this might contain HTTP headers to add to each
     request.
+    """
+
+    auth_schemes: Sequence["EndpointAuthScheme"]
+    """The auth schemes the endpoint supports, in order of preference.
+
+    Empty when the endpoint has no special auth settings.
     """
 
 
@@ -282,13 +297,14 @@ A protocol class satisfies this, since calling the class constructs an instance.
 
 
 class EndpointResolver(Protocol):
-    """Resolves an operation's endpoint given parameters.
+    """Resolves an operation's endpoint given parameters."""
 
-    Placeholder for the synchronous endpoint resolver; populated alongside the sync
-    client implementation.
-    """
+    def resolve_endpoint(self, params: "EndpointResolverParams[Any]") -> Endpoint:
+        """Resolve an endpoint for the given operation.
 
-    # TODO(sync-api): implement alongside the sync client
+        :param params: The parameters available to resolve the endpoint.
+        """
+        ...
 
 
 class ClientTransport(Protocol):

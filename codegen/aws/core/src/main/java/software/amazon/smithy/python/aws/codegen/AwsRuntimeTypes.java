@@ -31,10 +31,15 @@ public final class AwsRuntimeTypes {
             "aio.protocols",
             "AsyncRestXmlClientProtocol");
 
-    // smithy_aws_core.aio.endpoints.standard_regional
-    public static final Symbol STANDARD_REGIONAL_ENDPOINTS_RESOLVER = createSymbol(
-            "aio.endpoints.standard_regional",
-            "AsyncStandardRegionalEndpointsResolver");
+    // smithy_aws_core.endpoints
+    public static final Symbol AWS_RULES_EXTENSION = createSymbol(
+            "endpoints",
+            "AWS_RULES_EXTENSION");
+
+    // smithy_aws_core.identity
+    public static final Symbol AWS_CREDENTIALS_IDENTITY = createSymbol(
+            "identity",
+            "AWSCredentialsIdentity");
 
     private AwsRuntimeTypes() {}
 

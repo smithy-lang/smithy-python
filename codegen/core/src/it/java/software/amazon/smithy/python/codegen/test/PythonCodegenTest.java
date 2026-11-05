@@ -80,8 +80,14 @@ public class PythonCodegenTest {
         assertTrue(schemas.contains("aws.protocols#restJson1"));
         assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
         assertTrue(schemas.contains("\"name\": \"weather-auth\""));
-        assertTrue(schemas.contains("smithy.rules#endpointBdd"));
-        assertTrue(schemas.contains("(default endpointRuleSet) endpoint is not set"));
+        // Lowering consumes the endpoint rules; the schemas no longer carry them.
+        assertFalse(schemas.contains("smithy.rules#endpointBdd"));
+
+        var endpoints = Files.readString(tempDir.resolve("src/weather/_private/endpoints.py"));
+        assertTrue(endpoints.contains("(default endpointRuleSet) endpoint is not set"));
+        assertTrue(config.contains(
+                "self.endpoint_resolver = endpoint_resolver or AsyncBddEndpointResolver(BDD)"));
+        assertTrue(config.contains("from ._private.endpoints import BDD"));
         assertTrue(schemas.contains("smithy.api#longPoll"));
         assertTrue(schemas.contains("\"timeoutMillis\": 20000"));
     }

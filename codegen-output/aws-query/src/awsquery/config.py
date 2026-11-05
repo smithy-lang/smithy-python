@@ -15,13 +15,16 @@ from typing import (
 from smithy_aws_core.aio.auth.sigv4 import AsyncSigV4AuthScheme
 from smithy_aws_core.aio.config import AsyncFileSystem
 from smithy_aws_core.aio.config.aws_config import AsyncAwsConfig, AwsConfigOverrides
-from smithy_aws_core.aio.config.resolvers import EndpointUriResolver
-from smithy_aws_core.aio.endpoints.standard_regional import (
-    AsyncStandardRegionalEndpointsResolver,
+from smithy_aws_core.aio.config.resolvers import (
+    EndpointUriResolver,
+    resolve_use_dualstack_endpoint,
+    resolve_use_fips_endpoint,
 )
 from smithy_aws_core.aio.protocols import AsyncAwsQueryClientProtocol
 from smithy_aws_core.config.types import FieldSpec
+from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
 from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+from smithy_core.aio.endpoints import AsyncBddEndpointResolver
 from smithy_core.aio.interfaces import AsyncClientProtocol, AsyncEndpointResolver
 from smithy_core.aio.interfaces.auth import AsyncAuthScheme
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
@@ -30,6 +33,7 @@ from smithy_core.interfaces.auth import AuthSchemeResolver
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
 
+from ._private.endpoints import BDD
 from ._private.schemas import AWS_QUERY
 from .auth import HTTPAuthSchemeResolver
 
@@ -185,6 +189,8 @@ class _AsyncQueryProtocolConfigOverrides(AwsConfigOverrides, total=False):
     )
     auth_schemes: dict[ShapeID, AsyncAuthScheme[Any, Any, Any, Any]] | None
     auth_scheme_resolver: AuthSchemeResolver | None
+    use_dualstack_endpoint: bool | None
+    use_fips_endpoint: bool | None
 
 
 @dataclass(kw_only=True, repr=False, init=False)
@@ -219,6 +225,12 @@ class AsyncQueryProtocolConfig(AsyncAwsConfig):
     operation.
     """
 
+    use_dualstack_endpoint: bool | None = None
+    """Whether to use dual-stack."""
+
+    use_fips_endpoint: bool | None = None
+    """Whether to use FIPS-compliant regional endpoint."""
+
     aws_credentials_identity_resolver: (
         AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties] | None
     ) = None
@@ -249,6 +261,12 @@ class AsyncQueryProtocolConfig(AsyncAwsConfig):
     """
 
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
+        "use_dualstack_endpoint": FieldSpec(
+            default=None, resolver=resolve_use_dualstack_endpoint
+        ),
+        "use_fips_endpoint": FieldSpec(
+            default=None, resolver=resolve_use_fips_endpoint
+        ),
         "aws_credentials_identity_resolver": FieldSpec(default=None),
         "region": FieldSpec(default=None),
         "aws_access_key_id": FieldSpec(default=None),
@@ -261,8 +279,8 @@ class AsyncQueryProtocolConfig(AsyncAwsConfig):
             default=None, resolver=EndpointUriResolver("query_protocol")
         ),
         "endpoint_resolver": FieldSpec(
-            default_factory=lambda: AsyncStandardRegionalEndpointsResolver(
-                endpoint_prefix="awsquery"
+            default_factory=lambda: AsyncBddEndpointResolver(
+                BDD, extensions=[AWS_RULES_EXTENSION]
             )
         ),
         "protocol": FieldSpec(

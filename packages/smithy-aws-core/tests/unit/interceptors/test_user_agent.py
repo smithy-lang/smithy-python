@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from copy import copy
+from dataclasses import dataclass
 from typing import Any
 from unittest.mock import Mock
 
@@ -18,6 +19,7 @@ from smithy_core.aio.retries import (
     AsyncSimpleRetryStrategy,
     AsyncStandardRetryStrategy,
 )
+from smithy_core.endpoints import STATIC_ENDPOINT_CONFIG
 from smithy_core.interceptors import InputContext, RequestContext
 from smithy_core.types import TypedProperties
 from smithy_http import Field, Fields
@@ -191,3 +193,28 @@ def test_registers_retry_mode_without_user_agent() -> None:
     )
     _interceptor().read_after_serialization(context)
     assert list(properties[FEATURE_IDS]) == [AwsFeatureId.RETRY_MODE_STANDARD]
+
+
+@dataclass
+class _EndpointConfig:
+    endpoint_uri: str | URI | None
+
+
+@pytest.mark.parametrize(
+    ("endpoint_uri", "expected"),
+    [
+        ("https://example.com", [AwsFeatureId.ENDPOINT_OVERRIDE]),
+        (URI(host="example.com"), [AwsFeatureId.ENDPOINT_OVERRIDE]),
+        (None, []),
+    ],
+)
+def test_registers_endpoint_override(
+    endpoint_uri: str | URI | None, expected: list[AwsFeatureId]
+) -> None:
+    properties = TypedProperties()
+    properties[STATIC_ENDPOINT_CONFIG] = _EndpointConfig(endpoint_uri)
+    context = RequestContext[Any, Any](
+        request=Mock(), transport_request=Mock(), properties=properties
+    )
+    _interceptor().read_after_serialization(context)
+    assert list(properties.get(FEATURE_IDS, {})) == expected

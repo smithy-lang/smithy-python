@@ -6,8 +6,11 @@ from decimal import Decimal
 from math import isinf, isnan
 from types import UnionType
 from typing import Any, overload
+from urllib.parse import urlsplit
 
+from . import URI as _URI
 from .exceptions import ExpectationNotMetError
+from .rfc3986 import UNRESERVED_HOST_MATCHER as _UNRESERVED_HOST_MATCHER
 
 __all__ = [
     "RFC3339",
@@ -17,6 +20,7 @@ __all__ = [
     "expect_type",
     "limited_parse_float",
     "limited_serialize_float",
+    "parse_uri",
     "remove_dot_segments",
     "serialize_epoch_seconds",
     "serialize_float",
@@ -269,3 +273,46 @@ def remove_dot_segments(path: str, remove_consecutive_slashes: bool = False) -> 
     if remove_consecutive_slashes:
         result = result.replace("//", "/")
     return result
+
+
+def parse_uri(url: str) -> _URI:
+    """Parse an absolute URI, keeping the host as written.
+
+    :param url: The URI to parse.
+    :raises ExpectationNotMetError: If it has no scheme or host, or an invalid port.
+    """
+    # An http or https URL with a host of unreserved characters and no port, query
+    # or fragment is split directly: urlsplit would return it unchanged.
+    scheme, _, rest = url.partition("://")
+    host, slash, path = rest.partition("/")
+    if (
+        (scheme == "https" or scheme == "http")
+        and _UNRESERVED_HOST_MATCHER.fullmatch(host)
+        and "?" not in path
+        and "#" not in path
+        and path.isprintable()
+    ):
+        return _URI(scheme=scheme, host=host, path=slash + path or None)
+    try:
+        parts = urlsplit(url)
+        port = parts.port  # Validates the port and its range.
+    except ValueError as e:
+        raise ExpectationNotMetError(f"Invalid URI: {url}") from e
+    # urlsplit lowercases hostname; take the host from the authority instead.
+    host = parts.netloc.rpartition("@")[2]
+    if host.startswith("["):
+        host = host[1 : host.index("]")]
+    else:
+        host = host.partition(":")[0]
+    if not parts.scheme or not host:
+        raise ExpectationNotMetError(f"Invalid URI: {url}")
+    return _URI(
+        scheme=parts.scheme,
+        username=parts.username,
+        password=parts.password,
+        host=host,
+        port=port,
+        path=parts.path or None,
+        query=parts.query or None,
+        fragment=parts.fragment or None,
+    )

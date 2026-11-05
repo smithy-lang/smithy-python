@@ -30,6 +30,7 @@ import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.generators.ConfigGenerator;
 import software.amazon.smithy.python.codegen.generators.ConformanceTestGenerator;
+import software.amazon.smithy.python.codegen.generators.EndpointBddGenerator;
 import software.amazon.smithy.python.codegen.generators.InitGenerator;
 import software.amazon.smithy.python.codegen.generators.ModelModuleGenerator;
 import software.amazon.smithy.python.codegen.generators.ModelStubGenerator;
@@ -111,6 +112,7 @@ final class DirectedPythonClientCodegen
         new ModelStubGenerator(directive.context(), modelShapes).run();
         new ConformanceTestGenerator(directive.context(), modelShapes).run();
 
+        new EndpointBddGenerator(directive.context()).run();
         new ConfigGenerator(directive.settings(), directive.context()).run();
         var serviceIndex = ServiceIndex.of(directive.model());
         if (directive.context().applicationProtocol().isHttpProtocol()) {
@@ -123,6 +125,7 @@ final class DirectedPythonClientCodegen
     @Override
     public void generateService(GenerateServiceDirective<GenerationContext, PythonSettings> directive) {
         new ClientGenerator(directive.context(), directive.service()).run();
+        new EndpointTestGenerator(directive.context()).run();
 
         var protocolGenerator = directive.context().protocolGenerator();
         if (protocolGenerator == null) {

@@ -40,6 +40,7 @@ __all__ = [
     "REG_NAME",
     "REGULAR_NAME_RE",
     "SUB_DELIMITERS_RE",
+    "UNRESERVED_HOST_MATCHER",
     "UNRESERVED_RE",
     "ZONE_ID",
 ]
@@ -143,3 +144,10 @@ IPv6_NO_RFC4007_MATCHER = re.compile(r"^\[%s\]$" % (IPv6_ADDRZ_RE))
 # #########################
 # End misc.py
 # #########################
+
+UNRESERVED_HOST_MATCHER = re.compile(f"[{UNRESERVED_RE}]+")
+"""Fully matches a host made only of unreserved characters.
+
+Such a host is a valid reg-name, with no port, userinfo or brackets. Use
+``fullmatch``: the pattern isn't anchored.
+"""
