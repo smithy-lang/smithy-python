@@ -83,6 +83,20 @@ public final class ConfigGenerator implements Runnable {
                     .documentation("A static URI to route requests to.")
                     .build(),
             ConfigProperty.builder()
+                    .name("idempotency_token_provider")
+                    .type(Symbol.builder()
+                            .name("Callable[[], str]")
+                            .addReference(Symbol.builder()
+                                    .name("Callable")
+                                    .namespace("collections.abc", ".")
+                                    .putProperty(SymbolProperties.STDLIB, true)
+                                    .build())
+                            .build())
+                    .documentation("""
+                            A callable that returns the value used for an unset idempotency token input \
+                            member. When unset, a random UUID v4 string is used.""")
+                    .build(),
+            ConfigProperty.builder()
                     .name("endpoint_resolver")
                     .type(RuntimeTypes.ENDPOINT_RESOLVER)
                     .documentation("""

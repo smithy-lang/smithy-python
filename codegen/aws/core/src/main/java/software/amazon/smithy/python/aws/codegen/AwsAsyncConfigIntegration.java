@@ -46,6 +46,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             "http_request_config",
             "transport",
             "retry_strategy",
+            "idempotency_token_provider",
             "endpoint_resolver",
             "protocol",
             "auth_schemes",

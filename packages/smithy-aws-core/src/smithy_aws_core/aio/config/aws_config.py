@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
 from typing import TYPE_CHECKING, Any, ClassVar, Self, TypedDict, Unpack
@@ -61,6 +61,7 @@ class AwsConfigOverrides(TypedDict, total=False):
     http_request_config: "HTTPRequestConfiguration | None"
     transport: "AsyncClientTransport[Any, Any] | None"
     retry_strategy: "AsyncRetryStrategy | RetryStrategyOptions | None"
+    idempotency_token_provider: Callable[[], str] | None
 
 
 @dataclass(kw_only=True, init=False)
@@ -141,6 +142,10 @@ class AsyncAwsConfig:
     """The retry strategy or options for configuring retry behavior.
     """
 
+    idempotency_token_provider: Callable[[], str] | None = None
+    """A callable that returns the value used for an unset ``@idempotencyToken``
+    input member. When unset, a random UUID v4 string is used."""
+
     _ctx: AsyncSharedConfigContext | None = field(
         default=None, repr=False, compare=False
     )
@@ -200,6 +205,9 @@ class AsyncAwsConfig:
             default=None,
         ),
         "retry_strategy": FieldSpec(
+            default=None,
+        ),
+        "idempotency_token_provider": FieldSpec(
             default=None,
         ),
     }

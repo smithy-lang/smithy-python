@@ -341,6 +341,25 @@ class TestProvenanceTracking:
             assert config.source_of("region") == ConfigSource.OVERRIDE
             assert config.region == "eu-west-1"
 
+    @pytest.mark.asyncio
+    async def test_idempotency_token_provider_defaults_to_none(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
+        assert config.idempotency_token_provider is None
+        assert config.source_of("idempotency_token_provider") == ConfigSource.DEFAULT
+
+    @pytest.mark.asyncio
+    async def test_idempotency_token_provider_override_is_stored(self):
+        def provider() -> str:
+            return "00000000-0000-4000-8000-000000000000"
+
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await AsyncAwsConfig.resolve(
+                fs=NullFileSystem(), idempotency_token_provider=provider
+            )
+        assert config.idempotency_token_provider is provider
+        assert config.source_of("idempotency_token_provider") == ConfigSource.OVERRIDE
+
 
 class TestConstructionBlocking:
     def test_direct_instantiation_raises_error(self):
