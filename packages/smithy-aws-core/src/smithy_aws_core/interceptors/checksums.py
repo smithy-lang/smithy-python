@@ -58,7 +58,7 @@ class FlexibleChecksumsInterceptor(
         if not algorithms or field_name is None:
             return context.request
 
-        # The setting is only reported for operations it applies to.
+        # Feature IDs are only reported for operations the setting applies to.
         validation = _response_checksum_validation(context.properties)
         if (feature_id := _FEATURE_IDS.get(validation)) is not None:
             register_feature_id(context.properties, feature_id)
