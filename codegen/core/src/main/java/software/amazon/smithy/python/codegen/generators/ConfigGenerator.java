@@ -88,7 +88,7 @@ public final class ConfigGenerator implements Runnable {
                             .name("Callable[[], str]")
                             .addReference(Symbol.builder()
                                     .name("Callable")
-                                    .namespace("collections.abc", ".")
+                                    .namespace("typing", ".")
                                     .putProperty(SymbolProperties.STDLIB, true)
                                     .build())
                             .build())
