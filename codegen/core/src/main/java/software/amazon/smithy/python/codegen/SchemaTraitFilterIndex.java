@@ -68,7 +68,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public final class SchemaTraitFilterIndex implements KnowledgeIndex {
 
-    // smithy-python reads this at runtime via schema.traits.get(...) in rpcv2Cbor unit detection.
+    // smithy-python reads this at runtime via schema.traits.get(...) in rpcv2Cbor and rpcv2Json
+    // unit detection.
     private static final ShapeId ORIGINAL_SHAPE_ID = ShapeId.from("smithy.synthetic#originalShapeId");
 
     // Traits a protocol/auth meta-trait references but that must still never reach a schema.
@@ -93,7 +94,7 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     InputTrait.ID, // runtime input-structure nullability (@input members optional)
                     OutputTrait.ID, // runtime injects response_metadata on output structures
                     TimestampFormatTrait.ID, // read per-member by smithy_http / smithy_aws_core serde
-                    ORIGINAL_SHAPE_ID, // rpcv2Cbor unit detection
+                    ORIGINAL_SHAPE_ID, // rpcv2Cbor and rpcv2Json unit detection
                     ServiceTrait.ID, // service metadata, including sdkId used by package docs
                     EndpointBddTrait.ID, // endpoint resolution data prepared by EndpointBddIntegration
                     LongPollTrait.ID, // retry backoff when a long-polling operation exhausts its quota

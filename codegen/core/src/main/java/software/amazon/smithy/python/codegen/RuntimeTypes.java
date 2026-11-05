@@ -183,6 +183,10 @@ public final class RuntimeTypes {
             "aio.protocols",
             "AsyncRpcV2CborClientProtocol",
             SmithyPythonDependency.SMITHY_HTTP);
+    public static final Symbol RPC_V2_JSON_CLIENT_PROTOCOL = createSymbol(
+            "aio.protocols",
+            "AsyncRpcV2JsonClientProtocol",
+            SmithyPythonDependency.SMITHY_HTTP);
 
     // smithy_aws_core.aio.identity.static
     public static final Symbol STATIC_CREDENTIALS_RESOLVER = createSymbol(
