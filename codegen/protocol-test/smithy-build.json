@@ -199,6 +199,28 @@
                 }
             }
         },
+        "rpcv2-json": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "smithy.protocoltests.rpcv2Json#RpcV2JsonProtocol"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "smithy.protocoltests.rpcv2Json#RpcV2JsonProtocol",
+                    "module": "rpcv2json",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
         "query-compatible-rpcv2-cbor": {
             "transforms": [
                 {
