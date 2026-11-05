@@ -29,8 +29,9 @@ def _substring(value: str | None, start: int, stop: int, reverse: bool) -> str |
     return value[start:stop]
 
 
-_HOST_LABEL = _re(r"[A-Za-z0-9][A-Za-z0-9-]{0,62}")
-_HOST_LABELS = _re(r"[A-Za-z0-9][A-Za-z0-9-]{0,62}(?:\.[A-Za-z0-9][A-Za-z0-9-]{0,62})*")
+_LABEL = r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+_HOST_LABEL = _re(_LABEL)
+_HOST_LABELS = _re(rf"{_LABEL}(?:\.{_LABEL})*")
 
 
 def _is_valid_host_label(value: str | None, allow_sub_domains: bool) -> bool | None:

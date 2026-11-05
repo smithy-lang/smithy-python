@@ -26,9 +26,13 @@ def test_substring(args: tuple[Any, ...], expected: str | None) -> None:
     "value, allow_sub_domains, expected",
     [
         ("us-east-1", False, True),
+        ("a", False, True),
         ("3abc4", False, True),
+        ("a" * 63, False, True),
         ("a" * 64, False, False),
         ("-abc", False, False),
+        ("abc-", False, False),
+        ("a.b-", True, False),
         ("", False, False),
         ("a.b", False, False),
         ("a.b", True, True),
