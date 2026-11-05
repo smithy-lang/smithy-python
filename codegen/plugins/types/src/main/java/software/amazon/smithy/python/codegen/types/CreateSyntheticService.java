@@ -72,13 +72,14 @@ final class CreateSyntheticService {
                         .addTrait(new InputTrait())
                         .addMember("member", shape.getId())
                         .build();
-                index++;
                 operationBuilder.input(input);
                 addedShapes.add(input);
             }
 
             serviceBuilder.addOperation(operationId);
             addedShapes.add(operationBuilder.build());
+            // Every shape needs its own operation; a reused ID replaces the earlier one.
+            index++;
         }
 
         addedShapes.add(serviceBuilder.build());
