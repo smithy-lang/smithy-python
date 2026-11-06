@@ -879,8 +879,6 @@
     "utils": "rex-module"
   },
   "smithy_core.aio": {
-    "client": "rex-module",
-    "eventstream": "rex-module",
     "interfaces": "rex-module",
     "program": "rex-module",
     "types": "rex-module",
@@ -1417,8 +1415,6 @@
     "AIOHTTPClientConfig": "class",
     "AsyncBytesReader": "rex-class[async]",
     "AsyncHTTPClient": "rex-protocol[async]",
-    "Field": "rex-class",
-    "Fields": "rex-class",
     "HTTPClientConfiguration": "rex-class",
     "HTTPRequest": "rex-protocol",
     "HTTPRequestConfiguration": "rex-class",
@@ -1427,7 +1423,8 @@
     "MissingDependencyError": "rex-exception",
     "SmithyHTTPError": "rex-exception",
     "StreamingBlob": "rex-type_alias",
-    "URI": "rex-protocol"
+    "URI": "rex-protocol",
+    "tuples_to_fields": "rex-function"
   },
   "smithy_http.aio.auth": {},
   "smithy_http.aio.auth.apikey": {
@@ -1457,7 +1454,8 @@
     "core_interfaces": "rex-module",
     "http_aio_interfaces": "rex-module",
     "http_interfaces": "rex-module",
-    "read_streaming_blob_async": "rex-function[async]"
+    "read_streaming_blob_async": "rex-function[async]",
+    "tuples_to_fields": "rex-function"
   },
   "smithy_http.aio.identity": {},
   "smithy_http.aio.identity.apikey": {
@@ -1816,8 +1814,6 @@
     "tuples_to_fields": "rex-function"
   },
   "smithy_http.urllib3": {
-    "Field": "rex-class",
-    "Fields": "rex-class",
     "HTTPClient": "rex-protocol",
     "HTTPClientConfiguration": "rex-class",
     "HTTPRequest": "rex-protocol",
@@ -1827,7 +1823,8 @@
     "MissingDependencyError": "rex-exception",
     "SmithyHTTPError": "rex-exception",
     "Urllib3HTTPClient": "class",
-    "Urllib3HTTPClientConfig": "class"
+    "Urllib3HTTPClientConfig": "class",
+    "tuples_to_fields": "rex-function"
   },
   "smithy_http.user_agent": {
     "RawStringUserAgentComponent": "class",

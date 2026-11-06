@@ -18,6 +18,7 @@ from smithy_core.client import ClientCall
 from smithy_core.endpoints import RESOLVED_ENDPOINT, EndpointAuthScheme
 from smithy_core.exceptions import (
     CallError,
+    ClientTimeoutError,
     SmithyError,
     UnsupportedAuthSchemeError,
     UnsupportedTransportError,
@@ -644,3 +645,34 @@ async def test_input_event_stream_is_not_retried() -> None:
     with pytest.raises(CallError, match="Service unavailable"):
         await stream.await_output()
     assert harness.transport.send_calls == 1
+
+
+class _ConnectionRefused(TimeoutError):
+    """Mimics transports that raise connection failures as timeouts."""
+
+
+class _TimingOutTransport(NonDuplexTransport):
+    TIMEOUT_EXCEPTIONS = (TimeoutError,)
+
+
+@pytest.mark.parametrize(
+    ("error", "message"),
+    [
+        (
+            _ConnectionRefused("Failed to establish a new connection"),
+            "A timeout error occurred (_ConnectionRefused: Failed to establish a new"
+            " connection).",
+        ),
+        (TimeoutError(), "A timeout error occurred (TimeoutError)."),
+    ],
+)
+async def test_timeout_errors_name_their_cause(error: Exception, message: str) -> None:
+    transport = _TimingOutTransport()
+    transport.send = AsyncMock(side_effect=error)  # type: ignore[method-assign]
+    harness = pipeline_harness(transport)
+
+    with pytest.raises(ClientTimeoutError) as exc_info:
+        await harness.pipeline(client_call())
+
+    assert str(exc_info.value) == message
+    assert exc_info.value.__cause__ is error

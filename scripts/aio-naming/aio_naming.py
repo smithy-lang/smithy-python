@@ -17,6 +17,7 @@ Inside ``<root>/aio``:
     ``async_*`` name is accepted with a warning.
 
 Outside it:
+  - no imports from an ``aio`` package, including under ``TYPE_CHECKING``.
   - public classes must not be named ``Async*``.
   - functions and methods must not be named ``async_*`` or ``*_async``.
   - no ``async def``.
@@ -201,6 +202,8 @@ def _check_modules(modules: "list[_Module]") -> list[Finding]:
     for module in modules:
         checker = (_AioChecker if module.in_aio else _SyncChecker)(module, index)
         checker.visit_body(module.tree.body, in_class=False, private=module.private)
+        if not module.in_aio:
+            findings.extend(_aio_imports(module))
         findings.extend(checker.findings)
     return findings
 
@@ -446,6 +449,30 @@ class _SyncChecker(_Checker):
                 "error",
                 f"non-aio {kind} '{node.name}' must not start or end with async",
             )
+
+
+def _aio_imports(module: "_Module") -> Iterator[Finding]:
+    is_package = module.path.stem == "__init__"
+    for node in ast.walk(module.tree):
+        match node:
+            case ast.Import():
+                sources = [alias.name for alias in node.names]
+            case ast.ImportFrom():
+                source = module._absolute(node, is_package=is_package)  # pyright: ignore[reportPrivateUsage]
+                # `from pkg import aio` names the aio package itself.
+                sources = [f"{source}.{alias.name}" for alias in node.names]
+            case _:
+                continue
+        for source in sources:
+            if AIO in source.split("."):
+                yield Finding(
+                    module.path,
+                    node.lineno,
+                    node.col_offset + 1,
+                    "error",
+                    f"non-aio module '{module.name}' must not import '{source}'",
+                )
+                break
 
 
 def _misplaced_aio(root: Path) -> Iterator[Finding]:

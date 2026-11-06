@@ -4,6 +4,7 @@ import asyncio
 import json
 import traceback
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -302,9 +303,15 @@ async def test_process_timeout():
     process.kill = Mock()
     process.wait = AsyncMock()
 
+    def time_out(awaitable: Any, timeout: float) -> None:
+        # CAUTION: real wait_for cancels what it times out; leaving the coroutine
+        # unawaited warns in whichever later test collects it.
+        awaitable.close()
+        raise TimeoutError
+
     with (
         patch("asyncio.create_subprocess_exec", return_value=process),
-        patch("asyncio.wait_for", side_effect=TimeoutError),
+        patch("asyncio.wait_for", side_effect=time_out),
     ):
         resolver = AsyncProcessCredentialsResolver(["mock-process"], timeout=1)
         with pytest.raises(SmithyIdentityError, match="timed out after 1 seconds"):

@@ -462,7 +462,7 @@ class RequestPipelineBase[TRequest, TResponse]:
                 )
             except Exception as e:
                 if isinstance(e, self.transport.TIMEOUT_EXCEPTIONS):
-                    raise ClientTimeoutError(message="A timeout error occurred.") from e
+                    raise ClientTimeoutError(message=_timeout_message(e)) from e
                 raise
 
             self._logger.debug("Received response: %s", transport_response)
@@ -602,6 +602,14 @@ class RequestPipelineBase[TRequest, TResponse]:
             output_context = replace(output_context, response=e)
 
         return output_context
+
+
+def _timeout_message(error: Exception) -> str:
+    # Some transports raise connection failures as timeouts, such as urllib3's
+    # NewConnectionError, so name the cause.
+    detail = str(error)
+    cause = f"{type(error).__name__}: {detail}" if detail else type(error).__name__
+    return f"A timeout error occurred ({cause})."
 
 
 def _seek(stream: Any, offset: int, whence: int = 0) -> Any:

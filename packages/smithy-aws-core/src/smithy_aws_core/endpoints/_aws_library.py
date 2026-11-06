@@ -10,8 +10,8 @@ from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Any
 
-from smithy_core.aio.client import AUTH_SCHEME
 from smithy_core.auth import RESOLVED_IDENTITY
+from smithy_core.client import AUTH_SCHEME
 from smithy_core.endpoints import EndpointAuthScheme, RulesExtension
 from smithy_core.interfaces import TypedProperties as _TypedProperties
 from smithy_core.shapes import ShapeID
