@@ -1,17 +1,18 @@
 .DEFAULT_GOAL:=help
 
-.PHONY: help install format-java check-java build-java generate-protocol-tests generate-codegen-output-py api-snapshot aio-check gen ci lint-py check-py lint-rust check-rust third-party-licenses test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
+.PHONY: help install format-java check-java build-java generate-protocol-tests generate-codegen-output-py api-snapshot aio-check changelog-check gen ci lint-py check-py lint-rust check-rust third-party-licenses test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
 
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 
 # CI runs this target on 3.12 only; see typecheck-protocols.
-static-analysis: ## Runs check-py, typecheck-protocols, api-snapshot, and aio-check.
+static-analysis: ## Runs check-py, typecheck-protocols, api-snapshot, aio-check, and changelog-check.
 	$(MAKE) check-py
 	$(MAKE) typecheck-protocols
 	$(MAKE) api-snapshot
 	$(MAKE) aio-check
+	$(MAKE) changelog-check
 
 
 test-unit: ## Runs the python unit tests.
@@ -103,6 +104,10 @@ api-snapshot: ## Records the public API surface and dual-mode mirrors of each pa
 
 aio-check: ## Enforces aio naming and separation in package sources.
 	uv run python scripts/aio-naming/aio_naming.py
+
+
+changelog-check: ## Asserts the latest commit's api.json changes carry changelog fragments of a fitting bump.
+	uv run python scripts/changelog/check-fragments.py
 
 
 # `make gen dynamodb`: the second goal is the client name, so swallow it as a no-op target.
