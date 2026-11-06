@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 
+import importlib
 import runpy
+import sys
 from collections.abc import Mapping
 from pathlib import Path
 from types import MappingProxyType
@@ -32,10 +34,19 @@ from smithy_python.selection import select_type_shapes
 from smithy_python.symbols import SymbolProvider
 
 
-def _context(model_data: Mapping[str, object]) -> GenerationContext[TypesSettings]:
+def _context(
+    model_data: Mapping[str, object],
+    *,
+    schema_partition_size: int | None = 250,
+) -> GenerationContext[TypesSettings]:
     model = load_model(model_data)
     selection = select_type_shapes(model, generate_inputs_and_outputs=True)
-    settings = TypesSettings("example.types", "1.0.0", None)
+    settings = TypesSettings(
+        "example.types",
+        "1.0.0",
+        None,
+        schema_partition_size=schema_partition_size,
+    )
     symbols = SymbolProvider(model, selection, package=settings.package)
     dependencies = DependencySet()
     return GenerationContext(
@@ -229,6 +240,158 @@ def test_schema_generator_emits_lazy_hydratable_schemas(tmp_path: Path) -> None:
     assert node.members_by_index[0].get_trait(RequiredTrait) is not None
     assert node.members_by_index[1].expect_member_target() is node
     assert str(node.members_by_index[2].expect_member_target().id) == "example#Choice"
+
+
+def test_schema_generator_partitions_behind_lazy_facade(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    context = _context(
+        {
+            "smithy": "2.0",
+            "shapes": {
+                "example#Leaf": {"type": "string"},
+                "example#Node": {
+                    "type": "structure",
+                    "members": {"leaf": {"target": "example#Leaf"}},
+                },
+                "example#CycleA": {
+                    "type": "structure",
+                    "members": {"b": {"target": "example#CycleB"}},
+                },
+                "example#CycleB": {
+                    "type": "structure",
+                    "members": {"a": {"target": "example#CycleA"}},
+                },
+            },
+        },
+        schema_partition_size=1,
+    )
+    SchemaGenerator().generate(context)
+    context.files.text_file("src/example/types/__init__.py", "")
+    context.files.text_file("src/example/types/_private/__init__.py", "")
+    context.files.commit(tmp_path)
+
+    package = tmp_path / "src/example/types/_private"
+    assert (package / "schemas.py").is_file()
+    assert (package / "schemas_0.py").is_file()
+    assert (package / "schemas_1.py").is_file()
+    facade_source = (package / "schemas.py").read_text()
+    assert "_PARTITION_NAMES: tuple[tuple[str, ...], ...]" in facade_source
+    assert "name: index" in facade_source
+    assert facade_source.count(".schemas_") == 1
+    partitions = tuple(package.glob("schemas_*.py"))
+    cycle = next(
+        path.read_text() for path in partitions if "CYCLE_A:" in path.read_text()
+    )
+    assert "CYCLE_B:" in cycle
+
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    facade = importlib.import_module("example.types._private.schemas")
+    assert "example.types._private.schemas_0" not in sys.modules
+    assert "example.types._private.schemas_1" not in sys.modules
+
+    static_node = cast(tuple[Any, ...], facade.NODE)
+    assert facade.NODE is static_node
+    assert "NODE" in dir(facade)
+    assert "example.types._private.schemas_1" in sys.modules
+    assert "example.types._private.schemas_0" not in sys.modules
+    with pytest.raises(AttributeError):
+        facade.MISSING
+    node = _schema_compact.hydrate(static_node)
+    assert str(node.members["leaf"].expect_member_target().id) == "example#Leaf"
+    assert "example.types._private.schemas_0" in sys.modules
+    cycle_a = _schema_compact.hydrate(cast(tuple[Any, ...], facade.CYCLE_A))
+    cycle_b = cycle_a.members["b"].expect_member_target()
+    assert cycle_b.members["a"].expect_member_target() is cycle_a
+
+
+@pytest.mark.parametrize(("shape_count", "partition_count"), [(250, 0), (251, 2)])
+def test_schema_partition_threshold(
+    tmp_path: Path,
+    shape_count: int,
+    partition_count: int,
+) -> None:
+    context = _context(
+        {
+            "smithy": "2.0",
+            "shapes": {
+                f"example#Shape{index}": {"type": "structure"}
+                for index in range(shape_count)
+            },
+        },
+    )
+    SchemaGenerator().generate(context)
+    context.files.commit(tmp_path)
+
+    private = tmp_path / "src/example/types/_private"
+    assert len(tuple(private.glob("schemas_*.py"))) == partition_count
+    facade = (private / "schemas.py").read_text()
+    assert ("_PARTITIONS" in facade) is bool(partition_count)
+
+
+def test_schema_partitions_balance_emitted_size(tmp_path: Path) -> None:
+    context = _context(
+        {
+            "smithy": "2.0",
+            "shapes": {
+                "example#AHeavy": {
+                    "type": "structure",
+                    "members": {
+                        f"member{index}": {"target": "smithy.api#String"}
+                        for index in range(20)
+                    },
+                },
+                "example#BTiny": {"type": "structure"},
+                "example#CTiny": {"type": "structure"},
+                "example#DTiny": {"type": "structure"},
+            },
+        },
+        schema_partition_size=2,
+    )
+    SchemaGenerator().generate(context)
+    context.files.commit(tmp_path)
+    private = tmp_path / "src/example/types/_private"
+
+    first = (private / "schemas_0.py").read_text()
+    second = (private / "schemas_1.py").read_text()
+    assert "A_HEAVY:" in first
+    assert "B_TINY:" not in first
+    assert all(f"{name}:" in second for name in ("B_TINY", "C_TINY", "D_TINY"))
+
+
+def test_schema_partition_weights_include_interned_strings(tmp_path: Path) -> None:
+    context = _context(
+        {
+            "smithy": "2.0",
+            "shapes": {
+                "example#AHeavy": {
+                    "type": "structure",
+                    "members": {
+                        "value": {
+                            "target": "smithy.api#String",
+                            "traits": {"smithy.api#default": "x" * 10_000},
+                        }
+                    },
+                },
+                "example#BTiny": {"type": "structure"},
+                "example#CTiny": {"type": "structure"},
+                "example#DTiny": {"type": "structure"},
+            },
+        },
+        schema_partition_size=2,
+    )
+    SchemaGenerator().generate(context)
+    context.files.commit(tmp_path)
+    private = tmp_path / "src/example/types/_private"
+
+    first = (private / "schemas_0.py").read_text()
+    second = (private / "schemas_1.py").read_text()
+    assert "A_HEAVY:" in first
+    assert "B_TINY:" not in first
+    assert all(f"{name}:" in second for name in ("B_TINY", "C_TINY", "D_TINY"))
 
 
 def test_schema_generator_preserves_primitive_prelude_targets(tmp_path: Path) -> None:
