@@ -7,13 +7,8 @@ from typing import TypeGuard, cast
 
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_core.interfaces import TypedProperties
 
-from ...business_metrics import (
-    AwsFeatureId,
-    normalize_feature_ids,
-    register_feature_id,
-)
+from ...business_metrics import AwsFeatureId, add_feature_id
 from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
 
 __all__ = ["AsyncProcessCredentialsResolver"]
@@ -35,10 +30,10 @@ class AsyncProcessCredentialsResolver(
     :param timeout: Maximum time in seconds to wait for the process to complete.
     :param account_id: Fallback account ID to associate with the resolved
         credentials when the process output does not include an ``AccountId``.
-    :param feature_ids: The features recorded for each call that uses the
-        credentials. Defaults to ``CREDENTIALS_PROCESS``. Pass ``()`` when another
-        component, such as the credential chain, already records them.
     """
+
+    _FEATURE_ID = AwsFeatureId.CREDENTIALS_PROCESS
+    """Recorded when used directly; in the credential chain, the provider's are used."""
 
     def __init__(
         self,
@@ -46,7 +41,6 @@ class AsyncProcessCredentialsResolver(
         *,
         timeout: float | None = None,
         account_id: str | None = None,
-        feature_ids: tuple[AwsFeatureId, ...] = (AwsFeatureId.CREDENTIALS_PROCESS,),
     ) -> None:
         if not _is_command_list(command):
             raise ValueError("command must be a non-empty list of strings")
@@ -54,18 +48,14 @@ class AsyncProcessCredentialsResolver(
         self._timeout = timeout
         self._account_id = account_id
         self._credentials: AWSCredentialsIdentity | None = None
-        self._feature_ids = normalize_feature_ids(feature_ids)
 
     async def get_identity(
-        self,
-        *,
-        properties: AWSIdentityProperties,
-        context: TypedProperties | None = None,
+        self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
         identity = await self._resolve()
-        if context is not None:
-            for feature_id in self._feature_ids:
-                register_feature_id(context, feature_id)
+        features = properties.get("feature_ids")
+        if features is not None:
+            add_feature_id(features, self._FEATURE_ID)
         return identity
 
     async def _resolve(self) -> AWSCredentialsIdentity:

@@ -1,74 +1,45 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
-from typing import Any
-from unittest.mock import AsyncMock
 
-import pytest
-from aws_sdk_signers import AWSCredentialIdentity as SignersCredentialIdentity
 from smithy_aws_core.aio.auth.sigv4 import AsyncSigV4AuthScheme
-from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
-from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
-from smithy_aws_core.identity import AWSCredentialsIdentity
+from smithy_aws_core.business_metrics import (
+    FEATURE_IDS,
+    AwsFeatureId,
+    add_feature_id,
+    register_feature_id,
+)
 from smithy_core.types import TypedProperties
 
 
 @dataclass
 class _Config:
-    aws_credentials_identity_resolver: Any
-    region: str = "us-west-2"
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+    aws_session_token: str | None = None
 
 
-def _identity_resolver(resolver: Any) -> Any:
-    context = TypedProperties({"config": _Config(resolver)})
-    return AsyncSigV4AuthScheme(service="svc").identity_resolver(context=context)
+def _identity_properties(context: TypedProperties) -> dict[str, object]:
+    scheme = AsyncSigV4AuthScheme(service="svc")
+    return dict(scheme.identity_properties(context=context))
 
 
-async def test_records_resolved_account_id() -> None:
-    identity = AWSCredentialsIdentity(
-        access_key_id="akid", secret_access_key="s", account_id="123456789012"
-    )
-    resolver = _identity_resolver(AsyncStaticCredentialsResolver(identity))
-    context = TypedProperties()
+def test_identity_properties_share_the_call_feature_record() -> None:
+    context = TypedProperties({"config": _Config()})
 
-    assert await resolver.get_identity(properties={}, context=context) is identity
-    assert list(context[FEATURE_IDS]) == [
-        AwsFeatureId.CREDENTIALS_CODE,
-        AwsFeatureId.RESOLVED_ACCOUNT_ID,
-    ]
+    features = _identity_properties(context)["feature_ids"]
+    add_feature_id(features, AwsFeatureId.CREDENTIALS_ENV_VARS)  # type: ignore[arg-type]
+
+    # Resolvers add to the same dict the call sends in the User-Agent header.
+    assert features is context[FEATURE_IDS]
+    assert list(context[FEATURE_IDS]) == [AwsFeatureId.CREDENTIALS_ENV_VARS]
 
 
-@pytest.mark.parametrize(
-    "identity",
-    [
-        AWSCredentialsIdentity(access_key_id="akid", secret_access_key="s"),
-        # Has no account_id field at all.
-        SignersCredentialIdentity(access_key_id="akid", secret_access_key="s"),
-    ],
-)
-async def test_does_not_record_account_id_when_missing(identity: Any) -> None:
-    configured = AsyncMock()
-    configured.get_identity.return_value = identity
-    context = TypedProperties()
+def test_identity_properties_keep_features_already_recorded() -> None:
+    context = TypedProperties({"config": _Config()})
+    register_feature_id(context, AwsFeatureId.RETRY_MODE_STANDARD)
 
-    result = await _identity_resolver(configured).get_identity(
-        properties={}, context=context
-    )
+    features = _identity_properties(context)["feature_ids"]
 
-    assert result is identity
-    assert FEATURE_IDS not in context
-
-
-async def test_resolves_without_context() -> None:
-    identity = AWSCredentialsIdentity(
-        access_key_id="akid", secret_access_key="s", account_id="123456789012"
-    )
-    resolver = _identity_resolver(AsyncStaticCredentialsResolver(identity))
-
-    assert await resolver.get_identity(properties={}) is identity
-
-
-async def test_invalidate_reaches_configured_resolver() -> None:
-    configured = AsyncMock()
-    await _identity_resolver(configured).invalidate()
-    configured.invalidate.assert_awaited_once()
+    assert features is context[FEATURE_IDS]
+    assert list(context[FEATURE_IDS]) == [AwsFeatureId.RETRY_MODE_STANDARD]

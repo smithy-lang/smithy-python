@@ -115,9 +115,7 @@ Identity resolvers are responsible for contructiong an `Identity` for a request.
 ```python
 class IdentityResolver[I: Identity, IP: Mapping[str, Any]](Protocol):
 
-    async def get_identity(
-        self, *, properties: IP, context: TypedProperties | None = None
-    ) -> I:
+    async def get_identity(self, *, properties: IP) -> I:
         ...
 ```
 
@@ -127,13 +125,9 @@ be prioritized to provide a stable resolution strategy. A
 `ChainedIdentityResolver` implementation is provided that implements this
 behavior generically.
 
-The `get_identity` function takes two keyword-only arguments. `properties` is a
-mapping of properties that is refined by the `IP` generic parameter, constructed
-by the `AuthScheme`'s `identity_properties` method. `context` is the request
-properties of the call the identity is for, if any. Resolvers may use it, for
-example, to record the features used for the User-Agent header. It is optional
-because some callers, such as event stream signing, resolve identities outside a
-request.
+The `get_identity` function takes only one (keyword-only) argument - a mapping
+of properties that is refined by the `IP` generic parameter. The identity
+properties are contructed by the `AuthScheme`'s `identity_properties` method.
 
 Identity resolvers are constructed by the `AuthScheme`'s `identity_resolver`
 method.

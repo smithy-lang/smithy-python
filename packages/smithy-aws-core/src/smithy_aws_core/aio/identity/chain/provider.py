@@ -7,14 +7,13 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
-from smithy_core.interfaces import TypedProperties
 from smithy_core.interfaces.identity import Identity
 from smithy_http.aio.interfaces import AsyncHTTPClient
 
 from ....business_metrics import (
     AwsFeatureId,
+    add_feature_id,
     normalize_feature_ids,
-    register_feature_id,
 )
 from ....config.merged_config import MergedConfig
 from ....identity.chain.ordering import OrderingConstraint
@@ -37,16 +36,20 @@ class NamedResolver:
     def __post_init__(self) -> None:
         object.__setattr__(self, "feature_ids", normalize_feature_ids(self.feature_ids))
 
-    async def get_identity(
-        self, *, properties: Mapping[str, Any], context: TypedProperties | None = None
-    ) -> Any:
+    async def get_identity(self, *, properties: Mapping[str, Any]) -> Any:
         """Resolve an identity and record the provider's features for the call."""
-        identity = await self.resolver.get_identity(
-            properties=properties, context=context
-        )
-        if context is not None:
-            for feature_id in self.feature_ids:
-                register_feature_id(context, feature_id)
+        features = properties.get("feature_ids")
+        if features is None or not self.feature_ids:
+            return await self.resolver.get_identity(properties=properties)
+        # Record the provider's feature IDs instead of the resolver's own. Leaving out
+        # the call's feature record keeps the resolver from recording its own, which is
+        # meant for when it's used directly.
+        resolver_properties = {
+            key: value for key, value in properties.items() if key != "feature_ids"
+        }
+        identity = await self.resolver.get_identity(properties=resolver_properties)
+        for feature_id in self.feature_ids:
+            add_feature_id(features, feature_id)
         return identity
 
     async def invalidate(self) -> None:

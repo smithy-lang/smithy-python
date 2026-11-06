@@ -6,6 +6,8 @@ from typing import Protocol, TypedDict
 
 from smithy_core.interfaces.identity import Identity, IdentityResolver
 
+from ..business_metrics import AwsFeatureId
+
 __all__ = [
     "AWSCredentialsIdentity",
     "AWSCredentialsResolver",
@@ -41,6 +43,7 @@ class AWSIdentityProperties(TypedDict, total=False):
     access_key_id: str | None
     secret_access_key: str | None
     session_token: str | None
+    feature_ids: dict[AwsFeatureId, None]
 
 
 type AWSCredentialsResolver = IdentityResolver[

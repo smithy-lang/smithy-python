@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Identity resolvers now receive the call's request properties via a new optional `context` argument to `get_identity`. Custom resolvers must accept `context`."
-}

@@ -5,7 +5,6 @@ from collections.abc import Mapping, Sequence
 from typing import Any, Final
 
 from ..exceptions import SmithyIdentityError
-from ..interfaces import TypedProperties
 from ..interfaces.identity import Identity
 from .interfaces.identity import AsyncIdentityResolver
 
@@ -21,9 +20,7 @@ class AsyncCachingIdentityResolver[I: Identity, IP: Mapping[str, Any]](
     def __init__(self) -> None:
         self._cached: I | None = None
 
-    async def get_identity(
-        self, *, properties: IP, context: TypedProperties | None = None
-    ) -> I:
+    async def get_identity(self, *, properties: IP) -> I:
         if self._cached is None or self._cached.is_expired:
             self._cached = await self._get_identity(properties=properties)
         return self._cached

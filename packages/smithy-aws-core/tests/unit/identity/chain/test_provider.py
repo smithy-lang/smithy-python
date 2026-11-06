@@ -4,12 +4,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 from smithy_aws_core.aio.identity.chain.provider import ChainSetup, NamedResolver
-from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
+from smithy_aws_core.business_metrics import AwsFeatureId
 from smithy_aws_core.config.file_parser import StandardizedOutput
 from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.identity.chain.ordering import Standard, StandardProvider
 from smithy_core.interfaces.identity import Identity
-from smithy_core.types import TypedProperties
 
 
 class _FakeProvider:
@@ -140,15 +139,15 @@ async def test_named_resolver_records_feature_ids() -> None:
         resolver=resolver,
         feature_ids=(AwsFeatureId.CREDENTIALS_ENV_VARS,),
     )
-    context = TypedProperties()
+    features: dict[AwsFeatureId, None] = {}
 
-    result = await named.get_identity(properties={}, context=context)
+    result = await named.get_identity(properties={"feature_ids": features})
 
     assert result is resolver.get_identity.return_value
-    assert list(context[FEATURE_IDS]) == [AwsFeatureId.CREDENTIALS_ENV_VARS]
+    assert list(features) == [AwsFeatureId.CREDENTIALS_ENV_VARS]
 
 
-async def test_named_resolver_resolves_without_context() -> None:
+async def test_named_resolver_resolves_without_feature_record() -> None:
     resolver = AsyncMock()
     named = NamedResolver(
         provider_name="Environment",

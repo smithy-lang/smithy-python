@@ -11,7 +11,6 @@ from urllib.parse import urlparse
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_core.interfaces import TypedProperties
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import AsyncHTTPClient, HTTPResponse
@@ -177,10 +176,7 @@ class AsyncContainerCredentialsResolver(
                 ) from e
 
     async def get_identity(
-        self,
-        *,
-        properties: AWSIdentityProperties,
-        context: TypedProperties | None = None,
+        self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
         if (
             self._credentials is not None

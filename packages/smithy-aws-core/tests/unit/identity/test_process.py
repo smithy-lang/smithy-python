@@ -8,9 +8,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from smithy_aws_core.aio.identity.process import AsyncProcessCredentialsResolver
-from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
+from smithy_aws_core.business_metrics import AwsFeatureId
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_core.types import TypedProperties
 
 ISO8601 = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -443,6 +442,6 @@ async def test_registers_process_feature_on_every_call():
     with patch("asyncio.create_subprocess_exec", return_value=process):
         # The second call is served from cached credentials.
         for _ in range(2):
-            context = TypedProperties()
-            await resolver.get_identity(properties={}, context=context)
-            assert list(context[FEATURE_IDS]) == [AwsFeatureId.CREDENTIALS_PROCESS]
+            features: dict[AwsFeatureId, None] = {}
+            await resolver.get_identity(properties={"feature_ids": features})
+            assert list(features) == [AwsFeatureId.CREDENTIALS_PROCESS]

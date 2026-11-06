@@ -7,7 +7,6 @@ from typing import Any, cast
 
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_core.interfaces import TypedProperties
 from smithy_core.interfaces.identity import Identity
 from smithy_http.aio.interfaces import AsyncHTTPClient
 
@@ -111,16 +110,12 @@ class AsyncIdentityChain[I: Identity](AsyncIdentityResolver[I, Mapping[str, Any]
             unclaimed_sources=unclaimed_sources,
         )
 
-    async def get_identity(
-        self, *, properties: Mapping[str, Any], context: TypedProperties | None = None
-    ) -> I:
+    async def get_identity(self, *, properties: Mapping[str, Any]) -> I:
         """Return the first identity resolved by the chain."""
         failures: list[IdentityResolverFailure] = []
         for resolver in self._resolvers:
             try:
-                return await resolver.get_identity(
-                    properties=properties, context=context
-                )
+                return await resolver.get_identity(properties=properties)
             except SmithyIdentityError as error:
                 if isinstance(resolver, NamedResolver):
                     provider_name = resolver.provider_name

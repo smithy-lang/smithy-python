@@ -8,7 +8,7 @@ import pytest
 import smithy_aws_core.aio.identity.chain as chain_module
 from smithy_aws_core.aio.identity import AsyncIdentityChain
 from smithy_aws_core.aio.identity.chain.provider import NamedResolver
-from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
+from smithy_aws_core.business_metrics import AwsFeatureId
 from smithy_aws_core.identity import (
     AWSCredentialsIdentity,
     AWSIdentityProperties,
@@ -26,7 +26,6 @@ from smithy_aws_core.identity.chain.ordering import (
 )
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_core.types import TypedProperties
 
 
 class _StubProvider:
@@ -57,7 +56,7 @@ class _FakeResolver(
         self.error = error
 
     async def get_identity(
-        self, *, properties: AWSIdentityProperties, context: Any = None
+        self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
         if self.error is not None:
             raise self.error
@@ -80,7 +79,7 @@ async def test_non_identity_errors_propagate() -> None:
         AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
     ):
         async def get_identity(
-            self, *, properties: Mapping[str, Any], context: Any = None
+            self, *, properties: Mapping[str, Any]
         ) -> AWSCredentialsIdentity:
             raise RuntimeError("broken")
 
@@ -273,7 +272,7 @@ async def test_chained_invalidate() -> None:
             self.invalidated = False
 
         async def get_identity(
-            self, *, properties: AWSIdentityProperties, context: Any = None
+            self, *, properties: AWSIdentityProperties
         ) -> AWSCredentialsIdentity:
             return _credentials("cached")
 
@@ -301,8 +300,10 @@ async def test_registers_feature_ids_of_resolver_that_returned_identity() -> Non
         resolver=_FakeResolver(identity=_credentials("hit")),
         feature_ids=(AwsFeatureId.CREDENTIALS_PROFILE,),
     )
-    context = TypedProperties()
+    features: dict[AwsFeatureId, None] = {}
 
-    await AsyncIdentityChain((miss, hit)).get_identity(properties={}, context=context)
+    await AsyncIdentityChain((miss, hit)).get_identity(
+        properties={"feature_ids": features}
+    )
 
-    assert list(context[FEATURE_IDS]) == [AwsFeatureId.CREDENTIALS_PROFILE]
+    assert list(features) == [AwsFeatureId.CREDENTIALS_PROFILE]

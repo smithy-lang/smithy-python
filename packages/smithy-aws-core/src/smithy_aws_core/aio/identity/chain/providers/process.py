@@ -54,7 +54,5 @@ class AsyncProfileCredentialProcessProvider:
             AsyncProcessCredentialsResolver(
                 _split_process_command(command),
                 account_id=config_file.get(profile_name, _ACCOUNT_ID),
-                # The chain records this provider's feature IDs.
-                feature_ids=(),
             )
         )

@@ -6,14 +6,14 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from smithy_aws_core.aio.identity.chain.provider import NamedResolver
 from smithy_aws_core.aio.identity.environment import (
     AsyncEnvironmentCredentialsResolver,
 )
 from smithy_aws_core.aio.identity.process import AsyncProcessCredentialsResolver
 from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
-from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
+from smithy_aws_core.business_metrics import AwsFeatureId
 from smithy_aws_core.identity import AWSCredentialsIdentity
-from smithy_core.types import TypedProperties
 
 _IDENTITY = AWSCredentialsIdentity(access_key_id="akid", secret_access_key="secret")
 
@@ -21,12 +21,12 @@ _IDENTITY = AWSCredentialsIdentity(access_key_id="akid", secret_access_key="secr
 @pytest.mark.parametrize(
     "create",
     [
-        lambda: AsyncStaticCredentialsResolver(_IDENTITY, feature_ids=()),
-        lambda: AsyncEnvironmentCredentialsResolver(feature_ids=()),
-        lambda: AsyncProcessCredentialsResolver(["mock-process"], feature_ids=()),
+        lambda: AsyncStaticCredentialsResolver(_IDENTITY),
+        lambda: AsyncEnvironmentCredentialsResolver(),
+        lambda: AsyncProcessCredentialsResolver(["mock-process"]),
     ],
 )
-async def test_registers_nothing_with_empty_feature_ids(
+async def test_chain_records_only_the_provider_feature_ids(
     create: Callable[[], Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "akid")
@@ -39,12 +39,18 @@ async def test_registers_nothing_with_empty_feature_ids(
         ).encode("utf-8"),
         b"",
     )
-    context = TypedProperties()
+    named = NamedResolver(
+        provider_name="ProfileStaticKeys",
+        resolver=create(),
+        feature_ids=(AwsFeatureId.CREDENTIALS_PROFILE,),
+    )
+    features: dict[AwsFeatureId, None] = {}
 
     with patch("asyncio.create_subprocess_exec", return_value=process):
-        await create().get_identity(properties={}, context=context)
+        await named.get_identity(properties={"feature_ids": features})
 
-    assert FEATURE_IDS not in context
+    # The resolver's own feature, for when it's used directly, isn't recorded.
+    assert features == {AwsFeatureId.CREDENTIALS_PROFILE: None}
 
 
 async def test_environment_resolver_registers_env_vars_by_default(
@@ -52,10 +58,28 @@ async def test_environment_resolver_registers_env_vars_by_default(
 ) -> None:
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "akid")
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret")
-    context = TypedProperties()
+    features: dict[AwsFeatureId, None] = {}
 
     await AsyncEnvironmentCredentialsResolver().get_identity(
-        properties={}, context=context
+        properties={"feature_ids": features}
     )
 
-    assert context[FEATURE_IDS] == {AwsFeatureId.CREDENTIALS_ENV_VARS: None}
+    assert features == {AwsFeatureId.CREDENTIALS_ENV_VARS: None}
+
+
+@pytest.mark.parametrize("provider_feature_ids", [(), None])
+async def test_chain_keeps_resolver_feature_ids_when_provider_has_none(
+    provider_feature_ids: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "akid")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret")
+    named = NamedResolver(
+        provider_name="Custom",
+        resolver=AsyncEnvironmentCredentialsResolver(),
+        feature_ids=provider_feature_ids,
+    )
+    features: dict[AwsFeatureId, None] = {}
+
+    await named.get_identity(properties={"feature_ids": features})
+
+    assert features == {AwsFeatureId.CREDENTIALS_ENV_VARS: None}

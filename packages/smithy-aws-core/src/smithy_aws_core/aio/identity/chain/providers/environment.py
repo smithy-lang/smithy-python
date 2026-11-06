@@ -47,5 +47,4 @@ class AsyncEnvironmentCredentialsProvider:
         if not os.getenv(_ACCESS_KEY_ID) or not os.getenv(_SECRET_ACCESS_KEY):
             return
 
-        # The chain records this provider's feature IDs.
-        setup.add_terminal_resolver(AsyncEnvironmentCredentialsResolver(feature_ids=()))
+        setup.add_terminal_resolver(AsyncEnvironmentCredentialsResolver())

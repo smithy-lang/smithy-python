@@ -13,7 +13,6 @@ from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.aio.interfaces.retries import AsyncRetryStrategy
 from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_core.interfaces import TypedProperties
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import AsyncHTTPClient
@@ -192,10 +191,7 @@ class AsyncIMDSCredentialsResolver(
         self._profile_name = self._config.ec2_instance_profile_name
 
     async def get_identity(
-        self,
-        *,
-        properties: AWSIdentityProperties,
-        context: TypedProperties | None = None,
+        self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
         if (
             self._credentials is not None

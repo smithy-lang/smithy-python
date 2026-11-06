@@ -61,12 +61,7 @@ class AsyncProfileSessionCredentialsProvider:
             session_token=session_token,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        # The static resolver records CREDENTIALS_CODE by default. Turn that off, because
-        # these keys come from a profile, and the chain records this provider's
-        # CREDENTIALS_PROFILE instead.
-        setup.add_terminal_resolver(
-            AsyncStaticCredentialsResolver(identity, feature_ids=())
-        )
+        setup.add_terminal_resolver(AsyncStaticCredentialsResolver(identity))
 
 
 class AsyncProfileStaticCredentialsProvider:
@@ -108,9 +103,4 @@ class AsyncProfileStaticCredentialsProvider:
             secret_access_key=secret_access_key,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        # The static resolver records CREDENTIALS_CODE by default. Turn that off, because
-        # these keys come from a profile, and the chain records this provider's
-        # CREDENTIALS_PROFILE instead.
-        setup.add_terminal_resolver(
-            AsyncStaticCredentialsResolver(identity, feature_ids=())
-        )
+        setup.add_terminal_resolver(AsyncStaticCredentialsResolver(identity))

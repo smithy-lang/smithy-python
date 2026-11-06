@@ -3,7 +3,6 @@
 import os
 
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_core.interfaces import TypedProperties
 
 from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
@@ -17,10 +16,7 @@ class EnvironmentCredentialsResolver:
         self._credentials = None
 
     def get_identity(
-        self,
-        *,
-        properties: AWSIdentityProperties,
-        context: TypedProperties | None = None,
+        self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
         if self._credentials is not None:
             return self._credentials
