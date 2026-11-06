@@ -43,7 +43,7 @@ class AWSIdentityProperties(TypedDict, total=False):
     access_key_id: str | None
     secret_access_key: str | None
     session_token: str | None
-    feature_ids: dict[AwsFeatureId, None]
+    _feature_ids: dict[AwsFeatureId, None]
 
 
 type AWSCredentialsResolver = IdentityResolver[

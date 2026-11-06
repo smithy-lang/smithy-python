@@ -16,7 +16,7 @@ from smithy_core.interfaces import TypedProperties as _TypedProperties
 from smithy_core.types import PropertyKey
 from smithy_http.aio.interfaces import HTTPRequest
 
-from ...business_metrics import feature_ids_of
+from ...business_metrics import get_feature_ids
 from ...identity import (
     AWS_IDENTITY_CONFIG,
     AWSCredentialsIdentity,
@@ -85,7 +85,7 @@ class AsyncSigV4AuthScheme(
             "access_key_id": config.aws_access_key_id,
             "secret_access_key": config.aws_secret_access_key,
             "session_token": config.aws_session_token,
-            "feature_ids": feature_ids_of(context),
+            "_feature_ids": get_feature_ids(context),
         }
 
     def identity_resolver(

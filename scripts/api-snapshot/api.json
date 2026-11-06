@@ -92,7 +92,7 @@
     "SigV4SigningProperties": "rex-class",
     "SigV4Trait": "rex-class",
     "SmithyIdentityError": "rex-exception",
-    "feature_ids_of": "rex-function"
+    "get_feature_ids": "rex-function"
   },
   "smithy_aws_core.aio.checksums": {
     "AsyncBytesReader": "rex-class[async]",
@@ -429,7 +429,7 @@
     "TypedProperties": "rex-protocol",
     "add_feature_id": "function",
     "encode_feature_ids": "function",
-    "feature_ids_of": "function",
+    "get_feature_ids": "function",
     "logger": "Logger",
     "normalize_feature_ids": "function",
     "register_feature_id": "function"

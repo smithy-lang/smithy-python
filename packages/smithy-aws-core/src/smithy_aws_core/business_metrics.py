@@ -21,7 +21,7 @@ __all__ = [
     "AwsFeatureId",
     "add_feature_id",
     "encode_feature_ids",
-    "feature_ids_of",
+    "get_feature_ids",
     "normalize_feature_ids",
     "register_feature_id",
 ]
@@ -67,10 +67,10 @@ def register_feature_id(properties: TypedProperties, feature_id: AwsFeatureId) -
     :param feature_id: The feature that was used.
     """
     if _is_feature_id(feature_id):
-        feature_ids_of(properties)[feature_id] = None
+        get_feature_ids(properties)[feature_id] = None
 
 
-def feature_ids_of(properties: TypedProperties) -> dict[AwsFeatureId, None]:
+def get_feature_ids(properties: TypedProperties) -> dict[AwsFeatureId, None]:
     """Return the current call's feature record, creating it if needed.
 
     Returns the record itself, not a copy, so features added to it are sent.
@@ -89,7 +89,7 @@ def add_feature_id(
 ) -> None:
     """Record that the current call used a feature, in the call's feature record.
 
-    :param features: The current call's feature record, from ``feature_ids_of``.
+    :param features: The current call's feature record, from ``get_feature_ids``.
     :param feature_id: The feature that was used.
     """
     if _is_feature_id(feature_id):

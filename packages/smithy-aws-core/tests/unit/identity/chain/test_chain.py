@@ -303,7 +303,7 @@ async def test_registers_feature_ids_of_resolver_that_returned_identity() -> Non
     features: dict[AwsFeatureId, None] = {}
 
     await AsyncIdentityChain((miss, hit)).get_identity(
-        properties={"feature_ids": features}
+        properties={"_feature_ids": features}
     )
 
     assert list(features) == [AwsFeatureId.CREDENTIALS_PROFILE]

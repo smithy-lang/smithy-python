@@ -141,7 +141,7 @@ async def test_named_resolver_records_feature_ids() -> None:
     )
     features: dict[AwsFeatureId, None] = {}
 
-    result = await named.get_identity(properties={"feature_ids": features})
+    result = await named.get_identity(properties={"_feature_ids": features})
 
     assert result is resolver.get_identity.return_value
     assert list(features) == [AwsFeatureId.CREDENTIALS_ENV_VARS]

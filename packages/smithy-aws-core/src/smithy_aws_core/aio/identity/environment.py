@@ -28,7 +28,7 @@ class AsyncEnvironmentCredentialsResolver(
         self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
         identity = self._sync.get_identity(properties=properties)
-        features = properties.get("feature_ids")
+        features = properties.get("_feature_ids")
         if features is not None:
             add_feature_id(features, self._FEATURE_ID)
         return identity

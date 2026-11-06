@@ -53,7 +53,7 @@ class AsyncProcessCredentialsResolver(
         self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
         identity = await self._resolve()
-        features = properties.get("feature_ids")
+        features = properties.get("_feature_ids")
         if features is not None:
             add_feature_id(features, self._FEATURE_ID)
         return identity

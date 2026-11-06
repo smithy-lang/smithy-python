@@ -27,7 +27,7 @@ def _identity_properties(context: TypedProperties) -> dict[str, object]:
 def test_identity_properties_share_the_call_feature_record() -> None:
     context = TypedProperties({"config": _Config()})
 
-    features = _identity_properties(context)["feature_ids"]
+    features = _identity_properties(context)["_feature_ids"]
     add_feature_id(features, AwsFeatureId.CREDENTIALS_ENV_VARS)  # type: ignore[arg-type]
 
     # Resolvers add to the same dict the call sends in the User-Agent header.
@@ -39,7 +39,7 @@ def test_identity_properties_keep_features_already_recorded() -> None:
     context = TypedProperties({"config": _Config()})
     register_feature_id(context, AwsFeatureId.RETRY_MODE_STANDARD)
 
-    features = _identity_properties(context)["feature_ids"]
+    features = _identity_properties(context)["_feature_ids"]
 
     assert features is context[FEATURE_IDS]
     assert list(context[FEATURE_IDS]) == [AwsFeatureId.RETRY_MODE_STANDARD]

@@ -443,5 +443,5 @@ async def test_registers_process_feature_on_every_call():
         # The second call is served from cached credentials.
         for _ in range(2):
             features: dict[AwsFeatureId, None] = {}
-            await resolver.get_identity(properties={"feature_ids": features})
+            await resolver.get_identity(properties={"_feature_ids": features})
             assert list(features) == [AwsFeatureId.CREDENTIALS_PROCESS]

@@ -38,14 +38,14 @@ class NamedResolver:
 
     async def get_identity(self, *, properties: Mapping[str, Any]) -> Any:
         """Resolve an identity and record the provider's features for the call."""
-        features = properties.get("feature_ids")
+        features = properties.get("_feature_ids")
         if features is None or not self.feature_ids:
             return await self.resolver.get_identity(properties=properties)
         # Record the provider's feature IDs instead of the resolver's own. Leaving out
         # the call's feature record keeps the resolver from recording its own, which is
         # meant for when it's used directly.
         resolver_properties = {
-            key: value for key, value in properties.items() if key != "feature_ids"
+            key: value for key, value in properties.items() if key != "_feature_ids"
         }
         identity = await self.resolver.get_identity(properties=resolver_properties)
         for feature_id in self.feature_ids:

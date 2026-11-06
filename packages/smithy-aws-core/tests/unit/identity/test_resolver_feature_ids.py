@@ -47,7 +47,7 @@ async def test_chain_records_only_the_provider_feature_ids(
     features: dict[AwsFeatureId, None] = {}
 
     with patch("asyncio.create_subprocess_exec", return_value=process):
-        await named.get_identity(properties={"feature_ids": features})
+        await named.get_identity(properties={"_feature_ids": features})
 
     # The resolver's own feature, for when it's used directly, isn't recorded.
     assert features == {AwsFeatureId.CREDENTIALS_PROFILE: None}
@@ -61,7 +61,7 @@ async def test_environment_resolver_registers_env_vars_by_default(
     features: dict[AwsFeatureId, None] = {}
 
     await AsyncEnvironmentCredentialsResolver().get_identity(
-        properties={"feature_ids": features}
+        properties={"_feature_ids": features}
     )
 
     assert features == {AwsFeatureId.CREDENTIALS_ENV_VARS: None}
@@ -80,6 +80,6 @@ async def test_chain_keeps_resolver_feature_ids_when_provider_has_none(
     )
     features: dict[AwsFeatureId, None] = {}
 
-    await named.get_identity(properties={"feature_ids": features})
+    await named.get_identity(properties={"_feature_ids": features})
 
     assert features == {AwsFeatureId.CREDENTIALS_ENV_VARS: None}
