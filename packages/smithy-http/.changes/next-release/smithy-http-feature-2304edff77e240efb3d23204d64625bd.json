@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `max_pool_connections` to `Urllib3HTTPClientConfig`, the connections kept for reuse per host, defaulting to 10 instead of urllib3's 1."
+}

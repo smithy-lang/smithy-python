@@ -29,7 +29,7 @@ from smithy_http import HTTPResponse
 from smithy_http.interfaces import HTTPRequest
 from smithy_http.interfaces import HTTPResponse as HTTPResponseInterface
 
-from .. import Field, Fields
+from .. import tuples_to_fields
 from ..exceptions import SmithyHTTPError
 from ..interfaces import (
     HTTPClientConfiguration,
@@ -171,20 +171,9 @@ class AIOHTTPClient(AsyncHTTPClient):
         self, aiohttp_resp: "aiohttp.ClientResponse"
     ) -> HTTPResponseInterface:
         """Convert a ``aiohttp.ClientResponse`` to a ``smithy_http.aio.HTTPResponse``"""
-        headers = Fields()
-        for header_name, header_val in aiohttp_resp.headers.items():
-            try:
-                headers[header_name].add(header_val)
-            except KeyError:
-                headers[header_name] = Field(
-                    name=header_name,
-                    values=[header_val],
-                    kind="header",
-                )
-
         return HTTPResponse(
             status=aiohttp_resp.status,
-            fields=headers,
+            fields=tuples_to_fields(aiohttp_resp.headers.items()),
             body=_AIOHTTPStreamingBody(aiohttp_resp),
             reason=aiohttp_resp.reason,
         )

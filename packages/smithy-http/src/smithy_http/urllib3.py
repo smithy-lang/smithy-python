@@ -21,7 +21,7 @@ from smithy_http import HTTPResponse
 from smithy_http.interfaces import HTTPRequest
 from smithy_http.interfaces import HTTPResponse as HTTPResponseInterface
 
-from . import Field, Fields
+from . import tuples_to_fields
 from .exceptions import SmithyHTTPError
 from .interfaces import HTTPClient, HTTPClientConfiguration, HTTPRequestConfiguration
 
@@ -37,10 +37,13 @@ class Urllib3HTTPClientConfig(HTTPClientConfiguration):
     :param read_timeout: How long, in seconds, to wait for data on an open
         connection, or None to wait indefinitely. A request's
         ``HTTPRequestConfiguration.read_timeout`` takes precedence.
+    :param max_pool_connections: How many connections to keep open for reuse per
+        host. Concurrent requests beyond this open connections that aren't kept.
     """
 
     connect_timeout: float | None = 60.0
     read_timeout: float | None = 60.0
+    max_pool_connections: int = 10
 
     def __post_init__(self) -> None:
         _assert_urllib3()
@@ -68,7 +71,8 @@ class Urllib3HTTPClient(HTTPClient):
         self._closed = False
         # Advertise 'identity' to request uncompressed responses.
         self._pool = _pool or urllib3.PoolManager(
-            headers={"Accept-Encoding": "identity"}
+            maxsize=self._config.max_pool_connections,
+            headers={"Accept-Encoding": "identity"},
         )
 
     def __enter__(self) -> Self:
@@ -120,14 +124,11 @@ class Urllib3HTTPClient(HTTPClient):
             decode_content=False,
             timeout=timeout,
         )
-        fields = Fields()
-        for name, value in raw.headers.items():
-            if name in fields:
-                fields[name].add(value)
-            else:
-                fields[name] = Field(name=name, values=[value], kind="header")
         return HTTPResponse(
-            status=raw.status, fields=fields, body=raw.data, reason=raw.reason
+            status=raw.status,
+            fields=tuples_to_fields(raw.headers.items()),
+            body=raw.data,
+            reason=raw.reason,
         )
 
     def close(self) -> None:

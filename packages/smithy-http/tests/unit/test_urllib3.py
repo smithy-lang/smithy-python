@@ -48,3 +48,36 @@ def test_request_read_timeout_takes_precedence(
         HTTPRequestConfiguration(read_timeout=5.0),
     )
     assert timeout.read_timeout == 5.0
+
+
+@pytest.mark.parametrize(
+    ("config", "maxsize"),
+    [(None, 10), (Urllib3HTTPClientConfig(max_pool_connections=25), 25)],
+)
+def test_pool_keeps_the_configured_connections_per_host(
+    config: Urllib3HTTPClientConfig | None, maxsize: int
+) -> None:
+    client = Urllib3HTTPClient(client_config=config)
+    pool = client._pool.connection_from_host("example.com")  # pyright: ignore[reportPrivateUsage]
+    assert pool.pool is not None
+    assert pool.pool.maxsize == maxsize
+    client.close()
+
+
+def test_repeated_response_headers_are_merged_case_insensitively() -> None:
+    pool = Mock()
+    raw_headers = urllib3.HTTPHeaderDict()
+    raw_headers.add("X-Values", "a")
+    raw_headers.add("x-values", "b")
+    pool.request.return_value = Mock(
+        status=200, headers=raw_headers, data=b"", reason="OK"
+    )
+    client = Urllib3HTTPClient(_pool=pool)
+    request = HTTPRequest(
+        destination=URI(host="example.com"), method="GET", fields=Fields()
+    )
+
+    response = client.send(request)
+
+    assert response.fields["x-values"].values == ["a", "b"]
+    assert response.fields["x-values"].kind == "header"
