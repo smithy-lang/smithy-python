@@ -63,10 +63,7 @@ logger = logging.getLogger(__name__)
 
 
 class JsonProtocolClient(Client[JsonProtocolConfig]):
-    """
-    Synchronous variant of `awsjson11.aio.client.AsyncJsonProtocolClient`,
-    which documents each operation.
-    """
+    """Client for JsonProtocol"""
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
@@ -75,6 +72,22 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: ContentTypeParametersInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> ContentTypeParametersOutput:
+        """
+        The example tests how servers must support requests containing a
+        `Content-Type` header with parameters.
+
+        Args:
+            input:
+                An instance of `ContentTypeParametersInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `ContentTypeParametersOutput`.
+        """
         return self._invoke(input, _models.CONTENT_TYPE_PARAMETERS, [], plugins)
 
     def datetime_offsets(
@@ -82,6 +95,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: DatetimeOffsetsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> DatetimeOffsetsOutput:
+        """
+        Invokes the DatetimeOffsets operation.
+
+        Args:
+            input:
+                An instance of `DatetimeOffsetsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
+        """
         return self._invoke(input, _models.DATETIME_OFFSETS, [], plugins)
 
     def empty_operation(
@@ -89,6 +117,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: EmptyOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> EmptyOperationOutput:
+        """
+        Invokes the EmptyOperation operation.
+
+        Args:
+            input:
+                An instance of `EmptyOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EmptyOperationOutput`.
+        """
         return self._invoke(input, _models.EMPTY_OPERATION, [], plugins)
 
     def endpoint_operation(
@@ -96,6 +139,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: EndpointOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> EndpointOperationOutput:
+        """
+        Invokes the EndpointOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
+        """
         return self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
 
     def endpoint_with_host_label_operation(
@@ -103,6 +161,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: EndpointWithHostLabelOperationInput,
         plugins: list[Plugin] | None = None,
     ) -> EndpointWithHostLabelOperationOutput:
+        """
+        Invokes the EndpointWithHostLabelOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointWithHostLabelOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
+        """
         return self._invoke(
             input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
@@ -112,6 +185,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: FractionalSecondsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> FractionalSecondsOutput:
+        """
+        Invokes the FractionalSeconds operation.
+
+        Args:
+            input:
+                An instance of `FractionalSecondsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
+        """
         return self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
 
     def greeting_with_errors(
@@ -119,6 +207,25 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: GreetingWithErrorsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> GreetingWithErrorsOutput:
+        """
+        This operation has three possible return values: 1. A successful
+        response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting
+        error. 3. A ComplexError error. Implementations must be able to
+        successfully take a response and properly deserialize successful and
+        error responses.
+
+        Args:
+            input:
+                An instance of `GreetingWithErrorsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
+        """
         return self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
     def host_with_path_operation(
@@ -126,11 +233,42 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: HostWithPathOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HostWithPathOperationOutput:
+        """
+        Invokes the HostWithPathOperation operation.
+
+        Args:
+            input:
+                An instance of `HostWithPathOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
+        """
         return self._invoke(input, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
     def json_enums(
         self, input: JsonEnumsInput | None = None, plugins: list[Plugin] | None = None
     ) -> JsonEnumsOutput:
+        """
+        This example serializes enums as top level properties, in lists, sets,
+        and maps.
+
+        Args:
+            input:
+                An instance of `JsonEnumsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonEnumsOutput`.
+        """
         return self._invoke(input, _models.JSON_ENUMS, [], plugins)
 
     def json_int_enums(
@@ -138,11 +276,42 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: JsonIntEnumsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> JsonIntEnumsOutput:
+        """
+        This example serializes intEnums as top level properties, in lists,
+        sets, and maps.
+
+        Args:
+            input:
+                An instance of `JsonIntEnumsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonIntEnumsOutput`.
+        """
         return self._invoke(input, _models.JSON_INT_ENUMS, [], plugins)
 
     def json_unions(
         self, input: JsonUnionsInput | None = None, plugins: list[Plugin] | None = None
     ) -> JsonUnionsOutput:
+        """
+        This operation uses unions for inputs and outputs.
+
+        Args:
+            input:
+                An instance of `JsonUnionsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonUnionsOutput`.
+        """
         return self._invoke(input, _models.JSON_UNIONS, [], plugins)
 
     def kitchen_sink_operation(
@@ -150,6 +319,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: KitchenSinkOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> KitchenSinkOperationOutput:
+        """
+        Invokes the KitchenSinkOperation operation.
+
+        Args:
+            input:
+                An instance of `KitchenSinkOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `KitchenSinkOperationOutput`.
+        """
         return self._invoke(input, _models.KITCHEN_SINK_OPERATION, [], plugins)
 
     def null_operation(
@@ -157,6 +341,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: NullOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NullOperationOutput:
+        """
+        Invokes the NullOperation operation.
+
+        Args:
+            input:
+                An instance of `NullOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NullOperationOutput`.
+        """
         return self._invoke(input, _models.NULL_OPERATION, [], plugins)
 
     def operation_with_optional_input_output(
@@ -164,6 +363,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: OperationWithOptionalInputOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OperationWithOptionalInputOutputOutput:
+        """
+        Invokes the OperationWithOptionalInputOutput operation.
+
+        Args:
+            input:
+                An instance of `OperationWithOptionalInputOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OperationWithOptionalInputOutputOutput`.
+        """
         return self._invoke(
             input, _models.OPERATION_WITH_OPTIONAL_INPUT_OUTPUT, [], plugins
         )
@@ -173,6 +387,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: PutAndGetInlineDocumentsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> PutAndGetInlineDocumentsOutput:
+        """
+        This example serializes an inline document as part of the payload.
+
+        Args:
+            input:
+                An instance of `PutAndGetInlineDocumentsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `PutAndGetInlineDocumentsOutput`.
+        """
         return self._invoke(input, _models.PUT_AND_GET_INLINE_DOCUMENTS, [], plugins)
 
     def put_with_content_encoding(
@@ -180,6 +409,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: PutWithContentEncodingInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> PutWithContentEncodingOutput:
+        """
+        Invokes the PutWithContentEncoding operation.
+
+        Args:
+            input:
+                An instance of `PutWithContentEncodingInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
+        """
         return self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
 
     def simple_scalar_properties(
@@ -187,6 +431,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: SimpleScalarPropertiesInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
+        """
+        Invokes the SimpleScalarProperties operation.
+
+        Args:
+            input:
+                An instance of `SimpleScalarPropertiesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
+        """
         return self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
 
     def sparse_nulls_operation(
@@ -194,6 +453,21 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         input: SparseNullsOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SparseNullsOperationOutput:
+        """
+        Invokes the SparseNullsOperation operation.
+
+        Args:
+            input:
+                An instance of `SparseNullsOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SparseNullsOperationOutput`.
+        """
         return self._invoke(input, _models.SPARSE_NULLS_OPERATION, [], plugins)
 
     def _new_config(self) -> JsonProtocolConfig:

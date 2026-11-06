@@ -37,15 +37,15 @@ from ..interfaces import (
 )
 from .interfaces import AsyncHTTPClient
 
-__all__ = ["AsyncAIOHTTPClient", "AsyncAIOHTTPClientConfig"]
+__all__ = ["AIOHTTPClient", "AIOHTTPClientConfig"]
 
 
-class AsyncAIOHTTPClientConfig(HTTPClientConfiguration):
+class AIOHTTPClientConfig(HTTPClientConfiguration):
     def __post_init__(self) -> None:
         _assert_aiohttp()
 
 
-class AsyncAIOHTTPClient(AsyncHTTPClient):
+class AIOHTTPClient(AsyncHTTPClient):
     """Implementation of :py:class:`.interfaces.AsyncHTTPClient` using aiohttp."""
 
     TIMEOUT_EXCEPTIONS = (TimeoutError,)
@@ -57,7 +57,7 @@ class AsyncAIOHTTPClient(AsyncHTTPClient):
     def __init__(
         self,
         *,
-        client_config: AsyncAIOHTTPClientConfig | None = None,
+        client_config: AIOHTTPClientConfig | None = None,
         _session: "aiohttp.ClientSession | None" = None,
     ) -> None:
         """
@@ -65,7 +65,7 @@ class AsyncAIOHTTPClient(AsyncHTTPClient):
         client.
         """
         _assert_aiohttp()
-        self._config = client_config or AsyncAIOHTTPClientConfig()
+        self._config = client_config or AIOHTTPClientConfig()
         self._closed = False
         # Disable transparent response decompression and advertise
         # 'identity' to request uncompressed responses.
@@ -83,8 +83,8 @@ class AsyncAIOHTTPClient(AsyncHTTPClient):
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         await self.close()
 
-    def __deepcopy__(self, memo: Any) -> "AsyncAIOHTTPClient":
-        return AsyncAIOHTTPClient(
+    def __deepcopy__(self, memo: Any) -> "AIOHTTPClient":
+        return AIOHTTPClient(
             client_config=deepcopy(self._config),
             _session=copy(self._session),
         )

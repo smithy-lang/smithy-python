@@ -40,8 +40,8 @@ from smithy_aws_event_stream.events import Event
 from smithy_cbor import CBORCodec
 from smithy_core import URI
 from smithy_http.aio.crt import (
-    AsyncAWSCRTHTTPClient,
-    AsyncAWSCRTHTTPClientConfig,
+    AWSCRTHTTPClient,
+    AWSCRTHTTPClientConfig,
 )
 
 from ._h2_server import H2BidiServer, ServerStream
@@ -118,9 +118,9 @@ def _simon_referee() -> "tuple[object, list[str]]":
 
 async def _client(
     server: H2BidiServer,
-) -> tuple[AsyncMyHandwrittenModel, AsyncAWSCRTHTTPClient]:
-    transport = AsyncAWSCRTHTTPClient(
-        client_config=AsyncAWSCRTHTTPClientConfig(
+) -> tuple[AsyncMyHandwrittenModel, AWSCRTHTTPClient]:
+    transport = AWSCRTHTTPClient(
+        client_config=AWSCRTHTTPClientConfig(
             force_http_2=True, trust_store_path=str(server.ca_cert_path)
         )
     )

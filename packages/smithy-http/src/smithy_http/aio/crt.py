@@ -47,8 +47,8 @@ from . import interfaces as http_aio_interfaces
 
 __all__ = [
     "DEFAULT_READ_BUFFER_SIZE",
-    "AsyncAWSCRTHTTPClient",
-    "AsyncAWSCRTHTTPClientConfig",
+    "AWSCRTHTTPClient",
+    "AWSCRTHTTPClientConfig",
     "AsyncAWSCRTHTTPResponse",
     "ConnectionPoolDict",
     "ConnectionPoolKey",
@@ -126,7 +126,7 @@ ConnectionPoolDict = dict[ConnectionPoolKey, "AIOHttpClientConnectionUnified"]
 
 
 @dataclass(kw_only=True)
-class AsyncAWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
+class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
     """AWS CRT HTTP client configuration.
 
     :param read_buffer_size: The buffer size in bytes to use when reading from streams.
@@ -147,7 +147,7 @@ class _CRTTimeoutError(Exception):
     """Internal wrapper for CRT timeout errors."""
 
 
-class AsyncAWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
+class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
     _TIMEOUT_ERROR_NAMES = frozenset(["AWS_IO_SOCKET_TIMEOUT", "AWS_IO_SOCKET_CLOSED"])
@@ -161,14 +161,14 @@ class AsyncAWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
     def __init__(
         self,
         eventloop: _AWSCRTEventLoop | None = None,
-        client_config: AsyncAWSCRTHTTPClientConfig | None = None,
+        client_config: AWSCRTHTTPClientConfig | None = None,
     ) -> None:
         """
         :param client_config: Configuration that applies to all requests made with this
         client.
         """
         _assert_crt()
-        self._config = client_config or AsyncAWSCRTHTTPClientConfig()
+        self._config = client_config or AWSCRTHTTPClientConfig()
         if eventloop is None:
             eventloop = _AWSCRTEventLoop()
         self._eventloop = eventloop
@@ -191,8 +191,8 @@ class AsyncAWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         await self.close()
 
-    def __deepcopy__(self, memo: Any) -> "AsyncAWSCRTHTTPClient":
-        return AsyncAWSCRTHTTPClient(
+    def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
+        return AWSCRTHTTPClient(
             eventloop=self._eventloop,
             client_config=deepcopy(self._config),
         )
@@ -317,7 +317,7 @@ class AsyncAWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
                 tls_connection_options.set_alpn_list(["h2", "http/1.1"])
         else:
             raise SmithyHTTPError(
-                f"AsyncAWSCRTHTTPClient does not support URL scheme {url.scheme}"
+                f"AWSCRTHTTPClient does not support URL scheme {url.scheme}"
             )
         if url.port is not None:
             port = url.port

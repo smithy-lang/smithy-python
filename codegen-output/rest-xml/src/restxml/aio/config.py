@@ -38,7 +38,7 @@ from smithy_core.interfaces import (
 )
 from smithy_core.interfaces.auth import AuthSchemeResolver
 from smithy_core.shapes import ShapeID
-from smithy_http.aio.aiohttp import AsyncAIOHTTPClient
+from smithy_http.aio.aiohttp import AIOHTTPClient
 
 from .._private.endpoints import BDD
 from .._private.schemas import REST_XML
@@ -465,7 +465,7 @@ class AsyncRestXmlProtocolConfig(AsyncAwsConfig):
             }
         ),
         "auth_scheme_resolver": FieldSpec(default_factory=HTTPAuthSchemeResolver),
-        "transport": FieldSpec(default_factory=lambda: AsyncAIOHTTPClient()),
+        "transport": FieldSpec(default_factory=lambda: AIOHTTPClient()),
     }
 
     def set_auth_scheme(self, scheme: AsyncAuthScheme[Any, Any, Any, Any]) -> None:

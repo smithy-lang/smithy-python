@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from dataclasses import dataclass
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Self
 
@@ -27,7 +28,20 @@ from .interfaces import HTTPClient, HTTPClientConfiguration, HTTPRequestConfigur
 __all__ = ["Urllib3HTTPClient", "Urllib3HTTPClientConfig"]
 
 
+@dataclass(kw_only=True)
 class Urllib3HTTPClientConfig(HTTPClientConfiguration):
+    """Client-level configuration for :py:class:`Urllib3HTTPClient`.
+
+    :param connect_timeout: How long, in seconds, to wait for a connection, or None
+        to wait indefinitely.
+    :param read_timeout: How long, in seconds, to wait for data on an open
+        connection, or None to wait indefinitely. A request's
+        ``HTTPRequestConfiguration.read_timeout`` takes precedence.
+    """
+
+    connect_timeout: float | None = 60.0
+    read_timeout: float | None = 60.0
+
     def __post_init__(self) -> None:
         _assert_urllib3()
 
@@ -84,10 +98,10 @@ class Urllib3HTTPClient(HTTPClient):
                 "Cannot send a request after the HTTP client has been closed."
             )
         request_config = request_config or HTTPRequestConfiguration()
-        timeout = (
-            urllib3.Timeout(read=request_config.read_timeout)
-            if request_config.read_timeout is not None
-            else None
+        read_timeout = request_config.read_timeout
+        timeout = urllib3.Timeout(
+            connect=self._config.connect_timeout,
+            read=self._config.read_timeout if read_timeout is None else read_timeout,
         )
         headers = urllib3.HTTPHeaderDict()
         for name, value in chain.from_iterable(

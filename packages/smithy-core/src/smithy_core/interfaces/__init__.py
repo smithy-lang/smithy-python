@@ -15,7 +15,6 @@ from inspect import iscoroutinefunction
 from typing import (
     TYPE_CHECKING,
     Any,
-    Literal,
     Protocol,
     TypeGuard,
     overload,
@@ -389,12 +388,6 @@ class ClientTransport[I, O](Protocol):
     def send(self, request: I) -> O:
         """Send a request over the transport and receive the response."""
         ...
-
-
-class DuplexClientTransport[I, O](ClientTransport[I, O], Protocol):
-    """A synchronous client transport that supports duplex event streaming."""
-
-    SUPPORTS_DUPLEX_STREAMING: Literal[True]
 
 
 class ClientProtocol[I, O](Protocol):

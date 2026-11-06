@@ -305,7 +305,7 @@ public final class ConfigGenerator implements Runnable {
                         .build())
                 .documentation("The transport to use to send requests (e.g. an HTTP client). "
                         + "Operations with bidirectional event streams require a "
-                        + "AsyncDuplexClientTransport, such as AsyncAWSCRTHTTPClient. Transports are "
+                        + "AsyncDuplexClientTransport, such as AWSCRTHTTPClient. Transports are "
                         + "assumed not to support duplex streaming unless they explicitly set "
                         + "SUPPORTS_DUPLEX_STREAMING to True.");
 

@@ -50,10 +50,7 @@ logger = logging.getLogger(__name__)
 
 
 class RpcV2Protocol(Client[Config]):
-    """
-    Synchronous variant of `rpcv2cbor.aio.client.AsyncRpcV2Protocol`,
-    which documents each operation.
-    """
+    """Client for RpcV2Protocol"""
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
@@ -62,11 +59,41 @@ class RpcV2Protocol(Client[Config]):
         input: EmptyInputOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> EmptyInputOutputOutput:
+        """
+        Invokes the EmptyInputOutput operation.
+
+        Args:
+            input:
+                An instance of `EmptyInputOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EmptyInputOutputOutput`.
+        """
         return self._invoke(input, _models.EMPTY_INPUT_OUTPUT, [], plugins)
 
     def float16(
         self, input: Float16Input | None = None, plugins: list[Plugin] | None = None
     ) -> Float16Output:
+        """
+        Invokes the Float16 operation.
+
+        Args:
+            input:
+                An instance of `Float16Input`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `Float16Output`.
+        """
         return self._invoke(input, _models.FLOAT16, [], plugins)
 
     def fractional_seconds(
@@ -74,6 +101,21 @@ class RpcV2Protocol(Client[Config]):
         input: FractionalSecondsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> FractionalSecondsOutput:
+        """
+        Invokes the FractionalSeconds operation.
+
+        Args:
+            input:
+                An instance of `FractionalSecondsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
+        """
         return self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
 
     def greeting_with_errors(
@@ -81,6 +123,28 @@ class RpcV2Protocol(Client[Config]):
         input: GreetingWithErrorsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> GreetingWithErrorsOutput:
+        """
+        This operation has three possible return values:
+
+        1.  A successful response in the form of GreetingWithErrorsOutput
+        2.  An InvalidGreeting error.
+        3.  A ComplexError error.
+
+        Implementations must be able to successfully take a response and
+        properly deserialize successful and error responses.
+
+        Args:
+            input:
+                An instance of `GreetingWithErrorsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
+        """
         return self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
     def no_input_output(
@@ -88,6 +152,21 @@ class RpcV2Protocol(Client[Config]):
         input: NoInputOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NoInputOutputOutput:
+        """
+        Invokes the NoInputOutput operation.
+
+        Args:
+            input:
+                An instance of `NoInputOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NoInputOutputOutput`.
+        """
         return self._invoke(input, _models.NO_INPUT_OUTPUT, [], plugins)
 
     def operation_with_defaults(
@@ -95,6 +174,21 @@ class RpcV2Protocol(Client[Config]):
         input: OperationWithDefaultsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OperationWithDefaultsOutput:
+        """
+        Invokes the OperationWithDefaults operation.
+
+        Args:
+            input:
+                An instance of `OperationWithDefaultsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OperationWithDefaultsOutput`.
+        """
         return self._invoke(input, _models.OPERATION_WITH_DEFAULTS, [], plugins)
 
     def optional_input_output(
@@ -102,6 +196,21 @@ class RpcV2Protocol(Client[Config]):
         input: OptionalInputOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OptionalInputOutputOutput:
+        """
+        Invokes the OptionalInputOutput operation.
+
+        Args:
+            input:
+                An instance of `OptionalInputOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OptionalInputOutputOutput`.
+        """
         return self._invoke(input, _models.OPTIONAL_INPUT_OUTPUT, [], plugins)
 
     def recursive_shapes(
@@ -109,6 +218,21 @@ class RpcV2Protocol(Client[Config]):
         input: RecursiveShapesInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> RecursiveShapesOutput:
+        """
+        Invokes the RecursiveShapes operation.
+
+        Args:
+            input:
+                An instance of `RecursiveShapesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `RecursiveShapesOutput`.
+        """
         return self._invoke(input, _models.RECURSIVE_SHAPES, [], plugins)
 
     def rpc_v2_cbor_dense_maps(
@@ -116,6 +240,21 @@ class RpcV2Protocol(Client[Config]):
         input: RpcV2CborDenseMapsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> RpcV2CborDenseMapsOutput:
+        """
+        The example tests basic map serialization.
+
+        Args:
+            input:
+                An instance of `RpcV2CborDenseMapsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `RpcV2CborDenseMapsOutput`.
+        """
         return self._invoke(input, _models.RPC_V2_CBOR_DENSE_MAPS, [], plugins)
 
     def rpc_v2_cbor_lists(
@@ -123,6 +262,27 @@ class RpcV2Protocol(Client[Config]):
         input: RpcV2CborListsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> RpcV2CborListsOutput:
+        """
+        This test case serializes JSON lists for the following cases for both
+        input and output:
+
+        1.  Normal lists.
+        2.  Normal sets.
+        3.  Lists of lists.
+        4.  Lists of structures.
+
+        Args:
+            input:
+                An instance of `RpcV2CborListsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `RpcV2CborListsOutput`.
+        """
         return self._invoke(input, _models.RPC_V2_CBOR_LISTS, [], plugins)
 
     def rpc_v2_cbor_sparse_maps(
@@ -130,6 +290,21 @@ class RpcV2Protocol(Client[Config]):
         input: RpcV2CborSparseMapsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> RpcV2CborSparseMapsOutput:
+        """
+        Invokes the RpcV2CborSparseMaps operation.
+
+        Args:
+            input:
+                An instance of `RpcV2CborSparseMapsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `RpcV2CborSparseMapsOutput`.
+        """
         return self._invoke(input, _models.RPC_V2_CBOR_SPARSE_MAPS, [], plugins)
 
     def rpc_v2_cbor_unions(
@@ -137,6 +312,21 @@ class RpcV2Protocol(Client[Config]):
         input: RpcV2CborUnionsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> RpcV2CborUnionsOutput:
+        """
+        This operation uses unions for inputs and outputs.
+
+        Args:
+            input:
+                An instance of `RpcV2CborUnionsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `RpcV2CborUnionsOutput`.
+        """
         return self._invoke(input, _models.RPC_V2_CBOR_UNIONS, [], plugins)
 
     def simple_scalar_properties(
@@ -144,6 +334,21 @@ class RpcV2Protocol(Client[Config]):
         input: SimpleScalarPropertiesInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
+        """
+        Invokes the SimpleScalarProperties operation.
+
+        Args:
+            input:
+                An instance of `SimpleScalarPropertiesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
+        """
         return self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
 
     def sparse_nulls_operation(
@@ -151,6 +356,21 @@ class RpcV2Protocol(Client[Config]):
         input: SparseNullsOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SparseNullsOperationOutput:
+        """
+        Invokes the SparseNullsOperation operation.
+
+        Args:
+            input:
+                An instance of `SparseNullsOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SparseNullsOperationOutput`.
+        """
         return self._invoke(input, _models.SPARSE_NULLS_OPERATION, [], plugins)
 
     def _new_config(self) -> Config:

@@ -2,9 +2,10 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 import contextlib
+import logging
 from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from smithy_core.interfaces import ClientProtocol, Request, Response
 
@@ -55,6 +56,8 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
     transport: AsyncClientTransport[TRequest, TResponse]
     """The transport to use to send the request and receive the response (e.g. an HTTP
     Client)."""
+
+    _logger: ClassVar[logging.Logger] = logging.getLogger("smithy_core.aio.client")
 
     def __init__(
         self,
@@ -153,8 +156,8 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
                 f"not support duplex (bidirectional) event streaming, which is "
                 f"required by the {call.operation.schema.id} operation. Use a "
                 f"transport that does, such as "
-                f"smithy_http.aio.crt.AsyncAWSCRTHTTPClient. Custom transports that "
-                f"support duplex streaming can implement DuplexClientTransport "
+                f"smithy_http.aio.crt.AWSCRTHTTPClient. Custom transports that "
+                f"support duplex streaming can implement AsyncDuplexClientTransport "
                 f"by setting SUPPORTS_DUPLEX_STREAMING to True."
             )
         request_future = Future[RequestContext[I, TRequest]]()

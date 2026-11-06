@@ -159,11 +159,11 @@ public final class RuntimeTypes {
 
     // smithy_http.aio.crt
     public static final Symbol AWS_CRT_HTTP_CLIENT =
-            createSymbol("aio.crt", "AsyncAWSCRTHTTPClient", SmithyPythonDependency.SMITHY_HTTP);
+            createSymbol("aio.crt", "AWSCRTHTTPClient", SmithyPythonDependency.SMITHY_HTTP);
 
     // smithy_http.aio.aiohttp
     public static final Symbol AIOHTTP_CLIENT =
-            createSymbol("aio.aiohttp", "AsyncAIOHTTPClient", SmithyPythonDependency.SMITHY_HTTP);
+            createSymbol("aio.aiohttp", "AIOHTTPClient", SmithyPythonDependency.SMITHY_HTTP);
 
     // smithy_http.aio.identity.apikey
     public static final Symbol API_KEY_IDENTITY_RESOLVER =

@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from asyncio import iscoroutine, sleep
 from collections.abc import AsyncIterable, Iterable
-from inspect import iscoroutinefunction
+from inspect import isawaitable
 from typing import Any
 
 from .._pipeline import _seek  # pyright: ignore[reportPrivateUsage]
@@ -31,8 +31,13 @@ async def read_streaming_blob_async(body: StreamingBlob) -> bytes:
     :param body: The streaming blob to read from.
     """
     match body:
-        case AsyncByteStream() if iscoroutinefunction(body.read):
-            return await body.read()
+        case AsyncByteStream():
+            # runtime_checkable can't tell sync readers apart, and a sync read may
+            # return an awaitable.
+            data: Any = body.read()
+            if isawaitable(data):
+                data = await data
+            return bytes(data)
         case AsyncIterable():
             full = b""
             async for chunk in body:

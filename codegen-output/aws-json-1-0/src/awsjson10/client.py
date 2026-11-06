@@ -59,10 +59,7 @@ logger = logging.getLogger(__name__)
 
 
 class JSONRPC10Client(Client[JSONRPC10Config]):
-    """
-    Synchronous variant of `awsjson10.aio.client.AsyncJSONRPC10Client`,
-    which documents each operation.
-    """
+    """Client for JsonRpc10"""
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
@@ -71,6 +68,22 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: ContentTypeParametersInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> ContentTypeParametersOutput:
+        """
+        The example tests how servers must support requests containing a
+        `Content-Type` header with parameters.
+
+        Args:
+            input:
+                An instance of `ContentTypeParametersInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `ContentTypeParametersOutput`.
+        """
         return self._invoke(input, _models.CONTENT_TYPE_PARAMETERS, [], plugins)
 
     def empty_input_and_empty_output(
@@ -78,6 +91,24 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: EmptyInputAndEmptyOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> EmptyInputAndEmptyOutputOutput:
+        """
+        The example tests how requests and responses are serialized when
+        there's no request or response payload because the operation has an
+        empty input and empty output structure that reuses the same shape. While
+        this should be rare, code generators must support this.
+
+        Args:
+            input:
+                An instance of `EmptyInputAndEmptyOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EmptyInputAndEmptyOutputOutput`.
+        """
         return self._invoke(input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins)
 
     def endpoint_operation(
@@ -85,6 +116,21 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: EndpointOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> EndpointOperationOutput:
+        """
+        Invokes the EndpointOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
+        """
         return self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
 
     def endpoint_with_host_label_operation(
@@ -92,6 +138,21 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: EndpointWithHostLabelOperationInput,
         plugins: list[Plugin] | None = None,
     ) -> EndpointWithHostLabelOperationOutput:
+        """
+        Invokes the EndpointWithHostLabelOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointWithHostLabelOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
+        """
         return self._invoke(
             input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
@@ -101,6 +162,25 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: GreetingWithErrorsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> GreetingWithErrorsOutput:
+        """
+        This operation has three possible return values: 1. A successful
+        response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting
+        error. 3. A ComplexError error. Implementations must be able to
+        successfully take a response and properly deserialize successful and
+        error responses.
+
+        Args:
+            input:
+                An instance of `GreetingWithErrorsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
+        """
         return self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
     def host_with_path_operation(
@@ -108,11 +188,41 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: HostWithPathOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HostWithPathOperationOutput:
+        """
+        Invokes the HostWithPathOperation operation.
+
+        Args:
+            input:
+                An instance of `HostWithPathOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
+        """
         return self._invoke(input, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
     def json_unions(
         self, input: JsonUnionsInput | None = None, plugins: list[Plugin] | None = None
     ) -> JsonUnionsOutput:
+        """
+        This operation uses unions for inputs and outputs.
+
+        Args:
+            input:
+                An instance of `JsonUnionsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonUnionsOutput`.
+        """
         return self._invoke(input, _models.JSON_UNIONS, [], plugins)
 
     def no_input_and_no_output(
@@ -120,6 +230,24 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: NoInputAndNoOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NoInputAndNoOutputOutput:
+        """
+        The example tests how requests and responses are serialized when
+        there's no request or response payload because the operation has no
+        input or output. While this should be rare, code generators must support
+        this.
+
+        Args:
+            input:
+                An instance of `NoInputAndNoOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NoInputAndNoOutputOutput`.
+        """
         return self._invoke(input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
     def no_input_and_output(
@@ -127,6 +255,24 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: NoInputAndOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NoInputAndOutputOutput:
+        """
+        The example tests how requests and responses are serialized when
+        there's no request or response payload because the operation has no
+        input and the output is empty. While this should be rare, code
+        generators must support this.
+
+        Args:
+            input:
+                An instance of `NoInputAndOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NoInputAndOutputOutput`.
+        """
         return self._invoke(input, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
     def operation_with_defaults(
@@ -134,6 +280,21 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: OperationWithDefaultsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OperationWithDefaultsOutput:
+        """
+        Invokes the OperationWithDefaults operation.
+
+        Args:
+            input:
+                An instance of `OperationWithDefaultsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OperationWithDefaultsOutput`.
+        """
         return self._invoke(input, _models.OPERATION_WITH_DEFAULTS, [], plugins)
 
     def operation_with_nested_structure(
@@ -141,6 +302,21 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: OperationWithNestedStructureInput,
         plugins: list[Plugin] | None = None,
     ) -> OperationWithNestedStructureOutput:
+        """
+        Invokes the OperationWithNestedStructure operation.
+
+        Args:
+            input:
+                An instance of `OperationWithNestedStructureInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OperationWithNestedStructureOutput`.
+        """
         return self._invoke(input, _models.OPERATION_WITH_NESTED_STRUCTURE, [], plugins)
 
     def operation_with_required_members(
@@ -148,6 +324,21 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: OperationWithRequiredMembersInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OperationWithRequiredMembersOutput:
+        """
+        Invokes the OperationWithRequiredMembers operation.
+
+        Args:
+            input:
+                An instance of `OperationWithRequiredMembersInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OperationWithRequiredMembersOutput`.
+        """
         return self._invoke(input, _models.OPERATION_WITH_REQUIRED_MEMBERS, [], plugins)
 
     def operation_with_required_members_with_defaults(
@@ -155,6 +346,21 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: OperationWithRequiredMembersWithDefaultsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OperationWithRequiredMembersWithDefaultsOutput:
+        """
+        Invokes the OperationWithRequiredMembersWithDefaults operation.
+
+        Args:
+            input:
+                An instance of `OperationWithRequiredMembersWithDefaultsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OperationWithRequiredMembersWithDefaultsOutput`.
+        """
         return self._invoke(
             input, _models.OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS, [], plugins
         )
@@ -164,6 +370,21 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: PutWithContentEncodingInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> PutWithContentEncodingOutput:
+        """
+        Invokes the PutWithContentEncoding operation.
+
+        Args:
+            input:
+                An instance of `PutWithContentEncodingInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
+        """
         return self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
 
     def query_incompatible_operation(
@@ -171,6 +392,21 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: QueryIncompatibleOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryIncompatibleOperationOutput:
+        """
+        Invokes the QueryIncompatibleOperation operation.
+
+        Args:
+            input:
+                An instance of `QueryIncompatibleOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `QueryIncompatibleOperationOutput`.
+        """
         return self._invoke(input, _models.QUERY_INCOMPATIBLE_OPERATION, [], plugins)
 
     def simple_scalar_properties(
@@ -178,6 +414,21 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         input: SimpleScalarPropertiesInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
+        """
+        Invokes the SimpleScalarProperties operation.
+
+        Args:
+            input:
+                An instance of `SimpleScalarPropertiesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
+        """
         return self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
 
     def _new_config(self) -> JSONRPC10Config:

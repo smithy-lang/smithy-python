@@ -29,7 +29,7 @@ public final class SyncVariant {
 
     // Sync twins that don't follow the naming convention.
     private static final Map<String, Symbol> SPECIAL_CASES = Map.of(
-            "smithy_http.aio.aiohttp.AsyncAIOHTTPClient",
+            "smithy_http.aio.aiohttp.AIOHTTPClient",
             Symbol.builder()
                     .name("Urllib3HTTPClient")
                     .namespace("smithy_http.urllib3", ".")

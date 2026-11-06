@@ -239,10 +239,7 @@ logger = logging.getLogger(__name__)
 
 
 class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
-    """
-    Synchronous variant of `restjson.aio.client.AsyncRestJsonProtocolClient`,
-    which documents each operation.
-    """
+    """Client for RestJson"""
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
@@ -251,6 +248,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: AllQueryStringTypesInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> AllQueryStringTypesOutput:
+        """
+        This example uses all query string types.
+
+        Args:
+            input:
+                An instance of `AllQueryStringTypesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `AllQueryStringTypesOutput`.
+        """
         return self._invoke(input, _models.ALL_QUERY_STRING_TYPES, [], plugins)
 
     def constant_and_variable_query_string(
@@ -258,6 +270,23 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: ConstantAndVariableQueryStringInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> ConstantAndVariableQueryStringOutput:
+        """
+        This example uses fixed query string params and variable query string
+        params. The fixed query string parameters and variable parameters must
+        both be serialized (implementations may need to merge them together).
+
+        Args:
+            input:
+                An instance of `ConstantAndVariableQueryStringInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `ConstantAndVariableQueryStringOutput`.
+        """
         return self._invoke(
             input, _models.CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
         )
@@ -265,6 +294,24 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def constant_query_string(
         self, input: ConstantQueryStringInput, plugins: list[Plugin] | None = None
     ) -> ConstantQueryStringOutput:
+        """
+        This example uses a constant query string parameters and a label. This
+        simply tests that labels and query string parameters are compatible. The
+        fixed query string parameter named \"hello\" should in no way conflict
+        with the label, `{hello}`.
+
+        Args:
+            input:
+                An instance of `ConstantQueryStringInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `ConstantQueryStringOutput`.
+        """
         return self._invoke(input, _models.CONSTANT_QUERY_STRING, [], plugins)
 
     def content_type_parameters(
@@ -272,6 +319,22 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: ContentTypeParametersInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> ContentTypeParametersOutput:
+        """
+        The example tests how servers must support requests containing a
+        `Content-Type` header with parameters.
+
+        Args:
+            input:
+                An instance of `ContentTypeParametersInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `ContentTypeParametersOutput`.
+        """
         return self._invoke(input, _models.CONTENT_TYPE_PARAMETERS, [], plugins)
 
     def datetime_offsets(
@@ -279,6 +342,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: DatetimeOffsetsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> DatetimeOffsetsOutput:
+        """
+        Invokes the DatetimeOffsets operation.
+
+        Args:
+            input:
+                An instance of `DatetimeOffsetsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
+        """
         return self._invoke(input, _models.DATETIME_OFFSETS, [], plugins)
 
     def document_type(
@@ -286,6 +364,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: DocumentTypeInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> DocumentTypeOutput:
+        """
+        This example serializes a document as part of the payload.
+
+        Args:
+            input:
+                An instance of `DocumentTypeInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `DocumentTypeOutput`.
+        """
         return self._invoke(input, _models.DOCUMENT_TYPE, [], plugins)
 
     def document_type_as_map_value(
@@ -293,6 +386,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: DocumentTypeAsMapValueInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> DocumentTypeAsMapValueOutput:
+        """
+        This example serializes documents as the value of maps.
+
+        Args:
+            input:
+                An instance of `DocumentTypeAsMapValueInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `DocumentTypeAsMapValueOutput`.
+        """
         return self._invoke(input, _models.DOCUMENT_TYPE_AS_MAP_VALUE, [], plugins)
 
     def document_type_as_payload(
@@ -300,6 +408,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: DocumentTypeAsPayloadInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> DocumentTypeAsPayloadOutput:
+        """
+        This example serializes a document as the entire HTTP payload.
+
+        Args:
+            input:
+                An instance of `DocumentTypeAsPayloadInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `DocumentTypeAsPayloadOutput`.
+        """
         return self._invoke(input, _models.DOCUMENT_TYPE_AS_PAYLOAD, [], plugins)
 
     def empty_input_and_empty_output(
@@ -307,6 +430,24 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: EmptyInputAndEmptyOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> EmptyInputAndEmptyOutputOutput:
+        """
+        The example tests how requests and responses are serialized when
+        there's no request or response payload because the operation has an
+        empty input and empty output structure that reuses the same shape. While
+        this should be rare, code generators must support this.
+
+        Args:
+            input:
+                An instance of `EmptyInputAndEmptyOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EmptyInputAndEmptyOutputOutput`.
+        """
         return self._invoke(input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins)
 
     def endpoint_operation(
@@ -314,6 +455,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: EndpointOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> EndpointOperationOutput:
+        """
+        Invokes the EndpointOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
+        """
         return self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
 
     def endpoint_with_host_label_operation(
@@ -321,6 +477,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: EndpointWithHostLabelOperationInput,
         plugins: list[Plugin] | None = None,
     ) -> EndpointWithHostLabelOperationOutput:
+        """
+        Invokes the EndpointWithHostLabelOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointWithHostLabelOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
+        """
         return self._invoke(
             input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
@@ -330,6 +501,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: FractionalSecondsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> FractionalSecondsOutput:
+        """
+        Invokes the FractionalSeconds operation.
+
+        Args:
+            input:
+                An instance of `FractionalSecondsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
+        """
         return self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
 
     def greeting_with_errors(
@@ -337,6 +523,25 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: GreetingWithErrorsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> GreetingWithErrorsOutput:
+        """
+        This operation has four possible return values: 1. A successful response
+        in the form of GreetingWithErrorsOutput 2. An InvalidGreeting error. 3.
+        A BadRequest error. 4. A FooError. Implementations must be able to
+        successfully take a response and properly (de)serialize successful and
+        error responses based on the the presence of the
+
+        Args:
+            input:
+                An instance of `GreetingWithErrorsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
+        """
         return self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
     def host_with_path_operation(
@@ -344,6 +549,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HostWithPathOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HostWithPathOperationOutput:
+        """
+        Invokes the HostWithPathOperation operation.
+
+        Args:
+            input:
+                An instance of `HostWithPathOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
+        """
         return self._invoke(input, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
     def http_checksum_required(
@@ -351,6 +571,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpChecksumRequiredInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpChecksumRequiredOutput:
+        """
+        This example tests httpChecksumRequired trait
+
+        Args:
+            input:
+                An instance of `HttpChecksumRequiredInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpChecksumRequiredOutput`.
+        """
         return self._invoke(input, _models.HTTP_CHECKSUM_REQUIRED, [], plugins)
 
     def http_empty_prefix_headers(
@@ -358,6 +593,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpEmptyPrefixHeadersInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpEmptyPrefixHeadersOutput:
+        """
+        Clients that perform this test extract all headers from the response.
+
+        Args:
+            input:
+                An instance of `HttpEmptyPrefixHeadersInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpEmptyPrefixHeadersOutput`.
+        """
         return self._invoke(input, _models.HTTP_EMPTY_PREFIX_HEADERS, [], plugins)
 
     def http_enum_payload(
@@ -365,6 +615,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpEnumPayloadInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpEnumPayloadOutput:
+        """
+        Invokes the HttpEnumPayload operation.
+
+        Args:
+            input:
+                An instance of `HttpEnumPayloadInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpEnumPayloadOutput`.
+        """
         return self._invoke(input, _models.HTTP_ENUM_PAYLOAD, [], plugins)
 
     def http_payload_traits(
@@ -372,6 +637,23 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpPayloadTraitsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadTraitsOutput:
+        """
+        This example serializes a blob shape in the payload. In this example, no
+        JSON document is synthesized because the payload is not a structure or a
+        union type.
+
+        Args:
+            input:
+                An instance of `HttpPayloadTraitsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpPayloadTraitsOutput`.
+        """
         return self._invoke(input, _models.HTTP_PAYLOAD_TRAITS, [], plugins)
 
     def http_payload_traits_with_media_type(
@@ -379,6 +661,22 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpPayloadTraitsWithMediaTypeInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadTraitsWithMediaTypeOutput:
+        """
+        This example uses a `@mediaType` trait on the payload to force a
+        custom content-type to be serialized.
+
+        Args:
+            input:
+                An instance of `HttpPayloadTraitsWithMediaTypeInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
+        """
         return self._invoke(
             input, _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
         )
@@ -388,6 +686,23 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpPayloadWithStructureInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithStructureOutput:
+        """
+        This example serializes a structure in the payload. Note that
+        serializing a structure changes the wrapper element name to match the
+        targeted structure.
+
+        Args:
+            input:
+                An instance of `HttpPayloadWithStructureInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpPayloadWithStructureOutput`.
+        """
         return self._invoke(input, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins)
 
     def http_payload_with_union(
@@ -395,6 +710,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpPayloadWithUnionInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithUnionOutput:
+        """
+        This example serializes a union in the payload.
+
+        Args:
+            input:
+                An instance of `HttpPayloadWithUnionInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpPayloadWithUnionOutput`.
+        """
         return self._invoke(input, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins)
 
     def http_prefix_headers(
@@ -402,6 +732,22 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpPrefixHeadersInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPrefixHeadersOutput:
+        """
+        This examples adds headers to the input of a request and response by
+        prefix.
+
+        Args:
+            input:
+                An instance of `HttpPrefixHeadersInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpPrefixHeadersOutput`.
+        """
         return self._invoke(input, _models.HTTP_PREFIX_HEADERS, [], plugins)
 
     def http_prefix_headers_in_response(
@@ -409,6 +755,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpPrefixHeadersInResponseInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPrefixHeadersInResponseOutput:
+        """
+        Clients that perform this test extract all headers from the response.
+
+        Args:
+            input:
+                An instance of `HttpPrefixHeadersInResponseInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpPrefixHeadersInResponseOutput`.
+        """
         return self._invoke(input, _models.HTTP_PREFIX_HEADERS_IN_RESPONSE, [], plugins)
 
     def http_query_params_only_operation(
@@ -416,6 +777,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpQueryParamsOnlyOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpQueryParamsOnlyOperationOutput:
+        """
+        This example tests httpQueryParams when no other query parameters exist.
+
+        Args:
+            input:
+                An instance of `HttpQueryParamsOnlyOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpQueryParamsOnlyOperationOutput`.
+        """
         return self._invoke(
             input, _models.HTTP_QUERY_PARAMS_ONLY_OPERATION, [], plugins
         )
@@ -425,6 +801,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpRequestWithFloatLabelsInput,
         plugins: list[Plugin] | None = None,
     ) -> HttpRequestWithFloatLabelsOutput:
+        """
+        Invokes the HttpRequestWithFloatLabels operation.
+
+        Args:
+            input:
+                An instance of `HttpRequestWithFloatLabelsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpRequestWithFloatLabelsOutput`.
+        """
         return self._invoke(input, _models.HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins)
 
     def http_request_with_greedy_label_in_path(
@@ -432,6 +823,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpRequestWithGreedyLabelInPathInput,
         plugins: list[Plugin] | None = None,
     ) -> HttpRequestWithGreedyLabelInPathOutput:
+        """
+        Invokes the HttpRequestWithGreedyLabelInPath operation.
+
+        Args:
+            input:
+                An instance of `HttpRequestWithGreedyLabelInPathInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpRequestWithGreedyLabelInPathOutput`.
+        """
         return self._invoke(
             input, _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
         )
@@ -439,6 +845,22 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_request_with_labels(
         self, input: HttpRequestWithLabelsInput, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithLabelsOutput:
+        """
+        The example tests how requests are serialized when there's no input
+        payload but there are HTTP labels.
+
+        Args:
+            input:
+                An instance of `HttpRequestWithLabelsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpRequestWithLabelsOutput`.
+        """
         return self._invoke(input, _models.HTTP_REQUEST_WITH_LABELS, [], plugins)
 
     def http_request_with_labels_and_timestamp_format(
@@ -446,6 +868,22 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpRequestWithLabelsAndTimestampFormatInput,
         plugins: list[Plugin] | None = None,
     ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
+        """
+        The example tests how requests serialize different timestamp formats in
+        the URI path.
+
+        Args:
+            input:
+                An instance of `HttpRequestWithLabelsAndTimestampFormatInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
+        """
         return self._invoke(
             input, _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
         )
@@ -455,6 +893,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpRequestWithRegexLiteralInput,
         plugins: list[Plugin] | None = None,
     ) -> HttpRequestWithRegexLiteralOutput:
+        """
+        Invokes the HttpRequestWithRegexLiteral operation.
+
+        Args:
+            input:
+                An instance of `HttpRequestWithRegexLiteralInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpRequestWithRegexLiteralOutput`.
+        """
         return self._invoke(input, _models.HTTP_REQUEST_WITH_REGEX_LITERAL, [], plugins)
 
     def http_response_code(
@@ -462,6 +915,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpResponseCodeInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpResponseCodeOutput:
+        """
+        Invokes the HttpResponseCode operation.
+
+        Args:
+            input:
+                An instance of `HttpResponseCodeInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpResponseCodeOutput`.
+        """
         return self._invoke(input, _models.HTTP_RESPONSE_CODE, [], plugins)
 
     def http_string_payload(
@@ -469,6 +937,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: HttpStringPayloadInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpStringPayloadOutput:
+        """
+        Invokes the HttpStringPayload operation.
+
+        Args:
+            input:
+                An instance of `HttpStringPayloadInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HttpStringPayloadOutput`.
+        """
         return self._invoke(input, _models.HTTP_STRING_PAYLOAD, [], plugins)
 
     def ignore_query_params_in_response(
@@ -476,6 +959,23 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: IgnoreQueryParamsInResponseInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> IgnoreQueryParamsInResponseOutput:
+        """
+        This example ensures that query string bound request parameters are
+        serialized in the body of responses if the structure is used in both the
+        request and response.
+
+        Args:
+            input:
+                An instance of `IgnoreQueryParamsInResponseInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `IgnoreQueryParamsInResponseOutput`.
+        """
         return self._invoke(input, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins)
 
     def input_and_output_with_headers(
@@ -483,16 +983,63 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: InputAndOutputWithHeadersInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> InputAndOutputWithHeadersOutput:
+        """
+        The example tests how requests and responses are serialized when there
+        is no input or output payload but there are HTTP header bindings.
+
+        Args:
+            input:
+                An instance of `InputAndOutputWithHeadersInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `InputAndOutputWithHeadersOutput`.
+        """
         return self._invoke(input, _models.INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins)
 
     def json_blobs(
         self, input: JsonBlobsInput | None = None, plugins: list[Plugin] | None = None
     ) -> JsonBlobsOutput:
+        """
+        Blobs are base64 encoded
+
+        Args:
+            input:
+                An instance of `JsonBlobsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonBlobsOutput`.
+        """
         return self._invoke(input, _models.JSON_BLOBS, [], plugins)
 
     def json_enums(
         self, input: JsonEnumsInput | None = None, plugins: list[Plugin] | None = None
     ) -> JsonEnumsOutput:
+        """
+        This example serializes enums as top level properties, in lists, sets,
+        and maps.
+
+        Args:
+            input:
+                An instance of `JsonEnumsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonEnumsOutput`.
+        """
         return self._invoke(input, _models.JSON_ENUMS, [], plugins)
 
     def json_int_enums(
@@ -500,16 +1047,64 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: JsonIntEnumsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> JsonIntEnumsOutput:
+        """
+        This example serializes intEnums as top level properties, in lists,
+        sets, and maps.
+
+        Args:
+            input:
+                An instance of `JsonIntEnumsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonIntEnumsOutput`.
+        """
         return self._invoke(input, _models.JSON_INT_ENUMS, [], plugins)
 
     def json_lists(
         self, input: JsonListsInput | None = None, plugins: list[Plugin] | None = None
     ) -> JsonListsOutput:
+        """
+        This test case serializes JSON lists for the following cases for both
+        input and output: 1. Normal JSON lists. 2. Normal JSON sets. 3. JSON
+        lists of lists. 4. Lists of structures.
+
+        Args:
+            input:
+                An instance of `JsonListsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonListsOutput`.
+        """
         return self._invoke(input, _models.JSON_LISTS, [], plugins)
 
     def json_maps(
         self, input: JsonMapsInput | None = None, plugins: list[Plugin] | None = None
     ) -> JsonMapsOutput:
+        """
+        The example tests basic map serialization.
+
+        Args:
+            input:
+                An instance of `JsonMapsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonMapsOutput`.
+        """
         return self._invoke(input, _models.JSON_MAPS, [], plugins)
 
     def json_timestamps(
@@ -517,11 +1112,42 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: JsonTimestampsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> JsonTimestampsOutput:
+        """
+        This tests how timestamps are serialized, including using the default
+        format of date-time and various @timestampFormat trait values.
+
+        Args:
+            input:
+                An instance of `JsonTimestampsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonTimestampsOutput`.
+        """
         return self._invoke(input, _models.JSON_TIMESTAMPS, [], plugins)
 
     def json_unions(
         self, input: JsonUnionsInput | None = None, plugins: list[Plugin] | None = None
     ) -> JsonUnionsOutput:
+        """
+        This operation uses unions for inputs and outputs.
+
+        Args:
+            input:
+                An instance of `JsonUnionsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `JsonUnionsOutput`.
+        """
         return self._invoke(input, _models.JSON_UNIONS, [], plugins)
 
     def malformed_accept_with_body(
@@ -529,6 +1155,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedAcceptWithBodyInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedAcceptWithBodyOutput:
+        """
+        Invokes the MalformedAcceptWithBody operation.
+
+        Args:
+            input:
+                An instance of `MalformedAcceptWithBodyInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedAcceptWithBodyOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_ACCEPT_WITH_BODY, [], plugins)
 
     def malformed_accept_with_generic_string(
@@ -536,6 +1177,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedAcceptWithGenericStringInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedAcceptWithGenericStringOutput:
+        """
+        Invokes the MalformedAcceptWithGenericString operation.
+
+        Args:
+            input:
+                An instance of `MalformedAcceptWithGenericStringInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedAcceptWithGenericStringOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_ACCEPT_WITH_GENERIC_STRING, [], plugins
         )
@@ -545,6 +1201,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedAcceptWithPayloadInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedAcceptWithPayloadOutput:
+        """
+        Invokes the MalformedAcceptWithPayload operation.
+
+        Args:
+            input:
+                An instance of `MalformedAcceptWithPayloadInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedAcceptWithPayloadOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_ACCEPT_WITH_PAYLOAD, [], plugins)
 
     def malformed_blob(
@@ -552,16 +1223,61 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedBlobInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedBlobOutput:
+        """
+        Invokes the MalformedBlob operation.
+
+        Args:
+            input:
+                An instance of `MalformedBlobInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedBlobOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_BLOB, [], plugins)
 
     def malformed_boolean(
         self, input: MalformedBooleanInput, plugins: list[Plugin] | None = None
     ) -> MalformedBooleanOutput:
+        """
+        Invokes the MalformedBoolean operation.
+
+        Args:
+            input:
+                An instance of `MalformedBooleanInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedBooleanOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_BOOLEAN, [], plugins)
 
     def malformed_byte(
         self, input: MalformedByteInput, plugins: list[Plugin] | None = None
     ) -> MalformedByteOutput:
+        """
+        Invokes the MalformedByte operation.
+
+        Args:
+            input:
+                An instance of `MalformedByteInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedByteOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_BYTE, [], plugins)
 
     def malformed_content_type_with_body(
@@ -569,6 +1285,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedContentTypeWithBodyInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedContentTypeWithBodyOutput:
+        """
+        Invokes the MalformedContentTypeWithBody operation.
+
+        Args:
+            input:
+                An instance of `MalformedContentTypeWithBodyInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedContentTypeWithBodyOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_CONTENT_TYPE_WITH_BODY, [], plugins
         )
@@ -578,6 +1309,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedContentTypeWithGenericStringInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedContentTypeWithGenericStringOutput:
+        """
+        Invokes the MalformedContentTypeWithGenericString operation.
+
+        Args:
+            input:
+                An instance of `MalformedContentTypeWithGenericStringInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedContentTypeWithGenericStringOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING, [], plugins
         )
@@ -587,6 +1333,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedContentTypeWithoutBodyInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedContentTypeWithoutBodyOutput:
+        """
+        Invokes the MalformedContentTypeWithoutBody operation.
+
+        Args:
+            input:
+                An instance of `MalformedContentTypeWithoutBodyInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedContentTypeWithoutBodyOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY, [], plugins
         )
@@ -596,6 +1357,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedContentTypeWithoutBodyEmptyInputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedContentTypeWithoutBodyEmptyInputOutput:
+        """
+        Invokes the MalformedContentTypeWithoutBodyEmptyInput operation.
+
+        Args:
+            input:
+                An instance of `MalformedContentTypeWithoutBodyEmptyInputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedContentTypeWithoutBodyEmptyInputOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT, [], plugins
         )
@@ -605,6 +1381,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedContentTypeWithPayloadInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedContentTypeWithPayloadOutput:
+        """
+        Invokes the MalformedContentTypeWithPayload operation.
+
+        Args:
+            input:
+                An instance of `MalformedContentTypeWithPayloadInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedContentTypeWithPayloadOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_CONTENT_TYPE_WITH_PAYLOAD, [], plugins
         )
@@ -612,16 +1403,61 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_double(
         self, input: MalformedDoubleInput, plugins: list[Plugin] | None = None
     ) -> MalformedDoubleOutput:
+        """
+        Invokes the MalformedDouble operation.
+
+        Args:
+            input:
+                An instance of `MalformedDoubleInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedDoubleOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_DOUBLE, [], plugins)
 
     def malformed_float(
         self, input: MalformedFloatInput, plugins: list[Plugin] | None = None
     ) -> MalformedFloatOutput:
+        """
+        Invokes the MalformedFloat operation.
+
+        Args:
+            input:
+                An instance of `MalformedFloatInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedFloatOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_FLOAT, [], plugins)
 
     def malformed_integer(
         self, input: MalformedIntegerInput, plugins: list[Plugin] | None = None
     ) -> MalformedIntegerOutput:
+        """
+        Invokes the MalformedInteger operation.
+
+        Args:
+            input:
+                An instance of `MalformedIntegerInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedIntegerOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_INTEGER, [], plugins)
 
     def malformed_list(
@@ -629,11 +1465,41 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedListInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedListOutput:
+        """
+        Invokes the MalformedList operation.
+
+        Args:
+            input:
+                An instance of `MalformedListInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedListOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_LIST, [], plugins)
 
     def malformed_long(
         self, input: MalformedLongInput, plugins: list[Plugin] | None = None
     ) -> MalformedLongOutput:
+        """
+        Invokes the MalformedLong operation.
+
+        Args:
+            input:
+                An instance of `MalformedLongInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedLongOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_LONG, [], plugins)
 
     def malformed_map(
@@ -641,6 +1507,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedMapInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedMapOutput:
+        """
+        Invokes the MalformedMap operation.
+
+        Args:
+            input:
+                An instance of `MalformedMapInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedMapOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_MAP, [], plugins)
 
     def malformed_request_body(
@@ -648,11 +1529,41 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedRequestBodyInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedRequestBodyOutput:
+        """
+        Invokes the MalformedRequestBody operation.
+
+        Args:
+            input:
+                An instance of `MalformedRequestBodyInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedRequestBodyOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_REQUEST_BODY, [], plugins)
 
     def malformed_short(
         self, input: MalformedShortInput, plugins: list[Plugin] | None = None
     ) -> MalformedShortOutput:
+        """
+        Invokes the MalformedShort operation.
+
+        Args:
+            input:
+                An instance of `MalformedShortInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedShortOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_SHORT, [], plugins)
 
     def malformed_string(
@@ -660,6 +1571,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedStringInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedStringOutput:
+        """
+        Invokes the MalformedString operation.
+
+        Args:
+            input:
+                An instance of `MalformedStringInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedStringOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_STRING, [], plugins)
 
     def malformed_timestamp_body_date_time(
@@ -667,6 +1593,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampBodyDateTimeInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampBodyDateTimeOutput:
+        """
+        Invokes the MalformedTimestampBodyDateTime operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampBodyDateTimeInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampBodyDateTimeOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_TIMESTAMP_BODY_DATE_TIME, [], plugins
         )
@@ -676,6 +1617,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampBodyDefaultInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampBodyDefaultOutput:
+        """
+        Invokes the MalformedTimestampBodyDefault operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampBodyDefaultInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampBodyDefaultOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_TIMESTAMP_BODY_DEFAULT, [], plugins
         )
@@ -685,6 +1641,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampBodyHttpDateInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampBodyHttpDateOutput:
+        """
+        Invokes the MalformedTimestampBodyHttpDate operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampBodyHttpDateInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampBodyHttpDateOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_TIMESTAMP_BODY_HTTP_DATE, [], plugins
         )
@@ -694,6 +1665,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampHeaderDateTimeInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampHeaderDateTimeOutput:
+        """
+        Invokes the MalformedTimestampHeaderDateTime operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampHeaderDateTimeInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampHeaderDateTimeOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_TIMESTAMP_HEADER_DATE_TIME, [], plugins
         )
@@ -703,6 +1689,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampHeaderDefaultInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampHeaderDefaultOutput:
+        """
+        Invokes the MalformedTimestampHeaderDefault operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampHeaderDefaultInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampHeaderDefaultOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_TIMESTAMP_HEADER_DEFAULT, [], plugins
         )
@@ -712,6 +1713,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampHeaderEpochInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampHeaderEpochOutput:
+        """
+        Invokes the MalformedTimestampHeaderEpoch operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampHeaderEpochInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampHeaderEpochOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_TIMESTAMP_HEADER_EPOCH, [], plugins
         )
@@ -721,6 +1737,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampPathDefaultInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampPathDefaultOutput:
+        """
+        Invokes the MalformedTimestampPathDefault operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampPathDefaultInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampPathDefaultOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_TIMESTAMP_PATH_DEFAULT, [], plugins
         )
@@ -730,6 +1761,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampPathEpochInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampPathEpochOutput:
+        """
+        Invokes the MalformedTimestampPathEpoch operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampPathEpochInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampPathEpochOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_TIMESTAMP_PATH_EPOCH, [], plugins)
 
     def malformed_timestamp_path_http_date(
@@ -737,6 +1783,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampPathHttpDateInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampPathHttpDateOutput:
+        """
+        Invokes the MalformedTimestampPathHttpDate operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampPathHttpDateInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampPathHttpDateOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_TIMESTAMP_PATH_HTTP_DATE, [], plugins
         )
@@ -746,6 +1807,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampQueryDefaultInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampQueryDefaultOutput:
+        """
+        Invokes the MalformedTimestampQueryDefault operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampQueryDefaultInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampQueryDefaultOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_TIMESTAMP_QUERY_DEFAULT, [], plugins
         )
@@ -755,6 +1831,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampQueryEpochInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampQueryEpochOutput:
+        """
+        Invokes the MalformedTimestampQueryEpoch operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampQueryEpochInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampQueryEpochOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_TIMESTAMP_QUERY_EPOCH, [], plugins)
 
     def malformed_timestamp_query_http_date(
@@ -762,6 +1853,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedTimestampQueryHttpDateInput,
         plugins: list[Plugin] | None = None,
     ) -> MalformedTimestampQueryHttpDateOutput:
+        """
+        Invokes the MalformedTimestampQueryHttpDate operation.
+
+        Args:
+            input:
+                An instance of `MalformedTimestampQueryHttpDateInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedTimestampQueryHttpDateOutput`.
+        """
         return self._invoke(
             input, _models.MALFORMED_TIMESTAMP_QUERY_HTTP_DATE, [], plugins
         )
@@ -771,6 +1877,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MalformedUnionInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MalformedUnionOutput:
+        """
+        Invokes the MalformedUnion operation.
+
+        Args:
+            input:
+                An instance of `MalformedUnionInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MalformedUnionOutput`.
+        """
         return self._invoke(input, _models.MALFORMED_UNION, [], plugins)
 
     def media_type_header(
@@ -778,6 +1899,22 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: MediaTypeHeaderInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> MediaTypeHeaderOutput:
+        """
+        This example ensures that mediaType strings are base64 encoded in
+        headers.
+
+        Args:
+            input:
+                An instance of `MediaTypeHeaderInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `MediaTypeHeaderOutput`.
+        """
         return self._invoke(input, _models.MEDIA_TYPE_HEADER, [], plugins)
 
     def no_input_and_no_output(
@@ -785,6 +1922,24 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: NoInputAndNoOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NoInputAndNoOutputOutput:
+        """
+        The example tests how requests and responses are serialized when
+        there's no request or response payload because the operation has no
+        input or output. While this should be rare, code generators must support
+        this.
+
+        Args:
+            input:
+                An instance of `NoInputAndNoOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NoInputAndNoOutputOutput`.
+        """
         return self._invoke(input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
     def no_input_and_output(
@@ -792,6 +1947,24 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: NoInputAndOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NoInputAndOutputOutput:
+        """
+        The example tests how requests and responses are serialized when
+        there's no request or response payload because the operation has no
+        input and the output is empty. While this should be rare, code
+        generators must support this.
+
+        Args:
+            input:
+                An instance of `NoInputAndOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NoInputAndOutputOutput`.
+        """
         return self._invoke(input, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
     def null_and_empty_headers_client(
@@ -799,6 +1972,22 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: NullAndEmptyHeadersClientInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NullAndEmptyHeadersClientOutput:
+        """
+        Null headers are not sent over the wire, empty headers are serialized to
+        \"\"
+
+        Args:
+            input:
+                An instance of `NullAndEmptyHeadersClientInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NullAndEmptyHeadersClientOutput`.
+        """
         return self._invoke(input, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins)
 
     def null_and_empty_headers_server(
@@ -806,6 +1995,22 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: NullAndEmptyHeadersServerInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NullAndEmptyHeadersServerOutput:
+        """
+        Null headers are not sent over the wire, empty headers are serialized to
+        \"\"
+
+        Args:
+            input:
+                An instance of `NullAndEmptyHeadersServerInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NullAndEmptyHeadersServerOutput`.
+        """
         return self._invoke(input, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins)
 
     def omits_null_serializes_empty_string(
@@ -813,6 +2018,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: OmitsNullSerializesEmptyStringInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OmitsNullSerializesEmptyStringOutput:
+        """
+        Omits null, but serializes empty string value.
+
+        Args:
+            input:
+                An instance of `OmitsNullSerializesEmptyStringInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OmitsNullSerializesEmptyStringOutput`.
+        """
         return self._invoke(
             input, _models.OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
         )
@@ -822,6 +2042,23 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: OmitsSerializingEmptyListsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OmitsSerializingEmptyListsOutput:
+        """
+        Omits serializing empty lists. Because empty strings are serilized as
+        `Foo=`, empty lists cannot also be serialized as `Foo=` and instead
+        must be omitted.
+
+        Args:
+            input:
+                An instance of `OmitsSerializingEmptyListsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OmitsSerializingEmptyListsOutput`.
+        """
         return self._invoke(input, _models.OMITS_SERIALIZING_EMPTY_LISTS, [], plugins)
 
     def operation_with_defaults(
@@ -829,6 +2066,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: OperationWithDefaultsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OperationWithDefaultsOutput:
+        """
+        Invokes the OperationWithDefaults operation.
+
+        Args:
+            input:
+                An instance of `OperationWithDefaultsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OperationWithDefaultsOutput`.
+        """
         return self._invoke(input, _models.OPERATION_WITH_DEFAULTS, [], plugins)
 
     def operation_with_nested_structure(
@@ -836,6 +2088,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: OperationWithNestedStructureInput,
         plugins: list[Plugin] | None = None,
     ) -> OperationWithNestedStructureOutput:
+        """
+        Invokes the OperationWithNestedStructure operation.
+
+        Args:
+            input:
+                An instance of `OperationWithNestedStructureInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `OperationWithNestedStructureOutput`.
+        """
         return self._invoke(input, _models.OPERATION_WITH_NESTED_STRUCTURE, [], plugins)
 
     def post_player_action(
@@ -843,6 +2110,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: PostPlayerActionInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> PostPlayerActionOutput:
+        """
+        This operation defines a union with a Unit member.
+
+        Args:
+            input:
+                An instance of `PostPlayerActionInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `PostPlayerActionOutput`.
+        """
         return self._invoke(input, _models.POST_PLAYER_ACTION, [], plugins)
 
     def post_union_with_json_name(
@@ -850,6 +2132,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: PostUnionWithJsonNameInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> PostUnionWithJsonNameOutput:
+        """
+        This operation defines a union that uses jsonName on some members.
+
+        Args:
+            input:
+                An instance of `PostUnionWithJsonNameInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `PostUnionWithJsonNameOutput`.
+        """
         return self._invoke(input, _models.POST_UNION_WITH_JSON_NAME, [], plugins)
 
     def put_with_content_encoding(
@@ -857,6 +2154,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: PutWithContentEncodingInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> PutWithContentEncodingOutput:
+        """
+        Invokes the PutWithContentEncoding operation.
+
+        Args:
+            input:
+                An instance of `PutWithContentEncodingInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
+        """
         return self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
 
     def query_idempotency_token_auto_fill(
@@ -864,6 +2176,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: QueryIdempotencyTokenAutoFillInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryIdempotencyTokenAutoFillOutput:
+        """
+        Automatically adds idempotency tokens.
+
+        Args:
+            input:
+                An instance of `QueryIdempotencyTokenAutoFillInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `QueryIdempotencyTokenAutoFillOutput`.
+        """
         return self._invoke(
             input, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
@@ -873,6 +2200,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: QueryParamsAsStringListMapInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryParamsAsStringListMapOutput:
+        """
+        Invokes the QueryParamsAsStringListMap operation.
+
+        Args:
+            input:
+                An instance of `QueryParamsAsStringListMapInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `QueryParamsAsStringListMapOutput`.
+        """
         return self._invoke(input, _models.QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins)
 
     def query_precedence(
@@ -880,6 +2222,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: QueryPrecedenceInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryPrecedenceOutput:
+        """
+        Invokes the QueryPrecedence operation.
+
+        Args:
+            input:
+                An instance of `QueryPrecedenceInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `QueryPrecedenceOutput`.
+        """
         return self._invoke(input, _models.QUERY_PRECEDENCE, [], plugins)
 
     def recursive_shapes(
@@ -887,6 +2244,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: RecursiveShapesInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> RecursiveShapesOutput:
+        """
+        Recursive shapes
+
+        Args:
+            input:
+                An instance of `RecursiveShapesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `RecursiveShapesOutput`.
+        """
         return self._invoke(input, _models.RECURSIVE_SHAPES, [], plugins)
 
     def response_code_http_fallback(
@@ -894,6 +2266,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: ResponseCodeHttpFallbackInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> ResponseCodeHttpFallbackOutput:
+        """
+        Invokes the ResponseCodeHttpFallback operation.
+
+        Args:
+            input:
+                An instance of `ResponseCodeHttpFallbackInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `ResponseCodeHttpFallbackOutput`.
+        """
         return self._invoke(input, _models.RESPONSE_CODE_HTTP_FALLBACK, [], plugins)
 
     def response_code_required(
@@ -901,6 +2288,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: ResponseCodeRequiredInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> ResponseCodeRequiredOutput:
+        """
+        Invokes the ResponseCodeRequired operation.
+
+        Args:
+            input:
+                An instance of `ResponseCodeRequiredInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `ResponseCodeRequiredOutput`.
+        """
         return self._invoke(input, _models.RESPONSE_CODE_REQUIRED, [], plugins)
 
     def simple_scalar_properties(
@@ -908,6 +2310,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: SimpleScalarPropertiesInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
+        """
+        Invokes the SimpleScalarProperties operation.
+
+        Args:
+            input:
+                An instance of `SimpleScalarPropertiesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
+        """
         return self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
 
     def sparse_json_lists(
@@ -915,6 +2332,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: SparseJsonListsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SparseJsonListsOutput:
+        """
+        Invokes the SparseJsonLists operation.
+
+        Args:
+            input:
+                An instance of `SparseJsonListsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SparseJsonListsOutput`.
+        """
         return self._invoke(input, _models.SPARSE_JSON_LISTS, [], plugins)
 
     def sparse_json_maps(
@@ -922,6 +2354,21 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: SparseJsonMapsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SparseJsonMapsOutput:
+        """
+        This example tests sparse map serialization.
+
+        Args:
+            input:
+                An instance of `SparseJsonMapsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SparseJsonMapsOutput`.
+        """
         return self._invoke(input, _models.SPARSE_JSON_MAPS, [], plugins)
 
     def streaming_traits(
@@ -929,6 +2376,23 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: StreamingTraitsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> StreamingTraitsOutput:
+        """
+        This examples serializes a streaming blob shape in the request body. In
+        this example, no JSON document is synthesized because the payload is not
+        a structure or a union type.
+
+        Args:
+            input:
+                An instance of `StreamingTraitsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `StreamingTraitsOutput`.
+        """
         return self._invoke(input, _models.STREAMING_TRAITS, [], plugins)
 
     def streaming_traits_require_length(
@@ -936,6 +2400,23 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: StreamingTraitsRequireLengthInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> StreamingTraitsRequireLengthOutput:
+        """
+        This examples serializes a streaming blob shape with a required content
+        length in the request body. In this example, no JSON document is
+        synthesized because the payload is not a structure or a union type.
+
+        Args:
+            input:
+                An instance of `StreamingTraitsRequireLengthInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `StreamingTraitsRequireLengthOutput`.
+        """
         return self._invoke(input, _models.STREAMING_TRAITS_REQUIRE_LENGTH, [], plugins)
 
     def streaming_traits_with_media_type(
@@ -943,6 +2424,23 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: StreamingTraitsWithMediaTypeInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> StreamingTraitsWithMediaTypeOutput:
+        """
+        This examples serializes a streaming media-typed blob shape in the
+        request body. This examples uses a `@mediaType` trait on the payload
+        to force a custom content-type to be serialized.
+
+        Args:
+            input:
+                An instance of `StreamingTraitsWithMediaTypeInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `StreamingTraitsWithMediaTypeOutput`.
+        """
         return self._invoke(
             input, _models.STREAMING_TRAITS_WITH_MEDIA_TYPE, [], plugins
         )
@@ -952,6 +2450,23 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: TestBodyStructureInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> TestBodyStructureOutput:
+        """
+        This example operation serializes a structure in the HTTP body. It
+        should ensure Content-Type: application/json is used in all requests and
+        that an \"empty\" body is an empty JSON document ({}).
+
+        Args:
+            input:
+                An instance of `TestBodyStructureInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `TestBodyStructureOutput`.
+        """
         return self._invoke(input, _models.TEST_BODY_STRUCTURE, [], plugins)
 
     def test_get_no_input_no_payload(
@@ -959,6 +2474,24 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: TestGetNoInputNoPayloadInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> TestGetNoInputNoPayloadOutput:
+        """
+        This example GET operation has no input and serializes a request without
+        a HTTP body. These tests are to ensure we do not attach a body or
+        related headers (Content-Length, Content-Type) to operations that
+        semantically cannot produce an HTTP body.
+
+        Args:
+            input:
+                An instance of `TestGetNoInputNoPayloadInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `TestGetNoInputNoPayloadOutput`.
+        """
         return self._invoke(input, _models.TEST_GET_NO_INPUT_NO_PAYLOAD, [], plugins)
 
     def test_get_no_payload(
@@ -966,6 +2499,24 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: TestGetNoPayloadInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> TestGetNoPayloadOutput:
+        """
+        This example GET operation serializes a request without a modeled HTTP
+        body. These tests are to ensure we do not attach a body or related
+        headers (Content-Length, Content-Type) to operations that semantically
+        cannot produce an HTTP body.
+
+        Args:
+            input:
+                An instance of `TestGetNoPayloadInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `TestGetNoPayloadOutput`.
+        """
         return self._invoke(input, _models.TEST_GET_NO_PAYLOAD, [], plugins)
 
     def test_payload_blob(
@@ -973,6 +2524,25 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: TestPayloadBlobInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> TestPayloadBlobOutput:
+        """
+        This example operation serializes a payload targeting a blob. The Blob
+        shape is not structured content and we cannot make assumptions about
+        what data will be sent. This test ensures only a generic \"Content-Type:
+        application/octet-stream\" header is used, and that we are not treating
+        an empty body as an empty JSON document.
+
+        Args:
+            input:
+                An instance of `TestPayloadBlobInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `TestPayloadBlobOutput`.
+        """
         return self._invoke(input, _models.TEST_PAYLOAD_BLOB, [], plugins)
 
     def test_payload_structure(
@@ -980,6 +2550,23 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: TestPayloadStructureInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> TestPayloadStructureOutput:
+        """
+        This example operation serializes a payload targeting a structure. This
+        enforces the same requirements as TestBodyStructure but with the body
+        specified by the @httpPayload trait.
+
+        Args:
+            input:
+                An instance of `TestPayloadStructureInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `TestPayloadStructureOutput`.
+        """
         return self._invoke(input, _models.TEST_PAYLOAD_STRUCTURE, [], plugins)
 
     def test_post_no_input_no_payload(
@@ -987,6 +2574,24 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: TestPostNoInputNoPayloadInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> TestPostNoInputNoPayloadOutput:
+        """
+        This example POST operation has no input and serializes a request
+        without a HTTP body. These tests are to ensure we do not attach a body
+        or related headers (Content-Type) to a POST operation with no modeled
+        input.
+
+        Args:
+            input:
+                An instance of `TestPostNoInputNoPayloadInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `TestPostNoInputNoPayloadOutput`.
+        """
         return self._invoke(input, _models.TEST_POST_NO_INPUT_NO_PAYLOAD, [], plugins)
 
     def test_post_no_payload(
@@ -994,6 +2599,23 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: TestPostNoPayloadInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> TestPostNoPayloadOutput:
+        """
+        This example POST operation serializes a request without a modeled HTTP
+        body. These tests are to ensure we do not attach a body or related
+        headers (Content-Type) to a POST operation with no modeled payload.
+
+        Args:
+            input:
+                An instance of `TestPostNoPayloadInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `TestPostNoPayloadOutput`.
+        """
         return self._invoke(input, _models.TEST_POST_NO_PAYLOAD, [], plugins)
 
     def timestamp_format_headers(
@@ -1001,6 +2623,22 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: TimestampFormatHeadersInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> TimestampFormatHeadersOutput:
+        """
+        This example tests how timestamp request and response headers are
+        serialized.
+
+        Args:
+            input:
+                An instance of `TimestampFormatHeadersInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `TimestampFormatHeadersOutput`.
+        """
         return self._invoke(input, _models.TIMESTAMP_FORMAT_HEADERS, [], plugins)
 
     def unit_input_and_output(
@@ -1008,6 +2646,22 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         input: UnitInputAndOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> UnitInputAndOutputOutput:
+        """
+        This test is similar to NoInputAndNoOutput, but uses explicit Unit
+        types.
+
+        Args:
+            input:
+                An instance of `UnitInputAndOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `UnitInputAndOutputOutput`.
+        """
         return self._invoke(input, _models.UNIT_INPUT_AND_OUTPUT, [], plugins)
 
     def _new_config(self) -> RestJsonProtocolConfig:

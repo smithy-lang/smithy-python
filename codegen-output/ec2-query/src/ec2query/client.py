@@ -77,10 +77,7 @@ logger = logging.getLogger(__name__)
 
 
 class EC2ProtocolClient(Client[EC2ProtocolConfig]):
-    """
-    Synchronous variant of `ec2query.aio.client.AsyncEC2ProtocolClient`,
-    which documents each operation.
-    """
+    """An EC2 query service that sends query requests and XML responses."""
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
@@ -89,6 +86,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: DatetimeOffsetsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> DatetimeOffsetsOutput:
+        """
+        Invokes the DatetimeOffsets operation.
+
+        Args:
+            input:
+                An instance of `DatetimeOffsetsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
+        """
         return self._invoke(input, _models.DATETIME_OFFSETS, [], plugins)
 
     def empty_input_and_empty_output(
@@ -96,6 +108,23 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: EmptyInputAndEmptyOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> EmptyInputAndEmptyOutputOutput:
+        """
+        The example tests how requests and responses are serialized when
+        there's no request or response members. While this should be rare, code
+        generators must support this.
+
+        Args:
+            input:
+                An instance of `EmptyInputAndEmptyOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EmptyInputAndEmptyOutputOutput`.
+        """
         return self._invoke(input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins)
 
     def endpoint_operation(
@@ -103,6 +132,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: EndpointOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> EndpointOperationOutput:
+        """
+        Invokes the EndpointOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
+        """
         return self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
 
     def endpoint_with_host_label_operation(
@@ -110,6 +154,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: EndpointWithHostLabelOperationInput,
         plugins: list[Plugin] | None = None,
     ) -> EndpointWithHostLabelOperationOutput:
+        """
+        Invokes the EndpointWithHostLabelOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointWithHostLabelOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
+        """
         return self._invoke(
             input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
@@ -119,6 +178,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: FractionalSecondsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> FractionalSecondsOutput:
+        """
+        Invokes the FractionalSeconds operation.
+
+        Args:
+            input:
+                An instance of `FractionalSecondsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
+        """
         return self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
 
     def greeting_with_errors(
@@ -126,6 +200,23 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: GreetingWithErrorsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> GreetingWithErrorsOutput:
+        """
+        This operation has three possible return values: 1. A successful
+        response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting
+        error. 3. A BadRequest error.
+
+        Args:
+            input:
+                An instance of `GreetingWithErrorsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
+        """
         return self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
     def host_with_path_operation(
@@ -133,6 +224,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: HostWithPathOperationInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HostWithPathOperationOutput:
+        """
+        Invokes the HostWithPathOperation operation.
+
+        Args:
+            input:
+                An instance of `HostWithPathOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
+        """
         return self._invoke(input, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
     def ignores_wrapping_xml_name(
@@ -140,6 +246,22 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: IgnoresWrappingXmlNameInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> IgnoresWrappingXmlNameOutput:
+        """
+        The xmlName trait on the output structure is ignored in AWS Query. The
+        wrapping element is always operation name + \"Response\".
+
+        Args:
+            input:
+                An instance of `IgnoresWrappingXmlNameInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `IgnoresWrappingXmlNameOutput`.
+        """
         return self._invoke(input, _models.IGNORES_WRAPPING_XML_NAME, [], plugins)
 
     def nested_structures(
@@ -147,6 +269,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: NestedStructuresInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NestedStructuresOutput:
+        """
+        This test serializes nested and recursive structure members.
+
+        Args:
+            input:
+                An instance of `NestedStructuresInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NestedStructuresOutput`.
+        """
         return self._invoke(input, _models.NESTED_STRUCTURES, [], plugins)
 
     def no_input_and_output(
@@ -154,6 +291,23 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: NoInputAndOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NoInputAndOutputOutput:
+        """
+        The example tests how requests and responses are serialized when
+        there's no request payload or response members. While this should be
+        rare, code generators must support this.
+
+        Args:
+            input:
+                An instance of `NoInputAndOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NoInputAndOutputOutput`.
+        """
         return self._invoke(input, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
     def put_with_content_encoding(
@@ -161,6 +315,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: PutWithContentEncodingInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> PutWithContentEncodingOutput:
+        """
+        Invokes the PutWithContentEncoding operation.
+
+        Args:
+            input:
+                An instance of `PutWithContentEncodingInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
+        """
         return self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
 
     def query_idempotency_token_auto_fill(
@@ -168,6 +337,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: QueryIdempotencyTokenAutoFillInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryIdempotencyTokenAutoFillOutput:
+        """
+        Automatically adds idempotency tokens.
+
+        Args:
+            input:
+                An instance of `QueryIdempotencyTokenAutoFillInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `QueryIdempotencyTokenAutoFillOutput`.
+        """
         return self._invoke(
             input, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
@@ -175,6 +359,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
     def query_lists(
         self, input: QueryListsInput | None = None, plugins: list[Plugin] | None = None
     ) -> QueryListsOutput:
+        """
+        This test serializes simple and complex lists.
+
+        Args:
+            input:
+                An instance of `QueryListsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `QueryListsOutput`.
+        """
         return self._invoke(input, _models.QUERY_LISTS, [], plugins)
 
     def query_timestamps(
@@ -182,6 +381,24 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: QueryTimestampsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryTimestampsOutput:
+        """
+        This test serializes timestamps. 1. Timestamps are serialized as RFC
+        3339 date-time values by default. 2. A timestampFormat trait on a member
+        changes the format. 3. A timestampFormat trait on the shape targeted by
+        the member changes the format.
+
+        Args:
+            input:
+                An instance of `QueryTimestampsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `QueryTimestampsOutput`.
+        """
         return self._invoke(input, _models.QUERY_TIMESTAMPS, [], plugins)
 
     def recursive_xml_shapes(
@@ -189,6 +406,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: RecursiveXmlShapesInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> RecursiveXmlShapesOutput:
+        """
+        Recursive shapes
+
+        Args:
+            input:
+                An instance of `RecursiveXmlShapesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `RecursiveXmlShapesOutput`.
+        """
         return self._invoke(input, _models.RECURSIVE_XML_SHAPES, [], plugins)
 
     def simple_input_params(
@@ -196,6 +428,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: SimpleInputParamsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SimpleInputParamsOutput:
+        """
+        This test serializes strings, numbers, and boolean values.
+
+        Args:
+            input:
+                An instance of `SimpleInputParamsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleInputParamsOutput`.
+        """
         return self._invoke(input, _models.SIMPLE_INPUT_PARAMS, [], plugins)
 
     def simple_scalar_xml_properties(
@@ -203,11 +450,41 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: SimpleScalarXmlPropertiesInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SimpleScalarXmlPropertiesOutput:
+        """
+        Invokes the SimpleScalarXmlProperties operation.
+
+        Args:
+            input:
+                An instance of `SimpleScalarXmlPropertiesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleScalarXmlPropertiesOutput`.
+        """
         return self._invoke(input, _models.SIMPLE_SCALAR_XML_PROPERTIES, [], plugins)
 
     def xml_blobs(
         self, input: XmlBlobsInput | None = None, plugins: list[Plugin] | None = None
     ) -> XmlBlobsOperationOutput:
+        """
+        Blobs are base64 encoded
+
+        Args:
+            input:
+                An instance of `XmlBlobsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlBlobsOperationOutput`.
+        """
         return self._invoke(input, _models.XML_BLOBS, [], plugins)
 
     def xml_empty_blobs(
@@ -215,6 +492,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: XmlEmptyBlobsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlEmptyBlobsOutput:
+        """
+        Invokes the XmlEmptyBlobs operation.
+
+        Args:
+            input:
+                An instance of `XmlEmptyBlobsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlEmptyBlobsOutput`.
+        """
         return self._invoke(input, _models.XML_EMPTY_BLOBS, [], plugins)
 
     def xml_empty_lists(
@@ -222,21 +514,87 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: XmlEmptyListsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlEmptyListsOutput:
+        """
+        Invokes the XmlEmptyLists operation.
+
+        Args:
+            input:
+                An instance of `XmlEmptyListsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlEmptyListsOutput`.
+        """
         return self._invoke(input, _models.XML_EMPTY_LISTS, [], plugins)
 
     def xml_enums(
         self, input: XmlEnumsInput | None = None, plugins: list[Plugin] | None = None
     ) -> XmlEnumsOutput:
+        """
+        This example serializes enums as top level properties, in lists, sets,
+        and maps.
+
+        Args:
+            input:
+                An instance of `XmlEnumsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlEnumsOutput`.
+        """
         return self._invoke(input, _models.XML_ENUMS, [], plugins)
 
     def xml_int_enums(
         self, input: XmlIntEnumsInput | None = None, plugins: list[Plugin] | None = None
     ) -> XmlIntEnumsOutput:
+        """
+        This example serializes intEnums as top level properties, in lists,
+        sets, and maps.
+
+        Args:
+            input:
+                An instance of `XmlIntEnumsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlIntEnumsOutput`.
+        """
         return self._invoke(input, _models.XML_INT_ENUMS, [], plugins)
 
     def xml_lists(
         self, input: XmlListsInput | None = None, plugins: list[Plugin] | None = None
     ) -> XmlListsOperationOutput:
+        """
+        This test case serializes XML lists for the following cases for both
+        input and output: 1. Normal XML lists. 2. Normal XML sets. 3. XML lists
+        of lists. 4. XML lists with @xmlName on its members 5. Flattened XML
+        lists. 6. Flattened XML lists with @xmlName. 7. Flattened XML lists
+        with @xmlNamespace. 8. Lists of structures.
+
+        Args:
+            input:
+                An instance of `XmlListsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlListsOperationOutput`.
+        """
         return self._invoke(input, _models.XML_LISTS, [], plugins)
 
     def xml_namespaces(
@@ -244,6 +602,21 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: XmlNamespacesInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlNamespacesOutput:
+        """
+        Invokes the XmlNamespaces operation.
+
+        Args:
+            input:
+                An instance of `XmlNamespacesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlNamespacesOutput`.
+        """
         return self._invoke(input, _models.XML_NAMESPACES, [], plugins)
 
     def xml_timestamps(
@@ -251,6 +624,22 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         input: XmlTimestampsInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlTimestampsOutput:
+        """
+        This tests how timestamps are serialized, including using the default
+        format of date-time and various @timestampFormat trait values.
+
+        Args:
+            input:
+                An instance of `XmlTimestampsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlTimestampsOutput`.
+        """
         return self._invoke(input, _models.XML_TIMESTAMPS, [], plugins)
 
     def _new_config(self) -> EC2ProtocolConfig:

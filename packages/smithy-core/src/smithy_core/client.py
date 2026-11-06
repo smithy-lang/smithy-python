@@ -1,10 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import logging
 import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Self
+from typing import Any, ClassVar, Self
 
 from ._client import OPERATION
 from ._client import ClientBase as _ClientBase
@@ -84,6 +85,8 @@ class RequestPipeline[TRequest, TResponse](RequestPipelineBase[TRequest, TRespon
 
     transport: ClientTransport[TRequest, TResponse]
     """The transport to use to send the request and receive the response."""
+
+    _logger: ClassVar[logging.Logger] = logging.getLogger("smithy_core.client")
 
     def __init__(
         self,

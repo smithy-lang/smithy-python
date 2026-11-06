@@ -13,10 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class MyHandwrittenModel(Client[Config]):
-    """
-    Synchronous variant of `my_handwritten_model.aio.client.AsyncMyHandwrittenModel`,
-    which documents each operation.
-    """
+    """Client for MyHandwrittenModel"""
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 

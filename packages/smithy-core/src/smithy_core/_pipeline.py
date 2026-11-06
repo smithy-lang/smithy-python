@@ -11,7 +11,7 @@ import logging
 from collections.abc import Mapping, Sequence
 from copy import copy
 from dataclasses import replace
-from typing import Any, Protocol
+from typing import Any, ClassVar, Protocol
 
 from . import URI
 from .auth import RESOLVED_IDENTITY, AuthParams
@@ -46,7 +46,6 @@ AUTH_SCHEME = PropertyKey(key="auth_scheme", value_type=object)
 client module."""
 
 _UNRESOLVED = URI(host="", path="/")
-_LOGGER = logging.getLogger("smithy_core.aio.client")
 
 
 class CallLike[I: SerializeableShape, O: DeserializeableShape](Protocol):
@@ -93,6 +92,8 @@ class RequestPipelineBase[TRequest, TResponse]:
     protocol: Any
     transport: Any
 
+    _logger: ClassVar[logging.Logger]
+
     def _read_body(self, body: Any) -> Any:
         """Effect: read a whole response body into bytes."""
         raise NotImplementedError
@@ -113,7 +114,7 @@ class RequestPipelineBase[TRequest, TResponse]:
     def _execute[I: SerializeableShape, O: DeserializeableShape](
         self, call: CallLike[I, O], request_future: Any
     ) -> Program[tuple[O, OutputContext[I, O, TRequest, TResponse]]]:
-        _LOGGER.debug(
+        self._logger.debug(
             'Making request for operation "%s" with parameters: %s',
             call.operation.schema.id.name,
             call.input,
@@ -164,7 +165,7 @@ class RequestPipelineBase[TRequest, TResponse]:
             # Metadata is diagnostic and must never fail a call. Both statements
             # above can raise: a broken protocol, or the assignment itself if the
             # output shape is frozen.
-            _LOGGER.debug("Unable to attach response metadata: %s", e)
+            self._logger.debug("Unable to attach response metadata: %s", e)
 
     def _handle_execution[I: SerializeableShape, O: DeserializeableShape](
         self, call: CallLike[I, O], request_future: Any
@@ -180,7 +181,7 @@ class RequestPipelineBase[TRequest, TResponse]:
             )
 
             interceptor.read_before_serialization(input_context)
-            _LOGGER.debug("Serializing request for: %s", input_context.request)
+            self._logger.debug("Serializing request for: %s", input_context.request)
 
             transport_request: TRequest = self.protocol.serialize_request(
                 operation=call.operation,
@@ -194,7 +195,7 @@ class RequestPipelineBase[TRequest, TResponse]:
                 properties=input_context.properties,
             )
 
-            _LOGGER.debug(
+            self._logger.debug(
                 "Serialization complete. Transport request: %s", transport_request
             )
         except Exception as e:
@@ -295,7 +296,7 @@ class RequestPipelineBase[TRequest, TResponse]:
                     # failures still carry a request ID when _execute raises.
                     return output_context
 
-                _LOGGER.debug(
+                self._logger.debug(
                     "Retry needed. Attempting request #%s in %.4f seconds.",
                     retry_token.retry_count + 1,
                     retry_token.retry_delay,
@@ -398,11 +399,13 @@ class RequestPipelineBase[TRequest, TResponse]:
                 input=request_context.request,
                 context=request_context.properties,
             )
-            _LOGGER.debug("Calling endpoint resolver with params: %s", endpoint_params)
+            self._logger.debug(
+                "Calling endpoint resolver with params: %s", endpoint_params
+            )
             endpoint: Endpoint = yield lambda: call.endpoint_resolver.resolve_endpoint(
                 endpoint_params
             )
-            _LOGGER.debug("Endpoint resolver result: %s", endpoint)
+            self._logger.debug("Endpoint resolver result: %s", endpoint)
             request_context.properties[RESOLVED_ENDPOINT] = endpoint
 
             request_context = replace(
@@ -429,8 +432,10 @@ class RequestPipelineBase[TRequest, TResponse]:
                 )
                 if endpoint_auth_scheme is not None:
                     signer_properties.update(endpoint_auth_scheme.properties)
-                _LOGGER.debug("Request to sign: %s", request_context.transport_request)
-                _LOGGER.debug("Signer properties: %s", signer_properties)
+                self._logger.debug(
+                    "Request to sign: %s", request_context.transport_request
+                )
+                self._logger.debug("Signer properties: %s", signer_properties)
 
                 signer = scheme.signer()
                 unsigned = request_context.transport_request
@@ -448,7 +453,7 @@ class RequestPipelineBase[TRequest, TResponse]:
             )
             interceptor.read_before_transmit(request_context)
 
-            _LOGGER.debug("Sending request %s", request_context.transport_request)
+            self._logger.debug("Sending request %s", request_context.transport_request)
 
             to_send = request_context
             try:
@@ -460,7 +465,7 @@ class RequestPipelineBase[TRequest, TResponse]:
                     raise ClientTimeoutError(message="A timeout error occurred.") from e
                 raise
 
-            _LOGGER.debug("Received response: %s", transport_response)
+            self._logger.debug("Received response: %s", transport_response)
 
             response_context = ResponseContext(
                 request=request_context.request,
@@ -481,7 +486,7 @@ class RequestPipelineBase[TRequest, TResponse]:
 
             interceptor.read_before_deserialization(response_context)
 
-            _LOGGER.debug(
+            self._logger.debug(
                 "Deserializing response: %s", response_context.transport_response
             )
 
@@ -495,7 +500,7 @@ class RequestPipelineBase[TRequest, TResponse]:
             )
             output = yield from deserialize
 
-            _LOGGER.debug("Deserialization complete. Output: %s", output)
+            self._logger.debug("Deserialization complete. Output: %s", output)
 
             output_context = OutputContext(
                 request=response_context.request,

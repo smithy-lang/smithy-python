@@ -55,9 +55,8 @@ Dual-mode symbols (async in aio, sync twin outside):
         AsyncChainedIdentityResolver  ChainedIdentityResolver
       interfaces/
         __init__.py
-          AsyncClientProtocol         ClientProtocol
-          AsyncClientTransport        ClientTransport
-          AsyncDuplexClientTransport  DuplexClientTransport
+          AsyncClientProtocol   ClientProtocol
+          AsyncClientTransport  ClientTransport
         auth.py
           AsyncAuthScheme  AuthScheme
           AsyncSigner      Signer
@@ -91,4 +90,4 @@ Dual-mode symbols (async in aio, sync twin outside):
         parse_rest_json_error_info_async  parse_rest_json_error_info
       testing.py
         AsyncMockHTTPClient  MockHTTPClient  (smithy_http.testing.mockhttp)
-46 dual-mode symbol(s).
+45 dual-mode symbol(s).

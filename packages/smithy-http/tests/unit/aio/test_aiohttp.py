@@ -10,18 +10,18 @@ from smithy_core import URI
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_http import Field, Fields, HTTPRequest
-from smithy_http.aio.aiohttp import AsyncAIOHTTPClient, _AIOHTTPStreamingBody
+from smithy_http.aio.aiohttp import AIOHTTPClient, _AIOHTTPStreamingBody
 from smithy_http.exceptions import SmithyHTTPError
 
 
-def _create_client() -> tuple[AsyncAIOHTTPClient, MagicMock]:
+def _create_client() -> tuple[AIOHTTPClient, MagicMock]:
     response = MagicMock(status=200, headers={}, reason="OK")
     response.read = AsyncMock(return_value=b"")
 
     session = MagicMock()
     session.close = AsyncMock()
     session.request = AsyncMock(return_value=response)
-    return AsyncAIOHTTPClient(_session=cast(Any, session)), session
+    return AIOHTTPClient(_session=cast(Any, session)), session
 
 
 def _create_request() -> HTTPRequest:
@@ -232,4 +232,4 @@ async def test_prepare_body_does_not_consume_nonseekable_body() -> None:
 
 
 def test_does_not_support_duplex_streaming() -> None:
-    assert AsyncAIOHTTPClient.SUPPORTS_DUPLEX_STREAMING is False
+    assert AIOHTTPClient.SUPPORTS_DUPLEX_STREAMING is False

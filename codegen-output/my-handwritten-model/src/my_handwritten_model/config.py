@@ -111,9 +111,8 @@ class Config:
     """
     The transport to use to send requests (e.g. an HTTP client). Operations
     with bidirectional event streams require a AsyncDuplexClientTransport,
-    such as AsyncAWSCRTHTTPClient. Transports are assumed not to support
-    duplex streaming unless they explicitly set SUPPORTS_DUPLEX_STREAMING to
-    True.
+    such as AWSCRTHTTPClient. Transports are assumed not to support duplex
+    streaming unless they explicitly set SUPPORTS_DUPLEX_STREAMING to True.
     """
 
     user_agent_extra: str | None

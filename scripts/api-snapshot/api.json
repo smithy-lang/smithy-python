@@ -1132,7 +1132,6 @@
     "BytesWriter": "protocol",
     "ClientProtocol": "protocol",
     "ClientTransport": "protocol",
-    "DuplexClientTransport": "protocol",
     "Endpoint": "protocol",
     "EndpointResolver": "protocol",
     "PropertyKey": "protocol",
@@ -1413,8 +1412,8 @@
     "protocols": "rex-module"
   },
   "smithy_http.aio.aiohttp": {
-    "AsyncAIOHTTPClient": "class[async]",
-    "AsyncAIOHTTPClientConfig": "class",
+    "AIOHTTPClient": "class[async]",
+    "AIOHTTPClientConfig": "class",
     "AsyncBytesReader": "rex-class[async]",
     "AsyncHTTPClient": "rex-protocol[async]",
     "Field": "rex-class",
@@ -1442,8 +1441,8 @@
     "PropertyKey": "rex-class"
   },
   "smithy_http.aio.crt": {
-    "AsyncAWSCRTHTTPClient": "class[async]",
-    "AsyncAWSCRTHTTPClientConfig": "class",
+    "AWSCRTHTTPClient": "class[async]",
+    "AWSCRTHTTPClientConfig": "class",
     "AsyncAWSCRTHTTPResponse": "class",
     "AsyncBytesReader": "rex-class[async]",
     "ConnectionPoolDict": "type_alias",

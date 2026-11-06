@@ -27,8 +27,11 @@ logger = logging.getLogger(__name__)
 
 class RestXmlProtocolNamespaceClient(Client[RestXmlProtocolNamespaceConfig]):
     """
-    Synchronous variant of `restxmlwithnamespace.aio.client.AsyncRestXmlProtocolNamespaceClient`,
-    which documents each operation.
+    A REST XML service that sends XML requests and responses. This service
+    and test case is complementary to the test cases in the `restXml`
+    directory, but the service under test here has the `xmlNamespace`
+    trait applied to it. See
+    https://github.com/smithy-lang/smithy/issues/616
     """
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
@@ -38,6 +41,21 @@ class RestXmlProtocolNamespaceClient(Client[RestXmlProtocolNamespaceConfig]):
         input: SimpleScalarPropertiesInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
+        """
+        Invokes the SimpleScalarProperties operation.
+
+        Args:
+            input:
+                An instance of `SimpleScalarPropertiesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
+        """
         return self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
 
     def _new_config(self) -> RestXmlProtocolNamespaceConfig:

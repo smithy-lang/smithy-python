@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import logging
+import threading
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, Final
 
@@ -20,11 +21,29 @@ class CachingIdentityResolver[I: Identity, IP: Mapping[str, Any]](
 
     def __init__(self) -> None:
         self._cached: I | None = None
+        self._lock = threading.Lock()
+
+    def __getstate__(self) -> dict[str, Any]:
+        # CAUTION: locks can't be copied, and config setup deep-copies resolvers.
+        state = self.__dict__.copy()
+        del state["_lock"]
+        return state
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        self.__dict__.update(state)
+        self._lock = threading.Lock()
 
     def get_identity(self, *, properties: IP) -> I:
-        return run_program(
-            _cached_identity(self, lambda: self._get_identity(properties=properties))
-        )
+        cached = self._cached
+        if cached is not None and not cached.is_expired:
+            return cached
+        # Concurrent callers wait for one fetch rather than each fetching.
+        with self._lock:
+            return run_program(
+                _cached_identity(
+                    self, lambda: self._get_identity(properties=properties)
+                )
+            )
 
     def invalidate(self) -> None:
         """Discard the cached identity so the next resolution re-reads its source."""

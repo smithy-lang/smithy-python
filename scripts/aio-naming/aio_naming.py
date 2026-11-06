@@ -7,7 +7,8 @@ A package source root is each directory under a ``src`` directory. Its optional
 ``aio`` subfolder holds all async code; everything else must be sync.
 
 Inside ``<root>/aio``:
-  - classes must be async, and public ones must be named ``Async*``. A class is
+  - classes must be async, and public ones must be named ``Async*``, except the
+    transports with no sync twin in ``_NO_TWIN_NAMES``. A class is
     async when it has an async method, own or inherited, or its annotations or
     base class arguments name an ``Async*`` type. A class holding only data (no
     methods besides dunders) also qualifies, since it serves the async code
@@ -45,6 +46,16 @@ _ASYNC_CLASS = re.compile(r"^_*Async(?=[A-Z0-9_]|$)")
 
 # Sync names that describe async things rather than being async themselves.
 _SYNC_ASYNC_NAMES = frozenset({"AsyncBodyError"})
+
+# aio classes with no sync twin that keep their established names.
+_NO_TWIN_NAMES = frozenset(
+    {
+        "AIOHTTPClient",
+        "AIOHTTPClientConfig",
+        "AWSCRTHTTPClient",
+        "AWSCRTHTTPClientConfig",
+    }
+)
 
 type _Def = ast.FunctionDef | ast.AsyncFunctionDef
 
@@ -378,7 +389,11 @@ class _Checker:
 
 class _AioChecker(_Checker):
     def check_class(self, node: ast.ClassDef, *, private: bool) -> None:
-        if not private and not _ASYNC_CLASS.match(node.name):
+        if (
+            not private
+            and not _ASYNC_CLASS.match(node.name)
+            and node.name not in _NO_TWIN_NAMES
+        ):
             self._report(
                 node, "error", f"aio class '{node.name}' must start with Async"
             )

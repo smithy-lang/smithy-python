@@ -81,6 +81,16 @@ async def test_seek_respects_seekable_function() -> None:
     assert source.tell() == 3
 
 
+class _AwaitableReadResult:
+    """A reader whose plain ``read`` returns an awaitable."""
+
+    def read(self, size: int = -1) -> Any:
+        async def data() -> bytes:
+            return b"foo"
+
+        return data()
+
+
 @pytest.mark.parametrize(
     "body",
     [
@@ -89,6 +99,7 @@ async def test_seek_respects_seekable_function() -> None:
         BytesIO(b"foo"),
         AsyncBytesReader(b"foo"),
         list_async([b"f", b"oo"]),
+        _AwaitableReadResult(),
     ],
 )
 async def test_read_streaming_blob_async(body: Any) -> None:

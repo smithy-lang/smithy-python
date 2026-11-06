@@ -18,7 +18,7 @@ from smithy_core.interfaces.auth import AuthSchemeResolver
 from smithy_core.interfaces.retries import RetryStrategy
 from smithy_core.retries import RetryStrategyOptions
 from smithy_core.shapes import ShapeID
-from smithy_http.aio.aiohttp import AsyncAIOHTTPClient
+from smithy_http.aio.aiohttp import AIOHTTPClient
 from smithy_http.aio.protocols import AsyncRpcV2CborClientProtocol
 from smithy_http.interfaces import HTTPRequestConfiguration
 
@@ -147,9 +147,8 @@ class AsyncConfig:
     """
     The transport to use to send requests (e.g. an HTTP client). Operations
     with bidirectional event streams require a AsyncDuplexClientTransport,
-    such as AsyncAWSCRTHTTPClient. Transports are assumed not to support
-    duplex streaming unless they explicitly set SUPPORTS_DUPLEX_STREAMING to
-    True.
+    such as AWSCRTHTTPClient. Transports are assumed not to support duplex
+    streaming unless they explicitly set SUPPORTS_DUPLEX_STREAMING to True.
     """
 
     user_agent_extra: str | None
@@ -187,7 +186,7 @@ class AsyncConfig:
         self.region = region
         self.retry_strategy = retry_strategy
         self.sdk_ua_app_id = sdk_ua_app_id
-        self.transport = transport or AsyncAIOHTTPClient()
+        self.transport = transport or AIOHTTPClient()
         self.user_agent_extra = user_agent_extra
 
 

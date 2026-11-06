@@ -57,15 +57,25 @@ final class ClientGenerator implements Runnable {
                     writer.setSymbolMapper(mapper);
                     generateService(writer, true);
                 });
-        writeSyncExports(syncClient, mapper);
+        writeExports(syncClient, mapper);
     }
 
-    private void writeSyncExports(Symbol syncClient, UnaryOperator<Symbol> mapper) {
-        var syncConfig = mapper.apply(CodegenUtils.getAsyncConfigSymbol(context.settings(), model));
+    private void writeExports(Symbol syncClient, UnaryOperator<Symbol> mapper) {
+        var asyncConfig = CodegenUtils.getAsyncConfigSymbol(context.settings(), model);
+        var moduleName = context.settings().moduleName();
+        writeExports("./src/" + moduleName + "/__init__.py",
+                moduleName,
+                syncClient.getName(),
+                mapper.apply(asyncConfig).getName());
+        writeExports("./src/" + moduleName + "/aio/__init__.py",
+                moduleName + ".aio",
+                symbolProvider.toSymbol(service).getName(),
+                asyncConfig.getName());
+    }
 
-        // Lazily exported so importing the package does not import either client.
-        var init = "./src/" + context.settings().moduleName() + "/__init__.py";
-        context.writerDelegator().useFileWriter(init, context.settings().moduleName(), writer -> {
+    // Lazily exported so importing the package does not import the client.
+    private void writeExports(String file, String namespace, String client, String config) {
+        context.writerDelegator().useFileWriter(file, namespace, writer -> {
             writer.addStdlibImport("typing", "TYPE_CHECKING");
             writer.addStdlibImport("typing", "Any");
             writer.addStdlibImport("importlib", "import_module");
@@ -84,7 +94,7 @@ final class ClientGenerator implements Runnable {
                             return getattr(import_module(_EXPORTS[name], __name__), name)
                         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-                    """, syncClient.getName(), syncConfig.getName());
+                    """, client, config);
         });
     }
 
@@ -105,18 +115,10 @@ final class ClientGenerator implements Runnable {
                 RuntimeTypes.ASYNC_CLIENT,
                 configSym,
                 () -> {
-                    if (sync) {
-                        // Operation docs live on the async client only, so they stay in one place.
-                        var asyncClient = symbolProvider.toSymbol(service);
-                        writer.writeMultiLineDocs(() -> writer.write(
-                                "Synchronous variant of `$L`,\nwhich documents each operation.",
-                                asyncClient.getFullName()));
-                    } else {
-                        var docs = service.getTrait(DocumentationTrait.class)
-                                .map(StringTrait::getValue)
-                                .orElse("Client for " + service.getId().getName());
-                        writer.writeDocs(docs, context);
-                    }
+                    var docs = service.getTrait(DocumentationTrait.class)
+                            .map(StringTrait::getValue)
+                            .orElse("Client for " + service.getId().getName());
+                    writer.writeDocs(docs, context);
                     writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
 
                     // Collect service-scoped plugins applied once during setup.
@@ -225,7 +227,7 @@ final class ClientGenerator implements Runnable {
                                 plugins,
                             )
                         """;
-        writer.putContext("docs", sync ? null : writer.consumer(w -> writeOperationDocs(w, operation, input, output)));
+        writer.putContext("docs", writer.consumer(w -> writeOperationDocs(w, operation, input, output)));
         writer.write(sync ? SyncVariant.toSyncCode(template) : template,
                 writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
     }

@@ -53,12 +53,18 @@ public class PythonCodegenTest {
         assertTrue(client.contains("_models.GET_CITY,"));
 
         var config = Files.readString(tempDir.resolve("src/weather/aio/config.py"));
-        assertTrue(config.contains("self.transport = transport or AsyncAIOHTTPClient()"));
-        assertFalse(config.contains("self.transport = transport or AsyncAWSCRTHTTPClient()"));
+        assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
+        assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));
 
         var syncClient = Files.readString(tempDir.resolve("src/weather/client.py"));
         assertTrue(syncClient.contains("class Weather(Client[Config]):"));
         assertTrue(syncClient.contains("return self._invoke("));
+        // Sync operations carry the same docs as async ones.
+        assertTrue(syncClient.contains("An instance of `GetCityInput`."));
+
+        var aioInit = Files.readString(tempDir.resolve("src/weather/aio/__init__.py"));
+        assertTrue(aioInit.contains("__all__ = [\"AsyncWeather\", \"AsyncConfig\"]"));
+
         var syncConfig = Files.readString(tempDir.resolve("src/weather/config.py"));
         assertTrue(syncConfig.contains("self.transport = transport or Urllib3HTTPClient()"));
 
