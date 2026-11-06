@@ -8,12 +8,17 @@ The stream that validates response payloads is
 
 from dataclasses import dataclass
 
-from smithy_core.exceptions import CallError, Fault
+from smithy_core.exceptions import CallError, Fault, SmithyError
 
 from ._private.checksums import encode_digest
-from .config.types import ResponseChecksumValidation
+from .config.types import RequestChecksumCalculation, ResponseChecksumValidation
 
-__all__ = ["ChecksumMismatchError", "ResponseChecksumValidation"]
+__all__ = [
+    "ChecksumMismatchError",
+    "RequestChecksumCalculation",
+    "ResponseChecksumValidation",
+    "UnsupportedChecksumAlgorithmError",
+]
 
 
 @dataclass(kw_only=True)
@@ -40,3 +45,19 @@ class ChecksumMismatchError(CallError):
                 f"{encode_digest(self.actual)}."
             )
         super().__post_init__()
+
+
+class UnsupportedChecksumAlgorithmError(SmithyError):
+    """The checksum algorithm chosen for a request isn't supported.
+
+    To use an algorithm the SDK can't calculate, such as MD5, calculate the checksum
+    and set it on the request instead.
+    """
+
+    def __init__(self, algorithm: str) -> None:
+        super().__init__(
+            f"Unsupported checksum algorithm: {algorithm!r}. To use it, calculate "
+            "the checksum and set it on the request."
+        )
+        self.algorithm = algorithm
+        """The algorithm that was chosen."""

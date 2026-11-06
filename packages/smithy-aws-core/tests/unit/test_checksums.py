@@ -4,9 +4,11 @@
 import pytest
 from smithy_aws_core._private import checksums
 from smithy_aws_core._private.checksums import (
+    DEFAULT_ALGORITHM,
     SUPPORTED_ALGORITHMS,
     assert_checksums_installed,
     checksum_header,
+    checksum_header_algorithm,
     create_checksum,
     decode_checksum,
     encode_digest,
@@ -126,3 +128,26 @@ def test_response_validation_order() -> None:
 def test_response_validation_order_skips_unsupported_algorithms() -> None:
     assert response_validation_order(["md5", "sha256", "future"]) == ("SHA256",)
     assert response_validation_order([]) == ()
+
+
+def test_default_algorithm_is_supported() -> None:
+    assert DEFAULT_ALGORITHM in SUPPORTED_ALGORITHMS
+
+
+@pytest.mark.parametrize(
+    ("name", "algorithm"),
+    [
+        ("x-amz-checksum-crc32", "CRC32"),
+        ("X-Amz-Checksum-SHA256", "SHA256"),
+        ("x-amz-checksum-md5", "MD5"),
+        # Unknown algorithms are recognized too, so they're never calculated again.
+        ("x-amz-checksum-emoji", "EMOJI"),
+        ("x-amz-checksum-type", None),
+        ("x-amz-checksum-mode", None),
+        ("X-Amz-Checksum-Algorithm", None),
+        ("x-amz-sdk-checksum-algorithm", None),
+        ("content-md5", None),
+    ],
+)
+def test_checksum_header_algorithm(name: str, algorithm: str | None) -> None:
+    assert checksum_header_algorithm(name) == algorithm

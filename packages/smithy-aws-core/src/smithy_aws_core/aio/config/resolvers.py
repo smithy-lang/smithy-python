@@ -16,6 +16,7 @@ __all__ = [
     "resolve_endpoint_uri",
     "resolve_max_attempts",
     "resolve_region",
+    "resolve_request_checksum_calculation",
     "resolve_response_checksum_validation",
     "resolve_retry_mode",
     "resolve_sdk_ua_app_id",
@@ -163,6 +164,23 @@ async def resolve_retry_mode(ctx: AsyncSharedConfigContext) -> Resolved[str | No
     return result
 
 
+async def resolve_request_checksum_calculation(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[str | None]:
+    """Resolve when request checksums are calculated from environment or config file.
+
+    Values are case-insensitive and are returned in lowercase.
+
+    :param ctx: The shared resolution context.
+    :returns: Resolved value with source.
+    """
+    return await _resolve_lowercase_str(
+        ctx,
+        env_vars=("AWS_REQUEST_CHECKSUM_CALCULATION",),
+        profile_keys=("request_checksum_calculation",),
+    )
+
+
 async def resolve_response_checksum_validation(
     ctx: AsyncSharedConfigContext,
 ) -> Resolved[str | None]:
@@ -173,11 +191,20 @@ async def resolve_response_checksum_validation(
     :param ctx: The shared resolution context.
     :returns: Resolved value with source.
     """
-    result = await _resolve_str(
+    return await _resolve_lowercase_str(
         ctx,
         env_vars=("AWS_RESPONSE_CHECKSUM_VALIDATION",),
         profile_keys=("response_checksum_validation",),
     )
+
+
+async def _resolve_lowercase_str(
+    ctx: AsyncSharedConfigContext,
+    *,
+    env_vars: Sequence[str],
+    profile_keys: Sequence[str],
+) -> Resolved[str | None]:
+    result = await _resolve_str(ctx, env_vars=env_vars, profile_keys=profile_keys)
     if result.value is UNSET:
         return result
     return Resolved(value=result.value.lower(), source=result.source)

@@ -93,6 +93,16 @@ class AsyncBytesReader:
 
         return await seek(self._data, offset, whence)  # type: ignore
 
+    @property
+    def source(self) -> BytesReader | AsyncByteStream | AsyncIterable[bytes] | None:
+        """The object that data is read from.
+
+        ``bytes`` and ``bytearray`` sources are wrapped in a ``BytesIO``. Reading from
+        the source directly bypasses any data the reader has already buffered, and
+        any changes a subclass makes to the data it reads.
+        """
+        return self._data
+
     def tell(self) -> int:
         """Returns the position of the cursor."""
         if self._seekable:

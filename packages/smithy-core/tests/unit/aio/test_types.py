@@ -557,3 +557,12 @@ async def test_aexit_flushes() -> None:
     # The draining task should be able to complete without errors. When next it
     # tries to get a chunk, the provider's iterator will exit.
     await drain_task
+
+
+async def test_source_is_the_wrapped_object() -> None:
+    stream = BytesIO(b"foo")
+    assert AsyncBytesReader(stream).source is stream
+
+    source = AsyncBytesReader(b"foo").source
+    assert isinstance(source, BytesIO)
+    assert source.read() == b"foo"

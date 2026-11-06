@@ -11,6 +11,7 @@ __all__ = [
     "UNSET",
     "ConfigSource",
     "FieldSpec",
+    "RequestChecksumCalculation",
     "Resolved",
     "ResponseChecksumValidation",
 ]
@@ -82,6 +83,18 @@ class FieldSpec:
             raise ValueError(
                 "FieldSpec: exactly one of 'default' or 'default_factory' must be set"
             )
+
+
+type RequestChecksumCalculation = Literal["when_supported", "when_required"]
+"""When to calculate checksums of request payloads.
+
+* ``when_supported``: calculate a checksum for the request payload of every
+  operation that supports request checksums.
+* ``when_required``: only calculate a checksum when the operation requires one, or
+  when the caller chose a checksum algorithm on the request.
+
+Values from the environment and shared config files are case-insensitive.
+"""
 
 
 type ResponseChecksumValidation = Literal["when_supported", "when_required"]
