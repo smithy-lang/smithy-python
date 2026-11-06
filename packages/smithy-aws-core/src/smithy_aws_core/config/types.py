@@ -5,13 +5,14 @@
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 __all__ = [
     "UNSET",
     "ConfigSource",
     "FieldSpec",
     "Resolved",
+    "ResponseChecksumValidation",
 ]
 
 
@@ -81,3 +82,15 @@ class FieldSpec:
             raise ValueError(
                 "FieldSpec: exactly one of 'default' or 'default_factory' must be set"
             )
+
+
+type ResponseChecksumValidation = Literal["when_supported", "when_required"]
+"""When to validate the checksums of response payloads.
+
+* ``when_supported``: validate the response payload of every operation that models
+  response checksums, as long as one of the modeled algorithms is supported.
+* ``when_required``: only validate a response payload when the caller enabled
+  validation on the request, such as by setting ``checksum_mode`` to ``ENABLED``.
+
+Values from the environment and shared config files are case-insensitive.
+"""
