@@ -10,6 +10,7 @@ User-Agent header.
 import logging
 from collections.abc import Iterable
 from enum import StrEnum, unique
+from typing import cast
 
 from smithy_core.interfaces import TypedProperties
 from smithy_core.types import PropertyKey
@@ -18,7 +19,10 @@ __all__ = [
     "FEATURE_IDS",
     "MAX_ENCODED_FEATURE_IDS_BYTES",
     "AwsFeatureId",
+    "add_feature_id",
     "encode_feature_ids",
+    "get_feature_ids",
+    "normalize_feature_ids",
     "register_feature_id",
 ]
 
@@ -37,8 +41,14 @@ class AwsFeatureId(StrEnum):
     RETRY_MODE_STANDARD = "E"
     RETRY_MODE_ADAPTIVE = "F"
     ENDPOINT_OVERRIDE = "N"
+    RESOLVED_ACCOUNT_ID = "T"
     FLEXIBLE_CHECKSUMS_RES_WHEN_SUPPORTED = "b"
     FLEXIBLE_CHECKSUMS_RES_WHEN_REQUIRED = "c"
+    CREDENTIALS_CODE = "e"
+    CREDENTIALS_ENV_VARS = "g"
+    CREDENTIALS_PROFILE = "n"
+    CREDENTIALS_PROFILE_PROCESS = "v"
+    CREDENTIALS_PROCESS = "w"
 
 
 FEATURE_IDS = PropertyKey(key="feature_ids", value_type=dict[AwsFeatureId, None])
@@ -56,14 +66,64 @@ def register_feature_id(properties: TypedProperties, feature_id: AwsFeatureId) -
     :param properties: The request properties of the current call.
     :param feature_id: The feature that was used.
     """
-    if not isinstance(feature_id, AwsFeatureId):  # pyright: ignore[reportUnnecessaryIsInstance]
-        logger.debug("Ignoring unknown feature ID: %r", feature_id)
-        return
+    if _is_feature_id(feature_id):
+        get_feature_ids(properties)[feature_id] = None
+
+
+def get_feature_ids(properties: TypedProperties) -> dict[AwsFeatureId, None]:
+    """Return the current call's feature record, creating it if needed.
+
+    Returns the record itself, not a copy, so features added to it are sent.
+
+    :param properties: The request properties of the current call.
+    """
     features = properties.get(FEATURE_IDS)
     if features is None:
         features = {}
         properties[FEATURE_IDS] = features
-    features[feature_id] = None
+    return features
+
+
+def add_feature_id(
+    features: dict[AwsFeatureId, None], feature_id: AwsFeatureId
+) -> None:
+    """Record that the current call used a feature, in the call's feature record.
+
+    :param features: The current call's feature record, from ``get_feature_ids``.
+    :param feature_id: The feature that was used.
+    """
+    if _is_feature_id(feature_id):
+        features[feature_id] = None
+
+
+def _is_feature_id(value: AwsFeatureId) -> bool:
+    if not isinstance(value, AwsFeatureId):  # pyright: ignore[reportUnnecessaryIsInstance]
+        logger.debug("Ignoring unknown feature ID: %r", value)
+        return False
+    return True
+
+
+def normalize_feature_ids(value: object) -> tuple[AwsFeatureId, ...]:
+    """Turn a ``feature_ids`` value into a tuple of feature IDs.
+
+    Accepts a single feature ID, any iterable of them, or None (no features). Values
+    that aren't ``AwsFeatureId`` members, and values that aren't iterable, are
+    dropped. Errors raised by the value itself, such as from a failing generator, are
+    not caught.
+
+    :param value: The ``feature_ids`` value to normalize.
+    """
+    if value is None:
+        return ()
+    if isinstance(value, AwsFeatureId):
+        return (value,)
+    if isinstance(value, str):
+        return ()
+    try:
+        items = list(cast(Iterable[object], value))
+    except TypeError:
+        return ()
+    return tuple(item for item in items if isinstance(item, AwsFeatureId))
 
 
 MAX_ENCODED_FEATURE_IDS_BYTES = 1024

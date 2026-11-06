@@ -91,7 +91,8 @@
     "SigV4Signer": "rex-type_alias",
     "SigV4SigningProperties": "rex-class",
     "SigV4Trait": "rex-class",
-    "SmithyIdentityError": "rex-exception"
+    "SmithyIdentityError": "rex-exception",
+    "get_feature_ids": "rex-function"
   },
   "smithy_aws_core.aio.checksums": {
     "AsyncBytesReader": "rex-class[async]",
@@ -226,12 +227,15 @@
   "smithy_aws_core.aio.identity.chain.provider": {
     "AsyncHTTPClient": "rex-protocol[async]",
     "AsyncIdentityResolver": "rex-protocol[async]",
+    "AwsFeatureId": "rex-class",
     "ChainIdentityProvider": "protocol[async]",
     "ChainSetup": "class",
     "Identity": "rex-protocol",
     "MergedConfig": "rex-class",
     "NamedResolver": "class[async]",
-    "OrderingConstraint": "rex-type_alias"
+    "OrderingConstraint": "rex-type_alias",
+    "add_feature_id": "rex-function",
+    "normalize_feature_ids": "rex-function"
   },
   "smithy_aws_core.aio.identity.chain.providers": {
     "environment": "rex-module",
@@ -243,6 +247,7 @@
     "AWSCredentialsIdentity": "rex-class",
     "AsyncEnvironmentCredentialsProvider": "class[async]",
     "AsyncEnvironmentCredentialsResolver": "rex-class[async]",
+    "AwsFeatureId": "rex-class",
     "ChainSetup": "rex-class",
     "Identity": "rex-protocol",
     "Standard": "rex-class",
@@ -252,6 +257,7 @@
     "AWSCredentialsIdentity": "rex-class",
     "AsyncProcessCredentialsResolver": "rex-class[async]",
     "AsyncProfileCredentialProcessProvider": "class[async]",
+    "AwsFeatureId": "rex-class",
     "ChainSetup": "rex-class",
     "Identity": "rex-protocol",
     "Standard": "rex-class",
@@ -262,6 +268,7 @@
     "AsyncProfileSessionCredentialsProvider": "class[async]",
     "AsyncProfileStaticCredentialsProvider": "class[async]",
     "AsyncStaticCredentialsResolver": "rex-class[async]",
+    "AwsFeatureId": "rex-class",
     "ChainSetup": "rex-class",
     "Identity": "rex-protocol",
     "Standard": "rex-class",
@@ -296,7 +303,9 @@
     "AWSIdentityProperties": "rex-class",
     "AsyncEnvironmentCredentialsResolver": "class[async]",
     "AsyncIdentityResolver": "rex-protocol[async]",
-    "EnvironmentCredentialsResolver": "rex-class"
+    "AwsFeatureId": "rex-class",
+    "EnvironmentCredentialsResolver": "rex-class",
+    "add_feature_id": "rex-function"
   },
   "smithy_aws_core.aio.identity.imds": {
     "AWSCredentialsIdentity": "rex-class",
@@ -321,14 +330,18 @@
     "AWSIdentityProperties": "rex-class",
     "AsyncIdentityResolver": "rex-protocol[async]",
     "AsyncProcessCredentialsResolver": "class[async]",
-    "SmithyIdentityError": "rex-exception"
+    "AwsFeatureId": "rex-class",
+    "SmithyIdentityError": "rex-exception",
+    "add_feature_id": "rex-function"
   },
   "smithy_aws_core.aio.identity.static": {
     "AWSCredentialsIdentity": "rex-class",
     "AWSIdentityProperties": "rex-class",
     "AsyncIdentityResolver": "rex-protocol[async]",
     "AsyncStaticCredentialsResolver": "class[async]",
-    "StaticCredentialsResolver": "rex-class"
+    "AwsFeatureId": "rex-class",
+    "StaticCredentialsResolver": "rex-class",
+    "add_feature_id": "rex-function"
   },
   "smithy_aws_core.aio.protocols": {
     "APIOperation": "rex-class",
@@ -414,8 +427,11 @@
     "MAX_ENCODED_FEATURE_IDS_BYTES": "int",
     "PropertyKey": "rex-class",
     "TypedProperties": "rex-protocol",
+    "add_feature_id": "function",
     "encode_feature_ids": "function",
+    "get_feature_ids": "function",
     "logger": "Logger",
+    "normalize_feature_ids": "function",
     "register_feature_id": "function"
   },
   "smithy_aws_core.checksums": {
@@ -559,6 +575,7 @@
     "AWSCredentialsResolver": "rex-type_alias",
     "AWSIdentityConfig": "protocol",
     "AWSIdentityProperties": "class",
+    "AwsFeatureId": "rex-class",
     "Identity": "rex-protocol",
     "IdentityResolver": "rex-protocol"
   },
@@ -613,6 +630,7 @@
     "Field": "rex-class",
     "HTTPRequest": "rex-protocol[async]",
     "Interceptor": "rex-class",
+    "RESOLVED_IDENTITY": "rex-PropertyKey",
     "RETRY_STRATEGY": "rex-PropertyKey",
     "RawStringUserAgentComponent": "rex-class",
     "RequestContext": "rex-class",

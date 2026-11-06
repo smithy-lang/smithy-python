@@ -7,6 +7,8 @@ from typing import Any, assert_type
 import pytest
 import smithy_aws_core.aio.identity.chain as chain_module
 from smithy_aws_core.aio.identity import AsyncIdentityChain
+from smithy_aws_core.aio.identity.chain.provider import NamedResolver
+from smithy_aws_core.business_metrics import AwsFeatureId
 from smithy_aws_core.identity import (
     AWSCredentialsIdentity,
     AWSIdentityProperties,
@@ -285,3 +287,23 @@ async def test_chained_invalidate() -> None:
 
     assert first.invalidated
     assert second.invalidated
+
+
+async def test_registers_feature_ids_of_resolver_that_returned_identity() -> None:
+    miss = NamedResolver(
+        provider_name="Environment",
+        resolver=_FakeResolver(error=SmithyIdentityError("miss")),
+        feature_ids=(AwsFeatureId.CREDENTIALS_ENV_VARS,),
+    )
+    hit = NamedResolver(
+        provider_name="ProfileStaticKeys",
+        resolver=_FakeResolver(identity=_credentials("hit")),
+        feature_ids=(AwsFeatureId.CREDENTIALS_PROFILE,),
+    )
+    features: dict[AwsFeatureId, None] = {}
+
+    await AsyncIdentityChain((miss, hit)).get_identity(
+        properties={"_feature_ids": features}
+    )
+
+    assert list(features) == [AwsFeatureId.CREDENTIALS_PROFILE]

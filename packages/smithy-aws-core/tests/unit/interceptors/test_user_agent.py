@@ -6,11 +6,13 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
+from aws_sdk_signers import AWSCredentialIdentity as SignersCredentialIdentity
 from smithy_aws_core.business_metrics import (
     FEATURE_IDS,
     AwsFeatureId,
     register_feature_id,
 )
+from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_aws_core.interceptors.user_agent import UserAgentInterceptor
 from smithy_core import URI
 from smithy_core.aio.retries import (
@@ -19,6 +21,7 @@ from smithy_core.aio.retries import (
     AsyncSimpleRetryStrategy,
     AsyncStandardRetryStrategy,
 )
+from smithy_core.auth import RESOLVED_IDENTITY
 from smithy_core.endpoints import STATIC_ENDPOINT_CONFIG
 from smithy_core.interceptors import InputContext, RequestContext
 from smithy_core.types import TypedProperties
@@ -218,3 +221,31 @@ def test_registers_endpoint_override(
     )
     _interceptor().read_after_serialization(context)
     assert list(properties.get(FEATURE_IDS, {})) == expected
+
+
+@pytest.mark.parametrize(
+    "identity,expected",
+    [
+        (
+            AWSCredentialsIdentity(
+                access_key_id="akid", secret_access_key="s", account_id="123456789012"
+            ),
+            f"{_BASE_USER_AGENT} m/T",
+        ),
+        (
+            AWSCredentialsIdentity(access_key_id="akid", secret_access_key="s"),
+            _BASE_USER_AGENT,
+        ),
+        # Has no account_id field at all.
+        (
+            SignersCredentialIdentity(access_key_id="akid", secret_access_key="s"),
+            _BASE_USER_AGENT,
+        ),
+        (None, _BASE_USER_AGENT),
+    ],
+)
+def test_registers_resolved_account_id(identity: Any, expected: str) -> None:
+    properties = TypedProperties()
+    if identity is not None:
+        properties[RESOLVED_IDENTITY] = identity
+    assert _transmit(_interceptor(), properties) == expected

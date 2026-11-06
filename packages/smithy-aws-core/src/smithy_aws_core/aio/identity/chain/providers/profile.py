@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.interfaces.identity import Identity
 
+from .....business_metrics import AwsFeatureId
 from .....identity.chain.ordering import Standard, StandardProvider
 from .....identity.components import AWSCredentialsIdentity
 from ...static import AsyncStaticCredentialsResolver
@@ -21,6 +22,9 @@ _ROLE_ARN = "role_arn"
 
 class AsyncProfileSessionCredentialsProvider:
     """Adds a resolver for session credentials from the active profile."""
+
+    feature_ids = (AwsFeatureId.CREDENTIALS_PROFILE,)
+    """The features recorded when this provider's resolver returns credentials."""
 
     @property
     def name(self) -> str:
@@ -62,6 +66,9 @@ class AsyncProfileSessionCredentialsProvider:
 
 class AsyncProfileStaticCredentialsProvider:
     """Adds a resolver for static credentials from the active profile."""
+
+    feature_ids = (AwsFeatureId.CREDENTIALS_PROFILE,)
+    """The features recorded when this provider's resolver returns credentials."""
 
     @property
     def name(self) -> str:

@@ -10,6 +10,7 @@ from smithy_core.aio.retries import (
     AsyncAdaptiveRetryStrategy,
     AsyncStandardRetryStrategy,
 )
+from smithy_core.auth import RESOLVED_IDENTITY
 from smithy_core.endpoints import STATIC_ENDPOINT_CONFIG
 from smithy_core.interceptors import Interceptor, RequestContext
 from smithy_core.interfaces import TypedProperties
@@ -90,6 +91,7 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
         # registered up to that point are included. User-Agent isn't signed by AWS
         # auth schemes, so changing it after signing doesn't affect the signature.
         request = context.transport_request
+        self._register_resolved_account_id(context.properties)
         encoded = encode_feature_ids(context.properties.get(FEATURE_IDS, {}))
         if encoded and "User-Agent" in request.fields:
             user_agent = request.fields["User-Agent"].as_string()
@@ -111,6 +113,11 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
         config = properties.get(STATIC_ENDPOINT_CONFIG)
         if config is not None and config.endpoint_uri is not None:
             register_feature_id(properties, AwsFeatureId.ENDPOINT_OVERRIDE)
+
+    def _register_resolved_account_id(self, properties: TypedProperties) -> None:
+        identity = properties.get(RESOLVED_IDENTITY)
+        if getattr(identity, "account_id", None):
+            register_feature_id(properties, AwsFeatureId.RESOLVED_ACCOUNT_ID)
 
     def _build_sdk_metadata(self) -> list[UserAgentComponent]:
         return [

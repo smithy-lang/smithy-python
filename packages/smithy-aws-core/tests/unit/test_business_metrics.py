@@ -9,6 +9,7 @@ from smithy_aws_core.business_metrics import (
     MAX_ENCODED_FEATURE_IDS_BYTES,
     AwsFeatureId,
     encode_feature_ids,
+    normalize_feature_ids,
     register_feature_id,
 )
 from smithy_core.types import TypedProperties
@@ -59,3 +60,29 @@ def test_register_feature_id_ignores_plain_strings() -> None:
     properties = TypedProperties()
     register_feature_id(properties, cast(Any, "N"))
     assert FEATURE_IDS not in properties
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (None, ()),
+        (AwsFeatureId.CREDENTIALS_CODE, (AwsFeatureId.CREDENTIALS_CODE,)),
+        (
+            (AwsFeatureId.CREDENTIALS_CODE, AwsFeatureId.ENDPOINT_OVERRIDE),
+            (AwsFeatureId.CREDENTIALS_CODE, AwsFeatureId.ENDPOINT_OVERRIDE),
+        ),
+        (
+            (f for f in [AwsFeatureId.CREDENTIALS_CODE]),
+            (AwsFeatureId.CREDENTIALS_CODE,),
+        ),
+        ([AwsFeatureId.CREDENTIALS_CODE, "g"], (AwsFeatureId.CREDENTIALS_CODE,)),
+        ("g", ()),
+        (5, ()),
+    ],
+)
+def test_normalize_feature_ids(
+    value: object, expected: tuple[AwsFeatureId, ...]
+) -> None:
+    result = normalize_feature_ids(value)
+    assert result == expected
+    assert all(isinstance(feature_id, AwsFeatureId) for feature_id in result)

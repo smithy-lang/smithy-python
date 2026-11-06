@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 
+from ...business_metrics import AwsFeatureId, add_feature_id
 from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
 from ...identity.environment import EnvironmentCredentialsResolver
 
@@ -17,10 +18,17 @@ class AsyncEnvironmentCredentialsResolver(
     awaiting.
     """
 
+    _FEATURE_ID = AwsFeatureId.CREDENTIALS_ENV_VARS
+    """Recorded when used directly; in the credential chain, the provider's are used."""
+
     def __init__(self):
         self._sync = EnvironmentCredentialsResolver()
 
     async def get_identity(
         self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
-        return self._sync.get_identity(properties=properties)
+        identity = self._sync.get_identity(properties=properties)
+        features = properties.get("_feature_ids")
+        if features is not None:
+            add_feature_id(features, self._FEATURE_ID)
+        return identity

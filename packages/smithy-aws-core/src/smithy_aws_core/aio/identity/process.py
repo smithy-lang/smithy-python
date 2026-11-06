@@ -8,6 +8,7 @@ from typing import TypeGuard, cast
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 
+from ...business_metrics import AwsFeatureId, add_feature_id
 from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
 
 __all__ = ["AsyncProcessCredentialsResolver"]
@@ -31,6 +32,9 @@ class AsyncProcessCredentialsResolver(
         credentials when the process output does not include an ``AccountId``.
     """
 
+    _FEATURE_ID = AwsFeatureId.CREDENTIALS_PROCESS
+    """Recorded when used directly; in the credential chain, the provider's are used."""
+
     def __init__(
         self,
         command: list[str],
@@ -48,6 +52,13 @@ class AsyncProcessCredentialsResolver(
     async def get_identity(
         self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
+        identity = await self._resolve()
+        features = properties.get("_feature_ids")
+        if features is not None:
+            add_feature_id(features, self._FEATURE_ID)
+        return identity
+
+    async def _resolve(self) -> AWSCredentialsIdentity:
         if self._credentials is not None:
             # Long-term credentials (no expiration) should always be reused
             if self._credentials.expiration is None:
