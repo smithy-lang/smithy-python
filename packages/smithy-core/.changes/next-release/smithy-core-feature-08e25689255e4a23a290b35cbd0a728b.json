@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added the operation being invoked to the request properties of each call under `OPERATION`."
+}

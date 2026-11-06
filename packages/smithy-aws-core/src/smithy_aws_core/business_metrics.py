@@ -37,6 +37,8 @@ class AwsFeatureId(StrEnum):
     RETRY_MODE_STANDARD = "E"
     RETRY_MODE_ADAPTIVE = "F"
     ENDPOINT_OVERRIDE = "N"
+    FLEXIBLE_CHECKSUMS_RES_WHEN_SUPPORTED = "b"
+    FLEXIBLE_CHECKSUMS_RES_WHEN_REQUIRED = "c"
 
 
 FEATURE_IDS = PropertyKey(key="feature_ids", value_type=dict[AwsFeatureId, None])

@@ -9,13 +9,14 @@ from typing import get_args
 from smithy_core.retries import RetryStrategyType
 
 from .exceptions import ConfigValidationError, ProfileNotFoundError
-from .types import ConfigSource
+from .types import ConfigSource, ResponseChecksumValidation
 
 __all__ = [
     "validate_account_id_endpoint_mode",
     "validate_max_attempts",
     "validate_profile",
     "validate_region",
+    "validate_response_checksum_validation",
     "validate_retry_mode",
     "validate_sdk_ua_app_id",
 ]
@@ -133,6 +134,25 @@ def validate_sdk_ua_app_id(value: object) -> None:
             "The configured value for sdk_ua_app_id exceeds the recommended maximum "
             "length of %d characters.",
             _SDK_UA_APP_ID_MAX_LENGTH,
+        )
+
+
+def validate_response_checksum_validation(value: object) -> None:
+    """Validate when response checksums are validated.
+
+    Valid values: 'when_supported', 'when_required', or None for the default. The
+    resolver lowercases values from the environment and shared config files.
+
+    :param value: The value to validate.
+    :raises ConfigValidationError: If the value is invalid.
+    """
+    if value is None:
+        return
+    valid = get_args(ResponseChecksumValidation.__value__)
+    if value not in valid:
+        raise ConfigValidationError(
+            f"Invalid value for 'response_checksum_validation': {value!r}. "
+            f"Must be one of {valid}."
         )
 
 

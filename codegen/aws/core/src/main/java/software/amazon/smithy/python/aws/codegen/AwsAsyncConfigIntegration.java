@@ -313,7 +313,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // survive and participate in the resolution pipeline.
             for (ConfigProperty property : pluginProperties.values()) {
                 var propertyName = property.name();
-                var defaultValue = builtInDefaults.get(propertyName);
+                var defaultValue = property.defaultValue().orElse(builtInDefaults.get(propertyName));
                 if (defaultValue == null && property.resolver().isEmpty() && property.validator().isEmpty()) {
                     writer.write("\"$L\": $T(default=None),", propertyName, fieldSpecSymbol);
                     continue;

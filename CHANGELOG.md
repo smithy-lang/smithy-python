@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Features
+
+* Generated AWS clients validate the checksums of response payloads for operations with the `aws.protocols#httpChecksum` trait, such as Amazon S3's `GetObject`. These clients depend on the `checksums` extra of `smithy-aws-core`.
+
 ## v0.6.0
 
 ### Breaking Changes

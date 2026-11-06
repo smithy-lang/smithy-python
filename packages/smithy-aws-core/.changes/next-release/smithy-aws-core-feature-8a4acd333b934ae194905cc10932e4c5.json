@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added response checksum validation for operations with the `httpChecksum` trait, configured with the new `response_checksum_validation` setting (`AWS_RESPONSE_CHECKSUM_VALIDATION`). Validation happens when the response payload is read to the end, and a mismatch raises `ChecksumMismatchError`."
+}

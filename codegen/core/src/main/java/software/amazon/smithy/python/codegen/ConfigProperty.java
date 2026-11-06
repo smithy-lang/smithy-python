@@ -25,6 +25,7 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     private final boolean nullable;
     private final String documentation;
     private final Consumer<PythonWriter> initialize;
+    private final String defaultValue;
     private final String endpointParameter;
     private final Consumer<PythonWriter> resolver;
     private final Consumer<PythonWriter> definitions;
@@ -40,6 +41,7 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         this.nullable = builder.nullable;
         this.documentation = Objects.requireNonNull(builder.documentation);
         this.initialize = Objects.requireNonNull(builder.initialize);
+        this.defaultValue = builder.defaultValue;
         this.endpointParameter = builder.endpointParameter;
         this.resolver = builder.resolver;
         this.definitions = builder.definitions;
@@ -82,6 +84,14 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
      */
     public String documentation() {
         return documentation;
+    }
+
+    /**
+     * @return Returns the field's default value, if any. It's used when the value isn't
+     * set or resolved, in configs that resolve their fields from the environment.
+     */
+    public Optional<String> defaultValue() {
+        return Optional.ofNullable(defaultValue);
     }
 
     /**
@@ -150,6 +160,7 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
                 .nullable(nullable)
                 .documentation(documentation)
                 .initialize(initialize)
+                .defaultValue(defaultValue)
                 .endpointParameter(endpointParameter)
                 .resolver(resolver)
                 .definitions(definitions)
@@ -166,6 +177,7 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         private boolean nullable = true;
         private String documentation;
         private Consumer<PythonWriter> initialize = writer -> writer.write("self.$1L = $1L", name);
+        private String defaultValue;
         private String endpointParameter;
         private Consumer<PythonWriter> resolver;
         private Consumer<PythonWriter> definitions;
@@ -257,6 +269,19 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
          */
         public Builder initialize(Consumer<PythonWriter> initialize) {
             this.initialize = initialize;
+            return this;
+        }
+
+        /**
+         * Sets the field's default value, used when the value isn't set or resolved.
+         *
+         * <p>Only configs that resolve their fields from the environment use it.
+         *
+         * @param defaultValue The default string value.
+         * @return Returns the builder.
+         */
+        public Builder defaultValue(String defaultValue) {
+            this.defaultValue = defaultValue;
             return this;
         }
 

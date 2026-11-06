@@ -53,6 +53,9 @@ build-backend = "hatchling.build"
 path = "src/smithy_aws_core/__init__.py"
 
 [project.optional-dependencies]
+checksums = [
+    "smithy-checksums~=0.0.0"
+]
 eventstream = [
     "smithy-aws-event-stream~=0.3.0"
 ]
