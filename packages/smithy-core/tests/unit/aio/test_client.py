@@ -338,6 +338,25 @@ async def test_modified_input_is_serialized_and_used_to_resolve_endpoint() -> No
     assert resolver.resolved_inputs == [interceptor.replacement]
 
 
+class _AsyncEndpointResolver:
+    def __init__(self) -> None:
+        self.resolved_inputs: list[Any] = []
+
+    async def resolve_endpoint(self, params: Any) -> StubEndpoint:
+        self.resolved_inputs.append(params.input)
+        return StubEndpoint()
+
+
+async def test_async_endpoint_resolvers_are_awaited() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    resolver = _AsyncEndpointResolver()
+    call = replace(client_call(), endpoint_resolver=resolver)
+
+    await harness.pipeline(call)
+
+    assert resolver.resolved_inputs == [call.input]
+
+
 class _RecordHooks(Interceptor[Any, Any, Any, Any]):
     def __init__(self, events: list[str]) -> None:
         self.events = events

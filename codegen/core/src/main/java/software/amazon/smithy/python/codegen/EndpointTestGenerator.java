@@ -129,7 +129,8 @@ public final class EndpointTestGenerator implements Runnable {
                         config = await _config()
                         # Only the resolver is used, so the transport is closed right away.
                         await $T(config.transport)
-                        assert config.endpoint_resolver is not None
+                        # The rules checks are sync, so they need the default sync resolver.
+                        assert isinstance(config.endpoint_resolver, $T)
                         _resolver = config.endpoint_resolver
                     return _resolver
 
@@ -155,9 +156,10 @@ public final class EndpointTestGenerator implements Runnable {
                 config,
                 construct,
                 RuntimeTypes.SIMPLE_RETRY_STRATEGY,
-                RuntimeTypes.ENDPOINT_RESOLVER,
-                RuntimeTypes.ENDPOINT_RESOLVER,
+                RuntimeTypes.BDD_ENDPOINT_RESOLVER,
+                RuntimeTypes.BDD_ENDPOINT_RESOLVER,
                 RuntimeTypes.CLOSE_ASYNC,
+                RuntimeTypes.BDD_ENDPOINT_RESOLVER,
                 RuntimeTypes.INTERCEPTOR,
                 client,
                 client);

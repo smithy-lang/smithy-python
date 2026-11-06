@@ -64,6 +64,12 @@ public class PythonCodegenTest {
 
         var aioInit = Files.readString(tempDir.resolve("src/weather/aio/__init__.py"));
         assertTrue(aioInit.contains("__all__ = [\"AsyncWeather\", \"AsyncConfig\"]"));
+        var init = Files.readString(tempDir.resolve("src/weather/__init__.py"));
+        assertTrue(init.contains("__all__ = [\"Weather\", \"Config\", \"AsyncWeather\", \"AsyncConfig\"]"));
+        assertTrue(init.contains("\"AsyncWeather\": \".aio.client\""));
+
+        // Async configs take either kind of endpoint resolver; sync ones take sync only.
+        assertTrue(config.contains("endpoint_resolver: EndpointResolver | AsyncEndpointResolver"));
 
         var syncConfig = Files.readString(tempDir.resolve("src/weather/config.py"));
         assertTrue(syncConfig.contains("self.transport = transport or Urllib3HTTPClient()"));

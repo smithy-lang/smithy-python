@@ -241,7 +241,7 @@ public final class ConfigGenerator implements Runnable {
     private static ConfigProperty endpointResolverProperty(GenerationContext context) {
         return ConfigProperty.builder()
                 .name("endpoint_resolver")
-                .type(RuntimeTypes.ENDPOINT_RESOLVER)
+                .type(RuntimeTypes.CONFIG_ENDPOINT_RESOLVER)
                 .documentation("""
                         The endpoint resolver used to resolve the final endpoint per-operation based on the \
                         configuration.""")

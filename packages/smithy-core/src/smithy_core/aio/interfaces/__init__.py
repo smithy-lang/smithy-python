@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
     from ...deserializers import DeserializeableShape, ShapeDeserializer
+    from ...endpoints import EndpointResolverParams
+    from ...interfaces import Endpoint
     from ...schemas import APIOperation
     from ...serializers import SerializeableShape
     from .auth import AsyncAuthScheme
@@ -39,6 +41,22 @@ class AsyncWriter(Protocol):
 
 
 type StreamingBlob = AnyStreamingBlob
+
+
+class AsyncEndpointResolver(Protocol):
+    """Resolves an operation's endpoint given parameters, for async clients.
+
+    Async clients also accept a sync :py:class:`smithy_core.interfaces.EndpointResolver`.
+    """
+
+    async def resolve_endpoint(
+        self, params: "EndpointResolverParams[Any]"
+    ) -> "Endpoint":
+        """Resolve an endpoint for the given operation.
+
+        :param params: The parameters available to resolve the endpoint.
+        """
+        ...
 
 
 class AsyncClientTransport[I: Request, O: Response](Protocol):

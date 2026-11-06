@@ -8,8 +8,11 @@ import static software.amazon.smithy.python.codegen.SymbolProperties.DESERIALIZE
 import static software.amazon.smithy.python.codegen.SymbolProperties.OPERATION_METHOD;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.SymbolReference;
@@ -62,31 +65,33 @@ final class ClientGenerator implements Runnable {
 
     private void writeExports(Symbol syncClient, UnaryOperator<Symbol> mapper) {
         var asyncConfig = CodegenUtils.getAsyncConfigSymbol(context.settings(), model);
+        var asyncClient = symbolProvider.toSymbol(service).getName();
         var moduleName = context.settings().moduleName();
-        writeExports("./src/" + moduleName + "/__init__.py",
-                moduleName,
-                syncClient.getName(),
-                mapper.apply(asyncConfig).getName());
-        writeExports("./src/" + moduleName + "/aio/__init__.py",
-                moduleName + ".aio",
-                symbolProvider.toSymbol(service).getName(),
-                asyncConfig.getName());
+        var root = new LinkedHashMap<String, String>();
+        root.put(syncClient.getName(), ".client");
+        root.put(mapper.apply(asyncConfig).getName(), ".config");
+        root.put(asyncClient, ".aio.client");
+        root.put(asyncConfig.getName(), ".aio.config");
+        writeExports("./src/" + moduleName + "/__init__.py", moduleName, root);
+        var aio = new LinkedHashMap<String, String>();
+        aio.put(asyncClient, ".client");
+        aio.put(asyncConfig.getName(), ".config");
+        writeExports("./src/" + moduleName + "/aio/__init__.py", moduleName + ".aio", aio);
     }
 
-    // Lazily exported so importing the package does not import the client.
-    private void writeExports(String file, String namespace, String client, String config) {
+    // Lazily exported so importing the package imports neither client.
+    private void writeExports(String file, String namespace, Map<String, String> exports) {
         context.writerDelegator().useFileWriter(file, namespace, writer -> {
             writer.addStdlibImport("typing", "TYPE_CHECKING");
             writer.addStdlibImport("typing", "Any");
             writer.addStdlibImport("importlib", "import_module");
             writer.write("""
                     if TYPE_CHECKING:
-                        from .client import $1L
-                        from .config import $2L
+                        ${C|}
 
-                    __all__ = [$1S, $2S]
+                    __all__ = [${L}]
 
-                    _EXPORTS = {$1S: ".client", $2S: ".config"}
+                    _EXPORTS = {${L}}
 
 
                     def __getattr__(name: str) -> Any:
@@ -94,7 +99,14 @@ final class ClientGenerator implements Runnable {
                             return getattr(import_module(_EXPORTS[name], __name__), name)
                         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-                    """, client, config);
+                    """,
+                    writer.consumer(w -> exports.forEach(
+                            (name, module) -> w.write("from $L import $L", module, name))),
+                    exports.keySet().stream().map(n -> '"' + n + '"').collect(Collectors.joining(", ")),
+                    exports.entrySet()
+                            .stream()
+                            .map(e -> '"' + e.getKey() + "\": \"" + e.getValue() + '"')
+                            .collect(Collectors.joining(", ")));
         });
     }
 

@@ -7,10 +7,22 @@ from typing import Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from .client import QueryProtocolClient
     from .config import QueryProtocolConfig
+    from .aio.client import AsyncQueryProtocolClient
+    from .aio.config import AsyncQueryProtocolConfig
 
-__all__ = ["QueryProtocolClient", "QueryProtocolConfig"]
+__all__ = [
+    "QueryProtocolClient",
+    "QueryProtocolConfig",
+    "AsyncQueryProtocolClient",
+    "AsyncQueryProtocolConfig",
+]
 
-_EXPORTS = {"QueryProtocolClient": ".client", "QueryProtocolConfig": ".config"}
+_EXPORTS = {
+    "QueryProtocolClient": ".client",
+    "QueryProtocolConfig": ".config",
+    "AsyncQueryProtocolClient": ".aio.client",
+    "AsyncQueryProtocolConfig": ".aio.config",
+}
 
 
 def __getattr__(name: str) -> Any:

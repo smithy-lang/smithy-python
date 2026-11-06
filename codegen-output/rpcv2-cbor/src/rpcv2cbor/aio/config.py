@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, TYPE_CHECKING, TypeAlias, Union, cast
 
-from smithy_core.aio.interfaces import AsyncClientTransport
+from smithy_core.aio.interfaces import AsyncClientTransport, AsyncEndpointResolver
 from smithy_core.aio.interfaces.auth import AsyncAuthScheme
 from smithy_core.auth import DefaultAuthResolver
 from smithy_core.endpoints import BddEndpointResolver
@@ -100,7 +100,7 @@ class AsyncConfig:
     auth_schemes: dict[ShapeID, AsyncAuthScheme[Any, Any, Any, Any]]
     """A map of auth scheme ids to auth schemes."""
 
-    endpoint_resolver: EndpointResolver
+    endpoint_resolver: EndpointResolver | AsyncEndpointResolver
     """
     The endpoint resolver used to resolve the final endpoint per-operation
     based on the configuration.
@@ -159,7 +159,7 @@ class AsyncConfig:
         *,
         auth_scheme_resolver: AuthSchemeResolver | None = None,
         auth_schemes: dict[ShapeID, AsyncAuthScheme[Any, Any, Any, Any]] | None = None,
-        endpoint_resolver: EndpointResolver | None = None,
+        endpoint_resolver: EndpointResolver | AsyncEndpointResolver | None = None,
         endpoint_uri: str | URI | None = None,
         http_request_config: HTTPRequestConfiguration | None = None,
         interceptors: list[_ServiceInterceptor] | None = None,

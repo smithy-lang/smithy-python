@@ -1,4 +1,4 @@
 {
   "type": "breaking",
-  "description": "Removed `smithy_core.aio.endpoints`, `AsyncEndpointResolver` and `AsyncClientCall`. Use `smithy_core.endpoints.StaticEndpointResolver`, `smithy_core.interfaces.EndpointResolver` and `smithy_core.client.ClientCall`, which serve both sync and async clients."
+  "description": "Removed `smithy_core.aio.endpoints` and `AsyncClientCall`. Use `smithy_core.endpoints.StaticEndpointResolver` and `smithy_core.client.ClientCall`, which serve both sync and async clients. Async clients accept a sync `smithy_core.interfaces.EndpointResolver` as well as an `AsyncEndpointResolver`."
 }

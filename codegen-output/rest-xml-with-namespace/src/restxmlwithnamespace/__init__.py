@@ -7,12 +7,21 @@ from typing import Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from .client import RestXmlProtocolNamespaceClient
     from .config import RestXmlProtocolNamespaceConfig
+    from .aio.client import AsyncRestXmlProtocolNamespaceClient
+    from .aio.config import AsyncRestXmlProtocolNamespaceConfig
 
-__all__ = ["RestXmlProtocolNamespaceClient", "RestXmlProtocolNamespaceConfig"]
+__all__ = [
+    "RestXmlProtocolNamespaceClient",
+    "RestXmlProtocolNamespaceConfig",
+    "AsyncRestXmlProtocolNamespaceClient",
+    "AsyncRestXmlProtocolNamespaceConfig",
+]
 
 _EXPORTS = {
     "RestXmlProtocolNamespaceClient": ".client",
     "RestXmlProtocolNamespaceConfig": ".config",
+    "AsyncRestXmlProtocolNamespaceClient": ".aio.client",
+    "AsyncRestXmlProtocolNamespaceConfig": ".aio.config",
 }
 
 

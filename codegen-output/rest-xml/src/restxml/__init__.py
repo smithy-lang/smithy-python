@@ -7,10 +7,22 @@ from typing import Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from .client import RestXmlProtocolClient
     from .config import RestXmlProtocolConfig
+    from .aio.client import AsyncRestXmlProtocolClient
+    from .aio.config import AsyncRestXmlProtocolConfig
 
-__all__ = ["RestXmlProtocolClient", "RestXmlProtocolConfig"]
+__all__ = [
+    "RestXmlProtocolClient",
+    "RestXmlProtocolConfig",
+    "AsyncRestXmlProtocolClient",
+    "AsyncRestXmlProtocolConfig",
+]
 
-_EXPORTS = {"RestXmlProtocolClient": ".client", "RestXmlProtocolConfig": ".config"}
+_EXPORTS = {
+    "RestXmlProtocolClient": ".client",
+    "RestXmlProtocolConfig": ".config",
+    "AsyncRestXmlProtocolClient": ".aio.client",
+    "AsyncRestXmlProtocolConfig": ".aio.config",
+}
 
 
 def __getattr__(name: str) -> Any:

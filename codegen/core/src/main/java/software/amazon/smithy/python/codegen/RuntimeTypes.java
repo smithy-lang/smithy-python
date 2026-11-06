@@ -129,6 +129,20 @@ public final class RuntimeTypes {
     public static final Symbol ENDPOINT_RESOLVER =
             createSymbol("interfaces", "EndpointResolver", SmithyPythonDependency.SMITHY_CORE);
 
+    // smithy_core.aio.interfaces
+    public static final Symbol ASYNC_ENDPOINT_RESOLVER =
+            createSymbol("aio.interfaces", "AsyncEndpointResolver", SmithyPythonDependency.SMITHY_CORE);
+
+    /**
+     * The endpoint resolver a config accepts: async configs take either kind, and the
+     * sync variant maps this to {@link #ENDPOINT_RESOLVER}.
+     */
+    public static final Symbol CONFIG_ENDPOINT_RESOLVER = Symbol.builder()
+            .name("EndpointResolver | AsyncEndpointResolver")
+            .addReference(ENDPOINT_RESOLVER)
+            .addReference(ASYNC_ENDPOINT_RESOLVER)
+            .build();
+
     // smithy_core.aio.types
     public static final Symbol ASYNC_BYTES_READER =
             createSymbol("aio.types", "AsyncBytesReader", SmithyPythonDependency.SMITHY_CORE);

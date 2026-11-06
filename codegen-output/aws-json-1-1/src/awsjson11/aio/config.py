@@ -27,6 +27,7 @@ from smithy_aws_core.config.resolvers import (
 from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
 from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+from smithy_core.aio.interfaces import AsyncEndpointResolver
 from smithy_core.aio.interfaces.auth import AsyncAuthScheme
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.endpoints import BddEndpointResolver
@@ -133,7 +134,7 @@ _PROTOCOL_SETTINGS = ProtocolSettings(
 
 
 class _AsyncJsonProtocolConfigOverrides(AsyncAwsConfigOverrides, total=False):
-    endpoint_resolver: EndpointResolver | None
+    endpoint_resolver: EndpointResolver | AsyncEndpointResolver | None
     protocol: (
         ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]] | None
     )
@@ -147,7 +148,7 @@ class _AsyncJsonProtocolConfigOverrides(AsyncAwsConfigOverrides, total=False):
 class AsyncJsonProtocolConfig(AsyncAwsConfig):
     """Json Protocol configuration (async-resolved)."""
 
-    endpoint_resolver: EndpointResolver | None = None
+    endpoint_resolver: EndpointResolver | AsyncEndpointResolver | None = None
     """
     The endpoint resolver used to resolve the final endpoint per-operation
     based on the configuration.

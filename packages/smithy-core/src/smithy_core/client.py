@@ -59,8 +59,9 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
     """The supported auth schemes for the operation, sync or async to match the
     pipeline."""
 
-    endpoint_resolver: EndpointResolver
-    """The endpoint resolver for the operation."""
+    endpoint_resolver: EndpointResolver | Any
+    """The endpoint resolver for the operation. Async clients also accept an
+    ``AsyncEndpointResolver``."""
 
     retry_strategy: RetryStrategy
     """The retry strategy to use for the operation."""

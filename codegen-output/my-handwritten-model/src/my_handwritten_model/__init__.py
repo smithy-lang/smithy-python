@@ -7,10 +7,17 @@ from typing import Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from .client import MyHandwrittenModel
     from .config import Config
+    from .aio.client import AsyncMyHandwrittenModel
+    from .aio.config import AsyncConfig
 
-__all__ = ["MyHandwrittenModel", "Config"]
+__all__ = ["MyHandwrittenModel", "Config", "AsyncMyHandwrittenModel", "AsyncConfig"]
 
-_EXPORTS = {"MyHandwrittenModel": ".client", "Config": ".config"}
+_EXPORTS = {
+    "MyHandwrittenModel": ".client",
+    "Config": ".config",
+    "AsyncMyHandwrittenModel": ".aio.client",
+    "AsyncConfig": ".aio.config",
+}
 
 
 def __getattr__(name: str) -> Any:

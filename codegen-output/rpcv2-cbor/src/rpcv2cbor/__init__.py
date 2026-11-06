@@ -7,10 +7,17 @@ from typing import Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from .client import RpcV2Protocol
     from .config import Config
+    from .aio.client import AsyncRpcV2Protocol
+    from .aio.config import AsyncConfig
 
-__all__ = ["RpcV2Protocol", "Config"]
+__all__ = ["RpcV2Protocol", "Config", "AsyncRpcV2Protocol", "AsyncConfig"]
 
-_EXPORTS = {"RpcV2Protocol": ".client", "Config": ".config"}
+_EXPORTS = {
+    "RpcV2Protocol": ".client",
+    "Config": ".config",
+    "AsyncRpcV2Protocol": ".aio.client",
+    "AsyncConfig": ".aio.config",
+}
 
 
 def __getattr__(name: str) -> Any:

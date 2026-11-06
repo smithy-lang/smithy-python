@@ -937,6 +937,7 @@
     "AsyncClientProtocol": "protocol[async]",
     "AsyncClientTransport": "protocol[async]",
     "AsyncDuplexClientTransport": "protocol[async]",
+    "AsyncEndpointResolver": "protocol[async]",
     "AsyncEventPublisher": "rex-protocol[async]",
     "AsyncEventReceiver": "rex-protocol[async]",
     "AsyncWriter": "protocol[async]",

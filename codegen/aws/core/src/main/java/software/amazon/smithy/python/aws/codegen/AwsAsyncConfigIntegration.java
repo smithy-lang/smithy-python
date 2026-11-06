@@ -240,7 +240,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                 });
             }
             writer.openBlock("class $L($T, total=False):", overridesTypeName, awsConfigOverridesSymbol);
-            writer.write("endpoint_resolver: $T | None", RuntimeTypes.ENDPOINT_RESOLVER);
+            writer.write("endpoint_resolver: $T | None", RuntimeTypes.CONFIG_ENDPOINT_RESOLVER);
             writer.write("protocol: $T | None", protocolInputSymbol);
             if (hasAuth) {
                 writer.write("auth_schemes: dict[$T, $T] | None",
@@ -266,7 +266,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.write("");
 
             // Write service-specific field declarations
-            writer.write("endpoint_resolver: $T | None = None", RuntimeTypes.ENDPOINT_RESOLVER);
+            writer.write("endpoint_resolver: $T | None = None", RuntimeTypes.CONFIG_ENDPOINT_RESOLVER);
             writer.writeDocs("The endpoint resolver used to resolve the final endpoint per-operation "
                     + "based on the configuration.", context);
             writer.write("");

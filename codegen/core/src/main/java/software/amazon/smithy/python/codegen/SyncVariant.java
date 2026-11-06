@@ -5,9 +5,11 @@
 package software.amazon.smithy.python.codegen;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -93,6 +95,9 @@ public final class SyncVariant {
         }
         if (!changed) {
             return symbol;
+        }
+        if (name.contains(" | ")) {
+            name = Arrays.stream(name.split(" \\| ")).distinct().collect(Collectors.joining(" | "));
         }
         return symbol.toBuilder()
                 .name(name)
