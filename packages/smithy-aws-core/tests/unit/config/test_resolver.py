@@ -25,6 +25,7 @@ from smithy_aws_core.aio.config.resolvers import (
     resolve_endpoint_uri,
     resolve_max_attempts,
     resolve_region,
+    resolve_request_checksum_calculation,
     resolve_response_checksum_validation,
     resolve_retry_mode,
     resolve_sdk_ua_app_id,
@@ -45,7 +46,10 @@ from smithy_aws_core.config.types import (
     ConfigSource,
     FieldSpec,
 )
-from smithy_aws_core.config.validators import validate_response_checksum_validation
+from smithy_aws_core.config.validators import (
+    validate_request_checksum_calculation,
+    validate_response_checksum_validation,
+)
 from smithy_core.aio.retries import AsyncStandardRetryStrategy
 from smithy_http.interfaces import HTTPRequestConfiguration
 from smithy_http.testing import MockHTTPClient
@@ -1043,9 +1047,15 @@ class TestResolveSdkUaAppId:
 class _ChecksumServiceConfig(AsyncAwsConfig):
     """Mirrors the config codegen emits for services with the httpChecksum trait."""
 
+    request_checksum_calculation: str | None = None
     response_checksum_validation: str | None = None
 
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
+        "request_checksum_calculation": FieldSpec(
+            default="when_supported",
+            resolver=resolve_request_checksum_calculation,
+            validator=validate_request_checksum_calculation,
+        ),
         "response_checksum_validation": FieldSpec(
             default="when_supported",
             resolver=resolve_response_checksum_validation,
@@ -1144,6 +1154,46 @@ class TestResolveResponseChecksumValidation:
                 match="Invalid value for 'response_checksum_validation'",
             ):
                 await _ChecksumServiceConfig.resolve(fs=NullFileSystem())
+
+
+class TestResolveRequestChecksumCalculation:
+    @pytest.mark.asyncio
+    async def test_resolves_from_env_in_lowercase(self):
+        with patch.dict(
+            os.environ,
+            {"AWS_REQUEST_CHECKSUM_CALCULATION": "WHEN_REQUIRED"},
+            clear=True,
+        ):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            result = await resolve_request_checksum_calculation(ctx)
+            assert result.value == "when_required"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_resolves_from_profile(self):
+        fs = FakeFileSystem(
+            {
+                "/fake/config": (
+                    "[profile default]\nrequest_checksum_calculation = When_Required\n"
+                )
+            }
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
+            result = await resolve_request_checksum_calculation(ctx)
+            assert result.value == "when_required"
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_config_defaults_to_when_supported(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-west-2"}, clear=True):
+            config = await _ChecksumServiceConfig.resolve(fs=NullFileSystem())
+            assert config.request_checksum_calculation == "when_supported"
+            overrides: Any = {"request_checksum_calculation": "when_required"}
+            config = await _ChecksumServiceConfig.resolve(
+                fs=NullFileSystem(), **overrides
+            )
+            assert config.request_checksum_calculation == "when_required"
 
 
 class TestResolveEndpointUri:

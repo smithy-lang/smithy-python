@@ -43,6 +43,16 @@ SUPPORTED_ALGORITHMS: Final = frozenset(_RESPONSE_VALIDATION_ORDER)
 MD5 isn't included: it may only be sent as a checksum the caller calculated.
 """
 
+DEFAULT_ALGORITHM: Final = "CRC64NVME"
+"""The algorithm used for request checksums when the caller doesn't choose one."""
+
+_CHECKSUM_HEADER_PREFIX: Final = "x-amz-checksum-"
+
+# Headers that share the checksum prefix but don't carry a checksum.
+_NON_CHECKSUM_HEADERS: Final = frozenset(
+    ("x-amz-checksum-type", "x-amz-checksum-mode", "x-amz-checksum-algorithm")
+)
+
 
 def assert_checksums_installed() -> None:
     """Raise if smithy-checksums, which calculates checksums, isn't installed.
@@ -74,7 +84,22 @@ def checksum_header(algorithm: str) -> str:
 
     :param algorithm: The name of the algorithm.
     """
-    return "x-amz-checksum-" + algorithm.lower()
+    return _CHECKSUM_HEADER_PREFIX + algorithm.lower()
+
+
+def checksum_header_algorithm(name: str) -> str | None:
+    """The algorithm of a header that carries a checksum, if it is one.
+
+    Headers are matched by prefix, so that checksums of algorithms the SDK doesn't
+    know yet are recognized too.
+
+    :param name: The header name, in any case.
+    :returns: The uppercase algorithm name, such as ``CRC32``, or None.
+    """
+    name = name.lower()
+    if not name.startswith(_CHECKSUM_HEADER_PREFIX) or name in _NON_CHECKSUM_HEADERS:
+        return None
+    return name.removeprefix(_CHECKSUM_HEADER_PREFIX).upper()
 
 
 def encode_digest(digest: bytes) -> str:
