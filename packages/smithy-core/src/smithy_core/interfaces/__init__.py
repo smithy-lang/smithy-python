@@ -1,6 +1,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from collections.abc import (
+    AsyncIterable,
+    Awaitable,
     Callable,
     ItemsView,
     Iterator,
@@ -10,15 +12,26 @@ from collections.abc import (
 )
 from dataclasses import dataclass
 from inspect import iscoroutinefunction
-from typing import TYPE_CHECKING, Any, Protocol, TypeGuard, overload, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Protocol,
+    TypeGuard,
+    overload,
+    runtime_checkable,
+)
 
 __all__ = [
     "URI",
+    "AnyStreamingBlob",
+    "AwaitableBytesReader",
     "BytesReader",
     "BytesWriter",
     "Endpoint",
     "EndpointResolver",
     "PropertyKey",
+    "Request",
+    "Response",
     "SeekableBytesReader",
     "StreamingBlob",
     "TypedProperties",
@@ -30,8 +43,14 @@ if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
     from .._schema_compact import StaticSchema
+    from ..deserializers import DeserializeableShape
+    from ..documents import TypeRegistry
     from ..endpoints import EndpointAuthScheme, EndpointResolverParams
-    from ..schemas import Schema
+    from ..program import Program
+    from ..response import ResponseMetadata
+    from ..schemas import APIOperation, Schema
+    from ..serializers import SerializeableShape
+    from ..shapes import ShapeID
 
 
 class URI(Protocol):
@@ -121,6 +140,45 @@ def is_streaming_blob(obj: Any) -> TypeGuard[StreamingBlob]:
     :param obj: The object to inspect.
     """
     return isinstance(obj, bytes | bytearray) or is_bytes_reader(obj)
+
+
+@runtime_checkable
+class AwaitableBytesReader(Protocol):
+    """A file-like object whose read returns an awaitable, such as an async stream."""
+
+    def read(self, size: int = -1) -> Awaitable[bytes]: ...
+
+
+# CAUTION: matches smithy_core.aio.interfaces.StreamingBlob structurally; message
+# types carry either mode's body, so they can't name the aio alias.
+type AnyStreamingBlob = StreamingBlob | AwaitableBytesReader | AsyncIterable[bytes]
+
+
+class Request(Protocol):
+    """Protocol-agnostic representation of a request."""
+
+    destination: URI
+    """The URI where the request should be sent to."""
+
+    body: AnyStreamingBlob = b""
+    """The request payload."""
+
+    def consume_body(self) -> bytes:
+        """Read the request body into bytes."""
+        ...
+
+
+class Response(Protocol):
+    """Protocol-agnostic representation of a response."""
+
+    @property
+    def body(self) -> AnyStreamingBlob:
+        """The response payload."""
+        ...
+
+    def consume_body(self) -> bytes:
+        """Read the response body into bytes."""
+        ...
 
 
 class Endpoint(Protocol):
@@ -218,43 +276,57 @@ class TypedProperties(Protocol):
 
     @overload
     def __getitem__[T](self, key: PropertyKey[T]) -> T: ...
+
     @overload
     def __getitem__(self, key: str) -> Any: ...
 
     @overload
     def __setitem__[T](self, key: PropertyKey[T], value: T) -> None: ...
+
     @overload
     def __setitem__(self, key: str, value: Any) -> None: ...
 
     def __delitem__(self, key: str | PropertyKey[Any]) -> None: ...
 
+    def __iter__(self) -> Iterator[str]: ...
+
+    def __contains__(self, key: object) -> bool: ...
+
     @overload
     def get[T](self, key: PropertyKey[T], default: None = None) -> T | None: ...
+
     @overload
     def get[T](self, key: PropertyKey[T], default: T) -> T: ...
+
     @overload
     def get[T, DT](self, key: PropertyKey[T], default: DT) -> T | DT: ...
+
     @overload
     def get(self, key: str, default: None = None) -> Any | None: ...
+
     @overload
     def get[T](self, key: str, default: T) -> Any | T: ...
 
     @overload
     def pop[T](self, key: PropertyKey[T], default: None = None) -> T | None: ...
+
     @overload
     def pop[T](self, key: PropertyKey[T], default: T) -> T: ...
+
     @overload
     def pop[T, DT](self, key: PropertyKey[T], default: DT) -> T | DT: ...
+
     @overload
     def pop(self, key: str, default: None = None) -> Any | None: ...
+
     @overload
     def pop[T](self, key: str, default: T) -> Any | T: ...
 
-    def __iter__(self) -> Iterator[str]: ...
     def items(self) -> ItemsView[str, Any]: ...
+
     def keys(self) -> KeysView[str]: ...
+
     def values(self) -> ValuesView[Any]: ...
-    def __contains__(self, key: object) -> bool: ...
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -307,28 +379,94 @@ class EndpointResolver(Protocol):
         ...
 
 
-class ClientTransport(Protocol):
-    """Protocol-agnostic representation of a synchronous client transport.
+class ClientTransport[I, O](Protocol):
+    """Protocol-agnostic representation of a synchronous client transport (e.g. an
+    HTTP client)."""
 
-    Placeholder; populated alongside the sync client implementation.
-    """
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
 
-    # TODO(sync-api): implement alongside the sync client
-
-
-class DuplexClientTransport(Protocol):
-    """A synchronous client transport that supports duplex event streaming.
-
-    Placeholder; populated alongside the sync client implementation.
-    """
-
-    # TODO(sync-api): implement alongside the sync client
+    def send(self, request: I) -> O:
+        """Send a request over the transport and receive the response."""
+        ...
 
 
-class ClientProtocol(Protocol):
-    """A protocol used by a synchronous client to communicate with a server.
+class ClientProtocol[I, O](Protocol):
+    """A protocol used by a synchronous client to communicate with a server."""
 
-    Placeholder; populated alongside the sync client implementation.
-    """
+    @property
+    def id(self) -> "ShapeID":
+        """The ID of the protocol."""
+        ...
 
-    # TODO(sync-api): implement alongside the sync client
+    def serialize_request[
+        OperationInput: "SerializeableShape",
+        OperationOutput: "DeserializeableShape",
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        input: OperationInput,
+        endpoint: URI,
+        context: TypedProperties,
+    ) -> I:
+        """Serialize an operation input into a transport request.
+
+        :param operation: The operation whose request is being serialized.
+        :param input: The input shape to be serialized.
+        :param endpoint: The base endpoint to serialize.
+        :param context: A context bag for the request.
+        """
+        ...
+
+    def set_service_endpoint(self, *, request: I, endpoint: Endpoint) -> I:
+        """Update the endpoint of a transport request.
+
+        :param request: The request whose endpoint should be updated.
+        :param endpoint: The endpoint to set on the request.
+        """
+        ...
+
+    def deserialize_response_program[
+        OperationInput: "SerializeableShape",
+        OperationOutput: "DeserializeableShape",
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        request: I,
+        response: O,
+        error_registry: "TypeRegistry",
+        context: TypedProperties,
+        read_body: Callable[[AnyStreamingBlob], Any],
+    ) -> "Program[OperationOutput]":
+        """Deserialize the output from the transport response or raise its error.
+
+        The returned program runs under both the sync and async clients. It reads
+        response bodies only by yielding ``lambda: read_body(body)``, which each
+        client drives in its own mode.
+
+        :param operation: The operation whose response is being deserialized.
+        :param request: The transport request that was sent for this response.
+        :param response: The response to deserialize.
+        :param error_registry: A TypeRegistry used to deserialize errors.
+        :param context: A context bag for the request.
+        :param read_body: Reads a whole response body into bytes.
+        """
+        ...
+
+    def extract_response_metadata(
+        self, *, response: O, context: TypedProperties
+    ) -> "ResponseMetadata":
+        """Extract metadata about a transport response.
+
+        This is called for both successful and failed invocations so that request
+        identifiers remain available to callers for debugging. Implementations
+        MUST NOT raise: metadata is diagnostic, so any value that cannot be
+        determined is left unset instead.
+
+        :param response: The response to extract metadata from.
+        :param context: Per-call storage shared with this protocol's other methods.
+            Protocols whose request IDs arrive in the body must leave them here while
+            deserializing, since only deserialization sees the parsed body.
+        """
+        ...

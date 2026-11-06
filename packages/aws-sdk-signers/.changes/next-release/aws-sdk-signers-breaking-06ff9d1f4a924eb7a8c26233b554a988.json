@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Moved `AsyncSigV4Signer` and `AsyncBytesReader` to `aws_sdk_signers.aio`, and `AsyncByteStream` and `AsyncSeekable` to `aws_sdk_signers.aio.interfaces.io`. `AsyncSigV4Signer` now also signs requests with sync bodies, and its `string_to_sign` and `generate_authorization_field` are synchronous."
+}

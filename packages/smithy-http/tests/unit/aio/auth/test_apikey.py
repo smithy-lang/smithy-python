@@ -7,16 +7,15 @@ import pytest
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
+from smithy_core.traits import APIKeyLocation
 from smithy_core.types import TypedProperties
-from smithy_http import Field, Fields
-from smithy_http.aio import HTTPRequest
+from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.aio.auth.apikey import (
     APIKeyIdentityProperties,
-    APIKeyLocation,
     AsyncAPIKeyAuthScheme,
-    AsyncAPIKeySigner,
 )
 from smithy_http.aio.identity.apikey import AsyncAPIKeyIdentityResolver
+from smithy_http.auth.apikey import APIKeySigner
 from smithy_http.identity import APIKeyIdentity
 
 
@@ -40,15 +39,15 @@ def request(query: str | None = None, fields: Fields | None = None) -> HTTPReque
     )
 
 
-async def test_sign_empty_query() -> None:
+def test_sign_empty_query() -> None:
     api_key = "spam"
     identity = APIKeyIdentity(api_key=api_key)
-    signer = AsyncAPIKeySigner(name="eggs", location=APIKeyLocation.QUERY)
+    signer = APIKeySigner(name="eggs", location=APIKeyLocation.QUERY)
 
     given = request()
     expected = request(query="eggs=spam")
 
-    actual = await signer.sign(
+    actual = signer.sign(
         request=given,
         identity=identity,
         properties={},
@@ -57,15 +56,15 @@ async def test_sign_empty_query() -> None:
     assert actual == expected
 
 
-async def test_sign_non_empty_query() -> None:
+def test_sign_non_empty_query() -> None:
     api_key = "spam"
     identity = APIKeyIdentity(api_key=api_key)
-    signer = AsyncAPIKeySigner(name="eggs", location=APIKeyLocation.QUERY)
+    signer = APIKeySigner(name="eggs", location=APIKeyLocation.QUERY)
 
     given = request(query="spam=eggs")
     expected = request(query="spam=eggs&eggs=spam")
 
-    actual = await signer.sign(
+    actual = signer.sign(
         request=given,
         identity=identity,
         properties={},
@@ -74,15 +73,15 @@ async def test_sign_non_empty_query() -> None:
     assert actual == expected
 
 
-async def test_sign_header() -> None:
+def test_sign_header() -> None:
     api_key = "spam"
     identity = APIKeyIdentity(api_key=api_key)
-    signer = AsyncAPIKeySigner(name="eggs", location=APIKeyLocation.HEADER)
+    signer = APIKeySigner(name="eggs", location=APIKeyLocation.HEADER)
 
     given = request()
     expected = request(fields=Fields([Field(name="eggs", values=["spam"])]))
 
-    actual = await signer.sign(
+    actual = signer.sign(
         request=given,
         identity=identity,
         properties={},
@@ -91,17 +90,15 @@ async def test_sign_header() -> None:
     assert actual == expected
 
 
-async def test_sign_header_with_scheme() -> None:
+def test_sign_header_with_scheme() -> None:
     api_key = "spam"
     identity = APIKeyIdentity(api_key=api_key)
-    signer = AsyncAPIKeySigner(
-        name="eggs", location=APIKeyLocation.HEADER, scheme="Bearer"
-    )
+    signer = APIKeySigner(name="eggs", location=APIKeyLocation.HEADER, scheme="Bearer")
 
     given = request()
     expected = request(fields=Fields([Field(name="eggs", values=["Bearer spam"])]))
 
-    actual = await signer.sign(
+    actual = signer.sign(
         request=given,
         identity=identity,
         properties={},

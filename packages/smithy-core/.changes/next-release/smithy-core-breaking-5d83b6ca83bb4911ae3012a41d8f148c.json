@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Moved `Request`, `Response`, `AnyStreamingBlob` and `AwaitableBytesReader` to `smithy_core.interfaces` and `read_streaming_blob` to `smithy_core.utils`. Removed `consume_body_async`; use `await read_streaming_blob_async(response.body)`."
+}

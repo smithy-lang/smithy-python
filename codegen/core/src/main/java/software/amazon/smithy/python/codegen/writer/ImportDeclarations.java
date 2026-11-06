@@ -77,6 +77,10 @@ public final class ImportDeclarations implements ImportContainer {
     }
 
     private String relativize(String namespace) {
+        if (namespace.equals(localNamespace)) {
+            // A bare "." would name the package, not this module.
+            return "." + namespace.substring(namespace.lastIndexOf('.') + 1);
+        }
         if (namespace.startsWith(localNamespace)) {
             return "." + namespace.substring(localNamespace.length());
         }
@@ -91,7 +95,7 @@ public final class ImportDeclarations implements ImportContainer {
         var prefix = StringUtils.repeat(".", localParts.length - commonSegments);
         String[] segments = namespace.split("\\.", commonSegments + 1);
         if (commonSegments >= segments.length) {
-            return ".";
+            return prefix.isEmpty() ? "." : prefix;
         } else {
             return prefix + segments[commonSegments];
         }

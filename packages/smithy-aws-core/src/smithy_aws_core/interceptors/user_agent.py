@@ -5,18 +5,18 @@ import os
 from typing import Any
 
 import smithy_core
-from smithy_core.aio.retries import (
-    RETRY_STRATEGY,
-    AsyncAdaptiveRetryStrategy,
-    AsyncStandardRetryStrategy,
-)
 from smithy_core.auth import RESOLVED_IDENTITY
 from smithy_core.endpoints import STATIC_ENDPOINT_CONFIG
 from smithy_core.interceptors import Interceptor, RequestContext
 from smithy_core.interfaces import TypedProperties
+from smithy_core.retries import (
+    RETRY_STRATEGY,
+    AdaptiveRetryStrategy,
+    StandardRetryStrategy,
+)
 from smithy_http import Field
-from smithy_http.aio.interfaces import HTTPRequest
 from smithy_http.interceptors.user_agent import USER_AGENT
+from smithy_http.interfaces import HTTPRequest
 from smithy_http.user_agent import RawStringUserAgentComponent, UserAgentComponent
 
 from .. import __version__
@@ -104,9 +104,9 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
         # Adaptive is a subclass of standard, so it's checked first. Other
         # strategies have no feature ID and aren't reported.
         strategy = properties.get(RETRY_STRATEGY)
-        if isinstance(strategy, AsyncAdaptiveRetryStrategy):
+        if isinstance(strategy, AdaptiveRetryStrategy):
             register_feature_id(properties, AwsFeatureId.RETRY_MODE_ADAPTIVE)
-        elif isinstance(strategy, AsyncStandardRetryStrategy):
+        elif isinstance(strategy, StandardRetryStrategy):
             register_feature_id(properties, AwsFeatureId.RETRY_MODE_STANDARD)
 
     def _register_endpoint_override(self, properties: TypedProperties) -> None:

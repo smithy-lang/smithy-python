@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `connect_timeout` and `read_timeout` to `Urllib3HTTPClientConfig`, both defaulting to 60 seconds, so sync requests no longer wait indefinitely. A request's `HTTPRequestConfiguration.read_timeout` takes precedence."
+}

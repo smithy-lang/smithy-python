@@ -2,16 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import asyncio
-import logging
-from pathlib import Path
 from typing import Protocol, runtime_checkable
+
+from ...config.filesystem import DefaultFileSystem
 
 __all__ = [
     "AsyncDefaultFileSystem",
     "AsyncFileSystem",
 ]
 
-logger = logging.getLogger(__name__)
+_SYNC_FILESYSTEM = DefaultFileSystem()
 
 
 @runtime_checkable
@@ -43,13 +43,4 @@ class AsyncDefaultFileSystem:
         :param path: Resolved file path.
         :returns: File content, or None if the file is inaccessible.
         """
-        try:
-            content: str = await asyncio.to_thread(
-                Path(path).read_text, encoding="utf-8"
-            )
-            return content
-        except FileNotFoundError:
-            return None
-        except (PermissionError, OSError) as e:
-            logger.warning("Unable to read config file '%s': %s", path, e)
-            return None
+        return await asyncio.to_thread(_SYNC_FILESYSTEM.read_file, path)

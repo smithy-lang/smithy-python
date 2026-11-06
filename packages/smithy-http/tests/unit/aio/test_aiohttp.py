@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from smithy_core import URI
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_http import Field, Fields
-from smithy_http.aio import HTTPRequest
+from smithy_core.aio.utils import read_streaming_blob_async
+from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.aio.aiohttp import AIOHTTPClient, _AIOHTTPStreamingBody
 from smithy_http.exceptions import SmithyHTTPError
 
@@ -164,7 +164,7 @@ async def test_non_streaming_response_body_can_be_consumed() -> None:
 
     response = await client.send(_create_request())
 
-    assert await response.consume_body_async() == b'{"message":"hello"}'
+    assert await read_streaming_blob_async(response.body) == b'{"message":"hello"}'
     aiohttp_response.content.iter_any.assert_called_once_with()
 
 

@@ -32,14 +32,13 @@ class Identity(Protocol):
 
 
 class IdentityResolver[I: Identity, IP: Mapping[str, Any]](Protocol):
-    """Loads a user's :py:class:`Identity` from a given source.
-
-    Placeholder for the synchronous identity resolver; populated alongside the sync
-    client implementation.
-    """
+    """Loads a user's :py:class:`Identity` from a given source."""
 
     def get_identity(self, *, properties: IP) -> I:
-        # TODO(sync-api): implement alongside the sync client
+        """Load the user's identity from this resolver.
+
+        :param properties: Properties used to help determine the identity to return.
+        """
         ...
 
     def invalidate(self) -> None:

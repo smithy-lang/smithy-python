@@ -1,19 +1,18 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import asyncio
 import contextlib
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from smithy_core.aio.interfaces import AsyncByteStream, AsyncWriter
-from smithy_core.aio.interfaces.auth import AsyncEventSigner
 from smithy_core.aio.interfaces.eventstream import (
     AsyncEventPublisher,
     AsyncEventReceiver,
 )
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
+from smithy_core.aio.program import run_program_async
+from smithy_core.aio.utils import close_async
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.exceptions import ExpectationNotMetError
@@ -23,33 +22,39 @@ from .._private.deserializers import EventDeserializer as _EventDeserializer
 from .._private.serializers import EventSerializer as _EventSerializer
 from ..events import Event, EventMessage
 from ..exceptions import EventError
+from ..signing import SigningConfig
 
-__all__ = ["AWSEventPublisher", "AWSEventReceiver", "SigningConfig"]
+__all__ = ["AsyncAWSEventPublisher", "AsyncAWSEventReceiver", "decode_event_async"]
 
 logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
-    from aws_sdk_signers import SigV4SigningProperties
     from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
 
-
-@dataclass
-class SigningConfig:
-    signer: "AsyncEventSigner[AWSCredentialsIdentity, SigV4SigningProperties]"
-    signing_properties: "SigV4SigningProperties"
-    identity_resolver: (
-        "AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]"
-    )
-    identity_properties: "AWSIdentityProperties"
+    type _AsyncSigningConfig = SigningConfig[
+        AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
+    ]
 
 
-class AWSEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
+async def decode_event_async(source: AsyncByteStream) -> Event | None:
+    """Decode an event from an async byte stream.
+
+    :param source: An object to read event bytes from. It must have an async `read`
+        method that accepts a number of bytes to read.
+
+    :returns: An Event representing the next event on the source, or None if no
+        data can be read from the source.
+    """
+    return await run_program_async(Event._decode(source.read))  # pyright: ignore[reportPrivateUsage]
+
+
+class AsyncAWSEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
     def __init__(
         self,
         payload_codec: Codec,
         async_writer: AsyncWriter,
-        signing_config: SigningConfig | None = None,
+        signing_config: "_AsyncSigningConfig | None" = None,
         is_client_mode: bool = True,
         initial_message: EventMessage | None = None,
     ):
@@ -96,7 +101,7 @@ class AWSEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
                 identity = await self._signing_config.identity_resolver.get_identity(
                     properties=self._signing_config.identity_properties
                 )
-                end_frame = await self._signing_config.signer.sign_empty(
+                end_frame = self._signing_config.signer.sign_empty(
                     event=end_frame,
                     identity=identity,
                     properties=self._signing_config.signing_properties,
@@ -106,9 +111,7 @@ class AWSEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
                 )
                 await self._writer.write(end_frame.encode())
         finally:
-            if (close := getattr(self._writer, "close", None)) is not None:
-                if asyncio.iscoroutine(result := close()):
-                    await result
+            await close_async(self._writer)
 
     @property
     def closed(self) -> bool:
@@ -129,7 +132,7 @@ class AWSEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
             identity = await self._signing_config.identity_resolver.get_identity(
                 properties=self._signing_config.identity_properties
             )
-            message = await self._signing_config.signer.sign(
+            message = self._signing_config.signer.sign(
                 event=message,
                 identity=identity,
                 properties=self._signing_config.signing_properties,
@@ -143,14 +146,12 @@ class AWSEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
             # the dead writer and tries to send a signed terminator that would also fail.
             self._closed = True
             self._initial_message = None
-            if (close := getattr(self._writer, "close", None)) is not None:
-                with contextlib.suppress(Exception):
-                    if asyncio.iscoroutine(result := close()):
-                        await result
+            with contextlib.suppress(Exception):
+                await close_async(self._writer)
             raise OSError("Failed to write to stream.") from e
 
 
-class AWSEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
+class AsyncAWSEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
     def __init__(
         self,
         payload_codec: Codec,
@@ -169,7 +170,7 @@ class AWSEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
             return None
 
         try:
-            event = await Event.decode_async(self._source)
+            event = await decode_event_async(self._source)
         except Exception as e:
             await self.close()
             if not isinstance(e, EventError):
@@ -197,10 +198,7 @@ class AWSEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
         if self._closed:
             return
         self._closed = True
-
-        if (close := getattr(self._source, "close", None)) is not None:
-            if asyncio.iscoroutine(result := close()):
-                await result
+        await close_async(self._source)
 
     @property
     def closed(self) -> bool:

@@ -4,20 +4,19 @@ from urllib.parse import parse_qsl
 
 from pytest import fail, raises
 from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
-from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_core.aio.utils import async_list
-from smithy_http import tuples_to_fields
-from smithy_http.aio import HTTPResponse as _smithy_http_aio_HTTPResponse
-from smithy_http.aio.interfaces import (
+from smithy_core.retries import SimpleRetryStrategy
+from smithy_http import HTTPResponse as _smithy_http_HTTPResponse, tuples_to_fields
+from smithy_http.interfaces import (
+    HTTPClientConfiguration,
     HTTPRequest,
-    HTTPResponse as _smithy_http_aio_interfaces_HTTPResponse,
+    HTTPRequestConfiguration,
+    HTTPResponse as _smithy_http_interfaces_HTTPResponse,
 )
-from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 from smithy_test import deep_equal, xml_equal
 
-from restxmlwithnamespace.client import AsyncRestXmlProtocolNamespaceClient
-from restxmlwithnamespace.config import AsyncRestXmlProtocolNamespaceConfig
+from restxmlwithnamespace.aio.client import AsyncRestXmlProtocolNamespaceClient
+from restxmlwithnamespace.aio.config import AsyncRestXmlProtocolNamespaceConfig
 from restxmlwithnamespace.models import (
     NestedWithNamespace,
     ServiceError,
@@ -34,7 +33,7 @@ async def test_xml_namespace_simple_scalar_properties_request_simple_scalar_prop
         config=await AsyncRestXmlProtocolNamespaceConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -177,7 +176,7 @@ class RequestTestHTTPClient:
         request: HTTPRequest,
         *,
         request_config: HTTPRequestConfiguration | None = None,
-    ) -> _smithy_http_aio_interfaces_HTTPResponse:
+    ) -> _smithy_http_interfaces_HTTPResponse:
         # Raise the exception with the request object to bypass actual request handling
         raise TestHttpServiceError(request)
 
@@ -206,8 +205,8 @@ class ResponseTestHTTPClient:
         request: HTTPRequest,
         *,
         request_config: HTTPRequestConfiguration | None = None,
-    ) -> _smithy_http_aio_HTTPResponse:
+    ) -> _smithy_http_HTTPResponse:
         # Pre-construct the response from the request and return it
-        return _smithy_http_aio_HTTPResponse(
-            status=self.status, fields=self.fields, body=async_list([self.body])
+        return _smithy_http_HTTPResponse(
+            status=self.status, fields=self.fields, body=AsyncBytesReader(self.body)
         )

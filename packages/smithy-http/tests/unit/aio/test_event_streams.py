@@ -14,7 +14,9 @@ from typing import Any
 import pytest
 from smithy_core import URI
 from smithy_core.aio.interfaces import AsyncWriter, ProtocolSettings
+from smithy_core.aio.program import run_program_async
 from smithy_core.aio.types import AsyncBytesProvider, AsyncBytesReader
+from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.prelude import STRING
@@ -23,13 +25,12 @@ from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import RequiredTrait, RpcV2CborTrait, StreamingTrait
 from smithy_core.types import TypedProperties
-from smithy_http import Fields
-from smithy_http.aio import HTTPRequest, HTTPResponse
+from smithy_http import Fields, HTTPRequest, HTTPResponse
 from smithy_http.aio.protocols import AsyncRpcV2CborClientProtocol
 
 pytest.importorskip("smithy_cbor")
 
-from smithy_aws_event_stream.aio import AWSEventReceiver
+from smithy_aws_event_stream.aio import AsyncAWSEventReceiver
 from smithy_aws_event_stream.events import Event, EventMessage
 from smithy_aws_event_stream.exceptions import MissingInitialResponse
 from smithy_cbor import CBORCodec
@@ -256,7 +257,8 @@ async def test_deserialize_response_peels_initial_response_then_streams() -> Non
     )
 
     context = TypedProperties()
-    output = await _protocol().deserialize_response(
+    output = await _deserialize_response(
+        _protocol(),
         operation=operation,
         request=_request(),
         response=response,
@@ -275,7 +277,7 @@ async def test_deserialize_response_peels_initial_response_then_streams() -> Non
         event_deserializer=_message_event_deserializer,
         context=context,
     )
-    assert isinstance(receiver, AWSEventReceiver)
+    assert isinstance(receiver, AsyncAWSEventReceiver)
     received = await receiver.receive()
     assert received is not None
     assert received.body == "first event"
@@ -388,7 +390,8 @@ async def test_event_stream_http_opt_out_read_from_service_schema() -> None:
     )
 
     context = TypedProperties()
-    output = await _protocol().deserialize_response(
+    output = await _deserialize_response(
+        _protocol(),
         operation=operation,
         request=_request(),
         response=response,
@@ -415,7 +418,8 @@ async def test_deserialize_response_empty_stream_defaults_output() -> None:
     # An empty stream with no initial-response yields the default output rather than
     # raising, because every output member is optional.
     response = HTTPResponse(status=200, fields=Fields(), body=AsyncBytesReader(b""))
-    output = await _protocol().deserialize_response(
+    output = await _deserialize_response(
+        _protocol(),
         operation=_operation(),
         request=_request(),
         response=response,
@@ -433,10 +437,19 @@ async def test_missing_initial_response_raises_when_required_member_has_no_defau
     # satisfy it: an absent initial-response must raise rather than fabricate a value.
     response = HTTPResponse(status=200, fields=Fields(), body=AsyncBytesReader(b""))
     with pytest.raises(MissingInitialResponse):
-        await _protocol().deserialize_response(
+        await _deserialize_response(
+            _protocol(),
             operation=_operation(output_schema=_REQUIRED_OUTPUT_IO_SCHEMA),
             request=_request(),
             response=response,
             error_registry=TypeRegistry({}),
             context=TypedProperties(),
         )
+
+
+async def _deserialize_response(protocol: Any, **kwargs: Any) -> Any:
+    return await run_program_async(
+        protocol.deserialize_response_program(
+            **kwargs, read_body=read_streaming_blob_async
+        )
+    )

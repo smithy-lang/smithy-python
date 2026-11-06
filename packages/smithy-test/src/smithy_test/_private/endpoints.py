@@ -1,6 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-"""Helpers for the ``smithy.rules#endpointTests`` checks in :py:mod:`smithy_test.aio`."""
+"""Helpers for the ``smithy.rules#endpointTests`` checks in :py:mod:`smithy_test`."""
 
 from collections.abc import Mapping, Sequence
 from typing import Any

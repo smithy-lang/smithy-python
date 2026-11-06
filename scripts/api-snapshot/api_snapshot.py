@@ -11,10 +11,14 @@ source, or re-exported from another of our packages (marked with a ``rex-``
 kind prefix). Reachable re-exports of third-party/stdlib names are excluded:
 they are not ours to keep stable. Then fails if writing the file changed it
 from the committed version, so an unreviewed surface change cannot pass CI.
+
+Also records the dual-mode symbols, each async symbol under ``aio`` with its sync
+twin, in mirrors.txt, which fails the same way when it changes.
 """
 
 import ast
 import importlib
+import importlib.util
 import inspect
 import json
 import subprocess
@@ -26,6 +30,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 DATA_PATH = HERE / "api.json"
+MIRRORS_PATH = HERE / "mirrors.txt"
 PACKAGES_DIR = ROOT / "packages"
 
 # Top-level module names we own: one per packages/*/src/<module>. A reachable
@@ -46,14 +51,14 @@ def main() -> int:
     surface = _collect_surface()
     ordered = {k: dict(sorted(v.items())) for k, v in sorted(surface.items())}
     DATA_PATH.write_text(json.dumps(ordered, indent=2) + "\n")
+    MIRRORS_PATH.write_text(_mirrors())
 
-    # Fixed argv, no shell: git resolved from PATH is the repo's own convention.
-    argv = ["git", "diff", "--exit-code", "--", str(DATA_PATH)]
-    diff = subprocess.run(argv, cwd=ROOT)  # noqa: S603
-    if diff.returncode != 0:
+    changed = [path for path in (DATA_PATH, MIRRORS_PATH) if _changed(path)]
+    if changed:
+        names = " and ".join(str(path.relative_to(ROOT)) for path in changed)
         print(
-            f"\n{DATA_PATH.relative_to(ROOT)} was updated to reflect the current API "
-            "surface. Review the change above and commit it in the PR that made it.",
+            f"\n{names} updated to reflect the current API surface. Review the "
+            "change above and commit it in the PR that made it.",
             file=sys.stderr,
         )
         return 1
@@ -187,6 +192,27 @@ def _is_type_alias(obj: object) -> bool:
     if type(obj) is types.GenericAlias:
         return True
     return getattr(obj, "__module__", None) == "typing" and hasattr(obj, "__origin__")
+
+
+def _mirrors() -> str:
+    path = ROOT / "scripts" / "aio-naming" / "aio_naming.py"
+    spec = importlib.util.spec_from_file_location("aio_naming", path)
+    assert spec is not None and spec.loader is not None  # noqa: S101
+    module = importlib.util.module_from_spec(spec)
+    # Registered first so the module's dataclasses can resolve their own module.
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module.dual_mode_report()
+
+
+def _changed(path: Path) -> bool:
+    """Whether the file differs from git, counting a new untracked file as changed."""
+    # Fixed argv, no shell: git resolved from PATH is the repo's own convention.
+    argv = ["git", "diff", "--exit-code", "--", str(path)]
+    diff = subprocess.run(argv, cwd=ROOT)  # noqa: S603
+    argv = ["git", "ls-files", "--others", "--exclude-standard", "--", str(path)]
+    untracked = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True)  # noqa: S603
+    return diff.returncode != 0 or bool(untracked.stdout.strip())
 
 
 if __name__ == "__main__":

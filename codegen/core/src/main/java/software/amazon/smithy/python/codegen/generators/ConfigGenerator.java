@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
@@ -27,6 +28,7 @@ import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
+import software.amazon.smithy.python.codegen.SyncVariant;
 import software.amazon.smithy.python.codegen.integrations.EndpointRulesExtension;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
@@ -62,10 +64,10 @@ public final class ConfigGenerator implements Runnable {
             ConfigProperty.builder()
                     .name("retry_strategy")
                     .type(Symbol.builder()
-                            .name("AsyncRetryStrategy | RetryStrategyOptions")
+                            .name("RetryStrategy | RetryStrategyOptions")
                             .addReference(Symbol.builder()
-                                    .name("AsyncRetryStrategy")
-                                    .namespace("smithy_core.aio.interfaces.retries", ".")
+                                    .name("RetryStrategy")
+                                    .namespace("smithy_core.interfaces.retries", ".")
                                     .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                     .build())
                             .addReference(Symbol.builder()
@@ -226,10 +228,10 @@ public final class ConfigGenerator implements Runnable {
         var bdd = EndpointBddGenerator.bddSymbol(context.settings());
         var extensions = endpointRulesExtensions(context);
         if (extensions.isEmpty()) {
-            writer.writeInline("$T($T)", RuntimeTypes.ASYNC_BDD_ENDPOINT_RESOLVER, bdd);
+            writer.writeInline("$T($T)", RuntimeTypes.BDD_ENDPOINT_RESOLVER, bdd);
             return;
         }
-        writer.writeInline("$T($T, extensions=[", RuntimeTypes.ASYNC_BDD_ENDPOINT_RESOLVER, bdd);
+        writer.writeInline("$T($T, extensions=[", RuntimeTypes.BDD_ENDPOINT_RESOLVER, bdd);
         for (int i = 0; i < extensions.size(); i++) {
             writer.writeInline(i == 0 ? "$T" : ", $T", extensions.get(i).getRulesExtensionSymbol(context));
         }
@@ -239,7 +241,7 @@ public final class ConfigGenerator implements Runnable {
     private static ConfigProperty endpointResolverProperty(GenerationContext context) {
         return ConfigProperty.builder()
                 .name("endpoint_resolver")
-                .type(RuntimeTypes.ENDPOINT_RESOLVER)
+                .type(RuntimeTypes.CONFIG_ENDPOINT_RESOLVER)
                 .documentation("""
                         The endpoint resolver used to resolve the final endpoint per-operation based on the \
                         configuration.""")
@@ -258,17 +260,17 @@ public final class ConfigGenerator implements Runnable {
         var protocolBuilder = ConfigProperty.builder()
                 .name("protocol")
                 .type(Symbol.builder()
-                        .name("AsyncClientProtocol[Any, Any]")
+                        .name("ClientProtocol[Any, Any]")
                         .addReference(Symbol.builder()
-                                .name("AsyncClientProtocol")
-                                .namespace("smithy_core.aio.interfaces", ".")
+                                .name("ClientProtocol")
+                                .namespace("smithy_core.interfaces", ".")
                                 .build())
                         .build())
                 .inputType(Symbol.builder()
-                        .name("AsyncClientProtocol[Any, Any] | ProtocolConstructor[AsyncClientProtocol[Any, Any]]")
+                        .name("ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]]")
                         .addReference(Symbol.builder()
-                                .name("AsyncClientProtocol")
-                                .namespace("smithy_core.aio.interfaces", ".")
+                                .name("ClientProtocol")
+                                .namespace("smithy_core.interfaces", ".")
                                 .build())
                         .addReference(Symbol.builder()
                                 .name("ProtocolConstructor")
@@ -284,7 +286,11 @@ public final class ConfigGenerator implements Runnable {
                     w.write("""
                             if isinstance(protocol, type):
                                 protocol = protocol(_PROTOCOL_SETTINGS)
-                            self.protocol = cast("AsyncClientProtocol[Any, Any]", protocol) or ${C|}""",
+                            self.protocol = cast("$T[Any, Any]", protocol) or ${C|}""",
+                            Symbol.builder()
+                                    .name("ClientProtocol")
+                                    .namespace("smithy_core.interfaces", ".")
+                                    .build(),
                             w.consumer(writer -> context.protocolGenerator().initializeProtocol(context, writer)));
                 });
 
@@ -350,11 +356,7 @@ public final class ConfigGenerator implements Runnable {
                                         .namespace("smithy_core.shapes", ".")
                                         .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                         .build())
-                                .addReference(Symbol.builder()
-                                        .name("AsyncAuthScheme")
-                                        .namespace("smithy_core.aio.interfaces.auth", ".")
-                                        .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                                        .build())
+                                .addReference(ASYNC_AUTH_SCHEME)
                                 .addReference(Symbol.builder()
                                         .name("Any")
                                         .namespace("typing", ".")
@@ -397,40 +399,33 @@ public final class ConfigGenerator implements Runnable {
 
     @Override
     public void run() {
-        var config = CodegenUtils.getConfigSymbol(context.settings());
-        var asyncConfigForPlugin = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
+        var asyncConfig = CodegenUtils.getAsyncConfigSymbol(settings, context.model());
+        generateConfigModule(asyncConfig, false);
+        generateConfigModule(asyncConfig, true);
+    }
 
+    private void generateConfigModule(Symbol asyncConfig, boolean sync) {
+        var mapper = sync ? SyncVariant.mapper(settings) : UnaryOperator.<Symbol>identity();
+        var config = mapper.apply(asyncConfig);
+        var plugin = mapper.apply(CodegenUtils.getPluginSymbol(settings));
         context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
-            writeInterceptorsType(writer);
-
+            writer.setSymbolMapper(mapper);
+            writeInterceptorsType(writer, sync ? ".models" : "..models");
             stageProtocolSettings(context, writer);
 
-            // AWS services generate only the async config subclass.
-            if (asyncConfigForPlugin.isEmpty()) {
-                generateConfig(context, writer);
+            // AWS integrations intercept this section to emit a config subclass.
+            if (CodegenUtils.isAwsService(context)) {
+                writer.pushState(new AsyncConfigSection(sync));
+                writer.popState();
+            } else {
+                generateConfig(context, writer, config);
             }
 
-            // AWS integrations intercept this section to emit the async config.
-            writer.pushState(new AsyncConfigSection());
-            writer.popState();
-        });
-
-        // Generate the plugin symbol. This is just a callable. We could do something
-        // like have a class to implement, but that seems unnecessarily burdensome for
-        // a single function.
-        //
-        // Plugins accept the config type generated for the service.
-        var plugin = CodegenUtils.getPluginSymbol(context.settings());
-        context.writerDelegator().useFileWriter(plugin.getDefinitionFile(), plugin.getNamespace(), writer -> {
+            // Plugins are plain callables over the config; a protocol class would add
+            // nothing but ceremony.
             writer.addStdlibImport("typing", "Callable");
             writer.addStdlibImport("typing", "TypeAlias");
-            if (asyncConfigForPlugin.isPresent()) {
-                writer.write("$L: TypeAlias = Callable[[$T], None]",
-                        plugin.getName(),
-                        asyncConfigForPlugin.get());
-            } else {
-                writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
-            }
+            writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), asyncConfig);
             writer.writeDocs("""
                     A callable that customizes a client configuration. Service-level plugins are
                     applied once to the base configuration inherited by every operation.
@@ -494,7 +489,7 @@ public final class ConfigGenerator implements Runnable {
         writer.write("_PROTOCOL_SETTINGS = $T(" + params + ")", args.toArray());
     }
 
-    private void writeInterceptorsType(PythonWriter writer) {
+    private void writeInterceptorsType(PythonWriter writer, String modelsModule) {
         var symbolProvider = context.symbolProvider();
         var operationShapes = TopDownIndex.of(context.model())
                 .getContainedOperations(settings.service());
@@ -521,7 +516,7 @@ public final class ConfigGenerator implements Runnable {
 
         writer.write("if TYPE_CHECKING:").indent();
         writer.write("from smithy_core.interceptors import Interceptor");
-        writer.openBlock("from .models import (", ")", () -> {
+        writer.openBlock("from $L import (", ")", modelsModule, () -> {
             for (var name : names) {
                 writer.write("$L,", name);
             }
@@ -542,8 +537,7 @@ public final class ConfigGenerator implements Runnable {
         writer.write("");
     }
 
-    private void generateConfig(GenerationContext context, PythonWriter writer) {
-        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
+    private void generateConfig(GenerationContext context, PythonWriter writer, Symbol configSymbol) {
 
         // Initialize a set of config properties with our base properties.
         var properties = new TreeSet<>(Comparator.comparing(ConfigProperty::name));
@@ -580,7 +574,6 @@ public final class ConfigGenerator implements Runnable {
         writer.pushState(new ConfigSection(finalProperties));
         writer.addLocallyDefinedSymbol(configSymbol);
         writer.addStdlibImport("dataclasses", "dataclass");
-        // Only non-AWS services reach this path.
         writer.write("""
                 @dataclass(init=False)
                 class $L:
@@ -626,6 +619,12 @@ public final class ConfigGenerator implements Runnable {
         }
     }
 
+    private static final Symbol ASYNC_AUTH_SCHEME = Symbol.builder()
+            .name("AsyncAuthScheme")
+            .namespace("smithy_core.aio.interfaces.auth", ".")
+            .addDependency(SmithyPythonDependency.SMITHY_CORE)
+            .build();
+
     private static final class AddAuthHelper implements CodeInterceptor<ConfigSection, PythonWriter> {
         @Override
         public Class<ConfigSection> sectionType() {
@@ -643,7 +642,7 @@ public final class ConfigGenerator implements Runnable {
             // Note that this is indented to keep it at the proper indentation level.
             writer.write("""
 
-                        def set_auth_scheme(self, scheme: AsyncAuthScheme[Any, Any, Any, Any]) -> None:
+                        def set_auth_scheme(self, scheme: $T[Any, Any, Any, Any]) -> None:
                             \"""
                             Sets the implementation of an auth scheme.
 
@@ -654,7 +653,7 @@ public final class ConfigGenerator implements Runnable {
                                     The auth scheme to add.
                             \"""
                             self.auth_schemes[scheme.scheme_id] = scheme
-                    """);
+                    """, ASYNC_AUTH_SCHEME);
         }
     }
 }

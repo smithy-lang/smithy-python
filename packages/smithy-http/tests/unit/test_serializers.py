@@ -12,9 +12,9 @@ from typing import Any, ClassVar, Protocol, Self
 import pytest
 from smithy_core import URI
 from smithy_core.aio.interfaces import StreamingBlob
-from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.aio.types import AsyncBytesProvider, AsyncBytesReader
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
-from smithy_core.exceptions import SerializationError
+from smithy_core.exceptions import SerializationError, UnsupportedStreamError
 from smithy_core.prelude import (
     BIG_DECIMAL,
     BLOB,
@@ -48,7 +48,7 @@ from smithy_core.traits import (
     Trait,
 )
 from smithy_http import Fields, tuples_to_fields
-from smithy_http.aio import HTTPResponse as _HTTPResponse
+from smithy_http import HTTPResponse as _HTTPResponse
 from smithy_http.deserializers import HTTPResponseDeserializer
 from smithy_http.interfaces import Fields as FieldsInterface
 from smithy_http.serializers import (
@@ -1946,7 +1946,6 @@ async def test_serialize_http_request(case: HTTPMessageTestCase) -> None:
         actual_body_value = await AsyncBytesReader(actual.body).read()
         expected_body_value = await AsyncBytesReader(case.request.body).read()
         assert actual_body_value == expected_body_value
-        assert type(actual.body) is type(case.request.body)
 
 
 async def test_serialize_request_omitting_empty_payload() -> None:
@@ -2031,7 +2030,6 @@ async def test_serialize_http_response(case: HTTPMessageTestCase) -> None:
         actual_body_value = await AsyncBytesReader(actual.body).read()
         expected_body_value = await AsyncBytesReader(case.request.body).read()
         assert actual_body_value == expected_body_value
-        assert type(actual.body) is type(case.request.body)
 
 
 async def test_serialize_response_omitting_empty_payload() -> None:
@@ -2277,10 +2275,23 @@ async def test_deserialize_http_response_with_async_stream() -> None:
     assert actual == HTTPStreamingPayload(stream)
 
 
+def test_deserialize_http_response_with_sync_stream() -> None:
+    stream = BytesIO(b"\xde\xad\xbe\xef")
+
+    deserializer = HTTPResponseDeserializer(
+        payload_codec=JSONCodec(),
+        http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+        response=_HTTPResponse(body=stream, status=200, fields=Fields()),
+    )
+    actual = HTTPStreamingPayload.deserialize(deserializer)
+    assert actual.payload is stream
+
+
 async def test_serialize_request_event_stream_creates_writeable_body() -> None:
     serializer = HTTPRequestSerializer(
         payload_codec=JSONCodec(),
         http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+        event_stream_body=AsyncBytesProvider,
     )
 
     request = HTTPEventStreamPayload(header="foo")
@@ -2300,6 +2311,7 @@ async def test_serialize_response_event_stream_creates_writeable_body() -> None:
     serializer = HTTPResponseSerializer(
         payload_codec=JSONCodec(),
         http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+        event_stream_body=AsyncBytesProvider,
     )
 
     response = HTTPEventStreamPayload(header="foo")
@@ -2532,3 +2544,24 @@ async def test_requires_length_with_transfer_encoding_raises(kind: str) -> None:
             transfer_encoding="chunked",
             schema=REQUIRED_LENGTH_STREAMING_PAYLOAD,
         )
+
+
+def test_serialize_request_document_body_is_sync() -> None:
+    serializer = HTTPRequestSerializer(
+        payload_codec=JSONCodec(),
+        http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+    )
+    HTTPStructuredPayload(payload=HTTPStringPayload(payload="foo")).serialize(
+        serializer
+    )
+    assert serializer.result is not None
+    assert isinstance(serializer.result.body, BytesIO)
+
+
+def test_serialize_request_event_stream_needs_a_body() -> None:
+    serializer = HTTPRequestSerializer(
+        payload_codec=JSONCodec(),
+        http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+    )
+    with pytest.raises(UnsupportedStreamError):
+        HTTPEventStreamPayload(header="foo").serialize(serializer)

@@ -2,23 +2,18 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import logging
-from typing import Any, cast
+from typing import cast
 
-from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config import ConfigSource
 from smithy_aws_core.identity import AWSCredentialsIdentity
-from smithy_core.aio.client import AsyncClient, AsyncClientCall, AsyncRequestPipeline
-from smithy_core.deserializers import DeserializeableShape
-from smithy_core.exceptions import ExpectationNotMetError
-from smithy_core.schemas import APIOperation
-from smithy_core.serializers import SerializeableShape
-from smithy_http.aio.interfaces import AsyncHTTPClient
+from smithy_aws_core.identity.chain import IdentityChain
+from smithy_core.client import Client
+from smithy_http.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
 
 from . import models as _models
-from .config import AsyncJsonProtocolConfig, Plugin
+from .config import JsonProtocolConfig, Plugin
 from .user_agent import aws_user_agent_plugin
 
 from typing import TYPE_CHECKING
@@ -67,117 +62,15 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class AsyncJsonProtocolClient(AsyncClient):
+class JsonProtocolClient(Client[JsonProtocolConfig]):
     """Client for JsonProtocol"""
 
-    def __init__(
+    _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
+
+    def content_type_parameters(
         self,
-        config: AsyncJsonProtocolConfig | None = None,
+        input: ContentTypeParametersInput | None = None,
         plugins: list[Plugin] | None = None,
-    ):
-        """
-        Constructor for `AsyncJsonProtocolClient`.
-
-        Args:
-            config:
-                Optional configuration for the client. Here you can set things like
-                the endpoint for HTTP services or auth credentials.
-            plugins:
-                A list of callables applied once to the client's base configuration.
-                Their changes are inherited by every operation invocation.
-        """
-        super().__init__()
-        self._config = config
-        self._plugins = plugins
-        self._client_plugins: list[Plugin] = [aws_user_agent_plugin, user_agent_plugin]
-
-    async def _ensure_setup(self) -> AsyncJsonProtocolConfig:
-        if not self._setup_done:
-            async with self._derive_lock:
-                if self._closed:
-                    raise RuntimeError(
-                        "Cannot invoke an operation on a client that has been closed."
-                    )
-                if not self._setup_done:
-                    if self._config is None:
-                        config = await AsyncJsonProtocolConfig.resolve()
-                    else:
-                        # Copy so plugins don't mutate the caller's config.
-                        config = deepcopy(self._config)
-                    for plugin in self._client_plugins:
-                        plugin(config)
-                    if self._plugins:
-                        for plugin in self._plugins:
-                            plugin(config)
-                    # Publish state only after setup fully succeeds, so a
-                    # failed _post_setup leaves the caller's config untouched
-                    # (no re-applied plugins) and the transport closeable.
-                    await self._post_setup(config)
-                    self._transport = config.transport
-                    self._config = config
-                    self._setup_done = True
-        assert self._config is not None
-        return self._config
-
-    async def _post_setup(self, config: AsyncJsonProtocolConfig) -> None:
-        if config.aws_credentials_identity_resolver is None:
-            config_context = config.resolution_context()
-            config_file = None
-            profile_name = None
-            if config_context is not None:
-                config_file = await config_context.parsed_profiles()
-                if config_context.profile_source is ConfigSource.OVERRIDE:
-                    profile_name = config_context.profile_name
-            config.aws_credentials_identity_resolver = await AsyncIdentityChain.create(
-                AWSCredentialsIdentity,
-                config_file=config_file,
-                profile_name=profile_name,
-                region_override=config.region,
-                http_client=cast(AsyncHTTPClient | None, config.transport),
-            )
-
-    async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
-        self,
-        input: I,
-        operation: APIOperation[I, O],
-        default_plugins: list[Plugin],
-        plugins: list[Plugin] | None,
-    ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
-        if self._closed:
-            raise RuntimeError(
-                "Cannot invoke an operation on a client that has been closed."
-            )
-        config = await self._ensure_setup()
-        if default_plugins or plugins:
-            # Keep operation-plugin mutations scoped to this call.
-            config = deepcopy(config)
-            for plugin in default_plugins:
-                plugin(config)
-            if plugins:
-                for plugin in plugins:
-                    plugin(config)
-        if (
-            config.protocol is None
-            or config.transport is None
-            or config.endpoint_resolver is None
-            or config.auth_scheme_resolver is None
-            or config.auth_schemes is None
-        ):
-            raise ExpectationNotMetError(
-                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
-                " and auth_schemes MUST be set on the config to make calls."
-            )
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-            retry_strategy=config.retry_strategy,
-            retry_mode=config.retry_mode,
-            max_attempts=config.max_attempts,
-        )
-        return self._build_call(
-            input, operation, config=config, retry_strategy=retry_strategy
-        )
-
-    async def content_type_parameters(
-        self, input: ContentTypeParametersInput, plugins: list[Plugin] | None = None
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -195,13 +88,12 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.CONTENT_TYPE_PARAMETERS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.CONTENT_TYPE_PARAMETERS, [], plugins)
 
-    async def datetime_offsets(
-        self, input: DatetimeOffsetsInput, plugins: list[Plugin] | None = None
+    def datetime_offsets(
+        self,
+        input: DatetimeOffsetsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -218,13 +110,12 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.DATETIME_OFFSETS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.DATETIME_OFFSETS, [], plugins)
 
-    async def empty_operation(
-        self, input: EmptyOperationInput, plugins: list[Plugin] | None = None
+    def empty_operation(
+        self,
+        input: EmptyOperationInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> EmptyOperationOutput:
         """
         Invokes the EmptyOperation operation.
@@ -241,13 +132,12 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `EmptyOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.EMPTY_OPERATION, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.EMPTY_OPERATION, [], plugins)
 
-    async def endpoint_operation(
-        self, input: EndpointOperationInput, plugins: list[Plugin] | None = None
+    def endpoint_operation(
+        self,
+        input: EndpointOperationInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -264,12 +154,9 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.ENDPOINT_OPERATION, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
 
-    async def endpoint_with_host_label_operation(
+    def endpoint_with_host_label_operation(
         self,
         input: EndpointWithHostLabelOperationInput,
         plugins: list[Plugin] | None = None,
@@ -289,13 +176,14 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
-        return await pipeline(call)
 
-    async def fractional_seconds(
-        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+    def fractional_seconds(
+        self,
+        input: FractionalSecondsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -312,13 +200,12 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.FRACTIONAL_SECONDS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
 
-    async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+    def greeting_with_errors(
+        self,
+        input: GreetingWithErrorsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -339,13 +226,12 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.GREETING_WITH_ERRORS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
-    async def host_with_path_operation(
-        self, input: HostWithPathOperationInput, plugins: list[Plugin] | None = None
+    def host_with_path_operation(
+        self,
+        input: HostWithPathOperationInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
@@ -362,13 +248,10 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HOST_WITH_PATH_OPERATION, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
-    async def json_enums(
-        self, input: JsonEnumsInput, plugins: list[Plugin] | None = None
+    def json_enums(
+        self, input: JsonEnumsInput | None = None, plugins: list[Plugin] | None = None
     ) -> JsonEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -386,13 +269,12 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.JSON_ENUMS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.JSON_ENUMS, [], plugins)
 
-    async def json_int_enums(
-        self, input: JsonIntEnumsInput, plugins: list[Plugin] | None = None
+    def json_int_enums(
+        self,
+        input: JsonIntEnumsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> JsonIntEnumsOutput:
         """
         This example serializes intEnums as top level properties, in lists,
@@ -410,13 +292,10 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonIntEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.JSON_INT_ENUMS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.JSON_INT_ENUMS, [], plugins)
 
-    async def json_unions(
-        self, input: JsonUnionsInput, plugins: list[Plugin] | None = None
+    def json_unions(
+        self, input: JsonUnionsInput | None = None, plugins: list[Plugin] | None = None
     ) -> JsonUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
@@ -433,13 +312,12 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.JSON_UNIONS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.JSON_UNIONS, [], plugins)
 
-    async def kitchen_sink_operation(
-        self, input: KitchenSinkOperationInput, plugins: list[Plugin] | None = None
+    def kitchen_sink_operation(
+        self,
+        input: KitchenSinkOperationInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> KitchenSinkOperationOutput:
         """
         Invokes the KitchenSinkOperation operation.
@@ -456,13 +334,12 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `KitchenSinkOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.KITCHEN_SINK_OPERATION, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.KITCHEN_SINK_OPERATION, [], plugins)
 
-    async def null_operation(
-        self, input: NullOperationInput, plugins: list[Plugin] | None = None
+    def null_operation(
+        self,
+        input: NullOperationInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NullOperationOutput:
         """
         Invokes the NullOperation operation.
@@ -479,14 +356,11 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `NullOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.NULL_OPERATION, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.NULL_OPERATION, [], plugins)
 
-    async def operation_with_optional_input_output(
+    def operation_with_optional_input_output(
         self,
-        input: OperationWithOptionalInputOutputInput,
+        input: OperationWithOptionalInputOutputInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OperationWithOptionalInputOutputOutput:
         """
@@ -504,13 +378,14 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `OperationWithOptionalInputOutputOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.OPERATION_WITH_OPTIONAL_INPUT_OUTPUT, [], plugins
         )
-        return await pipeline(call)
 
-    async def put_and_get_inline_documents(
-        self, input: PutAndGetInlineDocumentsInput, plugins: list[Plugin] | None = None
+    def put_and_get_inline_documents(
+        self,
+        input: PutAndGetInlineDocumentsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> PutAndGetInlineDocumentsOutput:
         """
         This example serializes an inline document as part of the payload.
@@ -527,13 +402,12 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `PutAndGetInlineDocumentsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.PUT_AND_GET_INLINE_DOCUMENTS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.PUT_AND_GET_INLINE_DOCUMENTS, [], plugins)
 
-    async def put_with_content_encoding(
-        self, input: PutWithContentEncodingInput, plugins: list[Plugin] | None = None
+    def put_with_content_encoding(
+        self,
+        input: PutWithContentEncodingInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
@@ -550,13 +424,12 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
 
-    async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+    def simple_scalar_properties(
+        self,
+        input: SimpleScalarPropertiesInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
@@ -573,13 +446,12 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
 
-    async def sparse_nulls_operation(
-        self, input: SparseNullsOperationInput, plugins: list[Plugin] | None = None
+    def sparse_nulls_operation(
+        self,
+        input: SparseNullsOperationInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SparseNullsOperationOutput:
         """
         Invokes the SparseNullsOperation operation.
@@ -596,7 +468,24 @@ class AsyncJsonProtocolClient(AsyncClient):
         Returns:
             An instance of `SparseNullsOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.SPARSE_NULLS_OPERATION, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.SPARSE_NULLS_OPERATION, [], plugins)
+
+    def _new_config(self) -> JsonProtocolConfig:
+        return JsonProtocolConfig.resolve()
+
+    def _post_setup(self, config: JsonProtocolConfig) -> None:
+        if config.aws_credentials_identity_resolver is None:
+            config_context = config.resolution_context()
+            config_file = None
+            profile_name = None
+            if config_context is not None:
+                config_file = config_context.parsed_profiles()
+                if config_context.profile_source is ConfigSource.OVERRIDE:
+                    profile_name = config_context.profile_name
+            config.aws_credentials_identity_resolver = IdentityChain.create(
+                AWSCredentialsIdentity,
+                config_file=config_file,
+                profile_name=profile_name,
+                region_override=config.region,
+                http_client=cast(HTTPClient | None, config.transport),
+            )

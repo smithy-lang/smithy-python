@@ -1,0 +1,364 @@
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  SPDX-License-Identifier: Apache-2.0
+
+from typing import Any, Self
+
+import pytest
+from smithy_core import URI
+from smithy_core.codecs import Codec
+from smithy_core.deserializers import ShapeDeserializer
+from smithy_core.documents import TypeRegistry
+from smithy_core.endpoints import Endpoint
+from smithy_core.interfaces import TypedProperties as TypedPropertiesInterface
+from smithy_core.interfaces import URI as URIInterface
+from smithy_core.program import Program, run_program
+from smithy_core.schemas import APIOperation, Schema
+from smithy_core.serializers import ShapeSerializer
+from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.traits import HTTPPayloadTrait, StreamingTrait
+from smithy_core.types import TypedProperties
+from smithy_http import Field, Fields, HTTPRequest, HTTPResponse
+from smithy_http.interfaces import HTTPErrorIdentifier
+from smithy_http.interfaces import HTTPRequest as HTTPRequestInterface
+from smithy_http.protocols import HttpBindingClientProtocol, HttpClientProtocol
+from smithy_json import JSONCodec
+
+
+class MockProtocol(HttpClientProtocol):
+    _id = ShapeID("ns.foo#bar")
+
+    @property
+    def id(self) -> ShapeID:
+        return self._id
+
+    def serialize_request(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        input: Any,
+        endpoint: URIInterface,
+        context: TypedPropertiesInterface,
+    ) -> HTTPRequestInterface:
+        raise Exception("This is only for tests.")
+
+    def deserialize_response_program(self, **kwargs: Any) -> Program[Any]:
+        raise Exception("This is only for tests.")
+
+
+class MockBindingProtocol(HttpBindingClientProtocol):
+    _id = ShapeID("ns.foo#binding")
+    _codec = JSONCodec()
+    _error_identifier = HTTPErrorIdentifier()
+
+    @property
+    def id(self) -> ShapeID:
+        return self._id
+
+    @property
+    def payload_codec(self) -> Codec:
+        return self._codec
+
+    @property
+    def content_type(self) -> str:
+        return "application/json"
+
+    @property
+    def error_identifier(self) -> HTTPErrorIdentifier:
+        return self._error_identifier
+
+
+class LegacyInput:
+    SCHEMA = Schema.collection(id=ShapeID("ns.foo#LegacyInput"))
+
+    def __init__(self) -> None:
+        self.serialize_called = False
+
+    def serialize(self, serializer: ShapeSerializer) -> None:
+        self.serialize_called = True
+        with serializer.begin_struct(self.SCHEMA):
+            pass
+
+
+class StructInput:
+    SCHEMA = Schema.collection(id=ShapeID("ns.foo#StructInput"))
+
+    def __init__(self) -> None:
+        self.serialize_members_called = False
+
+    def serialize(self, serializer: ShapeSerializer) -> None:
+        raise AssertionError("The structure fast path must not call serialize().")
+
+    def serialize_members(self, serializer: ShapeSerializer) -> None:
+        self.serialize_members_called = True
+
+
+class MockOutput:
+    SCHEMA = Schema.collection(id=ShapeID("ns.foo#MockOutput"))
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+        return cls()
+
+
+class StreamingOutput(MockOutput):
+    SCHEMA = Schema.collection(
+        id=ShapeID("ns.foo#StreamingOutput"),
+        members={
+            "payload": {
+                "target": Schema(
+                    id=ShapeID("ns.foo#StreamingBlob"),
+                    shape_type=ShapeType.BLOB,
+                    traits=[StreamingTrait()],
+                ),
+                "traits": [HTTPPayloadTrait()],
+            }
+        },
+    )
+
+
+class _StubRegistry:
+    def __init__(self, classes: dict[str, type]) -> None:
+        self._classes = classes
+
+    def build(self, name: str) -> type:
+        return self._classes[name]
+
+
+_STUB_REGISTRY = _StubRegistry(
+    {
+        "LegacyInput": LegacyInput,
+        "StructInput": StructInput,
+        "MockOutput": MockOutput,
+        "StreamingOutput": StreamingOutput,
+    }
+)
+
+
+def test_http_binding_protocol_falls_back_to_legacy_serialize() -> None:
+    operation: APIOperation[Any, Any] = APIOperation(
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "ns.foo",
+            "LegacyOperation",
+            {"smithy.api#http": {"method": "POST", "code": 200, "uri": "/legacy"}},
+            LegacyInput.SCHEMA,
+            MockOutput.SCHEMA,
+            (),
+        ),
+        model_registry=_STUB_REGISTRY,
+        effective_auth_schemes=[],
+    )
+    input = LegacyInput()
+
+    request = MockBindingProtocol().serialize_request(
+        operation=operation,
+        input=input,
+        endpoint=URI(host="example.com"),
+        context=TypedProperties(),
+    )
+
+    assert input.serialize_called
+    assert request.method == "POST"
+    assert request.destination.path == "/legacy"
+
+
+def test_http_binding_protocol_uses_structure_fast_path() -> None:
+    operation: APIOperation[Any, Any] = APIOperation(
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "ns.foo",
+            "StructOperation",
+            {"smithy.api#http": {"method": "POST", "code": 200, "uri": "/structure"}},
+            StructInput.SCHEMA,
+            MockOutput.SCHEMA,
+            (),
+        ),
+        model_registry=_STUB_REGISTRY,
+        effective_auth_schemes=[],
+    )
+    input = StructInput()
+
+    request = MockBindingProtocol().serialize_request(
+        operation=operation,
+        input=input,
+        endpoint=URI(host="example.com"),
+        context=TypedProperties(),
+    )
+
+    assert input.serialize_members_called
+    assert request.method == "POST"
+    assert request.destination.path == "/structure"
+
+
+@pytest.mark.parametrize(
+    ("output", "expected_reads"),
+    [(MockOutput, 1), (StreamingOutput, 0)],
+)
+def test_deserialize_response_uses_cached_streaming_member(
+    monkeypatch: pytest.MonkeyPatch,
+    output: type[MockOutput],
+    expected_reads: int,
+) -> None:
+    def fail_if_scanned(_: APIOperation[Any, Any]) -> None:
+        pytest.fail("output_stream_member should not be scanned")
+
+    monkeypatch.setattr(
+        APIOperation,
+        "output_stream_member",
+        property(fail_if_scanned),
+    )
+    operation: APIOperation[Any, Any] = APIOperation(
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "ns.foo",
+            "DeserializeOperation",
+            {"smithy.api#http": {"method": "GET", "code": 200, "uri": "/"}},
+            LegacyInput.SCHEMA,
+            output.SCHEMA,
+            (),
+        ),
+        model_registry=_STUB_REGISTRY,
+        effective_auth_schemes=[],
+    )
+    request = HTTPRequest(
+        destination=URI(host="example.com"),
+        method="GET",
+        fields=Fields(),
+    )
+    response = HTTPResponse(body=b"{}", status=200, fields=Fields())
+    reads: list[Any] = []
+
+    def read_body(body: Any) -> bytes:
+        reads.append(body)
+        return body
+
+    run_program(
+        MockBindingProtocol().deserialize_response_program(
+            operation=operation,
+            request=request,
+            response=response,
+            error_registry=TypeRegistry({}),
+            context=TypedProperties(),
+            read_body=read_body,
+        )
+    )
+
+    assert len(reads) == expected_reads
+
+
+@pytest.mark.parametrize(
+    "request_uri,endpoint_uri,expected",
+    [
+        (
+            URI(host="com.example", path="/foo"),
+            URI(host="com.example", path="/bar"),
+            URI(host="com.example", path="/bar/foo"),
+        ),
+        (
+            URI(host="com.example"),
+            URI(host="com.example", path="/bar"),
+            URI(host="com.example", path="/bar"),
+        ),
+        (
+            URI(host="com.example", path="/foo"),
+            URI(host="com.example"),
+            URI(host="com.example", path="/foo"),
+        ),
+        (
+            URI(host="com.example", scheme="http"),
+            URI(host="com.example", scheme="https"),
+            URI(host="com.example", scheme="https"),
+        ),
+        (
+            URI(host="com.example", username="name", password="password"),
+            URI(host="com.example", username="othername", password="otherpassword"),
+            URI(host="com.example", username="othername", password="otherpassword"),
+        ),
+        (
+            URI(host="com.example", username="name", password="password"),
+            URI(host="com.example"),
+            URI(host="com.example", username="name", password="password"),
+        ),
+        (
+            URI(host="com.example", port=8080),
+            URI(host="com.example", port=8000),
+            URI(host="com.example", port=8000),
+        ),
+        (
+            URI(host="com.example", port=8080),
+            URI(host="com.example"),
+            URI(host="com.example", port=8080),
+        ),
+        (
+            URI(host="com.example", query="foo=bar"),
+            URI(host="com.example"),
+            URI(host="com.example", query="foo=bar"),
+        ),
+        (
+            URI(host="com.example"),
+            URI(host="com.example", query="spam"),
+            URI(host="com.example", query="spam"),
+        ),
+        (
+            URI(host="com.example", query="foo=bar"),
+            URI(host="com.example", query="spam"),
+            URI(host="com.example", query="spam&foo=bar"),
+        ),
+        (
+            URI(host="com.example", fragment="header"),
+            URI(host="com.example", fragment="footer"),
+            URI(host="com.example", fragment="footer"),
+        ),
+        (
+            URI(host="com.example"),
+            URI(host="com.example", fragment="footer"),
+            URI(host="com.example", fragment="footer"),
+        ),
+        (
+            URI(host="com.example", fragment="header"),
+            URI(host="com.example"),
+            URI(host="com.example", fragment="header"),
+        ),
+        (
+            URI(host="foo."),
+            URI(host="com.example"),
+            URI(host="com.example"),
+        ),
+        (
+            URI(host="."),
+            URI(host="com.example"),
+            URI(host="com.example"),
+        ),
+    ],
+)
+def test_http_protocol_joins_uris(
+    request_uri: URI, endpoint_uri: URI, expected: URI
+) -> None:
+    protocol = MockProtocol()
+    request = HTTPRequest(
+        destination=request_uri,
+        method="GET",
+        fields=Fields(),
+    )
+    endpoint = Endpoint(uri=endpoint_uri)
+    updated_request = protocol.set_service_endpoint(request=request, endpoint=endpoint)
+    actual = updated_request.destination
+    assert actual == expected
+
+
+def test_extract_response_metadata_reports_only_the_status_code() -> None:
+    # Request Ids are not an HTTP concept. The base HTTP layer must not read
+    # request IDs even when an AWS-style header is present; that knowledge
+    # belongs in smithy-aws-core.
+    response = HTTPResponse(
+        status=429,
+        fields=Fields([Field(name="x-amzn-requestid", values=["rid"])]),
+    )
+
+    metadata = MockProtocol().extract_response_metadata(
+        response=response, context=TypedProperties()
+    )
+
+    assert metadata.http_status_code == 429
+    assert metadata.request_id is None
+    assert metadata.extended_request_id is None

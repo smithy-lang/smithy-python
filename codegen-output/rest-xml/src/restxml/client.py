@@ -2,23 +2,18 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import logging
-from typing import Any, cast
+from typing import cast
 
-from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config import ConfigSource
 from smithy_aws_core.identity import AWSCredentialsIdentity
-from smithy_core.aio.client import AsyncClient, AsyncClientCall, AsyncRequestPipeline
-from smithy_core.deserializers import DeserializeableShape
-from smithy_core.exceptions import ExpectationNotMetError
-from smithy_core.schemas import APIOperation
-from smithy_core.serializers import SerializeableShape
-from smithy_http.aio.interfaces import AsyncHTTPClient
+from smithy_aws_core.identity.chain import IdentityChain
+from smithy_core.client import Client
+from smithy_http.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
 
 from . import models as _models
-from .config import AsyncRestXmlProtocolConfig, Plugin
+from .config import Plugin, RestXmlProtocolConfig
 from .user_agent import aws_user_agent_plugin
 
 from typing import TYPE_CHECKING
@@ -161,117 +156,15 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class AsyncRestXmlProtocolClient(AsyncClient):
+class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     """A REST XML service that sends XML requests and responses."""
 
-    def __init__(
+    _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
+
+    def all_query_string_types(
         self,
-        config: AsyncRestXmlProtocolConfig | None = None,
+        input: AllQueryStringTypesInput | None = None,
         plugins: list[Plugin] | None = None,
-    ):
-        """
-        Constructor for `AsyncRestXmlProtocolClient`.
-
-        Args:
-            config:
-                Optional configuration for the client. Here you can set things like
-                the endpoint for HTTP services or auth credentials.
-            plugins:
-                A list of callables applied once to the client's base configuration.
-                Their changes are inherited by every operation invocation.
-        """
-        super().__init__()
-        self._config = config
-        self._plugins = plugins
-        self._client_plugins: list[Plugin] = [aws_user_agent_plugin, user_agent_plugin]
-
-    async def _ensure_setup(self) -> AsyncRestXmlProtocolConfig:
-        if not self._setup_done:
-            async with self._derive_lock:
-                if self._closed:
-                    raise RuntimeError(
-                        "Cannot invoke an operation on a client that has been closed."
-                    )
-                if not self._setup_done:
-                    if self._config is None:
-                        config = await AsyncRestXmlProtocolConfig.resolve()
-                    else:
-                        # Copy so plugins don't mutate the caller's config.
-                        config = deepcopy(self._config)
-                    for plugin in self._client_plugins:
-                        plugin(config)
-                    if self._plugins:
-                        for plugin in self._plugins:
-                            plugin(config)
-                    # Publish state only after setup fully succeeds, so a
-                    # failed _post_setup leaves the caller's config untouched
-                    # (no re-applied plugins) and the transport closeable.
-                    await self._post_setup(config)
-                    self._transport = config.transport
-                    self._config = config
-                    self._setup_done = True
-        assert self._config is not None
-        return self._config
-
-    async def _post_setup(self, config: AsyncRestXmlProtocolConfig) -> None:
-        if config.aws_credentials_identity_resolver is None:
-            config_context = config.resolution_context()
-            config_file = None
-            profile_name = None
-            if config_context is not None:
-                config_file = await config_context.parsed_profiles()
-                if config_context.profile_source is ConfigSource.OVERRIDE:
-                    profile_name = config_context.profile_name
-            config.aws_credentials_identity_resolver = await AsyncIdentityChain.create(
-                AWSCredentialsIdentity,
-                config_file=config_file,
-                profile_name=profile_name,
-                region_override=config.region,
-                http_client=cast(AsyncHTTPClient | None, config.transport),
-            )
-
-    async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
-        self,
-        input: I,
-        operation: APIOperation[I, O],
-        default_plugins: list[Plugin],
-        plugins: list[Plugin] | None,
-    ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
-        if self._closed:
-            raise RuntimeError(
-                "Cannot invoke an operation on a client that has been closed."
-            )
-        config = await self._ensure_setup()
-        if default_plugins or plugins:
-            # Keep operation-plugin mutations scoped to this call.
-            config = deepcopy(config)
-            for plugin in default_plugins:
-                plugin(config)
-            if plugins:
-                for plugin in plugins:
-                    plugin(config)
-        if (
-            config.protocol is None
-            or config.transport is None
-            or config.endpoint_resolver is None
-            or config.auth_scheme_resolver is None
-            or config.auth_schemes is None
-        ):
-            raise ExpectationNotMetError(
-                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
-                " and auth_schemes MUST be set on the config to make calls."
-            )
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-            retry_strategy=config.retry_strategy,
-            retry_mode=config.retry_mode,
-            max_attempts=config.max_attempts,
-        )
-        return self._build_call(
-            input, operation, config=config, retry_strategy=retry_strategy
-        )
-
-    async def all_query_string_types(
-        self, input: AllQueryStringTypesInput, plugins: list[Plugin] | None = None
     ) -> AllQueryStringTypesOutput:
         """
         This example uses all query string types.
@@ -288,13 +181,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `AllQueryStringTypesOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.ALL_QUERY_STRING_TYPES, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.ALL_QUERY_STRING_TYPES, [], plugins)
 
-    async def body_with_xml_name(
-        self, input: BodyWithXmlNameInput, plugins: list[Plugin] | None = None
+    def body_with_xml_name(
+        self,
+        input: BodyWithXmlNameInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> BodyWithXmlNameOutput:
         """
         The following example serializes a body that uses an XML name, changing
@@ -312,14 +204,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `BodyWithXmlNameOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.BODY_WITH_XML_NAME, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.BODY_WITH_XML_NAME, [], plugins)
 
-    async def constant_and_variable_query_string(
+    def constant_and_variable_query_string(
         self,
-        input: ConstantAndVariableQueryStringInput,
+        input: ConstantAndVariableQueryStringInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> ConstantAndVariableQueryStringOutput:
         """
@@ -339,12 +228,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `ConstantAndVariableQueryStringOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
         )
-        return await pipeline(call)
 
-    async def constant_query_string(
+    def constant_query_string(
         self, input: ConstantQueryStringInput, plugins: list[Plugin] | None = None
     ) -> ConstantQueryStringOutput:
         """
@@ -365,13 +253,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `ConstantQueryStringOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.CONSTANT_QUERY_STRING, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.CONSTANT_QUERY_STRING, [], plugins)
 
-    async def content_type_parameters(
-        self, input: ContentTypeParametersInput, plugins: list[Plugin] | None = None
+    def content_type_parameters(
+        self,
+        input: ContentTypeParametersInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -389,13 +276,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.CONTENT_TYPE_PARAMETERS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.CONTENT_TYPE_PARAMETERS, [], plugins)
 
-    async def datetime_offsets(
-        self, input: DatetimeOffsetsInput, plugins: list[Plugin] | None = None
+    def datetime_offsets(
+        self,
+        input: DatetimeOffsetsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -412,13 +298,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.DATETIME_OFFSETS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.DATETIME_OFFSETS, [], plugins)
 
-    async def empty_input_and_empty_output(
-        self, input: EmptyInputAndEmptyOutputInput, plugins: list[Plugin] | None = None
+    def empty_input_and_empty_output(
+        self,
+        input: EmptyInputAndEmptyOutputInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -438,13 +323,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins)
 
-    async def endpoint_operation(
-        self, input: EndpointOperationInput, plugins: list[Plugin] | None = None
+    def endpoint_operation(
+        self,
+        input: EndpointOperationInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -461,12 +345,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.ENDPOINT_OPERATION, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
 
-    async def endpoint_with_host_label_header_operation(
+    def endpoint_with_host_label_header_operation(
         self,
         input: EndpointWithHostLabelHeaderOperationInput,
         plugins: list[Plugin] | None = None,
@@ -486,12 +367,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `EndpointWithHostLabelHeaderOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION, [], plugins
         )
-        return await pipeline(call)
 
-    async def endpoint_with_host_label_operation(
+    def endpoint_with_host_label_operation(
         self,
         input: EndpointWithHostLabelOperationInput,
         plugins: list[Plugin] | None = None,
@@ -511,13 +391,14 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
-        return await pipeline(call)
 
-    async def flattened_xml_map(
-        self, input: FlattenedXmlMapInput, plugins: list[Plugin] | None = None
+    def flattened_xml_map(
+        self,
+        input: FlattenedXmlMapInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> FlattenedXmlMapOutput:
         """
         Flattened maps
@@ -534,14 +415,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `FlattenedXmlMapOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.FLATTENED_XML_MAP, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.FLATTENED_XML_MAP, [], plugins)
 
-    async def flattened_xml_map_with_xml_name(
+    def flattened_xml_map_with_xml_name(
         self,
-        input: FlattenedXmlMapWithXmlNameInput,
+        input: FlattenedXmlMapWithXmlNameInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> FlattenedXmlMapWithXmlNameOutput:
         """
@@ -559,14 +437,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins)
 
-    async def flattened_xml_map_with_xml_namespace(
+    def flattened_xml_map_with_xml_namespace(
         self,
-        input: FlattenedXmlMapWithXmlNamespaceInput,
+        input: FlattenedXmlMapWithXmlNamespaceInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         """
@@ -584,13 +459,14 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
         )
-        return await pipeline(call)
 
-    async def fractional_seconds(
-        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+    def fractional_seconds(
+        self,
+        input: FractionalSecondsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -607,13 +483,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.FRACTIONAL_SECONDS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
 
-    async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+    def greeting_with_errors(
+        self,
+        input: GreetingWithErrorsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -634,13 +509,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.GREETING_WITH_ERRORS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
-    async def http_empty_prefix_headers(
-        self, input: HttpEmptyPrefixHeadersInput, plugins: list[Plugin] | None = None
+    def http_empty_prefix_headers(
+        self,
+        input: HttpEmptyPrefixHeadersInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpEmptyPrefixHeadersOutput:
         """
         Clients that perform this test extract all headers from the response.
@@ -657,13 +531,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpEmptyPrefixHeadersOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_EMPTY_PREFIX_HEADERS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_EMPTY_PREFIX_HEADERS, [], plugins)
 
-    async def http_enum_payload(
-        self, input: HttpEnumPayloadInput, plugins: list[Plugin] | None = None
+    def http_enum_payload(
+        self,
+        input: HttpEnumPayloadInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
@@ -680,13 +553,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpEnumPayloadOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_ENUM_PAYLOAD, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_ENUM_PAYLOAD, [], plugins)
 
-    async def http_payload_traits(
-        self, input: HttpPayloadTraitsInput, plugins: list[Plugin] | None = None
+    def http_payload_traits(
+        self,
+        input: HttpPayloadTraitsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPayloadTraitsOutput:
         """
         This example serializes a blob shape in the payload. In this example, no
@@ -705,14 +577,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadTraitsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_PAYLOAD_TRAITS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_PAYLOAD_TRAITS, [], plugins)
 
-    async def http_payload_traits_with_media_type(
+    def http_payload_traits_with_media_type(
         self,
-        input: HttpPayloadTraitsWithMediaTypeInput,
+        input: HttpPayloadTraitsWithMediaTypeInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadTraitsWithMediaTypeOutput:
         """
@@ -731,14 +600,13 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
         )
-        return await pipeline(call)
 
-    async def http_payload_with_member_xml_name(
+    def http_payload_with_member_xml_name(
         self,
-        input: HttpPayloadWithMemberXmlNameInput,
+        input: HttpPayloadWithMemberXmlNameInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithMemberXmlNameOutput:
         """
@@ -757,13 +625,14 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadWithMemberXmlNameOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, [], plugins
         )
-        return await pipeline(call)
 
-    async def http_payload_with_structure(
-        self, input: HttpPayloadWithStructureInput, plugins: list[Plugin] | None = None
+    def http_payload_with_structure(
+        self,
+        input: HttpPayloadWithStructureInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithStructureOutput:
         """
         This example serializes a structure in the payload. Note that
@@ -782,13 +651,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadWithStructureOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins)
 
-    async def http_payload_with_union(
-        self, input: HttpPayloadWithUnionInput, plugins: list[Plugin] | None = None
+    def http_payload_with_union(
+        self,
+        input: HttpPayloadWithUnionInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithUnionOutput:
         """
         This example serializes a union in the payload.
@@ -805,13 +673,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadWithUnionOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins)
 
-    async def http_payload_with_xml_name(
-        self, input: HttpPayloadWithXmlNameInput, plugins: list[Plugin] | None = None
+    def http_payload_with_xml_name(
+        self,
+        input: HttpPayloadWithXmlNameInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithXmlNameOutput:
         """
         The following example serializes a payload that uses an XML name,
@@ -829,14 +696,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadWithXmlNameOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_PAYLOAD_WITH_XML_NAME, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_PAYLOAD_WITH_XML_NAME, [], plugins)
 
-    async def http_payload_with_xml_namespace(
+    def http_payload_with_xml_namespace(
         self,
-        input: HttpPayloadWithXmlNamespaceInput,
+        input: HttpPayloadWithXmlNamespaceInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithXmlNamespaceOutput:
         """
@@ -854,14 +718,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadWithXmlNamespaceOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE, [], plugins)
 
-    async def http_payload_with_xml_namespace_and_prefix(
+    def http_payload_with_xml_namespace_and_prefix(
         self,
-        input: HttpPayloadWithXmlNamespaceAndPrefixInput,
+        input: HttpPayloadWithXmlNamespaceAndPrefixInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput:
         """
@@ -879,13 +740,14 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPayloadWithXmlNamespaceAndPrefixOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, [], plugins
         )
-        return await pipeline(call)
 
-    async def http_prefix_headers(
-        self, input: HttpPrefixHeadersInput, plugins: list[Plugin] | None = None
+    def http_prefix_headers(
+        self,
+        input: HttpPrefixHeadersInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPrefixHeadersOutput:
         """
         This examples adds headers to the input of a request and response by
@@ -903,12 +765,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpPrefixHeadersOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_PREFIX_HEADERS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_PREFIX_HEADERS, [], plugins)
 
-    async def http_request_with_float_labels(
+    def http_request_with_float_labels(
         self,
         input: HttpRequestWithFloatLabelsInput,
         plugins: list[Plugin] | None = None,
@@ -928,12 +787,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpRequestWithFloatLabelsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins)
 
-    async def http_request_with_greedy_label_in_path(
+    def http_request_with_greedy_label_in_path(
         self,
         input: HttpRequestWithGreedyLabelInPathInput,
         plugins: list[Plugin] | None = None,
@@ -953,12 +809,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
         )
-        return await pipeline(call)
 
-    async def http_request_with_labels(
+    def http_request_with_labels(
         self, input: HttpRequestWithLabelsInput, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithLabelsOutput:
         """
@@ -977,12 +832,9 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpRequestWithLabelsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_REQUEST_WITH_LABELS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_REQUEST_WITH_LABELS, [], plugins)
 
-    async def http_request_with_labels_and_timestamp_format(
+    def http_request_with_labels_and_timestamp_format(
         self,
         input: HttpRequestWithLabelsAndTimestampFormatInput,
         plugins: list[Plugin] | None = None,
@@ -1003,13 +855,14 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
         )
-        return await pipeline(call)
 
-    async def http_response_code(
-        self, input: HttpResponseCodeInput, plugins: list[Plugin] | None = None
+    def http_response_code(
+        self,
+        input: HttpResponseCodeInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpResponseCodeOutput:
         """
         Invokes the HttpResponseCode operation.
@@ -1026,13 +879,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpResponseCodeOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_RESPONSE_CODE, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_RESPONSE_CODE, [], plugins)
 
-    async def http_string_payload(
-        self, input: HttpStringPayloadInput, plugins: list[Plugin] | None = None
+    def http_string_payload(
+        self,
+        input: HttpStringPayloadInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
@@ -1049,14 +901,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `HttpStringPayloadOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.HTTP_STRING_PAYLOAD, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.HTTP_STRING_PAYLOAD, [], plugins)
 
-    async def ignore_query_params_in_response(
+    def ignore_query_params_in_response(
         self,
-        input: IgnoreQueryParamsInResponseInput,
+        input: IgnoreQueryParamsInResponseInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> IgnoreQueryParamsInResponseOutput:
         """
@@ -1076,13 +925,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `IgnoreQueryParamsInResponseOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins)
 
-    async def input_and_output_with_headers(
-        self, input: InputAndOutputWithHeadersInput, plugins: list[Plugin] | None = None
+    def input_and_output_with_headers(
+        self,
+        input: InputAndOutputWithHeadersInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> InputAndOutputWithHeadersOutput:
         """
         The example tests how requests and responses are serialized when there
@@ -1100,13 +948,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `InputAndOutputWithHeadersOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins)
 
-    async def nested_xml_maps(
-        self, input: NestedXmlMapsInput, plugins: list[Plugin] | None = None
+    def nested_xml_maps(
+        self,
+        input: NestedXmlMapsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NestedXmlMapsOutput:
         """
         Invokes the NestedXmlMaps operation.
@@ -1123,13 +970,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `NestedXmlMapsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.NESTED_XML_MAPS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.NESTED_XML_MAPS, [], plugins)
 
-    async def nested_xml_map_with_xml_name(
-        self, input: NestedXmlMapWithXmlNameInput, plugins: list[Plugin] | None = None
+    def nested_xml_map_with_xml_name(
+        self,
+        input: NestedXmlMapWithXmlNameInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NestedXmlMapWithXmlNameOutput:
         """
         Nested Xml Maps with key/values with @xmlName
@@ -1146,13 +992,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `NestedXmlMapWithXmlNameOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.NESTED_XML_MAP_WITH_XML_NAME, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.NESTED_XML_MAP_WITH_XML_NAME, [], plugins)
 
-    async def no_input_and_no_output(
-        self, input: NoInputAndNoOutputInput, plugins: list[Plugin] | None = None
+    def no_input_and_no_output(
+        self,
+        input: NoInputAndNoOutputInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1172,13 +1017,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
-    async def no_input_and_output(
-        self, input: NoInputAndOutputInput, plugins: list[Plugin] | None = None
+    def no_input_and_output(
+        self,
+        input: NoInputAndOutputInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1198,13 +1042,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.NO_INPUT_AND_OUTPUT, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
-    async def null_and_empty_headers_client(
-        self, input: NullAndEmptyHeadersClientInput, plugins: list[Plugin] | None = None
+    def null_and_empty_headers_client(
+        self,
+        input: NullAndEmptyHeadersClientInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NullAndEmptyHeadersClientOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
@@ -1222,13 +1065,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `NullAndEmptyHeadersClientOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins)
 
-    async def null_and_empty_headers_server(
-        self, input: NullAndEmptyHeadersServerInput, plugins: list[Plugin] | None = None
+    def null_and_empty_headers_server(
+        self,
+        input: NullAndEmptyHeadersServerInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NullAndEmptyHeadersServerOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
@@ -1246,14 +1088,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `NullAndEmptyHeadersServerOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins)
 
-    async def omits_null_serializes_empty_string(
+    def omits_null_serializes_empty_string(
         self,
-        input: OmitsNullSerializesEmptyStringInput,
+        input: OmitsNullSerializesEmptyStringInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OmitsNullSerializesEmptyStringOutput:
         """
@@ -1271,13 +1110,14 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
         )
-        return await pipeline(call)
 
-    async def put_with_content_encoding(
-        self, input: PutWithContentEncodingInput, plugins: list[Plugin] | None = None
+    def put_with_content_encoding(
+        self,
+        input: PutWithContentEncodingInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
@@ -1294,14 +1134,11 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
 
-    async def query_idempotency_token_auto_fill(
+    def query_idempotency_token_auto_fill(
         self,
-        input: QueryIdempotencyTokenAutoFillInput,
+        input: QueryIdempotencyTokenAutoFillInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
@@ -1319,14 +1156,13 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
-        pipeline, call = await self._prepare_call(
+        return self._invoke(
             input, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
-        return await pipeline(call)
 
-    async def query_params_as_string_list_map(
+    def query_params_as_string_list_map(
         self,
-        input: QueryParamsAsStringListMapInput,
+        input: QueryParamsAsStringListMapInput | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryParamsAsStringListMapOutput:
         """
@@ -1344,13 +1180,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryParamsAsStringListMapOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins)
 
-    async def query_precedence(
-        self, input: QueryPrecedenceInput, plugins: list[Plugin] | None = None
+    def query_precedence(
+        self,
+        input: QueryPrecedenceInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> QueryPrecedenceOutput:
         """
         Invokes the QueryPrecedence operation.
@@ -1367,13 +1202,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `QueryPrecedenceOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.QUERY_PRECEDENCE, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.QUERY_PRECEDENCE, [], plugins)
 
-    async def recursive_shapes(
-        self, input: RecursiveShapesInput, plugins: list[Plugin] | None = None
+    def recursive_shapes(
+        self,
+        input: RecursiveShapesInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RecursiveShapesOutput:
         """
         Recursive shapes
@@ -1390,13 +1224,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.RECURSIVE_SHAPES, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.RECURSIVE_SHAPES, [], plugins)
 
-    async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+    def simple_scalar_properties(
+        self,
+        input: SimpleScalarPropertiesInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
@@ -1413,13 +1246,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
 
-    async def timestamp_format_headers(
-        self, input: TimestampFormatHeadersInput, plugins: list[Plugin] | None = None
+    def timestamp_format_headers(
+        self,
+        input: TimestampFormatHeadersInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> TimestampFormatHeadersOutput:
         """
         The example tests how timestamp request and response headers are
@@ -1437,13 +1269,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `TimestampFormatHeadersOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.TIMESTAMP_FORMAT_HEADERS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.TIMESTAMP_FORMAT_HEADERS, [], plugins)
 
-    async def xml_attributes(
-        self, input: XmlAttributesInput, plugins: list[Plugin] | None = None
+    def xml_attributes(
+        self,
+        input: XmlAttributesInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlAttributesOutput:
         """
         This example serializes an XML attributes on synthesized document.
@@ -1460,13 +1291,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlAttributesOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_ATTRIBUTES, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_ATTRIBUTES, [], plugins)
 
-    async def xml_attributes_in_middle(
-        self, input: XmlAttributesInMiddleInput, plugins: list[Plugin] | None = None
+    def xml_attributes_in_middle(
+        self,
+        input: XmlAttributesInMiddleInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlAttributesInMiddleOutput:
         """
         This example serializes an XML attribute on a payload when it's defined
@@ -1487,13 +1317,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlAttributesInMiddleOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_ATTRIBUTES_IN_MIDDLE, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_ATTRIBUTES_IN_MIDDLE, [], plugins)
 
-    async def xml_attributes_on_payload(
-        self, input: XmlAttributesOnPayloadInput, plugins: list[Plugin] | None = None
+    def xml_attributes_on_payload(
+        self,
+        input: XmlAttributesOnPayloadInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlAttributesOnPayloadOutput:
         """
         This example serializes an XML attributes on a document targeted by
@@ -1511,13 +1340,10 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlAttributesOnPayloadOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_ATTRIBUTES_ON_PAYLOAD, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_ATTRIBUTES_ON_PAYLOAD, [], plugins)
 
-    async def xml_blobs(
-        self, input: XmlBlobsInput, plugins: list[Plugin] | None = None
+    def xml_blobs(
+        self, input: XmlBlobsInput | None = None, plugins: list[Plugin] | None = None
     ) -> XmlBlobsOutput:
         """
         Blobs are base64 encoded
@@ -1534,11 +1360,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlBlobsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, _models.XML_BLOBS, [], plugins)
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_BLOBS, [], plugins)
 
-    async def xml_empty_blobs(
-        self, input: XmlEmptyBlobsInput, plugins: list[Plugin] | None = None
+    def xml_empty_blobs(
+        self,
+        input: XmlEmptyBlobsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlEmptyBlobsOutput:
         """
         Blobs are base64 encoded
@@ -1555,13 +1382,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_EMPTY_BLOBS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_EMPTY_BLOBS, [], plugins)
 
-    async def xml_empty_lists(
-        self, input: XmlEmptyListsInput, plugins: list[Plugin] | None = None
+    def xml_empty_lists(
+        self,
+        input: XmlEmptyListsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlEmptyListsOutput:
         """
         Invokes the XmlEmptyLists operation.
@@ -1578,13 +1404,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_EMPTY_LISTS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_EMPTY_LISTS, [], plugins)
 
-    async def xml_empty_maps(
-        self, input: XmlEmptyMapsInput, plugins: list[Plugin] | None = None
+    def xml_empty_maps(
+        self,
+        input: XmlEmptyMapsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlEmptyMapsOutput:
         """
         Invokes the XmlEmptyMaps operation.
@@ -1601,13 +1426,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyMapsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_EMPTY_MAPS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_EMPTY_MAPS, [], plugins)
 
-    async def xml_empty_strings(
-        self, input: XmlEmptyStringsInput, plugins: list[Plugin] | None = None
+    def xml_empty_strings(
+        self,
+        input: XmlEmptyStringsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlEmptyStringsOutput:
         """
         Invokes the XmlEmptyStrings operation.
@@ -1624,13 +1448,10 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEmptyStringsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_EMPTY_STRINGS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_EMPTY_STRINGS, [], plugins)
 
-    async def xml_enums(
-        self, input: XmlEnumsInput, plugins: list[Plugin] | None = None
+    def xml_enums(
+        self, input: XmlEnumsInput | None = None, plugins: list[Plugin] | None = None
     ) -> XmlEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -1648,11 +1469,10 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, _models.XML_ENUMS, [], plugins)
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_ENUMS, [], plugins)
 
-    async def xml_int_enums(
-        self, input: XmlIntEnumsInput, plugins: list[Plugin] | None = None
+    def xml_int_enums(
+        self, input: XmlIntEnumsInput | None = None, plugins: list[Plugin] | None = None
     ) -> XmlIntEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -1670,13 +1490,10 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_INT_ENUMS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_INT_ENUMS, [], plugins)
 
-    async def xml_lists(
-        self, input: XmlListsInput, plugins: list[Plugin] | None = None
+    def xml_lists(
+        self, input: XmlListsInput | None = None, plugins: list[Plugin] | None = None
     ) -> XmlListsOutput:
         """
         This test case serializes XML lists for the following cases for both
@@ -1698,11 +1515,10 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlListsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, _models.XML_LISTS, [], plugins)
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_LISTS, [], plugins)
 
-    async def xml_maps(
-        self, input: XmlMapsInput, plugins: list[Plugin] | None = None
+    def xml_maps(
+        self, input: XmlMapsInput | None = None, plugins: list[Plugin] | None = None
     ) -> XmlMapsOutput:
         """
         The example tests basic map serialization.
@@ -1719,11 +1535,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlMapsOutput`.
         """
-        pipeline, call = await self._prepare_call(input, _models.XML_MAPS, [], plugins)
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_MAPS, [], plugins)
 
-    async def xml_maps_xml_name(
-        self, input: XmlMapsXmlNameInput, plugins: list[Plugin] | None = None
+    def xml_maps_xml_name(
+        self,
+        input: XmlMapsXmlNameInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlMapsXmlNameOutput:
         """
         Invokes the XmlMapsXmlName operation.
@@ -1740,13 +1557,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlMapsXmlNameOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_MAPS_XML_NAME, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_MAPS_XML_NAME, [], plugins)
 
-    async def xml_map_with_xml_namespace(
-        self, input: XmlMapWithXmlNamespaceInput, plugins: list[Plugin] | None = None
+    def xml_map_with_xml_namespace(
+        self,
+        input: XmlMapWithXmlNamespaceInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlMapWithXmlNamespaceOutput:
         """
         Maps with @xmlNamespace and @xmlName
@@ -1763,13 +1579,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlMapWithXmlNamespaceOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_MAP_WITH_XML_NAMESPACE, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_MAP_WITH_XML_NAMESPACE, [], plugins)
 
-    async def xml_namespaces(
-        self, input: XmlNamespacesInput, plugins: list[Plugin] | None = None
+    def xml_namespaces(
+        self,
+        input: XmlNamespacesInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlNamespacesOutput:
         """
         Invokes the XmlNamespaces operation.
@@ -1786,13 +1601,12 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_NAMESPACES, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_NAMESPACES, [], plugins)
 
-    async def xml_timestamps(
-        self, input: XmlTimestampsInput, plugins: list[Plugin] | None = None
+    def xml_timestamps(
+        self,
+        input: XmlTimestampsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
@@ -1810,13 +1624,10 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_TIMESTAMPS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_TIMESTAMPS, [], plugins)
 
-    async def xml_unions(
-        self, input: XmlUnionsInput, plugins: list[Plugin] | None = None
+    def xml_unions(
+        self, input: XmlUnionsInput | None = None, plugins: list[Plugin] | None = None
     ) -> XmlUnionsOutput:
         """
         Invokes the XmlUnions operation.
@@ -1833,7 +1644,24 @@ class AsyncRestXmlProtocolClient(AsyncClient):
         Returns:
             An instance of `XmlUnionsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.XML_UNIONS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.XML_UNIONS, [], plugins)
+
+    def _new_config(self) -> RestXmlProtocolConfig:
+        return RestXmlProtocolConfig.resolve()
+
+    def _post_setup(self, config: RestXmlProtocolConfig) -> None:
+        if config.aws_credentials_identity_resolver is None:
+            config_context = config.resolution_context()
+            config_file = None
+            profile_name = None
+            if config_context is not None:
+                config_file = config_context.parsed_profiles()
+                if config_context.profile_source is ConfigSource.OVERRIDE:
+                    profile_name = config_context.profile_name
+            config.aws_credentials_identity_resolver = IdentityChain.create(
+                AWSCredentialsIdentity,
+                config_file=config_file,
+                profile_name=profile_name,
+                region_override=config.region,
+                http_client=cast(HTTPClient | None, config.transport),
+            )

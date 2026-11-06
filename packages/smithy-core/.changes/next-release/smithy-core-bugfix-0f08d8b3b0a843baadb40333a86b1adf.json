@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "`read_streaming_blob_async` now awaits a reader's `read()` result only when it's awaitable."
+}

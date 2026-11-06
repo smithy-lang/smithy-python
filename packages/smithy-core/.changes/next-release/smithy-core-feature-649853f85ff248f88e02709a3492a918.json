@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added synchronous clients. `smithy_core.client` provides `Client`, `RequestPipeline` and `ClientCall`, which run the same request pipeline as the async client through the programs in the new public `smithy_core.program` module."
+}

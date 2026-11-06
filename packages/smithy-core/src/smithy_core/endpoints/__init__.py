@@ -1,6 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from ._resolver import BddEndpointResolver, resolve_static_uri
+from ._resolver import BddEndpointResolver, StaticEndpointResolver, resolve_static_uri
 from ._types import (
     ENDPOINT_HEADERS,
     ENDPOINT_PARAMETERS,
@@ -32,5 +32,6 @@ __all__ = [
     "EndpointResolverParams",
     "RulesExtension",
     "StaticEndpointConfig",
+    "StaticEndpointResolver",
     "resolve_static_uri",
 ]

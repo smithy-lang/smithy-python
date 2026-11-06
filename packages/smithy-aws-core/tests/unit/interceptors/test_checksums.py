@@ -8,15 +8,15 @@ from unittest.mock import Mock
 import pytest
 from smithy_aws_core.aio.checksums import AsyncChecksumStream
 from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
+from smithy_aws_core.checksums import ChecksumStream
 from smithy_aws_core.interceptors.checksums import FlexibleChecksumsInterceptor
 from smithy_aws_core.traits import HTTPChecksumTrait
 from smithy_core import URI
-from smithy_core.aio.client import OPERATION
+from smithy_core.client import OPERATION
 from smithy_core.interceptors import InputContext, ResponseContext
 from smithy_core.interfaces import TypedProperties as TypedPropertiesInterface
 from smithy_core.types import TypedProperties
-from smithy_http import Field, Fields
-from smithy_http.aio import HTTPRequest, HTTPResponse
+from smithy_http import Field, Fields, HTTPRequest, HTTPResponse
 
 ALL_ALGORITHMS = ["CRC64NVME", "CRC32", "CRC32C", "SHA256", "SHA1", "MD5"]
 DATA = b"hello world"
@@ -79,9 +79,11 @@ def _response_context(
 
 
 def _prepared(
-    validation: Any = "when_supported", request: _Input | None = None
+    validation: Any = "when_supported",
+    request: _Input | None = None,
+    interceptor: FlexibleChecksumsInterceptor | None = None,
 ) -> tuple[FlexibleChecksumsInterceptor, InputContext[Any], Any]:
-    interceptor = FlexibleChecksumsInterceptor()
+    interceptor = interceptor or FlexibleChecksumsInterceptor()
     context = _input_context(request=request, validation=validation)
     return interceptor, context, interceptor.modify_before_serialization(context)
 
@@ -122,7 +124,7 @@ def test_when_required_validates_when_caller_enabled_it() -> None:
     )
     assert isinstance(
         interceptor.modify_before_deserialization(response).body,
-        AsyncChecksumStream,
+        ChecksumStream,
     )
 
 
@@ -176,7 +178,7 @@ def test_calls_without_an_operation_are_unchanged() -> None:
     assert interceptor.modify_before_serialization(context) is request
 
 
-async def test_validates_the_fastest_algorithm_in_the_response() -> None:
+def test_validates_the_fastest_algorithm_in_the_response() -> None:
     interceptor, context, _ = _prepared()
     response = _response_context(
         context.properties,
@@ -184,14 +186,28 @@ async def test_validates_the_fastest_algorithm_in_the_response() -> None:
     )
 
     body = interceptor.modify_before_deserialization(response).body
-    assert isinstance(body, AsyncChecksumStream)
+    assert isinstance(body, ChecksumStream)
     assert body.checksum_algorithm == "CRC32C"
+    assert body.read() == DATA
+    assert body.validated
+
+
+async def test_async_clients_get_the_stream_they_pass() -> None:
+    interceptor, context, _ = _prepared(
+        interceptor=FlexibleChecksumsInterceptor(AsyncChecksumStream)
+    )
+    response = _response_context(
+        context.properties, headers={"x-amz-checksum-crc32": CRC32}
+    )
+
+    body = interceptor.modify_before_deserialization(response).body
+    assert isinstance(body, AsyncChecksumStream)
     assert await body.read() == DATA
     assert body.validated
 
 
 @pytest.mark.parametrize("crc32c", ["", "yZRlqg==-3", "yZRlqg==,yZRlqg==", "bad!"])
-async def test_skips_checksums_that_cannot_be_validated(crc32c: str) -> None:
+def test_skips_checksums_that_cannot_be_validated(crc32c: str) -> None:
     interceptor, context, _ = _prepared()
     response = _response_context(
         context.properties,
@@ -199,12 +215,12 @@ async def test_skips_checksums_that_cannot_be_validated(crc32c: str) -> None:
     )
 
     body = interceptor.modify_before_deserialization(response).body
-    assert isinstance(body, AsyncChecksumStream)
+    assert isinstance(body, ChecksumStream)
     assert body.checksum_algorithm == "CRC32"
-    assert await body.read() == DATA
+    assert body.read() == DATA
 
 
-async def test_skips_composite_checksums() -> None:
+def test_skips_composite_checksums() -> None:
     interceptor, context, _ = _prepared()
     response = _response_context(
         context.properties,
@@ -212,7 +228,7 @@ async def test_skips_composite_checksums() -> None:
     )
 
     body = interceptor.modify_before_deserialization(response).body
-    assert isinstance(body, AsyncChecksumStream)
+    assert isinstance(body, ChecksumStream)
     assert body.checksum_algorithm == "CRC32"
 
 

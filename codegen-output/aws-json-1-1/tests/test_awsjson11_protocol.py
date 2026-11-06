@@ -6,21 +6,20 @@ from urllib.parse import parse_qsl
 
 from pytest import fail, mark, raises
 from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
-from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_core.aio.utils import async_list
 from smithy_core.documents import Document
-from smithy_http import tuples_to_fields
-from smithy_http.aio import HTTPResponse as _smithy_http_aio_HTTPResponse
-from smithy_http.aio.interfaces import (
+from smithy_core.retries import SimpleRetryStrategy
+from smithy_http import HTTPResponse as _smithy_http_HTTPResponse, tuples_to_fields
+from smithy_http.interfaces import (
+    HTTPClientConfiguration,
     HTTPRequest,
-    HTTPResponse as _smithy_http_aio_interfaces_HTTPResponse,
+    HTTPRequestConfiguration,
+    HTTPResponse as _smithy_http_interfaces_HTTPResponse,
 )
-from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 from smithy_test import deep_equal
 
-from awsjson11.client import AsyncJsonProtocolClient
-from awsjson11.config import AsyncJsonProtocolConfig
+from awsjson11.aio.client import AsyncJsonProtocolClient
+from awsjson11.aio.config import AsyncJsonProtocolConfig
 from awsjson11.models import (
     DatetimeOffsetsInput,
     DatetimeOffsetsOutput,
@@ -146,7 +145,7 @@ async def test_sends_requests_to_slash_request_empty_operation() -> None:
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -215,7 +214,7 @@ async def test_includes_x_amz_target_and_content_type_request_empty_operation() 
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -292,7 +291,7 @@ async def test_json_1_1_client_sends_empty_payload_for_no_input_shape_request_em
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -475,7 +474,7 @@ async def test_aws_json11_endpoint_trait_request_endpoint_operation() -> None:
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -555,7 +554,7 @@ async def test_aws_json11_endpoint_trait_with_host_label_request_endpoint_with_h
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1145,7 +1144,7 @@ async def test_aws_json11_host_with_path_request_host_with_path_operation() -> N
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/custom",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1218,7 +1217,7 @@ async def test_aws_json11_enums_request_json_enums() -> None:
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1336,7 +1335,7 @@ async def test_aws_json11_int_enums_request_json_int_enums() -> None:
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1457,7 +1456,7 @@ async def test_aws_json11_serialize_string_union_value_request_json_unions() -> 
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1534,7 +1533,7 @@ async def test_aws_json11_serialize_boolean_union_value_request_json_unions() ->
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1611,7 +1610,7 @@ async def test_aws_json11_serialize_number_union_value_request_json_unions() -> 
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1688,7 +1687,7 @@ async def test_aws_json11_serialize_blob_union_value_request_json_unions() -> No
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1765,7 +1764,7 @@ async def test_aws_json11_serialize_timestamp_union_value_request_json_unions() 
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1846,7 +1845,7 @@ async def test_aws_json11_serialize_enum_union_value_request_json_unions() -> No
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1923,7 +1922,7 @@ async def test_aws_json11_serialize_list_union_value_request_json_unions() -> No
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2000,7 +1999,7 @@ async def test_aws_json11_serialize_map_union_value_request_json_unions() -> Non
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2077,7 +2076,7 @@ async def test_aws_json11_serialize_structure_union_value_request_json_unions() 
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2460,7 +2459,7 @@ async def test_serializes_string_shapes_request_kitchen_sink_operation() -> None
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2537,7 +2536,7 @@ async def test_serializes_string_shapes_with_jsonvalue_trait_request_kitchen_sin
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2614,7 +2613,7 @@ async def test_serializes_integer_shapes_request_kitchen_sink_operation() -> Non
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2689,7 +2688,7 @@ async def test_serializes_long_shapes_request_kitchen_sink_operation() -> None:
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2764,7 +2763,7 @@ async def test_serializes_float_shapes_request_kitchen_sink_operation() -> None:
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2839,7 +2838,7 @@ async def test_serializes_double_shapes_request_kitchen_sink_operation() -> None
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2914,7 +2913,7 @@ async def test_serializes_blob_shapes_request_kitchen_sink_operation() -> None:
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2989,7 +2988,7 @@ async def test_serializes_boolean_shapes_true_request_kitchen_sink_operation() -
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3064,7 +3063,7 @@ async def test_serializes_boolean_shapes_false_request_kitchen_sink_operation() 
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3139,7 +3138,7 @@ async def test_serializes_timestamp_shapes_request_kitchen_sink_operation() -> N
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3218,7 +3217,7 @@ async def test_serializes_timestamp_shapes_with_iso8601_timestampformat_request_
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3297,7 +3296,7 @@ async def test_serializes_timestamp_shapes_with_httpdate_timestampformat_request
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3376,7 +3375,7 @@ async def test_serializes_timestamp_shapes_with_unixtimestamp_timestampformat_re
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3453,7 +3452,7 @@ async def test_serializes_list_shapes_request_kitchen_sink_operation() -> None:
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3528,7 +3527,7 @@ async def test_serializes_empty_list_shapes_request_kitchen_sink_operation() -> 
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3603,7 +3602,7 @@ async def test_serializes_list_of_map_shapes_request_kitchen_sink_operation() ->
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3684,7 +3683,7 @@ async def test_serializes_list_of_structure_shapes_request_kitchen_sink_operatio
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3769,7 +3768,7 @@ async def test_serializes_list_of_recursive_structure_shapes_request_kitchen_sin
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3850,7 +3849,7 @@ async def test_serializes_map_shapes_request_kitchen_sink_operation() -> None:
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3925,7 +3924,7 @@ async def test_serializes_empty_map_shapes_request_kitchen_sink_operation() -> N
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4000,7 +3999,7 @@ async def test_serializes_map_of_list_shapes_request_kitchen_sink_operation() ->
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4081,7 +4080,7 @@ async def test_serializes_map_of_structure_shapes_request_kitchen_sink_operation
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4165,7 +4164,7 @@ async def test_serializes_map_of_recursive_structure_shapes_request_kitchen_sink
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4250,7 +4249,7 @@ async def test_serializes_structure_shapes_request_kitchen_sink_operation() -> N
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4327,7 +4326,7 @@ async def test_serializes_structure_members_with_locationname_traits_request_kit
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4406,7 +4405,7 @@ async def test_serializes_empty_structure_shapes_request_kitchen_sink_operation(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4483,7 +4482,7 @@ async def test_serializes_structure_which_have_no_members_request_kitchen_sink_o
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -4560,7 +4559,7 @@ async def test_serializes_recursive_structure_shapes_request_kitchen_sink_operat
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5382,7 +5381,7 @@ async def test_aws_json11_structures_dont_serialize_null_values_request_null_ope
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5490,7 +5489,7 @@ async def test_can_call_operation_with_no_input_or_output_request_operation_with
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5567,7 +5566,7 @@ async def test_can_call_operation_with_optional_input_request_operation_with_opt
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5644,7 +5643,7 @@ async def test_put_and_get_inline_documents_input_request_put_and_get_inline_doc
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5758,7 +5757,7 @@ async def test_sdk_applied_content_encoding_aws_json1_1_request_put_with_content
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5834,7 +5833,7 @@ async def test_sdk_appends_gzip_and_ignores_http_provided_encoding_aws_json1_1_r
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5905,7 +5904,7 @@ async def test_aws_json11_supports_na_n_float_inputs_request_simple_scalar_prope
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -5986,7 +5985,7 @@ async def test_aws_json11_supports_infinity_float_inputs_request_simple_scalar_p
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6067,7 +6066,7 @@ async def test_aws_json11_supports_negative_infinity_float_inputs_request_simple
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6247,7 +6246,7 @@ async def test_aws_json11_sparse_maps_serialize_null_values_request_sparse_nulls
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6326,7 +6325,7 @@ async def test_aws_json11_sparse_lists_serialize_null_request_sparse_nulls_opera
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -6478,7 +6477,7 @@ class RequestTestHTTPClient:
         request: HTTPRequest,
         *,
         request_config: HTTPRequestConfiguration | None = None,
-    ) -> _smithy_http_aio_interfaces_HTTPResponse:
+    ) -> _smithy_http_interfaces_HTTPResponse:
         # Raise the exception with the request object to bypass actual request handling
         raise TestHttpServiceError(request)
 
@@ -6507,8 +6506,8 @@ class ResponseTestHTTPClient:
         request: HTTPRequest,
         *,
         request_config: HTTPRequestConfiguration | None = None,
-    ) -> _smithy_http_aio_HTTPResponse:
+    ) -> _smithy_http_HTTPResponse:
         # Pre-construct the response from the request and return it
-        return _smithy_http_aio_HTTPResponse(
-            status=self.status, fields=self.fields, body=async_list([self.body])
+        return _smithy_http_HTTPResponse(
+            status=self.status, fields=self.fields, body=AsyncBytesReader(self.body)
         )

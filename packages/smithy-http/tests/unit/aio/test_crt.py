@@ -11,11 +11,10 @@ import pytest
 from awscrt import http as crt_http  # type: ignore
 from smithy_core import URI
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_http import Field, Fields
-from smithy_http.aio import HTTPRequest
+from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.aio.crt import (
+    AsyncAWSCRTHTTPResponse,
     AWSCRTHTTPClient,
-    AWSCRTHTTPResponse,
 )
 from smithy_http.exceptions import SmithyHTTPError
 
@@ -559,7 +558,7 @@ async def test_response_chunks() -> None:
         b"",  # End of stream
     ]
 
-    response = AWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
+    response = AsyncAWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
 
     chunks: list[bytes] = []
     async for chunk in response.chunks():
@@ -573,7 +572,7 @@ async def test_response_body_property() -> None:
     mock_stream = AsyncMock()
     mock_stream.get_next_response_chunk.side_effect = [b"data", b""]
 
-    response = AWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
+    response = AsyncAWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
 
     chunks: list[bytes] = []
     async for chunk in response.body:
@@ -588,7 +587,7 @@ def test_response_properties() -> None:
     fields.set_field(Field(name="content-type", values=["application/json"]))
 
     mock_stream = Mock()
-    response = AWSCRTHTTPResponse(status=404, fields=fields, stream=mock_stream)
+    response = AsyncAWSCRTHTTPResponse(status=404, fields=fields, stream=mock_stream)
 
     assert response.status == 404
     assert response.fields == fields

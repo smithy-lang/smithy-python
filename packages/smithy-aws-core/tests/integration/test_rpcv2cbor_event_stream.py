@@ -26,8 +26,8 @@ pytest.importorskip("awscrt")
 pytest.importorskip("h2")
 pytest.importorskip("trustme")
 
-from my_handwritten_model.client import MyHandwrittenModel
-from my_handwritten_model.config import Config
+from my_handwritten_model.aio.client import AsyncMyHandwrittenModel
+from my_handwritten_model.aio.config import AsyncConfig
 from my_handwritten_model.models import (
     Alpha,
     TradeEventsAlpha,
@@ -116,14 +116,16 @@ def _simon_referee() -> "tuple[object, list[str]]":
     return referee, moves
 
 
-async def _client(server: H2BidiServer) -> tuple[MyHandwrittenModel, AWSCRTHTTPClient]:
+async def _client(
+    server: H2BidiServer,
+) -> tuple[AsyncMyHandwrittenModel, AWSCRTHTTPClient]:
     transport = AWSCRTHTTPClient(
         client_config=AWSCRTHTTPClientConfig(
             force_http_2=True, trust_store_path=str(server.ca_cert_path)
         )
     )
-    client = MyHandwrittenModel(
-        Config(
+    client = AsyncMyHandwrittenModel(
+        AsyncConfig(
             endpoint_uri=URI(host=server.host, port=server.port, scheme="https"),
             transport=transport,
         )

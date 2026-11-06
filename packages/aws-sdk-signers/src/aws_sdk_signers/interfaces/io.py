@@ -4,8 +4,6 @@
 from typing import Protocol, runtime_checkable
 
 __all__ = (
-    "AsyncByteStream",
-    "AsyncSeekable",
     "ByteStream",
     "ConditionallySeekable",
     "Seekable",
@@ -20,13 +18,6 @@ class ByteStream(Protocol):
 
 
 @runtime_checkable
-class AsyncByteStream(Protocol):
-    """A file-like object with an async read method."""
-
-    async def read(self, size: int | None = -1, /) -> bytes: ...
-
-
-@runtime_checkable
 class Seekable(Protocol):
     """A file-like object with seek and tell implemented."""
 
@@ -36,20 +27,10 @@ class Seekable(Protocol):
 
 
 @runtime_checkable
-class AsyncSeekable(Protocol):
-    """An async file-like object with seek and tell implemented."""
-
-    async def seek(self, offset: int, whence: int = 0, /) -> int: ...
-
-    def tell(self) -> int: ...
-
-
-@runtime_checkable
 class ConditionallySeekable(Protocol):
     """A file-like object that is conditionally seekable.
 
-    This is separate from Seekable and AsyncSeekable as seekable objects may not define
-    this method.
+    This is separate from Seekable as seekable objects may not define this method.
     """
 
     def seekable(self) -> bool: ...

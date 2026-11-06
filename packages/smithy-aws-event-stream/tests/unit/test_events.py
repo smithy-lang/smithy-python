@@ -6,6 +6,7 @@ import uuid
 from io import BytesIO
 
 import pytest
+from smithy_aws_event_stream.aio import decode_event_async
 from smithy_aws_event_stream.events import (
     MAX_HEADER_VALUE_BYTE_LENGTH,
     MAX_HEADERS_LENGTH,
@@ -528,7 +529,7 @@ def test_decode(encoded: bytes, expected: Event | None):
 
 @pytest.mark.parametrize("encoded,expected", POSITIVE_CASES)
 async def test_decode_async(encoded: bytes, expected: Event | None):
-    assert await Event.decode_async(AsyncBytesReader(encoded)) == expected
+    assert await decode_event_async(AsyncBytesReader(encoded)) == expected
 
 
 @pytest.mark.parametrize(
@@ -551,7 +552,7 @@ def test_negative_cases(encoded: bytes, expected: type[Exception]):
 )
 async def test_negative_cases_async(encoded: bytes, expected: type[Exception]):
     with pytest.raises(expected):
-        await Event.decode_async(AsyncBytesReader(encoded))
+        await decode_event_async(AsyncBytesReader(encoded))
 
 
 def test_event_prelude_rejects_long_headers():

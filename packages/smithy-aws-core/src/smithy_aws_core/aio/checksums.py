@@ -2,33 +2,19 @@
 #  SPDX-License-Identifier: Apache-2.0
 """Async streams for payload checksums."""
 
-import logging
-
 from smithy_core.aio.interfaces import StreamingBlob
 from smithy_core.aio.types import AsyncBytesReader
 
-from .._private.checksums import create_checksum
-from ..checksums import ChecksumMismatchError
+from .._private.checksums import ChecksumValidator
 
 __all__ = ["AsyncChecksumStream"]
 
-logger = logging.getLogger(__name__)
-
 
 class AsyncChecksumStream(AsyncBytesReader):
-    """A response payload that validates its checksum once it's read to the end.
+    """An async response payload that validates its checksum once it's read to the end.
 
-    The checksum is calculated as the payload is read. Validation happens when the
-    stream is read to the end: when ``read()`` is called without a size, when a
-    sized ``read()`` returns no data, or when iteration finishes. A mismatch raises
-    ``ChecksumMismatchError`` from that read, after the earlier data was returned. A
-    payload that isn't read to the end isn't validated.
-
-    The stream can't be seeked, since that would invalidate the checksum.
+    See :py:class:`smithy_aws_core.checksums.ChecksumStream` for when it validates.
     """
-
-    checksum_algorithm: str
-    """The algorithm used to validate the payload, such as ``CRC32``."""
 
     def __init__(
         self, source: StreamingBlob, *, checksum_algorithm: str, expected: bytes
@@ -42,15 +28,17 @@ class AsyncChecksumStream(AsyncBytesReader):
         """
         super().__init__(source)
         self._seekable = False
-        self._checksum = create_checksum(checksum_algorithm)
-        self._expected = expected
-        self._validated = False
-        self.checksum_algorithm = checksum_algorithm
+        self._validator = ChecksumValidator(checksum_algorithm, expected)
+
+    @property
+    def checksum_algorithm(self) -> str:
+        """The algorithm used to validate the payload, such as ``CRC32``."""
+        return self._validator.checksum_algorithm
 
     @property
     def validated(self) -> bool:
         """Whether the payload was read to the end and its checksum matched."""
-        return self._validated
+        return self._validator.validated
 
     async def read(self, size: int = -1) -> bytes:
         """Read up to ``size`` bytes, or the rest of the payload if it's negative.
@@ -59,25 +47,5 @@ class AsyncChecksumStream(AsyncBytesReader):
             checksum doesn't match.
         """
         data = await super().read(size)
-        if size == 0:
-            return data
-        if data:
-            self._checksum.update(data)
-        if size < 0 or not data:
-            self._validate()
+        self._validator.observe(data, size)
         return data
-
-    def _validate(self) -> None:
-        if self._validated:
-            return
-        actual = self._checksum.digest()
-        if actual != self._expected:
-            raise ChecksumMismatchError(
-                algorithm=self.checksum_algorithm,
-                expected=self._expected,
-                actual=actual,
-            )
-        self._validated = True
-        logger.debug(
-            "Validated the response payload's %s checksum", self.checksum_algorithm
-        )

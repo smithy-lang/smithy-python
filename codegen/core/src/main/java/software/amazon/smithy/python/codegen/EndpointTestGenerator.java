@@ -47,8 +47,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public final class EndpointTestGenerator implements Runnable {
 
-    private static final Symbol CHECK_RULES_CASE = testSymbol("check_rules_case_async");
-    private static final Symbol CHECK_CLIENT_CASE = testSymbol("check_client_case_async");
+    private static final Symbol CHECK_RULES_CASE = testSymbol("check_rules_case", "");
+    private static final Symbol CHECK_CLIENT_CASE = testSymbol("check_client_case_async", ".aio");
 
     private final GenerationContext context;
     private final ServiceShape service;
@@ -99,9 +99,8 @@ public final class EndpointTestGenerator implements Runnable {
     // interceptor added to it.
     private void writeClientFactory(PythonWriter writer) {
         var settings = context.settings();
-        var asyncConfig = CodegenUtils.getAsyncConfigSymbol(settings, context.model());
-        var config = asyncConfig.orElse(CodegenUtils.getConfigSymbol(settings));
-        var construct = asyncConfig.isPresent()
+        var config = CodegenUtils.getAsyncConfigSymbol(settings, context.model());
+        var construct = CodegenUtils.isAwsService(settings, context.model())
                 ? writer.format("await $T.resolve", config)
                 : writer.format("$T", config);
         var client = context.symbolProvider().toSymbol(service);
@@ -130,7 +129,8 @@ public final class EndpointTestGenerator implements Runnable {
                         config = await _config()
                         # Only the resolver is used, so the transport is closed right away.
                         await $T(config.transport)
-                        assert config.endpoint_resolver is not None
+                        # The rules checks are sync, so they need the default sync resolver.
+                        assert isinstance(config.endpoint_resolver, $T)
                         _resolver = config.endpoint_resolver
                     return _resolver
 
@@ -156,9 +156,10 @@ public final class EndpointTestGenerator implements Runnable {
                 config,
                 construct,
                 RuntimeTypes.SIMPLE_RETRY_STRATEGY,
-                RuntimeTypes.ENDPOINT_RESOLVER,
-                RuntimeTypes.ENDPOINT_RESOLVER,
-                RuntimeTypes.ASYNC_CLOSE,
+                RuntimeTypes.BDD_ENDPOINT_RESOLVER,
+                RuntimeTypes.BDD_ENDPOINT_RESOLVER,
+                RuntimeTypes.CLOSE_ASYNC,
+                RuntimeTypes.BDD_ENDPOINT_RESOLVER,
                 RuntimeTypes.INTERCEPTOR,
                 client,
                 client);
@@ -200,7 +201,7 @@ public final class EndpointTestGenerator implements Runnable {
 
                 @mark.parametrize(("params", "expect"), RULES_CASES)
                 async def test_endpoint_rules(params: dict[str, Any], expect: dict[str, Any]) -> None:
-                    await $T(await _endpoint_resolver(), params, expect$L)
+                    $T(await _endpoint_resolver(), params, expect$L)
                 """,
                 writer.consumer(w -> {
                     for (EndpointTestCase testCase : cases) {
@@ -418,10 +419,10 @@ public final class EndpointTestGenerator implements Runnable {
         };
     }
 
-    private static Symbol testSymbol(String name) {
+    private static Symbol testSymbol(String name, String module) {
         return Symbol.builder()
                 .name(name)
-                .namespace(SmithyPythonDependency.SMITHY_TEST.packageName() + ".aio", ".")
+                .namespace(SmithyPythonDependency.SMITHY_TEST.packageName() + module, ".")
                 .addDependency(SmithyPythonDependency.SMITHY_TEST)
                 .build();
     }
