@@ -173,6 +173,77 @@ _DTI = "DocumentTypeInput"
 _aDTIO = "aws.protocoltests.restjson#DocumentTypeInputOutput"
 _sVt = "stringValue"
 _dV = "documentValue"
+_DTO = "DocumentTypeOutput"
+_DTo = "DocumentType"
+_DVM = "DocumentValuedMap"
+_DTAMVI = "DocumentTypeAsMapValueInput"
+_aDTAMVIO = "aws.protocoltests.restjson#DocumentTypeAsMapValueInputOutput"
+_dVM = "docValuedMap"
+_DTAMVO = "DocumentTypeAsMapValueOutput"
+_DTAMV = "DocumentTypeAsMapValue"
+_DTAPI = "DocumentTypeAsPayloadInput"
+_aDTAPIO = "aws.protocoltests.restjson#DocumentTypeAsPayloadInputOutput"
+_sPm = "smithy.api#httpPayload"
+_DTAPO = "DocumentTypeAsPayloadOutput"
+_DTAP = "DocumentTypeAsPayload"
+_EE = "ErrorEvent"
+_me = "message"
+_HE = "HeadersEvent"
+_bH = "booleanHeader"
+_sHm = "smithy.api#eventHeader"
+_bHy = "byteHeader"
+_sHh = "shortHeader"
+_iH = "intHeader"
+_lH = "longHeader"
+_bHl = "blobHeader"
+_sHt = "stringHeader"
+_tH = "timestampHeader"
+_PS = "PayloadStructure"
+_sM = "structureMember"
+_HAEPE = "HeadersAndExplicitPayloadEvent"
+_he = "header"
+_HAIPE = "HeadersAndImplicitPayloadEvent"
+_SPE = "StringPayloadEvent"
+_SPEt = "StructurePayloadEvent"
+_PU = "PayloadUnion"
+_uM = "unionMember"
+_UPE = "UnionPayloadEvent"
+_ES = "EventStream"
+_smithya = "smithy.api#streaming"
+_hea = "headers"
+_bP = "blobPayload"
+_sPt = "stringPayload"
+_sPtr = "structurePayload"
+_uP = "unionPayload"
+_hAEP = "headersAndExplicitPayload"
+_hAIP = "headersAndImplicitPayload"
+_e = "error"
+_DSI = "DuplexStreamInput"
+_st = "stream"
+_DSO = "DuplexStreamOutput"
+_DS = "DuplexStream"
+_DSWDSI = "DuplexStreamWithDistinctStreamsInput"
+_SE = "SingletonEvent"
+_SES = "SingletonEventStream"
+_si = "singleton"
+_DSWDSO = "DuplexStreamWithDistinctStreamsOutput"
+_DSWDS = "DuplexStreamWithDistinctStreams"
+_DSWIMI = "DuplexStreamWithInitialMessagesInput"
+_iRM = "initialRequestMember"
+_irm = "initial-request-member"
+_DSWIMO = "DuplexStreamWithInitialMessagesOutput"
+_iRMn = "initialResponseMember"
+_irm_ = "initial-response-member"
+_SUE = "ServiceUnavailableError"
+_se = "server"
+_DSWIM = "DuplexStreamWithInitialMessages"
+_EIAEOI = "EmptyInputAndEmptyOutputInput"
+_EIAEOO = "EmptyInputAndEmptyOutputOutput"
+_EIAEO = "EmptyInputAndEmptyOutput"
+_EOI = "EndpointOperationInput"
+_EOO = "EndpointOperationOutput"
+_EO = "EndpointOperation"
+_smithyap = "smithy.api#endpoint"
 
 BOOLEAN_LIST: StaticSchema = (16, n0, _BL, 0, (_m,), ((2, 0),))
 
@@ -376,15 +447,13 @@ CONTENT_TYPE_PARAMETERS: StaticOperationSchema = (
 
 DATETIME_OFFSETS_INPUT: StaticSchema = (18, n1, _DOI, {_sSI: _sU, _s: None})
 
-DATE_TIME: StaticSchema = (4, n0, _DT, {_sF: _dt})
-
 DATETIME_OFFSETS_OUTPUT: StaticSchema = (
     18,
     n1,
     _DOO,
     {_sm: None},
     (_d,),
-    ((DATE_TIME, 0),),
+    ((lambda: DATE_TIME, 0),),
 )
 
 DATETIME_OFFSETS: StaticOperationSchema = (
@@ -396,6 +465,8 @@ DATETIME_OFFSETS: StaticOperationSchema = (
     DATETIME_OFFSETS_OUTPUT,
     (),
 )
+
+DATE_TIME: StaticSchema = (4, n0, _DT, {_sF: _dt})
 
 DOCUMENT: StaticSchema = (13, n1, _Do, 0)
 
@@ -529,4 +600,311 @@ DOCUMENT_TYPE_INPUT: StaticSchema = (
     {_sSI: _aDTIO, _s: None},
     (_sVt, _dV),
     ((3, 0), (DOCUMENT, 0)),
+)
+
+DOCUMENT_TYPE_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _DTO,
+    {_sSI: _aDTIO, _sm: None},
+    (_sVt, _dV),
+    ((3, 0), (DOCUMENT, 0)),
+)
+
+DOCUMENT_TYPE: StaticOperationSchema = (
+    23,
+    n1,
+    _DTo,
+    {_smi: MappingProxyType({"uri": "/DocumentType", "method": "PUT"})},
+    DOCUMENT_TYPE_INPUT,
+    DOCUMENT_TYPE_OUTPUT,
+    (),
+)
+
+DOCUMENT_VALUED_MAP: StaticSchema = (
+    17,
+    n1,
+    _DVM,
+    0,
+    (_k, _va),
+    ((3, 0), (DOCUMENT, 0)),
+)
+
+DOCUMENT_TYPE_AS_MAP_VALUE_INPUT: StaticSchema = (
+    18,
+    n1,
+    _DTAMVI,
+    {_sSI: _aDTAMVIO, _s: None},
+    (_dVM,),
+    ((DOCUMENT_VALUED_MAP, 0),),
+)
+
+DOCUMENT_TYPE_AS_MAP_VALUE_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _DTAMVO,
+    {_sSI: _aDTAMVIO, _sm: None},
+    (_dVM,),
+    ((DOCUMENT_VALUED_MAP, 0),),
+)
+
+DOCUMENT_TYPE_AS_MAP_VALUE: StaticOperationSchema = (
+    23,
+    n1,
+    _DTAMV,
+    {_smi: MappingProxyType({"uri": "/DocumentTypeAsMapValue", "method": "PUT"})},
+    DOCUMENT_TYPE_AS_MAP_VALUE_INPUT,
+    DOCUMENT_TYPE_AS_MAP_VALUE_OUTPUT,
+    (),
+)
+
+DOCUMENT_TYPE_AS_PAYLOAD_INPUT: StaticSchema = (
+    18,
+    n1,
+    _DTAPI,
+    {_sSI: _aDTAPIO, _s: None},
+    (_dV,),
+    ((DOCUMENT, 16),),
+)
+
+DOCUMENT_TYPE_AS_PAYLOAD_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _DTAPO,
+    {_sSI: _aDTAPIO, _sm: None},
+    (_dV,),
+    ((DOCUMENT, 16),),
+)
+
+DOCUMENT_TYPE_AS_PAYLOAD: StaticOperationSchema = (
+    23,
+    n1,
+    _DTAP,
+    {_smi: MappingProxyType({"uri": "/DocumentTypeAsPayload", "method": "PUT"})},
+    DOCUMENT_TYPE_AS_PAYLOAD_INPUT,
+    DOCUMENT_TYPE_AS_PAYLOAD_OUTPUT,
+    (),
+)
+
+ERROR_EVENT: StaticSchema = (18, n1, _EE, {_smith: _c}, (_me,), ((3, 0),))
+
+HEADERS_EVENT: StaticSchema = (
+    18,
+    n1,
+    _HE,
+    0,
+    (_bH, _bHy, _sHh, _iH, _lH, _bHl, _sHt, _tH),
+    (
+        (2, {_sHm: None}),
+        (5, {_sHm: None}),
+        (6, {_sHm: None}),
+        (7, {_sHm: None}),
+        (8, {_sHm: None}),
+        (1, {_sHm: None}),
+        (3, {_sHm: None}),
+        (DATE_TIME, {_sHm: None}),
+    ),
+)
+
+PAYLOAD_STRUCTURE: StaticSchema = (18, n1, _PS, 0, (_sM,), ((3, 0),))
+
+HEADERS_AND_EXPLICIT_PAYLOAD_EVENT: StaticSchema = (
+    18,
+    n1,
+    _HAEPE,
+    0,
+    (_he, _p),
+    ((3, {_sHm: None}), (PAYLOAD_STRUCTURE, {_sP: None})),
+)
+
+HEADERS_AND_IMPLICIT_PAYLOAD_EVENT: StaticSchema = (
+    18,
+    n1,
+    _HAIPE,
+    0,
+    (_he, _p),
+    ((3, {_sHm: None}), (3, 0)),
+)
+
+STRING_PAYLOAD_EVENT: StaticSchema = (18, n1, _SPE, 0, (_p,), ((3, {_sP: None}),))
+
+STRUCTURE_PAYLOAD_EVENT: StaticSchema = (
+    18,
+    n1,
+    _SPEt,
+    0,
+    (_p,),
+    ((PAYLOAD_STRUCTURE, {_sP: None}),),
+)
+
+PAYLOAD_UNION: StaticSchema = (19, n1, _PU, 0, (_uM,), ((3, 0),))
+
+UNION_PAYLOAD_EVENT: StaticSchema = (
+    18,
+    n1,
+    _UPE,
+    0,
+    (_p,),
+    ((PAYLOAD_UNION, {_sP: None}),),
+)
+
+EVENT_STREAM: StaticSchema = (
+    19,
+    n1,
+    _ES,
+    {_smithya: None},
+    (_hea, _bP, _sPt, _sPtr, _uP, _hAEP, _hAIP, _e),
+    (
+        (HEADERS_EVENT, 0),
+        (BLOB_PAYLOAD_EVENT, 0),
+        (STRING_PAYLOAD_EVENT, 0),
+        (STRUCTURE_PAYLOAD_EVENT, 0),
+        (UNION_PAYLOAD_EVENT, 0),
+        (HEADERS_AND_EXPLICIT_PAYLOAD_EVENT, 0),
+        (HEADERS_AND_IMPLICIT_PAYLOAD_EVENT, 0),
+        (ERROR_EVENT, 0),
+    ),
+)
+
+DUPLEX_STREAM_INPUT: StaticSchema = (
+    18,
+    n1,
+    _DSI,
+    {_s: None},
+    (_st,),
+    ((EVENT_STREAM, 16),),
+)
+
+DUPLEX_STREAM_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _DSO,
+    {_sm: None},
+    (_st,),
+    ((EVENT_STREAM, 16),),
+)
+
+DUPLEX_STREAM: StaticOperationSchema = (
+    23,
+    n1,
+    _DS,
+    {_smi: MappingProxyType({"method": "POST", "uri": "/DuplexStream"})},
+    DUPLEX_STREAM_INPUT,
+    DUPLEX_STREAM_OUTPUT,
+    (),
+)
+
+DUPLEX_STREAM_WITH_DISTINCT_STREAMS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _DSWDSI,
+    {_s: None},
+    (_st,),
+    ((EVENT_STREAM, 16),),
+)
+
+DUPLEX_STREAM_WITH_DISTINCT_STREAMS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _DSWDSO,
+    {_sm: None},
+    (_st,),
+    ((lambda: SINGLETON_EVENT_STREAM, 16),),
+)
+
+DUPLEX_STREAM_WITH_DISTINCT_STREAMS: StaticOperationSchema = (
+    23,
+    n1,
+    _DSWDS,
+    {
+        _smi: MappingProxyType(
+            {"method": "POST", "uri": "/DuplexStreamWithDistinctStreams"}
+        )
+    },
+    DUPLEX_STREAM_WITH_DISTINCT_STREAMS_INPUT,
+    DUPLEX_STREAM_WITH_DISTINCT_STREAMS_OUTPUT,
+    (),
+)
+
+SINGLETON_EVENT: StaticSchema = (18, n1, _SE, 0, (_va,), ((3, 0),))
+
+SINGLETON_EVENT_STREAM: StaticSchema = (
+    19,
+    n1,
+    _SES,
+    0,
+    (_si,),
+    ((SINGLETON_EVENT, 0),),
+)
+
+DUPLEX_STREAM_WITH_INITIAL_MESSAGES_INPUT: StaticSchema = (
+    18,
+    n1,
+    _DSWIMI,
+    {_s: None},
+    (_iRM, _st),
+    ((3, {_sH: _irm, _smithy: None}), (EVENT_STREAM, 16)),
+)
+
+DUPLEX_STREAM_WITH_INITIAL_MESSAGES_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _DSWIMO,
+    {_sm: None},
+    (_iRMn, _st),
+    ((3, {_sH: _irm_, _smithy: None}), (EVENT_STREAM, 16)),
+)
+
+DUPLEX_STREAM_WITH_INITIAL_MESSAGES: StaticOperationSchema = (
+    23,
+    n1,
+    _DSWIM,
+    {
+        _smi: MappingProxyType(
+            {"method": "POST", "uri": "/DuplexStreamWithInitialMessages"}
+        )
+    },
+    DUPLEX_STREAM_WITH_INITIAL_MESSAGES_INPUT,
+    DUPLEX_STREAM_WITH_INITIAL_MESSAGES_OUTPUT,
+    (lambda: SERVICE_UNAVAILABLE_ERROR,),
+)
+
+SERVICE_UNAVAILABLE_ERROR: StaticSchema = (
+    18,
+    n1,
+    _SUE,
+    {_smith: _se, _sE: 500},
+    (_me,),
+    ((3, 0),),
+)
+
+EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT: StaticSchema = (18, n1, _EIAEOI, {_s: None})
+
+EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT: StaticSchema = (18, n1, _EIAEOO, {_sm: None})
+
+EMPTY_INPUT_AND_EMPTY_OUTPUT: StaticOperationSchema = (
+    23,
+    n1,
+    _EIAEO,
+    {_smi: MappingProxyType({"uri": "/EmptyInputAndEmptyOutput", "method": "POST"})},
+    EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT,
+    EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT,
+    (),
+)
+
+ENDPOINT_OPERATION_INPUT: StaticSchema = (18, n1, _EOI, {_sSI: _sU, _s: None})
+
+ENDPOINT_OPERATION_OUTPUT: StaticSchema = (18, n1, _EOO, {_sSI: _sU, _sm: None})
+
+ENDPOINT_OPERATION: StaticOperationSchema = (
+    23,
+    n1,
+    _EO,
+    {
+        _smithyap: MappingProxyType({"hostPrefix": "foo."}),
+        _smi: MappingProxyType({"uri": "/EndpointOperation", "method": "POST"}),
+    },
+    ENDPOINT_OPERATION_INPUT,
+    ENDPOINT_OPERATION_OUTPUT,
+    (),
 )

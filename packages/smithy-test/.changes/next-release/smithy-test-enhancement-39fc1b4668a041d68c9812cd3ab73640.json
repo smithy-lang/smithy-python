@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Support model conformance checks for partitioned stub re-exports."
+}

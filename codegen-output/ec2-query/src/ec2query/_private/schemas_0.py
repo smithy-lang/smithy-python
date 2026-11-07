@@ -4,6 +4,8 @@ from types import MappingProxyType
 
 from smithy_core._schema_compact import StaticOperationSchema, StaticSchema
 
+from . import schemas
+
 
 n0 = "aws.protocoltests.ec2"
 _DOI = "DatetimeOffsetsInput"
@@ -89,10 +91,69 @@ _LAWXNM = "ListArgWithXmlNameMember"
 _LAWXN = "ListArgWithXmlName"
 _H = "Hi"
 _NWL = "NestedWithList"
+_QLO = "QueryListsOutput"
+_QL = "QueryLists"
+_ES = "EpochSeconds"
+_es = "epoch-seconds"
+_QTI = "QueryTimestampsInput"
+_nF = "normalFormat"
+_eM = "epochMember"
+_eT = "epochTarget"
+_QTO = "QueryTimestampsOutput"
+_QT = "QueryTimestamps"
+_RXSI = "RecursiveXmlShapesInput"
+_FE = "FooEnum"
+_FOO = "FOO"
+_sV = "smithy.api#enumValue"
+_BAZ = "BAZ"
+_B = "Baz"
+_BAR = "BAR"
+_Ba = "Bar"
+_ONE = "ONE"
+_v = "1"
+_ZERO = "ZERO"
+_v_ = "0"
+_SIPI = "SimpleInputParamsInput"
+_Bam = "Bam"
+_FV = "FloatValue"
+_Bo = "Boo"
+_Q = "Qux"
+_HQN = "HasQueryName"
+_aQN = "aws.protocols#ec2QueryName"
+_HQAXN = "HasQueryAndXmlName"
+_hQAXN = "hasQueryAndXmlName"
+_UXN = "UsesXmlName"
+_uXN = "usesXmlName"
+_DQN = "DistinctQueryName"
+_QN = "QueryName"
+_DQAXN = "DistinctQueryAndXmlName"
+_qAXN = "queryAndXmlName"
+_xAQN = "xmlAndQueryName"
+_DXN = "DistinctXmlName"
+_xNO = "xmlNameOnly"
+_SIPO = "SimpleInputParamsOutput"
+_SIP = "SimpleInputParams"
+_SSXPI = "SimpleScalarXmlPropertiesInput"
+_SSXPO = "SimpleScalarXmlPropertiesOutput"
+_sVt = "stringValue"
+_eSV = "emptyStringValue"
+_tBV = "trueBooleanValue"
+_fBV = "falseBooleanValue"
+_bV = "byteValue"
+_sVh = "shortValue"
+_iV = "integerValue"
+_lV = "longValue"
+_fV = "floatValue"
+_dV = "doubleValue"
+_DD = "DoubleDribble"
+_SSXP = "SimpleScalarXmlProperties"
+_n = "nested"
+_NSI = "NestedStructuresInput"
+_NS = "NestedStructures"
+_RXSO = "RecursiveXmlShapesOutput"
+_RXS = "RecursiveXmlShapes"
 
 DATETIME_OFFSETS_INPUT: StaticSchema = (18, n0, _DOI, {_sSI: _sU, _s: None})
-
-DATE_TIME: StaticSchema = (4, n1, _DT, {_sF: _dt})
 
 DATETIME_OFFSETS_OUTPUT: StaticSchema = (
     18,
@@ -100,7 +161,7 @@ DATETIME_OFFSETS_OUTPUT: StaticSchema = (
     _DOO,
     {_sm: None},
     (_d,),
-    ((DATE_TIME, 0),),
+    ((lambda: DATE_TIME, 0),),
 )
 
 DATETIME_OFFSETS: StaticOperationSchema = (
@@ -112,6 +173,8 @@ DATETIME_OFFSETS: StaticOperationSchema = (
     DATETIME_OFFSETS_OUTPUT,
     (),
 )
+
+DATE_TIME: StaticSchema = (4, n1, _DT, {_sF: _dt})
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT: StaticSchema = (18, n0, _EIAEOI, {_s: None})
 
@@ -210,8 +273,6 @@ GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (
     ((3, 0),),
 )
 
-INVALID_GREETING: StaticSchema = (18, n0, _IG, {_smith: _c}, (_M,), ((3, 0),))
-
 GREETING_WITH_ERRORS: StaticOperationSchema = (
     23,
     n0,
@@ -219,8 +280,10 @@ GREETING_WITH_ERRORS: StaticOperationSchema = (
     0,
     GREETING_WITH_ERRORS_INPUT,
     GREETING_WITH_ERRORS_OUTPUT,
-    (INVALID_GREETING, COMPLEX_ERROR),
+    (lambda: INVALID_GREETING, COMPLEX_ERROR),
 )
+
+INVALID_GREETING: StaticSchema = (18, n0, _IG, {_smith: _c}, (_M,), ((3, 0),))
 
 HOST_WITH_PATH_OPERATION_INPUT: StaticSchema = (18, n0, _HWPOI, {_sSI: _sU, _s: None})
 
@@ -258,6 +321,25 @@ IGNORES_WRAPPING_XML_NAME: StaticOperationSchema = (
 )
 
 NESTED_STRUCTURES_OUTPUT: StaticSchema = (18, n0, _NSO, {_sSI: _sU, _sm: None})
+
+NESTED_STRUCTURES_INPUT: StaticSchema = (
+    18,
+    n0,
+    _NSI,
+    {_s: None},
+    (_N,),
+    ((lambda: schemas.STRUCT_ARG, 0),),
+)
+
+NESTED_STRUCTURES: StaticOperationSchema = (
+    23,
+    n0,
+    _NS,
+    0,
+    NESTED_STRUCTURES_INPUT,
+    NESTED_STRUCTURES_OUTPUT,
+    (),
+)
 
 NO_INPUT_AND_OUTPUT_INPUT: StaticSchema = (18, n0, _NIAOI, {_sSI: _sU, _s: None})
 
@@ -348,4 +430,148 @@ QUERY_LISTS_INPUT: StaticSchema = (
         (LIST_WITH_XML_NAME, {_sN: _H}),
         (NESTED_STRUCT_WITH_LIST, 0),
     ),
+)
+
+QUERY_LISTS_OUTPUT: StaticSchema = (18, n0, _QLO, {_sSI: _sU, _sm: None})
+
+QUERY_LISTS: StaticOperationSchema = (
+    23,
+    n0,
+    _QL,
+    0,
+    QUERY_LISTS_INPUT,
+    QUERY_LISTS_OUTPUT,
+    (),
+)
+
+EPOCH_SECONDS: StaticSchema = (4, n1, _ES, {_sF: _es})
+
+QUERY_TIMESTAMPS_INPUT: StaticSchema = (
+    18,
+    n0,
+    _QTI,
+    {_s: None},
+    (_nF, _eM, _eT),
+    ((4, 0), (4, {_sF: _es}), (EPOCH_SECONDS, 0)),
+)
+
+QUERY_TIMESTAMPS_OUTPUT: StaticSchema = (18, n0, _QTO, {_sSI: _sU, _sm: None})
+
+QUERY_TIMESTAMPS: StaticOperationSchema = (
+    23,
+    n0,
+    _QT,
+    0,
+    QUERY_TIMESTAMPS_INPUT,
+    QUERY_TIMESTAMPS_OUTPUT,
+    (),
+)
+
+RECURSIVE_XML_SHAPES_INPUT: StaticSchema = (18, n0, _RXSI, {_sSI: _sU, _s: None})
+
+RECURSIVE_XML_SHAPES_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _RXSO,
+    {_sm: None},
+    (_n,),
+    ((lambda: schemas.RECURSIVE_XML_SHAPES_OUTPUT_NESTED1, 0),),
+)
+
+RECURSIVE_XML_SHAPES: StaticOperationSchema = (
+    23,
+    n0,
+    _RXS,
+    0,
+    RECURSIVE_XML_SHAPES_INPUT,
+    RECURSIVE_XML_SHAPES_OUTPUT,
+    (),
+)
+
+FOO_ENUM: StaticSchema = (
+    14,
+    n1,
+    _FE,
+    0,
+    (_FOO, _BAZ, _BAR, _ONE, _ZERO),
+    (
+        (-1, {_sV: _F}),
+        (-1, {_sV: _B}),
+        (-1, {_sV: _Ba}),
+        (-1, {_sV: _v}),
+        (-1, {_sV: _v_}),
+    ),
+)
+
+SIMPLE_INPUT_PARAMS_INPUT: StaticSchema = (
+    18,
+    n0,
+    _SIPI,
+    {_s: None},
+    (_F, _Ba, _B, _Bam, _FV, _Bo, _Q, _FE, _HQN, _HQAXN, _UXN, _DQN, _DQAXN, _DXN),
+    (
+        (3, 0),
+        (3, 0),
+        (2, 0),
+        (7, 0),
+        (9, 0),
+        (10, 0),
+        (1, 0),
+        (FOO_ENUM, 0),
+        (3, {_aQN: _HQN}),
+        (3, {_aQN: _HQAXN, _sN: _hQAXN}),
+        (3, {_sN: _uXN}),
+        (3, {_aQN: _QN}),
+        (3, {_aQN: _qAXN, _sN: _xAQN}),
+        (3, {_sN: _xNO}),
+    ),
+)
+
+SIMPLE_INPUT_PARAMS_OUTPUT: StaticSchema = (18, n0, _SIPO, {_sSI: _sU, _sm: None})
+
+SIMPLE_INPUT_PARAMS: StaticOperationSchema = (
+    23,
+    n0,
+    _SIP,
+    0,
+    SIMPLE_INPUT_PARAMS_INPUT,
+    SIMPLE_INPUT_PARAMS_OUTPUT,
+    (),
+)
+
+SIMPLE_SCALAR_XML_PROPERTIES_INPUT: StaticSchema = (
+    18,
+    n0,
+    _SSXPI,
+    {_sSI: _sU, _s: None},
+)
+
+SIMPLE_SCALAR_XML_PROPERTIES_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _SSXPO,
+    {_sm: None},
+    (_sVt, _eSV, _tBV, _fBV, _bV, _sVh, _iV, _lV, _fV, _dV),
+    (
+        (3, {_aQN: _IM}),
+        (3, 0),
+        (2, 0),
+        (2, 0),
+        (5, 0),
+        (6, 0),
+        (7, 0),
+        (8, 0),
+        (9, 0),
+        (10, {_sN: _DD}),
+    ),
+)
+
+SIMPLE_SCALAR_XML_PROPERTIES: StaticOperationSchema = (
+    23,
+    n0,
+    _SSXP,
+    0,
+    SIMPLE_SCALAR_XML_PROPERTIES_INPUT,
+    SIMPLE_SCALAR_XML_PROPERTIES_OUTPUT,
+    (),
 )

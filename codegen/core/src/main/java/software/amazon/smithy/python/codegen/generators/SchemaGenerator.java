@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -56,7 +58,10 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 @SmithyUnstableApi
 public final class SchemaGenerator implements Consumer<Shape> {
 
-    private static final int SCHEMA_PARTITION_SIZE = 50;
+    private static final int SCHEMA_PARTITION_SIZE = 100;
+    private static final double PARTITION_BALANCE_TOLERANCE = 0.25;
+    private static final int MIN_COMMON_OPERATION_COUNT = 12;
+    private static final int AFFINITY_PASSES = 3;
 
     // Bit index -> trait id. MUST match smithy_core._schema_compact._TRAIT_BITS.
     private static final List<String> TRAIT_BITS = List.of(
@@ -237,33 +242,47 @@ public final class SchemaGenerator implements Consumer<Shape> {
     }
 
     private List<List<Shape>> partitionSchemas(List<Shape> shapes) {
-        var groups = recursiveGroups(shapes);
-        var countPartitions = new ArrayList<List<Shape>>();
-        var current = new ArrayList<Shape>();
+        var groups = schemaAffinityGroups(shapes);
+        int partitionCount = 0;
+        int currentSize = 0;
         for (var group : groups) {
-            if (!current.isEmpty() && current.size() + group.size() > SCHEMA_PARTITION_SIZE) {
-                countPartitions.add(List.copyOf(current));
-                current.clear();
+            if (currentSize > 0 && currentSize + group.size() > SCHEMA_PARTITION_SIZE) {
+                partitionCount++;
+                currentSize = 0;
             }
-            current.addAll(group);
+            currentSize += group.size();
         }
-        if (!current.isEmpty()) {
-            countPartitions.add(List.copyOf(current));
+        if (currentSize > 0) {
+            partitionCount++;
         }
-        var partitionCount = countPartitions.size();
         if (partitionCount < 2) {
-            return countPartitions;
+            return List.of(flatten(groups));
         }
 
         var weights = groups.stream().mapToLong(this::schemaGroupWeight).toArray();
-        var partitions = new ArrayList<List<Shape>>(partitionCount);
+        var layout = sourceBalancedLayout(weights, partitionCount);
+        var operationClosures = operationClosures(shapes);
+        var operationsByGroup = operationsByGroup(groups, operationClosures);
+        var affinityLayout = improveOperationAffinityLayout(
+                groups.stream().map(List::size).toList(),
+                weights,
+                operationsByGroup,
+                layout,
+                SCHEMA_PARTITION_SIZE);
+        return affinityLayout.stream()
+                .map(partition -> flatten(groups, partition))
+                .toList();
+    }
+
+    private List<List<Integer>> sourceBalancedLayout(long[] weights, int partitionCount) {
+        var partitions = new ArrayList<List<Integer>>(partitionCount);
         int start = 0;
         long remainingWeight = Arrays.stream(weights).sum();
         for (int remainingParts = partitionCount; remainingParts > 1; remainingParts--) {
             double target = (double) remainingWeight / remainingParts;
             int end = start;
             long weight = 0;
-            int lastEnd = groups.size() - remainingParts + 1;
+            int lastEnd = weights.length - remainingParts + 1;
             while (end < lastEnd) {
                 long nextWeight = weight + weights[end];
                 if (weight > 0 && Math.abs(target - weight) <= Math.abs(target - nextWeight)) {
@@ -272,12 +291,326 @@ public final class SchemaGenerator implements Consumer<Shape> {
                 weight = nextWeight;
                 end++;
             }
-            partitions.add(flatten(groups.subList(start, end)));
+            partitions.add(groupIndexes(start, end));
             start = end;
             remainingWeight -= weight;
         }
-        partitions.add(flatten(groups.subList(start, groups.size())));
+        partitions.add(groupIndexes(start, weights.length));
         return partitions;
+    }
+
+    private List<Integer> groupIndexes(int start, int end) {
+        var indexes = new ArrayList<Integer>(end - start);
+        for (int i = start; i < end; i++) {
+            indexes.add(i);
+        }
+        return List.copyOf(indexes);
+    }
+
+    private Map<ShapeId, Set<ShapeId>> operationClosures(List<Shape> shapes) {
+        var byId = shapes.stream()
+                .collect(Collectors.toMap(
+                        Shape::getId,
+                        Function.identity(),
+                        (left, right) -> left,
+                        LinkedHashMap::new));
+        var closures = new LinkedHashMap<ShapeId, Set<ShapeId>>();
+        for (var shape : shapes) {
+            if (!shape.isOperationShape()) {
+                continue;
+            }
+            var visited = new LinkedHashSet<ShapeId>();
+            var pending = new ArrayDeque<ShapeId>();
+            pending.push(shape.getId());
+            while (!pending.isEmpty()) {
+                var current = pending.pop();
+                if (!visited.add(current)) {
+                    continue;
+                }
+                var currentShape = byId.get(current);
+                if (currentShape == null) {
+                    continue;
+                }
+                var targets = references(currentShape);
+                for (int i = targets.size() - 1; i >= 0; i--) {
+                    var target = targets.get(i);
+                    if (byId.containsKey(target) && !visited.contains(target)) {
+                        pending.push(target);
+                    }
+                }
+            }
+            closures.put(shape.getId(), Collections.unmodifiableSet(new TreeSet<>(visited)));
+        }
+        return closures;
+    }
+
+    private List<Set<ShapeId>> operationsByGroup(
+            List<List<Shape>> groups,
+            Map<ShapeId, Set<ShapeId>> operationClosures
+    ) {
+        var groupByShape = new HashMap<ShapeId, Integer>();
+        var operationsByGroup = new ArrayList<Set<ShapeId>>(groups.size());
+        for (int i = 0; i < groups.size(); i++) {
+            operationsByGroup.add(new TreeSet<>());
+            for (var shape : groups.get(i)) {
+                groupByShape.put(shape.getId(), i);
+            }
+        }
+        for (var entry : operationClosures.entrySet()) {
+            for (var shapeId : entry.getValue()) {
+                var group = groupByShape.get(shapeId);
+                if (group != null) {
+                    operationsByGroup.get(group).add(entry.getKey());
+                }
+            }
+        }
+        return operationsByGroup.stream()
+                .map(operations -> Collections.unmodifiableSet(operations))
+                .toList();
+    }
+
+    static List<List<Integer>> improveOperationAffinityLayout(
+            List<Integer> groupShapeCounts,
+            long[] groupWeights,
+            List<Set<ShapeId>> groupOperations,
+            List<List<Integer>> initialLayout,
+            int targetSize
+    ) {
+        var assigned = initialLayout.stream()
+                .map(ArrayList::new)
+                .collect(Collectors.toCollection(ArrayList::new));
+        int partitionCount = assigned.size();
+        var shapeCounts = new int[partitionCount];
+        var sourceWeights = new long[partitionCount];
+        var operationCounts = new ArrayList<Map<ShapeId, Integer>>(partitionCount);
+        var operationLocations = new TreeMap<ShapeId, Set<Integer>>();
+        for (int partition = 0; partition < partitionCount; partition++) {
+            var counts = new TreeMap<ShapeId, Integer>();
+            for (var groupIndex : assigned.get(partition)) {
+                shapeCounts[partition] += groupShapeCounts.get(groupIndex);
+                sourceWeights[partition] += groupWeights[groupIndex];
+                for (var operationId : new TreeSet<>(groupOperations.get(groupIndex))) {
+                    counts.merge(operationId, 1, Integer::sum);
+                }
+            }
+            operationCounts.add(counts);
+            for (var operationId : counts.keySet()) {
+                operationLocations
+                        .computeIfAbsent(operationId, ignored -> new TreeSet<>())
+                        .add(partition);
+            }
+        }
+
+        double idealSourceWeight = (double) Arrays.stream(groupWeights).sum() / partitionCount;
+        int totalShapes = groupShapeCounts.stream().mapToInt(Integer::intValue).sum();
+        double idealShapeCount = (double) totalShapes / partitionCount;
+        var sourceCeiling = new long[partitionCount];
+        var sourceFloor = new long[partitionCount];
+        var shapeCeiling = new int[partitionCount];
+        for (int partition = 0; partition < partitionCount; partition++) {
+            sourceCeiling[partition] = Math.max(
+                    (long) Math.ceil(idealSourceWeight * (1 + PARTITION_BALANCE_TOLERANCE)),
+                    sourceWeights[partition]);
+            sourceFloor[partition] = Math.min(
+                    (long) (idealSourceWeight * (1 - PARTITION_BALANCE_TOLERANCE)),
+                    sourceWeights[partition]);
+            shapeCeiling[partition] = Math.max(
+                    shapeCounts[partition],
+                    (int) Math.ceil(
+                            Math.max(targetSize, idealShapeCount)
+                                    * (1 + PARTITION_BALANCE_TOLERANCE)));
+        }
+        int commonThreshold = Math.max(
+                MIN_COMMON_OPERATION_COUNT,
+                (int) Math.ceil(Math.sqrt(operationLocations.size())));
+
+        for (int pass = 0; pass < AFFINITY_PASSES; pass++) {
+            boolean changed = false;
+            for (int source = 0; source < partitionCount; source++) {
+                int sourcePartition = source;
+                for (var groupIndex : List.copyOf(assigned.get(source))) {
+                    if (assigned.get(source).size() == 1) {
+                        continue;
+                    }
+                    var operations = groupOperations.get(groupIndex);
+                    if (operations.size() < 2 || operations.size() > commonThreshold) {
+                        continue;
+                    }
+                    var candidates = operations.stream()
+                            .sorted()
+                            .flatMap(operation -> operationLocations.get(operation).stream())
+                            .filter(partition -> partition != sourcePartition)
+                            .distinct()
+                            .sorted()
+                            .toList();
+                    AffinityMove best = null;
+                    for (var target : candidates) {
+                        long newSourceWeight = sourceWeights[source] - groupWeights[groupIndex];
+                        long newTargetWeight = sourceWeights[target] + groupWeights[groupIndex];
+                        int newTargetShapes = shapeCounts[target] + groupShapeCounts.get(groupIndex);
+                        if (newSourceWeight < sourceFloor[source]
+                                || newTargetWeight > sourceCeiling[target]
+                                || newTargetShapes > shapeCeiling[target]) {
+                            continue;
+                        }
+                        int delta = operationTouchDelta(
+                                operations,
+                                operationCounts.get(source),
+                                operationCounts.get(target));
+                        if (delta >= 0) {
+                            continue;
+                        }
+                        double balance = Math.abs(newSourceWeight - idealSourceWeight)
+                                + Math.abs(newTargetWeight - idealSourceWeight);
+                        var candidate = new AffinityMove(delta, balance, target);
+                        if (best == null || candidate.compareTo(best) < 0) {
+                            best = candidate;
+                        }
+                    }
+                    if (best == null) {
+                        continue;
+                    }
+                    int target = best.target();
+                    assigned.get(source).remove(groupIndex);
+                    assigned.get(target).add(groupIndex);
+                    shapeCounts[source] -= groupShapeCounts.get(groupIndex);
+                    shapeCounts[target] += groupShapeCounts.get(groupIndex);
+                    sourceWeights[source] -= groupWeights[groupIndex];
+                    sourceWeights[target] += groupWeights[groupIndex];
+                    updateOperationCounts(
+                            source,
+                            groupOperations.get(groupIndex),
+                            operationCounts,
+                            operationLocations,
+                            -1);
+                    updateOperationCounts(
+                            target,
+                            groupOperations.get(groupIndex),
+                            operationCounts,
+                            operationLocations,
+                            1);
+                    changed = true;
+                }
+            }
+            if (!changed) {
+                break;
+            }
+        }
+
+        return assigned.stream()
+                .map(partition -> partition.stream().sorted().toList())
+                .toList();
+    }
+
+    private static int operationTouchDelta(
+            Set<ShapeId> operations,
+            Map<ShapeId, Integer> sourceCounts,
+            Map<ShapeId, Integer> targetCounts
+    ) {
+        int delta = 0;
+        for (var operation : new TreeSet<>(operations)) {
+            if (targetCounts.getOrDefault(operation, 0) == 0) {
+                delta++;
+            }
+            if (sourceCounts.getOrDefault(operation, 0) == 1) {
+                delta--;
+            }
+        }
+        return delta;
+    }
+
+    private static void updateOperationCounts(
+            int partition,
+            Set<ShapeId> operations,
+            List<Map<ShapeId, Integer>> operationCounts,
+            Map<ShapeId, Set<Integer>> operationLocations,
+            int adjustment
+    ) {
+        var counts = operationCounts.get(partition);
+        for (var operation : new TreeSet<>(operations)) {
+            int current = counts.getOrDefault(operation, 0);
+            int updated = current + adjustment;
+            if (updated == 0) {
+                counts.remove(operation);
+            } else {
+                counts.put(operation, updated);
+            }
+            var locations = operationLocations.get(operation);
+            if (current == 0 && updated == 1) {
+                locations.add(partition);
+            } else if (current == 1 && updated == 0) {
+                locations.remove(partition);
+            }
+        }
+    }
+
+    /**
+     * Builds the indivisible shape groups used by the partition balancer.
+     *
+     * <p>Recursive components must remain together to preserve direct references.
+     * Operations are also kept with their direct input and output so resolving an
+     * operation does not require a second partition import.
+     */
+    private List<List<Shape>> schemaAffinityGroups(List<Shape> shapes) {
+        var groups = recursiveGroups(shapes);
+        return mergeOperationGroups(shapes, groups);
+    }
+
+    private List<List<Shape>> mergeOperationGroups(List<Shape> shapes, List<List<Shape>> groups) {
+        var groupByShape = new HashMap<ShapeId, Integer>();
+        var parents = new int[groups.size()];
+        for (int i = 0; i < groups.size(); i++) {
+            parents[i] = i;
+            for (var shape : groups.get(i)) {
+                groupByShape.put(shape.getId(), i);
+            }
+        }
+
+        for (var shape : shapes) {
+            shape.asOperationShape().ifPresent(operation -> {
+                mergeGroups(parents, groupByShape, operation.getId(), operation.getInputShape());
+                mergeGroups(parents, groupByShape, operation.getId(), operation.getOutputShape());
+            });
+        }
+
+        var merged = new LinkedHashMap<Integer, List<Shape>>();
+        for (int i = 0; i < groups.size(); i++) {
+            merged.computeIfAbsent(findGroup(parents, i), ignored -> new ArrayList<>())
+                    .addAll(groups.get(i));
+        }
+        return merged.values().stream().map(List::copyOf).toList();
+    }
+
+    private void mergeGroups(
+            int[] parents,
+            Map<ShapeId, Integer> groupByShape,
+            ShapeId leftShape,
+            ShapeId rightShape
+    ) {
+        var left = groupByShape.get(leftShape);
+        var right = groupByShape.get(rightShape);
+        if (left == null || right == null) {
+            return;
+        }
+        var leftRoot = findGroup(parents, left);
+        var rightRoot = findGroup(parents, right);
+        if (leftRoot == rightRoot) {
+            return;
+        }
+        parents[Math.max(leftRoot, rightRoot)] = Math.min(leftRoot, rightRoot);
+    }
+
+    private int findGroup(int[] parents, int group) {
+        var root = group;
+        while (parents[root] != root) {
+            root = parents[root];
+        }
+        while (parents[group] != group) {
+            var next = parents[group];
+            parents[group] = root;
+            group = next;
+        }
+        return root;
     }
 
     private List<List<Shape>> recursiveGroups(List<Shape> shapes) {
@@ -384,6 +717,10 @@ public final class SchemaGenerator implements Consumer<Shape> {
         return groups.stream().flatMap(Collection::stream).toList();
     }
 
+    private List<Shape> flatten(List<List<Shape>> groups, List<Integer> indexes) {
+        return indexes.stream().flatMap(index -> groups.get(index).stream()).toList();
+    }
+
     private long schemaGroupWeight(List<Shape> group) {
         long declarations = schemaStrings(group).stream()
                 .mapToLong(value -> stringStore.get(value).length() + value.length() + 4L)
@@ -463,6 +800,21 @@ public final class SchemaGenerator implements Consumer<Shape> {
     }
 
     private record SearchFrame(ShapeId id, int nextTarget) {}
+
+    private record AffinityMove(int delta, double balance, int target) implements Comparable<AffinityMove> {
+        @Override
+        public int compareTo(AffinityMove other) {
+            int deltaComparison = Integer.compare(delta, other.delta);
+            if (deltaComparison != 0) {
+                return deltaComparison;
+            }
+            int balanceComparison = Double.compare(balance, other.balance);
+            if (balanceComparison != 0) {
+                return balanceComparison;
+            }
+            return Integer.compare(target, other.target);
+        }
+    }
 
     // String interning follows smithy-typescript's StringStore: a general literal
     // becomes `_` + its initials (uppercase/word-start letters), deconflicted with its

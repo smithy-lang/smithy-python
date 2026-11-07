@@ -7,562 +7,1003 @@ from smithy_core._schema_compact import StaticOperationSchema, StaticSchema
 from . import schemas
 
 
-n0 = "aws.protocoltests.shared"
-_m = "member"
-_k = "key"
-_va = "value"
+_BL = "BooleanList"
+_DL = "DoubleList"
+_FOO = "FOO"
+_IEL = "IntegerEnumList"
+_IL = "IntegerList"
+_SL = "StringList"
+_TL = "TimestampList"
 n1 = "aws.protocoltests.restjson"
 _s = "smithy.api#input"
 _sQ = "smithy.api#httpQuery"
+_qSL = "queryStringList"
+_qIL = "queryIntegerList"
+_qDL = "queryDoubleList"
+_qBL = "queryBooleanList"
+_qTL = "queryTimestampList"
+_qEL = "queryEnumList"
+_EL = "EnumList"
+_qIEL = "queryIntegerEnumList"
 _sSI = "smithy.synthetic#originalShapeId"
 _sU = "smithy.api#Unit"
 _sm = "smithy.api#output"
 _smi = "smithy.api#http"
-_p = "payload"
-_sN = "smithy.api#jsonName"
+_smit = "smithy.api#default"
 _sH = "smithy.api#httpHeader"
-_b = "baz"
+_TLo = "TopLevel"
 _smithy = "smithy.api#required"
+_sL = "smithy.api#httpLabel"
+_sF = "smithy.api#timestampFormat"
+_dt = "date-time"
+_dS = "defaultString"
+_hi = "hi"
+_dB = "defaultBoolean"
+_dL = "defaultList"
+_dDM = "defaultDocumentMap"
+_dDS = "defaultDocumentString"
+_dDB = "defaultDocumentBoolean"
+_dDL = "defaultDocumentList"
+_dND = "defaultNullDocument"
+_dT = "defaultTimestamp"
+_dBe = "defaultBlob"
+_YWJ = "YWJj"
+_dBef = "defaultByte"
+_dSe = "defaultShort"
+_dI = "defaultInteger"
+_dLe = "defaultLong"
+_dF = "defaultFloat"
+_dD = "defaultDouble"
+_dM = "defaultMap"
+_dE = "defaultEnum"
+_dIE = "defaultIntEnum"
+_eS = "emptyString"
+_v__ = ""
+_fB = "falseBoolean"
+_eB = "emptyBlob"
+_zB = "zeroByte"
+_zS = "zeroShort"
+_zI = "zeroInteger"
+_zL = "zeroLong"
+_zF = "zeroFloat"
+_zD = "zeroDouble"
 _sPm = "smithy.api#httpPayload"
 _st = "stream"
-_iRM = "initialRequestMember"
-_irm = "initial-request-member"
-_sT = "smithy.api#mediaType"
-_HRWRLO = "HttpRequestWithRegexLiteralOutput"
-_HRWRL = "HttpRequestWithRegexLiteral"
-_HRCI = "HttpResponseCodeInput"
-_HRCO = "HttpResponseCodeOutput"
-_St = "Status"
-_sRC = "smithy.api#httpResponseCode"
-_HRC = "HttpResponseCode"
-_HSPI = "HttpStringPayloadInput"
-_aSPI = "aws.protocoltests.restjson#StringPayloadInput"
-_HSPO = "HttpStringPayloadOutput"
-_HSP = "HttpStringPayload"
-_IQPIRI = "IgnoreQueryParamsInResponseInput"
-_IQPIRO = "IgnoreQueryParamsInResponseOutput"
-_IQPIR = "IgnoreQueryParamsInResponse"
-_IAOWHI = "InputAndOutputWithHeadersInput"
-_aIAOWHIO = "aws.protocoltests.restjson#InputAndOutputWithHeadersIO"
-_hS = "headerString"
-_XS = "X-String"
-_hB = "headerByte"
-_XB = "X-Byte"
-_hSe = "headerShort"
-_XS_ = "X-Short"
-_hI = "headerInteger"
-_XI = "X-Integer"
-_hL = "headerLong"
-_XL = "X-Long"
-_hF = "headerFloat"
-_XF_ = "X-Float"
-_hD = "headerDouble"
-_XD = "X-Double"
-_hTB = "headerTrueBool"
-_XB_ = "X-Boolean1"
-_hFB = "headerFalseBool"
-_XB__ = "X-Boolean2"
-_hSL = "headerStringList"
-_XS__ = "X-StringList"
-_hSS = "headerStringSet"
-_XS___ = "X-StringSet"
-_hIL = "headerIntegerList"
-_XI_ = "X-IntegerList"
-_hBL = "headerBooleanList"
-_XB___ = "X-BooleanList"
-_hTL = "headerTimestampList"
-_XT = "X-TimestampList"
-_hE = "headerEnum"
-_XE = "X-Enum"
-_hEL = "headerEnumList"
-_XE_ = "X-EnumList"
-_hIE = "headerIntegerEnum"
-_XI__ = "X-IntegerEnum"
-_hIEL = "headerIntegerEnumList"
-_XI___ = "X-IntegerEnumList"
-_IAOWHO = "InputAndOutputWithHeadersOutput"
-_IAOWH = "InputAndOutputWithHeaders"
-_ISI = "InputStreamInput"
-_ISO = "InputStreamOutput"
-_ISn = "InputStream"
-_ISWIRI = "InputStreamWithInitialRequestInput"
-_ISWIRO = "InputStreamWithInitialRequestOutput"
-_ISWIR = "InputStreamWithInitialRequest"
-_JBI = "JsonBlobsInput"
-_aJBIO = "aws.protocoltests.restjson#JsonBlobsInputOutput"
+_iRMn = "initialResponseMember"
+_irm_ = "initial-response-member"
+_bl = "blob"
+_fl = "float"
+_str = "string"
+_ti = "timestamp"
+_es = "epoch-seconds"
+_hd = "http-date"
 _da = "data"
-_JBO = "JsonBlobsOutput"
-_JB = "JsonBlobs"
-_FEM = "FooEnumMap"
-_FES = "FooEnumSet"
-_JEI = "JsonEnumsInput"
-_aJEIO = "aws.protocoltests.restjson#JsonEnumsInputOutput"
-_fE = "fooEnum1"
-_fEo = "fooEnum2"
-_fEoo = "fooEnum3"
-_fEL = "fooEnumList"
-_fES = "fooEnumSet"
-_fEM = "fooEnumMap"
-_JEO = "JsonEnumsOutput"
-_JE = "JsonEnums"
-_JHS = "JsonHeaderString"
-_a = "application/json"
-_IEM = "IntegerEnumMap"
-_IES = "IntegerEnumSet"
-_JIEI = "JsonIntEnumsInput"
-_aJIEIO = "aws.protocoltests.restjson#JsonIntEnumsInputOutput"
-_iE = "integerEnum1"
-_iEn = "integerEnum2"
-_iEnt = "integerEnum3"
-_iEL = "integerEnumList"
-_iES = "integerEnumSet"
-_iEM = "integerEnumMap"
-_JIEO = "JsonIntEnumsOutput"
-_JIE = "JsonIntEnums"
-_NSL = "NestedStringList"
-_SLMt = "StructureListMember"
 _a_ = "a"
 _b_ = "b"
-_o = "other"
-_SLt = "StructureList"
-_JLI = "JsonListsInput"
-_aJLIO = "aws.protocoltests.restjson#JsonListsInputOutput"
-_sLt = "stringList"
-_sS = "stringSet"
-_iL = "integerList"
-_bL = "booleanList"
-_tL = "timestampList"
-_eL = "enumList"
-_iELn = "intEnumList"
-_nSL = "nestedStringList"
-_sLtr = "structureList"
-_mSL = "myStructureList"
+_MRBI = "MalformedRequestBodyInput"
+_in = "int"
+_MRBO = "MalformedRequestBodyOutput"
+_MRB = "MalformedRequestBody"
+_MSI = "MalformedShortInput"
+_sIB = "shortInBody"
+_sIP = "shortInPath"
+_sIQ = "shortInQuery"
+_sIH = "shortInHeader"
+_MSO = "MalformedShortOutput"
+_MS = "MalformedShort"
+_MSIa = "MalformedStringInput"
+_amth = "amz-media-typed-header"
+_MSOa = "MalformedStringOutput"
+_MSa = "MalformedString"
+_MTBDTI = "MalformedTimestampBodyDateTimeInput"
+_MTBDTO = "MalformedTimestampBodyDateTimeOutput"
+_MTBDT = "MalformedTimestampBodyDateTime"
+_MTBDI = "MalformedTimestampBodyDefaultInput"
+_MTBDO = "MalformedTimestampBodyDefaultOutput"
+_MTBD = "MalformedTimestampBodyDefault"
+_MTBHDI = "MalformedTimestampBodyHttpDateInput"
+_MTBHDO = "MalformedTimestampBodyHttpDateOutput"
+_MTBHD = "MalformedTimestampBodyHttpDate"
+_MTHDTI = "MalformedTimestampHeaderDateTimeInput"
+_MTHDTO = "MalformedTimestampHeaderDateTimeOutput"
+_MTHDT = "MalformedTimestampHeaderDateTime"
+_MTHDI = "MalformedTimestampHeaderDefaultInput"
+_MTHDO = "MalformedTimestampHeaderDefaultOutput"
+_MTHD = "MalformedTimestampHeaderDefault"
+_MTHEI = "MalformedTimestampHeaderEpochInput"
+_MTHEO = "MalformedTimestampHeaderEpochOutput"
+_MTHE = "MalformedTimestampHeaderEpoch"
+_MTPDI = "MalformedTimestampPathDefaultInput"
+_MTPDO = "MalformedTimestampPathDefaultOutput"
+_MTPD = "MalformedTimestampPathDefault"
+_MTPEI = "MalformedTimestampPathEpochInput"
+_MTPEO = "MalformedTimestampPathEpochOutput"
+_MTPE = "MalformedTimestampPathEpoch"
+_MTPHDI = "MalformedTimestampPathHttpDateInput"
+_MTPHDO = "MalformedTimestampPathHttpDateOutput"
+_MTPHD = "MalformedTimestampPathHttpDate"
+_MTQDI = "MalformedTimestampQueryDefaultInput"
+_MTQDO = "MalformedTimestampQueryDefaultOutput"
+_MTQD = "MalformedTimestampQueryDefault"
+_MTQEI = "MalformedTimestampQueryEpochInput"
+_MTQEO = "MalformedTimestampQueryEpochOutput"
+_MTQE = "MalformedTimestampQueryEpoch"
+_MTQHDI = "MalformedTimestampQueryHttpDateInput"
+_MTQHDO = "MalformedTimestampQueryHttpDateOutput"
+_MTQHD = "MalformedTimestampQueryHttpDate"
+_SU = "SimpleUnion"
+_MUI = "MalformedUnionInput"
+_u = "union"
+_MUO = "MalformedUnionOutput"
+_MUa = "MalformedUnion"
+_MTHI = "MediaTypeHeaderInput"
+_j = "json"
+_XJ = "X-Json"
+_MTHO = "MediaTypeHeaderOutput"
+_MTH = "MediaTypeHeader"
+_NIANOI = "NoInputAndNoOutputInput"
+_NIANOO = "NoInputAndNoOutputOutput"
+_NIANO = "NoInputAndNoOutput"
+_NIAOI = "NoInputAndOutputInput"
+_NIAOO = "NoInputAndOutputOutput"
+_NIAO = "NoInputAndOutput"
+_NAEHCI = "NullAndEmptyHeadersClientInput"
+_aNAEHIO = "aws.protocoltests.restjson#NullAndEmptyHeadersIO"
+_XA = "X-A"
+_XB____ = "X-B"
+_c_ = "c"
+_XC = "X-C"
+_NAEHCO = "NullAndEmptyHeadersClientOutput"
+_NAEHC = "NullAndEmptyHeadersClient"
+_NAEHSI = "NullAndEmptyHeadersServerInput"
+_NAEHSO = "NullAndEmptyHeadersServerOutput"
+_NAEHS = "NullAndEmptyHeadersServer"
+_ONSESI = "OmitsNullSerializesEmptyStringInput"
+_nVu = "nullValue"
+_Nu = "Null"
+_Em = "Empty"
+_ONSESO = "OmitsNullSerializesEmptyStringOutput"
+_ONSES = "OmitsNullSerializesEmptyString"
+_OSELI = "OmitsSerializingEmptyListsInput"
+_OSELO = "OmitsSerializingEmptyListsOutput"
+_OSEL = "OmitsSerializingEmptyLists"
+_OWDI = "OperationWithDefaultsInput"
+_de = "defaults"
+_cOD = "clientOptionalDefaults"
+_tLD = "topLevelDefault"
+_oTLD = "otherTopLevelDefault"
+_OWDO = "OperationWithDefaultsOutput"
+_OWD = "OperationWithDefaults"
+_di = "dialog"
+_dLi = "dialogList"
+_dMi = "dialogMap"
+_OWNSI = "OperationWithNestedStructureInput"
+_tLo = "topLevel"
+_OWNSO = "OperationWithNestedStructureOutput"
+_OWNS = "OperationWithNestedStructure"
+_OSI = "OutputStreamInput"
+_OSO = "OutputStreamOutput"
+_OS = "OutputStream"
+_OSWIRI = "OutputStreamWithInitialResponseInput"
+_OSWIRO = "OutputStreamWithInitialResponseOutput"
+_OSWIR = "OutputStreamWithInitialResponse"
+_PC = "PayloadConfig"
 
-HTTP_REQUEST_WITH_REGEX_LITERAL_OUTPUT: StaticSchema = (
+MALFORMED_REQUEST_BODY_INPUT: StaticSchema = (
     18,
     n1,
-    _HRWRLO,
+    _MRBI,
+    {_s: None},
+    (_in, _fl),
+    ((7, 0), (9, 0)),
+)
+
+MALFORMED_REQUEST_BODY_OUTPUT: StaticSchema = (18, n1, _MRBO, {_sSI: _sU, _sm: None})
+
+MALFORMED_REQUEST_BODY: StaticOperationSchema = (
+    23,
+    n1,
+    _MRB,
+    {_smi: MappingProxyType({"uri": "/MalformedRequestBody", "method": "POST"})},
+    MALFORMED_REQUEST_BODY_INPUT,
+    MALFORMED_REQUEST_BODY_OUTPUT,
+    (),
+)
+
+MALFORMED_SHORT_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MSI,
+    {_s: None},
+    (_sIB, _sIP, _sIQ, _sIH),
+    ((6, 0), (6, 9), (6, {_sQ: _sIQ}), (6, {_sH: _sIH})),
+)
+
+MALFORMED_SHORT_OUTPUT: StaticSchema = (18, n1, _MSO, {_sSI: _sU, _sm: None})
+
+MALFORMED_SHORT: StaticOperationSchema = (
+    23,
+    n1,
+    _MS,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedShort/{shortInPath}", "method": "POST"}
+        )
+    },
+    MALFORMED_SHORT_INPUT,
+    MALFORMED_SHORT_OUTPUT,
+    (),
+)
+
+MALFORMED_STRING_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MSIa,
+    {_s: None},
+    (_bl,),
+    ((lambda: schemas.JSON_HEADER_STRING, {_sH: _amth}),),
+)
+
+MALFORMED_STRING_OUTPUT: StaticSchema = (18, n1, _MSOa, {_sSI: _sU, _sm: None})
+
+MALFORMED_STRING: StaticOperationSchema = (
+    23,
+    n1,
+    _MSa,
+    {_smi: MappingProxyType({"uri": "/MalformedString", "method": "POST"})},
+    MALFORMED_STRING_INPUT,
+    MALFORMED_STRING_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_BODY_DATE_TIME_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTBDTI,
+    {_s: None},
+    (_ti,),
+    ((4, {_sF: _dt, _smithy: None}),),
+)
+
+MALFORMED_TIMESTAMP_BODY_DATE_TIME_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTBDTO,
     {_sSI: _sU, _sm: None},
 )
 
-HTTP_REQUEST_WITH_REGEX_LITERAL: StaticOperationSchema = (
+MALFORMED_TIMESTAMP_BODY_DATE_TIME: StaticOperationSchema = (
     23,
     n1,
-    _HRWRL,
-    {_smi: MappingProxyType({"method": "GET", "uri": "/ReDosLiteral/{str}/(a+)+"})},
-    lambda: schemas.HTTP_REQUEST_WITH_REGEX_LITERAL_INPUT,
-    HTTP_REQUEST_WITH_REGEX_LITERAL_OUTPUT,
+    _MTBDT,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampBodyDateTime", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_BODY_DATE_TIME_INPUT,
+    MALFORMED_TIMESTAMP_BODY_DATE_TIME_OUTPUT,
     (),
 )
 
-HTTP_RESPONSE_CODE_INPUT: StaticSchema = (18, n1, _HRCI, {_sSI: _sU, _s: None})
-
-HTTP_RESPONSE_CODE_OUTPUT: StaticSchema = (
+MALFORMED_TIMESTAMP_BODY_DEFAULT_INPUT: StaticSchema = (
     18,
     n1,
-    _HRCO,
-    {_sm: None},
-    (_St,),
-    ((7, 128),),
-)
-
-HTTP_RESPONSE_CODE: StaticOperationSchema = (
-    23,
-    n1,
-    _HRC,
-    {_smi: MappingProxyType({"uri": "/HttpResponseCode", "method": "PUT"})},
-    HTTP_RESPONSE_CODE_INPUT,
-    HTTP_RESPONSE_CODE_OUTPUT,
-    (),
-)
-
-HTTP_STRING_PAYLOAD_INPUT: StaticSchema = (
-    18,
-    n1,
-    _HSPI,
-    {_sSI: _aSPI, _s: None},
-    (_p,),
-    ((3, 16),),
-)
-
-HTTP_STRING_PAYLOAD_OUTPUT: StaticSchema = (
-    18,
-    n1,
-    _HSPO,
-    {_sSI: _aSPI, _sm: None},
-    (_p,),
-    ((3, 16),),
-)
-
-HTTP_STRING_PAYLOAD: StaticOperationSchema = (
-    23,
-    n1,
-    _HSP,
-    {_smi: MappingProxyType({"uri": "/StringPayload", "method": "POST"})},
-    HTTP_STRING_PAYLOAD_INPUT,
-    HTTP_STRING_PAYLOAD_OUTPUT,
-    (),
-)
-
-IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT: StaticSchema = (
-    18,
-    n1,
-    _IQPIRI,
-    {_sSI: _sU, _s: None},
-)
-
-IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT: StaticSchema = (
-    18,
-    n1,
-    _IQPIRO,
-    {_sm: None},
-    (_b,),
-    ((3, {_sQ: _b}),),
-)
-
-IGNORE_QUERY_PARAMS_IN_RESPONSE: StaticOperationSchema = (
-    23,
-    n1,
-    _IQPIR,
-    {_smi: MappingProxyType({"uri": "/IgnoreQueryParamsInResponse", "method": "GET"})},
-    IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT,
-    IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT,
-    (),
-)
-
-INPUT_AND_OUTPUT_WITH_HEADERS_INPUT: StaticSchema = (
-    18,
-    n1,
-    _IAOWHI,
-    {_sSI: _aIAOWHIO, _s: None},
-    (
-        _hS,
-        _hB,
-        _hSe,
-        _hI,
-        _hL,
-        _hF,
-        _hD,
-        _hTB,
-        _hFB,
-        _hSL,
-        _hSS,
-        _hIL,
-        _hBL,
-        _hTL,
-        _hE,
-        _hEL,
-        _hIE,
-        _hIEL,
-    ),
-    (
-        (3, {_sH: _XS}),
-        (5, {_sH: _XB}),
-        (6, {_sH: _XS_}),
-        (7, {_sH: _XI}),
-        (8, {_sH: _XL}),
-        (9, {_sH: _XF_}),
-        (10, {_sH: _XD}),
-        (2, {_sH: _XB_}),
-        (2, {_sH: _XB__}),
-        (lambda: schemas.STRING_LIST, {_sH: _XS__}),
-        (lambda: schemas.STRING_SET, {_sH: _XS___}),
-        (lambda: schemas.INTEGER_LIST, {_sH: _XI_}),
-        (lambda: schemas.BOOLEAN_LIST, {_sH: _XB___}),
-        (lambda: schemas.TIMESTAMP_LIST, {_sH: _XT}),
-        (lambda: schemas.FOO_ENUM, {_sH: _XE}),
-        (lambda: schemas.FOO_ENUM_LIST, {_sH: _XE_}),
-        (lambda: schemas.INTEGER_ENUM, {_sH: _XI__}),
-        (lambda: schemas.INTEGER_ENUM_LIST, {_sH: _XI___}),
-    ),
-)
-
-INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT: StaticSchema = (
-    18,
-    n1,
-    _IAOWHO,
-    {_sSI: _aIAOWHIO, _sm: None},
-    (
-        _hS,
-        _hB,
-        _hSe,
-        _hI,
-        _hL,
-        _hF,
-        _hD,
-        _hTB,
-        _hFB,
-        _hSL,
-        _hSS,
-        _hIL,
-        _hBL,
-        _hTL,
-        _hE,
-        _hEL,
-        _hIE,
-        _hIEL,
-    ),
-    (
-        (3, {_sH: _XS}),
-        (5, {_sH: _XB}),
-        (6, {_sH: _XS_}),
-        (7, {_sH: _XI}),
-        (8, {_sH: _XL}),
-        (9, {_sH: _XF_}),
-        (10, {_sH: _XD}),
-        (2, {_sH: _XB_}),
-        (2, {_sH: _XB__}),
-        (lambda: schemas.STRING_LIST, {_sH: _XS__}),
-        (lambda: schemas.STRING_SET, {_sH: _XS___}),
-        (lambda: schemas.INTEGER_LIST, {_sH: _XI_}),
-        (lambda: schemas.BOOLEAN_LIST, {_sH: _XB___}),
-        (lambda: schemas.TIMESTAMP_LIST, {_sH: _XT}),
-        (lambda: schemas.FOO_ENUM, {_sH: _XE}),
-        (lambda: schemas.FOO_ENUM_LIST, {_sH: _XE_}),
-        (lambda: schemas.INTEGER_ENUM, {_sH: _XI__}),
-        (lambda: schemas.INTEGER_ENUM_LIST, {_sH: _XI___}),
-    ),
-)
-
-INPUT_AND_OUTPUT_WITH_HEADERS: StaticOperationSchema = (
-    23,
-    n1,
-    _IAOWH,
-    {_smi: MappingProxyType({"uri": "/InputAndOutputWithHeaders", "method": "POST"})},
-    INPUT_AND_OUTPUT_WITH_HEADERS_INPUT,
-    INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT,
-    (),
-)
-
-INPUT_STREAM_INPUT: StaticSchema = (
-    18,
-    n1,
-    _ISI,
+    _MTBDI,
     {_s: None},
+    (_ti,),
+    ((4, 1),),
+)
+
+MALFORMED_TIMESTAMP_BODY_DEFAULT_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTBDO,
+    {_sSI: _sU, _sm: None},
+)
+
+MALFORMED_TIMESTAMP_BODY_DEFAULT: StaticOperationSchema = (
+    23,
+    n1,
+    _MTBD,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampBodyDefault", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_BODY_DEFAULT_INPUT,
+    MALFORMED_TIMESTAMP_BODY_DEFAULT_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_BODY_HTTP_DATE_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTBHDI,
+    {_s: None},
+    (_ti,),
+    ((4, {_sF: _hd, _smithy: None}),),
+)
+
+MALFORMED_TIMESTAMP_BODY_HTTP_DATE_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTBHDO,
+    {_sSI: _sU, _sm: None},
+)
+
+MALFORMED_TIMESTAMP_BODY_HTTP_DATE: StaticOperationSchema = (
+    23,
+    n1,
+    _MTBHD,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampBodyHttpDate", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_BODY_HTTP_DATE_INPUT,
+    MALFORMED_TIMESTAMP_BODY_HTTP_DATE_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_HEADER_DATE_TIME_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTHDTI,
+    {_s: None},
+    (_ti,),
+    ((4, {_sF: _dt, _sH: _ti, _smithy: None}),),
+)
+
+MALFORMED_TIMESTAMP_HEADER_DATE_TIME_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTHDTO,
+    {_sSI: _sU, _sm: None},
+)
+
+MALFORMED_TIMESTAMP_HEADER_DATE_TIME: StaticOperationSchema = (
+    23,
+    n1,
+    _MTHDT,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampHeaderDateTime", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_HEADER_DATE_TIME_INPUT,
+    MALFORMED_TIMESTAMP_HEADER_DATE_TIME_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_HEADER_DEFAULT_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTHDI,
+    {_s: None},
+    (_ti,),
+    ((4, {_sH: _ti, _smithy: None}),),
+)
+
+MALFORMED_TIMESTAMP_HEADER_DEFAULT_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTHDO,
+    {_sSI: _sU, _sm: None},
+)
+
+MALFORMED_TIMESTAMP_HEADER_DEFAULT: StaticOperationSchema = (
+    23,
+    n1,
+    _MTHD,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampHeaderDefault", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_HEADER_DEFAULT_INPUT,
+    MALFORMED_TIMESTAMP_HEADER_DEFAULT_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_HEADER_EPOCH_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTHEI,
+    {_s: None},
+    (_ti,),
+    ((4, {_sF: _es, _sH: _ti, _smithy: None}),),
+)
+
+MALFORMED_TIMESTAMP_HEADER_EPOCH_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTHEO,
+    {_sSI: _sU, _sm: None},
+)
+
+MALFORMED_TIMESTAMP_HEADER_EPOCH: StaticOperationSchema = (
+    23,
+    n1,
+    _MTHE,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampHeaderEpoch", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_HEADER_EPOCH_INPUT,
+    MALFORMED_TIMESTAMP_HEADER_EPOCH_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_PATH_DEFAULT_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTPDI,
+    {_s: None},
+    (_ti,),
+    ((4, 9),),
+)
+
+MALFORMED_TIMESTAMP_PATH_DEFAULT_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTPDO,
+    {_sSI: _sU, _sm: None},
+)
+
+MALFORMED_TIMESTAMP_PATH_DEFAULT: StaticOperationSchema = (
+    23,
+    n1,
+    _MTPD,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampPathDefault/{timestamp}", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_PATH_DEFAULT_INPUT,
+    MALFORMED_TIMESTAMP_PATH_DEFAULT_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_PATH_EPOCH_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTPEI,
+    {_s: None},
+    (_ti,),
+    ((4, {_sF: _es, _smithy: None, _sL: None}),),
+)
+
+MALFORMED_TIMESTAMP_PATH_EPOCH_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTPEO,
+    {_sSI: _sU, _sm: None},
+)
+
+MALFORMED_TIMESTAMP_PATH_EPOCH: StaticOperationSchema = (
+    23,
+    n1,
+    _MTPE,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampPathEpoch/{timestamp}", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_PATH_EPOCH_INPUT,
+    MALFORMED_TIMESTAMP_PATH_EPOCH_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_PATH_HTTP_DATE_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTPHDI,
+    {_s: None},
+    (_ti,),
+    ((4, {_sF: _hd, _smithy: None, _sL: None}),),
+)
+
+MALFORMED_TIMESTAMP_PATH_HTTP_DATE_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTPHDO,
+    {_sSI: _sU, _sm: None},
+)
+
+MALFORMED_TIMESTAMP_PATH_HTTP_DATE: StaticOperationSchema = (
+    23,
+    n1,
+    _MTPHD,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampPathHttpDate/{timestamp}", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_PATH_HTTP_DATE_INPUT,
+    MALFORMED_TIMESTAMP_PATH_HTTP_DATE_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_QUERY_DEFAULT_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTQDI,
+    {_s: None},
+    (_ti,),
+    ((4, {_sQ: _ti, _smithy: None}),),
+)
+
+MALFORMED_TIMESTAMP_QUERY_DEFAULT_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTQDO,
+    {_sSI: _sU, _sm: None},
+)
+
+MALFORMED_TIMESTAMP_QUERY_DEFAULT: StaticOperationSchema = (
+    23,
+    n1,
+    _MTQD,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampQueryDefault", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_QUERY_DEFAULT_INPUT,
+    MALFORMED_TIMESTAMP_QUERY_DEFAULT_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_QUERY_EPOCH_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTQEI,
+    {_s: None},
+    (_ti,),
+    ((4, {_sF: _es, _sQ: _ti, _smithy: None}),),
+)
+
+MALFORMED_TIMESTAMP_QUERY_EPOCH_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTQEO,
+    {_sSI: _sU, _sm: None},
+)
+
+MALFORMED_TIMESTAMP_QUERY_EPOCH: StaticOperationSchema = (
+    23,
+    n1,
+    _MTQE,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampQueryEpoch", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_QUERY_EPOCH_INPUT,
+    MALFORMED_TIMESTAMP_QUERY_EPOCH_OUTPUT,
+    (),
+)
+
+MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTQHDI,
+    {_s: None},
+    (_ti,),
+    ((4, {_sF: _hd, _sQ: _ti, _smithy: None}),),
+)
+
+MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTQHDO,
+    {_sSI: _sU, _sm: None},
+)
+
+MALFORMED_TIMESTAMP_QUERY_HTTP_DATE: StaticOperationSchema = (
+    23,
+    n1,
+    _MTQHD,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/MalformedTimestampQueryHttpDate", "method": "POST"}
+        )
+    },
+    MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_INPUT,
+    MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_OUTPUT,
+    (),
+)
+
+SIMPLE_UNION: StaticSchema = (19, n1, _SU, 0, (_in, _str), ((7, 0), (3, 0)))
+
+MALFORMED_UNION_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MUI,
+    {_s: None},
+    (_u,),
+    ((SIMPLE_UNION, 0),),
+)
+
+MALFORMED_UNION_OUTPUT: StaticSchema = (18, n1, _MUO, {_sSI: _sU, _sm: None})
+
+MALFORMED_UNION: StaticOperationSchema = (
+    23,
+    n1,
+    _MUa,
+    {_smi: MappingProxyType({"uri": "/MalformedUnion", "method": "POST"})},
+    MALFORMED_UNION_INPUT,
+    MALFORMED_UNION_OUTPUT,
+    (),
+)
+
+MEDIA_TYPE_HEADER_INPUT: StaticSchema = (
+    18,
+    n1,
+    _MTHI,
+    {_s: None},
+    (_j,),
+    ((lambda: schemas.JSON_VALUE, {_sH: _XJ}),),
+)
+
+MEDIA_TYPE_HEADER_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _MTHO,
+    {_sm: None},
+    (_j,),
+    ((lambda: schemas.JSON_VALUE, {_sH: _XJ}),),
+)
+
+MEDIA_TYPE_HEADER: StaticOperationSchema = (
+    23,
+    n1,
+    _MTH,
+    {_smi: MappingProxyType({"uri": "/MediaTypeHeader", "method": "GET"})},
+    MEDIA_TYPE_HEADER_INPUT,
+    MEDIA_TYPE_HEADER_OUTPUT,
+    (),
+)
+
+NO_INPUT_AND_NO_OUTPUT_INPUT: StaticSchema = (18, n1, _NIANOI, {_sSI: _sU, _s: None})
+
+NO_INPUT_AND_NO_OUTPUT_OUTPUT: StaticSchema = (18, n1, _NIANOO, {_sSI: _sU, _sm: None})
+
+NO_INPUT_AND_NO_OUTPUT: StaticOperationSchema = (
+    23,
+    n1,
+    _NIANO,
+    {_smi: MappingProxyType({"uri": "/NoInputAndNoOutput", "method": "POST"})},
+    NO_INPUT_AND_NO_OUTPUT_INPUT,
+    NO_INPUT_AND_NO_OUTPUT_OUTPUT,
+    (),
+)
+
+NO_INPUT_AND_OUTPUT_INPUT: StaticSchema = (18, n1, _NIAOI, {_sSI: _sU, _s: None})
+
+NO_INPUT_AND_OUTPUT_OUTPUT: StaticSchema = (18, n1, _NIAOO, {_sm: None})
+
+NO_INPUT_AND_OUTPUT: StaticOperationSchema = (
+    23,
+    n1,
+    _NIAO,
+    {_smi: MappingProxyType({"uri": "/NoInputAndOutputOutput", "method": "POST"})},
+    NO_INPUT_AND_OUTPUT_INPUT,
+    NO_INPUT_AND_OUTPUT_OUTPUT,
+    (),
+)
+
+NULL_AND_EMPTY_HEADERS_CLIENT_INPUT: StaticSchema = (
+    18,
+    n1,
+    _NAEHCI,
+    {_sSI: _aNAEHIO, _s: None},
+    (_a_, _b_, _c_),
+    ((3, {_sH: _XA}), (3, {_sH: _XB____}), (lambda: schemas.STRING_LIST, {_sH: _XC})),
+)
+
+NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _NAEHCO,
+    {_sSI: _aNAEHIO, _sm: None},
+    (_a_, _b_, _c_),
+    ((3, {_sH: _XA}), (3, {_sH: _XB____}), (lambda: schemas.STRING_LIST, {_sH: _XC})),
+)
+
+NULL_AND_EMPTY_HEADERS_CLIENT: StaticOperationSchema = (
+    23,
+    n1,
+    _NAEHC,
+    {_smi: MappingProxyType({"uri": "/NullAndEmptyHeadersClient", "method": "GET"})},
+    NULL_AND_EMPTY_HEADERS_CLIENT_INPUT,
+    NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT,
+    (),
+)
+
+NULL_AND_EMPTY_HEADERS_SERVER_INPUT: StaticSchema = (
+    18,
+    n1,
+    _NAEHSI,
+    {_sSI: _aNAEHIO, _s: None},
+    (_a_, _b_, _c_),
+    ((3, {_sH: _XA}), (3, {_sH: _XB____}), (lambda: schemas.STRING_LIST, {_sH: _XC})),
+)
+
+NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _NAEHSO,
+    {_sSI: _aNAEHIO, _sm: None},
+    (_a_, _b_, _c_),
+    ((3, {_sH: _XA}), (3, {_sH: _XB____}), (lambda: schemas.STRING_LIST, {_sH: _XC})),
+)
+
+NULL_AND_EMPTY_HEADERS_SERVER: StaticOperationSchema = (
+    23,
+    n1,
+    _NAEHS,
+    {_smi: MappingProxyType({"uri": "/NullAndEmptyHeadersServer", "method": "GET"})},
+    NULL_AND_EMPTY_HEADERS_SERVER_INPUT,
+    NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT,
+    (),
+)
+
+OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT: StaticSchema = (
+    18,
+    n1,
+    _ONSESI,
+    {_s: None},
+    (_nVu, _eS),
+    ((3, {_sQ: _Nu}), (3, {_sQ: _Em})),
+)
+
+OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _ONSESO,
+    {_sSI: _sU, _sm: None},
+)
+
+OMITS_NULL_SERIALIZES_EMPTY_STRING: StaticOperationSchema = (
+    23,
+    n1,
+    _ONSES,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/OmitsNullSerializesEmptyString", "method": "GET"}
+        )
+    },
+    OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT,
+    OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT,
+    (),
+)
+
+OMITS_SERIALIZING_EMPTY_LISTS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _OSELI,
+    {_s: None},
+    (_qSL, _qIL, _qDL, _qBL, _qTL, _qEL, _qIEL),
+    (
+        (lambda: schemas.STRING_LIST, {_sQ: _SL}),
+        (lambda: schemas.INTEGER_LIST, {_sQ: _IL}),
+        (lambda: schemas.DOUBLE_LIST, {_sQ: _DL}),
+        (lambda: schemas.BOOLEAN_LIST, {_sQ: _BL}),
+        (lambda: schemas.TIMESTAMP_LIST, {_sQ: _TL}),
+        (lambda: schemas.FOO_ENUM_LIST, {_sQ: _EL}),
+        (lambda: schemas.INTEGER_ENUM_LIST, {_sQ: _IEL}),
+    ),
+)
+
+OMITS_SERIALIZING_EMPTY_LISTS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _OSELO,
+    {_sSI: _sU, _sm: None},
+)
+
+OMITS_SERIALIZING_EMPTY_LISTS: StaticOperationSchema = (
+    23,
+    n1,
+    _OSEL,
+    {_smi: MappingProxyType({"uri": "/OmitsSerializingEmptyLists", "method": "POST"})},
+    OMITS_SERIALIZING_EMPTY_LISTS_INPUT,
+    OMITS_SERIALIZING_EMPTY_LISTS_OUTPUT,
+    (),
+)
+
+OPERATION_WITH_DEFAULTS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _OWDI,
+    {_s: None},
+    (_de, _cOD, _tLD, _oTLD),
+    (
+        (lambda: schemas.DEFAULTS, 0),
+        (lambda: schemas.CLIENT_OPTIONAL_DEFAULTS, 0),
+        (3, {_smit: _hi}),
+        (7, {_smit: 0}),
+    ),
+)
+
+OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _OWDO,
+    {_sm: None},
+    (
+        _dS,
+        _dB,
+        _dL,
+        _dDM,
+        _dDS,
+        _dDB,
+        _dDL,
+        _dND,
+        _dT,
+        _dBe,
+        _dBef,
+        _dSe,
+        _dI,
+        _dLe,
+        _dF,
+        _dD,
+        _dM,
+        _dE,
+        _dIE,
+        _eS,
+        _fB,
+        _eB,
+        _zB,
+        _zS,
+        _zI,
+        _zL,
+        _zF,
+        _zD,
+    ),
+    (
+        (3, {_smit: _hi}),
+        (2, {_smit: True}),
+        (lambda: schemas.TEST_STRING_LIST, {_smit: ()}),
+        (lambda: schemas.DOCUMENT, {_smit: MappingProxyType[str, object]({})}),
+        (lambda: schemas.DOCUMENT, {_smit: _hi}),
+        (lambda: schemas.DOCUMENT, {_smit: True}),
+        (lambda: schemas.DOCUMENT, {_smit: ()}),
+        (lambda: schemas.DOCUMENT, {_smit: None}),
+        (4, {_smit: 0}),
+        (1, {_smit: _YWJ}),
+        (5, {_smit: 1}),
+        (6, {_smit: 1}),
+        (7, {_smit: 10}),
+        (8, {_smit: 100}),
+        (9, {_smit: 1.0}),
+        (10, {_smit: 1.0}),
+        (lambda: schemas.TEST_STRING_MAP, {_smit: MappingProxyType[str, object]({})}),
+        (lambda: schemas.TEST_ENUM, {_smit: _FOO}),
+        (lambda: schemas.TEST_INT_ENUM, {_smit: 1}),
+        (3, {_smit: _v__}),
+        (2, {_smit: False}),
+        (1, {_smit: _v__}),
+        (5, {_smit: 0}),
+        (6, {_smit: 0}),
+        (7, {_smit: 0}),
+        (8, {_smit: 0}),
+        (9, {_smit: 0.0}),
+        (10, {_smit: 0.0}),
+    ),
+)
+
+OPERATION_WITH_DEFAULTS: StaticOperationSchema = (
+    23,
+    n1,
+    _OWD,
+    {_smi: MappingProxyType({"uri": "/OperationWithDefaults", "method": "POST"})},
+    OPERATION_WITH_DEFAULTS_INPUT,
+    OPERATION_WITH_DEFAULTS_OUTPUT,
+    (),
+)
+
+TOP_LEVEL: StaticSchema = (
+    18,
+    n1,
+    _TLo,
+    0,
+    (_di, _dLi, _dMi),
+    (
+        (lambda: schemas.DIALOG, 1),
+        (lambda: schemas.DIALOG_LIST, {_smit: ()}),
+        (lambda: schemas.DIALOG_MAP, {_smit: MappingProxyType[str, object]({})}),
+    ),
+)
+
+OPERATION_WITH_NESTED_STRUCTURE_INPUT: StaticSchema = (
+    18,
+    n1,
+    _OWNSI,
+    {_s: None},
+    (_tLo,),
+    ((TOP_LEVEL, 1),),
+)
+
+OPERATION_WITH_NESTED_STRUCTURE_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _OWNSO,
+    {_sm: None},
+    (_di, _dLi, _dMi),
+    (
+        (lambda: schemas.DIALOG, 1),
+        (lambda: schemas.DIALOG_LIST, {_smit: ()}),
+        (lambda: schemas.DIALOG_MAP, {_smit: MappingProxyType[str, object]({})}),
+    ),
+)
+
+OPERATION_WITH_NESTED_STRUCTURE: StaticOperationSchema = (
+    23,
+    n1,
+    _OWNS,
+    {
+        _smi: MappingProxyType(
+            {"uri": "/OperationWithNestedStructure", "method": "POST"}
+        )
+    },
+    OPERATION_WITH_NESTED_STRUCTURE_INPUT,
+    OPERATION_WITH_NESTED_STRUCTURE_OUTPUT,
+    (),
+)
+
+OUTPUT_STREAM_INPUT: StaticSchema = (18, n1, _OSI, {_sSI: _sU, _s: None})
+
+OUTPUT_STREAM_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _OSO,
+    {_sm: None},
     (_st,),
     ((lambda: schemas.EVENT_STREAM, 16),),
 )
 
-INPUT_STREAM_OUTPUT: StaticSchema = (18, n1, _ISO, {_sSI: _sU, _sm: None})
-
-INPUT_STREAM: StaticOperationSchema = (
+OUTPUT_STREAM: StaticOperationSchema = (
     23,
     n1,
-    _ISn,
-    {_smi: MappingProxyType({"method": "POST", "uri": "/InputStream"})},
-    INPUT_STREAM_INPUT,
-    INPUT_STREAM_OUTPUT,
-    (),
+    _OS,
+    {_smi: MappingProxyType({"method": "POST", "uri": "/OutputStream"})},
+    OUTPUT_STREAM_INPUT,
+    OUTPUT_STREAM_OUTPUT,
+    (lambda: schemas.SERVICE_UNAVAILABLE_ERROR,),
 )
 
-INPUT_STREAM_WITH_INITIAL_REQUEST_INPUT: StaticSchema = (
+OUTPUT_STREAM_WITH_INITIAL_RESPONSE_INPUT: StaticSchema = (
     18,
     n1,
-    _ISWIRI,
-    {_s: None},
-    (_iRM, _st),
-    ((3, {_sH: _irm, _smithy: None}), (lambda: schemas.EVENT_STREAM, 16)),
+    _OSWIRI,
+    {_sSI: _sU, _s: None},
 )
 
-INPUT_STREAM_WITH_INITIAL_REQUEST_OUTPUT: StaticSchema = (
+OUTPUT_STREAM_WITH_INITIAL_RESPONSE_OUTPUT: StaticSchema = (
     18,
     n1,
-    _ISWIRO,
-    {_sSI: _sU, _sm: None},
+    _OSWIRO,
+    {_sm: None},
+    (_iRMn, _st),
+    ((3, {_sH: _irm_, _smithy: None}), (lambda: schemas.EVENT_STREAM, 16)),
 )
 
-INPUT_STREAM_WITH_INITIAL_REQUEST: StaticOperationSchema = (
+OUTPUT_STREAM_WITH_INITIAL_RESPONSE: StaticOperationSchema = (
     23,
     n1,
-    _ISWIR,
+    _OSWIR,
     {
         _smi: MappingProxyType(
-            {"method": "POST", "uri": "/InputStreamWithInitialRequest"}
+            {"method": "POST", "uri": "/OutputStreamWithInitialResponse"}
         )
     },
-    INPUT_STREAM_WITH_INITIAL_REQUEST_INPUT,
-    INPUT_STREAM_WITH_INITIAL_REQUEST_OUTPUT,
+    OUTPUT_STREAM_WITH_INITIAL_RESPONSE_INPUT,
+    OUTPUT_STREAM_WITH_INITIAL_RESPONSE_OUTPUT,
     (),
 )
 
-JSON_BLOBS_INPUT: StaticSchema = (
-    18,
-    n1,
-    _JBI,
-    {_sSI: _aJBIO, _s: None},
-    (_da,),
-    ((1, 0),),
-)
-
-JSON_BLOBS_OUTPUT: StaticSchema = (
-    18,
-    n1,
-    _JBO,
-    {_sSI: _aJBIO, _sm: None},
-    (_da,),
-    ((1, 0),),
-)
-
-JSON_BLOBS: StaticOperationSchema = (
-    23,
-    n1,
-    _JB,
-    {_smi: MappingProxyType({"uri": "/JsonBlobs", "method": "POST"})},
-    JSON_BLOBS_INPUT,
-    JSON_BLOBS_OUTPUT,
-    (),
-)
-
-FOO_ENUM_MAP: StaticSchema = (
-    17,
-    n0,
-    _FEM,
-    0,
-    (_k, _va),
-    ((3, 0), (lambda: schemas.FOO_ENUM, 0)),
-)
-
-FOO_ENUM_SET: StaticSchema = (16, n0, _FES, 0, (_m,), ((lambda: schemas.FOO_ENUM, 0),))
-
-JSON_ENUMS_INPUT: StaticSchema = (
-    18,
-    n1,
-    _JEI,
-    {_sSI: _aJEIO, _s: None},
-    (_fE, _fEo, _fEoo, _fEL, _fES, _fEM),
-    (
-        (lambda: schemas.FOO_ENUM, 0),
-        (lambda: schemas.FOO_ENUM, 0),
-        (lambda: schemas.FOO_ENUM, 0),
-        (lambda: schemas.FOO_ENUM_LIST, 0),
-        (FOO_ENUM_SET, 0),
-        (FOO_ENUM_MAP, 0),
-    ),
-)
-
-JSON_ENUMS_OUTPUT: StaticSchema = (
-    18,
-    n1,
-    _JEO,
-    {_sSI: _aJEIO, _sm: None},
-    (_fE, _fEo, _fEoo, _fEL, _fES, _fEM),
-    (
-        (lambda: schemas.FOO_ENUM, 0),
-        (lambda: schemas.FOO_ENUM, 0),
-        (lambda: schemas.FOO_ENUM, 0),
-        (lambda: schemas.FOO_ENUM_LIST, 0),
-        (FOO_ENUM_SET, 0),
-        (FOO_ENUM_MAP, 0),
-    ),
-)
-
-JSON_ENUMS: StaticOperationSchema = (
-    23,
-    n1,
-    _JE,
-    {_smi: MappingProxyType({"uri": "/JsonEnums", "method": "PUT"})},
-    JSON_ENUMS_INPUT,
-    JSON_ENUMS_OUTPUT,
-    (),
-)
-
-JSON_HEADER_STRING: StaticSchema = (3, n1, _JHS, {_sT: _a})
-
-INTEGER_ENUM_MAP: StaticSchema = (
-    17,
-    n0,
-    _IEM,
-    0,
-    (_k, _va),
-    ((3, 0), (lambda: schemas.INTEGER_ENUM, 0)),
-)
-
-INTEGER_ENUM_SET: StaticSchema = (
-    16,
-    n0,
-    _IES,
-    0,
-    (_m,),
-    ((lambda: schemas.INTEGER_ENUM, 0),),
-)
-
-JSON_INT_ENUMS_INPUT: StaticSchema = (
-    18,
-    n1,
-    _JIEI,
-    {_sSI: _aJIEIO, _s: None},
-    (_iE, _iEn, _iEnt, _iEL, _iES, _iEM),
-    (
-        (lambda: schemas.INTEGER_ENUM, 0),
-        (lambda: schemas.INTEGER_ENUM, 0),
-        (lambda: schemas.INTEGER_ENUM, 0),
-        (lambda: schemas.INTEGER_ENUM_LIST, 0),
-        (INTEGER_ENUM_SET, 0),
-        (INTEGER_ENUM_MAP, 0),
-    ),
-)
-
-JSON_INT_ENUMS_OUTPUT: StaticSchema = (
-    18,
-    n1,
-    _JIEO,
-    {_sSI: _aJIEIO, _sm: None},
-    (_iE, _iEn, _iEnt, _iEL, _iES, _iEM),
-    (
-        (lambda: schemas.INTEGER_ENUM, 0),
-        (lambda: schemas.INTEGER_ENUM, 0),
-        (lambda: schemas.INTEGER_ENUM, 0),
-        (lambda: schemas.INTEGER_ENUM_LIST, 0),
-        (INTEGER_ENUM_SET, 0),
-        (INTEGER_ENUM_MAP, 0),
-    ),
-)
-
-JSON_INT_ENUMS: StaticOperationSchema = (
-    23,
-    n1,
-    _JIE,
-    {_smi: MappingProxyType({"uri": "/JsonIntEnums", "method": "PUT"})},
-    JSON_INT_ENUMS_INPUT,
-    JSON_INT_ENUMS_OUTPUT,
-    (),
-)
-
-NESTED_STRING_LIST: StaticSchema = (
-    16,
-    n0,
-    _NSL,
-    0,
-    (_m,),
-    ((lambda: schemas.STRING_LIST, 0),),
-)
-
-STRUCTURE_LIST_MEMBER: StaticSchema = (
-    18,
-    n1,
-    _SLMt,
-    0,
-    (_a_, _b_),
-    ((3, {_sN: _va}), (3, {_sN: _o})),
-)
-
-STRUCTURE_LIST: StaticSchema = (16, n1, _SLt, 0, (_m,), ((STRUCTURE_LIST_MEMBER, 0),))
-
-JSON_LISTS_INPUT: StaticSchema = (
-    18,
-    n1,
-    _JLI,
-    {_sSI: _aJLIO, _s: None},
-    (_sLt, _sS, _iL, _bL, _tL, _eL, _iELn, _nSL, _sLtr),
-    (
-        (lambda: schemas.STRING_LIST, 0),
-        (lambda: schemas.STRING_SET, 0),
-        (lambda: schemas.INTEGER_LIST, 0),
-        (lambda: schemas.BOOLEAN_LIST, 0),
-        (lambda: schemas.TIMESTAMP_LIST, 0),
-        (lambda: schemas.FOO_ENUM_LIST, 0),
-        (lambda: schemas.INTEGER_ENUM_LIST, 0),
-        (NESTED_STRING_LIST, 0),
-        (STRUCTURE_LIST, {_sN: _mSL}),
-    ),
-)
+PAYLOAD_CONFIG: StaticSchema = (18, n1, _PC, 0, (_da,), ((7, 0),))

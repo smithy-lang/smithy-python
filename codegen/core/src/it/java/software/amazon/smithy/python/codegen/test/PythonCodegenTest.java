@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import software.amazon.smithy.build.FileManifest;
@@ -173,7 +174,6 @@ public class PythonCodegenTest {
         assertTrue(schemas.contains("\"SHAPE250\","));
         assertTrue(Files.exists(tempDir.resolve("src/large/_private/schemas_0.py")));
         assertTrue(Files.exists(tempDir.resolve("src/large/_private/schemas_1.py")));
-        assertTrue(Files.exists(tempDir.resolve("src/large/_private/schemas_5.py")));
 
         var models = Files.readString(tempDir.resolve("src/large/models.pyi"));
         assertTrue(models.contains("from ._private.models_0 import ("));
@@ -181,6 +181,82 @@ public class PythonCodegenTest {
         assertTrue(models.contains("Shape250 as Shape250,"));
         assertTrue(Files.exists(tempDir.resolve("src/large/_private/models_0.pyi")));
         assertTrue(Files.exists(tempDir.resolve("src/large/_private/models_1.pyi")));
+    }
+
+    @Test
+    public void keepsOperationSchemasTogether(@TempDir Path tempDir) throws IOException {
+        var source = new StringBuilder("""
+                $version: "2"
+                namespace example.affinity
+
+                use aws.protocols#restJson1
+
+                @restJson1
+                service Affinity {
+                    version: "1",
+                    operations: [
+                """);
+        var operationSuffixes = new ArrayList<String>();
+        for (int i = 0; i < 60; i++) {
+            operationSuffixes.add(i < 26
+                    ? Character.toString((char) ('A' + i))
+                    : Character.toString((char) ('A' + (i - 26) / 26))
+                            + Character.toString((char) ('A' + (i - 26) % 26)));
+        }
+        for (var suffix : operationSuffixes) {
+            source.append("Operation").append(suffix).append(",\n");
+        }
+        source.append("""
+                    ]
+                }
+
+                """);
+        for (var suffix : operationSuffixes) {
+            source.append("@http(method: \"POST\", uri: \"/")
+                    .append(suffix.toLowerCase())
+                    .append("\", code: 200)\n")
+                    .append("operation Operation")
+                    .append(suffix)
+                    .append(" { input: Operation")
+                    .append(suffix)
+                    .append("Input, output: Operation")
+                    .append(suffix)
+                    .append("Output }\n")
+                    .append("@input structure Operation")
+                    .append(suffix)
+                    .append("Input {}\n")
+                    .append("@output structure Operation")
+                    .append(suffix)
+                    .append("Output {}\n");
+        }
+
+        var model = Model.assembler(PythonCodegenTest.class.getClassLoader())
+                .discoverModels(PythonCodegenTest.class.getClassLoader())
+                .addUnparsedModel("affinity.smithy", source.toString())
+                .assemble()
+                .unwrap();
+        var context = PluginContext.builder()
+                .fileManifest(FileManifest.create(tempDir))
+                .settings(
+                        ObjectNode.builder()
+                                .withMember("service", "example.affinity#Affinity")
+                                .withMember("module", "affinity")
+                                .withMember("moduleVersion", "0.0.1")
+                                .build())
+                .model(model)
+                .build();
+
+        new PythonClientCodegenPlugin().execute(context);
+
+        var schemaDirectory = tempDir.resolve("src/affinity/_private");
+        for (var suffix : operationSuffixes) {
+            var operationName = "OPERATION_" + suffix;
+            assertSchemaDeclarationsShareModule(
+                    schemaDirectory,
+                    operationName + ": StaticOperationSchema",
+                    operationName + "_INPUT: StaticSchema",
+                    operationName + "_OUTPUT: StaticSchema");
+        }
     }
 
     private static String readSchemaModules(Path directory) throws IOException {
@@ -191,5 +267,20 @@ public class PythonCodegenTest {
             }
         }
         return result.toString();
+    }
+
+    private static void assertSchemaDeclarationsShareModule(Path directory, String... declarations) throws IOException {
+        try (var files = Files.newDirectoryStream(directory, "schemas_*.py")) {
+            for (var file : files) {
+                var source = Files.readString(file);
+                if (source.contains(declarations[0])) {
+                    for (var declaration : declarations) {
+                        assertTrue(source.contains(declaration));
+                    }
+                    return;
+                }
+            }
+        }
+        throw new AssertionError("No schema partition contained " + declarations[0]);
     }
 }

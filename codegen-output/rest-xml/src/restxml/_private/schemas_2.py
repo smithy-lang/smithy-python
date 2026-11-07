@@ -13,534 +13,1086 @@ _k = "key"
 _va = "value"
 n1 = "aws.protocoltests.restxml"
 _s = "smithy.api#input"
-_sQ = "smithy.api#httpQuery"
 _sSI = "smithy.synthetic#originalShapeId"
-_sU = "smithy.api#Unit"
 _sm = "smithy.api#output"
 _smi = "smithy.api#http"
+_sN = "smithy.api#xmlName"
 _ne = "nested"
-_sH = "smithy.api#httpHeader"
 _b = "baz"
-_smith = "smithy.api#required"
-_sL = "smithy.api#httpLabel"
 _sF = "smithy.api#timestampFormat"
 _dt = "date-time"
+_mM = "myMap"
 _sFm = "smithy.api#xmlFlattened"
+_K = "K"
+_V = "V"
+_KVP = "KVP"
 _sNm = "smithy.api#xmlNamespace"
-_sPH = "smithy.api#httpPrefixHeaders"
 _p = "payload"
 _sP = "smithy.api#httpPayload"
 _f = "foo"
-_HPWXNAPI = "HttpPayloadWithXmlNamespaceAndPrefixInput"
-_aHPWXNAPIO = (
-    "aws.protocoltests.restxml#HttpPayloadWithXmlNamespaceAndPrefixInputOutput"
-)
-_HPWXNAPO = "HttpPayloadWithXmlNamespaceAndPrefixOutput"
-_HPWXNAP = "HttpPayloadWithXmlNamespaceAndPrefix"
-_HPHI = "HttpPrefixHeadersInput"
-_aHPHIO = "aws.protocoltests.restxml#HttpPrefixHeadersInputOutput"
-_xf = "x-foo"
-_fM = "fooMap"
-_xf_ = "x-foo-"
-_HPHO = "HttpPrefixHeadersOutput"
-_HPH = "HttpPrefixHeaders"
-_HRWFLI = "HttpRequestWithFloatLabelsInput"
-_fl = "float"
-_do = "double"
-_HRWFLO = "HttpRequestWithFloatLabelsOutput"
-_HRWFL = "HttpRequestWithFloatLabels"
-_HRWGLIPI = "HttpRequestWithGreedyLabelInPathInput"
-_HRWGLIPO = "HttpRequestWithGreedyLabelInPathOutput"
-_HRWGLIP = "HttpRequestWithGreedyLabelInPath"
-_HRWLI = "HttpRequestWithLabelsInput"
-_st = "string"
-_sh = "short"
-_i = "integer"
-_lo = "long"
-_bo = "boolean"
-_ti = "timestamp"
-_HRWLO = "HttpRequestWithLabelsOutput"
-_HRWL = "HttpRequestWithLabels"
-_ES = "EpochSeconds"
 _es = "epoch-seconds"
-_HD = "HttpDate"
 _hd = "http-date"
-_HRWLATFI = "HttpRequestWithLabelsAndTimestampFormatInput"
-_mES = "memberEpochSeconds"
-_mHD = "memberHttpDate"
-_mDT = "memberDateTime"
-_dF = "defaultFormat"
-_tES = "targetEpochSeconds"
-_tHD = "targetHttpDate"
-_tDT = "targetDateTime"
-_HRWLATFO = "HttpRequestWithLabelsAndTimestampFormatOutput"
-_HRWLATF = "HttpRequestWithLabelsAndTimestampFormat"
-_HRCI = "HttpResponseCodeInput"
-_HRCO = "HttpResponseCodeOutput"
-_St = "Status"
-_sRC = "smithy.api#httpResponseCode"
-_HRC = "HttpResponseCode"
-_HSPI = "HttpStringPayloadInput"
-_aSPI = "aws.protocoltests.restxml#StringPayloadInput"
-_HSPO = "HttpStringPayloadOutput"
-_HSP = "HttpStringPayload"
-_IQPIRI = "IgnoreQueryParamsInResponseInput"
-_IQPIRO = "IgnoreQueryParamsInResponseOutput"
-_IQPIR = "IgnoreQueryParamsInResponse"
-_IAOWHI = "InputAndOutputWithHeadersInput"
-_aIAOWHIO = "aws.protocoltests.restxml#InputAndOutputWithHeadersIO"
-_hS = "headerString"
-_XS = "X-String"
-_hB = "headerByte"
-_XB = "X-Byte"
-_hSe = "headerShort"
-_XS_ = "X-Short"
-_hI = "headerInteger"
-_XI = "X-Integer"
-_hL = "headerLong"
-_XL = "X-Long"
-_hF = "headerFloat"
-_XF_ = "X-Float"
-_hD = "headerDouble"
-_XD = "X-Double"
-_hTB = "headerTrueBool"
-_XB_ = "X-Boolean1"
-_hFB = "headerFalseBool"
-_XB__ = "X-Boolean2"
-_hSL = "headerStringList"
-_XS__ = "X-StringList"
-_hSS = "headerStringSet"
-_XS___ = "X-StringSet"
-_hIL = "headerIntegerList"
-_XI_ = "X-IntegerList"
-_hBL = "headerBooleanList"
-_XB___ = "X-BooleanList"
-_hTL = "headerTimestampList"
-_XT = "X-TimestampList"
-_hE = "headerEnum"
-_XE = "X-Enum"
-_hEL = "headerEnumList"
-_XE_ = "X-EnumList"
-_IAOWHO = "InputAndOutputWithHeadersOutput"
-_IAOWH = "InputAndOutputWithHeaders"
-_LWMN = "ListWithMemberNamespace"
-_LWN = "ListWithNamespace"
-_NM = "NestedMap"
-_NXMI = "NestedXmlMapsInput"
-_aNXMR = "aws.protocoltests.restxml#NestedXmlMapsRequest"
-_nM = "nestedMap"
-_fNM = "flatNestedMap"
-_NXMO = "NestedXmlMapsOutput"
-_aNXMRw = "aws.protocoltests.restxml#NestedXmlMapsResponse"
+_a = "a"
+_b_ = "b"
+_eS = "emptyString"
+_da = "data"
+_ba = "bar"
+_it = "item"
+_sVt = "stringValue"
+_bV = "byteValue"
+_sVh = "shortValue"
+_iV = "integerValue"
+_lV = "longValue"
+_fV = "floatValue"
+_dV = "doubleValue"
+_XAI = "XmlAttributesInput"
+_aXAR = "aws.protocoltests.restxml#XmlAttributesRequest"
+_at = "attr"
+_te = "test"
+_sA = "smithy.api#xmlAttribute"
+_XAO = "XmlAttributesOutput"
+_aXARw = "aws.protocoltests.restxml#XmlAttributesResponse"
+_XAm = "XmlAttributes"
+_XAIMPR = "XmlAttributesInMiddlePayloadRequest"
+_XAIMI = "XmlAttributesInMiddleInput"
+_aXAIMR = "aws.protocoltests.restxml#XmlAttributesInMiddleRequest"
+_XAIMPRm = "XmlAttributesInMiddlePayloadResponse"
+_XAIMO = "XmlAttributesInMiddleOutput"
+_aXAIMRw = "aws.protocoltests.restxml#XmlAttributesInMiddleResponse"
+_XAIM = "XmlAttributesInMiddle"
+_XAPR = "XmlAttributesPayloadRequest"
+_XAOPI = "XmlAttributesOnPayloadInput"
+_aXAOPR = "aws.protocoltests.restxml#XmlAttributesOnPayloadRequest"
+_XAPRm = "XmlAttributesPayloadResponse"
+_XAOPO = "XmlAttributesOnPayloadOutput"
+_aXAOPRw = "aws.protocoltests.restxml#XmlAttributesOnPayloadResponse"
+_XAOP = "XmlAttributesOnPayload"
+_XBI = "XmlBlobsInput"
+_aXBR = "aws.protocoltests.restxml#XmlBlobsRequest"
+_XBO = "XmlBlobsOutput"
+_aXBRw = "aws.protocoltests.restxml#XmlBlobsResponse"
+_XBm = "XmlBlobs"
+_XEBI = "XmlEmptyBlobsInput"
+_aXEBR = "aws.protocoltests.restxml#XmlEmptyBlobsRequest"
+_XEBO = "XmlEmptyBlobsOutput"
+_aXEBRw = "aws.protocoltests.restxml#XmlEmptyBlobsResponse"
+_XEB = "XmlEmptyBlobs"
+_SLMt = "StructureListMember"
+_o = "other"
+_SLt = "StructureList"
+_NSL = "NestedStringList"
+_XELI = "XmlEmptyListsInput"
+_aXELR = "aws.protocoltests.restxml#XmlEmptyListsRequest"
+_sLt = "stringList"
+_sS = "stringSet"
+_iL = "integerList"
+_bL = "booleanList"
+_tL = "timestampList"
+_eL = "enumList"
+_iEL = "intEnumList"
+_nSL = "nestedStringList"
+_rLM = "renamedListMembers"
+_r = "renamed"
+_fL = "flattenedList"
+_fLl = "flattenedList2"
+_cN = "customName"
+_fLWMN = "flattenedListWithMemberNamespace"
+_fLWN = "flattenedListWithNamespace"
+_sLtr = "structureList"
+_mSL = "myStructureList"
+_fSL = "flattenedStructureList"
+_XELO = "XmlEmptyListsOutput"
+_aXELRw = "aws.protocoltests.restxml#XmlEmptyListsResponse"
+_XEL = "XmlEmptyLists"
+_GS = "GreetingStruct"
+_hi = "hi"
+_XMIOM = "XmlMapsInputOutputMap"
+_XEMI = "XmlEmptyMapsInput"
+_aXEMR = "aws.protocoltests.restxml#XmlEmptyMapsRequest"
+_XEMO = "XmlEmptyMapsOutput"
+_aXEMRw = "aws.protocoltests.restxml#XmlEmptyMapsResponse"
+_XEM = "XmlEmptyMaps"
+_XESI = "XmlEmptyStringsInput"
+_aXESR = "aws.protocoltests.restxml#XmlEmptyStringsRequest"
+_XESO = "XmlEmptyStringsOutput"
+_aXESRw = "aws.protocoltests.restxml#XmlEmptyStringsResponse"
+_XES = "XmlEmptyStrings"
+_FES = "FooEnumSet"
+_XEI = "XmlEnumsInput"
+_aXER = "aws.protocoltests.restxml#XmlEnumsRequest"
+_fE = "fooEnum1"
+_fEo = "fooEnum2"
+_fEoo = "fooEnum3"
+_fEL = "fooEnumList"
+_fES = "fooEnumSet"
+_fEM = "fooEnumMap"
+_XEO = "XmlEnumsOutput"
+_aXERw = "aws.protocoltests.restxml#XmlEnumsResponse"
+_XEm = "XmlEnums"
+_IEM = "IntegerEnumMap"
+_IES = "IntegerEnumSet"
+_XIEI = "XmlIntEnumsInput"
+_aXIER = "aws.protocoltests.restxml#XmlIntEnumsRequest"
+_iE = "intEnum1"
+_iEn = "intEnum2"
+_iEnt = "intEnum3"
+_iES = "intEnumSet"
+_iEM = "intEnumMap"
+_XIEO = "XmlIntEnumsOutput"
+_aXIERw = "aws.protocoltests.restxml#XmlIntEnumsResponse"
+_XIE = "XmlIntEnums"
+_XLI = "XmlListsInput"
+_aXLR = "aws.protocoltests.restxml#XmlListsRequest"
+_XLO = "XmlListsOutput"
+_aXLRw = "aws.protocoltests.restxml#XmlListsResponse"
+_XLm = "XmlLists"
+_XMI = "XmlMapsInput"
+_aXMR = "aws.protocoltests.restxml#XmlMapsRequest"
+_XMO = "XmlMapsOutput"
+_aXMRw = "aws.protocoltests.restxml#XmlMapsResponse"
+_XM = "XmlMaps"
+_XMXNIOM = "XmlMapsXmlNameInputOutputMap"
+_At = "Attribute"
+_Se = "Setting"
+_XMXNI = "XmlMapsXmlNameInput"
+_aXMXNR = "aws.protocoltests.restxml#XmlMapsXmlNameRequest"
+_XMXNO = "XmlMapsXmlNameOutput"
+_aXMXNRw = "aws.protocoltests.restxml#XmlMapsXmlNameResponse"
+_XMXN = "XmlMapsXmlName"
+_XMWXNIOM = "XmlMapWithXmlNamespaceInputOutputMap"
+_XMWXNI = "XmlMapWithXmlNamespaceInput"
+_aXMWXNR = "aws.protocoltests.restxml#XmlMapWithXmlNamespaceRequest"
+_XMWXNO = "XmlMapWithXmlNamespaceOutput"
+_aXMWXNRw = "aws.protocoltests.restxml#XmlMapWithXmlNamespaceResponse"
+_XMWXN = "XmlMapWithXmlNamespace"
+_XNL = "XmlNamespacedList"
+_XNN = "XmlNamespaceNested"
+_val = "values"
+_XNI = "XmlNamespacesInput"
+_aXNR = "aws.protocoltests.restxml#XmlNamespacesRequest"
+_XNO = "XmlNamespacesOutput"
+_aXNRw = "aws.protocoltests.restxml#XmlNamespacesResponse"
+_XN = "XmlNamespaces"
+_XTI = "XmlTimestampsInput"
+_aXTR = "aws.protocoltests.restxml#XmlTimestampsRequest"
+_no = "normal"
+_dT = "dateTime"
+_dTOT = "dateTimeOnTarget"
+_eSp = "epochSeconds"
+_eSOT = "epochSecondsOnTarget"
+_hDt = "httpDate"
+_hDOT = "httpDateOnTarget"
+_XTO = "XmlTimestampsOutput"
+_aXTRw = "aws.protocoltests.restxml#XmlTimestampsResponse"
+_XTm = "XmlTimestamps"
+_XNUS = "XmlNestedUnionStruct"
+_bVo = "booleanValue"
+_XUS = "XmlUnionShape"
+_uV = "unionValue"
+_sVtr = "structValue"
+_RSION = "RecursiveShapesInputOutputNested1"
+_RSIONe = "RecursiveShapesInputOutputNested2"
+_rM = "recursiveMember"
+_XUI = "XmlUnionsInput"
+_aXUR = "aws.protocoltests.restxml#XmlUnionsRequest"
+_XUO = "XmlUnionsOutput"
+_aXURw = "aws.protocoltests.restxml#XmlUnionsResponse"
+_RSI = "RecursiveShapesInput"
+_aRSR = "aws.protocoltests.restxml#RecursiveShapesRequest"
+_RSO = "RecursiveShapesOutput"
+_aRSRw = "aws.protocoltests.restxml#RecursiveShapesResponse"
+_XU = "XmlUnions"
+_RS = "RecursiveShapes"
+_RX = "RestXml"
+_aw = "aws.auth#sigv4"
+_aX = "aws.protocols#restXml"
+_aws = "aws.api#service"
 
-HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT: StaticSchema = (
+XML_ATTRIBUTES_INPUT: StaticSchema = (
     18,
     n1,
-    _HPWXNAPI,
-    {_sSI: _aHPWXNAPIO, _s: None},
-    (_ne,),
-    ((lambda: schemas.PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, 16),),
+    _XAI,
+    {_sSI: _aXAR, _s: None},
+    (_f, _at),
+    ((3, 0), (3, {_sN: _te, _sA: None})),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT: StaticSchema = (
+XML_ATTRIBUTES_OUTPUT: StaticSchema = (
     18,
     n1,
-    _HPWXNAPO,
-    {_sSI: _aHPWXNAPIO, _sm: None},
-    (_ne,),
-    ((lambda: schemas.PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, 16),),
+    _XAO,
+    {_sSI: _aXARw, _sm: None},
+    (_f, _at),
+    ((3, 0), (3, {_sN: _te, _sA: None})),
 )
 
-HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX: StaticOperationSchema = (
+XML_ATTRIBUTES: StaticOperationSchema = (
     23,
     n1,
-    _HPWXNAP,
-    {
-        _smi: MappingProxyType(
-            {"uri": "/HttpPayloadWithXmlNamespaceAndPrefix", "method": "PUT"}
-        )
-    },
-    HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT,
-    HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT,
+    _XAm,
+    {_smi: MappingProxyType({"uri": "/XmlAttributes", "method": "PUT"})},
+    XML_ATTRIBUTES_INPUT,
+    XML_ATTRIBUTES_OUTPUT,
     (),
 )
 
-HTTP_PREFIX_HEADERS_INPUT: StaticSchema = (
+XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST: StaticSchema = (
     18,
     n1,
-    _HPHI,
-    {_sSI: _aHPHIO, _s: None},
-    (_f, _fM),
-    ((3, {_sH: _xf}), (lambda: schemas.FOO_PREFIX_HEADERS, {_sPH: _xf_})),
+    _XAIMPR,
+    0,
+    (_f, _at, _b),
+    ((3, 0), (3, {_sN: _te, _sA: None}), (3, 0)),
 )
 
-HTTP_PREFIX_HEADERS_OUTPUT: StaticSchema = (
+XML_ATTRIBUTES_IN_MIDDLE_INPUT: StaticSchema = (
     18,
     n1,
-    _HPHO,
-    {_sSI: _aHPHIO, _sm: None},
-    (_f, _fM),
-    ((3, {_sH: _xf}), (lambda: schemas.FOO_PREFIX_HEADERS, {_sPH: _xf_})),
-)
-
-HTTP_PREFIX_HEADERS: StaticOperationSchema = (
-    23,
-    n1,
-    _HPH,
-    {_smi: MappingProxyType({"uri": "/HttpPrefixHeaders", "method": "GET"})},
-    HTTP_PREFIX_HEADERS_INPUT,
-    HTTP_PREFIX_HEADERS_OUTPUT,
-    (),
-)
-
-HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT: StaticSchema = (
-    18,
-    n1,
-    _HRWFLI,
-    {_s: None},
-    (_fl, _do),
-    ((9, 9), (10, 9)),
-)
-
-HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT: StaticSchema = (
-    18,
-    n1,
-    _HRWFLO,
-    {_sSI: _sU, _sm: None},
-)
-
-HTTP_REQUEST_WITH_FLOAT_LABELS: StaticOperationSchema = (
-    23,
-    n1,
-    _HRWFL,
-    {
-        _smi: MappingProxyType(
-            {"method": "GET", "uri": "/FloatHttpLabels/{float}/{double}"}
-        )
-    },
-    HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT,
-    HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT,
-    (),
-)
-
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT: StaticSchema = (
-    18,
-    n1,
-    _HRWGLIPI,
-    {_s: None},
-    (_f, _b),
-    ((3, 9), (3, 9)),
-)
-
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT: StaticSchema = (
-    18,
-    n1,
-    _HRWGLIPO,
-    {_sSI: _sU, _sm: None},
-)
-
-HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH: StaticOperationSchema = (
-    23,
-    n1,
-    _HRWGLIP,
-    {
-        _smi: MappingProxyType(
-            {
-                "method": "GET",
-                "uri": "/HttpRequestWithGreedyLabelInPath/foo/{foo}/baz/{baz+}",
-            }
-        )
-    },
-    HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT,
-    HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT,
-    (),
-)
-
-HTTP_REQUEST_WITH_LABELS_INPUT: StaticSchema = (
-    18,
-    n1,
-    _HRWLI,
-    {_s: None},
-    (_st, _sh, _i, _lo, _fl, _do, _bo, _ti),
-    ((3, 9), (6, 9), (7, 9), (8, 9), (9, 9), (10, 9), (2, 9), (4, 9)),
-)
-
-HTTP_REQUEST_WITH_LABELS_OUTPUT: StaticSchema = (18, n1, _HRWLO, {_sSI: _sU, _sm: None})
-
-HTTP_REQUEST_WITH_LABELS: StaticOperationSchema = (
-    23,
-    n1,
-    _HRWL,
-    {
-        _smi: MappingProxyType(
-            {
-                "method": "GET",
-                "uri": "/HttpRequestWithLabels/{string}/{short}/{integer}/{long}/{float}/{double}/{boolean}/{timestamp}",
-            }
-        )
-    },
-    HTTP_REQUEST_WITH_LABELS_INPUT,
-    HTTP_REQUEST_WITH_LABELS_OUTPUT,
-    (),
-)
-
-EPOCH_SECONDS: StaticSchema = (4, n0, _ES, {_sF: _es})
-
-HTTP_DATE: StaticSchema = (4, n0, _HD, {_sF: _hd})
-
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT: StaticSchema = (
-    18,
-    n1,
-    _HRWLATFI,
-    {_s: None},
-    (_mES, _mHD, _mDT, _dF, _tES, _tHD, _tDT),
-    (
-        (4, {_sF: _es, _smith: None, _sL: None}),
-        (4, {_sF: _hd, _smith: None, _sL: None}),
-        (4, {_sF: _dt, _smith: None, _sL: None}),
-        (4, 9),
-        (EPOCH_SECONDS, 9),
-        (HTTP_DATE, 9),
-        (lambda: schemas.DATE_TIME, 9),
-    ),
-)
-
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT: StaticSchema = (
-    18,
-    n1,
-    _HRWLATFO,
-    {_sSI: _sU, _sm: None},
-)
-
-HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT: StaticOperationSchema = (
-    23,
-    n1,
-    _HRWLATF,
-    {
-        _smi: MappingProxyType(
-            {
-                "method": "GET",
-                "uri": "/HttpRequestWithLabelsAndTimestampFormat/{memberEpochSeconds}/{memberHttpDate}/{memberDateTime}/{defaultFormat}/{targetEpochSeconds}/{targetHttpDate}/{targetDateTime}",
-            }
-        )
-    },
-    HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT,
-    HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT,
-    (),
-)
-
-HTTP_RESPONSE_CODE_INPUT: StaticSchema = (18, n1, _HRCI, {_sSI: _sU, _s: None})
-
-HTTP_RESPONSE_CODE_OUTPUT: StaticSchema = (
-    18,
-    n1,
-    _HRCO,
-    {_sm: None},
-    (_St,),
-    ((7, 128),),
-)
-
-HTTP_RESPONSE_CODE: StaticOperationSchema = (
-    23,
-    n1,
-    _HRC,
-    {_smi: MappingProxyType({"uri": "/HttpResponseCode", "method": "PUT"})},
-    HTTP_RESPONSE_CODE_INPUT,
-    HTTP_RESPONSE_CODE_OUTPUT,
-    (),
-)
-
-HTTP_STRING_PAYLOAD_INPUT: StaticSchema = (
-    18,
-    n1,
-    _HSPI,
-    {_sSI: _aSPI, _s: None},
+    _XAIMI,
+    {_sSI: _aXAIMR, _s: None},
     (_p,),
-    ((3, 16),),
+    ((XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_REQUEST, 16),),
 )
 
-HTTP_STRING_PAYLOAD_OUTPUT: StaticSchema = (
+XML_ATTRIBUTES_IN_MIDDLE_OUTPUT: StaticSchema = (
     18,
     n1,
-    _HSPO,
-    {_sSI: _aSPI, _sm: None},
+    _XAIMO,
+    {_sSI: _aXAIMRw, _sm: None},
     (_p,),
-    ((3, 16),),
+    ((lambda: XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE, 16),),
 )
 
-HTTP_STRING_PAYLOAD: StaticOperationSchema = (
+XML_ATTRIBUTES_IN_MIDDLE: StaticOperationSchema = (
     23,
     n1,
-    _HSP,
-    {_smi: MappingProxyType({"uri": "/StringPayload", "method": "POST"})},
-    HTTP_STRING_PAYLOAD_INPUT,
-    HTTP_STRING_PAYLOAD_OUTPUT,
+    _XAIM,
+    {_smi: MappingProxyType({"uri": "/XmlAttributesInMiddle", "method": "PUT"})},
+    XML_ATTRIBUTES_IN_MIDDLE_INPUT,
+    XML_ATTRIBUTES_IN_MIDDLE_OUTPUT,
     (),
 )
 
-IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT: StaticSchema = (
+XML_ATTRIBUTES_IN_MIDDLE_PAYLOAD_RESPONSE: StaticSchema = (
     18,
     n1,
-    _IQPIRI,
-    {_sSI: _sU, _s: None},
+    _XAIMPRm,
+    0,
+    (_f, _at, _b),
+    ((3, 0), (3, {_sN: _te, _sA: None}), (3, 0)),
 )
 
-IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT: StaticSchema = (
+XML_ATTRIBUTES_PAYLOAD_REQUEST: StaticSchema = (
     18,
     n1,
-    _IQPIRO,
-    {_sm: None},
-    (_b,),
-    ((3, {_sQ: _b}),),
+    _XAPR,
+    0,
+    (_f, _at),
+    ((3, 0), (3, {_sN: _te, _sA: None})),
 )
 
-IGNORE_QUERY_PARAMS_IN_RESPONSE: StaticOperationSchema = (
+XML_ATTRIBUTES_ON_PAYLOAD_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XAOPI,
+    {_sSI: _aXAOPR, _s: None},
+    (_p,),
+    ((XML_ATTRIBUTES_PAYLOAD_REQUEST, 16),),
+)
+
+XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XAOPO,
+    {_sSI: _aXAOPRw, _sm: None},
+    (_p,),
+    ((lambda: XML_ATTRIBUTES_PAYLOAD_RESPONSE, 16),),
+)
+
+XML_ATTRIBUTES_ON_PAYLOAD: StaticOperationSchema = (
     23,
     n1,
-    _IQPIR,
-    {_smi: MappingProxyType({"uri": "/IgnoreQueryParamsInResponse", "method": "GET"})},
-    IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT,
-    IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT,
+    _XAOP,
+    {_smi: MappingProxyType({"uri": "/XmlAttributesOnPayload", "method": "PUT"})},
+    XML_ATTRIBUTES_ON_PAYLOAD_INPUT,
+    XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT,
     (),
 )
 
-INPUT_AND_OUTPUT_WITH_HEADERS_INPUT: StaticSchema = (
+XML_ATTRIBUTES_PAYLOAD_RESPONSE: StaticSchema = (
     18,
     n1,
-    _IAOWHI,
-    {_sSI: _aIAOWHIO, _s: None},
-    (
-        _hS,
-        _hB,
-        _hSe,
-        _hI,
-        _hL,
-        _hF,
-        _hD,
-        _hTB,
-        _hFB,
-        _hSL,
-        _hSS,
-        _hIL,
-        _hBL,
-        _hTL,
-        _hE,
-        _hEL,
-    ),
-    (
-        (3, {_sH: _XS}),
-        (5, {_sH: _XB}),
-        (6, {_sH: _XS_}),
-        (7, {_sH: _XI}),
-        (8, {_sH: _XL}),
-        (9, {_sH: _XF_}),
-        (10, {_sH: _XD}),
-        (2, {_sH: _XB_}),
-        (2, {_sH: _XB__}),
-        (lambda: schemas.STRING_LIST, {_sH: _XS__}),
-        (lambda: schemas.STRING_SET, {_sH: _XS___}),
-        (lambda: schemas.INTEGER_LIST, {_sH: _XI_}),
-        (lambda: schemas.BOOLEAN_LIST, {_sH: _XB___}),
-        (lambda: schemas.TIMESTAMP_LIST, {_sH: _XT}),
-        (lambda: schemas.FOO_ENUM, {_sH: _XE}),
-        (lambda: schemas.FOO_ENUM_LIST, {_sH: _XE_}),
-    ),
+    _XAPRm,
+    0,
+    (_f, _at),
+    ((3, 0), (3, {_sN: _te, _sA: None})),
 )
 
-INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT: StaticSchema = (
+XML_BLOBS_INPUT: StaticSchema = (
     18,
     n1,
-    _IAOWHO,
-    {_sSI: _aIAOWHIO, _sm: None},
-    (
-        _hS,
-        _hB,
-        _hSe,
-        _hI,
-        _hL,
-        _hF,
-        _hD,
-        _hTB,
-        _hFB,
-        _hSL,
-        _hSS,
-        _hIL,
-        _hBL,
-        _hTL,
-        _hE,
-        _hEL,
-    ),
-    (
-        (3, {_sH: _XS}),
-        (5, {_sH: _XB}),
-        (6, {_sH: _XS_}),
-        (7, {_sH: _XI}),
-        (8, {_sH: _XL}),
-        (9, {_sH: _XF_}),
-        (10, {_sH: _XD}),
-        (2, {_sH: _XB_}),
-        (2, {_sH: _XB__}),
-        (lambda: schemas.STRING_LIST, {_sH: _XS__}),
-        (lambda: schemas.STRING_SET, {_sH: _XS___}),
-        (lambda: schemas.INTEGER_LIST, {_sH: _XI_}),
-        (lambda: schemas.BOOLEAN_LIST, {_sH: _XB___}),
-        (lambda: schemas.TIMESTAMP_LIST, {_sH: _XT}),
-        (lambda: schemas.FOO_ENUM, {_sH: _XE}),
-        (lambda: schemas.FOO_ENUM_LIST, {_sH: _XE_}),
-    ),
+    _XBI,
+    {_sSI: _aXBR, _s: None},
+    (_da,),
+    ((1, 0),),
 )
 
-INPUT_AND_OUTPUT_WITH_HEADERS: StaticOperationSchema = (
+XML_BLOBS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XBO,
+    {_sSI: _aXBRw, _sm: None},
+    (_da,),
+    ((1, 0),),
+)
+
+XML_BLOBS: StaticOperationSchema = (
     23,
     n1,
-    _IAOWH,
-    {_smi: MappingProxyType({"uri": "/InputAndOutputWithHeaders", "method": "POST"})},
-    INPUT_AND_OUTPUT_WITH_HEADERS_INPUT,
-    INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT,
+    _XBm,
+    {_smi: MappingProxyType({"uri": "/XmlBlobs", "method": "POST"})},
+    XML_BLOBS_INPUT,
+    XML_BLOBS_OUTPUT,
     (),
 )
 
-LIST_WITH_MEMBER_NAMESPACE: StaticSchema = (
+XML_EMPTY_BLOBS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XEBI,
+    {_sSI: _aXEBR, _s: None},
+    (_da,),
+    ((1, 0),),
+)
+
+XML_EMPTY_BLOBS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XEBO,
+    {_sSI: _aXEBRw, _sm: None},
+    (_da,),
+    ((1, 0),),
+)
+
+XML_EMPTY_BLOBS: StaticOperationSchema = (
+    23,
+    n1,
+    _XEB,
+    {_smi: MappingProxyType({"uri": "/XmlEmptyBlobs", "method": "POST"})},
+    XML_EMPTY_BLOBS_INPUT,
+    XML_EMPTY_BLOBS_OUTPUT,
+    (),
+)
+
+STRUCTURE_LIST_MEMBER: StaticSchema = (
+    18,
+    n1,
+    _SLMt,
+    0,
+    (_a, _b_),
+    ((3, {_sN: _va}), (3, {_sN: _o})),
+)
+
+STRUCTURE_LIST: StaticSchema = (
     16,
     n1,
-    _LWMN,
-    {_sNm: MappingProxyType({"uri": "https://xml-list.example.com"})},
+    _SLt,
+    0,
     (_m,),
-    ((3, {_sNm: MappingProxyType({"uri": "https://xml-member.example.com"})}),),
+    ((STRUCTURE_LIST_MEMBER, {_sN: _it}),),
 )
 
-LIST_WITH_NAMESPACE: StaticSchema = (
+NESTED_STRING_LIST: StaticSchema = (
     16,
-    n1,
-    _LWN,
-    {_sNm: MappingProxyType({"uri": "https://xml-list.example.com"})},
+    n0,
+    _NSL,
+    0,
     (_m,),
+    ((lambda: schemas.STRING_LIST, 0),),
+)
+
+XML_EMPTY_LISTS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XELI,
+    {_sSI: _aXELR, _s: None},
+    (
+        _sLt,
+        _sS,
+        _iL,
+        _bL,
+        _tL,
+        _eL,
+        _iEL,
+        _nSL,
+        _rLM,
+        _fL,
+        _fLl,
+        _fLWMN,
+        _fLWN,
+        _sLtr,
+        _fSL,
+    ),
+    (
+        (lambda: schemas.STRING_LIST, 0),
+        (lambda: schemas.STRING_SET, 0),
+        (lambda: schemas.INTEGER_LIST, 0),
+        (lambda: schemas.BOOLEAN_LIST, 0),
+        (lambda: schemas.TIMESTAMP_LIST, 0),
+        (lambda: schemas.FOO_ENUM_LIST, 0),
+        (lambda: schemas.INTEGER_ENUM_LIST, 0),
+        (NESTED_STRING_LIST, 0),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sN: _r}),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sFm: None}),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sN: _cN, _sFm: None}),
+        (lambda: schemas.LIST_WITH_MEMBER_NAMESPACE, {_sFm: None}),
+        (lambda: schemas.LIST_WITH_NAMESPACE, {_sFm: None}),
+        (STRUCTURE_LIST, {_sN: _mSL}),
+        (STRUCTURE_LIST, {_sFm: None}),
+    ),
+)
+
+XML_EMPTY_LISTS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XELO,
+    {_sSI: _aXELRw, _sm: None},
+    (
+        _sLt,
+        _sS,
+        _iL,
+        _bL,
+        _tL,
+        _eL,
+        _iEL,
+        _nSL,
+        _rLM,
+        _fL,
+        _fLl,
+        _fLWMN,
+        _fLWN,
+        _sLtr,
+        _fSL,
+    ),
+    (
+        (lambda: schemas.STRING_LIST, 0),
+        (lambda: schemas.STRING_SET, 0),
+        (lambda: schemas.INTEGER_LIST, 0),
+        (lambda: schemas.BOOLEAN_LIST, 0),
+        (lambda: schemas.TIMESTAMP_LIST, 0),
+        (lambda: schemas.FOO_ENUM_LIST, 0),
+        (lambda: schemas.INTEGER_ENUM_LIST, 0),
+        (NESTED_STRING_LIST, 0),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sN: _r}),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sFm: None}),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sN: _cN, _sFm: None}),
+        (lambda: schemas.LIST_WITH_MEMBER_NAMESPACE, {_sFm: None}),
+        (lambda: schemas.LIST_WITH_NAMESPACE, {_sFm: None}),
+        (STRUCTURE_LIST, {_sN: _mSL}),
+        (STRUCTURE_LIST, {_sFm: None}),
+    ),
+)
+
+XML_EMPTY_LISTS: StaticOperationSchema = (
+    23,
+    n1,
+    _XEL,
+    {_smi: MappingProxyType({"uri": "/XmlEmptyLists", "method": "PUT"})},
+    XML_EMPTY_LISTS_INPUT,
+    XML_EMPTY_LISTS_OUTPUT,
+    (),
+)
+
+GREETING_STRUCT: StaticSchema = (18, n0, _GS, 0, (_hi,), ((3, 0),))
+
+XML_MAPS_INPUT_OUTPUT_MAP: StaticSchema = (
+    17,
+    n1,
+    _XMIOM,
+    0,
+    (_k, _va),
+    ((3, 0), (GREETING_STRUCT, 0)),
+)
+
+XML_EMPTY_MAPS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XEMI,
+    {_sSI: _aXEMR, _s: None},
+    (_mM,),
+    ((XML_MAPS_INPUT_OUTPUT_MAP, 0),),
+)
+
+XML_EMPTY_MAPS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XEMO,
+    {_sSI: _aXEMRw, _sm: None},
+    (_mM,),
+    ((XML_MAPS_INPUT_OUTPUT_MAP, 0),),
+)
+
+XML_EMPTY_MAPS: StaticOperationSchema = (
+    23,
+    n1,
+    _XEM,
+    {_smi: MappingProxyType({"uri": "/XmlEmptyMaps", "method": "POST"})},
+    XML_EMPTY_MAPS_INPUT,
+    XML_EMPTY_MAPS_OUTPUT,
+    (),
+)
+
+XML_EMPTY_STRINGS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XESI,
+    {_sSI: _aXESR, _s: None},
+    (_eS,),
     ((3, 0),),
 )
 
-NESTED_MAP: StaticSchema = (
-    17,
+XML_EMPTY_STRINGS_OUTPUT: StaticSchema = (
+    18,
     n1,
-    _NM,
+    _XESO,
+    {_sSI: _aXESRw, _sm: None},
+    (_eS,),
+    ((3, 0),),
+)
+
+XML_EMPTY_STRINGS: StaticOperationSchema = (
+    23,
+    n1,
+    _XES,
+    {_smi: MappingProxyType({"uri": "/XmlEmptyStrings", "method": "PUT"})},
+    XML_EMPTY_STRINGS_INPUT,
+    XML_EMPTY_STRINGS_OUTPUT,
+    (),
+)
+
+FOO_ENUM_SET: StaticSchema = (16, n0, _FES, 0, (_m,), ((lambda: schemas.FOO_ENUM, 0),))
+
+XML_ENUMS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XEI,
+    {_sSI: _aXER, _s: None},
+    (_fE, _fEo, _fEoo, _fEL, _fES, _fEM),
+    (
+        (lambda: schemas.FOO_ENUM, 0),
+        (lambda: schemas.FOO_ENUM, 0),
+        (lambda: schemas.FOO_ENUM, 0),
+        (lambda: schemas.FOO_ENUM_LIST, 0),
+        (FOO_ENUM_SET, 0),
+        (lambda: schemas.FOO_ENUM_MAP, 0),
+    ),
+)
+
+XML_ENUMS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XEO,
+    {_sSI: _aXERw, _sm: None},
+    (_fE, _fEo, _fEoo, _fEL, _fES, _fEM),
+    (
+        (lambda: schemas.FOO_ENUM, 0),
+        (lambda: schemas.FOO_ENUM, 0),
+        (lambda: schemas.FOO_ENUM, 0),
+        (lambda: schemas.FOO_ENUM_LIST, 0),
+        (FOO_ENUM_SET, 0),
+        (lambda: schemas.FOO_ENUM_MAP, 0),
+    ),
+)
+
+XML_ENUMS: StaticOperationSchema = (
+    23,
+    n1,
+    _XEm,
+    {_smi: MappingProxyType({"uri": "/XmlEnums", "method": "PUT"})},
+    XML_ENUMS_INPUT,
+    XML_ENUMS_OUTPUT,
+    (),
+)
+
+INTEGER_ENUM_MAP: StaticSchema = (
+    17,
+    n0,
+    _IEM,
     0,
     (_k, _va),
-    ((3, 0), (lambda: schemas.FOO_ENUM_MAP, 0)),
+    ((3, 0), (lambda: schemas.INTEGER_ENUM, 0)),
 )
 
-NESTED_XML_MAPS_INPUT: StaticSchema = (
-    18,
-    n1,
-    _NXMI,
-    {_sSI: _aNXMR, _s: None},
-    (_nM, _fNM),
-    ((NESTED_MAP, 0), (NESTED_MAP, {_sFm: None})),
+INTEGER_ENUM_SET: StaticSchema = (
+    16,
+    n0,
+    _IES,
+    0,
+    (_m,),
+    ((lambda: schemas.INTEGER_ENUM, 0),),
 )
 
-NESTED_XML_MAPS_OUTPUT: StaticSchema = (
+XML_INT_ENUMS_INPUT: StaticSchema = (
     18,
     n1,
-    _NXMO,
-    {_sSI: _aNXMRw, _sm: None},
-    (_nM, _fNM),
-    ((NESTED_MAP, 0), (NESTED_MAP, {_sFm: None})),
+    _XIEI,
+    {_sSI: _aXIER, _s: None},
+    (_iE, _iEn, _iEnt, _iEL, _iES, _iEM),
+    (
+        (lambda: schemas.INTEGER_ENUM, 0),
+        (lambda: schemas.INTEGER_ENUM, 0),
+        (lambda: schemas.INTEGER_ENUM, 0),
+        (lambda: schemas.INTEGER_ENUM_LIST, 0),
+        (INTEGER_ENUM_SET, 0),
+        (INTEGER_ENUM_MAP, 0),
+    ),
+)
+
+XML_INT_ENUMS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XIEO,
+    {_sSI: _aXIERw, _sm: None},
+    (_iE, _iEn, _iEnt, _iEL, _iES, _iEM),
+    (
+        (lambda: schemas.INTEGER_ENUM, 0),
+        (lambda: schemas.INTEGER_ENUM, 0),
+        (lambda: schemas.INTEGER_ENUM, 0),
+        (lambda: schemas.INTEGER_ENUM_LIST, 0),
+        (INTEGER_ENUM_SET, 0),
+        (INTEGER_ENUM_MAP, 0),
+    ),
+)
+
+XML_INT_ENUMS: StaticOperationSchema = (
+    23,
+    n1,
+    _XIE,
+    {_smi: MappingProxyType({"uri": "/XmlIntEnums", "method": "PUT"})},
+    XML_INT_ENUMS_INPUT,
+    XML_INT_ENUMS_OUTPUT,
+    (),
+)
+
+XML_LISTS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XLI,
+    {_sSI: _aXLR, _s: None},
+    (
+        _sLt,
+        _sS,
+        _iL,
+        _bL,
+        _tL,
+        _eL,
+        _iEL,
+        _nSL,
+        _rLM,
+        _fL,
+        _fLl,
+        _fLWMN,
+        _fLWN,
+        _sLtr,
+        _fSL,
+    ),
+    (
+        (lambda: schemas.STRING_LIST, 0),
+        (lambda: schemas.STRING_SET, 0),
+        (lambda: schemas.INTEGER_LIST, 0),
+        (lambda: schemas.BOOLEAN_LIST, 0),
+        (lambda: schemas.TIMESTAMP_LIST, 0),
+        (lambda: schemas.FOO_ENUM_LIST, 0),
+        (lambda: schemas.INTEGER_ENUM_LIST, 0),
+        (NESTED_STRING_LIST, 0),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sN: _r}),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sFm: None}),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sN: _cN, _sFm: None}),
+        (lambda: schemas.LIST_WITH_MEMBER_NAMESPACE, {_sFm: None}),
+        (lambda: schemas.LIST_WITH_NAMESPACE, {_sFm: None}),
+        (STRUCTURE_LIST, {_sN: _mSL}),
+        (STRUCTURE_LIST, {_sFm: None}),
+    ),
+)
+
+XML_LISTS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XLO,
+    {_sSI: _aXLRw, _sm: None},
+    (
+        _sLt,
+        _sS,
+        _iL,
+        _bL,
+        _tL,
+        _eL,
+        _iEL,
+        _nSL,
+        _rLM,
+        _fL,
+        _fLl,
+        _fLWMN,
+        _fLWN,
+        _sLtr,
+        _fSL,
+    ),
+    (
+        (lambda: schemas.STRING_LIST, 0),
+        (lambda: schemas.STRING_SET, 0),
+        (lambda: schemas.INTEGER_LIST, 0),
+        (lambda: schemas.BOOLEAN_LIST, 0),
+        (lambda: schemas.TIMESTAMP_LIST, 0),
+        (lambda: schemas.FOO_ENUM_LIST, 0),
+        (lambda: schemas.INTEGER_ENUM_LIST, 0),
+        (NESTED_STRING_LIST, 0),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sN: _r}),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sFm: None}),
+        (lambda: schemas.RENAMED_LIST_MEMBERS, {_sN: _cN, _sFm: None}),
+        (lambda: schemas.LIST_WITH_MEMBER_NAMESPACE, {_sFm: None}),
+        (lambda: schemas.LIST_WITH_NAMESPACE, {_sFm: None}),
+        (STRUCTURE_LIST, {_sN: _mSL}),
+        (STRUCTURE_LIST, {_sFm: None}),
+    ),
+)
+
+XML_LISTS: StaticOperationSchema = (
+    23,
+    n1,
+    _XLm,
+    {_smi: MappingProxyType({"uri": "/XmlLists", "method": "PUT"})},
+    XML_LISTS_INPUT,
+    XML_LISTS_OUTPUT,
+    (),
+)
+
+XML_MAPS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XMI,
+    {_sSI: _aXMR, _s: None},
+    (_mM,),
+    ((XML_MAPS_INPUT_OUTPUT_MAP, 0),),
+)
+
+XML_MAPS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XMO,
+    {_sSI: _aXMRw, _sm: None},
+    (_mM,),
+    ((XML_MAPS_INPUT_OUTPUT_MAP, 0),),
+)
+
+XML_MAPS: StaticOperationSchema = (
+    23,
+    n1,
+    _XM,
+    {_smi: MappingProxyType({"uri": "/XmlMaps", "method": "POST"})},
+    XML_MAPS_INPUT,
+    XML_MAPS_OUTPUT,
+    (),
+)
+
+XML_MAPS_XML_NAME_INPUT_OUTPUT_MAP: StaticSchema = (
+    17,
+    n1,
+    _XMXNIOM,
+    0,
+    (_k, _va),
+    ((3, {_sN: _At}), (GREETING_STRUCT, {_sN: _Se})),
+)
+
+XML_MAPS_XML_NAME_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XMXNI,
+    {_sSI: _aXMXNR, _s: None},
+    (_mM,),
+    ((XML_MAPS_XML_NAME_INPUT_OUTPUT_MAP, 0),),
+)
+
+XML_MAPS_XML_NAME_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XMXNO,
+    {_sSI: _aXMXNRw, _sm: None},
+    (_mM,),
+    ((XML_MAPS_XML_NAME_INPUT_OUTPUT_MAP, 0),),
+)
+
+XML_MAPS_XML_NAME: StaticOperationSchema = (
+    23,
+    n1,
+    _XMXN,
+    {_smi: MappingProxyType({"uri": "/XmlMapsXmlName", "method": "POST"})},
+    XML_MAPS_XML_NAME_INPUT,
+    XML_MAPS_XML_NAME_OUTPUT,
+    (),
+)
+
+XML_MAP_WITH_XML_NAMESPACE_INPUT_OUTPUT_MAP: StaticSchema = (
+    17,
+    n1,
+    _XMWXNIOM,
+    0,
+    (_k, _va),
+    (
+        (3, {_sN: _K, _sNm: MappingProxyType({"uri": "https://the-key.example.com"})}),
+        (
+            3,
+            {_sN: _V, _sNm: MappingProxyType({"uri": "https://the-value.example.com"})},
+        ),
+    ),
+)
+
+XML_MAP_WITH_XML_NAMESPACE_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XMWXNI,
+    {_sSI: _aXMWXNR, _s: None},
+    (_mM,),
+    (
+        (
+            XML_MAP_WITH_XML_NAMESPACE_INPUT_OUTPUT_MAP,
+            {
+                _sN: _KVP,
+                _sNm: MappingProxyType({"uri": "https://the-member.example.com"}),
+            },
+        ),
+    ),
+)
+
+XML_MAP_WITH_XML_NAMESPACE_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XMWXNO,
+    {_sSI: _aXMWXNRw, _sm: None},
+    (_mM,),
+    (
+        (
+            XML_MAP_WITH_XML_NAMESPACE_INPUT_OUTPUT_MAP,
+            {
+                _sN: _KVP,
+                _sNm: MappingProxyType({"uri": "https://the-member.example.com"}),
+            },
+        ),
+    ),
+)
+
+XML_MAP_WITH_XML_NAMESPACE: StaticOperationSchema = (
+    23,
+    n1,
+    _XMWXN,
+    {_smi: MappingProxyType({"uri": "/XmlMapWithXmlNamespace", "method": "POST"})},
+    XML_MAP_WITH_XML_NAMESPACE_INPUT,
+    XML_MAP_WITH_XML_NAMESPACE_OUTPUT,
+    (),
+)
+
+XML_NAMESPACED_LIST: StaticSchema = (
+    16,
+    n1,
+    _XNL,
+    0,
+    (_m,),
+    ((3, {_sNm: MappingProxyType({"uri": "http://bux.com"})}),),
+)
+
+XML_NAMESPACE_NESTED: StaticSchema = (
+    18,
+    n1,
+    _XNN,
+    {_sNm: MappingProxyType({"uri": "http://foo.com"})},
+    (_f, _val),
+    (
+        (3, {_sNm: MappingProxyType({"uri": "http://baz.com", "prefix": "baz"})}),
+        (XML_NAMESPACED_LIST, {_sNm: MappingProxyType({"uri": "http://qux.com"})}),
+    ),
+)
+
+XML_NAMESPACES_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XNI,
+    {_sSI: _aXNR, _s: None, _sNm: MappingProxyType({"uri": "http://foo.com"})},
+    (_ne,),
+    ((XML_NAMESPACE_NESTED, 0),),
+)
+
+XML_NAMESPACES_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XNO,
+    {_sSI: _aXNRw, _sm: None, _sNm: MappingProxyType({"uri": "http://foo.com"})},
+    (_ne,),
+    ((XML_NAMESPACE_NESTED, 0),),
+)
+
+XML_NAMESPACES: StaticOperationSchema = (
+    23,
+    n1,
+    _XN,
+    {_smi: MappingProxyType({"uri": "/XmlNamespaces", "method": "POST"})},
+    XML_NAMESPACES_INPUT,
+    XML_NAMESPACES_OUTPUT,
+    (),
+)
+
+XML_TIMESTAMPS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XTI,
+    {_sSI: _aXTR, _s: None},
+    (_no, _dT, _dTOT, _eSp, _eSOT, _hDt, _hDOT),
+    (
+        (4, 0),
+        (4, {_sF: _dt}),
+        (lambda: schemas.DATE_TIME, 0),
+        (4, {_sF: _es}),
+        (lambda: schemas.EPOCH_SECONDS, 0),
+        (4, {_sF: _hd}),
+        (lambda: schemas.HTTP_DATE, 0),
+    ),
+)
+
+XML_TIMESTAMPS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XTO,
+    {_sSI: _aXTRw, _sm: None},
+    (_no, _dT, _dTOT, _eSp, _eSOT, _hDt, _hDOT),
+    (
+        (4, 0),
+        (4, {_sF: _dt}),
+        (lambda: schemas.DATE_TIME, 0),
+        (4, {_sF: _es}),
+        (lambda: schemas.EPOCH_SECONDS, 0),
+        (4, {_sF: _hd}),
+        (lambda: schemas.HTTP_DATE, 0),
+    ),
+)
+
+XML_TIMESTAMPS: StaticOperationSchema = (
+    23,
+    n1,
+    _XTm,
+    {_smi: MappingProxyType({"uri": "/XmlTimestamps", "method": "POST"})},
+    XML_TIMESTAMPS_INPUT,
+    XML_TIMESTAMPS_OUTPUT,
+    (),
+)
+
+XML_NESTED_UNION_STRUCT: StaticSchema = (
+    18,
+    n1,
+    _XNUS,
+    0,
+    (_sVt, _bVo, _bV, _sVh, _iV, _lV, _fV, _dV),
+    ((3, 0), (2, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (10, 0)),
+)
+
+XML_UNION_SHAPE: StaticSchema = (
+    19,
+    n1,
+    _XUS,
+    0,
+    (_sVt, _bVo, _bV, _sVh, _iV, _lV, _fV, _dV, _uV, _sVtr),
+    (
+        (3, 0),
+        (2, 0),
+        (5, 0),
+        (6, 0),
+        (7, 0),
+        (8, 0),
+        (9, 0),
+        (10, 0),
+        (lambda: XML_UNION_SHAPE, 0),
+        (XML_NESTED_UNION_STRUCT, 0),
+    ),
+)
+
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1: StaticSchema = (
+    18,
+    n1,
+    _RSION,
+    0,
+    (_f, _ne),
+    ((3, 0), (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0)),
+)
+
+RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2: StaticSchema = (
+    18,
+    n1,
+    _RSIONe,
+    0,
+    (_ba, _rM),
+    ((3, 0), (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0)),
+)
+
+XML_UNIONS_INPUT: StaticSchema = (
+    18,
+    n1,
+    _XUI,
+    {_sSI: _aXUR, _s: None},
+    (_uV,),
+    ((XML_UNION_SHAPE, 0),),
+)
+
+XML_UNIONS_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _XUO,
+    {_sSI: _aXURw, _sm: None},
+    (_uV,),
+    ((XML_UNION_SHAPE, 0),),
+)
+
+XML_UNIONS: StaticOperationSchema = (
+    23,
+    n1,
+    _XU,
+    {_smi: MappingProxyType({"uri": "/XmlUnions", "method": "PUT"})},
+    XML_UNIONS_INPUT,
+    XML_UNIONS_OUTPUT,
+    (),
+)
+
+RECURSIVE_SHAPES_INPUT: StaticSchema = (
+    18,
+    n1,
+    _RSI,
+    {_sSI: _aRSR, _s: None},
+    (_ne,),
+    ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
+)
+
+RECURSIVE_SHAPES_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _RSO,
+    {_sSI: _aRSRw, _sm: None},
+    (_ne,),
+    ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
+)
+
+RECURSIVE_SHAPES: StaticOperationSchema = (
+    23,
+    n1,
+    _RS,
+    {_smi: MappingProxyType({"uri": "/RecursiveShapes", "method": "PUT"})},
+    RECURSIVE_SHAPES_INPUT,
+    RECURSIVE_SHAPES_OUTPUT,
+    (),
+)
+
+REST_XML: StaticSchema = (
+    21,
+    n1,
+    _RX,
+    {
+        _aw: MappingProxyType({"name": "restxml"}),
+        _aX: None,
+        _aws: MappingProxyType({"sdkId": "Rest Xml Protocol"}),
+    },
 )
