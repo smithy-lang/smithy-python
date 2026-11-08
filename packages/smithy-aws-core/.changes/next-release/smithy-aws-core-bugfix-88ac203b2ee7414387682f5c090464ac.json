@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Sync clients now return a readable stream for streaming outputs whether or not the response checksum was validated, and `ChecksumStream` can be used in a `with` block."
+}

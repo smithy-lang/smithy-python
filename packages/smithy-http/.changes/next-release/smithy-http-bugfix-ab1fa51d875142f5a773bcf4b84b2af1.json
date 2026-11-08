@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "The urllib3 HTTP client now streams response bodies instead of reading each one into memory. A streaming output, such as an S3 `GetObject` body, holds its connection until it is read to the end or closed, so use it in a `with` block to release the connection early."
+}

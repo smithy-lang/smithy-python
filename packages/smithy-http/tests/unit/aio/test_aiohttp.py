@@ -13,6 +13,8 @@ from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.aio.aiohttp import AIOHTTPClient, _AIOHTTPStreamingBody
 from smithy_http.exceptions import SmithyHTTPError
 
+from .._local_server import LocalHTTPServer, Reply
+
 
 def _create_client() -> tuple[AIOHTTPClient, MagicMock]:
     response = MagicMock(status=200, headers={}, reason="OK")
@@ -233,3 +235,24 @@ async def test_prepare_body_does_not_consume_nonseekable_body() -> None:
 
 def test_does_not_support_duplex_streaming() -> None:
     assert AIOHTTPClient.SUPPORTS_DUPLEX_STREAMING is False
+
+
+async def test_closing_a_read_body_keeps_its_connection() -> None:
+    # The client closes the bodies of failed attempts, which it has usually read
+    # already, so that close must leave the connection reusable.
+    with LocalHTTPServer() as server:
+        server.replies = [Reply(status=503, body=b"busy"), Reply(body=b"ok")]
+        request = HTTPRequest(
+            destination=URI(scheme="http", host="127.0.0.1", port=server.port),
+            method="GET",
+            fields=Fields(),
+        )
+        async with AIOHTTPClient() as client:
+            failed = await client.send(request)
+            assert await read_streaming_blob_async(failed.body) == b"busy"
+            await cast(Any, failed.body).close()
+
+            succeeded = await client.send(request)
+            assert await read_streaming_blob_async(succeeded.body) == b"ok"
+
+        assert server.ports[0] == server.ports[1]

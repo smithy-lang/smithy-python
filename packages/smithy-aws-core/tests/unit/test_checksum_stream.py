@@ -134,3 +134,13 @@ def test_close_closes_the_source() -> None:
 
     stream.close()
     assert source.closed
+
+
+def test_with_block_closes_the_source() -> None:
+    source = BytesIO(DATA)
+
+    with _stream(source) as stream:
+        assert stream.read() == DATA
+
+    assert stream.closed
+    assert source.closed

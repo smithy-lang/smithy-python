@@ -1,14 +1,23 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import threading
+import tracemalloc
+from collections.abc import Iterator
 from typing import Any
 from unittest.mock import Mock
 
 import pytest
 import urllib3
 from smithy_core import URI
+from smithy_core.exceptions import ClientTimeoutError
+from smithy_core.interfaces import is_bytes_reader
+from smithy_core.utils import read_streaming_blob
 from smithy_http import Fields, HTTPRequest
+from smithy_http.exceptions import SmithyHTTPError
 from smithy_http.interfaces import HTTPRequestConfiguration
 from smithy_http.urllib3 import Urllib3HTTPClient, Urllib3HTTPClientConfig
+
+from ._local_server import LocalHTTPServer, Reply
 
 
 def _send(
@@ -81,3 +90,211 @@ def test_repeated_response_headers_are_merged_case_insensitively() -> None:
 
     assert response.fields["x-values"].values == ["a", "b"]
     assert response.fields["x-values"].kind == "header"
+
+
+# The tests below send real requests to a local server, so they exercise urllib3's
+# connection pooling rather than a mock of it.
+
+
+@pytest.fixture
+def server() -> Iterator[LocalHTTPServer]:
+    with LocalHTTPServer() as server:
+        yield server
+
+
+def _local_body(client: Urllib3HTTPClient, server: LocalHTTPServer) -> Any:
+    request = HTTPRequest(
+        destination=URI(scheme="http", host="127.0.0.1", port=server.port),
+        method="GET",
+        fields=Fields(),
+    )
+    body = client.send(request).body
+    assert is_bytes_reader(body)
+    return body
+
+
+def _connection_pool(
+    pool: urllib3.PoolManager, server: LocalHTTPServer
+) -> urllib3.HTTPConnectionPool:
+    return pool.connection_from_host("127.0.0.1", server.port, scheme="http")
+
+
+def _idle_connections(pool: urllib3.PoolManager, server: LocalHTTPServer) -> int:
+    """Connections back in the pool, open or not."""
+    queue = _connection_pool(pool, server).pool
+    assert queue is not None
+    return queue.qsize()
+
+
+def test_response_body_is_streamed(server: LocalHTTPServer) -> None:
+    payload = bytes(range(256)) * 32 * 1024  # 8 MiB
+    server.replies = [Reply(body=payload)]
+    with Urllib3HTTPClient() as client:
+        body = _local_body(client, server)
+
+        first = body.read(1024)
+        chunks = [first, *body.iter_chunks(1024 * 1024)]
+        # Generic consumers such as read_streaming_blob treat it as a sync reader.
+        assert is_bytes_reader(body)
+
+    assert all(len(chunk) <= 1024 * 1024 for chunk in chunks)
+    assert len(chunks) > 8
+    assert b"".join(chunks) == payload
+
+
+def test_body_read_to_the_end_returns_connection_to_the_pool(
+    server: LocalHTTPServer,
+) -> None:
+    server.replies = [Reply(body=b"first"), Reply(body=b"second")]
+    pool = urllib3.PoolManager()
+    client = Urllib3HTTPClient(_pool=pool)
+
+    assert read_streaming_blob(_local_body(client, server)) == b"first"
+    assert _idle_connections(pool, server) == 1
+    assert read_streaming_blob(_local_body(client, server)) == b"second"
+
+    assert server.ports[0] == server.ports[1]
+    assert _connection_pool(pool, server).num_connections == 1
+
+
+def test_closing_a_partly_read_body_discards_its_connection(
+    server: LocalHTTPServer,
+) -> None:
+    server.replies = [Reply(body=b"x" * 100_000), Reply(body=b"next")]
+    pool = urllib3.PoolManager()
+    client = Urllib3HTTPClient(_pool=pool)
+
+    with _local_body(client, server) as body:
+        assert body.read(10) == b"x" * 10
+        assert _idle_connections(pool, server) == 0
+    assert body.closed
+    # The slot is back in the pool, but its connection is closed, so the next
+    # request opens a new one.
+    assert _idle_connections(pool, server) == 1
+
+    assert read_streaming_blob(_local_body(client, server)) == b"next"
+    assert server.ports[0] != server.ports[1]
+
+
+def test_close_after_reading_to_the_end_keeps_the_connection(
+    server: LocalHTTPServer,
+) -> None:
+    server.replies = [Reply(body=b"first"), Reply(body=b"second")]
+    client = Urllib3HTTPClient()
+
+    body = _local_body(client, server)
+    assert body.read() == b"first"
+    body.close()
+    body.close()
+    assert _local_body(client, server).read() == b"second"
+
+    assert server.ports[0] == server.ports[1]
+
+
+def test_read_after_close_raises(server: LocalHTTPServer) -> None:
+    server.replies = [Reply(body=b"data")]
+    body = _local_body(Urllib3HTTPClient(), server)
+    body.close()
+
+    with pytest.raises(ValueError, match="closed"):
+        body.read()
+
+
+def test_empty_body_reads_as_empty(server: LocalHTTPServer) -> None:
+    server.replies = [Reply(status=204), Reply(body=b"next")]
+    client = Urllib3HTTPClient()
+
+    assert _local_body(client, server).read() == b""
+    assert _local_body(client, server).read() == b"next"
+    assert server.ports[0] == server.ports[1]
+
+
+def test_truncated_body_raises_http_error(server: LocalHTTPServer) -> None:
+    server.replies = [Reply(body=b"short", truncate=True)]
+    body = _local_body(Urllib3HTTPClient(), server)
+
+    with pytest.raises(SmithyHTTPError, match="Failed to read the response body"):
+        body.read()
+
+
+def test_stalled_body_raises_client_timeout(server: LocalHTTPServer) -> None:
+    server.replies = [Reply(body=b"x" * 100, stall_after=10)]
+    client = Urllib3HTTPClient(client_config=Urllib3HTTPClientConfig(read_timeout=0.2))
+    body = _local_body(client, server)
+
+    assert body.read(10) == b"x" * 10
+    with pytest.raises(ClientTimeoutError):
+        body.read()
+
+
+def test_body_can_be_read_after_the_client_closes(server: LocalHTTPServer) -> None:
+    server.replies = [Reply(body=b"x" * 100_000)]
+    client = Urllib3HTTPClient()
+    body = _local_body(client, server)
+
+    client.close()
+
+    assert body.read() == b"x" * 100_000
+
+
+def test_send_returns_before_the_body_arrives(server: LocalHTTPServer) -> None:
+    gate = threading.Event()
+    server.replies = [Reply(body=b"late", gate=gate)]
+    client = Urllib3HTTPClient()
+
+    body = _local_body(client, server)
+    gate.set()
+
+    assert body.read() == b"late"
+
+
+def test_exact_size_read_returns_the_connection(server: LocalHTTPServer) -> None:
+    server.replies = [Reply(body=b"0123456789"), Reply(body=b"next")]
+    pool = urllib3.PoolManager()
+    client = Urllib3HTTPClient(_pool=pool)
+
+    body = _local_body(client, server)
+    assert body.read(10) == b"0123456789"
+    # Reading the whole Content-Length ends the body without another, empty read.
+    assert _idle_connections(pool, server) == 1
+
+    assert _local_body(client, server).read() == b"next"
+    assert server.ports[0] == server.ports[1]
+
+
+def test_chunked_body_is_streamed(server: LocalHTTPServer) -> None:
+    payload = b"x" * 300_000
+    server.replies = [Reply(body=payload, chunked=True, chunk_size=1000)]
+    pool = urllib3.PoolManager()
+    client = Urllib3HTTPClient(_pool=pool)
+
+    body = _local_body(client, server)
+    chunks = list(body.iter_chunks(64 * 1024))
+
+    assert b"".join(chunks) == payload
+    assert all(len(chunk) <= 64 * 1024 for chunk in chunks)
+    assert _idle_connections(pool, server) == 1
+
+
+def test_body_is_a_read_only_stream(server: LocalHTTPServer) -> None:
+    server.replies = [Reply(body=b"data")]
+    with _local_body(Urllib3HTTPClient(), server) as body:
+        assert body.readable()
+        assert not body.writeable()
+        assert not body.seekable()
+
+
+def test_large_body_is_not_buffered(server: LocalHTTPServer) -> None:
+    size = 32 * 1024 * 1024
+    server.replies = [Reply(body=b"\0" * size)]
+
+    tracemalloc.start()
+    try:
+        body = _local_body(Urllib3HTTPClient(), server)
+        received = sum(len(chunk) for chunk in body.iter_chunks(64 * 1024))
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+
+    assert received == size
+    assert peak < size // 8

@@ -1814,6 +1814,7 @@
     "tuples_to_fields": "rex-function"
   },
   "smithy_http.urllib3": {
+    "ClientTimeoutError": "rex-exception",
     "HTTPClient": "rex-protocol",
     "HTTPClientConfiguration": "rex-class",
     "HTTPRequest": "rex-protocol",
