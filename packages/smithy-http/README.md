@@ -10,11 +10,14 @@ The `smithy_http.testing` module provides shared utilities for testing HTTP func
 
 ### MockHTTPClient
 
-The `MockHTTPClient` allows you to test smithy-python clients without making actual network calls. It implements the `HTTPClient` interface and provides configurable responses for functional testing.
+`MockHTTPClient` lets you test smithy-python clients without making actual network
+calls. It implements the `HTTPClient` interface and returns queued responses. For async
+clients, use `smithy_http.aio.testing.AsyncMockHTTPClient`, which implements
+`AsyncHTTPClient` the same way.
 
-#### Basic Usage                                                                                                                                                                                      
+#### Basic Usage
 
-```python                                                                                                                                                                                               
+```python
 from smithy_http.testing import MockHTTPClient
 
 # Create mock client and configure responses
@@ -30,7 +33,7 @@ config = Config(transport=mock_client)
 client = TestSmithyServiceClient(config=config)
 
 # Test your client logic
-result = await client.some_operation({"input": "data"})
+result = client.some_operation({"input": "data"})
 
 # Inspect what requests were made
 assert mock_client.call_count == 1

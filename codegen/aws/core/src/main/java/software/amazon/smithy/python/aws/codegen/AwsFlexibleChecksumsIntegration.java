@@ -14,6 +14,7 @@ import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.SyncVariant;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -33,8 +34,21 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
 
     private static final String CHECKSUMS_PLUGIN = """
             def flexible_checksums_plugin(config: $1T) -> None:
-                config.interceptors.append($2T())
+                config.interceptors.append($2T($3T))
             """;
+
+    private static final Symbol INTERCEPTOR = Symbol.builder()
+            .namespace("smithy_aws_core.interceptors.checksums", ".")
+            .name("FlexibleChecksumsInterceptor")
+            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("checksums"))
+            .build();
+
+    // The sync plugin gets ChecksumStream, this symbol's sync twin.
+    private static final Symbol ASYNC_STREAM = Symbol.builder()
+            .namespace("smithy_aws_core.aio.checksums", ".")
+            .name("AsyncChecksumStream")
+            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+            .build();
 
     private static final ConfigProperty REQUEST_CHECKSUM_CALCULATION = checksumSetting(
             "request_checksum_calculation",
@@ -54,8 +68,8 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
                     + "request, such as with ``checksum_mode``. A payload is validated when it's "
                     + "read to the end, and a mismatch raises ``ChecksumMismatchError``.");
 
-    // The type, resolver, and validator of each setting are named after it
-    // in smithy-aws-core.
+    // The type, resolver program, and validator of each setting are named after
+    // it in smithy-aws-core.
     private static ConfigProperty checksumSetting(String name, String typeName, String documentation) {
         return ConfigProperty.builder()
                 .name(name)
@@ -69,8 +83,8 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
                 .defaultValue("when_supported")
                 .resolver(writer -> writer.writeInline("$T",
                         Symbol.builder()
-                                .namespace("smithy_aws_core.aio.config.resolvers", ".")
-                                .name("resolve_" + name)
+                                .namespace("smithy_aws_core.config.resolvers", ".")
+                                .name("resolve_" + name + "_program")
                                 .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                                 .build()))
                 .validator(Symbol.builder()
@@ -86,22 +100,12 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
         var model = context.model();
         var service = context.settings().service(model);
         var traits = checksumTraits(model, service);
-        if (traits.isEmpty() || CodegenUtils.getAsyncConfigSymbol(context.settings(), model).isEmpty()) {
+        if (traits.isEmpty() || !CodegenUtils.isAwsService(context)) {
             return List.of();
         }
 
-        final String moduleName = context.settings().moduleName();
         final SymbolReference plugin = SymbolReference.builder()
-                .symbol(Symbol.builder()
-                        .namespace(String.format("%s.%s", moduleName, PLUGIN_FILE), ".")
-                        .definitionFile(String.format("./src/%s/%s.py", moduleName, PLUGIN_FILE))
-                        .name("flexible_checksums_plugin")
-                        .build())
-                .build();
-        final Symbol interceptor = Symbol.builder()
-                .namespace("smithy_aws_core.interceptors.checksums", ".")
-                .name("FlexibleChecksumsInterceptor")
-                .addDependency(AwsPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("checksums"))
+                .symbol(CodegenUtils.aioSymbol(context.settings(), PLUGIN_FILE, "flexible_checksums_plugin"))
                 .build();
 
         // Each setting is only added to clients it has an effect on.
@@ -116,15 +120,22 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
                 builder
                         .pythonPlugin(plugin)
                         .writeAdditionalFiles((c) -> {
-                            String filename = "src/%s/%s.py".formatted(moduleName, PLUGIN_FILE);
+                            var filename = plugin.getSymbol().getDefinitionFile();
+                            var asyncConfig = CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model());
                             c.writerDelegator()
-                                    .useFileWriter(filename, moduleName + ".", writer -> {
-                                        writer.write(CHECKSUMS_PLUGIN,
-                                                CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model())
-                                                        .orElseThrow(),
-                                                interceptor);
-                                    });
-                            return List.of(filename);
+                                    .useFileWriter(filename,
+                                            plugin.getSymbol().getNamespace(),
+                                            writer -> writer.write(CHECKSUMS_PLUGIN,
+                                                    asyncConfig,
+                                                    INTERCEPTOR,
+                                                    ASYNC_STREAM));
+                            var syncFile = SyncVariant.writeSyncTwin(c,
+                                    plugin.getSymbol(),
+                                    CHECKSUMS_PLUGIN,
+                                    asyncConfig,
+                                    INTERCEPTOR,
+                                    ASYNC_STREAM);
+                            return List.of(filename, syncFile);
                         })
                         .build());
     }

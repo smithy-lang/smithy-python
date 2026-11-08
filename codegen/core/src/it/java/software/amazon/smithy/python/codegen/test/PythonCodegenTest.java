@@ -44,17 +44,35 @@ public class PythonCodegenTest {
                 .build();
         plugin.execute(context);
 
-        var client = Files.readString(tempDir.resolve("src/weather/client.py"));
-        assertFalse(client.contains("retry_mode="));
-        assertFalse(client.contains("max_attempts="));
-        assertTrue(client.contains("(AsyncClient):"));
-        assertTrue(client.contains("await self._prepare_call("));
-        assertTrue(client.contains("from . import models as _models"));
+        var client = Files.readString(tempDir.resolve("src/weather/aio/client.py"));
+        assertTrue(client.contains("class AsyncWeather(AsyncClient[AsyncConfig]):"));
+        assertTrue(client.contains("return AsyncConfig()"));
+        assertFalse(client.contains("_post_setup"));
+        assertTrue(client.contains("await self._invoke("));
+        assertTrue(client.contains("from .. import models as _models"));
         assertTrue(client.contains("_models.GET_CITY,"));
 
-        var config = Files.readString(tempDir.resolve("src/weather/config.py"));
+        var config = Files.readString(tempDir.resolve("src/weather/aio/config.py"));
         assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
         assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));
+
+        var syncClient = Files.readString(tempDir.resolve("src/weather/client.py"));
+        assertTrue(syncClient.contains("class Weather(Client[Config]):"));
+        assertTrue(syncClient.contains("return self._invoke("));
+        // Sync operations carry the same docs as async ones.
+        assertTrue(syncClient.contains("An instance of `GetCityInput`."));
+
+        var aioInit = Files.readString(tempDir.resolve("src/weather/aio/__init__.py"));
+        assertTrue(aioInit.contains("__all__ = [\"AsyncWeather\", \"AsyncConfig\"]"));
+        var init = Files.readString(tempDir.resolve("src/weather/__init__.py"));
+        assertTrue(init.contains("__all__ = [\"Weather\", \"Config\", \"AsyncWeather\", \"AsyncConfig\"]"));
+        assertTrue(init.contains("\"AsyncWeather\": \".aio.client\""));
+
+        // Async configs take either kind of endpoint resolver; sync ones take sync only.
+        assertTrue(config.contains("endpoint_resolver: EndpointResolver | AsyncEndpointResolver"));
+
+        var syncConfig = Files.readString(tempDir.resolve("src/weather/config.py"));
+        assertTrue(syncConfig.contains("self.transport = transport or Urllib3HTTPClient()"));
 
         // An output that models a "responseMetadata" member gets both the SDK-reserved
         // response_metadata attribute and the escaped modeled member, so neither shadows
@@ -86,8 +104,9 @@ public class PythonCodegenTest {
         var endpoints = Files.readString(tempDir.resolve("src/weather/_private/endpoints.py"));
         assertTrue(endpoints.contains("(default endpointRuleSet) endpoint is not set"));
         assertTrue(config.contains(
-                "self.endpoint_resolver = endpoint_resolver or AsyncBddEndpointResolver(BDD)"));
-        assertTrue(config.contains("from ._private.endpoints import BDD"));
+                "self.endpoint_resolver = endpoint_resolver or BddEndpointResolver(BDD)"));
+        assertTrue(config.contains("from .._private.endpoints import BDD"));
+        assertTrue(syncConfig.contains("from ._private.endpoints import BDD"));
         assertTrue(schemas.contains("smithy.api#longPoll"));
         assertTrue(schemas.contains("\"timeoutMillis\": 20000"));
     }

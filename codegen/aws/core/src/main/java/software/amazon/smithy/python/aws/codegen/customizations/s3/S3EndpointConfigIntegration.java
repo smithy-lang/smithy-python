@@ -14,6 +14,7 @@ import software.amazon.smithy.model.shapes.ShapeType;
 import software.amazon.smithy.python.aws.codegen.AwsPythonDependency;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -48,13 +49,15 @@ public final class S3EndpointConfigIntegration implements PythonIntegration {
                     "AWS_S3_DISABLE_EXPRESS_SESSION_AUTH",
                     "s3_disable_express_session_auth"));
 
-    private static final Symbol ASYNC_SHARED_CONFIG_CONTEXT = awsCoreSymbol(
-            "smithy_aws_core.aio.config",
-            "AsyncSharedConfigContext");
     private static final Symbol RESOLVED = awsCoreSymbol("smithy_aws_core.config.types", "Resolved");
-    private static final Symbol RESOLVE_BOOL = awsCoreSymbol(
-            "smithy_aws_core.aio.config.resolvers",
-            "resolve_bool");
+    private static final Symbol RESOLVE_BOOL_PROGRAM = awsCoreSymbol(
+            "smithy_aws_core.config.resolvers",
+            "resolve_bool_program");
+    private static final Symbol PROGRAM = Symbol.builder()
+            .name("Program")
+            .namespace("smithy_core.program", ".")
+            .addDependency(SmithyPythonDependency.SMITHY_CORE)
+            .build();
 
     /**
      * A config field for a client context parameter.
@@ -107,13 +110,14 @@ public final class S3EndpointConfigIntegration implements PythonIntegration {
     }
 
     private static void writeResolver(PythonWriter writer, String function, S3Field field) {
+        writer.addStdlibImport("typing", "Any");
         writer.write("""
-                async def $L(ctx: $T) -> $T[bool | None]:
-                    return await $T(ctx, env_vars=($S,), profile_keys=($S,))""",
+                def $L(ctx: Any) -> $T[$T[bool | None]]:
+                    return $T(ctx, env_vars=($S,), profile_keys=($S,))""",
                 function,
-                ASYNC_SHARED_CONFIG_CONTEXT,
+                PROGRAM,
                 RESOLVED,
-                RESOLVE_BOOL,
+                RESOLVE_BOOL_PROGRAM,
                 field.envVar(),
                 field.profileKey());
     }

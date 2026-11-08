@@ -9,7 +9,7 @@ import pytest
 from smithy_core.aio.types import (
     AsyncBytesProvider,
     AsyncBytesReader,
-    SeekableAsyncBytesReader,
+    AsyncSeekableBytesReader,
 )
 from smithy_core.exceptions import SmithyError
 
@@ -38,7 +38,7 @@ async def test_read_bytes() -> None:
 
 
 async def test_buffered_seekable_read_byes() -> None:
-    reader = SeekableAsyncBytesReader(b"foo")
+    reader = AsyncSeekableBytesReader(b"foo")
     assert reader.tell() == 0
     assert await reader.read() == b"foo"
     assert reader.tell() == 3
@@ -53,7 +53,7 @@ async def test_read_bytearray() -> None:
 
 
 async def test_buffered_seekable_read_bytearray() -> None:
-    reader = SeekableAsyncBytesReader(bytearray(b"foo"))
+    reader = AsyncSeekableBytesReader(bytearray(b"foo"))
     assert reader.tell() == 0
     assert await reader.read() == b"foo"
     assert reader.tell() == 3
@@ -70,7 +70,7 @@ async def test_read_byte_stream() -> None:
 
 async def test_buffered_seekable_read_byte_stream() -> None:
     source = BytesIO(b"foo")
-    reader = SeekableAsyncBytesReader(source)
+    reader = AsyncSeekableBytesReader(source)
     assert reader.tell() == 0
     assert source.tell() == 0
     assert await reader.read() == b"foo"
@@ -89,7 +89,7 @@ async def test_read_async_byte_stream() -> None:
 
 async def test_buffered_seekable_read_async_byte_stream() -> None:
     source = BytesIO(b"foo")
-    reader = SeekableAsyncBytesReader(AsyncBytesReader(source))
+    reader = AsyncSeekableBytesReader(AsyncBytesReader(source))
     assert reader.tell() == 0
     assert source.tell() == 0
     assert await reader.read() == b"foo"
@@ -134,7 +134,7 @@ async def test_seek_unseekable_raises_notimplemented() -> None:
 
 async def test_buffered_seekable_read_async_iterator() -> None:
     source = BytesIO(b"foo")
-    reader = SeekableAsyncBytesReader(_AsyncIteratorWrapper(source))
+    reader = AsyncSeekableBytesReader(_AsyncIteratorWrapper(source))
     assert reader.tell() == 0
     assert source.tell() == 0
     assert await reader.read() == b"foo"
@@ -142,7 +142,7 @@ async def test_buffered_seekable_read_async_iterator() -> None:
     assert source.tell() == 3
 
     source = BytesIO(b"foo,bar,baz\n")
-    reader = SeekableAsyncBytesReader(_AsyncIteratorWrapper(source, chunk_size=6))
+    reader = AsyncSeekableBytesReader(_AsyncIteratorWrapper(source, chunk_size=6))
     assert source.tell() == 0
     assert reader.tell() == 0
     assert await reader.read(4) == b"foo,"
@@ -202,7 +202,7 @@ async def test_close_non_closeable_source() -> None:
 
 async def test_seekable_close_closeable_source() -> None:
     source = BytesIO(b"foo")
-    reader = SeekableAsyncBytesReader(source)
+    reader = AsyncSeekableBytesReader(source)
 
     assert not reader.closed
     assert not source.closed
@@ -222,7 +222,7 @@ async def test_seekable_close_closeable_source() -> None:
 
 async def test_buffered_seekable_close_async_closeable_source() -> None:
     source = AsyncBytesReader(BytesIO(b"foo"))
-    reader = SeekableAsyncBytesReader(source)
+    reader = AsyncSeekableBytesReader(source)
 
     assert not reader.closed
     assert not source.closed
@@ -242,7 +242,7 @@ async def test_buffered_seekable_close_async_closeable_source() -> None:
 
 async def test_seekable_close_non_closeable_source() -> None:
     source = _AsyncIteratorWrapper(BytesIO(b"foo"))
-    reader = SeekableAsyncBytesReader(source)
+    reader = AsyncSeekableBytesReader(source)
 
     assert not reader.closed
     assert reader.tell() == 0
@@ -289,7 +289,7 @@ async def test_seek() -> None:
 
 async def test_buffered_seek() -> None:
     source = BytesIO(b"foo")
-    reader = SeekableAsyncBytesReader(source)
+    reader = AsyncSeekableBytesReader(source)
 
     assert source.tell() == 0
     assert reader.tell() == 0
@@ -310,7 +310,7 @@ async def test_buffered_seek() -> None:
     assert reader.tell() == 0
 
     source = BytesIO(b"foo")
-    reader = SeekableAsyncBytesReader(source)
+    reader = AsyncSeekableBytesReader(source)
 
     assert await reader.seek(-3, 2) == 0
 
@@ -331,7 +331,7 @@ async def test_read_as_iterator() -> None:
 
 async def test_buffered_seekable_read_as_iterator() -> None:
     source = BytesIO(b"foo")
-    reader = SeekableAsyncBytesReader(source)
+    reader = AsyncSeekableBytesReader(source)
 
     assert reader.tell() == 0
 
@@ -357,7 +357,7 @@ async def test_iter_chunks() -> None:
 
 async def test_buffered_seekable_iter_chunks() -> None:
     source = BytesIO(b"foo")
-    reader = SeekableAsyncBytesReader(source)
+    reader = AsyncSeekableBytesReader(source)
 
     assert reader.tell() == 0
 
@@ -557,12 +557,3 @@ async def test_aexit_flushes() -> None:
     # The draining task should be able to complete without errors. When next it
     # tries to get a chunk, the provider's iterator will exit.
     await drain_task
-
-
-async def test_source_is_the_wrapped_object() -> None:
-    stream = BytesIO(b"foo")
-    assert AsyncBytesReader(stream).source is stream
-
-    source = AsyncBytesReader(b"foo").source
-    assert isinstance(source, BytesIO)
-    assert source.read() == b"foo"

@@ -42,8 +42,8 @@ public class AwsCodegenTest {
                 .build();
         plugin.execute(context);
 
-        var config = Files.readString(tempDir.resolve("src/restjson/config.py"));
-        assertTrue(config.contains("Overrides(AwsConfigOverrides, total=False):"));
+        var config = Files.readString(tempDir.resolve("src/restjson/aio/config.py"));
+        assertTrue(config.contains("Overrides(AsyncAwsConfigOverrides, total=False):"));
         assertTrue(config.contains("api_key: str | None"));
         assertTrue(config.contains("@dataclass(kw_only=True, repr=False, init=False)"));
         assertTrue(config.contains("**overrides: Unpack["));
@@ -57,22 +57,17 @@ public class AwsCodegenTest {
         assertTrue(config.contains("default_factory=lambda: AIOHTTPClient()"));
         assertFalse(config.contains("from smithy_http.aio.crt import AWSCRTHTTPClient"));
 
-        var client = Files.readString(tempDir.resolve("src/restjson/client.py"));
+        var client = Files.readString(tempDir.resolve("src/restjson/aio/client.py"));
         assertInOrder(
                 client,
-                "(AsyncClient):",
-                "config = await AsyncRESTJSONConfig.resolve()",
-                "for plugin in self._client_plugins:",
-                "for plugin in self._plugins:",
-                "await self._post_setup(config)",
-                "self._config = config");
-        assertTrue(client.contains("async def _post_setup(self, config:"));
-        assertTrue(client.contains("for plugin in default_plugins:"));
-        assertTrue(client.contains("await self._prepare_call("));
-        assertTrue(client.contains("self._build_call("));
-        assertFalse(client.contains("plugin(self._config)"));
-        assertTrue(client.contains("retry_mode=config.retry_mode"));
-        assertTrue(client.contains("max_attempts=config.max_attempts"));
+                "(AsyncClient[AsyncRESTJSONConfig]):",
+                "_client_plugins = (",
+                "await self._invoke(",
+                "async def _new_config(self) -> AsyncRESTJSONConfig:",
+                "return await AsyncRESTJSONConfig.resolve()");
+        assertFalse(client.contains("def __init__("));
+        assertFalse(client.contains("def _ensure_setup("));
+        assertFalse(client.contains("def _prepare_call["));
 
         var schemas = Files.readString(tempDir.resolve("src/restjson/_private/schemas.py"));
         assertTrue(schemas.contains("aws.protocols#restJson1"));
@@ -90,9 +85,9 @@ public class AwsCodegenTest {
         var endpoints = Files.readString(tempDir.resolve("src/restjson/_private/endpoints.py"));
         assertTrue(endpoints.contains("\"https://rest-json-1.{Region}.{PartitionResult#dnsSuffix}\""));
         // Formatting may wrap the call, so match its parts.
-        assertTrue(config.contains("AsyncBddEndpointResolver("));
+        assertTrue(config.contains("BddEndpointResolver("));
         assertTrue(config.contains("BDD, extensions=[AWS_RULES_EXTENSION]"));
-        assertTrue(config.contains("from ._private.endpoints import BDD"));
+        assertTrue(config.contains("from .._private.endpoints import BDD"));
         assertTrue(config.contains("from smithy_aws_core.endpoints import AWS_RULES_EXTENSION"));
         // The default rules declare the FIPS and dual-stack built-ins, so the config gets
         // their fields; they don't declare the account ID endpoint mode.
@@ -103,11 +98,11 @@ public class AwsCodegenTest {
         assertInOrder(config,
                 "\"use_fips_endpoint\": FieldSpec(",
                 "default=None,",
-                "resolver=resolve_use_fips_endpoint");
+                "resolver=resolve_use_fips_endpoint_program");
         assertInOrder(config,
                 "\"use_dualstack_endpoint\": FieldSpec(",
                 "default=None,",
-                "resolver=resolve_use_dualstack_endpoint");
+                "resolver=resolve_use_dualstack_endpoint_program");
         assertFalse(config.contains("account_id_endpoint_mode"));
     }
 

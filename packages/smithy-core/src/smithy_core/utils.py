@@ -9,7 +9,8 @@ from typing import Any, overload
 from urllib.parse import urlsplit
 
 from . import URI as _URI
-from .exceptions import ExpectationNotMetError
+from .exceptions import AsyncBodyError, ExpectationNotMetError
+from .interfaces import AnyStreamingBlob, BytesReader, StreamingBlob, is_bytes_reader
 from .rfc3986 import UNRESERVED_HOST_MATCHER as _UNRESERVED_HOST_MATCHER
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "limited_parse_float",
     "limited_serialize_float",
     "parse_uri",
+    "read_streaming_blob",
     "remove_dot_segments",
     "serialize_epoch_seconds",
     "serialize_float",
@@ -316,3 +318,20 @@ def parse_uri(url: str) -> _URI:
         query=parts.query or None,
         fragment=parts.fragment or None,
     )
+
+
+def read_streaming_blob(body: AnyStreamingBlob) -> bytes:
+    """Synchronously reads a streaming blob into bytes.
+
+    :param body: The streaming blob to read from.
+    :raises AsyncBodyError: If the body is an async type.
+    """
+    match body:
+        case bytes():
+            return body
+        case bytearray():
+            return bytes(body)
+        case BytesReader() if is_bytes_reader(body):
+            return body.read()
+        case _:
+            raise AsyncBodyError(f"Expected type {StreamingBlob}, but was {type(body)}")

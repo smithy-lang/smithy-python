@@ -5,11 +5,10 @@ import json
 from collections.abc import AsyncIterator
 
 import pytest
-from smithy_core.aio.utils import async_list
+from smithy_core.aio.utils import list_async
 from smithy_core.documents import DocumentValue
-from smithy_http import tuples_to_fields
-from smithy_http.aio import HTTPResponse
-from smithy_http.aio.restjson import parse_rest_json_error_info
+from smithy_http import HTTPResponse, tuples_to_fields
+from smithy_http.aio.restjson import parse_rest_json_error_info_async
 from smithy_http.restjson import RestJsonErrorInfo
 
 
@@ -78,9 +77,9 @@ async def test_parse_rest_json_error_info(
     response = HTTPResponse(
         status=400,
         fields=tuples_to_fields(headers),
-        body=async_list([json.dumps(body).encode()]),
+        body=list_async([json.dumps(body).encode()]),
     )
-    actual = await parse_rest_json_error_info(response)
+    actual = await parse_rest_json_error_info_async(response)
     assert actual == expected
 
 
@@ -115,7 +114,7 @@ async def test_parse_rest_json_error_info_without_body(
     response = HTTPResponse(
         status=400, fields=tuples_to_fields(headers), body=_ExceptionThrowingBody()
     )
-    actual = await parse_rest_json_error_info(response, check_body=False)
+    actual = await parse_rest_json_error_info_async(response, check_body=False)
     assert actual == expected
 
 
@@ -123,7 +122,7 @@ async def test_parse_error_info_non_json_body() -> None:
     response = HTTPResponse(
         status=400,
         fields=tuples_to_fields([]),
-        body=async_list(
+        body=list_async(
             [
                 (
                     b"<html>\r\n<head><title>400 Bad Request</title></head>\r\n"
@@ -133,5 +132,5 @@ async def test_parse_error_info_non_json_body() -> None:
         ),
     )
     expected = RestJsonErrorInfo("Unknown", "Unknown", None)
-    actual = await parse_rest_json_error_info(response, check_body=True)
+    actual = await parse_rest_json_error_info_async(response, check_body=True)
     assert actual == expected

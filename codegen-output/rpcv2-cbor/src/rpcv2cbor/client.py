@@ -2,15 +2,9 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import logging
-from typing import Any
 
-from smithy_core.aio.client import AsyncClient, AsyncClientCall, AsyncRequestPipeline
-from smithy_core.deserializers import DeserializeableShape
-from smithy_core.exceptions import ExpectationNotMetError
-from smithy_core.schemas import APIOperation
-from smithy_core.serializers import SerializeableShape
+from smithy_core.client import Client
 from smithy_http.plugins import user_agent_plugin
 
 from . import models as _models
@@ -55,99 +49,15 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class RpcV2Protocol(AsyncClient):
+class RpcV2Protocol(Client[Config]):
     """Client for RpcV2Protocol"""
 
-    def __init__(
-        self, config: Config | None = None, plugins: list[Plugin] | None = None
-    ):
-        """
-        Constructor for `RpcV2Protocol`.
+    _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
-        Args:
-            config:
-                Optional configuration for the client. Here you can set things like
-                the endpoint for HTTP services or auth credentials.
-            plugins:
-                A list of callables applied once to the client's base configuration.
-                Their changes are inherited by every operation invocation.
-        """
-        super().__init__()
-        self._config = config
-        self._plugins = plugins
-        self._client_plugins: list[Plugin] = [aws_user_agent_plugin, user_agent_plugin]
-
-    async def _ensure_setup(self) -> Config:
-        if not self._setup_done:
-            async with self._derive_lock:
-                if self._closed:
-                    raise RuntimeError(
-                        "Cannot invoke an operation on a client that has been closed."
-                    )
-                if not self._setup_done:
-                    if self._config is None:
-                        config = Config()
-                    else:
-                        # Copy so plugins don't mutate the caller's config.
-                        config = deepcopy(self._config)
-                    for plugin in self._client_plugins:
-                        plugin(config)
-                    if self._plugins:
-                        for plugin in self._plugins:
-                            plugin(config)
-                    # Publish state only after setup fully succeeds, so a
-                    # failed _post_setup leaves the caller's config untouched
-                    # (no re-applied plugins) and the transport closeable.
-                    await self._post_setup(config)
-                    self._transport = config.transport
-                    self._config = config
-                    self._setup_done = True
-        assert self._config is not None
-        return self._config
-
-    async def _post_setup(self, config: Config) -> None:
-        pass
-
-    async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
+    def empty_input_output(
         self,
-        input: I,
-        operation: APIOperation[I, O],
-        default_plugins: list[Plugin],
-        plugins: list[Plugin] | None,
-    ) -> tuple[AsyncRequestPipeline[Any, Any], AsyncClientCall[I, O]]:
-        if self._closed:
-            raise RuntimeError(
-                "Cannot invoke an operation on a client that has been closed."
-            )
-        config = await self._ensure_setup()
-        if default_plugins or plugins:
-            # Keep operation-plugin mutations scoped to this call.
-            config = deepcopy(config)
-            for plugin in default_plugins:
-                plugin(config)
-            if plugins:
-                for plugin in plugins:
-                    plugin(config)
-        if (
-            config.protocol is None
-            or config.transport is None
-            or config.endpoint_resolver is None
-            or config.auth_scheme_resolver is None
-            or config.auth_schemes is None
-        ):
-            raise ExpectationNotMetError(
-                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
-                " and auth_schemes MUST be set on the config to make calls."
-            )
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-            retry_strategy=config.retry_strategy
-        )
-        return self._build_call(
-            input, operation, config=config, retry_strategy=retry_strategy
-        )
-
-    async def empty_input_output(
-        self, input: EmptyInputOutputInput, plugins: list[Plugin] | None = None
+        input: EmptyInputOutputInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> EmptyInputOutputOutput:
         """
         Invokes the EmptyInputOutput operation.
@@ -164,13 +74,10 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `EmptyInputOutputOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.EMPTY_INPUT_OUTPUT, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.EMPTY_INPUT_OUTPUT, [], plugins)
 
-    async def float16(
-        self, input: Float16Input, plugins: list[Plugin] | None = None
+    def float16(
+        self, input: Float16Input | None = None, plugins: list[Plugin] | None = None
     ) -> Float16Output:
         """
         Invokes the Float16 operation.
@@ -187,11 +94,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `Float16Output`.
         """
-        pipeline, call = await self._prepare_call(input, _models.FLOAT16, [], plugins)
-        return await pipeline(call)
+        return self._invoke(input, _models.FLOAT16, [], plugins)
 
-    async def fractional_seconds(
-        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+    def fractional_seconds(
+        self,
+        input: FractionalSecondsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -208,13 +116,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.FRACTIONAL_SECONDS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
 
-    async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+    def greeting_with_errors(
+        self,
+        input: GreetingWithErrorsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values:
@@ -238,13 +145,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.GREETING_WITH_ERRORS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
-    async def no_input_output(
-        self, input: NoInputOutputInput, plugins: list[Plugin] | None = None
+    def no_input_output(
+        self,
+        input: NoInputOutputInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NoInputOutputOutput:
         """
         Invokes the NoInputOutput operation.
@@ -261,13 +167,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `NoInputOutputOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.NO_INPUT_OUTPUT, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.NO_INPUT_OUTPUT, [], plugins)
 
-    async def operation_with_defaults(
-        self, input: OperationWithDefaultsInput, plugins: list[Plugin] | None = None
+    def operation_with_defaults(
+        self,
+        input: OperationWithDefaultsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> OperationWithDefaultsOutput:
         """
         Invokes the OperationWithDefaults operation.
@@ -284,13 +189,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `OperationWithDefaultsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.OPERATION_WITH_DEFAULTS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.OPERATION_WITH_DEFAULTS, [], plugins)
 
-    async def optional_input_output(
-        self, input: OptionalInputOutputInput, plugins: list[Plugin] | None = None
+    def optional_input_output(
+        self,
+        input: OptionalInputOutputInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> OptionalInputOutputOutput:
         """
         Invokes the OptionalInputOutput operation.
@@ -307,13 +211,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `OptionalInputOutputOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.OPTIONAL_INPUT_OUTPUT, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.OPTIONAL_INPUT_OUTPUT, [], plugins)
 
-    async def recursive_shapes(
-        self, input: RecursiveShapesInput, plugins: list[Plugin] | None = None
+    def recursive_shapes(
+        self,
+        input: RecursiveShapesInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RecursiveShapesOutput:
         """
         Invokes the RecursiveShapes operation.
@@ -330,13 +233,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.RECURSIVE_SHAPES, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.RECURSIVE_SHAPES, [], plugins)
 
-    async def rpc_v2_cbor_dense_maps(
-        self, input: RpcV2CborDenseMapsInput, plugins: list[Plugin] | None = None
+    def rpc_v2_cbor_dense_maps(
+        self,
+        input: RpcV2CborDenseMapsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborDenseMapsOutput:
         """
         The example tests basic map serialization.
@@ -353,13 +255,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RpcV2CborDenseMapsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.RPC_V2_CBOR_DENSE_MAPS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.RPC_V2_CBOR_DENSE_MAPS, [], plugins)
 
-    async def rpc_v2_cbor_lists(
-        self, input: RpcV2CborListsInput, plugins: list[Plugin] | None = None
+    def rpc_v2_cbor_lists(
+        self,
+        input: RpcV2CborListsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborListsOutput:
         """
         This test case serializes JSON lists for the following cases for both
@@ -382,13 +283,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RpcV2CborListsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.RPC_V2_CBOR_LISTS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.RPC_V2_CBOR_LISTS, [], plugins)
 
-    async def rpc_v2_cbor_sparse_maps(
-        self, input: RpcV2CborSparseMapsInput, plugins: list[Plugin] | None = None
+    def rpc_v2_cbor_sparse_maps(
+        self,
+        input: RpcV2CborSparseMapsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborSparseMapsOutput:
         """
         Invokes the RpcV2CborSparseMaps operation.
@@ -405,13 +305,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RpcV2CborSparseMapsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.RPC_V2_CBOR_SPARSE_MAPS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.RPC_V2_CBOR_SPARSE_MAPS, [], plugins)
 
-    async def rpc_v2_cbor_unions(
-        self, input: RpcV2CborUnionsInput, plugins: list[Plugin] | None = None
+    def rpc_v2_cbor_unions(
+        self,
+        input: RpcV2CborUnionsInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
@@ -428,13 +327,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `RpcV2CborUnionsOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.RPC_V2_CBOR_UNIONS, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.RPC_V2_CBOR_UNIONS, [], plugins)
 
-    async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+    def simple_scalar_properties(
+        self,
+        input: SimpleScalarPropertiesInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
@@ -451,13 +349,12 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
 
-    async def sparse_nulls_operation(
-        self, input: SparseNullsOperationInput, plugins: list[Plugin] | None = None
+    def sparse_nulls_operation(
+        self,
+        input: SparseNullsOperationInput | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SparseNullsOperationOutput:
         """
         Invokes the SparseNullsOperation operation.
@@ -474,7 +371,7 @@ class RpcV2Protocol(AsyncClient):
         Returns:
             An instance of `SparseNullsOperationOutput`.
         """
-        pipeline, call = await self._prepare_call(
-            input, _models.SPARSE_NULLS_OPERATION, [], plugins
-        )
-        return await pipeline(call)
+        return self._invoke(input, _models.SPARSE_NULLS_OPERATION, [], plugins)
+
+    def _new_config(self) -> Config:
+        return Config()

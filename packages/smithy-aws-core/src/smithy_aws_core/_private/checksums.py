@@ -8,10 +8,13 @@ model, such as ``CRC32`` or ``SHA256``, and are compared case-insensitively.
 
 import base64
 import binascii
+import logging
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Final
 
 from smithy_core.exceptions import MissingDependencyError
+
+logger = logging.getLogger(__name__)
 
 try:
     import smithy_checksums
@@ -131,3 +134,50 @@ def response_validation_order(algorithms: Iterable[str]) -> tuple[str, ...]:
     """
     modeled = {algorithm.upper() for algorithm in algorithms}
     return tuple(a for a in _RESPONSE_VALIDATION_ORDER if a in modeled)
+
+
+class ChecksumValidator:
+    """Calculates a payload's checksum as it's read and checks it at the end."""
+
+    def __init__(self, checksum_algorithm: str, expected: bytes) -> None:
+        """Initialize the validator.
+
+        :param checksum_algorithm: The algorithm of the expected checksum.
+        :param expected: The checksum the payload must match.
+        :raises ValueError: If the algorithm isn't supported.
+        """
+        self.checksum_algorithm = checksum_algorithm
+        self._checksum = create_checksum(checksum_algorithm)
+        self._expected = expected
+        self.validated = False
+
+    def observe(self, data: bytes, size: int) -> None:
+        """Record the result of ``read(size)``, validating at the end of the payload.
+
+        :raises ChecksumMismatchError: If the payload ended and its checksum doesn't
+            match.
+        """
+        if size == 0:
+            return
+        if data:
+            self._checksum.update(data)
+        if size < 0 or not data:
+            self._validate()
+
+    def _validate(self) -> None:
+        if self.validated:
+            return
+        actual = self._checksum.digest()
+        if actual != self._expected:
+            # CAUTION: a module-level import is circular; ..checksums imports this one.
+            from ..checksums import ChecksumMismatchError
+
+            raise ChecksumMismatchError(
+                algorithm=self.checksum_algorithm,
+                expected=self._expected,
+                actual=actual,
+            )
+        self.validated = True
+        logger.debug(
+            "Validated the response payload's %s checksum", self.checksum_algorithm
+        )

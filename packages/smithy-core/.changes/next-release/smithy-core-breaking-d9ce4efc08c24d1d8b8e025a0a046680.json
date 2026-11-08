@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Renamed `smithy_core.aio.types.SeekableAsyncBytesReader` to `AsyncSeekableBytesReader`, and `close`, `seek` and `async_list` in `smithy_core.aio.utils` to `close_async`, `seek_async` and `list_async`."
+}

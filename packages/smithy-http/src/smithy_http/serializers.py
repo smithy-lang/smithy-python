@@ -12,9 +12,8 @@ from typing import TYPE_CHECKING
 from urllib.parse import quote as urlquote
 
 from smithy_core import URI
-from smithy_core.aio.types import AsyncBytesProvider, AsyncBytesReader
 from smithy_core.codecs import Codec
-from smithy_core.exceptions import SerializationError
+from smithy_core.exceptions import SerializationError, UnsupportedStreamError
 from smithy_core.schemas import Schema
 from smithy_core.serializers import (
     InterceptingSerializer,
@@ -34,10 +33,11 @@ from smithy_core.traits import (
 from smithy_core.types import PathPattern, TimestampFormat
 from smithy_core.utils import serialize_float
 
+from smithy_http import HTTPRequest as _HTTPRequest
+from smithy_http import HTTPResponse as _HTTPResponse
+from smithy_http.interfaces import HTTPRequest, HTTPResponse
+
 from . import Field, Fields, tuples_to_fields
-from .aio import HTTPRequest as _HTTPRequest
-from .aio import HTTPResponse as _HTTPResponse
-from .aio.interfaces import HTTPRequest, HTTPResponse
 from .bindings import Binding, RequestBindingMatcher
 from .schema_extensions import (
     HTTP_BINDING_SCHEMA_EXTENSION,
@@ -48,7 +48,7 @@ from .schema_extensions import (
 from .utils import join_query_params
 
 if TYPE_CHECKING:
-    from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
+    from smithy_core.interfaces import AnyStreamingBlob as AsyncStreamingBlob
 
 
 __all__ = [
@@ -73,6 +73,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         endpoint_trait: EndpointTrait | None = None,
         omit_empty_payload: bool = True,
         operation_metadata: HTTPOperationSchemaMetadata | None = None,
+        event_stream_body: "Callable[[], AsyncStreamingBlob] | None" = None,
     ) -> None:
         """Initialize an HTTPRequestSerializer.
 
@@ -83,7 +84,10 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
             handled.
         :param omit_empty_payload: Whether an empty payload should be omitted.
         :param operation_metadata: Optional cached operation binding metadata.
+        :param event_stream_body: Creates the body that event stream events are
+            written to. Event stream inputs are unsupported without it.
         """
+        self._event_stream_body = event_stream_body
         self._http_trait = http_trait
         self._endpoint_trait = endpoint_trait
         self._payload_codec = payload_codec
@@ -100,6 +104,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
             endpoint_trait=self._endpoint_trait,
             omit_empty_payload=self._omit_empty_payload,
             operation_metadata=self._operation_metadata,
+            event_stream_body=self._event_stream_body,
         )
         try:
             yield binding_serializer
@@ -108,77 +113,6 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
             raise
         else:
             self.result = binding_serializer.build_request()
-
-
-def _set_content_length(
-    fields: Fields,
-    content_length: int | None,
-    raw_payload: "AsyncStreamingBlob | None",
-    *,
-    required: bool,
-) -> None:
-    # A length the caller already set, such as with a modeled Content-Length
-    # member, takes precedence and isn't computed again.
-    if "content-length" in fields:
-        return
-
-    # A body sent with Transfer-Encoding can't also have a Content-Length.
-    if "transfer-encoding" not in fields:
-        if raw_payload is not None:
-            content_length = _compute_content_length(raw_payload)
-        if content_length is not None:
-            fields.set_field(Field(name="content-length", values=[str(content_length)]))
-            return
-
-    if required:
-        raise SerializationError(
-            "This operation requires the content length of the input stream, but "
-            "it was not provided and was unable to be computed. Provide a "
-            "seekable stream or set the content length explicitly."
-        )
-
-
-def _compute_content_length(payload: "AsyncStreamingBlob") -> int | None:
-    """Determine the length of a raw payload without consuming it.
-
-    ``bytes`` and ``bytearray`` report their length, and synchronously seekable
-    streams are measured from their current position to the end. The length of any
-    other stream, including async streams, is unknown.
-    """
-    if isinstance(payload, bytes | bytearray):
-        return len(payload)
-
-    tell = getattr(payload, "tell", None)
-    seek = getattr(payload, "seek", None)
-    if tell is None or seek is None:
-        return None
-
-    try:
-        if (seekable := getattr(payload, "seekable", None)) is not None:
-            if _is_async(is_seekable := seekable()) or not is_seekable:
-                return None
-        if _is_async(start := tell()) or _is_async(seek(0, 2)):
-            return None
-    except (OSError, ValueError, NotImplementedError):
-        # Pipes raise io.UnsupportedOperation, closed files raise ValueError, and
-        # AsyncBytesReader raises NotImplementedError if its source can't tell.
-        return None
-
-    # The stream is now at its end, so errors are raised instead of sending it on
-    # with an empty body.
-    end: int = tell()
-    seek(start, 0)
-    # A stream positioned past its end has nothing left to send.
-    return max(end - start, 0)
-
-
-def _is_async(result: object) -> bool:
-    # Wrappers of async methods return a coroutine without being declared with
-    # ``async def``. Closing it avoids a "never awaited" warning.
-    if iscoroutine(result):
-        result.close()
-        return True
-    return False
 
 
 class HTTPBindingSerializer(InterceptingSerializer):
@@ -198,6 +132,7 @@ class HTTPBindingSerializer(InterceptingSerializer):
         endpoint_trait: EndpointTrait | None = None,
         omit_empty_payload: bool = True,
         operation_metadata: HTTPOperationSchemaMetadata | None = None,
+        event_stream_body: "Callable[[], AsyncStreamingBlob] | None" = None,
     ) -> None:
         """Initialize an HTTPBindingSerializer.
 
@@ -207,6 +142,8 @@ class HTTPBindingSerializer(InterceptingSerializer):
         :param endpoint_trait: The optional endpoint trait of the operation.
         :param omit_empty_payload: Whether an empty document payload should be omitted.
         :param operation_metadata: Optional cached operation binding metadata.
+        :param event_stream_body: Creates the body that event stream events are
+            written to. Event stream inputs are unsupported without it.
         """
         self._operation_metadata = operation_metadata or (
             HTTPOperationSchemaMetadata.from_traits(http_trait, endpoint_trait)
@@ -218,14 +155,18 @@ class HTTPBindingSerializer(InterceptingSerializer):
         self._body_context: AbstractContextManager[ShapeSerializer] | None = None
         self._sync_payload: BytesIO | None = None
         self._raw_payload_serializer: RawPayloadSerializer | None = None
-        self._payload: AsyncBytesReader | AsyncBytesProvider | None = None
+        self._payload: AsyncStreamingBlob | None = None
         self._content_type: str | None = payload_codec.media_type
         self._content_length_required = False
         self._writes_document_body = False
         self._result: HTTPRequest | None = None
 
         if request_metadata.event_stream_member is not None:
-            self._payload = AsyncBytesProvider()
+            if event_stream_body is None:
+                raise UnsupportedStreamError(
+                    "Event streams are not supported by synchronous clients."
+                )
+            self._payload = event_stream_body()
             self._content_type = "application/vnd.amazon.eventstream"
             payload_serializer: ShapeSerializer = SpecificShapeSerializer()
         elif (payload_metadata := request_metadata.payload) is not None:
@@ -315,7 +256,7 @@ class HTTPBindingSerializer(InterceptingSerializer):
             ):
                 content_length = self._sync_payload.tell()
             self._sync_payload.seek(0)
-            payload = AsyncBytesReader(self._sync_payload)
+            payload = self._sync_payload
 
         headers = self.header_serializer.headers
         if self._content_type is not None and (
@@ -329,7 +270,10 @@ class HTTPBindingSerializer(InterceptingSerializer):
             fields, content_length, raw_payload, required=self._content_length_required
         )
         if self._raw_payload_serializer is not None:
-            payload = AsyncBytesReader(raw_payload or b"")
+            if isinstance(raw_payload, bytes | bytearray) or raw_payload is None:
+                payload = BytesIO(raw_payload or b"")
+            else:
+                payload = raw_payload
 
         assert payload is not None  # noqa: S101
 
@@ -409,6 +353,7 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
         http_trait: HTTPTrait,
         omit_empty_payload: bool = True,
         operation_metadata: HTTPOperationSchemaMetadata | None = None,
+        event_stream_body: "Callable[[], AsyncStreamingBlob] | None" = None,
     ) -> None:
         """Initialize an HTTPResponseSerializer.
 
@@ -417,7 +362,10 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
         :param http_trait: The HTTP trait of the operation being handled.
         :param omit_empty_payload: Whether an empty payload should be omitted.
         :param operation_metadata: Optional cached operation binding metadata.
+        :param event_stream_body: Creates the body that event stream events are
+            written to. Event stream outputs are unsupported without it.
         """
+        self._event_stream_body = event_stream_body
         self._operation_metadata = operation_metadata or (
             HTTPOperationSchemaMetadata.from_traits(http_trait)
         )
@@ -427,7 +375,7 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
 
     @contextmanager
     def begin_struct(self, schema: Schema) -> Iterator[ShapeSerializer]:
-        payload: AsyncBytesReader | AsyncBytesProvider
+        payload: AsyncStreamingBlob
         binding_serializer: HTTPResponseBindingSerializer
 
         content_type: str | None = self._payload_codec.media_type
@@ -438,7 +386,9 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
         binding_metadata = schema.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
         response_metadata = binding_metadata.response
         if response_metadata.event_stream_member is not None:
-            payload = AsyncBytesProvider()
+            if self._event_stream_body is None:
+                raise UnsupportedStreamError("Event streams require an async body.")
+            payload = self._event_stream_body()
             content_type = "application/vnd.amazon.eventstream"
             binding_serializer = HTTPResponseBindingSerializer(
                 SpecificShapeSerializer(), binding_metadata
@@ -456,7 +406,10 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
                 raw_payload = payload_serializer.payload
                 if raw_payload is None and content_length_required:
                     raw_payload = b""
-                payload = AsyncBytesReader(raw_payload or b"")
+                if isinstance(raw_payload, bytes | bytearray) or raw_payload is None:
+                    payload = BytesIO(raw_payload or b"")
+                else:
+                    payload = raw_payload
             else:
                 if payload_metadata.media_type is not None:
                     content_type = payload_metadata.media_type
@@ -468,7 +421,7 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
                 yield binding_serializer
                 content_length = sync_payload.tell()
                 sync_payload.seek(0)
-                payload = AsyncBytesReader(sync_payload)
+                payload = sync_payload
         else:
             sync_payload = BytesIO()
             payload_serializer = self._payload_codec.create_serializer(sync_payload)
@@ -488,7 +441,7 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
                 )
                 yield binding_serializer
             sync_payload.seek(0)
-            payload = AsyncBytesReader(sync_payload)
+            payload = sync_payload
 
         headers = binding_serializer.header_serializer.headers
         if content_type is not None and (
@@ -619,41 +572,6 @@ class HTTPHeaderSerializer(SpecificShapeSerializer):
         """Set the cached plan for the next top-level member write."""
         self._member_metadata = metadata
 
-    def _key_for(self, schema: Schema) -> str:
-        if self._key is not None:
-            return self._key
-        if (metadata := self._member_metadata) is not None:
-            key = (
-                metadata.response_wire_name
-                if self._response
-                else metadata.request_wire_name
-            )
-            if key is not None:
-                return key
-        return schema.expect_trait(HTTPHeaderTrait).key
-
-    def _timestamp_format_for(self, schema: Schema) -> TimestampFormat:
-        if self._timestamp_format is not None:
-            return self._timestamp_format
-        if (metadata := self._member_metadata) is not None:
-            format = (
-                metadata.response_timestamp_format
-                if self._response
-                else metadata.request_timestamp_format
-            )
-            if format is not None:
-                return format
-        if (trait := schema.get_trait(TimestampFormatTrait)) is not None:
-            return trait.format
-        return TimestampFormat.HTTP_DATE
-
-    def _has_media_type_for(self, schema: Schema) -> bool:
-        if self._has_media_type is not None:
-            return self._has_media_type
-        if (metadata := self._member_metadata) is not None:
-            return metadata.media_type is not None
-        return MediaTypeTrait in schema
-
     @contextmanager
     def begin_list(self, schema: Schema, size: int) -> Iterator[ShapeSerializer]:
         metadata = self._member_metadata
@@ -728,6 +646,41 @@ class HTTPHeaderSerializer(SpecificShapeSerializer):
                 str(self._timestamp_format_for(schema).serialize(value)),
             )
         )
+
+    def _key_for(self, schema: Schema) -> str:
+        if self._key is not None:
+            return self._key
+        if (metadata := self._member_metadata) is not None:
+            key = (
+                metadata.response_wire_name
+                if self._response
+                else metadata.request_wire_name
+            )
+            if key is not None:
+                return key
+        return schema.expect_trait(HTTPHeaderTrait).key
+
+    def _timestamp_format_for(self, schema: Schema) -> TimestampFormat:
+        if self._timestamp_format is not None:
+            return self._timestamp_format
+        if (metadata := self._member_metadata) is not None:
+            format = (
+                metadata.response_timestamp_format
+                if self._response
+                else metadata.request_timestamp_format
+            )
+            if format is not None:
+                return format
+        if (trait := schema.get_trait(TimestampFormatTrait)) is not None:
+            return trait.format
+        return TimestampFormat.HTTP_DATE
+
+    def _has_media_type_for(self, schema: Schema) -> bool:
+        if self._has_media_type is not None:
+            return self._has_media_type
+        if (metadata := self._member_metadata) is not None:
+            return metadata.media_type is not None
+        return MediaTypeTrait in schema
 
 
 class HTTPHeaderMapSerializer(MapSerializer):
@@ -806,24 +759,6 @@ class HTTPQuerySerializer(SpecificShapeSerializer):
         """Set the cached plan for the next top-level member write."""
         self._member_metadata = metadata
 
-    def _key_for(self, schema: Schema) -> str:
-        if self._key is not None:
-            return self._key
-        if (metadata := self._member_metadata) is not None:
-            if metadata.request_wire_name is not None:
-                return metadata.request_wire_name
-        return schema.expect_trait(HTTPQueryTrait).key
-
-    def _timestamp_format_for(self, schema: Schema) -> TimestampFormat:
-        if self._timestamp_format is not None:
-            return self._timestamp_format
-        if (metadata := self._member_metadata) is not None:
-            if metadata.request_timestamp_format is not None:
-                return metadata.request_timestamp_format
-        if (trait := schema.get_trait(TimestampFormatTrait)) is not None:
-            return trait.format
-        return TimestampFormat.DATE_TIME
-
     @contextmanager
     def begin_list(self, schema: Schema, size: int) -> Iterator[ShapeSerializer]:
         metadata = self._member_metadata
@@ -880,6 +815,24 @@ class HTTPQuerySerializer(SpecificShapeSerializer):
             )
         )
 
+    def _key_for(self, schema: Schema) -> str:
+        if self._key is not None:
+            return self._key
+        if (metadata := self._member_metadata) is not None:
+            if metadata.request_wire_name is not None:
+                return metadata.request_wire_name
+        return schema.expect_trait(HTTPQueryTrait).key
+
+    def _timestamp_format_for(self, schema: Schema) -> TimestampFormat:
+        if self._timestamp_format is not None:
+            return self._timestamp_format
+        if (metadata := self._member_metadata) is not None:
+            if metadata.request_timestamp_format is not None:
+                return metadata.request_timestamp_format
+        if (trait := schema.get_trait(TimestampFormatTrait)) is not None:
+            return trait.format
+        return TimestampFormat.DATE_TIME
+
 
 class HTTPPathSerializer(SpecificShapeSerializer):
     """Binds properties of a serializable shape to the HTTP URI path."""
@@ -908,20 +861,6 @@ class HTTPPathSerializer(SpecificShapeSerializer):
     def set_member_metadata(self, metadata: HTTPMemberBindingMetadata) -> None:
         """Set the cached plan for the next top-level member write."""
         self._member_metadata = metadata
-
-    def _name_for(self, schema: Schema) -> str:
-        if (metadata := self._member_metadata) is not None:
-            if metadata.request_wire_name is not None:
-                return metadata.request_wire_name
-        return schema.expect_member_name()
-
-    def _timestamp_format_for(self, schema: Schema) -> TimestampFormat:
-        if (metadata := self._member_metadata) is not None:
-            if metadata.request_timestamp_format is not None:
-                return metadata.request_timestamp_format
-        if (trait := schema.get_trait(TimestampFormatTrait)) is not None:
-            return trait.format
-        return TimestampFormat.DATE_TIME
 
     @property
     def path(self) -> str:
@@ -971,6 +910,20 @@ class HTTPPathSerializer(SpecificShapeSerializer):
         self._path_params[self._name_for(schema)] = urlquote(
             str(self._timestamp_format_for(schema).serialize(value))
         )
+
+    def _name_for(self, schema: Schema) -> str:
+        if (metadata := self._member_metadata) is not None:
+            if metadata.request_wire_name is not None:
+                return metadata.request_wire_name
+        return schema.expect_member_name()
+
+    def _timestamp_format_for(self, schema: Schema) -> TimestampFormat:
+        if (metadata := self._member_metadata) is not None:
+            if metadata.request_timestamp_format is not None:
+                return metadata.request_timestamp_format
+        if (trait := schema.get_trait(TimestampFormatTrait)) is not None:
+            return trait.format
+        return TimestampFormat.DATE_TIME
 
 
 class HTTPQueryMapSerializer(MapSerializer):
@@ -1041,14 +994,6 @@ class HostPrefixSerializer(SpecificShapeSerializer):
         """Set the cached plan for the next top-level member write."""
         self._member_metadata = metadata
 
-    def _name_for(self, schema: Schema) -> str:
-        if (
-            self._member_metadata is not None
-            and self._member_metadata.request_wire_name is not None
-        ):
-            return self._member_metadata.request_wire_name
-        return schema.expect_member_name()
-
     @property
     def host_prefix(self) -> str:
         """The formatted host prefix.
@@ -1061,6 +1006,14 @@ class HostPrefixSerializer(SpecificShapeSerializer):
     def write_string(self, schema: Schema, value: str) -> None:
         self._payload_serializer.write_string(schema, value)
         self._prefix_params[self._name_for(schema)] = urlquote(value, safe=".")
+
+    def _name_for(self, schema: Schema) -> str:
+        if (
+            self._member_metadata is not None
+            and self._member_metadata.request_wire_name is not None
+        ):
+            return self._member_metadata.request_wire_name
+        return schema.expect_member_name()
 
 
 class HTTPResponseCodeSerializer(SpecificShapeSerializer):
@@ -1081,3 +1034,74 @@ class HTTPResponseCodeSerializer(SpecificShapeSerializer):
 
     def write_integer(self, schema: Schema, value: int) -> None:
         self.response_code = value
+
+
+def _set_content_length(
+    fields: Fields,
+    content_length: int | None,
+    raw_payload: "AsyncStreamingBlob | None",
+    *,
+    required: bool,
+) -> None:
+    # A length the caller already set, such as with a modeled Content-Length
+    # member, takes precedence and isn't computed again.
+    if "content-length" in fields:
+        return
+
+    # A body sent with Transfer-Encoding can't also have a Content-Length.
+    if "transfer-encoding" not in fields:
+        if raw_payload is not None:
+            content_length = _compute_content_length(raw_payload)
+        if content_length is not None:
+            fields.set_field(Field(name="content-length", values=[str(content_length)]))
+            return
+
+    if required:
+        raise SerializationError(
+            "This operation requires the content length of the input stream, but "
+            "it was not provided and was unable to be computed. Provide a "
+            "seekable stream or set the content length explicitly."
+        )
+
+
+def _compute_content_length(payload: "AsyncStreamingBlob") -> int | None:
+    """Determine the length of a raw payload without consuming it.
+
+    ``bytes`` and ``bytearray`` report their length, and synchronously seekable
+    streams are measured from their current position to the end. The length of any
+    other stream, including async streams, is unknown.
+    """
+    if isinstance(payload, bytes | bytearray):
+        return len(payload)
+
+    tell = getattr(payload, "tell", None)
+    seek = getattr(payload, "seek", None)
+    if tell is None or seek is None:
+        return None
+
+    try:
+        if (seekable := getattr(payload, "seekable", None)) is not None:
+            if _is_coroutine(is_seekable := seekable()) or not is_seekable:
+                return None
+        if _is_coroutine(start := tell()) or _is_coroutine(seek(0, 2)):
+            return None
+    except (OSError, ValueError, NotImplementedError):
+        # Pipes raise io.UnsupportedOperation, closed files raise ValueError, and
+        # AsyncBytesReader raises NotImplementedError if its source can't tell.
+        return None
+
+    # The stream is now at its end, so errors are raised instead of sending it on
+    # with an empty body.
+    end: int = tell()
+    seek(start, 0)
+    # A stream positioned past its end has nothing left to send.
+    return max(end - start, 0)
+
+
+def _is_coroutine(result: object) -> bool:
+    # Wrappers of async methods return a coroutine without being declared with
+    # ``async def``. Closing it avoids a "never awaited" warning.
+    if iscoroutine(result):
+        result.close()
+        return True
+    return False

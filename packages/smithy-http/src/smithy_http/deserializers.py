@@ -4,15 +4,15 @@ import datetime
 from base64 import b64decode
 from collections.abc import Callable
 from decimal import Decimal
-from inspect import iscoroutinefunction
-from typing import TYPE_CHECKING, Any, TypeGuard
+from typing import TYPE_CHECKING
 
-from smithy_core.aio.interfaces import AsyncByteStream
-from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer, SpecificShapeDeserializer
 from smithy_core.exceptions import UnsupportedStreamError
-from smithy_core.interfaces import is_bytes_reader, is_streaming_blob
+from smithy_core.interfaces import (
+    is_bytes_reader,
+    is_streaming_blob,
+)
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeType
 from smithy_core.traits import (
@@ -23,14 +23,15 @@ from smithy_core.traits import (
 from smithy_core.types import TimestampFormat
 from smithy_core.utils import ensure_utc, strict_parse_bool, strict_parse_float
 
-from .aio.interfaces import HTTPResponse
+from smithy_http.interfaces import HTTPResponse
+
 from .bindings import Binding
 from .interfaces import Field, Fields
 from .schema_extensions import HTTP_BINDING_SCHEMA_EXTENSION, HTTPPayloadMetadata
 from .utils import split_header
 
 if TYPE_CHECKING:
-    from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
+    from smithy_core.interfaces import AnyStreamingBlob as AsyncStreamingBlob
     from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 
 
@@ -55,57 +56,6 @@ _PREFIX_HEADER_OMISSIONS = frozenset(
         "x-forwarded-for",
     }
 )
-
-
-def _discard_value(schema: Schema, deserializer: ShapeDeserializer) -> None:
-    """Consume a value that belongs to a non-document HTTP binding."""
-    if deserializer.is_null():
-        deserializer.read_null()
-        return
-
-    match schema.shape_type:
-        case ShapeType.STRUCTURE | ShapeType.UNION:
-            deserializer.read_struct(schema, _discard_value)
-        case ShapeType.LIST:
-            value_schema = schema.members["member"]
-            deserializer.read_list(
-                schema,
-                lambda value: _discard_value(value_schema, value),
-            )
-        case ShapeType.MAP:
-            value_schema = schema.members["value"]
-            deserializer.read_map(
-                schema,
-                lambda _, value: _discard_value(value_schema, value),
-            )
-        case ShapeType.BOOLEAN:
-            deserializer.read_boolean(schema)
-        case ShapeType.BLOB:
-            deserializer.read_blob(schema)
-        case ShapeType.BYTE:
-            deserializer.read_byte(schema)
-        case ShapeType.SHORT:
-            deserializer.read_short(schema)
-        case ShapeType.INTEGER | ShapeType.INT_ENUM:
-            deserializer.read_integer(schema)
-        case ShapeType.LONG:
-            deserializer.read_long(schema)
-        case ShapeType.BIG_INTEGER:
-            deserializer.read_big_integer(schema)
-        case ShapeType.FLOAT:
-            deserializer.read_float(schema)
-        case ShapeType.DOUBLE:
-            deserializer.read_double(schema)
-        case ShapeType.BIG_DECIMAL:
-            deserializer.read_big_decimal(schema)
-        case ShapeType.STRING | ShapeType.ENUM:
-            deserializer.read_string(schema)
-        case ShapeType.TIMESTAMP:
-            deserializer.read_timestamp(schema)
-        case ShapeType.DOCUMENT:
-            deserializer.read_document(schema)
-        case _:
-            raise TypeError(f"Unsupported document member type: {schema.shape_type}")
 
 
 class HTTPResponseDeserializer(SpecificShapeDeserializer):
@@ -435,14 +385,7 @@ class RawPayloadDeserializer(SpecificShapeDeserializer):
         return self._consume_payload()
 
     def read_data_stream(self, schema: Schema) -> "AsyncStreamingBlob":
-        if self._is_async_reader(self._payload):
-            return self._payload
-        return AsyncBytesReader(self._payload)
-
-    def _is_async_reader(self, obj: Any) -> TypeGuard[AsyncByteStream]:
-        return isinstance(obj, AsyncByteStream) and iscoroutinefunction(
-            getattr(obj, "read")
-        )
+        return self._payload
 
     def _consume_payload(self) -> bytes:
         if isinstance(self._payload, bytes):
@@ -455,3 +398,54 @@ class RawPayloadDeserializer(SpecificShapeDeserializer):
             "Unable to read async stream. This stream must be buffered prior "
             "to creating the deserializer."
         )
+
+
+def _discard_value(schema: Schema, deserializer: ShapeDeserializer) -> None:
+    """Consume a value that belongs to a non-document HTTP binding."""
+    if deserializer.is_null():
+        deserializer.read_null()
+        return
+
+    match schema.shape_type:
+        case ShapeType.STRUCTURE | ShapeType.UNION:
+            deserializer.read_struct(schema, _discard_value)
+        case ShapeType.LIST:
+            value_schema = schema.members["member"]
+            deserializer.read_list(
+                schema,
+                lambda value: _discard_value(value_schema, value),
+            )
+        case ShapeType.MAP:
+            value_schema = schema.members["value"]
+            deserializer.read_map(
+                schema,
+                lambda _, value: _discard_value(value_schema, value),
+            )
+        case ShapeType.BOOLEAN:
+            deserializer.read_boolean(schema)
+        case ShapeType.BLOB:
+            deserializer.read_blob(schema)
+        case ShapeType.BYTE:
+            deserializer.read_byte(schema)
+        case ShapeType.SHORT:
+            deserializer.read_short(schema)
+        case ShapeType.INTEGER | ShapeType.INT_ENUM:
+            deserializer.read_integer(schema)
+        case ShapeType.LONG:
+            deserializer.read_long(schema)
+        case ShapeType.BIG_INTEGER:
+            deserializer.read_big_integer(schema)
+        case ShapeType.FLOAT:
+            deserializer.read_float(schema)
+        case ShapeType.DOUBLE:
+            deserializer.read_double(schema)
+        case ShapeType.BIG_DECIMAL:
+            deserializer.read_big_decimal(schema)
+        case ShapeType.STRING | ShapeType.ENUM:
+            deserializer.read_string(schema)
+        case ShapeType.TIMESTAMP:
+            deserializer.read_timestamp(schema)
+        case ShapeType.DOCUMENT:
+            deserializer.read_document(schema)
+        case _:
+            raise TypeError(f"Unsupported document member type: {schema.shape_type}")

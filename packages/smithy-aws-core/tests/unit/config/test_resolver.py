@@ -16,43 +16,44 @@ from typing import Any, ClassVar
 from unittest.mock import patch
 
 import pytest
-from smithy_aws_core.aio.config.aws_config import AsyncAwsConfig, AwsConfigOverrides
-from smithy_aws_core.aio.config.context import AsyncSharedConfigContext
-from smithy_aws_core.aio.config.resolvers import (
-    EndpointUriResolver,
-    resolve_account_id_endpoint_mode,
-    resolve_bool,
-    resolve_endpoint_uri,
-    resolve_max_attempts,
-    resolve_region,
-    resolve_request_checksum_calculation,
-    resolve_response_checksum_validation,
-    resolve_retry_mode,
-    resolve_sdk_ua_app_id,
-    resolve_use_dualstack_endpoint,
-    resolve_use_fips_endpoint,
+from smithy_aws_core.aio.config.aws_config import (
+    AsyncAwsConfig,
+    AsyncAwsConfigOverrides,
 )
+from smithy_aws_core.aio.config.context import AsyncSharedConfigContext
 from smithy_aws_core.aio.identity.environment import (
     AsyncEnvironmentCredentialsResolver,
 )
 from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
+from smithy_aws_core.config.aws_config import AwsConfig
 from smithy_aws_core.config.exceptions import (
     ConfigError,
     ConfigValidationError,
     ProfileNotFoundError,
 )
-from smithy_aws_core.config.types import (
-    UNSET,
-    ConfigSource,
-    FieldSpec,
+from smithy_aws_core.config.resolvers import (
+    EndpointUriResolver,
+    _endpoint_uri,  # pyright: ignore[reportPrivateUsage]
+    _max_attempts,  # pyright: ignore[reportPrivateUsage]
+    _region,  # pyright: ignore[reportPrivateUsage]
+    _retry_mode,  # pyright: ignore[reportPrivateUsage]
+    _sdk_ua_app_id,  # pyright: ignore[reportPrivateUsage]
+    resolve_account_id_endpoint_mode_program,
+    resolve_bool_program,
+    resolve_request_checksum_calculation_program,
+    resolve_response_checksum_validation_program,
+    resolve_use_dualstack_endpoint_program,
+    resolve_use_fips_endpoint_program,
 )
+from smithy_aws_core.config.types import UNSET, ConfigSource, FieldSpec, Resolved
 from smithy_aws_core.config.validators import (
     validate_request_checksum_calculation,
     validate_response_checksum_validation,
 )
-from smithy_core.aio.retries import AsyncStandardRetryStrategy
+from smithy_core.aio.program import run_program_async
+from smithy_core.retries import StandardRetryStrategy
+from smithy_http.aio.testing import AsyncMockHTTPClient
 from smithy_http.interfaces import HTTPRequestConfiguration
-from smithy_http.testing import MockHTTPClient
 
 
 class NullFileSystem:
@@ -66,6 +67,67 @@ class FakeFileSystem:
 
     async def read_file(self, path: str) -> str | None:
         return self._files.get(path)
+
+
+async def resolve_region(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
+    return await run_program_async(_region(ctx))
+
+
+async def resolve_retry_mode(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
+    return await run_program_async(_retry_mode(ctx))
+
+
+async def resolve_max_attempts(ctx: AsyncSharedConfigContext) -> Resolved[int | None]:
+    return await run_program_async(_max_attempts(ctx))
+
+
+async def resolve_endpoint_uri(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
+    return await run_program_async(_endpoint_uri(ctx))
+
+
+async def resolve_sdk_ua_app_id(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
+    return await run_program_async(_sdk_ua_app_id(ctx))
+
+
+async def resolve_bool(
+    ctx: AsyncSharedConfigContext,
+    *,
+    env_vars: tuple[str, ...] = (),
+    profile_keys: tuple[str, ...] = (),
+) -> Resolved[bool | None]:
+    return await run_program_async(
+        resolve_bool_program(ctx, env_vars=env_vars, profile_keys=profile_keys)
+    )
+
+
+async def resolve_use_fips_endpoint(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[bool | None]:
+    return await run_program_async(resolve_use_fips_endpoint_program(ctx))
+
+
+async def resolve_use_dualstack_endpoint(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[bool | None]:
+    return await run_program_async(resolve_use_dualstack_endpoint_program(ctx))
+
+
+async def resolve_account_id_endpoint_mode(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[str | None]:
+    return await run_program_async(resolve_account_id_endpoint_mode_program(ctx))
+
+
+async def resolve_request_checksum_calculation(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[str | None]:
+    return await run_program_async(resolve_request_checksum_calculation_program(ctx))
+
+
+async def resolve_response_checksum_validation(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[str | None]:
+    return await run_program_async(resolve_response_checksum_validation_program(ctx))
 
 
 class TestResolveRegion:
@@ -374,7 +436,7 @@ class TestConstructionBlocking:
         )
 
     def test_typed_overrides_cover_all_base_config_fields(self):
-        assert set(AwsConfigOverrides.__annotations__) == set(
+        assert set(AsyncAwsConfigOverrides.__annotations__) == set(
             AsyncAwsConfig._FIELDS  # pyright: ignore[reportPrivateUsage]
         )
 
@@ -515,9 +577,9 @@ class TestConfigDeepCopy:
 
         # The transport, credentials resolver, and retry strategy hold network
         # clients, locks, and shared retry quotas that must not be duplicated
-        transport = MockHTTPClient()
+        transport = AsyncMockHTTPClient()
         resolver = AsyncEnvironmentCredentialsResolver()
-        retry_strategy = AsyncStandardRetryStrategy()
+        retry_strategy = StandardRetryStrategy()
         config.transport = transport
         config.aws_credentials_identity_resolver = resolver
         config.retry_strategy = retry_strategy
@@ -716,7 +778,7 @@ class TestEndpointUriResolver:
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://service-env.com"
             assert result.source == ConfigSource.ENV
 
@@ -732,7 +794,7 @@ class TestEndpointUriResolver:
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://global-env.com"
             assert result.source == ConfigSource.ENV
 
@@ -751,7 +813,7 @@ class TestEndpointUriResolver:
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://service-env.com"
 
     @pytest.mark.asyncio
@@ -774,7 +836,7 @@ class TestEndpointUriResolver:
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://service-config.com"
             assert result.source == ConfigSource.PROFILE
 
@@ -791,7 +853,7 @@ class TestEndpointUriResolver:
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://global-config.com"
             assert result.source == ConfigSource.PROFILE
 
@@ -818,7 +880,7 @@ class TestEndpointUriResolver:
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://service-config.com"
 
     @pytest.mark.asyncio
@@ -844,7 +906,7 @@ class TestEndpointUriResolver:
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://global-env.com"
 
     @pytest.mark.asyncio
@@ -857,7 +919,7 @@ class TestEndpointUriResolver:
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value is UNSET
 
     @pytest.mark.asyncio
@@ -875,7 +937,7 @@ class TestEndpointUriResolver:
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://from-env.com"
             assert result.source == ConfigSource.ENV
 
@@ -1053,12 +1115,12 @@ class _ChecksumServiceConfig(AsyncAwsConfig):
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
         "request_checksum_calculation": FieldSpec(
             default="when_supported",
-            resolver=resolve_request_checksum_calculation,
+            resolver=resolve_request_checksum_calculation_program,
             validator=validate_request_checksum_calculation,
         ),
         "response_checksum_validation": FieldSpec(
             default="when_supported",
-            resolver=resolve_response_checksum_validation,
+            resolver=resolve_response_checksum_validation_program,
             validator=validate_response_checksum_validation,
         ),
         **AsyncAwsConfig._FIELDS,
@@ -1194,6 +1256,66 @@ class TestResolveRequestChecksumCalculation:
                 fs=NullFileSystem(), **overrides
             )
             assert config.request_checksum_calculation == "when_required"
+
+
+class _SyncFakeFileSystem:
+    def __init__(self, files: dict[str, str] | None = None):
+        self._files = files or {}
+
+    def read_file(self, path: str) -> str | None:
+        return self._files.get(path)
+
+
+@dataclass(kw_only=True, repr=False, init=False)
+class _SyncChecksumServiceConfig(AwsConfig):
+    """Mirrors the sync config codegen emits for services with the httpChecksum trait."""
+
+    request_checksum_calculation: str | None = None
+    response_checksum_validation: str | None = None
+
+    _FIELDS: ClassVar[dict[str, FieldSpec]] = {
+        "request_checksum_calculation": FieldSpec(
+            default="when_supported",
+            resolver=resolve_request_checksum_calculation_program,
+            validator=validate_request_checksum_calculation,
+        ),
+        "response_checksum_validation": FieldSpec(
+            default="when_supported",
+            resolver=resolve_response_checksum_validation_program,
+            validator=validate_response_checksum_validation,
+        ),
+        **AwsConfig._FIELDS,
+    }
+
+
+class TestSyncChecksumSettings:
+    def test_defaults_to_when_supported(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-west-2"}, clear=True):
+            config = _SyncChecksumServiceConfig.resolve(fs=_SyncFakeFileSystem())
+            assert config.request_checksum_calculation == "when_supported"
+            assert config.response_checksum_validation == "when_supported"
+
+    def test_resolves_from_env_and_profile_in_lowercase(self):
+        fs = _SyncFakeFileSystem(
+            {
+                "/fake/config": (
+                    "[profile default]\nresponse_checksum_validation = When_Required\n"
+                )
+            }
+        )
+        with patch.dict(
+            os.environ,
+            {
+                "AWS_REGION": "us-west-2",
+                "AWS_REQUEST_CHECKSUM_CALCULATION": "WHEN_REQUIRED",
+            },
+            clear=True,
+        ):
+            config = _SyncChecksumServiceConfig.resolve(
+                fs=fs, config_file_path="/fake/config"
+            )
+            assert config.request_checksum_calculation == "when_required"
+            assert config.response_checksum_validation == "when_required"
 
 
 class TestResolveEndpointUri:

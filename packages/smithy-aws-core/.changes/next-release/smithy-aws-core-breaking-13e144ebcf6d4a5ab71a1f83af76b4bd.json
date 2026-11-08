@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "`smithy_aws_core.identity.EnvironmentCredentialsResolver` is now the synchronous resolver. Async code uses `smithy_aws_core.aio.identity.AsyncEnvironmentCredentialsResolver`."
+}

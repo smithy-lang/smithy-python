@@ -4,13 +4,6 @@ from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 
 from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
 from .chain import AsyncIdentityChain
-from .chain.providers.environment import AsyncEnvironmentCredentialsProvider
-from .chain.providers.process import AsyncProfileCredentialProcessProvider
-from .chain.providers.profile import (
-    AsyncProfileSessionCredentialsProvider,
-    AsyncProfileStaticCredentialsProvider,
-)
-from .chain.providers.shared_config import AsyncSharedConfigProvider
 from .container import AsyncContainerCredentialsResolver
 from .environment import AsyncEnvironmentCredentialsResolver
 from .imds import AsyncIMDSCredentialsResolver
@@ -24,14 +17,9 @@ type AsyncAWSCredentialsResolver = AsyncIdentityResolver[
 __all__ = (
     "AsyncAWSCredentialsResolver",
     "AsyncContainerCredentialsResolver",
-    "AsyncEnvironmentCredentialsProvider",
     "AsyncEnvironmentCredentialsResolver",
     "AsyncIMDSCredentialsResolver",
     "AsyncIdentityChain",
     "AsyncProcessCredentialsResolver",
-    "AsyncProfileCredentialProcessProvider",
-    "AsyncProfileSessionCredentialsProvider",
-    "AsyncProfileStaticCredentialsProvider",
-    "AsyncSharedConfigProvider",
     "AsyncStaticCredentialsResolver",
 )

@@ -3,11 +3,11 @@
 import asyncio
 from io import BytesIO
 from typing import Any
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 from smithy_aws_event_stream._private.serializers import EventSerializer
-from smithy_aws_event_stream.aio import AWSEventPublisher
+from smithy_aws_event_stream.aio import AsyncAWSEventPublisher
 from smithy_aws_event_stream.events import Event, EventMessage
 from smithy_core.aio.types import AsyncBytesProvider
 from smithy_core.serializers import SerializeableShape
@@ -46,7 +46,7 @@ def test_serialize_initial_response():
 
 async def test_publisher_closes_reader():
     writer = AsyncBytesProvider()
-    publisher: AWSEventPublisher[Any] = AWSEventPublisher(
+    publisher: AsyncAWSEventPublisher[Any] = AsyncAWSEventPublisher(
         payload_codec=JSONCodec(), async_writer=writer
     )
 
@@ -59,7 +59,7 @@ async def test_publisher_closes_reader():
 
 async def test_send_after_close():
     writer = AsyncBytesProvider()
-    publisher: AWSEventPublisher[Any] = AWSEventPublisher(
+    publisher: AsyncAWSEventPublisher[Any] = AsyncAWSEventPublisher(
         payload_codec=JSONCodec(), async_writer=writer
     )
 
@@ -71,7 +71,7 @@ async def test_send_after_close():
 
 async def test_send_to_closed_writer():
     writer = AsyncBytesProvider()
-    publisher: AWSEventPublisher[Any] = AWSEventPublisher(
+    publisher: AsyncAWSEventPublisher[Any] = AsyncAWSEventPublisher(
         payload_codec=JSONCodec(), async_writer=writer
     )
 
@@ -86,9 +86,10 @@ async def test_close_sends_empty_end_frame_when_signing():
     writer = AsyncBytesProvider()
     end_frame = EventMessage()
     signing_config = AsyncMock()
+    signing_config.signer = Mock()
     signing_config.signer.sign_empty.return_value = end_frame
 
-    publisher: AWSEventPublisher[Any] = AWSEventPublisher(
+    publisher: AsyncAWSEventPublisher[Any] = AsyncAWSEventPublisher(
         payload_codec=JSONCodec(), async_writer=writer, signing_config=signing_config
     )
 
@@ -98,7 +99,7 @@ async def test_close_sends_empty_end_frame_when_signing():
     await publisher.close()
     written = await reader
 
-    signing_config.signer.sign_empty.assert_awaited_once()
+    signing_config.signer.sign_empty.assert_called_once()
     assert publisher.closed
     assert writer.closed
 

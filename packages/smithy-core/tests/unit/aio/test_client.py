@@ -8,18 +8,13 @@ from typing import Any, cast
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from smithy_core.aio.client import OPERATION as OPERATION_PROPERTY
-from smithy_core.aio.client import AsyncClient, AsyncClientCall
+from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.eventstream import AsyncDuplexEventStream, AsyncInputEventStream
 from smithy_core.aio.interfaces import AsyncClientTransport
-from smithy_core.aio.retries import (
-    RETRY_STRATEGY,
-    AsyncAdaptiveRetryStrategy,
-    AsyncSimpleRetryStrategy,
-    AsyncStandardRetryStrategy,
-)
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.auth import RESOLVED_IDENTITY, AuthOption
+from smithy_core.client import OPERATION as OPERATION_PROPERTY
+from smithy_core.client import ClientCall
 from smithy_core.endpoints import RESOLVED_ENDPOINT, EndpointAuthScheme
 from smithy_core.exceptions import (
     CallError,
@@ -35,7 +30,13 @@ from smithy_core.interceptors import (
     RequestContext,
 )
 from smithy_core.response import EMPTY_RESPONSE_METADATA
-from smithy_core.retries import ExponentialRetryBackoffStrategy
+from smithy_core.retries import (
+    RETRY_STRATEGY,
+    AdaptiveRetryStrategy,
+    ExponentialRetryBackoffStrategy,
+    SimpleRetryStrategy,
+    StandardRetryStrategy,
+)
 from smithy_core.shapes import ShapeID
 from smithy_core.types import TypedProperties
 
@@ -143,14 +144,14 @@ async def test_response_metadata_kept_when_retry_times_out_waiting_for_send_toke
         raise CallError("Rate exceeded", is_retry_safe=True, is_throttling_error=True)
 
     harness.protocol.deserialize_response = throttle  # type: ignore[method-assign]
-    strategy = AsyncAdaptiveRetryStrategy(max_attempts=3)
+    strategy = AdaptiveRetryStrategy(max_attempts=3)
     timeout = TimeoutError("Failed to acquire 1.0 tokens within 30.0s")
 
     with (
         patch.object(
-            strategy,
-            "acquire_from_token_bucket",
-            AsyncMock(side_effect=[None, timeout]),
+            strategy.rate_limiter,
+            "_send_token_waits",
+            Mock(side_effect=[iter(()), timeout]),
         ),
         patch("smithy_core.aio.client.sleep", AsyncMock()),
     ):
@@ -235,12 +236,12 @@ async def test_auth_option_signer_properties_override_scheme_defaults() -> None:
 
 def _signing_call(
     scheme: Mock, option: AuthOption, endpoint: StubEndpoint
-) -> AsyncClientCall[Any, Any]:
+) -> ClientCall[Any, Any]:
     return replace(
         client_call(),
         auth_scheme_resolver=Mock(resolve_auth_scheme=Mock(return_value=[option])),
         supported_auth_schemes={option.scheme_id: scheme},
-        endpoint_resolver=Mock(resolve_endpoint=AsyncMock(return_value=endpoint)),
+        endpoint_resolver=Mock(resolve_endpoint=Mock(return_value=endpoint)),
     )
 
 
@@ -337,6 +338,25 @@ async def test_modified_input_is_serialized_and_used_to_resolve_endpoint() -> No
     assert resolver.resolved_inputs == [interceptor.replacement]
 
 
+class _AsyncEndpointResolver:
+    def __init__(self) -> None:
+        self.resolved_inputs: list[Any] = []
+
+    async def resolve_endpoint(self, params: Any) -> StubEndpoint:
+        self.resolved_inputs.append(params.input)
+        return StubEndpoint()
+
+
+async def test_async_endpoint_resolvers_are_awaited() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    resolver = _AsyncEndpointResolver()
+    call = replace(client_call(), endpoint_resolver=resolver)
+
+    await harness.pipeline(call)
+
+    assert resolver.resolved_inputs == [call.input]
+
+
 class _RecordHooks(Interceptor[Any, Any, Any, Any]):
     def __init__(self, events: list[str]) -> None:
         self.events = events
@@ -364,10 +384,10 @@ async def test_identity_resolves_before_the_endpoint_and_signing_after_hooks() -
         return identity
 
     class _Resolver(StubEndpointResolver):
-        async def resolve_endpoint(self, params: Any) -> Any:
+        def resolve_endpoint(self, params: Any) -> Any:
             events.append("resolve_endpoint")
             assert params.context[RESOLVED_IDENTITY] is identity
-            return await super().resolve_endpoint(params)
+            return super().resolve_endpoint(params)
 
     def signer_properties(**kwargs: Any) -> dict[str, Any]:
         events.append("signer_properties")
@@ -432,7 +452,7 @@ class _CountingTransport:
         self.close_calls += 1
 
 
-class _StubClient(AsyncClient):
+class _StubClient(AsyncClient[Any]):
     """Simulates a generated client's post-setup state via the public ctor."""
 
     def __init__(self, *, setup: bool = True) -> None:
@@ -448,7 +468,7 @@ class _StubClient(AsyncClient):
 
 
 def test_build_call_adds_retry_strategy_to_request_properties() -> None:
-    retry_strategy = AsyncStandardRetryStrategy()
+    retry_strategy = StandardRetryStrategy()
     config = Mock(interceptors=[])
     client = _StubClient()
     _, call = client._build_call(  # pyright: ignore[reportPrivateUsage]
@@ -469,7 +489,7 @@ def test_build_call_adds_operation_to_request_properties() -> None:
         cast(Any, Mock()),
         operation,
         config=Mock(interceptors=[]),
-        retry_strategy=AsyncStandardRetryStrategy(),
+        retry_strategy=StandardRetryStrategy(),
     )
 
     assert call.context[OPERATION_PROPERTY] is operation
@@ -544,7 +564,7 @@ def _streaming_call_failing_once(
     return replace(
         client_call(),
         operation=operation,
-        retry_strategy=AsyncSimpleRetryStrategy(
+        retry_strategy=SimpleRetryStrategy(
             backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=0),
             max_attempts=2,
         ),

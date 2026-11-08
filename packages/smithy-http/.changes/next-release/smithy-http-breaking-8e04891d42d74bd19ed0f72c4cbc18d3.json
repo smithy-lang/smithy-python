@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Moved `HTTPRequest` and `HTTPResponse` to `smithy_http`, and their protocols and `HTTPErrorIdentifier` to `smithy_http.interfaces`. Removed `consume_body_async`."
+}

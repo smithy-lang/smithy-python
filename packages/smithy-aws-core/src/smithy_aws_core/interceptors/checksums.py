@@ -4,12 +4,10 @@ import logging
 from copy import copy, deepcopy
 from dataclasses import replace
 from inspect import iscoroutinefunction
-from typing import Any
+from typing import Any, Protocol
 
 from smithy_core._model_naming import member_field_name
-from smithy_core.aio.client import OPERATION
-from smithy_core.aio.interfaces import StreamingBlob
-from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.client import OPERATION
 from smithy_core.exceptions import SmithyError
 from smithy_core.interceptors import (
     InputContext,
@@ -21,10 +19,9 @@ from smithy_core.interfaces import TypedProperties
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.traits import HTTPHeaderTrait
 from smithy_core.types import PropertyKey
-from smithy_http import Field
-from smithy_http.aio import HTTPResponse
-from smithy_http.aio.interfaces import HTTPRequest
-from smithy_http.aio.interfaces import HTTPResponse as HTTPResponseInterface
+from smithy_http import Field, HTTPResponse
+from smithy_http.interfaces import HTTPRequest
+from smithy_http.interfaces import HTTPResponse as HTTPResponseInterface
 
 from .._private.checksums import (
     DEFAULT_ALGORITHM,
@@ -37,14 +34,21 @@ from .._private.checksums import (
     encode_digest,
     response_validation_order,
 )
-from ..aio.checksums import AsyncChecksumStream
 from ..business_metrics import AwsFeatureId, register_feature_id
-from ..checksums import UnsupportedChecksumAlgorithmError
+from ..checksums import ChecksumStream, UnsupportedChecksumAlgorithmError
 from ..traits import HTTPChecksumTrait
 
-__all__ = ["FlexibleChecksumsInterceptor"]
+__all__ = ["ChecksumStreamFactory", "FlexibleChecksumsInterceptor"]
 
 logger = logging.getLogger(__name__)
+
+
+class ChecksumStreamFactory(Protocol):
+    """Wraps a response payload in a stream that validates its checksum."""
+
+    def __call__(
+        self, source: Any, /, *, checksum_algorithm: str, expected: bytes
+    ) -> Any: ...
 
 
 class FlexibleChecksumsInterceptor(
@@ -58,12 +62,15 @@ class FlexibleChecksumsInterceptor(
     change them per call. Operations without the trait are passed through unchanged.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, stream: ChecksumStreamFactory = ChecksumStream) -> None:
         """Initialize the interceptor.
 
+        :param stream: Wraps validated response payloads. Async clients pass
+            ``AsyncChecksumStream``.
         :raises MissingDependencyError: If smithy-checksums isn't installed.
         """
         assert_checksums_installed()
+        self._stream = stream
 
     def modify_before_serialization(self, context: InputContext[Any]) -> Any:
         operation = context.properties.get(OPERATION)
@@ -127,19 +134,18 @@ class FlexibleChecksumsInterceptor(
                 algorithm = DEFAULT_ALGORITHM
             if algorithm is None:
                 return request
-            source = _payload_source(request.body)
-            value = _calculate(algorithm, source)
+            value = _calculate(algorithm, request.body)
             if value is None:
                 if chosen is not None or trait.request_checksum_required:
                     raise SmithyError(
                         f"A {algorithm} request checksum can't be calculated for a "
-                        f"payload of type {type(source).__name__}. Send bytes or a "
+                        f"payload of type {type(request.body).__name__}. Send bytes or a "
                         "seekable file, or set the checksum on the request."
                     )
                 logger.debug(
                     "Skipping the request checksum: it can't be calculated for a "
                     "payload of type %s.",
-                    type(source),
+                    type(request.body),
                 )
                 return request
             saved = (algorithm, value)
@@ -180,7 +186,7 @@ class FlexibleChecksumsInterceptor(
                 status=response.status,
                 fields=response.fields,
                 reason=response.reason,
-                body=AsyncChecksumStream(
+                body=self._stream(
                     response.body, checksum_algorithm=algorithm, expected=expected
                 ),
             )
@@ -250,16 +256,6 @@ def _chosen_algorithm(
     if chosen.upper() not in SUPPORTED_ALGORITHMS:
         raise UnsupportedChecksumAlgorithmError(chosen)
     return chosen.upper()
-
-
-def _payload_source(body: StreamingBlob) -> object:
-    # The serializer wraps payloads in a reader, which may itself wrap one set on
-    # the request. Subclasses may transform what they read, such as by compressing
-    # it, so only plain readers are unwrapped.
-    source: object = body
-    while type(source) is AsyncBytesReader:
-        source = source.source
-    return source
 
 
 def _calculate(algorithm: str, source: Any) -> str | None:

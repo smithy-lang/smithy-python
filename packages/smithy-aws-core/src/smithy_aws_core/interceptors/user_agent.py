@@ -5,17 +5,18 @@ import os
 from typing import Any
 
 import smithy_core
-from smithy_core.aio.retries import (
-    RETRY_STRATEGY,
-    AsyncAdaptiveRetryStrategy,
-    AsyncStandardRetryStrategy,
-)
+from smithy_core.auth import RESOLVED_IDENTITY
 from smithy_core.endpoints import STATIC_ENDPOINT_CONFIG
 from smithy_core.interceptors import Interceptor, RequestContext
 from smithy_core.interfaces import TypedProperties
+from smithy_core.retries import (
+    RETRY_STRATEGY,
+    AdaptiveRetryStrategy,
+    StandardRetryStrategy,
+)
 from smithy_http import Field
-from smithy_http.aio.interfaces import HTTPRequest
 from smithy_http.interceptors.user_agent import USER_AGENT
+from smithy_http.interfaces import HTTPRequest
 from smithy_http.user_agent import RawStringUserAgentComponent, UserAgentComponent
 
 from .. import __version__
@@ -90,6 +91,7 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
         # registered up to that point are included. User-Agent isn't signed by AWS
         # auth schemes, so changing it after signing doesn't affect the signature.
         request = context.transport_request
+        self._register_resolved_account_id(context.properties)
         encoded = encode_feature_ids(context.properties.get(FEATURE_IDS, {}))
         if encoded and "User-Agent" in request.fields:
             user_agent = request.fields["User-Agent"].as_string()
@@ -102,15 +104,20 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
         # Adaptive is a subclass of standard, so it's checked first. Other
         # strategies have no feature ID and aren't reported.
         strategy = properties.get(RETRY_STRATEGY)
-        if isinstance(strategy, AsyncAdaptiveRetryStrategy):
+        if isinstance(strategy, AdaptiveRetryStrategy):
             register_feature_id(properties, AwsFeatureId.RETRY_MODE_ADAPTIVE)
-        elif isinstance(strategy, AsyncStandardRetryStrategy):
+        elif isinstance(strategy, StandardRetryStrategy):
             register_feature_id(properties, AwsFeatureId.RETRY_MODE_STANDARD)
 
     def _register_endpoint_override(self, properties: TypedProperties) -> None:
         config = properties.get(STATIC_ENDPOINT_CONFIG)
         if config is not None and config.endpoint_uri is not None:
             register_feature_id(properties, AwsFeatureId.ENDPOINT_OVERRIDE)
+
+    def _register_resolved_account_id(self, properties: TypedProperties) -> None:
+        identity = properties.get(RESOLVED_IDENTITY)
+        if getattr(identity, "account_id", None):
+            register_feature_id(properties, AwsFeatureId.RESOLVED_ACCOUNT_ID)
 
     def _build_sdk_metadata(self) -> list[UserAgentComponent]:
         return [

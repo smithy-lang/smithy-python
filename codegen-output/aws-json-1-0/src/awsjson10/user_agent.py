@@ -3,10 +3,10 @@
 from smithy_aws_core.interceptors.user_agent import UserAgentInterceptor
 
 from . import __version__
-from .config import AsyncJSONRPC10Config
+from .config import JSONRPC10Config
 
 
-def aws_user_agent_plugin(config: AsyncJSONRPC10Config):
+def aws_user_agent_plugin(config: JSONRPC10Config):
     config.interceptors.append(
         UserAgentInterceptor(
             ua_suffix=config.user_agent_extra,

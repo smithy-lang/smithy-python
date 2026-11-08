@@ -8,14 +8,12 @@ from collections.abc import Awaitable, Callable
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from smithy_aws_core.aio.identity.chain.provider import ChainSetup
-from smithy_aws_core.aio.identity.chain.providers.process import (
-    AsyncProfileCredentialProcessProvider,
-)
+from smithy_aws_core.aio.identity.chain.provider import AsyncChainSetup
 from smithy_aws_core.aio.identity.process import AsyncProcessCredentialsResolver
 from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.identity.chain.providers.process import (
     ProcessConfigurationError,
+    ProfileCredentialProcessProvider,
     _split_process_command,
 )
 
@@ -94,10 +92,10 @@ def test_split_process_command_rejects_unclosed_quote(platform: str) -> None:
 
 
 async def test_ignores_non_aws_identity_type(
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     merged_config: Callable[..., MergedConfig],
 ) -> None:
-    provider = AsyncProfileCredentialProcessProvider()
+    provider = ProfileCredentialProcessProvider()
 
     setup = await setup_provider(
         provider,
@@ -113,20 +111,20 @@ async def test_ignores_non_aws_identity_type(
 
 
 async def test_requires_active_profile(
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
 ) -> None:
-    setup = await setup_provider(AsyncProfileCredentialProcessProvider())
+    setup = await setup_provider(ProfileCredentialProcessProvider())
 
     assert setup.resolvers == ()
     assert not setup.terminal
 
 
 async def test_missing_process_does_not_register(
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
-        AsyncProfileCredentialProcessProvider(),
+        ProfileCredentialProcessProvider(),
         config_file=merged_config({"default": {}}),
         profile_name="default",
     )
@@ -136,11 +134,11 @@ async def test_missing_process_does_not_register(
 
 
 async def test_registers_terminal_resolver(
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
-        AsyncProfileCredentialProcessProvider(),
+        ProfileCredentialProcessProvider(),
         config_file=merged_config(
             {
                 "default": {
@@ -186,11 +184,11 @@ async def test_registers_terminal_resolver(
 
 
 async def test_account_id_falls_back_to_profile_config(
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
-        AsyncProfileCredentialProcessProvider(),
+        ProfileCredentialProcessProvider(),
         config_file=merged_config(
             {
                 "default": {

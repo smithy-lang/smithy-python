@@ -1,18 +1,17 @@
 .DEFAULT_GOAL:=help
 
-.PHONY: help install format-java check-java build-java generate-protocol-tests generate-codegen-output-py api-snapshot aio-check ci lint-py check-py lint-rust check-rust third-party-licenses test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
+.PHONY: help install format-java check-java build-java generate-protocol-tests generate-codegen-output-py api-snapshot aio-check gen ci lint-py check-py lint-rust check-rust third-party-licenses test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
 
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 
 # CI runs this target on 3.12 only; see typecheck-protocols.
-static-analysis: ## Runs check-py, typecheck-protocols, and api-snapshot.
+static-analysis: ## Runs check-py, typecheck-protocols, api-snapshot, and aio-check.
 	$(MAKE) check-py
 	$(MAKE) typecheck-protocols
 	$(MAKE) api-snapshot
-	# TODO: enable once aws-sdk-signers passes the aio naming rules.
-	# $(MAKE) aio-check
+	$(MAKE) aio-check
 
 
 test-unit: ## Runs the python unit tests.
@@ -98,12 +97,24 @@ generate-codegen-output-py: ## Generates Python output and asserts no snapshot d
 	@echo "codegen-output-py is up to date."
 
 
-api-snapshot: ## Records the public API surface of each package and asserts no git diff.
+api-snapshot: ## Records the public API surface and dual-mode mirrors of each package and asserts no git diff.
 	uv run python scripts/api-snapshot/api_snapshot.py
 
 
 aio-check: ## Enforces aio naming and separation in package sources.
 	uv run python scripts/aio-naming/aio_naming.py
+
+
+# `make gen dynamodb`: the second goal is the client name, so swallow it as a no-op target.
+ifeq (gen,$(firstword $(MAKECMDGOALS)))
+CLIENT ?= $(word 2,$(MAKECMDGOALS))
+ifneq (,$(word 2,$(MAKECMDGOALS)))
+$(eval $(word 2,$(MAKECMDGOALS)):;@:)
+endif
+endif
+
+gen: ## Generates an AWS SDK client from a sibling aws-sdk-python model into ./workspace/clients (make gen dynamodb).
+	uv run python scripts/gen-client/gen_client.py "$(CLIENT)"
 
 
 lint-py: ## Runs linters and formatters on the python packages.

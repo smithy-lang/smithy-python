@@ -5,20 +5,19 @@ from urllib.parse import parse_qsl
 
 from pytest import fail, mark, raises
 from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
-from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_core.aio.utils import async_list
-from smithy_http import tuples_to_fields
-from smithy_http.aio import HTTPResponse as _smithy_http_aio_HTTPResponse
-from smithy_http.aio.interfaces import (
+from smithy_core.retries import SimpleRetryStrategy
+from smithy_http import HTTPResponse as _smithy_http_HTTPResponse, tuples_to_fields
+from smithy_http.interfaces import (
+    HTTPClientConfiguration,
     HTTPRequest,
-    HTTPResponse as _smithy_http_aio_interfaces_HTTPResponse,
+    HTTPRequestConfiguration,
+    HTTPResponse as _smithy_http_interfaces_HTTPResponse,
 )
-from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 from smithy_test import deep_equal
 
-from ec2query.client import AsyncEC2ProtocolClient
-from ec2query.config import AsyncEC2ProtocolConfig
+from ec2query.aio.client import AsyncEC2ProtocolClient
+from ec2query.aio.config import AsyncEC2ProtocolConfig
 from ec2query.models import (
     DatetimeOffsetsInput,
     DatetimeOffsetsOutput,
@@ -152,7 +151,7 @@ async def test_ec2_query_empty_input_and_empty_output_request_empty_input_and_em
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -265,7 +264,7 @@ async def test_ec2_query_endpoint_trait_request_endpoint_operation() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -350,7 +349,7 @@ async def test_ec2_query_endpoint_trait_with_host_label_request_endpoint_with_ho
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -555,7 +554,7 @@ async def test_ec2_query_host_with_path_request_host_with_path_operation() -> No
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/custom",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -656,7 +655,7 @@ async def test_ec2_nested_structures_request_nested_structures() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -738,7 +737,7 @@ async def test_ec2_query_no_input_and_output_request_no_input_and_output() -> No
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -851,7 +850,7 @@ async def test_sdk_applied_content_encoding_ec2_query_request_put_with_content_e
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -927,7 +926,7 @@ async def test_sdk_appends_gzip_and_ignores_http_provided_encoding_ec2_query_req
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -999,7 +998,7 @@ async def test_ec2_protocol_idempotency_token_auto_fill_request_query_idempotenc
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1079,7 +1078,7 @@ async def test_ec2_protocol_idempotency_token_auto_fill_is_set_request_query_ide
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1159,7 +1158,7 @@ async def test_ec2_lists_request_query_lists() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1240,7 +1239,7 @@ async def test_ec2_empty_query_lists_request_query_lists() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1321,7 +1320,7 @@ async def test_ec2_list_arg_with_xml_name_member_request_query_lists() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1399,7 +1398,7 @@ async def test_ec2_list_member_with_xml_name_request_query_lists() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1477,7 +1476,7 @@ async def test_ec2_list_nested_struct_with_list_request_query_lists() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1555,7 +1554,7 @@ async def test_ec2_timestamps_input_request_query_timestamps() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1676,7 +1675,7 @@ async def test_ec2_simple_input_params_strings_request_simple_input_params() -> 
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1758,7 +1757,7 @@ async def test_ec2_simple_input_params_string_and_boolean_true_request_simple_in
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1840,7 +1839,7 @@ async def test_ec2_simple_input_params_strings_and_boolean_false_request_simple_
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1918,7 +1917,7 @@ async def test_ec2_simple_input_params_integer_request_simple_input_params() -> 
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -1996,7 +1995,7 @@ async def test_ec2_simple_input_params_float_request_simple_input_params() -> No
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2074,7 +2073,7 @@ async def test_ec2_simple_input_params_blob_request_simple_input_params() -> Non
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2154,7 +2153,7 @@ async def test_ec2_enums_request_simple_input_params() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2234,7 +2233,7 @@ async def test_ec2_query_request_simple_input_params() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2314,7 +2313,7 @@ async def test_ec2_query_is_preferred_request_simple_input_params() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2397,7 +2396,7 @@ async def test_ec2_xml_name_is_uppercased_request_simple_input_params() -> None:
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2482,7 +2481,7 @@ async def test_ec2_query_name_distinct_from_xml_name_and_member_name_request_sim
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2566,7 +2565,7 @@ async def test_ec2_query_supports_na_n_float_inputs_request_simple_input_params(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2648,7 +2647,7 @@ async def test_ec2_query_supports_infinity_float_inputs_request_simple_input_par
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -2728,7 +2727,7 @@ async def test_ec2_query_supports_negative_infinity_float_inputs_request_simple_
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
-            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
@@ -3469,7 +3468,7 @@ class RequestTestHTTPClient:
         request: HTTPRequest,
         *,
         request_config: HTTPRequestConfiguration | None = None,
-    ) -> _smithy_http_aio_interfaces_HTTPResponse:
+    ) -> _smithy_http_interfaces_HTTPResponse:
         # Raise the exception with the request object to bypass actual request handling
         raise TestHttpServiceError(request)
 
@@ -3498,8 +3497,8 @@ class ResponseTestHTTPClient:
         request: HTTPRequest,
         *,
         request_config: HTTPRequestConfiguration | None = None,
-    ) -> _smithy_http_aio_HTTPResponse:
+    ) -> _smithy_http_HTTPResponse:
         # Pre-construct the response from the request and return it
-        return _smithy_http_aio_HTTPResponse(
-            status=self.status, fields=self.fields, body=async_list([self.body])
+        return _smithy_http_HTTPResponse(
+            status=self.status, fields=self.fields, body=AsyncBytesReader(self.body)
         )

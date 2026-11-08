@@ -56,18 +56,18 @@ public final class AwsEndpointRulesIntegration implements PythonIntegration {
             "AWS::UseFIPS",
             new BuiltInField("use_fips_endpoint",
                     null,
-                    resolver("resolve_use_fips_endpoint"),
+                    resolver("resolve_use_fips_endpoint_program"),
                     null),
             "AWS::UseDualStack",
             new BuiltInField("use_dualstack_endpoint",
                     null,
-                    resolver("resolve_use_dualstack_endpoint"),
+                    resolver("resolve_use_dualstack_endpoint_program"),
                     null),
             // The SDKs and Tools Reference Guide default.
             "AWS::Auth::AccountIdEndpointMode",
             new BuiltInField("account_id_endpoint_mode",
                     "preferred",
-                    resolver("resolve_account_id_endpoint_mode"),
+                    resolver("resolve_account_id_endpoint_mode_program"),
                     validator("validate_account_id_endpoint_mode")));
     private static final String REGION_BUILT_IN = "AWS::Region";
     private static final String ACCOUNT_ID = "AWS::Auth::AccountId";
@@ -147,7 +147,7 @@ public final class AwsEndpointRulesIntegration implements PythonIntegration {
     private static Consumer<PythonWriter> resolver(String name) {
         var symbol = Symbol.builder()
                 .name(name)
-                .namespace("smithy_aws_core.aio.config.resolvers", ".")
+                .namespace("smithy_aws_core.config.resolvers", ".")
                 .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                 .build();
         return writer -> writer.writeInline("$T", symbol);
@@ -208,7 +208,7 @@ public final class AwsEndpointRulesIntegration implements PythonIntegration {
 
         @Override
         public void writeEndpointTestConfig(GenerationContext context, PythonWriter writer) {
-            if (CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model()).isEmpty()) {
+            if (!CodegenUtils.isAwsService(context)) {
                 return;
             }
             // Config resolution requires a region. Explicit values keep endpoint_uri, the
@@ -241,7 +241,7 @@ public final class AwsEndpointRulesIntegration implements PythonIntegration {
                 String builtIn,
                 Node value
         ) {
-            if (CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model()).isEmpty()) {
+            if (!CodegenUtils.isAwsService(context)) {
                 return Optional.empty();
             }
             var field = builtIn.equals(REGION_BUILT_IN)

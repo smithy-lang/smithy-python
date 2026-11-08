@@ -75,11 +75,11 @@ public class AwsClientContextParamsCodegenTest {
                 "awss3ccp");
         assertTrue(config.contains("\"use_accelerate_endpoint\": FieldSpec(default=None),"));
         assertInOrder(config,
-                "return await resolve_bool(",
+                "return resolve_bool_program(",
                 "env_vars=(\"AWS_S3_USE_ARN_REGION\",)",
                 "profile_keys=(\"s3_use_arn_region\",)");
         // Defined above the config class, which refers to it.
-        var definition = config.indexOf("async def _resolve_use_arn_region(");
+        var definition = config.indexOf("def _resolve_use_arn_region(");
         assertTrue(definition >= 0 && definition < config.indexOf("resolver=_resolve_use_arn_region"));
 
         var endpoints = Files.readString(tempDir.resolve("src/awss3ccp/_private/endpoints.py"));
@@ -99,7 +99,7 @@ public class AwsClientContextParamsCodegenTest {
         assertTrue(config.contains("Defaults to preferred."));
         assertTrue(config.contains("\"account_id_endpoint_mode\": FieldSpec("));
         assertTrue(config.contains("default=\"preferred\","));
-        assertTrue(config.contains("resolver=resolve_account_id_endpoint_mode,"));
+        assertTrue(config.contains("resolver=resolve_account_id_endpoint_mode_program,"));
         assertTrue(config.contains("validator=validate_account_id_endpoint_mode,"));
         // Its rules declare no FIPS or dual-stack built-ins.
         assertFalse(config.contains("use_fips_endpoint"));

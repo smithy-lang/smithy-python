@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Made `CachingIdentityResolver` thread-safe: concurrent callers share one identity fetch."
+}

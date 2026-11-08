@@ -10,19 +10,18 @@ from unittest.mock import Mock
 import pytest
 from smithy_aws_core.aio.checksums import AsyncChecksumStream
 from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
-from smithy_aws_core.checksums import UnsupportedChecksumAlgorithmError
+from smithy_aws_core.checksums import ChecksumStream, UnsupportedChecksumAlgorithmError
 from smithy_aws_core.interceptors.checksums import FlexibleChecksumsInterceptor
 from smithy_aws_core.traits import HTTPChecksumTrait
 from smithy_core import URI
-from smithy_core.aio.client import OPERATION
 from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.client import OPERATION
 from smithy_core.exceptions import SmithyError
 from smithy_core.interceptors import InputContext, RequestContext, ResponseContext
 from smithy_core.interfaces import TypedProperties as TypedPropertiesInterface
 from smithy_core.traits import HTTPHeaderTrait
 from smithy_core.types import TypedProperties
-from smithy_http import Field, Fields
-from smithy_http.aio import HTTPRequest, HTTPResponse
+from smithy_http import Field, Fields, HTTPRequest, HTTPResponse
 
 ALL_ALGORITHMS = ["CRC64NVME", "CRC32", "CRC32C", "SHA256", "SHA1", "MD5"]
 DATA = b"hello world"
@@ -88,9 +87,11 @@ def _response_context(
 
 
 def _prepared(
-    validation: Any = "when_supported", request: _Input | None = None
+    validation: Any = "when_supported",
+    request: _Input | None = None,
+    interceptor: FlexibleChecksumsInterceptor | None = None,
 ) -> tuple[FlexibleChecksumsInterceptor, InputContext[Any], Any]:
-    interceptor = FlexibleChecksumsInterceptor()
+    interceptor = interceptor or FlexibleChecksumsInterceptor()
     context = _input_context(request=request, validation=validation)
     return interceptor, context, interceptor.modify_before_serialization(context)
 
@@ -131,7 +132,7 @@ def test_when_required_validates_when_caller_enabled_it() -> None:
     )
     assert isinstance(
         interceptor.modify_before_deserialization(response).body,
-        AsyncChecksumStream,
+        ChecksumStream,
     )
 
 
@@ -185,7 +186,7 @@ def test_calls_without_an_operation_are_unchanged() -> None:
     assert interceptor.modify_before_serialization(context) is request
 
 
-async def test_validates_the_fastest_algorithm_in_the_response() -> None:
+def test_validates_the_fastest_algorithm_in_the_response() -> None:
     interceptor, context, _ = _prepared()
     response = _response_context(
         context.properties,
@@ -193,14 +194,28 @@ async def test_validates_the_fastest_algorithm_in_the_response() -> None:
     )
 
     body = interceptor.modify_before_deserialization(response).body
-    assert isinstance(body, AsyncChecksumStream)
+    assert isinstance(body, ChecksumStream)
     assert body.checksum_algorithm == "CRC32C"
+    assert body.read() == DATA
+    assert body.validated
+
+
+async def test_async_clients_get_the_stream_they_pass() -> None:
+    interceptor, context, _ = _prepared(
+        interceptor=FlexibleChecksumsInterceptor(AsyncChecksumStream)
+    )
+    response = _response_context(
+        context.properties, headers={"x-amz-checksum-crc32": CRC32}
+    )
+
+    body = interceptor.modify_before_deserialization(response).body
+    assert isinstance(body, AsyncChecksumStream)
     assert await body.read() == DATA
     assert body.validated
 
 
 @pytest.mark.parametrize("crc32c", ["", "yZRlqg==-3", "yZRlqg==,yZRlqg==", "bad!"])
-async def test_skips_checksums_that_cannot_be_validated(crc32c: str) -> None:
+def test_skips_checksums_that_cannot_be_validated(crc32c: str) -> None:
     interceptor, context, _ = _prepared()
     response = _response_context(
         context.properties,
@@ -208,12 +223,12 @@ async def test_skips_checksums_that_cannot_be_validated(crc32c: str) -> None:
     )
 
     body = interceptor.modify_before_deserialization(response).body
-    assert isinstance(body, AsyncChecksumStream)
+    assert isinstance(body, ChecksumStream)
     assert body.checksum_algorithm == "CRC32"
-    assert await body.read() == DATA
+    assert body.read() == DATA
 
 
-async def test_skips_composite_checksums() -> None:
+def test_skips_composite_checksums() -> None:
     interceptor, context, _ = _prepared()
     response = _response_context(
         context.properties,
@@ -221,7 +236,7 @@ async def test_skips_composite_checksums() -> None:
     )
 
     body = interceptor.modify_before_deserialization(response).body
-    assert isinstance(body, AsyncChecksumStream)
+    assert isinstance(body, ChecksumStream)
     assert body.checksum_algorithm == "CRC32"
 
 
@@ -337,7 +352,9 @@ def _request_context(
             destination=URI(host="example.com"),
             method="PUT",
             fields=Fields([Field(name=k, values=[v]) for k, v in headers.items()]),
-            body=AsyncBytesReader(body),
+            # The serializer sends bytes payloads in a BytesIO, and other payloads
+            # as they were set on the request.
+            body=BytesIO(body) if isinstance(body, bytes) else body,
         ),
         properties=properties,
     )
@@ -464,21 +481,17 @@ def test_requires_a_readable_payload_for_required_or_chosen_checksums(
         _sent(context)
 
 
-def test_calculates_payloads_wrapped_more_than_once() -> None:
-    body = AsyncBytesReader(DATA)
-
-    assert _sent(_request_context(body=body))["x-amz-checksum-crc64nvme"] == CRC64NVME
-
-
-class _UppercaseReader(AsyncBytesReader):
-    async def read(self, size: int = -1) -> bytes:
-        return (await super().read(size)).upper()
+def test_skips_optional_checksums_of_async_readers() -> None:
+    # An async reader can't be read from a synchronous hook, even if it holds bytes.
+    assert _sent(_request_context(body=AsyncBytesReader(DATA))) == {}
 
 
-def test_does_not_unwrap_readers_that_change_the_data() -> None:
-    # The checksum has to cover the data that's sent, so a reader that changes it
-    # isn't read around.
-    assert _sent(_request_context(body=_UppercaseReader(DATA))) == {}
+@pytest.mark.parametrize("body", [DATA, bytearray(DATA)])
+def test_calculates_raw_bytes_payloads(body: bytes | bytearray) -> None:
+    context = _request_context(body=b"")
+    context.transport_request.body = body
+
+    assert _sent(context)["x-amz-checksum-crc64nvme"] == CRC64NVME
 
 
 class _SeekableWithoutSeekableMethod:

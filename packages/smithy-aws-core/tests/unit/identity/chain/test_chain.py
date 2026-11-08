@@ -6,7 +6,10 @@ from typing import Any, assert_type
 
 import pytest
 import smithy_aws_core.aio.identity.chain as chain_module
+import smithy_aws_core.identity.chain.resolver as resolver_module
 from smithy_aws_core.aio.identity import AsyncIdentityChain
+from smithy_aws_core.aio.identity.chain.provider import AsyncNamedResolver
+from smithy_aws_core.business_metrics import AwsFeatureId
 from smithy_aws_core.identity import (
     AWSCredentialsIdentity,
     AWSIdentityProperties,
@@ -97,7 +100,10 @@ async def test_explicit_chain_preserves_resolvers() -> None:
 
 
 async def test_create_records_identity_type(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(chain_module, "_discover_chain_identity_providers", tuple)
+    def no_providers(group: str) -> tuple[Any, ...]:
+        return ()
+
+    monkeypatch.setattr(chain_module, "_discover_providers", no_providers)
 
     chain = await AsyncIdentityChain.create(AWSCredentialsIdentity)
 
@@ -120,10 +126,12 @@ def test_discovers_and_constructs_entry_point_providers(
         return (_EntryPoint(),)
 
     monkeypatch.setattr(
-        "smithy_aws_core.aio.identity.chain.metadata.entry_points", _entry_points
+        "smithy_aws_core.identity.chain.resolver.metadata.entry_points", _entry_points
     )
 
-    discovered = chain_module._discover_chain_identity_providers()
+    discovered = resolver_module._discover_providers(
+        chain_module._CHAIN_PROVIDER_ENTRY_POINT_GROUP
+    )
 
     assert len(discovered) == 1
     assert isinstance(discovered[0], _Provider)
@@ -142,7 +150,7 @@ def test_sort_orders_standards_by_slot_declaration() -> None:
     env = _StubProvider("env", Standard(slot=StandardProvider.ENVIRONMENT))
     shared = _StubProvider("shared", Standard(slot=StandardProvider.SHARED_CONFIG))
 
-    ordered = chain_module._sort_by_ordering(
+    ordered = resolver_module._sort_by_ordering(
         (static, session, env, assume_role, shared)
     )
 
@@ -160,7 +168,7 @@ def test_sort_places_before_and_after_around_slot() -> None:
     shared = _StubProvider("shared", Standard(slot=StandardProvider.SHARED_CONFIG))
     after = _StubProvider("after", After(slot=StandardProvider.SHARED_CONFIG))
 
-    ordered = chain_module._sort_by_ordering((after, shared, before))
+    ordered = resolver_module._sort_by_ordering((after, shared, before))
 
     assert [p.name for p in ordered] == ["before", "shared", "after"]
 
@@ -174,7 +182,7 @@ def test_sort_resolves_relative_constraints_without_a_claiming_provider() -> Non
         "static", Standard(slot=StandardProvider.PROFILE_STATIC_KEYS)
     )
 
-    ordered = chain_module._sort_by_ordering((static, before, env))
+    ordered = resolver_module._sort_by_ordering((static, before, env))
 
     assert [p.name for p in ordered] == ["env", "before", "static"]
 
@@ -183,7 +191,7 @@ def test_sort_keeps_discovery_order_for_same_constraint() -> None:
     first = _StubProvider("first", Before(slot=StandardProvider.ENVIRONMENT))
     second = _StubProvider("second", Before(slot=StandardProvider.ENVIRONMENT))
 
-    ordered = chain_module._sort_by_ordering((first, second))
+    ordered = resolver_module._sort_by_ordering((first, second))
 
     assert [p.name for p in ordered] == ["first", "second"]
 
@@ -197,7 +205,7 @@ def test_validate_rejects_duplicate_names() -> None:
         match="Credential providers _StubProvider and _StubProvider use the "
         "same name: dup",
     ):
-        chain_module._validate_providers((first, second))
+        resolver_module._validate_providers((first, second))
 
 
 def test_validate_rejects_case_insensitive_duplicate_names() -> None:
@@ -209,7 +217,7 @@ def test_validate_rejects_case_insensitive_duplicate_names() -> None:
         match="Credential providers _StubProvider and _StubProvider use the "
         "same name: duplicate",
     ):
-        chain_module._validate_providers((first, second))
+        resolver_module._validate_providers((first, second))
 
 
 def test_validate_rejects_duplicate_standard_slots() -> None:
@@ -221,7 +229,7 @@ def test_validate_rejects_duplicate_standard_slots() -> None:
         match="Credential providers _StubProvider and _StubProvider both claim "
         "standard slot: ENVIRONMENT",
     ):
-        chain_module._validate_providers((first, second))
+        resolver_module._validate_providers((first, second))
 
 
 def test_sort_rejects_unsupported_ordering_constraint() -> None:
@@ -234,7 +242,7 @@ def test_sort_rejects_unsupported_ordering_constraint() -> None:
         IdentityChainConfigurationError,
         match="Provider _StubProvider returned an unsupported ordering constraint",
     ):
-        chain_module._sort_by_ordering((provider,))
+        resolver_module._sort_by_ordering((provider,))
 
 
 async def test_all_miss_raises_with_per_provider_failures() -> None:
@@ -285,3 +293,23 @@ async def test_chained_invalidate() -> None:
 
     assert first.invalidated
     assert second.invalidated
+
+
+async def test_registers_feature_ids_of_resolver_that_returned_identity() -> None:
+    miss = AsyncNamedResolver(
+        provider_name="Environment",
+        resolver=_FakeResolver(error=SmithyIdentityError("miss")),
+        feature_ids=(AwsFeatureId.CREDENTIALS_ENV_VARS,),
+    )
+    hit = AsyncNamedResolver(
+        provider_name="ProfileStaticKeys",
+        resolver=_FakeResolver(identity=_credentials("hit")),
+        feature_ids=(AwsFeatureId.CREDENTIALS_PROFILE,),
+    )
+    features: dict[AwsFeatureId, None] = {}
+
+    await AsyncIdentityChain((miss, hit)).get_identity(
+        properties={"_feature_ids": features}
+    )
+
+    assert list(features) == [AwsFeatureId.CREDENTIALS_PROFILE]

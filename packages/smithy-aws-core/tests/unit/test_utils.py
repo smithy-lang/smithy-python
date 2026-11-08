@@ -10,8 +10,7 @@ from smithy_aws_core.utils import (
 )
 from smithy_core.documents import Document
 from smithy_core.shapes import ShapeID
-from smithy_http import Field, Fields
-from smithy_http.aio import HTTPResponse
+from smithy_http import Field, Fields, HTTPResponse
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added synchronous AWS support: `AwsConfig`, the protocols in `smithy_aws_core.protocols`, `SigV4AuthScheme`, `IdentityChain`, `StandardRegionalEndpointsResolver` and the sync credentials resolvers."
+}

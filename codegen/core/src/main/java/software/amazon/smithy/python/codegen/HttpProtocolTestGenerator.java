@@ -667,14 +667,13 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
     /**
      * Returns the config construction prefix for test code.
-     * For AWS services: "config = await AsyncConfig.resolve("
-     * For non-AWS services: "config = Config("
+     * For AWS services: "config = await AsyncXConfig.resolve("
+     * For non-AWS services: "config = AsyncConfig("
      */
     private String getTestConfigPrefix() {
-        var configSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), model)
-                .orElse(CodegenUtils.getConfigSymbol(context.settings()));
+        var configSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), model);
         writer.addImport(configSymbol.getNamespace(), configSymbol.getName());
-        return CodegenUtils.getAsyncConfigSymbol(context.settings(), model).isPresent()
+        return CodegenUtils.isAwsService(context)
                 ? "config = await %s.resolve(".formatted(configSymbol.getName())
                 : "config = %s(".formatted(configSymbol.getName());
     }
@@ -749,7 +748,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         return ${10T}(
                             status=self.status,
                             fields=self.fields,
-                            body=${11T}([self.body]),
+                            body=${11T}(self.body),
                         )
                 """,
                 TEST_HTTP_SERVICE_ERR_SYMBOL,
@@ -762,7 +761,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                 RuntimeTypes.TUPLES_TO_FIELDS,
                 RuntimeTypes.HTTP_RESPONSE_IMPL,
-                RuntimeTypes.ASYNC_LIST);
+                RuntimeTypes.ASYNC_BYTES_READER);
     }
 
     /**
