@@ -106,7 +106,7 @@ aio-check: ## Enforces aio naming and separation in package sources.
 	uv run python scripts/aio-naming/aio_naming.py
 
 
-changelog-check: ## Asserts the latest commit's api.json changes carry changelog fragments of a fitting bump.
+changelog-check: ## Asserts the latest commit's package source changes carry changelog fragments of a fitting bump.
 	uv run python scripts/changelog/check-fragments.py
 
 

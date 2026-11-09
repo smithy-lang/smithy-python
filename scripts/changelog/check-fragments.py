@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Fails when the latest commit changes a package's api.json surface without a fitting changelog fragment."""
+"""Fails when the latest commit changes a package's source without a fitting changelog fragment."""
 
 import json
 import re
@@ -29,26 +29,24 @@ def main() -> int:
         )
         return 1
 
-    before = _surface(BASE)
-    after = _surface("HEAD")
-    if before == after:
-        print("api.json unchanged in the latest commit.")
-        return 0
-
     changed = (_git("diff", "--name-only", BASE, "HEAD") or "").splitlines()
     sources = {m.group(1) for p in changed if (m := SOURCE_PATTERN.match(p))}
+    if not sources:
+        print("No package source changed in the latest commit.")
+        return 0
+
     fragments = _fragment_types(changed)
+    # A surface change with no source change comes from snapshot tooling, not the package.
+    surface = _package_changes(_surface(BASE), _surface("HEAD"))
     errors: list[str] = []
-    for package, breaks in sorted(_package_changes(before, after).items()):
-        # A surface change with no source change comes from snapshot tooling, not the package.
-        if package not in sources:
-            continue
+    for package in sorted(sources):
         types = fragments.get(package, [])
         if not types:
             errors.append(
-                f"{package}: api.json changed but no changelog fragment was added."
+                f"{package}: source changed but no changelog fragment was added."
             )
             continue
+        breaks = surface.get(package)
         if not breaks:
             continue
         version = _version(package)
@@ -68,7 +66,7 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
-    print("Changelog fragments match the api.json changes.")
+    print("Changelog fragments match the source changes.")
     return 0
 
 
