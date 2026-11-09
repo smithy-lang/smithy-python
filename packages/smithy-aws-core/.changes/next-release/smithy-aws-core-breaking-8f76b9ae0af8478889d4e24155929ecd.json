@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Async AWS protocols now compose an event stream mixin with the sync protocol. Removed `AsyncAwsQueryClientProtocol` and `AsyncEc2QueryClientProtocol`, which have no event streams; async clients use `AwsQueryClientProtocol` and `Ec2QueryClientProtocol`."
-}

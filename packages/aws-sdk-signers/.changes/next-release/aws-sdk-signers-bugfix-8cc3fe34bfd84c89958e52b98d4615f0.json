@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Fixed `SigV4Signer` ignoring a preset `X-Amz-Content-SHA256` header and not signing event stream requests with the streaming payload hash."
-}

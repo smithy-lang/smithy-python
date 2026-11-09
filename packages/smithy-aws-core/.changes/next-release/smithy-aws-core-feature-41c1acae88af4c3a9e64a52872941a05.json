@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Track the credential source (code, environment variables, profile, credential process) and resolved account ID in the User Agent business metrics (`m/`) of sync and async clients."
-}

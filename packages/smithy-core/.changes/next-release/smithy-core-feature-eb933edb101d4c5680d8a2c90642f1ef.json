@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added endpoint BDD resolution with `smithy_core.endpoints.BddEndpointResolver`, which serves sync and async clients, and `smithy_core.endpoints.EndpointBdd`, the endpoint BDD it evaluates."
-}

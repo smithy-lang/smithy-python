@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "The request pipeline now resolves the auth scheme and the identity after `read_before_attempt` and before endpoint resolution, then stores the identity in the call context under `smithy_core.auth.RESOLVED_IDENTITY`. This allows endpoint resolution to read account IDs."
-}

@@ -6,7 +6,7 @@ from ._private.conformance import verify_models as verify_models
 from ._private.equality import deep_equal as deep_equal
 from ._private.equality import xml_equal as xml_equal
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = (
     "ConformanceError",
     "check_rules_case",

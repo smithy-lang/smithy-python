@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Replaced `ClientProtocol.deserialize_response` with `deserialize_response_program`, which reads response bodies through an injected effect so one implementation serves sync and async clients. `AsyncClientProtocol` now extends `ClientProtocol` with only the event stream methods, and async clients accept any `ClientProtocol`."
-}

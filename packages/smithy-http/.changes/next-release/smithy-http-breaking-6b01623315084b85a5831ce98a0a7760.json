@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Renamed `AWSCRTHTTPResponse` to `AsyncAWSCRTHTTPResponse`, and `smithy_http.aio.auth.apikey.APIKeyResolverConfig` to `AsyncAPIKeyResolverConfig`."
-}

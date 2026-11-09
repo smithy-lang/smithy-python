@@ -1,4 +1,0 @@
-{
-  "type": "dependency",
-  "description": "Added a `checksums` extra that installs `smithy-checksums`."
-}

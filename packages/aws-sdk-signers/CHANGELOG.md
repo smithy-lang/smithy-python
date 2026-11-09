@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.5.0
+
+### Breaking Changes
+* Replaced `AsyncEventSigner` with the synchronous `EventSigner`, which is thread-safe.
+* Moved `AsyncSigV4Signer` and `AsyncBytesReader` to `aws_sdk_signers.aio`, and `AsyncByteStream` and `AsyncSeekable` to `aws_sdk_signers.aio.interfaces.io`. `AsyncSigV4Signer` now also signs requests with sync bodies, and its `string_to_sign` and `generate_authorization_field` are synchronous.
+* Declared explicit `__all__` exports on all public modules. Names that were previously importable only incidentally (via `from module import *` or as un-annotated module attributes) are no longer part of the public API; import public symbols by name from their documented module.
+
+### Enhancements
+* Added support for Python 3.15.
+
+### Bug fixes
+* Fixed `SigV4Signer` ignoring a preset `X-Amz-Content-SHA256` header and not signing event stream requests with the streaming payload hash.
+* Fixed signing requests whose body can't be deep-copied, such as files and async generators. The signers now share the body with the signed request instead of copying it, so signing reads the original body directly.
+
 ## v0.4.0
 
 ### Features

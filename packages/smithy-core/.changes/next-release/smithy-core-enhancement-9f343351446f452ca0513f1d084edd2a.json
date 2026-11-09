@@ -1,4 +1,0 @@
-{
-  "type": "enhancement",
-  "description": "`ClientTimeoutError` messages now name the transport error that caused them, since some transports report connection failures as timeouts."
-}

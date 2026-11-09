@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "`AWSCredentialsIdentity` no longer includes `secret_access_key` or `session_token` in its repr, which keeps them out of debug logs."
-}

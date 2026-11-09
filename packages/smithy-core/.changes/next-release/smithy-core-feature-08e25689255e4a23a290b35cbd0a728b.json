@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added the operation being invoked to the request properties of each call under `smithy_core.client.OPERATION`, for sync and async clients."
-}

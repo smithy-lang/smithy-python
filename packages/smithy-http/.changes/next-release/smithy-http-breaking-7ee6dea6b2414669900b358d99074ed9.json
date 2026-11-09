@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Serialized request bodies are now synchronous for both sync and async clients. `HTTPBindingSerializer`'s `async_body` parameter is replaced by `event_stream_body`, and `RawPayloadDeserializer` returns streaming payloads as the transport provides them."
-}

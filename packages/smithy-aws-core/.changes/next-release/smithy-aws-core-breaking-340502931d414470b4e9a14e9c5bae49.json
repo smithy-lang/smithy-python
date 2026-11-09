@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Renamed `smithy_aws_core.aio.config.AwsConfigOverrides` to `AsyncAwsConfigOverrides`, and the async chain types `ChainSetup`, `NamedResolver` and `ChainIdentityProvider` to `AsyncChainSetup`, `AsyncNamedResolver` and `AsyncChainIdentityProvider`. Removed the `Async*Provider` chain providers; the built-in providers in `smithy_aws_core.identity.chain.providers` serve both chains."
-}

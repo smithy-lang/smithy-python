@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added `HTTPChecksumTrait` for the `aws.protocols#httpChecksum` trait."
-}

@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added native generation of lazy runtime model modules and complete static model stubs for standalone types packages."
-}

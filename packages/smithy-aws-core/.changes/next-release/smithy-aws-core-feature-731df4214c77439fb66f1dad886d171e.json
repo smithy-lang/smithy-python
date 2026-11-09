@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added request checksum calculation for operations with the `httpChecksum` trait, configured with the new `request_checksum_calculation` setting (`AWS_REQUEST_CHECKSUM_CALCULATION`). Checksums default to CRC64NVME, are sent in a header, and are reused on retries. A checksum set on the request is sent as is. Choosing an algorithm the SDK can't calculate raises `UnsupportedChecksumAlgorithmError`."
-}

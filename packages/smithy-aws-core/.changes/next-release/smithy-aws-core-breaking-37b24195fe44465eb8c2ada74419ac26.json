@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Removed `smithy_aws_core.aio.config.resolvers`. The resolvers in `smithy_aws_core.config.resolvers` have `*_program` forms, such as `resolve_use_fips_endpoint_program` and `EndpointUriResolver(...).program`, that serve as sync and async config field resolvers."
-}

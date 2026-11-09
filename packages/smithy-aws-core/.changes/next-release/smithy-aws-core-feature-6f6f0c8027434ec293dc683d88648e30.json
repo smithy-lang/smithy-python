@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added client-side event stream support for the awsJson1.0 and awsJson1.1 protocols."
-}

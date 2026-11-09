@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Removed `AsyncAPIKeySigner`; `AsyncAPIKeyAuthScheme` returns the sync `APIKeySigner`. Renamed `smithy_http.aio.restjson.parse_rest_json_error_info` to `parse_rest_json_error_info_async`."
-}

@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added XXHash64, XXHash3, and XXHash128 checksums."
-}

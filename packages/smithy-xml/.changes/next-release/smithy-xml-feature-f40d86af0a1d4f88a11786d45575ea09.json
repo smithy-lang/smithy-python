@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "XML payloads are now eagerly parsed before deserialization, improving performance for both `bytes` and `BytesReader` inputs."
-}

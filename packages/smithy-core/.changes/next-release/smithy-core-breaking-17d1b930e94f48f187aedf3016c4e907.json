@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Added the required `auth_schemes` attribute to the `smithy_core.interfaces.Endpoint` protocol. Custom endpoint types that don't subclass `smithy_core.endpoints.Endpoint` must add it."
-}

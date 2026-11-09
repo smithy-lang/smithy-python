@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "`smithy_http.testing.MockHTTPClient` is now synchronous. Async clients use `smithy_http.aio.testing.AsyncMockHTTPClient`."
-}

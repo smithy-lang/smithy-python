@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Fixed `read_streaming_blob_async` failing on synchronous readers such as `BytesIO`."
-}

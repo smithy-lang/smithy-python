@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.4.0
+
+### Breaking Changes
+* Declared explicit `__all__` exports on all public modules. Names that were previously importable only incidentally (via `from module import *` or as un-annotated module attributes) are no longer part of the public API; import public symbols by name from their documented module.
+* Added the `Async` prefix to the async event-stream implementations, for example `AsyncEventSigner`. The unprefixed names are reserved for sync implementations. Update imports to the `aio` paths.
+* Renamed `AWSEventPublisher` and `AWSEventReceiver` to `AsyncAWSEventPublisher` and `AsyncAWSEventReceiver`, and replaced `Event.decode_async` with `smithy_aws_event_stream.aio.decode_event_async`. `SigningConfig` moved to `smithy_aws_event_stream.signing`, is generic in its identity resolver, and takes a synchronous `EventSigner`.
+
+### Enhancements
+* Added support for Python 3.15.
+
 ## v0.3.0
 
 ### Features

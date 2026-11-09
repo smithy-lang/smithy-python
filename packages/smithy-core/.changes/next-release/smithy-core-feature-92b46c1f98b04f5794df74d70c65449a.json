@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Requests now sign with the resolved endpoint's auth scheme overrides. Endpoints that don't support the selected auth scheme raise `UnsupportedAuthSchemeError`."
-}

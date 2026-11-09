@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Added the `Async` prefix to async helpers: `smithy_aws_core.aio.auth.sigv4.SigV4Config` is now `AsyncSigV4Config`, and `ContainerMetadataClient`, `TokenCache` and `EC2Metadata` are now `AsyncContainerMetadataClient`, `AsyncTokenCache` and `AsyncEC2Metadata`. The IMDS `Config` moved to `smithy_aws_core.identity.imds`."
-}

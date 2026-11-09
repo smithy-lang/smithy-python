@@ -1,7 +1,7 @@
 [project]
 name = "smithy-checksums"
 # The version must stay static: both build backends read it from here.
-version = "0.0.0"
+version = "0.1.0"
 requires-python = ">=3.12"
 authors = [
   {name = "Amazon Web Services"},

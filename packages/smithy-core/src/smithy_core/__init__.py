@@ -10,7 +10,7 @@ from .exceptions import SmithyError
 
 __all__ = ["URI", "HostType", "SmithyError", "interfaces", "rfc3986"]
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 
 
 class HostType(Enum):

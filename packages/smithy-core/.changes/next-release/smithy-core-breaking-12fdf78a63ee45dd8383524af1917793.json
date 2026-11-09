@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "`AsyncAuthScheme.signer` may now return a synchronous `Signer`, and `AsyncAuthScheme.event_signer` returns a synchronous `EventSigner`. Removed `smithy_core.aio.interfaces.auth.AsyncEventSigner`."
-}

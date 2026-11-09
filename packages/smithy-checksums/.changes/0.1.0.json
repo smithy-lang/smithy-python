@@ -1,0 +1,16 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added XXHash64, XXHash3, and XXHash128 checksums."
+    },
+    {
+      "type": "feature",
+      "description": "Added CRC64NVME checksums."
+    },
+    {
+      "type": "feature",
+      "description": "Added CRC32 and CRC32C checksums, backed by a native Rust extension with a pure-Python fallback, and SHA-1, SHA-256, SHA-512, and MD5 checksums through `new()`."
+    }
+  ]
+}

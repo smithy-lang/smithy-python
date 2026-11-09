@@ -1,0 +1,136 @@
+{
+  "changes": [
+    {
+      "type": "breaking",
+      "description": "Removed the `input`/`output`/`error_registry` constructor overrides from `APIOperation`. Operations are now constructed from a `static_schema` tuple plus a `model_registry` that resolves input, output, and error types on demand."
+    },
+    {
+      "type": "breaking",
+      "description": "Replaced `ClientProtocol.deserialize_response` with `deserialize_response_program`, which reads response bodies through an injected effect so one implementation serves sync and async clients. `AsyncClientProtocol` now extends `ClientProtocol` with only the event stream methods, and async clients accept any `ClientProtocol`."
+    },
+    {
+      "type": "breaking",
+      "description": "ProtocolSettings now requires a service_schema field; the event_stream_http field was removed and RPC protocols read eventStreamHttp from the service schema's protocol trait."
+    },
+    {
+      "type": "breaking",
+      "description": "Removed `smithy_core.aio.endpoints` and `AsyncClientCall`. Use `smithy_core.endpoints.StaticEndpointResolver` and `smithy_core.client.ClientCall`, which serve both sync and async clients. Async clients accept a sync `smithy_core.interfaces.EndpointResolver` as well as an `AsyncEndpointResolver`."
+    },
+    {
+      "type": "breaking",
+      "description": "Changed generated schemas to a compact tuple encoding hydrated on first use, and reworked `APIOperation` to accept a single `static_schema` tuple with lazily-hydrated `schema`, `input_schema`, `output_schema`, and `error_schemas` properties."
+    },
+    {
+      "type": "breaking",
+      "description": "The request pipeline now resolves the auth scheme and the identity after `read_before_attempt` and before endpoint resolution, then stores the identity in the call context under `smithy_core.auth.RESOLVED_IDENTITY`. This allows endpoint resolution to read account IDs."
+    },
+    {
+      "type": "breaking",
+      "description": "Declared explicit `__all__` exports on all public modules. Names that were previously importable only incidentally (via `from module import *` or as un-annotated module attributes) are no longer part of the public API; import public symbols by name from their documented module."
+    },
+    {
+      "type": "breaking",
+      "description": "Moved `Request`, `Response`, `AnyStreamingBlob` and `AwaitableBytesReader` to `smithy_core.interfaces` and `read_streaming_blob` to `smithy_core.utils`. Removed `consume_body_async`; use `await read_streaming_blob_async(response.body)`."
+    },
+    {
+      "type": "breaking",
+      "description": "Renamed `smithy_core.aio.types.SeekableAsyncBytesReader` to `AsyncSeekableBytesReader`, and `close`, `seek` and `async_list` in `smithy_core.aio.utils` to `close_async`, `seek_async` and `list_async`."
+    },
+    {
+      "type": "breaking",
+      "description": "Moved async implementations to `smithy_core.aio` and added the `Async` prefix to their names, for example `AsyncClientProtocol`, `AsyncRpcClientProtocol`, `AsyncEndpointResolver`, `AsyncStandardRetryStrategy`, `AsyncSigner` and the event-stream types `AsyncDuplexEventStream`/`AsyncInputEventStream`/`AsyncOutputEventStream`. The unprefixed names are reserved for sync implementations. `ProtocolSettings` and `ProtocolConstructor` moved to `smithy_core.interfaces`. Update imports to the `aio` paths."
+    },
+    {
+      "type": "breaking",
+      "description": "Added the required `auth_schemes` attribute to the `smithy_core.interfaces.Endpoint` protocol. Custom endpoint types that don't subclass `smithy_core.endpoints.Endpoint` must add it."
+    },
+    {
+      "type": "breaking",
+      "description": "`AsyncAuthScheme.signer` may now return a synchronous `Signer`, and `AsyncAuthScheme.event_signer` returns a synchronous `EventSigner`. Removed `smithy_core.aio.interfaces.auth.AsyncEventSigner`."
+    },
+    {
+      "type": "breaking",
+      "description": "Removed the async retry strategies (`smithy_core.aio.retries` and `smithy_core.aio.interfaces.retries`). Async clients use the strategies in `smithy_core.retries`; adaptive rate limiting waits through the client, so it never blocks the event loop."
+    },
+    {
+      "type": "breaking",
+      "description": "Generated model classes are now built lazily from the schema on first access via a `ModelRegistry`, rather than defined eagerly at import. This moves per-class construction cost off the import/cold-start path."
+    },
+    {
+      "type": "feature",
+      "description": "Added synchronous clients. `smithy_core.client` provides `Client`, `RequestPipeline` and `ClientCall`, which run the same request pipeline as the async client through the programs in the new public `smithy_core.program` module."
+    },
+    {
+      "type": "feature",
+      "description": "Add the retry strategy chosen for a call to its request properties under `RETRY_STRATEGY`."
+    },
+    {
+      "type": "feature",
+      "description": "Added support for `adaptive` retry mode, which builds on standard retries by adding client-side rate limiting that slows the client's sending rate when a service throttles requests."
+    },
+    {
+      "type": "feature",
+      "description": "Requests now sign with the resolved endpoint's auth scheme overrides. Endpoints that don't support the selected auth scheme raise `UnsupportedAuthSchemeError`."
+    },
+    {
+      "type": "feature",
+      "description": "Added endpoint BDD resolution with `smithy_core.endpoints.BddEndpointResolver`, which serves sync and async clients, and `smithy_core.endpoints.EndpointBdd`, the endpoint BDD it evaluates."
+    },
+    {
+      "type": "feature",
+      "description": "Added the operation being invoked to the request properties of each call under `smithy_core.client.OPERATION`, for sync and async clients."
+    },
+    {
+      "type": "enhancement",
+      "description": "Added retries for requests with a seekable streaming payload, which are resent from the position the stream was at when the operation was called."
+    },
+    {
+      "type": "enhancement",
+      "description": "`ClientTimeoutError` messages now name the transport error that caused them, since some transports report connection failures as timeouts."
+    },
+    {
+      "type": "enhancement",
+      "description": "Added support for Python 3.15."
+    },
+    {
+      "type": "enhancement",
+      "description": "Sync clients log under `smithy_core.client`, and async clients under `smithy_core.aio.client`."
+    },
+    {
+      "type": "enhancement",
+      "description": "Added optional full shape ID target mappings to `ModelRegistry` so generators can resolve renamed and same-named cross-namespace model targets without ambiguous local-name lookups."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed the request pipeline ignoring the request returned by `modify_before_serialization`. The modified request is now serialized, used for endpoint resolution, and passed to later hooks if serialization fails. `InterceptorChain` now also raises a `TypeError` when a `modify_*` hook returns `None`, instead of passing `None` to the next interceptor."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed `InterceptorChain` skipping later interceptors when one raised in a `read_*` hook. Every interceptor's read hook now runs, then the last exception is raised and earlier ones are logged. `read_after_attempt` also now passes each exception to later interceptors as the `response`, as `read_after_execution` already did."
+    },
+    {
+      "type": "bugfix",
+      "description": "`read_streaming_blob_async` now awaits a reader's `read()` result only when it's awaitable."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed `read_streaming_blob_async` failing on synchronous readers such as `BytesIO`."
+    },
+    {
+      "type": "bugfix",
+      "description": "`RetryStrategyResolver` now caches retry strategies per resolver instead of in a shared process-wide cache, so a client's retry state is no longer reset or shared when many clients are created."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed `InterceptorChain` discarding changes made by `modify_*` hooks. Each interceptor now receives the value returned by the interceptor before it, so an interceptor that returns its input unchanged no longer undoes earlier modifications. `modify_before_completion` also now calls each interceptor's `modify_before_completion` hook instead of `modify_before_attempt_completion`."
+    },
+    {
+      "type": "bugfix",
+      "description": "Restored docstrings on generated model classes, members, enums, and unions, which were dropped from the type stub when model classes became lazily loaded."
+    },
+    {
+      "type": "bugfix",
+      "description": "Made `CachingIdentityResolver` thread-safe: concurrent callers share one identity fetch."
+    }
+  ]
+}

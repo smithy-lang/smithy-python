@@ -41,7 +41,7 @@ awscrt = [
     "awscrt~=0.32.0",
 ]
 cbor = [
-    "smithy-cbor~=0.1.0",
+    "smithy-cbor~=0.2.0",
 ]
 aiohttp = [
     "aiohttp>=3.11.12, <4.0",

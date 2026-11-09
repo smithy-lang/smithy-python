@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Replaced the async protocols with event stream mixins composed onto the sync protocols. `AsyncHttpClientProtocol`, `AsyncHttpBindingClientProtocol` and `AsyncRpcClientProtocol` are removed; use `AsyncHttpEventStreamMixin` or `AsyncRpcEventStreamMixin` with a protocol from `smithy_http.protocols`. `AsyncRpcV2CborClientProtocol` is kept as such a composition."
-}

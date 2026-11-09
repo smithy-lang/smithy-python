@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Fixed API key auth setting the request path to the URI password."
-}
