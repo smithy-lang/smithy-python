@@ -22,6 +22,9 @@ from smithy_core.interfaces import TypedProperties as TypedPropertiesInterface
 from smithy_core.traits import HTTPHeaderTrait
 from smithy_core.types import TypedProperties
 from smithy_http import Field, Fields, HTTPRequest, HTTPResponse
+from smithy_http.urllib3 import (
+    _Urllib3ResponseBody,  # pyright: ignore[reportPrivateUsage]
+)
 
 ALL_ALGORITHMS = ["CRC64NVME", "CRC32", "CRC32C", "SHA256", "SHA1", "MD5"]
 DATA = b"hello world"
@@ -74,6 +77,7 @@ def _response_context(
     *,
     status: int = 200,
     headers: dict[str, str] | None = None,
+    body: Any = DATA,
 ) -> ResponseContext[Any, Any, Any]:
     fields = Fields([Field(name=k, values=[v]) for k, v in (headers or {}).items()])
     return ResponseContext(
@@ -81,7 +85,7 @@ def _response_context(
         transport_request=HTTPRequest(
             destination=URI(host="example.com"), method="GET", fields=Fields()
         ),
-        transport_response=HTTPResponse(status=status, fields=fields, body=DATA),
+        transport_response=HTTPResponse(status=status, fields=fields, body=body),
         properties=properties,
     )
 
@@ -212,6 +216,64 @@ async def test_async_clients_get_the_stream_they_pass() -> None:
     assert isinstance(body, AsyncChecksumStream)
     assert await body.read() == DATA
     assert body.validated
+
+
+class _StreamedResponse:
+    """Stands in for the urllib3 response the sync transport streams a body from."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = BytesIO(data)
+        self.closed = False
+
+    def read(self, amt: int | None = None) -> bytes:
+        return self._data.read(-1 if amt is None else amt)
+
+    def close(self) -> None:
+        self.closed = True
+
+    def release_conn(self) -> None:
+        pass
+
+
+def _public(obj: object) -> set[str]:
+    return {name for name in dir(obj) if not name.startswith("_")}
+
+
+def test_wraps_streamed_sync_bodies() -> None:
+    interceptor, context, _ = _prepared()
+    source = _StreamedResponse(DATA)
+    response = _response_context(
+        context.properties,
+        headers={"x-amz-checksum-crc32": CRC32},
+        body=_Urllib3ResponseBody(source),  # type: ignore[arg-type]
+    )
+
+    body = interceptor.modify_before_deserialization(response).body
+    assert isinstance(body, ChecksumStream)
+    with body:
+        assert b"".join(body.iter_chunks(4)) == DATA
+        assert body.validated
+    assert source.closed
+
+
+def test_validated_and_unvalidated_sync_bodies_share_an_interface() -> None:
+    interceptor, context, _ = _prepared()
+    unvalidated = _Urllib3ResponseBody(_StreamedResponse(DATA))  # type: ignore[arg-type]
+    response = _response_context(
+        context.properties,
+        headers={"x-amz-checksum-crc32": CRC32},
+        body=_Urllib3ResponseBody(_StreamedResponse(DATA)),  # type: ignore[arg-type]
+    )
+
+    validated = interceptor.modify_before_deserialization(response).body
+    assert isinstance(validated, ChecksumStream)
+    # Only the checksum details, and a seek that always raises, differ.
+    assert _public(validated) - _public(unvalidated) == {
+        "checksum_algorithm",
+        "validated",
+        "seek",
+    }
+    assert _public(unvalidated) - _public(validated) == set()
 
 
 @pytest.mark.parametrize("crc32c", ["", "yZRlqg==-3", "yZRlqg==,yZRlqg==", "bad!"])

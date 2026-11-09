@@ -9,6 +9,7 @@ clients with :py:class:`smithy_aws_core.aio.checksums.AsyncChecksumStream`.
 from collections.abc import Iterator
 from dataclasses import dataclass
 from io import BytesIO
+from typing import Any, Self
 
 from smithy_core.exceptions import CallError, Fault, SmithyError
 from smithy_core.interfaces import BytesReader
@@ -99,6 +100,12 @@ class ChecksumStream:
             BytesIO(source) if isinstance(source, bytes | bytearray) else source
         )
         self._validator = ChecksumValidator(checksum_algorithm, expected)
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        self.close()
 
     def __iter__(self) -> Iterator[bytes]:
         return self.iter_chunks()

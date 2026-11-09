@@ -676,3 +676,72 @@ async def test_timeout_errors_name_their_cause(error: Exception, message: str) -
 
     assert str(exc_info.value) == message
     assert exc_info.value.__cause__ is error
+
+
+class _TrackedBody:
+    def __init__(self) -> None:
+        self.closed = False
+
+    async def read(self, size: int = -1) -> bytes:
+        return b""
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+class _TrackedBodyTransport(NonDuplexTransport):
+    def __init__(self) -> None:
+        super().__init__()
+        self.bodies: list[_TrackedBody] = []
+
+    async def send(self, request: Any) -> Any:
+        self.send_calls += 1
+        body = _TrackedBody()
+        self.bodies.append(body)
+        return Mock(body=body)
+
+
+async def test_failed_attempts_close_their_response_bodies() -> None:
+    transport = _TrackedBodyTransport()
+    harness = pipeline_harness(transport)
+
+    async def raise_retryable_error(**kwargs: Any) -> StubOutput:
+        raise CallError("Rate exceeded", is_retry_safe=True)
+
+    harness.protocol.deserialize_response = raise_retryable_error  # type: ignore[method-assign]
+    strategy = SimpleRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=0),
+        max_attempts=2,
+    )
+
+    with pytest.raises(CallError):
+        await harness.pipeline(retryable_client_call(strategy))
+
+    assert len(transport.bodies) == 2
+    assert all(body.closed for body in transport.bodies)
+
+
+async def test_successful_response_body_is_left_open() -> None:
+    transport = _TrackedBodyTransport()
+    harness = pipeline_harness(transport)
+
+    await harness.pipeline(retryable_client_call())
+
+    assert [body.closed for body in transport.bodies] == [False]
+
+
+async def test_failure_closing_a_body_does_not_hide_the_error() -> None:
+    transport = _TrackedBodyTransport()
+    harness = pipeline_harness(transport)
+
+    async def fail_close() -> None:
+        raise OSError("already gone")
+
+    async def raise_error(**kwargs: Any) -> StubOutput:
+        transport.bodies[0].close = fail_close  # type: ignore[method-assign]
+        raise CallError("original")
+
+    harness.protocol.deserialize_response = raise_error  # type: ignore[method-assign]
+
+    with pytest.raises(CallError, match="original"):
+        await harness.pipeline(retryable_client_call())

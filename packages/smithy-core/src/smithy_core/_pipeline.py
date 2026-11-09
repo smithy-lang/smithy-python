@@ -121,6 +121,9 @@ class RequestPipelineBase[TRequest, TResponse]:
         )
         output_context = yield from self._handle_execution(call, request_future)
         output_context = self._finalize_execution(call, output_context)
+        if isinstance(output_context.response, Exception):
+            # A success turned into an error by an interceptor leaves its body open.
+            yield from self._release_response(output_context.transport_response)
 
         self._attach_response_metadata(output_context)
 
@@ -520,7 +523,26 @@ class RequestPipelineBase[TRequest, TResponse]:
                 properties=request_context.properties,
             )
 
-        return self._finalize_attempt(call, output_context)
+        output_context = self._finalize_attempt(call, output_context)
+        if isinstance(output_context.response, Exception):
+            # The caller never sees a failed attempt's response, so release it now
+            # rather than holding its connection until it's garbage collected.
+            yield from self._release_response(output_context.transport_response)
+        return output_context
+
+    def _release_response(self, response: Any) -> Program[None]:
+        """Close the body of a response that won't be returned to the caller.
+
+        A body that was already read or closed is closed again, which streams
+        allow. Failures are logged and ignored, since they'd hide the error that
+        made the response unneeded.
+        """
+        if (body := getattr(response, "body", None)) is None:
+            return
+        try:
+            yield lambda: _close(body)
+        except Exception as e:
+            self._logger.debug("Unable to close response body: %s", e)
 
     def _resolve_auth[I: SerializeableShape, O: DeserializeableShape](
         self, call: CallLike[Any, Any], params: AuthParams[I, O]
@@ -610,6 +632,13 @@ def _timeout_message(error: Exception) -> str:
     detail = str(error)
     cause = f"{type(error).__name__}: {detail}" if detail else type(error).__name__
     return f"A timeout error occurred ({cause})."
+
+
+def _close(stream: Any) -> Any:
+    """Close a stream, returning the stream's own (possibly awaitable) result."""
+    if (close := getattr(stream, "close", None)) is not None:
+        return close()
+    return None
 
 
 def _seek(stream: Any, offset: int, whence: int = 0) -> Any:
