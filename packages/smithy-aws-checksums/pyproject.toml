@@ -1,5 +1,5 @@
 [project]
-name = "smithy-checksums"
+name = "smithy-aws-checksums"
 # The version must stay static: both build backends read it from here.
 version = "0.1.0"
 requires-python = ">=3.12"
@@ -32,25 +32,25 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-checksums/CHANGELOG.md"
-"Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-checksums/"
+"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-aws-checksums/CHANGELOG.md"
+"Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-aws-checksums/"
 "Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
 
 # Wheels are built with maturin when a Rust toolchain is available and with
-# hatchling (pure Python) otherwise. See build_backend/smithy_checksums_build.py.
+# hatchling (pure Python) otherwise. See build_backend/smithy_aws_checksums_build.py.
 [build-system]
 requires = []
-build-backend = "smithy_checksums_build"
+build-backend = "smithy_aws_checksums_build"
 backend-path = ["build_backend"]
 
 [tool.maturin]
 python-source = "src"
-module-name = "smithy_checksums._native"
+module-name = "smithy_aws_checksums._native"
 features = ["pyo3/extension-module"]
 exclude = ["**/__pycache__/**", "**/*.pyc"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/smithy_checksums"]
+packages = ["src/smithy_aws_checksums"]
 exclude = ["*.so", "*.pyd"]
 
 [tool.hatch.build.targets.sdist]

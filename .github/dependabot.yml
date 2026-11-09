@@ -14,7 +14,7 @@ updates:
       default-days: 7
   - package-ecosystem: "cargo"
     directories:
-      - "/packages/smithy-checksums"
+      - "/packages/smithy-aws-checksums"
     schedule:
       interval: "weekly"
       day: "wednesday"

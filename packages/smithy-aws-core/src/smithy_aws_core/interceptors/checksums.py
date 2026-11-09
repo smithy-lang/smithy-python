@@ -67,7 +67,7 @@ class FlexibleChecksumsInterceptor(
 
         :param stream: Wraps validated response payloads. Async clients pass
             ``AsyncChecksumStream``.
-        :raises MissingDependencyError: If smithy-checksums isn't installed.
+        :raises MissingDependencyError: If smithy-aws-checksums isn't installed.
         """
         assert_checksums_installed()
         self._stream = stream

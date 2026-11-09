@@ -62,7 +62,7 @@ path = "src/smithy_aws_core/__init__.py"
 
 [project.optional-dependencies]
 checksums = [
-    "smithy-checksums~=0.1.0"
+    "smithy-aws-checksums~=0.1.0"
 ]
 eventstream = [
     "smithy-aws-event-stream~=0.4.0"

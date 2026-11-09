@@ -60,7 +60,7 @@ jobs:
       - name: Cache Rust builds
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          workspaces: packages/smithy-checksums
+          workspaces: packages/smithy-aws-checksums
           key: ${{ matrix.python-version }}
           # Pull requests restore the caches develop saves, without adding their own.
           save-if: ${{ github.ref == 'refs/heads/develop' }}
@@ -114,7 +114,7 @@ jobs:
         # 3.12 builds the abi3 wheel, 3.14t a version-specific free-threaded
         # wheel, and 3.15t the abi3t wheel.
         python-version: ["3.12", "3.14t", "3.15t"]
-        package: [smithy-checksums]
+        package: [smithy-aws-checksums]
     env:
       SMITHY_PYTHON_NATIVE_BUILD: always
       PACKAGE: ${{ matrix.package }}
@@ -155,7 +155,7 @@ jobs:
       - name: Test wheel
         run: |
           uv pip install pytest dist/*.whl
-          python -c "import smithy_checksums; assert smithy_checksums.HAS_NATIVE_EXTENSION"
+          python -c "import smithy_aws_checksums; assert smithy_aws_checksums.HAS_NATIVE_EXTENSION"
           python -m pytest "packages/$PACKAGE/tests" --import-mode=importlib -o addopts=""
 
   # Tests the pure-Python wheel, and installing from the sdist without a Rust
@@ -166,7 +166,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [smithy-checksums]
+        package: [smithy-aws-checksums]
     env:
       PACKAGE: ${{ matrix.package }}
 
@@ -192,7 +192,7 @@ jobs:
       - name: Test pure-Python wheel
         run: |
           uv pip install pytest awscrt dist/*-py3-none-any.whl
-          python -c "import smithy_checksums; assert not smithy_checksums.HAS_NATIVE_EXTENSION"
+          python -c "import smithy_aws_checksums; assert not smithy_aws_checksums.HAS_NATIVE_EXTENSION"
           python -m pytest "packages/$PACKAGE/tests" --import-mode=importlib -o addopts=""
 
       - name: Test sdist install without Rust
@@ -201,7 +201,7 @@ jobs:
           if command -v cargo; then echo "cargo is still on the PATH"; exit 1; fi
           uv venv .venv-sdist
           uv pip install --python .venv-sdist --no-cache pytest awscrt dist/*.tar.gz
-          .venv-sdist/bin/python -c "import smithy_checksums; assert not smithy_checksums.HAS_NATIVE_EXTENSION"
+          .venv-sdist/bin/python -c "import smithy_aws_checksums; assert not smithy_aws_checksums.HAS_NATIVE_EXTENSION"
           .venv-sdist/bin/python -m pytest "packages/$PACKAGE/tests" --import-mode=importlib -o addopts=""
 
   # Checks each native extension builds with the minimum Rust version it declares,
@@ -212,7 +212,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [smithy-checksums]
+        package: [smithy-aws-checksums]
     env:
       PACKAGE: ${{ matrix.package }}
 

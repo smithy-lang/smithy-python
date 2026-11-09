@@ -8,7 +8,7 @@ from types import ModuleType, SimpleNamespace
 import pytest
 
 _BACKEND_PATH = (
-    Path(__file__).parents[2] / "build_backend" / "smithy_checksums_build.py"
+    Path(__file__).parents[2] / "build_backend" / "smithy_aws_checksums_build.py"
 )
 _ENV_VAR = "SMITHY_PYTHON_NATIVE_BUILD"
 
@@ -16,7 +16,7 @@ _ENV_VAR = "SMITHY_PYTHON_NATIVE_BUILD"
 @pytest.fixture
 def backend() -> ModuleType:
     spec = importlib.util.spec_from_file_location(
-        "smithy_checksums_build", _BACKEND_PATH
+        "smithy_aws_checksums_build", _BACKEND_PATH
     )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

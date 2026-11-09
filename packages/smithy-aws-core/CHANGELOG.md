@@ -32,11 +32,11 @@
 * `AWSCredentialsIdentity` no longer includes `secret_access_key` or `session_token` in its repr, which keeps them out of debug logs.
 
 ### Dependencies
-* Added a `checksums` extra that installs `smithy-checksums`.
+* Added a `checksums` extra that installs `smithy-aws-checksums`.
 * Bump `smithy-core` from `~=0.9.0` to `~=0.10.0`.
 * Bump `smithy-http` from `~=0.6.0` to `~=0.7.0`.
 * Bump `aws-sdk-signers` from `~=0.4.0` to `~=0.5.0`.
-* Bump `smithy-checksums` from `~=0.0.0` to `~=0.1.0`.
+* Bump `smithy-aws-checksums` from `~=0.0.0` to `~=0.1.0`.
 * Bump `smithy-aws-event-stream` from `~=0.3.0` to `~=0.4.0`.
 * Bump `smithy-json` from `~=0.3.0` to `~=0.4.0`.
 * Bump `smithy-xml` from `~=0.2.0` to `~=0.3.0`.

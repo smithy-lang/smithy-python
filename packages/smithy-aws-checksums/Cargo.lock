@@ -141,7 +141,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "smithy-checksums"
+name = "smithy-aws-checksums"
 version = "0.0.0"
 dependencies = [
  "crc-fast",

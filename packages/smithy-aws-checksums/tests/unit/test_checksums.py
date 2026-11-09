@@ -7,8 +7,8 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import pytest
-import smithy_checksums
-from smithy_checksums import (
+import smithy_aws_checksums
+from smithy_aws_checksums import (
     CRC32,
     CRC32C,
     CRC64NVME,
@@ -154,5 +154,5 @@ def test_checksum_protocol_supports_isinstance() -> None:
 
 
 def test_has_native_extension() -> None:
-    built = importlib.util.find_spec("smithy_checksums._native") is not None
-    assert smithy_checksums.HAS_NATIVE_EXTENSION is built
+    built = importlib.util.find_spec("smithy_aws_checksums._native") is not None
+    assert smithy_aws_checksums.HAS_NATIVE_EXTENSION is built

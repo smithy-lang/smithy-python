@@ -13,8 +13,8 @@ from concurrent.futures import ThreadPoolExecutor
 from types import ModuleType
 
 import pytest
-from smithy_checksums._private import crc, xxhash
-from smithy_checksums._private.selection import ChecksumImpl
+from smithy_aws_checksums._private import crc, xxhash
+from smithy_aws_checksums._private.selection import ChecksumImpl
 
 from .vectors import ALGORITHMS, KNOWN_ANSWERS, PATTERN_DIGESTS, pattern
 
@@ -32,7 +32,7 @@ PURE: dict[str, Factory] = {
 
 def _load_native() -> ModuleType | None:
     try:
-        from smithy_checksums import _native
+        from smithy_aws_checksums import _native
     except ImportError:
         return None
     return _native

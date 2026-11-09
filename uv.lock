@@ -1,14 +1,14 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 
 [manifest]
 members = [
     "aws-sdk-signers",
+    "smithy-aws-checksums",
     "smithy-aws-core",
     "smithy-aws-event-stream",
     "smithy-cbor",
-    "smithy-checksums",
     "smithy-core",
     "smithy-http",
     "smithy-json",
@@ -666,6 +666,11 @@ wheels = [
 ]
 
 [[package]]
+name = "smithy-aws-checksums"
+version = "0.1.0"
+source = { editable = "packages/smithy-aws-checksums" }
+
+[[package]]
 name = "smithy-aws-core"
 source = { editable = "packages/smithy-aws-core" }
 dependencies = [
@@ -676,7 +681,7 @@ dependencies = [
 
 [package.optional-dependencies]
 checksums = [
-    { name = "smithy-checksums" },
+    { name = "smithy-aws-checksums" },
 ]
 eventstream = [
     { name = "smithy-aws-event-stream" },
@@ -691,8 +696,8 @@ xml = [
 [package.metadata]
 requires-dist = [
     { name = "aws-sdk-signers", editable = "packages/aws-sdk-signers" },
+    { name = "smithy-aws-checksums", marker = "extra == 'checksums'", editable = "packages/smithy-aws-checksums" },
     { name = "smithy-aws-event-stream", marker = "extra == 'eventstream'", editable = "packages/smithy-aws-event-stream" },
-    { name = "smithy-checksums", marker = "extra == 'checksums'", editable = "packages/smithy-checksums" },
     { name = "smithy-core", editable = "packages/smithy-core" },
     { name = "smithy-http", editable = "packages/smithy-http" },
     { name = "smithy-json", marker = "extra == 'json'", editable = "packages/smithy-json" },
@@ -719,11 +724,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
-
-[[package]]
-name = "smithy-checksums"
-version = "0.0.0"
-source = { editable = "packages/smithy-checksums" }
 
 [[package]]
 name = "smithy-core"
@@ -790,6 +790,7 @@ source = { editable = "packages/smithy-python" }
 name = "smithy-python-workspace"
 version = "0.1.0"
 source = { virtual = "." }
+default-groups = ["changelog", "lint", "test", "typing"]
 
 [package.dev-dependencies]
 changelog = [

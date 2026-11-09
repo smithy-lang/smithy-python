@@ -86,7 +86,7 @@
     },
     {
       "type": "dependency",
-      "description": "Added a `checksums` extra that installs `smithy-checksums`."
+      "description": "Added a `checksums` extra that installs `smithy-aws-checksums`."
     },
     {
       "type": "dependency",
@@ -102,7 +102,7 @@
     },
     {
       "type": "dependency",
-      "description": "Bump `smithy-checksums` from `~=0.0.0` to `~=0.1.0`."
+      "description": "Bump `smithy-aws-checksums` from `~=0.0.0` to `~=0.1.0`."
     },
     {
       "type": "dependency",
