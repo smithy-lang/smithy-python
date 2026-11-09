@@ -9,6 +9,7 @@ from smithy_aws_core.config.validators import (
     validate_account_id_endpoint_mode,
     validate_max_attempts,
     validate_region,
+    validate_request_checksum_calculation,
     validate_response_checksum_validation,
     validate_retry_mode,
     validate_sdk_ua_app_id,
@@ -128,3 +129,17 @@ class TestValidateAccountIdEndpointMode:
     def test_invalid_values_raise(self, value: object):
         with pytest.raises(ConfigValidationError, match="account_id_endpoint_mode"):
             validate_account_id_endpoint_mode(value)
+
+
+class TestValidateRequestChecksumCalculation:
+    @pytest.mark.parametrize("value", ["when_supported", "when_required", None])
+    def test_accepts_valid_values(self, value: str | None) -> None:
+        validate_request_checksum_calculation(value)
+
+    @pytest.mark.parametrize("value", ["always", "", "WHEN_SUPPORTED", 1])
+    def test_rejects_invalid_values(self, value: object) -> None:
+        with pytest.raises(
+            ConfigValidationError,
+            match="Invalid value for 'request_checksum_calculation'",
+        ):
+            validate_request_checksum_calculation(value)

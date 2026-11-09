@@ -21,6 +21,8 @@ __all__ = [
     "resolve_endpoint_uri",
     "resolve_max_attempts",
     "resolve_region",
+    "resolve_request_checksum_calculation",
+    "resolve_request_checksum_calculation_program",
     "resolve_response_checksum_validation",
     "resolve_response_checksum_validation_program",
     "resolve_retry_mode",
@@ -124,6 +126,19 @@ def resolve_account_id_endpoint_mode(ctx: SharedConfigContext) -> Resolved[str |
     return run_program(resolve_account_id_endpoint_mode_program(ctx))
 
 
+def resolve_request_checksum_calculation(
+    ctx: SharedConfigContext,
+) -> Resolved[str | None]:
+    """Resolve when request checksums are calculated from environment or config file.
+
+    Values are case-insensitive and are returned in lowercase.
+
+    :param ctx: The shared resolution context.
+    :returns: Resolved value with source.
+    """
+    return run_program(resolve_request_checksum_calculation_program(ctx))
+
+
 def resolve_response_checksum_validation(
     ctx: SharedConfigContext,
 ) -> Resolved[str | None]:
@@ -208,6 +223,23 @@ def resolve_account_id_endpoint_mode_program(
         ctx,
         env_vars=("AWS_ACCOUNT_ID_ENDPOINT_MODE",),
         profile_keys=("account_id_endpoint_mode",),
+    )
+    if result.value is UNSET:
+        return result
+    return Resolved(value=result.value.lower(), source=result.source)
+
+
+def resolve_request_checksum_calculation_program(
+    ctx: Any,
+) -> Program[Resolved[str | None]]:
+    """Resolve when request checksums are calculated as a program, lowercasing it.
+
+    :param ctx: The shared resolution context, sync or async.
+    """
+    result = yield from _resolve_str(
+        ctx,
+        env_vars=("AWS_REQUEST_CHECKSUM_CALCULATION",),
+        profile_keys=("request_checksum_calculation",),
     )
     if result.value is UNSET:
         return result

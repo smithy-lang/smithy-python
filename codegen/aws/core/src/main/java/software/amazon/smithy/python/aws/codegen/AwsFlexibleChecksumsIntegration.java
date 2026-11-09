@@ -50,38 +50,57 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
             .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
             .build();
 
-    private static final ConfigProperty RESPONSE_CHECKSUM_VALIDATION = ConfigProperty.builder()
-            .name("response_checksum_validation")
-            .type(Symbol.builder()
-                    .namespace("smithy_aws_core.config.types", ".")
-                    .name("ResponseChecksumValidation")
-                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                    .build())
-            .nullable(true)
-            .documentation("When to validate the checksums of response payloads: ``when_supported`` "
+    private static final ConfigProperty REQUEST_CHECKSUM_CALCULATION = checksumSetting(
+            "request_checksum_calculation",
+            "RequestChecksumCalculation",
+            "When to calculate checksums of request payloads: ``when_supported`` (the "
+                    + "default) calculates them for every operation that supports request "
+                    + "checksums, and ``when_required`` only when the operation requires one or "
+                    + "an algorithm is set on the request, such as with ``checksum_algorithm``. "
+                    + "A checksum set on the request is sent as is.");
+
+    private static final ConfigProperty RESPONSE_CHECKSUM_VALIDATION = checksumSetting(
+            "response_checksum_validation",
+            "ResponseChecksumValidation",
+            "When to validate the checksums of response payloads: ``when_supported`` "
                     + "(the default) validates them for every operation that models response "
                     + "checksums, and ``when_required`` only when validation is enabled on the "
                     + "request, such as with ``checksum_mode``. A payload is validated when it's "
-                    + "read to the end, and a mismatch raises ``ChecksumMismatchError``.")
-            .defaultValue("when_supported")
-            .resolver(writer -> writer.writeInline("$T",
-                    Symbol.builder()
-                            .namespace("smithy_aws_core.config.resolvers", ".")
-                            .name("resolve_response_checksum_validation_program")
-                            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                            .build()))
-            .validator(Symbol.builder()
-                    .namespace("smithy_aws_core.config.validators", ".")
-                    .name("validate_response_checksum_validation")
-                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                    .build())
-            .build();
+                    + "read to the end, and a mismatch raises ``ChecksumMismatchError``.");
+
+    // The type, resolver program, and validator of each setting are named after
+    // it in smithy-aws-core.
+    private static ConfigProperty checksumSetting(String name, String typeName, String documentation) {
+        return ConfigProperty.builder()
+                .name(name)
+                .type(Symbol.builder()
+                        .namespace("smithy_aws_core.config.types", ".")
+                        .name(typeName)
+                        .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                        .build())
+                .nullable(true)
+                .documentation(documentation)
+                .defaultValue("when_supported")
+                .resolver(writer -> writer.writeInline("$T",
+                        Symbol.builder()
+                                .namespace("smithy_aws_core.config.resolvers", ".")
+                                .name("resolve_" + name + "_program")
+                                .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                                .build()))
+                .validator(Symbol.builder()
+                        .namespace("smithy_aws_core.config.validators", ".")
+                        .name("validate_" + name)
+                        .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                        .build())
+                .build();
+    }
 
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
         var model = context.model();
         var service = context.settings().service(model);
-        if (!hasHttpChecksumOperation(model, service) || !CodegenUtils.isAwsService(context)) {
+        var traits = checksumTraits(model, service);
+        if (traits.isEmpty() || !CodegenUtils.isAwsService(context)) {
             return List.of();
         }
 
@@ -89,9 +108,16 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
                 .symbol(CodegenUtils.aioSymbol(context.settings(), PLUGIN_FILE, "flexible_checksums_plugin"))
                 .build();
 
+        // Each setting is only added to clients it has an effect on.
+        var builder = RuntimeClientPlugin.builder();
+        if (traits.stream().anyMatch(AwsFlexibleChecksumsIntegration::hasRequestChecksum)) {
+            builder.addConfigProperty(REQUEST_CHECKSUM_CALCULATION);
+        }
+        if (traits.stream().anyMatch(AwsFlexibleChecksumsIntegration::hasResponseChecksum)) {
+            builder.addConfigProperty(RESPONSE_CHECKSUM_VALIDATION);
+        }
         return List.of(
-                RuntimeClientPlugin.builder()
-                        .addConfigProperty(RESPONSE_CHECKSUM_VALIDATION)
+                builder
                         .pythonPlugin(plugin)
                         .writeAdditionalFiles((c) -> {
                             var filename = plugin.getSymbol().getDefinitionFile();
@@ -114,10 +140,19 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
                         .build());
     }
 
-    static boolean hasHttpChecksumOperation(Model model, ServiceShape service) {
+    static List<HttpChecksumTrait> checksumTraits(Model model, ServiceShape service) {
         return TopDownIndex.of(model)
                 .getContainedOperations(service)
                 .stream()
-                .anyMatch(operation -> operation.hasTrait(HttpChecksumTrait.class));
+                .flatMap(operation -> operation.getTrait(HttpChecksumTrait.class).stream())
+                .toList();
+    }
+
+    static boolean hasRequestChecksum(HttpChecksumTrait trait) {
+        return trait.isRequestChecksumRequired() || trait.getRequestAlgorithmMember().isPresent();
+    }
+
+    static boolean hasResponseChecksum(HttpChecksumTrait trait) {
+        return !trait.getResponseAlgorithms().isEmpty() && trait.getRequestValidationModeMember().isPresent();
     }
 }

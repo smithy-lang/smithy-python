@@ -9,13 +9,18 @@ from typing import get_args
 from smithy_core.retries import RetryStrategyType
 
 from .exceptions import ConfigValidationError, ProfileNotFoundError
-from .types import ConfigSource, ResponseChecksumValidation
+from .types import (
+    ConfigSource,
+    RequestChecksumCalculation,
+    ResponseChecksumValidation,
+)
 
 __all__ = [
     "validate_account_id_endpoint_mode",
     "validate_max_attempts",
     "validate_profile",
     "validate_region",
+    "validate_request_checksum_calculation",
     "validate_response_checksum_validation",
     "validate_retry_mode",
     "validate_sdk_ua_app_id",
@@ -137,6 +142,20 @@ def validate_sdk_ua_app_id(value: object) -> None:
         )
 
 
+def validate_request_checksum_calculation(value: object) -> None:
+    """Validate when request checksums are calculated.
+
+    Valid values: 'when_supported', 'when_required', or None for the default. The
+    resolver lowercases values from the environment and shared config files.
+
+    :param value: The value to validate.
+    :raises ConfigValidationError: If the value is invalid.
+    """
+    _validate_choice(
+        "request_checksum_calculation", value, RequestChecksumCalculation.__value__
+    )
+
+
 def validate_response_checksum_validation(value: object) -> None:
     """Validate when response checksums are validated.
 
@@ -146,13 +165,18 @@ def validate_response_checksum_validation(value: object) -> None:
     :param value: The value to validate.
     :raises ConfigValidationError: If the value is invalid.
     """
+    _validate_choice(
+        "response_checksum_validation", value, ResponseChecksumValidation.__value__
+    )
+
+
+def _validate_choice(name: str, value: object, choices: object) -> None:
     if value is None:
         return
-    valid = get_args(ResponseChecksumValidation.__value__)
+    valid = get_args(choices)
     if value not in valid:
         raise ConfigValidationError(
-            f"Invalid value for 'response_checksum_validation': {value!r}. "
-            f"Must be one of {valid}."
+            f"Invalid value for {name!r}: {value!r}. Must be one of {valid}."
         )
 
 

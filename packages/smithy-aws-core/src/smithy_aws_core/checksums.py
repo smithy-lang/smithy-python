@@ -10,13 +10,19 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from io import BytesIO
 
-from smithy_core.exceptions import CallError, Fault
+from smithy_core.exceptions import CallError, Fault, SmithyError
 from smithy_core.interfaces import BytesReader
 
 from ._private.checksums import ChecksumValidator, encode_digest
-from .config.types import ResponseChecksumValidation
+from .config.types import RequestChecksumCalculation, ResponseChecksumValidation
 
-__all__ = ["ChecksumMismatchError", "ChecksumStream", "ResponseChecksumValidation"]
+__all__ = [
+    "ChecksumMismatchError",
+    "ChecksumStream",
+    "RequestChecksumCalculation",
+    "ResponseChecksumValidation",
+    "UnsupportedChecksumAlgorithmError",
+]
 
 _DEFAULT_CHUNK_SIZE = 1024
 
@@ -45,6 +51,22 @@ class ChecksumMismatchError(CallError):
                 f"{encode_digest(self.actual)}."
             )
         super().__post_init__()
+
+
+class UnsupportedChecksumAlgorithmError(SmithyError):
+    """The checksum algorithm chosen for a request isn't supported.
+
+    To use an algorithm the SDK can't calculate, such as MD5, calculate the checksum
+    and set it on the request instead.
+    """
+
+    def __init__(self, algorithm: str) -> None:
+        super().__init__(
+            f"Unsupported checksum algorithm: {algorithm!r}. To use it, calculate "
+            "the checksum and set it on the request."
+        )
+        self.algorithm = algorithm
+        """The algorithm that was chosen."""
 
 
 class ChecksumStream:
