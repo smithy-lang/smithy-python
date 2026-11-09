@@ -201,14 +201,14 @@ def _multi_value_request(values: list[str]) -> AWSRequest:
     )
 
 
-def _smithy_http_multi_value_request() -> AWSRequest:
+def _smithy_http_multi_value_request(values: list[str]) -> AWSRequest:
     # smithy-aws-core signs smithy-http requests, whose Field is a separate class.
     request = smithy_http.HTTPRequest(
         destination=smithy_core.URI(host="example.amazonaws.com"),
         method="PUT",
         body=BytesIO(b""),
         fields=smithy_http.Fields(
-            [smithy_http.Field(name="Content-Encoding", values=["gzip", "aws-chunked"])]
+            [smithy_http.Field(name="Content-Encoding", values=values)]
         ),
     )
     return typing.cast(AWSRequest, request)
@@ -221,10 +221,28 @@ MULTI_VALUE_REQUESTS = pytest.mark.parametrize(
     "make_request",
     [
         lambda: _multi_value_request(["gzip", "aws-chunked"]),
-        _smithy_http_multi_value_request,
+        lambda: _smithy_http_multi_value_request(["gzip", "aws-chunked"]),
         lambda: _multi_value_request(["gzip,aws-chunked"]),
+        lambda: _multi_value_request([" gzip ", "  aws-chunked"]),
     ],
-    ids=["aws-sdk-signers", "smithy-http", "joined"],
+    ids=["aws-sdk-signers", "smithy-http", "joined", "padded"],
+)
+
+# Each case is (values sent as separate header lines, the value the service rebuilds).
+# ``Field.as_string`` would quote the values containing a comma or a double quote.
+CANONICAL_FIELD_VALUE_CASES = pytest.mark.parametrize(
+    "values, expected",
+    [
+        (["gzip,br", "aws-chunked"], "gzip,br,aws-chunked"),
+        (['"gzip"', "aws-chunked"], '"gzip",aws-chunked'),
+        (["a  b ", " c"], "a b,c"),
+    ],
+    ids=["comma", "quote", "whitespace"],
+)
+CANONICAL_FIELD_VALUE_REQUESTS = pytest.mark.parametrize(
+    "make_request",
+    [_multi_value_request, _smithy_http_multi_value_request],
+    ids=["aws-sdk-signers", "smithy-http"],
 )
 
 
@@ -348,6 +366,23 @@ class TestSigV4Signer:
         )
         assert (
             signed.fields["authorization"].as_string().endswith(MULTI_VALUE_SIGNATURE)
+        )
+
+    @CANONICAL_FIELD_VALUE_CASES
+    @CANONICAL_FIELD_VALUE_REQUESTS
+    def test_canonical_field_matches_value_service_rebuilds(
+        self,
+        make_request: typing.Callable[[list[str]], AWSRequest],
+        values: list[str],
+        expected: str,
+    ) -> None:
+        canonical_request = self.SIGV4_SYNC_SIGNER.canonical_request(
+            signing_properties=MULTI_VALUE_PROPERTIES, request=make_request(values)
+        )
+        assert f"\ncontent-encoding:{expected}\n" in canonical_request
+        assert canonical_request == self.SIGV4_SYNC_SIGNER.canonical_request(
+            signing_properties=MULTI_VALUE_PROPERTIES,
+            request=_multi_value_request([expected]),
         )
 
     def test_sign_event_stream(self, aws_identity: AWSCredentialIdentity) -> None:
@@ -692,6 +727,23 @@ class TestAsyncSigV4Signer:
         )
         assert (
             signed.fields["authorization"].as_string().endswith(MULTI_VALUE_SIGNATURE)
+        )
+
+    @CANONICAL_FIELD_VALUE_CASES
+    @CANONICAL_FIELD_VALUE_REQUESTS
+    async def test_canonical_field_matches_value_service_rebuilds(
+        self,
+        make_request: typing.Callable[[list[str]], AWSRequest],
+        values: list[str],
+        expected: str,
+    ) -> None:
+        canonical_request = await self.SIGV4_ASYNC_SIGNER.canonical_request(
+            signing_properties=MULTI_VALUE_PROPERTIES, request=make_request(values)
+        )
+        assert f"\ncontent-encoding:{expected}\n" in canonical_request
+        assert canonical_request == await self.SIGV4_ASYNC_SIGNER.canonical_request(
+            signing_properties=MULTI_VALUE_PROPERTIES,
+            request=_multi_value_request([expected]),
         )
 
     async def test_sign_event_stream(

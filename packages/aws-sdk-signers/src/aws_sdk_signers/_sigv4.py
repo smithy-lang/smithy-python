@@ -236,7 +236,7 @@ class SigV4SignerBase:
 
     def _normalize_signing_fields(self, *, request: AWSRequest) -> dict[str, str]:
         normalized_fields = {
-            field.name.lower(): field.as_string()
+            field.name.lower(): _canonical_field_value(field.values)
             for field in request.fields
             if field.name.lower() not in HEADERS_EXCLUDED_FROM_SIGNING
         }
@@ -255,9 +255,7 @@ class SigV4SignerBase:
         return uri.netloc
 
     def _format_canonical_fields(self, *, fields: dict[str, str]) -> str:
-        return "".join(
-            f"{key}:{' '.join(value.split())}\n" for key, value in fields.items()
-        )
+        return "".join(f"{key}:{value}\n" for key, value in fields.items())
 
     def _format_canonical_payload(
         self,
@@ -416,6 +414,16 @@ def remove_dot_segments(path: str, remove_consecutive_slashes: bool = True) -> s
     if remove_consecutive_slashes:
         result = result.replace("//", "/")
     return result
+
+
+def _canonical_field_value(values: list[str]) -> str:
+    """Join a field's values the way the service rebuilds them to check a signature.
+
+    Transports send each value as its own header line, and the service joins the
+    lines with a bare comma. SigV4 trims each value and collapses runs of spaces.
+    Values are never quoted, unlike ``Field.as_string``.
+    """
+    return ",".join(" ".join(value.split()) for value in values)
 
 
 def _hmac(key: bytes, value: str) -> bytes:
