@@ -12,7 +12,7 @@ from smithy_core import URI
 from smithy_core.exceptions import ClientTimeoutError
 from smithy_core.interfaces import is_bytes_reader
 from smithy_core.utils import read_streaming_blob
-from smithy_http import Fields, HTTPRequest
+from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.exceptions import SmithyHTTPError
 from smithy_http.interfaces import HTTPRequestConfiguration
 from smithy_http.urllib3 import Urllib3HTTPClient, Urllib3HTTPClientConfig
@@ -90,6 +90,29 @@ def test_repeated_response_headers_are_merged_case_insensitively() -> None:
 
     assert response.fields["x-values"].values == ["a", "b"]
     assert response.fields["x-values"].kind == "header"
+
+
+def test_trailer_fields_are_not_sent_as_headers() -> None:
+    pool = Mock()
+    pool.request.return_value = Mock(
+        status=200, headers=urllib3.HTTPHeaderDict(), data=b"", reason="OK"
+    )
+    client = Urllib3HTTPClient(_pool=pool)
+    request = HTTPRequest(
+        destination=URI(host="example.com"),
+        method="PUT",
+        fields=Fields(
+            [
+                Field(name="x-amz-meta-a", values=["1"]),
+                Field(name="x-amz-checksum-crc32", values=["AAAAAA=="], kind="trailer"),
+            ]
+        ),
+    )
+
+    client.send(request)
+
+    headers = pool.request.call_args.kwargs["headers"]
+    assert list(headers.items()) == [("x-amz-meta-a", "1")]
 
 
 # The tests below send real requests to a local server, so they exercise urllib3's

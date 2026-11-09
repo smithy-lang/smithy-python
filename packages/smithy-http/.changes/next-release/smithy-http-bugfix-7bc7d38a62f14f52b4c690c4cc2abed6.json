@@ -1,4 +1,4 @@
 {
   "type": "bugfix",
-  "description": "`Field.as_string()` now joins values with its `delimiter` argument, a bare comma by default, instead of always using a comma and a space. The `Field` interface now declares the `delimiter` parameter."
+  "description": "`Field.as_string()` now joins values with its `delimiter` argument, a bare comma by default, instead of always using a comma and a space. The `Field` interface now declares the `delimiter` parameter. `AIOHTTPClient` and `Urllib3HTTPClient` no longer send trailer fields as headers, matching `AWSCRTHTTPClient`."
 }

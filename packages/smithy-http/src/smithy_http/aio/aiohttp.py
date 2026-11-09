@@ -107,8 +107,11 @@ class AIOHTTPClient(AsyncHTTPClient):
 
         request_config = request_config or HTTPRequestConfiguration()
 
+        # aiohttp can't send request trailers, and a trailer is never a header.
         headers_list = list(
-            chain.from_iterable(fld.as_tuples() for fld in request.fields)
+            chain.from_iterable(
+                fld.as_tuples() for fld in request.fields.get_by_type("header")
+            )
         )
 
         body: StreamingBlob | None = request.body

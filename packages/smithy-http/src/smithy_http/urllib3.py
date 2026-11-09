@@ -114,9 +114,10 @@ class Urllib3HTTPClient(HTTPClient):
             connect=self._config.connect_timeout,
             read=self._config.read_timeout if read_timeout is None else read_timeout,
         )
+        # urllib3 can't send request trailers, and a trailer is never a header.
         headers = urllib3.HTTPHeaderDict()
         for name, value in chain.from_iterable(
-            fld.as_tuples() for fld in request.fields
+            fld.as_tuples() for fld in request.fields.get_by_type("header")
         ):
             headers.add(name, value)
 
