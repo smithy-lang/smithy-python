@@ -34,6 +34,7 @@ import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.StructureShape;
+import software.amazon.smithy.model.traits.IdempotencyTokenTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.AppliesTo;
@@ -70,6 +71,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private static final Symbol TEST_HTTP_SERVICE_ERR_SYMBOL = Symbol.builder()
             .name("TestHttpServiceError")
             .build();
+    /** The idempotency token value protocol tests expect when the caller leaves the member unset. */
+    private static final String TEST_IDEMPOTENCY_TOKEN = "00000000-0000-4000-8000-000000000000";
+    /** The runtime function that generates auto-filled idempotency tokens. */
+    private static final String IDEMPOTENCY_TOKEN_GENERATOR = "smithy_core._pipeline._default_idempotency_token";
 
     private final PythonSettings settings;
     private final Model model;
@@ -160,6 +165,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 testCase,
                 String.format("%s_request_%s", testCase.getId(), operation.getId().getName()),
                 testFilter.test(operation, testCase),
+                () -> writeIdempotencyTokenPatch(operation),
                 () -> {
                     var hostSplit = testCase.getHost().orElse("example.com").split("/", 2);
                     var host = hostSplit[0];
@@ -635,6 +641,16 @@ public final class HttpProtocolTestGenerator implements Runnable {
             boolean shouldSkip,
             Runnable f
     ) {
+        writeTestBlock(testCase, testName, shouldSkip, () -> {}, f);
+    }
+
+    private void writeTestBlock(
+            HttpMessageTestCase testCase,
+            String testName,
+            boolean shouldSkip,
+            Runnable decorators,
+            Runnable f
+    ) {
         LOGGER.fine(String.format("Writing test block for %s", testName));
         writer.addDependency(SmithyPythonDependency.PYTEST);
 
@@ -644,6 +660,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "mark", "mark");
             writer.write("@mark.xfail()");
         }
+        decorators.run();
         writer.openBlock("async def test_$L() -> None:", "", CaseUtils.toSnakeCase(testName), () -> {
             testCase.getDocumentation().ifPresent(docs -> writer.writeDocs(docs, context));
             f.run();
@@ -688,6 +705,20 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 aws_secret_access_key="test-secret-access-key",
                 aws_credentials_identity_resolver=$T(),
                 """, RuntimeTypes.STATIC_CREDENTIALS_RESOLVER);
+    }
+
+    /**
+     * Pins the auto-filled idempotency token so request tests can assert it.
+     * The generator is private to the runtime, so the test patches it. Only
+     * written for operations whose input has an {@code @idempotencyToken} member.
+     */
+    private void writeIdempotencyTokenPatch(OperationShape operation) {
+        var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
+        if (inputShape.members().stream().noneMatch(member -> member.hasTrait(IdempotencyTokenTrait.class))) {
+            return;
+        }
+        writer.addStdlibImport("unittest.mock", "patch");
+        writer.write("@patch($S, new=lambda: $S)", IDEMPOTENCY_TOKEN_GENERATOR, TEST_IDEMPOTENCY_TOKEN);
     }
 
     private void writeUtilStubs(Symbol serviceSymbol) {

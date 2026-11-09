@@ -25,9 +25,6 @@ public final class RestXmlProtocolGenerator implements ProtocolGenerator {
             "SDKAppliedContentEncoding_restXml",
             "SDKAppendedGzipAfterProvidedEncoding_restXml",
 
-            // TODO: support idempotency token autofill
-            "QueryIdempotencyTokenAutoFill",
-
             // TODO: support of the endpoint trait
             "RestXmlEndpointTraitWithHostLabelAndHttpBinding",
             "RestXmlEndpointTraitWithHostLabel",

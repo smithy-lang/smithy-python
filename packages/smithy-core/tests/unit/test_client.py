@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from dataclasses import replace
 from typing import Any, cast
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from smithy_core.client import Client, ClientCall, RequestPipeline
@@ -16,7 +16,14 @@ from smithy_core.retries import (
     StandardRetryStrategy,
 )
 
-from .aio._pipeline_harness import StubOutput, StubProtocol, retryable_client_call
+from .aio._pipeline_harness import (
+    TOKEN_OPERATION,
+    StubOutput,
+    StubProtocol,
+    StubResponse,
+    TokenInput,
+    retryable_client_call,
+)
 
 
 def test_build_call_adds_retry_strategy_to_request_properties() -> None:
@@ -175,3 +182,34 @@ def test_failure_closing_a_body_does_not_hide_the_error() -> None:
 
     with pytest.raises(CallError, match="original"):
         _pipeline(transport, protocol)(_call(max_attempts=1))
+
+
+class _SyncProtocol(StubProtocol):
+    def deserialize_response_program(self, **kwargs: Any) -> Program[StubOutput]:
+        self.deserialize_response_calls += 1
+        return (yield lambda: StubOutput())
+
+
+class _SyncTransport:
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...] = ()
+
+    def send(self, request: Any) -> StubResponse:
+        return StubResponse()
+
+
+def test_sync_pipeline_fills_unset_idempotency_token() -> None:
+    protocol = _SyncProtocol()
+    pipeline: RequestPipeline[Any, Any] = RequestPipeline(
+        protocol=cast(Any, protocol), transport=cast(Any, _SyncTransport())
+    )
+    input = TokenInput()
+    call = replace(retryable_client_call(), input=input, operation=TOKEN_OPERATION)
+
+    with patch(
+        "smithy_core._pipeline._default_idempotency_token", new=lambda: "sync-token"
+    ):
+        pipeline(call)
+
+    [serialized] = protocol.serialized_inputs
+    assert serialized.client_token == "sync-token"
+    assert input.client_token is None

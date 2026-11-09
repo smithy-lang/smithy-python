@@ -8,6 +8,7 @@ the few hooks below.
 """
 
 import logging
+import uuid
 from collections.abc import Mapping, Sequence
 from copy import copy
 from dataclasses import replace
@@ -180,9 +181,17 @@ class RequestPipelineBase[TRequest, TResponse]:
         try:
             interceptor.read_before_execution(input_context)
 
+            # Filled after the whole modify_before_serialization chain, so an
+            # interceptor that returns a new input still gets a token, and
+            # read_before_execution sees the caller's own input. Serialization runs
+            # once per call, so every retry attempt sends the same token.
             input_context = replace(
                 input_context,
-                request=interceptor.modify_before_serialization(input_context),
+                request=_fill_idempotency_token(
+                    interceptor.modify_before_serialization(input_context),
+                    call.operation,
+                    self._logger,
+                ),
             )
 
             interceptor.read_before_serialization(input_context)
@@ -660,3 +669,38 @@ def _rewind_position(body: Any) -> Program[int | None]:
         return (yield lambda: _seek(body, 0, 1))
     except (OSError, ValueError, NotImplementedError):
         return None
+
+
+def _default_idempotency_token() -> str:
+    # Protocol tests patch this to pin the token. It is not a public hook.
+    return str(uuid.uuid4())
+
+
+def _fill_idempotency_token[I: SerializeableShape](
+    input: I, operation: APIOperation[I, Any], logger: logging.Logger
+) -> I:
+    """Return the input with its idempotency token set, if the caller left it unset.
+
+    A token set by the caller or by an interceptor is sent as-is. The caller's input
+    is never mutated: a generated token goes on a copy. Inputs that aren't
+    dataclasses with the derived field, such as hand-written shapes, are passed
+    through unchanged and a warning is logged.
+    """
+    field_name = operation._idempotency_token_field  # pyright: ignore[reportPrivateUsage]
+    if field_name is None or getattr(input, field_name, None) is not None:
+        return input
+    if field_name not in getattr(type(input), "__dataclass_fields__", {}):
+        logger.warning(
+            "Not filling idempotency token: input %s has no dataclass field %r, so "
+            "the request is sent without one",
+            type(input).__name__,
+            field_name,
+        )
+        return input
+
+    # A shallow copy plus a direct set, rather than dataclasses.replace, so the
+    # input's __init__ and __post_init__ don't run again. object.__setattr__ also
+    # works on frozen dataclasses.
+    filled = copy(input)
+    object.__setattr__(filled, field_name, _default_idempotency_token())
+    return filled

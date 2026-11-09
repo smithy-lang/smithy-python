@@ -221,6 +221,8 @@ class TestAdaptiveRetryPipeline:
         call.retryable.return_value = True
         call.retry_strategy = strategy
         call.retry_scope = None
+        # A MagicMock attribute would look like a token field name.
+        call.operation._idempotency_token_field = None
         return call
 
     def _request_context(self) -> RequestContext[Any, Any]:
