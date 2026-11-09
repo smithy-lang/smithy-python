@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "The `Field` interface now declares a bare comma as the default `as_string()` delimiter, matching `Field` and the way services join repeated headers when they check a signature."
+}
