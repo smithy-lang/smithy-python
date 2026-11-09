@@ -121,7 +121,7 @@ class FlexibleChecksumsInterceptor(
         provided = [checksum_header_algorithm(field.name) for field in request.fields]
         if any(provided):
             for algorithm in filter(None, provided):
-                _register_algorithm(context.properties, algorithm)
+                _register_algorithm_feature_id(context.properties, algorithm)
             return request
 
         # A retry reuses the checksum, so a payload that changed is rejected.
@@ -160,7 +160,7 @@ class FlexibleChecksumsInterceptor(
             if header not in request.fields:
                 request.fields.set_field(Field(name=header, values=[algorithm]))
         request.fields.set_field(Field(name=checksum_header(algorithm), values=[value]))
-        _register_algorithm(context.properties, algorithm)
+        _register_algorithm_feature_id(context.properties, algorithm)
         return request
 
     def modify_before_deserialization(
@@ -303,7 +303,7 @@ def _algorithm_header(
     return http_header.key
 
 
-def _register_algorithm(properties: TypedProperties, algorithm: str) -> None:
+def _register_algorithm_feature_id(properties: TypedProperties, algorithm: str) -> None:
     if (feature_id := _ALGORITHM_FEATURE_IDS.get(algorithm)) is not None:
         register_feature_id(properties, feature_id)
 
