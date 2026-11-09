@@ -13,6 +13,8 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+import smithy_core
+import smithy_http
 from aws_sdk_signers import (
     AWSCredentialIdentity,
     AWSRequest,
@@ -178,6 +180,54 @@ def _signed_headers(request: AWSRequest) -> list[str]:
     return match.group("signed_headers").split(";")
 
 
+MULTI_VALUE_PROPERTIES = SigV4SigningProperties(
+    region="us-west-2",
+    service="s3",
+    date="20250101T000000Z",
+    payload_signing_enabled=False,
+)
+MULTI_VALUE_CANONICAL_FIELD = "\ncontent-encoding:gzip,aws-chunked\n"
+MULTI_VALUE_SIGNATURE = (
+    "Signature=a09dab2d634373cdd8df8baae2f32979b64c416b0b08724e4094c78d67b77466"
+)
+
+
+def _multi_value_request(values: list[str]) -> AWSRequest:
+    return AWSRequest(
+        destination=URI(scheme="https", host="example.amazonaws.com"),
+        method="PUT",
+        body=BytesIO(b""),
+        fields=Fields([Field(name="Content-Encoding", values=values)]),
+    )
+
+
+def _smithy_http_multi_value_request() -> AWSRequest:
+    # smithy-aws-core signs smithy-http requests, whose Field is a separate class.
+    request = smithy_http.HTTPRequest(
+        destination=smithy_core.URI(host="example.amazonaws.com"),
+        method="PUT",
+        body=BytesIO(b""),
+        fields=smithy_http.Fields(
+            [smithy_http.Field(name="Content-Encoding", values=["gzip", "aws-chunked"])]
+        ),
+    )
+    return typing.cast(AWSRequest, request)
+
+
+# Transports send each value of a field as its own header line, and the service
+# joins them with a bare comma before verifying the signature. The "joined" case is
+# the request as the service sees it, so every case must produce its signature.
+MULTI_VALUE_REQUESTS = pytest.mark.parametrize(
+    "make_request",
+    [
+        lambda: _multi_value_request(["gzip", "aws-chunked"]),
+        _smithy_http_multi_value_request,
+        lambda: _multi_value_request(["gzip,aws-chunked"]),
+    ],
+    ids=["aws-sdk-signers", "smithy-http", "joined"],
+)
+
+
 class TestSigV4Signer:
     SIGV4_SYNC_SIGNER = SigV4Signer()
 
@@ -279,6 +329,26 @@ class TestSigV4Signer:
         assert "host" in signed_headers
         assert name not in signed_headers
         assert signed_request.fields[name].as_string() == value
+
+    @MULTI_VALUE_REQUESTS
+    def test_sign_joins_multi_valued_field_with_bare_comma(
+        self,
+        aws_identity: AWSCredentialIdentity,
+        make_request: typing.Callable[[], AWSRequest],
+    ) -> None:
+        request = make_request()
+        canonical_request = self.SIGV4_SYNC_SIGNER.canonical_request(
+            signing_properties=MULTI_VALUE_PROPERTIES, request=request
+        )
+        assert MULTI_VALUE_CANONICAL_FIELD in canonical_request
+        signed = self.SIGV4_SYNC_SIGNER.sign(
+            properties=MULTI_VALUE_PROPERTIES,
+            request=request,
+            identity=aws_identity,
+        )
+        assert (
+            signed.fields["authorization"].as_string().endswith(MULTI_VALUE_SIGNATURE)
+        )
 
     def test_sign_event_stream(self, aws_identity: AWSCredentialIdentity) -> None:
         signed = self.SIGV4_SYNC_SIGNER.sign(
@@ -603,6 +673,26 @@ class TestAsyncSigV4Signer:
         assert "host" in signed_headers
         assert name not in signed_headers
         assert signed_request.fields[name].as_string() == value
+
+    @MULTI_VALUE_REQUESTS
+    async def test_sign_joins_multi_valued_field_with_bare_comma(
+        self,
+        aws_identity: AWSCredentialIdentity,
+        make_request: typing.Callable[[], AWSRequest],
+    ) -> None:
+        request = make_request()
+        canonical_request = await self.SIGV4_ASYNC_SIGNER.canonical_request(
+            signing_properties=MULTI_VALUE_PROPERTIES, request=request
+        )
+        assert MULTI_VALUE_CANONICAL_FIELD in canonical_request
+        signed = await self.SIGV4_ASYNC_SIGNER.sign(
+            properties=MULTI_VALUE_PROPERTIES,
+            request=request,
+            identity=aws_identity,
+        )
+        assert (
+            signed.fields["authorization"].as_string().endswith(MULTI_VALUE_SIGNATURE)
+        )
 
     async def test_sign_event_stream(
         self,

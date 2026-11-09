@@ -60,6 +60,11 @@ def test_field_serialization(values: list[str], expected: str):
     assert field.as_string() == expected
 
 
+def test_field_serialization_with_delimiter() -> None:
+    field = Field(name="_", values=["val1", "val2,val3"])
+    assert field.as_string(delimiter=", ") == 'val1, "val2,val3"'
+
+
 @pytest.mark.parametrize(
     "field,expected_repr",
     [
