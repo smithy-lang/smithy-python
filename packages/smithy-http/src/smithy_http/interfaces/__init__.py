@@ -61,7 +61,7 @@ class Field(Protocol):
         """Remove all matching entries from list."""
         ...
 
-    def as_string(self) -> str:
+    def as_string(self, delimiter: str = ",") -> str:
         """Serialize the ``Field``'s values into a single line string."""
         ...
 

@@ -13,8 +13,6 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
-import smithy_core
-import smithy_http
 from aws_sdk_signers import (
     AWSCredentialIdentity,
     AWSRequest,
@@ -193,25 +191,37 @@ MULTI_VALUE_SIGNATURE = (
 
 
 def _multi_value_request(values: list[str]) -> AWSRequest:
+    return _request_with_fields([Field(name="Content-Encoding", values=values)])
+
+
+@dataclass
+class ForeignField:
+    """A ``Field`` from another package, like the smithy-http one smithy-aws-core signs.
+
+    Its ``as_string`` joins with a comma and a space, as smithy-http's once did, so the
+    tests fail if the signer serializes values through it.
+    """
+
+    name: str
+    values: list[str]
+    kind: typing.Literal["header", "trailer"] = "header"
+
+    def as_string(self, delimiter: str = ", ") -> str:
+        return ", ".join(self.values)
+
+
+def _foreign_field_request(values: list[str]) -> AWSRequest:
+    field = ForeignField(name="Content-Encoding", values=values)
+    return _request_with_fields([typing.cast(Field, field)])
+
+
+def _request_with_fields(fields: list[Field]) -> AWSRequest:
     return AWSRequest(
         destination=URI(scheme="https", host="example.amazonaws.com"),
         method="PUT",
         body=BytesIO(b""),
-        fields=Fields([Field(name="Content-Encoding", values=values)]),
+        fields=Fields(fields),
     )
-
-
-def _smithy_http_multi_value_request(values: list[str]) -> AWSRequest:
-    # smithy-aws-core signs smithy-http requests, whose Field is a separate class.
-    request = smithy_http.HTTPRequest(
-        destination=smithy_core.URI(host="example.amazonaws.com"),
-        method="PUT",
-        body=BytesIO(b""),
-        fields=smithy_http.Fields(
-            [smithy_http.Field(name="Content-Encoding", values=values)]
-        ),
-    )
-    return typing.cast(AWSRequest, request)
 
 
 # Transports send each value of a field as its own header line, and the service
@@ -221,11 +231,11 @@ MULTI_VALUE_REQUESTS = pytest.mark.parametrize(
     "make_request",
     [
         lambda: _multi_value_request(["gzip", "aws-chunked"]),
-        lambda: _smithy_http_multi_value_request(["gzip", "aws-chunked"]),
+        lambda: _foreign_field_request(["gzip", "aws-chunked"]),
         lambda: _multi_value_request(["gzip,aws-chunked"]),
         lambda: _multi_value_request([" gzip ", "  aws-chunked"]),
     ],
-    ids=["aws-sdk-signers", "smithy-http", "joined", "padded"],
+    ids=["aws-sdk-signers", "foreign-field", "joined", "padded"],
 )
 
 # Each case is (values sent as separate header lines, the value the service rebuilds).
@@ -239,10 +249,20 @@ CANONICAL_FIELD_VALUE_CASES = pytest.mark.parametrize(
     ],
     ids=["comma", "quote", "whitespace"],
 )
+
+# Fields that never reach the wire as a header line, so they must not be signed.
+UNSENT_FIELDS = pytest.mark.parametrize(
+    "field",
+    [
+        Field(name="X-Amz-Meta-Empty", values=[]),
+        Field(name="X-Amz-Checksum-Crc32", values=["AAAAAA=="], kind="trailer"),
+    ],
+    ids=["no-values", "trailer"],
+)
 CANONICAL_FIELD_VALUE_REQUESTS = pytest.mark.parametrize(
     "make_request",
-    [_multi_value_request, _smithy_http_multi_value_request],
-    ids=["aws-sdk-signers", "smithy-http"],
+    [_multi_value_request, _foreign_field_request],
+    ids=["aws-sdk-signers", "foreign-field"],
 )
 
 
@@ -366,6 +386,17 @@ class TestSigV4Signer:
         )
         assert (
             signed.fields["authorization"].as_string().endswith(MULTI_VALUE_SIGNATURE)
+        )
+
+    @UNSENT_FIELDS
+    def test_does_not_sign_unsent_field(self, field: Field) -> None:
+        canonical_request = self.SIGV4_SYNC_SIGNER.canonical_request(
+            signing_properties=MULTI_VALUE_PROPERTIES,
+            request=_request_with_fields([field]),
+        )
+        assert canonical_request == self.SIGV4_SYNC_SIGNER.canonical_request(
+            signing_properties=MULTI_VALUE_PROPERTIES,
+            request=_request_with_fields([]),
         )
 
     @CANONICAL_FIELD_VALUE_CASES
@@ -727,6 +758,17 @@ class TestAsyncSigV4Signer:
         )
         assert (
             signed.fields["authorization"].as_string().endswith(MULTI_VALUE_SIGNATURE)
+        )
+
+    @UNSENT_FIELDS
+    async def test_does_not_sign_unsent_field(self, field: Field) -> None:
+        canonical_request = await self.SIGV4_ASYNC_SIGNER.canonical_request(
+            signing_properties=MULTI_VALUE_PROPERTIES,
+            request=_request_with_fields([field]),
+        )
+        assert canonical_request == await self.SIGV4_ASYNC_SIGNER.canonical_request(
+            signing_properties=MULTI_VALUE_PROPERTIES,
+            request=_request_with_fields([]),
         )
 
     @CANONICAL_FIELD_VALUE_CASES

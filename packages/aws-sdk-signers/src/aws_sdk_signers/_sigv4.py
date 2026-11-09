@@ -235,10 +235,14 @@ class SigV4SignerBase:
         return "&".join(f"{key}={value}" for key, value in sorted(query_parts))
 
     def _normalize_signing_fields(self, *, request: AWSRequest) -> dict[str, str]:
+        # A field with no values is never sent, and trailers aren't headers, so
+        # signing either would claim a header line the service never receives.
         normalized_fields = {
             field.name.lower(): _canonical_field_value(field.values)
             for field in request.fields
-            if field.name.lower() not in HEADERS_EXCLUDED_FROM_SIGNING
+            if field.kind == "header"
+            and field.values
+            and field.name.lower() not in HEADERS_EXCLUDED_FROM_SIGNING
         }
         if "host" not in normalized_fields:
             normalized_fields["host"] = self._normalize_host_field(
@@ -420,8 +424,9 @@ def _canonical_field_value(values: list[str]) -> str:
     """Join a field's values the way the service rebuilds them to check a signature.
 
     Transports send each value as its own header line, and the service joins the
-    lines with a bare comma. SigV4 trims each value and collapses runs of spaces.
-    Values are never quoted, unlike ``Field.as_string``.
+    lines with a bare comma. Each value is trimmed and its internal whitespace is
+    collapsed to single spaces, as botocore does; ``str.split`` treats all Unicode
+    whitespace as whitespace. Values are never quoted, unlike ``Field.as_string``.
     """
     return ",".join(" ".join(value.split()) for value in values)
 

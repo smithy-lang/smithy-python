@@ -1,4 +1,4 @@
 {
   "type": "bugfix",
-  "description": "Fixed SigV4 signature mismatches (HTTP 403) on requests that send a header with more than one value. The signer now trims each value and joins them with a bare comma, without quoting, which matches how services rebuild repeated headers before checking the signature. The `Field` interface also declares a bare comma as the default `as_string()` delimiter."
+  "description": "Fixed SigV4 signature mismatches (HTTP 403) on requests that send a header with more than one value, such as `Content-Encoding` with `gzip` and `aws-chunked`. The signer now trims each value and joins them with a bare comma, without quoting, which matches how services rebuild repeated headers before checking the signature. Fields with no values and trailer fields are no longer signed as headers. The `Field` interface also declares a bare comma as the default `as_string()` delimiter."
 }
