@@ -19,13 +19,14 @@ from smithy_core.aio.types import AsyncBytesProvider, AsyncBytesReader
 from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
+from smithy_core.exceptions import CallError
 from smithy_core.prelude import STRING
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import RequiredTrait, RpcV2CborTrait, StreamingTrait
 from smithy_core.types import TypedProperties
-from smithy_http import Fields, HTTPRequest, HTTPResponse
+from smithy_http import Fields, HTTPRequest, HTTPResponse, tuples_to_fields
 from smithy_http.aio.protocols import AsyncRpcV2CborClientProtocol
 
 pytest.importorskip("smithy_cbor")
@@ -189,6 +190,12 @@ def _protocol(service_schema: Schema | None = None) -> AsyncRpcV2CborClientProto
     )
 
 
+def _response_fields() -> Fields:
+    # A well-formed rpcv2Cbor response echoes the request's Smithy-Protocol header;
+    # without it the protocol treats the response as malformed.
+    return tuples_to_fields([("smithy-protocol", "rpc-v2-cbor")])
+
+
 def _request() -> HTTPRequest:
     return HTTPRequest(
         destination=URI(host="example.com"), method="POST", fields=Fields()
@@ -252,7 +259,7 @@ async def test_deserialize_response_peels_initial_response_then_streams() -> Non
     )
     response = HTTPResponse(
         status=200,
-        fields=Fields(),
+        fields=_response_fields(),
         body=AsyncBytesReader(initial.encode() + event.encode()),
     )
 
@@ -386,7 +393,7 @@ async def test_event_stream_http_opt_out_read_from_service_schema() -> None:
         payload=_CODEC.serialize(shape=_MessageEvent("first event")),
     )
     response = HTTPResponse(
-        status=200, fields=Fields(), body=AsyncBytesReader(event.encode())
+        status=200, fields=_response_fields(), body=AsyncBytesReader(event.encode())
     )
 
     context = TypedProperties()
@@ -417,7 +424,9 @@ async def test_event_stream_http_opt_out_read_from_service_schema() -> None:
 async def test_deserialize_response_empty_stream_defaults_output() -> None:
     # An empty stream with no initial-response yields the default output rather than
     # raising, because every output member is optional.
-    response = HTTPResponse(status=200, fields=Fields(), body=AsyncBytesReader(b""))
+    response = HTTPResponse(
+        status=200, fields=_response_fields(), body=AsyncBytesReader(b"")
+    )
     output = await _deserialize_response(
         _protocol(),
         operation=_operation(),
@@ -435,7 +444,9 @@ async def test_missing_initial_response_raises_when_required_member_has_no_defau
 ):
     # The output has a @required member with no default, so an empty document cannot
     # satisfy it: an absent initial-response must raise rather than fabricate a value.
-    response = HTTPResponse(status=200, fields=Fields(), body=AsyncBytesReader(b""))
+    response = HTTPResponse(
+        status=200, fields=_response_fields(), body=AsyncBytesReader(b"")
+    )
     with pytest.raises(MissingInitialResponse):
         await _deserialize_response(
             _protocol(),
@@ -445,6 +456,39 @@ async def test_missing_initial_response_raises_when_required_member_has_no_defau
             error_registry=TypeRegistry({}),
             context=TypedProperties(),
         )
+
+
+@pytest.mark.parametrize("smithy_protocol", [None, "rpc-v2-json"])
+async def test_stream_response_without_matching_smithy_protocol_is_malformed(
+    smithy_protocol: str | None,
+) -> None:
+    # The Smithy-Protocol check runs before the event-stream branch: a 200 stream
+    # response that does not echo rpc-v2-cbor is malformed, and its frames (here a
+    # valid initial-response) are never interpreted.
+    initial = EventMessage(
+        headers={":message-type": "event", ":event-type": "initial-response"},
+        payload=_CODEC.serialize(shape=InitialMessage(message="ignored")),
+    )
+    fields = (
+        tuples_to_fields([("smithy-protocol", smithy_protocol)])
+        if smithy_protocol is not None
+        else Fields()
+    )
+    response = HTTPResponse(
+        status=200, fields=fields, body=AsyncBytesReader(initial.encode())
+    )
+    with pytest.raises(CallError) as exc_info:
+        await _deserialize_response(
+            _protocol(),
+            operation=_operation(),
+            request=_request(),
+            response=response,
+            error_registry=TypeRegistry({}),
+            context=TypedProperties(),
+        )
+    assert type(exc_info.value) is CallError
+    assert exc_info.value.fault == "client"
+    assert "rpc-v2-cbor" in exc_info.value.message
 
 
 async def _deserialize_response(protocol: Any, **kwargs: Any) -> Any:
