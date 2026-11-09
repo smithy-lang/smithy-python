@@ -40,7 +40,7 @@ from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_core.exceptions import MissingDependencyError
 
-from .. import Field, Fields
+from .. import Field, Fields, tuples_to_fields
 from .. import interfaces as http_interfaces
 from ..exceptions import SmithyHTTPError
 from . import interfaces as http_aio_interfaces
@@ -258,19 +258,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
     ) -> AsyncAWSCRTHTTPResponse:
         status_code = await stream.get_response_status_code()
         headers = await stream.get_response_headers()
-        fields = Fields()
-        for header_name, header_val in headers:
-            try:
-                fields[header_name].add(header_val)
-            except KeyError:
-                fields[header_name] = Field(
-                    name=header_name,
-                    values=[header_val],
-                    kind="header",
-                )
         return AsyncAWSCRTHTTPResponse(
             status=status_code,
-            fields=fields,
+            fields=tuples_to_fields(headers),
             stream=stream,
         )
 
