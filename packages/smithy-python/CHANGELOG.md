@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.2.0
+
+### Breaking Changes
+* Declared explicit `__all__` exports on all public modules. Names that were previously importable only incidentally (via `from module import *` or as un-annotated module attributes) are no longer part of the public API; import public symbols by name from their documented module.
+
+### Features
+* Added native generation of compact, lazily hydrated schemas with Java-compatible trait filtering, string interning, and recursive references.
+* Added a native Python symbol provider with deterministic declaration and member naming, generator-reserved member names, structured type references, service renames, collision diagnostics, sparse collections, and recursive type support.
+* Added a native Python writer with structured annotations, deterministic collision-safe imports, indentation contexts, and forward-reference support.
+* Added native generation of lazy runtime model modules and complete static model stubs for standalone types packages.
+
+### Enhancements
+* Added support for Python 3.15.
+
 ## v0.1.0
 
 ### Features

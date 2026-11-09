@@ -1,7 +1,47 @@
 .DEFAULT_GOAL:=help
 
+.PHONY: help install format-java check-java build-java generate-protocol-tests generate-codegen-output-py api-snapshot aio-check gen ci lint-py check-py lint-rust check-rust third-party-licenses test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
+
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
+
+# CI runs this target on 3.12 only; see typecheck-protocols.
+static-analysis: ## Runs check-py, typecheck-protocols, api-snapshot, and aio-check.
+	$(MAKE) check-py
+	$(MAKE) typecheck-protocols
+	$(MAKE) api-snapshot
+	$(MAKE) aio-check
+
+
+test-unit: ## Runs the python unit tests.
+	uv run pytest packages/*/tests/unit
+
+
+# The packages/*/tests/integration suites drive generated clients against
+# in-process servers, so they are functional, not live-service, tests.
+test-functional: ## Runs the python functional tests and test-protocols.
+	$(MAKE) test-protocols
+	uv pip install h2 trustme -e "packages/smithy-http[awscrt]"
+	uv run pytest packages/*/tests/functional packages/*/tests/integration --no-cov
+
+
+test-integration: ## Builds and tests the Java codegen and asserts the regenerated snapshots match.
+	$(MAKE) build-java
+	$(MAKE) generate-protocol-tests
+	$(MAKE) generate-codegen-output-py
+
+
+ci: ## Runs the full CI sequence locally.
+	$(MAKE) static-analysis
+	$(MAKE) check-rust
+	$(MAKE) test-unit
+	$(MAKE) test-functional
+	$(MAKE) build-py
+	$(MAKE) test-integration
+
+
+########################## Granular targets below ##########################
 
 
 install: ## Sets up workspace (* you should run this first! *)
@@ -20,14 +60,6 @@ check-java: ## Checks Java and Gradle formatting without modifying source.
 
 build-java: ## Builds and tests the Java code generation packages without modifying source.
 	cd codegen && ./gradlew clean build
-
-
-test-protocols: ## Generates and runs protocol tests for all supported protocols.
-	cd codegen && ./gradlew :protocol-test:clean :protocol-test:build
-	@set -e; for projection_dir in codegen/protocol-test/build/smithyprojections/protocol-test/*/python-client-codegen; do \
-		uv pip install "$$projection_dir"; \
-		uv run pytest "$$projection_dir"; \
-	done
 
 
 generate-protocol-tests: ## Generates protocol-test clients, copies them to ./codegen-output, and asserts no git diff.
@@ -52,6 +84,39 @@ generate-protocol-tests: ## Generates protocol-test clients, copies them to ./co
 	@echo "codegen-output is up to date."
 
 
+generate-codegen-output-py: ## Generates Python output and asserts no snapshot diff.
+	rm -rf codegen-output-py
+	uv run python scripts/codegen-output-py/generate.py
+	@if ! git diff --quiet --exit-code -- codegen-output-py || [ -n "$$(git ls-files --others --exclude-standard -- codegen-output-py)" ]; then \
+		echo "ERROR: generated codegen-output-py differs from the committed snapshot."; \
+		echo "Review the diff and commit it if the change is intended:"; \
+		git --no-pager status --short -- codegen-output-py; \
+		git --no-pager diff -- codegen-output-py; \
+		exit 1; \
+	fi
+	@echo "codegen-output-py is up to date."
+
+
+api-snapshot: ## Records the public API surface and dual-mode mirrors of each package and asserts no git diff.
+	uv run python scripts/api-snapshot/api_snapshot.py
+
+
+aio-check: ## Enforces aio naming and separation in package sources.
+	uv run python scripts/aio-naming/aio_naming.py
+
+
+# `make gen dynamodb`: the second goal is the client name, so swallow it as a no-op target.
+ifeq (gen,$(firstword $(MAKECMDGOALS)))
+CLIENT ?= $(word 2,$(MAKECMDGOALS))
+ifneq (,$(word 2,$(MAKECMDGOALS)))
+$(eval $(word 2,$(MAKECMDGOALS)):;@:)
+endif
+endif
+
+gen: ## Generates an AWS SDK client from a sibling aws-sdk-python model into ./workspace/clients (make gen dynamodb).
+	uv run python scripts/gen-client/gen_client.py "$(CLIENT)"
+
+
 lint-py: ## Runs linters and formatters on the python packages.
 	uv run ruff check packages --fix --config pyproject.toml
 	uv run ruff format packages --config pyproject.toml
@@ -63,8 +128,60 @@ check-py: ## Runs checks (formatting, lints, type-checking) on the python packag
 	uv run pyright packages
 
 
+# Packages with a native extension, each built from a Cargo.toml in the package root.
+RUST_MANIFESTS := $(wildcard packages/*/Cargo.toml)
+
+lint-rust: ## Formats and fixes lints in the Rust extensions.
+	@set -e; for manifest in $(RUST_MANIFESTS); do \
+		cargo fmt --manifest-path "$$manifest"; \
+		cargo clippy --manifest-path "$$manifest" --all-targets --fix --allow-dirty --allow-staged; \
+	done
+
+
+check-rust: ## Checks formatting, lints, dependencies, and license attribution of the Rust extensions.
+	@set -e; for manifest in $(RUST_MANIFESTS); do \
+		dir=$$(dirname "$$manifest"); \
+		cargo fmt --manifest-path "$$manifest" --check; \
+		cargo clippy --manifest-path "$$manifest" --all-targets --locked -- -D warnings; \
+		cargo deny --manifest-path "$$manifest" check; \
+		cargo about generate --manifest-path "$$manifest" \
+			--output-file "$$dir/LICENSE-THIRD-PARTY.expected" "$$dir/about.hbs"; \
+		if ! diff -u "$$dir/LICENSE-THIRD-PARTY" "$$dir/LICENSE-THIRD-PARTY.expected"; then \
+			rm "$$dir/LICENSE-THIRD-PARTY.expected"; \
+			echo "$$dir/LICENSE-THIRD-PARTY is out of date. Run 'make third-party-licenses'."; \
+			exit 1; \
+		fi; \
+		rm "$$dir/LICENSE-THIRD-PARTY.expected"; \
+	done
+
+
+third-party-licenses: ## Regenerates the third-party license file of each Rust extension from its Cargo.lock.
+	@set -e; for manifest in $(RUST_MANIFESTS); do \
+		dir=$$(dirname "$$manifest"); \
+		cargo about generate --manifest-path "$$manifest" \
+			--output-file "$$dir/LICENSE-THIRD-PARTY" "$$dir/about.hbs"; \
+	done
+
+
 test-py: ## Runs tests for the python packages.
 	uv run pytest packages
+
+
+test-protocols: ## Runs the generated protocol-test clients in ./codegen-output; run generate-protocol-tests first after codegen changes.
+	uv pip install -e packages/smithy-test
+	@set -e; for projection_dir in codegen-output/*/; do \
+		uv pip install "$$projection_dir"; \
+		uv run pytest "$$projection_dir" --no-cov; \
+	done
+
+
+# pyright's wrapper imports typing_extensions, which fails to import on 3.15
+# (removed typing.no_type_check_decorator); run the stub type-check on 3.12 only.
+typecheck-protocols: ## Type-checks the generated protocol-test stub fixtures in ./codegen-output with pyright.
+	@set -e; for projection_dir in codegen-output/*/; do \
+		uv pip install "$$projection_dir"; \
+		uv run pyright "$$projection_dir/tests/_typecheck.py"; \
+	done
 
 
 benchmark: ## Runs ser/deser throughput benchmarks (coverage disabled; not part of CI or the default test run).

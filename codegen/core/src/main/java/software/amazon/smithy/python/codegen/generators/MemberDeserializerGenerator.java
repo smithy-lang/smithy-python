@@ -22,7 +22,6 @@ import software.amazon.smithy.model.shapes.LongShape;
 import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
-import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.ShortShape;
 import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
@@ -38,11 +37,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  * Generates calls to shape serializers for member shapes.
  */
 @SmithyInternalApi
-public class MemberDeserializerGenerator extends ShapeVisitor.DataShapeVisitor<Void> {
+public class MemberDeserializerGenerator extends AbstractMemberGenerator {
 
-    private final GenerationContext context;
-    private final PythonWriter writer;
-    private final MemberShape member;
     private final String deserializerName;
 
     public MemberDeserializerGenerator(
@@ -51,9 +47,7 @@ public class MemberDeserializerGenerator extends ShapeVisitor.DataShapeVisitor<V
             MemberShape member,
             String deserializerName
     ) {
-        this.context = context;
-        this.writer = writer;
-        this.member = member;
+        super(context, writer, member);
         this.deserializerName = deserializerName;
     }
 
@@ -86,17 +80,6 @@ public class MemberDeserializerGenerator extends ShapeVisitor.DataShapeVisitor<V
                 shapeTypeName,
                 writer.consumer(w -> writeSchema()));
         //writer.popState();
-    }
-
-    private void writeSchema() {
-        var parent = context.model().expectShape(member.getContainer());
-        if (parent.isListShape()) {
-            writer.writeInline("member_schema");
-        } else if (parent.isMapShape()) {
-            writer.writeInline("value_schema");
-        } else {
-            writer.writeInline("${schema:T}.members[${member:S}]");
-        }
     }
 
     @Override

@@ -1,13 +1,16 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import os
+from typing import Any
 
 from smithy_core.interfaces.identity import Identity
+from smithy_core.program import Program
 
-from ....config import load_config
 from ...components import AWSCredentialsIdentity
 from ..ordering import Standard, StandardProvider
-from ..provider import ChainSetup
+from ..provider import _ChainSetupBase  # pyright: ignore[reportPrivateUsage]
+
+__all__ = ["SharedConfigProvider"]
 
 
 class SharedConfigProvider:
@@ -23,14 +26,19 @@ class SharedConfigProvider:
         """Return the provider's standard chain position."""
         return Standard(slot=StandardProvider.SHARED_CONFIG)
 
-    async def setup(self, identity_type: type[Identity], setup: ChainSetup) -> None:
+    def setup(self, identity_type: type[Identity], setup: _ChainSetupBase) -> Any:
         """Load and select the active profile for AWS credentials."""
+        return setup._run(self._setup(identity_type, setup))  # pyright: ignore[reportPrivateUsage]
+
+    def _setup(
+        self, identity_type: type[Identity], setup: _ChainSetupBase
+    ) -> Program[None]:
         if identity_type is not AWSCredentialsIdentity:
             return
 
         config_file = setup.config_file
         if config_file is None:
-            config_file = await load_config()
+            config_file = yield setup._load_config  # pyright: ignore[reportPrivateUsage]
             setup.set_config_file(config_file)
 
         profile_name = setup.profile_name or os.getenv("AWS_PROFILE") or "default"

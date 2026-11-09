@@ -81,3 +81,17 @@ str
 # that are likely imported in the generated code (e.g. datetime)
 # We only escape the types we use.
 datetime
+
+# Generated model runtime methods.
+serialize
+serialize_members
+deserialize
+
+# Dataclass-generated methods and hooks.
+__init__
+__post_init__
+__repr__
+__annotations__
+
+# Generated model runtime methods.
+_smithy_default

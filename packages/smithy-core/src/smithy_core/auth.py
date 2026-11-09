@@ -6,10 +6,24 @@ from typing import Any
 
 from .deserializers import DeserializeableShape
 from .interfaces import TypedProperties as _TypedProperties
+from .interfaces.identity import Identity as _Identity
 from .schemas import APIOperation
 from .serializers import SerializeableShape
 from .shapes import ShapeID
-from .types import TypedProperties
+from .types import PropertyKey, TypedProperties
+
+__all__ = [
+    "RESOLVED_IDENTITY",
+    "AuthOption",
+    "AuthParams",
+    "DefaultAuthResolver",
+    "NoAuthResolver",
+]
+
+RESOLVED_IDENTITY: PropertyKey[_Identity] = PropertyKey(
+    key="resolved_identity", value_type=_Identity
+)
+"""A call context property holding the identity resolved for the current attempt."""
 
 
 @dataclass(kw_only=True, frozen=True)

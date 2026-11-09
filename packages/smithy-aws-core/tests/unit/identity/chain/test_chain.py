@@ -5,11 +5,14 @@ from collections.abc import Mapping
 from typing import Any, assert_type
 
 import pytest
-import smithy_aws_core.identity.chain as chain_module
+import smithy_aws_core.aio.identity.chain as chain_module
+import smithy_aws_core.identity.chain.resolver as resolver_module
+from smithy_aws_core.aio.identity import AsyncIdentityChain
+from smithy_aws_core.aio.identity.chain.provider import AsyncNamedResolver
+from smithy_aws_core.business_metrics import AwsFeatureId
 from smithy_aws_core.identity import (
     AWSCredentialsIdentity,
     AWSIdentityProperties,
-    IdentityChain,
 )
 from smithy_aws_core.identity.chain import (
     IdentityChainConfigurationError,
@@ -22,7 +25,7 @@ from smithy_aws_core.identity.chain.ordering import (
     Standard,
     StandardProvider,
 )
-from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 
 
@@ -41,7 +44,9 @@ def _credentials(access_key_id: str) -> AWSCredentialsIdentity:
     return AWSCredentialsIdentity(access_key_id=access_key_id, secret_access_key="s")
 
 
-class _FakeResolver(IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]):
+class _FakeResolver(
+    AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
+):
     def __init__(
         self,
         *,
@@ -63,7 +68,7 @@ class _FakeResolver(IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperti
 async def test_returns_first_successful_resolver() -> None:
     miss = _FakeResolver(error=SmithyIdentityError("miss"))
     hit = _FakeResolver(identity=_credentials("hit"))
-    chain = IdentityChain((miss, hit))
+    chain = AsyncIdentityChain((miss, hit))
 
     result = await chain.get_identity(properties={})
 
@@ -72,14 +77,14 @@ async def test_returns_first_successful_resolver() -> None:
 
 async def test_non_identity_errors_propagate() -> None:
     class _BrokenResolver(
-        IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
+        AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
     ):
         async def get_identity(
             self, *, properties: Mapping[str, Any]
         ) -> AWSCredentialsIdentity:
             raise RuntimeError("broken")
 
-    chain = IdentityChain((_BrokenResolver(),))
+    chain = AsyncIdentityChain((_BrokenResolver(),))
 
     with pytest.raises(RuntimeError, match="broken"):
         await chain.get_identity(properties={})
@@ -87,7 +92,7 @@ async def test_non_identity_errors_propagate() -> None:
 
 async def test_explicit_chain_preserves_resolvers() -> None:
     resolver = _FakeResolver(identity=_credentials("explicit"))
-    chain = IdentityChain((resolver,))
+    chain = AsyncIdentityChain((resolver,))
 
     assert chain._resolvers == (resolver,)
     assert chain.identity_type is None
@@ -95,12 +100,15 @@ async def test_explicit_chain_preserves_resolvers() -> None:
 
 
 async def test_create_records_identity_type(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(chain_module, "_discover_chain_identity_providers", tuple)
+    def no_providers(group: str) -> tuple[Any, ...]:
+        return ()
 
-    chain = await IdentityChain.create(AWSCredentialsIdentity)
+    monkeypatch.setattr(chain_module, "_discover_providers", no_providers)
+
+    chain = await AsyncIdentityChain.create(AWSCredentialsIdentity)
 
     assert chain.identity_type is AWSCredentialsIdentity
-    assert_type(chain, IdentityChain[AWSCredentialsIdentity])
+    assert_type(chain, AsyncIdentityChain[AWSCredentialsIdentity])
 
 
 def test_discovers_and_constructs_entry_point_providers(
@@ -114,14 +122,16 @@ def test_discovers_and_constructs_entry_point_providers(
             return _Provider
 
     def _entry_points(*, group: str) -> tuple[_EntryPoint, ...]:
-        assert group == "smithy_aws_core.identity.chain_providers"
+        assert group == "smithy_aws_core.aio.identity.chain_providers"
         return (_EntryPoint(),)
 
     monkeypatch.setattr(
-        "smithy_aws_core.identity.chain.metadata.entry_points", _entry_points
+        "smithy_aws_core.identity.chain.resolver.metadata.entry_points", _entry_points
     )
 
-    discovered = chain_module._discover_chain_identity_providers()
+    discovered = resolver_module._discover_providers(
+        chain_module._CHAIN_PROVIDER_ENTRY_POINT_GROUP
+    )
 
     assert len(discovered) == 1
     assert isinstance(discovered[0], _Provider)
@@ -140,7 +150,7 @@ def test_sort_orders_standards_by_slot_declaration() -> None:
     env = _StubProvider("env", Standard(slot=StandardProvider.ENVIRONMENT))
     shared = _StubProvider("shared", Standard(slot=StandardProvider.SHARED_CONFIG))
 
-    ordered = chain_module._sort_by_ordering(
+    ordered = resolver_module._sort_by_ordering(
         (static, session, env, assume_role, shared)
     )
 
@@ -158,7 +168,7 @@ def test_sort_places_before_and_after_around_slot() -> None:
     shared = _StubProvider("shared", Standard(slot=StandardProvider.SHARED_CONFIG))
     after = _StubProvider("after", After(slot=StandardProvider.SHARED_CONFIG))
 
-    ordered = chain_module._sort_by_ordering((after, shared, before))
+    ordered = resolver_module._sort_by_ordering((after, shared, before))
 
     assert [p.name for p in ordered] == ["before", "shared", "after"]
 
@@ -172,7 +182,7 @@ def test_sort_resolves_relative_constraints_without_a_claiming_provider() -> Non
         "static", Standard(slot=StandardProvider.PROFILE_STATIC_KEYS)
     )
 
-    ordered = chain_module._sort_by_ordering((static, before, env))
+    ordered = resolver_module._sort_by_ordering((static, before, env))
 
     assert [p.name for p in ordered] == ["env", "before", "static"]
 
@@ -181,7 +191,7 @@ def test_sort_keeps_discovery_order_for_same_constraint() -> None:
     first = _StubProvider("first", Before(slot=StandardProvider.ENVIRONMENT))
     second = _StubProvider("second", Before(slot=StandardProvider.ENVIRONMENT))
 
-    ordered = chain_module._sort_by_ordering((first, second))
+    ordered = resolver_module._sort_by_ordering((first, second))
 
     assert [p.name for p in ordered] == ["first", "second"]
 
@@ -195,7 +205,7 @@ def test_validate_rejects_duplicate_names() -> None:
         match="Credential providers _StubProvider and _StubProvider use the "
         "same name: dup",
     ):
-        chain_module._validate_providers((first, second))
+        resolver_module._validate_providers((first, second))
 
 
 def test_validate_rejects_case_insensitive_duplicate_names() -> None:
@@ -207,7 +217,7 @@ def test_validate_rejects_case_insensitive_duplicate_names() -> None:
         match="Credential providers _StubProvider and _StubProvider use the "
         "same name: duplicate",
     ):
-        chain_module._validate_providers((first, second))
+        resolver_module._validate_providers((first, second))
 
 
 def test_validate_rejects_duplicate_standard_slots() -> None:
@@ -219,7 +229,7 @@ def test_validate_rejects_duplicate_standard_slots() -> None:
         match="Credential providers _StubProvider and _StubProvider both claim "
         "standard slot: ENVIRONMENT",
     ):
-        chain_module._validate_providers((first, second))
+        resolver_module._validate_providers((first, second))
 
 
 def test_sort_rejects_unsupported_ordering_constraint() -> None:
@@ -232,13 +242,13 @@ def test_sort_rejects_unsupported_ordering_constraint() -> None:
         IdentityChainConfigurationError,
         match="Provider _StubProvider returned an unsupported ordering constraint",
     ):
-        chain_module._sort_by_ordering((provider,))
+        resolver_module._sort_by_ordering((provider,))
 
 
 async def test_all_miss_raises_with_per_provider_failures() -> None:
     first = _FakeResolver(error=SmithyIdentityError("first miss"))
     second = _FakeResolver(error=SmithyIdentityError("second miss"))
-    chain = IdentityChain((first, second))
+    chain = AsyncIdentityChain((first, second))
 
     with pytest.raises(
         IdentityChainError,
@@ -251,7 +261,7 @@ async def test_all_miss_raises_with_per_provider_failures() -> None:
 
 
 async def test_empty_chain_reports_no_configured_provider() -> None:
-    chain = IdentityChain((), identity_type=AWSCredentialsIdentity)
+    chain = AsyncIdentityChain((), identity_type=AWSCredentialsIdentity)
 
     with pytest.raises(
         IdentityChainError,
@@ -262,7 +272,7 @@ async def test_empty_chain_reports_no_configured_provider() -> None:
 
 async def test_chained_invalidate() -> None:
     class _InvalidatingResolver(
-        IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
+        AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
     ):
         def __init__(self) -> None:
             self.invalidated = False
@@ -277,9 +287,29 @@ async def test_chained_invalidate() -> None:
 
     first = _InvalidatingResolver()
     second = _InvalidatingResolver()
-    chain = IdentityChain((first, second))
+    chain = AsyncIdentityChain((first, second))
 
     await chain.invalidate()
 
     assert first.invalidated
     assert second.invalidated
+
+
+async def test_registers_feature_ids_of_resolver_that_returned_identity() -> None:
+    miss = AsyncNamedResolver(
+        provider_name="Environment",
+        resolver=_FakeResolver(error=SmithyIdentityError("miss")),
+        feature_ids=(AwsFeatureId.CREDENTIALS_ENV_VARS,),
+    )
+    hit = AsyncNamedResolver(
+        provider_name="ProfileStaticKeys",
+        resolver=_FakeResolver(identity=_credentials("hit")),
+        feature_ids=(AwsFeatureId.CREDENTIALS_PROFILE,),
+    )
+    features: dict[AwsFeatureId, None] = {}
+
+    await AsyncIdentityChain((miss, hit)).get_identity(
+        properties={"_feature_ids": features}
+    )
+
+    assert list(features) == [AwsFeatureId.CREDENTIALS_PROFILE]

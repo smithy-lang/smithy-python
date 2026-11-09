@@ -5,6 +5,8 @@ from urllib.parse import quote as urlquote
 
 from smithy_core.exceptions import SmithyError
 
+__all__ = ["join_query_params", "split_header"]
+
 
 def split_header(given: str, handle_unquoted_http_date: bool = False) -> list[str]:
     """Splits a header value into a list of strings.

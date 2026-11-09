@@ -1,7 +1,7 @@
 # Retries
 
 Operation requests might fail for a number of reasons that are unrelated to the
-input paramters, such as a transient network issue, or excessive load on the
+input parameters, such as a transient network issue, or excessive load on the
 service. This document describes how Smithy clients will automatically retry in
 those cases, and how the retry system can be modified.
 

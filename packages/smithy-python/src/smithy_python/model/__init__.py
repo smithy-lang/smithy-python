@@ -12,6 +12,7 @@ from ._loader import load_model
 from ._model import Model
 from ._shape_id import ShapeId
 from ._shapes import (
+    DECLARATION_TYPES,
     EnumShape,
     IntEnumShape,
     JsonValue,
@@ -31,6 +32,7 @@ from ._shapes import (
 )
 
 __all__ = [
+    "DECLARATION_TYPES",
     "EnumShape",
     "IntEnumShape",
     "InvalidShapeIdError",

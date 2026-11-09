@@ -6,6 +6,30 @@ from .schemas import Schema
 from .shapes import ShapeID, ShapeType
 from .traits import DefaultTrait, UnitTypeTrait
 
+__all__ = [
+    "BIG_DECIMAL",
+    "BIG_INTEGER",
+    "BLOB",
+    "BOOLEAN",
+    "BYTE",
+    "DOCUMENT",
+    "DOUBLE",
+    "FLOAT",
+    "INTEGER",
+    "LONG",
+    "PRIMITIVE_BOOLEAN",
+    "PRIMITIVE_BYTE",
+    "PRIMITIVE_DOUBLE",
+    "PRIMITIVE_FLOAT",
+    "PRIMITIVE_INTEGER",
+    "PRIMITIVE_LONG",
+    "PRIMITIVE_SHORT",
+    "SHORT",
+    "STRING",
+    "TIMESTAMP",
+    "UNIT",
+]
+
 BLOB = Schema(
     id=ShapeID("smithy.api#Blob"),
     shape_type=ShapeType.BLOB,

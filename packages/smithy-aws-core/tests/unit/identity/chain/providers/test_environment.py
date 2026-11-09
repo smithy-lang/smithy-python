@@ -3,17 +3,19 @@
 from collections.abc import Awaitable, Callable
 
 import pytest
-from smithy_aws_core.identity.chain.provider import ChainSetup
+from smithy_aws_core.aio.identity.chain.provider import AsyncChainSetup
+from smithy_aws_core.aio.identity.environment import (
+    AsyncEnvironmentCredentialsResolver,
+)
 from smithy_aws_core.identity.chain.providers.environment import (
     EnvironmentCredentialsProvider,
 )
-from smithy_aws_core.identity.environment import EnvironmentCredentialsResolver
 
 from .conftest import OtherIdentity
 
 
 async def test_ignores_non_aws_identity_type(
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "akid")
@@ -37,7 +39,7 @@ async def test_ignores_non_aws_identity_type(
 )
 async def test_requires_both_keys(
     environment: dict[str, str],
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("AWS_ACCESS_KEY_ID", raising=False)
@@ -52,7 +54,7 @@ async def test_requires_both_keys(
 
 
 async def test_registers_terminal_resolver(
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "akid")
@@ -63,11 +65,11 @@ async def test_registers_terminal_resolver(
     assert setup.terminal
     assert len(setup.resolvers) == 1
     assert setup.resolvers[0].provider_name == "Environment"
-    assert isinstance(setup.resolvers[0].resolver, EnvironmentCredentialsResolver)
+    assert isinstance(setup.resolvers[0].resolver, AsyncEnvironmentCredentialsResolver)
 
 
 async def test_explicit_profile_suppresses_environment_credentials(
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "akid")
@@ -83,7 +85,7 @@ async def test_explicit_profile_suppresses_environment_credentials(
 
 
 async def test_aws_profile_env_var_does_not_suppress_environment_credentials(
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("AWS_PROFILE", "work")
@@ -94,4 +96,4 @@ async def test_aws_profile_env_var_does_not_suppress_environment_credentials(
 
     assert setup.terminal
     assert len(setup.resolvers) == 1
-    assert isinstance(setup.resolvers[0].resolver, EnvironmentCredentialsResolver)
+    assert isinstance(setup.resolvers[0].resolver, AsyncEnvironmentCredentialsResolver)

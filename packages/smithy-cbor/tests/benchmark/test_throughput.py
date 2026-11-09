@@ -3,7 +3,7 @@
 """Throughput benchmark: rpcv2Cbor protocol vs awsJson1_0 protocol.
 
 Measures the PROTOCOL layer (``serialize_request`` / ``deserialize_response``), NOT the
-raw codec. Both protocol classes subclass ``HttpClientProtocol`` and expose the same two
+raw codec. Both protocol classes subclass ``AsyncHttpClientProtocol`` and expose the same two
 methods; we build a modeled shape + ``Schema`` + ``APIOperation`` by hand (see
 ``model.py``) exactly the way a generated client does, then drive the protocol methods
 directly with a plain ``time.perf_counter`` loop (no benchmark dependency).
@@ -19,15 +19,17 @@ import string
 import time
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
+from typing import Any
 
-from smithy_aws_core.aio.protocols import AwsJson10ClientProtocol
+from smithy_aws_core.aio.protocols import AsyncAwsJson10ClientProtocol
 from smithy_core import URI
+from smithy_core.aio.program import run_program_async
 from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_core.interfaces import TypedProperties as _TypedPropertiesInterface
 from smithy_core.types import TypedProperties
-from smithy_http import tuples_to_fields
-from smithy_http.aio import HTTPResponse
-from smithy_http.aio.protocols import RpcV2CborClientProtocol
+from smithy_http import HTTPResponse, tuples_to_fields
+from smithy_http.aio.protocols import AsyncRpcV2CborClientProtocol
 
 from .model import (
     PUT_RECORDS_OPERATION,
@@ -126,7 +128,7 @@ class _Measurement:
 
 def _bench_protocol(
     name: str,
-    protocol: RpcV2CborClientProtocol | AwsJson10ClientProtocol,
+    protocol: AsyncRpcV2CborClientProtocol | AsyncAwsJson10ClientProtocol,
     content_type: str,
     ctx: _TypedPropertiesInterface,
 ) -> tuple[_Measurement, _Measurement, int]:
@@ -140,7 +142,7 @@ def _bench_protocol(
         endpoint=_ENDPOINT,
         context=ctx,  # type: ignore[arg-type]
     )
-    request_body = asyncio.run(request.consume_body_async())
+    request_body = asyncio.run(read_streaming_blob_async(request.body))
     payload_bytes = len(request_body)
 
     # The output shape is identical to the input shape, so the wire body a server would
@@ -151,7 +153,7 @@ def _bench_protocol(
         endpoint=_ENDPOINT,
         context=ctx,  # type: ignore[arg-type]
     )
-    response_body = asyncio.run(response_request.consume_body_async())
+    response_body = asyncio.run(read_streaming_blob_async(response_request.body))
     response_bytes = len(response_body)
 
     # --- serialize throughput ---
@@ -170,7 +172,8 @@ def _bench_protocol(
     # --- deserialize throughput ---
     async def _deserialize() -> object:
         response = _make_response(response_body, content_type)
-        return await protocol.deserialize_response(
+        return await _deserialize_response(
+            protocol,
             operation=PUT_RECORDS_OPERATION,
             request=request,
             response=response,
@@ -196,8 +199,8 @@ def test_protocol_throughput() -> None:
     """
     ctx = TypedProperties()
 
-    cbor = RpcV2CborClientProtocol(SETTINGS)
-    json = AwsJson10ClientProtocol(SETTINGS)
+    cbor = AsyncRpcV2CborClientProtocol(SETTINGS)
+    json = AsyncAwsJson10ClientProtocol(SETTINGS)
 
     cbor_ser, cbor_de, cbor_bytes = _bench_protocol(
         "cbor", cbor, "application/cbor", ctx
@@ -239,3 +242,11 @@ def test_protocol_throughput() -> None:
     for r in results:
         assert r.ops_per_sec > 0
         assert r.mb_per_sec > 0
+
+
+async def _deserialize_response(protocol: Any, **kwargs: Any) -> Any:
+    return await run_program_async(
+        protocol.deserialize_response_program(
+            **kwargs, read_body=read_streaming_blob_async
+        )
+    )

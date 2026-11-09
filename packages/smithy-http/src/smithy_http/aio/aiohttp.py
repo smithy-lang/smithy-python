@@ -25,22 +25,19 @@ from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.exceptions import MissingDependencyError
 from smithy_core.interfaces import URI
 
-from .. import Field, Fields
+from smithy_http import HTTPResponse
+from smithy_http.interfaces import HTTPRequest
+from smithy_http.interfaces import HTTPResponse as HTTPResponseInterface
+
+from .. import tuples_to_fields
 from ..exceptions import SmithyHTTPError
 from ..interfaces import (
     HTTPClientConfiguration,
     HTTPRequestConfiguration,
 )
-from . import HTTPResponse
-from .interfaces import HTTPClient, HTTPRequest
-from .interfaces import HTTPResponse as HTTPResponseInterface
+from .interfaces import AsyncHTTPClient
 
-
-def _assert_aiohttp() -> None:
-    if not HAS_AIOHTTP:
-        raise MissingDependencyError(
-            "Attempted to use aiohttp component, but aiohttp is not installed."
-        )
+__all__ = ["AIOHTTPClient", "AIOHTTPClientConfig"]
 
 
 class AIOHTTPClientConfig(HTTPClientConfiguration):
@@ -48,23 +45,8 @@ class AIOHTTPClientConfig(HTTPClientConfiguration):
         _assert_aiohttp()
 
 
-class _AIOHTTPStreamingBody(AsyncIterable[bytes]):
-    """Streams a response body, releasing the response once it is done."""
-
-    def __init__(self, response: "aiohttp.ClientResponse") -> None:
-        self._response = response
-
-    def __aiter__(self) -> AsyncIterator[bytes]:
-        # The reader iterates by line, so use iter_any to get raw chunks.
-        return self._response.content.iter_any()
-
-    async def close(self) -> None:
-        # Pools the connection if the body was read to completion, closes it if not.
-        self._response.release()
-
-
-class AIOHTTPClient(HTTPClient):
-    """Implementation of :py:class:`.interfaces.HTTPClient` using aiohttp."""
+class AIOHTTPClient(AsyncHTTPClient):
+    """Implementation of :py:class:`.interfaces.AsyncHTTPClient` using aiohttp."""
 
     TIMEOUT_EXCEPTIONS = (TimeoutError,)
 
@@ -91,6 +73,20 @@ class AIOHTTPClient(HTTPClient):
         self._session = _session or aiohttp.ClientSession(
             auto_decompress=False,
             headers={"Accept-Encoding": "identity"},
+        )
+
+    async def __aenter__(self) -> Self:
+        if self._closed:
+            raise SmithyHTTPError("Cannot enter an HTTP client that has been closed.")
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        await self.close()
+
+    def __deepcopy__(self, memo: Any) -> "AIOHTTPClient":
+        return AIOHTTPClient(
+            client_config=deepcopy(self._config),
+            _session=copy(self._session),
         )
 
     async def send(
@@ -145,14 +141,6 @@ class AIOHTTPClient(HTTPClient):
         self._closed = True
         await self._session.close()
 
-    async def __aenter__(self) -> Self:
-        if self._closed:
-            raise SmithyHTTPError("Cannot enter an HTTP client that has been closed.")
-        return self
-
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        await self.close()
-
     async def _prepare_body(self, body: StreamingBlob) -> AsyncBytesReader | None:
         """Convert a body for aiohttp, omitting seekable bodies with no data."""
         if not isinstance(body, AsyncBytesReader):
@@ -183,26 +171,37 @@ class AIOHTTPClient(HTTPClient):
         self, aiohttp_resp: "aiohttp.ClientResponse"
     ) -> HTTPResponseInterface:
         """Convert a ``aiohttp.ClientResponse`` to a ``smithy_http.aio.HTTPResponse``"""
-        headers = Fields()
-        for header_name, header_val in aiohttp_resp.headers.items():
-            try:
-                headers[header_name].add(header_val)
-            except KeyError:
-                headers[header_name] = Field(
-                    name=header_name,
-                    values=[header_val],
-                    kind="header",
-                )
-
         return HTTPResponse(
             status=aiohttp_resp.status,
-            fields=headers,
+            fields=tuples_to_fields(aiohttp_resp.headers.items()),
             body=_AIOHTTPStreamingBody(aiohttp_resp),
             reason=aiohttp_resp.reason,
         )
 
-    def __deepcopy__(self, memo: Any) -> "AIOHTTPClient":
-        return AIOHTTPClient(
-            client_config=deepcopy(self._config),
-            _session=copy(self._session),
+
+def _assert_aiohttp() -> None:
+    if not HAS_AIOHTTP:
+        raise MissingDependencyError(
+            "Attempted to use aiohttp component, but aiohttp is not installed."
         )
+
+
+class _AIOHTTPStreamingBody(AsyncIterable[bytes]):
+    """Streams a response body, releasing the response once it is done."""
+
+    def __init__(self, response: "aiohttp.ClientResponse") -> None:
+        self._response = response
+        self._reader: AsyncBytesReader | None = None
+
+    def __aiter__(self) -> AsyncIterator[bytes]:
+        # The reader iterates by line, so use iter_any to get raw chunks.
+        return self._response.content.iter_any()
+
+    async def read(self, size: int = -1) -> bytes:
+        if self._reader is None:
+            self._reader = AsyncBytesReader(self._response.content.iter_any())
+        return await self._reader.read(size)
+
+    async def close(self) -> None:
+        # Pools the connection if the body was read to completion, closes it if not.
+        self._response.release()

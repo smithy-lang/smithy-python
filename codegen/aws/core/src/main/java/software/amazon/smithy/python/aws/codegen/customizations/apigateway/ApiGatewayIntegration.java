@@ -11,6 +11,7 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.SyncVariant;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -26,10 +27,10 @@ public class ApiGatewayIntegration implements PythonIntegration {
             ShapeId.from("com.amazonaws.apigateway#BackplaneControlService");
 
     public static final String ACCEPT_HEADER_MODULE = """
-            class _AcceptHeaderInterceptor($1T[Any, Any, $2T, None]):
+            class _AcceptHeaderInterceptor($1T[$6T, $6T, $2T, None]):
                 \"""Sets the Accept header to application/json if not already present.\"""
 
-                def modify_before_signing(self, context: $3T[Any, $2T]) -> $2T:
+                def modify_before_signing(self, context: $3T[$6T, $2T]) -> $2T:
                     request = context.transport_request
                     if "Accept" not in request.fields:
                         request.fields.set_field($4T(name="Accept", values=["application/json"]))
@@ -47,14 +48,9 @@ public class ApiGatewayIntegration implements PythonIntegration {
         }
 
         final String pluginFile = "accept_header";
-        final String moduleName = context.settings().moduleName();
 
         final SymbolReference acceptHeaderPlugin = SymbolReference.builder()
-                .symbol(Symbol.builder()
-                        .namespace(String.format("%s.%s", moduleName, pluginFile), ".")
-                        .definitionFile(String.format("./src/%s/%s.py", moduleName, pluginFile))
-                        .name("accept_header_plugin")
-                        .build())
+                .symbol(CodegenUtils.aioSymbol(context.settings(), pluginFile, "accept_header_plugin"))
                 .build();
         final SymbolReference interceptor = SymbolReference.builder()
                 .symbol(Symbol.builder()
@@ -70,7 +66,7 @@ public class ApiGatewayIntegration implements PythonIntegration {
                 .build();
         final SymbolReference httpRequest = SymbolReference.builder()
                 .symbol(Symbol.builder()
-                        .namespace("smithy_http.aio.interfaces", ".")
+                        .namespace("smithy_http.interfaces", ".")
                         .name("HTTPRequest")
                         .build())
                 .build();
@@ -86,24 +82,28 @@ public class ApiGatewayIntegration implements PythonIntegration {
                         .servicePredicate((model, service) -> service.getId().equals(API_GATEWAY_SERVICE_ID))
                         .pythonPlugin(acceptHeaderPlugin)
                         .writeAdditionalFiles((c) -> {
-                            String filename = "src/%s/%s.py".formatted(moduleName, pluginFile);
+                            String filename = acceptHeaderPlugin.getSymbol().getDefinitionFile();
+                            Object[] args = {
+                                    interceptor,
+                                    httpRequest,
+                                    requestContext,
+                                    field,
+                                    CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model()),
+                                    Symbol.builder().namespace("typing", ".").name("Any").build()};
                             c.writerDelegator()
                                     .useFileWriter(
                                             filename,
-                                            moduleName + ".",
+                                            acceptHeaderPlugin.getSymbol().getNamespace(),
                                             writer -> {
                                                 writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
                                                 writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-                                                writer.addStdlibImport("typing", "Any");
-                                                writer.write(ACCEPT_HEADER_MODULE,
-                                                        interceptor,
-                                                        httpRequest,
-                                                        requestContext,
-                                                        field,
-                                                        CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model())
-                                                                .orElseThrow());
+                                                writer.write(ACCEPT_HEADER_MODULE, args);
                                             });
-                            return List.of(filename);
+                            return List.of(filename,
+                                    SyncVariant.writeSyncTwin(c,
+                                            acceptHeaderPlugin.getSymbol(),
+                                            ACCEPT_HEADER_MODULE,
+                                            args));
                         })
                         .build());
     }

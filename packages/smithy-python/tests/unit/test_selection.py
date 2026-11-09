@@ -10,6 +10,16 @@ from pathlib import Path
 import pytest
 from smithy_python.cli import main
 
+_TYPES_OPTIONS = ("--package", "example_types", "--package-version", "1.0.0")
+
+
+def _artifact_args(artifact: str, *options: str) -> list[str]:
+    args = ["generate", artifact]
+    if artifact == "types":
+        args.extend(_TYPES_OPTIONS)
+    args.extend(options)
+    return args
+
 
 @pytest.mark.parametrize("artifact", ["client", "types"])
 @pytest.mark.parametrize(
@@ -53,19 +63,29 @@ def test_cli_service_selection(
         }
     ).encode()
     output = tmp_path / "output"
-    argv = ["generate", artifact, "--output", str(output)]
+    argv = _artifact_args(artifact, "--output", str(output))
     if service is not None:
         argv.extend(("--service", service))
+    if artifact == "types" and service in (None, "example#Second"):
+        expected = 0
+        diagnostic = (
+            ""
+            if service is None
+            else "excluded 1 eligible data shape(s) outside the closure"
+        )
     assert main(argv, environ={}, stdin=BytesIO(source)) == expected
     captured = capsys.readouterr()
     assert captured.out == ""
-    assert diagnostic in captured.err
+    if diagnostic:
+        assert diagnostic in captured.err
+    else:
+        assert captured.err == ""
     assert "unrecognized arguments" not in captured.err
     if service is None:
         assert "example#Base" not in captured.err
     if expected == 2:
         assert "not implemented" not in captured.err
-    assert not output.exists()
+    assert output.exists() is (expected == 0)
 
 
 @pytest.mark.parametrize("artifact", ["client", "types"])
@@ -82,18 +102,22 @@ def test_cli_implicit_service(
     if has_service:
         shapes["example#Service"] = {"type": "service"}
     source = json.dumps({"smithy": "2.0", "shapes": shapes}).encode()
-    requires_service = artifact == "client" and not has_service
-    assert main(
-        ("generate", artifact),
-        environ={"SMITHY_PLUGIN_DIR": str(tmp_path / "output")},
-        stdin=BytesIO(source),
-    ) == (2 if requires_service else 1)
+    argv = _artifact_args(artifact)
+    expected = 0 if artifact == "types" else 1 if has_service else 2
+    assert (
+        main(
+            argv,
+            environ={"SMITHY_PLUGIN_DIR": str(tmp_path / "output")},
+            stdin=BytesIO(source),
+        )
+        == expected
+    )
     captured = capsys.readouterr()
     assert captured.out == ""
-    assert ("not implemented" in captured.err) is not requires_service
-    if requires_service:
+    assert ("not implemented" in captured.err) is (artifact == "client" and has_service)
+    if artifact == "client" and not has_service:
         assert "service" in captured.err
-    assert not (tmp_path / "output").exists()
+    assert (tmp_path / "output").exists() is (artifact == "types")
 
 
 @pytest.mark.parametrize("artifact", ["client", "types"])
@@ -124,19 +148,24 @@ def test_cli_reports_only_excluded_eligible_data(
         }
     ).encode()
     output = tmp_path / "output"
-    argv = ["generate", artifact, "--service", "example#Service"]
+    argv = _artifact_args(artifact, "--service", "example#Service")
     environ = {"SMITHY_PLUGIN_DIR": str(output)} if plugin else {}
     if not plugin:
         argv.extend(("--output", str(output)))
-    assert main(argv, environ=environ, stdin=BytesIO(source)) == 1
+    assert main(argv, environ=environ, stdin=BytesIO(source)) == (
+        0 if artifact == "types" else 1
+    )
     captured = capsys.readouterr()
     assert captured.out == ""
-    assert captured.err == (
-        "smithy-python: excluded 1 eligible data shape(s) "
-        "outside the closure of service example#Service\n"
-        f"smithy-python: error: {artifact} generation is not implemented yet\n"
-    )
-    assert not output.exists()
+    expected = ""
+    if artifact == "client":
+        expected = (
+            "smithy-python: excluded 1 eligible data shape(s) "
+            "outside the closure of service example#Service\n"
+            "smithy-python: error: client generation is not implemented yet\n"
+        )
+    assert captured.err == expected
+    assert output.exists() is (artifact == "types")
 
 
 def test_cli_conflicts_are_model_errors(
@@ -146,7 +175,7 @@ def test_cli_conflicts_are_model_errors(
         {
             "smithy": "2.0",
             "shapes": {
-                shape_id: {"type": "string"}
+                shape_id: {"type": "structure"}
                 for shape_id in ("a#Name", "b#name", "c#NAME", "a#Other", "b#other")
             },
         }
@@ -154,7 +183,7 @@ def test_cli_conflicts_are_model_errors(
     output = tmp_path / "output"
     assert (
         main(
-            ("generate", "types", "--output", str(output)),
+            _artifact_args("types", "--output", str(output)),
             environ={},
             stdin=BytesIO(source),
         )

@@ -3,7 +3,7 @@
 
 import datetime
 from base64 import b64decode
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from decimal import Decimal
 from xml.etree.ElementTree import Element
 
@@ -19,7 +19,6 @@ from smithy_core.traits import (
 )
 
 from ..settings import XMLSettings
-from .readers import XMLEvent, XMLEventReader
 from .traits import member_xml_name
 
 
@@ -61,28 +60,33 @@ class XMLParseError(SmithyError):
 
 
 class XMLShapeDeserializer(ShapeDeserializer):
-    """Deserializer that reads XML from a streaming pull parser."""
+    """Deserializer backed by a fully materialized ElementTree value."""
 
     def __init__(
         self,
         settings: XMLSettings,
-        reader: XMLEventReader,
+        root: Element,
         wrapper_elements: tuple[str, ...] = (),
+        *,
+        elements: tuple[Element, ...] | None = None,
+        xml_names: dict[ShapeID, dict[str, Schema]] | None = None,
     ) -> None:
         self._settings = settings
-        self._reader = reader
-        self._xml_names: dict[ShapeID, dict[str, Schema]] = {}
-        self._preconsumed_start: Element | None = None
+        self._xml_names = xml_names if xml_names is not None else {}
+        self._elements = elements
+        self._from_wrapper = bool(wrapper_elements)
 
-        # Wrapper elements are protocol transport containers (e.g. awsQuery's
-        # <OpResponse><OpResult>). The last wrapper's start element is kept
-        # so that the next read can reuse it.
-        for wrapper in wrapper_elements:
-            event = next(self._reader)
-            if event.type != "start":
-                raise XMLParseError(f"Expected start element, got '{event.type}'")
-            _validate_element_name(wrapper, event.elem)
-            self._preconsumed_start = event.elem
+        current = root
+        for index, wrapper in enumerate(wrapper_elements):
+            _validate_element_name(wrapper, current)
+            if index < len(wrapper_elements) - 1:
+                child = next(iter(current), None)
+                if child is None:
+                    raise XMLParseError(
+                        f"Expected wrapper element '{wrapper_elements[index + 1]}'"
+                    )
+                current = child
+        self._element = current
 
     def is_null(self) -> bool:
         return False
@@ -123,194 +127,123 @@ class XMLShapeDeserializer(ShapeDeserializer):
         if self._settings.use_timestamp_format:
             if format_trait := schema.get_trait(TimestampFormatTrait):
                 format = format_trait.format
-
-        text = self._read_text()
-        return format.deserialize(text)
+        return format.deserialize(self._read_text())
 
     def read_struct(
         self,
         schema: Schema,
-        consumer: Callable[[Schema, "ShapeDeserializer"], None],
+        consumer: Callable[[Schema, ShapeDeserializer], None],
     ) -> None:
+        element = self._element
         xml_names = self._get_xml_names(schema)
-        start_from_wrapper = self._preconsumed_start is not None
-        start_elem = self._consume_start_event()
 
-        # Wrapper elements are protocol transport containers, not modeled structs,
-        # so their attributes cannot be deserialized as struct members.
-        if not start_from_wrapper:
+        if not self._from_wrapper:
             for member_schema in schema.members.values():
                 if member_schema.get_trait(XMLAttributeTrait) is None:
                     continue
-                # Prefixed names (e.g. ``xsi:name``) are parsed into a
-                # namespace-qualified key, so only the local parts are compared.
-                expected_attr_name = _local_attr_name(member_xml_name(member_schema))
-                for attr_name, attr_value in start_elem.attrib.items():
-                    attr_local_name = _local_name(attr_name)
-                    if attr_local_name == expected_attr_name:
+                expected_name = _local_attr_name(member_xml_name(member_schema))
+                for attribute_name, value in element.attrib.items():
+                    if _local_name(attribute_name) == expected_name:
                         consumer(
                             member_schema,
-                            _AttributeDeserializer(attr_value, self._settings),
+                            _AttributeDeserializer(value, self._settings),
                         )
                         break
 
-        # Flattened members lack an enclosing element, so there is no way to
-        # know when all items have been parsed. Their events are collected
-        # during iteration and replayed through a bounded reader afterwards.
-        flattened_buffers: dict[str, list[XMLEvent]] = {}
-        flattened_names = {
-            xml_name: member_schema
-            for xml_name, member_schema in xml_names.items()
-            if member_schema.get_trait(XMLFlattenedTrait) is not None
-        }
-
-        while self._reader.peek().type != "end":
-            tag = _local_name(self._reader.peek().elem.tag)
-
-            if tag in flattened_names:
-                flattened_buffers.setdefault(tag, []).extend(self._buffer_element())
-            elif tag in xml_names:
-                consumer(xml_names[tag], self)
+        flattened: dict[str, list[Element]] = {}
+        for child in element:
+            name = _local_name(child.tag)
+            member_schema = xml_names.get(name)
+            if member_schema is None:
+                continue
+            if member_schema.get_trait(XMLFlattenedTrait) is not None:
+                flattened.setdefault(name, []).append(child)
             else:
-                # Skip unknown tag
-                self._consume_start_event()
-                self._skip_to_end()
+                consumer(member_schema, self._for_element(child))
 
-        next(self._reader)
-
-        for tag, events in flattened_buffers.items():
-            member_schema = flattened_names[tag]
-            buffered_de = XMLShapeDeserializer(
-                self._settings,
-                XMLEventReader(iter(events)),
+        for name, elements in flattened.items():
+            consumer(
+                xml_names[name],
+                self._for_elements(elements),
             )
-            consumer(member_schema, buffered_de)
 
     def read_list(
         self,
         schema: Schema,
-        consumer: Callable[["ShapeDeserializer"], None],
+        consumer: Callable[[ShapeDeserializer], None],
     ) -> None:
-        is_flattened = schema.get_trait(XMLFlattenedTrait) is not None
-        if not is_flattened:
-            self._consume_start_event()
-            while self._reader.peek().type != "end":
-                consumer(self)
+        elements: Iterable[Element]
+        if schema.get_trait(XMLFlattenedTrait) is not None:
+            elements = self._elements or (self._element,)
         else:
-            while self._reader.has_next():
-                consumer(self)
+            elements = self._element
 
-        if not is_flattened:
-            next(self._reader)
+        for element in elements:
+            consumer(self._for_element(element))
 
     def read_map(
         self,
         schema: Schema,
-        consumer: Callable[[str, "ShapeDeserializer"], None],
+        consumer: Callable[[str, ShapeDeserializer], None],
     ) -> None:
-        is_flattened = schema.get_trait(XMLFlattenedTrait) is not None
-        key_schema = schema.members["key"]
-        value_schema = schema.members["value"]
-        key_tag = member_xml_name(key_schema)
-        value_tag = member_xml_name(value_schema)
-
-        if not is_flattened:
-            self._consume_start_event()
-            while self._reader.peek().type != "end":
-                self._read_map_entry(key_tag, value_tag, consumer)
+        key_tag = member_xml_name(schema.members["key"])
+        value_tag = member_xml_name(schema.members["value"])
+        entries: Iterable[Element]
+        if schema.get_trait(XMLFlattenedTrait) is not None:
+            entries = self._elements or (self._element,)
         else:
-            while self._reader.has_next():
-                self._read_map_entry(key_tag, value_tag, consumer)
+            entries = self._element
 
-        if not is_flattened:
-            next(self._reader)
-
-    def _read_text(self) -> str:
-        """Consume a complete element (start through end) and return its text."""
-        elem = self._consume_start_event()
-        self._skip_to_end()
-        # elem.text is populated only after consuming the "end" event
-        return elem.text or ""
-
-    def _consume_start_event(self) -> Element:
-        """Consume and return the next start element.
-
-        If a start element was pre-consumed (e.g. from consuming wrapper elements),
-        it is returned first and cleared.
-        """
-        if self._preconsumed_start is not None:
-            elem = self._preconsumed_start
-            self._preconsumed_start = None
-            return elem
-        event = next(self._reader)
-        if event.type != "start":
-            raise XMLParseError(f"Expected start element, got '{event.type}'")
-        return event.elem
-
-    def _skip_to_end(self) -> None:
-        """Skip to the matching end event. Assumes start was already consumed."""
-        depth = 1
-        while depth > 0:
-            event = next(self._reader)
-            if event.type == "start":
-                depth += 1
-            elif event.type == "end":
-                depth -= 1
-
-    def _buffer_element(self) -> list[XMLEvent]:
-        """Buffer a complete element's events (start through matching end)."""
-        events: list[XMLEvent] = []
-        event = next(self._reader)
-        events.append(event)
-        depth = 1
-        while depth > 0:
-            event = next(self._reader)
-            events.append(event)
-            if event.type == "start":
-                depth += 1
-            elif event.type == "end":
-                depth -= 1
-        return events
-
-    def _get_xml_names(self, schema: Schema) -> dict[str, Schema]:
-        """Get or build the XML element name -> member schema mapping for a shape."""
-        if schema.id in self._xml_names:
-            return self._xml_names[schema.id]
-        result: dict[str, Schema] = {}
-        for member_schema in schema.members.values():
-            if member_schema.get_trait(XMLAttributeTrait) is not None:
-                continue
-            xml_name = member_xml_name(member_schema)
-            result[xml_name] = member_schema
-        self._xml_names[schema.id] = result
-        return result
+        for entry in entries:
+            self._read_map_entry(entry, key_tag, value_tag, consumer)
 
     def _read_map_entry(
         self,
+        entry: Element,
         key_tag: str,
         value_tag: str,
-        consumer: Callable[[str, "ShapeDeserializer"], None],
+        consumer: Callable[[str, ShapeDeserializer], None],
     ) -> None:
-        """Read one map entry element and emit key/value pairs via consumer."""
-        self._consume_start_event()
-
         key: str | None = None
-        while self._reader.peek().type != "end":
-            child_tag = _local_name(self._reader.peek().elem.tag)
-            if child_tag == key_tag:
-                key = self._read_text()
-            elif child_tag == value_tag:
+        for child in entry:
+            name = _local_name(child.tag)
+            if name == key_tag:
+                key = child.text or ""
+            elif name == value_tag:
                 if key is None:
                     raise XMLParseError(
                         "Map key element must appear before value element"
                     )
-                consumer(key, self)
-            else:
-                # Skip unknown child tag
-                self._consume_start_event()
-                self._skip_to_end()
+                consumer(key, self._for_element(child))
 
-        next(self._reader)
+    def _read_text(self) -> str:
+        return self._element.text or ""
+
+    def _for_element(self, element: Element) -> "XMLShapeDeserializer":
+        return XMLShapeDeserializer(
+            settings=self._settings,
+            root=element,
+            xml_names=self._xml_names,
+        )
+
+    def _for_elements(self, elements: list[Element]) -> "XMLShapeDeserializer":
+        return XMLShapeDeserializer(
+            settings=self._settings,
+            root=elements[0],
+            elements=tuple(elements),
+            xml_names=self._xml_names,
+        )
+
+    def _get_xml_names(self, schema: Schema) -> dict[str, Schema]:
+        if schema.id in self._xml_names:
+            return self._xml_names[schema.id]
+        result = {
+            member_xml_name(member_schema): member_schema
+            for member_schema in schema.members.values()
+            if member_schema.get_trait(XMLAttributeTrait) is None
+        }
+        self._xml_names[schema.id] = result
+        return result
 
 
 class _AttributeDeserializer(SpecificShapeDeserializer):

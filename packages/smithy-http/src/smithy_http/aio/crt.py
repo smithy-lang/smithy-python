@@ -40,10 +40,19 @@ from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_core.exceptions import MissingDependencyError
 
-from .. import Field, Fields
+from .. import Field, Fields, tuples_to_fields
 from .. import interfaces as http_interfaces
 from ..exceptions import SmithyHTTPError
 from . import interfaces as http_aio_interfaces
+
+__all__ = [
+    "DEFAULT_READ_BUFFER_SIZE",
+    "AWSCRTHTTPClient",
+    "AWSCRTHTTPClientConfig",
+    "AsyncAWSCRTHTTPResponse",
+    "ConnectionPoolDict",
+    "ConnectionPoolKey",
+]
 
 # Default buffer size for reading from streams (8 KB)
 DEFAULT_READ_BUFFER_SIZE = 8192
@@ -59,15 +68,12 @@ def _assert_crt() -> None:
 class _AWSCRTEventLoop:
     def __init__(self) -> None:
         _assert_crt()
-        self.bootstrap = self._initialize_default_loop()
-
-    def _initialize_default_loop(self) -> "crt_io.ClientBootstrap":
         event_loop_group = crt_io.EventLoopGroup(1)
         host_resolver = crt_io.DefaultHostResolver(event_loop_group)
-        return crt_io.ClientBootstrap(event_loop_group, host_resolver)
+        self.bootstrap = crt_io.ClientBootstrap(event_loop_group, host_resolver)
 
 
-class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
+class AsyncAWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
     def __init__(
         self,
         *,
@@ -79,6 +85,14 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
         self._status = status
         self._fields = fields
         self._stream = stream
+        self._body = AsyncBytesReader(self.chunks())
+
+    def __repr__(self) -> str:
+        return (
+            f"AsyncAWSCRTHTTPResponse("
+            f"status={self.status}, "
+            f"fields={self.fields!r}, body=...)"
+        )
 
     @property
     def status(self) -> int:
@@ -89,8 +103,8 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
         return self._fields
 
     @property
-    def body(self) -> AsyncIterable[bytes]:
-        return self.chunks()
+    def body(self) -> AsyncBytesReader:
+        return self._body
 
     @property
     def reason(self) -> str | None:
@@ -106,15 +120,8 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
             else:
                 break
 
-    def __repr__(self) -> str:
-        return (
-            f"AWSCRTHTTPResponse("
-            f"status={self.status}, "
-            f"fields={self.fields!r}, body=...)"
-        )
 
-
-ConnectionPoolKey = tuple[str, str, int | None]
+ConnectionPoolKey = tuple[str, str, int | None, bool]
 ConnectionPoolDict = dict[ConnectionPoolKey, "AIOHttpClientConnectionUnified"]
 
 
@@ -124,9 +131,13 @@ class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
 
     :param read_buffer_size: The buffer size in bytes to use when reading from streams.
         Defaults to 8192 (8 KB).
+    :param trust_store_path: Path to a PEM CA bundle that overrides the default system
+        trust store when verifying TLS peers. Enables connecting to a server whose
+        certificate chains to a private CA.
     """
 
     read_buffer_size: int = DEFAULT_READ_BUFFER_SIZE
+    trust_store_path: str | None = None
 
     def __post_init__(self) -> None:
         _assert_crt()
@@ -136,7 +147,7 @@ class _CRTTimeoutError(Exception):
     """Internal wrapper for CRT timeout errors."""
 
 
-class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
+class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
     _TIMEOUT_ERROR_NAMES = frozenset(["AWS_IO_SOCKET_TIMEOUT", "AWS_IO_SOCKET_CLOSED"])
@@ -162,17 +173,36 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             eventloop = _AWSCRTEventLoop()
         self._eventloop = eventloop
         self._client_bootstrap = self._eventloop.bootstrap
-        self._tls_ctx = crt_io.ClientTlsContext(crt_io.TlsContextOptions())
+        tls_ctx_options = crt_io.TlsContextOptions()
+        if self._config.trust_store_path is not None:
+            tls_ctx_options.override_default_trust_store_from_path(
+                None, self._config.trust_store_path
+            )
+        self._tls_ctx = crt_io.ClientTlsContext(tls_ctx_options)
         self._socket_options = crt_io.SocketOptions()
         self._connections: ConnectionPoolDict = {}
         self._closed = False
+
+    async def __aenter__(self) -> Self:
+        if self._closed:
+            raise SmithyHTTPError("Cannot enter an HTTP client that has been closed.")
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        await self.close()
+
+    def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
+        return AWSCRTHTTPClient(
+            eventloop=self._eventloop,
+            client_config=deepcopy(self._config),
+        )
 
     async def send(
         self,
         request: http_aio_interfaces.HTTPRequest,
         *,
         request_config: http_aio_interfaces.HTTPRequestConfiguration | None = None,
-    ) -> AWSCRTHTTPResponse:
+    ) -> AsyncAWSCRTHTTPResponse:
         """Send HTTP request using awscrt client.
 
         :param request: The request including destination URI, fields, payload.
@@ -185,7 +215,12 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
         try:
             crt_request = self._marshal_request(request)
-            connection = await self._get_connection(request.destination)
+            require_http2 = (
+                getattr(request, "http2_required", False) or self._config.force_http_2
+            )
+            connection = await self._get_connection(
+                request.destination, require_http2=require_http2
+            )
 
             # request_body_generator is HTTP/2-only in CRT; HTTP/1.1 must use body_stream
             if connection.version is crt_http.HttpVersion.Http2:
@@ -218,59 +253,43 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             return_exceptions=True,
         )
 
-    async def __aenter__(self) -> Self:
-        if self._closed:
-            raise SmithyHTTPError("Cannot enter an HTTP client that has been closed.")
-        return self
-
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        await self.close()
-
     async def _await_response(
         self, stream: "AIOHttpClientStreamUnified"
-    ) -> AWSCRTHTTPResponse:
+    ) -> AsyncAWSCRTHTTPResponse:
         status_code = await stream.get_response_status_code()
         headers = await stream.get_response_headers()
-        fields = Fields()
-        for header_name, header_val in headers:
-            try:
-                fields[header_name].add(header_val)
-            except KeyError:
-                fields[header_name] = Field(
-                    name=header_name,
-                    values=[header_val],
-                    kind="header",
-                )
-        return AWSCRTHTTPResponse(
+        return AsyncAWSCRTHTTPResponse(
             status=status_code,
-            fields=fields,
+            fields=tuples_to_fields(headers),
             stream=stream,
         )
 
     async def _create_connection(
-        self, url: core_interfaces.URI
+        self, url: core_interfaces.URI, *, require_http2: bool
     ) -> "AIOHttpClientConnectionUnified":
         """Builds and validates connection to ``url``"""
-        connection = await self._build_new_connection(url)
-        await self._validate_connection(connection)
+        connection = await self._build_new_connection(url, require_http2=require_http2)
+        await self._validate_connection(connection, require_http2=require_http2)
         return connection
 
     async def _get_connection(
-        self, url: core_interfaces.URI
+        self, url: core_interfaces.URI, *, require_http2: bool = False
     ) -> "AIOHttpClientConnectionUnified":
         # TODO: Use CRT connection pooling instead of this basic kind
-        connection_key = (url.scheme, url.host, url.port)
+        # Key by require_http2 so an h2-required event stream never reuses a pooled
+        # HTTP/1.1 connection to the same host (and vice versa).
+        connection_key = (url.scheme, url.host, url.port, require_http2)
         connection = self._connections.get(connection_key)
 
         if connection and connection.is_open():
             return connection
 
-        connection = await self._create_connection(url)
+        connection = await self._create_connection(url, require_http2=require_http2)
         self._connections[connection_key] = connection
         return connection
 
     async def _build_new_connection(
-        self, url: core_interfaces.URI
+        self, url: core_interfaces.URI, *, require_http2: bool = False
     ) -> "AIOHttpClientConnectionUnified":
         if url.scheme == "http":
             port = self._HTTP_PORT
@@ -279,8 +298,13 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             port = self._HTTPS_PORT
             tls_connection_options = self._tls_ctx.new_connection_options()
             tls_connection_options.set_server_name(url.host)
-            # TODO: Support TLS configuration, including alpn
-            tls_connection_options.set_alpn_list(["h2", "http/1.1"])
+            # Advertise only h2 when it is required so endpoints that would otherwise
+            # negotiate down to http/1.1 cannot, which would then fail validation.
+            # TODO: Support broader TLS configuration.
+            if require_http2:
+                tls_connection_options.set_alpn_list(["h2"])
+            else:
+                tls_connection_options.set_alpn_list(["h2", "http/1.1"])
         else:
             raise SmithyHTTPError(
                 f"AWSCRTHTTPClient does not support URL scheme {url.scheme}"
@@ -297,15 +321,14 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         )
 
     async def _validate_connection(
-        self, connection: "AIOHttpClientConnectionUnified"
+        self, connection: "AIOHttpClientConnectionUnified", *, require_http2: bool
     ) -> None:
-        """Validates an existing connection against the client config.
+        """Validates an existing connection against the request's requirement.
 
         Checks performed:
-        * If ``force_http_2`` is enabled: Is the connection HTTP/2?
+        * If HTTP/2 is required: Is the connection HTTP/2?
         """
-        force_http_2 = self._config.force_http_2
-        if force_http_2 and connection.version is not crt_http.HttpVersion.Http2:
+        if require_http2 and connection.version is not crt_http.HttpVersion.Http2:
             await connection.close()
             negotiated = crt_http.HttpVersion(connection.version).name
             raise SmithyHTTPError(f"HTTP/2 could not be negotiated: {negotiated}")
@@ -393,9 +416,3 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                     yield bytes(chunk)
                 else:
                     yield chunk
-
-    def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
-        return AWSCRTHTTPClient(
-            eventloop=self._eventloop,
-            client_config=deepcopy(self._config),
-        )

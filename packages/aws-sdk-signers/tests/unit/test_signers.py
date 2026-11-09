@@ -2,23 +2,30 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import copy
+import hmac
 import re
 import typing
+from collections.abc import AsyncIterator, Iterable
+from dataclasses import dataclass
 from datetime import UTC, datetime
+from hashlib import sha256
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 from aws_sdk_signers import (
-    AsyncEventSigner,
-    AsyncSigV4Signer,
     AWSCredentialIdentity,
     AWSRequest,
+    EventSigner,
     Field,
     Fields,
     SigV4Signer,
     SigV4SigningProperties,
     URI,
 )
+from aws_sdk_signers._sigv4 import signing_key
+from aws_sdk_signers.aio import AsyncBytesReader, AsyncSigV4Signer
+from aws_sdk_signers.signers import EVENT_STREAM_CONTENT_TYPE, EVENT_STREAM_HASH
 from smithy_aws_event_stream.events import Event, EventHeaderEncoder, EventMessage
 
 SIGV4_RE = re.compile(
@@ -108,6 +115,63 @@ def _request_with_field(name: str, value: str) -> AWSRequest:
     )
 
 
+@dataclass(kw_only=True)
+class DataclassRequest:
+    """A request without a custom ``__deepcopy__``, like smithy-http's HTTPRequest."""
+
+    destination: URI
+    method: str
+    body: typing.Any
+    fields: Fields
+
+
+def _dataclass_request(body: typing.Any) -> AWSRequest:
+    request = DataclassRequest(
+        destination=URI(scheme="https", host="127.0.0.1", port=8000),
+        method="PUT",
+        body=body,
+        fields=Fields({}),
+    )
+    return typing.cast(AWSRequest, request)
+
+
+async def _async_chunks(chunks: Iterable[bytes]) -> AsyncIterator[bytes]:
+    for chunk in chunks:
+        yield chunk
+
+
+class AsyncSeekableBody:
+    """An async body with async seek and sync tell, like smithy-core's readers."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = BytesIO(data)
+
+    def __aiter__(self) -> AsyncIterator[bytes]:
+        return self._chunks()
+
+    async def _chunks(self) -> AsyncIterator[bytes]:
+        while chunk := self._data.read(2):
+            yield chunk
+
+    async def seek(self, offset: int, whence: int = 0) -> int:
+        return self._data.seek(offset, whence)
+
+    def tell(self) -> int:
+        return self._data.tell()
+
+
+# Signs the payload and sends its hash, so tests can check what was hashed.
+PAYLOAD_SIGNING_PROPERTIES = SigV4SigningProperties(
+    region="us-west-2",
+    service="s3",
+    content_checksum_enabled=True,
+)
+
+
+def _payload_hash(request: AWSRequest) -> str:
+    return request.fields["X-Amz-Content-SHA256"].as_string()
+
+
 def _signed_headers(request: AWSRequest) -> list[str]:
     match = SIGNED_HEADERS_RE.search(request.fields["authorization"].as_string())
     assert match is not None
@@ -150,6 +214,23 @@ class TestSigV4Signer:
         assert signed_request is not aws_request
         assert aws_request.fields == original_request.fields
         assert signed_request.fields != aws_request.fields
+
+    def test_sign_payload_restores_shared_seekable_body(
+        self, aws_identity: AWSCredentialIdentity, tmp_path: Path
+    ) -> None:
+        path = tmp_path / "body"
+        path.write_bytes(b"123456")
+        with path.open("rb") as body:
+            body.seek(2)
+            request = _dataclass_request(body)
+            signed_request = self.SIGV4_SYNC_SIGNER.sign(
+                properties=PAYLOAD_SIGNING_PROPERTIES,
+                request=request,
+                identity=aws_identity,
+            )
+            assert signed_request.body is body
+            assert body.tell() == 2
+            assert _payload_hash(signed_request) == sha256(b"3456").hexdigest()
 
     @typing.no_type_check
     def test_sign_with_invalid_identity(
@@ -199,6 +280,29 @@ class TestSigV4Signer:
         assert name not in signed_headers
         assert signed_request.fields[name].as_string() == value
 
+    def test_sign_event_stream(self, aws_identity: AWSCredentialIdentity) -> None:
+        signed = self.SIGV4_SYNC_SIGNER.sign(
+            properties=PAYLOAD_SIGNING_PROPERTIES,
+            request=_event_stream_request(UnreadableStream()),
+            identity=aws_identity,
+        )
+        assert _payload_hash(signed) == EVENT_STREAM_HASH
+
+    def test_sign_uses_preset_payload_hash(
+        self, aws_identity: AWSCredentialIdentity
+    ) -> None:
+        signed = self.SIGV4_SYNC_SIGNER.sign(
+            properties=PAYLOAD_SIGNING_PROPERTIES,
+            request=_preset_hash_request(UnreadableStream()),
+            identity=aws_identity,
+        )
+        assert _payload_hash(signed) == PRESET_HASH
+        assert (
+            signed.fields["authorization"]
+            .as_string()
+            .endswith(_expected_signature(signed))
+        )
+
     def test_format_canonical_query_keeps_blank_values(self) -> None:
         canonical_query = self.SIGV4_SYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
             query="foo=bar&baz="
@@ -222,6 +326,45 @@ class TestSigV4Signer:
         assert canonical_path == expected
 
 
+class UnreadableStream:
+    def __iter__(self) -> typing.Self:
+        return self
+
+    def __next__(self) -> bytes:
+        raise Exception("Read should not have been called!")
+
+
+PRESET_HASH = sha256(b"preset").hexdigest()
+
+
+def _event_stream_request(body: typing.Any) -> AWSRequest:
+    request = _dataclass_request(body)
+    request.fields.set_field(
+        Field(name="Content-Type", values=[EVENT_STREAM_CONTENT_TYPE])
+    )
+    return request
+
+
+def _preset_hash_request(body: typing.Any) -> AWSRequest:
+    request = _dataclass_request(body)
+    request.fields.set_field(Field(name="X-Amz-Content-SHA256", values=[PRESET_HASH]))
+    return request
+
+
+def _expected_signature(request: AWSRequest) -> str:
+    signer = SigV4Signer()
+    properties = SigV4SigningProperties(**PAYLOAD_SIGNING_PROPERTIES)
+    properties["date"] = request.fields["X-Amz-Date"].as_string()
+    canonical_request = signer.canonical_request(
+        signing_properties=properties, request=request
+    )
+    string_to_sign = signer.string_to_sign(
+        canonical_request=canonical_request, signing_properties=properties
+    )
+    key = signing_key("EXAMPLE1234SECRET", properties)
+    return hmac.new(key, string_to_sign.encode(), sha256).hexdigest()
+
+
 class UnreadableAsyncStream:
     def __aiter__(self) -> typing.Self:
         return self
@@ -230,12 +373,12 @@ class UnreadableAsyncStream:
         raise Exception("Read should not have been called!")
 
 
-class TestAsyncEventSigner:
-    async def test_sign_wraps_event_message_payload(
+class TestEventSigner:
+    def test_sign_wraps_event_message_payload(
         self,
         aws_identity: AWSCredentialIdentity,
     ) -> None:
-        signer = AsyncEventSigner(
+        signer = EventSigner(
             initial_signature=b"initial-signature",
             event_encoder_cls=EventHeaderEncoder,
         )
@@ -244,7 +387,7 @@ class TestAsyncEventSigner:
             payload=b"audio",
         )
 
-        signed = await signer.sign(
+        signed = signer.sign(
             event=message,
             identity=aws_identity,
             properties=SigV4SigningProperties(region="us-west-2", service="transcribe"),
@@ -260,16 +403,16 @@ class TestAsyncEventSigner:
         assert ":date" in signed.headers
         assert ":chunk-signature" in signed.headers
 
-    async def test_sign_empty_uses_zero_byte_outer_payload(
+    def test_sign_empty_uses_zero_byte_outer_payload(
         self,
         aws_identity: AWSCredentialIdentity,
     ) -> None:
-        signer = AsyncEventSigner(
+        signer = EventSigner(
             initial_signature=b"initial-signature",
             event_encoder_cls=EventHeaderEncoder,
         )
 
-        signed = await signer.sign_empty(
+        signed = signer.sign_empty(
             event=EventMessage(),
             identity=aws_identity,
             properties=SigV4SigningProperties(region="us-west-2", service="transcribe"),
@@ -281,17 +424,17 @@ class TestAsyncEventSigner:
         assert ":date" in decoded.message.headers
         assert ":chunk-signature" in decoded.message.headers
 
-    async def test_sign_empty_rejects_non_empty_event(
+    def test_sign_empty_rejects_non_empty_event(
         self,
         aws_identity: AWSCredentialIdentity,
     ) -> None:
-        signer = AsyncEventSigner(
+        signer = EventSigner(
             initial_signature=b"initial-signature",
             event_encoder_cls=EventHeaderEncoder,
         )
 
         with pytest.raises(ValueError):
-            await signer.sign_empty(
+            signer.sign_empty(
                 event=EventMessage(headers={"foo": "bar"}),
                 identity=aws_identity,
                 properties=SigV4SigningProperties(
@@ -300,7 +443,7 @@ class TestAsyncEventSigner:
             )
 
         with pytest.raises(ValueError):
-            await signer.sign_empty(
+            signer.sign_empty(
                 event=EventMessage(payload=b"audio"),
                 identity=aws_identity,
                 properties=SigV4SigningProperties(
@@ -308,24 +451,24 @@ class TestAsyncEventSigner:
                 ),
             )
 
-    async def test_sign_rejects_events_after_empty_event(
+    def test_sign_rejects_events_after_empty_event(
         self,
         aws_identity: AWSCredentialIdentity,
     ) -> None:
-        signer = AsyncEventSigner(
+        signer = EventSigner(
             initial_signature=b"initial-signature",
             event_encoder_cls=EventHeaderEncoder,
         )
         properties = SigV4SigningProperties(region="us-west-2", service="transcribe")
 
-        await signer.sign_empty(
+        signer.sign_empty(
             event=EventMessage(),
             identity=aws_identity,
             properties=properties,
         )
 
         with pytest.raises(RuntimeError, match="final empty event"):
-            await signer.sign(
+            signer.sign(
                 event=EventMessage(
                     headers={":message-type": "event", ":event-type": "AudioEvent"},
                     payload=b"audio",
@@ -371,6 +514,47 @@ class TestAsyncSigV4Signer:
         assert signed_request is not aws_request
         assert aws_request.fields == original_request.fields
         assert signed_request.fields != aws_request.fields
+
+    async def test_sign_payload_restores_shared_seekable_body(
+        self, aws_identity: AWSCredentialIdentity
+    ) -> None:
+        body = AsyncSeekableBody(b"123456")
+        await body.seek(2)
+        request = _dataclass_request(body)
+        signed_request = await self.SIGV4_ASYNC_SIGNER.sign(
+            properties=PAYLOAD_SIGNING_PROPERTIES,
+            request=request,
+            identity=aws_identity,
+        )
+        assert signed_request.body is body
+        assert body.tell() == 2
+        assert _payload_hash(signed_request) == sha256(b"3456").hexdigest()
+
+    async def test_sign_payload_buffers_non_seekable_body(
+        self, aws_identity: AWSCredentialIdentity
+    ) -> None:
+        request = _dataclass_request(_async_chunks([b"123", b"456"]))
+        signed_request = await self.SIGV4_ASYNC_SIGNER.sign(
+            properties=PAYLOAD_SIGNING_PROPERTIES,
+            request=request,
+            identity=aws_identity,
+        )
+        assert _payload_hash(signed_request) == sha256(b"123456").hexdigest()
+        assert isinstance(signed_request.body, AsyncBytesReader)
+        assert await signed_request.body.read() == b"123456"
+
+    async def test_sign_payload_hashes_sync_body(
+        self, aws_identity: AWSCredentialIdentity
+    ) -> None:
+        body = BytesIO(b"123456")
+        signed_request = await self.SIGV4_ASYNC_SIGNER.sign(
+            properties=PAYLOAD_SIGNING_PROPERTIES,
+            request=_dataclass_request(body),
+            identity=aws_identity,
+        )
+        assert _payload_hash(signed_request) == sha256(b"123456").hexdigest()
+        assert signed_request.body is body
+        assert body.tell() == 0
 
     @typing.no_type_check
     async def test_sign_with_invalid_identity(
@@ -451,24 +635,57 @@ class TestAsyncSigV4Signer:
         payload_hash = signed.fields["X-Amz-Content-SHA256"].as_string()
         assert payload_hash == "STREAMING-AWS4-HMAC-SHA256-EVENTS"
 
-    async def test_format_canonical_query_keeps_blank_values(self) -> None:
-        canonical_query = await self.SIGV4_ASYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
+    async def test_sign_uses_preset_payload_hash(
+        self, aws_identity: AWSCredentialIdentity
+    ) -> None:
+        signed = await self.SIGV4_ASYNC_SIGNER.sign(
+            properties=PAYLOAD_SIGNING_PROPERTIES,
+            request=_preset_hash_request(UnreadableAsyncStream()),
+            identity=aws_identity,
+        )
+        assert _payload_hash(signed) == PRESET_HASH
+        assert (
+            signed.fields["authorization"]
+            .as_string()
+            .endswith(_expected_signature(signed))
+        )
+
+    async def test_sign_matches_sync_signer(
+        self, aws_identity: AWSCredentialIdentity
+    ) -> None:
+        properties = SigV4SigningProperties(region="us-west-2", service="s3")
+        signed = await self.SIGV4_ASYNC_SIGNER.sign(
+            properties=properties,
+            request=_dataclass_request(AsyncBytesReader(b"123456")),
+            identity=aws_identity,
+        )
+        sync_properties = SigV4SigningProperties(**properties)
+        sync_properties["date"] = signed.fields["X-Amz-Date"].as_string()
+        expected = SigV4Signer().sign(
+            properties=sync_properties,
+            request=_dataclass_request(BytesIO(b"123456")),
+            identity=aws_identity,
+        )
+        assert signed.fields == expected.fields
+
+    def test_format_canonical_query_keeps_blank_values(self) -> None:
+        canonical_query = self.SIGV4_ASYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
             query="foo=bar&baz="
         )
         assert canonical_query == "baz=&foo=bar"
 
-    async def test_format_canonical_query_with_literal_query_param(self) -> None:
-        canonical_query = await self.SIGV4_ASYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
+    def test_format_canonical_query_with_literal_query_param(self) -> None:
+        canonical_query = self.SIGV4_ASYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
             query="sync"
         )
         assert canonical_query == "sync="
 
     @pytest.mark.parametrize("options, path, expected", CANONICAL_PATH_CASES)
-    async def test_format_canonical_path(
+    def test_format_canonical_path(
         self, options: dict[str, bool], path: str, expected: str
     ) -> None:
         properties = SigV4SigningProperties(region="us-west-2", service="s3", **options)  # type: ignore[typeddict-item]
-        canonical_path = await self.SIGV4_ASYNC_SIGNER._format_canonical_path(  # pyright: ignore[reportPrivateUsage]
+        canonical_path = self.SIGV4_ASYNC_SIGNER._format_canonical_path(  # pyright: ignore[reportPrivateUsage]
             path=path, signing_properties=properties
         )
         assert canonical_path == expected

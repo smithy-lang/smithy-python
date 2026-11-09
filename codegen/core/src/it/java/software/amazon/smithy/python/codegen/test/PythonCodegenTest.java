@@ -44,30 +44,69 @@ public class PythonCodegenTest {
                 .build();
         plugin.execute(context);
 
-        var client = Files.readString(tempDir.resolve("src/weather/client.py"));
-        assertFalse(client.contains("retry_mode="));
-        assertFalse(client.contains("max_attempts="));
-        assertTrue(client.contains("(AsyncClient):"));
-        assertTrue(client.contains("await self._prepare_call("));
+        var client = Files.readString(tempDir.resolve("src/weather/aio/client.py"));
+        assertTrue(client.contains("class AsyncWeather(AsyncClient[AsyncConfig]):"));
+        assertTrue(client.contains("return AsyncConfig()"));
+        assertFalse(client.contains("_post_setup"));
+        assertTrue(client.contains("await self._invoke("));
+        assertTrue(client.contains("from .. import models as _models"));
+        assertTrue(client.contains("_models.GET_CITY,"));
 
-        var config = Files.readString(tempDir.resolve("src/weather/config.py"));
+        var config = Files.readString(tempDir.resolve("src/weather/aio/config.py"));
         assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
         assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));
 
+        var syncClient = Files.readString(tempDir.resolve("src/weather/client.py"));
+        assertTrue(syncClient.contains("class Weather(Client[Config]):"));
+        assertTrue(syncClient.contains("return self._invoke("));
+        // Sync operations carry the same docs as async ones.
+        assertTrue(syncClient.contains("An instance of `GetCityInput`."));
+
+        var aioInit = Files.readString(tempDir.resolve("src/weather/aio/__init__.py"));
+        assertTrue(aioInit.contains("__all__ = [\"AsyncWeather\", \"AsyncConfig\"]"));
+        var init = Files.readString(tempDir.resolve("src/weather/__init__.py"));
+        assertTrue(init.contains("__all__ = [\"Weather\", \"Config\", \"AsyncWeather\", \"AsyncConfig\"]"));
+        assertTrue(init.contains("\"AsyncWeather\": \".aio.client\""));
+
+        // Async configs take either kind of endpoint resolver; sync ones take sync only.
+        assertTrue(config.contains("endpoint_resolver: EndpointResolver | AsyncEndpointResolver"));
+
+        var syncConfig = Files.readString(tempDir.resolve("src/weather/config.py"));
+        assertTrue(syncConfig.contains("self.transport = transport or Urllib3HTTPClient()"));
+
         // An output that models a "responseMetadata" member gets both the SDK-reserved
         // response_metadata attribute and the escaped modeled member, so neither shadows
-        // the other.
-        var models = Files.readString(tempDir.resolve("src/weather/models.py"));
+        // the other. Field declarations live in the typed stub (models.py builds
+        // classes lazily at runtime), so the surface is asserted against models.pyi.
+        var models = Files.readString(tempDir.resolve("src/weather/models.pyi"));
         assertTrue(models.contains("response_metadata: ResponseMetadata"));
         assertTrue(models.contains("response_metadata_:"));
+
+        var runtimeModels = Files.readString(tempDir.resolve("src/weather/models.py"));
+        assertTrue(runtimeModels.contains("_operation_names = ("));
+        assertTrue(runtimeModels.contains("_operation_data[\"GET_CITY\"]"));
+        assertTrue(runtimeModels.contains("__all__.extend(_operation_names)"));
+        assertTrue(runtimeModels.contains("return globals().setdefault(name, operation)"));
+        assertFalse(runtimeModels.contains("GET_CITY = APIOperation("));
+
+        // Event streams are passed through the stream API, not model constructors.
+        var typecheck = Files.readString(tempDir.resolve("tests/_typecheck.py"));
+        assertFalse(typecheck.contains("stream=_"));
 
         var schemas = Files.readString(tempDir.resolve("src/weather/_private/schemas.py"));
         assertTrue(schemas.contains("example.weather#fakeProtocol"));
         assertTrue(schemas.contains("aws.protocols#restJson1"));
         assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
         assertTrue(schemas.contains("\"name\": \"weather-auth\""));
-        assertTrue(schemas.contains("smithy.rules#endpointBdd"));
-        assertTrue(schemas.contains("(default endpointRuleSet) endpoint is not set"));
+        // Lowering consumes the endpoint rules; the schemas no longer carry them.
+        assertFalse(schemas.contains("smithy.rules#endpointBdd"));
+
+        var endpoints = Files.readString(tempDir.resolve("src/weather/_private/endpoints.py"));
+        assertTrue(endpoints.contains("(default endpointRuleSet) endpoint is not set"));
+        assertTrue(config.contains(
+                "self.endpoint_resolver = endpoint_resolver or BddEndpointResolver(BDD)"));
+        assertTrue(config.contains("from .._private.endpoints import BDD"));
+        assertTrue(syncConfig.contains("from ._private.endpoints import BDD"));
         assertTrue(schemas.contains("smithy.api#longPoll"));
         assertTrue(schemas.contains("\"timeoutMillis\": 20000"));
     }

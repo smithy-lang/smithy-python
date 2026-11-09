@@ -33,14 +33,14 @@ generate as follows:
 * `--service SHAPE_ID` selects a specific service shape. The ID MUST be absolute
   and MUST NOT identify a member. The shape MUST exist in the model and MUST be
   a service that is not marked `@mixin`.
-* When `--service` is omitted and the model contains exactly one non-mixin
-  service shape, that service is used.
-* When `--service` is omitted and the model contains more than one non-mixin
-  service shape, the command fails with an invocation error that lists the
-  candidates.
+* For `client`, omitting `--service` selects the sole non-mixin service. Multiple
+  services produce an invocation error that lists the candidates. A model
+  without a service also fails.
+* For `types`, omitting `--service` does not infer one. Selection starts from
+  eligible declarations across the model even when the model contains one or
+  more services.
 
-The `client` artifact requires a resolved service. The `types` artifact does
-not. The CLI MUST NOT synthesize a placeholder service to satisfy generation.
+The CLI MUST NOT synthesize a placeholder service to satisfy generation.
 
 ### Generated Shapes
 
@@ -50,16 +50,15 @@ resources, errors, and members. This matches the surface produced by the other
 Smithy code generators. Data shapes in the model that are not connected to the
 service are not generated, and the CLI reports how many were left out.
 
-When no service is resolved, the `types` artifact generates every data shape in
-the model. Smithy guarantees case-insensitively unique shape names only within a
-service closure, so in this mode the command fails when two shapes have
-case-insensitively equal names, identifying the conflicting shape IDs.
+When no service is resolved, the `types` artifact starts with eligible
+declaration shapes across the model. Its selector and input/output settings
+filter those roots before member-target dependencies are added. Smithy
+guarantees case-insensitively unique shape names only within a service closure,
+so the command fails when two final declarations have case-insensitively equal
+names, identifying the conflicting shape IDs.
 
 Trait definitions, prelude shapes, and shapes marked `@mixin` are never
-generated. Builds that need a different set of shapes, such as types that are
-not bound to any operation, apply smithy-build transforms in the projection.
-An option to generate every shape in the model regardless of the service MAY be
-added when there is a need for it.
+generated. Projection transforms apply before the artifact's selector.
 
 The command MUST return zero after successful generation and non-zero when
 arguments, settings, the model, or generation are invalid. Diagnostics are

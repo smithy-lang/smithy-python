@@ -18,6 +18,7 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.traits.AuthDefinitionTrait;
 import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.EndpointTrait;
+import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.EventHeaderTrait;
 import software.amazon.smithy.model.traits.EventPayloadTrait;
@@ -32,10 +33,12 @@ import software.amazon.smithy.model.traits.HttpQueryTrait;
 import software.amazon.smithy.model.traits.HttpResponseCodeTrait;
 import software.amazon.smithy.model.traits.HttpTrait;
 import software.amazon.smithy.model.traits.IdempotencyTokenTrait;
+import software.amazon.smithy.model.traits.InputTrait;
 import software.amazon.smithy.model.traits.JsonNameTrait;
 import software.amazon.smithy.model.traits.LengthTrait;
 import software.amazon.smithy.model.traits.LongPollTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
+import software.amazon.smithy.model.traits.OutputTrait;
 import software.amazon.smithy.model.traits.PatternTrait;
 import software.amazon.smithy.model.traits.ProtocolDefinitionTrait;
 import software.amazon.smithy.model.traits.RangeTrait;
@@ -52,7 +55,9 @@ import software.amazon.smithy.model.traits.XmlAttributeTrait;
 import software.amazon.smithy.model.traits.XmlFlattenedTrait;
 import software.amazon.smithy.model.traits.XmlNameTrait;
 import software.amazon.smithy.model.traits.XmlNamespaceTrait;
-import software.amazon.smithy.rulesengine.traits.EndpointBddTrait;
+import software.amazon.smithy.rulesengine.traits.ContextParamTrait;
+import software.amazon.smithy.rulesengine.traits.OperationContextParamsTrait;
+import software.amazon.smithy.rulesengine.traits.StaticContextParamsTrait;
 import software.amazon.smithy.utils.SetUtils;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -85,11 +90,16 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     SensitiveTrait.ID,
                     IdempotencyTokenTrait.ID,
                     DefaultTrait.ID, // runtime populates default values
+                    EnumValueTrait.ID, // runtime builds enum members with their wire value
                     RequiredTrait.ID, // runtime enforcement
+                    InputTrait.ID, // runtime input-structure nullability (@input members optional)
+                    OutputTrait.ID, // runtime injects response_metadata on output structures
                     TimestampFormatTrait.ID, // read per-member by smithy_http / smithy_aws_core serde
                     ORIGINAL_SHAPE_ID, // rpcv2Cbor unit detection
                     ServiceTrait.ID, // service metadata, including sdkId used by package docs
-                    EndpointBddTrait.ID, // endpoint resolution data prepared by EndpointBddIntegration
+                    ContextParamTrait.ID, // endpoint parameter plans read these at runtime
+                    StaticContextParamsTrait.ID,
+                    OperationContextParamsTrait.ID,
                     LongPollTrait.ID, // retry backoff when a long-polling operation exhausts its quota
                     RequestCompressionTrait.ID, // read at runtime
                     JsonNameTrait.ID,

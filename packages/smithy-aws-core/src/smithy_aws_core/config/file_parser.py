@@ -5,9 +5,24 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import TYPE_CHECKING, Any
+
+from smithy_core.program import Program, run_program
 
 from .exceptions import ConfigParseError
-from .filesystem import FileSystem
+
+if TYPE_CHECKING:
+    from .filesystem import FileSystem
+
+__all__ = [
+    "FileType",
+    "RawParsedSections",
+    "Section",
+    "SectionMap",
+    "StandardizedOutput",
+    "parse_config_file",
+    "standardize",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -40,27 +55,6 @@ class StandardizedOutput:
     profiles: SectionMap = field(default_factory=dict)  # type: ignore[assignment]
     sso_sessions: SectionMap = field(default_factory=dict)  # type: ignore[assignment]
     services: SectionMap = field(default_factory=dict)  # type: ignore[assignment]
-
-
-async def parse_config_file(
-    file_path: str, filesystem: FileSystem
-) -> RawParsedSections:
-    """Parse an AWS config or credentials file.
-
-    Reads the file asynchronously and parses it into raw sections.
-
-    :param file_path: Resolved path to the file.
-    :param filesystem: FileSystem object to use.
-    :returns: Raw sections dict {section_name: {key: value}}.
-    :raises ConfigParseError: If the file has invalid syntax.
-    """
-    content = await filesystem.read_file(file_path)
-    if content is None:
-        return {}
-    try:
-        return _parse_content(content)
-    except ConfigParseError as e:
-        raise ConfigParseError(f"Unable to parse config file '{file_path}': {e}") from e
 
 
 def standardize(
@@ -113,7 +107,28 @@ def standardize(
     )
 
 
-def _parse_content(content: str) -> RawParsedSections:
+def parse_config_file(file_path: str, filesystem: "FileSystem") -> RawParsedSections:
+    """Parse an AWS config or credentials file.
+
+    :param file_path: Resolved path to the file.
+    :param filesystem: FileSystem object to use.
+    :returns: Raw sections dict {section_name: {key: value}}.
+    :raises ConfigParseError: If the file has invalid syntax.
+    """
+    return run_program(_parse_config_file(file_path, filesystem))
+
+
+def _parse_config_file(file_path: str, filesystem: Any) -> Program[RawParsedSections]:  # type: ignore[reportUnusedFunction]
+    content: str | None = yield lambda: filesystem.read_file(file_path)
+    if content is None:
+        return {}
+    try:
+        return _parse_content(content)
+    except ConfigParseError as e:
+        raise ConfigParseError(f"Unable to parse config file '{file_path}': {e}") from e
+
+
+def _parse_content(content: str) -> RawParsedSections:  # type: ignore[reportUnusedFunction]
     """Parse config file content from a string into raw sections.
 
     :param content: The raw config file content as a string.

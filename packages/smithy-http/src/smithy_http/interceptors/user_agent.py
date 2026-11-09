@@ -8,10 +8,12 @@ from smithy_core.interceptors import InputContext, Interceptor, RequestContext
 from smithy_core.types import PropertyKey
 
 from smithy_http import Field
-from smithy_http.aio.interfaces import HTTPRequest
+from smithy_http.interfaces import HTTPRequest
 from smithy_http.user_agent import UserAgent, UserAgentComponent
 
 USER_AGENT = PropertyKey(key="user_agent", value_type=UserAgent)
+
+__all__ = ["USER_AGENT", "UserAgentInterceptor"]
 
 
 class UserAgentInterceptor(Interceptor[Any, Any, HTTPRequest, None]):

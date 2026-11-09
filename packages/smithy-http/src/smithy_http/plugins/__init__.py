@@ -6,6 +6,8 @@ from smithy_core.interceptors import Interceptor
 
 from smithy_http.interceptors.user_agent import UserAgentInterceptor
 
+__all__ = ["user_agent_plugin"]
+
 
 class _InterceptorConfig(Protocol):
     interceptors: list[Interceptor[Any, Any, Any, Any]]

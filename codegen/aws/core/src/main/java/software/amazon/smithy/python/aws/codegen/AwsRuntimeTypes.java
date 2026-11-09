@@ -17,24 +17,39 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 public final class AwsRuntimeTypes {
 
     // smithy_aws_core.aio.protocols
-    public static final Symbol AWS_QUERY_CLIENT_PROTOCOL = createSymbol(
+    public static final Symbol AWS_JSON_10_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
-            "AwsQueryClientProtocol");
+            "AsyncAwsJson10ClientProtocol");
 
     // smithy_aws_core.aio.protocols
-    public static final Symbol EC2_QUERY_CLIENT_PROTOCOL = createSymbol(
+    public static final Symbol AWS_JSON_11_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
+            "AsyncAwsJson11ClientProtocol");
+
+    // smithy_aws_core.protocols
+    public static final Symbol AWS_QUERY_CLIENT_PROTOCOL = createSymbol(
+            "protocols",
+            "AwsQueryClientProtocol");
+
+    // smithy_aws_core.protocols
+    public static final Symbol EC2_QUERY_CLIENT_PROTOCOL = createSymbol(
+            "protocols",
             "Ec2QueryClientProtocol");
 
     // smithy_aws_core.aio.protocols
     public static final Symbol REST_XML_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
-            "RestXmlClientProtocol");
+            "AsyncRestXmlClientProtocol");
 
-    // smithy_aws_core.endpoints.standard_regional
-    public static final Symbol STANDARD_REGIONAL_ENDPOINTS_RESOLVER = createSymbol(
-            "endpoints.standard_regional",
-            "StandardRegionalEndpointsResolver");
+    // smithy_aws_core.endpoints
+    public static final Symbol AWS_RULES_EXTENSION = createSymbol(
+            "endpoints",
+            "AWS_RULES_EXTENSION");
+
+    // smithy_aws_core.identity
+    public static final Symbol AWS_CREDENTIALS_IDENTITY = createSymbol(
+            "identity",
+            "AWSCredentialsIdentity");
 
     private AwsRuntimeTypes() {}
 

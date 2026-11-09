@@ -7,20 +7,19 @@ from urllib.parse import parse_qsl
 
 from pytest import fail, mark, raises
 from smithy_cbor import loads as _cbor_loads
-from smithy_core.aio.retries import SimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_core.aio.utils import async_list
-from smithy_http import tuples_to_fields
-from smithy_http.aio import HTTPResponse as _smithy_http_aio_HTTPResponse
-from smithy_http.aio.interfaces import (
+from smithy_core.retries import SimpleRetryStrategy
+from smithy_http import HTTPResponse as _smithy_http_HTTPResponse, tuples_to_fields
+from smithy_http.interfaces import (
+    HTTPClientConfiguration,
     HTTPRequest,
-    HTTPResponse as _smithy_http_aio_interfaces_HTTPResponse,
+    HTTPRequestConfiguration,
+    HTTPResponse as _smithy_http_interfaces_HTTPResponse,
 )
-from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 from smithy_test import deep_equal
 
-from rpcv2cbor.client import RpcV2Protocol
-from rpcv2cbor.config import Config
+from rpcv2cbor.aio.client import AsyncRpcV2Protocol
+from rpcv2cbor.aio.config import AsyncConfig
 from rpcv2cbor.models import (
     ClientOptionalDefaults,
     Defaults,
@@ -64,8 +63,8 @@ from rpcv2cbor.models import (
 
 async def test_empty_input_request_empty_input_output() -> None:
     """When Input structure is empty we write CBOR equivalent of {}"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -143,8 +142,8 @@ async def test_empty_input_request_empty_input_output() -> None:
 
 async def test_empty_output_response_empty_input_output() -> None:
     """When output structure is empty we write CBOR equivalent of {}"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -171,8 +170,8 @@ async def test_empty_output_response_empty_input_output() -> None:
 
 async def test_empty_output_no_body_response_empty_input_output() -> None:
     """When output structure is empty the client should accept an empty body"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -199,8 +198,8 @@ async def test_empty_output_no_body_response_empty_input_output() -> None:
 
 async def test_rpc_v2_cbor_float16_inf_response_float16() -> None:
     """Ensures that clients can correctly parse float16 +Inf."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -227,8 +226,8 @@ async def test_rpc_v2_cbor_float16_inf_response_float16() -> None:
 
 async def test_rpc_v2_cbor_float16_neg_inf_response_float16() -> None:
     """Ensures that clients can correctly parse float16 -Inf."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -255,8 +254,8 @@ async def test_rpc_v2_cbor_float16_neg_inf_response_float16() -> None:
 
 async def test_rpc_v2_cbor_float16_lsb_na_n_response_float16() -> None:
     """Ensures that clients can correctly parse float16 NaN with high LSB."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -283,8 +282,8 @@ async def test_rpc_v2_cbor_float16_lsb_na_n_response_float16() -> None:
 
 async def test_rpc_v2_cbor_float16_msb_na_n_response_float16() -> None:
     """Ensures that clients can correctly parse float16 NaN with high MSB."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -311,8 +310,8 @@ async def test_rpc_v2_cbor_float16_msb_na_n_response_float16() -> None:
 
 async def test_rpc_v2_cbor_float16_subnormal_response_float16() -> None:
     """Ensures that clients can correctly parse a subnormal float16."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -344,8 +343,8 @@ async def test_rpc_v2_cbor_date_time_with_fractional_seconds_response_fractional
     Ensures that clients can correctly parse timestamps with fractional
     seconds
     """
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -374,8 +373,8 @@ async def test_rpc_v2_cbor_date_time_with_fractional_seconds_response_fractional
 
 async def test_rpc_v2_cbor_invalid_greeting_error_error_greeting_with_errors() -> None:
     """Parses simple RpcV2 Cbor errors"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=400,
@@ -404,8 +403,8 @@ async def test_rpc_v2_cbor_invalid_greeting_error_error_greeting_with_errors() -
 
 async def test_rpc_v2_cbor_complex_error_error_greeting_with_errors() -> None:
     """Parses a complex error with no message member"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=400,
@@ -433,8 +432,8 @@ async def test_rpc_v2_cbor_complex_error_error_greeting_with_errors() -> None:
 
 
 async def test_rpc_v2_cbor_empty_complex_error_error_greeting_with_errors() -> None:
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=400,
@@ -463,8 +462,8 @@ async def test_rpc_v2_cbor_empty_complex_error_error_greeting_with_errors() -> N
 
 async def test_no_input_request_no_input_output() -> None:
     """Body is empty and no Content-Type header if no input"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -534,8 +533,8 @@ async def test_no_input_request_no_input_output() -> None:
 
 async def test_no_output_response_no_input_output() -> None:
     """A `Content-Type` header should not be set if the response body is empty."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -559,8 +558,8 @@ async def test_no_output_response_no_input_output() -> None:
 
 async def test_no_output_client_allows_empty_cbor_response_no_input_output() -> None:
     """Clients should accept a CBOR empty struct if there is no output."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -590,8 +589,8 @@ async def test_no_output_client_allows_empty_body_response_no_input_output() -> 
     Clients should accept an empty body if there is no output and should not
     raise an error if the `Content-Type` header is set.
     """
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -621,8 +620,8 @@ async def test_rpc_v2_cbor_client_populates_default_values_in_input_request_oper
     None
 ):
     """Client populates default values in input."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -705,8 +704,8 @@ async def test_rpc_v2_cbor_client_skips_top_level_default_values_in_input_reques
     None
 ):
     """Client skips top level default values in input."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -787,8 +786,8 @@ async def test_rpc_v2_cbor_client_uses_explicitly_provided_member_values_over_de
     None
 ):
     """Client uses explicitly provided member values over defaults"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -899,8 +898,8 @@ async def test_rpc_v2_cbor_client_uses_explicitly_provided_values_in_top_level_r
     Any time a value is provided for a member in the top level of input, it
     is used, regardless of if its the default.
     """
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -988,8 +987,8 @@ async def test_rpc_v2_cbor_client_ignores_non_top_level_defaults_on_members_with
     Typically, non top-level members would have defaults filled in, but if
     they have the clientOptional trait, the defaults should be ignored.
     """
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -1073,8 +1072,8 @@ async def test_rpc_v2_cbor_client_populates_defaults_values_when_missing_in_resp
     None
 ):
     """Client populates default values when missing in response."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -1130,8 +1129,8 @@ async def test_rpc_v2_cbor_client_ignores_default_values_if_member_values_are_pr
     Client ignores default values if member values are present in the
     response.
     """
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -1184,8 +1183,8 @@ async def test_rpc_v2_cbor_client_ignores_default_values_if_member_values_are_pr
 
 async def test_optional_input_request_optional_input_output() -> None:
     """When input is empty we write CBOR equivalent of {}"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -1263,8 +1262,8 @@ async def test_optional_input_request_optional_input_output() -> None:
 
 async def test_optional_output_response_optional_input_output() -> None:
     """When output is empty we write CBOR equivalent of {}"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -1291,8 +1290,8 @@ async def test_optional_output_response_optional_input_output() -> None:
 
 async def test_rpc_v2_cbor_recursive_shapes_request_recursive_shapes() -> None:
     """Serializes recursive structures"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -1382,8 +1381,8 @@ async def test_rpc_v2_cbor_recursive_shapes_request_recursive_shapes() -> None:
 
 async def test_rpc_v2_cbor_recursive_shapes_response_recursive_shapes() -> None:
     """Serializes recursive structures"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -1427,8 +1426,8 @@ async def test_rpc_v2_cbor_recursive_shapes_using_definite_length_response_recur
     Deserializes recursive structures encoded using a map with definite
     length
     """
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -1467,8 +1466,8 @@ async def test_rpc_v2_cbor_recursive_shapes_using_definite_length_response_recur
 
 async def test_rpc_v2_cbor_maps_request_rpc_v2_cbor_dense_maps() -> None:
     """Serializes maps"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -1555,8 +1554,8 @@ async def test_rpc_v2_cbor_serializes_zero_values_in_maps_request_rpc_v2_cbor_de
     None
 ):
     """Ensure that 0 and false are sent over the wire in all maps and lists"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -1640,8 +1639,8 @@ async def test_rpc_v2_cbor_serializes_dense_set_map_request_rpc_v2_cbor_dense_ma
     None
 ):
     """A request that contains a dense map of sets."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -1719,8 +1718,8 @@ async def test_rpc_v2_cbor_serializes_dense_set_map_request_rpc_v2_cbor_dense_ma
 
 async def test_rpc_v2_cbor_maps_response_rpc_v2_cbor_dense_maps() -> None:
     """Deserializes maps"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -1756,8 +1755,8 @@ async def test_rpc_v2_cbor_deserializes_zero_values_in_maps_response_rpc_v2_cbor
     None
 ):
     """Ensure that 0 and false are sent over the wire in all maps and lists"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -1790,8 +1789,8 @@ async def test_rpc_v2_cbor_deserializes_dense_set_map_response_rpc_v2_cbor_dense
     None
 ):
     """A response that contains a dense map of sets"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -1818,8 +1817,8 @@ async def test_rpc_v2_cbor_deserializes_dense_set_map_response_rpc_v2_cbor_dense
 
 async def test_rpc_v2_cbor_lists_request_rpc_v2_cbor_lists() -> None:
     """Serializes RpcV2 Cbor lists"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -1915,8 +1914,8 @@ async def test_rpc_v2_cbor_lists_request_rpc_v2_cbor_lists() -> None:
 
 async def test_rpc_v2_cbor_lists_empty_request_rpc_v2_cbor_lists() -> None:
     """Serializes empty JSON lists"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -1995,8 +1994,8 @@ async def test_rpc_v2_cbor_lists_empty_using_definite_length_request_rpc_v2_cbor
     None
 ):
     """Serializes empty JSON definite length lists"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -2073,8 +2072,8 @@ async def test_rpc_v2_cbor_lists_empty_using_definite_length_request_rpc_v2_cbor
 
 async def test_rpc_v2_cbor_lists_response_rpc_v2_cbor_lists() -> None:
     """Serializes RpcV2 Cbor lists"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -2120,8 +2119,8 @@ async def test_rpc_v2_cbor_lists_response_rpc_v2_cbor_lists() -> None:
 
 async def test_rpc_v2_cbor_lists_empty_response_rpc_v2_cbor_lists() -> None:
     """Serializes empty RpcV2 Cbor lists"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -2153,8 +2152,8 @@ async def test_rpc_v2_cbor_indefinite_string_inside_indefinite_list_can_deserial
     Can deserialize indefinite length text strings inside an indefinite
     length list
     """
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -2194,8 +2193,8 @@ async def test_rpc_v2_cbor_indefinite_string_inside_definite_list_can_deserializ
     Can deserialize indefinite length text strings inside a definite length
     list
     """
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -2230,8 +2229,8 @@ async def test_rpc_v2_cbor_indefinite_string_inside_definite_list_can_deserializ
 
 async def test_rpc_v2_cbor_sparse_maps_request_rpc_v2_cbor_sparse_maps() -> None:
     """Serializes sparse maps"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -2318,8 +2317,8 @@ async def test_rpc_v2_cbor_serializes_null_map_values_request_rpc_v2_cbor_sparse
     None
 ):
     """Serializes null map values in sparse maps"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -2406,8 +2405,8 @@ async def test_rpc_v2_cbor_serializes_sparse_set_map_request_rpc_v2_cbor_sparse_
     None
 ):
     """A request that contains a sparse map of sets"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -2489,8 +2488,8 @@ async def test_rpc_v2_cbor_serializes_sparse_set_map_and_retains_null_request_rp
     None
 ):
     """A request that contains a sparse map of sets."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -2574,8 +2573,8 @@ async def test_rpc_v2_cbor_serializes_zero_values_in_sparse_maps_request_rpc_v2_
     None
 ):
     """Ensure that 0 and false are sent over the wire in all maps and lists"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -2657,8 +2656,8 @@ async def test_rpc_v2_cbor_serializes_zero_values_in_sparse_maps_request_rpc_v2_
 
 async def test_rpc_v2_cbor_sparse_json_maps_response_rpc_v2_cbor_sparse_maps() -> None:
     """Deserializes sparse maps"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -2694,8 +2693,8 @@ async def test_rpc_v2_cbor_deserializes_null_map_values_response_rpc_v2_cbor_spa
     None
 ):
     """Deserializes null map values"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -2731,8 +2730,8 @@ async def test_rpc_v2_cbor_deserializes_sparse_set_map_response_rpc_v2_cbor_spar
     None
 ):
     """A response that contains a sparse map of sets"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -2761,8 +2760,8 @@ async def test_rpc_v2_cbor_deserializes_sparse_set_map_and_retains_null_response
     None
 ):
     """A response that contains a sparse map of sets with a null"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -2793,8 +2792,8 @@ async def test_rpc_v2_cbor_deserializes_zero_values_in_sparse_maps_response_rpc_
     None
 ):
     """Ensure that 0 and false are sent over the wire in all maps and lists"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -2825,8 +2824,8 @@ async def test_rpc_v2_cbor_deserializes_zero_values_in_sparse_maps_response_rpc_
 
 async def test_rpc_v2_cbor_serializes_union_value_request_rpc_v2_cbor_unions() -> None:
     """Serializes a union followed by another structure member"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -2910,8 +2909,8 @@ async def test_rpc_v2_cbor_serializes_nested_union_value_request_rpc_v2_cbor_uni
     None
 ):
     """Serializes a nested union followed by another structure member"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -2998,8 +2997,8 @@ async def test_rpc_v2_cbor_deserializes_union_value_response_rpc_v2_cbor_unions(
     None
 ):
     """Deserializes a tagged union followed by another structure member"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -3032,8 +3031,8 @@ async def test_rpc_v2_cbor_deserializes_nested_union_value_response_rpc_v2_cbor_
     None
 ):
     """Deserializes a nested union followed by another structure member"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -3069,8 +3068,8 @@ async def test_rpc_v2_cbor_simple_scalar_properties_request_simple_scalar_proper
     None
 ):
     """Serializes simple scalar properties"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -3163,8 +3162,8 @@ async def test_rpc_v2_cbor_client_doesnt_serialize_null_structure_values_request
     None
 ):
     """RpcV2 Cbor should not serialize null structure values"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -3244,8 +3243,8 @@ async def test_rpc_v2_cbor_supports_na_n_float_inputs_request_simple_scalar_prop
     None
 ):
     """Supports handling NaN float values."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -3329,8 +3328,8 @@ async def test_rpc_v2_cbor_supports_infinity_float_inputs_request_simple_scalar_
     None
 ):
     """Supports handling Infinity float values."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -3414,8 +3413,8 @@ async def test_rpc_v2_cbor_supports_negative_infinity_float_inputs_request_simpl
     None
 ):
     """Supports handling Infinity float values."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -3499,8 +3498,8 @@ async def test_rpc_v2_cbor_simple_scalar_properties_response_simple_scalar_prope
     None
 ):
     """Serializes simple scalar properties"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -3544,8 +3543,8 @@ async def test_rpc_v2_cbor_simple_scalar_properties_using_definite_length_respon
     Deserializes simple scalar properties encoded using a map with definite
     length
     """
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -3586,8 +3585,8 @@ async def test_rpc_v2_cbor_client_doesnt_deserialize_null_structure_values_respo
     None
 ):
     """RpcV2 Cbor should not deserialize null structure values"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -3616,8 +3615,8 @@ async def test_rpc_v2_cbor_supports_na_n_float_outputs_response_simple_scalar_pr
     None
 ):
     """Supports handling NaN float values."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -3650,8 +3649,8 @@ async def test_rpc_v2_cbor_supports_infinity_float_outputs_response_simple_scala
     None
 ):
     """Supports handling Infinity float values."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -3684,8 +3683,8 @@ async def test_rpc_v2_cbor_supports_negative_infinity_float_outputs_response_sim
     None
 ):
     """Supports handling Negative Infinity float values."""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -3721,8 +3720,8 @@ async def test_rpc_v2_cbor_supports_upcasting_data_on_deserialize_response_simpl
     Supports upcasting from a smaller byte representation of the same data
     type.
     """
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -3764,8 +3763,8 @@ async def test_rpc_v2_cbor_extra_fields_in_the_body_should_be_skipped_by_clients
     to be able to communicate with a server that is generated against a
     newer Smithy model.
     """
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -3807,8 +3806,8 @@ async def test_rpc_v2_cbor_sparse_maps_serialize_null_values_request_sparse_null
     None
 ):
     """Serializes null values in maps"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -3890,8 +3889,8 @@ async def test_rpc_v2_cbor_sparse_lists_serialize_null_request_sparse_nulls_oper
     None
 ):
     """Serializes null values in lists"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com/",
             transport=RequestTestHTTPClient(),
             retry_strategy=SimpleRetryStrategy(max_attempts=1),
@@ -3971,8 +3970,8 @@ async def test_rpc_v2_cbor_sparse_maps_deserialize_null_values_response_sparse_n
     None
 ):
     """Deserializes null values in maps"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -4001,8 +4000,8 @@ async def test_rpc_v2_cbor_sparse_lists_deserialize_null_response_sparse_nulls_o
     None
 ):
     """Deserializes null values in lists"""
-    client = RpcV2Protocol(
-        config=Config(
+    client = AsyncRpcV2Protocol(
+        config=AsyncConfig(
             endpoint_uri="https://example.com",
             transport=ResponseTestHTTPClient(
                 status=200,
@@ -4048,7 +4047,7 @@ class RequestTestHTTPClient:
         request: HTTPRequest,
         *,
         request_config: HTTPRequestConfiguration | None = None,
-    ) -> _smithy_http_aio_interfaces_HTTPResponse:
+    ) -> _smithy_http_interfaces_HTTPResponse:
         # Raise the exception with the request object to bypass actual request handling
         raise TestHttpServiceError(request)
 
@@ -4077,8 +4076,8 @@ class ResponseTestHTTPClient:
         request: HTTPRequest,
         *,
         request_config: HTTPRequestConfiguration | None = None,
-    ) -> _smithy_http_aio_HTTPResponse:
+    ) -> _smithy_http_HTTPResponse:
         # Pre-construct the response from the request and return it
-        return _smithy_http_aio_HTTPResponse(
-            status=self.status, fields=self.fields, body=async_list([self.body])
+        return _smithy_http_HTTPResponse(
+            status=self.status, fields=self.fields, body=AsyncBytesReader(self.body)
         )

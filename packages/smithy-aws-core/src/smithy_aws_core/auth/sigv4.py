@@ -1,15 +1,14 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import re
-from typing import TYPE_CHECKING, Protocol, Self
+from typing import Any, Self
 
-from aws_sdk_signers import AsyncEventSigner, AsyncSigV4Signer, SigV4SigningProperties
-from smithy_core.aio.interfaces.auth import AuthScheme, EventSigner, Signer
+from aws_sdk_signers import SigV4Signer, SigV4SigningProperties
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces import TypedProperties as _TypedProperties
-from smithy_core.types import PropertyKey
-from smithy_http.aio.interfaces import HTTPRequest
+from smithy_core.interfaces.auth import AuthScheme, Signer
+from smithy_http.interfaces import HTTPRequest
 
+from ..business_metrics import get_feature_ids
 from ..identity import (
     AWS_IDENTITY_CONFIG,
     AWSCredentialsIdentity,
@@ -18,54 +17,15 @@ from ..identity import (
 )
 from ..traits import SigV4Trait
 
-if TYPE_CHECKING:
-    from smithy_aws_event_stream.events import EventHeaderEncoder
-
-try:
-    from smithy_aws_event_stream.events import EventHeaderEncoder
-
-    HAS_EVENT_STREAM = True
-except ImportError:
-    HAS_EVENT_STREAM = False  # type: ignore
+__all__ = ["SigV4AuthScheme"]
 
 
-class SigV4Config(Protocol):
-    region: str | None
-    aws_credentials_identity_resolver: AWSCredentialsResolver | None
-
-
-SIGV4_CONFIG = PropertyKey(key="config", value_type=SigV4Config)
-
-type SigV4Signer = Signer[HTTPRequest, AWSCredentialsIdentity, SigV4SigningProperties]
-
-
-class SigV4AuthScheme(
-    AuthScheme[
-        HTTPRequest,
-        AWSCredentialsIdentity,
-        AWSIdentityProperties,
-        SigV4SigningProperties,
-    ]
-):
-    """SigV4 AuthScheme."""
+class _SigV4AuthSchemeBase:
+    """SigV4 auth scheme logic shared by the sync and async schemes."""
 
     scheme_id = SigV4Trait.id
-    _signer: SigV4Signer
 
-    def __init__(
-        self,
-        *,
-        service: str,
-        signer: SigV4Signer | None = None,
-    ) -> None:
-        """Constructor.
-
-        :param identity_resolver: The identity resolver to extract the api key identity.
-        :param signer: The signer used to sign the request.
-        """
-        # TODO: There are type mismatches in the signature of the "sign" method.
-        # The issues seems to be that it's not using protocols in its signature
-        self._signer = signer or AsyncSigV4Signer()  # type: ignore
+    def __init__(self, *, service: str) -> None:
         self._service = service
 
     def identity_properties(
@@ -76,10 +36,11 @@ class SigV4AuthScheme(
             "access_key_id": config.aws_access_key_id,
             "secret_access_key": config.aws_secret_access_key,
             "session_token": config.aws_session_token,
+            "_feature_ids": get_feature_ids(context),
         }
 
-    def identity_resolver(self, *, context: _TypedProperties) -> AWSCredentialsResolver:
-        config = context.get(SIGV4_CONFIG)
+    def identity_resolver(self, *, context: _TypedProperties) -> Any:
+        config = context.get("config")
         if config is None or config.aws_credentials_identity_resolver is None:
             raise SmithyIdentityError(
                 "Attempted to use SigV4 auth, but aws_credentials_identity_resolver was not "
@@ -88,7 +49,7 @@ class SigV4AuthScheme(
         return config.aws_credentials_identity_resolver
 
     def signer_properties(self, *, context: _TypedProperties) -> SigV4SigningProperties:
-        config = context.get(SIGV4_CONFIG)
+        config = context.get("config")
         if config is None or config.region is None:
             raise SmithyIdentityError(
                 "Attempted to use SigV4 auth, but region was not set on the config."
@@ -98,23 +59,45 @@ class SigV4AuthScheme(
             "service": self._service,
         }
 
-    def signer(self) -> SigV4Signer:
-        return self._signer
-
-    def event_signer(
-        self, *, request: HTTPRequest
-    ) -> EventSigner[AWSCredentialsIdentity, SigV4SigningProperties] | None:
-        if not HAS_EVENT_STREAM:
-            return None
-
-        auth_value = request.fields["Authorization"].as_string()
-        signature: str = re.split("Signature=", auth_value)[-1]
-
-        return AsyncEventSigner(
-            initial_signature=signature.encode("utf-8"),
-            event_encoder_cls=EventHeaderEncoder,
-        )
-
     @classmethod
     def from_trait(cls, trait: SigV4Trait, /) -> Self:
         return cls(service=trait.name)
+
+
+class SigV4AuthScheme(
+    _SigV4AuthSchemeBase,
+    AuthScheme[
+        HTTPRequest,
+        AWSCredentialsIdentity,
+        AWSIdentityProperties,
+        SigV4SigningProperties,
+    ],
+):
+    """SigV4 AuthScheme."""
+
+    _signer: Signer[HTTPRequest, AWSCredentialsIdentity, SigV4SigningProperties]
+
+    def __init__(
+        self,
+        *,
+        service: str,
+        signer: Signer[HTTPRequest, AWSCredentialsIdentity, SigV4SigningProperties]
+        | None = None,
+    ) -> None:
+        """Constructor.
+
+        :param service: The name of the service to sign requests for.
+        :param signer: The signer used to sign the request.
+        """
+        super().__init__(service=service)
+        # The signer's own request type is structurally compatible but not declared
+        # as an HTTPRequest protocol.
+        self._signer = signer or SigV4Signer()  # type: ignore
+
+    def identity_resolver(self, *, context: _TypedProperties) -> AWSCredentialsResolver:
+        return super().identity_resolver(context=context)
+
+    def signer(
+        self,
+    ) -> Signer[HTTPRequest, AWSCredentialsIdentity, SigV4SigningProperties]:
+        return self._signer

@@ -1,25 +1,29 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import AsyncIterable, Callable
-from dataclasses import dataclass
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
 
-from ...documents import TypeRegistry
-from ...endpoints import EndpointResolverParams
 from ...exceptions import UnsupportedStreamError
-from ...interfaces import Endpoint, TypedProperties, URI
-from ...interfaces import StreamingBlob as SyncStreamingBlob
-from .eventstream import EventPublisher, EventReceiver
+from ...interfaces import (
+    AnyStreamingBlob,
+    ClientProtocol,
+    Request,
+    Response,
+    TypedProperties,
+)
+from ...interfaces import ProtocolConstructor as ProtocolConstructor
+from ...interfaces import ProtocolSettings as ProtocolSettings
+from .eventstream import AsyncEventPublisher, AsyncEventReceiver
 
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
     from ...deserializers import DeserializeableShape, ShapeDeserializer
-    from ...response import ResponseMetadata
+    from ...endpoints import EndpointResolverParams
+    from ...interfaces import Endpoint
     from ...schemas import APIOperation
     from ...serializers import SerializeableShape
-    from ...shapes import ShapeID
-    from .auth import AuthScheme
+    from .auth import AsyncAuthScheme
 
 
 @runtime_checkable
@@ -36,50 +40,18 @@ class AsyncWriter(Protocol):
     async def write(self, data: bytes) -> None: ...
 
 
-# A union of all acceptable streaming blob types. Deserialized payloads will
-# always return a ByteStream, or AsyncByteStream if async is enabled.
-type StreamingBlob = SyncStreamingBlob | AsyncByteStream | AsyncIterable[bytes]
+type StreamingBlob = AnyStreamingBlob
 
 
-class Request(Protocol):
-    """Protocol-agnostic representation of a request."""
+class AsyncEndpointResolver(Protocol):
+    """Resolves an operation's endpoint given parameters, for async clients.
 
-    destination: URI
-    """The URI where the request should be sent to."""
+    Async clients also accept a sync :py:class:`smithy_core.interfaces.EndpointResolver`.
+    """
 
-    body: StreamingBlob = b""
-    """The request payload."""
-
-    async def consume_body_async(self) -> bytes:
-        """Iterate over request body and return as bytes."""
-        ...
-
-    def consume_body(self) -> bytes:
-        """Iterate over request body and return as bytes."""
-        ...
-
-
-class Response(Protocol):
-    """Protocol-agnostic representation of a response."""
-
-    @property
-    def body(self) -> StreamingBlob:
-        """The response payload as iterable of chunks of bytes."""
-        ...
-
-    async def consume_body_async(self) -> bytes:
-        """Iterate over response body and return as bytes."""
-        ...
-
-    def consume_body(self) -> bytes:
-        """Iterate over request body and return as bytes."""
-        ...
-
-
-class EndpointResolver(Protocol):
-    """Resolves an operation's endpoint based given parameters."""
-
-    async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Endpoint:
+    async def resolve_endpoint(
+        self, params: "EndpointResolverParams[Any]"
+    ) -> "Endpoint":
         """Resolve an endpoint for the given operation.
 
         :param params: The parameters available to resolve the endpoint.
@@ -87,11 +59,11 @@ class EndpointResolver(Protocol):
         ...
 
 
-class ClientTransport[I: Request, O: Response](Protocol):
+class AsyncClientTransport[I: Request, O: Response](Protocol):
     """Protocol-agnostic representation of a client transport (e.g. an HTTP client).
 
     Transports that support duplex (bidirectional) event streaming can implement
-    :py:class:`DuplexClientTransport`.
+    :py:class:`AsyncDuplexClientTransport`.
     """
 
     TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
@@ -101,7 +73,9 @@ class ClientTransport[I: Request, O: Response](Protocol):
         ...
 
 
-class DuplexClientTransport[I: Request, O: Response](ClientTransport[I, O], Protocol):
+class AsyncDuplexClientTransport[I: Request, O: Response](
+    AsyncClientTransport[I, O], Protocol
+):
     """A client transport that supports duplex (bidirectional) event streaming.
 
     Duplex transports can read response data while the request body is still being
@@ -111,121 +85,11 @@ class DuplexClientTransport[I: Request, O: Response](ClientTransport[I, O], Prot
     SUPPORTS_DUPLEX_STREAMING: Literal[True]
 
 
-@dataclass(kw_only=True, frozen=True)
-class ProtocolSettings:
-    """Service-level metadata for constructing a protocol.
+@runtime_checkable
+class AsyncClientProtocol[I: Request, O: Response](ClientProtocol[I, O], Protocol):
+    """A client protocol that also supports event streams for async clients."""
 
-    Lets a consumer select a protocol by class alone (e.g.
-    ``protocol=AwsQueryClientProtocol``) without importing a private schema module.
-    """
-
-    namespace: str
-    """The service's Smithy namespace, e.g. ``com.amazonaws.sqs``."""
-
-    service_target: str
-    """The service shape name, used as the ``X-Amz-Target`` prefix by RPC protocols."""
-
-    version: str | None = None
-    """The service API version. Required by awsQuery; unused by other protocols."""
-
-    xml_namespace: str | None = None
-    """The URI of the service's ``@xmlNamespace``, applied by restXml to request
-    payloads that don't declare their own namespace."""
-
-
-type ProtocolConstructor[T] = Callable[[ProtocolSettings], T]
-"""A callable that builds a protocol instance from ``ProtocolSettings``.
-
-A protocol class satisfies this, since calling the class constructs an instance.
-"""
-
-
-class ClientProtocol[I: Request, O: Response](Protocol):
-    """A protocol used by a client to communicate with a server."""
-
-    @property
-    def id(self) -> "ShapeID":
-        """The ID of the protocol."""
-        ...
-
-    def serialize_request[
-        OperationInput: "SerializeableShape",
-        OperationOutput: "DeserializeableShape",
-    ](
-        self,
-        *,
-        operation: "APIOperation[OperationInput, OperationOutput]",
-        input: OperationInput,
-        endpoint: URI,
-        context: TypedProperties,
-    ) -> I:
-        """Serialize an operation input into a transport request.
-
-        :param operation: The operation whose request is being serialized.
-        :param input: The input shape to be serialized.
-        :param endpoint: The base endpoint to serialize.
-        :param context: A context bag for the request.
-        """
-        ...
-
-    def set_service_endpoint(
-        self,
-        *,
-        request: I,
-        endpoint: Endpoint,
-    ) -> I:
-        """Update the endpoint of a transport request.
-
-        :param request: The request whose endpoint should be updated.
-        :param endpoint: The endpoint to set on the request.
-        """
-        ...
-
-    async def deserialize_response[
-        OperationInput: "SerializeableShape",
-        OperationOutput: "DeserializeableShape",
-    ](
-        self,
-        *,
-        operation: "APIOperation[OperationInput, OperationOutput]",
-        request: I,
-        response: O,
-        error_registry: TypeRegistry,
-        context: TypedProperties,
-    ) -> OperationOutput:
-        """Deserializes the output from the tranport response or throws an exception.
-
-        :param operation: The operation whose response is being deserialized.
-        :param request: The transport request that was sent for this response.
-        :param response: The response to deserialize.
-        :param error_registry: A TypeRegistry used to deserialize errors.
-        :param context: A context bag for the request.
-        """
-        ...
-
-    def extract_response_metadata(
-        self,
-        *,
-        response: O,
-        context: TypedProperties,
-    ) -> "ResponseMetadata":
-        """Extract metadata about a transport response.
-
-        This is called for both successful and failed invocations so that request
-        identifiers remain available to callers for debugging. Implementations
-        MUST NOT raise: metadata is diagnostic, so any value that cannot be
-        determined is left unset instead.
-
-        :param response: The response to extract metadata from.
-        :param context: Per-call storage shared with this protocol's other methods.
-            Protocols whose request IDs arrive in headers need nothing from it, since
-            ``response`` already carries those. Protocols whose IDs arrive in the body
-            do: only ``deserialize_response`` sees the parsed body, so it must leave
-            the value here for this method to read back.
-        """
-        ...
-
-    def create_event_publisher[
+    async def create_event_publisher[
         OperationInput: "SerializeableShape",
         OperationOutput: "DeserializeableShape",
         Event: "SerializeableShape",
@@ -236,8 +100,8 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         request: I,
         event_type: "TypeForm[Event]",
         context: TypedProperties,
-        auth_scheme: "AuthScheme[Any, Any, Any, Any] | None" = None,
-    ) -> EventPublisher[Event]:
+        auth_scheme: "AsyncAuthScheme[Any, Any, Any, Any] | None" = None,
+    ) -> AsyncEventPublisher[Event]:
         """Creates an event publisher for a protocol event stream.
 
         :param operation: The event stream operation.
@@ -261,7 +125,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         event_type: "TypeForm[Event]",
         event_deserializer: Callable[["ShapeDeserializer"], Event],
         context: TypedProperties,
-    ) -> EventReceiver[Event]:
+    ) -> AsyncEventReceiver[Event]:
         """Creates an event receiver for a protocol event stream.
 
         :param operation: The event stream operation.

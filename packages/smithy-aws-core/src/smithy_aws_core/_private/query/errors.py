@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from typing import TYPE_CHECKING, Any
-from xml.etree.ElementTree import ParseError, fromstring
+from xml.etree.ElementTree import Element
 
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import (
@@ -15,7 +15,7 @@ from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
 
 from ...traits import AwsQueryErrorTrait
-from ._xml import find_child, local_name
+from ._xml import find_child, local_name, parse_xml_root
 
 try:
     from smithy_xml import XMLCodec
@@ -36,12 +36,10 @@ def _assert_xml() -> None:
 
 
 def _parse_aws_query_error_code(
-    body: bytes, wrapper_elements: tuple[str, ...]
+    element: Element | None, wrapper_elements: tuple[str, ...]
 ) -> str | None:
     """Parse the ``Code`` field from a wrapped awsQuery error response."""
-    try:
-        element = fromstring(body)  # noqa: S314
-    except ParseError:
+    if element is None:
         return None
 
     if wrapper_elements:
@@ -78,7 +76,7 @@ def _resolve_aws_query_error_shape_id(
 
 def create_aws_query_error(
     *,
-    body: bytes,
+    body: bytes | Element | None,
     operation: APIOperation[Any, Any],
     error_registry: TypeRegistry,
     default_namespace: str,
@@ -88,7 +86,8 @@ def create_aws_query_error(
     retry_after: float | None = None,
 ) -> CallError:
     """Create a modeled or generic CallError from an awsQuery error response."""
-    code = _parse_aws_query_error_code(body, wrapper_elements)
+    root = parse_xml_root(body) if isinstance(body, bytes) else body
+    code = _parse_aws_query_error_code(root, wrapper_elements)
     if code is not None:
         shape_id = _resolve_aws_query_error_shape_id(
             code=code,
@@ -96,7 +95,7 @@ def create_aws_query_error(
             error_registry=error_registry,
             default_namespace=default_namespace,
         )
-        if shape_id is not None:
+        if shape_id is not None and root is not None:
             error_shape = error_registry.get(shape_id)
             if not issubclass(error_shape, ModeledError):
                 raise ExpectationNotMetError(
@@ -105,8 +104,8 @@ def create_aws_query_error(
                 )
 
             _assert_xml()
-            deserializer = XMLCodec().create_deserializer(
-                body, wrapper_elements=wrapper_elements
+            deserializer = XMLCodec().create_deserializer_from_element(
+                root, wrapper_elements=wrapper_elements
             )
             modeled_error = error_shape.deserialize(deserializer)
             if retry_after is not None:

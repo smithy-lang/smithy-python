@@ -2,7 +2,15 @@
 #  SPDX-License-Identifier: Apache-2.0
 """Helpers for reading awsQuery response bodies that are not shape-modeled."""
 
-from xml.etree.ElementTree import Element
+from xml.etree.ElementTree import Element, ParseError, fromstring
+
+
+def parse_xml_root(body: bytes) -> Element | None:
+    """Parse an XML body, returning None when it is empty or malformed."""
+    try:
+        return fromstring(body)  # noqa: S314
+    except ParseError:
+        return None
 
 
 def local_name(tag: str) -> str:

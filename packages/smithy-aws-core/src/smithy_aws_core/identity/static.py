@@ -1,9 +1,13 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
+from smithy_core.interfaces.identity import IdentityResolver
 
+from .._private.identity_features import record_features
+from ..business_metrics import AwsFeatureId
 from .components import AWSCredentialsIdentity, AWSIdentityProperties
+
+__all__ = ["StaticCredentialsResolver"]
 
 
 class StaticCredentialsResolver(
@@ -11,14 +15,20 @@ class StaticCredentialsResolver(
 ):
     """Resolves static AWS credentials from a fixed identity or request properties."""
 
+    _FEATURE_ID = AwsFeatureId.CREDENTIALS_CODE
+    """Recorded when used directly; in the credential chain, the provider's are used."""
+
     def __init__(self, identity: AWSCredentialsIdentity | None = None) -> None:
-        """Initialize the resolver with optional fixed credentials."""
         self._identity = identity
 
-    async def get_identity(
+    def get_identity(
         self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
-        """Resolve credentials from the fixed identity or request properties."""
+        identity = self._resolve(properties)
+        record_features(properties, (self._FEATURE_ID,))
+        return identity
+
+    def _resolve(self, properties: AWSIdentityProperties) -> AWSCredentialsIdentity:
         if self._identity is not None:
             return self._identity
 

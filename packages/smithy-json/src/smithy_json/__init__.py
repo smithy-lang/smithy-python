@@ -1,7 +1,5 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from io import BytesIO
-
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.interfaces import BytesReader, BytesWriter
@@ -13,7 +11,7 @@ from ._private.documents import JSONDocument
 from ._private.serializers import JSONShapeSerializer as _JSONShapeSerializer
 from .settings import JSONSettings
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __all__ = ("JSONCodec", "JSONDocument", "JSONSettings")
 
 
@@ -27,6 +25,7 @@ class JSONCodec(Codec):
         default_timestamp_format: TimestampFormat = TimestampFormat.DATE_TIME,
         default_namespace: str | None = None,
         document_class: type[JSONDocument] = JSONDocument,
+        arbitrary_precision_as_string: bool = False,
     ) -> None:
         """Initializes a JSONCodec.
 
@@ -39,6 +38,9 @@ class JSONCodec(Codec):
         :param default_namespace: The default namespace to use when determining a
             document's discriminator.
         :param document_class: The document class to deserialize to.
+        :param arbitrary_precision_as_string: Whether bigInteger and bigDecimal values
+            are written and read as JSON strings to preserve arbitrary precision, as
+            required by `smithy.protocols#rpcv2Json`.
         """
         self._settings = JSONSettings(
             use_json_name=use_json_name,
@@ -46,6 +48,7 @@ class JSONCodec(Codec):
             default_timestamp_format=default_timestamp_format,
             default_namespace=default_namespace,
             document_class=document_class,
+            arbitrary_precision_as_string=arbitrary_precision_as_string,
         )
 
     @property
@@ -56,6 +59,4 @@ class JSONCodec(Codec):
         return _JSONShapeSerializer(sink, settings=self._settings)
 
     def create_deserializer(self, source: bytes | BytesReader) -> "ShapeDeserializer":
-        if isinstance(source, bytes):
-            source = BytesIO(source)
         return _JSONShapeDeserializer(source, settings=self._settings)

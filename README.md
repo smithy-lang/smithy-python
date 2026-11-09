@@ -338,7 +338,7 @@ both plugins in one projection:
   strategies, URI interfaces, shared types, etc.
 * `smithy-http` provides HTTP core modules and interfaces required to build
   HTTP service clients, including optional HTTP client implementations.
-  Currently it provides two async HTTP clients that are useable with the
+  Currently it provides two async HTTP clients that are usable with the
   `aiohttp` or `awscrt` optional dependency sets respectively.
 * `smithy-aws-core` provides implementations of `smithy-core` interfaces for
   AWS, such as SigV4 signers.

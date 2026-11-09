@@ -2,34 +2,50 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 from dataclasses import dataclass
+from json import JSONDecodeError
 from typing import Any, cast
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+from xml.etree import ElementTree
 
 import pytest
-from ijson.common import IncompleteJSONError  # type: ignore[reportMissingTypeStubs]
 from smithy_aws_core.aio.protocols import (
+    AsyncAwsJson11ClientProtocol,
+    AsyncRestXmlClientProtocol,
+)
+from smithy_aws_core.protocols import (
     AWSErrorIdentifier,
-    AwsJson11ClientProtocol,
     AWSJSONDocument,
     AwsQueryClientProtocol,
-    ProtocolSettings,
-    RestXmlClientProtocol,
 )
 from smithy_aws_event_stream.events import EventMessage
 from smithy_core import URI as _URI
+from smithy_core.aio.program import run_program_async
+from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import CallError, DiscriminatorError, ModeledError
-from smithy_core.interfaces import URI
+from smithy_core.interfaces import ProtocolSettings, URI
 from smithy_core.prelude import INTEGER, STRING
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import HTTPTrait, Trait
+from smithy_core.traits import Trait
 from smithy_core.types import TypedProperties
-from smithy_http import Fields, tuples_to_fields
-from smithy_http.aio import HTTPRequest, HTTPResponse
+from smithy_http import Fields, HTTPRequest, HTTPResponse, tuples_to_fields
 from smithy_json import JSONSettings
+
+_SERVICE_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#Service"),
+    shape_type=ShapeType.SERVICE,
+)
+
+
+class _StubRegistry:
+    def __init__(self, classes: dict[str, type]) -> None:
+        self._classes = classes
+
+    def build(self, name: str) -> type:
+        return self._classes[name]
 
 
 @pytest.mark.parametrize(
@@ -199,12 +215,18 @@ def _mock_operation(
     operation = Mock(spec=APIOperation)
     operation.schema = schema
     operation.error_schemas = error_schemas or []
+    operation.input_stream_member = None
+    operation.output_stream_member = None
     return cast("APIOperation[Any, Any]", operation)
 
 
-def _aws_json11_protocol() -> AwsJson11ClientProtocol:
-    return AwsJson11ClientProtocol(
-        ProtocolSettings(namespace="com.test", service_target="JsonService")
+def _aws_json11_protocol() -> AsyncAwsJson11ClientProtocol:
+    return AsyncAwsJson11ClientProtocol(
+        ProtocolSettings(
+            namespace="com.test",
+            service_target="JsonService",
+            service_schema=_SERVICE_SCHEMA,
+        )
     )
 
 
@@ -222,7 +244,7 @@ async def test_aws_json11_serializes_base_request_shape() -> None:
     assert request.fields["content-type"].as_string() == "application/x-amz-json-1.1"
     assert request.fields["x-amz-target"].as_string() == "JsonService.EmptyOperation"
     assert request.fields["content-length"].as_string() == "2"
-    assert await request.consume_body_async() == b"{}"
+    assert await read_streaming_blob_async(request.body) == b"{}"
 
 
 async def test_aws_json11_resolves_body_error_with_content_type_parameters() -> None:
@@ -237,7 +259,8 @@ async def test_aws_json11_resolves_body_error_with_content_type_parameters() -> 
     operation = _mock_operation(_operation_schema("FailingOperation"))
 
     with pytest.raises(_ModeledJSONError):
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=operation,
             request=cast(HTTPRequest, Mock()),
             response=response,
@@ -258,7 +281,8 @@ async def test_aws_json11_ignores_body_error_with_unexpected_content_type() -> N
     operation = _mock_operation(_operation_schema("FailingOperation"))
 
     with pytest.raises(CallError) as exc_info:
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=operation,
             request=cast(HTTPRequest, Mock()),
             response=response,
@@ -276,7 +300,8 @@ async def test_aws_json11_deserializes_empty_response_body() -> None:
     operation = _mock_operation(_operation_schema("EmptyOperation"))
     cast(Any, operation).output = _EmptyOutput
 
-    output = await protocol.deserialize_response(
+    output = await _deserialize_response(
+        protocol,
         operation=operation,
         request=cast(HTTPRequest, Mock()),
         response=HTTPResponse(status=200, fields=Fields(), body=b""),
@@ -308,7 +333,8 @@ async def test_aws_json11_sets_retry_after_on_modeled_error() -> None:
     )
 
     with pytest.raises(_ModeledJSONError) as exc_info:
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=operation,
             request=cast(HTTPRequest, Mock()),
             response=response,
@@ -331,7 +357,8 @@ async def test_aws_json11_sets_retry_after_on_generic_error() -> None:
     )
 
     with pytest.raises(CallError) as exc_info:
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=operation,
             request=cast(HTTPRequest, Mock()),
             response=response,
@@ -358,7 +385,8 @@ async def test_aws_json11_resolves_modeled_error_from_header_other_namespace() -
     )
 
     with pytest.raises(_ModeledJSONError):
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=operation,
             request=cast(HTTPRequest, Mock()),
             response=response,
@@ -380,7 +408,8 @@ async def test_aws_json11_resolves_modeled_error_from_header_only_shapeid() -> N
     )
 
     with pytest.raises(_ModeledJSONError):
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=operation,
             request=cast(HTTPRequest, Mock()),
             response=response,
@@ -420,7 +449,8 @@ async def test_aws_json11_resolves_modeled_error_from_header_name_fallback() -> 
     )
 
     with pytest.raises(_ModeledJSONError):
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=operation,
             request=cast(HTTPRequest, Mock()),
             response=response,
@@ -447,7 +477,8 @@ async def test_aws_json11_resolves_modeled_error_from_body_name_fallback() -> No
     )
 
     with pytest.raises(_ModeledJSONError):
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=operation,
             request=cast(HTTPRequest, Mock()),
             response=response,
@@ -467,8 +498,12 @@ async def test_aws_json11_raises_parse_error_for_invalid_error_body() -> None:
         body=b'{"__type":',
     )
 
-    with pytest.raises(IncompleteJSONError, match=r"premature EOF|parse error"):
-        await protocol.deserialize_response(
+    with pytest.raises(
+        JSONDecodeError,
+        match="Expecting value",
+    ):
+        await _deserialize_response(
+            protocol,
             operation=operation,
             request=cast(HTTPRequest, Mock()),
             response=response,
@@ -480,7 +515,10 @@ async def test_aws_json11_raises_parse_error_for_invalid_error_body() -> None:
 async def test_aws_query_serializes_base_request_shape() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     request = protocol.serialize_request(
@@ -496,7 +534,7 @@ async def test_aws_query_serializes_base_request_shape() -> None:
         request.fields["content-type"].as_string()
         == "application/x-www-form-urlencoded"
     )
-    body = await request.consume_body_async()
+    body = await read_streaming_blob_async(request.body)
     assert request.fields["content-length"].as_string() == str(len(body))
     assert body == b"Action=TestOperation&Version=2020-01-08&name=example"
 
@@ -504,31 +542,74 @@ async def test_aws_query_serializes_base_request_shape() -> None:
 async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
-    with pytest.raises(_ModeledQueryError) as exc_info:
-        await protocol.deserialize_response(
-            operation=_mock_operation(
-                _operation_schema("FailingOperation"),
-                error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
-            ),
+    with patch(
+        "smithy_aws_core._private.query._xml.fromstring",
+        wraps=ElementTree.fromstring,
+    ) as parse:
+        with pytest.raises(_ModeledQueryError) as exc_info:
+            await _deserialize_response(
+                protocol,
+                operation=_mock_operation(
+                    _operation_schema("FailingOperation"),
+                    error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
+                ),
+                request=cast(HTTPRequest, Mock()),
+                response=HTTPResponse(
+                    status=400,
+                    fields=tuples_to_fields([]),
+                    body=(
+                        b"<ErrorResponse><Error><Code>InvalidAction</Code>"
+                        b"<message>bad request</message></Error></ErrorResponse>"
+                    ),
+                ),
+                error_registry=TypeRegistry(
+                    {ShapeID("com.test#InvalidActionError"): _ModeledQueryError}
+                ),
+                context=TypedProperties(),
+            )
+
+    assert exc_info.value.message == "bad request"
+    parse.assert_called_once()
+
+
+async def test_aws_query_parses_success_body_once() -> None:
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
+        )
+    )
+    operation = _mock_operation(_operation_schema("EmptyOperation"))
+    cast(Any, operation).output = _EmptyOutput
+    cast(Any, operation).output_schema = _EMPTY_OUTPUT_SCHEMA
+
+    with patch(
+        "smithy_aws_core._private.query._xml.fromstring",
+        wraps=ElementTree.fromstring,
+    ) as parse:
+        output = await _deserialize_response(
+            protocol,
+            operation=operation,
             request=cast(HTTPRequest, Mock()),
             response=HTTPResponse(
-                status=400,
+                status=200,
                 fields=tuples_to_fields([]),
-                body=(
-                    b"<ErrorResponse><Error><Code>InvalidAction</Code>"
-                    b"<message>bad request</message></Error></ErrorResponse>"
-                ),
+                body=b"<EmptyOperationResponse/>",
             ),
-            error_registry=TypeRegistry(
-                {ShapeID("com.test#InvalidActionError"): _ModeledQueryError}
-            ),
+            error_registry=TypeRegistry({}),
             context=TypedProperties(),
         )
 
-    assert exc_info.value.message == "bad request"
+    assert isinstance(output, _EmptyOutput)
+    parse.assert_called_once()
 
 
 async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback() -> (
@@ -536,11 +617,15 @@ async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback(
 ):
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     with pytest.raises(_ModeledQueryError) as exc_info:
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=_mock_operation(_operation_schema("FailingOperation")),
             request=cast(HTTPRequest, Mock()),
             response=HTTPResponse(
@@ -563,11 +648,15 @@ async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback(
 async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     with pytest.raises(CallError) as exc_info:
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=_mock_operation(_operation_schema("FailingOperation")),
             request=cast(HTTPRequest, Mock()),
             response=HTTPResponse(
@@ -589,10 +678,44 @@ async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
     )
 
 
+async def test_aws_query_parses_invalid_error_body_once() -> None:
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
+        )
+    )
+
+    with patch(
+        "smithy_aws_core._private.query._xml.fromstring",
+        wraps=ElementTree.fromstring,
+    ) as parse:
+        with pytest.raises(CallError):
+            await _deserialize_response(
+                protocol,
+                operation=_mock_operation(_operation_schema("FailingOperation")),
+                request=cast(HTTPRequest, Mock()),
+                response=HTTPResponse(
+                    status=500,
+                    fields=tuples_to_fields([]),
+                    body=b"not xml",
+                ),
+                error_registry=TypeRegistry({}),
+                context=TypedProperties(),
+            )
+
+    parse.assert_called_once()
+
+
 async def test_aws_query_reports_request_id_from_the_response_body() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     context = TypedProperties()
@@ -606,7 +729,8 @@ async def test_aws_query_reports_request_id_from_the_response_body() -> None:
         ),
     )
     with pytest.raises(_ModeledQueryError):
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=_mock_operation(
                 _operation_schema("FailingOperation"),
                 error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
@@ -627,7 +751,10 @@ async def test_aws_query_reports_request_id_from_the_response_body() -> None:
 async def test_aws_query_prefers_a_request_id_header_when_one_is_sent() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     context = TypedProperties()
@@ -649,7 +776,10 @@ async def test_aws_query_prefers_a_request_id_header_when_one_is_sent() -> None:
 async def test_aws_query_reports_no_request_id_when_the_body_has_none() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     response = HTTPResponse(
@@ -665,7 +795,10 @@ async def test_aws_query_reports_no_request_id_when_the_body_has_none() -> None:
 async def test_aws_query_does_not_report_a_previous_attempts_request_id() -> None:
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     context = TypedProperties()
@@ -704,7 +837,10 @@ async def test_aws_query_does_not_report_a_previous_attempts_request_id_when_des
 ):
     protocol = AwsQueryClientProtocol(
         ProtocolSettings(
-            namespace="com.test", service_target="QueryService", version="2020-01-08"
+            namespace="com.test",
+            service_target="QueryService",
+            version="2020-01-08",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
     context = TypedProperties()
@@ -744,7 +880,8 @@ async def _deserialize_query_error(
     rather than reaching into the protocol's private storage key.
     """
     with pytest.raises(_ModeledQueryError):
-        await protocol.deserialize_response(
+        await _deserialize_response(
+            protocol,
             operation=_mock_operation(
                 _operation_schema("FailingOperation"),
                 error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
@@ -773,54 +910,62 @@ class _NoSuchBucket(ModeledError):
         return cls()
 
 
-def _rest_xml_protocol() -> RestXmlClientProtocol:
-    return RestXmlClientProtocol(
+def _rest_xml_protocol() -> AsyncRestXmlClientProtocol:
+    return AsyncRestXmlClientProtocol(
         ProtocolSettings(
             namespace="com.test",
             service_target="XmlService",
             xml_namespace="https://xml.example.com",
+            service_schema=_SERVICE_SCHEMA,
         )
     )
 
 
 def _rest_xml_operation() -> APIOperation[Any, Any]:
     return APIOperation(
-        input=_EmptyInput,
-        output=_EmptyOutput,
-        schema=Schema(
-            id=ShapeID("com.test#GetThing"),
-            shape_type=ShapeType.OPERATION,
-            traits=[HTTPTrait({"method": "GET", "code": 200, "uri": "/"})],
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "com.test",
+            "GetThing",
+            {"smithy.api#http": {"method": "GET", "code": 200, "uri": "/"}},
+            _EMPTY_INPUT_SCHEMA,
+            _EMPTY_OUTPUT_SCHEMA,
+            (_NO_SUCH_BUCKET_SCHEMA,),
         ),
-        input_schema=_EMPTY_INPUT_SCHEMA,
-        output_schema=_EMPTY_OUTPUT_SCHEMA,
-        error_registry=TypeRegistry({}),
+        model_registry=_StubRegistry(
+            {"EmptyInput": _EmptyInput, "EmptyOutput": _EmptyOutput}
+        ),
         effective_auth_schemes=[],
-        error_schemas=[_NO_SUCH_BUCKET_SCHEMA],
     )
 
 
 async def test_rest_xml_modeled_error_falls_back_to_message_element() -> None:
-    with pytest.raises(_NoSuchBucket) as exc_info:
-        await _rest_xml_protocol().deserialize_response(
-            operation=_rest_xml_operation(),
-            request=cast(HTTPRequest, Mock()),
-            response=HTTPResponse(
-                status=404,
-                fields=tuples_to_fields([]),
-                body=(
-                    b"<Error><Code>NoSuchBucket</Code>"
-                    b"<Message>The specified bucket does not exist</Message></Error>"
+    with patch(
+        "smithy_aws_core._private.query._xml.fromstring",
+        wraps=ElementTree.fromstring,
+    ) as parse:
+        with pytest.raises(_NoSuchBucket) as exc_info:
+            await _deserialize_response(
+                _rest_xml_protocol(),
+                operation=_rest_xml_operation(),
+                request=cast(HTTPRequest, Mock()),
+                response=HTTPResponse(
+                    status=404,
+                    fields=tuples_to_fields([]),
+                    body=(
+                        b"<Error><Code>NoSuchBucket</Code>"
+                        b"<Message>The specified bucket does not exist</Message></Error>"
+                    ),
                 ),
-            ),
-            error_registry=TypeRegistry(
-                {ShapeID("com.test#NoSuchBucket"): _NoSuchBucket}
-            ),
-            context=TypedProperties(),
-        )
+                error_registry=TypeRegistry(
+                    {ShapeID("com.test#NoSuchBucket"): _NoSuchBucket}
+                ),
+                context=TypedProperties(),
+            )
 
     assert exc_info.value.message == "The specified bucket does not exist"
     assert str(exc_info.value) == "The specified bucket does not exist"
+    parse.assert_called_once()
 
 
 _STATS_SCHEMA = Schema.collection(
@@ -873,3 +1018,11 @@ async def test_rest_xml_receives_events_with_xml_payloads() -> None:
     )
 
     assert await receiver.receive() == _StatsEvent(bytes_scanned=512)
+
+
+async def _deserialize_response(protocol: Any, **kwargs: Any) -> Any:
+    return await run_program_async(
+        protocol.deserialize_response_program(
+            **kwargs, read_body=read_streaming_blob_async
+        )
+    )

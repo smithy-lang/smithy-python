@@ -3,6 +3,8 @@
 import math
 from datetime import datetime
 from decimal import Decimal
+from io import BytesIO
+from json import JSONDecodeError
 from typing import Any
 
 import pytest
@@ -10,6 +12,7 @@ from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.prelude import (
     BIG_DECIMAL,
+    BIG_INTEGER,
     BLOB,
     BOOLEAN,
     DOCUMENT,
@@ -19,6 +22,7 @@ from smithy_core.prelude import (
     TIMESTAMP,
 )
 from smithy_json import JSONCodec, JSONDocument
+from smithy_json._private.deserializers import JSONShapeDeserializer, JSONValueError
 
 from . import (
     JSON_SERDE_CASES,
@@ -108,3 +112,76 @@ def test_uses_custom_document() -> None:
     codec = JSONCodec(document_class=CustomDocument)
     actual = codec.create_deserializer(b'{"foo": "bar"}').read_document(DOCUMENT)
     assert isinstance(actual, CustomDocument)
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        b"{}",
+        BytesIO(b"{}"),
+    ],
+)
+def test_deserializer_is_eager(source: bytes | BytesIO) -> None:
+    deserializer = JSONCodec().create_deserializer(source)
+    assert isinstance(deserializer, JSONShapeDeserializer)
+
+
+def test_ignores_unknown_structure_members() -> None:
+    actual = JSONCodec().deserialize(
+        b'{"unknown":{"nested":[1,2,3]},"stringMember":"value"}',
+        SerdeShape,
+    )
+
+    assert actual.string_member == "value"
+
+
+def test_invalid_json_raises_json_decode_error() -> None:
+    with pytest.raises(JSONDecodeError):
+        deserializer = JSONCodec().create_deserializer(b'{"incomplete":')
+        deserializer.read_document(DOCUMENT)
+
+
+@pytest.mark.parametrize(
+    "given, expected",
+    [
+        (b"1.1", Decimal("1.1")),
+        (b"-0.100000000000000000000001", Decimal("-0.100000000000000000000001")),
+        (b"123", Decimal(123)),
+        (b"1e10", Decimal("1e10")),
+        (b'"NaN"', Decimal("NaN")),
+        (b'"Infinity"', Decimal("Infinity")),
+        (b'"-Infinity"', Decimal("-Infinity")),
+    ],
+)
+def test_default_read_big_decimal_unchanged(given: bytes, expected: Decimal) -> None:
+    actual = JSONCodec().create_deserializer(given).read_big_decimal(BIG_DECIMAL)
+    assert isinstance(actual, Decimal)
+    if expected.is_nan():
+        assert actual.is_nan()
+    else:
+        assert actual == expected
+
+
+@pytest.mark.parametrize("given", [b'"1.1"', b'"123"', b"true", b"null"])
+def test_default_read_big_decimal_rejects_non_numbers(given: bytes) -> None:
+    with pytest.raises(JSONValueError):
+        JSONCodec().create_deserializer(given).read_big_decimal(BIG_DECIMAL)
+
+
+@pytest.mark.parametrize(
+    "given, expected",
+    [
+        (b"0", 0),
+        (b"-1", -1),
+        (b"123456789012345678901234567890", 123456789012345678901234567890),
+    ],
+)
+def test_default_read_big_integer_unchanged(given: bytes, expected: int) -> None:
+    actual = JSONCodec().create_deserializer(given).read_big_integer(BIG_INTEGER)
+    assert actual == expected
+
+
+@pytest.mark.parametrize("given", [b'"123"', b"1.5", b"true"])
+def test_default_read_big_integer_rejects_non_integers(given: bytes) -> None:
+    with pytest.raises(JSONValueError):
+        JSONCodec().create_deserializer(given).read_big_integer(BIG_INTEGER)

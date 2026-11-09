@@ -7,6 +7,8 @@ from .file_parser import (
     StandardizedOutput,
 )
 
+__all__ = ["MergedConfig"]
+
 
 class MergedConfig:
     """A merged representation of AWS config and credentials files.

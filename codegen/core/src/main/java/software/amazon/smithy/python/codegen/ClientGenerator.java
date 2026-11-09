@@ -8,7 +8,12 @@ import static software.amazon.smithy.python.codegen.SymbolProperties.DESERIALIZE
 import static software.amazon.smithy.python.codegen.SymbolProperties.OPERATION_METHOD;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
+import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.Model;
@@ -19,6 +24,7 @@ import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
+import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
@@ -46,34 +52,86 @@ final class ClientGenerator implements Runnable {
 
     @Override
     public void run() {
-        context.writerDelegator().useShapeWriter(service, this::generateService);
+        context.writerDelegator().useShapeWriter(service, writer -> generateService(writer, false));
+        var mapper = SyncVariant.mapper(context.settings());
+        var syncClient = mapper.apply(symbolProvider.toSymbol(service));
+        context.writerDelegator()
+                .useFileWriter(syncClient.getDefinitionFile(), syncClient.getNamespace(), writer -> {
+                    writer.setSymbolMapper(mapper);
+                    generateService(writer, true);
+                });
+        writeExports(syncClient, mapper);
     }
 
-    private void generateService(PythonWriter writer) {
-        var serviceSymbol = symbolProvider.toSymbol(service);
+    private void writeExports(Symbol syncClient, UnaryOperator<Symbol> mapper) {
+        var asyncConfig = CodegenUtils.getAsyncConfigSymbol(context.settings(), model);
+        var asyncClient = symbolProvider.toSymbol(service).getName();
+        var moduleName = context.settings().moduleName();
+        var root = new LinkedHashMap<String, String>();
+        root.put(syncClient.getName(), ".client");
+        root.put(mapper.apply(asyncConfig).getName(), ".config");
+        root.put(asyncClient, ".aio.client");
+        root.put(asyncConfig.getName(), ".aio.config");
+        writeExports("./src/" + moduleName + "/__init__.py", moduleName, root);
+        var aio = new LinkedHashMap<String, String>();
+        aio.put(asyncClient, ".client");
+        aio.put(asyncConfig.getName(), ".config");
+        writeExports("./src/" + moduleName + "/aio/__init__.py", moduleName + ".aio", aio);
+    }
+
+    // Lazily exported so importing the package imports neither client.
+    private void writeExports(String file, String namespace, Map<String, String> exports) {
+        context.writerDelegator().useFileWriter(file, namespace, writer -> {
+            writer.addStdlibImport("typing", "TYPE_CHECKING");
+            writer.addStdlibImport("typing", "Any");
+            writer.addStdlibImport("importlib", "import_module");
+            writer.write("""
+                    if TYPE_CHECKING:
+                        ${C|}
+
+                    __all__ = [${L}]
+
+                    _EXPORTS = {${L}}
+
+
+                    def __getattr__(name: str) -> Any:
+                        if name in _EXPORTS:
+                            return getattr(import_module(_EXPORTS[name], __name__), name)
+                        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+                    """,
+                    writer.consumer(w -> exports.forEach(
+                            (name, module) -> w.write("from $L import $L", module, name))),
+                    exports.keySet().stream().map(n -> '"' + n + '"').collect(Collectors.joining(", ")),
+                    exports.entrySet()
+                            .stream()
+                            .map(e -> '"' + e.getKey() + "\": \"" + e.getValue() + '"')
+                            .collect(Collectors.joining(", ")));
+        });
+    }
+
+    private void generateService(PythonWriter writer, boolean sync) {
+        UnaryOperator<String> code = sync ? SyncVariant::toSyncCode : UnaryOperator.identity();
+        var serviceSymbol = writer.getSymbolMapper().apply(symbolProvider.toSymbol(service));
         writer.addLocallyDefinedSymbol(serviceSymbol);
-        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
-        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+        writer.addImport(context.settings().moduleName(), "models", "_models");
         writer.addLogger();
 
-        // Services with a generated async config resolve lazily on first use;
-        // the rest keep the synchronous constructor with old Config.
-        var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
-        var isAsyncConfig = asyncConfigSymbol.isPresent();
-        var configSym = asyncConfigSymbol.orElse(configSymbol);
+        // AWS configs resolve from the environment; the rest are plain dataclasses.
+        var isAwsConfig = CodegenUtils.isAwsService(context);
+        var configSym = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
 
-        writer.openBlock("class $L($T):",
+        writer.openBlock("class $L($T[$T]):",
                 "",
                 serviceSymbol.getName(),
                 RuntimeTypes.ASYNC_CLIENT,
+                configSym,
                 () -> {
                     var docs = service.getTrait(DocumentationTrait.class)
                             .map(StringTrait::getValue)
                             .orElse("Client for " + service.getId().getName());
                     writer.writeDocs(docs, context);
-
                     writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-                    writer.addStdlibImport("typing", "Any");
 
                     // Collect service-scoped plugins applied once during setup.
                     var servicePlugins = new LinkedHashSet<SymbolReference>();
@@ -84,137 +142,38 @@ final class ClientGenerator implements Runnable {
                             }
                         }
                     }
-
-                    writer.addStdlibImport("copy", "deepcopy");
-
-                    writer.write("""
-                            def __init__(
-                                self,
-                                config: $1T | None = None,
-                                plugins: list[$2T] | None = None,
-                            ):
-                                ${3C|}
-                                super().__init__()
-                                self._config = config
-                                self._plugins = plugins
-                                self._client_plugins: list[$2T] = [
-                                    ${4C|}
-                                ]
-
-                            async def _ensure_setup(self) -> $1T:
-                                if not self._setup_done:
-                                    async with self._derive_lock:
-                                        if self._closed:
-                                            raise RuntimeError(
-                                                "Cannot invoke an operation on a client that has been closed."
-                                            )
-                                        if not self._setup_done:
-                                            if self._config is None:
-                                                ${5C|}
-                                            else:
-                                                # Copy so plugins don't mutate the caller's config.
-                                                config = deepcopy(self._config)
-                                            for plugin in self._client_plugins:
-                                                plugin(config)
-                                            if self._plugins:
-                                                for plugin in self._plugins:
-                                                    plugin(config)
-                                            # Publish state only after setup fully succeeds, so a
-                                            # failed _post_setup leaves the caller's config untouched
-                                            # (no re-applied plugins) and the transport closeable.
-                                            await self._post_setup(config)
-                                            self._transport = config.transport
-                                            self._config = config
-                                            self._setup_done = True
-                                assert self._config is not None
-                                return self._config
-
-                            async def _post_setup(self, config: $1T) -> None:
-                                ${6C|}
-
-                            async def _prepare_call[
-                                I: $12T, O: $13T
-                            ](
-                                self,
-                                input: I,
-                                operation: $8T[I, O],
-                                default_plugins: list[$2T],
-                                plugins: list[$2T] | None,
-                            ) -> tuple[$9T[Any, Any], $10T[I, O]]:
-                                if self._closed:
-                                    raise RuntimeError(
-                                        "Cannot invoke an operation on a client that has been closed."
-                                    )
-                                config = await self._ensure_setup()
-                                if default_plugins or plugins:
-                                    # Keep operation-plugin mutations scoped to this call.
-                                    config = deepcopy(config)
-                                    for plugin in default_plugins:
-                                        plugin(config)
-                                    if plugins:
-                                        for plugin in plugins:
-                                            plugin(config)
-                                if (
-                                    config.protocol is None
-                                    or config.transport is None
-                                    or config.endpoint_resolver is None
-                                    or config.auth_scheme_resolver is None
-                                    or config.auth_schemes is None
-                                ):
-                                    raise $7T(
-                                        "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
-                                        " and auth_schemes MUST be set on the config to make calls."
-                                    )
-                                retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-                                    retry_strategy=config.retry_strategy,
-                                    ${11C|}
+                    if (!servicePlugins.isEmpty()) {
+                        writer.write("""
+                                _client_plugins = (
+                                    ${C|}
                                 )
-                                return self._build_call(
-                                    input,
-                                    operation,
-                                    config=config,
-                                    retry_strategy=retry_strategy,
-                                )
-                            """,
-                            configSym,
-                            pluginSymbol,
-                            writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
-                            writer.consumer(w -> writeDefaultPlugins(w, servicePlugins)),
-                            writer.consumer(w -> {
-                                if (isAsyncConfig) {
-                                    w.write("config = await $T.resolve()", configSym);
-                                } else {
-                                    w.write("config = $T()", configSym);
-                                }
-                            }),
-                            writer.consumer(w -> {
-                                w.pushState(new ClientSetupSection());
-                                w.write("pass");
-                                w.popState();
-                            }),
-                            RuntimeTypes.EXPECTATION_NOT_MET_ERROR,
-                            RuntimeTypes.API_OPERATION,
-                            RuntimeTypes.REQUEST_PIPELINE,
-                            RuntimeTypes.CLIENT_CALL,
-                            writer.consumer(w -> {
-                                if (isAsyncConfig) {
-                                    w.write("retry_mode=config.retry_mode,");
-                                    w.write("max_attempts=config.max_attempts,");
-                                }
-                            }),
-                            RuntimeTypes.SERIALIZEABLE_SHAPE,
-                            RuntimeTypes.DESERIALIZEABLE_SHAPE);
+                                """, writer.consumer(w -> writeDefaultPlugins(w, servicePlugins)));
+                    }
 
                     var topDownIndex = TopDownIndex.of(model);
                     var eventStreamIndex = EventStreamIndex.of(model);
                     for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
                         if (eventStreamIndex.getInputInfo(operation).isPresent()
                                 || eventStreamIndex.getOutputInfo(operation).isPresent()) {
-                            generateEventStreamOperation(writer, operation);
+                            // Sync clients don't support event streams.
+                            if (!sync) {
+                                generateEventStreamOperation(writer, operation);
+                            }
                         } else {
-                            generateOperation(writer, operation);
+                            generateOperation(writer, operation, sync);
                         }
                     }
+
+                    writer.write(code.apply("""
+                            async def _new_config(self) -> $T:
+                                return $L
+                            """),
+                            configSym,
+                            isAwsConfig
+                                    ? writer.format(code.apply("await $T.resolve()"), configSym)
+                                    : writer.format("$T()", configSym));
+                    writer.pushState(new ClientSetupSection(sync, configSym));
+                    writer.popState();
                 });
 
     }
@@ -225,26 +184,10 @@ final class ClientGenerator implements Runnable {
         }
     }
 
-    private void writeConstructorDocs(PythonWriter writer, String clientName) {
-        writer.writeMultiLineDocs(() -> {
-            writer.write("""
-                    Constructor for `$L`.
-
-                    Args:
-                        config:
-                            Optional configuration for the client. Here you can set things like
-                            the endpoint for HTTP services or auth credentials.
-                        plugins:
-                            A list of callables applied once to the client's base configuration.
-                            Their changes are inherited by every operation invocation.
-                    """, clientName);
-        });
-    }
-
     /**
      * Generates the function for a single operation.
      */
-    private void generateOperation(PythonWriter writer, OperationShape operation) {
+    private void generateOperation(PythonWriter writer, OperationShape operation, boolean sync) {
         var operationSymbol = symbolProvider.toSymbol(operation);
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
@@ -255,29 +198,49 @@ final class ClientGenerator implements Runnable {
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
 
-        writer.putContext("input", inputSymbol);
-        writer.putContext("output", outputSymbol);
+        // Input/output types are used ONLY in annotations here. Import them under
+        // TYPE_CHECKING and reference by bare name (with future-annotations deferring
+        // the annotations) so importing the client does not eagerly build every model
+        // class. Operations are resolved through the models module when invoked.
+        writer.getImportContainer().enableFutureAnnotations();
+        writer.getImportContainer()
+                .addTypeCheckingImport(
+                        inputSymbol.getNamespace(),
+                        inputSymbol.getName(),
+                        inputSymbol.getName());
+        writer.getImportContainer()
+                .addTypeCheckingImport(
+                        outputSymbol.getNamespace(),
+                        outputSymbol.getName(),
+                        outputSymbol.getName());
+
+        writer.putContext("input", inputSymbol.getName());
+        writer.putContext("output", outputSymbol.getName());
         writer.putContext("plugin", pluginSymbol);
         writer.putContext("operationName", operationMethodSymbol.getName());
-        writer.putContext("operation", symbolProvider.toSymbol(operation));
-        writer.write("""
-                async def ${operationName:L}(
-                    self,
-                    input: ${input:T},
-                    plugins: list[${plugin:T}] | None = None
-                ) -> ${output:T}:
-                    ${C|}
-                    pipeline, call = await self._prepare_call(
-                        input,
-                        ${operation:T},
-                        [
-                            ${C|}
-                        ],
-                        plugins,
-                    )
-                    return await pipeline(call)
-                """,
-                writer.consumer(w -> writeOperationDocs(w, operation, input, output)),
+        writer.putContext("operation", "_models." + operationSymbol.getName());
+        // Sync callers may omit an input that has no required members.
+        var optionalInput = sync && input.members().stream().noneMatch(m -> m.hasTrait(RequiredTrait.class));
+        writer.putContext("optionalInput", optionalInput);
+        var template =
+                """
+                        async def ${operationName:L}(
+                            self,
+                            ${?optionalInput}input: ${input:L} | None = None,${/optionalInput}${^optionalInput}input: ${input:L},${/optionalInput}
+                            plugins: list[${plugin:T}] | None = None
+                        ) -> ${output:L}:
+                            ${?docs}${docs:C|}
+                            ${/docs}return await self._invoke(
+                                input,
+                                ${operation:L},
+                                [
+                                    ${C|}
+                                ],
+                                plugins,
+                            )
+                        """;
+        writer.putContext("docs", writer.consumer(w -> writeOperationDocs(w, operation, input, output)));
+        writer.write(sync ? SyncVariant.toSyncCode(template) : template,
                 writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
     }
 
@@ -341,7 +304,7 @@ final class ClientGenerator implements Runnable {
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("eventstream"));
         var operationSymbol = symbolProvider.toSymbol(operation);
-        writer.putContext("operation", operationSymbol);
+        writer.putContext("operation", "_models." + operationSymbol.getName());
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
         writer.putContext("operationName", operationMethodSymbol.getName());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
@@ -377,7 +340,7 @@ final class ClientGenerator implements Runnable {
         if (inputStreamSymbol.isPresent()) {
             if (outputStreamSymbol.isPresent()) {
                 writer.putContext("duplexEventStream", RuntimeTypes.DUPLEX_EVENT_STREAM);
-                var outputDocs = "A `DuplexEventStream` for bidirectional streaming.";
+                var outputDocs = "An `AsyncDuplexEventStream` for bidirectional streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
@@ -387,7 +350,7 @@ final class ClientGenerator implements Runnable {
                             ${C|}
                             pipeline, call = await self._prepare_call(
                                 input,
-                                ${operation:T},
+                                ${operation:L},
                                 [
                                     ${C|}
                                 ],
@@ -404,7 +367,7 @@ final class ClientGenerator implements Runnable {
                         writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
             } else {
                 writer.putContext("inputEventStream", RuntimeTypes.INPUT_EVENT_STREAM);
-                var outputDocs = "An `InputEventStream` for client-to-server streaming.";
+                var outputDocs = "An `AsyncInputEventStream` for client-to-server streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
@@ -414,7 +377,7 @@ final class ClientGenerator implements Runnable {
                             ${C|}
                             pipeline, call = await self._prepare_call(
                                 input,
-                                ${operation:T},
+                                ${operation:L},
                                 [
                                     ${C|}
                                 ],
@@ -430,7 +393,7 @@ final class ClientGenerator implements Runnable {
             }
         } else {
             writer.putContext("outputEventStream", RuntimeTypes.OUTPUT_EVENT_STREAM);
-            var outputDocs = "An `OutputEventStream` for server-to-client streaming.";
+            var outputDocs = "An `AsyncOutputEventStream` for server-to-client streaming.";
             writer.write("""
                     async def ${operationName:L}(
                         self,
@@ -440,7 +403,7 @@ final class ClientGenerator implements Runnable {
                         ${C|}
                         pipeline, call = await self._prepare_call(
                             input,
-                            ${operation:T},
+                            ${operation:L},
                             [
                                 ${C|}
                             ],

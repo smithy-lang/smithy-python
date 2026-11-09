@@ -7,6 +7,14 @@ from collections import OrderedDict
 from collections.abc import AsyncIterable, Iterable, Iterator
 from typing import Literal, Protocol, runtime_checkable
 
+__all__ = (
+    "URI",
+    "Field",
+    "FieldPosition",
+    "Fields",
+    "Request",
+)
+
 FieldPosition = Literal["header", "trailer"]
 """The type of a field.
 

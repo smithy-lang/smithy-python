@@ -20,9 +20,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Self
 
-from smithy_core.aio.interfaces import ProtocolSettings
 from smithy_core.deserializers import ShapeDeserializer
-from smithy_core.documents import TypeRegistry
+from smithy_core.interfaces import ProtocolSettings
 from smithy_core.prelude import (
     DOUBLE,
     INTEGER,
@@ -91,17 +90,19 @@ PUT_RECORDS_OUTPUT = Schema.collection(
     members={"records": {"target": RECORD_LIST}},
 )
 
-PUT_RECORDS = Schema(
-    id=ShapeID(f"{_NS}#PutRecords"),
-    shape_type=ShapeType.OPERATION,
-)
-
 SERVICE = Schema(
     id=ShapeID(f"{_NS}#BenchmarkService"),
     shape_type=ShapeType.SERVICE,
 )
 
-SETTINGS = ProtocolSettings(namespace=_NS, service_target="BenchmarkService")
+SETTINGS = ProtocolSettings(
+    namespace=_NS,
+    service_target="BenchmarkService",
+    service_schema=Schema.collection(
+        id=ShapeID(f"{_NS}#BenchmarkService"),
+        shape_type=ShapeType.SERVICE,
+    ),
+)
 
 
 # --- Shape dataclasses (mirroring models.py) -----------------------------------
@@ -353,13 +354,26 @@ class PutRecordsOutput:
         return kwargs
 
 
+class _StubRegistry:
+    def __init__(self, classes: dict[str, type]) -> None:
+        self._classes = classes
+
+    def build(self, name: str) -> type:
+        return self._classes[name]
+
+
 PUT_RECORDS_OPERATION: APIOperation[PutRecordsInput, PutRecordsOutput] = APIOperation(
-    input=PutRecordsInput,
-    output=PutRecordsOutput,
-    schema=PUT_RECORDS,
-    input_schema=PUT_RECORDS_INPUT,
-    output_schema=PUT_RECORDS_OUTPUT,
-    error_registry=TypeRegistry({}),
+    static_schema=(
+        ShapeType.OPERATION.value,
+        _NS,
+        "PutRecords",
+        0,
+        PUT_RECORDS_INPUT,
+        PUT_RECORDS_OUTPUT,
+        (),
+    ),
+    model_registry=_StubRegistry(
+        {"PutRecordsInput": PutRecordsInput, "PutRecordsOutput": PutRecordsOutput}
+    ),
     effective_auth_schemes=[ShapeID("smithy.api#noAuth")],
-    error_schemas=[],
 )

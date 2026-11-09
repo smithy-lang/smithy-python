@@ -1,0 +1,3 @@
+# Native extension built in place by editable installs.
+*.so
+*.pyd

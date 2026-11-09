@@ -2,12 +2,27 @@
 # SPDX-License-Identifier: Apache-2.0
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
+from dataclasses import dataclass, field
 from typing import get_args
+
+from smithy_core.interfaces import AnyStreamingBlob, URI
+from smithy_core.utils import read_streaming_blob
 
 from . import interfaces
 from .interfaces import FieldPosition
 
-__version__ = "0.6.0"
+__all__ = [
+    "Field",
+    "FieldPosition",
+    "Fields",
+    "HTTPRequest",
+    "HTTPResponse",
+    "interfaces",
+    "quote_and_escape_field_value",
+    "tuples_to_fields",
+]
+
+__version__ = "0.7.0"
 
 _VALID_FIELD_POSITIONS = frozenset(get_args(FieldPosition))
 
@@ -34,6 +49,22 @@ class Field(interfaces.Field):
         if kind not in _VALID_FIELD_POSITIONS:
             raise ValueError(f"Unknown field kind: {kind!r}")
         self.kind = kind
+
+    def __eq__(self, other: object) -> bool:
+        """Name, values, and kind must match.
+
+        Values order must match.
+        """
+        if not isinstance(other, Field):
+            return False
+        return (
+            self.name == other.name
+            and self.kind == other.kind
+            and self.values == other.values
+        )
+
+    def __repr__(self) -> str:
+        return f"Field(name={self.name!r}, value={self.values!r}, kind={self.kind!r})"
 
     def add(self, value: str) -> None:
         """Append a value to a field."""
@@ -75,22 +106,6 @@ class Field(interfaces.Field):
         value."""
         return [(self.name, val) for val in self.values]
 
-    def __eq__(self, other: object) -> bool:
-        """Name, values, and kind must match.
-
-        Values order must match.
-        """
-        if not isinstance(other, Field):
-            return False
-        return (
-            self.name == other.name
-            and self.kind == other.kind
-            and self.values == other.values
-        )
-
-    def __repr__(self) -> str:
-        return f"Field(name={self.name!r}, value={self.values!r}, kind={self.kind!r})"
-
 
 class Fields(interfaces.Fields):
     def __init__(
@@ -123,10 +138,6 @@ class Fields(interfaces.Fields):
         self.entries: dict[str, interfaces.Field] = OrderedDict(init_tuples)
         self.encoding: str = encoding
 
-    def set_field(self, field: interfaces.Field) -> None:
-        """Alias for __setitem__ to utilize the field.name for the entry key."""
-        self.__setitem__(field.name, field)
-
     def __setitem__(self, name: str, field: interfaces.Field) -> None:
         """Set or override entry for a Field name."""
         normalized_name = self._normalize_field_name(name)
@@ -138,11 +149,6 @@ class Fields(interfaces.Fields):
             )
         self.entries[normalized_name] = field
 
-    def get(
-        self, key: str, default: interfaces.Field | None = None
-    ) -> interfaces.Field | None:
-        return self[key] if key in self else default
-
     def __getitem__(self, name: str) -> interfaces.Field:
         """Retrieve Field entry."""
         normalized_name = self._normalize_field_name(name)
@@ -152,6 +158,36 @@ class Fields(interfaces.Fields):
         """Delete entry from collection."""
         normalized_name = self._normalize_field_name(name)
         del self.entries[normalized_name]
+
+    def __eq__(self, other: object) -> bool:
+        """Encoding must match.
+
+        Entries must match in values and order.
+        """
+        if not isinstance(other, Fields):
+            return False
+        return self.encoding == other.encoding and self.entries == other.entries
+
+    def __iter__(self) -> Iterator[interfaces.Field]:
+        yield from self.entries.values()
+
+    def __len__(self) -> int:
+        return len(self.entries)
+
+    def __repr__(self) -> str:
+        return f"Fields({self.entries})"
+
+    def __contains__(self, key: str) -> bool:
+        return self._normalize_field_name(key) in self.entries
+
+    def set_field(self, field: interfaces.Field) -> None:
+        """Alias for __setitem__ to utilize the field.name for the entry key."""
+        self.__setitem__(field.name, field)
+
+    def get(
+        self, key: str, default: interfaces.Field | None = None
+    ) -> interfaces.Field | None:
+        return self[key] if key in self else default
 
     def get_by_type(self, kind: FieldPosition) -> list[interfaces.Field]:
         """Helper function for retrieving specific types of fields.
@@ -182,26 +218,43 @@ class Fields(interfaces.Fields):
         """
         return name.lower()
 
-    def __eq__(self, other: object) -> bool:
-        """Encoding must match.
 
-        Entries must match in values and order.
-        """
-        if not isinstance(other, Fields):
-            return False
-        return self.encoding == other.encoding and self.entries == other.entries
+@dataclass(kw_only=True)
+class HTTPRequest(interfaces.HTTPRequest):
+    """HTTP primitives for an Exchange to construct a version agnostic HTTP message."""
 
-    def __iter__(self) -> Iterator[interfaces.Field]:
-        yield from self.entries.values()
+    destination: URI
+    body: AnyStreamingBlob = field(repr=False, default=b"")
+    method: str
+    fields: interfaces.Fields
+    http2_required: bool = False
+    """Transport hint: negotiate HTTP/2 for this request and don't reuse a non-h2
+    connection for it. Set for event-stream operations whose protocol permits h2;
+    not sent on the wire."""
 
-    def __len__(self) -> int:
-        return len(self.entries)
 
-    def __repr__(self) -> str:
-        return f"Fields({self.entries})"
+# CAUTION: implements interfaces.HTTPResponse structurally; subclassing the protocol
+# makes its read-only properties collide with the dataclass fields (AttributeError).
+# See https://github.com/python/typing/discussions/903#discussioncomment-4866851.
+@dataclass(kw_only=True)
+class HTTPResponse:
+    """Basic implementation of :py:class:`.interfaces.HTTPResponse`."""
 
-    def __contains__(self, key: str) -> bool:
-        return self._normalize_field_name(key) in self.entries
+    body: AnyStreamingBlob = field(repr=False, default=b"")
+    """The response payload."""
+
+    status: int
+    """The 3 digit response status code (1xx, 2xx, 3xx, 4xx, 5xx)."""
+
+    fields: interfaces.Fields
+    """HTTP header and trailer fields."""
+
+    reason: str | None = None
+    """Optional string provided by the server explaining the status."""
+
+    def consume_body(self) -> bytes:
+        """Read the response body into bytes."""
+        return read_streaming_blob(self.body)
 
 
 def quote_and_escape_field_value(value: str) -> str:

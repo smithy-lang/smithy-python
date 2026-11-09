@@ -11,12 +11,10 @@ import pytest
 from awscrt import http as crt_http  # type: ignore
 from smithy_core import URI
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_http import Field, Fields
-from smithy_http.aio import HTTPRequest
+from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.aio.crt import (
+    AsyncAWSCRTHTTPResponse,
     AWSCRTHTTPClient,
-    AWSCRTHTTPClientConfig,
-    AWSCRTHTTPResponse,
 )
 from smithy_http.exceptions import SmithyHTTPError
 
@@ -31,8 +29,8 @@ async def test_close_closes_and_clears_pooled_connections() -> None:
     client = AWSCRTHTTPClient()
     connections = [AsyncMock(), AsyncMock()]
     client._connections = {
-        ("https", "one.example.com", None): connections[0],
-        ("https", "two.example.com", None): connections[1],
+        ("https", "one.example.com", None, False): connections[0],
+        ("https", "two.example.com", None, True): connections[1],
     }
 
     await client.close()
@@ -392,32 +390,85 @@ async def test_build_connection_unsupported_scheme() -> None:
 
 
 async def test_validate_connection_http2_required() -> None:
-    """Test connection validation when force_http_2 is enabled."""
-    config = AWSCRTHTTPClientConfig(force_http_2=True)
-    client = AWSCRTHTTPClient(client_config=config)
-
-    # Mock HTTP/1.1 connection
+    """A non-HTTP/2 connection is rejected when HTTP/2 is required."""
+    client = AWSCRTHTTPClient()
     mock_connection = AsyncMock()
     mock_connection.version = crt_http.HttpVersion.Http1_1
     mock_connection.close = AsyncMock()
 
     with pytest.raises(SmithyHTTPError, match="HTTP/2 could not be negotiated"):
-        await client._validate_connection(mock_connection)
+        await client._validate_connection(mock_connection, require_http2=True)
 
     mock_connection.close.assert_called_once()
 
 
 async def test_validate_connection_http2_success() -> None:
-    """Test connection validation succeeds with HTTP/2."""
-    config = AWSCRTHTTPClientConfig(force_http_2=True)
-    client = AWSCRTHTTPClient(client_config=config)
-
-    # Mock HTTP/2 connection
+    """Validation passes for an HTTP/2 connection when HTTP/2 is required."""
+    client = AWSCRTHTTPClient()
     mock_connection = AsyncMock()
     mock_connection.version = crt_http.HttpVersion.Http2
 
     # Should not raise
-    await client._validate_connection(mock_connection)
+    await client._validate_connection(mock_connection, require_http2=True)
+
+
+async def test_validate_connection_http1_allowed_when_not_required() -> None:
+    """An HTTP/1.1 connection is fine when HTTP/2 is not required."""
+    client = AWSCRTHTTPClient()
+    mock_connection = AsyncMock()
+    mock_connection.version = crt_http.HttpVersion.Http1_1
+
+    # Should not raise
+    await client._validate_connection(mock_connection, require_http2=False)
+
+
+async def _captured_alpn(require_http2: bool) -> list[str]:
+    client = AWSCRTHTTPClient()
+    tls_options = Mock()
+    client._tls_ctx = Mock()
+    client._tls_ctx.new_connection_options.return_value = tls_options
+    with patch("smithy_http.aio.crt.AIOHttpClientConnectionUnified.new", AsyncMock()):
+        await client._build_new_connection(
+            URI(scheme="https", host="example.com"), require_http2=require_http2
+        )
+    (alpn_list,), _ = tls_options.set_alpn_list.call_args
+    return alpn_list
+
+
+async def test_alpn_h2_only_when_http2_required() -> None:
+    # When h2 is required, advertise only h2 so an endpoint that prefers http/1.1
+    # cannot negotiate down below the required HTTP/2.
+    assert await _captured_alpn(require_http2=True) == ["h2"]
+
+
+async def test_alpn_offers_both_when_not_required() -> None:
+    assert await _captured_alpn(require_http2=False) == ["h2", "http/1.1"]
+
+
+async def test_pool_separates_http2_required_connections() -> None:
+    # An h2-required request must not reuse a pooled HTTP/1.1 connection to the same
+    # host, nor vice versa.
+    client = AWSCRTHTTPClient()
+    url = URI(scheme="https", host="example.com")
+    h1 = AsyncMock()
+    h1.version = crt_http.HttpVersion.Http1_1
+    h1.is_open = Mock(return_value=True)
+    h2 = AsyncMock()
+    h2.version = crt_http.HttpVersion.Http2
+    h2.is_open = Mock(return_value=True)
+
+    with patch.object(
+        client, "_create_connection", AsyncMock(side_effect=[h1, h2])
+    ) as created:
+        first = await client._get_connection(url, require_http2=False)
+        second = await client._get_connection(url, require_http2=True)
+        # Same host, different h2 requirement -> two distinct pooled connections.
+        assert first is h1
+        assert second is h2
+        assert created.call_count == 2
+        # The h1 request reuses its own pooled connection.
+        assert await client._get_connection(url, require_http2=False) is h1
+        assert created.call_count == 2
 
 
 async def test_connection_pooling() -> None:
@@ -507,7 +558,7 @@ async def test_response_chunks() -> None:
         b"",  # End of stream
     ]
 
-    response = AWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
+    response = AsyncAWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
 
     chunks: list[bytes] = []
     async for chunk in response.chunks():
@@ -521,7 +572,7 @@ async def test_response_body_property() -> None:
     mock_stream = AsyncMock()
     mock_stream.get_next_response_chunk.side_effect = [b"data", b""]
 
-    response = AWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
+    response = AsyncAWSCRTHTTPResponse(status=200, fields=Fields(), stream=mock_stream)
 
     chunks: list[bytes] = []
     async for chunk in response.body:
@@ -536,7 +587,7 @@ def test_response_properties() -> None:
     fields.set_field(Field(name="content-type", values=["application/json"]))
 
     mock_stream = Mock()
-    response = AWSCRTHTTPResponse(status=404, fields=fields, stream=mock_stream)
+    response = AsyncAWSCRTHTTPResponse(status=404, fields=fields, stream=mock_stream)
 
     assert response.status == 404
     assert response.fields == fields

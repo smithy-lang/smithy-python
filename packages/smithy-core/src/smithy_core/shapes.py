@@ -5,6 +5,8 @@ from typing import Self
 
 from .exceptions import ExpectationNotMetError, SmithyError
 
+__all__ = ["ShapeID", "ShapeType"]
+
 
 class ShapeID:
     """An identifier for a Smithy shape."""

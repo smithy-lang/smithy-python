@@ -136,7 +136,8 @@ public final class SetupGenerator {
                         "Programming Language :: Python :: 3 :: Only",
                         "Programming Language :: Python :: 3.12",
                         "Programming Language :: Python :: 3.13",
-                        "Programming Language :: Python :: 3.14"
+                        "Programming Language :: Python :: 3.14",
+                        "Programming Language :: Python :: 3.15"
                     ]
                     """, settings.moduleName(), settings.moduleVersion(), settings.moduleDescription());
 
@@ -171,6 +172,9 @@ public final class SetupGenerator {
                     reportUnnecessaryComparison = false
                     reportUnusedClass = false
                     enableExperimentalFeatures = true
+                    # models.py is the dynamic runtime; models.pyi carries the typed
+                    # surface for consumers, so don't type-check the implementation body.
+                    exclude = ["**/models.py"]
 
                     [tool.ruff]
                     target-version = "py312"

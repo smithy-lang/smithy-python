@@ -18,6 +18,7 @@ lint = [
 ]
 typing = [
     "pyright>=1.1.400",
+    "typing-extensions>=4.14.0",
 ]
 changelog = [
     "jinja2>=3.1.6"
@@ -41,11 +42,18 @@ smithy_xml = { workspace = true }
 smithy_aws_core = { workspace = true }
 smithy_aws_event_stream = { workspace = true }
 aws_sdk_signers = {workspace = true }
+smithy_checksums = { workspace = true }
 smithy_python = { workspace = true }
 
 [tool.pyright]
 typeCheckingMode = "strict"
 enableExperimentalFeatures = true
+# Drives a stubless h2 server and the dynamically-typed generated client; strict
+# typing there is noise, not signal.
+exclude = [
+    "**/__pycache__",
+    "packages/smithy-aws-core/tests/integration",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto" # makes pytest run async tests without having to be marked with the @pytest.mark.asyncio decorator

@@ -3,29 +3,29 @@
 
 from collections import deque
 from copy import copy
-from typing import Any
+from io import BytesIO
+from typing import Any, Self
 
-from smithy_core.aio.utils import async_list
+from smithy_http import HTTPResponse, tuples_to_fields
+from smithy_http.interfaces import (
+    Fields,
+    HTTPClient,
+    HTTPClientConfiguration,
+    HTTPRequest,
+    HTTPRequestConfiguration,
+)
 
-from smithy_http import tuples_to_fields
-from smithy_http.aio import HTTPResponse
-from smithy_http.aio.interfaces import HTTPClient, HTTPRequest
-from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
+__all__ = ["MockHTTPClient", "MockHTTPClientError"]
 
 
-class MockHTTPClient(HTTPClient):
-    """Implementation of :py:class:`.interfaces.HTTPClient` solely for testing purposes.
+class MockHTTPClientBase:
+    """Queued responses and captured requests, shared by the sync and async mocks.
 
     Simulates HTTP request/response behavior. Responses are queued in FIFO order and
     requests are captured for inspection.
     """
 
     TIMEOUT_EXCEPTIONS = (TimeoutError,)
-
-    # Declared so duplex (bidirectional) stream operations can be unit tested
-    # against this client. Queued responses are returned without consuming the
-    # request body, which is compatible with duplex streaming.
-    SUPPORTS_DUPLEX_STREAMING = True
 
     def __init__(
         self,
@@ -37,8 +37,21 @@ class MockHTTPClient(HTTPClient):
         client.
         """
         self._client_config = client_config
-        self._response_queue: deque[dict[str, Any]] = deque()
+        self._responses: deque[tuple[int, Fields, bytes]] = deque()
         self._captured_requests: list[HTTPRequest] = []
+
+    def __deepcopy__(self, memo: Any) -> Self:
+        return self
+
+    @property
+    def call_count(self) -> int:
+        """The number of requests made to this client."""
+        return len(self._captured_requests)
+
+    @property
+    def captured_requests(self) -> list[HTTPRequest]:
+        """The list of all requests captured by this client."""
+        return self._captured_requests.copy()
 
     def add_response(
         self,
@@ -52,15 +65,29 @@ class MockHTTPClient(HTTPClient):
         :param headers: HTTP response headers as list of (name, value) tuples.
         :param body: Response body as bytes.
         """
-        self._response_queue.append(
-            {
-                "status": status,
-                "headers": headers or [],
-                "body": body,
-            }
-        )
+        self._responses.append((status, tuples_to_fields(headers or []), body))
 
-    async def send(
+    def _pop_response(self, request: HTTPRequest) -> tuple[int, Fields, bytes]:
+        """Capture the request and return the next queued status, fields and body.
+
+        :raises MockHTTPClientError: If no responses are queued.
+        """
+        self._captured_requests.append(copy(request))
+        if not self._responses:
+            raise MockHTTPClientError(
+                f"No responses queued in {type(self).__name__}. Use add_response() to "
+                "queue responses."
+            )
+        return self._responses.popleft()
+
+
+class MockHTTPClient(MockHTTPClientBase, HTTPClient):
+    """Implementation of :py:class:`.interfaces.HTTPClient` solely for testing purposes.
+
+    For async clients, use :py:class:`smithy_http.aio.testing.AsyncMockHTTPClient`.
+    """
+
+    def send(
         self,
         request: HTTPRequest,
         *,
@@ -73,35 +100,9 @@ class MockHTTPClient(HTTPClient):
         :returns: Pre-configured HTTP response from the queue.
         :raises MockHTTPClientError: If no responses are queued.
         """
-        self._captured_requests.append(copy(request))
-
-        # Return next queued response or raise error
-        if self._response_queue:
-            response_data = self._response_queue.popleft()
-            return HTTPResponse(
-                status=response_data["status"],
-                fields=tuples_to_fields(response_data["headers"]),
-                body=async_list([response_data["body"]]),
-                reason=None,
-            )
-        else:
-            raise MockHTTPClientError(
-                "No responses queued in MockHTTPClient. Use add_response() to queue responses."
-            )
-
-    @property
-    def call_count(self) -> int:
-        """The number of requests made to this client."""
-        return len(self._captured_requests)
-
-    @property
-    def captured_requests(self) -> list[HTTPRequest]:
-        """The list of all requests captured by this client."""
-        return self._captured_requests.copy()
-
-    def __deepcopy__(self, memo: Any) -> "MockHTTPClient":
-        return self
+        status, fields, body = self._pop_response(request)
+        return HTTPResponse(status=status, fields=fields, body=BytesIO(body))
 
 
 class MockHTTPClientError(Exception):
-    """Exception raised by MockHTTPClient for test setup issues."""
+    """Exception raised by the mock HTTP clients for test setup issues."""

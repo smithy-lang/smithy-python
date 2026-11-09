@@ -2,19 +2,30 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for the config resolution pipeline.
 
-Tests AsyncAwsConfig.resolve(), resolver functions, SharedConfigContext,
+Tests AsyncAwsConfig.resolve(), resolver functions, AsyncSharedConfigContext,
 provenance tracking, and precedence behavior.
 """
 
 import os
+import warnings
+from collections.abc import Awaitable, Callable
 from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
+from typing import Any, ClassVar
 from unittest.mock import patch
 
 import pytest
-from smithy_aws_core.config.aws_config import AsyncAwsConfig, AwsConfigOverrides
-from smithy_aws_core.config.context import SharedConfigContext
+from smithy_aws_core.aio.config.aws_config import (
+    AsyncAwsConfig,
+    AsyncAwsConfigOverrides,
+)
+from smithy_aws_core.aio.config.context import AsyncSharedConfigContext
+from smithy_aws_core.aio.identity.environment import (
+    AsyncEnvironmentCredentialsResolver,
+)
+from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
+from smithy_aws_core.config.aws_config import AwsConfig
 from smithy_aws_core.config.exceptions import (
     ConfigError,
     ConfigValidationError,
@@ -22,18 +33,27 @@ from smithy_aws_core.config.exceptions import (
 )
 from smithy_aws_core.config.resolvers import (
     EndpointUriResolver,
-    resolve_endpoint_uri,
-    resolve_max_attempts,
-    resolve_region,
-    resolve_retry_mode,
-    resolve_sdk_ua_app_id,
+    _endpoint_uri,  # pyright: ignore[reportPrivateUsage]
+    _max_attempts,  # pyright: ignore[reportPrivateUsage]
+    _region,  # pyright: ignore[reportPrivateUsage]
+    _retry_mode,  # pyright: ignore[reportPrivateUsage]
+    _sdk_ua_app_id,  # pyright: ignore[reportPrivateUsage]
+    resolve_account_id_endpoint_mode_program,
+    resolve_bool_program,
+    resolve_request_checksum_calculation_program,
+    resolve_response_checksum_validation_program,
+    resolve_use_dualstack_endpoint_program,
+    resolve_use_fips_endpoint_program,
 )
-from smithy_aws_core.config.types import UNSET, ConfigSource
-from smithy_aws_core.identity.environment import EnvironmentCredentialsResolver
-from smithy_aws_core.identity.static import StaticCredentialsResolver
-from smithy_core.aio.retries import StandardRetryStrategy
+from smithy_aws_core.config.types import UNSET, ConfigSource, FieldSpec, Resolved
+from smithy_aws_core.config.validators import (
+    validate_request_checksum_calculation,
+    validate_response_checksum_validation,
+)
+from smithy_core.aio.program import run_program_async
+from smithy_core.retries import StandardRetryStrategy
+from smithy_http.aio.testing import AsyncMockHTTPClient
 from smithy_http.interfaces import HTTPRequestConfiguration
-from smithy_http.testing import MockHTTPClient
 
 
 class NullFileSystem:
@@ -49,11 +69,72 @@ class FakeFileSystem:
         return self._files.get(path)
 
 
+async def resolve_region(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
+    return await run_program_async(_region(ctx))
+
+
+async def resolve_retry_mode(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
+    return await run_program_async(_retry_mode(ctx))
+
+
+async def resolve_max_attempts(ctx: AsyncSharedConfigContext) -> Resolved[int | None]:
+    return await run_program_async(_max_attempts(ctx))
+
+
+async def resolve_endpoint_uri(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
+    return await run_program_async(_endpoint_uri(ctx))
+
+
+async def resolve_sdk_ua_app_id(ctx: AsyncSharedConfigContext) -> Resolved[str | None]:
+    return await run_program_async(_sdk_ua_app_id(ctx))
+
+
+async def resolve_bool(
+    ctx: AsyncSharedConfigContext,
+    *,
+    env_vars: tuple[str, ...] = (),
+    profile_keys: tuple[str, ...] = (),
+) -> Resolved[bool | None]:
+    return await run_program_async(
+        resolve_bool_program(ctx, env_vars=env_vars, profile_keys=profile_keys)
+    )
+
+
+async def resolve_use_fips_endpoint(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[bool | None]:
+    return await run_program_async(resolve_use_fips_endpoint_program(ctx))
+
+
+async def resolve_use_dualstack_endpoint(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[bool | None]:
+    return await run_program_async(resolve_use_dualstack_endpoint_program(ctx))
+
+
+async def resolve_account_id_endpoint_mode(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[str | None]:
+    return await run_program_async(resolve_account_id_endpoint_mode_program(ctx))
+
+
+async def resolve_request_checksum_calculation(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[str | None]:
+    return await run_program_async(resolve_request_checksum_calculation_program(ctx))
+
+
+async def resolve_response_checksum_validation(
+    ctx: AsyncSharedConfigContext,
+) -> Resolved[str | None]:
+    return await run_program_async(resolve_response_checksum_validation_program(ctx))
+
+
 class TestResolveRegion:
     @pytest.mark.asyncio
     async def test_resolves_from_aws_region(self):
         with patch.dict(os.environ, {"AWS_REGION": "us-west-2"}, clear=True):
-            ctx = SharedConfigContext()
+            ctx = AsyncSharedConfigContext()
             result = await resolve_region(ctx)
             assert result.value == "us-west-2"
             assert result.source == ConfigSource.ENV
@@ -61,7 +142,7 @@ class TestResolveRegion:
     @pytest.mark.asyncio
     async def test_resolves_from_aws_default_region(self):
         with patch.dict(os.environ, {"AWS_DEFAULT_REGION": "eu-central-1"}, clear=True):
-            ctx = SharedConfigContext()
+            ctx = AsyncSharedConfigContext()
             result = await resolve_region(ctx)
             assert result.value == "eu-central-1"
             assert result.source == ConfigSource.ENV
@@ -73,7 +154,7 @@ class TestResolveRegion:
             {"AWS_REGION": "us-west-2", "AWS_DEFAULT_REGION": "eu-west-1"},
             clear=True,
         ):
-            ctx = SharedConfigContext()
+            ctx = AsyncSharedConfigContext()
             result = await resolve_region(ctx)
             assert result.value == "us-west-2"
 
@@ -83,7 +164,7 @@ class TestResolveRegion:
             {"/fake/config": "[profile default]\nregion = ap-southeast-1\n"}
         )
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/credentials",
@@ -96,7 +177,7 @@ class TestResolveRegion:
     async def test_env_takes_precedence_over_profile(self):
         fs = FakeFileSystem({"/fake/config": "[profile default]\nregion = eu-west-1\n"})
         with patch.dict(os.environ, {"AWS_REGION": "us-west-2"}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/credentials",
@@ -109,7 +190,7 @@ class TestResolveRegion:
     async def test_empty_string_env_var_treated_as_absent(self):
         fs = FakeFileSystem({"/fake/config": "[profile default]\nregion = eu-west-1\n"})
         with patch.dict(os.environ, {"AWS_REGION": ""}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/credentials",
@@ -355,7 +436,7 @@ class TestConstructionBlocking:
         )
 
     def test_typed_overrides_cover_all_base_config_fields(self):
-        assert set(AwsConfigOverrides.__annotations__) == set(
+        assert set(AsyncAwsConfigOverrides.__annotations__) == set(
             AsyncAwsConfig._FIELDS  # pyright: ignore[reportPrivateUsage]
         )
 
@@ -402,25 +483,25 @@ class TestConstructionBlocking:
 class TestSharedConfigContext:
     def test_default_profile_is_default(self):
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext()
+            ctx = AsyncSharedConfigContext()
             assert ctx.profile_name == "default"
             assert ctx.profile_source is ConfigSource.DEFAULT
 
     def test_profile_from_aws_profile_env(self):
         with patch.dict(os.environ, {"AWS_PROFILE": "work"}, clear=True):
-            ctx = SharedConfigContext()
+            ctx = AsyncSharedConfigContext()
             assert ctx.profile_name == "work"
             assert ctx.profile_source is ConfigSource.ENV
 
     def test_empty_aws_profile_env_treated_as_absent(self):
         with patch.dict(os.environ, {"AWS_PROFILE": ""}, clear=True):
-            ctx = SharedConfigContext()
+            ctx = AsyncSharedConfigContext()
             assert ctx.profile_name == "default"
             assert ctx.profile_source is ConfigSource.DEFAULT
 
     def test_explicit_profile_overrides_env(self):
         with patch.dict(os.environ, {"AWS_PROFILE": "work"}, clear=True):
-            ctx = SharedConfigContext(profile_name="custom")
+            ctx = AsyncSharedConfigContext(profile_name="custom")
             assert ctx.profile_name == "custom"
             assert ctx.profile_source is ConfigSource.OVERRIDE
 
@@ -428,7 +509,7 @@ class TestSharedConfigContext:
     async def test_parsed_profiles_caches_result(self):
         fs = FakeFileSystem({"/fake/config": "[profile default]\nregion = us-east-1\n"})
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/credentials",
@@ -439,7 +520,7 @@ class TestSharedConfigContext:
 
     def test_deepcopy_returns_same_instance(self):
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(fs=NullFileSystem())
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
             assert deepcopy(ctx) is ctx
 
 
@@ -496,8 +577,8 @@ class TestConfigDeepCopy:
 
         # The transport, credentials resolver, and retry strategy hold network
         # clients, locks, and shared retry quotas that must not be duplicated
-        transport = MockHTTPClient()
-        resolver = EnvironmentCredentialsResolver()
+        transport = AsyncMockHTTPClient()
+        resolver = AsyncEnvironmentCredentialsResolver()
         retry_strategy = StandardRetryStrategy()
         config.transport = transport
         config.aws_credentials_identity_resolver = resolver
@@ -531,7 +612,7 @@ class TestResolveRetryMode:
     @pytest.mark.asyncio
     async def test_resolves_from_env(self):
         with patch.dict(os.environ, {"AWS_RETRY_MODE": "standard"}, clear=True):
-            ctx = SharedConfigContext()
+            ctx = AsyncSharedConfigContext()
             result = await resolve_retry_mode(ctx)
             assert result.value == "standard"
             assert result.source == ConfigSource.ENV
@@ -542,7 +623,7 @@ class TestResolveRetryMode:
             {"/fake/config": "[profile default]\nretry_mode = standard\n"}
         )
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/credentials",
@@ -552,22 +633,20 @@ class TestResolveRetryMode:
             assert result.source == ConfigSource.PROFILE
 
     @pytest.mark.asyncio
-    async def test_adaptive_from_profile_warns_and_maps_to_standard(self):
+    async def test_resolves_adaptive_from_profile(self):
         fs = FakeFileSystem(
             {"/fake/config": "[profile default]\nretry_mode = adaptive\n"}
         )
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/credentials",
             )
-            with pytest.warns(
-                UserWarning,
-                match="'adaptive' retry mode is not supported, using 'standard' instead.",
-            ):
+            with warnings.catch_warnings():
+                warnings.simplefilter("error")
                 result = await resolve_retry_mode(ctx)
-            assert result.value == "standard"
+            assert result.value == "adaptive"
             assert result.source == ConfigSource.PROFILE
 
     @pytest.mark.asyncio
@@ -576,7 +655,7 @@ class TestResolveRetryMode:
             {"/fake/config": "[profile default]\nretry_mode = adaptive\n"}
         )
         with patch.dict(os.environ, {"AWS_RETRY_MODE": "standard"}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/credentials",
@@ -588,7 +667,7 @@ class TestResolveRetryMode:
     @pytest.mark.asyncio
     async def test_returns_unset_when_not_found(self):
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(fs=NullFileSystem())
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
             result = await resolve_retry_mode(ctx)
             assert result.value is UNSET
             assert result.source is ConfigSource.DEFAULT
@@ -596,7 +675,7 @@ class TestResolveRetryMode:
     @pytest.mark.asyncio
     async def test_legacy_warns_and_maps_to_standard(self):
         with patch.dict(os.environ, {"AWS_RETRY_MODE": "legacy"}, clear=True):
-            ctx = SharedConfigContext()
+            ctx = AsyncSharedConfigContext()
             with pytest.warns(
                 UserWarning,
                 match="'legacy' retry mode is not supported, using 'standard' instead.",
@@ -606,15 +685,13 @@ class TestResolveRetryMode:
             assert result.source == ConfigSource.ENV
 
     @pytest.mark.asyncio
-    async def test_adaptive_warns_and_maps_to_standard(self):
+    async def test_resolves_adaptive_from_env(self):
         with patch.dict(os.environ, {"AWS_RETRY_MODE": "adaptive"}, clear=True):
-            ctx = SharedConfigContext()
-            with pytest.warns(
-                UserWarning,
-                match="'adaptive' retry mode is not supported, using 'standard' instead.",
-            ):
+            ctx = AsyncSharedConfigContext()
+            with warnings.catch_warnings():
+                warnings.simplefilter("error")
                 result = await resolve_retry_mode(ctx)
-            assert result.value == "standard"
+            assert result.value == "adaptive"
             assert result.source == ConfigSource.ENV
 
 
@@ -622,7 +699,7 @@ class TestResolveMaxAttempts:
     @pytest.mark.asyncio
     async def test_resolves_from_env(self):
         with patch.dict(os.environ, {"AWS_MAX_ATTEMPTS": "5"}, clear=True):
-            ctx = SharedConfigContext()
+            ctx = AsyncSharedConfigContext()
             result = await resolve_max_attempts(ctx)
             assert result.value == 5
             assert result.source == ConfigSource.ENV
@@ -631,7 +708,7 @@ class TestResolveMaxAttempts:
     async def test_resolves_from_profile_when_no_env(self):
         fs = FakeFileSystem({"/fake/config": "[profile default]\nmax_attempts = 10\n"})
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/credentials",
@@ -644,7 +721,7 @@ class TestResolveMaxAttempts:
     async def test_env_takes_precedence_over_profile(self):
         fs = FakeFileSystem({"/fake/config": "[profile default]\nmax_attempts = 10\n"})
         with patch.dict(os.environ, {"AWS_MAX_ATTEMPTS": "3"}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/credentials",
@@ -656,14 +733,14 @@ class TestResolveMaxAttempts:
     @pytest.mark.asyncio
     async def test_returns_unset_when_not_found(self):
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(fs=NullFileSystem())
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
             result = await resolve_max_attempts(ctx)
             assert result.value is UNSET
 
     @pytest.mark.asyncio
     async def test_casts_to_int(self):
         with patch.dict(os.environ, {"AWS_MAX_ATTEMPTS": "7"}, clear=True):
-            ctx = SharedConfigContext()
+            ctx = AsyncSharedConfigContext()
             result = await resolve_max_attempts(ctx)
             assert result.value == 7
             assert isinstance(result.value, int)
@@ -671,7 +748,7 @@ class TestResolveMaxAttempts:
     @pytest.mark.asyncio
     async def test_invalid_value_raises_error(self):
         with patch.dict(os.environ, {"AWS_MAX_ATTEMPTS": "abc"}, clear=True):
-            ctx = SharedConfigContext()
+            ctx = AsyncSharedConfigContext()
             with pytest.raises(ConfigValidationError, match="Invalid integer value"):
                 await resolve_max_attempts(ctx)
 
@@ -696,12 +773,12 @@ class TestEndpointUriResolver:
             {"AWS_ENDPOINT_URL_BEDROCK_RUNTIME": "https://service-env.com"},
             clear=True,
         ):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://service-env.com"
             assert result.source == ConfigSource.ENV
 
@@ -712,12 +789,12 @@ class TestEndpointUriResolver:
         with patch.dict(
             os.environ, {"AWS_ENDPOINT_URL": "https://global-env.com"}, clear=True
         ):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=NullFileSystem(),
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://global-env.com"
             assert result.source == ConfigSource.ENV
 
@@ -731,12 +808,12 @@ class TestEndpointUriResolver:
             },
             clear=True,
         ):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=NullFileSystem(),
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://service-env.com"
 
     @pytest.mark.asyncio
@@ -754,12 +831,12 @@ class TestEndpointUriResolver:
             }
         )
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://service-config.com"
             assert result.source == ConfigSource.PROFILE
 
@@ -771,12 +848,12 @@ class TestEndpointUriResolver:
             }
         )
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://global-config.com"
             assert result.source == ConfigSource.PROFILE
 
@@ -798,12 +875,12 @@ class TestEndpointUriResolver:
             }
         )
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://service-config.com"
 
     @pytest.mark.asyncio
@@ -824,12 +901,12 @@ class TestEndpointUriResolver:
         with patch.dict(
             os.environ, {"AWS_ENDPOINT_URL": "https://global-env.com"}, clear=True
         ):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=fs,
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://global-env.com"
 
     @pytest.mark.asyncio
@@ -837,12 +914,12 @@ class TestEndpointUriResolver:
         self, resolver: EndpointUriResolver
     ):
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=NullFileSystem(),
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value is UNSET
 
     @pytest.mark.asyncio
@@ -855,12 +932,12 @@ class TestEndpointUriResolver:
             {"AWS_ENDPOINT_URL_BEDROCK_RUNTIME": "https://from-env.com"},
             clear=True,
         ):
-            ctx = SharedConfigContext(
+            ctx = AsyncSharedConfigContext(
                 fs=NullFileSystem(),
                 config_file_path="/fake/config",
                 credentials_file_path="/fake/creds",
             )
-            result = await resolver(ctx)
+            result = await run_program_async(resolver.program(ctx))
             assert result.value == "https://from-env.com"
             assert result.source == ConfigSource.ENV
 
@@ -983,7 +1060,7 @@ class TestIncodeStaticCredentialResolution:
 
     @pytest.mark.asyncio
     async def test_explicit_resolver_not_overwritten(self):
-        custom_resolver = StaticCredentialsResolver()
+        custom_resolver = AsyncStaticCredentialsResolver()
         with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
             config = await AsyncAwsConfig.resolve(
                 fs=NullFileSystem(),
@@ -1004,7 +1081,7 @@ class TestResolveSdkUaAppId:
     @pytest.mark.asyncio
     async def test_resolves_from_env(self):
         with patch.dict(os.environ, {"AWS_SDK_UA_APP_ID": "my-app"}, clear=True):
-            ctx = SharedConfigContext(fs=NullFileSystem())
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
             result = await resolve_sdk_ua_app_id(ctx)
             assert result.value == "my-app"
             assert result.source == ConfigSource.ENV
@@ -1015,7 +1092,7 @@ class TestResolveSdkUaAppId:
             {"/fake/config": "[profile default]\nsdk_ua_app_id = profile-app\n"}
         )
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(fs=fs, config_file_path="/fake/config")
+            ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
             result = await resolve_sdk_ua_app_id(ctx)
             assert result.value == "profile-app"
             assert result.source == ConfigSource.PROFILE
@@ -1023,9 +1100,222 @@ class TestResolveSdkUaAppId:
     @pytest.mark.asyncio
     async def test_returns_unset_when_not_configured(self):
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(fs=NullFileSystem())
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
             result = await resolve_sdk_ua_app_id(ctx)
             assert result.value is UNSET
+
+
+@dataclass(kw_only=True, repr=False, init=False)
+class _ChecksumServiceConfig(AsyncAwsConfig):
+    """Mirrors the config codegen emits for services with the httpChecksum trait."""
+
+    request_checksum_calculation: str | None = None
+    response_checksum_validation: str | None = None
+
+    _FIELDS: ClassVar[dict[str, FieldSpec]] = {
+        "request_checksum_calculation": FieldSpec(
+            default="when_supported",
+            resolver=resolve_request_checksum_calculation_program,
+            validator=validate_request_checksum_calculation,
+        ),
+        "response_checksum_validation": FieldSpec(
+            default="when_supported",
+            resolver=resolve_response_checksum_validation_program,
+            validator=validate_response_checksum_validation,
+        ),
+        **AsyncAwsConfig._FIELDS,
+    }
+
+
+class TestResolveResponseChecksumValidation:
+    @pytest.mark.asyncio
+    async def test_resolves_from_env_in_lowercase(self):
+        with patch.dict(
+            os.environ,
+            {"AWS_RESPONSE_CHECKSUM_VALIDATION": "WHEN_REQUIRED"},
+            clear=True,
+        ):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            result = await resolve_response_checksum_validation(ctx)
+            assert result.value == "when_required"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_resolves_from_profile(self):
+        fs = FakeFileSystem(
+            {
+                "/fake/config": (
+                    "[profile default]\nresponse_checksum_validation = When_Required\n"
+                )
+            }
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
+            result = await resolve_response_checksum_validation(ctx)
+            assert result.value == "when_required"
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_returns_unset_when_not_configured(self):
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            result = await resolve_response_checksum_validation(ctx)
+            assert result.value is UNSET
+
+    @pytest.mark.asyncio
+    async def test_config_defaults_to_when_supported(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-west-2"}, clear=True):
+            config = await _ChecksumServiceConfig.resolve(fs=NullFileSystem())
+            assert config.response_checksum_validation == "when_supported"
+            assert config.source_of("response_checksum_validation") == (
+                ConfigSource.DEFAULT
+            )
+
+    @pytest.mark.asyncio
+    async def test_config_resolves_from_env(self):
+        with patch.dict(
+            os.environ,
+            {
+                "AWS_REGION": "us-west-2",
+                "AWS_RESPONSE_CHECKSUM_VALIDATION": "when_required",
+            },
+            clear=True,
+        ):
+            config = await _ChecksumServiceConfig.resolve(fs=NullFileSystem())
+            assert config.response_checksum_validation == "when_required"
+
+    @pytest.mark.asyncio
+    async def test_config_requires_lowercase_values_set_in_code(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-west-2"}, clear=True):
+            overrides: Any = {"response_checksum_validation": "when_required"}
+            config = await _ChecksumServiceConfig.resolve(
+                fs=NullFileSystem(), **overrides
+            )
+            assert config.response_checksum_validation == "when_required"
+
+            overrides = {"response_checksum_validation": "WHEN_REQUIRED"}
+            with pytest.raises(
+                ConfigValidationError,
+                match="Invalid value for 'response_checksum_validation'",
+            ):
+                await _ChecksumServiceConfig.resolve(fs=NullFileSystem(), **overrides)
+
+    @pytest.mark.asyncio
+    async def test_base_config_does_not_have_the_setting(self):
+        assert "response_checksum_validation" not in AsyncAwsConfig._FIELDS  # pyright: ignore[reportPrivateUsage]
+
+    @pytest.mark.asyncio
+    async def test_config_rejects_invalid_value(self):
+        with patch.dict(
+            os.environ,
+            {"AWS_REGION": "us-west-2", "AWS_RESPONSE_CHECKSUM_VALIDATION": "always"},
+            clear=True,
+        ):
+            with pytest.raises(
+                ConfigValidationError,
+                match="Invalid value for 'response_checksum_validation'",
+            ):
+                await _ChecksumServiceConfig.resolve(fs=NullFileSystem())
+
+
+class TestResolveRequestChecksumCalculation:
+    @pytest.mark.asyncio
+    async def test_resolves_from_env_in_lowercase(self):
+        with patch.dict(
+            os.environ,
+            {"AWS_REQUEST_CHECKSUM_CALCULATION": "WHEN_REQUIRED"},
+            clear=True,
+        ):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            result = await resolve_request_checksum_calculation(ctx)
+            assert result.value == "when_required"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_resolves_from_profile(self):
+        fs = FakeFileSystem(
+            {
+                "/fake/config": (
+                    "[profile default]\nrequest_checksum_calculation = When_Required\n"
+                )
+            }
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
+            result = await resolve_request_checksum_calculation(ctx)
+            assert result.value == "when_required"
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_config_defaults_to_when_supported(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-west-2"}, clear=True):
+            config = await _ChecksumServiceConfig.resolve(fs=NullFileSystem())
+            assert config.request_checksum_calculation == "when_supported"
+            overrides: Any = {"request_checksum_calculation": "when_required"}
+            config = await _ChecksumServiceConfig.resolve(
+                fs=NullFileSystem(), **overrides
+            )
+            assert config.request_checksum_calculation == "when_required"
+
+
+class _SyncFakeFileSystem:
+    def __init__(self, files: dict[str, str] | None = None):
+        self._files = files or {}
+
+    def read_file(self, path: str) -> str | None:
+        return self._files.get(path)
+
+
+@dataclass(kw_only=True, repr=False, init=False)
+class _SyncChecksumServiceConfig(AwsConfig):
+    """Mirrors the sync config codegen emits for services with the httpChecksum trait."""
+
+    request_checksum_calculation: str | None = None
+    response_checksum_validation: str | None = None
+
+    _FIELDS: ClassVar[dict[str, FieldSpec]] = {
+        "request_checksum_calculation": FieldSpec(
+            default="when_supported",
+            resolver=resolve_request_checksum_calculation_program,
+            validator=validate_request_checksum_calculation,
+        ),
+        "response_checksum_validation": FieldSpec(
+            default="when_supported",
+            resolver=resolve_response_checksum_validation_program,
+            validator=validate_response_checksum_validation,
+        ),
+        **AwsConfig._FIELDS,
+    }
+
+
+class TestSyncChecksumSettings:
+    def test_defaults_to_when_supported(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-west-2"}, clear=True):
+            config = _SyncChecksumServiceConfig.resolve(fs=_SyncFakeFileSystem())
+            assert config.request_checksum_calculation == "when_supported"
+            assert config.response_checksum_validation == "when_supported"
+
+    def test_resolves_from_env_and_profile_in_lowercase(self):
+        fs = _SyncFakeFileSystem(
+            {
+                "/fake/config": (
+                    "[profile default]\nresponse_checksum_validation = When_Required\n"
+                )
+            }
+        )
+        with patch.dict(
+            os.environ,
+            {
+                "AWS_REGION": "us-west-2",
+                "AWS_REQUEST_CHECKSUM_CALCULATION": "WHEN_REQUIRED",
+            },
+            clear=True,
+        ):
+            config = _SyncChecksumServiceConfig.resolve(
+                fs=fs, config_file_path="/fake/config"
+            )
+            assert config.request_checksum_calculation == "when_required"
+            assert config.response_checksum_validation == "when_required"
 
 
 class TestResolveEndpointUri:
@@ -1034,7 +1324,7 @@ class TestResolveEndpointUri:
         with patch.dict(
             os.environ, {"AWS_ENDPOINT_URL": "https://custom.endpoint"}, clear=True
         ):
-            ctx = SharedConfigContext(fs=NullFileSystem())
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
             result = await resolve_endpoint_uri(ctx)
             assert result.value == "https://custom.endpoint"
             assert result.source == ConfigSource.ENV
@@ -1047,7 +1337,7 @@ class TestResolveEndpointUri:
             }
         )
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(fs=fs, config_file_path="/fake/config")
+            ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
             result = await resolve_endpoint_uri(ctx)
             assert result.value == "https://profile.endpoint"
             assert result.source == ConfigSource.PROFILE
@@ -1055,8 +1345,89 @@ class TestResolveEndpointUri:
     @pytest.mark.asyncio
     async def test_returns_unset_when_not_configured(self):
         with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(fs=NullFileSystem())
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
             result = await resolve_endpoint_uri(ctx)
+            assert result.value is UNSET
+
+
+class TestResolveBool:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("raw,expected", [("true", True), ("FALSE", False)])
+    async def test_resolves_from_env(self, raw: str, expected: bool):
+        with patch.dict(os.environ, {"AWS_FLAG": raw}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            result = await resolve_bool(ctx, env_vars=("AWS_FLAG",))
+            assert result.value is expected
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_resolves_from_profile(self):
+        fs = FakeFileSystem({"/fake/config": "[profile default]\nflag = True\n"})
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
+            result = await resolve_bool(ctx, profile_keys=("flag",))
+            assert result.value is True
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_invalid_value_raises_error(self):
+        with patch.dict(os.environ, {"AWS_FLAG": "yes"}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            with pytest.raises(ConfigValidationError, match="'yes' for AWS_FLAG"):
+                await resolve_bool(ctx, env_vars=("AWS_FLAG",))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "resolver,env_var,profile_key",
+    [
+        (resolve_use_fips_endpoint, "AWS_USE_FIPS_ENDPOINT", "use_fips_endpoint"),
+        (
+            resolve_use_dualstack_endpoint,
+            "AWS_USE_DUALSTACK_ENDPOINT",
+            "use_dualstack_endpoint",
+        ),
+    ],
+)
+async def test_endpoint_flags_read_their_settings(
+    resolver: Callable[..., Awaitable[Any]], env_var: str, profile_key: str
+):
+    fs = FakeFileSystem({"/fake/config": f"[profile default]\n{profile_key} = true\n"})
+    with patch.dict(os.environ, {env_var: "false"}, clear=True):
+        ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
+        assert (await resolver(ctx)).value is False
+    with patch.dict(os.environ, {}, clear=True):
+        ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
+        assert (await resolver(ctx)).value is True
+
+
+class TestResolveAccountIdEndpointMode:
+    @pytest.mark.asyncio
+    async def test_resolves_from_env(self):
+        with patch.dict(
+            os.environ, {"AWS_ACCOUNT_ID_ENDPOINT_MODE": "Disabled"}, clear=True
+        ):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            result = await resolve_account_id_endpoint_mode(ctx)
+            assert result.value == "disabled"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_resolves_from_profile(self):
+        fs = FakeFileSystem(
+            {"/fake/config": "[profile default]\naccount_id_endpoint_mode = required\n"}
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=fs, config_file_path="/fake/config")
+            result = await resolve_account_id_endpoint_mode(ctx)
+            assert result.value == "required"
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_returns_unset_when_not_configured(self):
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = AsyncSharedConfigContext(fs=NullFileSystem())
+            result = await resolve_account_id_endpoint_mode(ctx)
             assert result.value is UNSET
 
 

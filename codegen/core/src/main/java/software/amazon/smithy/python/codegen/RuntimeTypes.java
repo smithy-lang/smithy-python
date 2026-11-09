@@ -23,6 +23,14 @@ public final class RuntimeTypes {
     public static final Symbol API_OPERATION =
             createSymbol("schemas", "APIOperation", SmithyPythonDependency.SMITHY_CORE);
 
+    // smithy_core._schema_compact
+    public static final Symbol HYDRATE =
+            createSymbol("_schema_compact", "hydrate", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol STATIC_SCHEMA =
+            createSymbol("_schema_compact", "StaticSchema", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol STATIC_OPERATION_SCHEMA =
+            createSymbol("_schema_compact", "StaticOperationSchema", SmithyPythonDependency.SMITHY_CORE);
+
     // smithy_core.shapes
     public static final Symbol SHAPE_ID = createSymbol("shapes", "ShapeID", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol SHAPE_TYPE = createSymbol("shapes", "ShapeType", SmithyPythonDependency.SMITHY_CORE);
@@ -73,15 +81,15 @@ public final class RuntimeTypes {
     public static final Symbol AUTH_OPTION_INTERFACE =
             createSymbol("interfaces.auth", "AuthOption", SmithyPythonDependency.SMITHY_CORE);
 
-    // smithy_core.aio.retries
+    // smithy_core.retries
     public static final Symbol RETRY_STRATEGY_OPTIONS =
             createSymbol("retries", "RetryStrategyOptions", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol SIMPLE_RETRY_STRATEGY =
-            createSymbol("aio.retries", "SimpleRetryStrategy", SmithyPythonDependency.SMITHY_CORE);
+            createSymbol("retries", "SimpleRetryStrategy", SmithyPythonDependency.SMITHY_CORE);
 
-    // smithy_core.aio.interfaces.retries
+    // smithy_core.interfaces.retries
     public static final Symbol RETRY_STRATEGY =
-            createSymbol("aio.interfaces.retries", "RetryStrategy", SmithyPythonDependency.SMITHY_CORE);
+            createSymbol("interfaces.retries", "RetryStrategy", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.types
     public static final Symbol UNKNOWN_ENUM_MIXIN =
@@ -91,48 +99,66 @@ public final class RuntimeTypes {
     public static final Symbol INTERCEPTOR =
             createSymbol("interceptors", "Interceptor", SmithyPythonDependency.SMITHY_CORE);
 
-    // smithy_core.aio.client
+    // smithy_core.client
     public static final Symbol CLIENT_CALL =
-            createSymbol("aio.client", "ClientCall", SmithyPythonDependency.SMITHY_CORE);
+            createSymbol("client", "ClientCall", SmithyPythonDependency.SMITHY_CORE);
+
+    // smithy_core.aio.client
     public static final Symbol REQUEST_PIPELINE =
-            createSymbol("aio.client", "RequestPipeline", SmithyPythonDependency.SMITHY_CORE);
+            createSymbol("aio.client", "AsyncRequestPipeline", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol ASYNC_CLIENT =
             createSymbol("aio.client", "AsyncClient", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.aio.eventstream
     public static final Symbol DUPLEX_EVENT_STREAM =
-            createSymbol("aio.eventstream", "DuplexEventStream", SmithyPythonDependency.SMITHY_CORE);
+            createSymbol("aio.eventstream", "AsyncDuplexEventStream", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol INPUT_EVENT_STREAM =
-            createSymbol("aio.eventstream", "InputEventStream", SmithyPythonDependency.SMITHY_CORE);
+            createSymbol("aio.eventstream", "AsyncInputEventStream", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol OUTPUT_EVENT_STREAM =
-            createSymbol("aio.eventstream", "OutputEventStream", SmithyPythonDependency.SMITHY_CORE);
+            createSymbol("aio.eventstream", "AsyncOutputEventStream", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.aio.interfaces
     public static final Symbol ASYNC_BYTE_STREAM =
             createSymbol("aio.interfaces", "AsyncByteStream", SmithyPythonDependency.SMITHY_CORE);
-    public static final Symbol ENDPOINT_RESOLVER =
-            createSymbol("aio.interfaces", "EndpointResolver", SmithyPythonDependency.SMITHY_CORE);
 
-    // smithy_core.aio.endpoints
-    public static final Symbol STATIC_ENDPOINT_RESOLVER =
-            createSymbol("aio.endpoints", "StaticEndpointResolver", SmithyPythonDependency.SMITHY_CORE);
+    // smithy_core.endpoints
+    public static final Symbol BDD_ENDPOINT_RESOLVER =
+            createSymbol("endpoints", "BddEndpointResolver", SmithyPythonDependency.SMITHY_CORE);
+
+    // smithy_core.interfaces
+    public static final Symbol ENDPOINT_RESOLVER =
+            createSymbol("interfaces", "EndpointResolver", SmithyPythonDependency.SMITHY_CORE);
+
+    // smithy_core.aio.interfaces
+    public static final Symbol ASYNC_ENDPOINT_RESOLVER =
+            createSymbol("aio.interfaces", "AsyncEndpointResolver", SmithyPythonDependency.SMITHY_CORE);
+
+    /**
+     * The endpoint resolver a config accepts: async configs take either kind, and the
+     * sync variant maps this to {@link #ENDPOINT_RESOLVER}.
+     */
+    public static final Symbol CONFIG_ENDPOINT_RESOLVER = Symbol.builder()
+            .name("EndpointResolver | AsyncEndpointResolver")
+            .addReference(ENDPOINT_RESOLVER)
+            .addReference(ASYNC_ENDPOINT_RESOLVER)
+            .build();
 
     // smithy_core.aio.types
     public static final Symbol ASYNC_BYTES_READER =
             createSymbol("aio.types", "AsyncBytesReader", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.aio.utils
-    public static final Symbol ASYNC_LIST = createSymbol("aio.utils", "async_list", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol CLOSE_ASYNC =
+            createSymbol("aio.utils", "close_async", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_http
     public static final Symbol TUPLES_TO_FIELDS =
             createSymbol("", "tuples_to_fields", SmithyPythonDependency.SMITHY_HTTP);
 
-    // Note: HTTPResponse from smithy_http.aio has the same simple name as HTTPResponse
-    // from smithy_http.aio.interfaces. The collision resolver will automatically
-    // disambiguate them with module-based aliases.
+    // CAUTION: shares its simple name with HTTP_RESPONSE; the collision resolver
+    // aliases them by module.
     public static final Symbol HTTP_RESPONSE_IMPL =
-            createSymbol("aio", "HTTPResponse", SmithyPythonDependency.SMITHY_HTTP);
+            createSymbol("", "HTTPResponse", SmithyPythonDependency.SMITHY_HTTP);
 
     // smithy_http.interfaces
     public static final Symbol HTTP_REQUEST_CONFIGURATION =
@@ -140,11 +166,10 @@ public final class RuntimeTypes {
     public static final Symbol HTTP_CLIENT_CONFIGURATION =
             createSymbol("interfaces", "HTTPClientConfiguration", SmithyPythonDependency.SMITHY_HTTP);
 
-    // smithy_http.aio.interfaces
     public static final Symbol HTTP_REQUEST =
-            createSymbol("aio.interfaces", "HTTPRequest", SmithyPythonDependency.SMITHY_HTTP);
+            createSymbol("interfaces", "HTTPRequest", SmithyPythonDependency.SMITHY_HTTP);
     public static final Symbol HTTP_RESPONSE =
-            createSymbol("aio.interfaces", "HTTPResponse", SmithyPythonDependency.SMITHY_HTTP);
+            createSymbol("interfaces", "HTTPResponse", SmithyPythonDependency.SMITHY_HTTP);
 
     // smithy_http.aio.crt
     public static final Symbol AWS_CRT_HTTP_CLIENT =
@@ -156,30 +181,30 @@ public final class RuntimeTypes {
 
     // smithy_http.aio.identity.apikey
     public static final Symbol API_KEY_IDENTITY_RESOLVER =
-            createSymbol("aio.identity.apikey", "APIKeyIdentityResolver", SmithyPythonDependency.SMITHY_HTTP);
+            createSymbol("aio.identity.apikey", "AsyncAPIKeyIdentityResolver", SmithyPythonDependency.SMITHY_HTTP);
 
     // smithy_aws_core.aio.protocols 
     public static final Symbol REST_JSON_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
-            "RestJsonClientProtocol",
+            "AsyncRestJsonClientProtocol",
             SmithyPythonDependency.SMITHY_AWS_CORE);
 
-    // smithy_core.aio.interfaces
+    // smithy_core.interfaces
     public static final Symbol PROTOCOL_SETTINGS = createSymbol(
-            "aio.interfaces",
+            "interfaces",
             "ProtocolSettings",
             SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_http.aio.protocols
     public static final Symbol RPC_V2_CBOR_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
-            "RpcV2CborClientProtocol",
+            "AsyncRpcV2CborClientProtocol",
             SmithyPythonDependency.SMITHY_HTTP);
 
-    // smithy_aws_core.identity 
+    // smithy_aws_core.aio.identity.static
     public static final Symbol STATIC_CREDENTIALS_RESOLVER = createSymbol(
-            "identity",
-            "StaticCredentialsResolver",
+            "aio.identity.static",
+            "AsyncStaticCredentialsResolver",
             SmithyPythonDependency.SMITHY_AWS_CORE);
 
     private RuntimeTypes() {}

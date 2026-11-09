@@ -34,6 +34,7 @@ import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
+import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -77,78 +78,51 @@ public final class CodegenUtils {
     private CodegenUtils() {}
 
     /**
-     * @param settings The client settings, used to account for module configuration.
-     * @return Returns the client's configuration object symbol.
+     * Gets the async config symbol; the sync config is its {@link SyncVariant} twin.
+     *
+     * <p>AWS services derive the name from the SDK ID (e.g., "Bedrock Runtime" becomes
+     * "AsyncBedrockRuntimeConfig"), and their config subclasses {@code AsyncAwsConfig};
+     * other services use {@code AsyncConfig}.
+     *
+     * @param settings The client settings.
+     * @param model The model containing the service shape.
+     * @return Returns the async config symbol.
      */
-    public static Symbol getConfigSymbol(PythonSettings settings) {
-        return Symbol.builder()
-                .name("Config")
-                .namespace(String.format("%s.config", settings.moduleName()), ".")
-                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
-                .build();
+    public static Symbol getAsyncConfigSymbol(PythonSettings settings, Model model) {
+        var name = isAwsService(settings, model)
+                ? "Async" + StringUtils.capitalize(settings.service(model)
+                        .expectTrait(ServiceTrait.class)
+                        .getSdkId()).replace(" ", "") + "Config"
+                : "AsyncConfig";
+        return aioSymbol(settings, "config", name);
     }
 
     /**
      * @param settings The client settings, used to account for module configuration.
-     * @return Returns the client's plugin type hint symbol.
+     * @return Returns the async client's plugin type hint symbol, beside the config it accepts.
      */
     public static Symbol getPluginSymbol(PythonSettings settings) {
+        return aioSymbol(settings, "config", "Plugin");
+    }
+
+    /**
+     * Places a symbol in a generated module under the client's {@code aio} package.
+     *
+     * <p>Modules typed by the async config live there, so the sync variant's twins can
+     * take the package root.
+     *
+     * @param settings The client settings.
+     * @param file The module's file name, without the extension.
+     * @param name The symbol's name.
+     * @return Returns the symbol.
+     */
+    public static Symbol aioSymbol(PythonSettings settings, String file, String name) {
+        var namespace = String.format("%s.aio.%s", settings.moduleName(), file.replace('/', '.'));
         return Symbol.builder()
-                .name("Plugin")
-                .namespace(String.format("%s.config", settings.moduleName()), ".")
-                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
-                .build();
-    }
-
-    /**
-     * Gets the async configuration object symbol for the service, if one is generated.
-     *
-     * <p>This is the new async-resolved config class that inherits from AsyncAwsConfig.
-     * Derives the name from the SDK ID (e.g., "Bedrock Runtime" becomes
-     * "AsyncBedrockRuntimeConfig").
-     *
-     * <p>The async config class lives in {@code smithy-aws-core} and is only generated
-     * for AWS services, so this returns an empty {@code Optional} otherwise. This is the
-     * single source of truth for whether the class exists: generators must not emit
-     * references to it when this is empty, and the integration that defines it gates
-     * itself on this same result. Callers that need the name unconditionally would
-     * reintroduce references to a class nobody defines.
-     *
-     * @param settings The client settings.
-     * @param model The model containing the service shape.
-     * @return Returns the async config symbol, or empty if none is generated.
-     */
-    public static Optional<Symbol> getAsyncConfigSymbol(PythonSettings settings, Model model) {
-        return asyncConfigSymbolName(settings, model, "Config");
-    }
-
-    /**
-     * Gets the async plugin type hint symbol for the service, if one is generated.
-     *
-     * @param settings The client settings.
-     * @param model The model containing the service shape.
-     * @return Returns the async plugin symbol, or empty if none is generated.
-     * @see #getAsyncConfigSymbol(PythonSettings, Model)
-     */
-    public static Optional<Symbol> getAsyncPluginSymbol(PythonSettings settings, Model model) {
-        return asyncConfigSymbolName(settings, model, "Plugin");
-    }
-
-    private static Optional<Symbol> asyncConfigSymbolName(
-            PythonSettings settings,
-            Model model,
-            String suffix
-    ) {
-        if (!isAwsService(settings, model)) {
-            return Optional.empty();
-        }
-        var sdkId = settings.service(model).expectTrait(ServiceTrait.class).getSdkId();
-        var name = "Async" + StringUtils.capitalize(sdkId).replace(" ", "") + suffix;
-        return Optional.of(Symbol.builder()
                 .name(name)
-                .namespace(String.format("%s.config", settings.moduleName()), ".")
-                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
-                .build());
+                .namespace(namespace, ".")
+                .definitionFile(String.format("./src/%s/aio/%s.py", settings.moduleName(), file))
+                .build();
     }
 
     /**
@@ -191,6 +165,18 @@ public final class CodegenUtils {
     public static boolean isErrorMessage(Model model, MemberShape shape) {
         return ERROR_MESSAGE_MEMBER_NAMES.contains(shape.getMemberName().toLowerCase(Locale.US))
                 && model.expectShape(shape.getContainer()).hasTrait(ErrorTrait.class);
+    }
+
+    /**
+     * Determines whether a member targets an event stream.
+     *
+     * @param model The whole service model.
+     * @param member The member to check.
+     * @return Returns whether the member targets a streaming union.
+     */
+    public static boolean isEventStreamMember(Model model, MemberShape member) {
+        var target = model.expectShape(member.getTarget());
+        return target.isUnionShape() && target.hasTrait(StreamingTrait.class);
     }
 
     /**

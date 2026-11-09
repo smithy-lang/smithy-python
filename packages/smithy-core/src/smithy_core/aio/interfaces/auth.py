@@ -3,14 +3,16 @@
 from collections.abc import Mapping
 from typing import Any, Protocol
 
+from smithy_core.interfaces import Request
+
 from ...interfaces import TypedProperties as _TypedProperties
+from ...interfaces.auth import EventSigner, Signer
 from ...interfaces.identity import Identity
 from ...shapes import ShapeID
-from . import Request
-from .identity import IdentityResolver
+from .identity import AsyncIdentityResolver
 
 
-class Signer[R: Request, I, SP: Mapping[str, Any]](Protocol):
+class AsyncSigner[R: Request, I, SP: Mapping[str, Any]](Protocol):
     """A class that signs requests before they are sent."""
 
     async def sign(self, *, request: R, identity: I, properties: SP) -> R:
@@ -23,32 +25,12 @@ class Signer[R: Request, I, SP: Mapping[str, Any]](Protocol):
         ...
 
 
-class EventSigner[I, SP: Mapping[str, Any]](Protocol):
-    """A class that signs requests before they are sent."""
-
-    # TODO: add a protocol type for events
-    async def sign(self, *, event: Any, identity: I, properties: SP) -> Any:
-        """Get a signed version of the event.
-
-        :param event: The event to be signed.
-        :param identity: The identity to use to sign the event.
-        :param properties: Additional properties used to sign the event.
-        """
-        ...
-
-    async def sign_empty(self, *, event: Any, identity: I, properties: SP) -> Any:
-        """Get a signed version of an empty event.
-
-        :param event: The empty event to be signed.
-        :param identity: The identity to use to sign the event.
-        :param properties: Additional properties used to sign the event.
-        """
-        ...
-
-
-class AuthScheme[R: Request, I: Identity, IP: Mapping[str, Any], SP: Mapping[str, Any]](
-    Protocol
-):
+class AsyncAuthScheme[
+    R: Request,
+    I: Identity,
+    IP: Mapping[str, Any],
+    SP: Mapping[str, Any],
+](Protocol):
     """A class that coordinates identity and auth."""
 
     scheme_id: ShapeID
@@ -66,7 +48,7 @@ class AuthScheme[R: Request, I: Identity, IP: Mapping[str, Any], SP: Mapping[str
 
     def identity_resolver(
         self, *, context: _TypedProperties
-    ) -> IdentityResolver[I, IP]:
+    ) -> AsyncIdentityResolver[I, IP]:
         """Get an identity resolver for the request.
 
         The context will always include the client's config under "config". Other
@@ -86,8 +68,11 @@ class AuthScheme[R: Request, I: Identity, IP: Mapping[str, Any], SP: Mapping[str
         """
         ...
 
-    def signer(self) -> Signer[R, I, SP]:
-        """Get a signer for the request."""
+    def signer(self) -> AsyncSigner[R, I, SP] | Signer[R, I, SP]:
+        """Get a signer for the request.
+
+        Signers that do no I/O may be synchronous.
+        """
         ...
 
     def event_signer(self, *, request: R) -> EventSigner[I, SP] | None:

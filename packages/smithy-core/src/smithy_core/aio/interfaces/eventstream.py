@@ -6,11 +6,17 @@ from ...deserializers import DeserializeableShape
 from ...serializers import SerializeableShape
 
 
-class EventPublisher[E: SerializeableShape](Protocol):
+class AsyncEventPublisher[E: SerializeableShape](Protocol):
     """Asynchronously sends events to a service.
 
     This may be used as a context manager to ensure the stream is closed before exiting.
     """
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+        await self.close()
 
     async def send(self, event: E) -> None:
         """Sends an event to the service.
@@ -23,14 +29,8 @@ class EventPublisher[E: SerializeableShape](Protocol):
         """Closes the event stream."""
         ...
 
-    async def __aenter__(self) -> Self:
-        return self
 
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        await self.close()
-
-
-class EventReceiver[E: DeserializeableShape](Protocol):
+class AsyncEventReceiver[E: DeserializeableShape](Protocol):
     """Asynchronously receives events from a service.
 
     Events may be received via the ``receive`` method or by using this class as
@@ -39,6 +39,22 @@ class EventReceiver[E: DeserializeableShape](Protocol):
     This may also be used as a context manager to ensure the stream is closed before
     exiting.
     """
+
+    async def __anext__(self) -> E:
+        result = await self.receive()
+        if result is None:
+            await self.close()
+            raise StopAsyncIteration
+        return result
+
+    def __aiter__(self) -> Self:
+        return self
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+        await self.close()
 
     async def receive(self) -> E | None:
         """Receive a single event from the service.
@@ -51,19 +67,3 @@ class EventReceiver[E: DeserializeableShape](Protocol):
     async def close(self) -> None:
         """Closes the event stream."""
         ...
-
-    async def __anext__(self) -> E:
-        result = await self.receive()
-        if result is None:
-            await self.close()
-            raise StopAsyncIteration
-        return result
-
-    def __aiter__(self) -> Self:
-        return self
-
-    async def __enter__(self) -> Self:
-        return self
-
-    async def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        await self.close()

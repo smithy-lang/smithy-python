@@ -1,115 +1,68 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
+import contextlib
 import logging
 from asyncio import Future, sleep
-from collections.abc import Awaitable, Callable, Sequence
-from copy import copy
-from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any, Self
+from collections.abc import Awaitable, Callable
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
-from .. import URI
-from ..auth import AuthParams
+from smithy_core.interfaces import ClientProtocol, Request, Response
+
+from .._client import ClientBase as _ClientBase
+from .._pipeline import RequestPipelineBase
+from ..client import ClientCall
 from ..deserializers import DeserializeableShape, ShapeDeserializer
-from ..endpoints import EndpointResolverParams
-from ..exceptions import (
-    ClientTimeoutError,
-    RetryError,
-    SmithyError,
-    UnsupportedTransportError,
-)
+from ..exceptions import UnsupportedStreamError, UnsupportedTransportError
 from ..interceptors import (
-    InputContext,
-    Interceptor,
-    InterceptorChain,
     OutputContext,
     RequestContext,
-    ResponseContext,
 )
-from ..interfaces import Endpoint, TypedProperties
-from ..interfaces.auth import AuthOption, AuthSchemeResolver
 from ..schemas import APIOperation
 from ..serializers import SerializeableShape
-from ..shapes import ShapeID
 from ..types import PropertyKey
-from ..types import TypedProperties as _TypedProperties
-from .eventstream import DuplexEventStream, InputEventStream, OutputEventStream
-from .interfaces import (
-    ClientProtocol,
-    ClientTransport,
-    EndpointResolver,
-    Request,
-    Response,
+from .eventstream import (
+    AsyncDuplexEventStream,
+    AsyncInputEventStream,
+    AsyncOutputEventStream,
 )
-from .interfaces.auth import AuthScheme
-from .interfaces.eventstream import EventReceiver
-from .interfaces.retries import RetryStrategy
-from .retries import RetryStrategyResolver
-from .utils import close, seek
+from .interfaces import AsyncClientProtocol, AsyncClientTransport
+from .interfaces.auth import AsyncAuthScheme
+from .interfaces.eventstream import AsyncEventReceiver
+from .program import run_program_async
+from .utils import read_streaming_blob_async
 
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
-AUTH_SCHEME = PropertyKey(key="auth_scheme", value_type=AuthScheme[Any, Any, Any, Any])
+    from .interfaces.eventstream import AsyncEventPublisher
 
-_UNRESOLVED = URI(host="", path="/")
-_LOGGER = logging.getLogger(__name__)
-
-
-@dataclass(kw_only=True, frozen=True)
-class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
-    """A data class containing all the initial information about an operation
-    invocation."""
-
-    input: I
-    """The input of the operation."""
-
-    operation: APIOperation[I, O] = field(repr=False)
-    """The schema of the operation."""
-
-    context: TypedProperties
-    """The initial context of the operation."""
-
-    interceptor: Interceptor[I, O, Any, Any]
-    """The interceptor to use in the course of the operation invocation.
-
-    This SHOULD be an InterceptorChain.
-    """
-
-    auth_scheme_resolver: AuthSchemeResolver
-    """The auth scheme resolver for the operation."""
-
-    supported_auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]]
-    """The supported auth schemes for the operation."""
-
-    endpoint_resolver: EndpointResolver
-    """The endpoint resolver for the operation."""
-
-    retry_strategy: RetryStrategy
-    """The retry strategy to use for the operation."""
-
-    retry_scope: str | None = None
-    """The retry scope for the operation."""
-
-    def retryable(self) -> bool:
-        # TODO: check to see if the stream is seekable
-        return self.operation.input_stream_member is None
+AUTH_SCHEME = PropertyKey(
+    key="auth_scheme", value_type=AsyncAuthScheme[Any, Any, Any, Any]
+)
 
 
-class RequestPipeline[TRequest: Request, TResponse: Response]:
+class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
+    RequestPipelineBase[TRequest, TResponse]
+):
     """Invokes client operations asynchronously."""
 
     protocol: ClientProtocol[TRequest, TResponse]
-    """The protocol to use to serialize the request and deserialize the response."""
+    """The protocol to use to serialize the request and deserialize the response.
 
-    transport: ClientTransport[TRequest, TResponse]
+    Event stream operations need an :py:class:`AsyncClientProtocol`.
+    """
+
+    transport: AsyncClientTransport[TRequest, TResponse]
     """The transport to use to send the request and receive the response (e.g. an HTTP
     Client)."""
+
+    _logger: ClassVar[logging.Logger] = logging.getLogger("smithy_core.aio.client")
 
     def __init__(
         self,
         protocol: ClientProtocol[TRequest, TResponse],
-        transport: ClientTransport[TRequest, TResponse],
+        transport: AsyncClientTransport[TRequest, TResponse],
     ) -> None:
         self.protocol = protocol
         self.transport = transport
@@ -130,7 +83,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         E: SerializeableShape,
     ](
         self, call: ClientCall[I, O], event_type: "TypeForm[E]", /
-    ) -> InputEventStream[E, O]:
+    ) -> AsyncInputEventStream[E, O]:
         """Invoke an input stream operation asynchronously.
 
         :param call: The operation to invoke and associated context.
@@ -140,22 +93,12 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         output_future = asyncio.create_task(
             self._await_output(self._execute_request(call, request_future))
         )
-        request_context = await request_future
-        input_stream = self.protocol.create_event_publisher(
-            operation=call.operation,
-            request=request_context.transport_request,
-            event_type=event_type,
-            context=request_context.properties,
-            auth_scheme=request_context.properties.get(AUTH_SCHEME),
+        input_stream = await self._start_publisher(
+            call, event_type, request_future, output_future
         )
-        return InputEventStream(input_stream=input_stream, output_future=output_future)
-
-    async def _await_output[I: SerializeableShape, O: DeserializeableShape](
-        self,
-        execute_task: Awaitable[tuple[O, OutputContext[I, O, TRequest, TResponse]]],
-    ) -> O:
-        output, _ = await execute_task
-        return output
+        return AsyncInputEventStream(
+            input_stream=input_stream, output_future=output_future
+        )
 
     async def output_stream[
         I: SerializeableShape,
@@ -167,7 +110,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         event_type: "TypeForm[E]",
         event_deserializer: Callable[[ShapeDeserializer], E],
         /,
-    ) -> OutputEventStream[E, O]:
+    ) -> AsyncOutputEventStream[E, O]:
         """Invoke an input stream operation asynchronously.
 
         :param call: The operation to invoke and associated context.
@@ -175,7 +118,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         :param event_deserializer: The method used to deserialize events.
         """
         output, output_context = await self._execute_request(call, None)
-        output_stream = self.protocol.create_event_receiver(
+        output_stream = self._event_stream_protocol().create_event_receiver(
             operation=call.operation,
             request=output_context.transport_request,
             response=output_context.transport_response,
@@ -183,7 +126,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             event_deserializer=event_deserializer,
             context=output_context.properties,
         )
-        return OutputEventStream(output_stream=output_stream, output=output)
+        return AsyncOutputEventStream(output_stream=output_stream, output=output)
 
     async def duplex_stream[
         I: SerializeableShape,
@@ -197,7 +140,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         output_event_type: "TypeForm[OE]",
         event_deserializer: Callable[[ShapeDeserializer], OE],
         /,
-    ) -> DuplexEventStream[IE, OE, O]:
+    ) -> AsyncDuplexEventStream[IE, OE, O]:
         """Invoke an input stream operation asynchronously.
 
         :param call: The operation to invoke and associated context.
@@ -214,18 +157,13 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 f"required by the {call.operation.schema.id} operation. Use a "
                 f"transport that does, such as "
                 f"smithy_http.aio.crt.AWSCRTHTTPClient. Custom transports that "
-                f"support duplex streaming can implement DuplexClientTransport "
+                f"support duplex streaming can implement AsyncDuplexClientTransport "
                 f"by setting SUPPORTS_DUPLEX_STREAMING to True."
             )
         request_future = Future[RequestContext[I, TRequest]]()
         execute_task = asyncio.create_task(self._execute_request(call, request_future))
-        request_context = await request_future
-        input_stream = self.protocol.create_event_publisher(
-            operation=call.operation,
-            request=request_context.transport_request,
-            event_type=input_event_type,
-            context=request_context.properties,
-            auth_scheme=request_context.properties.get(AUTH_SCHEME),
+        input_stream = await self._start_publisher(
+            call, input_event_type, request_future, execute_task
         )
         output_future = asyncio.create_task(
             self._await_output_stream(
@@ -235,7 +173,40 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 event_deserializer=event_deserializer,
             )
         )
-        return DuplexEventStream(input_stream=input_stream, output_future=output_future)
+        return AsyncDuplexEventStream(
+            input_stream=input_stream, output_future=output_future
+        )
+
+    async def _start_publisher[I: SerializeableShape, E: SerializeableShape](
+        self,
+        call: ClientCall[I, Any],
+        event_type: "TypeForm[E]",
+        request_future: Future[RequestContext[I, TRequest]],
+        execute_task: "asyncio.Task[Any]",
+    ) -> "AsyncEventPublisher[E]":
+        request_context = await request_future
+        try:
+            return await self._event_stream_protocol().create_event_publisher(
+                operation=call.operation,
+                request=request_context.transport_request,
+                event_type=event_type,
+                context=request_context.properties,
+                auth_scheme=request_context.properties.get(AUTH_SCHEME),
+            )
+        except BaseException:
+            # Publisher creation failed; the request task is still running, so cancel
+            # and drain it rather than leaking a pending task.
+            execute_task.cancel()
+            with contextlib.suppress(BaseException):
+                await execute_task
+            raise
+
+    async def _await_output[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        execute_task: Awaitable[tuple[O, OutputContext[I, O, TRequest, TResponse]]],
+    ) -> O:
+        output, _ = await execute_task
+        return output
 
     async def _await_output_stream[
         I: SerializeableShape,
@@ -247,9 +218,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         execute_task: Awaitable[tuple[O, OutputContext[I, O, TRequest, TResponse]]],
         output_event_type: "TypeForm[OE]",
         event_deserializer: Callable[[ShapeDeserializer], OE],
-    ) -> tuple[O, EventReceiver[OE]]:
+    ) -> tuple[O, AsyncEventReceiver[OE]]:
         output, output_context = await execute_task
-        output_stream = self.protocol.create_event_receiver(
+        output_stream = self._event_stream_protocol().create_event_receiver(
             operation=call.operation,
             request=output_context.transport_request,
             response=output_context.transport_response,
@@ -264,440 +235,68 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         call: ClientCall[I, O],
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> tuple[O, OutputContext[I, O, TRequest, TResponse]]:
-        _LOGGER.debug(
-            'Making request for operation "%s" with parameters: %s',
-            call.operation.schema.id.name,
-            call.input,
-        )
-        output_context = await self._handle_execution(call, request_future)
-        output_context = self._finalize_execution(call, output_context)
+        return await run_program_async(self._execute(call, request_future))
 
-        self._attach_response_metadata(output_context)
+    def _event_stream_protocol(self) -> AsyncClientProtocol[TRequest, TResponse]:
+        if not isinstance(self.protocol, AsyncClientProtocol):
+            raise UnsupportedStreamError(
+                f"The configured protocol ({type(self.protocol).__name__}) does not "
+                "support event streams."
+            )
+        return self.protocol  # type: ignore[reportUnknownVariableType]
 
-        if isinstance(output_context.response, Exception):
-            e = output_context.response
-            if not isinstance(e, SmithyError):
-                raise SmithyError(e) from e
-            raise e
+    async def _read_body(self, body: Any) -> bytes:
+        return await read_streaming_blob_async(body)
 
-        return output_context.response, output_context  # type: ignore
+    async def _sleep(self, delay: float) -> None:
+        await sleep(delay)
 
-    def _attach_response_metadata[I: SerializeableShape, O: DeserializeableShape](
+    async def _transmit(
         self,
-        output_context: OutputContext[I, O, TRequest | None, TResponse | None],
+        request_context: RequestContext[Any, TRequest],
+        request_future: Future[RequestContext[Any, TRequest]] | None,
+    ) -> TResponse:
+        if request_future is None:
+            # If we don't have an input stream, there's no point in creating a
+            # task, so we just immediately await the coroutine.
+            return await self.transport.send(request=request_context.transport_request)
+        # If we have an input event stream (or duplex event stream) then we need to
+        # let the client return ASAP so that it can start sending events. So here we
+        # start the transport send in a background task then set the result of the
+        # request future. It's important to sequence it just like that so that the
+        # client gets a stream that's ready to send.
+        transport_task = asyncio.create_task(
+            self.transport.send(request=request_context.transport_request)
+        )
+        request_future.set_result(request_context)
+        return await transport_task
+
+    def _fail_request_future(
+        self,
+        request_future: Future[RequestContext[Any, TRequest]] | None,
+        error: Exception,
     ) -> None:
-        """Attach metadata about the transport response to the result or error.
+        if request_future is not None and not request_future.done():
+            request_future.set_exception(error)
 
-        This runs for successes and failures alike, so that request identifiers
-        stay available to callers for debugging. Results that do not carry the
-        attribute are left untouched, as are cases where no response was received
-        at all.
-        """
-        result = output_context.response
-        transport_response = output_context.transport_response
 
-        # Only reachable for errors raised before a response arrived, such as a
-        # connection timeout. The default empty metadata is left in place, where
-        # a null status code records that nothing came back.
-        if transport_response is None:
-            return
+class AsyncClient[C](_ClientBase[C]):
+    """Shared async client machinery: lifecycle, setup gating, and call dispatch.
 
-        if not hasattr(result, "response_metadata"):
-            return
+    Generated clients subclass this with their config type and supply
+    ``_new_config``, plus ``_post_setup`` when setup needs more than plugins.
+    """
 
-        try:
-            metadata = self.protocol.extract_response_metadata(
-                response=transport_response,
-                context=output_context.properties,
-            )
-            setattr(result, "response_metadata", metadata)
-        except Exception as e:
-            # Metadata is diagnostic and must never fail a call. Both statements
-            # above can raise: a broken protocol, or the assignment itself if the
-            # output shape is frozen.
-            _LOGGER.debug("Unable to attach response metadata: %s", e)
+    _pipeline_type = AsyncRequestPipeline
+    _call_type = ClientCall
 
-    async def _handle_execution[I: SerializeableShape, O: DeserializeableShape](
+    def __init__(
         self,
-        call: ClientCall[I, O],
-        request_future: Future[RequestContext[I, TRequest]] | None,
-    ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
-        try:
-            interceptor = call.interceptor
-
-            input_context = InputContext(request=call.input, properties=call.context)
-            interceptor.read_before_execution(input_context)
-
-            input_context = replace(
-                input_context,
-                request=interceptor.modify_before_serialization(input_context),
-            )
-
-            interceptor.read_before_serialization(input_context)
-            _LOGGER.debug("Serializing request for: %s", input_context.request)
-
-            transport_request = self.protocol.serialize_request(
-                operation=call.operation,
-                input=call.input,
-                endpoint=_UNRESOLVED,
-                context=input_context.properties,
-            )
-            request_context = RequestContext(
-                request=input_context.request,
-                transport_request=transport_request,
-                properties=input_context.properties,
-            )
-
-            _LOGGER.debug(
-                "Serialization complete. Transport request: %s", transport_request
-            )
-        except Exception as e:
-            return OutputContext(
-                request=call.input,
-                response=e,
-                transport_request=None,
-                transport_response=None,
-                properties=call.context,
-            )
-
-        try:
-            interceptor.read_after_serialization(request_context)
-            request_context = replace(
-                request_context,
-                transport_request=interceptor.modify_before_retry_loop(request_context),
-            )
-
-            return await self._retry(call, request_context, request_future)
-        except Exception as e:
-            return OutputContext(
-                request=request_context.request,
-                response=e,
-                transport_request=request_context.transport_request,
-                transport_response=None,
-                properties=request_context.properties,
-            )
-
-    async def _retry[I: SerializeableShape, O: DeserializeableShape](
-        self,
-        call: ClientCall[I, O],
-        request_context: RequestContext[I, TRequest],
-        request_future: Future[RequestContext[I, TRequest]] | None,
-    ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
-        if not call.retryable():
-            return await self._handle_attempt(call, request_context, request_future)
-
-        retry_strategy = call.retry_strategy
-        retry_token = await retry_strategy.acquire_initial_retry_token(
-            token_scope=call.retry_scope
-        )
-
-        while True:
-            if retry_token.retry_delay:
-                await sleep(retry_token.retry_delay)
-
-            output_context = await self._handle_attempt(
-                call,
-                replace(
-                    request_context,
-                    transport_request=copy(request_context.transport_request),
-                ),
-                request_future,
-            )
-
-            if isinstance(output_context.response, Exception):
-                try:
-                    retry_token = await retry_strategy.refresh_retry_token_for_retry(
-                        token_to_renew=retry_token,
-                        error=output_context.response,
-                    )
-                except RetryError as retry_error:
-                    # Long-polling operations back off even when the retry quota
-                    # is exhausted; the strategy surfaces that delay here.
-                    if (
-                        call.operation.long_polling
-                        and retry_error.retry_after is not None
-                    ):
-                        await sleep(retry_error.retry_after)
-                    # Keeps the final attempt's response, so throttling and 5xx
-                    # failures still carry a request ID when _execute_request raises.
-                    return output_context
-
-                _LOGGER.debug(
-                    "Retry needed. Attempting request #%s in %.4f seconds.",
-                    retry_token.retry_count + 1,
-                    retry_token.retry_delay,
-                )
-
-                await seek(request_context.transport_request.body, 0)
-            else:
-                await retry_strategy.record_success(token=retry_token)
-                return output_context
-
-    async def _handle_attempt[I: SerializeableShape, O: DeserializeableShape](
-        self,
-        call: ClientCall[I, O],
-        request_context: RequestContext[I, TRequest],
-        request_future: Future[RequestContext[I, TRequest]] | None,
-    ) -> OutputContext[I, O, TRequest, TResponse | None]:
-        output_context: OutputContext[I, O, TRequest, TResponse | None]
-        # A modeled error arrives after the response does, so the response is kept
-        # here to report alongside it. Stays None if nothing came back.
-        transport_response: TResponse | None = None
-        try:
-            interceptor = call.interceptor
-            interceptor.read_before_attempt(request_context)
-
-            endpoint_params = EndpointResolverParams(
-                operation=call.operation,
-                input=call.input,
-                context=request_context.properties,
-            )
-            _LOGGER.debug("Calling endpoint resolver with params: %s", endpoint_params)
-            endpoint: Endpoint = await call.endpoint_resolver.resolve_endpoint(
-                endpoint_params
-            )
-            _LOGGER.debug("Endpoint resolver result: %s", endpoint)
-
-            request_context = replace(
-                request_context,
-                transport_request=self.protocol.set_service_endpoint(
-                    request=request_context.transport_request, endpoint=endpoint
-                ),
-            )
-
-            request_context = replace(
-                request_context,
-                transport_request=interceptor.modify_before_signing(request_context),
-            )
-            interceptor.read_before_signing(request_context)
-
-            auth_params = AuthParams[I, O](
-                protocol_id=self.protocol.id,
-                operation=call.operation,
-                context=request_context.properties,
-            )
-            auth = self._resolve_auth(call, auth_params)
-            if auth is not None:
-                option, scheme = auth
-                request_context.properties[AUTH_SCHEME] = scheme
-                identity_resolver = scheme.identity_resolver(context=call.context)
-
-                identity_properties = scheme.identity_properties(
-                    context=request_context.properties
-                )
-                identity_properties.update(option.identity_properties)
-
-                identity = await identity_resolver.get_identity(
-                    properties=identity_properties
-                )
-
-                signer_properties = scheme.signer_properties(
-                    context=request_context.properties
-                )
-                signer_properties.update(option.signer_properties)
-                _LOGGER.debug("Request to sign: %s", request_context.transport_request)
-                _LOGGER.debug("Signer properties: %s", signer_properties)
-
-                signer = scheme.signer()
-                request_context = replace(
-                    request_context,
-                    transport_request=await signer.sign(
-                        request=request_context.transport_request,
-                        identity=identity,
-                        properties=signer_properties,
-                    ),
-                )
-
-            interceptor.read_after_signing(request_context)
-            request_context = replace(
-                request_context,
-                transport_request=interceptor.modify_before_transmit(request_context),
-            )
-            interceptor.read_before_transmit(request_context)
-
-            _LOGGER.debug("Sending request %s", request_context.transport_request)
-
-            try:
-                if request_future is not None:
-                    # If we have an input event stream (or duplex event stream) then we
-                    # need to let the client return ASAP so that it can start sending
-                    # events. So here we start the transport send in a background task
-                    # then set the result of the request future. It's important to sequence
-                    # it just like that so that the client gets a stream that's ready
-                    # to send.
-                    transport_task = asyncio.create_task(
-                        self.transport.send(request=request_context.transport_request)
-                    )
-                    request_future.set_result(request_context)
-                    transport_response = await transport_task
-                else:
-                    # If we don't have an input stream, there's no point in creating a
-                    # task, so we just immediately await the coroutine.
-                    transport_response = await self.transport.send(
-                        request=request_context.transport_request
-                    )
-            except Exception as e:
-                if isinstance(e, self.transport.TIMEOUT_EXCEPTIONS):
-                    raise ClientTimeoutError(message="A timeout error occurred.") from e
-                raise
-
-            _LOGGER.debug("Received response: %s", transport_response)
-
-            response_context = ResponseContext(
-                request=request_context.request,
-                transport_request=request_context.transport_request,
-                transport_response=transport_response,
-                properties=request_context.properties,
-            )
-
-            interceptor.read_after_transmit(response_context)
-
-            response_context = replace(
-                response_context,
-                transport_response=interceptor.modify_before_deserialization(
-                    response_context
-                ),
-            )
-            transport_response = response_context.transport_response
-
-            interceptor.read_before_deserialization(response_context)
-
-            _LOGGER.debug(
-                "Deserializing response: %s", response_context.transport_response
-            )
-
-            output = await self.protocol.deserialize_response(
-                operation=call.operation,
-                request=response_context.transport_request,
-                response=response_context.transport_response,
-                error_registry=call.operation.error_registry,
-                context=response_context.properties,
-            )
-
-            _LOGGER.debug("Deserialization complete. Output: %s", output)
-
-            output_context = OutputContext(
-                request=response_context.request,
-                response=output,
-                transport_request=response_context.transport_request,
-                transport_response=response_context.transport_response,
-                properties=response_context.properties,
-            )
-
-            interceptor.read_after_deserialization(output_context)
-        except Exception as e:
-            output_context = OutputContext(
-                request=request_context.request,
-                response=e,
-                transport_request=request_context.transport_request,
-                transport_response=transport_response,
-                properties=request_context.properties,
-            )
-
-        return self._finalize_attempt(call, output_context)
-
-    def _resolve_auth[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[Any, Any], params: AuthParams[I, O]
-    ) -> tuple[AuthOption, AuthScheme[TRequest, Any, Any, Any]] | None:
-        auth_options: Sequence[AuthOption] = (
-            call.auth_scheme_resolver.resolve_auth_scheme(auth_parameters=params)
-        )
-
-        for option in auth_options:
-            if (
-                scheme := call.supported_auth_schemes.get(option.scheme_id)
-            ) is not None:
-                return option, scheme
-
-        return None
-
-    def _finalize_attempt[I: SerializeableShape, O: DeserializeableShape](
-        self,
-        call: ClientCall[I, O],
-        output_context: OutputContext[I, O, TRequest, TResponse | None],
-    ) -> OutputContext[I, O, TRequest, TResponse | None]:
-        interceptor = call.interceptor
-        try:
-            output_context = replace(
-                output_context,
-                response=interceptor.modify_before_attempt_completion(output_context),
-            )
-        except Exception as e:
-            output_context = replace(output_context, response=e)
-
-        try:
-            interceptor.read_after_attempt(output_context)
-        except Exception as e:
-            output_context = replace(output_context, response=e)
-
-        return output_context
-
-    def _finalize_execution[I: SerializeableShape, O: DeserializeableShape](
-        self,
-        call: ClientCall[I, O],
-        output_context: OutputContext[I, O, TRequest | None, TResponse | None],
-    ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
-        interceptor = call.interceptor
-        try:
-            output_context = replace(
-                output_context,
-                response=interceptor.modify_before_completion(output_context),
-            )
-
-            # TODO trace probe
-        except Exception as e:
-            output_context = replace(output_context, response=e)
-
-        try:
-            interceptor.read_after_execution(output_context)
-        except Exception as e:
-            output_context = replace(output_context, response=e)
-
-        return output_context
-
-
-class AsyncClient:
-    """Shared async client machinery: lifecycle, setup gating, and call dispatch."""
-
-    def __init__(self) -> None:
+        config: C | None = None,
+        plugins: list[Callable[[C], None]] | None = None,
+    ) -> None:
+        super().__init__(config, plugins)
         self._derive_lock = asyncio.Lock()
-        self._setup_done = False
-        self._closed = False
-        self._transport: ClientTransport[Any, Any] | None = None
-        self._retry_strategy_resolver = RetryStrategyResolver()
-
-    def _build_call[I: SerializeableShape, O: DeserializeableShape](
-        self,
-        input: I,
-        operation: APIOperation[I, O],
-        *,
-        config: Any,
-        retry_strategy: RetryStrategy,
-    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
-        """Build the pipeline and call from a resolved config and retry strategy."""
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
-        call = ClientCall(
-            input=input,
-            operation=operation,
-            context=_TypedProperties({"config": config}),
-            interceptor=InterceptorChain(config.interceptors),
-            auth_scheme_resolver=config.auth_scheme_resolver,
-            supported_auth_schemes=config.auth_schemes,
-            endpoint_resolver=config.endpoint_resolver,
-            retry_strategy=retry_strategy,
-        )
-        return pipeline, call
-
-    async def close(self) -> None:
-        """Close this client and any resources held by its transport."""
-        if self._closed:
-            return
-        async with self._derive_lock:
-            if self._closed:
-                return
-            self._closed = True
-            if self._setup_done and self._transport is not None:
-                await close(self._transport)
 
     async def __aenter__(self) -> Self:
         if self._closed:
@@ -706,3 +305,41 @@ class AsyncClient:
 
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         await self.close()
+
+    async def close(self) -> None:
+        """Close this client and any resources held by its transport."""
+        if self._closed:
+            return
+        async with self._derive_lock:
+            await run_program_async(self._close())
+
+    async def _ensure_setup(self) -> C:
+        if not self._setup_done:
+            async with self._derive_lock:
+                return await run_program_async(self._setup())
+        return self._config
+
+    async def _invoke[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        input: I | None,
+        operation: APIOperation[I, O],
+        default_plugins: list[Callable[[C], None]],
+        plugins: list[Callable[[C], None]] | None,
+    ) -> O:
+        pipeline, call = await self._prepare_call(
+            input, operation, default_plugins, plugins
+        )
+        return await pipeline(call)
+
+    async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        input: I | None,
+        operation: APIOperation[I, O],
+        default_plugins: list[Callable[[C], None]],
+        plugins: list[Callable[[C], None]] | None,
+    ) -> tuple[AsyncRequestPipeline[Any, Any], ClientCall[I, O]]:
+        self._raise_if_closed()
+        config = await self._ensure_setup()
+        return await run_program_async(
+            self._prepare(config, input, operation, default_plugins, plugins)
+        )

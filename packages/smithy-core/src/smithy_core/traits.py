@@ -19,6 +19,53 @@ if TYPE_CHECKING:
     from .documents import DocumentValue
 
 
+__all__ = [
+    "ORIGINAL_SHAPE_ID",
+    "APIKeyLocation",
+    "ContextParamTrait",
+    "DefaultTrait",
+    "DynamicTrait",
+    "EndpointTrait",
+    "EnumValueTrait",
+    "ErrorFault",
+    "ErrorTrait",
+    "EventHeaderTrait",
+    "EventPayloadTrait",
+    "HTTPAPIKeyAuthTrait",
+    "HTTPChecksumRequiredTrait",
+    "HTTPErrorTrait",
+    "HTTPHeaderTrait",
+    "HTTPLabelTrait",
+    "HTTPPayloadTrait",
+    "HTTPPrefixHeadersTrait",
+    "HTTPQueryParamsTrait",
+    "HTTPQueryTrait",
+    "HTTPResponseCodeTrait",
+    "HTTPTrait",
+    "HostLabelTrait",
+    "IdempotencyTokenTrait",
+    "InternalTrait",
+    "JSONNameTrait",
+    "LongPollTrait",
+    "MediaTypeTrait",
+    "OperationContextParamsTrait",
+    "RequiredTrait",
+    "RequiresLengthTrait",
+    "RpcV2CborTrait",
+    "SensitiveTrait",
+    "SparseTrait",
+    "StaticContextParamsTrait",
+    "StreamingTrait",
+    "TimestampFormatTrait",
+    "Trait",
+    "UnitTypeTrait",
+    "XMLAttributeTrait",
+    "XMLFlattenedTrait",
+    "XMLNameTrait",
+    "XMLNamespaceTrait",
+]
+
+
 @dataclass(kw_only=True, frozen=True, slots=True)
 class DynamicTrait:
     """A component that can be attached to a schema to describe additional information
@@ -210,6 +257,14 @@ class JSONNameTrait(Trait, id=ShapeID("smithy.api#jsonName")):
 class IdempotencyTokenTrait(Trait, id=ShapeID("smithy.api#idempotencyToken")):
     def __post_init__(self):
         assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class EnumValueTrait(Trait, id=ShapeID("smithy.api#enumValue")):
+    @property
+    def value(self) -> str | int:
+        assert isinstance(self.document_value, str | int)
+        return self.document_value
 
 
 @dataclass(init=False, frozen=True)
@@ -456,3 +511,49 @@ class XMLFlattenedTrait(Trait, id=ShapeID("smithy.api#xmlFlattened")):
 class XMLAttributeTrait(Trait, id=ShapeID("smithy.api#xmlAttribute")):
     def __post_init__(self):
         assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class ContextParamTrait(Trait, id=ShapeID("smithy.rules#contextParam")):
+    name: str = field(repr=False, hash=False, compare=False)
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        assert isinstance(self.document_value, Mapping)
+        name = self.document_value["name"]
+        assert isinstance(name, str)
+        object.__setattr__(self, "name", name)
+
+
+@dataclass(init=False, frozen=True)
+class StaticContextParamsTrait(Trait, id=ShapeID("smithy.rules#staticContextParams")):
+    values: Mapping[str, "DocumentValue"] = field(repr=False, hash=False, compare=False)
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        assert isinstance(self.document_value, Mapping)
+
+        values: dict[str, DocumentValue] = {}
+        for name, definition in self.document_value.items():
+            assert isinstance(definition, Mapping)
+            values[name] = definition["value"]
+        object.__setattr__(self, "values", values)
+
+
+@dataclass(init=False, frozen=True)
+class OperationContextParamsTrait(
+    Trait, id=ShapeID("smithy.rules#operationContextParams")
+):
+    paths: Mapping[str, str] = field(repr=False, hash=False, compare=False)
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        assert isinstance(self.document_value, Mapping)
+
+        paths: dict[str, str] = {}
+        for name, definition in self.document_value.items():
+            assert isinstance(definition, Mapping)
+            path = definition["path"]
+            assert isinstance(path, str)
+            paths[name] = path
+        object.__setattr__(self, "paths", paths)

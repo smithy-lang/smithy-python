@@ -1,0 +1,28 @@
+{
+  "changes": [
+    {
+      "type": "breaking",
+      "description": "Replaced `AsyncEventSigner` with the synchronous `EventSigner`, which is thread-safe."
+    },
+    {
+      "type": "breaking",
+      "description": "Moved `AsyncSigV4Signer` and `AsyncBytesReader` to `aws_sdk_signers.aio`, and `AsyncByteStream` and `AsyncSeekable` to `aws_sdk_signers.aio.interfaces.io`. `AsyncSigV4Signer` now also signs requests with sync bodies, and its `string_to_sign` and `generate_authorization_field` are synchronous."
+    },
+    {
+      "type": "breaking",
+      "description": "Declared explicit `__all__` exports on all public modules. Names that were previously importable only incidentally (via `from module import *` or as un-annotated module attributes) are no longer part of the public API; import public symbols by name from their documented module."
+    },
+    {
+      "type": "enhancement",
+      "description": "Added support for Python 3.15."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed `SigV4Signer` ignoring a preset `X-Amz-Content-SHA256` header and not signing event stream requests with the streaming payload hash."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed signing requests whose body can't be deep-copied, such as files and async generators. The signers now share the body with the signed request instead of copying it, so signing reads the original body directly."
+    }
+  ]
+}

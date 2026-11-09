@@ -3,6 +3,13 @@
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
+__all__ = [
+    "ErrorRetryInfo",
+    "RetryBackoffStrategy",
+    "RetryStrategy",
+    "RetryToken",
+]
+
 
 @runtime_checkable
 class ErrorRetryInfo(Protocol):
@@ -32,6 +39,46 @@ class ErrorRetryInfo(Protocol):
     """Whether the error is a timeout error."""
 
 
+@runtime_checkable
+class RetryStrategy(Protocol):
+    """Issuer of :py:class:`RetryToken`s."""
+
+    backoff_strategy: "RetryBackoffStrategy"
+    """The strategy used by returned tokens to compute delay duration values."""
+
+    max_attempts: int
+    """Upper limit on total attempt count (initial attempt plus retries)."""
+
+    def acquire_initial_retry_token(
+        self, *, token_scope: str | None = None
+    ) -> "RetryToken":
+        """Create a base retry token for the start of a request.
+
+        :param token_scope: An arbitrary string accepted by the retry strategy to
+            separate tokens into scopes.
+        :raises RetryError: If the retry strategy has no available tokens.
+        """
+        ...
+
+    def refresh_retry_token_for_retry(
+        self, *, token_to_renew: "RetryToken", error: Exception
+    ) -> "RetryToken":
+        """Replace an existing retry token from a failed attempt with a new token.
+
+        :param token_to_renew: The token used for the previous failed attempt.
+        :param error: The error that triggered the need for a retry.
+        :raises RetryError: If no further retry attempts are allowed.
+        """
+        ...
+
+    def record_success(self, *, token: "RetryToken") -> None:
+        """Return token after successful completion of an operation.
+
+        :param token: The token used for the previous successful attempt.
+        """
+        ...
+
+
 class RetryBackoffStrategy(Protocol):
     """Stateless strategy for computing retry delays based on retry attempt account."""
 
@@ -47,7 +94,7 @@ class RetryBackoffStrategy(Protocol):
 
 @dataclass(kw_only=True)
 class RetryToken(Protocol):
-    """Token issued by a :py:class:`smithy_core.aio.interfaces.retries.RetryStrategy` for the next attempt."""
+    """Token issued by a retry strategy for the next attempt."""
 
     retry_count: int
     """Retry count is the total number of attempts minus the initial attempt."""

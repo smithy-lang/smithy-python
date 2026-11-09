@@ -2,6 +2,8 @@
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
 
+__all__ = ["EMPTY_RESPONSE_METADATA", "ResponseMetadata"]
+
 
 @dataclass(frozen=True, kw_only=True)
 class ResponseMetadata:

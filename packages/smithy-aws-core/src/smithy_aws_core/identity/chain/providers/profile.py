@@ -2,10 +2,15 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.interfaces.identity import Identity
 
+from ....business_metrics import AwsFeatureId
 from ...components import AWSCredentialsIdentity
-from ...static import StaticCredentialsResolver
 from ..ordering import Standard, StandardProvider
-from ..provider import ChainSetup
+from ..provider import _ChainSetupBase  # pyright: ignore[reportPrivateUsage]
+
+__all__ = [
+    "ProfileSessionCredentialsProvider",
+    "ProfileStaticCredentialsProvider",
+]
 
 _ACCESS_KEY_ID = "aws_access_key_id"
 _SECRET_ACCESS_KEY = "aws_secret_access_key"  # noqa: S105
@@ -17,6 +22,9 @@ _ROLE_ARN = "role_arn"
 class ProfileSessionCredentialsProvider:
     """Adds a resolver for session credentials from the active profile."""
 
+    feature_ids = (AwsFeatureId.CREDENTIALS_PROFILE,)
+    """The features recorded when this provider's resolver returns credentials."""
+
     @property
     def name(self) -> str:
         """Return the canonical provider name."""
@@ -27,8 +35,8 @@ class ProfileSessionCredentialsProvider:
         """Return the provider's standard chain position."""
         return Standard(slot=StandardProvider.PROFILE_SESSION_KEYS)
 
-    async def setup(self, identity_type: type[Identity], setup: ChainSetup) -> None:
-        """Add a resolver for complete session credentials from the active profile."""
+    def setup(self, identity_type: type[Identity], setup: _ChainSetupBase) -> None:
+        """Add a resolver for complete credentials from the active profile."""
         if identity_type is not AWSCredentialsIdentity:
             return
 
@@ -52,11 +60,14 @@ class ProfileSessionCredentialsProvider:
             session_token=session_token,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        setup.add_terminal_resolver(StaticCredentialsResolver(identity))
+        setup._add_terminal(setup._static_resolver(identity))  # pyright: ignore[reportPrivateUsage]
 
 
 class ProfileStaticCredentialsProvider:
     """Adds a resolver for static credentials from the active profile."""
+
+    feature_ids = (AwsFeatureId.CREDENTIALS_PROFILE,)
+    """The features recorded when this provider's resolver returns credentials."""
 
     @property
     def name(self) -> str:
@@ -68,8 +79,8 @@ class ProfileStaticCredentialsProvider:
         """Return the provider's standard chain position."""
         return Standard(slot=StandardProvider.PROFILE_STATIC_KEYS)
 
-    async def setup(self, identity_type: type[Identity], setup: ChainSetup) -> None:
-        """Add a resolver for complete static credentials from the active profile."""
+    def setup(self, identity_type: type[Identity], setup: _ChainSetupBase) -> None:
+        """Add a resolver for complete credentials from the active profile."""
         if identity_type is not AWSCredentialsIdentity:
             return
 
@@ -91,4 +102,4 @@ class ProfileStaticCredentialsProvider:
             secret_access_key=secret_access_key,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        setup.add_terminal_resolver(StaticCredentialsResolver(identity))
+        setup._add_terminal(setup._static_resolver(identity))  # pyright: ignore[reportPrivateUsage]

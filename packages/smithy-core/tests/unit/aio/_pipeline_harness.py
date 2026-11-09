@@ -4,15 +4,17 @@ from dataclasses import dataclass
 from typing import Any, Self, cast
 
 from smithy_core import URI
-from smithy_core.aio.client import ClientCall, RequestPipeline
-from smithy_core.aio.interfaces import ClientProtocol
-from smithy_core.aio.interfaces.retries import RetryStrategy
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_core.aio.client import AsyncRequestPipeline
+from smithy_core.aio.interfaces import AsyncClientProtocol
+from smithy_core.client import ClientCall
 from smithy_core.deserializers import ShapeDeserializer
-from smithy_core.documents import TypeRegistry
-from smithy_core.endpoints import EndpointResolverParams
+from smithy_core.endpoints import EndpointAuthScheme, EndpointResolverParams
 from smithy_core.interceptors import InterceptorChain
+from smithy_core.interfaces.retries import RetryStrategy
+from smithy_core.prelude import BLOB
+from smithy_core.program import Program
 from smithy_core.response import EMPTY_RESPONSE_METADATA, ResponseMetadata
+from smithy_core.retries import SimpleRetryStrategy
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
@@ -70,35 +72,76 @@ _UNARY_OUTPUT_SCHEMA = Schema.collection(
     members={"message": {"target": _STRING}},
 )
 
-OPERATION = APIOperation(
-    input=StubInput,
-    output=StubOutput,
-    schema=Schema(
-        id=ShapeID("com.example#StreamingOperation"),
-        shape_type=ShapeType.OPERATION,
-    ),
-    input_schema=_INPUT_SCHEMA,
-    output_schema=_OUTPUT_SCHEMA,
-    error_registry=TypeRegistry({}),
-    effective_auth_schemes=[],
-    error_schemas=[],
+
+class _StubRegistry:
+    """A hand-built operation's model registry: maps shape name to its stub type."""
+
+    def __init__(self, classes: dict[str, type]) -> None:
+        self._classes = classes
+
+    def build(self, name: str) -> type:
+        return self._classes[name]
+
+
+_STUB_REGISTRY = _StubRegistry(
+    {
+        "StreamingInput": StubInput,
+        "StreamingOutput": StubOutput,
+        "UnaryInput": StubInput,
+        "UnaryOutput": StubOutput,
+        "DataStreamInput": StubInput,
+    }
 )
 
-# ``ClientCall.retryable()`` is False for operations with a streaming input, so
+OPERATION: APIOperation[StubInput, StubOutput] = APIOperation(
+    static_schema=(
+        ShapeType.OPERATION.value,
+        "com.example",
+        "StreamingOperation",
+        0,
+        _INPUT_SCHEMA,
+        _OUTPUT_SCHEMA,
+        (),
+    ),
+    model_registry=_STUB_REGISTRY,
+    effective_auth_schemes=[],
+)
+
+_DATA_STREAM_INPUT_SCHEMA = Schema.collection(
+    id=ShapeID("com.example#DataStreamInput"),
+    members={"body": {"target": BLOB, "traits": [StreamingTrait()]}},
+)
+
+# An operation whose input is a data stream rather than an event stream.
+DATA_STREAM_OPERATION: APIOperation[StubInput, StubOutput] = APIOperation(
+    static_schema=(
+        ShapeType.OPERATION.value,
+        "com.example",
+        "DataStreamOperation",
+        0,
+        _DATA_STREAM_INPUT_SCHEMA,
+        _UNARY_OUTPUT_SCHEMA,
+        (),
+    ),
+    model_registry=_STUB_REGISTRY,
+    effective_auth_schemes=[],
+)
+
+# ``ClientCall.retryable()`` is False for operations with an input event stream, so
 # OPERATION above never enters the retry loop. This one has no input stream and so
 # exercises it.
-UNARY_OPERATION = APIOperation(
-    input=StubInput,
-    output=StubOutput,
-    schema=Schema(
-        id=ShapeID("com.example#UnaryOperation"),
-        shape_type=ShapeType.OPERATION,
+UNARY_OPERATION: APIOperation[StubInput, StubOutput] = APIOperation(
+    static_schema=(
+        ShapeType.OPERATION.value,
+        "com.example",
+        "UnaryOperation",
+        0,
+        _UNARY_INPUT_SCHEMA,
+        _UNARY_OUTPUT_SCHEMA,
+        (),
     ),
-    input_schema=_UNARY_INPUT_SCHEMA,
-    output_schema=_UNARY_OUTPUT_SCHEMA,
-    error_registry=TypeRegistry({}),
+    model_registry=_STUB_REGISTRY,
     effective_auth_schemes=[],
-    error_schemas=[],
 )
 
 
@@ -107,18 +150,12 @@ class StubRequest:
         self.destination = URI(host="example.com")
         self.body = b""
 
-    async def consume_body_async(self) -> bytes:
-        return b""
-
     def consume_body(self) -> bytes:
         return b""
 
 
 class StubResponse:
     body = b""
-
-    async def consume_body_async(self) -> bytes:
-        return b""
 
     def consume_body(self) -> bytes:
         return b""
@@ -143,6 +180,7 @@ class StubEventReceiver:
 class StubProtocol:
     def __init__(self) -> None:
         self.serialize_request_calls = 0
+        self.serialized_inputs: list[Any] = []
         self.set_service_endpoint_calls = 0
         self.deserialize_response_calls = 0
         self.create_event_publisher_calls = 0
@@ -162,11 +200,16 @@ class StubProtocol:
 
     def serialize_request(self, **kwargs: Any) -> StubRequest:
         self.serialize_request_calls += 1
+        self.serialized_inputs.append(kwargs["input"])
         return StubRequest()
 
     def set_service_endpoint(self, *, request: Any, endpoint: Any) -> Any:
         self.set_service_endpoint_calls += 1
         return request
+
+    def deserialize_response_program(self, **kwargs: Any) -> Program[StubOutput]:
+        del kwargs["read_body"]
+        return (yield lambda: self.deserialize_response(**kwargs))
 
     async def deserialize_response(self, **kwargs: Any) -> StubOutput:
         self.deserialize_response_calls += 1
@@ -178,7 +221,7 @@ class StubProtocol:
             raise self.extract_response_metadata_error
         return self.stub_response_metadata
 
-    def create_event_publisher(self, **kwargs: Any) -> StubEventPublisher:
+    async def create_event_publisher(self, **kwargs: Any) -> StubEventPublisher:
         self.create_event_publisher_calls += 1
         return StubEventPublisher()
 
@@ -191,10 +234,15 @@ class StubEndpoint:
     def __init__(self) -> None:
         self.uri = URI(host="example.com")
         self.properties = TypedProperties()
+        self.auth_schemes: tuple[EndpointAuthScheme, ...] = ()
 
 
 class StubEndpointResolver:
-    async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Any:
+    def __init__(self) -> None:
+        self.resolved_inputs: list[Any] = []
+
+    def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Any:
+        self.resolved_inputs.append(params.input)
         return StubEndpoint()
 
 
@@ -228,13 +276,13 @@ class DuplexTransport(UndeclaredTransport):
 class PipelineHarness:
     protocol: StubProtocol
     transport: UndeclaredTransport
-    pipeline: RequestPipeline[Any, Any]
+    pipeline: AsyncRequestPipeline[Any, Any]
 
 
 def pipeline_harness(transport: UndeclaredTransport) -> PipelineHarness:
     protocol = StubProtocol()
-    pipeline = RequestPipeline(
-        protocol=cast("ClientProtocol[Any, Any]", protocol),
+    pipeline = AsyncRequestPipeline(
+        protocol=cast("AsyncClientProtocol[Any, Any]", protocol),
         transport=transport,
     )
     return PipelineHarness(protocol=protocol, transport=transport, pipeline=pipeline)

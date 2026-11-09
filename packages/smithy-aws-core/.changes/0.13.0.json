@@ -1,0 +1,120 @@
+{
+  "changes": [
+    {
+      "type": "breaking",
+      "description": "`smithy_aws_core.identity.EnvironmentCredentialsResolver` is now the synchronous resolver. Async code uses `smithy_aws_core.aio.identity.AsyncEnvironmentCredentialsResolver`."
+    },
+    {
+      "type": "breaking",
+      "description": "Declared explicit `__all__` exports on all public modules. Names that were previously importable only incidentally (via `from module import *` or as un-annotated module attributes) are no longer part of the public API; import public symbols by name from their documented module."
+    },
+    {
+      "type": "breaking",
+      "description": "Removed `AsyncStandardRegionalEndpointsResolver` and its `smithy_aws_core.aio.endpoints` module, along with `smithy_aws_core.endpoints.RegionalEndpointConfig` and `REGIONAL_ENDPOINT_CONFIG`. Generated AWS clients now resolve endpoints from the service's endpoint rules with `smithy_core.endpoints.BddEndpointResolver` and `smithy_aws_core.endpoints.AWS_RULES_EXTENSION`."
+    },
+    {
+      "type": "breaking",
+      "description": "Removed `smithy_aws_core.aio.config.resolvers`. The resolvers in `smithy_aws_core.config.resolvers` have `*_program` forms, such as `resolve_use_fips_endpoint_program` and `EndpointUriResolver(...).program`, that serve as sync and async config field resolvers."
+    },
+    {
+      "type": "breaking",
+      "description": "Added the `Async` prefix to async helpers: `smithy_aws_core.aio.auth.sigv4.SigV4Config` is now `AsyncSigV4Config`, and `ContainerMetadataClient`, `TokenCache` and `EC2Metadata` are now `AsyncContainerMetadataClient`, `AsyncTokenCache` and `AsyncEC2Metadata`. The IMDS `Config` moved to `smithy_aws_core.identity.imds`."
+    },
+    {
+      "type": "breaking",
+      "description": "Moved async implementations to `smithy_aws_core.aio` and added the `Async` prefix to their names, for example `AsyncAwsJson10ClientProtocol`, `AsyncSigV4AuthScheme`, `AsyncIdentityChain`, `AsyncAwsConfig` and the credential resolvers (`AsyncContainerCredentialsResolver`, `AsyncIMDSCredentialsResolver`, `AsyncProcessCredentialsResolver`). The unprefixed names are reserved for sync implementations, and some, like `StaticCredentialsResolver`, are already sync. Update imports to the `aio` paths."
+    },
+    {
+      "type": "breaking",
+      "description": "Async AWS protocols now compose an event stream mixin with the sync protocol. Removed `AsyncAwsQueryClientProtocol` and `AsyncEc2QueryClientProtocol`, which have no event streams; async clients use `AwsQueryClientProtocol` and `Ec2QueryClientProtocol`."
+    },
+    {
+      "type": "breaking",
+      "description": "Renamed `smithy_aws_core.aio.config.AwsConfigOverrides` to `AsyncAwsConfigOverrides`, and the async chain types `ChainSetup`, `NamedResolver` and `ChainIdentityProvider` to `AsyncChainSetup`, `AsyncNamedResolver` and `AsyncChainIdentityProvider`. Removed the `Async*Provider` chain providers; the built-in providers in `smithy_aws_core.identity.chain.providers` serve both chains."
+    },
+    {
+      "type": "feature",
+      "description": "Track the credential source (code, environment variables, profile, credential process) and resolved account ID in the User Agent business metrics (`m/`) of sync and async clients."
+    },
+    {
+      "type": "feature",
+      "description": "Added synchronous AWS support: `AwsConfig`, the protocols in `smithy_aws_core.protocols`, `SigV4AuthScheme`, `IdentityChain`, `StandardRegionalEndpointsResolver` and the sync credentials resolvers."
+    },
+    {
+      "type": "feature",
+      "description": "Added request checksum calculation for operations with the `httpChecksum` trait, configured with the new `request_checksum_calculation` setting (`AWS_REQUEST_CHECKSUM_CALCULATION`). Checksums default to CRC64NVME, are sent in a header, and are reused on retries. A checksum set on the request is sent as is. Choosing an algorithm the SDK can't calculate raises `UnsupportedChecksumAlgorithmError`."
+    },
+    {
+      "type": "feature",
+      "description": "Add User Agent business metrics to the `User-Agent` header (`m/`), tracking the retry mode and endpoint override."
+    },
+    {
+      "type": "feature",
+      "description": "Added client-side event stream support for the awsJson1.0 and awsJson1.1 protocols."
+    },
+    {
+      "type": "feature",
+      "description": "Added `HTTPChecksumTrait` for the `aws.protocols#httpChecksum` trait."
+    },
+    {
+      "type": "feature",
+      "description": "Added response checksum validation for operations with the `httpChecksum` trait, for sync and async clients, configured with the new `response_checksum_validation` setting (`AWS_RESPONSE_CHECKSUM_VALIDATION`). Validation happens when the response payload is read to the end, through `smithy_aws_core.checksums.ChecksumStream` or `smithy_aws_core.aio.checksums.AsyncChecksumStream`, and a mismatch raises `ChecksumMismatchError`."
+    },
+    {
+      "type": "feature",
+      "description": "Added `smithy_aws_core.endpoints.AWS_RULES_EXTENSION`, which adds AWS support to endpoint rules resolution. It provides the `aws.partition`, `aws.parseArn` and `aws.isVirtualHostableS3Bucket` functions, binds the AWS built-ins to client config, turns the endpoint's `sigv4` auth scheme into signer property overrides, and maps `sigv4a` and `sigv4-s3express` to their scheme IDs."
+    },
+    {
+      "type": "enhancement",
+      "description": "The `AWS_RETRY_MODE` environment variable and `retry_mode` config setting now accept `adaptive` instead of falling back to `standard` with a warning."
+    },
+    {
+      "type": "enhancement",
+      "description": "Add the `exec-env/` field to the User-Agent header from the `AWS_EXECUTION_ENV` environment variable, and log a warning when `sdk_ua_app_id` is longer than 50 characters."
+    },
+    {
+      "type": "enhancement",
+      "description": "Reused parsed XML response trees across AWS Query and Rest XML metadata, error identification, and shape deserialization."
+    },
+    {
+      "type": "enhancement",
+      "description": "Added support for Python 3.15."
+    },
+    {
+      "type": "bugfix",
+      "description": "`AWSCredentialsIdentity` no longer includes `secret_access_key` or `session_token` in its repr, which keeps them out of debug logs."
+    },
+    {
+      "type": "dependency",
+      "description": "Added a `checksums` extra that installs `smithy-checksums`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-core` from `~=0.9.0` to `~=0.10.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-http` from `~=0.6.0` to `~=0.7.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `aws-sdk-signers` from `~=0.4.0` to `~=0.5.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-checksums` from `~=0.0.0` to `~=0.1.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-aws-event-stream` from `~=0.3.0` to `~=0.4.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-json` from `~=0.3.0` to `~=0.4.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-xml` from `~=0.2.0` to `~=0.3.0`."
+    }
+  ]
+}

@@ -2,4 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 """A Smithy code generator for Python clients and types."""
 
-__version__ = "0.1.0"
+__all__: list[str] = []
+
+__version__ = "0.2.0"

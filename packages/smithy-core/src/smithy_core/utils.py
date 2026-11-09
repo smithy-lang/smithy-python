@@ -6,8 +6,31 @@ from decimal import Decimal
 from math import isinf, isnan
 from types import UnionType
 from typing import Any, overload
+from urllib.parse import urlsplit
 
-from .exceptions import ExpectationNotMetError
+from . import URI as _URI
+from .exceptions import AsyncBodyError, ExpectationNotMetError
+from .interfaces import AnyStreamingBlob, BytesReader, StreamingBlob, is_bytes_reader
+from .rfc3986 import UNRESERVED_HOST_MATCHER as _UNRESERVED_HOST_MATCHER
+
+__all__ = [
+    "RFC3339",
+    "RFC3339_MICRO",
+    "ensure_utc",
+    "epoch_seconds_to_datetime",
+    "expect_type",
+    "limited_parse_float",
+    "limited_serialize_float",
+    "parse_uri",
+    "read_streaming_blob",
+    "remove_dot_segments",
+    "serialize_epoch_seconds",
+    "serialize_float",
+    "serialize_rfc3339",
+    "split_every",
+    "strict_parse_bool",
+    "strict_parse_float",
+]
 
 RFC3339 = "%Y-%m-%dT%H:%M:%SZ"
 # Same as RFC3339, but with microsecond precision.
@@ -252,3 +275,63 @@ def remove_dot_segments(path: str, remove_consecutive_slashes: bool = False) -> 
     if remove_consecutive_slashes:
         result = result.replace("//", "/")
     return result
+
+
+def parse_uri(url: str) -> _URI:
+    """Parse an absolute URI, keeping the host as written.
+
+    :param url: The URI to parse.
+    :raises ExpectationNotMetError: If it has no scheme or host, or an invalid port.
+    """
+    # An http or https URL with a host of unreserved characters and no port, query
+    # or fragment is split directly: urlsplit would return it unchanged.
+    scheme, _, rest = url.partition("://")
+    host, slash, path = rest.partition("/")
+    if (
+        (scheme == "https" or scheme == "http")
+        and _UNRESERVED_HOST_MATCHER.fullmatch(host)
+        and "?" not in path
+        and "#" not in path
+        and path.isprintable()
+    ):
+        return _URI(scheme=scheme, host=host, path=slash + path or None)
+    try:
+        parts = urlsplit(url)
+        port = parts.port  # Validates the port and its range.
+    except ValueError as e:
+        raise ExpectationNotMetError(f"Invalid URI: {url}") from e
+    # urlsplit lowercases hostname; take the host from the authority instead.
+    host = parts.netloc.rpartition("@")[2]
+    if host.startswith("["):
+        host = host[1 : host.index("]")]
+    else:
+        host = host.partition(":")[0]
+    if not parts.scheme or not host:
+        raise ExpectationNotMetError(f"Invalid URI: {url}")
+    return _URI(
+        scheme=parts.scheme,
+        username=parts.username,
+        password=parts.password,
+        host=host,
+        port=port,
+        path=parts.path or None,
+        query=parts.query or None,
+        fragment=parts.fragment or None,
+    )
+
+
+def read_streaming_blob(body: AnyStreamingBlob) -> bytes:
+    """Synchronously reads a streaming blob into bytes.
+
+    :param body: The streaming blob to read from.
+    :raises AsyncBodyError: If the body is an async type.
+    """
+    match body:
+        case bytes():
+            return body
+        case bytearray():
+            return bytes(body)
+        case BytesReader() if is_bytes_reader(body):
+            return body.read()
+        case _:
+            raise AsyncBodyError(f"Expected type {StreamingBlob}, but was {type(body)}")

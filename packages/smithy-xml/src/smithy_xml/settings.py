@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 from smithy_core.types import TimestampFormat
 
+__all__ = ["XMLSettings"]
+
 
 @dataclass(slots=True)
 class XMLSettings:

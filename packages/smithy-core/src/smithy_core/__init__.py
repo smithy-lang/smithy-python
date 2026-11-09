@@ -8,7 +8,9 @@ from urllib.parse import urlunparse
 from . import interfaces, rfc3986
 from .exceptions import SmithyError
 
-__version__ = "0.9.0"
+__all__ = ["URI", "HostType", "SmithyError", "interfaces", "rfc3986"]
+
+__version__ = "0.10.0"
 
 
 class HostType(Enum):
@@ -57,10 +59,15 @@ class URI(interfaces.URI):
 
     def __post_init__(self) -> None:
         """Validate host component."""
-        if not rfc3986.HOST_MATCHER.match(self.host) and not rfc3986.IPv6_MATCHER.match(
-            f"[{self.host}]"
+        host = self.host
+        # The full host matcher accepts every unreserved host; checking those first
+        # skips its cost.
+        if (
+            rfc3986.UNRESERVED_HOST_MATCHER.fullmatch(host) is None
+            and not rfc3986.HOST_MATCHER.match(host)
+            and not rfc3986.IPv6_MATCHER.match(f"[{host}]")
         ):
-            raise SmithyError(f"Invalid host: {self.host}")
+            raise SmithyError(f"Invalid host: {host}")
 
     @property
     def netloc(self) -> str:

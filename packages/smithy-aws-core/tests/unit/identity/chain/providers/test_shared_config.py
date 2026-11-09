@@ -4,22 +4,22 @@ from collections.abc import Awaitable, Callable
 from unittest.mock import AsyncMock
 
 import pytest
+from smithy_aws_core.aio import config as shared_config_module
+from smithy_aws_core.aio.identity.chain.provider import AsyncChainSetup
 from smithy_aws_core.config.merged_config import MergedConfig
-from smithy_aws_core.identity.chain.provider import ChainSetup
-from smithy_aws_core.identity.chain.providers import (
-    shared_config as shared_config_module,
+from smithy_aws_core.identity.chain.providers.shared_config import (
+    SharedConfigProvider,
 )
-from smithy_aws_core.identity.chain.providers.shared_config import SharedConfigProvider
 
 from .conftest import OtherIdentity
 
 
 async def test_ignores_non_aws_identity_type(
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     load_config = AsyncMock()
-    monkeypatch.setattr(shared_config_module, "load_config", load_config)
+    monkeypatch.setattr(shared_config_module, "load_config_async", load_config)
 
     setup = await setup_provider(SharedConfigProvider(), identity_type=OtherIdentity)
 
@@ -42,7 +42,7 @@ async def test_selects_profile_without_reloading(
     profile_name: str | None,
     environment_profile: str | None,
     expected: str,
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     merged_config: Callable[..., MergedConfig],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -52,7 +52,7 @@ async def test_selects_profile_without_reloading(
     else:
         monkeypatch.setenv("AWS_PROFILE", environment_profile)
     load_config = AsyncMock()
-    monkeypatch.setattr(shared_config_module, "load_config", load_config)
+    monkeypatch.setattr(shared_config_module, "load_config_async", load_config)
 
     setup = await setup_provider(
         SharedConfigProvider(),
@@ -67,13 +67,13 @@ async def test_selects_profile_without_reloading(
 
 
 async def test_loads_when_not_preloaded(
-    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
     merged_config: Callable[..., MergedConfig],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     loaded = merged_config({"default": {"name": "loaded"}})
     load_config = AsyncMock(return_value=loaded)
-    monkeypatch.setattr(shared_config_module, "load_config", load_config)
+    monkeypatch.setattr(shared_config_module, "load_config_async", load_config)
     monkeypatch.delenv("AWS_PROFILE", raising=False)
 
     setup = await setup_provider(SharedConfigProvider())

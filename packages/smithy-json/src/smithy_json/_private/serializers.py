@@ -1,17 +1,18 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
-import re
 from base64 import b64encode
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import AbstractContextManager
 from datetime import datetime
 from decimal import Decimal
 from io import BufferedWriter, RawIOBase
+from json.encoder import encode_basestring
 from types import TracebackType
 from typing import Self
 
 from smithy_core.documents import Document, DocumentValue
+from smithy_core.exceptions import SerializationError
 from smithy_core.interfaces import BytesWriter
 from smithy_core.schemas import Schema
 from smithy_core.serializers import (
@@ -19,6 +20,7 @@ from smithy_core.serializers import (
     MapSerializer,
     ShapeSerializer,
 )
+from smithy_core.shapes import ShapeType
 from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 from smithy_core.types import TimestampFormat
 
@@ -27,30 +29,6 @@ from . import Flushable
 
 _INF: float = float("inf")
 _NEG_INF: float = float("-inf")
-
-# RFC 8259 §7: All control characters U+0000 through U+001F MUST be escaped.
-_ESCAPE_MAP: dict[str, str] = {
-    "\\": "\\\\",
-    '"': '\\"',
-    "\n": "\\n",
-    "\r": "\\r",
-    "\t": "\\t",
-    "\b": "\\b",
-    "\f": "\\f",
-}
-_CHARS_TO_ESCAPE = re.compile(r'[\\"\x00-\x1f]')
-
-
-def _escape_char(match: re.Match[str]) -> str:
-    c = match.group()
-    if c in _ESCAPE_MAP:
-        return _ESCAPE_MAP[c]
-    return f"\\u{ord(c):04x}"
-
-
-def _escape_string(value: str) -> str:
-    """Escape a string value per RFC 8259 §7."""
-    return _CHARS_TO_ESCAPE.sub(_escape_char, value)
 
 
 class JSONShapeSerializer(ShapeSerializer):
@@ -85,8 +63,31 @@ class JSONShapeSerializer(ShapeSerializer):
     def write_float(self, schema: "Schema", value: float) -> None:
         self._stream.write_float(value)
 
+    def write_big_integer(self, schema: "Schema", value: int) -> None:
+        # The shape_type guard keeps untyped document numbers as JSON numbers.
+        if (
+            self._settings.arbitrary_precision_as_string
+            and schema.shape_type is ShapeType.BIG_INTEGER
+        ):
+            self._stream.write_string(str(value))
+        else:
+            self._stream.write_int(value)
+
     def write_big_decimal(self, schema: "Schema", value: Decimal) -> None:
-        self._stream.write_float(value)
+        # The shape_type guard keeps untyped document numbers as JSON numbers.
+        if (
+            self._settings.arbitrary_precision_as_string
+            and schema.shape_type is ShapeType.BIG_DECIMAL
+        ):
+            if not value.is_finite():
+                raise SerializationError(
+                    "bigDecimal values must be finite to serialize as a string, "
+                    f"got {value}"
+                )
+            # str() preserves the caller's precision; don't normalize().
+            self._stream.write_string(str(value))
+        else:
+            self._stream.write_float(value)
 
     def write_string(self, schema: "Schema", value: str) -> None:
         self._stream.write_string(value)
@@ -295,9 +296,7 @@ class StreamingJSONEncoder:
                 self.write_array_end()
 
     def write_string(self, value: str) -> None:
-        self._sink.write(b'"')
-        self._sink.write(_escape_string(value).encode("utf-8"))
-        self._sink.write(b'"')
+        self._sink.write(encode_basestring(value).encode("utf-8"))
 
     def write_int(self, value: int) -> None:
         # int() unwraps IntEnum members; otherwise repr would emit "<MyEnum.A: 1>".

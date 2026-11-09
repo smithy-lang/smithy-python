@@ -1,0 +1,7 @@
+# The Rust toolchain used to develop and test the native extensions in packages/.
+# Builds from a source distribution use the installed toolchain instead, as long as
+# it meets the package's rust-version.
+[toolchain]
+channel = "1.99.1"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

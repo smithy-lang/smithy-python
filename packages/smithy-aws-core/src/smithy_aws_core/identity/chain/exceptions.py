@@ -1,10 +1,15 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
-from typing import Any
 
-from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyError, SmithyIdentityError
+
+__all__ = [
+    "IdentityChainConfigurationError",
+    "IdentityChainError",
+    "IdentityResolverFailure",
+    "UnclaimedSource",
+]
 
 
 class IdentityChainConfigurationError(SmithyError):
@@ -34,7 +39,6 @@ class IdentityResolverFailure:
     """A failed identity resolution attempt."""
 
     provider_name: str
-    resolver: IdentityResolver[Any, Any]
     error: SmithyIdentityError
 
 

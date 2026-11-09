@@ -19,6 +19,32 @@ https://github.com/python-hyper/rfc3986/blob/main/src/rfc3986/misc.py
 
 import re
 
+__all__ = [
+    "HEXDIG_RE",
+    "HOST_MATCHER",
+    "HOST_PATTERN",
+    "HOST_RE",
+    "IP_LITERAL_RE",
+    "IPv4_MATCHER",
+    "IPv4_RE",
+    "IPv6_ADDRZ_RE",
+    "IPv6_ADDRZ_RFC4007_RE",
+    "IPv6_MATCHER",
+    "IPv6_NO_RFC4007_MATCHER",
+    "IPv6_RE",
+    "IPv_FUTURE_RE",
+    "LS32_RE",
+    "PCHAR",
+    "PCT_ENCODED",
+    "PERCENT_ENCODED",
+    "REG_NAME",
+    "REGULAR_NAME_RE",
+    "SUB_DELIMITERS_RE",
+    "UNRESERVED_HOST_MATCHER",
+    "UNRESERVED_RE",
+    "ZONE_ID",
+]
+
 # #########################
 # Start abnf_regexp.py
 # #########################
@@ -118,3 +144,10 @@ IPv6_NO_RFC4007_MATCHER = re.compile(r"^\[%s\]$" % (IPv6_ADDRZ_RE))
 # #########################
 # End misc.py
 # #########################
+
+UNRESERVED_HOST_MATCHER = re.compile(f"[{UNRESERVED_RE}]+")
+"""Fully matches a host made only of unreserved characters.
+
+Such a host is a valid reg-name, with no port, userinfo or brackets. Use
+``fullmatch``: the pattern isn't anchored.
+"""

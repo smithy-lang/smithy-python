@@ -8,6 +8,13 @@ import uuid
 from collections.abc import Mapping
 from typing import Protocol
 
+__all__ = (
+    "HEADERS_DICT",
+    "HEADER_VALUE",
+    "EventHeaderEncoder",
+    "EventMessage",
+)
+
 type HEADER_VALUE = bool | int | bytes | str | datetime.datetime | uuid.UUID
 """A union of valid value types for event headers."""
 

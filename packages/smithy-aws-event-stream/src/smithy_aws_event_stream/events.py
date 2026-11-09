@@ -16,10 +16,10 @@ from dataclasses import dataclass, field
 from io import BytesIO
 from struct import pack, unpack
 from types import MappingProxyType
-from typing import Literal, Self
+from typing import Any, Literal, Self
 
-from smithy_core.aio.interfaces import AsyncByteStream
 from smithy_core.interfaces import BytesReader
+from smithy_core.program import Program, run_program
 from smithy_core.types import TimestampFormat
 
 from .exceptions import (
@@ -32,6 +32,24 @@ from .exceptions import (
     InvalidIntegerValue,
     InvalidPayloadLength,
 )
+
+__all__ = [
+    "HEADERS_DICT",
+    "HEADER_VALUE",
+    "MAX_HEADERS_LENGTH",
+    "MAX_HEADER_VALUE_BYTE_LENGTH",
+    "MAX_PAYLOAD_LENGTH",
+    "Byte",
+    "BytesLike",
+    "Event",
+    "EventHeaderDecoder",
+    "EventHeaderEncoder",
+    "EventMessage",
+    "EventPrelude",
+    "Long",
+    "Short",
+    "SizedInt",
+]
 
 MAX_HEADERS_LENGTH = 128 * 1024  # 128 Kb
 MAX_HEADER_VALUE_BYTE_LENGTH = 32 * 1024 - 1  # 32Kb
@@ -204,16 +222,6 @@ class EventMessage:
         if len(self.payload) > MAX_PAYLOAD_LENGTH:
             raise InvalidPayloadLength(len(self.payload))
 
-    def _get_headers_bytes(self) -> bytes:
-        encoder = EventHeaderEncoder()
-        encoder.encode_headers(self.headers)
-        return encoder.get_result()
-
-    def encode(self) -> bytes:
-        return _EventEncoder().encode_bytes(
-            headers=self._get_headers_bytes(), payload=self.payload
-        )
-
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, EventMessage):
             return False
@@ -224,6 +232,16 @@ class EventMessage:
                 self._get_headers_bytes() == other._get_headers_bytes(),
             ]
         )
+
+    def encode(self) -> bytes:
+        return _EventEncoder().encode_bytes(
+            headers=self._get_headers_bytes(), payload=self.payload
+        )
+
+    def _get_headers_bytes(self) -> bytes:
+        encoder = EventHeaderEncoder()
+        encoder.encode_headers(self.headers)
+        return encoder.get_result()
 
 
 @dataclass(frozen=True)
@@ -253,60 +271,19 @@ class Event:
         :returns: An Event representing the next event on the source, or None if no
             data can be read from the source.
         """
-
-        prelude_bytes = source.read(8)
-        if not prelude_bytes:
-            # If nothing can be read from the source, return None. If bytes are missing
-            # later, that indicates a problem with the source and therefore will result
-            # in an exception.
-            return None
-
-        prelude_crc_bytes = source.read(4)
-        try:
-            prelude_crc: int = _DecodeUtils.unpack_uint32(prelude_crc_bytes)[0]
-            total_length, headers_length = unpack("!II", prelude_bytes)
-        except struct.error as e:
-            raise InvalidEventBytes() from e
-
-        _validate_checksum(prelude_bytes, prelude_crc)
-        prelude = EventPrelude(
-            total_length=total_length, headers_length=headers_length, crc=prelude_crc
-        )
-
-        message_bytes = source.read(total_length - _MESSAGE_METADATA_SIZE)
-        try:
-            crc: int = _DecodeUtils.unpack_uint32(source.read(4))[0]
-        except struct.error as e:
-            raise InvalidEventBytes() from e
-
-        _validate_checksum(prelude_crc_bytes + message_bytes, crc, prelude_crc)
-
-        headers_bytes = message_bytes[: prelude.headers_length]
-        message = EventMessage(
-            headers=EventHeaderDecoder(headers_bytes).decode_headers(),
-            payload=message_bytes[prelude.headers_length :],
-        )
-        return cls(prelude, message, crc)
+        return run_program(cls._decode(source.read))
 
     @classmethod
-    async def decode_async(cls, source: AsyncByteStream) -> Self | None:
-        """Decode an event from an async byte stream.
-
-        :param source: An object to read event bytes from. It must have a `read` method
-            that accepts a number of bytes to read.
-
-        :returns: An Event representing the next event on the source, or None if no
-            data can be read from the source.
-        """
-
-        prelude_bytes = await source.read(8)
+    def _decode(cls, read: Callable[[int], Any]) -> Program[Self | None]:
+        """Decode the next event, yielding each read of ``size`` bytes as an effect."""
+        prelude_bytes = yield lambda: read(8)
         if not prelude_bytes:
             # If nothing can be read from the source, return None. If bytes are missing
             # later, that indicates a problem with the source and therefore will result
             # in an exception.
             return None
 
-        prelude_crc_bytes = await source.read(4)
+        prelude_crc_bytes = yield lambda: read(4)
         try:
             prelude_crc: int = _DecodeUtils.unpack_uint32(prelude_crc_bytes)[0]
             total_length, headers_length = unpack("!II", prelude_bytes)
@@ -318,9 +295,10 @@ class Event:
             total_length=total_length, headers_length=headers_length, crc=prelude_crc
         )
 
-        message_bytes = await source.read(total_length - _MESSAGE_METADATA_SIZE)
+        message_bytes = yield lambda: read(total_length - _MESSAGE_METADATA_SIZE)
+        crc_bytes = yield lambda: read(4)
         try:
-            crc: int = _DecodeUtils.unpack_uint32(await source.read(4))[0]
+            crc: int = _DecodeUtils.unpack_uint32(crc_bytes)[0]
         except struct.error as e:
             raise InvalidEventBytes() from e
 
@@ -417,15 +395,6 @@ class EventHeaderEncoder:
                     self.encode_uuid(key, value)
                 case _:  # type: ignore
                     raise InvalidHeaderValue(value)
-
-    def _encode_key(self, key: str) -> None:
-        if key in self._keys:
-            raise DuplicateHeader(key)
-        self._keys.add(key)
-
-        encoded_key = key.encode("utf-8")
-        self._buffer.write(pack("B", len(encoded_key)))
-        self._buffer.write(encoded_key)
 
     def encode_boolean(self, key: str, value: bool):
         """Encode a boolean header.
@@ -545,6 +514,15 @@ class EventHeaderEncoder:
         self._encode_key(key)
         self._buffer.write(b"\x09")
         self._buffer.write(value.bytes)
+
+    def _encode_key(self, key: str) -> None:
+        if key in self._keys:
+            raise DuplicateHeader(key)
+        self._keys.add(key)
+
+        encoded_key = key.encode("utf-8")
+        self._buffer.write(pack("B", len(encoded_key)))
+        self._buffer.write(encoded_key)
 
 
 BytesLike = bytes | memoryview
@@ -741,6 +719,14 @@ class EventHeaderDecoder(Iterator[tuple[str, HEADER_VALUE]]):
             raise InvalidHeadersLength(len(header_bytes))
         self._data = header_bytes
 
+    def __iter__(self) -> Iterator[tuple[str, HEADER_VALUE]]:
+        return self
+
+    def __next__(self) -> tuple[str, HEADER_VALUE]:
+        if len(self._data) == 0:
+            raise StopIteration()
+        return self.decode_header()
+
     def decode_headers(self) -> HEADERS_DICT:
         """Decode all remaining headers.
 
@@ -771,14 +757,6 @@ class EventHeaderDecoder(Iterator[tuple[str, HEADER_VALUE]]):
 
     def _advance_data(self, consumed: int):
         self._data = self._data[consumed:]
-
-    def __iter__(self) -> Iterator[tuple[str, HEADER_VALUE]]:
-        return self
-
-    def __next__(self) -> tuple[str, HEADER_VALUE]:
-        if len(self._data) == 0:
-            raise StopIteration()
-        return self.decode_header()
 
 
 def _validate_checksum(data: bytes, checksum: int, crc: int = 0) -> None:

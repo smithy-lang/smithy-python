@@ -2,7 +2,25 @@
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
+
+from smithy_core.interfaces import Request, Response
+from smithy_core.schemas import APIOperation
+from smithy_core.shapes import ShapeID
+from smithy_core.utils import read_streaming_blob
+
+__all__ = [
+    "Field",
+    "FieldPosition",
+    "Fields",
+    "HTTPClient",
+    "HTTPClientConfiguration",
+    "HTTPErrorIdentifier",
+    "HTTPRequest",
+    "HTTPRequestConfiguration",
+    "HTTPResponse",
+    "QueryParamsList",
+]
 
 FieldPosition = Literal["header", "trailer"]
 """The type of a field.
@@ -61,10 +79,6 @@ class Fields(Protocol):
     entries: dict[str, Field]
     encoding: str = "utf-8"
 
-    def set_field(self, field: Field) -> None:
-        """Alias for __setitem__ to utilize the field.name for the entry key."""
-        ...
-
     def __setitem__(self, name: str, field: Field) -> None:
         """Set entry for a Field name."""
         ...
@@ -89,6 +103,10 @@ class Fields(Protocol):
         """Allows in/not in checks on Field entries."""
         ...
 
+    def set_field(self, field: Field) -> None:
+        """Alias for __setitem__ to utilize the field.name for the entry key."""
+        ...
+
     def get_by_type(self, kind: FieldPosition) -> list[Field]:
         """Helper function for retrieving specific types of fields.
 
@@ -104,6 +122,63 @@ class Fields(Protocol):
         appended. Otherwise, the ``Field`` is added to the list of ``entries``.
         """
         ...
+
+
+class HTTPRequest(Request, Protocol):
+    """HTTP primitive for an Exchange to construct a version agnostic HTTP message.
+
+    :param destination: The URI where the request should be sent to.
+    :param method: The HTTP method of the request, for example "GET".
+    :param fields: ``Fields`` object containing HTTP headers and trailers.
+    :param body: A streamable collection of bytes.
+    """
+
+    method: str
+    fields: Fields
+
+    def consume_body(self) -> bytes:
+        """Read the request body into bytes."""
+        return read_streaming_blob(self.body)
+
+
+class HTTPResponse(Response, Protocol):
+    """HTTP primitives returned from an Exchange, used to construct a client
+    response."""
+
+    @property
+    def status(self) -> int:
+        """The 3 digit response status code (1xx, 2xx, 3xx, 4xx, 5xx)."""
+        ...
+
+    @property
+    def fields(self) -> Fields:
+        """``Fields`` object containing HTTP headers and trailers."""
+        ...
+
+    @property
+    def reason(self) -> str | None:
+        """Optional string provided by the server explaining the status."""
+        ...
+
+    def consume_body(self) -> bytes:
+        """Read the response body into bytes."""
+        return read_streaming_blob(self.body)
+
+
+class HTTPErrorIdentifier:
+    """A class that uses HTTP response metadata to identify errors.
+
+    The body of the response SHOULD NOT be touched by this. The payload codec will be
+    used instead to check for an ID in the body.
+    """
+
+    def identify(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        response: HTTPResponse,
+    ) -> ShapeID | None:
+        """Idenitfy the ShapeID of an error from an HTTP response."""
 
 
 QueryParamsList = list[tuple[str, str]]
@@ -128,3 +203,35 @@ class HTTPRequestConfiguration:
     """
 
     read_timeout: float | None = None
+
+
+class HTTPClient(Protocol):
+    """A synchronous HTTP client interface.
+
+    Header field names and values are not validated before reaching this layer.
+    Implementations of ``HTTPClient`` are responsible for validating and handling those
+    invalid and dangerous characters (such as CR, LF, or NUL) as defined in `RFC 9110,
+    Section 5.5 <https://www.rfc-editor.org/rfc/rfc9110#section-5.5>`_.
+    """
+
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
+
+    def __init__(self, *, client_config: HTTPClientConfiguration | None) -> None:
+        """
+        :param client_config: Configuration that applies to all requests made with this
+        client.
+        """
+        ...
+
+    def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> HTTPResponse:
+        """Send HTTP request over the wire and return the response.
+
+        :param request: The request including destination URI, fields, payload.
+        :param request_config: Configuration specific to this request.
+        """
+        ...

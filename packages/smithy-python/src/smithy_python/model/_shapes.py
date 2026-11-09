@@ -75,6 +75,14 @@ SIMPLE_TYPES: Final = frozenset(
         ShapeType.DOCUMENT,
     }
 )
+DECLARATION_TYPES: Final = frozenset(
+    {
+        ShapeType.STRUCTURE,
+        ShapeType.UNION,
+        ShapeType.ENUM,
+        ShapeType.INT_ENUM,
+    }
+)
 
 MIXIN_TRAIT: Final = ShapeId(PRELUDE_NAMESPACE, "mixin")
 UNIT: Final = ShapeId(PRELUDE_NAMESPACE, "Unit")

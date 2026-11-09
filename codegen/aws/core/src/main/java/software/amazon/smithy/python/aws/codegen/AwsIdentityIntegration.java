@@ -9,6 +9,7 @@ import software.amazon.smithy.aws.traits.auth.SigV4Trait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.SyncVariant;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.sections.ClientSetupSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -46,31 +47,32 @@ public class AwsIdentityIntegration implements PythonIntegration {
 
         @Override
         public void write(PythonWriter writer, String previousText, ClientSetupSection section) {
-            // Drop the bare "pass" placeholder; this block is a real body. Preserve any
-            // real content an earlier contributor wrote.
-            if (!previousText.strip().equals("pass")) {
+            if (!previousText.isBlank()) {
                 writer.write(previousText);
             }
             writer.addStdlibImport("typing", "cast");
-            writer.write("""
-                    if config.aws_credentials_identity_resolver is None:
-                        config_context = config.resolution_context()
-                        config_file = None
-                        profile_name = None
-                        if config_context is not None:
-                            config_file = await config_context.parsed_profiles()
-                            if config_context.profile_source is $4T.OVERRIDE:
-                                profile_name = config_context.profile_name
-                        config.aws_credentials_identity_resolver = await $1T.create(
-                            $2T,
-                            config_file=config_file,
-                            profile_name=profile_name,
-                            region_override=config.region,
-                            http_client=cast($3T | None, config.transport),
-                        )""",
+            var template = """
+                    async def _post_setup(self, config: $5T) -> None:
+                        if config.aws_credentials_identity_resolver is None:
+                            config_context = config.resolution_context()
+                            config_file = None
+                            profile_name = None
+                            if config_context is not None:
+                                config_file = await config_context.parsed_profiles()
+                                if config_context.profile_source is $4T.OVERRIDE:
+                                    profile_name = config_context.profile_name
+                            config.aws_credentials_identity_resolver = await $1T.create(
+                                $2T,
+                                config_file=config_file,
+                                profile_name=profile_name,
+                                region_override=config.region,
+                                http_client=cast($3T | None, config.transport),
+                            )
+                    """;
+            writer.write(section.sync() ? SyncVariant.toSyncCode(template) : template,
                     Symbol.builder()
-                            .name("IdentityChain")
-                            .namespace("smithy_aws_core.identity.chain", ".")
+                            .name("AsyncIdentityChain")
+                            .namespace("smithy_aws_core.aio.identity.chain", ".")
                             .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                             .build(),
                     Symbol.builder()
@@ -79,7 +81,7 @@ public class AwsIdentityIntegration implements PythonIntegration {
                             .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                             .build(),
                     Symbol.builder()
-                            .name("HTTPClient")
+                            .name("AsyncHTTPClient")
                             .namespace("smithy_http.aio.interfaces", ".")
                             .addDependency(SmithyPythonDependency.SMITHY_HTTP)
                             .build(),
@@ -87,7 +89,8 @@ public class AwsIdentityIntegration implements PythonIntegration {
                             .name("ConfigSource")
                             .namespace("smithy_aws_core.config", ".")
                             .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                            .build());
+                            .build(),
+                    section.config());
         }
     }
 }

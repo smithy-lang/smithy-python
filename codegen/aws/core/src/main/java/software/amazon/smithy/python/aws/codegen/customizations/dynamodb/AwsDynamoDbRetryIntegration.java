@@ -13,6 +13,7 @@ import software.amazon.smithy.python.aws.codegen.AwsPythonDependency;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.SyncVariant;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 
@@ -31,7 +32,7 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
 
 
             def dynamodb_retry_plugin(config: $1T) -> None:
-                \"\"\"Apply DynamoDB's standard-mode retry defaults for any option left unset.\"\"\"
+                \"\"\"Apply DynamoDB's standard and adaptive mode retry defaults for any option left unset.\"\"\"
                 retry_strategy = config.retry_strategy
                 if retry_strategy is not None and not isinstance(
                     retry_strategy, $2T
@@ -49,10 +50,11 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                     if config.source_of("max_attempts") == $4T.DEFAULT:
                         max_attempts = None
 
-                if retry_mode != "standard":
+                if retry_mode not in ("standard", "adaptive"):
                     return
 
-                config.retry_strategy = $3T(
+                strategy_cls = $7T if retry_mode == "adaptive" else $3T
+                config.retry_strategy = strategy_cls(
                     max_attempts=(
                         max_attempts
                         if max_attempts is not None
@@ -69,22 +71,21 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
         final String pluginFile = "retries";
-        final String moduleName = context.settings().moduleName();
 
         final SymbolReference dynamodbRetryPlugin = SymbolReference.builder()
-                .symbol(Symbol.builder()
-                        .namespace(String.format("%s.%s", moduleName, pluginFile), ".")
-                        .definitionFile(String.format("./src/%s/%s.py", moduleName, pluginFile))
-                        .name("dynamodb_retry_plugin")
-                        .build())
+                .symbol(CodegenUtils.aioSymbol(context.settings(), pluginFile, "dynamodb_retry_plugin"))
                 .build();
         final Symbol retryStrategyOptions = Symbol.builder()
                 .namespace("smithy_core.retries", ".")
                 .name("RetryStrategyOptions")
                 .build();
         final Symbol standardRetryStrategy = Symbol.builder()
-                .namespace("smithy_core.aio.retries", ".")
+                .namespace("smithy_core.retries", ".")
                 .name("StandardRetryStrategy")
+                .build();
+        final Symbol adaptiveRetryStrategy = Symbol.builder()
+                .namespace("smithy_core.retries", ".")
+                .name("AdaptiveRetryStrategy")
                 .build();
         final Symbol configSource = Symbol.builder()
                 .namespace("smithy_aws_core.config", ".")
@@ -106,25 +107,30 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                                 .orElse(false))
                         .pythonPlugin(dynamodbRetryPlugin)
                         .writeAdditionalFiles((c) -> {
-                            String filename = "src/%s/%s.py".formatted(moduleName, pluginFile);
+                            String filename = dynamodbRetryPlugin.getSymbol().getDefinitionFile();
+                            var asyncConfig = CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model());
+                            Object[] args = {
+                                    asyncConfig,
+                                    retryStrategyOptions,
+                                    standardRetryStrategy,
+                                    configSource,
+                                    exponentialBackoffStrategy,
+                                    exponentialBackoffJitterType,
+                                    adaptiveRetryStrategy};
                             c.writerDelegator()
                                     .useFileWriter(
                                             filename,
-                                            moduleName + ".",
+                                            dynamodbRetryPlugin.getSymbol().getNamespace(),
                                             writer -> {
                                                 writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
                                                 writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE);
-                                                writer.write(
-                                                        DYNAMODB_RETRY_MODULE,
-                                                        CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model())
-                                                                .orElseThrow(),
-                                                        retryStrategyOptions,
-                                                        standardRetryStrategy,
-                                                        configSource,
-                                                        exponentialBackoffStrategy,
-                                                        exponentialBackoffJitterType);
+                                                writer.write(DYNAMODB_RETRY_MODULE, args);
                                             });
-                            return List.of(filename);
+                            return List.of(filename,
+                                    SyncVariant.writeSyncTwin(c,
+                                            dynamodbRetryPlugin.getSymbol(),
+                                            DYNAMODB_RETRY_MODULE,
+                                            args));
                         })
                         .build());
     }

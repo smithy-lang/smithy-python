@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.7.0
+
+### Breaking Changes
+* Replaced the async protocols with event stream mixins composed onto the sync protocols. `AsyncHttpClientProtocol`, `AsyncHttpBindingClientProtocol` and `AsyncRpcClientProtocol` are removed; use `AsyncHttpEventStreamMixin` or `AsyncRpcEventStreamMixin` with a protocol from `smithy_http.protocols`. `AsyncRpcV2CborClientProtocol` is kept as such a composition.
+* Moved `HTTPRequest` and `HTTPResponse` to `smithy_http`, and their protocols and `HTTPErrorIdentifier` to `smithy_http.interfaces`. Removed `consume_body_async`.
+* Removed `AsyncAPIKeySigner`; `AsyncAPIKeyAuthScheme` returns the sync `APIKeySigner`. Renamed `smithy_http.aio.restjson.parse_rest_json_error_info` to `parse_rest_json_error_info_async`.
+* Serialized request bodies are now synchronous for both sync and async clients. `HTTPBindingSerializer`'s `async_body` parameter is replaced by `event_stream_body`, and `RawPayloadDeserializer` returns streaming payloads as the transport provides them.
+* Moved async implementations to `smithy_http.aio` and added the `Async` prefix to their names, for example `AsyncHTTPClient`, `AsyncHttpClientProtocol`, `AsyncHttpBindingClientProtocol`, `AsyncRpcV2CborClientProtocol` and `AsyncAPIKeyAuthScheme`. The unprefixed names are reserved for sync implementations. Update imports to the `aio` paths.
+* Declared explicit `__all__` exports on all public modules. Names that were previously importable only incidentally (via `from module import *` or as un-annotated module attributes) are no longer part of the public API; import public symbols by name from their documented module.
+* `smithy_http.testing.MockHTTPClient` is now synchronous. Async clients use `smithy_http.aio.testing.AsyncMockHTTPClient`.
+* Renamed `AWSCRTHTTPResponse` to `AsyncAWSCRTHTTPResponse`, and `smithy_http.aio.auth.apikey.APIKeyResolverConfig` to `AsyncAPIKeyResolverConfig`.
+
+### Features
+* Added synchronous HTTP support: `smithy_http.urllib3.Urllib3HTTPClient`, the sync protocols in `smithy_http.protocols`, `smithy_http.restjson.parse_rest_json_error_info` and `smithy_http.identity.apikey.APIKeyIdentityResolver`.
+* Added `connect_timeout` and `read_timeout` to `Urllib3HTTPClientConfig`, both defaulting to 60 seconds, so sync requests no longer wait indefinitely. A request's `HTTPRequestConfiguration.read_timeout` takes precedence.
+* Added `max_pool_connections` to `Urllib3HTTPClientConfig`, the connections kept for reuse per host, defaulting to 10 instead of urllib3's 1.
+* Added a RpcClientProtocol base class and client-side event stream support for the rpcv2Cbor protocol.
+
+### Enhancements
+* AWSCRTHTTPClient now negotiates HTTP/2 per request for operations that require it (event streams), advertising only HTTP/2 in ALPN and pooling those connections separately from HTTP/1.1 ones, so a single client serves both HTTP/1.1 operations and HTTP/2 event streams without configuration. The client-wide force_http_2 config remains as an override.
+* Added a trust_store_path option to AWSCRTHTTPClientConfig for overriding the TLS trust store with a custom CA bundle.
+* Added support for Python 3.15.
+
+### Bug fixes
+* Fixed HTTP serializers sending seekable streaming payloads, such as files, without a Content-Length and sending a modeled Content-Length twice.
+* Fixed API key auth setting the request path to the URI password.
+* `APIKeyIdentity` no longer includes `api_key` in its repr, which keeps it out of debug logs.
+
+### Dependencies
+* Bump `smithy-cbor` from `~=0.1.0` to `~=0.2.0`.
+
 ## v0.6.0
 
 ### Features

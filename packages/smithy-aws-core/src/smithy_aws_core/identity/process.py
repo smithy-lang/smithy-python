@@ -1,26 +1,22 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import asyncio
 import json
+import subprocess
 from datetime import UTC, datetime
 from typing import TypeGuard, cast
 
-from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
+from smithy_core.interfaces.identity import IdentityResolver
 
+from .._private.identity_features import record_features
+from ..business_metrics import AwsFeatureId
 from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
-
-def _is_command_list(command: object) -> TypeGuard[list[str]]:
-    if not isinstance(command, list) or not command:
-        return False
-    return all(isinstance(argument, str) for argument in cast(list[object], command))
+__all__ = ["ProcessCredentialsResolver"]
 
 
-class ProcessCredentialsResolver(
-    IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
-):
-    """Resolves AWS Credentials from a process.
+class _ProcessCredentialsResolverBase:
+    """Credential process logic shared by the sync and async resolvers.
 
     :param command: The process command and arguments to execute, as a
         non-empty list of strings.
@@ -28,6 +24,9 @@ class ProcessCredentialsResolver(
     :param account_id: Fallback account ID to associate with the resolved
         credentials when the process output does not include an ``AccountId``.
     """
+
+    _FEATURE_ID = AwsFeatureId.CREDENTIALS_PROCESS
+    """Recorded when used directly; in the credential chain, the provider's are used."""
 
     def __init__(
         self,
@@ -43,9 +42,13 @@ class ProcessCredentialsResolver(
         self._account_id = account_id
         self._credentials: AWSCredentialsIdentity | None = None
 
-    async def get_identity(
-        self, *, properties: AWSIdentityProperties
+    def _record(
+        self, identity: AWSCredentialsIdentity, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
+        record_features(properties, (self._FEATURE_ID,))
+        return identity
+
+    def _cached(self) -> AWSCredentialsIdentity | None:
         if self._credentials is not None:
             # Long-term credentials (no expiration) should always be reused
             if self._credentials.expiration is None:
@@ -53,34 +56,19 @@ class ProcessCredentialsResolver(
             # Temporary credentials should be reused if not expired
             if datetime.now(UTC) < self._credentials.expiration:
                 return self._credentials
+        return None
 
-        try:
-            process = await asyncio.create_subprocess_exec(
-                *self._command,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-        except OSError as e:
-            raise SmithyIdentityError(f"Credential process failed to start: {e}") from e
+    def _timeout_error(self) -> SmithyIdentityError:
+        return SmithyIdentityError(
+            f"Credential process timed out after {self._timeout} seconds"
+        )
 
-        try:
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=self._timeout
-            )
-        except TimeoutError as e:
-            if process.returncode is None:
-                try:
-                    process.kill()
-                except ProcessLookupError:
-                    pass
-                await process.wait()
+    def _credentials_from_output(
+        self, returncode: int | None, stdout: bytes, stderr: bytes
+    ) -> AWSCredentialsIdentity:
+        if returncode != 0:
             raise SmithyIdentityError(
-                f"Credential process timed out after {self._timeout} seconds"
-            ) from e
-
-        if process.returncode != 0:
-            raise SmithyIdentityError(
-                f"Credential process failed with exit code {process.returncode}: "
+                f"Credential process failed with exit code {returncode}: "
                 f"{stderr.decode('utf-8', errors='replace')}"
             )
         # These exceptions retain the full process output, which may contain
@@ -152,3 +140,43 @@ class ProcessCredentialsResolver(
                 f"got {type(value).__name__}"
             )
         return value
+
+
+class ProcessCredentialsResolver(
+    _ProcessCredentialsResolverBase,
+    IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties],
+):
+    """Resolves AWS Credentials from a process.
+
+    :param command: The process command and arguments to execute, as a
+        non-empty list of strings.
+    :param timeout: Maximum time in seconds to wait for the process to complete.
+    :param account_id: Fallback account ID to associate with the resolved
+        credentials when the process output does not include an ``AccountId``.
+    """
+
+    def get_identity(
+        self, *, properties: AWSIdentityProperties
+    ) -> AWSCredentialsIdentity:
+        return self._record(self._fetch(), properties)
+
+    def _fetch(self) -> AWSCredentialsIdentity:
+        if (cached := self._cached()) is not None:
+            return cached
+        try:
+            completed = subprocess.run(  # noqa: S603
+                self._command, capture_output=True, timeout=self._timeout, check=False
+            )
+        except OSError as e:
+            raise SmithyIdentityError(f"Credential process failed to start: {e}") from e
+        except subprocess.TimeoutExpired as e:
+            raise self._timeout_error() from e
+        return self._credentials_from_output(
+            completed.returncode, completed.stdout, completed.stderr
+        )
+
+
+def _is_command_list(command: object) -> TypeGuard[list[str]]:
+    if not isinstance(command, list) or not command:
+        return False
+    return all(isinstance(argument, str) for argument in cast(list[object], command))

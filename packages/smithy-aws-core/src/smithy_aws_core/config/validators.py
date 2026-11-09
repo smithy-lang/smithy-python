@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+import logging
 import re
 from collections.abc import Collection
 from typing import get_args
@@ -8,9 +9,30 @@ from typing import get_args
 from smithy_core.retries import RetryStrategyType
 
 from .exceptions import ConfigValidationError, ProfileNotFoundError
-from .types import ConfigSource
+from .types import (
+    ConfigSource,
+    RequestChecksumCalculation,
+    ResponseChecksumValidation,
+)
+
+__all__ = [
+    "validate_account_id_endpoint_mode",
+    "validate_max_attempts",
+    "validate_profile",
+    "validate_region",
+    "validate_request_checksum_calculation",
+    "validate_response_checksum_validation",
+    "validate_retry_mode",
+    "validate_sdk_ua_app_id",
+]
+
+logger = logging.getLogger(__name__)
+
+_SDK_UA_APP_ID_MAX_LENGTH = 50
 
 _REGION_PATTERN = re.compile(r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$")
+
+_ACCOUNT_ID_ENDPOINT_MODES = ("preferred", "disabled", "required")
 
 
 def validate_region(value: object) -> None:
@@ -36,16 +58,15 @@ def validate_region(value: object) -> None:
 def validate_retry_mode(retry_mode: str):
     """Validate retry mode.
 
-    Valid values: 'standard'
+    Valid values: 'standard', 'adaptive'
 
     :param retry_mode: The retry mode value to validate
     :raises: ConfigValidationError: If the retry mode is invalid
     """
-    # NOTE: RetryStrategyType includes 'simple' for direct config use, but the only valid
-    # string mode accepted here is 'standard'. 'adaptive' and 'legacy' are intentionally
-    # rejected as direct overrides ('adaptive' support may be added later; 'legacy' is not
-    # recommended and never will be). When 'adaptive' or 'legacy' come from the environment
-    # or a config file, resolve_retry_mode() warns and maps them to 'standard'.
+    # NOTE: RetryStrategyType includes 'simple' for direct config use, but it isn't a
+    # valid string mode here. 'legacy' is intentionally rejected as a direct override
+    # (it is not recommended and never will be). When 'legacy' comes from the
+    # environment or a config file, resolve_retry_mode() warns and maps it to 'standard'.
 
     all_modes = list(get_args(RetryStrategyType))
     if "simple" in all_modes:
@@ -103,4 +124,72 @@ def validate_profile(
         )
         raise ProfileNotFoundError(
             f"Profile {profile_name!r} from {source_str} was not found in config file."
+        )
+
+
+def validate_sdk_ua_app_id(value: object) -> None:
+    """Warn when the SDK user agent app ID is longer than recommended.
+
+    The app ID is still used. Config is resolved once, so the warning is logged once.
+
+    :param value: The resolved app ID value.
+    """
+    if isinstance(value, str) and len(value) > _SDK_UA_APP_ID_MAX_LENGTH:
+        logger.warning(
+            "The configured value for sdk_ua_app_id exceeds the recommended maximum "
+            "length of %d characters.",
+            _SDK_UA_APP_ID_MAX_LENGTH,
+        )
+
+
+def validate_request_checksum_calculation(value: object) -> None:
+    """Validate when request checksums are calculated.
+
+    Valid values: 'when_supported', 'when_required', or None for the default. The
+    resolver lowercases values from the environment and shared config files.
+
+    :param value: The value to validate.
+    :raises ConfigValidationError: If the value is invalid.
+    """
+    _validate_choice(
+        "request_checksum_calculation", value, RequestChecksumCalculation.__value__
+    )
+
+
+def validate_response_checksum_validation(value: object) -> None:
+    """Validate when response checksums are validated.
+
+    Valid values: 'when_supported', 'when_required', or None for the default. The
+    resolver lowercases values from the environment and shared config files.
+
+    :param value: The value to validate.
+    :raises ConfigValidationError: If the value is invalid.
+    """
+    _validate_choice(
+        "response_checksum_validation", value, ResponseChecksumValidation.__value__
+    )
+
+
+def _validate_choice(name: str, value: object, choices: object) -> None:
+    if value is None:
+        return
+    valid = get_args(choices)
+    if value not in valid:
+        raise ConfigValidationError(
+            f"Invalid value for {name!r}: {value!r}. Must be one of {valid}."
+        )
+
+
+def validate_account_id_endpoint_mode(value: object) -> None:
+    """Validate the account ID endpoint mode.
+
+    Valid values: 'preferred', 'disabled', 'required', or None.
+
+    :param value: The resolved account ID endpoint mode value.
+    :raises ConfigValidationError: If the value is not a valid mode.
+    """
+    if value is not None and value not in _ACCOUNT_ID_ENDPOINT_MODES:
+        raise ConfigValidationError(
+            f"Invalid value for 'account_id_endpoint_mode': {value!r}. "
+            f"Must be one of {_ACCOUNT_ID_ENDPOINT_MODES}."
         )

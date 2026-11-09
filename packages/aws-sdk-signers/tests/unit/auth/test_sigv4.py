@@ -10,16 +10,15 @@ from io import BytesIO
 
 import pytest
 from aws_sdk_signers import (
-    AsyncBytesReader,
     AWSCredentialIdentity,
     AWSRequest,
     Field,
     Fields,
     URI,
 )
+from aws_sdk_signers.aio import AsyncBytesReader, AsyncSigV4Signer
 from aws_sdk_signers.signers import (
     SIGV4_TIMESTAMP_FORMAT,
-    AsyncSigV4Signer,
     SigV4Signer,
     SigV4SigningProperties,
 )
@@ -143,7 +142,7 @@ async def _test_signature_version_4_async(
         signing_properties=signing_props, request=request
     )
     assert test_case.canonical_request == actual_canonical_request
-    actual_string_to_sign = await signer.string_to_sign(
+    actual_string_to_sign = signer.string_to_sign(
         canonical_request=actual_canonical_request, signing_properties=signing_props
     )
     assert test_case.string_to_sign == actual_string_to_sign

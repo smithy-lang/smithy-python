@@ -8,9 +8,11 @@ from io import BytesIO
 from typing import Any, Self, cast
 
 from ..exceptions import SmithyError
-from ..interfaces import BytesReader
+from ..interfaces import AwaitableBytesReader, BytesReader
 from .interfaces import AsyncByteStream, StreamingBlob
-from .utils import close, seek
+from .utils import close_async, seek_async
+
+__all__ = ["AsyncBytesProvider", "AsyncBytesReader", "AsyncSeekableBytesReader"]
 
 # The default chunk size for iterating streams.
 _DEFAULT_CHUNK_SIZE = 1024
@@ -22,7 +24,7 @@ class AsyncBytesReader:
     """A file-like object with an async read method."""
 
     # BytesIO *is* a ByteStream, but mypy will nevertheless complain if it isn't here.
-    _data: BytesReader | AsyncByteStream | AsyncIterable[bytes] | BytesIO | None
+    _data: BytesReader | AwaitableBytesReader | AsyncIterable[bytes] | BytesIO | None
     _closed = False
 
     def __init__(self, data: StreamingBlob):
@@ -47,6 +49,9 @@ class AsyncBytesReader:
                 self._seekable = True
         else:
             self._seekable = False
+
+    def __aiter__(self) -> AsyncIterator[bytes]:
+        return self.iter_chunks()
 
     async def read(self, size: int = -1) -> bytes:
         """Read a number of bytes from the stream.
@@ -89,7 +94,7 @@ class AsyncBytesReader:
         if not self._seekable:
             raise NotImplementedError
 
-        return await seek(self._data, offset, whence)  # type: ignore
+        return await seek_async(self._data, offset, whence)  # type: ignore
 
     def tell(self) -> int:
         """Returns the position of the cursor."""
@@ -97,30 +102,6 @@ class AsyncBytesReader:
             if (tell := getattr(self._data, "tell", None)) is not None:
                 return tell()
         raise NotImplementedError
-
-    async def _read_from_iterable(
-        self, iterator: AsyncIterable[bytes], size: int
-    ) -> bytes:
-        # This takes the iterator as an arg here just to avoid mypy complaints, since
-        # we know it's an iterator where this is called.
-        result = self._remainder
-        if size < 0:
-            async for element in iterator:
-                result += element
-            self._remainder = b""
-            return result
-
-        if len(result) < size:
-            async for element in iterator:
-                result += element
-                if len(result) >= size:
-                    break
-
-        self._remainder = result[size:]
-        return result[:size]
-
-    def __aiter__(self) -> AsyncIterator[bytes]:
-        return self.iter_chunks()
 
     def iter_chunks(
         self, chunk_size: int = _DEFAULT_CHUNK_SIZE
@@ -152,13 +133,34 @@ class AsyncBytesReader:
     async def close(self) -> None:
         """Closes the stream, as well as the underlying stream where possible."""
         self._closed = True
-        await close(self._data)
+        await close_async(self._data)
         self._data = None
+
+    async def _read_from_iterable(
+        self, iterator: AsyncIterable[bytes], size: int
+    ) -> bytes:
+        # This takes the iterator as an arg here just to avoid mypy complaints, since
+        # we know it's an iterator where this is called.
+        result = self._remainder
+        if size < 0:
+            async for element in iterator:
+                result += element
+            self._remainder = b""
+            return result
+
+        if len(result) < size:
+            async for element in iterator:
+                result += element
+                if len(result) >= size:
+                    break
+
+        self._remainder = result[size:]
+        return result[:size]
 
 
 # Better named BufferedAsyncBytesReader
 # TODO: remove this or rework it to only buffer if needed
-class SeekableAsyncBytesReader:
+class AsyncSeekableBytesReader:
     """A file-like object with async read and seek methods.
 
     Data is written into a buffer as it is read to enable seeking non-seekable streams.
@@ -181,6 +183,9 @@ class SeekableAsyncBytesReader:
         else:
             self._buffer = BytesIO()
             self._data_source = AsyncBytesReader(data)
+
+    def __aiter__(self) -> AsyncIterator[bytes]:
+        return self.iter_chunks()
 
     async def read(self, size: int = -1) -> bytes:
         """Read a number of bytes from the stream.
@@ -239,23 +244,9 @@ class SeekableAsyncBytesReader:
 
         return self._buffer.seek(target, 0)
 
-    async def _read_into_buffer(self, size: int) -> None:
-        if self._data_source is None:
-            return
-
-        read_bytes = await self._data_source.read(size)
-        if len(read_bytes) < size or size < 0:
-            self._data_source = None
-
-        self._buffer.seek(0, 2)
-        self._buffer.write(read_bytes)
-
     def tell(self) -> int:
         """Returns the position of the cursor."""
         return self._buffer.tell()
-
-    def __aiter__(self) -> AsyncIterator[bytes]:
-        return self.iter_chunks()
 
     def iter_chunks(
         self, chunk_size: int = _DEFAULT_CHUNK_SIZE
@@ -287,31 +278,19 @@ class SeekableAsyncBytesReader:
     async def close(self) -> None:
         """Closes the stream, as well as the underlying stream where possible."""
         self._buffer.close()
-        await close(self._data_source)
+        await close_async(self._data_source)
         self._data_source = None
 
+    async def _read_into_buffer(self, size: int) -> None:
+        if self._data_source is None:
+            return
 
-class _AsyncByteStreamIterator:
-    """An async bytes iterator that operates over an async read method."""
+        read_bytes = await self._data_source.read(size)
+        if len(read_bytes) < size or size < 0:
+            self._data_source = None
 
-    def __init__(self, read: Callable[[int], Awaitable[bytes]], chunk_size: int):
-        """Initializes self.
-
-        :param read: An async callable that reads a given number of bytes from some
-            source.
-        :param chunk_size: The number of bytes to read in each iteration.
-        """
-        self._read = read
-        self._chunk_size = chunk_size
-
-    def __aiter__(self) -> Self:
-        return self
-
-    async def __anext__(self) -> bytes:
-        data = await self._read(self._chunk_size)
-        if data:
-            return data
-        raise StopAsyncIteration
+        self._buffer.seek(0, 2)
+        self._buffer.write(read_bytes)
 
 
 class AsyncBytesProvider:
@@ -348,6 +327,35 @@ class AsyncBytesProvider:
         # Create a Condition to synchronize access to the data chunk pool.
         self._data_condition = asyncio.Condition()
 
+    def __aiter__(self) -> Self:
+        return self
+
+    async def __anext__(self) -> bytes:
+        # Acquire a lock on the data buffer, releasing it automatically when the
+        # block exits.
+        async with self._data_condition:
+            # Wait for the stream to be closed or for the data buffer to be non-empty.
+            # This also releases the lock until that condition is met.
+            await self._data_condition.wait_for(
+                lambda: self._closed or len(self._data) > 0
+            )
+
+            # If the provider is closed, end the iteration.
+            if self._closed:
+                raise StopAsyncIteration
+
+            # Pop the next chunk of data from the buffer, then notify any waiting
+            # coroutines, returning immediately after.
+            result = self._data.popleft()
+            self._data_condition.notify()
+            return result
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        await self.close(flush=True)
+
     async def write(self, data: bytes) -> None:
         if self._closed:
             raise SmithyError("Attempted to write to a closed provider.")
@@ -371,13 +379,6 @@ class AsyncBytesProvider:
             # coroutine.
             self._data.append(data)
             self._data_condition.notify()
-
-    def _can_write(self) -> bool:
-        return (
-            self._closed
-            or self._closing
-            or (len(self._data) < self._max_buffered_chunks and not self._flushing)
-        )
 
     @property
     def closed(self) -> bool:
@@ -431,31 +432,32 @@ class AsyncBytesProvider:
             # Notify all waiting coroutines that the provider has closed.
             self._data_condition.notify_all()
 
+    def _can_write(self) -> bool:
+        return (
+            self._closed
+            or self._closing
+            or (len(self._data) < self._max_buffered_chunks and not self._flushing)
+        )
+
+
+class _AsyncByteStreamIterator:
+    """An async bytes iterator that operates over an async read method."""
+
+    def __init__(self, read: Callable[[int], Awaitable[bytes]], chunk_size: int):
+        """Initializes self.
+
+        :param read: An async callable that reads a given number of bytes from some
+            source.
+        :param chunk_size: The number of bytes to read in each iteration.
+        """
+        self._read = read
+        self._chunk_size = chunk_size
+
     def __aiter__(self) -> Self:
         return self
 
     async def __anext__(self) -> bytes:
-        # Acquire a lock on the data buffer, releasing it automatically when the
-        # block exits.
-        async with self._data_condition:
-            # Wait for the stream to be closed or for the data buffer to be non-empty.
-            # This also releases the lock until that condition is met.
-            await self._data_condition.wait_for(
-                lambda: self._closed or len(self._data) > 0
-            )
-
-            # If the provider is closed, end the iteration.
-            if self._closed:
-                raise StopAsyncIteration
-
-            # Pop the next chunk of data from the buffer, then notify any waiting
-            # coroutines, returning immediately after.
-            result = self._data.popleft()
-            self._data_condition.notify()
-            return result
-
-    async def __aenter__(self) -> Self:
-        return self
-
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        await self.close(flush=True)
+        data = await self._read(self._chunk_size)
+        if data:
+            return data
+        raise StopAsyncIteration

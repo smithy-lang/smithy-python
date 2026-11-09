@@ -1,14 +1,33 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 # pyright: reportMissingTypeStubs=false
+import os
 from typing import Any
 
 import smithy_core
+from smithy_core.auth import RESOLVED_IDENTITY
+from smithy_core.endpoints import STATIC_ENDPOINT_CONFIG
 from smithy_core.interceptors import Interceptor, RequestContext
+from smithy_core.interfaces import TypedProperties
+from smithy_core.retries import (
+    RETRY_STRATEGY,
+    AdaptiveRetryStrategy,
+    StandardRetryStrategy,
+)
+from smithy_http import Field
 from smithy_http.interceptors.user_agent import USER_AGENT
+from smithy_http.interfaces import HTTPRequest
 from smithy_http.user_agent import RawStringUserAgentComponent, UserAgentComponent
 
 from .. import __version__
+from ..business_metrics import (
+    FEATURE_IDS,
+    AwsFeatureId,
+    encode_feature_ids,
+    register_feature_id,
+)
+
+__all__ = ["UserAgentInterceptor"]
 
 _USERAGENT_SDK_NAME = "aws-sdk-python"
 
@@ -37,6 +56,7 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
         self._ua_app_id = ua_app_id
         self._sdk_version = sdk_version
         self._service_id = service_id
+        self._execution_env = os.environ.get("AWS_EXECUTION_ENV")
 
     def read_after_serialization(self, context: RequestContext[Any, Any]) -> None:
         if USER_AGENT in context.properties:
@@ -45,6 +65,11 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
             user_agent.api_metadata.append(
                 UserAgentComponent("api", self._service_id, self._sdk_version)
             )
+
+            if self._execution_env:
+                user_agent.env_metadata.append(
+                    UserAgentComponent("exec-env", self._execution_env)
+                )
 
             if self._ua_app_id is not None:
                 user_agent.additional_metadata.append(
@@ -55,6 +80,44 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
                 user_agent.additional_metadata.append(
                     RawStringUserAgentComponent(self._ua_suffix)
                 )
+
+        self._register_retry_mode(context.properties)
+        self._register_endpoint_override(context.properties)
+
+    def modify_before_transmit(
+        self, context: RequestContext[Any, HTTPRequest]
+    ) -> HTTPRequest:
+        # Runs on every attempt, after identity resolution and signing, so features
+        # registered up to that point are included. User-Agent isn't signed by AWS
+        # auth schemes, so changing it after signing doesn't affect the signature.
+        request = context.transport_request
+        self._register_resolved_account_id(context.properties)
+        encoded = encode_feature_ids(context.properties.get(FEATURE_IDS, {}))
+        if encoded and "User-Agent" in request.fields:
+            user_agent = request.fields["User-Agent"].as_string()
+            request.fields.set_field(
+                Field(name="User-Agent", values=[f"{user_agent} m/{encoded}"])
+            )
+        return request
+
+    def _register_retry_mode(self, properties: TypedProperties) -> None:
+        # Adaptive is a subclass of standard, so it's checked first. Other
+        # strategies have no feature ID and aren't reported.
+        strategy = properties.get(RETRY_STRATEGY)
+        if isinstance(strategy, AdaptiveRetryStrategy):
+            register_feature_id(properties, AwsFeatureId.RETRY_MODE_ADAPTIVE)
+        elif isinstance(strategy, StandardRetryStrategy):
+            register_feature_id(properties, AwsFeatureId.RETRY_MODE_STANDARD)
+
+    def _register_endpoint_override(self, properties: TypedProperties) -> None:
+        config = properties.get(STATIC_ENDPOINT_CONFIG)
+        if config is not None and config.endpoint_uri is not None:
+            register_feature_id(properties, AwsFeatureId.ENDPOINT_OVERRIDE)
+
+    def _register_resolved_account_id(self, properties: TypedProperties) -> None:
+        identity = properties.get(RESOLVED_IDENTITY)
+        if getattr(identity, "account_id", None):
+            register_feature_id(properties, AwsFeatureId.RESOLVED_ACCOUNT_ID)
 
     def _build_sdk_metadata(self) -> list[UserAgentComponent]:
         return [

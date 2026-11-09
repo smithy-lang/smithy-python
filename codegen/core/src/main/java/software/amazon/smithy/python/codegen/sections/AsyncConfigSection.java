@@ -12,6 +12,12 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  *
  * <p>AWS integrations intercept this section to generate the async config
  * subclass (e.g., AsyncBedrockRuntimeConfig) that inherits from AsyncAwsConfig.
+ *
+ * @param sync Whether to generate the sync config (e.g., BedrockRuntimeConfig) instead.
  */
 @SmithyInternalApi
-public record AsyncConfigSection() implements CodeSection {}
+public record AsyncConfigSection(boolean sync) implements CodeSection {
+    public AsyncConfigSection() {
+        this(false);
+    }
+}

@@ -6,9 +6,13 @@ import pytest
 from smithy_aws_core.config.exceptions import ConfigValidationError
 from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.config.validators import (
+    validate_account_id_endpoint_mode,
     validate_max_attempts,
     validate_region,
+    validate_request_checksum_calculation,
+    validate_response_checksum_validation,
     validate_retry_mode,
+    validate_sdk_ua_app_id,
 )
 
 
@@ -70,7 +74,7 @@ class TestFieldSpec:
 
 
 class TestValidateRetryMode:
-    @pytest.mark.parametrize("mode", ["standard"])
+    @pytest.mark.parametrize("mode", ["standard", "adaptive"])
     def test_valid_modes(self, mode: str):
         validate_retry_mode(mode)
 
@@ -89,3 +93,53 @@ class TestValidateMaxAttempts:
     def test_invalid_values(self, value: int):
         with pytest.raises(ConfigValidationError, match="max_attempts"):
             validate_max_attempts(value)
+
+
+class TestValidateSdkUaAppId:
+    def test_warns_when_too_long(self, caplog: pytest.LogCaptureFixture):
+        validate_sdk_ua_app_id("a" * 51)
+        assert "exceeds the recommended maximum length of 50" in caplog.text
+
+    @pytest.mark.parametrize("value", [None, "a" * 50])
+    def test_no_warning(self, value: str | None, caplog: pytest.LogCaptureFixture):
+        validate_sdk_ua_app_id(value)
+        assert caplog.text == ""
+
+
+class TestValidateResponseChecksumValidation:
+    @pytest.mark.parametrize("value", ["when_supported", "when_required", None])
+    def test_accepts_valid_values(self, value: str | None) -> None:
+        validate_response_checksum_validation(value)
+
+    @pytest.mark.parametrize("value", ["always", "", "WHEN_SUPPORTED", 1])
+    def test_rejects_invalid_values(self, value: object) -> None:
+        with pytest.raises(
+            ConfigValidationError,
+            match="Invalid value for 'response_checksum_validation'",
+        ):
+            validate_response_checksum_validation(value)
+
+
+class TestValidateAccountIdEndpointMode:
+    @pytest.mark.parametrize("value", ["preferred", "disabled", "required", None])
+    def test_valid_values(self, value: str | None):
+        validate_account_id_endpoint_mode(value)
+
+    @pytest.mark.parametrize("value", ["", "PREFERRED", "optional", True])
+    def test_invalid_values_raise(self, value: object):
+        with pytest.raises(ConfigValidationError, match="account_id_endpoint_mode"):
+            validate_account_id_endpoint_mode(value)
+
+
+class TestValidateRequestChecksumCalculation:
+    @pytest.mark.parametrize("value", ["when_supported", "when_required", None])
+    def test_accepts_valid_values(self, value: str | None) -> None:
+        validate_request_checksum_calculation(value)
+
+    @pytest.mark.parametrize("value", ["always", "", "WHEN_SUPPORTED", 1])
+    def test_rejects_invalid_values(self, value: object) -> None:
+        with pytest.raises(
+            ConfigValidationError,
+            match="Invalid value for 'request_checksum_calculation'",
+        ):
+            validate_request_checksum_calculation(value)

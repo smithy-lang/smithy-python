@@ -4,10 +4,12 @@ import os
 
 from smithy_core.interfaces.identity import Identity
 
+from ....business_metrics import AwsFeatureId
 from ...components import AWSCredentialsIdentity
-from ...environment import EnvironmentCredentialsResolver
 from ..ordering import Standard, StandardProvider
-from ..provider import ChainSetup
+from ..provider import _ChainSetupBase  # pyright: ignore[reportPrivateUsage]
+
+__all__ = ["EnvironmentCredentialsProvider"]
 
 _ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID"
 _SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"  # noqa: S105
@@ -15,6 +17,9 @@ _SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"  # noqa: S105
 
 class EnvironmentCredentialsProvider:
     """Adds an environment resolver unless an explicit profile is selected."""
+
+    feature_ids = (AwsFeatureId.CREDENTIALS_ENV_VARS,)
+    """The features recorded when this provider's resolver returns credentials."""
 
     @property
     def name(self) -> str:
@@ -26,11 +31,7 @@ class EnvironmentCredentialsProvider:
         """Return the provider's standard chain position."""
         return Standard(slot=StandardProvider.ENVIRONMENT)
 
-    async def setup(
-        self,
-        identity_type: type[Identity],
-        setup: ChainSetup,
-    ) -> None:
+    def setup(self, identity_type: type[Identity], setup: _ChainSetupBase) -> None:
         """Add an environment resolver when env credentials are configured."""
         if identity_type is not AWSCredentialsIdentity:
             return
@@ -41,4 +42,4 @@ class EnvironmentCredentialsProvider:
         if not os.getenv(_ACCESS_KEY_ID) or not os.getenv(_SECRET_ACCESS_KEY):
             return
 
-        setup.add_terminal_resolver(EnvironmentCredentialsResolver())
+        setup._add_terminal(setup._environment_resolver())  # pyright: ignore[reportPrivateUsage]
