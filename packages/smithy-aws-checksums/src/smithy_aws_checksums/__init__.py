@@ -19,7 +19,7 @@ from ._private.selection import IMPLEMENTATIONS as _IMPLEMENTATIONS
 from ._private.selection import NATIVE as _NATIVE
 from ._private.selection import ChecksumImpl as _ChecksumImpl
 
-__version__ = version("smithy-checksums")
+__version__ = version("smithy-aws-checksums")
 __all__ = (
     "CRC32",
     "CRC32C",

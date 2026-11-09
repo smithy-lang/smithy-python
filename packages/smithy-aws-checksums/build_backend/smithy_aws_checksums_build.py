@@ -1,6 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-"""PEP 517 build backend for smithy-checksums.
+"""PEP 517 build backend for smithy-aws-checksums.
 
 Wheels are built with maturin, including the native extension, when a Rust
 toolchain is available. Without one, they're built with hatchling and contain only
@@ -66,7 +66,7 @@ def _check_rust_toolchain() -> None:
     rustc = shutil.which("rustc")
     if shutil.which("cargo") is None or rustc is None:
         raise RuntimeError(
-            f"Building the smithy-checksums native extension requires Rust {required} "
+            f"Building the smithy-aws-checksums native extension requires Rust {required} "
             f"or newer, but no Rust toolchain was found. Install one from "
             f"https://rustup.rs. {_PURE_PYTHON_HINT}"
         )
@@ -74,7 +74,7 @@ def _check_rust_toolchain() -> None:
     # If the version can't be determined, let the build itself decide.
     if found is not None and found < minimum:
         raise RuntimeError(
-            f"Building the smithy-checksums native extension requires Rust {required} "
+            f"Building the smithy-aws-checksums native extension requires Rust {required} "
             f"or newer, but found {'.'.join(map(str, found))}. Upgrade Rust, for "
             f"example with `rustup update`. {_PURE_PYTHON_HINT}"
         )
@@ -110,7 +110,7 @@ def _build(hook: str, wheel_directory: str, config_settings: _ConfigSettings) ->
     except (Exception, SystemExit):
         # maturin prints the compiler output and exits the process on failure.
         sys.stderr.write(
-            "\nBuilding the smithy-checksums native extension failed. "
+            "\nBuilding the smithy-aws-checksums native extension failed. "
             f"{_PURE_PYTHON_HINT}\n"
         )
         raise

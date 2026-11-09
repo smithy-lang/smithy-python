@@ -80,6 +80,17 @@
     "run_program": "rex-function",
     "signing_key": "rex-function"
   },
+  "smithy_aws_checksums": {
+    "CRC32": "class",
+    "CRC32C": "class",
+    "CRC64NVME": "class",
+    "Checksum": "protocol",
+    "HAS_NATIVE_EXTENSION": "bool",
+    "XXHash128": "class",
+    "XXHash3": "class",
+    "XXHash64": "class",
+    "new": "function"
+  },
   "smithy_aws_core": {},
   "smithy_aws_core.aio": {},
   "smithy_aws_core.aio.auth": {},
@@ -857,17 +868,6 @@
   },
   "smithy_cbor.settings": {
     "CBORSettings": "class"
-  },
-  "smithy_checksums": {
-    "CRC32": "class",
-    "CRC32C": "class",
-    "CRC64NVME": "class",
-    "Checksum": "protocol",
-    "HAS_NATIVE_EXTENSION": "bool",
-    "XXHash128": "class",
-    "XXHash3": "class",
-    "XXHash64": "class",
-    "new": "function"
   },
   "smithy_core": {
     "HostType": "class",

@@ -169,7 +169,7 @@ def test_reads_the_setting_from_each_calls_config() -> None:
         )
 
 
-def test_requires_smithy_checksums(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_requires_smithy_aws_checksums(monkeypatch: pytest.MonkeyPatch) -> None:
     from smithy_aws_core._private import checksums
     from smithy_core.exceptions import MissingDependencyError
 

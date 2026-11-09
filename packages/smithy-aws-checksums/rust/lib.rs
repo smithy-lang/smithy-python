@@ -1,10 +1,10 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-//! Native checksum implementations for `smithy_checksums`.
+//! Native checksum implementations for `smithy_aws_checksums`.
 //!
 //! Each class mirrors the pure-Python implementation of the same name in
-//! `smithy_checksums._private.crc` or `smithy_checksums._private.xxhash`, so
+//! `smithy_aws_checksums._private.crc` or `smithy_aws_checksums._private.xxhash`, so
 //! the two are interchangeable.
 
 use std::hash::Hasher as _;
@@ -149,7 +149,7 @@ fn hash_slice<S: State>(py: Python<'_>, state: &Mutex<S>, data: &[u8]) {
 
 macro_rules! checksum_class {
     ($name:ident, $state:ident) => {
-        #[pyclass(frozen, module = "smithy_checksums._native")]
+        #[pyclass(frozen, module = "smithy_aws_checksums._native")]
         struct $name {
             state: Mutex<$state>,
         }

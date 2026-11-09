@@ -24,9 +24,9 @@ type ImplFactory = Callable[[], ChecksumImpl]
 
 def _load() -> tuple[bool, Mapping[str, ImplFactory]]:
     try:
-        from smithy_checksums import _native
+        from smithy_aws_checksums import _native
     except ImportError:
-        from smithy_checksums._private import crc, xxhash
+        from smithy_aws_checksums._private import crc, xxhash
 
         return False, {
             "crc32": crc.Crc32,
