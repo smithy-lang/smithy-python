@@ -52,6 +52,7 @@ __all__ = [
     "RequiredTrait",
     "RequiresLengthTrait",
     "RpcV2CborTrait",
+    "RpcV2JsonTrait",
     "SensitiveTrait",
     "SparseTrait",
     "StaticContextParamsTrait",
@@ -427,7 +428,7 @@ class HTTPAPIKeyAuthTrait(Trait, id=ShapeID("smithy.api#httpApiKeyAuth")):
 
 
 def _parse_http_protocol_values(
-    value: "DocumentValue | DynamicTrait | None",
+    value: "DocumentValue",
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Parse ``{"http": [...], "eventStreamHttp": [...]}`` into (http, eventStreamHttp).
 
@@ -468,7 +469,23 @@ class RpcV2CborTrait(Trait, id=ShapeID("smithy.protocols#rpcv2Cbor")):
 
     def __init__(self, value: "DocumentValue | DynamicTrait" = None):
         super().__init__(value)
-        http, event_stream_http = _parse_http_protocol_values(value)
+        http, event_stream_http = _parse_http_protocol_values(self.document_value)
+        object.__setattr__(self, "http", http)
+        object.__setattr__(self, "event_stream_http", event_stream_http)
+
+
+@dataclass(init=False, frozen=True)
+class RpcV2JsonTrait(Trait, id=ShapeID("smithy.protocols#rpcv2Json")):
+    http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    event_stream_http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        http, event_stream_http = _parse_http_protocol_values(self.document_value)
         object.__setattr__(self, "http", http)
         object.__setattr__(self, "event_stream_http", event_stream_http)
 

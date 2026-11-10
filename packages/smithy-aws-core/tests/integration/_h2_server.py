@@ -16,6 +16,9 @@ import trustme
 from smithy_aws_event_stream.events import Event, EventMessage
 
 EVENT_STREAM_CONTENT_TYPE = "application/vnd.amazon.eventstream"
+# rpcv2 responses must echo the request's Smithy-Protocol header; clients treat a
+# response without it as malformed. This harness only speaks rpcv2Cbor.
+SMITHY_PROTOCOL = "rpc-v2-cbor"
 
 
 def encode_event(event_type: str, payload: bytes) -> bytes:
@@ -153,7 +156,11 @@ class H2BidiServer:
     ) -> None:
         conn.send_headers(
             stream._stream_id,
-            [(":status", "200"), ("content-type", EVENT_STREAM_CONTENT_TYPE)],
+            [
+                (":status", "200"),
+                ("content-type", EVENT_STREAM_CONTENT_TYPE),
+                ("smithy-protocol", SMITHY_PROTOCOL),
+            ],
         )
 
 
