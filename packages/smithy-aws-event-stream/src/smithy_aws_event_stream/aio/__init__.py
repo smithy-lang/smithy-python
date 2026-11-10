@@ -3,7 +3,7 @@
 import contextlib
 import logging
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from smithy_core.aio.interfaces import AsyncByteStream, AsyncWriter
 from smithy_core.aio.interfaces.eventstream import (
@@ -24,20 +24,20 @@ from ..events import Event, EventMessage
 from ..exceptions import EventError
 from ..signing import SigningConfig
 
+if TYPE_CHECKING:
+    from aws_sdk_signers.interfaces.identity import (
+        AWSCredentialsIdentity,
+        AWSIdentityProperties,
+    )
+    from smithy_core.interfaces.identity import Identity
+
 __all__ = ["AsyncAWSEventPublisher", "AsyncAWSEventReceiver", "decode_event_async"]
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-
-if TYPE_CHECKING:
-    from smithy_aws_core.identity.components import (
-        AWSCredentialsIdentity,
-        AWSIdentityProperties,
-    )
-
-    type _AsyncSigningConfig = SigningConfig[
-        AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
-    ]
+type _AsyncSigningConfig = SigningConfig[
+    AsyncIdentityResolver[_ResolvedCredentials, AWSIdentityProperties]
+]
 
 
 async def decode_event_async(source: AsyncByteStream) -> Event | None:
@@ -212,3 +212,8 @@ class AsyncAWSEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
     def closed(self) -> bool:
         """Whether the receiver has been closed."""
         return self._closed
+
+
+if TYPE_CHECKING:
+    # Resolvers must return a smithy-core Identity that the signer also accepts.
+    class _ResolvedCredentials(Identity, AWSCredentialsIdentity, Protocol): ...

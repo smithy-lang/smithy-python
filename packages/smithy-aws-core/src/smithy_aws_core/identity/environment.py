@@ -2,12 +2,13 @@
 #  SPDX-License-Identifier: Apache-2.0
 import os
 
+from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import IdentityResolver
 
 from .._private.identity_features import record_features
 from ..business_metrics import AwsFeatureId
-from .components import AWSCredentialsIdentity, AWSIdentityProperties
+from .components import AWSCredentialsIdentity
 
 __all__ = ["EnvironmentCredentialsResolver"]
 

@@ -27,7 +27,9 @@ classifiers = [
   "Programming Language :: Python :: Free Threading :: 2 - Beta",
   "Topic :: Software Development :: Libraries"
 ]
-dependencies = []
+dependencies = [
+    "smithy-core~=0.10.0",
+]
 
 [project.urls]
 "Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-test/CHANGELOG.md"

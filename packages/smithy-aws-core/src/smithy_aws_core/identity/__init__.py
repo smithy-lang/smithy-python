@@ -7,7 +7,6 @@ from .components import (
     AWSCredentialsIdentity,
     AWSCredentialsResolver,
     AWSIdentityConfig,
-    AWSIdentityProperties,
 )
 from .environment import EnvironmentCredentialsResolver
 from .process import ProcessCredentialsResolver
@@ -17,7 +16,6 @@ __all__ = (
     "AWS_IDENTITY_CONFIG",
     "AWSCredentialsIdentity",
     "AWSCredentialsResolver",
-    "AWSIdentityProperties",
     "EnvironmentCredentialsResolver",
     "IdentityChainError",
     "ProcessCredentialsResolver",

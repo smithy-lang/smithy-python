@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, TypedDict, runtime_checkable
 
 __all__ = (
     "AWSCredentialsIdentity",
+    "AWSIdentityProperties",
     "Identity",
 )
 
@@ -44,3 +45,14 @@ class AWSCredentialsIdentity(Identity, Protocol):
     session_token: str | None = None
     """A temporary token used to specify the current session for the supplied
     credentials."""
+
+
+class AWSIdentityProperties(TypedDict, total=False):
+    """Identity properties that may carry explicit AWS credentials."""
+
+    access_key_id: str | None
+    secret_access_key: str | None
+    session_token: str | None
+    # TODO: Key by smithy_aws_core.business_metrics.AwsFeatureId once the enum lives
+    # in a package aws-sdk-signers can depend on.
+    _feature_ids: dict[Any, None]

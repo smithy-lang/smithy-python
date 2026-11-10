@@ -2,7 +2,8 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import pytest
-from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
+from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_aws_core.identity.static import StaticCredentialsResolver
 from smithy_core.exceptions import SmithyIdentityError
 

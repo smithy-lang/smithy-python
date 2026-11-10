@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING, Any, ClassVar, Self, Unpack
 from smithy_core.aio.program import run_program_async
 
 if TYPE_CHECKING:
+    from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
     from smithy_core.aio.interfaces import AsyncClientTransport
     from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 
     from smithy_aws_core.identity.components import (
         AWSCredentialsIdentity,
-        AWSIdentityProperties,
     )
 
     type _AsyncTransport = AsyncClientTransport[Any, Any]

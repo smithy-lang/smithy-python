@@ -18,6 +18,7 @@ from smithy_aws_core.aio.config.aws_config import (
     AsyncAwsConfigOverrides,
 )
 from smithy_aws_core.aio.config.filesystem import AsyncFileSystem
+from smithy_aws_core.aio.identity import AsyncAWSCredentialsResolver
 from smithy_aws_core.aio.protocols import AsyncRestXmlClientProtocol
 from smithy_aws_core.config.resolvers import (
     EndpointUriResolver,
@@ -26,13 +27,8 @@ from smithy_aws_core.config.resolvers import (
 )
 from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
-from smithy_aws_core.identity.components import (
-    AWSCredentialsIdentity,
-    AWSIdentityProperties,
-)
 from smithy_core.aio.interfaces import AsyncEndpointResolver
 from smithy_core.aio.interfaces.auth import AsyncAuthScheme
-from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.endpoints import BddEndpointResolver
 from smithy_core.interfaces import (
     ClientProtocol,
@@ -407,9 +403,7 @@ class AsyncRestXmlProtocolConfig(AsyncAwsConfig):
     use_fips_endpoint: bool | None = None
     """Whether to use FIPS-compliant regional endpoint."""
 
-    aws_credentials_identity_resolver: (
-        AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties] | None
-    ) = None
+    aws_credentials_identity_resolver: AsyncAWSCredentialsResolver | None = None
     """Resolves AWS Credentials. Required for operations that use Sigv4 Auth."""
 
     region: str | None = None

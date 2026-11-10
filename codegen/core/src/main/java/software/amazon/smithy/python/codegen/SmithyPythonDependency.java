@@ -105,7 +105,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency PYTEST = new PythonDependency(
             "pytest",
-            ">=9.0.1,<10.0.0",
+            ">=9.0.3,<10.0.0",
             Type.TEST_DEPENDENCY,
             false);
 

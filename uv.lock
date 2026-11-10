@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 
 [manifest]
@@ -709,11 +709,15 @@ provides-extras = ["checksums", "eventstream", "json", "xml"]
 name = "smithy-aws-event-stream"
 source = { editable = "packages/smithy-aws-event-stream" }
 dependencies = [
+    { name = "aws-sdk-signers" },
     { name = "smithy-core" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
+requires-dist = [
+    { name = "aws-sdk-signers", editable = "packages/aws-sdk-signers" },
+    { name = "smithy-core", editable = "packages/smithy-core" },
+]
 
 [[package]]
 name = "smithy-cbor"
@@ -737,7 +741,7 @@ typing = [
 [package.metadata]
 
 [package.metadata.requires-dev]
-typing = [{ name = "typing-extensions", specifier = ">=4.13.0" }]
+typing = [{ name = "typing-extensions", specifier = ">=4.14.0" }]
 
 [[package]]
 name = "smithy-http"
@@ -757,6 +761,9 @@ awscrt = [
 cbor = [
     { name = "smithy-cbor" },
 ]
+eventstream = [
+    { name = "smithy-aws-event-stream" },
+]
 json = [
     { name = "smithy-json" },
 ]
@@ -768,13 +775,14 @@ urllib3 = [
 requires-dist = [
     { name = "aiohttp", marker = "extra == 'aiohttp'", specifier = ">=3.11.12,<4.0" },
     { name = "awscrt", marker = "extra == 'awscrt'", specifier = "~=0.32.0" },
+    { name = "smithy-aws-event-stream", marker = "extra == 'eventstream'", editable = "packages/smithy-aws-event-stream" },
     { name = "smithy-cbor", marker = "extra == 'cbor'", editable = "packages/smithy-cbor" },
     { name = "smithy-core", editable = "packages/smithy-core" },
     { name = "smithy-json", marker = "extra == 'json'", editable = "packages/smithy-json" },
     { name = "urllib3", marker = "extra == 'urllib3'", specifier = ">=2.0,<3.0" },
-    { name = "yarl", marker = "extra == 'aiohttp'" },
+    { name = "yarl", marker = "extra == 'aiohttp'", specifier = ">=1.17.0" },
 ]
-provides-extras = ["aiohttp", "awscrt", "cbor", "json", "urllib3"]
+provides-extras = ["aiohttp", "awscrt", "cbor", "eventstream", "json", "urllib3"]
 
 [[package]]
 name = "smithy-json"
@@ -794,7 +802,6 @@ source = { editable = "packages/smithy-python" }
 name = "smithy-python-workspace"
 version = "0.1.0"
 source = { virtual = "." }
-default-groups = ["changelog", "lint", "test", "typing"]
 
 [package.dev-dependencies]
 changelog = [
@@ -821,8 +828,8 @@ changelog = [{ name = "jinja2", specifier = ">=3.1.6" }]
 lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 test = [
     { name = "freezegun", specifier = ">=1.5.1" },
-    { name = "pytest", specifier = ">=9.0.3" },
-    { name = "pytest-asyncio", specifier = ">=0.25.3" },
+    { name = "pytest", specifier = ">=9.0.3,<10.0.0" },
+    { name = "pytest-asyncio", specifier = ">=1.3.0,<1.4.0" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
 ]
 typing = [
@@ -833,6 +840,12 @@ typing = [
 [[package]]
 name = "smithy-test"
 source = { editable = "packages/smithy-test" }
+dependencies = [
+    { name = "smithy-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
 name = "smithy-xml"

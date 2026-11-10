@@ -2,10 +2,11 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 
+from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 
-from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
+from ...identity.components import AWSCredentialsIdentity
 from ...identity.process import (
     _ProcessCredentialsResolverBase,  # pyright: ignore[reportPrivateUsage]
 )

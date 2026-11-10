@@ -36,6 +36,9 @@ def check() -> list[Finding]:
             top = imp.top
             if not top or top in own or is_stdlib(top):
                 continue
+            # Type checkers resolve typing_extensions from typeshed's bundled stdlib stubs.
+            if top == "typing_extensions" and imp.context == "type_checking":
+                continue
             dists = mapping.get(top)
             if not dists:
                 key = (top, "unresolved")

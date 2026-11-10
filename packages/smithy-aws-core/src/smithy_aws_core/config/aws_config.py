@@ -10,6 +10,7 @@ from smithy_core.program import Program, run_program
 from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
 
 if TYPE_CHECKING:
+    from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
     from smithy_core.interfaces import ClientTransport, URI
     from smithy_core.interfaces.identity import IdentityResolver
     from smithy_core.interfaces.retries import RetryStrategy
@@ -17,7 +18,6 @@ if TYPE_CHECKING:
 
     from smithy_aws_core.identity.components import (
         AWSCredentialsIdentity,
-        AWSIdentityProperties,
     )
 
     type _Transport = ClientTransport[Any, Any]

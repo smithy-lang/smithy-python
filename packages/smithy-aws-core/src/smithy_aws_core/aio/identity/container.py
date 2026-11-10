@@ -8,6 +8,7 @@ import warnings
 from datetime import UTC, datetime
 from urllib.parse import urlparse
 
+from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.aio.utils import read_streaming_blob_async
@@ -18,7 +19,6 @@ from smithy_http.interfaces import HTTPResponse
 
 from smithy_aws_core.identity.components import (
     AWSCredentialsIdentity,
-    AWSIdentityProperties,
 )
 from smithy_aws_core.identity.container import ContainerCredentialsConfig
 

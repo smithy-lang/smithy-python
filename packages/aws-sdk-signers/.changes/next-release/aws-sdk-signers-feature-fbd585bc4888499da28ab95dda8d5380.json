@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added AWSIdentityProperties to aws_sdk_signers.interfaces.identity."
+}
