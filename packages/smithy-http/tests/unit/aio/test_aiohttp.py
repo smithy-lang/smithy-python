@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 #  pyright: reportPrivateUsage=false
 from collections.abc import AsyncIterator
+from io import BytesIO
 from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -81,6 +82,47 @@ async def test_send_preserves_explicitly_framed_empty_body() -> None:
         destination=URI(scheme="https", host="example.com", path="/"),
         body=body,
         fields=Fields([Field(name="content-length", values=["0"])]),
+    )
+
+    await client.send(request)
+
+    data = session.request.call_args.kwargs["data"]
+    assert data is not None
+    assert [chunk async for chunk in data] == []
+
+
+async def test_send_reads_bodies_in_large_chunks() -> None:
+    # AsyncBytesReader iterates in 1 KiB chunks by default, which made uploads
+    # about 25x slower than larger chunks.
+    client, session = _create_client()
+    size = 300 * 1024
+    request = HTTPRequest(
+        method="PUT",
+        destination=URI(scheme="https", host="example.com", path="/"),
+        body=BytesIO(b"x" * size),
+        fields=Fields([Field(name="content-length", values=[str(size)])]),
+    )
+
+    await client.send(request)
+
+    chunks = [chunk async for chunk in session.request.call_args.kwargs["data"]]
+    assert [len(chunk) for chunk in chunks] == [128 * 1024, 128 * 1024, 44 * 1024]
+
+
+async def test_send_passes_async_iterables_through() -> None:
+    # Re-chunking would hold back each item until a full chunk had arrived.
+    client, session = _create_client()
+
+    async def chunks() -> AsyncIterator[bytes]:
+        yield b"a" * 10
+        yield b"b" * 10
+
+    body = chunks()
+    request = HTTPRequest(
+        method="PUT",
+        destination=URI(scheme="https", host="example.com", path="/"),
+        body=body,
+        fields=Fields([Field(name="content-length", values=["20"])]),
     )
 
     await client.send(request)

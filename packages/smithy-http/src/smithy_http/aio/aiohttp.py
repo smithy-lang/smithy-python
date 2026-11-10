@@ -3,7 +3,7 @@
 from collections.abc import AsyncIterable, AsyncIterator
 from copy import copy, deepcopy
 from itertools import chain
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Self, cast
 
 import yarl
 
@@ -38,6 +38,8 @@ from ..interfaces import (
 from .interfaces import AsyncHTTPClient
 
 __all__ = ["AIOHTTPClient", "AIOHTTPClientConfig"]
+
+_UPLOAD_CHUNK_SIZE = 128 * 1024
 
 
 class AIOHTTPClientConfig(HTTPClientConfiguration):
@@ -135,7 +137,7 @@ class AIOHTTPClient(AsyncHTTPClient):
             method=request.method,
             url=self._serialize_uri(request.destination),
             headers=headers_list,
-            data=body,
+            data=_upload_data(request.body, body),
             chunked=True if chunked else None,
             allow_redirects=False,
             skip_auto_headers={"Content-Type"},
@@ -189,6 +191,20 @@ class AIOHTTPClient(AsyncHTTPClient):
             body=_AIOHTTPStreamingBody(aiohttp_resp),
             reason=aiohttp_resp.reason,
         )
+
+
+def _upload_data(source: Any, body: AsyncBytesReader | None) -> Any:
+    """What aiohttp uploads for a request body, which it iterates.
+
+    AsyncBytesReader iterates in 1 KiB chunks by default, so a reader is read in
+    larger ones. An async iterable that isn't a reader is passed through, so each
+    item is sent as soon as it's produced rather than held until a chunk fills.
+    """
+    if body is None:
+        return None
+    if not hasattr(source, "read") and isinstance(source, AsyncIterable):
+        return cast(AsyncIterable[bytes], source)
+    return body.iter_chunks(_UPLOAD_CHUNK_SIZE)
 
 
 def _assert_aiohttp() -> None:
