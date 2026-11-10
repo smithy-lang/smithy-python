@@ -286,6 +286,28 @@
                     "moduleVersion": "0.0.1"
                 }
             }
+        },
+        "my-handwritten-json-model": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "smithy.python.tests.handwritten.json#MyHandwrittenJsonModel"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "smithy.python.tests.handwritten.json#MyHandwrittenJsonModel",
+                    "module": "my_handwritten_json_model",
+                    "moduleVersion": "0.0.1"
+                }
+            }
         }
     }
 }
