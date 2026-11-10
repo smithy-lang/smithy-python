@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "`Urllib3HTTPClient` now streams request bodies that are readers with a known length or chunked transfer encoding, such as an open file, instead of reading the whole body into memory first. Uploads are sent in 128 KiB blocks."
+}

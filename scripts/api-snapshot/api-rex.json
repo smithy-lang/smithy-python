@@ -1274,6 +1274,7 @@
     "HTTPResponseInterface": "rex-protocol",
     "MissingDependencyError": "rex-exception",
     "SmithyHTTPError": "rex-exception",
+    "is_bytes_reader": "rex-function",
     "tuples_to_fields": "rex-function"
   },
   "smithy_http.utils": {
