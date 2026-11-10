@@ -625,6 +625,7 @@
     "RequiredTrait": "class",
     "RequiresLengthTrait": "class",
     "RpcV2CborTrait": "class",
+    "RpcV2JsonTrait": "class",
     "SensitiveTrait": "class",
     "SparseTrait": "class",
     "StaticContextParamsTrait": "class",
@@ -701,7 +702,8 @@
   "smithy_http.aio.protocols": {
     "AsyncHttpEventStreamMixin": "class[async]",
     "AsyncRpcEventStreamMixin": "class[async]",
-    "AsyncRpcV2CborClientProtocol": "class[async]"
+    "AsyncRpcV2CborClientProtocol": "class[async]",
+    "AsyncRpcV2JsonClientProtocol": "class[async]"
   },
   "smithy_http.aio.restjson": {
     "parse_rest_json_error_info_async": "function[async]"
@@ -766,7 +768,8 @@
     "HttpBindingClientProtocol": "class",
     "HttpClientProtocol": "class",
     "RpcClientProtocol": "class",
-    "RpcV2CborClientProtocol": "class"
+    "RpcV2CborClientProtocol": "class",
+    "RpcV2JsonClientProtocol": "class"
   },
   "smithy_http.restjson": {
     "RestJsonErrorInfo": "class",

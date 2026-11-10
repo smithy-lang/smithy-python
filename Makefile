@@ -321,7 +321,7 @@ test-py: ## Runs tests for the python packages.
 test-protocols: ## Runs the generated protocol-test clients in ./codegen-output; run generate-protocol-tests first after codegen changes.
 	uv pip install -e packages/smithy-test
 	@set -e; for projection_dir in codegen-output/*/; do \
-		uv pip install "$$projection_dir"; \
+		uv pip install --no-deps "$$projection_dir"; \
 		uv run pytest "$$projection_dir" --no-cov; \
 	done
 
@@ -330,7 +330,7 @@ test-protocols: ## Runs the generated protocol-test clients in ./codegen-output;
 # (removed typing.no_type_check_decorator); run the stub type-check on 3.12 only.
 typecheck-protocols: ## Type-checks the generated protocol-test stub fixtures in ./codegen-output with pyright.
 	@set -e; for projection_dir in codegen-output/*/; do \
-		uv pip install "$$projection_dir"; \
+		uv pip install --no-deps "$$projection_dir"; \
 		uv run pyright "$$projection_dir/tests/_typecheck.py"; \
 	done
 

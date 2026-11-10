@@ -36,12 +36,14 @@ from ..protocols import (
     HttpClientProtocol,
     RpcClientProtocol,
     RpcV2CborClientProtocol,
+    RpcV2JsonClientProtocol,
 )
 
 __all__ = [
     "AsyncHttpEventStreamMixin",
     "AsyncRpcEventStreamMixin",
     "AsyncRpcV2CborClientProtocol",
+    "AsyncRpcV2JsonClientProtocol",
 ]
 
 try:
@@ -290,6 +292,10 @@ class AsyncRpcEventStreamMixin(AsyncHttpEventStreamMixin, RpcClientProtocol):
 
 class AsyncRpcV2CborClientProtocol(AsyncRpcEventStreamMixin, RpcV2CborClientProtocol):
     """An implementation of the smithy.protocols#rpcv2Cbor protocol."""
+
+
+class AsyncRpcV2JsonClientProtocol(AsyncRpcEventStreamMixin, RpcV2JsonClientProtocol):
+    """An implementation of the smithy.protocols#rpcv2Json protocol."""
 
 
 def _assert_event_stream() -> None:
