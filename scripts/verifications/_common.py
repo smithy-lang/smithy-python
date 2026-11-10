@@ -419,6 +419,37 @@ def probe(
     return _probe_cached(tuple(names), python)
 
 
+def public_runtime_module_names() -> list[str]:
+    return [m.name for m in runtime_modules() if m.public]
+
+
+def all_runtime_module_names() -> list[str]:
+    return [m.name for m in runtime_modules()]
+
+
+def import_call_aliases(tree: ast.Module) -> set[str]:
+    """Local names bound to ``importlib.import_module`` or ``__import__``."""
+    names = {"__import__"}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == "importlib":
+            for alias in node.names:
+                if alias.name in ("import_module", "__import__"):
+                    names.add(alias.asname or alias.name)
+    return names
+
+
+def is_import_call(func: ast.expr, aliases: set[str]) -> bool:
+    """Whether ``func`` is ``importlib.import_module``, ``__import__`` or a local alias of them."""
+    if isinstance(func, ast.Name):
+        return func.id in aliases
+    return (
+        isinstance(func, ast.Attribute)
+        and func.attr in ("import_module", "__import__")
+        and isinstance(func.value, ast.Name)
+        and func.value.id == "importlib"
+    )
+
+
 @functools.cache
 def _probe_cached(names: tuple[str, ...], python: str) -> dict[str, dict[str, Any]]:
     roots = [str(p.src) for p in packages()] + [str(p) for p in generated_srcs()]
@@ -441,14 +472,6 @@ def _probe_cached(names: tuple[str, ...], python: str) -> dict[str, dict[str, An
 
     with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as pool:
         return dict(pool.map(one, names))
-
-
-def public_runtime_module_names() -> list[str]:
-    return [m.name for m in runtime_modules() if m.public]
-
-
-def all_runtime_module_names() -> list[str]:
-    return [m.name for m in runtime_modules()]
 
 
 def _load_src(src: Path, package: Package | None) -> Iterator[Module]:
@@ -527,6 +550,7 @@ def _catches_import_error(node: ast.Try) -> bool:
 class _ImportCollector:
     def __init__(self, module: Module) -> None:
         self.module = module
+        self.call_aliases = import_call_aliases(module.tree)
 
     def collect(self) -> Iterator[Import]:
         yield from self._walk(self.module.tree.body, "runtime", guarded=False)
@@ -552,8 +576,15 @@ class _ImportCollector:
                         context,
                         guarded,
                     )
+            case ast.Call() if is_import_call(node.func, self.call_aliases):
+                if (target := self._call_target(node)) is not None:
+                    yield Import(
+                        self.module, target, None, None, node.lineno, context, guarded
+                    )
+                for child in ast.iter_child_nodes(node):
+                    yield from self._visit(child, context, guarded=guarded)
             case ast.ImportFrom():
-                target = self._absolute(node)
+                target = self._absolute(node.level, node.module)
                 for alias in node.names:
                     yield Import(
                         self.module,
@@ -584,13 +615,38 @@ class _ImportCollector:
                 for child in ast.iter_child_nodes(node):
                     yield from self._visit(child, context, guarded=guarded)
 
-    def _absolute(self, node: ast.ImportFrom) -> str:
-        if not node.level:
-            return node.module or ""
-        parts = self.module.name.split(".")
-        if not self.module.is_package:
-            parts = parts[:-1]
-        parts = parts[: len(parts) - (node.level - 1)]
-        if node.module:
-            parts.append(node.module)
+    def _call_target(self, node: ast.Call) -> str | None:
+        """The absolute module a literal ``import_module`` call loads, if statically known."""
+        first = node.args[0] if node.args else None
+        if not (isinstance(first, ast.Constant) and isinstance(first.value, str)):
+            return None
+        name = first.value
+        stripped = name.lstrip(".")
+        level = len(name) - len(stripped)
+        if not level:
+            return name
+        package = next((k.value for k in node.keywords if k.arg == "package"), None)
+        if len(node.args) > 1:
+            package = node.args[1]
+        # Relative calls resolve against the caller only when anchored to it.
+        if not isinstance(package, ast.Name):
+            return None
+        if package.id == "__package__":
+            return self._absolute(level, stripped or None)
+        if package.id == "__name__":
+            return self._absolute(level, stripped or None, base=self.module.name)
+        return None
+
+    def _absolute(self, level: int, module: str | None, base: str | None = None) -> str:
+        if not level:
+            return module or ""
+        if base is not None:
+            parts = base.split(".")
+        else:
+            parts = self.module.name.split(".")
+            if not self.module.is_package:
+                parts = parts[:-1]
+        parts = parts[: len(parts) - (level - 1)]
+        if module:
+            parts.append(module)
         return ".".join(parts)

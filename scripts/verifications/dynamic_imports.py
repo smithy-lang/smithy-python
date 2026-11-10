@@ -6,22 +6,27 @@
 An import whose target is computed at runtime is invisible to every static tool:
 the dependency, cycle, import-direction and canonical-import verifications,
 type checkers, bundlers and freezers all miss it. Requiring a string literal
-keeps the import graph those tools see complete.
+keeps the import graph those tools see complete, since the shared import index
+records literal calls as imports.
 """
 
 import ast
 
-from _common import Finding, main, runtime_modules
+from _common import (
+    Finding,
+    import_call_aliases,
+    is_import_call,
+    main,
+    runtime_modules,
+)
 
 
 def check() -> list[Finding]:
     findings: list[Finding] = []
     for module in runtime_modules():
-        aliases = _import_module_aliases(module.tree)
+        aliases = import_call_aliases(module.tree)
         for node in ast.walk(module.tree):
-            if not isinstance(node, ast.Call) or not _is_dynamic_import(
-                node.func, aliases
-            ):
+            if not isinstance(node, ast.Call) or not is_import_call(node.func, aliases):
                 continue
             first = node.args[0] if node.args else None
             if not (isinstance(first, ast.Constant) and isinstance(first.value, str)):
@@ -33,27 +38,6 @@ def check() -> list[Finding]:
                     )
                 )
     return findings
-
-
-def _import_module_aliases(tree: ast.Module) -> set[str]:
-    names = {"__import__"}
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom) and node.module == "importlib":
-            for alias in node.names:
-                if alias.name in ("import_module", "__import__"):
-                    names.add(alias.asname or alias.name)
-    return names
-
-
-def _is_dynamic_import(func: ast.expr, aliases: set[str]) -> bool:
-    if isinstance(func, ast.Name):
-        return func.id in aliases
-    return (
-        isinstance(func, ast.Attribute)
-        and func.attr in ("import_module", "__import__")
-        and isinstance(func.value, ast.Name)
-        and func.value.id == "importlib"
-    )
 
 
 if __name__ == "__main__":

@@ -50,8 +50,8 @@ def _inspect(package: Package, wheel: str, names: set[str]) -> list[Finding]:
     expected = {
         str(p.relative_to(package.src))
         for root in package.roots
-        for p in (package.src / root).rglob("*.py")
-        if "__pycache__" not in p.parts
+        for p in (package.src / root).rglob("*.py*")
+        if p.suffix in (".py", ".pyi") and "__pycache__" not in p.parts
     }
     for missing in sorted(expected - names):
         findings.append(Finding(f"{wheel}: missing {missing}", package.src / missing))
