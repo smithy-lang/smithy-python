@@ -294,9 +294,7 @@ public final class StructureGenerator implements Runnable {
     }
 
     private void writeMemberDocs(MemberShape member) {
-        member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
-            writer.writeDocs(trait.getValue(), context);
-        });
+        CodegenUtils.getMemberDocs(model, member).ifPresent(docs -> writer.writeDocs(docs, context));
     }
 
     private List<MemberShape> filterPropertyMembers(List<MemberShape> members) {

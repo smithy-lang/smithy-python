@@ -267,8 +267,7 @@ public final class ModelStubGenerator implements Runnable {
     }
 
     private void writeMemberDocs(PythonWriter writer, MemberShape member) {
-        member.getMemberTrait(model, DocumentationTrait.class)
-                .ifPresent(trait -> writer.writeDocs(trait.getValue(), context));
+        CodegenUtils.getMemberDocs(model, member).ifPresent(docs -> writer.writeDocs(docs, context));
     }
 
     private boolean carriesResponseMetadata(Shape shape) {
