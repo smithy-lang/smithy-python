@@ -10,20 +10,28 @@ from typing import Any, cast
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from aws_sdk_signers import AWSCredentialIdentity, SigV4Signer, SigV4SigningProperties
+from aws_sdk_signers import (
+    AWSCredentialIdentity,
+    ChunkSigner,
+    SigV4Signer,
+    SigV4SigningProperties,
+)
 from smithy_aws_core._aws_chunked import AwsChunkedReader
 from smithy_aws_core.aio._aws_chunked import AsyncAwsChunkedReader
 from smithy_aws_core.aio.checksums import AsyncChecksumStream
 from smithy_aws_core.aio.interceptors.checksums import (
     AsyncFlexibleChecksumsInterceptor,
 )
+from smithy_aws_core.auth.sigv4 import SigV4AuthScheme
 from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
 from smithy_aws_core.checksums import ChecksumStream, UnsupportedChecksumAlgorithmError
+from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_aws_core.interceptors.checksums import FlexibleChecksumsInterceptor
 from smithy_aws_core.traits import HTTPChecksumTrait
 from smithy_core import URI
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_core.client import OPERATION
+from smithy_core.auth import RESOLVED_IDENTITY
+from smithy_core.client import AUTH_SCHEME, OPERATION
 from smithy_core.exceptions import SmithyError
 from smithy_core.interceptors import InputContext, RequestContext, ResponseContext
 from smithy_core.interfaces import TypedProperties as TypedPropertiesInterface
@@ -571,17 +579,25 @@ def test_requires_a_readable_payload_for_required_or_chosen_checksums(
         _sent(context)
 
 
-@pytest.mark.parametrize("scheme,advises_length", [("https", True), ("http", False)])
+@pytest.mark.parametrize(
+    "interceptor,advises_length",
+    [
+        pytest.param(AsyncFlexibleChecksumsInterceptor(), True, id="async-client"),
+        pytest.param(FlexibleChecksumsInterceptor(), False, id="sync-client"),
+    ],
+)
+@pytest.mark.parametrize("scheme", ["https", "http"])
 def test_suggests_a_content_length_only_where_it_helps(
-    scheme: str, advises_length: bool
+    interceptor: FlexibleChecksumsInterceptor, advises_length: bool, scheme: str
 ) -> None:
-    # A content length lets an async client encode the payload, but only over https.
+    # A content length lets an async client encode an async payload, which a sync
+    # client can't read.
     context = _streaming_context(
         body=_async_chunks(), length=None, algorithm="SHA256", scheme=scheme
     )
 
     with pytest.raises(SmithyError) as error:
-        _ASYNC_CLIENT_INTERCEPTOR.modify_before_signing(context)
+        interceptor.modify_before_signing(context)
     assert ("content length" in str(error.value)) is advises_length
 
 
@@ -736,6 +752,111 @@ def test_trailing_checksum_requests_sign_without_reading_the_payload() -> None:
     )
 
 
+_IDENTITY = AWSCredentialsIdentity(
+    access_key_id="AKIDEXAMPLE", secret_access_key="secret"
+)
+
+
+def _sigv4_context(body: Any = DATA, **kwargs: Any) -> RequestContext[Any, Any]:
+    context = _streaming_context(body=body, **kwargs)
+    context.properties[AUTH_SCHEME] = SigV4AuthScheme(service="s3")
+    context.properties[RESOLVED_IDENTITY] = _IDENTITY
+    return context
+
+
+def _signed_and_transmitted(
+    context: RequestContext[Any, Any],
+    interceptor: FlexibleChecksumsInterceptor | None = None,
+    date: str = "20250101T000000Z",
+) -> RequestContext[Any, Any]:
+    """Sign with SigV4, then transmit the request, as an attempt does."""
+    interceptor = interceptor or FlexibleChecksumsInterceptor()
+    request = interceptor.modify_before_signing(context)
+    signed = SigV4Signer().sign(
+        request=cast(Any, request),
+        identity=_IDENTITY,
+        properties=SigV4SigningProperties(region="us-west-2", service="s3", date=date),
+    )
+    context = replace(context, transport_request=cast(Any, signed))
+    return replace(
+        context, transport_request=interceptor.modify_before_transmit(context)
+    )
+
+
+def _signed_encoding(request: Any, data: bytes, checksum: str) -> bytes:
+    """Encode ``data`` as a request signed as it's sent should be."""
+    signer = ChunkSigner.from_signed_request(request, _IDENTITY)
+    trailer = f"x-amz-checksum-crc64nvme:{checksum}"
+    return (
+        f"{len(data):x};chunk-signature={signer.sign_chunk(data)}\r\n".encode()
+        + data
+        + f"\r\n0;chunk-signature={signer.sign_chunk(b'')}\r\n{trailer}\r\n".encode()
+        + f"x-amz-trailer-signature:{signer.sign_trailer(trailer + chr(10))}".encode()
+        + b"\r\n\r\n"
+    )
+
+
+@pytest.mark.parametrize("sigv4", [True, False], ids=["sigv4", "anonymous"])
+def test_payloads_over_https_or_without_sigv4_are_unsigned(sigv4: bool) -> None:
+    for scheme in ("https",) if sigv4 else ("https", "http"):
+        context = (_sigv4_context if sigv4 else _streaming_context)(scheme=scheme)
+
+        sent = _sent(context)
+
+        assert sent["x-amz-content-sha256"] == "STREAMING-UNSIGNED-PAYLOAD-TRAILER"
+
+
+def test_sigv4_payloads_over_http_are_signed_as_they_are_sent() -> None:
+    context = _sigv4_context(body=_UnreadableBody(DATA), scheme="http")
+
+    sent = _sent(context)
+
+    assert sent["x-amz-content-sha256"] == "STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER"
+    assert sent["x-amz-trailer"] == "x-amz-checksum-crc64nvme"
+    assert sent["content-encoding"] == "aws-chunked"
+    assert sent["x-amz-decoded-content-length"] == str(len(DATA))
+    assert sent["transfer-encoding"] == "chunked"
+    assert "x-amz-checksum-crc64nvme" not in sent
+
+
+@pytest.mark.parametrize("client", ["sync", "async"])
+async def test_sigv4_payloads_over_http_sign_each_chunk_and_the_trailer(
+    client: str,
+) -> None:
+    if client == "sync":
+        context, interceptor = _sigv4_context(scheme="http"), None
+    else:
+        context = _sigv4_context(body=_async_chunks(), scheme="http")
+        interceptor = _ASYNC_CLIENT_INTERCEPTOR
+    request = _signed_and_transmitted(context, interceptor).transport_request
+
+    # The payload isn't read to sign the request, only to send it.
+    assert request.fields["Authorization"].as_string().startswith("AWS4-HMAC-SHA256 ")
+    encoded = (
+        await _read_async(request.body)
+        if isinstance(request.body, AsyncAwsChunkedReader)
+        else _read(request.body)
+    )
+    assert encoded == _signed_encoding(request, DATA, CRC64NVME)
+
+
+def test_signed_retries_sign_again_and_reuse_the_checksum() -> None:
+    first = _signed_and_transmitted(_sigv4_context(scheme="http"))
+    _read(first.transport_request.body)
+
+    # The retry signs the changed payload's chunks again, from its new signature,
+    # with the first attempt's checksum.
+    retry = _signed_and_transmitted(
+        _sigv4_context(body=b"changed!!!!", scheme="http", properties=first.properties),
+        date="20250101T000001Z",
+    ).transport_request
+
+    assert _read(retry.body) == _signed_encoding(retry, b"changed!!!!", CRC64NVME)
+    assert (
+        retry.fields["Authorization"] != first.transport_request.fields["Authorization"]
+    )
+
+
 def test_streaming_payloads_are_encoded_when_sent() -> None:
     request = _transmitted(_streaming_context()).transport_request
 
@@ -818,10 +939,11 @@ async def test_async_clients_encode_awaitable_readers() -> None:
 def test_awaitable_readers_without_a_trailer_skip_or_fail_cleanly(
     algorithm: str | None,
 ) -> None:
-    # Over http the checksum goes in a header, which a hook can't calculate from an
-    # awaitable read(). The read's coroutine is closed rather than left unawaited.
+    # Without a content length the checksum goes in a header, which a hook can't
+    # calculate from an awaitable read(). The read's coroutine is closed rather than
+    # left unawaited.
     context = _streaming_context(
-        body=_AwaitableReader(DATA), scheme="http", algorithm=algorithm
+        body=_AwaitableReader(DATA), length=None, algorithm=algorithm
     )
 
     with warnings.catch_warnings(record=True) as caught:
@@ -877,13 +999,13 @@ def test_retries_reuse_a_trailing_checksum() -> None:
 
 
 def test_retries_that_use_a_header_send_the_payload_unencoded() -> None:
-    # Each attempt resolves its endpoint again, so a retry can go to an http
-    # endpoint, which uses a header, after an attempt that used a trailer.
+    # Each attempt signs again, so a retry whose request can't send a trailer uses
+    # a header after an attempt that used a trailer.
     first = _transmitted(_streaming_context())
     _read(first.transport_request.body)
 
     retry = _transmitted(
-        _streaming_context(scheme="http", properties=first.properties)
+        _streaming_context(length=None, properties=first.properties)
     ).transport_request
 
     assert "x-amz-trailer" not in retry.fields
@@ -929,15 +1051,9 @@ def test_trailing_checksum_fails_a_payload_shorter_than_its_content_length() -> 
     assert _read(retry.transport_request.body) == _encoded(DATA, CRC64NVME)
 
 
-@pytest.mark.parametrize(
-    "kwargs",
-    [
-        pytest.param({"scheme": "http"}, id="http"),
-        pytest.param({"length": None}, id="unknown-length"),
-    ],
-)
-def test_streaming_payloads_use_a_header_otherwise(kwargs: dict[str, Any]) -> None:
-    context = _streaming_context(**kwargs)
+@pytest.mark.parametrize("scheme", ["https", "http"])
+def test_streaming_payloads_of_unknown_length_use_a_header(scheme: str) -> None:
+    context = _streaming_context(length=None, scheme=scheme)
 
     sent = _sent(context)
 

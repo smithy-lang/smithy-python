@@ -5,7 +5,7 @@ import hmac
 import threading
 from binascii import hexlify
 from hashlib import sha256
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from ._http import AWSRequest
 from ._program import run_program
@@ -36,6 +36,7 @@ __all__ = (
     "HEADERS_EXCLUDED_FROM_SIGNING",
     "SIGV4_TIMESTAMP_FORMAT",
     "UNSIGNED_PAYLOAD",
+    "ChunkSigner",
     "EventSigner",
     "SigV4Signer",
     "SigV4SigningProperties",
@@ -87,6 +88,117 @@ class SigV4Signer(SigV4SignerBase):
 
     def _hash_body(self, request: AWSRequest) -> str:
         return hash_sync_body(request)
+
+
+class _SignedField(Protocol):
+    def as_string(self) -> str: ...
+
+
+class _SignedFields(Protocol):
+    def __getitem__(self, name: str, /) -> _SignedField: ...
+
+
+class _SignedRequest(Protocol):
+    @property
+    def fields(self) -> _SignedFields: ...
+
+
+class ChunkSigner:
+    """Signs the chunks and trailer of an ``aws-chunked`` payload as it's sent.
+
+    Each signature chains from the one before it, starting from the signature of the
+    request's headers. The request is signed with the
+    ``STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER`` payload hash, so its payload isn't
+    read up front. Every chunk is signed with the date of the request's signature.
+    """
+
+    def __init__(
+        self,
+        *,
+        seed_signature: str,
+        identity: _AWSCredentialsIdentity,
+        properties: SigV4SigningProperties,
+    ) -> None:
+        """Initialize the signer.
+
+        :param seed_signature: The hex signature of the request's headers.
+        :param identity: The credentials the request was signed with.
+        :param properties: The properties the request was signed with, including its
+            ``date``.
+        """
+        if "date" not in properties:
+            raise ValueError("Chunk signing requires the date of the request.")
+        self._prior_signature = seed_signature
+        self._timestamp = properties["date"]
+        self._scope = credential_scope(properties)
+        self._key = signing_key(identity.secret_access_key, properties)
+
+    @classmethod
+    def from_signed_request(
+        cls, request: _SignedRequest, identity: _AWSCredentialsIdentity
+    ) -> "ChunkSigner":
+        """Create a signer that continues the signature of a signed request.
+
+        The seed signature and credential scope are read from the request's
+        ``Authorization`` field, and the date from its ``X-Amz-Date`` field.
+
+        :param request: A request signed by a SigV4 signer.
+        :param identity: The credentials the request was signed with.
+        :raises ValueError: If the request wasn't signed with SigV4.
+        """
+        try:
+            authorization = request.fields["Authorization"].as_string()
+            timestamp = request.fields["X-Amz-Date"].as_string()
+        except KeyError as e:
+            raise ValueError(f"The request has no {e} field to sign chunks.") from e
+        algorithm, _, parameters = authorization.partition(" ")
+        values: dict[str, str] = {}
+        for parameter in parameters.split(","):
+            name, _, value = parameter.strip().partition("=")
+            values[name] = value
+        scope = values.get("Credential", "").split("/")[1:]
+        if (
+            algorithm != "AWS4-HMAC-SHA256"
+            or len(scope) != 4
+            or scope[0] != timestamp[:8]
+            or not values.get("Signature")
+        ):
+            raise ValueError("The request wasn't signed with SigV4.")
+        return cls(
+            seed_signature=values["Signature"],
+            identity=identity,
+            properties={"date": timestamp, "region": scope[1], "service": scope[2]},
+        )
+
+    def sign_chunk(self, data: bytes | bytearray | memoryview) -> str:
+        """Sign the data of a chunk, returning the hex signature.
+
+        The last chunk of a payload is empty.
+        """
+        return self._sign(
+            "AWS4-HMAC-SHA256-PAYLOAD",
+            f"{EMPTY_SHA256_HASH}\n{sha256(data).hexdigest()}",
+        )
+
+    def sign_trailer(self, trailer: str) -> str:
+        """Sign the trailer fields, returning the hex signature.
+
+        :param trailer: The canonical trailer fields, each formatted as
+            ``<lowercase name>:<value>\\n``.
+        """
+        return self._sign(
+            "AWS4-HMAC-SHA256-TRAILER", sha256(trailer.encode()).hexdigest()
+        )
+
+    def _sign(self, algorithm: str, hashes: str) -> str:
+        string_to_sign = (
+            f"{algorithm}\n{self._timestamp}\n{self._scope}\n"
+            f"{self._prior_signature}\n{hashes}"
+        )
+        self._prior_signature = hmac.new(
+            self._key, string_to_sign.encode(), sha256
+        ).hexdigest()
+        return self._prior_signature
 
 
 class EventSigner:

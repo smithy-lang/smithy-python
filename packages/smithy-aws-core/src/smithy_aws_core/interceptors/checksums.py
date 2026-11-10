@@ -8,8 +8,10 @@ from dataclasses import replace
 from inspect import isawaitable, iscoroutinefunction
 from typing import Any, Protocol
 
+from aws_sdk_signers import ChunkSigner
 from smithy_core._model_naming import member_field_name
-from smithy_core.client import OPERATION
+from smithy_core.auth import RESOLVED_IDENTITY
+from smithy_core.client import AUTH_SCHEME, OPERATION
 from smithy_core.exceptions import SmithyError
 from smithy_core.interceptors import (
     InputContext,
@@ -40,7 +42,8 @@ from .._private.checksums import (
 )
 from ..business_metrics import AwsFeatureId, register_feature_id
 from ..checksums import ChecksumStream, UnsupportedChecksumAlgorithmError
-from ..traits import HTTPChecksumTrait
+from ..identity import AWSCredentialsIdentity
+from ..traits import HTTPChecksumTrait, SigV4Trait
 
 __all__ = [
     "AwsChunkedReaderFactory",
@@ -71,6 +74,7 @@ class AwsChunkedReaderFactory(Protocol):
         checksum_algorithm: str,
         checksum: bytes | None,
         on_checksum: Callable[[bytes], None],
+        chunk_signer: ChunkSigner | None,
     ) -> Any:
         """Wrap ``source`` in a reader that encodes it as it's read."""
         ...
@@ -81,8 +85,9 @@ class FlexibleChecksumsInterceptor(
 ):
     """Adds and validates checksums for operations with the ``httpChecksum`` trait.
 
-    Request checksums of streaming payloads sent over HTTPS are sent in an
-    ``aws-chunked`` trailer, and others in a header. When to calculate and validate them is
+    Request checksums of streaming payloads are sent in an ``aws-chunked`` trailer,
+    and others in a header. Over HTTP, a payload signed with SigV4 is signed as it's
+    sent, chunk by chunk. When to calculate and validate them is
     read from the ``request_checksum_calculation`` and
     ``response_checksum_validation`` settings of each call's config, so plugins can
     change them per call. Operations without the trait are passed through unchanged.
@@ -188,7 +193,9 @@ class FlexibleChecksumsInterceptor(
         ):
             # The checksum is calculated while the payload is sent, and sent after
             # it, so the payload is only read once.
-            _set_trailer_fields(request, algorithm)
+            _set_trailer_fields(
+                request, algorithm, signed=_signs_chunks(context.properties, request)
+            )
             _register_algorithm_feature_id(context.properties, algorithm)
             return request
 
@@ -243,6 +250,17 @@ class FlexibleChecksumsInterceptor(
         reader = self._chunked_reader_for(request.body)
         # Signing only chose a trailer for payloads with a reader.
         assert reader is not None  # noqa: S101
+        chunk_signer = None
+        if (
+            "x-amz-content-sha256" in request.fields
+            and request.fields["x-amz-content-sha256"].as_string()
+            == _STREAMING_SIGNED_PAYLOAD_TRAILER
+        ):
+            # The request was signed without its payload, which is signed as it's
+            # sent, continuing the signature of its headers.
+            identity = properties[RESOLVED_IDENTITY]
+            assert isinstance(identity, AWSCredentialsIdentity)  # noqa: S101
+            chunk_signer = ChunkSigner.from_signed_request(request, identity)
         # Each attempt encodes the payload again, after the client rewound it.
         request = copy(request)
         # Exactly the length the fields declare is sent, so the body always matches
@@ -255,6 +273,7 @@ class FlexibleChecksumsInterceptor(
             checksum_algorithm=algorithm,
             checksum=properties.get(_REQUEST_CHECKSUM),
             on_checksum=save,
+            chunk_signer=chunk_signer,
         )
         return request
 
@@ -316,15 +335,13 @@ _REQUEST_ALGORITHM = PropertyKey(key="request_checksum_algorithm", value_type=st
 """The algorithm of the request checksum, kept to be reused on retries."""
 
 _REQUEST_CHECKSUM = PropertyKey(key="request_checksum", value_type=bytes)
-"""The request payload's digest, reused on a retry so a changed payload is rejected."""
-"""The request checksum, kept to be reused on retries.
+"""The request payload's digest, reused on a retry so a changed payload is rejected.
 
 A trailing checksum is only saved once the payload was read to the end.
 """
 
-"""Whether the request checksum is sent in an ``aws-chunked`` trailer."""
-
 _STREAMING_UNSIGNED_PAYLOAD_TRAILER = "STREAMING-UNSIGNED-PAYLOAD-TRAILER"
+_STREAMING_SIGNED_PAYLOAD_TRAILER = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER"
 
 _READ_CHUNK_SIZE = 64 * 1024
 
@@ -423,15 +440,24 @@ def _sends_trailer(operation: APIOperation[Any, Any], request: HTTPRequest) -> b
 
 
 def _can_send_trailer(operation: APIOperation[Any, Any], request: HTTPRequest) -> bool:
-    # Like other AWS SDKs, a streaming payload's checksum is sent in a trailer over
-    # HTTPS, where the payload doesn't need to be signed.
-    return request.destination.scheme == "https" and any(
+    return any(
         StreamingTrait in member and member.shape_type is ShapeType.BLOB
         for member in operation.input_schema.members.values()
     )
 
 
-def _set_trailer_fields(request: HTTPRequest, algorithm: str) -> None:
+def _signs_chunks(properties: TypedProperties, request: HTTPRequest) -> bool:
+    # Payloads sent over HTTP are signed so they can't be changed on the way, and
+    # payloads sent over HTTPS or without SigV4, such as anonymously, aren't.
+    if request.destination.scheme == "https":
+        return False
+    scheme = properties.get(AUTH_SCHEME)
+    return getattr(scheme, "scheme_id", None) == SigV4Trait.id and isinstance(
+        properties.get(RESOLVED_IDENTITY), AWSCredentialsIdentity
+    )
+
+
+def _set_trailer_fields(request: HTTPRequest, algorithm: str, *, signed: bool) -> None:
     fields = request.fields
     # The encoded payload is sent with chunked transfer encoding rather than a
     # content length, and its decoded length, which S3 requires, in its own header.
@@ -444,9 +470,12 @@ def _set_trailer_fields(request: HTTPRequest, algorithm: str) -> None:
     del fields["content-length"]
     fields.set_field(Field(name="transfer-encoding", values=["chunked"]))
     fields.set_field(Field(name="x-amz-trailer", values=[checksum_header(algorithm)]))
-    fields.set_field(
-        Field(name="x-amz-content-sha256", values=[_STREAMING_UNSIGNED_PAYLOAD_TRAILER])
+    payload_hash = (
+        _STREAMING_SIGNED_PAYLOAD_TRAILER
+        if signed
+        else _STREAMING_UNSIGNED_PAYLOAD_TRAILER
     )
+    fields.set_field(Field(name="x-amz-content-sha256", values=[payload_hash]))
     # aws-chunked is applied after any other encoding, such as compression.
     encodings = (
         fields["content-encoding"].values if "content-encoding" in fields else []

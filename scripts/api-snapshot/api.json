@@ -36,6 +36,7 @@
     "Seekable": "protocol"
   },
   "aws_sdk_signers.signers": {
+    "ChunkSigner": "class",
     "EventSigner": "class",
     "SigV4Signer": "class"
   },

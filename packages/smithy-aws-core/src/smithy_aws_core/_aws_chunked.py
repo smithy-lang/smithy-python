@@ -12,6 +12,15 @@ a final CRLF::
     x-amz-checksum-crc64nvme:<base64 checksum>\\r\\n
     \\r\\n
 
+When the payload is signed as it's sent, each chunk's length is followed by its
+signature, and the trailer by its own::
+
+    10000;chunk-signature=<hex signature>\\r\\n<65536 bytes>\\r\\n
+    0;chunk-signature=<hex signature>\\r\\n
+    x-amz-checksum-crc64nvme:<base64 checksum>\\r\\n
+    x-amz-trailer-signature:<hex signature>\\r\\n
+    \\r\\n
+
 The checksum is calculated as the payload is read, so the payload is read only once.
 Exactly the declared decoded length is sent. A longer payload is cut off at that
 length, and a shorter one fails the request.
@@ -19,7 +28,7 @@ length, and a shorter one fails the request.
 
 import io
 from collections.abc import Callable
-from typing import Any, Final
+from typing import Any, Final, Protocol
 
 from smithy_core.exceptions import SmithyError
 
@@ -30,6 +39,18 @@ CHUNK_SIZE: Final = 64 * 1024
 
 Chunks must be at least 8 KiB, and 64 KiB is the recommended size.
 """
+
+
+class ChunkSigner(Protocol):
+    """Signs the chunks and trailer of a payload, chaining each signature."""
+
+    def sign_chunk(self, data: bytes | bytearray | memoryview, /) -> str:
+        """Sign the data of a chunk, returning the hex signature."""
+        ...
+
+    def sign_trailer(self, trailer: str, /) -> str:
+        """Sign the canonical trailer fields, returning the hex signature."""
+        ...
 
 
 class AwsChunkedEncoder:
@@ -43,8 +64,10 @@ class AwsChunkedEncoder:
         checksum: bytes | None,
         on_checksum: Callable[[bytes], None] | None,
         chunk_size: int,
+        chunk_signer: ChunkSigner | None = None,
     ) -> None:
         self.chunk_size = chunk_size
+        self._signer = chunk_signer
         self._decoded_length = decoded_length
         self._remaining = decoded_length
         self._algorithm = checksum_algorithm
@@ -94,7 +117,12 @@ class AwsChunkedEncoder:
                 self._on_checksum(digest)
         # The trailer is where the digest goes on the wire, so it's encoded here.
         trailer = f"{checksum_header(self._algorithm)}:{encode_digest(digest)}"
-        self.encoded += f"0\r\n{trailer}\r\n\r\n".encode()
+        self._frame(bytearray())
+        self.encoded += f"{trailer}\r\n".encode()
+        if self._signer is not None:
+            signature = self._signer.sign_trailer(f"{trailer}\n")
+            self.encoded += f"x-amz-trailer-signature:{signature}\r\n".encode()
+        self.encoded += b"\r\n"
         self.done = True
 
     def take(self, size: int) -> bytes:
@@ -108,11 +136,16 @@ class AwsChunkedEncoder:
         return data
 
     def _frame(self, data: bytearray) -> None:
+        """Frame a chunk, or the last, empty chunk, which has no data or CRLF."""
         if self._hash is not None:
             self._hash.update(data)
-        self.encoded += f"{len(data):x}\r\n".encode()
-        self.encoded += data
+        self.encoded += f"{len(data):x}".encode()
+        if self._signer is not None:
+            self.encoded += f";chunk-signature={self._signer.sign_chunk(data)}".encode()
         self.encoded += b"\r\n"
+        if data:
+            self.encoded += data
+            self.encoded += b"\r\n"
 
 
 class AwsChunkedReader(io.RawIOBase):
@@ -126,6 +159,8 @@ class AwsChunkedReader(io.RawIOBase):
         retry.
     :param on_checksum: Called with the calculated digest once the payload has been
         read to the end.
+    :param chunk_signer: Signs each chunk and the trailer, for a payload that's
+        signed as it's sent.
     """
 
     def __init__(
@@ -137,6 +172,7 @@ class AwsChunkedReader(io.RawIOBase):
         checksum: bytes | None = None,
         on_checksum: Callable[[bytes], None] | None = None,
         chunk_size: int = CHUNK_SIZE,
+        chunk_signer: ChunkSigner | None = None,
     ) -> None:
         super().__init__()
         self._source = (
@@ -148,6 +184,7 @@ class AwsChunkedReader(io.RawIOBase):
             checksum=checksum,
             on_checksum=on_checksum,
             chunk_size=chunk_size,
+            chunk_signer=chunk_signer,
         )
 
     def readable(self) -> bool:
