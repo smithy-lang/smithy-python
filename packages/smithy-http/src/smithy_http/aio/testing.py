@@ -38,4 +38,6 @@ class AsyncMockHTTPClient(MockHTTPClientBase, AsyncHTTPClient):
         :raises MockHTTPClientError: If no responses are queued.
         """
         status, fields, body = self._pop_response(request)
-        return HTTPResponse(status=status, fields=fields, body=list_async([body]))
+        if isinstance(body, bytes | bytearray):
+            body = list_async([bytes(body)])
+        return HTTPResponse(status=status, fields=fields, body=body)

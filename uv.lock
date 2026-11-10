@@ -837,11 +837,17 @@ typing = [
 name = "smithy-test"
 source = { editable = "packages/smithy-test" }
 dependencies = [
+    { name = "smithy-aws-core" },
     { name = "smithy-core" },
+    { name = "smithy-http" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
+requires-dist = [
+    { name = "smithy-aws-core", editable = "packages/smithy-aws-core" },
+    { name = "smithy-core", editable = "packages/smithy-core" },
+    { name = "smithy-http", editable = "packages/smithy-http" },
+]
 
 [[package]]
 name = "smithy-xml"

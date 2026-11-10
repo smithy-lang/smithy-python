@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import pytest
+from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_http.aio.testing import AsyncMockHTTPClient
 from smithy_http.testing import MockHTTPClientError, create_test_request
@@ -121,3 +122,14 @@ async def test_captured_requests_copy():
     assert captured1 is not captured2
     # But with same content
     assert len(captured1) == len(captured2) == 1
+
+
+async def test_responds_with_a_stream():
+    client = AsyncMockHTTPClient()
+    stream = AsyncBytesReader(b"streamed")
+    client.add_response(body=stream)
+
+    response = await client.send(create_test_request())
+
+    assert response.body is stream
+    assert await read_streaming_blob_async(response.body) == b"streamed"

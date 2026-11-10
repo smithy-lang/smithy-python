@@ -1,6 +1,8 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
+from io import BytesIO
+
 import pytest
 from smithy_core.utils import read_streaming_blob
 from smithy_http.testing import MockHTTPClient, MockHTTPClientError, create_test_request
@@ -27,3 +29,14 @@ def test_queued_responses_fifo():
 def test_raises_without_queued_response():
     with pytest.raises(MockHTTPClientError, match="No responses queued"):
         MockHTTPClient().send(create_test_request())
+
+
+def test_responds_with_a_stream():
+    client = MockHTTPClient()
+    stream = BytesIO(b"streamed")
+    client.add_response(body=stream)
+
+    response = client.send(create_test_request())
+
+    assert response.body is stream
+    assert read_streaming_blob(response.body) == b"streamed"

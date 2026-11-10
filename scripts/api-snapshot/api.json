@@ -893,6 +893,16 @@
   },
   "smithy_test": {},
   "smithy_test.aio": {},
+  "smithy_test.aio.http_mock": {
+    "mock_async": "function[async]"
+  },
+  "smithy_test.http_mock": {
+    "HTTPMockController": "class",
+    "HTTPMockError": "exception",
+    "HTTPMockExpectation": "class",
+    "HTTPMockMismatchError": "exception",
+    "mock": "function"
+  },
   "smithy_xml": {
     "XMLCodec": "class"
   },

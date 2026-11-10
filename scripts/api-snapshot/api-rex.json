@@ -1279,6 +1279,7 @@
     "utils": "rex-module"
   },
   "smithy_http.testing.mockhttp": {
+    "AnyStreamingBlob": "rex-type_alias",
     "Fields": "rex-protocol",
     "HTTPClient": "rex-protocol",
     "HTTPClientConfiguration": "rex-class",
@@ -1387,13 +1388,48 @@
   },
   "smithy_test": {
     "ConformanceError": "rex-exception",
+    "HTTPMockController": "rex-class",
+    "HTTPMockError": "rex-exception",
+    "HTTPMockExpectation": "rex-class",
+    "HTTPMockMismatchError": "rex-exception",
     "check_rules_case": "rex-function",
     "deep_equal": "rex-function",
+    "http_mock": "rex-module",
+    "mock": "rex-function",
     "verify_models": "rex-function",
     "xml_equal": "rex-function"
   },
   "smithy_test.aio": {
-    "check_client_case_async": "rex-function[async]"
+    "check_client_case_async": "rex-function[async]",
+    "http_mock": "rex-module",
+    "mock_async": "rex-function[async]"
+  },
+  "smithy_test.aio.http_mock": {
+    "AsyncClient": "rex-class[async]",
+    "AsyncHTTPClient": "rex-protocol[async]",
+    "AsyncMockHTTPClient": "rex-class[async]",
+    "HTTPMockController": "rex-class",
+    "HTTPRequest": "rex-protocol",
+    "HTTPRequestConfiguration": "rex-class",
+    "HTTPResponse": "rex-class",
+    "NoResponse": "rex-exception",
+    "read_streaming_blob_async": "rex-function[async]",
+    "take_over": "rex-function"
+  },
+  "smithy_test.http_mock": {
+    "AnyStreamingBlob": "rex-type_alias",
+    "Client": "rex-class",
+    "HTTPClient": "rex-protocol",
+    "HTTPRequest": "rex-protocol",
+    "HTTPRequestConfiguration": "rex-class",
+    "HTTPResponse": "rex-class",
+    "MockHTTPClient": "rex-class",
+    "MockHTTPClientBase": "rex-class",
+    "NoResponse": "rex-exception",
+    "SmithyError": "rex-exception",
+    "mismatches": "rex-function",
+    "read_streaming_blob": "rex-function",
+    "take_over": "rex-function"
   },
   "smithy_xml": {
     "BytesReader": "rex-protocol",
