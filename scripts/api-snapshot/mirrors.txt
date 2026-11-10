@@ -40,6 +40,9 @@ Dual-mode symbols (async in aio, sync twin outside):
           AsyncProcessCredentialsResolver  ProcessCredentialsResolver
         static.py
           AsyncStaticCredentialsResolver  StaticCredentialsResolver
+      interceptors/
+        checksums.py
+          AsyncFlexibleChecksumsInterceptor  FlexibleChecksumsInterceptor
       protocols.py
         AsyncAwsJson10ClientProtocol  AwsJson10ClientProtocol
         AsyncAwsJson11ClientProtocol  AwsJson11ClientProtocol
@@ -91,4 +94,4 @@ Dual-mode symbols (async in aio, sync twin outside):
         parse_rest_json_error_info_async  parse_rest_json_error_info
       testing.py
         AsyncMockHTTPClient  MockHTTPClient  (smithy_http.testing.mockhttp)
-46 dual-mode symbol(s).
+47 dual-mode symbol(s).

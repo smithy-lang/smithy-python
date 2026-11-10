@@ -105,6 +105,10 @@
   "smithy_aws_core.aio.identity.static": {
     "AsyncStaticCredentialsResolver": "class[async]"
   },
+  "smithy_aws_core.aio.interceptors": {},
+  "smithy_aws_core.aio.interceptors.checksums": {
+    "AsyncFlexibleChecksumsInterceptor": "class"
+  },
   "smithy_aws_core.aio.protocols": {
     "AsyncAwsJson10ClientProtocol": "class[async]",
     "AsyncAwsJson11ClientProtocol": "class[async]",
@@ -265,6 +269,7 @@
   },
   "smithy_aws_core.interceptors": {},
   "smithy_aws_core.interceptors.checksums": {
+    "AwsChunkedReaderFactory": "protocol",
     "ChecksumStreamFactory": "protocol",
     "FlexibleChecksumsInterceptor": "class",
     "logger": "Logger"
