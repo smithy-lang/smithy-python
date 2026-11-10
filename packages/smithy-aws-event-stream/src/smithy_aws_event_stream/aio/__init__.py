@@ -30,7 +30,10 @@ logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
-    from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+    from smithy_aws_core.identity.components import (
+        AWSCredentialsIdentity,
+        AWSIdentityProperties,
+    )
 
     type _AsyncSigningConfig = SigningConfig[
         AsyncIdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]

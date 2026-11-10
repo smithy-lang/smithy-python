@@ -11,15 +11,12 @@ static-analysis: ## Catches defects CI can find without running the code's tests
 	$(MAKE) check-py
 	$(MAKE) aio-check
 	$(MAKE) changelog-check
-#	$(MAKE) check-imports
+	$(MAKE) check-imports
 	$(MAKE) check-conventions
 #	$(MAKE) check-api
 #	$(MAKE) check-dependencies
 	$(MAKE) check-packaging
 	$(MAKE) check-import-stability
-	$(MAKE) import-cycles # TODO: remove when check-imports passes
-	$(MAKE) dynamic-imports # TODO: remove when check-imports passes
-	$(MAKE) banned-imports # TODO: remove when check-imports passes
 	$(MAKE) api-snapshot # TODO: remove when check-api passes
 	$(MAKE) typecheck-protocols # TODO: remove when check-api passes
 

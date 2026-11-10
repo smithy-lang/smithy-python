@@ -9,7 +9,9 @@ public-surface dependencies creep in. It also hides where a symbol lives from
 readers and refactoring tools. A re-export import is accepted under a private
 local name (``import X as _X``), which marks it as a deliberate, module-internal
 choice, and when the defining module is private, since the re-export is then the
-symbol's public home.
+symbol's public home. An import from another package's root is also accepted
+when that root lists the symbol in ``__all__``, since the root's declared
+surface is that package's public contract.
 
 Covers package sources and the generated test clients.
 """
@@ -65,6 +67,10 @@ def check() -> list[Finding]:
                 continue
             if any(part.startswith("_") for part in canonical.split(".")):
                 continue
+            if _is_declared_package_export(
+                module.name, target, attr, source.dunder_all
+            ):
+                continue
             findings.append(
                 Finding(
                     f"imports {attr} from re-exporting {target}; defined in {canonical}",
@@ -73,6 +79,18 @@ def check() -> list[Finding]:
                 )
             )
     return findings
+
+
+def _is_declared_package_export(
+    importer: str, target: str, attr: str, dunder_all: list[str] | None
+) -> bool:
+    """Whether target is another package's root and lists attr in its __all__."""
+    return (
+        "." not in target
+        and importer.split(".")[0] != target
+        and dunder_all is not None
+        and attr in dunder_all
+    )
 
 
 if __name__ == "__main__":

@@ -98,7 +98,7 @@ class AsyncChainSetup(_ChainSetupBase):
         return AsyncProcessCredentialsResolver(command, account_id=account_id)
 
     def _load_config(self) -> Any:
-        from ...config import load_config_async
+        from ...config.context import load_config_async
 
         return load_config_async()
 

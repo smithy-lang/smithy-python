@@ -70,16 +70,8 @@ public class AwsIdentityIntegration implements PythonIntegration {
                             )
                     """;
             writer.write(section.sync() ? SyncVariant.toSyncCode(template) : template,
-                    Symbol.builder()
-                            .name("AsyncIdentityChain")
-                            .namespace("smithy_aws_core.aio.identity.chain", ".")
-                            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                            .build(),
-                    Symbol.builder()
-                            .name("AWSCredentialsIdentity")
-                            .namespace("smithy_aws_core.identity", ".")
-                            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                            .build(),
+                    identityChain(section.sync()),
+                    AwsRuntimeTypes.AWS_CREDENTIALS_IDENTITY,
                     Symbol.builder()
                             .name("AsyncHTTPClient")
                             .namespace("smithy_http.aio.interfaces", ".")
@@ -87,10 +79,21 @@ public class AwsIdentityIntegration implements PythonIntegration {
                             .build(),
                     Symbol.builder()
                             .name("ConfigSource")
-                            .namespace("smithy_aws_core.config", ".")
+                            .namespace("smithy_aws_core.config.types", ".")
                             .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                             .build(),
                     section.config());
+        }
+
+        // The sync twin is defined in a submodule the aio-stripping convention can't derive.
+        private static Symbol identityChain(boolean sync) {
+            return Symbol.builder()
+                    .name(sync ? "IdentityChain" : "AsyncIdentityChain")
+                    .namespace(sync
+                            ? "smithy_aws_core.identity.chain.resolver"
+                            : "smithy_aws_core.aio.identity.chain", ".")
+                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                    .build();
         }
     }
 }

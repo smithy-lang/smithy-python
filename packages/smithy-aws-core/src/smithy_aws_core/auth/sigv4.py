@@ -9,8 +9,8 @@ from smithy_core.interfaces.auth import AuthScheme, Signer
 from smithy_http.interfaces import HTTPRequest
 
 from ..business_metrics import get_feature_ids
-from ..identity import (
-    AWS_IDENTITY_CONFIG,
+from ..identity import AWS_IDENTITY_CONFIG
+from ..identity.components import (
     AWSCredentialsIdentity,
     AWSCredentialsResolver,
     AWSIdentityProperties,
