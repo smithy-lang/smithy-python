@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
+from collections.abc import AsyncIterator
 from io import BytesIO
 from typing import Any, Self
 from unittest.mock import Mock
@@ -585,3 +586,16 @@ async def test_buffered_seekable_read_awaitable_bytes_reader() -> None:
     assert await reader.read() == b"foo"
     await reader.seek(0)
     assert await reader.read() == b"foo"
+
+
+async def _small_chunks(count: int, size: int) -> AsyncIterator[bytes]:
+    for i in range(count):
+        yield bytes([i % 256]) * size
+
+
+async def test_read_many_small_items_from_iterator() -> None:
+    expected = b"".join([bytes([i % 256]) * 16 for i in range(10_000)])
+    reader = AsyncBytesReader(_small_chunks(10_000, 16))
+
+    assert await reader.read(128 * 1024) == expected[: 128 * 1024]
+    assert await reader.read() == expected[128 * 1024 :]

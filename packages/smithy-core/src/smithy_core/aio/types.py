@@ -145,19 +145,24 @@ class AsyncBytesReader:
     ) -> bytes:
         # This takes the iterator as an arg here just to avoid mypy complaints, since
         # we know it's an iterator where this is called.
-        result = self._remainder
+        # Items are joined once, since adding each to the result would copy it again
+        # for every item.
+        parts = [self._remainder]
         if size < 0:
             async for element in iterator:
-                result += element
+                parts.append(element)
             self._remainder = b""
-            return result
+            return b"".join(parts)
 
-        if len(result) < size:
+        total = len(self._remainder)
+        if total < size:
             async for element in iterator:
-                result += element
-                if len(result) >= size:
+                parts.append(element)
+                total += len(element)
+                if total >= size:
                     break
 
+        result = b"".join(parts)
         self._remainder = result[size:]
         return result[:size]
 

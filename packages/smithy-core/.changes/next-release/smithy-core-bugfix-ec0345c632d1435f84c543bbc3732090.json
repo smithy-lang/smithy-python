@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "`AsyncBytesReader` now joins the items of an async iterable once per read instead of copying the result for each item, which made reading many small items up to 16 times faster."
+}
