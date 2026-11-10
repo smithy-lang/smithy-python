@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Ensures the Python API surface is reflected in the api.json file.
+"""Ensures the Python API surface is reflected in the api.json and api-rex.json files.
 
 All changes to the surface must be intentional and reviewed in the PR making them.
 
 For every public module (no underscore-prefixed path segment), records each
-reachable non-underscore symbol that we OWN -- defined in the module's own
-source, or re-exported from another of our packages (marked with a ``rex-``
-kind prefix). Reachable re-exports of third-party/stdlib names are excluded:
-they are not ours to keep stable. Then fails if writing the file changed it
-from the committed version, so an unreviewed surface change cannot pass CI.
+reachable non-underscore symbol that we OWN. Symbols defined in the module's own
+source go in api.json. Symbols re-exported from another of our modules (marked
+with a ``rex-`` kind prefix) go in api-rex.json. Reachable re-exports of
+third-party/stdlib names are excluded: they are not ours to keep stable. Then
+fails if writing either file changed it from the committed version, so an
+unreviewed surface change cannot pass CI.
 
 Also records the dual-mode symbols, each async symbol under ``aio`` with its sync
 twin, in mirrors.txt, which fails the same way when it changes.
@@ -30,6 +31,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 DATA_PATH = HERE / "api.json"
+REX_PATH = HERE / "api-rex.json"
 MIRRORS_PATH = HERE / "mirrors.txt"
 PACKAGES_DIR = ROOT / "packages"
 
@@ -49,13 +51,24 @@ def main() -> int:
         sys.path.insert(0, str(src))
 
     surface = _collect_surface()
-    ordered = {k: dict(sorted(v.items())) for k, v in sorted(surface.items())}
-    DATA_PATH.write_text(json.dumps(ordered, indent=2) + "\n")
+    declared = {
+        mod: {n: k for n, k in symbols.items() if not k.startswith("rex-")}
+        for mod, symbols in surface.items()
+    }
+    rex = {
+        mod: {n: k for n, k in symbols.items() if k.startswith("rex-")}
+        for mod, symbols in surface.items()
+    }
+    # api.json keeps every public module, even one with only re-exports, so a
+    # removed module still shows up in its diff.
+    _write_json(DATA_PATH, declared)
+    _write_json(REX_PATH, {mod: symbols for mod, symbols in rex.items() if symbols})
     MIRRORS_PATH.write_text(_mirrors())
 
-    changed = [path for path in (DATA_PATH, MIRRORS_PATH) if _changed(path)]
+    paths = (DATA_PATH, REX_PATH, MIRRORS_PATH)
+    changed = [path for path in paths if _changed(path)]
     if changed:
-        names = " and ".join(str(path.relative_to(ROOT)) for path in changed)
+        names = ", ".join(str(path.relative_to(ROOT)) for path in changed)
         print(
             f"\n{names} updated to reflect the current API surface. Review the "
             "change above and commit it in the PR that made it.",
@@ -64,6 +77,11 @@ def main() -> int:
         return 1
     print("API snapshot is up to date.")
     return 0
+
+
+def _write_json(path: Path, surface: dict[str, dict[str, str]]) -> None:
+    ordered = {k: dict(sorted(v.items())) for k, v in sorted(surface.items())}
+    path.write_text(json.dumps(ordered, indent=2) + "\n")
 
 
 def _collect_surface() -> dict[str, dict[str, str]]:
