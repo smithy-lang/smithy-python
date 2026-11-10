@@ -23,7 +23,9 @@ def check() -> list[Finding]:
     rows = {p.dist: (p, _fields(p)) for p in packages()}
     keys = sorted({k for _, fields in rows.values() for k in fields})
     for key in keys:
-        values = {dist: fields.get(key) for dist, (_, fields) in rows.items()}
+        values = {
+            dist: fields[key] for dist, (_, fields) in rows.items() if key in fields
+        }
         counts = Counter(json.dumps(v, sort_keys=True) for v in values.values())
         majority, _ = counts.most_common(1)[0]
         for dist, value in sorted(values.items()):
@@ -48,17 +50,20 @@ def _fields(package: Package) -> dict[str, Any]:
 
     def templated(value: Any) -> Any:
         text = json.dumps(value)
-        text = text.replace(package.dir.name, "<dir>")
+        # Scoped to the path so smithy-python's name doesn't match the repo name.
+        text = text.replace(f"packages/{package.dir.name}", "packages/<dir>")
         if root:
             text = text.replace(root, "<root>")
         return json.loads(text)
 
-    return {
+    fields = {
         "requires-python": project.get("requires-python"),
         "license": project.get("license"),
         "authors": project.get("authors"),
         "readme": project.get("readme"),
-        "classifiers": sorted(project.get("classifiers", [])),
+        "classifiers": sorted(
+            c for c in project.get("classifiers", []) if _is_policy(c, package)
+        ),
         "urls": templated(project.get("urls")),
         "version source": "dynamic"
         if "version" in project.get("dynamic", [])
@@ -79,6 +84,30 @@ def _fields(package: Package) -> dict[str, Any]:
         "tests/unit": (package.dir / "tests" / "unit").is_dir(),
         ".changes": (package.dir / ".changes").is_dir(),
     }
+    if package.maturin:
+        for key in _MATURIN_FORCED:
+            del fields[key]
+    return fields
+
+
+def _is_policy(classifier: str, package: Package) -> bool:
+    if classifier.startswith(_PER_PACKAGE_CLASSIFIERS):
+        return False
+    return not (package.maturin and classifier == "Programming Language :: Rust")
+
+
+# Topic and audience describe what each package is, not repo-wide policy.
+_PER_PACKAGE_CLASSIFIERS = ("Topic ::", "Intended Audience ::")
+
+# Its build backend dispatches to maturin, which reads a static version and
+# ignores hatch config.
+_MATURIN_FORCED = (
+    "version source",
+    "hatch version path",
+    "build backend",
+    "build requires",
+    "hatch build exclude",
+)
 
 
 if __name__ == "__main__":

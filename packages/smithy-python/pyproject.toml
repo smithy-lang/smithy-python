@@ -33,7 +33,7 @@ smithy-python = "smithy_python.cli:main"
 
 [project.urls]
 "Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-python/CHANGELOG.md"
-"Code" = "https://github.com/smithy-lang/smithy-python/tree/develop/packages/smithy-python/"
+"Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-python/"
 "Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
 
 [build-system]

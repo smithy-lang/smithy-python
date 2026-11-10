@@ -80,6 +80,10 @@ class Package:
         return {k: [Requirement(r) for r in v] for k, v in optional.items()}
 
     @property
+    def maturin(self) -> bool:
+        return "maturin" in self.pyproject.get("tool", {})
+
+    @property
     def version_file(self) -> Path | None:
         """The file hatch reads a dynamic version from."""
         path = (

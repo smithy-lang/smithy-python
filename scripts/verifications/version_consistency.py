@@ -21,7 +21,10 @@ def check() -> list[Finding]:
         pyproject = package.dir / "pyproject.toml"
         project = package.pyproject["project"]
         dynamic = "version" in project.get("dynamic", [])
-        if not dynamic:
+        # maturin only reads a static version, so __version__ comes from
+        # metadata. The runtime comparison below still keeps it truthful.
+        static_ok = package.maturin
+        if not dynamic and not static_ok:
             findings.append(
                 Finding(
                     f"{package.dist}: static version {project.get('version')!r} in pyproject.toml; "
@@ -29,14 +32,14 @@ def check() -> list[Finding]:
                     pyproject,
                 )
             )
-        elif package.version_file is None:
+        elif dynamic and package.version_file is None:
             findings.append(
                 Finding(
                     f"{package.dist}: dynamic version without a hatch version path",
                     pyproject,
                 )
             )
-        if package.source_version is None:
+        if package.source_version is None and not static_ok:
             findings.append(
                 Finding(
                     f"{package.dist}: __version__ is not a literal in the package source",
