@@ -95,4 +95,4 @@ Dual-mode symbols (async in aio, sync twin outside):
         parse_rest_json_error_info_async  parse_rest_json_error_info
       testing.py
         AsyncMockHTTPClient  MockHTTPClient  (smithy_http.testing.mockhttp)
-47 dual-mode symbol(s).
+48 dual-mode symbol(s).
