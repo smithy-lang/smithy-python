@@ -1,10 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import io
 import logging
 from collections.abc import Callable
 from copy import copy, deepcopy
 from dataclasses import replace
-from inspect import iscoroutinefunction
+from inspect import isawaitable, iscoroutinefunction
 from typing import Any, Protocol
 
 from smithy_core._model_naming import member_field_name
@@ -293,11 +294,15 @@ class FlexibleChecksumsInterceptor(
         return response
 
     def _chunked_reader_for(self, body: object) -> AwsChunkedReaderFactory | None:
-        # Synchronous payloads keep a synchronous reader, which every HTTP client can
-        # stream.
-        if _reads_asynchronously(body):
-            return self._chunked_reader
-        return AwsChunkedReader
+        if self._chunked_reader is None:
+            # Without an async reader, only synchronous payloads can be encoded.
+            return None if _reads_asynchronously(body) else AwsChunkedReader
+        # A plain read() can return an awaitable, as an AwaitableBytesReader's does,
+        # so only payloads known to read synchronously keep the sync reader, which
+        # every HTTP client can stream. The async reader awaits what read() returns.
+        if isinstance(body, bytes | bytearray | io.IOBase):
+            return AwsChunkedReader
+        return self._chunked_reader
 
 
 _VALIDATION_MODE_ENABLED = "ENABLED"
@@ -388,6 +393,11 @@ def _calculate(algorithm: str, source: Any) -> bytes | None:
     start = source.tell()
     try:
         while chunk := read(_READ_CHUNK_SIZE):
+            if isawaitable(chunk):
+                # A plain read() that returns an awaitable can't be read in a hook.
+                if (close := getattr(chunk, "close", None)) is not None:
+                    close()
+                return None
             checksum.update(chunk)
     finally:
         source.seek(start)

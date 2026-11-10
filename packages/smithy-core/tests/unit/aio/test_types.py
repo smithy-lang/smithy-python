@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 from io import BytesIO
-from typing import Self
+from typing import Any, Self
 from unittest.mock import Mock
 
 import pytest
@@ -557,3 +557,31 @@ async def test_aexit_flushes() -> None:
     # The draining task should be able to complete without errors. When next it
     # tries to get a chunk, the provider's iterator will exit.
     await drain_task
+
+
+class _AwaitableReader:
+    """A reader whose plain read() returns an awaitable, like an AwaitableBytesReader."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = BytesIO(data)
+
+    def read(self, size: int = -1) -> Any:
+        async def read() -> bytes:
+            return self._data.read(size)
+
+        return read()
+
+
+async def test_read_awaitable_bytes_reader() -> None:
+    reader = AsyncBytesReader(_AwaitableReader(b"foo"))
+
+    assert await reader.read(2) == b"fo"
+    assert await reader.read() == b"o"
+
+
+async def test_buffered_seekable_read_awaitable_bytes_reader() -> None:
+    reader = AsyncSeekableBytesReader(_AwaitableReader(b"foo"))
+
+    assert await reader.read() == b"foo"
+    await reader.seek(0)
+    assert await reader.read() == b"foo"

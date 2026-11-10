@@ -1,6 +1,8 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
+import gc
+import warnings
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, replace
 from io import BytesIO
@@ -765,6 +767,89 @@ async def test_async_payloads_use_a_header_without_an_async_reader() -> None:
     assert request.body is body
     assert "x-amz-trailer" not in request.fields
     assert request.fields["content-length"].as_string() == str(len(DATA))
+
+
+class _AwaitableReader:
+    """A reader whose plain read() returns an awaitable, like an AwaitableBytesReader."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = BytesIO(data)
+
+    def read(self, size: int = -1) -> Any:
+        async def read() -> bytes:
+            return self._data.read(size)
+
+        return read()
+
+    def seekable(self) -> bool:
+        return True
+
+    def seek(self, offset: int, whence: int = 0) -> int:
+        return self._data.seek(offset, whence)
+
+    def tell(self) -> int:
+        return self._data.tell()
+
+
+class _SyncReader:
+    """A synchronous reader that isn't an io stream."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = BytesIO(data)
+
+    def read(self, size: int = -1) -> bytes:
+        return self._data.read(size)
+
+
+async def test_async_clients_encode_awaitable_readers() -> None:
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        request = _transmitted(
+            _streaming_context(body=_AwaitableReader(DATA)), _ASYNC_CLIENT_INTERCEPTOR
+        ).transport_request
+
+        assert isinstance(request.body, AsyncAwsChunkedReader)
+        assert await _read_async(request.body) == _encoded(DATA, CRC64NVME)
+        gc.collect()
+    assert not [w for w in caught if issubclass(w.category, RuntimeWarning)]
+
+
+@pytest.mark.parametrize("algorithm", [pytest.param("SHA256", id="chosen"), None])
+def test_awaitable_readers_without_a_trailer_skip_or_fail_cleanly(
+    algorithm: str | None,
+) -> None:
+    # Over http the checksum goes in a header, which a hook can't calculate from an
+    # awaitable read(). The read's coroutine is closed rather than left unawaited.
+    context = _streaming_context(
+        body=_AwaitableReader(DATA), scheme="http", algorithm=algorithm
+    )
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        if algorithm is None:
+            sent = _ASYNC_CLIENT_INTERCEPTOR.modify_before_signing(context).fields
+            assert not [f for f in sent if f.name.startswith("x-amz-checksum-")]
+        else:
+            with pytest.raises(SmithyError, match="can't be calculated"):
+                _ASYNC_CLIENT_INTERCEPTOR.modify_before_signing(context)
+        gc.collect()
+    assert not [w for w in caught if issubclass(w.category, RuntimeWarning)]
+
+
+async def test_async_clients_encode_sync_readers_that_arent_io_streams() -> None:
+    request = _transmitted(
+        _streaming_context(body=_SyncReader(DATA)), _ASYNC_CLIENT_INTERCEPTOR
+    ).transport_request
+
+    assert isinstance(request.body, AsyncAwsChunkedReader)
+    assert await _read_async(request.body) == _encoded(DATA, CRC64NVME)
+
+
+def test_sync_clients_keep_a_sync_reader_for_any_sync_reader() -> None:
+    request = _transmitted(_streaming_context(body=_SyncReader(DATA))).transport_request
+
+    assert isinstance(request.body, AwsChunkedReader)
+    assert _read(request.body) == _encoded(DATA, CRC64NVME)
 
 
 def test_async_clients_keep_a_sync_reader_for_sync_payloads() -> None:
