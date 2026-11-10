@@ -63,14 +63,13 @@ class Field(interfaces_http.Field):
             return
 
     def as_string(self, delimiter: str = ",") -> str:
-        """Get delimited string of all values. A comma followed by a space is used by
-        default.
+        """Get delimited string of all values. A comma is used by default.
 
         If the ``Field`` has zero values, the empty string is returned. If the ``Field``
         has exactly one value, the value is returned unmodified.
 
-        For ``Field``s with more than one value, the values are joined by a comma and a
-        space. For such multi-valued ``Field``s, any values that already contain
+        For ``Field``s with more than one value, the values are joined by
+        ``delimiter``. For such multi-valued ``Field``s, any values that already contain
         commas or double quotes will be surrounded by double quotes. Within any values
         that get quoted, pre-existing double quotes and backslashes are escaped with a
         backslash.

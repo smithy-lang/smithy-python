@@ -96,6 +96,19 @@ async def test_send_disables_redirects() -> None:
     assert session.request.call_args.kwargs["allow_redirects"] is False
 
 
+async def test_trailer_fields_are_not_sent_as_headers() -> None:
+    client, session = _create_client()
+    request = _create_request()
+    request.fields.set_field(Field(name="x-amz-meta-a", values=["1"]))
+    request.fields.set_field(
+        Field(name="x-amz-checksum-crc32", values=["AAAAAA=="], kind="trailer")
+    )
+
+    await client.send(request)
+
+    assert session.request.call_args.kwargs["headers"] == [("x-amz-meta-a", "1")]
+
+
 async def test_send_skips_automatic_content_type() -> None:
     client, session = _create_client()
 
