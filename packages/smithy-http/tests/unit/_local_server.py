@@ -4,6 +4,7 @@
 
 import threading
 from dataclasses import dataclass, field
+from hashlib import sha256
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from types import TracebackType
 from typing import Any, Self
@@ -55,6 +56,12 @@ class LocalHTTPServer:
         self.ports: list[int] = []
         """The client port of each request received."""
 
+        self.bodies: list[tuple[int, str]] = []
+        """The length and SHA-256 of each request body received with a length.
+
+        Bodies are hashed as they're read, so a large one isn't held in memory.
+        """
+
         self._stopping = threading.Event()
         server = self
 
@@ -75,7 +82,15 @@ class LocalHTTPServer:
 
             def _handle(self) -> None:
                 if length := int(self.headers.get("Content-Length", 0)):
-                    self.rfile.read(length)
+                    digest, received = sha256(), 0
+                    while received < length:
+                        if not (
+                            chunk := self.rfile.read(min(64 * 1024, length - received))
+                        ):
+                            break
+                        digest.update(chunk)
+                        received += len(chunk)
+                    server.bodies.append((received, digest.hexdigest()))
                 try:
                     server._reply(self)
                 except (BrokenPipeError, ConnectionResetError):

@@ -17,6 +17,7 @@ except ImportError:
     HAS_URLLIB3 = False  # type: ignore
 
 from smithy_core.exceptions import ClientTimeoutError, MissingDependencyError
+from smithy_core.interfaces import is_bytes_reader
 
 from smithy_http import HTTPResponse
 from smithy_http.interfaces import HTTPRequest
@@ -52,6 +53,23 @@ class Urllib3HTTPClientConfig(HTTPClientConfiguration):
         _assert_urllib3()
 
 
+def _request_body(request: HTTPRequest) -> Any:
+    """The body to give urllib3, which streams readers rather than reading them first.
+
+    urllib3 reads a reader in blocks as it sends it, framed by the request's
+    Content-Length or chunked transfer encoding. Without either it would switch to
+    chunked transfer encoding, which services such as S3 reject, so such a body is
+    read into memory and sent with its length.
+    """
+    body = request.body
+    fields = request.fields
+    if is_bytes_reader(body) and (
+        "content-length" in fields or "transfer-encoding" in fields
+    ):
+        return body
+    return request.consume_body()
+
+
 class Urllib3HTTPClient(HTTPClient):
     """Implementation of :py:class:`.interfaces.HTTPClient` using urllib3."""
 
@@ -72,10 +90,13 @@ class Urllib3HTTPClient(HTTPClient):
         _assert_urllib3()
         self._config = client_config or Urllib3HTTPClientConfig()
         self._closed = False
-        # Advertise 'identity' to request uncompressed responses.
+        # Advertise 'identity' to request uncompressed responses. Uploads are streamed in
+        # 128 KiB blocks, as in botocore: urllib3's 16 KiB default was about 2.5x slower,
+        # and larger blocks were no faster.
         self._pool = _pool or urllib3.PoolManager(
             maxsize=self._config.max_pool_connections,
             headers={"Accept-Encoding": "identity"},
+            blocksize=128 * 1024,
         )
 
     def __enter__(self) -> Self:
@@ -124,7 +145,7 @@ class Urllib3HTTPClient(HTTPClient):
         raw = self._pool.request(
             method=request.method,
             url=request.destination.build(),
-            body=request.consume_body(),
+            body=_request_body(request),
             headers=headers,
             redirect=False,
             retries=False,
