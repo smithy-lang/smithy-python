@@ -28,7 +28,7 @@ from .provider import (
 __all__ = ("IdentityChain",)
 
 _CHAIN_PROVIDER_ENTRY_POINT_GROUP = "smithy_aws_core.identity.chain_providers"
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class _IdentityChainBase[I: Identity]:

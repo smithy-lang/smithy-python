@@ -26,7 +26,7 @@ __all__ = [
     "validate_sdk_ua_app_id",
 ]
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 _SDK_UA_APP_ID_MAX_LENGTH = 50
 
@@ -55,7 +55,7 @@ def validate_region(value: object) -> None:
         )
 
 
-def validate_retry_mode(retry_mode: str):
+def validate_retry_mode(retry_mode: str) -> None:
     """Validate retry mode.
 
     Valid values: 'standard', 'adaptive'
@@ -82,7 +82,7 @@ def validate_retry_mode(retry_mode: str):
 
 def validate_max_attempts(
     max_attempts: object,
-):
+) -> None:
     """Validate max_attempts
 
     :param max_attempts: The max attempts value.

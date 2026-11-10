@@ -29,7 +29,8 @@ def check() -> list[Finding]:
     for package in packages():
         sys.path.insert(0, str(package.src))
     findings: list[Finding] = []
-    paths = {m.name: m.path for m in runtime_modules()}
+    by_name = {m.name: m for m in runtime_modules()}
+    paths = {name: m.path for name, m in by_name.items()}
     roots = owned_roots()
     for modname in public_runtime_module_names():
         try:
@@ -41,8 +42,10 @@ def check() -> list[Finding]:
                 )
             )
             continue
+        # Without __all__, an imported name is the module's dependency, not its export.
+        imported = by_name[modname].imported
         names = getattr(module, "__all__", None) or [
-            n for n in vars(module) if not n.startswith("_")
+            n for n in vars(module) if not n.startswith("_") and n not in imported
         ]
         for name in names:
             obj = getattr(module, name, None)

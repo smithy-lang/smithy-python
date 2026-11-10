@@ -87,7 +87,7 @@ class AsyncDuplexEventStream[
     async def __aenter__(self) -> Self:
         return self
 
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         await self.close()
 
     async def await_output(self) -> tuple[O, AsyncEventReceiver[OE]]:
@@ -167,7 +167,7 @@ class AsyncInputEventStream[IE: SerializeableShape, O]:
     async def __aenter__(self) -> Self:
         return self
 
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         await self.close()
 
     async def await_output(self) -> O:
@@ -231,7 +231,7 @@ class AsyncOutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
     async def __aenter__(self) -> Self:
         return self
 
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         await self.close()
 
     async def close(self) -> None:

@@ -158,7 +158,7 @@ class DefaultTrait(Trait, id=ShapeID("smithy.api#default")):
 class SparseTrait(Trait, id=ShapeID("smithy.api#sparse")):
     """Indicates that a list or map may contain null values."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -197,7 +197,7 @@ class ErrorTrait(Trait, id=ShapeID("smithy.api#error")):
 class RequiredTrait(Trait, id=ShapeID("smithy.api#required")):
     """Marks a member as required."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -205,7 +205,7 @@ class RequiredTrait(Trait, id=ShapeID("smithy.api#required")):
 class InternalTrait(Trait, id=ShapeID("smithy.api#internal")):
     """Marks a shape as internal to the service."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -213,7 +213,7 @@ class InternalTrait(Trait, id=ShapeID("smithy.api#internal")):
 class SensitiveTrait(Trait, id=ShapeID("smithy.api#sensitive")):
     """Marks a shape as holding sensitive data that must not be logged."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -221,7 +221,7 @@ class SensitiveTrait(Trait, id=ShapeID("smithy.api#sensitive")):
 class StreamingTrait(Trait, id=ShapeID("smithy.api#streaming")):
     """Marks a blob or union as streamed rather than buffered."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -229,7 +229,7 @@ class StreamingTrait(Trait, id=ShapeID("smithy.api#streaming")):
 class RequiresLengthTrait(Trait, id=ShapeID("smithy.api#requiresLength")):
     """Indicates that a streaming blob must have a known length."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -237,7 +237,7 @@ class RequiresLengthTrait(Trait, id=ShapeID("smithy.api#requiresLength")):
 class UnitTypeTrait(Trait, id=ShapeID("smithy.api#unitType")):
     """Marks a structure as the unit type."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -247,7 +247,7 @@ class MediaTypeTrait(Trait, id=ShapeID("smithy.api#mediaType")):
 
     document_value: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
@@ -260,7 +260,7 @@ class MediaTypeTrait(Trait, id=ShapeID("smithy.api#mediaType")):
 class EventHeaderTrait(Trait, id=ShapeID("smithy.api#eventHeader")):
     """Binds an event member to an event stream header."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -268,7 +268,7 @@ class EventHeaderTrait(Trait, id=ShapeID("smithy.api#eventHeader")):
 class EventPayloadTrait(Trait, id=ShapeID("smithy.api#eventPayload")):
     """Binds an event member to the event stream payload."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -278,7 +278,7 @@ class JSONNameTrait(Trait, id=ShapeID("smithy.api#jsonName")):
 
     document_value: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
@@ -291,7 +291,7 @@ class JSONNameTrait(Trait, id=ShapeID("smithy.api#jsonName")):
 class IdempotencyTokenTrait(Trait, id=ShapeID("smithy.api#idempotencyToken")):
     """Marks a member as an idempotency token the client fills in when unset."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -311,7 +311,7 @@ class LongPollTrait(Trait, id=ShapeID("smithy.api#longPoll")):
     """Indicates that the service may hold the request open while waiting for
     information to become available."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, Mapping)
         assert isinstance(self.document_value["timeoutMillis"], int)
 
@@ -356,7 +356,7 @@ class HTTPTrait(Trait, id=ShapeID("smithy.api#http")):
 class HTTPErrorTrait(Trait, id=ShapeID("smithy.api#httpError")):
     """Sets the HTTP status code of an error."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, int)
 
     @property
@@ -369,7 +369,7 @@ class HTTPErrorTrait(Trait, id=ShapeID("smithy.api#httpError")):
 class HTTPHeaderTrait(Trait, id=ShapeID("smithy.api#httpHeader")):
     """Binds a member to an HTTP header."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
@@ -382,7 +382,7 @@ class HTTPHeaderTrait(Trait, id=ShapeID("smithy.api#httpHeader")):
 class HTTPLabelTrait(Trait, id=ShapeID("smithy.api#httpLabel")):
     """Binds a member to a label in the HTTP path."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -390,7 +390,7 @@ class HTTPLabelTrait(Trait, id=ShapeID("smithy.api#httpLabel")):
 class HTTPPayloadTrait(Trait, id=ShapeID("smithy.api#httpPayload")):
     """Binds a member to the HTTP body."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -398,7 +398,7 @@ class HTTPPayloadTrait(Trait, id=ShapeID("smithy.api#httpPayload")):
 class HTTPPrefixHeadersTrait(Trait, id=ShapeID("smithy.api#httpPrefixHeaders")):
     """Binds a map member to the HTTP headers that share a prefix."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
@@ -411,7 +411,7 @@ class HTTPPrefixHeadersTrait(Trait, id=ShapeID("smithy.api#httpPrefixHeaders")):
 class HTTPQueryTrait(Trait, id=ShapeID("smithy.api#httpQuery")):
     """Binds a member to an HTTP query parameter."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
@@ -424,7 +424,7 @@ class HTTPQueryTrait(Trait, id=ShapeID("smithy.api#httpQuery")):
 class HTTPQueryParamsTrait(Trait, id=ShapeID("smithy.api#httpQueryParams")):
     """Binds a map member to the HTTP query parameters."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -432,7 +432,7 @@ class HTTPQueryParamsTrait(Trait, id=ShapeID("smithy.api#httpQueryParams")):
 class HTTPResponseCodeTrait(Trait, id=ShapeID("smithy.api#httpResponseCode")):
     """Binds a member to the HTTP status code."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -440,7 +440,7 @@ class HTTPResponseCodeTrait(Trait, id=ShapeID("smithy.api#httpResponseCode")):
 class HTTPChecksumRequiredTrait(Trait, id=ShapeID("smithy.api#httpChecksumRequired")):
     """Indicates that an operation requires a checksum of its HTTP payload."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -448,7 +448,7 @@ class HTTPChecksumRequiredTrait(Trait, id=ShapeID("smithy.api#httpChecksumRequir
 class EndpointTrait(Trait, id=ShapeID("smithy.api#endpoint")):
     """Sets a host prefix for an operation's endpoint."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
@@ -461,7 +461,7 @@ class EndpointTrait(Trait, id=ShapeID("smithy.api#endpoint")):
 class HostLabelTrait(Trait, id=ShapeID("smithy.api#hostLabel")):
     """Binds a member to a label in the endpoint host prefix."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -541,7 +541,7 @@ class XMLNameTrait(Trait, id=ShapeID("smithy.api#xmlName")):
 
     document_value: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
@@ -554,7 +554,7 @@ class XMLNameTrait(Trait, id=ShapeID("smithy.api#xmlName")):
 class XMLNamespaceTrait(Trait, id=ShapeID("smithy.api#xmlNamespace")):
     """Sets the XML namespace of a shape or member."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, Mapping)
         assert isinstance(self.document_value["uri"], str)
         assert isinstance(self.document_value.get("prefix"), str | None)
@@ -574,7 +574,7 @@ class XMLNamespaceTrait(Trait, id=ShapeID("smithy.api#xmlNamespace")):
 class XMLFlattenedTrait(Trait, id=ShapeID("smithy.api#xmlFlattened")):
     """Serializes a list or map without a wrapping element."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -582,7 +582,7 @@ class XMLFlattenedTrait(Trait, id=ShapeID("smithy.api#xmlFlattened")):
 class XMLAttributeTrait(Trait, id=ShapeID("smithy.api#xmlAttribute")):
     """Serializes a member as an XML attribute."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 

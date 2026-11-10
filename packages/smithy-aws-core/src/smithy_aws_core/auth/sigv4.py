@@ -6,6 +6,7 @@ from aws_sdk_signers import SigV4Signer, SigV4SigningProperties
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces import TypedProperties as _TypedProperties
 from smithy_core.interfaces.auth import AuthScheme, Signer
+from smithy_core.shapes import ShapeID
 from smithy_http.interfaces import HTTPRequest
 
 from ..business_metrics import get_feature_ids
@@ -23,7 +24,7 @@ __all__ = ["SigV4AuthScheme"]
 class _SigV4AuthSchemeBase:
     """SigV4 auth scheme logic shared by the sync and async schemes."""
 
-    scheme_id = SigV4Trait.id
+    scheme_id: ShapeID = SigV4Trait.id
 
     def __init__(self, *, service: str) -> None:
         self._service = service

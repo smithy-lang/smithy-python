@@ -210,6 +210,7 @@
     "AWS_IDENTITY_CONFIG": "rex-PropertyKey",
     "AuthScheme": "rex-protocol",
     "HTTPRequest": "rex-protocol",
+    "ShapeID": "rex-class",
     "SigV4Signer": "rex-class",
     "SigV4SigningProperties": "rex-class",
     "SigV4Trait": "rex-class",
@@ -1072,6 +1073,7 @@
     "HTTPAPIKeyAuthTrait": "rex-class",
     "HTTPRequest": "rex-protocol",
     "IdentityResolver": "rex-protocol",
+    "ShapeID": "rex-class",
     "Signer": "rex-protocol",
     "SmithyIdentityError": "rex-exception",
     "URI": "rex-class"

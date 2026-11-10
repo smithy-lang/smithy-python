@@ -18,7 +18,7 @@ from .types import ConfigSource
 
 __all__ = ["SharedConfigContext", "load_config", "shared_config_files_exist"]
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 _PROFILE_ENV_VAR = "AWS_PROFILE"
 _DEFAULT_PROFILE = "default"

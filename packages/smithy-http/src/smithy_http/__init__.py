@@ -48,7 +48,7 @@ class Field(interfaces.Field):
         self.values: list[str] = list(values) if values is not None else []
         if kind not in _VALID_FIELD_POSITIONS:
             raise ValueError(f"Unknown field kind: {kind!r}")
-        self.kind = kind
+        self.kind: FieldPosition = kind
 
     def __eq__(self, other: object) -> bool:
         """Name, values, and kind must match.

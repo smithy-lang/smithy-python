@@ -35,7 +35,14 @@ if TYPE_CHECKING:
     from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 
 
-__all__ = ["HTTPResponseDeserializer"]
+__all__ = [
+    "HTTPHeaderDeserializer",
+    "HTTPHeaderListDeserializer",
+    "HTTPHeaderMapDeserializer",
+    "HTTPResponseCodeDeserializer",
+    "HTTPResponseDeserializer",
+    "RawPayloadDeserializer",
+]
 
 _PREFIX_HEADER_OMISSIONS = frozenset(
     {

@@ -25,7 +25,7 @@ from . import (
     get_payload_member,
 )
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 _DEFAULT_STRING_CONTENT_TYPE = "text/plain"
 _DEFAULT_BLOB_CONTENT_TYPE = "application/octet-stream"

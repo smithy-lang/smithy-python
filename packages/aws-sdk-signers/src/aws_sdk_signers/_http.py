@@ -44,7 +44,7 @@ class Field(interfaces_http.Field):
         self.values: list[str] = list(values) if values is not None else []
         if kind not in _VALID_FIELD_POSITIONS:
             raise ValueError(f"Unknown field kind: {kind!r}")
-        self.kind = kind
+        self.kind: interfaces_http.FieldPosition = kind
 
     def __eq__(self, other: object) -> bool:
         """Name, values, and kind must match.
@@ -344,7 +344,7 @@ class AWSRequest(interfaces_http.Request):
         body: AsyncIterable[bytes] | Iterable[bytes] | None,
         fields: Fields,
     ):
-        self.destination = destination
+        self.destination: interfaces_http.URI = destination
         self.method = method
         self.body = body
         self.fields = fields

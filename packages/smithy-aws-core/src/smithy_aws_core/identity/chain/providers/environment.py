@@ -18,7 +18,7 @@ _SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"  # noqa: S105
 class EnvironmentCredentialsProvider:
     """Adds an environment resolver unless an explicit profile is selected."""
 
-    feature_ids = (AwsFeatureId.CREDENTIALS_ENV_VARS,)
+    feature_ids: tuple[AwsFeatureId, ...] = (AwsFeatureId.CREDENTIALS_ENV_VARS,)
     """The features recorded when this provider's resolver returns credentials."""
 
     @property

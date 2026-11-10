@@ -15,7 +15,7 @@ from smithy_http.interfaces import (
     HTTPRequestConfiguration,
 )
 
-__all__ = ["MockHTTPClient", "MockHTTPClientError"]
+__all__ = ["MockHTTPClient", "MockHTTPClientBase", "MockHTTPClientError"]
 
 
 class MockHTTPClientBase:
@@ -25,7 +25,7 @@ class MockHTTPClientBase:
     requests are captured for inspection.
     """
 
-    TIMEOUT_EXCEPTIONS = (TimeoutError,)
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...] = (TimeoutError,)
 
     def __init__(
         self,

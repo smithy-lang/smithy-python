@@ -446,7 +446,7 @@ class TypeRegistry:
         self._types = types
         self._sub_registry = sub_registry
 
-    def __getitem__(self, shape: ShapeID):
+    def __getitem__(self, shape: ShapeID) -> type[DeserializeableShape]:
         """Get the deserializable shape for the given shape ID.
 
         :param shape: The shape ID to get from the registry.
@@ -455,7 +455,7 @@ class TypeRegistry:
         """
         return self.get(shape)
 
-    def __contains__(self, item: object, /):
+    def __contains__(self, item: object, /) -> bool:
         """Check if the registry contains the given shape.
 
         :param item: The shape ID to check for.
@@ -616,7 +616,7 @@ class _DocumentMapSerializer(MapSerializer):
     def result(self) -> Document:
         return self._result
 
-    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
+    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]) -> None:
         value_writer(self._delegate)
         self._result[key] = self._delegate.expect_result()
         self._delegate.result = None

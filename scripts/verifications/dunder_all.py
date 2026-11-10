@@ -13,6 +13,8 @@ Only modules that declare ``__all__`` are checked. A name counts as public when 
 is defined in the module and has no leading underscore.
 """
 
+import ast
+
 from _common import (
     Finding,
     main,
@@ -21,6 +23,9 @@ from _common import (
     resolve_from,
     runtime_modules,
 )
+
+# A module-level logger is named for logging config, not imported by customers.
+_NOT_API = frozenset({"logger"})
 
 
 def check() -> list[Finding]:
@@ -31,15 +36,21 @@ def check() -> list[Finding]:
         if exported is None:
             continue
         exported_set = set(exported)
-        for name in sorted(module.defined):
+        for name in sorted(module.defined - _NOT_API):
             if not name.startswith("_") and name not in exported_set:
                 findings.append(
                     Finding(f"public {name} is missing from __all__", module.path)
                 )
         if not module.is_package:
             continue
+        used = _used_names(module.tree)
         for name, imp in sorted(module.imported.items()):
             if name.startswith("_") or imp.top not in owned_roots() or imp.name is None:
+                continue
+            # An import the module itself uses is a dependency, not a re-export.
+            if name not in exported_set and (
+                imp.context == "type_checking" or name in used
+            ):
                 continue
             target, attr = resolve_from(imp)
             if attr is None:
@@ -65,6 +76,18 @@ def check() -> list[Finding]:
                     )
                 )
     return findings
+
+
+def _used_names(tree: ast.Module) -> set[str]:
+    used = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            try:
+                annotation = ast.parse(node.value, mode="eval")
+            except SyntaxError:
+                continue
+            used.update(n.id for n in ast.walk(annotation) if isinstance(n, ast.Name))
+    return used
 
 
 if __name__ == "__main__":

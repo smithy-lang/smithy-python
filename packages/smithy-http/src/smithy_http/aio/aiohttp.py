@@ -37,7 +37,7 @@ from ..interfaces import (
 )
 from .interfaces import AsyncHTTPClient
 
-__all__ = ["AIOHTTPClient", "AIOHTTPClientConfig"]
+__all__ = ["HAS_AIOHTTP", "AIOHTTPClient", "AIOHTTPClientConfig"]
 
 _UPLOAD_CHUNK_SIZE = 128 * 1024
 
@@ -52,7 +52,7 @@ class AIOHTTPClientConfig(HTTPClientConfiguration):
 class AIOHTTPClient(AsyncHTTPClient):
     """Implementation of :py:class:`.interfaces.AsyncHTTPClient` using aiohttp."""
 
-    TIMEOUT_EXCEPTIONS = (TimeoutError,)
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...] = (TimeoutError,)
 
     # aiohttp has no HTTP/2 support, so it can never interleave request and
     # response data.

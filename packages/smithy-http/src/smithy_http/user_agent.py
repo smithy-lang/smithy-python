@@ -29,7 +29,7 @@ class UserAgentComponent:
     name: str
     value: str | None = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Create string like 'prefix/name#value' from a UserAgentComponent."""
         clean_prefix = sanitize_user_agent_string_component(
             self.prefix, allow_hash=True
