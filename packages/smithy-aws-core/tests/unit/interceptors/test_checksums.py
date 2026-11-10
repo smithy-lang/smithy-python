@@ -1,14 +1,22 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
+import gc
+import warnings
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from io import BytesIO
 from typing import Any, cast
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
+from aws_sdk_signers import AWSCredentialIdentity, SigV4Signer, SigV4SigningProperties
+from smithy_aws_core._aws_chunked import AwsChunkedReader
+from smithy_aws_core.aio._aws_chunked import AsyncAwsChunkedReader
 from smithy_aws_core.aio.checksums import AsyncChecksumStream
+from smithy_aws_core.aio.interceptors.checksums import (
+    AsyncFlexibleChecksumsInterceptor,
+)
 from smithy_aws_core.business_metrics import FEATURE_IDS, AwsFeatureId
 from smithy_aws_core.checksums import ChecksumStream, UnsupportedChecksumAlgorithmError
 from smithy_aws_core.interceptors.checksums import FlexibleChecksumsInterceptor
@@ -19,7 +27,9 @@ from smithy_core.client import OPERATION
 from smithy_core.exceptions import SmithyError
 from smithy_core.interceptors import InputContext, RequestContext, ResponseContext
 from smithy_core.interfaces import TypedProperties as TypedPropertiesInterface
-from smithy_core.traits import HTTPHeaderTrait
+from smithy_core.schemas import Schema
+from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.traits import HTTPHeaderTrait, StreamingTrait
 from smithy_core.types import TypedProperties
 from smithy_http import Field, Fields, HTTPRequest, HTTPResponse
 from smithy_http.urllib3 import (
@@ -204,10 +214,8 @@ def test_validates_the_fastest_algorithm_in_the_response() -> None:
     assert body.validated
 
 
-async def test_async_clients_get_the_stream_they_pass() -> None:
-    interceptor, context, _ = _prepared(
-        interceptor=FlexibleChecksumsInterceptor(AsyncChecksumStream)
-    )
+async def test_async_interceptor_validates_with_an_async_stream() -> None:
+    interceptor, context, _ = _prepared(interceptor=AsyncFlexibleChecksumsInterceptor())
     response = _response_context(
         context.properties, headers={"x-amz-checksum-crc32": CRC32}
     )
@@ -376,15 +384,33 @@ class _PutInput:
     checksum_algorithm: str | None = None
 
 
-def _request_operation(trait: dict[str, Any]) -> Any:
-    member = Mock()
+# Generated input schemas carry the streaming trait of the blob a member targets.
+_STREAMING_BODY = Schema.collection(
+    id=ShapeID("com.test#PutInput"),
+    members={
+        "Body": {
+            "target": Schema(
+                id=ShapeID("com.test#StreamingBlob"),
+                shape_type=ShapeType.BLOB,
+                traits=[StreamingTrait()],
+            )
+        }
+    },
+).members["Body"]
+
+
+def _request_operation(trait: dict[str, Any], *, streaming: bool = False) -> Any:
+    member = MagicMock()
     member.expect_member_name.return_value = "ChecksumAlgorithm"
     member.get_trait.side_effect = lambda t: (  # pyright: ignore[reportUnknownLambdaType]
         HTTPHeaderTrait(ALGORITHM_HEADER) if t is HTTPHeaderTrait else None
     )
     operation = Mock()
     operation.schema.get_trait.return_value = HTTPChecksumTrait(trait)
-    operation.input_schema.members = {"ChecksumAlgorithm": member}
+    members: dict[str, Any] = {"ChecksumAlgorithm": member}
+    if streaming:
+        members["Body"] = _STREAMING_BODY
+    operation.input_schema.members = members
     return operation
 
 
@@ -396,10 +422,12 @@ def _request_context(
     headers: dict[str, str] | None = None,
     calculation: str = "when_supported",
     properties: TypedPropertiesInterface | None = None,
+    streaming: bool = False,
+    scheme: str = "https",
 ) -> RequestContext[Any, Any]:
     if properties is None:
         properties = TypedProperties()
-        properties[OPERATION] = _request_operation(trait)
+        properties[OPERATION] = _request_operation(trait, streaming=streaming)
         properties["config"] = Mock(
             request_checksum_calculation=calculation,
             response_checksum_validation="when_supported",
@@ -411,7 +439,7 @@ def _request_context(
     return RequestContext(
         request=cast(Any, _PutInput(checksum_algorithm=algorithm)),
         transport_request=HTTPRequest(
-            destination=URI(host="example.com"),
+            destination=URI(scheme=scheme, host="example.com"),
             method="PUT",
             fields=Fields([Field(name=k, values=[v]) for k, v in headers.items()]),
             # The serializer sends bytes payloads in a BytesIO, and other payloads
@@ -543,6 +571,20 @@ def test_requires_a_readable_payload_for_required_or_chosen_checksums(
         _sent(context)
 
 
+@pytest.mark.parametrize("scheme,advises_length", [("https", True), ("http", False)])
+def test_suggests_a_content_length_only_where_it_helps(
+    scheme: str, advises_length: bool
+) -> None:
+    # A content length lets an async client encode the payload, but only over https.
+    context = _streaming_context(
+        body=_async_chunks(), length=None, algorithm="SHA256", scheme=scheme
+    )
+
+    with pytest.raises(SmithyError) as error:
+        _ASYNC_CLIENT_INTERCEPTOR.modify_before_signing(context)
+    assert ("content length" in str(error.value)) is advises_length
+
+
 def test_skips_optional_checksums_of_async_readers() -> None:
     # An async reader can't be read from a synchronous hook, even if it holds bytes.
     assert _sent(_request_context(body=AsyncBytesReader(DATA))) == {}
@@ -583,3 +625,340 @@ def test_restores_the_stream_position_when_a_read_fails() -> None:
     with pytest.raises(OSError, match="read failed"):
         _sent(_request_context(body=body))
     assert body.tell() == 0
+
+
+# Trailing checksums of streaming payloads.
+
+
+class _UnreadableBody(BytesIO):
+    """Fails if it's read before it's sent."""
+
+    def read(self, size: int | None = -1) -> bytes:
+        raise AssertionError("The payload was read before it was sent.")
+
+
+# What the generated plugin of an async client builds.
+_ASYNC_CLIENT_INTERCEPTOR = AsyncFlexibleChecksumsInterceptor()
+
+
+def _streaming_context(
+    body: Any = DATA,
+    *,
+    length: int | None = len(DATA),
+    headers: dict[str, str] | None = None,
+    **kwargs: Any,
+) -> RequestContext[Any, Any]:
+    headers = dict(headers or {})
+    if length is not None:
+        headers["content-length"] = str(length)
+    return _request_context(body=body, headers=headers, streaming=True, **kwargs)
+
+
+def _transmitted(
+    context: RequestContext[Any, Any],
+    interceptor: FlexibleChecksumsInterceptor | None = None,
+) -> RequestContext[Any, Any]:
+    """Sign, then transmit the request, as an attempt does."""
+    interceptor = interceptor or FlexibleChecksumsInterceptor()
+    signed = replace(
+        context, transport_request=interceptor.modify_before_signing(context)
+    )
+    return replace(signed, transport_request=interceptor.modify_before_transmit(signed))
+
+
+def _read(body: Any) -> bytes:
+    return body.read()
+
+
+async def _read_async(body: Any) -> bytes:
+    return await body.read()
+
+
+def _encoded(data: bytes, checksum: str) -> bytes:
+    return (
+        f"{len(data):x}\r\n".encode()
+        + data
+        + f"\r\n0\r\nx-amz-checksum-crc64nvme:{checksum}\r\n\r\n".encode()
+    )
+
+
+def test_streaming_payloads_send_a_trailing_checksum() -> None:
+    context = _streaming_context(body=_UnreadableBody(DATA))
+
+    sent = _sent(context)
+
+    assert sent["x-amz-trailer"] == "x-amz-checksum-crc64nvme"
+    assert sent["x-amz-content-sha256"] == "STREAMING-UNSIGNED-PAYLOAD-TRAILER"
+    assert sent["content-encoding"] == "aws-chunked"
+    assert sent["x-amz-decoded-content-length"] == str(len(DATA))
+    assert sent[ALGORITHM_HEADER] == "CRC64NVME"
+    assert "x-amz-checksum-crc64nvme" not in sent
+    # The encoded payload is sent with chunked transfer encoding, as botocore does.
+    assert sent["transfer-encoding"] == "chunked"
+    assert "content-length" not in sent
+    assert list(context.properties[FEATURE_IDS])[-1] == (
+        AwsFeatureId.FLEXIBLE_CHECKSUMS_REQ_CRC64
+    )
+
+
+def test_trailing_checksum_requests_sign_without_reading_the_payload() -> None:
+    context = _streaming_context(
+        body=_UnreadableBody(DATA), headers={"content-encoding": "gzip"}
+    )
+    request = FlexibleChecksumsInterceptor().modify_before_signing(context)
+
+    canonical = (
+        SigV4Signer()
+        .canonical_request(
+            signing_properties=SigV4SigningProperties(
+                region="us-west-2", service="s3", date="20250101T000000Z"
+            ),
+            request=cast(Any, request),
+        )
+        .splitlines()
+    )
+
+    # The headers are signed as the service rebuilds them, and the payload hash is
+    # the trailer's, so the payload isn't read to sign it.
+    assert "content-encoding:gzip,aws-chunked" in canonical
+    assert "x-amz-trailer:x-amz-checksum-crc64nvme" in canonical
+    assert f"x-amz-decoded-content-length:{len(DATA)}" in canonical
+    assert {"content-encoding", "x-amz-decoded-content-length", "x-amz-trailer"} <= set(
+        canonical[-2].split(";")
+    )
+    assert canonical[-1] == "STREAMING-UNSIGNED-PAYLOAD-TRAILER"
+    SigV4Signer().sign(
+        properties=SigV4SigningProperties(region="us-west-2", service="s3"),
+        request=cast(Any, request),
+        identity=AWSCredentialIdentity(
+            access_key_id="AKIDEXAMPLE", secret_access_key="secret"
+        ),
+    )
+
+
+def test_streaming_payloads_are_encoded_when_sent() -> None:
+    request = _transmitted(_streaming_context()).transport_request
+
+    assert _read(request.body) == _encoded(DATA, CRC64NVME)
+
+
+async def test_async_streaming_payloads_are_encoded_when_sent() -> None:
+    async def chunks() -> AsyncIterator[bytes]:
+        yield DATA
+
+    request = _transmitted(
+        _streaming_context(body=chunks()), _ASYNC_CLIENT_INTERCEPTOR
+    ).transport_request
+
+    assert isinstance(request.body, AsyncAwsChunkedReader)
+    assert await _read_async(request.body) == _encoded(DATA, CRC64NVME)
+
+
+async def test_async_payloads_use_a_header_without_an_async_reader() -> None:
+    # An interceptor built without AsyncAwsChunkedReader can't encode the payload,
+    # so it falls back to a header, which can't be calculated for an async iterable.
+    async def chunks() -> AsyncIterator[bytes]:
+        yield DATA
+
+    body = chunks()
+    context = _transmitted(_streaming_context(body=body))
+    request = context.transport_request
+
+    assert request.body is body
+    assert "x-amz-trailer" not in request.fields
+    assert request.fields["content-length"].as_string() == str(len(DATA))
+
+
+class _AwaitableReader:
+    """A reader whose plain read() returns an awaitable, like an AwaitableBytesReader."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = BytesIO(data)
+
+    def read(self, size: int = -1) -> Any:
+        async def read() -> bytes:
+            return self._data.read(size)
+
+        return read()
+
+    def seekable(self) -> bool:
+        return True
+
+    def seek(self, offset: int, whence: int = 0) -> int:
+        return self._data.seek(offset, whence)
+
+    def tell(self) -> int:
+        return self._data.tell()
+
+
+class _SyncReader:
+    """A synchronous reader that isn't an io stream."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = BytesIO(data)
+
+    def read(self, size: int = -1) -> bytes:
+        return self._data.read(size)
+
+
+async def test_async_clients_encode_awaitable_readers() -> None:
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        request = _transmitted(
+            _streaming_context(body=_AwaitableReader(DATA)), _ASYNC_CLIENT_INTERCEPTOR
+        ).transport_request
+
+        assert isinstance(request.body, AsyncAwsChunkedReader)
+        assert await _read_async(request.body) == _encoded(DATA, CRC64NVME)
+        gc.collect()
+    assert not [w for w in caught if issubclass(w.category, RuntimeWarning)]
+
+
+@pytest.mark.parametrize("algorithm", [pytest.param("SHA256", id="chosen"), None])
+def test_awaitable_readers_without_a_trailer_skip_or_fail_cleanly(
+    algorithm: str | None,
+) -> None:
+    # Over http the checksum goes in a header, which a hook can't calculate from an
+    # awaitable read(). The read's coroutine is closed rather than left unawaited.
+    context = _streaming_context(
+        body=_AwaitableReader(DATA), scheme="http", algorithm=algorithm
+    )
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        if algorithm is None:
+            sent = _ASYNC_CLIENT_INTERCEPTOR.modify_before_signing(context).fields
+            assert not [f for f in sent if f.name.startswith("x-amz-checksum-")]
+        else:
+            with pytest.raises(SmithyError, match="can't be calculated"):
+                _ASYNC_CLIENT_INTERCEPTOR.modify_before_signing(context)
+        gc.collect()
+    assert not [w for w in caught if issubclass(w.category, RuntimeWarning)]
+
+
+async def test_async_clients_encode_sync_readers_that_arent_io_streams() -> None:
+    request = _transmitted(
+        _streaming_context(body=_SyncReader(DATA)), _ASYNC_CLIENT_INTERCEPTOR
+    ).transport_request
+
+    assert isinstance(request.body, AsyncAwsChunkedReader)
+    assert await _read_async(request.body) == _encoded(DATA, CRC64NVME)
+
+
+def test_sync_clients_keep_a_sync_reader_for_any_sync_reader() -> None:
+    request = _transmitted(_streaming_context(body=_SyncReader(DATA))).transport_request
+
+    assert isinstance(request.body, AwsChunkedReader)
+    assert _read(request.body) == _encoded(DATA, CRC64NVME)
+
+
+def test_async_clients_keep_a_sync_reader_for_sync_payloads() -> None:
+    # Every HTTP client can stream a synchronous reader, such as an open file.
+    request = _transmitted(
+        _streaming_context(), _ASYNC_CLIENT_INTERCEPTOR
+    ).transport_request
+
+    assert isinstance(request.body, AwsChunkedReader)
+    assert _read(request.body) == _encoded(DATA, CRC64NVME)
+
+
+def test_retries_reuse_a_trailing_checksum() -> None:
+    first = _transmitted(_streaming_context())
+    _read(first.transport_request.body)
+
+    # The retry reads the same length from a payload that changed.
+    retry = _transmitted(
+        _streaming_context(body=b"changed!!!!", properties=first.properties)
+    )
+
+    assert _read(retry.transport_request.body).endswith(
+        f"x-amz-checksum-crc64nvme:{CRC64NVME}\r\n\r\n".encode()
+    )
+
+
+def test_retries_that_use_a_header_send_the_payload_unencoded() -> None:
+    # Each attempt resolves its endpoint again, so a retry can go to an http
+    # endpoint, which uses a header, after an attempt that used a trailer.
+    first = _transmitted(_streaming_context())
+    _read(first.transport_request.body)
+
+    retry = _transmitted(
+        _streaming_context(scheme="http", properties=first.properties)
+    ).transport_request
+
+    assert "x-amz-trailer" not in retry.fields
+    assert retry.fields["x-amz-checksum-crc64nvme"].as_string() == CRC64NVME
+    assert _read(retry.body) == DATA
+
+
+def test_retries_recalculate_a_trailing_checksum_that_was_not_finished() -> None:
+    payload = b"x" * (200 * 1024)
+    first = _transmitted(_streaming_context(body=payload, length=len(payload)))
+    first.transport_request.body.read(10)
+
+    retry = _transmitted(
+        _streaming_context(
+            body=payload, length=len(payload), properties=first.properties
+        )
+    )
+
+    encoded = _read(retry.transport_request.body)
+    expected = _read(
+        _transmitted(
+            _streaming_context(body=payload, length=len(payload))
+        ).transport_request.body
+    )
+    assert encoded == expected
+
+
+def test_trailing_checksum_body_sends_only_its_content_length() -> None:
+    # A payload longer than its content length is cut off at that length.
+    context = _transmitted(_streaming_context(body=BytesIO(DATA + b" and more")))
+
+    assert _read(context.transport_request.body) == _encoded(DATA, CRC64NVME)
+
+
+def test_trailing_checksum_fails_a_payload_shorter_than_its_content_length() -> None:
+    first = _transmitted(_streaming_context(body=BytesIO(DATA[:5])))
+
+    with pytest.raises(SmithyError, match=r"after 5 bytes.*length is 11"):
+        _read(first.transport_request.body)
+
+    # The short payload's checksum isn't saved for a retry to reuse.
+    retry = _transmitted(_streaming_context(properties=first.properties))
+    assert _read(retry.transport_request.body) == _encoded(DATA, CRC64NVME)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        pytest.param({"scheme": "http"}, id="http"),
+        pytest.param({"length": None}, id="unknown-length"),
+    ],
+)
+def test_streaming_payloads_use_a_header_otherwise(kwargs: dict[str, Any]) -> None:
+    context = _streaming_context(**kwargs)
+
+    sent = _sent(context)
+
+    assert "x-amz-trailer" not in sent
+    assert sent["x-amz-checksum-crc64nvme"] == CRC64NVME
+    # The payload is sent as is, not encoded.
+    assert _transmitted(context).transport_request.body is (
+        context.transport_request.body
+    )
+
+
+def test_checksums_set_by_the_caller_are_not_trailed() -> None:
+    context = _streaming_context(headers={"x-amz-checksum-crc32": "c2V0"})
+
+    assert "x-amz-trailer" not in _sent(context)
+    assert FlexibleChecksumsInterceptor().modify_before_transmit(context) is (
+        context.transport_request
+    )
+
+
+def test_aws_chunked_follows_other_content_encodings() -> None:
+    context = _streaming_context(headers={"content-encoding": "gzip"})
+
+    assert _sent(context)["content-encoding"] == "gzip,aws-chunked"

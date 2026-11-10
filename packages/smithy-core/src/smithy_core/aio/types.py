@@ -3,7 +3,7 @@
 import asyncio
 from collections import deque
 from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
-from inspect import iscoroutinefunction
+from inspect import isawaitable, iscoroutinefunction
 from io import BytesIO
 from typing import Any, Self, cast
 
@@ -66,8 +66,12 @@ class AsyncBytesReader:
             self._data.read
         ):
             # Python's runtime_checkable can't actually tell the difference between
-            # sync and async, so we have to check ourselves.
-            return self._data.read(size)
+            # sync and async, so we have to check ourselves. A plain read() can still
+            # return an awaitable, as an AwaitableBytesReader's does.
+            data: Any = self._data.read(size)
+            if isawaitable(data):
+                data = await data
+            return data
 
         if isinstance(self._data, AsyncByteStream):  # type: ignore - TODO(pyright)
             return await self._data.read(size)

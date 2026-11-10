@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Request checksums of streaming payloads sent over HTTPS with a known length, such as S3 `PutObject` and `UploadPart` bodies, are now calculated while the payload is uploaded and sent in an `aws-chunked` trailer, so the payload is read only once. These requests use `Transfer-Encoding: chunked`, so custom HTTP clients must support chunked uploads. Async clients now also send checksums for asynchronous payloads, using the new `AsyncFlexibleChecksumsInterceptor` in `smithy_aws_core.aio.interceptors.checksums`. Exactly the declared content length is sent. A longer payload is cut off at that length, and a shorter one fails the request."
+}

@@ -109,6 +109,32 @@ async def test_trailer_fields_are_not_sent_as_headers() -> None:
     assert session.request.call_args.kwargs["headers"] == [("x-amz-meta-a", "1")]
 
 
+async def test_chunked_transfer_encoding_is_requested_with_the_flag() -> None:
+    # aiohttp raises ValueError if the header is passed along with chunked=True,
+    # and only chunks a body when asked with the flag.
+    client, session = _create_client()
+    request = _create_request()
+    request.method = "PUT"
+    request.fields.set_field(Field(name="Transfer-Encoding", values=["chunked"]))
+    request.fields.set_field(Field(name="x-amz-meta-a", values=["1"]))
+
+    await client.send(request)
+
+    kwargs = session.request.call_args.kwargs
+    assert kwargs["chunked"] is True
+    assert kwargs["headers"] == [("x-amz-meta-a", "1")]
+
+
+async def test_requests_without_chunked_transfer_encoding_leave_framing_to_aiohttp() -> (
+    None
+):
+    client, session = _create_client()
+
+    await client.send(_create_request())
+
+    assert session.request.call_args.kwargs["chunked"] is None
+
+
 async def test_send_skips_automatic_content_type() -> None:
     client, session = _create_client()
 

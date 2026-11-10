@@ -184,6 +184,11 @@
     "AsyncIdentityResolver": "rex-protocol[async]",
     "StaticCredentialsResolver": "rex-class"
   },
+  "smithy_aws_core.aio.interceptors.checksums": {
+    "AsyncAwsChunkedReader": "rex-class[async]",
+    "AsyncChecksumStream": "rex-class[async]",
+    "FlexibleChecksumsInterceptor": "rex-class"
+  },
   "smithy_aws_core.aio.protocols": {
     "AsyncHttpEventStreamMixin": "rex-class[async]",
     "AsyncRpcEventStreamMixin": "rex-class[async]",
@@ -466,8 +471,12 @@
     "SmithyIdentityError": "rex-exception",
     "record_features": "rex-function"
   },
+  "smithy_aws_core.interceptors": {
+    "checksums": "rex-module"
+  },
   "smithy_aws_core.interceptors.checksums": {
     "APIOperation": "rex-class",
+    "AwsChunkedReader": "rex-class",
     "AwsFeatureId": "rex-class",
     "ChecksumStream": "rex-class",
     "Field": "rex-class",
@@ -483,7 +492,9 @@
     "RequestContext": "rex-class",
     "ResponseContext": "rex-class",
     "Schema": "rex-class",
+    "ShapeType": "rex-class",
     "SmithyError": "rex-exception",
+    "StreamingTrait": "rex-class",
     "TypedProperties": "rex-protocol",
     "UnsupportedChecksumAlgorithmError": "rex-exception",
     "assert_checksums_installed": "rex-function",

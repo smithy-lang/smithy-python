@@ -34,20 +34,14 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
 
     private static final String CHECKSUMS_PLUGIN = """
             def flexible_checksums_plugin(config: $1T) -> None:
-                config.interceptors.append($2T($3T))
+                config.interceptors.append($2T())
             """;
 
-    private static final Symbol INTERCEPTOR = Symbol.builder()
-            .namespace("smithy_aws_core.interceptors.checksums", ".")
-            .name("FlexibleChecksumsInterceptor")
+    // The sync plugin gets FlexibleChecksumsInterceptor, this symbol's sync twin.
+    private static final Symbol ASYNC_INTERCEPTOR = Symbol.builder()
+            .namespace("smithy_aws_core.aio.interceptors.checksums", ".")
+            .name("AsyncFlexibleChecksumsInterceptor")
             .addDependency(AwsPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("checksums"))
-            .build();
-
-    // The sync plugin gets ChecksumStream, this symbol's sync twin.
-    private static final Symbol ASYNC_STREAM = Symbol.builder()
-            .namespace("smithy_aws_core.aio.checksums", ".")
-            .name("AsyncChecksumStream")
-            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
             .build();
 
     private static final ConfigProperty REQUEST_CHECKSUM_CALCULATION = checksumSetting(
@@ -127,14 +121,12 @@ public final class AwsFlexibleChecksumsIntegration implements PythonIntegration 
                                             plugin.getSymbol().getNamespace(),
                                             writer -> writer.write(CHECKSUMS_PLUGIN,
                                                     asyncConfig,
-                                                    INTERCEPTOR,
-                                                    ASYNC_STREAM));
+                                                    ASYNC_INTERCEPTOR));
                             var syncFile = SyncVariant.writeSyncTwin(c,
                                     plugin.getSymbol(),
                                     CHECKSUMS_PLUGIN,
                                     asyncConfig,
-                                    INTERCEPTOR,
-                                    ASYNC_STREAM);
+                                    ASYNC_INTERCEPTOR);
                             return List.of(filename, syncFile);
                         })
                         .build());

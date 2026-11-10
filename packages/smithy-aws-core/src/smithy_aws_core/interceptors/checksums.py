@@ -1,9 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import io
 import logging
+from collections.abc import Callable
 from copy import copy, deepcopy
 from dataclasses import replace
-from inspect import iscoroutinefunction
+from inspect import isawaitable, iscoroutinefunction
 from typing import Any, Protocol
 
 from smithy_core._model_naming import member_field_name
@@ -17,12 +19,14 @@ from smithy_core.interceptors import (
 )
 from smithy_core.interfaces import TypedProperties
 from smithy_core.schemas import APIOperation, Schema
-from smithy_core.traits import HTTPHeaderTrait
+from smithy_core.shapes import ShapeType
+from smithy_core.traits import HTTPHeaderTrait, StreamingTrait
 from smithy_core.types import PropertyKey
 from smithy_http import Field, HTTPResponse
 from smithy_http.interfaces import HTTPRequest
 from smithy_http.interfaces import HTTPResponse as HTTPResponseInterface
 
+from .._aws_chunked import AwsChunkedReader
 from .._private.checksums import (
     DEFAULT_ALGORITHM,
     SUPPORTED_ALGORITHMS,
@@ -38,7 +42,11 @@ from ..business_metrics import AwsFeatureId, register_feature_id
 from ..checksums import ChecksumStream, UnsupportedChecksumAlgorithmError
 from ..traits import HTTPChecksumTrait
 
-__all__ = ["ChecksumStreamFactory", "FlexibleChecksumsInterceptor"]
+__all__ = [
+    "AwsChunkedReaderFactory",
+    "ChecksumStreamFactory",
+    "FlexibleChecksumsInterceptor",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -51,26 +59,54 @@ class ChecksumStreamFactory(Protocol):
     ) -> Any: ...
 
 
+class AwsChunkedReaderFactory(Protocol):
+    """Wraps a request payload in a reader that encodes it as ``aws-chunked``."""
+
+    def __call__(
+        self,
+        source: Any,
+        /,
+        *,
+        decoded_length: int,
+        checksum_algorithm: str,
+        checksum: bytes | None,
+        on_checksum: Callable[[bytes], None],
+    ) -> Any:
+        """Wrap ``source`` in a reader that encodes it as it's read."""
+        ...
+
+
 class FlexibleChecksumsInterceptor(
     Interceptor[Any, Any, HTTPRequest, HTTPResponseInterface]
 ):
     """Adds and validates checksums for operations with the ``httpChecksum`` trait.
 
-    Request checksums are sent in a header. When to calculate and validate them is
+    Request checksums of streaming payloads sent over HTTPS are sent in an
+    ``aws-chunked`` trailer, and others in a header. When to calculate and validate them is
     read from the ``request_checksum_calculation`` and
     ``response_checksum_validation`` settings of each call's config, so plugins can
     change them per call. Operations without the trait are passed through unchanged.
     """
 
-    def __init__(self, stream: ChecksumStreamFactory = ChecksumStream) -> None:
+    def __init__(
+        self,
+        stream: ChecksumStreamFactory = ChecksumStream,
+        chunked_reader: AwsChunkedReaderFactory | None = None,
+    ) -> None:
         """Initialize the interceptor.
 
-        :param stream: Wraps validated response payloads. Async clients pass
-            ``AsyncChecksumStream``.
+        Async clients use ``AsyncFlexibleChecksumsInterceptor`` instead, which passes
+        the async stream and reader.
+
+        :param stream: Wraps validated response payloads.
+        :param chunked_reader: Encodes payloads that are read asynchronously with a
+            trailing checksum. Without one, an asynchronous payload's checksum is sent
+            in a header, if it can be calculated.
         :raises MissingDependencyError: If smithy-aws-checksums isn't installed.
         """
         assert_checksums_installed()
         self._stream = stream
+        self._chunked_reader = chunked_reader
 
     def modify_before_serialization(self, context: InputContext[Any]) -> Any:
         operation = context.properties.get(OPERATION)
@@ -124,8 +160,10 @@ class FlexibleChecksumsInterceptor(
                 _register_algorithm_feature_id(context.properties, algorithm)
             return request
 
-        # A retry reuses the checksum, so a payload that changed is rejected.
-        if (saved := context.properties.get(_REQUEST_CHECKSUM)) is None:
+        # A retry reuses the algorithm and checksum, so a payload that changed is
+        # rejected.
+        chosen = None
+        if (algorithm := context.properties.get(_REQUEST_ALGORITHM)) is None:
             chosen = _chosen_algorithm(context.request, operation, trait)
             algorithm = chosen
             if algorithm is None and (
@@ -134,24 +172,8 @@ class FlexibleChecksumsInterceptor(
                 algorithm = DEFAULT_ALGORITHM
             if algorithm is None:
                 return request
-            value = _calculate(algorithm, request.body)
-            if value is None:
-                if chosen is not None or trait.request_checksum_required:
-                    raise SmithyError(
-                        f"A {algorithm} request checksum can't be calculated for a "
-                        f"payload of type {type(request.body).__name__}. Send bytes or a "
-                        "seekable file, or set the checksum on the request."
-                    )
-                logger.debug(
-                    "Skipping the request checksum: it can't be calculated for a "
-                    "payload of type %s.",
-                    type(request.body),
-                )
-                return request
-            saved = (algorithm, value)
-            context.properties[_REQUEST_CHECKSUM] = saved
+            context.properties[_REQUEST_ALGORITHM] = algorithm
 
-        algorithm, value = saved
         # The request of each attempt shares its fields with the original, so copy
         # them before changing anything.
         request = copy(request)
@@ -159,8 +181,81 @@ class FlexibleChecksumsInterceptor(
         if (header := _algorithm_header(operation, trait)) is not None:
             if header not in request.fields:
                 request.fields.set_field(Field(name=header, values=[algorithm]))
-        request.fields.set_field(Field(name=checksum_header(algorithm), values=[value]))
+
+        if (
+            _sends_trailer(operation, request)
+            and self._chunked_reader_for(request.body) is not None
+        ):
+            # The checksum is calculated while the payload is sent, and sent after
+            # it, so the payload is only read once.
+            _set_trailer_fields(request, algorithm)
+            _register_algorithm_feature_id(context.properties, algorithm)
+            return request
+
+        if (value := context.properties.get(_REQUEST_CHECKSUM)) is None:
+            value = _calculate(algorithm, request.body)
+            if value is None:
+                if chosen is not None or trait.request_checksum_required:
+                    # A content length only helps if it lets the payload be encoded.
+                    length_advice = (
+                        "set the payload's content length, "
+                        if "content-length" not in request.fields
+                        and _can_send_trailer(operation, request)
+                        and self._chunked_reader_for(request.body) is not None
+                        else ""
+                    )
+                    raise SmithyError(
+                        f"A {algorithm} request checksum can't be calculated for a "
+                        f"payload of type {type(request.body).__name__}. Send bytes or a "
+                        f"seekable file, {length_advice}or set the checksum on the "
+                        "request."
+                    )
+                logger.debug(
+                    "Skipping the request checksum: it can't be calculated for a "
+                    "payload of type %s.",
+                    type(request.body),
+                )
+                return context.transport_request
+            context.properties[_REQUEST_CHECKSUM] = value
+
+        request.fields.set_field(
+            Field(name=checksum_header(algorithm), values=[encode_digest(value)])
+        )
         _register_algorithm_feature_id(context.properties, algorithm)
+        return request
+
+    def modify_before_transmit(
+        self, context: RequestContext[Any, HTTPRequest]
+    ) -> HTTPRequest:
+        """Encode the payload of a request that announces a trailing checksum."""
+        request = context.transport_request
+        properties = context.properties
+        # Each attempt signs again and can take the header path, such as after its
+        # endpoint changed, so only a request whose fields announce the trailer is
+        # encoded.
+        algorithm = properties.get(_REQUEST_ALGORITHM)
+        if algorithm is None or not _announces_trailer(request, algorithm):
+            return request
+
+        def save(digest: bytes) -> None:
+            properties[_REQUEST_CHECKSUM] = digest
+
+        reader = self._chunked_reader_for(request.body)
+        # Signing only chose a trailer for payloads with a reader.
+        assert reader is not None  # noqa: S101
+        # Each attempt encodes the payload again, after the client rewound it.
+        request = copy(request)
+        # Exactly the length the fields declare is sent, so the body always matches
+        # its framing.
+        request.body = reader(
+            request.body,
+            decoded_length=int(
+                request.fields["x-amz-decoded-content-length"].as_string()
+            ),
+            checksum_algorithm=algorithm,
+            checksum=properties.get(_REQUEST_CHECKSUM),
+            on_checksum=save,
+        )
         return request
 
     def modify_before_deserialization(
@@ -198,6 +293,17 @@ class FlexibleChecksumsInterceptor(
         )
         return response
 
+    def _chunked_reader_for(self, body: object) -> AwsChunkedReaderFactory | None:
+        if self._chunked_reader is None:
+            # Without an async reader, only synchronous payloads can be encoded.
+            return None if _reads_asynchronously(body) else AwsChunkedReader
+        # A plain read() can return an awaitable, as an AwaitableBytesReader's does,
+        # so only payloads known to read synchronously keep the sync reader, which
+        # every HTTP client can stream. The async reader awaits what read() returns.
+        if isinstance(body, bytes | bytearray | io.IOBase):
+            return AwsChunkedReader
+        return self._chunked_reader
+
 
 _VALIDATION_MODE_ENABLED = "ENABLED"
 
@@ -206,8 +312,19 @@ _RESPONSE_ALGORITHMS = PropertyKey(
 )
 """The algorithms to validate the response with, fastest first, if it's validated."""
 
-_REQUEST_CHECKSUM = PropertyKey(key="request_checksum", value_type=tuple[str, str])
-"""The algorithm and value of the request checksum, kept to be reused on retries."""
+_REQUEST_ALGORITHM = PropertyKey(key="request_checksum_algorithm", value_type=str)
+"""The algorithm of the request checksum, kept to be reused on retries."""
+
+_REQUEST_CHECKSUM = PropertyKey(key="request_checksum", value_type=bytes)
+"""The request payload's digest, reused on a retry so a changed payload is rejected."""
+"""The request checksum, kept to be reused on retries.
+
+A trailing checksum is only saved once the payload was read to the end.
+"""
+
+"""Whether the request checksum is sent in an ``aws-chunked`` trailer."""
+
+_STREAMING_UNSIGNED_PAYLOAD_TRAILER = "STREAMING-UNSIGNED-PAYLOAD-TRAILER"
 
 _READ_CHUNK_SIZE = 64 * 1024
 
@@ -258,8 +375,8 @@ def _chosen_algorithm(
     return chosen.upper()
 
 
-def _calculate(algorithm: str, source: Any) -> str | None:
-    """Calculate a checksum of the payload, if it can be read synchronously.
+def _calculate(algorithm: str, source: Any) -> bytes | None:
+    """Calculate the payload's digest, if it can be read synchronously.
 
     Interceptor hooks are synchronous, so only bytes and seekable synchronous
     streams can be read here. The stream is returned to where it started.
@@ -267,7 +384,7 @@ def _calculate(algorithm: str, source: Any) -> str | None:
     if isinstance(source, bytes | bytearray):
         checksum = create_checksum(algorithm)
         checksum.update(source)
-        return encode_digest(checksum.digest())
+        return checksum.digest()
 
     read = getattr(source, "read", None)
     if read is None or iscoroutinefunction(read) or not _is_seekable(source):
@@ -276,10 +393,15 @@ def _calculate(algorithm: str, source: Any) -> str | None:
     start = source.tell()
     try:
         while chunk := read(_READ_CHUNK_SIZE):
+            if isawaitable(chunk):
+                # A plain read() that returns an awaitable can't be read in a hook.
+                if (close := getattr(chunk, "close", None)) is not None:
+                    close()
+                return None
             checksum.update(chunk)
     finally:
         source.seek(start)
-    return encode_digest(checksum.digest())
+    return checksum.digest()
 
 
 def _is_seekable(source: Any) -> bool:
@@ -292,6 +414,59 @@ def _is_seekable(source: Any) -> bool:
     if (seekable := getattr(source, "seekable", None)) is None:
         return True
     return not iscoroutinefunction(seekable) and bool(seekable())
+
+
+def _sends_trailer(operation: APIOperation[Any, Any], request: HTTPRequest) -> bool:
+    # Services need to know the payload's length, so a payload of unknown length
+    # isn't encoded.
+    return "content-length" in request.fields and _can_send_trailer(operation, request)
+
+
+def _can_send_trailer(operation: APIOperation[Any, Any], request: HTTPRequest) -> bool:
+    # Like other AWS SDKs, a streaming payload's checksum is sent in a trailer over
+    # HTTPS, where the payload doesn't need to be signed.
+    return request.destination.scheme == "https" and any(
+        StreamingTrait in member and member.shape_type is ShapeType.BLOB
+        for member in operation.input_schema.members.values()
+    )
+
+
+def _set_trailer_fields(request: HTTPRequest, algorithm: str) -> None:
+    fields = request.fields
+    # The encoded payload is sent with chunked transfer encoding rather than a
+    # content length, and its decoded length, which S3 requires, in its own header.
+    fields.set_field(
+        Field(
+            name="x-amz-decoded-content-length",
+            values=[fields["content-length"].as_string()],
+        )
+    )
+    del fields["content-length"]
+    fields.set_field(Field(name="transfer-encoding", values=["chunked"]))
+    fields.set_field(Field(name="x-amz-trailer", values=[checksum_header(algorithm)]))
+    fields.set_field(
+        Field(name="x-amz-content-sha256", values=[_STREAMING_UNSIGNED_PAYLOAD_TRAILER])
+    )
+    # aws-chunked is applied after any other encoding, such as compression.
+    encodings = (
+        fields["content-encoding"].values if "content-encoding" in fields else []
+    )
+    fields.set_field(Field(name="content-encoding", values=[*encodings, "aws-chunked"]))
+
+
+def _announces_trailer(request: HTTPRequest, algorithm: str) -> bool:
+    fields = request.fields
+    return (
+        "x-amz-trailer" in fields
+        and fields["x-amz-trailer"].values == [checksum_header(algorithm)]
+        and "x-amz-decoded-content-length" in fields
+    )
+
+
+def _reads_asynchronously(body: object) -> bool:
+    if hasattr(body, "__aiter__"):
+        return True
+    return iscoroutinefunction(getattr(body, "read", None))
 
 
 def _algorithm_header(
