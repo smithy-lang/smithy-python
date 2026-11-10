@@ -3,6 +3,8 @@
 import threading
 import tracemalloc
 from collections.abc import Iterator
+from hashlib import sha256
+from io import BytesIO
 from typing import Any
 from unittest.mock import Mock
 
@@ -321,3 +323,116 @@ def test_large_body_is_not_buffered(server: LocalHTTPServer) -> None:
 
     assert received == size
     assert peak < size // 8
+
+
+def _sent_body(request: HTTPRequest) -> Any:
+    """The body the client gives urllib3 for a request."""
+    pool = Mock()
+    pool.request.return_value = Mock(
+        status=200, headers=urllib3.HTTPHeaderDict(), data=b"", reason="OK"
+    )
+    Urllib3HTTPClient(_pool=pool).send(request)
+    return pool.request.call_args.kwargs["body"]
+
+
+def _upload(body: Any, fields: list[Field], port: int = 443) -> HTTPRequest:
+    return HTTPRequest(
+        destination=URI(scheme="http", host="127.0.0.1", port=port, path="/k"),
+        method="PUT",
+        body=body,
+        fields=Fields(fields),
+    )
+
+
+@pytest.mark.parametrize(
+    "framing",
+    [
+        pytest.param(Field(name="Content-Length", values=["5"]), id="content-length"),
+        pytest.param(Field(name="Transfer-Encoding", values=["chunked"]), id="chunked"),
+    ],
+)
+def test_request_readers_with_framing_are_streamed(framing: Field) -> None:
+    body = BytesIO(b"hello")
+
+    assert _sent_body(_upload(body, [framing])) is body
+
+
+def test_request_bodies_are_streamed_in_large_blocks() -> None:
+    pool = Urllib3HTTPClient()._pool  # pyright: ignore[reportPrivateUsage]
+
+    assert pool.connection_pool_kw["blocksize"] == 128 * 1024
+
+
+def test_request_readers_of_unknown_length_are_read_first() -> None:
+    # urllib3 would send a reader without a length chunked, which services such as
+    # S3 reject, so it's read and sent with its length.
+    assert _sent_body(_upload(BytesIO(b"hello"), [])) == b"hello"
+
+
+def test_request_bytes_are_sent_as_is() -> None:
+    assert _sent_body(_upload(b"hello", [])) == b"hello"
+
+
+class _GeneratedReader:
+    """Produces ``size`` bytes as it's read, without holding them."""
+
+    def __init__(self, size: int) -> None:
+        self._left = size
+        self.digest = sha256()
+
+    def read(self, size: int = -1) -> bytes:
+        n = self._left if size < 0 else min(size, self._left)
+        self._left -= n
+        data = b"\0" * n
+        self.digest.update(data)
+        return data
+
+
+def test_large_request_body_is_not_buffered(server: LocalHTTPServer) -> None:
+    size = 32 * 1024 * 1024
+    body = _GeneratedReader(size)
+    request = _upload(
+        body, [Field(name="Content-Length", values=[str(size)])], server.port
+    )
+
+    tracemalloc.start()
+    try:
+        with Urllib3HTTPClient() as client:
+            read_streaming_blob(client.send(request).body)
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+
+    assert server.bodies == [(size, body.digest.hexdigest())]
+    assert peak < size // 8
+
+
+class _FailingReader(_GeneratedReader):
+    """Raises after ``fail_after`` bytes, as a payload that ends early does."""
+
+    def __init__(self, size: int, fail_after: int) -> None:
+        super().__init__(size)
+        self._fail_after = fail_after
+
+    def read(self, size: int = -1) -> bytes:
+        if self._fail_after <= 0:
+            raise ValueError("the payload ended early")
+        data = super().read(min(size, self._fail_after))
+        self._fail_after -= len(data)
+        return data
+
+
+def test_request_body_errors_raise_and_leave_the_client_usable(
+    server: LocalHTTPServer,
+) -> None:
+    size = 4 * 1024 * 1024
+    length = [Field(name="Content-Length", values=[str(size)])]
+
+    with Urllib3HTTPClient() as client:
+        with pytest.raises(ValueError, match="ended early"):
+            client.send(_upload(_FailingReader(size, size // 2), length, server.port))
+
+        body = _GeneratedReader(size)
+        read_streaming_blob(client.send(_upload(body, length, server.port)).body)
+
+    assert server.bodies[-1] == (size, body.digest.hexdigest())
