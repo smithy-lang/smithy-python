@@ -68,8 +68,8 @@ class AwsChunkedReaderFactory(Protocol):
         *,
         decoded_length: int,
         checksum_algorithm: str,
-        checksum: str | None,
-        on_checksum: Callable[[str], None],
+        checksum: bytes | None,
+        on_checksum: Callable[[bytes], None],
     ) -> Any:
         """Wrap ``source`` in a reader that encodes it as it's read."""
         ...
@@ -217,7 +217,9 @@ class FlexibleChecksumsInterceptor(
                 return context.transport_request
             context.properties[_REQUEST_CHECKSUM] = value
 
-        request.fields.set_field(Field(name=checksum_header(algorithm), values=[value]))
+        request.fields.set_field(
+            Field(name=checksum_header(algorithm), values=[encode_digest(value)])
+        )
         _register_algorithm_feature_id(context.properties, algorithm)
         return request
 
@@ -234,8 +236,8 @@ class FlexibleChecksumsInterceptor(
         if algorithm is None or not _announces_trailer(request, algorithm):
             return request
 
-        def save(checksum: str) -> None:
-            properties[_REQUEST_CHECKSUM] = checksum
+        def save(digest: bytes) -> None:
+            properties[_REQUEST_CHECKSUM] = digest
 
         reader = self._chunked_reader_for(request.body)
         # Signing only chose a trailer for payloads with a reader.
@@ -308,7 +310,8 @@ _RESPONSE_ALGORITHMS = PropertyKey(
 _REQUEST_ALGORITHM = PropertyKey(key="request_checksum_algorithm", value_type=str)
 """The algorithm of the request checksum, kept to be reused on retries."""
 
-_REQUEST_CHECKSUM = PropertyKey(key="request_checksum", value_type=str)
+_REQUEST_CHECKSUM = PropertyKey(key="request_checksum", value_type=bytes)
+"""The request payload's digest, reused on a retry so a changed payload is rejected."""
 """The request checksum, kept to be reused on retries.
 
 A trailing checksum is only saved once the payload was read to the end.
@@ -367,8 +370,8 @@ def _chosen_algorithm(
     return chosen.upper()
 
 
-def _calculate(algorithm: str, source: Any) -> str | None:
-    """Calculate a checksum of the payload, if it can be read synchronously.
+def _calculate(algorithm: str, source: Any) -> bytes | None:
+    """Calculate the payload's digest, if it can be read synchronously.
 
     Interceptor hooks are synchronous, so only bytes and seekable synchronous
     streams can be read here. The stream is returned to where it started.
@@ -376,7 +379,7 @@ def _calculate(algorithm: str, source: Any) -> str | None:
     if isinstance(source, bytes | bytearray):
         checksum = create_checksum(algorithm)
         checksum.update(source)
-        return encode_digest(checksum.digest())
+        return checksum.digest()
 
     read = getattr(source, "read", None)
     if read is None or iscoroutinefunction(read) or not _is_seekable(source):
@@ -388,7 +391,7 @@ def _calculate(algorithm: str, source: Any) -> str | None:
             checksum.update(chunk)
     finally:
         source.seek(start)
-    return encode_digest(checksum.digest())
+    return checksum.digest()
 
 
 def _is_seekable(source: Any) -> bool:

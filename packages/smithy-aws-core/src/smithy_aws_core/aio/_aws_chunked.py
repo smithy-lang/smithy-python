@@ -10,7 +10,7 @@ from typing import Any
 
 from smithy_core.aio.types import AsyncBytesReader
 
-from .._aws_chunked import CHUNK_SIZE, ChunkEncoder
+from .._aws_chunked import CHUNK_SIZE, AwsChunkedEncoder
 
 
 class AsyncAwsChunkedReader:
@@ -20,10 +20,10 @@ class AsyncAwsChunkedReader:
     :param decoded_length: The payload's length before it's encoded. Exactly this
         many bytes are read from it.
     :param checksum_algorithm: The algorithm of the trailing checksum.
-    :param checksum: A checksum to send rather than calculating one, such as on a
+    :param checksum: A digest to send rather than calculating one, such as on a
         retry.
-    :param on_checksum: Called with the calculated checksum once the payload has
-        been read to the end.
+    :param on_checksum: Called with the calculated digest once the payload has been
+        read to the end.
     """
 
     def __init__(
@@ -32,12 +32,12 @@ class AsyncAwsChunkedReader:
         *,
         decoded_length: int,
         checksum_algorithm: str,
-        checksum: str | None = None,
-        on_checksum: Callable[[str], None] | None = None,
+        checksum: bytes | None = None,
+        on_checksum: Callable[[bytes], None] | None = None,
         chunk_size: int = CHUNK_SIZE,
     ) -> None:
         self._source = AsyncBytesReader(source)
-        self._encoder = ChunkEncoder(
+        self._encoder = AwsChunkedEncoder(
             decoded_length=decoded_length,
             checksum_algorithm=checksum_algorithm,
             checksum=checksum,

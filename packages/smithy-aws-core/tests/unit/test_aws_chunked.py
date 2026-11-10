@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
+import base64
 import io
 from collections.abc import AsyncIterator
 from typing import Any
@@ -11,8 +12,9 @@ from smithy_aws_core.aio._aws_chunked import AsyncAwsChunkedReader
 from smithy_core.exceptions import SmithyError
 
 DATA = b"Hello world"
-# The CRC32 of DATA, from the flexible checksums test cases.
+# The CRC32 of DATA, from the flexible checksums test cases, as sent and as a digest.
 CRC32 = "i9aeUg=="
+CRC32_DIGEST = base64.b64decode(CRC32)
 
 
 class _TrickleReader:
@@ -78,7 +80,7 @@ def test_chunks_are_a_fixed_size_however_the_source_is_read() -> None:
 
 def test_reports_the_checksum_once_the_payload_is_read() -> None:
     payload = b"x" * (CHUNK_SIZE * 2)
-    reported: list[str] = []
+    reported: list[bytes] = []
     reader = AwsChunkedReader(
         payload,
         decoded_length=len(payload),
@@ -94,9 +96,9 @@ def test_reports_the_checksum_once_the_payload_is_read() -> None:
 
 
 def test_sends_a_given_checksum_without_calculating_one() -> None:
-    reported: list[str] = []
+    reported: list[bytes] = []
 
-    encoded = _encode(DATA, checksum="AAAAAA==", on_checksum=reported.append)
+    encoded = _encode(DATA, checksum=bytes(4), on_checksum=reported.append)
 
     assert encoded.endswith(b"x-amz-checksum-crc32:AAAAAA==\r\n\r\n")
     assert reported == []
@@ -138,7 +140,7 @@ async def test_async_reader_matches_the_sync_reader(source: Any) -> None:
 
 
 async def test_async_reader_reports_and_reuses_checksums() -> None:
-    reported: list[str] = []
+    reported: list[bytes] = []
     reader = AsyncAwsChunkedReader(
         _chunks(DATA),
         decoded_length=len(DATA),
@@ -146,13 +148,13 @@ async def test_async_reader_reports_and_reuses_checksums() -> None:
         on_checksum=reported.append,
     )
     assert await reader.read() == _encode(DATA)
-    assert reported == [CRC32]
+    assert reported == [CRC32_DIGEST]
 
     retried = AsyncAwsChunkedReader(
         b"changed!!!!",
         decoded_length=len(DATA),
         checksum_algorithm="CRC32",
-        checksum=CRC32,
+        checksum=CRC32_DIGEST,
     )
     assert (await retried.read()).endswith(b":" + CRC32.encode() + b"\r\n\r\n")
 
@@ -180,7 +182,7 @@ def test_sends_only_the_declared_length_of_a_longer_payload(size: int) -> None:
 
 @SNAPSHOT_SIZES
 def test_fails_a_payload_shorter_than_its_declared_length(size: int) -> None:
-    reported: list[str] = []
+    reported: list[bytes] = []
     reader = AwsChunkedReader(
         io.BytesIO(b"x" * (size - 1)),
         decoded_length=size,
@@ -218,7 +220,7 @@ async def test_async_reader_sends_only_the_declared_length(size: int) -> None:
 
 @SNAPSHOT_SIZES
 async def test_async_reader_fails_a_shorter_payload(size: int) -> None:
-    reported: list[str] = []
+    reported: list[bytes] = []
     reader = AsyncAwsChunkedReader(
         _chunks(b"x" * (size - 1)),
         decoded_length=size,

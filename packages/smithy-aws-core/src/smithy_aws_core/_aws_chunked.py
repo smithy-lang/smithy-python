@@ -32,16 +32,16 @@ Chunks must be at least 8 KiB, and 64 KiB is the recommended size.
 """
 
 
-class ChunkEncoder:
-    """Frames data into fixed-size chunks and writes the checksum trailer."""
+class AwsChunkedEncoder:
+    """Frames data into ``aws-chunked`` chunks and writes the checksum trailer."""
 
     def __init__(
         self,
         *,
         decoded_length: int,
         checksum_algorithm: str,
-        checksum: str | None,
-        on_checksum: Callable[[str], None] | None,
+        checksum: bytes | None,
+        on_checksum: Callable[[bytes], None] | None,
         chunk_size: int,
     ) -> None:
         self.chunk_size = chunk_size
@@ -86,15 +86,15 @@ class ChunkEncoder:
         if self._buffer:
             self._frame(self._buffer)
             self._buffer.clear()
-        checksum = self._checksum
-        if checksum is None:
+        digest = self._checksum
+        if digest is None:
             assert self._hash is not None  # noqa: S101
-            checksum = encode_digest(self._hash.digest())
+            digest = self._hash.digest()
             if self._on_checksum is not None:
-                self._on_checksum(checksum)
-        self.encoded += (
-            f"0\r\n{checksum_header(self._algorithm)}:{checksum}\r\n\r\n".encode()
-        )
+                self._on_checksum(digest)
+        # The trailer is where the digest goes on the wire, so it's encoded here.
+        trailer = f"{checksum_header(self._algorithm)}:{encode_digest(digest)}"
+        self.encoded += f"0\r\n{trailer}\r\n\r\n".encode()
         self.done = True
 
     def take(self, size: int) -> bytes:
@@ -122,10 +122,10 @@ class AwsChunkedReader(io.RawIOBase):
     :param decoded_length: The payload's length before it's encoded. Exactly this
         many bytes are read from it.
     :param checksum_algorithm: The algorithm of the trailing checksum.
-    :param checksum: A checksum to send rather than calculating one, such as on a
+    :param checksum: A digest to send rather than calculating one, such as on a
         retry.
-    :param on_checksum: Called with the calculated checksum once the payload has
-        been read to the end.
+    :param on_checksum: Called with the calculated digest once the payload has been
+        read to the end.
     """
 
     def __init__(
@@ -134,15 +134,15 @@ class AwsChunkedReader(io.RawIOBase):
         *,
         decoded_length: int,
         checksum_algorithm: str,
-        checksum: str | None = None,
-        on_checksum: Callable[[str], None] | None = None,
+        checksum: bytes | None = None,
+        on_checksum: Callable[[bytes], None] | None = None,
         chunk_size: int = CHUNK_SIZE,
     ) -> None:
         super().__init__()
         self._source = (
             io.BytesIO(source) if isinstance(source, bytes | bytearray) else source
         )
-        self._encoder = ChunkEncoder(
+        self._encoder = AwsChunkedEncoder(
             decoded_length=decoded_length,
             checksum_algorithm=checksum_algorithm,
             checksum=checksum,
