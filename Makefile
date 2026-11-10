@@ -200,7 +200,7 @@ import-cycles: ## Catches cycles that make import success depend on import order
 	uv run python scripts/verifications/import_cycles.py
 
 
-dep-specifiers: ## Keeps packages co-installable and in-repo version bounds current.
+dep-specifiers: ## Keeps every part of the repo on the same dependency ranges and in-repo bounds current.
 	uv run python scripts/verifications/dep_specifiers.py
 
 
