@@ -107,10 +107,18 @@ class AIOHTTPClient(AsyncHTTPClient):
 
         request_config = request_config or HTTPRequestConfiguration()
 
+        # aiohttp chunks a body itself when asked with chunked=True, and rejects a
+        # Transfer-Encoding: chunked header, so the header becomes that flag.
+        chunked = "transfer-encoding" in request.fields and [
+            value.strip().lower()
+            for value in request.fields["transfer-encoding"].values
+        ] == ["chunked"]
         # aiohttp can't send request trailers, and a trailer is never a header.
         headers_list = list(
             chain.from_iterable(
-                fld.as_tuples() for fld in request.fields.get_by_type("header")
+                fld.as_tuples()
+                for fld in request.fields.get_by_type("header")
+                if not (chunked and fld.name.lower() == "transfer-encoding")
             )
         )
 
@@ -128,6 +136,7 @@ class AIOHTTPClient(AsyncHTTPClient):
             url=self._serialize_uri(request.destination),
             headers=headers_list,
             data=body,
+            chunked=True if chunked else None,
             allow_redirects=False,
             skip_auto_headers={"Content-Type"},
         )

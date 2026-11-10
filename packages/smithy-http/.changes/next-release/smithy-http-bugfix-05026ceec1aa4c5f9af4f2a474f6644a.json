@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "`AIOHTTPClient` now sends requests that set `Transfer-Encoding: chunked` using aiohttp's chunked uploads. Previously aiohttp rejected the header with a `ValueError`."
+}
