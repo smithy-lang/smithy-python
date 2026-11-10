@@ -68,14 +68,6 @@ def member_field_name(
     return name
 
 
-def _escape_enum_underscores(name: str) -> str:
-    if name.startswith("__"):
-        return name + "_" if name.endswith("__") and not name.endswith("___") else name
-    if name.startswith("_") and name.endswith("_") and not name.endswith("__"):
-        return name + "_"
-    return name
-
-
 def variant_class_name(
     container_name: str,
     member_name: str,
@@ -102,4 +94,12 @@ def union_unknown_name(container_name: str, shape_names: Collection[str] = ()) -
     name = container_name + "Unknown"
     if name in shape_names:
         name = container_name + "_Unknown"
+    return name
+
+
+def _escape_enum_underscores(name: str) -> str:
+    if name.startswith("__"):
+        return name + "_" if name.endswith("__") and not name.endswith("___") else name
+    if name.startswith("_") and name.endswith("_") and not name.endswith("__"):
+        return name + "_"
     return name

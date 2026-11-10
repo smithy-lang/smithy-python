@@ -344,9 +344,11 @@ def _render_imports(imports: list[_Import]) -> str:
     for section in sorted(sections):
         lines: list[str] = []
         for module, items in sections[section].items():
-            for item in items:
-                if item.name is None:
-                    lines.append(f"import {module} as {item.alias}")
+            lines.extend(
+                f"import {module} as {item.alias}"
+                for item in items
+                if item.name is None
+            )
             named = [item for item in items if item.name is not None]
             if named:
                 lines.extend(_render_from_import(module, named))

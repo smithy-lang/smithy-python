@@ -34,6 +34,8 @@ _VALID_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9_\-/.%@:+]+$")
 
 
 class FileType(Enum):
+    """The kind of shared AWS file being parsed."""
+
     CONFIG = "config"
     CREDENTIALS = "credentials"
 

@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Raised IdentityChainConfigurationError instead of RuntimeError for invalid identity chain setup."
+}

@@ -42,12 +42,6 @@ _PACKAGE_VERSION: Final = re.compile(
 )
 
 
-@dataclass(frozen=True, slots=True)
-class _Invocation:
-    model_source: bytes
-    output_dir: Path
-
-
 def main(
     argv: Sequence[str] | None = None,
     *,
@@ -89,6 +83,12 @@ def main(
         return 0
     sys.stderr.write(_GENERATION_NOT_IMPLEMENTED.format(artifact=args.artifact))
     return 1
+
+
+@dataclass(frozen=True, slots=True)
+class _Invocation:
+    model_source: bytes
+    output_dir: Path
 
 
 def _create_parser() -> argparse.ArgumentParser:

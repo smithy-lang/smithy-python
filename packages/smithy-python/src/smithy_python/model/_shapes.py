@@ -128,10 +128,6 @@ class Shape:
         return MIXIN_TRAIT in self.traits
 
 
-def _trait_id(trait: ShapeId | str) -> ShapeId:
-    return as_shape_id(trait, default_namespace=PRELUDE_NAMESPACE)
-
-
 @dataclass(frozen=True, slots=True, kw_only=True, eq=False)
 class SimpleShape(Shape):
     """A blob, boolean, string, numeric, timestamp, or document shape."""
@@ -241,6 +237,10 @@ class OperationShape(Shape):
     input: ShapeId = UNIT
     output: ShapeId = UNIT
     errors: tuple[ShapeId, ...] = ()
+
+
+def _trait_id(trait: ShapeId | str) -> ShapeId:
+    return as_shape_id(trait, default_namespace=PRELUDE_NAMESPACE)
 
 
 SHAPE_CLASSES: Final[Mapping[ShapeType, type[Shape]]] = MappingProxyType(

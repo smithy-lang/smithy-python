@@ -18,4 +18,6 @@ class APIKeyIdentity(Identity):
 
 
 class APIKeyIdentityProperties(TypedDict, total=False):
+    """Identity properties that may carry an explicit API key."""
+
     api_key: str

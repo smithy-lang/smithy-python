@@ -25,3 +25,4 @@ __all__ = (
 )
 
 AWS_IDENTITY_CONFIG = PropertyKey(key="config", value_type=AWSIdentityConfig)
+"""Property key for the client config identity resolvers read credentials from."""

@@ -26,50 +26,6 @@ def _reflected_table(poly: int) -> tuple[int, ...]:
     return tuple(table)
 
 
-def _apply(columns: list[int], value: int) -> int:
-    """Multiplies the GF(2) matrix with the given columns by ``value``."""
-    result = 0
-    for column in columns:
-        if value & 1:
-            result ^= column
-        value >>= 1
-    return result
-
-
-@cache
-def _chunk_masks(table: tuple[int, ...], width: int) -> tuple[int, ...]:
-    """Returns masks that compute a CRC over a chunk with big-integer operations.
-
-    Without its initial value and final XOR, a CRC is linear over GF(2), so each
-    bit of the CRC of a message is the parity of a fixed subset of the message's
-    bits. Bit ``r`` of the CRC of a ``_CHUNK_SIZE``-byte chunk, read as a
-    little-endian integer ``m``, is the parity of ``m & masks[r]``. This does the
-    per-byte work in C, which is many times faster than a table lookup per byte.
-
-    The masks are built for one byte and then doubled: the CRC of ``a + b`` is the
-    CRC of ``a`` shifted through ``len(b)`` zero bytes, XORed with the CRC of
-    ``b``. The shift is linear too, and ``columns[s]`` holds its effect on bit
-    ``s`` of the CRC.
-    """
-    masks = [0] * width
-    for bit in range(8):
-        for row in range(width):
-            if (table[1 << bit] >> row) & 1:
-                masks[row] |= 1 << bit
-    columns = [(table[(1 << s) & 0xFF] ^ ((1 << s) >> 8)) for s in range(width)]
-    length = 1
-    while length < _CHUNK_SIZE:
-        shifted = [0] * width
-        for s, column in enumerate(columns):
-            for row in range(width):
-                if (column >> row) & 1:
-                    shifted[row] ^= masks[s]
-        masks = [low | (high << (8 * length)) for low, high in zip(shifted, masks)]
-        columns = [_apply(columns, column) for column in columns]
-        length *= 2
-    return tuple(masks)
-
-
 class Crc32(PureChecksum):
     """CRC-32 (ISO-HDLC), backed by :func:`zlib.crc32`."""
 
@@ -179,3 +135,50 @@ class Crc64Nvme(_ReflectedCrc):
     _table = _reflected_table(0x9A6C9329AC4BC9B5)
     _mask = 0xFFFFFFFFFFFFFFFF
     _size = 8
+
+
+def _apply(columns: list[int], value: int) -> int:
+    """Multiplies the GF(2) matrix with the given columns by ``value``."""
+    result = 0
+    for column in columns:
+        if value & 1:
+            result ^= column
+        value >>= 1
+    return result
+
+
+@cache
+def _chunk_masks(table: tuple[int, ...], width: int) -> tuple[int, ...]:
+    """Returns masks that compute a CRC over a chunk with big-integer operations.
+
+    Without its initial value and final XOR, a CRC is linear over GF(2), so each
+    bit of the CRC of a message is the parity of a fixed subset of the message's
+    bits. Bit ``r`` of the CRC of a ``_CHUNK_SIZE``-byte chunk, read as a
+    little-endian integer ``m``, is the parity of ``m & masks[r]``. This does the
+    per-byte work in C, which is many times faster than a table lookup per byte.
+
+    The masks are built for one byte and then doubled: the CRC of ``a + b`` is the
+    CRC of ``a`` shifted through ``len(b)`` zero bytes, XORed with the CRC of
+    ``b``. The shift is linear too, and ``columns[s]`` holds its effect on bit
+    ``s`` of the CRC.
+    """
+    masks = [0] * width
+    for bit in range(8):
+        for row in range(width):
+            if (table[1 << bit] >> row) & 1:
+                masks[row] |= 1 << bit
+    columns = [(table[(1 << s) & 0xFF] ^ ((1 << s) >> 8)) for s in range(width)]
+    length = 1
+    while length < _CHUNK_SIZE:
+        shifted = [0] * width
+        for s, column in enumerate(columns):
+            for row in range(width):
+                if (column >> row) & 1:
+                    shifted[row] ^= masks[s]
+        masks = [
+            low | (high << (8 * length))
+            for low, high in zip(shifted, masks, strict=True)
+        ]
+        columns = [_apply(columns, column) for column in columns]
+        length *= 2
+    return tuple(masks)

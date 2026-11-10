@@ -61,7 +61,7 @@ def _parse_url(value: str | None) -> dict[str, Any] | None:
     try:
         parts = urlsplit(value)
         # Accessing port validates it.
-        parts.port
+        _ = parts.port
     except ValueError:
         return None
     # The authority is the host and port: the specification drops any userinfo.

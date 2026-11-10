@@ -7,12 +7,16 @@ Docstrings are the API reference customers read in their editor and in the
 generated docs; an undocumented public symbol is a blank page there. Internal
 symbols (underscore-prefixed, dunders, or anything in an underscore-prefixed
 module) are exempt, since nobody outside the package reads them. Classes,
-functions and methods are checked with ruff's pydocstyle rules. Module-level
+functions and methods are checked with ruff's pydocstyle rules. A method that
+overrides a documented one is exempt, since editors and the generated docs show
+the inherited docstring (``inspect.getdoc``) for it. Module-level
 constants carry an attribute docstring (a string literal right after the
 assignment), which no ruff rule checks, so that part is an AST pass.
 """
 
 import ast
+import importlib
+import inspect
 import re
 import sys
 from pathlib import Path
@@ -21,10 +25,14 @@ from _common import ROOT, Finding, main, packages, run, runtime_modules
 
 _SELECT = "D101,D102,D103,D106"
 _CONSTANT = re.compile(r"^[A-Z][A-Z0-9_]*$")
+_LOCATION = re.compile(r"^(?P<path>[^:]+):(?P<line>\d+):\d+: (?P<code>D\d+) ")
 
 
 def check() -> list[Finding]:
-    return [*_ruff_findings(), *_constant_findings()]
+    return [
+        *(f for f in _ruff_findings() if not _inherits_docstring(f)),
+        *_constant_findings(),
+    ]
 
 
 def _ruff_findings() -> list[Finding]:
@@ -48,6 +56,47 @@ def _ruff_findings() -> list[Finding]:
         for line in proc.stdout.splitlines()
         if line.startswith(("/", "packages/"))
     ]
+
+
+def _inherits_docstring(finding: Finding) -> bool:
+    """Whether a D102 method overrides one whose docstring editors and docs show."""
+    match = _LOCATION.match(finding.message)
+    if match is None or match["code"] != "D102":
+        return False
+    path = (ROOT / match["path"]).resolve()
+    module = next((m for m in runtime_modules() if m.path.resolve() == path), None)
+    if module is None:
+        return False
+    qualname = _method_qualname(module.tree, int(match["line"]))
+    if qualname is None:
+        return False
+    for package in packages():
+        if str(package.src) not in sys.path:
+            sys.path.insert(0, str(package.src))
+    try:
+        obj: object = importlib.import_module(module.name)
+        for part in qualname:
+            obj = getattr(obj, part)
+    except Exception:  # noqa: BLE001
+        return False
+    return inspect.getdoc(obj) is not None
+
+
+def _method_qualname(tree: ast.Module, line: int) -> list[str] | None:
+    def walk(body: list[ast.stmt], prefix: list[str]) -> list[str] | None:
+        for node in body:
+            if isinstance(node, ast.ClassDef):
+                if (found := walk(node.body, [*prefix, node.name])) is not None:
+                    return found
+            elif (
+                isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and node.lineno == line
+                and prefix
+            ):
+                return [*prefix, node.name]
+        return None
+
+    return walk(tree.body, [])
 
 
 def _constant_findings() -> list[Finding]:

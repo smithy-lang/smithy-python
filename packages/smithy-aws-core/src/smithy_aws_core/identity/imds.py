@@ -22,10 +22,12 @@ class Token:
         self._created_time = datetime.now()
 
     def is_expired(self) -> bool:
+        """Return whether the token has outlived its TTL."""
         return datetime.now() - self._created_time >= timedelta(seconds=self._ttl)
 
     @property
     def value(self) -> str:
+        """The token sent in the ``x-aws-ec2-metadata-token`` header."""
         return self._value
 
 

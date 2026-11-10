@@ -22,38 +22,6 @@ from ..settings import XMLSettings
 from .traits import member_xml_name
 
 
-def _local_name(tag: str) -> str:
-    """Strip namespace URI from an element tag: {uri}local -> local."""
-    if tag.startswith("{"):
-        return tag.split("}", 1)[1]
-    return tag
-
-
-def _local_attr_name(name: str) -> str:
-    """Strip a namespace prefix from a modeled attribute name: prefix:local -> local."""
-    return name.rpartition(":")[2]
-
-
-def _validate_element_name(expected: str, elem: Element) -> None:
-    """Raise XMLParseError if the element's local name doesn't match expected."""
-    found = _local_name(elem.tag)
-    if found != expected:
-        raise XMLParseError(f"Expected element '{expected}', got '{found}'")
-
-
-def _parse_xml_float(text: str) -> float:
-    """Parse an XML float string, handling NaN and Infinity."""
-    match text:
-        case "NaN":
-            return float("nan")
-        case "Infinity":
-            return float("inf")
-        case "-Infinity":
-            return float("-inf")
-        case _:
-            return float(text)
-
-
 class XMLParseError(SmithyError):
     def __init__(self, message: str) -> None:
         super().__init__(f"Error parsing XML: {message}")
@@ -244,6 +212,38 @@ class XMLShapeDeserializer(ShapeDeserializer):
         }
         self._xml_names[schema.id] = result
         return result
+
+
+def _local_name(tag: str) -> str:
+    """Strip namespace URI from an element tag: {uri}local -> local."""
+    if tag.startswith("{"):
+        return tag.split("}", 1)[1]
+    return tag
+
+
+def _local_attr_name(name: str) -> str:
+    """Strip a namespace prefix from a modeled attribute name: prefix:local -> local."""
+    return name.rpartition(":")[2]
+
+
+def _validate_element_name(expected: str, elem: Element) -> None:
+    """Raise XMLParseError if the element's local name doesn't match expected."""
+    found = _local_name(elem.tag)
+    if found != expected:
+        raise XMLParseError(f"Expected element '{expected}', got '{found}'")
+
+
+def _parse_xml_float(text: str) -> float:
+    """Parse an XML float string, handling NaN and Infinity."""
+    match text:
+        case "NaN":
+            return float("nan")
+        case "Infinity":
+            return float("inf")
+        case "-Infinity":
+            return float("-inf")
+        case _:
+            return float(text)
 
 
 class _AttributeDeserializer(SpecificShapeDeserializer):

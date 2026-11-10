@@ -25,6 +25,7 @@ from aws_sdk_signers import (
 )
 from aws_sdk_signers._sigv4 import signing_key
 from aws_sdk_signers.aio import AsyncBytesReader, AsyncSigV4Signer
+from aws_sdk_signers.exceptions import ResourceLifecycleError
 from aws_sdk_signers.signers import EVENT_STREAM_CONTENT_TYPE, EVENT_STREAM_HASH
 from smithy_aws_event_stream.events import Event, EventHeaderEncoder, EventMessage
 
@@ -603,7 +604,7 @@ class TestEventSigner:
             properties=properties,
         )
 
-        with pytest.raises(RuntimeError, match="final empty event"):
+        with pytest.raises(ResourceLifecycleError, match="final empty event"):
             signer.sign(
                 event=EventMessage(
                     headers={":message-type": "event", ":event-type": "AudioEvent"},

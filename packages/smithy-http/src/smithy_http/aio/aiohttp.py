@@ -43,6 +43,8 @@ _UPLOAD_CHUNK_SIZE = 128 * 1024
 
 
 class AIOHTTPClientConfig(HTTPClientConfiguration):
+    """Configuration for the aiohttp HTTP client."""
+
     def __post_init__(self) -> None:
         _assert_aiohttp()
 

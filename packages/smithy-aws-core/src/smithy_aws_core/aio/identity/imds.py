@@ -38,6 +38,7 @@ class AsyncTokenCache:
         self._token = None
 
     async def get_token(self) -> Token:
+        """Return the cached IMDS session token, refreshing it when needed."""
         if self._should_refresh():
             await self._refresh()
         assert self._token is not None  # noqa: S101
@@ -75,6 +76,8 @@ class AsyncTokenCache:
 
 
 class AsyncEC2Metadata:
+    """Client for the EC2 Instance Metadata Service (IMDSv2)."""
+
     def __init__(self, http_client: AsyncHTTPClient, config: Config | None = None):
         self._http_client = http_client
         self._config = config or Config()
@@ -83,6 +86,7 @@ class AsyncEC2Metadata:
         )
 
     async def get(self, *, path: str) -> str:
+        """Return the metadata value at ``path``."""
         token = await self._token_cache.get_token()
         headers = Fields(
             [

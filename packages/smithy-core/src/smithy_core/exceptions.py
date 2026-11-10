@@ -15,6 +15,7 @@ __all__ = [
     "Fault",
     "MissingDependencyError",
     "ModeledError",
+    "ResourceLifecycleError",
     "RetryError",
     "SerializationError",
     "SmithyError",
@@ -136,6 +137,10 @@ class RetryError(SmithyError):
 
 class ExpectationNotMetError(SmithyError):
     """Exception type for exceptions thrown by unmet assertions."""
+
+
+class ResourceLifecycleError(SmithyError, RuntimeError):
+    """A resource was used after it was closed."""
 
 
 class SmithyIdentityError(SmithyError):

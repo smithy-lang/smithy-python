@@ -7,6 +7,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from smithy_core.documents import Document, DocumentValue
+from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.prelude import DOCUMENT
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
@@ -38,6 +39,28 @@ class JSONDocument(Document):
             for member_name, member_schema in schema.members.items():
                 if json_name := member_schema.get_trait(JSONNameTrait):
                     self._json_names[json_name.value] = member_name
+
+    def __setitem__(
+        self,
+        key: str | int,
+        value: "Document | list[Document] | dict[str, Document] | DocumentValue",
+    ) -> None:
+        if isinstance(key, str) and self._schema.shape_type in (
+            ShapeType.STRUCTURE,
+            ShapeType.UNION,
+        ):
+            member_name = self._json_names.get(key, key)
+            schema = self._schema.members[member_name]
+
+            if not isinstance(value, Document):
+                value = Document(value, schema=schema)
+            else:
+                value = value._with_schema(schema)
+
+            self.as_map()[member_name] = value
+            self._raw_value = None
+        else:
+            super().__setitem__(key, value)
 
     def as_blob(self) -> bytes:
         return b64decode(expect_type(str, self._value))
@@ -80,7 +103,7 @@ class JSONDocument(Document):
             case datetime():
                 return self._value
             case _:
-                raise Exception(
+                raise ExpectationNotMetError(
                     f"Expected number, but found {type(self._value)}: {self._value!r}"
                 )
 
@@ -135,25 +158,3 @@ class JSONDocument(Document):
                 v, self._schema.members[member_name]
             )
         return result
-
-    def __setitem__(
-        self,
-        key: str | int,
-        value: "Document | list[Document] | dict[str, Document] | DocumentValue",
-    ) -> None:
-        if isinstance(key, str) and self._schema.shape_type in (
-            ShapeType.STRUCTURE,
-            ShapeType.UNION,
-        ):
-            member_name = self._json_names.get(key, key)
-            schema = self._schema.members[member_name]
-
-            if not isinstance(value, Document):
-                value = Document(value, schema=schema)
-            else:
-                value = value._with_schema(schema)
-
-            self.as_map()[member_name] = value
-            self._raw_value = None
-        else:
-            super().__setitem__(key, value)

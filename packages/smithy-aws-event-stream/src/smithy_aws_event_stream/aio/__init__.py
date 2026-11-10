@@ -50,6 +50,8 @@ async def decode_event_async(source: AsyncByteStream) -> Event | None:
 
 
 class AsyncAWSEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
+    """Publishes events to an AWS event stream."""
+
     def __init__(
         self,
         payload_codec: Codec,
@@ -115,6 +117,7 @@ class AsyncAWSEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
 
     @property
     def closed(self) -> bool:
+        """Whether the publisher has been closed."""
         return self._closed
 
     async def _write_initial(self) -> None:
@@ -152,6 +155,8 @@ class AsyncAWSEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
 
 
 class AsyncAWSEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
+    """Receives events from an AWS event stream."""
+
     def __init__(
         self,
         payload_codec: Codec,
@@ -202,4 +207,5 @@ class AsyncAWSEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
 
     @property
     def closed(self) -> bool:
+        """Whether the receiver has been closed."""
         return self._closed

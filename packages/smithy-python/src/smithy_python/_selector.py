@@ -160,6 +160,9 @@ class Selector:
     _roots: tuple[_Expression, ...] = ()
     _variable_names: tuple[str, ...] = ()
 
+    def __str__(self) -> str:
+        return self.source
+
     @classmethod
     def identity(cls) -> Self:
         """Return a selector that retains every starting shape."""
@@ -192,9 +195,6 @@ class Selector:
     def is_identity(self) -> bool:
         """Whether this selector retains every starting shape."""
         return self._expression is _IDENTITY and not self._roots
-
-    def __str__(self) -> str:
-        return self.source
 
 
 class _Expression:

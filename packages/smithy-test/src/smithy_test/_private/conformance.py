@@ -69,11 +69,14 @@ def _structures(schemas: ModuleType, models: ModuleType) -> dict[str, Any]:
     # differ. The registry's rename map (symbol -> schema constant) is the
     # authoritative symbol<->schema pairing, so key each schema by the symbol
     # the client actually exposes rather than the ambiguous id name.
-    const_to_symbol: dict[str, str] = {}
     registry = getattr(models, "_registry", None)
-    if registry is not None:
-        for symbol, const in getattr(registry, "_renames", {}).items():
-            const_to_symbol[const] = symbol
+    const_to_symbol: dict[str, str] = (
+        {}
+        if registry is None
+        else {
+            const: symbol for symbol, const in getattr(registry, "_renames", {}).items()
+        }
+    )
     out: dict[str, Any] = {}
     for const in dir(schemas):
         if not (const.replace("_", "").isupper() and const[:1].isalpha()):

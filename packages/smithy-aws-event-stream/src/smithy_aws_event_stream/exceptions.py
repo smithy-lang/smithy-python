@@ -66,6 +66,8 @@ class InvalidHeadersLength(EventError):
 
 
 class InvalidHeaderValueLength(EventError):
+    """Raised when a header value exceeds the maximum serialized length."""
+
     def __init__(self, length: int):
         message = (
             f"Header bytes value exceeds max serialization "
@@ -75,6 +77,8 @@ class InvalidHeaderValueLength(EventError):
 
 
 class InvalidHeaderValue(EventError):
+    """Raised when a header value has a type event streams can't encode."""
+
     def __init__(self, value: Any):
         message = f"Invalid header value type: {type(value)}"
         super().__init__(message)
@@ -100,6 +104,8 @@ class ChecksumMismatch(EventError):
 
 
 class InvalidIntegerValue(EventError):
+    """Raised when an integer header value doesn't fit its declared size."""
+
     def __init__(self, size: str, value: int):
         message = (
             f"Invalid {size} value: {value}. The Byte, Short, and Long types may be "
@@ -110,11 +116,15 @@ class InvalidIntegerValue(EventError):
 
 
 class InvalidEventBytes(EventError):
+    """Raised when event stream bytes can't be decoded."""
+
     def __init__(self) -> None:
         message = "Invalid event bytes."
         super().__init__(message)
 
 
 class MissingInitialResponse(EventError):
+    """Raised when a stream lacks its expected initial response."""
+
     def __init__(self) -> None:
         super().__init__("Expected an initial response, but none was found.")

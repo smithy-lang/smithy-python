@@ -108,13 +108,6 @@ def add_feature_id(
         features[feature_id] = None
 
 
-def _is_feature_id(value: AwsFeatureId) -> bool:
-    if not isinstance(value, AwsFeatureId):  # pyright: ignore[reportUnnecessaryIsInstance]
-        logger.debug("Ignoring unknown feature ID: %r", value)
-        return False
-    return True
-
-
 def normalize_feature_ids(value: object) -> tuple[AwsFeatureId, ...]:
     """Turn a ``feature_ids`` value into a tuple of feature IDs.
 
@@ -157,3 +150,10 @@ def encode_feature_ids(feature_ids: Iterable[AwsFeatureId]) -> str:
             break
         encoded = candidate
     return encoded
+
+
+def _is_feature_id(value: AwsFeatureId) -> bool:
+    if not isinstance(value, AwsFeatureId):  # pyright: ignore[reportUnnecessaryIsInstance]
+        logger.debug("Ignoring unknown feature ID: %r", value)
+        return False
+    return True

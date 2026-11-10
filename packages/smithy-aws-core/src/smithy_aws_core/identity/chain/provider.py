@@ -18,6 +18,7 @@ from ..._private.identity_features import (
 from ...business_metrics import AwsFeatureId, normalize_feature_ids
 from ...config.merged_config import MergedConfig
 from ..components import AWSCredentialsIdentity
+from .exceptions import IdentityChainConfigurationError
 from .ordering import OrderingConstraint
 
 __all__ = [
@@ -123,13 +124,17 @@ class _ChainSetupBase:
     def set_current_provider(self, provider: Any) -> None:
         """Set the provider whose setup method is currently running."""
         if self._terminal:
-            raise RuntimeError("Cannot change provider after a terminal resolver.")
+            raise IdentityChainConfigurationError(
+                "Cannot change provider after a terminal resolver."
+            )
         self._current_provider = provider
 
     def set_config_file(self, config_file: MergedConfig) -> None:
         """Set the parsed config file without overwriting an existing value."""
         if self._config_file is not None:
-            raise RuntimeError("Cannot overwrite a config file already present.")
+            raise IdentityChainConfigurationError(
+                "Cannot overwrite a config file already present."
+            )
         self._config_file = config_file
 
     def set_profile_name(self, profile_name: str) -> None:
@@ -139,9 +144,13 @@ class _ChainSetupBase:
     def _add(self, resolver: Any) -> None:
         """Add a named resolver and continue assembly."""
         if self._terminal:
-            raise RuntimeError("Cannot add a resolver after a terminal resolver.")
+            raise IdentityChainConfigurationError(
+                "Cannot add a resolver after a terminal resolver."
+            )
         if self._current_provider is None:
-            raise RuntimeError("Cannot add a resolver without a current provider.")
+            raise IdentityChainConfigurationError(
+                "Cannot add a resolver without a current provider."
+            )
         # A provider's feature_ids may be a tuple of feature IDs, a single one, or
         # None for providers, such as custom ones, that have none.
         self._resolvers.append(

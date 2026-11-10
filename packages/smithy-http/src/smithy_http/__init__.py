@@ -108,6 +108,8 @@ class Field(interfaces.Field):
 
 
 class Fields(interfaces.Fields):
+    """Collection of header and trailer entries mapped by name."""
+
     def __init__(
         self,
         initial: Iterable[interfaces.Field] | None = None,
@@ -134,7 +136,7 @@ class Fields(interfaces.Fields):
                 "following normalized field names appear more than once: "
                 f"{', '.join(non_unique_names)}."
             )
-        init_tuples = zip(init_field_names, init_fields)
+        init_tuples = zip(init_field_names, init_fields, strict=True)
         self.entries: dict[str, interfaces.Field] = OrderedDict(init_tuples)
         self.encoding: str = encoding
 
@@ -187,6 +189,7 @@ class Fields(interfaces.Fields):
     def get(
         self, key: str, default: interfaces.Field | None = None
     ) -> interfaces.Field | None:
+        """Return the field named ``key``, or ``default`` if absent."""
         return self[key] if key in self else default
 
     def get_by_type(self, kind: FieldPosition) -> list[interfaces.Field]:

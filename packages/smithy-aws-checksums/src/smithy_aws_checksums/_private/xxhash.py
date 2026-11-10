@@ -35,6 +35,196 @@ _U64X8 = Struct("<8Q")
 _U32X16 = Struct("<16I")
 
 
+class XxHash64(PureChecksum):
+    """XXH64 with a seed of zero."""
+
+    __slots__ = ("_acc", "_buffer", "_length")
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._acc: list[int] = [
+            (_PRIME64_1 + _PRIME64_2) & _MASK64,
+            _PRIME64_2,
+            0,
+            (-_PRIME64_1) & _MASK64,
+        ]
+        self._buffer = b""
+        self._length = 0
+
+    def _update(self, data: bytes | bytearray | memoryview) -> None:
+        data = self._buffer + data
+        self._length += len(data) - len(self._buffer)
+        end = len(data) // 32 * 32
+        if end:
+            self._acc = _xxh64_stripes(self._acc, memoryview(data)[:end])
+        self._buffer = bytes(data[end:])
+
+    def _digest(self) -> bytes:
+        if self._length >= 32:
+            v1, v2, v3, v4 = self._acc
+            acc = (
+                _rotl64(v1, 1) + _rotl64(v2, 7) + _rotl64(v3, 12) + _rotl64(v4, 18)
+            ) & _MASK64
+            for value in self._acc:
+                acc = _xxh64_merge_round(acc, value)
+        else:
+            acc = _PRIME64_5
+        acc = (acc + self._length) & _MASK64
+
+        tail = self._buffer
+        offset = 0
+        while offset + 8 <= len(tail):
+            acc ^= _xxh64_round(0, _read64(tail, offset))
+            acc = (_rotl64(acc, 27) * _PRIME64_1 + _PRIME64_4) & _MASK64
+            offset += 8
+        if offset + 4 <= len(tail):
+            acc ^= (_read32(tail, offset) * _PRIME64_1) & _MASK64
+            acc = (_rotl64(acc, 23) * _PRIME64_2 + _PRIME64_3) & _MASK64
+            offset += 4
+        for byte in tail[offset:]:
+            acc ^= (byte * _PRIME64_5) & _MASK64
+            acc = (_rotl64(acc, 11) * _PRIME64_1) & _MASK64
+
+        return _xxh64_avalanche(acc).to_bytes(8, "big")
+
+    def _copy(self) -> Self:
+        new = type(self)()
+        new._acc = list(self._acc)
+        new._buffer = self._buffer
+        new._length = self._length
+        return new
+
+
+class _Xxh3Base(PureChecksum):
+    """Streaming state for XXH3 inputs longer than 240 bytes.
+
+    Inputs of up to 240 bytes are hashed in one shot from the buffer. Longer inputs
+    are consumed one 64-byte stripe at a time, always leaving at least one byte
+    unconsumed so the final stripe can be keyed differently, as the algorithm
+    requires.
+    """
+
+    __slots__ = ("_acc", "_buffer", "_last_consumed", "_length", "_stripes")
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._acc = list(_INITIAL_ACC)
+        self._buffer = b""
+        # The trailing bytes of consumed input, needed to build the final stripe
+        # when fewer than 64 bytes remain buffered.
+        self._last_consumed = b""
+        self._length = 0
+        # The number of stripes consumed in the current block.
+        self._stripes = 0
+
+    def _update(self, data: bytes | bytearray | memoryview) -> None:
+        data = self._buffer + data
+        self._length += len(data) - len(self._buffer)
+        if len(data) > _BUFFER_SIZE:
+            data = self._consume(data)
+        self._buffer = bytes(data)
+
+    def _consume(self, data: bytes | bytearray) -> bytes | bytearray:
+        """Consumes every complete stripe in ``data`` that has at least one byte after it."""
+        stripes = (len(data) - 1) // _STRIPE_LEN
+        if not stripes:
+            return data
+        end = stripes * _STRIPE_LEN
+        view = memoryview(data)
+        a0, a1, a2, a3, a4, a5, a6, a7 = self._acc
+        current = self._stripes
+        offset = 0
+        while offset < end:
+            size = min(_STRIPES_PER_BLOCK - current, (end - offset) // _STRIPE_LEN)
+            size *= _STRIPE_LEN
+            segment = view[offset : offset + size]
+            if size == len(_BLOCK_SECRET):
+                secret = _BLOCK_SECRET_INT
+            else:
+                start = current * _STRIPE_LEN
+                secret = int.from_bytes(_BLOCK_SECRET[start : start + size], "little")
+            keyed = (int.from_bytes(segment, "little") ^ secret).to_bytes(
+                size, "little"
+            )
+            # This is _accumulate_stripe unrolled, with the keyed words read as
+            # 32-bit halves. The accumulators are masked once per segment.
+            for words, halves in zip(
+                _U64X8.iter_unpack(segment), _U32X16.iter_unpack(keyed), strict=True
+            ):
+                d0, d1, d2, d3, d4, d5, d6, d7 = words
+                l0, h0, l1, h1, l2, h2, l3, h3, l4, h4, l5, h5, l6, h6, l7, h7 = halves
+                a0 += l0 * h0 + d1
+                a1 += l1 * h1 + d0
+                a2 += l2 * h2 + d3
+                a3 += l3 * h3 + d2
+                a4 += l4 * h4 + d5
+                a5 += l5 * h5 + d4
+                a6 += l6 * h6 + d7
+                a7 += l7 * h7 + d6
+            acc = [value & _MASK64 for value in (a0, a1, a2, a3, a4, a5, a6, a7)]
+            current += size // _STRIPE_LEN
+            if current == _STRIPES_PER_BLOCK:
+                _scramble(acc)
+                current = 0
+            a0, a1, a2, a3, a4, a5, a6, a7 = acc
+            offset += size
+        self._acc = [a0, a1, a2, a3, a4, a5, a6, a7]
+        self._stripes = current
+        self._last_consumed = bytes(data[end - _STRIPE_LEN : end])
+        return data[end:]
+
+    def _long_acc(self) -> list[int]:
+        """Returns the accumulators after all input, including the final stripe."""
+        state = self._copy()
+        remaining = state._consume(state._buffer)
+        last_stripe = (state._last_consumed + remaining)[-_STRIPE_LEN:]
+        _accumulate_stripe(state._acc, _U64X8.unpack(last_stripe), _LAST_STRIPE_SECRET)
+        return state._acc
+
+    def _copy(self) -> Self:
+        new = type(self)()
+        new._acc = list(self._acc)
+        new._buffer = self._buffer
+        new._last_consumed = self._last_consumed
+        new._length = self._length
+        new._stripes = self._stripes
+        return new
+
+
+class XxHash3(_Xxh3Base):
+    """XXH3-64 with a seed of zero and the default secret."""
+
+    __slots__ = ()
+
+    def _digest(self) -> bytes:
+        if self._length <= _MIDSIZE_MAX:
+            value = _xxh3_64_short(self._buffer)
+        else:
+            value = _merge_accs(
+                self._long_acc(), 11, (self._length * _PRIME64_1) & _MASK64
+            )
+        return value.to_bytes(8, "big")
+
+
+class XxHash128(_Xxh3Base):
+    """XXH3-128 with a seed of zero and the default secret."""
+
+    __slots__ = ()
+
+    def _digest(self) -> bytes:
+        if self._length <= _MIDSIZE_MAX:
+            low, high = _xxh3_128_short(self._buffer)
+        else:
+            acc = self._long_acc()
+            low = _merge_accs(acc, 11, (self._length * _PRIME64_1) & _MASK64)
+            high = _merge_accs(
+                acc,
+                _SECRET_SIZE - _STRIPE_LEN - 11,
+                ~(self._length * _PRIME64_2) & _MASK64,
+            )
+        return ((high << 64) | low).to_bytes(16, "big")
+
+
 def _rotl64(value: int, bits: int) -> int:
     return ((value << bits) | (value >> (64 - bits))) & _MASK64
 
@@ -139,66 +329,6 @@ def _xxh64_merge_round(acc: int, value: int) -> int:
     return (acc * _PRIME64_1 + _PRIME64_4) & _MASK64
 
 
-class XxHash64(PureChecksum):
-    """XXH64 with a seed of zero."""
-
-    __slots__ = ("_acc", "_buffer", "_length")
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._acc: list[int] = [
-            (_PRIME64_1 + _PRIME64_2) & _MASK64,
-            _PRIME64_2,
-            0,
-            (-_PRIME64_1) & _MASK64,
-        ]
-        self._buffer = b""
-        self._length = 0
-
-    def _update(self, data: bytes | bytearray | memoryview) -> None:
-        data = self._buffer + data
-        self._length += len(data) - len(self._buffer)
-        end = len(data) // 32 * 32
-        if end:
-            self._acc = _xxh64_stripes(self._acc, memoryview(data)[:end])
-        self._buffer = bytes(data[end:])
-
-    def _digest(self) -> bytes:
-        if self._length >= 32:
-            v1, v2, v3, v4 = self._acc
-            acc = (
-                _rotl64(v1, 1) + _rotl64(v2, 7) + _rotl64(v3, 12) + _rotl64(v4, 18)
-            ) & _MASK64
-            for value in self._acc:
-                acc = _xxh64_merge_round(acc, value)
-        else:
-            acc = _PRIME64_5
-        acc = (acc + self._length) & _MASK64
-
-        tail = self._buffer
-        offset = 0
-        while offset + 8 <= len(tail):
-            acc ^= _xxh64_round(0, _read64(tail, offset))
-            acc = (_rotl64(acc, 27) * _PRIME64_1 + _PRIME64_4) & _MASK64
-            offset += 8
-        if offset + 4 <= len(tail):
-            acc ^= (_read32(tail, offset) * _PRIME64_1) & _MASK64
-            acc = (_rotl64(acc, 23) * _PRIME64_2 + _PRIME64_3) & _MASK64
-            offset += 4
-        for byte in tail[offset:]:
-            acc ^= (byte * _PRIME64_5) & _MASK64
-            acc = (_rotl64(acc, 11) * _PRIME64_1) & _MASK64
-
-        return _xxh64_avalanche(acc).to_bytes(8, "big")
-
-    def _copy(self) -> Self:
-        new = type(self)()
-        new._acc = list(self._acc)
-        new._buffer = self._buffer
-        new._length = self._length
-        return new
-
-
 # --------------------------------------------------------------------------------------
 # XXH3 (shared by the 64- and 128-bit variants)
 # --------------------------------------------------------------------------------------
@@ -277,102 +407,6 @@ def _merge_accs(acc: list[int], secret_offset: int, start: int) -> int:
     return _xxh3_avalanche(result & _MASK64)
 
 
-class _Xxh3Base(PureChecksum):
-    """Streaming state for XXH3 inputs longer than 240 bytes.
-
-    Inputs of up to 240 bytes are hashed in one shot from the buffer. Longer inputs
-    are consumed one 64-byte stripe at a time, always leaving at least one byte
-    unconsumed so the final stripe can be keyed differently, as the algorithm
-    requires.
-    """
-
-    __slots__ = ("_acc", "_buffer", "_last_consumed", "_length", "_stripes")
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._acc = list(_INITIAL_ACC)
-        self._buffer = b""
-        # The trailing bytes of consumed input, needed to build the final stripe
-        # when fewer than 64 bytes remain buffered.
-        self._last_consumed = b""
-        self._length = 0
-        # The number of stripes consumed in the current block.
-        self._stripes = 0
-
-    def _update(self, data: bytes | bytearray | memoryview) -> None:
-        data = self._buffer + data
-        self._length += len(data) - len(self._buffer)
-        if len(data) > _BUFFER_SIZE:
-            data = self._consume(data)
-        self._buffer = bytes(data)
-
-    def _consume(self, data: bytes | bytearray) -> bytes | bytearray:
-        """Consumes every complete stripe in ``data`` that has at least one byte after it."""
-        stripes = (len(data) - 1) // _STRIPE_LEN
-        if not stripes:
-            return data
-        end = stripes * _STRIPE_LEN
-        view = memoryview(data)
-        a0, a1, a2, a3, a4, a5, a6, a7 = self._acc
-        current = self._stripes
-        offset = 0
-        while offset < end:
-            size = min(_STRIPES_PER_BLOCK - current, (end - offset) // _STRIPE_LEN)
-            size *= _STRIPE_LEN
-            segment = view[offset : offset + size]
-            if size == len(_BLOCK_SECRET):
-                secret = _BLOCK_SECRET_INT
-            else:
-                start = current * _STRIPE_LEN
-                secret = int.from_bytes(_BLOCK_SECRET[start : start + size], "little")
-            keyed = (int.from_bytes(segment, "little") ^ secret).to_bytes(
-                size, "little"
-            )
-            # This is _accumulate_stripe unrolled, with the keyed words read as
-            # 32-bit halves. The accumulators are masked once per segment.
-            for words, halves in zip(
-                _U64X8.iter_unpack(segment), _U32X16.iter_unpack(keyed)
-            ):
-                d0, d1, d2, d3, d4, d5, d6, d7 = words
-                l0, h0, l1, h1, l2, h2, l3, h3, l4, h4, l5, h5, l6, h6, l7, h7 = halves
-                a0 += l0 * h0 + d1
-                a1 += l1 * h1 + d0
-                a2 += l2 * h2 + d3
-                a3 += l3 * h3 + d2
-                a4 += l4 * h4 + d5
-                a5 += l5 * h5 + d4
-                a6 += l6 * h6 + d7
-                a7 += l7 * h7 + d6
-            acc = [value & _MASK64 for value in (a0, a1, a2, a3, a4, a5, a6, a7)]
-            current += size // _STRIPE_LEN
-            if current == _STRIPES_PER_BLOCK:
-                _scramble(acc)
-                current = 0
-            a0, a1, a2, a3, a4, a5, a6, a7 = acc
-            offset += size
-        self._acc = [a0, a1, a2, a3, a4, a5, a6, a7]
-        self._stripes = current
-        self._last_consumed = bytes(data[end - _STRIPE_LEN : end])
-        return data[end:]
-
-    def _long_acc(self) -> list[int]:
-        """Returns the accumulators after all input, including the final stripe."""
-        state = self._copy()
-        remaining = state._consume(state._buffer)
-        last_stripe = (state._last_consumed + remaining)[-_STRIPE_LEN:]
-        _accumulate_stripe(state._acc, _U64X8.unpack(last_stripe), _LAST_STRIPE_SECRET)
-        return state._acc
-
-    def _copy(self) -> Self:
-        new = type(self)()
-        new._acc = list(self._acc)
-        new._buffer = self._buffer
-        new._last_consumed = self._last_consumed
-        new._length = self._length
-        new._stripes = self._stripes
-        return new
-
-
 # --------------------------------------------------------------------------------------
 # XXH3-64
 # --------------------------------------------------------------------------------------
@@ -428,21 +462,6 @@ def _xxh3_64_129_to_240(data: bytes) -> int:
         acc += _mix16(data, 16 * round_, 16 * (round_ - 8) + 3)
     acc += _mix16(data, length - 16, 136 - 17)
     return _xxh3_avalanche(acc & _MASK64)
-
-
-class XxHash3(_Xxh3Base):
-    """XXH3-64 with a seed of zero and the default secret."""
-
-    __slots__ = ()
-
-    def _digest(self) -> bytes:
-        if self._length <= _MIDSIZE_MAX:
-            value = _xxh3_64_short(self._buffer)
-        else:
-            value = _merge_accs(
-                self._long_acc(), 11, (self._length * _PRIME64_1) & _MASK64
-            )
-        return value.to_bytes(8, "big")
 
 
 # --------------------------------------------------------------------------------------
@@ -547,22 +566,3 @@ def _xxh3_128_129_to_240(data: bytes) -> tuple[int, int]:
         acc = _mix32(acc, data, offset, offset + 16, 3 + offset - 128)
     acc = _mix32(acc, data, length - 16, length - 32, 136 - 17 - 16)
     return _finish_128(acc, length)
-
-
-class XxHash128(_Xxh3Base):
-    """XXH3-128 with a seed of zero and the default secret."""
-
-    __slots__ = ()
-
-    def _digest(self) -> bytes:
-        if self._length <= _MIDSIZE_MAX:
-            low, high = _xxh3_128_short(self._buffer)
-        else:
-            acc = self._long_acc()
-            low = _merge_accs(acc, 11, (self._length * _PRIME64_1) & _MASK64)
-            high = _merge_accs(
-                acc,
-                _SECRET_SIZE - _STRIPE_LEN - 11,
-                ~(self._length * _PRIME64_2) & _MASK64,
-            )
-        return ((high << 64) | low).to_bytes(16, "big")

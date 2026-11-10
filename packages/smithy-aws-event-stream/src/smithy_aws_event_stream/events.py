@@ -52,8 +52,11 @@ __all__ = [
 ]
 
 MAX_HEADERS_LENGTH = 128 * 1024  # 128 Kb
+"""Maximum total length in bytes of an event's headers."""
 MAX_HEADER_VALUE_BYTE_LENGTH = 32 * 1024 - 1  # 32Kb
+"""Maximum length in bytes of a single header value."""
 MAX_PAYLOAD_LENGTH = 16 * 1024**2  # 16 Mb
+"""Maximum length in bytes of an event's payload."""
 
 # In addition to the header length and payload length, the total length of the
 # message includes 12 bytes for the prelude and 4 bytes for the trailing crc.
@@ -234,6 +237,7 @@ class EventMessage:
         )
 
     def encode(self) -> bytes:
+        """Encode the message into its binary wire format."""
         return _EventEncoder().encode_bytes(
             headers=self._get_headers_bytes(), payload=self.payload
         )
@@ -310,40 +314,6 @@ class Event:
             payload=message_bytes[prelude.headers_length :],
         )
         return cls(prelude, message, crc)
-
-
-class _EventEncoder:
-    """A utility class that encodes message bytes into binary events."""
-
-    def encode_bytes(self, *, headers: bytes = b"", payload: bytes = b"") -> bytes:
-        """Encode message bytes into a binary event.
-
-        :param headers: The bytes representing the event headers.
-        :param payload: The bytes representing the event payload.
-        :returns: The fully encoded binary event, including the prelude and trailing
-            crc.
-        """
-        if len(headers) > MAX_HEADERS_LENGTH:
-            raise InvalidHeadersLength(len(headers))
-        if len(payload) > MAX_PAYLOAD_LENGTH:
-            raise InvalidPayloadLength(len(payload))
-
-        prelude_bytes = self._encode_prelude_bytes(headers, payload)
-        prelude_crc = self._calculate_checksum(prelude_bytes)
-        prelude_crc_bytes = pack("!I", prelude_crc)
-        message_bytes = prelude_crc_bytes + headers + payload
-
-        final_crc = self._calculate_checksum(message_bytes, crc=prelude_crc)
-        final_crc_bytes = pack("!I", final_crc)
-        return prelude_bytes + message_bytes + final_crc_bytes
-
-    def _encode_prelude_bytes(self, headers: bytes, payload: bytes) -> bytes:
-        header_length = len(headers)
-        total_length = header_length + len(payload) + _MESSAGE_METADATA_SIZE
-        return pack("!II", total_length, header_length)
-
-    def _calculate_checksum(self, data: bytes, crc: int = 0) -> int:
-        return crc32(data, crc) & 0xFFFFFFFF
 
 
 class EventHeaderEncoder:
@@ -757,6 +727,40 @@ class EventHeaderDecoder(Iterator[tuple[str, HEADER_VALUE]]):
 
     def _advance_data(self, consumed: int):
         self._data = self._data[consumed:]
+
+
+class _EventEncoder:
+    """A utility class that encodes message bytes into binary events."""
+
+    def encode_bytes(self, *, headers: bytes = b"", payload: bytes = b"") -> bytes:
+        """Encode message bytes into a binary event.
+
+        :param headers: The bytes representing the event headers.
+        :param payload: The bytes representing the event payload.
+        :returns: The fully encoded binary event, including the prelude and trailing
+            crc.
+        """
+        if len(headers) > MAX_HEADERS_LENGTH:
+            raise InvalidHeadersLength(len(headers))
+        if len(payload) > MAX_PAYLOAD_LENGTH:
+            raise InvalidPayloadLength(len(payload))
+
+        prelude_bytes = self._encode_prelude_bytes(headers, payload)
+        prelude_crc = self._calculate_checksum(prelude_bytes)
+        prelude_crc_bytes = pack("!I", prelude_crc)
+        message_bytes = prelude_crc_bytes + headers + payload
+
+        final_crc = self._calculate_checksum(message_bytes, crc=prelude_crc)
+        final_crc_bytes = pack("!I", final_crc)
+        return prelude_bytes + message_bytes + final_crc_bytes
+
+    def _encode_prelude_bytes(self, headers: bytes, payload: bytes) -> bytes:
+        header_length = len(headers)
+        total_length = header_length + len(payload) + _MESSAGE_METADATA_SIZE
+        return pack("!II", total_length, header_length)
+
+    def _calculate_checksum(self, data: bytes, crc: int = 0) -> int:
+        return crc32(data, crc) & 0xFFFFFFFF
 
 
 def _validate_checksum(data: bytes, checksum: int, crc: int = 0) -> None:

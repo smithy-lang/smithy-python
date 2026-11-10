@@ -42,6 +42,7 @@ class AsyncContainerMetadataClient:
         self._config = config
 
     async def get_credentials(self, uri: URI, fields: Fields) -> dict[str, str]:
+        """Fetch the credentials JSON from the container metadata endpoint at ``uri``."""
         self._validate_allowed_url(uri)
         fields.set_field(Field(name="Accept", values=["application/json"]))
 

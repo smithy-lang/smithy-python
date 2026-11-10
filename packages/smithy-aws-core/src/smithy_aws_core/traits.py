@@ -28,42 +28,10 @@ __all__ = [
 ]
 
 
-def _parse_http_protocol_values(
-    value: DocumentValue | DynamicTrait | None,
-) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    """Parse aws.protocols HTTP settings from a trait document.
-
-    The input is expected to be shaped like {"http": [...], "eventStreamHttp": [...]}
-    and returns (http_versions, event_stream_http_versions). If "eventStreamHttp"
-    is absent, event streams use the same versions as "http". If "http" is absent,
-    it defaults to ("http/1.1",).
-    """
-    document_value = value or {}
-    assert isinstance(document_value, Mapping)
-
-    http_versions_raw = document_value.get("http", ["http/1.1"])
-    assert isinstance(http_versions_raw, Sequence)
-    http_versions_list: list[str] = []
-    for entry in http_versions_raw:
-        assert isinstance(entry, str)
-        http_versions_list.append(entry)
-    http_versions = tuple(http_versions_list)
-
-    event_stream_http_versions_raw = document_value.get("eventStreamHttp")
-    if not event_stream_http_versions_raw:
-        return http_versions, http_versions
-
-    assert isinstance(event_stream_http_versions_raw, Sequence)
-    event_stream_http_versions_list: list[str] = []
-    for entry in event_stream_http_versions_raw:
-        assert isinstance(entry, str)
-        event_stream_http_versions_list.append(entry)
-
-    return http_versions, tuple(event_stream_http_versions_list)
-
-
 @dataclass(init=False, frozen=True)
 class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
+    """The ``aws.protocols#restJson1`` protocol trait."""
+
     http: Sequence[str] = field(
         repr=False, hash=False, compare=False, default_factory=tuple
     )
@@ -80,11 +48,13 @@ class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
 
 @dataclass(init=False, frozen=True)
 class RestXmlTrait(Trait, id=ShapeID("aws.protocols#restXml")):
-    pass
+    """The ``aws.protocols#restXml`` protocol trait."""
 
 
 @dataclass(init=False, frozen=True)
 class AwsJson1_0Trait(Trait, id=ShapeID("aws.protocols#awsJson1_0")):
+    """The ``aws.protocols#awsJson1_0`` protocol trait."""
+
     http: Sequence[str] = field(
         repr=False, hash=False, compare=False, default_factory=tuple
     )
@@ -101,6 +71,8 @@ class AwsJson1_0Trait(Trait, id=ShapeID("aws.protocols#awsJson1_0")):
 
 @dataclass(init=False, frozen=True)
 class AwsJson1_1Trait(Trait, id=ShapeID("aws.protocols#awsJson1_1")):
+    """The ``aws.protocols#awsJson1_1`` protocol trait."""
+
     http: Sequence[str] = field(
         repr=False, hash=False, compare=False, default_factory=tuple
     )
@@ -117,12 +89,16 @@ class AwsJson1_1Trait(Trait, id=ShapeID("aws.protocols#awsJson1_1")):
 
 @dataclass(frozen=True)
 class AwsQueryTrait(Trait, id=ShapeID("aws.protocols#awsQuery")):
+    """The ``aws.protocols#awsQuery`` protocol trait."""
+
     def __post_init__(self):
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class AwsQueryErrorTrait(Trait, id=ShapeID("aws.protocols#awsQueryError")):
+    """Sets the error code and HTTP status an awsQuery error is returned with."""
+
     def __post_init__(self):
         assert isinstance(self.document_value, Mapping)
         assert isinstance(self.document_value.get("code"), str)
@@ -130,21 +106,27 @@ class AwsQueryErrorTrait(Trait, id=ShapeID("aws.protocols#awsQueryError")):
 
     @property
     def code(self) -> str:
+        """The error code the service returns for the error."""
         return self.document_value["code"]  # type: ignore
 
     @property
     def http_response_code(self) -> int:
+        """The HTTP status code the service returns for the error."""
         return self.document_value["httpResponseCode"]  # type: ignore
 
 
 @dataclass(frozen=True)
 class Ec2QueryTrait(Trait, id=ShapeID("aws.protocols#ec2Query")):
+    """The ``aws.protocols#ec2Query`` protocol trait."""
+
     def __post_init__(self):
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class Ec2QueryNameTrait(Trait, id=ShapeID("aws.protocols#ec2QueryName")):
+    """Overrides the name a member is serialized under in ec2Query requests."""
+
     document_value: str | None = None
 
     def __post_init__(self):
@@ -152,6 +134,7 @@ class Ec2QueryNameTrait(Trait, id=ShapeID("aws.protocols#ec2QueryName")):
 
     @property
     def value(self) -> str:
+        """The serialized member name."""
         return self.document_value  # type: ignore
 
 
@@ -189,10 +172,47 @@ class HTTPChecksumTrait(Trait, id=ShapeID("aws.protocols#httpChecksum")):
 
 @dataclass(init=False, frozen=True)
 class SigV4Trait(Trait, id=ShapeID("aws.auth#sigv4")):
+    """Configures SigV4 signing for a service."""
+
     def __post_init__(self):
         assert isinstance(self.document_value, Mapping)
         assert isinstance(self.document_value["name"], str)
 
     @property
     def name(self) -> str:
+        """The signing name of the service."""
         return self.document_value["name"]  # type: ignore
+
+
+def _parse_http_protocol_values(
+    value: DocumentValue | DynamicTrait | None,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Parse aws.protocols HTTP settings from a trait document.
+
+    The input is expected to be shaped like {"http": [...], "eventStreamHttp": [...]}
+    and returns (http_versions, event_stream_http_versions). If "eventStreamHttp"
+    is absent, event streams use the same versions as "http". If "http" is absent,
+    it defaults to ("http/1.1",).
+    """
+    document_value = value or {}
+    assert isinstance(document_value, Mapping)
+
+    http_versions_raw = document_value.get("http", ["http/1.1"])
+    assert isinstance(http_versions_raw, Sequence)
+    http_versions_list: list[str] = []
+    for entry in http_versions_raw:
+        assert isinstance(entry, str)
+        http_versions_list.append(entry)
+    http_versions = tuple(http_versions_list)
+
+    event_stream_http_versions_raw = document_value.get("eventStreamHttp")
+    if not event_stream_http_versions_raw:
+        return http_versions, http_versions
+
+    assert isinstance(event_stream_http_versions_raw, Sequence)
+    event_stream_http_versions_list: list[str] = []
+    for entry in event_stream_http_versions_raw:
+        assert isinstance(entry, str)
+        event_stream_http_versions_list.append(entry)
+
+    return http_versions, tuple(event_stream_http_versions_list)

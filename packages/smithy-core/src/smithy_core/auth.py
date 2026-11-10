@@ -77,4 +77,5 @@ class NoAuthResolver:
     def resolve_auth_scheme(
         self, *, auth_parameters: AuthParams[Any, Any]
     ) -> Sequence[AuthOption]:
+        """Return no auth options."""
         return []

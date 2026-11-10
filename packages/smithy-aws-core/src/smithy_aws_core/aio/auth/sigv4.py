@@ -30,11 +30,14 @@ except ImportError:
 
 
 class AsyncSigV4Config(Protocol):
+    """Client config the SigV4 auth scheme reads its region and credentials resolver from."""
+
     region: str | None
     aws_credentials_identity_resolver: AsyncAWSCredentialsResolver | None
 
 
 SIGV4_CONFIG = PropertyKey(key="config", value_type=AsyncSigV4Config)
+"""Property key for the client config the SigV4 auth scheme reads."""
 
 type SigV4Signer = AsyncSigner[
     HTTPRequest, AWSCredentialsIdentity, SigV4SigningProperties

@@ -80,25 +80,6 @@ def check_endpoint(
     _check("properties", properties, expected_properties)
 
 
-def _expected_auth_schemes(
-    entries: Sequence[Mapping[str, Any]], extensions: Sequence[RulesExtension]
-) -> list[dict[str, Any]]:
-    """A case's expected ``authSchemes`` as resolution gives them: each entry built by
-    its name's extension factory, and names no extension maps left out."""
-    factories = {
-        name: factory
-        for extension in extensions
-        for name, factory in extension.auth_schemes.items()
-    }
-    expected: list[dict[str, Any]] = []
-    for entry in entries:
-        factory = factories.get(entry["name"])
-        if factory is not None:
-            scheme = factory(entry)
-            expected.append({"scheme_id": str(scheme.scheme_id), **scheme.properties})
-    return expected
-
-
 def check_error(expect: Mapping[str, Any], error: Exception) -> None:
     if "error" not in expect:
         raise AssertionError(
@@ -122,6 +103,25 @@ def check_destination(endpoint: Endpoint, request: Any) -> None:
             f"Expected request destination under {uri.build()},"
             f" got {destination.build()}"
         )
+
+
+def _expected_auth_schemes(
+    entries: Sequence[Mapping[str, Any]], extensions: Sequence[RulesExtension]
+) -> list[dict[str, Any]]:
+    """A case's expected ``authSchemes`` as resolution gives them: each entry built by
+    its name's extension factory, and names no extension maps left out."""
+    factories = {
+        name: factory
+        for extension in extensions
+        for name, factory in extension.auth_schemes.items()
+    }
+    expected: list[dict[str, Any]] = []
+    for entry in entries:
+        factory = factories.get(entry["name"])
+        if factory is not None:
+            scheme = factory(entry)
+            expected.append({"scheme_id": str(scheme.scheme_id), **scheme.properties})
+    return expected
 
 
 def _extends(value: str | None, base: str | None, separator: str) -> bool:

@@ -170,16 +170,6 @@ def validate_response_checksum_validation(value: object) -> None:
     )
 
 
-def _validate_choice(name: str, value: object, choices: object) -> None:
-    if value is None:
-        return
-    valid = get_args(choices)
-    if value not in valid:
-        raise ConfigValidationError(
-            f"Invalid value for {name!r}: {value!r}. Must be one of {valid}."
-        )
-
-
 def validate_account_id_endpoint_mode(value: object) -> None:
     """Validate the account ID endpoint mode.
 
@@ -192,4 +182,14 @@ def validate_account_id_endpoint_mode(value: object) -> None:
         raise ConfigValidationError(
             f"Invalid value for 'account_id_endpoint_mode': {value!r}. "
             f"Must be one of {_ACCOUNT_ID_ENDPOINT_MODES}."
+        )
+
+
+def _validate_choice(name: str, value: object, choices: object) -> None:
+    if value is None:
+        return
+    valid = get_args(choices)
+    if value not in valid:
+        raise ConfigValidationError(
+            f"Invalid value for {name!r}: {value!r}. Must be one of {valid}."
         )

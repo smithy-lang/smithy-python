@@ -98,14 +98,18 @@ class URI(Protocol):
 class BytesWriter(Protocol):
     """A protocol for objects that support writing bytes to them."""
 
-    def write(self, b: bytes, /) -> int: ...
+    def write(self, b: bytes, /) -> int:
+        """Write ``b`` and return the number of bytes written."""
+        ...
 
 
 @runtime_checkable
 class BytesReader(Protocol):
     """A protocol for objects that support reading bytes from them."""
 
-    def read(self, size: int = -1, /) -> bytes: ...
+    def read(self, size: int = -1, /) -> bytes:
+        """Read up to ``size`` bytes, or all remaining bytes if ``size`` is negative."""
+        ...
 
 
 def is_bytes_reader(obj: Any) -> TypeGuard[BytesReader]:
@@ -116,17 +120,20 @@ def is_bytes_reader(obj: Any) -> TypeGuard[BytesReader]:
 
     :param obj: The object to inspect.
     """
-    return isinstance(obj, BytesReader) and not iscoroutinefunction(
-        getattr(obj, "read")
-    )
+    return isinstance(obj, BytesReader) and not iscoroutinefunction(obj.read)
 
 
 @runtime_checkable
 class SeekableBytesReader(BytesReader, Protocol):
     """A synchronous bytes reader with seek and tell methods."""
 
-    def tell(self) -> int: ...
-    def seek(self, offset: int, whence: int = 0, /) -> int: ...
+    def tell(self) -> int:
+        """Return the current stream position."""
+        ...
+
+    def seek(self, offset: int, whence: int = 0, /) -> int:
+        """Move the stream position and return the new absolute position."""
+        ...
 
 
 # A union of all acceptable streaming blob types. Deserialized payloads will
@@ -146,7 +153,9 @@ def is_streaming_blob(obj: Any) -> TypeGuard[StreamingBlob]:
 class AwaitableBytesReader(Protocol):
     """A file-like object whose read returns an awaitable, such as an async stream."""
 
-    def read(self, size: int = -1) -> Awaitable[bytes]: ...
+    def read(self, size: int = -1) -> Awaitable[bytes]:
+        """Read up to ``size`` bytes, or all remaining bytes if ``size`` is negative."""
+        ...
 
 
 # CAUTION: matches smithy_core.aio.interfaces.StreamingBlob structurally; message
@@ -322,11 +331,17 @@ class TypedProperties(Protocol):
     @overload
     def pop[T](self, key: str, default: T) -> Any | T: ...
 
-    def items(self) -> ItemsView[str, Any]: ...
+    def items(self) -> ItemsView[str, Any]:
+        """Return a view of the property keys and values."""
+        ...
 
-    def keys(self) -> KeysView[str]: ...
+    def keys(self) -> KeysView[str]:
+        """Return a view of the property keys."""
+        ...
 
-    def values(self) -> ValuesView[Any]: ...
+    def values(self) -> ValuesView[Any]:
+        """Return a view of the property values."""
+        ...
 
 
 @dataclass(kw_only=True, frozen=True)

@@ -19,6 +19,7 @@ from smithy_core.endpoints import RESOLVED_ENDPOINT, EndpointAuthScheme
 from smithy_core.exceptions import (
     CallError,
     ClientTimeoutError,
+    ResourceLifecycleError,
     SmithyError,
     UnsupportedAuthSchemeError,
     UnsupportedTransportError,
@@ -520,7 +521,7 @@ async def test_aenter_raises_on_closed_client() -> None:
     client = _StubClient()
     await client.close()
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ResourceLifecycleError):
         await client.__aenter__()
 
 
