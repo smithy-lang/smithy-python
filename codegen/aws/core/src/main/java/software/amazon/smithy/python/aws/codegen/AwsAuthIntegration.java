@@ -57,7 +57,7 @@ public class AwsAuthIntegration implements PythonIntegration {
                                                 .namespace("smithy_aws_core.identity.components", ".")
                                                 .build())
                                         .addReference(Symbol.builder()
-                                                .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                                .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                                                 .name("AWSIdentityProperties")
                                                 .namespace("smithy_aws_core.identity.components", ".")
                                                 .build())
