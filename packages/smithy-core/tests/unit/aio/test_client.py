@@ -1,8 +1,10 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from collections.abc import AsyncIterator, Callable
-from dataclasses import replace
+import logging
+import uuid
+from collections.abc import AsyncIterator, Callable, Iterator
+from dataclasses import dataclass, field, replace
 from io import BytesIO, UnsupportedOperation
 from typing import Any, cast
 from unittest.mock import AsyncMock, Mock, patch
@@ -39,12 +41,15 @@ from smithy_core.retries import (
     SimpleRetryStrategy,
     StandardRetryStrategy,
 )
-from smithy_core.shapes import ShapeID
+from smithy_core.schemas import APIOperation, Schema
+from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.traits import IdempotencyTokenTrait
 from smithy_core.types import TypedProperties
 
 from ._pipeline_harness import (
     DATA_STREAM_OPERATION,
     OPERATION,
+    TOKEN_OPERATION,
     DuplexTransport,
     NonDuplexTransport,
     StubEndpoint,
@@ -54,6 +59,7 @@ from ._pipeline_harness import (
     StubInput,
     StubOutput,
     StubRequest,
+    TokenInput,
     UndeclaredTransport,
     client_call,
     pipeline_harness,
@@ -635,6 +641,364 @@ async def test_data_stream_that_fails_to_rewind_returns_the_attempts_error() -> 
     assert any(
         note.startswith("Retry not attempted") for note in exc_info.value.__notes__
     )
+
+
+class _CountingGenerator:
+    def __init__(self, *tokens: str) -> None:
+        self.tokens = list(tokens) or ["generated-token"]
+        self.calls = 0
+
+    def __call__(self) -> str:
+        token = self.tokens[self.calls % len(self.tokens)]
+        self.calls += 1
+        return token
+
+
+@pytest.fixture
+def token_generator() -> Iterator[_CountingGenerator]:
+    generator = _CountingGenerator("first-token", "second-token", "third-token")
+    with patch("smithy_core._pipeline._default_idempotency_token", new=generator):
+        yield generator
+
+
+def _token_call(
+    input: Any,
+    *,
+    interceptor: Interceptor[Any, Any, Any, Any] | None = None,
+    retry_strategy: Any = None,
+) -> Any:
+    return replace(
+        retryable_client_call(retry_strategy),
+        input=input,
+        operation=TOKEN_OPERATION,
+        interceptor=InterceptorChain([interceptor] if interceptor else []),
+    )
+
+
+async def test_unset_idempotency_token_is_generated_once_on_a_copy(
+    token_generator: _CountingGenerator,
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    input = TokenInput(message="hi")
+
+    await harness.pipeline(_token_call(input))
+
+    assert token_generator.calls == 1
+    [serialized] = harness.protocol.serialized_inputs
+    assert serialized is not input
+    assert serialized.client_token == "first-token"
+    assert serialized.message == "hi"
+    # The caller's own input is never mutated.
+    assert input.client_token is None
+
+
+# Only an unset (None) token is filled; "" is an explicit caller value.
+@pytest.mark.parametrize("token", ["caller-token", ""], ids=["caller-token", "empty"])
+async def test_set_idempotency_token_is_sent_unchanged(
+    token_generator: _CountingGenerator, token: str
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    input = TokenInput(client_token=token)
+
+    await harness.pipeline(_token_call(input))
+
+    assert token_generator.calls == 0
+    [serialized] = harness.protocol.serialized_inputs
+    assert serialized is input
+    assert serialized.client_token == token
+
+
+class _FailingTwiceTransport(BodyRecordingTransport):
+    async def send(self, request: Any) -> Any:
+        response = await super().send(request)
+        if self.send_calls <= 2:
+            raise CallError("Service unavailable", is_retry_safe=True)
+        return response
+
+
+async def test_idempotency_token_is_the_same_on_every_retry(
+    token_generator: _CountingGenerator,
+) -> None:
+    harness = pipeline_harness(_FailingTwiceTransport())
+
+    def serialize_request(**kwargs: Any) -> StubRequest:
+        harness.protocol.serialize_request_calls += 1
+        request = StubRequest()
+        request.body = kwargs["input"].client_token.encode()
+        return request
+
+    harness.protocol.serialize_request = serialize_request  # type: ignore[method-assign]
+    strategy = SimpleRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=0),
+        max_attempts=3,
+    )
+
+    await harness.pipeline(_token_call(TokenInput(), retry_strategy=strategy))
+
+    assert harness.protocol.serialize_request_calls == 1
+    assert harness.transport.send_calls == 3
+    assert cast(BodyRecordingTransport, harness.transport).bodies == [
+        b"first-token",
+        b"first-token",
+        b"first-token",
+    ]
+    assert token_generator.calls == 1
+
+
+_STRING_SCHEMA = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
+
+_PASCAL_TOKEN_OPERATION: APIOperation[Any, Any] = APIOperation(
+    static_schema=(
+        ShapeType.OPERATION.value,
+        "com.example",
+        "PascalTokenOperation",
+        0,
+        Schema.collection(
+            id=ShapeID("com.example#PascalTokenInput"),
+            members={
+                "ClientToken": {
+                    "target": _STRING_SCHEMA,
+                    "traits": [IdempotencyTokenTrait()],
+                },
+            },
+        ),
+        Schema.collection(id=ShapeID("com.example#PascalTokenOutput"), members={}),
+        (),
+    ),
+    effective_auth_schemes=[],
+)
+
+
+async def test_pascal_case_token_member_is_filled_on_its_python_field(
+    token_generator: _CountingGenerator,
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    call = replace(_token_call(TokenInput()), operation=_PASCAL_TOKEN_OPERATION)
+
+    await harness.pipeline(call)
+
+    # The model member "ClientToken" maps to the Python field "client_token".
+    [serialized] = harness.protocol.serialized_inputs
+    assert serialized.client_token == "first-token"
+
+
+async def test_input_without_idempotency_member_is_passed_through(
+    token_generator: _CountingGenerator,
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    call = retryable_client_call()
+
+    await harness.pipeline(call)
+
+    assert token_generator.calls == 0
+    assert harness.protocol.serialized_inputs[0] is call.input
+
+
+async def test_default_idempotency_token_is_a_uuid4() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+
+    await harness.pipeline(_token_call(TokenInput()))
+    await harness.pipeline(_token_call(TokenInput()))
+
+    first, second = (i.client_token for i in harness.protocol.serialized_inputs)
+    assert uuid.UUID(first).version == 4
+    assert first != second
+
+
+def test_idempotency_token_field_name_is_cached() -> None:
+    operation = replace(TOKEN_OPERATION)
+    first = operation._idempotency_token_field  # pyright: ignore[reportPrivateUsage]
+
+    assert first == "client_token"
+    assert operation.__dict__["_idempotency_token_field"] == "client_token"
+
+
+class _RecordTokens(Interceptor[Any, Any, Any, Any]):
+    def __init__(self, *, rebuild_input: bool = False) -> None:
+        self.rebuild_input = rebuild_input
+        self.read_before_execution_input: Any = None
+        self.modify_before_serialization_token: Any = "unset"
+        self.read_before_serialization_token: Any = None
+
+    def read_before_execution(self, context: InputContext[Any]) -> None:
+        self.read_before_execution_input = context.request
+
+    def modify_before_serialization(self, context: InputContext[Any]) -> Any:
+        self.modify_before_serialization_token = context.request.client_token
+        if self.rebuild_input:
+            return TokenInput(message="rebuilt")
+        return context.request
+
+    def read_before_serialization(self, context: InputContext[Any]) -> None:
+        self.read_before_serialization_token = context.request.client_token
+
+
+async def test_token_is_filled_after_modify_before_serialization(
+    token_generator: _CountingGenerator,
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    interceptor = _RecordTokens()
+    input = TokenInput()
+
+    await harness.pipeline(_token_call(input, interceptor=interceptor))
+
+    assert interceptor.read_before_execution_input is input
+    assert interceptor.modify_before_serialization_token is None
+    assert interceptor.read_before_serialization_token == "first-token"
+
+
+async def test_input_rebuilt_by_an_interceptor_still_gets_a_token(
+    token_generator: _CountingGenerator,
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    interceptor = _RecordTokens(rebuild_input=True)
+
+    await harness.pipeline(_token_call(TokenInput(), interceptor=interceptor))
+
+    [serialized] = harness.protocol.serialized_inputs
+    assert serialized.message == "rebuilt"
+    assert serialized.client_token == "first-token"
+
+
+class _NonDataclassTokenInput:
+    def __init__(self) -> None:
+        self.client_token: str | None = None
+
+    def serialize(self, serializer: Any) -> None:
+        pass
+
+
+@dataclass(kw_only=True)
+class _PostInitTokenInput:
+    client_token: str | None = None
+    message: str | None = None
+    post_init_calls: int = field(default=0, compare=False)
+
+    def __post_init__(self) -> None:
+        self.post_init_calls += 1
+
+    def serialize(self, serializer: Any) -> None:
+        pass
+
+
+@dataclass(kw_only=True, frozen=True)
+class _FrozenTokenInput:
+    client_token: str | None = None
+
+    def serialize(self, serializer: Any) -> None:
+        pass
+
+
+async def test_token_fill_does_not_rerun_post_init(
+    token_generator: _CountingGenerator,
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    input = _PostInitTokenInput(message="hi")
+
+    await harness.pipeline(_token_call(input))
+
+    [serialized] = harness.protocol.serialized_inputs
+    assert serialized is not input
+    assert serialized.client_token == "first-token"
+    assert serialized.message == "hi"
+    assert serialized.post_init_calls == 1
+    assert input.client_token is None
+
+
+async def test_frozen_dataclass_input_gets_a_token(
+    token_generator: _CountingGenerator,
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    input = _FrozenTokenInput()
+
+    await harness.pipeline(_token_call(input))
+
+    [serialized] = harness.protocol.serialized_inputs
+    assert serialized.client_token == "first-token"
+    assert input.client_token is None
+
+
+@dataclass(kw_only=True)
+class _MisnamedTokenInput:
+    token: str | None = None
+
+    def serialize(self, serializer: Any) -> None:
+        pass
+
+
+@pytest.mark.parametrize(
+    "input_type",
+    [_NonDataclassTokenInput, _MisnamedTokenInput],
+    ids=["non-dataclass", "misnamed-field"],
+)
+async def test_input_that_cannot_be_filled_is_passed_through_with_a_warning(
+    token_generator: _CountingGenerator,
+    caplog: pytest.LogCaptureFixture,
+    input_type: type[Any],
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    input = input_type()
+
+    with caplog.at_level(logging.WARNING):
+        await harness.pipeline(_token_call(input))
+
+    assert token_generator.calls == 0
+    assert harness.protocol.serialized_inputs[0] is input
+    [record] = [r for r in caplog.records if "idempotency token" in r.message]
+    assert record.levelno == logging.WARNING
+    # Logged through the client's logger, alongside the rest of the pipeline's logs
+    assert record.name == harness.pipeline._logger.name  # pyright: ignore[reportPrivateUsage]
+
+
+class _SetToken(Interceptor[Any, Any, Any, Any]):
+    def modify_before_serialization(self, context: InputContext[Any]) -> Any:
+        return replace(context.request, client_token="interceptor-token")
+
+
+async def test_token_set_by_an_interceptor_is_sent_unchanged(
+    token_generator: _CountingGenerator,
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+
+    await harness.pipeline(_token_call(TokenInput(), interceptor=_SetToken()))
+
+    assert token_generator.calls == 0
+    [serialized] = harness.protocol.serialized_inputs
+    assert serialized.client_token == "interceptor-token"
+
+
+class _RecordCompletion(Interceptor[Any, Any, Any, Any]):
+    def __init__(self) -> None:
+        self.completion_response: Any = None
+        self.after_execution_response: Any = None
+
+    def modify_before_completion(
+        self, context: OutputContext[Any, Any, Any, Any]
+    ) -> Any:
+        self.completion_response = context.response
+        return context.response
+
+    def read_after_execution(self, context: OutputContext[Any, Any, Any, Any]) -> None:
+        self.after_execution_response = context.response
+
+
+async def test_failing_token_generation_fails_the_call() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    interceptor = _RecordCompletion()
+    error = RuntimeError("no entropy")
+
+    def generator() -> str:
+        raise error
+
+    with patch("smithy_core._pipeline._default_idempotency_token", new=generator):
+        with pytest.raises(SmithyError) as exc_info:
+            await harness.pipeline(_token_call(TokenInput(), interceptor=interceptor))
+
+    assert exc_info.value.__cause__ is error
+    assert interceptor.completion_response is error
+    assert interceptor.after_execution_response is error
+    assert harness.protocol.serialize_request_calls == 0
+    assert harness.transport.send_calls == 0
 
 
 async def test_input_event_stream_is_not_retried() -> None:

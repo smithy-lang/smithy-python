@@ -505,6 +505,53 @@ def test_explicit_input_and_output_traits_match_runtime_and_stub(
     assert output.response_metadata is not None
 
 
+def test_idempotency_token_members_of_inputs_are_documented_as_autopopulated(
+    tmp_path: Path,
+) -> None:
+    package = "generated_idempotency_docs"
+    token: dict[str, object] = {
+        "target": "smithy.api#String",
+        "traits": {"smithy.api#idempotencyToken": {}},
+    }
+    source_root = _generate_custom(
+        tmp_path,
+        {
+            "smithy": "2.0",
+            "shapes": {
+                "example#CreateInput": {
+                    "type": "structure",
+                    "traits": {"smithy.api#input": {}},
+                    "members": {
+                        "documentedToken": {
+                            "target": "smithy.api#String",
+                            "traits": {
+                                "smithy.api#idempotencyToken": {},
+                                "smithy.api#documentation": "Unique request id.",
+                            },
+                        }
+                    },
+                },
+                "example#UpdateInput": {
+                    "type": "structure",
+                    "traits": {"smithy.api#input": {}},
+                    "members": {"undocumentedToken": token},
+                },
+                "example#Nested": {
+                    "type": "structure",
+                    "members": {"nestedToken": token},
+                },
+            },
+        },
+        package,
+    )
+    stub = (source_root / package / "models.pyi").read_text()
+    note = "This field is autopopulated if not provided."
+    assert f"Unique request id.\n\n    {note}" in stub
+    assert f'undocumented_token: str | None = ...\n    "{note}"' in stub
+    # Only operation inputs are filled by the client, so only they get the note.
+    assert stub.count(note) == 2
+
+
 def test_stub_and_runtime_use_the_same_member_names(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

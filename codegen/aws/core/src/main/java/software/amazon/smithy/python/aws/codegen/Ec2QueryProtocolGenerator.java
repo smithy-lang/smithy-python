@@ -23,9 +23,6 @@ public final class Ec2QueryProtocolGenerator implements ProtocolGenerator {
             "SDKAppliedContentEncoding_ec2Query",
             "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_ec2Query",
 
-            // TODO: support idempotency token autofill
-            "Ec2ProtocolIdempotencyTokenAutoFill",
-
             // TODO: support of the endpoint trait
             "Ec2QueryEndpointTraitWithHostLabel",
             "Ec2QueryEndpointTrait");

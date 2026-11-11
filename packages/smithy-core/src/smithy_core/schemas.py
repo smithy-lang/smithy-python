@@ -495,3 +495,25 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
         """Whether the service may hold the request open until information is
         available."""
         return self.schema.get_trait(LongPollTrait) is not None
+
+    @cached_property
+    def _idempotency_token_field(self) -> str | None:
+        """Python attribute name of the idempotency token member, or None.
+
+        Cached because the client reads it on every call.
+        """
+        member = self.idempotency_token_member
+        if member is None:
+            return None
+
+        # Imported here so that importing schemas doesn't load the naming module.
+        from ._model_naming import member_field_name
+
+        # Same derivation the generated input dataclass used for its field names.
+        # Operation inputs are never errors, enums or outputs.
+        return member_field_name(
+            member.expect_member_name(),
+            is_error=False,
+            carries_response_metadata=False,
+            is_enum=False,
+        )

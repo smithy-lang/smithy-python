@@ -942,6 +942,7 @@ class QueryIdempotencyTokenAutoFillInput(_SerdeShape):
     """Dataclass for QueryIdempotencyTokenAutoFillInput structure."""
 
     token: str | None = ...
+    """This field is autopopulated if not provided."""
 
 @dataclass(kw_only=True)
 class QueryIdempotencyTokenAutoFillOutput(_SerdeShape):

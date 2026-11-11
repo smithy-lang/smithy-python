@@ -272,7 +272,7 @@ class _StubEmitter:
                     reference,
                     "" if mandatory else " = ...",
                 )
-                if docs := _documentation(member):
+                if docs := _member_documentation(member, shape.id in self.inputs):
                     _write_docstring(writer, docs)
             if carries_metadata:
                 writer.line("response_metadata: ", _RESPONSE_METADATA, " = ...")
@@ -423,6 +423,18 @@ def _join_types(
 def _documentation(shape: _model.Shape) -> str | None:
     value = shape.get_trait("documentation")
     return value if isinstance(value, str) else None
+
+
+# Matches CodegenUtils.IDEMPOTENCY_TOKEN_DOCS in the Java generator, and botocore.
+_AUTOPOPULATED_NOTE = "This field is autopopulated if not provided."
+
+
+def _member_documentation(member: _model.MemberShape, in_input: bool) -> str | None:
+    """A member's docs, noting that the client fills an unset idempotency token."""
+    docs = _documentation(member)
+    if not (in_input and member.has_trait("idempotencyToken")):
+        return docs
+    return f"{docs}\n\n{_AUTOPOPULATED_NOTE}" if docs else _AUTOPOPULATED_NOTE
 
 
 def _is_event_stream_member(model: _model.Model, member: _model.MemberShape) -> bool:

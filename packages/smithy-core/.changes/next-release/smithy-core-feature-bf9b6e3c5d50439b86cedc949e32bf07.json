@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Unset `@idempotencyToken` input members are now auto-filled with a UUID v4 before serialization. The same token is sent on every retry."
+}

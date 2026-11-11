@@ -4,13 +4,16 @@
  */
 package software.amazon.smithy.python.codegen;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 
@@ -32,6 +35,70 @@ public class CodegenUtilsTest {
 
         // Should return false for non-AWS services
         assertFalse(CodegenUtils.isAwsService(context));
+    }
+
+    private static final Model TOKEN_MODEL = Model.assembler()
+            .addUnparsedModel("token.smithy", """
+                    $version: "2.0"
+                    namespace com.example
+
+                    operation CreateThing {
+                        input := {
+                            /// Unique identifier for the request.
+                            @idempotencyToken
+                            documentedToken: String
+
+                            /// The name.
+                            name: String
+
+                            nested: Nested
+                        }
+                    }
+
+                    operation UpdateThing {
+                        input := {
+                            @idempotencyToken
+                            undocumentedToken: String
+                        }
+                    }
+
+                    structure Nested {
+                        @idempotencyToken
+                        token: String
+                    }
+                    """)
+            .assemble()
+            .unwrap();
+
+    private static Optional<String> memberDocs(String member) {
+        return CodegenUtils.getMemberDocs(TOKEN_MODEL,
+                TOKEN_MODEL.expectShape(
+                        ShapeId.from("com.example#" + member),
+                        MemberShape.class));
+    }
+
+    @Test
+    public void testIdempotencyTokenNoteIsAppendedToMemberDocs() {
+        assertEquals(
+                Optional.of("Unique identifier for the request.\n\n" + CodegenUtils.IDEMPOTENCY_TOKEN_DOCS),
+                memberDocs("CreateThingInput$documentedToken"));
+    }
+
+    @Test
+    public void testIdempotencyTokenNoteIsTheOnlyDocsOfAnUndocumentedMember() {
+        assertEquals(
+                Optional.of(CodegenUtils.IDEMPOTENCY_TOKEN_DOCS),
+                memberDocs("UpdateThingInput$undocumentedToken"));
+    }
+
+    @Test
+    public void testOtherMembersKeepTheirDocs() {
+        assertEquals(Optional.of("The name."), memberDocs("CreateThingInput$name"));
+    }
+
+    @Test
+    public void testIdempotencyTokenOutsideAnOperationInputGetsNoNote() {
+        assertEquals(Optional.empty(), memberDocs("Nested$token"));
     }
 
     /**
