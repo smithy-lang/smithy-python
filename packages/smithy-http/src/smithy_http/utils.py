@@ -64,6 +64,25 @@ def split_header(given: str, handle_unquoted_http_date: bool = False) -> list[st
     return result
 
 
+def join_query_params(
+    params: Sequence[tuple[str, str | None]], prefix: str = ""
+) -> str:
+    """Join a list of query parameter key-value tuples.
+
+    :param params: The list of key-value query parameter tuples.
+    :param prefix: An optional query prefix.
+    """
+    query: str = prefix
+    for param in params:
+        if query:
+            query += "&"
+        if param[1] is None:
+            query += urlquote(param[0], safe="")
+        else:
+            query += f"{urlquote(param[0], safe='')}={urlquote(param[1], safe='')}"
+    return query
+
+
 def _consume_until(
     given: str,
     start_index: int,
@@ -106,22 +125,3 @@ def _consume_until(
             result += given[end_index]
         end_index += 1
     return result, end_index + 1
-
-
-def join_query_params(
-    params: Sequence[tuple[str, str | None]], prefix: str = ""
-) -> str:
-    """Join a list of query parameter key-value tuples.
-
-    :param params: The list of key-value query parameter tuples.
-    :param prefix: An optional query prefix.
-    """
-    query: str = prefix
-    for param in params:
-        if query:
-            query += "&"
-        if param[1] is None:
-            query += urlquote(param[0], safe="")
-        else:
-            query += f"{urlquote(param[0], safe='')}={urlquote(param[1], safe='')}"
-    return query

@@ -72,10 +72,6 @@ class Fields(Protocol):
     entries: OrderedDict[str, Field]
     encoding: str = "utf-8"
 
-    def set_field(self, field: Field) -> None:
-        """Alias for __setitem__ to utilize the field.name for the entry key."""
-        ...
-
     def __setitem__(self, name: str, field: Field) -> None:
         """Set entry for a Field name."""
         ...
@@ -94,6 +90,10 @@ class Fields(Protocol):
 
     def __len__(self) -> int:
         """Get total number of Field entries."""
+        ...
+
+    def set_field(self, field: Field) -> None:
+        """Alias for __setitem__ to utilize the field.name for the entry key."""
         ...
 
     def get_by_type(self, kind: FieldPosition) -> list[Field]:

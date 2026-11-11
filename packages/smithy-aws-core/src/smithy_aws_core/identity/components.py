@@ -18,6 +18,8 @@ __all__ = [
 
 @dataclass(kw_only=True)
 class AWSCredentialsIdentity(Identity):
+    """AWS credentials used to sign requests."""
+
     access_key_id: str
     """A unique identifier for an AWS user or role."""
 
@@ -40,6 +42,8 @@ class AWSCredentialsIdentity(Identity):
 
 
 class AWSIdentityProperties(TypedDict, total=False):
+    """Identity properties that may carry explicit AWS credentials."""
+
     access_key_id: str | None
     secret_access_key: str | None
     session_token: str | None
@@ -52,6 +56,8 @@ type AWSCredentialsResolver = IdentityResolver[
 
 
 class AWSIdentityConfig(Protocol):
+    """Client config that may carry explicit AWS credentials."""
+
     aws_access_key_id: str | None
     aws_secret_access_key: str | None
     aws_session_token: str | None = None

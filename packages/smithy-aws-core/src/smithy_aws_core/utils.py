@@ -83,6 +83,7 @@ def parse_response_metadata(response: HTTPResponse) -> ResponseMetadata:
 def parse_document_discriminator(
     document: Document, default_namespace: str | None
 ) -> ShapeID | None:
+    """Return the shape ID named by a map document's ``__type`` or ``code`` member."""
     if document.shape_type is ShapeType.MAP:
         map_document = document.as_map()
         code = map_document.get("__type")
@@ -95,6 +96,7 @@ def parse_document_discriminator(
 
 
 def parse_error_code(code: str, default_namespace: str | None) -> ShapeID | None:
+    """Parse an AWS error code into a shape ID, qualified by ``default_namespace`` if needed."""
     if not code:
         return None
 

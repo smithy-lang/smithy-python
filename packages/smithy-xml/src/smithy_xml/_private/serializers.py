@@ -50,17 +50,6 @@ class XMLShapeSerializer(ShapeSerializer):
         self._sink = sink
         self._ctx = _Context(settings, elements)
 
-    def _root(self, schema: Schema) -> tuple[str, str]:
-        name = root_xml_name(schema)
-        namespace = schema.get_trait(XMLNamespaceTrait)
-        if namespace is not None:
-            xmlns = _xmlns(namespace)
-        elif (default := self._ctx.settings.default_namespace) is not None:
-            xmlns = f' xmlns="{_escape_attr(default)}"'
-        else:
-            xmlns = ""
-        return f"<{name}{xmlns}", f"</{name}>"
-
     def begin_struct(self, schema: Schema) -> "_StructWriter":
         start, end = self._root(schema)
         return _StructWriter(self._ctx, start, end, self._sink)
@@ -70,10 +59,6 @@ class XMLShapeSerializer(ShapeSerializer):
 
     def begin_map(self, schema: Schema, size: int) -> "_MapWriter":
         raise SerializationError("XML documents must have a structure or union root.")
-
-    def _write_root_text(self, schema: Schema, text: str) -> None:
-        start, end = self._root(schema)
-        self._sink.write(f"{start}>{_escape_text(text)}{end}".encode())
 
     def write_null(self, schema: Schema) -> None:
         pass
@@ -101,6 +86,21 @@ class XMLShapeSerializer(ShapeSerializer):
 
     def write_document(self, schema: Schema, value: Document) -> None:
         raise SerializationError("XML does not support document types.")
+
+    def _root(self, schema: Schema) -> tuple[str, str]:
+        name = root_xml_name(schema)
+        namespace = schema.get_trait(XMLNamespaceTrait)
+        if namespace is not None:
+            xmlns = _xmlns(namespace)
+        elif (default := self._ctx.settings.default_namespace) is not None:
+            xmlns = f' xmlns="{_escape_attr(default)}"'
+        else:
+            xmlns = ""
+        return f"<{name}{xmlns}", f"</{name}>"
+
+    def _write_root_text(self, schema: Schema, text: str) -> None:
+        start, end = self._root(schema)
+        self._sink.write(f"{start}>{_escape_text(text)}{end}".encode())
 
 
 def _escape_text(value: str) -> str:
@@ -195,12 +195,6 @@ class _ValueWriter(ShapeSerializer):
 
     _ctx: _Context
 
-    def _element(self, schema: Schema) -> _Element: ...
-
-    def _write_text(self, schema: Schema, text: str) -> None:
-        element = self._element(schema)
-        self._ctx.parts.append(f"{element.start}>{_escape_text(text)}{element.end}")
-
     def begin_struct(self, schema: Schema) -> "_StructWriter":
         element = self._element(schema)
         return _StructWriter(self._ctx, element.start, element.end)
@@ -247,6 +241,12 @@ class _ValueWriter(ShapeSerializer):
 
     def write_document(self, schema: Schema, value: Document) -> None:
         raise SerializationError("XML does not support document types.")
+
+    def _element(self, schema: Schema) -> _Element: ...
+
+    def _write_text(self, schema: Schema, text: str) -> None:
+        element = self._element(schema)
+        self._ctx.parts.append(f"{element.start}>{_escape_text(text)}{element.end}")
 
 
 class _StructWriter(_ValueWriter):

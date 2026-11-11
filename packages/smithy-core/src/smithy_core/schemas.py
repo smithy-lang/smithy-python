@@ -115,6 +115,24 @@ class Schema:
         object.__setattr__(self, "_extensions", _EMPTY_SCHEMA_EXTENSIONS)
         object.__setattr__(self, "_members_by_index", None)
 
+    def __contains__(self, item: Any):
+        """Returns whether the schema has the given member or trait."""
+        match item:
+            case type():
+                if issubclass(item, Trait):
+                    return item.id in self.traits
+                return False
+            case ShapeID():
+                if (member := item.member) is not None:
+                    if self.id.with_member(member) == item:
+                        return member in self.members
+                    return False
+                return item in self.traits
+            case str():
+                return item in self.members
+            case _:
+                return False
+
     @property
     def member_name(self) -> str | None:
         """The name of the member, if the shape is the MEMBER type."""
@@ -238,40 +256,6 @@ class Schema:
             return self._compute_extension(extension)
         return value
 
-    def _compute_extension[T](self, extension: "SchemaExtension[T]") -> T:
-        """Grow an extension array or populate an uncomputed extension slot."""
-        extensions = self._extensions
-        extension_id = extension.id
-        if isinstance(extensions, tuple):
-            extensions = [_SCHEMA_EXTENSION_NOT_COMPUTED] * (extension_id + 1)
-            object.__setattr__(self, "_extensions", extensions)
-        elif extension_id >= len(extensions):
-            extensions.extend(
-                [_SCHEMA_EXTENSION_NOT_COMPUTED] * (extension_id + 1 - len(extensions))
-            )
-
-        value = extension.provider(self)
-        extensions[extension_id] = value
-        return value
-
-    def __contains__(self, item: Any):
-        """Returns whether the schema has the given member or trait."""
-        match item:
-            case type():
-                if issubclass(item, Trait):
-                    return item.id in self.traits
-                return False
-            case ShapeID():
-                if (member := item.member) is not None:
-                    if self.id.with_member(member) == item:
-                        return member in self.members
-                    return False
-                return item in self.traits
-            case str():
-                return item in self.members
-            case _:
-                return False
-
     @classmethod
     def collection(
         cls,
@@ -349,6 +333,22 @@ class Schema:
             member_target=target,
             member_index=index,
         )
+
+    def _compute_extension[T](self, extension: "SchemaExtension[T]") -> T:
+        """Grow an extension array or populate an uncomputed extension slot."""
+        extensions = self._extensions
+        extension_id = extension.id
+        if isinstance(extensions, tuple):
+            extensions = [_SCHEMA_EXTENSION_NOT_COMPUTED] * (extension_id + 1)
+            object.__setattr__(self, "_extensions", extensions)
+        elif extension_id >= len(extensions):
+            extensions.extend(
+                [_SCHEMA_EXTENSION_NOT_COMPUTED] * (extension_id + 1 - len(extensions))
+            )
+
+        value = extension.provider(self)
+        extensions[extension_id] = value
+        return value
 
 
 _SCHEMA_EXTENSION_IDS = count()

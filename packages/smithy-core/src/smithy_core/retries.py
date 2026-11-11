@@ -100,6 +100,8 @@ class ExponentialBackoffJitterType(Enum):
 
 
 class ExponentialRetryBackoffStrategy(retries_interface.RetryBackoffStrategy):
+    """Backoff strategy whose delay grows exponentially, with optional jitter."""
+
     def __init__(
         self,
         *,
@@ -289,6 +291,8 @@ class StandardRetryQuota:
 
 @dataclass(kw_only=True)
 class StandardRetryToken:
+    """Retry token for the standard and adaptive retry strategies."""
+
     retry_count: int
     """Retry count is the total number of attempts minus the initial attempt."""
 
@@ -377,10 +381,12 @@ class CubicCalculator:
 
     @property
     def last_max_rate(self) -> float:
+        """The request rate in use when the last throttle occurred."""
         return self._last_max_rate
 
     @property
     def last_throttle_time(self) -> float:
+        """The timestamp of the last throttled response."""
         return self._last_throttle_time
 
 
@@ -855,6 +861,7 @@ class ClientRateLimiter:
 
     @property
     def rate_limit_enabled(self) -> bool:
+        """Whether client-side rate limiting is active."""
         return self._rate_limiter_enabled
 
     def before_sending_request(self) -> None:

@@ -12,7 +12,8 @@
   "aws_sdk_signers.exceptions": {
     "AWSSDKWarning": "exception",
     "BaseAWSSDKException": "exception",
-    "MissingExpectedParameterException": "exception"
+    "MissingExpectedParameterException": "exception",
+    "ResourceLifecycleError": "exception"
   },
   "aws_sdk_signers.interfaces": {},
   "aws_sdk_signers.interfaces.events": {
@@ -437,6 +438,7 @@
     "ExpectationNotMetError": "exception",
     "MissingDependencyError": "exception",
     "ModeledError": "exception",
+    "ResourceLifecycleError": "exception",
     "RetryError": "exception",
     "SerializationError": "exception",
     "SmithyError": "exception",

@@ -3,6 +3,7 @@
 import logging
 import threading
 from collections.abc import Callable, Mapping, Sequence
+from functools import partial
 from typing import Any, Final
 
 from .exceptions import SmithyIdentityError
@@ -94,15 +95,15 @@ def _resolve_from_chain[I](
     """Resolve an identity from the first resolver in a chain that can provide one."""
     logger.debug("Attempting to resolve identity from resolver chain.")
     for resolver in resolvers:
-        resolve: Any = getattr(resolver, "get_identity")
+        duck: Any = resolver
         try:
             logger.debug("Attempting to resolve identity from %s.", type(resolver))
-            return (yield lambda: resolve(properties=properties))
+            return (yield partial(duck.get_identity, properties=properties))
         except SmithyIdentityError as e:
             logger.debug("Failed to resolve identity from %s: %s", type(resolver), e)
     raise SmithyIdentityError("Failed to resolve identity from resolver chain.")
 
 
-def _invalidate_all(resolvers: Sequence[object]) -> Program[None]:
+def _invalidate_all(resolvers: Sequence[Any]) -> Program[None]:
     for resolver in resolvers:
-        yield getattr(resolver, "invalidate")
+        yield resolver.invalidate

@@ -23,7 +23,7 @@ def deep_equal(a: object, b: object) -> bool:
         a_seq = cast(Sequence[object], a)
         b_seq = cast(Sequence[object], b)
         return len(a_seq) == len(b_seq) and all(
-            deep_equal(x, y) for x, y in zip(a_seq, b_seq)
+            deep_equal(x, y) for x, y in zip(a_seq, b_seq, strict=True)
         )
     if isinstance(a, dict) and isinstance(b, dict):
         a_map = cast(Mapping[object, object], a)

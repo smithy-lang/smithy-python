@@ -11,6 +11,7 @@ import logging
 from collections.abc import Mapping, Sequence
 from copy import copy
 from dataclasses import replace
+from functools import partial
 from typing import Any, ClassVar, Protocol
 
 from . import URI
@@ -163,7 +164,8 @@ class RequestPipelineBase[TRequest, TResponse]:
                 response=transport_response,
                 context=output_context.properties,
             )
-            setattr(result, "response_metadata", metadata)
+            target: Any = result
+            target.response_metadata = metadata
         except Exception as e:
             # Metadata is diagnostic and must never fail a call. Both statements
             # above can raise: a broken protocol, or the assignment itself if the
@@ -254,8 +256,7 @@ class RequestPipelineBase[TRequest, TResponse]:
         )
         while True:
             if retry_token.retry_delay:
-                delay = retry_token.retry_delay
-                yield lambda: self._sleep(delay)
+                yield partial(self._sleep, retry_token.retry_delay)
 
             try:
                 output_context = yield from self._send_with_rate_limiting(
@@ -280,12 +281,11 @@ class RequestPipelineBase[TRequest, TResponse]:
             if isinstance(output_context.response, Exception):
                 last_output_context = output_context
                 error = output_context.response
-                token = retry_token
                 try:
-                    retry_token = (
-                        yield lambda: retry_strategy.refresh_retry_token_for_retry(
-                            token_to_renew=token, error=error
-                        )
+                    retry_token = yield partial(
+                        retry_strategy.refresh_retry_token_for_retry,
+                        token_to_renew=retry_token,
+                        error=error,
                     )
                 except RetryError as retry_error:
                     # Long-polling operations back off even when the retry quota
@@ -311,8 +311,7 @@ class RequestPipelineBase[TRequest, TResponse]:
                     error.add_note(f"Retry not attempted: {e}")
                     return output_context
             else:
-                token = retry_token
-                yield lambda: retry_strategy.record_success(token=token)
+                yield partial(retry_strategy.record_success, token=retry_token)
                 return output_context
 
     def _send_with_rate_limiting[I: SerializeableShape, O: DeserializeableShape](
@@ -336,7 +335,7 @@ class RequestPipelineBase[TRequest, TResponse]:
             try:
                 # Waits go through _sleep so the async driver never blocks its loop.
                 for wait in adaptive.rate_limiter._send_token_waits():  # pyright: ignore[reportPrivateUsage]
-                    yield lambda: self._sleep(wait)
+                    yield partial(self._sleep, wait)
             except Exception as e:
                 self._fail_request_future(request_future, e)
                 raise

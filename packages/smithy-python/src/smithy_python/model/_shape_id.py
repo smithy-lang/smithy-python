@@ -43,6 +43,21 @@ class ShapeId:
                 f"Invalid shape ID member {self.member!r} in {self._raw()!r}"
             )
 
+    def __str__(self) -> str:
+        return self._raw()
+
+    def __lt__(self, other: ShapeId) -> bool:
+        return self._key() < other._key()
+
+    def __le__(self, other: ShapeId) -> bool:
+        return self._key() <= other._key()
+
+    def __gt__(self, other: ShapeId) -> bool:
+        return self._key() > other._key()
+
+    def __ge__(self, other: ShapeId) -> bool:
+        return self._key() >= other._key()
+
     @classmethod
     def from_string(cls, value: str, *, default_namespace: str | None = None) -> Self:
         """Parse an absolute or relative shape ID.
@@ -83,27 +98,12 @@ class ShapeId:
         """Return the ID of ``member`` within this shape."""
         return ShapeId(self.namespace, self.name, member)
 
-    def __str__(self) -> str:
-        return self._raw()
-
     def _raw(self) -> str:
         base = f"{self.namespace}#{self.name}"
         return base if self.member is None else f"{base}${self.member}"
 
     def _key(self) -> tuple[str, str, bool, str]:
         return (self.namespace, self.name, self.member is not None, self.member or "")
-
-    def __lt__(self, other: ShapeId) -> bool:
-        return self._key() < other._key()
-
-    def __le__(self, other: ShapeId) -> bool:
-        return self._key() <= other._key()
-
-    def __gt__(self, other: ShapeId) -> bool:
-        return self._key() > other._key()
-
-    def __ge__(self, other: ShapeId) -> bool:
-        return self._key() >= other._key()
 
 
 def as_shape_id(

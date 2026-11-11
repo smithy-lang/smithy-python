@@ -368,6 +368,7 @@ class AsyncBytesProvider:
         await self.close(flush=True)
 
     async def write(self, data: bytes) -> None:
+        """Buffer ``data``, waiting while the buffer is full."""
         if self._closed:
             raise SmithyError("Attempted to write to a closed provider.")
 

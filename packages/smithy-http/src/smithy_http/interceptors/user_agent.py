@@ -12,6 +12,7 @@ from smithy_http.interfaces import HTTPRequest
 from smithy_http.user_agent import UserAgent, UserAgentComponent
 
 USER_AGENT = PropertyKey(key="user_agent", value_type=UserAgent)
+"""Property key for the User-Agent being built for the request."""
 
 __all__ = ["USER_AGENT", "UserAgentInterceptor"]
 

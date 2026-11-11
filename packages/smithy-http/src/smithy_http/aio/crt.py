@@ -56,13 +56,7 @@ __all__ = [
 
 # Default buffer size for reading from streams (8 KB)
 DEFAULT_READ_BUFFER_SIZE = 8192
-
-
-def _assert_crt() -> None:
-    if not HAS_CRT:
-        raise MissingDependencyError(
-            "Attempted to use awscrt component, but awscrt is not installed."
-        )
+"""Default number of bytes read from a request body at a time."""
 
 
 class _AWSCRTEventLoop:
@@ -74,6 +68,8 @@ class _AWSCRTEventLoop:
 
 
 class AsyncAWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
+    """HTTP response from the AWS CRT HTTP client."""
+
     def __init__(
         self,
         *,
@@ -113,6 +109,7 @@ class AsyncAWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
         return None
 
     async def chunks(self) -> AsyncGenerator[bytes, None]:
+        """Yield the response body chunks as they arrive."""
         while True:
             chunk = await self._stream.get_next_response_chunk()
             if chunk:
@@ -143,11 +140,13 @@ class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
         _assert_crt()
 
 
-class _CRTTimeoutError(Exception):
+class _CRTTimeoutError(SmithyHTTPError):
     """Internal wrapper for CRT timeout errors."""
 
 
 class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
+    """Asynchronous HTTP client backed by the AWS CRT."""
+
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
     _TIMEOUT_ERROR_NAMES = frozenset(["AWS_IO_SOCKET_TIMEOUT", "AWS_IO_SOCKET_CLOSED"])
@@ -355,8 +354,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
         for fld in request.fields.entries.values():
             if fld.kind != "header":
                 continue
-            for val in fld.values:
-                headers_list.append((fld.name, val))
+            headers_list.extend((fld.name, val) for val in fld.values)
 
         path = self._render_path(request.destination)
         headers = crt_http.HttpHeaders(headers_list)
@@ -416,3 +414,10 @@ class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
                     yield bytes(chunk)
                 else:
                     yield chunk
+
+
+def _assert_crt() -> None:
+    if not HAS_CRT:
+        raise MissingDependencyError(
+            "Attempted to use awscrt component, but awscrt is not installed."
+        )

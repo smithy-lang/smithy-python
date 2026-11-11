@@ -23,6 +23,7 @@ from ._sigv4 import (
     hash_sync_body,
     signing_key,
 )
+from .exceptions import ResourceLifecycleError
 from .interfaces.identity import AWSCredentialsIdentity as _AWSCredentialsIdentity
 
 if TYPE_CHECKING:
@@ -261,7 +262,7 @@ class EventSigner:
     ) -> "EventMessage":
         with self._signing_lock:
             if self._is_finalized:
-                raise RuntimeError(
+                raise ResourceLifecycleError(
                     "Cannot sign event stream messages after the final empty event "
                     "has been signed."
                 )

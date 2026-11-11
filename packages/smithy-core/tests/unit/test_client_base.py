@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from smithy_core.aio.client import AsyncClient
 from smithy_core.client import Client
-from smithy_core.exceptions import ExpectationNotMetError
+from smithy_core.exceptions import ExpectationNotMetError, ResourceLifecycleError
 from smithy_core.retries import RetryStrategyOptions
 
 
@@ -133,7 +133,7 @@ def test_closed_client_rejects_calls() -> None:
     client = _SyncClient()
     client.close()
 
-    with pytest.raises(RuntimeError, match="closed"):
+    with pytest.raises(ResourceLifecycleError, match="closed"):
         client._prepare_call(Mock(), _operation(), [], None)  # pyright: ignore[reportPrivateUsage]
 
 

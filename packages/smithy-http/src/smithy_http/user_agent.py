@@ -57,6 +57,8 @@ class RawStringUserAgentComponent:
 
 @dataclass(kw_only=True, slots=True)
 class UserAgent:
+    """The components of a User-Agent header, grouped by section."""
+
     sdk_metadata: list[UserAgentComponent] = field(
         default_factory=list[UserAgentComponent]
     )

@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added ResourceLifecycleError, a BaseAWSSDKException and RuntimeError subclass, raised when EventSigner signs after the final empty event."
+}

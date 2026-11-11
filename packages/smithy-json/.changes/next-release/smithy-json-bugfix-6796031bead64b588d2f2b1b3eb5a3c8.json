@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Raised ExpectationNotMetError instead of Exception when a document is not a timestamp."
+}

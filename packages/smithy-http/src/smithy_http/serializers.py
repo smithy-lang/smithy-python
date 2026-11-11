@@ -212,6 +212,7 @@ class HTTPBindingSerializer(InterceptingSerializer):
         )
 
     def before(self, schema: Schema) -> ShapeSerializer:
+        """Return the serializer for the HTTP binding of ``schema``."""
         metadata = self._binding_metadata.members[schema.expect_member_index()]
         match metadata.request_binding:
             case Binding.HEADER | Binding.PREFIX_HEADERS:
@@ -230,7 +231,7 @@ class HTTPBindingSerializer(InterceptingSerializer):
                 return self._payload_serializer
 
     def after(self, schema: Schema) -> None:
-        pass
+        """Do nothing, since HTTP bindings write nothing after a member."""
 
     def build_request(self) -> HTTPRequest:
         """Build the HTTP request after payload serialization."""

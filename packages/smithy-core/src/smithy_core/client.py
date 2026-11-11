@@ -11,6 +11,7 @@ from ._client import OPERATION
 from ._client import ClientBase as _ClientBase
 from ._pipeline import RequestPipelineBase, is_retryable
 from .deserializers import DeserializeableShape
+from .exceptions import ResourceLifecycleError
 from .interceptors import Interceptor, RequestContext
 from .interfaces import (
     ClientProtocol,
@@ -30,6 +31,7 @@ from .utils import read_streaming_blob
 __all__ = ["AUTH_SCHEME", "OPERATION", "Client", "ClientCall", "RequestPipeline"]
 
 AUTH_SCHEME = PropertyKey(key="auth_scheme", value_type=AuthScheme[Any, Any, Any, Any])
+"""Property key for the auth scheme selected for the call."""
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -139,7 +141,7 @@ class Client[C](_ClientBase[C]):
 
     def __enter__(self) -> Self:
         if self._closed:
-            raise RuntimeError("Cannot enter a client that has been closed.")
+            raise ResourceLifecycleError("Cannot enter a client that has been closed.")
         return self
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:

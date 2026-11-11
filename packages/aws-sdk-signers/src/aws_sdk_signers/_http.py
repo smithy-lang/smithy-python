@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections import Counter, OrderedDict
 from collections.abc import AsyncIterable, Iterable, Iterator
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TypedDict, get_args
 from urllib.parse import urlunparse
@@ -45,6 +45,22 @@ class Field(interfaces_http.Field):
         if kind not in _VALID_FIELD_POSITIONS:
             raise ValueError(f"Unknown field kind: {kind!r}")
         self.kind = kind
+
+    def __eq__(self, other: object) -> bool:
+        """Name, values, and kind must match.
+
+        Values order must match.
+        """
+        if not isinstance(other, Field):
+            return False
+        return (
+            self.name == other.name
+            and self.kind == other.kind
+            and self.values == other.values
+        )
+
+    def __repr__(self) -> str:
+        return f"Field(name={self.name!r}, value={self.values!r}, kind={self.kind!r})"
 
     def add(self, value: str) -> None:
         """Append a value to a field."""
@@ -86,22 +102,6 @@ class Field(interfaces_http.Field):
         value."""
         return [(self.name, val) for val in self.values]
 
-    def __eq__(self, other: object) -> bool:
-        """Name, values, and kind must match.
-
-        Values order must match.
-        """
-        if not isinstance(other, Field):
-            return False
-        return (
-            self.name == other.name
-            and self.kind == other.kind
-            and self.values == other.values
-        )
-
-    def __repr__(self) -> str:
-        return f"Field(name={self.name!r}, value={self.values!r}, kind={self.kind!r})"
-
 
 class Fields(interfaces_http.Fields):
     def __init__(
@@ -130,13 +130,9 @@ class Fields(interfaces_http.Fields):
                 "following normalized field names appear more than once: "
                 f"{', '.join(non_unique_names)}."
             )
-        init_tuples = zip(init_field_names, init_fields)
+        init_tuples = zip(init_field_names, init_fields, strict=True)
         self.entries: OrderedDict[str, interfaces_http.Field] = OrderedDict(init_tuples)
         self.encoding: str = encoding
-
-    def set_field(self, field: interfaces_http.Field) -> None:
-        """Alias for __setitem__ to utilize the field.name for the entry key."""
-        self.__setitem__(field.name, field)
 
     def __setitem__(self, name: str, field: interfaces_http.Field) -> None:
         """Set or override entry for a Field name."""
@@ -149,11 +145,6 @@ class Fields(interfaces_http.Fields):
             )
         self.entries[normalized_name] = field
 
-    def get(
-        self, key: str, default: interfaces_http.Field | None = None
-    ) -> interfaces_http.Field | None:
-        return self[key] if key in self else default
-
     def __getitem__(self, name: str) -> interfaces_http.Field:
         """Retrieve Field entry."""
         normalized_name = self._normalize_field_name(name)
@@ -163,6 +154,36 @@ class Fields(interfaces_http.Fields):
         """Delete entry from collection."""
         normalized_name = self._normalize_field_name(name)
         del self.entries[normalized_name]
+
+    def __eq__(self, other: object) -> bool:
+        """Encoding must match.
+
+        Entries must match in values and order.
+        """
+        if not isinstance(other, Fields):
+            return False
+        return self.encoding == other.encoding and self.entries == other.entries
+
+    def __iter__(self) -> Iterator[interfaces_http.Field]:
+        yield from self.entries.values()
+
+    def __len__(self) -> int:
+        return len(self.entries)
+
+    def __repr__(self) -> str:
+        return f"Fields({self.entries})"
+
+    def __contains__(self, key: str) -> bool:
+        return self._normalize_field_name(key) in self.entries
+
+    def set_field(self, field: interfaces_http.Field) -> None:
+        """Alias for __setitem__ to utilize the field.name for the entry key."""
+        self.__setitem__(field.name, field)
+
+    def get(
+        self, key: str, default: interfaces_http.Field | None = None
+    ) -> interfaces_http.Field | None:
+        return self[key] if key in self else default
 
     def get_by_type(
         self, kind: interfaces_http.FieldPosition
@@ -195,27 +216,6 @@ class Fields(interfaces_http.Fields):
         """
         return name.lower()
 
-    def __eq__(self, other: object) -> bool:
-        """Encoding must match.
-
-        Entries must match in values and order.
-        """
-        if not isinstance(other, Fields):
-            return False
-        return self.encoding == other.encoding and self.entries == other.entries
-
-    def __iter__(self) -> Iterator[interfaces_http.Field]:
-        yield from self.entries.values()
-
-    def __len__(self) -> int:
-        return len(self.entries)
-
-    def __repr__(self) -> str:
-        return f"Fields({self.entries})"
-
-    def __contains__(self, key: str) -> bool:
-        return self._normalize_field_name(key) in self.entries
-
 
 @dataclass(kw_only=True, frozen=True)
 class URI(interfaces_http.URI):
@@ -227,7 +227,7 @@ class URI(interfaces_http.URI):
     username: str | None = None
     """Username part of the userinfo URI component."""
 
-    password: str | None = None
+    password: str | None = field(default=None, repr=False)
     """Password part of the userinfo URI component."""
 
     host: str
@@ -245,6 +245,20 @@ class URI(interfaces_http.URI):
     fragment: str | None = None
     """Part of the URI specification, but may not be transmitted by a client."""
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, URI):
+            return False
+        return (
+            self.scheme == other.scheme
+            and self.host == other.host
+            and self.port == other.port
+            and self.path == other.path
+            and self.query == other.query
+            and self.username == other.username
+            and self.password == other.password
+            and self.fragment == other.fragment
+        )
+
     @property
     def netloc(self) -> str:
         """Construct netloc string in format ``{username}:{password}@{host}:{port}``
@@ -253,25 +267,6 @@ class URI(interfaces_http.URI):
         is ignored, unless ``username`` is also set.
         """
         return self._netloc
-
-    # cached_property does NOT behave like property, it actually allows for setting.
-    # Therefore we need a layer of indirection.
-    @cached_property
-    def _netloc(self) -> str:
-        if self.username is not None:
-            password = "" if self.password is None else f":{self.password}"
-            userinfo = f"{self.username}{password}@"
-        else:
-            userinfo = ""
-
-        if self.port is not None:
-            port = f":{self.port}"
-        else:
-            port = ""
-
-        host = self.host
-
-        return f"{userinfo}{host}{port}"
 
     def build(self) -> str:
         """Construct URI string representation.
@@ -301,19 +296,24 @@ class URI(interfaces_http.URI):
             "fragment": self.fragment,
         }
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, URI):
-            return False
-        return (
-            self.scheme == other.scheme
-            and self.host == other.host
-            and self.port == other.port
-            and self.path == other.path
-            and self.query == other.query
-            and self.username == other.username
-            and self.password == other.password
-            and self.fragment == other.fragment
-        )
+    # cached_property does NOT behave like property, it actually allows for setting.
+    # Therefore we need a layer of indirection.
+    @cached_property
+    def _netloc(self) -> str:
+        if self.username is not None:
+            password = "" if self.password is None else f":{self.password}"
+            userinfo = f"{self.username}{password}@"
+        else:
+            userinfo = ""
+
+        if self.port is not None:
+            port = f":{self.port}"
+        else:
+            port = ""
+
+        host = self.host
+
+        return f"{userinfo}{host}{port}"
 
 
 class URIParameters(TypedDict):

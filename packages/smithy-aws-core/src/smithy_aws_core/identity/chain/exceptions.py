@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 
-class IdentityChainConfigurationError(SmithyError):
+class IdentityChainConfigurationError(SmithyError, RuntimeError):
     """Raised when discovered providers violate an assembly invariant."""
 
 

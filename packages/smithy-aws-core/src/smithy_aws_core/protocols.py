@@ -88,21 +88,9 @@ __all__ = [
 ]
 
 
-def _assert_json() -> None:
-    if not _HAS_JSON:
-        raise MissingDependencyError(
-            "Attempted to use JSON codec, but smithy-json is not installed."
-        )
-
-
-def _assert_xml() -> None:
-    if not _HAS_XML:
-        raise MissingDependencyError(
-            "Attempted to use XML codec, but smithy-xml is not installed."
-        )
-
-
 class AWSErrorIdentifier(HTTPErrorIdentifier):
+    """Identifies modeled errors from the ``x-amzn-errortype`` header."""
+
     _HEADER_KEY: Final = "x-amzn-errortype"
 
     def identify(
@@ -119,27 +107,6 @@ class AWSErrorIdentifier(HTTPErrorIdentifier):
         if code is not None:
             return parse_error_code(code, operation.schema.id.namespace)
         return None
-
-
-if TYPE_CHECKING or _HAS_JSON:
-
-    class AWSJSONDocument(JSONDocument):
-        @property
-        def discriminator(self) -> ShapeID:
-            if self.shape_type is ShapeType.STRUCTURE:
-                return self._schema.id
-            parsed = parse_document_discriminator(
-                self, self._settings.default_namespace
-            )
-            if parsed is None:
-                raise DiscriminatorError(
-                    f"Unable to parse discriminator for {self.shape_type} document."
-                )
-            return parsed
-else:
-
-    class AWSJSONDocument:  # type: ignore[no-redef]
-        pass
 
 
 class _AWSResponseMetadataMixin:
@@ -301,27 +268,6 @@ class RestXmlClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol
             is_timeout_error=is_timeout,
             is_retry_safe=is_throttle or is_timeout or None,
             retry_after=retry_after,
-        )
-
-
-@dataclass(frozen=True)
-class _XMLErrorCodec(Codec):
-    """Reads an error's members from inside its restXml wrapper elements."""
-
-    codec: "XMLCodec"
-    wrapper_elements: tuple[str, ...]
-    root: Element
-
-    @property
-    def media_type(self) -> str:
-        return self.codec.media_type
-
-    def create_serializer(self, sink: BytesWriter) -> ShapeSerializer:
-        return self.codec.create_serializer(sink)
-
-    def create_deserializer(self, source: bytes | BytesReader) -> ShapeDeserializer:
-        return self.codec.create_deserializer_from_element(
-            self.root, wrapper_elements=self.wrapper_elements
         )
 
 
@@ -537,31 +483,6 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
         return error_id
 
 
-@dataclass(frozen=True)
-class _RecordedQueryRequestId:
-    """A body-sourced request ID bound to the response it was parsed from.
-
-    Retry attempts share one properties object, so the ID is tagged with its
-    source response. ``extract_response_metadata`` only trusts it for that exact
-    response, so a later attempt that fails before recording its own ID (for
-    example, when a pre-deserialization hook raises) cannot surface an earlier
-    attempt's ID.
-    """
-
-    response: HTTPResponse
-    value: str
-
-
-_QUERY_REQUEST_ID = PropertyKey(
-    key="aws_query_request_id", value_type=_RecordedQueryRequestId
-)
-"""Where the awsQuery protocols record a body-sourced request ID.
-
-The body is only available while deserializing, so the value is stored there for
-``extract_response_metadata`` to read back.
-"""
-
-
 class AwsQueryClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
     """An implementation of the aws.protocols#awsQuery protocol."""
 
@@ -589,6 +510,7 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
 
     @property
     def content_type(self) -> str:
+        """The content type of serialized request bodies."""
         return self._content_type
 
     def extract_response_metadata(
@@ -806,3 +728,87 @@ class AwsJson11ClientProtocol(_AWSJSONClientProtocol):
 
     _id: ClassVar[ShapeID] = AwsJson1_1Trait.id
     _content_type: ClassVar[str] = "application/x-amz-json-1.1"
+
+
+if TYPE_CHECKING or _HAS_JSON:
+
+    class AWSJSONDocument(JSONDocument):
+        """JSON document that reads error and union discriminators from ``__type`` or ``code``."""
+
+        @property
+        def discriminator(self) -> ShapeID:
+            """The structure's shape ID, or the shape ID parsed from ``__type`` or ``code``."""
+            if self.shape_type is ShapeType.STRUCTURE:
+                return self._schema.id
+            parsed = parse_document_discriminator(
+                self, self._settings.default_namespace
+            )
+            if parsed is None:
+                raise DiscriminatorError(
+                    f"Unable to parse discriminator for {self.shape_type} document."
+                )
+            return parsed
+else:
+
+    class AWSJSONDocument:  # type: ignore[no-redef]
+        """Placeholder used when smithy-json isn't installed."""
+
+
+@dataclass(frozen=True)
+class _RecordedQueryRequestId:
+    """A body-sourced request ID bound to the response it was parsed from.
+
+    Retry attempts share one properties object, so the ID is tagged with its
+    source response. ``extract_response_metadata`` only trusts it for that exact
+    response, so a later attempt that fails before recording its own ID (for
+    example, when a pre-deserialization hook raises) cannot surface an earlier
+    attempt's ID.
+    """
+
+    response: HTTPResponse
+    value: str
+
+
+_QUERY_REQUEST_ID = PropertyKey(
+    key="aws_query_request_id", value_type=_RecordedQueryRequestId
+)
+"""Where the awsQuery protocols record a body-sourced request ID.
+
+The body is only available while deserializing, so the value is stored there for
+``extract_response_metadata`` to read back.
+"""
+
+
+def _assert_json() -> None:
+    if not _HAS_JSON:
+        raise MissingDependencyError(
+            "Attempted to use JSON codec, but smithy-json is not installed."
+        )
+
+
+def _assert_xml() -> None:
+    if not _HAS_XML:
+        raise MissingDependencyError(
+            "Attempted to use XML codec, but smithy-xml is not installed."
+        )
+
+
+@dataclass(frozen=True)
+class _XMLErrorCodec(Codec):
+    """Reads an error's members from inside its restXml wrapper elements."""
+
+    codec: "XMLCodec"
+    wrapper_elements: tuple[str, ...]
+    root: Element
+
+    @property
+    def media_type(self) -> str:
+        return self.codec.media_type
+
+    def create_serializer(self, sink: BytesWriter) -> ShapeSerializer:
+        return self.codec.create_serializer(sink)
+
+    def create_deserializer(self, source: bytes | BytesReader) -> ShapeDeserializer:
+        return self.codec.create_deserializer_from_element(
+            self.root, wrapper_elements=self.wrapper_elements
+        )

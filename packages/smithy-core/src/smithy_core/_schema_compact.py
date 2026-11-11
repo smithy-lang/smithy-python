@@ -113,44 +113,6 @@ _TRAIT_BIT_IDS: tuple[ShapeID, ...] = tuple(ShapeID(t) for t in _TRAIT_BITS)
 _traits_cache: dict[int, dict[ShapeID, "Trait | DynamicTrait"]] = {}
 
 
-def _expand_traits(
-    indicator: StaticSchemaTraits,
-) -> dict[ShapeID, "Trait | DynamicTrait"]:
-    if isinstance(indicator, int):
-        cached = _traits_cache.get(indicator)
-        if cached is not None:
-            return cached
-        traits: dict[ShapeID, Trait | DynamicTrait] = {}
-        bit = indicator
-        i = 0
-        while bit:
-            if bit & 1:
-                tid = _TRAIT_BIT_IDS[i]
-                traits[tid] = Trait.new(tid)
-            bit >>= 1
-            i += 1
-        _traits_cache[indicator] = traits
-        return traits
-
-    out: dict[ShapeID, Trait | DynamicTrait] = {}
-    for raw_id, value in indicator.items():
-        tid = ShapeID(raw_id)
-        out[tid] = Trait.new(tid, value)
-    return out
-
-
-def _resolve(ref: "StaticSchemaRef") -> Schema:
-    """Resolve a member target or operation ref to a concrete Schema."""
-    if isinstance(ref, Schema):
-        return ref
-    if isinstance(ref, int):
-        return _PRELUDE[ref]
-    if isinstance(ref, tuple):
-        return hydrate(cast(StaticSchema, ref))
-    # a lambda: SIBLING forward/recursive reference
-    return _resolve(ref())
-
-
 # id(tuple) -> (tuple, fully hydrated Schema). A component is written here only once
 # its ENTIRE connected graph is built: a cross-referenced sibling that finishes its
 # own populate loop first is still held out of _cache until the outermost hydrate
@@ -218,6 +180,65 @@ def hydrate(data: "StaticSchema | Schema") -> Schema:
             _building.stack = None
 
 
+# Operation tuple slots after the shape definition (0-3): input, output, error refs.
+_OP_INPUT = 4
+_OP_OUTPUT = 5
+_OP_ERRORS = 6
+
+
+def operation_input_schema(op: "StaticOperationSchema") -> Schema:
+    """Hydrate the input schema referenced by an operation tuple."""
+    return _resolve(op[_OP_INPUT])
+
+
+def operation_output_schema(op: "StaticOperationSchema") -> Schema:
+    """Hydrate the output schema referenced by an operation tuple."""
+    return _resolve(op[_OP_OUTPUT])
+
+
+def operation_error_schemas(op: "StaticOperationSchema") -> list[Schema]:
+    """Hydrate the error schemas referenced by an operation tuple."""
+    return [_resolve(ref) for ref in op[_OP_ERRORS]]
+
+
+def _expand_traits(
+    indicator: StaticSchemaTraits,
+) -> dict[ShapeID, "Trait | DynamicTrait"]:
+    if isinstance(indicator, int):
+        cached = _traits_cache.get(indicator)
+        if cached is not None:
+            return cached
+        traits: dict[ShapeID, Trait | DynamicTrait] = {}
+        bit = indicator
+        i = 0
+        while bit:
+            if bit & 1:
+                tid = _TRAIT_BIT_IDS[i]
+                traits[tid] = Trait.new(tid)
+            bit >>= 1
+            i += 1
+        _traits_cache[indicator] = traits
+        return traits
+
+    out: dict[ShapeID, Trait | DynamicTrait] = {}
+    for raw_id, value in indicator.items():
+        tid = ShapeID(raw_id)
+        out[tid] = Trait.new(tid, value)
+    return out
+
+
+def _resolve(ref: "StaticSchemaRef") -> Schema:
+    """Resolve a member target or operation ref to a concrete Schema."""
+    if isinstance(ref, Schema):
+        return ref
+    if isinstance(ref, int):
+        return _PRELUDE[ref]
+    if isinstance(ref, tuple):
+        return hydrate(cast(StaticSchema, ref))
+    # a lambda: SIBLING forward/recursive reference
+    return _resolve(ref())
+
+
 def _build(
     data: "StaticSchema",
     key: int,
@@ -257,24 +278,3 @@ def _build(
                 member_index=index,
             )
     return schema
-
-
-# Operation tuple slots after the shape definition (0-3): input, output, error refs.
-_OP_INPUT = 4
-_OP_OUTPUT = 5
-_OP_ERRORS = 6
-
-
-def operation_input_schema(op: "StaticOperationSchema") -> Schema:
-    """Hydrate the input schema referenced by an operation tuple."""
-    return _resolve(op[_OP_INPUT])
-
-
-def operation_output_schema(op: "StaticOperationSchema") -> Schema:
-    """Hydrate the output schema referenced by an operation tuple."""
-    return _resolve(op[_OP_OUTPUT])
-
-
-def operation_error_schemas(op: "StaticOperationSchema") -> list[Schema]:
-    """Hydrate the error schemas referenced by an operation tuple."""
-    return [_resolve(ref) for ref in op[_OP_ERRORS]]

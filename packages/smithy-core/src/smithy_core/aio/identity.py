@@ -22,6 +22,8 @@ logger: Final = logging.getLogger(__name__)
 class AsyncCachingIdentityResolver[I: Identity, IP: Mapping[str, Any]](
     AsyncIdentityResolver[I, IP]
 ):
+    """Identity resolver that caches its identity until it expires."""
+
     def __init__(self) -> None:
         self._cached: I | None = None
 

@@ -26,6 +26,7 @@ class _UnsetType:
 
 
 UNSET = _UnsetType()
+"""Sentinel for a config value that was never set."""
 
 
 class ConfigSource(StrEnum):
