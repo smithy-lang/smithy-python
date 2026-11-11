@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import software.amazon.smithy.build.FileManifest;
@@ -93,7 +94,7 @@ public class PythonCodegenTest {
         var typecheck = Files.readString(tempDir.resolve("tests/_typecheck.py"));
         assertFalse(typecheck.contains("stream=_"));
 
-        var schemas = Files.readString(tempDir.resolve("src/weather/_private/schemas.py"));
+        var schemas = readSchemaModules(tempDir.resolve("src/weather/_private"));
         assertTrue(schemas.contains("example.weather#fakeProtocol"));
         assertTrue(schemas.contains("aws.protocols#restJson1"));
         assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
@@ -109,5 +110,177 @@ public class PythonCodegenTest {
         assertTrue(syncConfig.contains("from ._private.endpoints import BDD"));
         assertTrue(schemas.contains("smithy.api#longPoll"));
         assertTrue(schemas.contains("\"timeoutMillis\": 20000"));
+    }
+
+    @Test
+    public void partitionsLargeModels(@TempDir Path tempDir) throws IOException {
+        var source = new StringBuilder("""
+                $version: "2"
+                namespace example.large
+
+                use aws.protocols#restJson1
+
+                @restJson1
+                service Large {
+                    version: "1",
+                    operations: [GetLarge]
+                }
+
+                @http(method: "POST", uri: "/", code: 200)
+                operation GetLarge {
+                    input: GetLargeInput,
+                    output: GetLargeOutput
+                }
+
+                @input
+                structure GetLargeInput {
+                    root: Shape0
+                }
+
+                @output
+                structure GetLargeOutput {}
+
+                """);
+        for (int i = 0; i < 250; i++) {
+            source.append("structure Shape")
+                    .append(i)
+                    .append(" { next: Shape")
+                    .append(i + 1)
+                    .append(" }\n");
+        }
+        source.append("structure Shape250 {}\n");
+
+        var model = Model.assembler(PythonCodegenTest.class.getClassLoader())
+                .discoverModels(PythonCodegenTest.class.getClassLoader())
+                .addUnparsedModel("large.smithy", source.toString())
+                .assemble()
+                .unwrap();
+        var context = PluginContext.builder()
+                .fileManifest(FileManifest.create(tempDir))
+                .settings(
+                        ObjectNode.builder()
+                                .withMember("service", "example.large#Large")
+                                .withMember("module", "large")
+                                .withMember("moduleVersion", "0.0.1")
+                                .build())
+                .model(model)
+                .build();
+
+        new PythonClientCodegenPlugin().execute(context);
+
+        var schemas = Files.readString(tempDir.resolve("src/large/_private/schemas.py"));
+        assertTrue(schemas.contains("__all__ = list(_PARTITIONS)  # pyright: ignore[reportUnsupportedDunderAll]"));
+        assertTrue(schemas.contains("\"SHAPE0\","));
+        assertTrue(schemas.contains("\"SHAPE250\","));
+        assertTrue(Files.exists(tempDir.resolve("src/large/_private/schemas_0.py")));
+        assertTrue(Files.exists(tempDir.resolve("src/large/_private/schemas_1.py")));
+
+        var models = Files.readString(tempDir.resolve("src/large/models.pyi"));
+        assertTrue(models.contains("from ._private.models_0 import ("));
+        assertTrue(models.contains("Shape0 as Shape0,"));
+        assertTrue(models.contains("Shape250 as Shape250,"));
+        assertTrue(Files.exists(tempDir.resolve("src/large/_private/models_0.pyi")));
+        assertTrue(Files.exists(tempDir.resolve("src/large/_private/models_1.pyi")));
+    }
+
+    @Test
+    public void keepsOperationSchemasTogether(@TempDir Path tempDir) throws IOException {
+        var source = new StringBuilder("""
+                $version: "2"
+                namespace example.affinity
+
+                use aws.protocols#restJson1
+
+                @restJson1
+                service Affinity {
+                    version: "1",
+                    operations: [
+                """);
+        var operationSuffixes = new ArrayList<String>();
+        for (int i = 0; i < 60; i++) {
+            operationSuffixes.add(i < 26
+                    ? Character.toString((char) ('A' + i))
+                    : Character.toString((char) ('A' + (i - 26) / 26))
+                            + Character.toString((char) ('A' + (i - 26) % 26)));
+        }
+        for (var suffix : operationSuffixes) {
+            source.append("Operation").append(suffix).append(",\n");
+        }
+        source.append("""
+                    ]
+                }
+
+                """);
+        for (var suffix : operationSuffixes) {
+            source.append("@http(method: \"POST\", uri: \"/")
+                    .append(suffix.toLowerCase())
+                    .append("\", code: 200)\n")
+                    .append("operation Operation")
+                    .append(suffix)
+                    .append(" { input: Operation")
+                    .append(suffix)
+                    .append("Input, output: Operation")
+                    .append(suffix)
+                    .append("Output }\n")
+                    .append("@input structure Operation")
+                    .append(suffix)
+                    .append("Input {}\n")
+                    .append("@output structure Operation")
+                    .append(suffix)
+                    .append("Output {}\n");
+        }
+
+        var model = Model.assembler(PythonCodegenTest.class.getClassLoader())
+                .discoverModels(PythonCodegenTest.class.getClassLoader())
+                .addUnparsedModel("affinity.smithy", source.toString())
+                .assemble()
+                .unwrap();
+        var context = PluginContext.builder()
+                .fileManifest(FileManifest.create(tempDir))
+                .settings(
+                        ObjectNode.builder()
+                                .withMember("service", "example.affinity#Affinity")
+                                .withMember("module", "affinity")
+                                .withMember("moduleVersion", "0.0.1")
+                                .build())
+                .model(model)
+                .build();
+
+        new PythonClientCodegenPlugin().execute(context);
+
+        var schemaDirectory = tempDir.resolve("src/affinity/_private");
+        for (var suffix : operationSuffixes) {
+            var operationName = "OPERATION_" + suffix;
+            assertSchemaDeclarationsShareModule(
+                    schemaDirectory,
+                    operationName + ": StaticOperationSchema",
+                    operationName + "_INPUT: StaticSchema",
+                    operationName + "_OUTPUT: StaticSchema");
+        }
+    }
+
+    private static String readSchemaModules(Path directory) throws IOException {
+        var result = new StringBuilder();
+        try (var files = Files.newDirectoryStream(directory, "schemas*.py")) {
+            for (var file : files) {
+                result.append(Files.readString(file));
+            }
+        }
+        return result.toString();
+    }
+
+    private static void assertSchemaDeclarationsShareModule(Path directory, String... declarations) throws IOException {
+        try (var files = Files.newDirectoryStream(directory, "schemas_*.py")) {
+            for (var file : files) {
+                var source = Files.readString(file);
+                if (source.contains(declarations[0])) {
+                    for (var declaration : declarations) {
+                        assertTrue(source.contains(declaration));
+                    }
+                    return;
+                }
+            }
+        }
+        throw new AssertionError("No schema partition contained " + declarations[0]);
     }
 }
