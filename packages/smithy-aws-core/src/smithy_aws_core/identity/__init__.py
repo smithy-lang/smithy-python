@@ -14,6 +14,7 @@ from .process import ProcessCredentialsResolver
 from .static import StaticCredentialsResolver
 
 __all__ = (
+    "AWS_IDENTITY_CONFIG",
     "AWSCredentialsIdentity",
     "AWSCredentialsResolver",
     "AWSIdentityProperties",

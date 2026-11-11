@@ -13,12 +13,10 @@ static-analysis: ## Catches defects CI can find without running the code's tests
 	$(MAKE) changelog-check
 	$(MAKE) check-imports
 	$(MAKE) check-conventions
-#	$(MAKE) check-api
 #	$(MAKE) check-dependencies
 	$(MAKE) check-packaging
 	$(MAKE) check-import-stability
-	$(MAKE) api-snapshot # TODO: remove when check-api passes
-	$(MAKE) typecheck-protocols # TODO: remove when check-api passes
+	$(MAKE) check-api
 
 
 test-unit: ## Runs the python unit tests.
@@ -70,8 +68,8 @@ check-api: ## Keeps the public API surface reviewed, typed, and exported under i
 	$(MAKE) api-snapshot
 	$(MAKE) export-names
 	$(MAKE) dunder-all
-	$(MAKE) typecheck-protocols
 	$(MAKE) type-completeness
+	$(MAKE) typecheck-protocols
 
 
 check-dependencies: ## Keeps declared dependencies honest for customers who install only some packages.

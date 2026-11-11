@@ -46,7 +46,7 @@ class ChecksumMismatchError(CallError):
 
     def __post_init__(self) -> None:
         if not self.message:
-            self.message = (
+            self.message: str = (
                 f"Expected a {self.algorithm} checksum of "
                 f"{encode_digest(self.expected)}, but the payload's checksum was "
                 f"{encode_digest(self.actual)}."

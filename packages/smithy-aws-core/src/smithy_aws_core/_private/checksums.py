@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Final
 
 from smithy_core.exceptions import MissingDependencyError
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 try:
     import smithy_aws_checksums

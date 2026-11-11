@@ -10,8 +10,12 @@ re-exports a name its source module doesn't export publishes something the owner
 never declared public. Unresolvable names are already caught by ruff F822.
 
 Only modules that declare ``__all__`` are checked. A name counts as public when it
-is defined in the module and has no leading underscore.
+is defined in the module and has no leading underscore. In a package
+``__init__``, an import the module never uses exists only to re-export, so it must
+be listed in ``__all__``. A used import may be left out as a private re-export.
 """
+
+import ast
 
 from _common import (
     Finding,
@@ -22,6 +26,9 @@ from _common import (
     runtime_modules,
 )
 
+# A module-level logger is named for logging config, not imported by customers.
+_NOT_API = frozenset({"logger"})
+
 
 def check() -> list[Finding]:
     findings: list[Finding] = []
@@ -31,15 +38,21 @@ def check() -> list[Finding]:
         if exported is None:
             continue
         exported_set = set(exported)
-        for name in sorted(module.defined):
+        for name in sorted(module.defined - _NOT_API):
             if not name.startswith("_") and name not in exported_set:
                 findings.append(
                     Finding(f"public {name} is missing from __all__", module.path)
                 )
         if not module.is_package:
             continue
+        used = _used_names(module.tree)
         for name, imp in sorted(module.imported.items()):
             if name.startswith("_") or imp.top not in owned_roots() or imp.name is None:
+                continue
+            # A used import is a private re-export, and a TYPE_CHECKING one is unbound.
+            if name not in exported_set and (
+                imp.context == "type_checking" or name in used
+            ):
                 continue
             target, attr = resolve_from(imp)
             if attr is None:
@@ -47,10 +60,10 @@ def check() -> list[Finding]:
             if name not in exported_set:
                 findings.append(
                     Finding(
-                        f"re-exported {name} (from {target}) is missing from __all__",
+                        f"{name} (from {target}) is imported only to re-export but "
+                        "is missing from __all__",
                         module.path,
                         imp.line,
-                        "warning",
                     )
                 )
                 continue
@@ -65,6 +78,37 @@ def check() -> list[Finding]:
                     )
                 )
     return findings
+
+
+def _used_names(tree: ast.Module) -> set[str]:
+    used = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
+    for annotation in _annotations(tree):
+        for node in ast.walk(annotation):
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                try:
+                    parsed = ast.parse(node.value, mode="eval")
+                except SyntaxError:
+                    continue
+                used.update(n.id for n in ast.walk(parsed) if isinstance(n, ast.Name))
+    return used
+
+
+def _annotations(tree: ast.Module) -> list[ast.expr]:
+    """Annotation expressions, where a string literal is a forward reference."""
+    found: list[ast.expr] = []
+    for node in ast.walk(tree):
+        match node:
+            case ast.arg(annotation=ann) | ast.AnnAssign(annotation=ann) if ann:
+                found.append(ann)
+            case ast.FunctionDef(returns=ret) | ast.AsyncFunctionDef(returns=ret) if (
+                ret
+            ):
+                found.append(ret)
+            case ast.TypeAlias(value=value):
+                found.append(value)
+            case _:
+                pass
+    return found
 
 
 if __name__ == "__main__":

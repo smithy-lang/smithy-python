@@ -115,7 +115,7 @@ class Schema:
         object.__setattr__(self, "_extensions", _EMPTY_SCHEMA_EXTENSIONS)
         object.__setattr__(self, "_members_by_index", None)
 
-    def __contains__(self, item: Any):
+    def __contains__(self, item: Any) -> bool:
         """Returns whether the schema has the given member or trait."""
         match item:
             case type():

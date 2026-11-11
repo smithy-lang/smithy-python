@@ -47,6 +47,7 @@ from . import interfaces as http_aio_interfaces
 
 __all__ = [
     "DEFAULT_READ_BUFFER_SIZE",
+    "HAS_CRT",
     "AWSCRTHTTPClient",
     "AWSCRTHTTPClientConfig",
     "AsyncAWSCRTHTTPResponse",
@@ -64,7 +65,7 @@ class _AWSCRTEventLoop:
         _assert_crt()
         event_loop_group = crt_io.EventLoopGroup(1)
         host_resolver = crt_io.DefaultHostResolver(event_loop_group)
-        self.bootstrap = crt_io.ClientBootstrap(event_loop_group, host_resolver)
+        self._bootstrap = crt_io.ClientBootstrap(event_loop_group, host_resolver)
 
 
 class AsyncAWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
@@ -151,36 +152,19 @@ class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
     _HTTPS_PORT = 443
     _TIMEOUT_ERROR_NAMES = frozenset(["AWS_IO_SOCKET_TIMEOUT", "AWS_IO_SOCKET_CLOSED"])
 
-    TIMEOUT_EXCEPTIONS = (_CRTTimeoutError,)
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...] = (_CRTTimeoutError,)
 
     # CRT can stream request and response data concurrently when the connection
     # negotiates HTTP/2.
     SUPPORTS_DUPLEX_STREAMING = True
 
-    def __init__(
-        self,
-        eventloop: _AWSCRTEventLoop | None = None,
-        client_config: AWSCRTHTTPClientConfig | None = None,
-    ) -> None:
+    def __init__(self, client_config: AWSCRTHTTPClientConfig | None = None) -> None:
         """
         :param client_config: Configuration that applies to all requests made with this
         client.
         """
         _assert_crt()
-        self._config = client_config or AWSCRTHTTPClientConfig()
-        if eventloop is None:
-            eventloop = _AWSCRTEventLoop()
-        self._eventloop = eventloop
-        self._client_bootstrap = self._eventloop.bootstrap
-        tls_ctx_options = crt_io.TlsContextOptions()
-        if self._config.trust_store_path is not None:
-            tls_ctx_options.override_default_trust_store_from_path(
-                None, self._config.trust_store_path
-            )
-        self._tls_ctx = crt_io.ClientTlsContext(tls_ctx_options)
-        self._socket_options = crt_io.SocketOptions()
-        self._connections: ConnectionPoolDict = {}
-        self._closed = False
+        self._init(_AWSCRTEventLoop(), client_config)
 
     async def __aenter__(self) -> Self:
         if self._closed:
@@ -191,10 +175,10 @@ class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
         await self.close()
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
-        return AWSCRTHTTPClient(
-            eventloop=self._eventloop,
-            client_config=deepcopy(self._config),
-        )
+        # Config is copied per operation, so copies share the event loop's thread.
+        copied = AWSCRTHTTPClient.__new__(AWSCRTHTTPClient)
+        copied._init(self._eventloop, deepcopy(self._config))
+        return copied
 
     async def send(
         self,
@@ -251,6 +235,24 @@ class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
             *(connection.close() for connection in connections),
             return_exceptions=True,
         )
+
+    def _init(
+        self,
+        eventloop: _AWSCRTEventLoop,
+        client_config: AWSCRTHTTPClientConfig | None,
+    ) -> None:
+        self._config = client_config or AWSCRTHTTPClientConfig()
+        self._eventloop = eventloop
+        self._client_bootstrap = eventloop._bootstrap  # pyright: ignore[reportPrivateUsage]
+        tls_ctx_options = crt_io.TlsContextOptions()
+        if self._config.trust_store_path is not None:
+            tls_ctx_options.override_default_trust_store_from_path(
+                None, self._config.trust_store_path
+            )
+        self._tls_ctx = crt_io.ClientTlsContext(tls_ctx_options)
+        self._socket_options = crt_io.SocketOptions()
+        self._connections: ConnectionPoolDict = {}
+        self._closed = False
 
     async def _await_response(
         self, stream: "AIOHttpClientStreamUnified"

@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Completed type annotations and __all__ declarations for the public API."
+}

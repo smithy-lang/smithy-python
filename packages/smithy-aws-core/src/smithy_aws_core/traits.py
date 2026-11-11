@@ -91,7 +91,7 @@ class AwsJson1_1Trait(Trait, id=ShapeID("aws.protocols#awsJson1_1")):
 class AwsQueryTrait(Trait, id=ShapeID("aws.protocols#awsQuery")):
     """The ``aws.protocols#awsQuery`` protocol trait."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -99,7 +99,7 @@ class AwsQueryTrait(Trait, id=ShapeID("aws.protocols#awsQuery")):
 class AwsQueryErrorTrait(Trait, id=ShapeID("aws.protocols#awsQueryError")):
     """Sets the error code and HTTP status an awsQuery error is returned with."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, Mapping)
         assert isinstance(self.document_value.get("code"), str)
         assert isinstance(self.document_value.get("httpResponseCode"), int)
@@ -119,7 +119,7 @@ class AwsQueryErrorTrait(Trait, id=ShapeID("aws.protocols#awsQueryError")):
 class Ec2QueryTrait(Trait, id=ShapeID("aws.protocols#ec2Query")):
     """The ``aws.protocols#ec2Query`` protocol trait."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -129,7 +129,7 @@ class Ec2QueryNameTrait(Trait, id=ShapeID("aws.protocols#ec2QueryName")):
 
     document_value: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
@@ -146,7 +146,7 @@ class HTTPChecksumTrait(Trait, id=ShapeID("aws.protocols#httpChecksum")):
     <https://smithy.io/2.0/aws/aws-core.html#aws-protocols-httpchecksum-trait>`_.
     """
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, Mapping)
 
     @property
@@ -174,7 +174,7 @@ class HTTPChecksumTrait(Trait, id=ShapeID("aws.protocols#httpChecksum")):
 class SigV4Trait(Trait, id=ShapeID("aws.auth#sigv4")):
     """Configures SigV4 signing for a service."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, Mapping)
         assert isinstance(self.document_value["name"], str)
 

@@ -7,6 +7,7 @@ __all__ = [
     "InvalidInvocationError",
     "InvalidShapeIdError",
     "ModelError",
+    "SelectorSyntaxError",
     "ShapeNotFoundError",
     "SmithyPythonError",
 ]

@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Removed the eventloop parameter from AWSCRTHTTPClient."
+}

@@ -241,7 +241,7 @@ class MapSerializer(Protocol):
     any data needed between entries.
     """
 
-    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
+    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]) -> None:
         """Write a map entry.
 
         :param key: The entry's key.

@@ -22,7 +22,9 @@ from smithy_http.exceptions import SmithyHTTPError
 def test_deepcopy_client() -> None:
     """Test that AWSCRTHTTPClient can be deep copied."""
     client = AWSCRTHTTPClient()
-    deepcopy(client)
+    copied = deepcopy(client)
+    assert copied._eventloop is client._eventloop  # pyright: ignore[reportPrivateUsage]
+    assert copied._config is not client._config  # pyright: ignore[reportPrivateUsage]
 
 
 async def test_close_closes_and_clears_pooled_connections() -> None:

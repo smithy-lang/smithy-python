@@ -43,6 +43,7 @@ __all__ = [
     "UNRESERVED_HOST_MATCHER",
     "UNRESERVED_RE",
     "ZONE_ID",
+    "variations",
 ]
 
 # #########################
@@ -84,7 +85,7 @@ _subs = {"hex": HEXDIG_RE, "ls32": LS32_RE}
 
 # Below: h16 = hexdig, see: https://tools.ietf.org/html/rfc5234 for details
 # about ABNF (Augmented Backus-Naur Form) use in the comments
-variations = [
+variations: list[str] = [
     #                            6( h16 ":" ) ls32
     "(%(hex)s:){6}%(ls32)s" % _subs,
     #                       "::" 5( h16 ":" ) ls32
@@ -105,7 +106,7 @@ variations = [
     "((%(hex)s:){0,6}%(hex)s)?::" % _subs,
 ]
 
-IPv6_RE = "(({})|({})|({})|({})|({})|({})|({})|({})|({}))".format(*variations)
+IPv6_RE: str = "(({})|({})|({})|({})|({})|({})|({})|({})|({}))".format(*variations)
 
 IPv_FUTURE_RE = r"v[0-9A-Fa-f]+\.[%s]+" % (UNRESERVED_RE + SUB_DELIMITERS_RE + ":")
 
@@ -113,8 +114,8 @@ IPv_FUTURE_RE = r"v[0-9A-Fa-f]+\.[%s]+" % (UNRESERVED_RE + SUB_DELIMITERS_RE + "
 ZONE_ID = "(?:[" + UNRESERVED_RE + "]|" + PCT_ENCODED + ")+"
 """Pattern for an RFC 6874 IPv6 zone ID."""
 
-IPv6_ADDRZ_RFC4007_RE = IPv6_RE + "(?:(?:%25|%)" + ZONE_ID + ")?"
-IPv6_ADDRZ_RE = IPv6_RE + "(?:%25" + ZONE_ID + ")?"
+IPv6_ADDRZ_RFC4007_RE: str = IPv6_RE + "(?:(?:%25|%)" + ZONE_ID + ")?"
+IPv6_ADDRZ_RE: str = IPv6_RE + "(?:%25" + ZONE_ID + ")?"
 
 IP_LITERAL_RE = r"\[({}|{})\]".format(
     IPv6_ADDRZ_RFC4007_RE,
@@ -143,11 +144,11 @@ HOST_RE = HOST_PATTERN = "({}|{}|{})".format(
 
 HOST_MATCHER = re.compile("^" + HOST_RE + "$")
 """Matches a complete RFC 3986 host."""
-IPv4_MATCHER = re.compile("^" + IPv4_RE + "$")
-IPv6_MATCHER = re.compile(r"^\[" + IPv6_ADDRZ_RFC4007_RE + r"\]$")
+IPv4_MATCHER: re.Pattern[str] = re.compile("^" + IPv4_RE + "$")
+IPv6_MATCHER: re.Pattern[str] = re.compile(r"^\[" + IPv6_ADDRZ_RFC4007_RE + r"\]$")
 
 # Used by host validator
-IPv6_NO_RFC4007_MATCHER = re.compile(r"^\[%s\]$" % (IPv6_ADDRZ_RE))
+IPv6_NO_RFC4007_MATCHER: re.Pattern[str] = re.compile(r"^\[%s\]$" % (IPv6_ADDRZ_RE))
 
 # #########################
 # End misc.py

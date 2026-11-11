@@ -159,7 +159,7 @@ class EventPrelude:
     event message.
     """
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.headers_length > MAX_HEADERS_LENGTH:
             raise InvalidHeadersLength(self.headers_length)
 
@@ -366,7 +366,7 @@ class EventHeaderEncoder:
                 case _:  # type: ignore
                     raise InvalidHeaderValue(value)
 
-    def encode_boolean(self, key: str, value: bool):
+    def encode_boolean(self, key: str, value: bool) -> None:
         """Encode a boolean header.
 
         :param key: The header key to encode.
@@ -464,7 +464,7 @@ class EventHeaderEncoder:
         self._buffer.write(pack("!H", len(utf8_string)))
         self._buffer.write(utf8_string)
 
-    def encode_timestamp(self, key: str, value: datetime.datetime):
+    def encode_timestamp(self, key: str, value: datetime.datetime) -> None:
         """Encode a timestamp header.
 
         :param key: The header key to encode.
@@ -475,7 +475,7 @@ class EventHeaderEncoder:
         self._buffer.write(b"\x08")
         self._buffer.write(pack("!q", timestamp_millis))
 
-    def encode_uuid(self, key: str, value: uuid.UUID):
+    def encode_uuid(self, key: str, value: uuid.UUID) -> None:
         """Encode a UUID header.
 
         :param key: The header key to encode.

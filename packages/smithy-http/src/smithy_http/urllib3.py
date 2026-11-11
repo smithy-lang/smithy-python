@@ -27,7 +27,7 @@ from . import tuples_to_fields
 from .exceptions import SmithyHTTPError
 from .interfaces import HTTPClient, HTTPClientConfiguration, HTTPRequestConfiguration
 
-__all__ = ["Urllib3HTTPClient", "Urllib3HTTPClientConfig"]
+__all__ = ["HAS_URLLIB3", "Urllib3HTTPClient", "Urllib3HTTPClientConfig"]
 
 _DEFAULT_CHUNK_SIZE = 64 * 1024
 

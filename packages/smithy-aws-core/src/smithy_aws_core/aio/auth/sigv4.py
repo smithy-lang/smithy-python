@@ -10,7 +10,7 @@ from smithy_core.aio.interfaces.auth import (
     AsyncSigner,
 )
 from smithy_core.interfaces import TypedProperties as _TypedProperties
-from smithy_core.interfaces.auth import EventSigner as EventSignerProtocol
+from smithy_core.interfaces.auth import EventSigner as _EventSignerProtocol
 from smithy_core.types import PropertyKey
 from smithy_http.interfaces import HTTPRequest
 
@@ -83,7 +83,7 @@ class AsyncSigV4AuthScheme(
 
     def event_signer(
         self, *, request: HTTPRequest
-    ) -> EventSignerProtocol[AWSCredentialsIdentity, SigV4SigningProperties] | None:
+    ) -> _EventSignerProtocol[AWSCredentialsIdentity, SigV4SigningProperties] | None:
         if not HAS_EVENT_STREAM:
             return None
 

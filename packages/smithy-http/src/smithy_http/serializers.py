@@ -52,9 +52,21 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "CapturingSerializer",
     "HTTPBindingSerializer",
+    "HTTPHeaderMapSerializer",
+    "HTTPHeaderSerializer",
+    "HTTPPathSerializer",
+    "HTTPQueryMapSerializer",
+    "HTTPQueryMapValueSerializer",
+    "HTTPQuerySerializer",
+    "HTTPRequestBindingSerializer",
     "HTTPRequestSerializer",
+    "HTTPResponseBindingSerializer",
+    "HTTPResponseCodeSerializer",
     "HTTPResponseSerializer",
+    "HostPrefixSerializer",
+    "RawPayloadSerializer",
 ]
 
 
@@ -193,20 +205,20 @@ class HTTPBindingSerializer(InterceptingSerializer):
                 self._content_type = None
 
         self._payload_serializer = payload_serializer
-        self.header_serializer = HTTPHeaderSerializer(
+        self.header_serializer: HTTPHeaderSerializer = HTTPHeaderSerializer(
             header_names=request_metadata.header_names,
         )
-        self.query_serializer = HTTPQuerySerializer(
+        self.query_serializer: HTTPQuerySerializer = HTTPQuerySerializer(
             query_param_exclusions=(
                 request_metadata.query_names
                 | self._operation_metadata.query_literal_names
             ),
         )
-        self.path_serializer = HTTPPathSerializer(
+        self.path_serializer: HTTPPathSerializer = HTTPPathSerializer(
             self._operation_metadata.path,
             greedy_label_names=self._operation_metadata.greedy_label_names,
         )
-        self.host_prefix_serializer = HostPrefixSerializer(
+        self.host_prefix_serializer: HostPrefixSerializer = HostPrefixSerializer(
             payload_serializer,
             self._operation_metadata.host_prefix,
         )
@@ -320,10 +332,10 @@ class HTTPRequestBindingSerializer(InterceptingSerializer):
         binding_matcher: RequestBindingMatcher,
     ) -> None:
         self._payload_serializer = payload_serializer
-        self.header_serializer = HTTPHeaderSerializer()
-        self.query_serializer = HTTPQuerySerializer()
-        self.path_serializer = HTTPPathSerializer(path_pattern)
-        self.host_prefix_serializer = HostPrefixSerializer(
+        self.header_serializer: HTTPHeaderSerializer = HTTPHeaderSerializer()
+        self.query_serializer: HTTPQuerySerializer = HTTPQuerySerializer()
+        self.path_serializer: HTTPPathSerializer = HTTPPathSerializer(path_pattern)
+        self.host_prefix_serializer: HostPrefixSerializer = HostPrefixSerializer(
             payload_serializer, host_prefix_pattern
         )
         self._binding_matcher = binding_matcher
@@ -484,11 +496,13 @@ class HTTPResponseBindingSerializer(InterceptingSerializer):
             the payload, if necessary.
         """
         self._payload_serializer = payload_serializer
-        self.header_serializer = HTTPHeaderSerializer(
+        self.header_serializer: HTTPHeaderSerializer = HTTPHeaderSerializer(
             response=True,
             header_names=binding_metadata.response.header_names,
         )
-        self.response_code_serializer = HTTPResponseCodeSerializer()
+        self.response_code_serializer: HTTPResponseCodeSerializer = (
+            HTTPResponseCodeSerializer()
+        )
         self._binding_metadata = binding_metadata
 
     def before(self, schema: Schema) -> ShapeSerializer:
@@ -704,7 +718,7 @@ class HTTPHeaderMapSerializer(MapSerializer):
         self._header_names = header_names
         self._delegate = CapturingSerializer()
 
-    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
+    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]) -> None:
         header_name = self._prefix + key
         if header_name.lower() in self._header_names:
             return
@@ -944,13 +958,15 @@ class HTTPQueryMapSerializer(MapSerializer):
         self._query_params = query_params
         self._query_param_exclusions = query_param_exclusions
 
-    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
+    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]) -> None:
         if key in self._query_param_exclusions:
             return
         value_writer(HTTPQueryMapValueSerializer(key, self._query_params))
 
 
 class HTTPQueryMapValueSerializer(SpecificShapeSerializer):
+    """Binds the values of one map entry to HTTP query params with a shared key."""
+
     def __init__(self, key: str, query_params: list[tuple[str, str]]) -> None:
         """Initialize an HTTPQueryMapValueSerializer.
 

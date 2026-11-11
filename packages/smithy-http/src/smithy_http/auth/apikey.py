@@ -7,6 +7,7 @@ from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces import TypedProperties as _TypedProperties
 from smithy_core.interfaces.auth import AuthScheme, Signer
 from smithy_core.interfaces.identity import IdentityResolver
+from smithy_core.shapes import ShapeID
 from smithy_core.traits import APIKeyLocation, HTTPAPIKeyAuthTrait
 
 from smithy_http.interfaces import HTTPRequest
@@ -77,7 +78,7 @@ class APIKeySigner(Signer[HTTPRequest, APIKeyIdentity, Any]):
 class _APIKeyAuthSchemeBase:
     """API key auth scheme logic shared by the sync and async schemes."""
 
-    scheme_id = HTTPAPIKeyAuthTrait.id
+    scheme_id: ShapeID = HTTPAPIKeyAuthTrait.id
 
     def __init__(
         self, *, name: str, location: APIKeyLocation, scheme: str | None = None

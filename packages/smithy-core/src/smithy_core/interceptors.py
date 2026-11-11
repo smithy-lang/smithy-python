@@ -10,6 +10,7 @@ from .interfaces import TypedProperties
 from .serializers import SerializeableShape
 
 __all__ = [
+    "AnyInterceptor",
     "InputContext",
     "Interceptor",
     "InterceptorChain",

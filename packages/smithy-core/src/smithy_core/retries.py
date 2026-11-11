@@ -407,7 +407,9 @@ class SimpleRetryStrategy:
         :param max_attempts: Upper limit on total number of attempts made, including
             initial attempt and retries.
         """
-        self.backoff_strategy = backoff_strategy or ExponentialRetryBackoffStrategy()
+        self.backoff_strategy: retries_interface.RetryBackoffStrategy = (
+            backoff_strategy or ExponentialRetryBackoffStrategy()
+        )
         self.max_attempts = max_attempts
 
     def __deepcopy__(self, memo: Any) -> Self:
@@ -494,12 +496,15 @@ class StandardRetryStrategy:
                 f"max_attempts must be a non-negative integer, got {max_attempts}"
             )
 
-        self.backoff_strategy = backoff_strategy or ExponentialRetryBackoffStrategy(
-            backoff_scale_value=self._NON_THROTTLING_BACKOFF_SCALE,
-            max_backoff=self._MAX_BACKOFF,
-            jitter_type=ExponentialBackoffJitterType.FULL,
+        self.backoff_strategy: retries_interface.RetryBackoffStrategy = (
+            backoff_strategy
+            or ExponentialRetryBackoffStrategy(
+                backoff_scale_value=self._NON_THROTTLING_BACKOFF_SCALE,
+                max_backoff=self._MAX_BACKOFF,
+                jitter_type=ExponentialBackoffJitterType.FULL,
+            )
         )
-        self.throttling_backoff_strategy = (
+        self.throttling_backoff_strategy: retries_interface.RetryBackoffStrategy = (
             throttling_backoff_strategy
             or ExponentialRetryBackoffStrategy(
                 backoff_scale_value=self._THROTTLING_BACKOFF_SCALE,
