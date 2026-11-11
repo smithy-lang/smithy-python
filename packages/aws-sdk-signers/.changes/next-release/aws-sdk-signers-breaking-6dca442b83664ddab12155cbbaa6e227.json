@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Renamed `EventSigner` to `SigV4EventSigner`, to match `SigV4Signer` and `SigV4ChunkSigner`."
+}

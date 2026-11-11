@@ -2,10 +2,10 @@
   "aws_sdk_signers": {
     "AWSCredentialIdentity": "rex-class",
     "AWSRequest": "rex-class",
-    "EventSigner": "rex-class",
     "Field": "rex-class",
     "Fields": "rex-class",
     "SigV4ChunkSigner": "rex-class",
+    "SigV4EventSigner": "rex-class",
     "SigV4Signer": "rex-class",
     "SigV4SigningProperties": "rex-class",
     "URI": "rex-class",
@@ -60,9 +60,10 @@
     "AsyncSigV4Signer": "rex-class[async]",
     "AsyncSigner": "rex-protocol[async]",
     "EventHeaderEncoder": "rex-class",
-    "EventSigner": "rex-class",
+    "EventSigner": "rex-protocol",
     "HTTPRequest": "rex-protocol",
     "PropertyKey": "rex-class",
+    "SigV4EventSigner": "rex-class",
     "SigV4Signer": "rex-type_alias",
     "SigV4SigningProperties": "rex-class"
   },

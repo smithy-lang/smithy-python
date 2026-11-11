@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "`AsyncSigV4AuthScheme.event_signer` now returns an `aws_sdk_signers.SigV4EventSigner`, the new name of `EventSigner`."
+}

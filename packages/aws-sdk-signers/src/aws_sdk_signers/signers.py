@@ -37,8 +37,8 @@ __all__ = (
     "HEADERS_EXCLUDED_FROM_SIGNING",
     "SIGV4_TIMESTAMP_FORMAT",
     "UNSIGNED_PAYLOAD",
-    "EventSigner",
     "SigV4ChunkSigner",
+    "SigV4EventSigner",
     "SigV4Signer",
     "SigV4SigningProperties",
 )
@@ -189,7 +189,7 @@ class SigV4ChunkSigner:
         return self._prior_signature
 
 
-class EventSigner:
+class SigV4EventSigner:
     """Signs the messages of an Amazon Event Stream, chaining each signature.
 
     Thread-safe, so one signer can serve a stream shared across threads or tasks.
