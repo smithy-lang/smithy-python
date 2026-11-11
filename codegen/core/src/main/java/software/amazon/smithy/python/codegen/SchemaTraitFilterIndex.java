@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import software.amazon.smithy.aws.traits.ServiceTrait;
+import software.amazon.smithy.aws.traits.protocols.AwsQueryCompatibleTrait;
+import software.amazon.smithy.aws.traits.protocols.AwsQueryErrorTrait;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.KnowledgeIndex;
 import software.amazon.smithy.model.shapes.Shape;
@@ -123,7 +125,11 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     HttpPrefixHeadersTrait.ID,
                     HttpQueryParamsTrait.ID,
                     HttpResponseCodeTrait.ID,
-                    HostLabelTrait.ID));
+                    HostLabelTrait.ID,
+                    // awsJson1_0 and rpcv2 read these at runtime for query compatibility;
+                    // their protocol definitions don't reference them.
+                    AwsQueryCompatibleTrait.ID,
+                    AwsQueryErrorTrait.ID));
 
     private final Map<Shape, Boolean> cache = new HashMap<>();
     private final Model model;
