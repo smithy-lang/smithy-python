@@ -965,6 +965,8 @@ class HTTPQueryMapSerializer(MapSerializer):
 
 
 class HTTPQueryMapValueSerializer(SpecificShapeSerializer):
+    """Binds the values of one map entry to HTTP query params with a shared key."""
+
     def __init__(self, key: str, query_params: list[tuple[str, str]]) -> None:
         """Initialize an HTTPQueryMapValueSerializer.
 
