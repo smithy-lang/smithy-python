@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Generated types escape a member of an operation input whose Python name is `plugins` or `self` to `plugins_` or `self_`, matching the names the runtime builds."
+}

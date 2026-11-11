@@ -20,7 +20,6 @@ from restxmlwithnamespace.aio.config import AsyncRestXmlProtocolNamespaceConfig
 from restxmlwithnamespace.models import (
     NestedWithNamespace,
     ServiceError,
-    SimpleScalarPropertiesInput,
     SimpleScalarPropertiesOutput,
 )
 
@@ -41,22 +40,20 @@ async def test_xml_namespace_simple_scalar_properties_request_simple_scalar_prop
         )
     )
 
-    input_ = SimpleScalarPropertiesInput(
-        foo="Foo",
-        string_value="string",
-        true_boolean_value=True,
-        false_boolean_value=False,
-        byte_value=1,
-        short_value=2,
-        integer_value=3,
-        long_value=4,
-        float_value=float(5.5),
-        nested=NestedWithNamespace(attr_field="nestedAttrValue"),
-        double_value=float(6.5),
-    )
-
     try:
-        await client.simple_scalar_properties(input_)
+        await client.simple_scalar_properties(
+            foo="Foo",
+            string_value="string",
+            true_boolean_value=True,
+            false_boolean_value=False,
+            byte_value=1,
+            short_value=2,
+            integer_value=3,
+            long_value=4,
+            float_value=float(5.5),
+            nested=NestedWithNamespace(attr_field="nestedAttrValue"),
+            double_value=float(6.5),
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -131,10 +128,8 @@ async def test_xml_namespace_simple_scalar_properties_response_simple_scalar_pro
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:

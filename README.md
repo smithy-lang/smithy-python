@@ -162,12 +162,11 @@ import asyncio
 
 from echo.client import EchoService
 from echo.config import Config
-from echo.models import EchoMessageInput
 
 
 async def main() -> None:
     async with EchoService(Config(endpoint_uri="https://example.com/")) as client:
-        response = await client.echo_message(EchoMessageInput(message="spam"))
+        response = await client.echo_message(message="spam")
         print(response.message)
 
 

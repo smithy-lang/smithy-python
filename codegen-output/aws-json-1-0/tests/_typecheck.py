@@ -2,51 +2,78 @@
 
 from typing import Any
 
+from awsjson10.aio.client import AsyncJSONRPC10Client
+from awsjson10.client import JSONRPC10Client
 from awsjson10.models import (
     ClientOptionalDefaults,
+    ClientOptionalDefaultsParams,
     ComplexNestedErrorData,
     ContentTypeParametersInput,
+    ContentTypeParametersInputParams,
     ContentTypeParametersOutput,
     Defaults,
+    DefaultsParams,
     Dialog,
+    DialogParams,
     EmptyInputAndEmptyOutputInput,
+    EmptyInputAndEmptyOutputInputParams,
     EmptyInputAndEmptyOutputOutput,
     EndpointOperationInput,
+    EndpointOperationInputParams,
     EndpointOperationOutput,
     EndpointWithHostLabelOperationInput,
+    EndpointWithHostLabelOperationInputParams,
     EndpointWithHostLabelOperationOutput,
     Farewell,
+    FarewellParams,
     GreetingStruct,
+    GreetingStructParams,
     GreetingWithErrorsInput,
+    GreetingWithErrorsInputParams,
     GreetingWithErrorsOutput,
     HostWithPathOperationInput,
+    HostWithPathOperationInputParams,
     HostWithPathOperationOutput,
     JsonUnionsInput,
+    JsonUnionsInputParams,
     JsonUnionsOutput,
+    MyUnionParams,
     NoInputAndNoOutputInput,
+    NoInputAndNoOutputInputParams,
     NoInputAndNoOutputOutput,
     NoInputAndOutputInput,
+    NoInputAndOutputInputParams,
     NoInputAndOutputOutput,
     OperationWithDefaultsInput,
+    OperationWithDefaultsInputParams,
     OperationWithDefaultsOutput,
     OperationWithNestedStructureInput,
+    OperationWithNestedStructureInputParams,
     OperationWithNestedStructureOutput,
     OperationWithRequiredMembersInput,
+    OperationWithRequiredMembersInputParams,
     OperationWithRequiredMembersOutput,
     OperationWithRequiredMembersWithDefaultsInput,
+    OperationWithRequiredMembersWithDefaultsInputParams,
     OperationWithRequiredMembersWithDefaultsOutput,
     PutWithContentEncodingInput,
+    PutWithContentEncodingInputParams,
     PutWithContentEncodingOutput,
     QueryIncompatibleOperationInput,
+    QueryIncompatibleOperationInputParams,
     QueryIncompatibleOperationOutput,
     SimpleScalarPropertiesInput,
+    SimpleScalarPropertiesInputParams,
     SimpleScalarPropertiesOutput,
     TopLevel,
+    TopLevelParams,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check. The clients are typed inline rather than by a stub.
+# pyright: reportMissingTypeStubs=false
 
 _: Any = ...
 
@@ -102,3 +129,126 @@ SimpleScalarPropertiesInput()
 SimpleScalarPropertiesOutput()
 TopLevel(dialog=_)
 GreetingStruct()
+_params_0: ClientOptionalDefaultsParams = {}
+_params_1: ContentTypeParametersInputParams = {}
+_params_2: DefaultsParams = {}
+_params_3: DialogParams = {}
+_params_4: EmptyInputAndEmptyOutputInputParams = {}
+_params_5: EndpointOperationInputParams = {}
+_params_6: EndpointWithHostLabelOperationInputParams = {"label": _}
+_params_7: FarewellParams = {}
+_params_8: GreetingWithErrorsInputParams = {}
+_params_9: HostWithPathOperationInputParams = {}
+_params_10: JsonUnionsInputParams = {}
+_params_11: MyUnionParams = {"string_value": _}
+_params_12: NoInputAndNoOutputInputParams = {}
+_params_13: NoInputAndOutputInputParams = {}
+_params_14: OperationWithDefaultsInputParams = {}
+_params_15: OperationWithNestedStructureInputParams = {"top_level": _}
+_params_16: OperationWithRequiredMembersInputParams = {}
+_params_17: OperationWithRequiredMembersWithDefaultsInputParams = {}
+_params_18: PutWithContentEncodingInputParams = {}
+_params_19: QueryIncompatibleOperationInputParams = {}
+_params_20: SimpleScalarPropertiesInputParams = {}
+_params_21: TopLevelParams = {"dialog": _}
+_params_22: GreetingStructParams = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncJSONRPC10Client) -> None:
+    pass
+    await client.content_type_parameters()
+    await client.content_type_parameters(**_request(ContentTypeParametersInputParams))
+    await client.empty_input_and_empty_output()
+    await client.empty_input_and_empty_output(
+        **_request(EmptyInputAndEmptyOutputInputParams)
+    )
+    await client.endpoint_operation()
+    await client.endpoint_operation(**_request(EndpointOperationInputParams))
+    await client.endpoint_with_host_label_operation(label=_)
+    await client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputParams)
+    )
+    await client.greeting_with_errors()
+    await client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    await client.host_with_path_operation()
+    await client.host_with_path_operation(**_request(HostWithPathOperationInputParams))
+    await client.json_unions()
+    await client.json_unions(**_request(JsonUnionsInputParams))
+    await client.no_input_and_no_output()
+    await client.no_input_and_no_output(**_request(NoInputAndNoOutputInputParams))
+    await client.no_input_and_output()
+    await client.no_input_and_output(**_request(NoInputAndOutputInputParams))
+    await client.operation_with_defaults()
+    await client.operation_with_defaults(**_request(OperationWithDefaultsInputParams))
+    await client.operation_with_nested_structure(top_level=_)
+    await client.operation_with_nested_structure(
+        **_request(OperationWithNestedStructureInputParams)
+    )
+    await client.operation_with_required_members()
+    await client.operation_with_required_members(
+        **_request(OperationWithRequiredMembersInputParams)
+    )
+    await client.operation_with_required_members_with_defaults()
+    await client.operation_with_required_members_with_defaults(
+        **_request(OperationWithRequiredMembersWithDefaultsInputParams)
+    )
+    await client.put_with_content_encoding()
+    await client.put_with_content_encoding(
+        **_request(PutWithContentEncodingInputParams)
+    )
+    await client.query_incompatible_operation()
+    await client.query_incompatible_operation(
+        **_request(QueryIncompatibleOperationInputParams)
+    )
+    await client.simple_scalar_properties()
+    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+
+
+def check_sync_calls(client: JSONRPC10Client) -> None:
+    pass
+    client.content_type_parameters()
+    client.content_type_parameters(**_request(ContentTypeParametersInputParams))
+    client.empty_input_and_empty_output()
+    client.empty_input_and_empty_output(**_request(EmptyInputAndEmptyOutputInputParams))
+    client.endpoint_operation()
+    client.endpoint_operation(**_request(EndpointOperationInputParams))
+    client.endpoint_with_host_label_operation(label=_)
+    client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputParams)
+    )
+    client.greeting_with_errors()
+    client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    client.host_with_path_operation()
+    client.host_with_path_operation(**_request(HostWithPathOperationInputParams))
+    client.json_unions()
+    client.json_unions(**_request(JsonUnionsInputParams))
+    client.no_input_and_no_output()
+    client.no_input_and_no_output(**_request(NoInputAndNoOutputInputParams))
+    client.no_input_and_output()
+    client.no_input_and_output(**_request(NoInputAndOutputInputParams))
+    client.operation_with_defaults()
+    client.operation_with_defaults(**_request(OperationWithDefaultsInputParams))
+    client.operation_with_nested_structure(top_level=_)
+    client.operation_with_nested_structure(
+        **_request(OperationWithNestedStructureInputParams)
+    )
+    client.operation_with_required_members()
+    client.operation_with_required_members(
+        **_request(OperationWithRequiredMembersInputParams)
+    )
+    client.operation_with_required_members_with_defaults()
+    client.operation_with_required_members_with_defaults(
+        **_request(OperationWithRequiredMembersWithDefaultsInputParams)
+    )
+    client.put_with_content_encoding()
+    client.put_with_content_encoding(**_request(PutWithContentEncodingInputParams))
+    client.query_incompatible_operation()
+    client.query_incompatible_operation(
+        **_request(QueryIncompatibleOperationInputParams)
+    )
+    client.simple_scalar_properties()
+    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))

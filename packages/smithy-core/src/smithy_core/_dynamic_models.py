@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import datetime
 from base64 import b64decode
-from collections.abc import Collection, Mapping
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import field as _field
 from dataclasses import make_dataclass
 from decimal import Decimal
@@ -27,10 +27,16 @@ from threading import RLock
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, cast, dataclass_transform
 
-from ._model_naming import member_field_name, union_unknown_name, variant_class_name
+from ._model_naming import (
+    escape_input_member_names,
+    member_field_name,
+    to_snake_case,
+    union_unknown_name,
+    variant_class_name,
+)
 from ._schema_compact import hydrate
 from .deserializers import ShapeDeserializer
-from .exceptions import ModeledError, SerializationError
+from .exceptions import ModeledError, SerializationError, SmithyError
 from .schemas import Schema, SchemaExtension
 from .serializers import ShapeSerializer
 from .shapes import ShapeID, ShapeType
@@ -38,6 +44,7 @@ from .traits import (
     DefaultTrait,
     EnumValueTrait,
     ErrorTrait,
+    IdempotencyTokenTrait,
     RequiredTrait,
     SensitiveTrait,
     SparseTrait,
@@ -50,6 +57,21 @@ if TYPE_CHECKING:
 
 type _Writer = "Callable[[ShapeSerializer, Schema, Any], None]"
 type _Reader = "Callable[[ShapeDeserializer, Schema], Any]"
+# Converts or checks a member's value: (value, redact, in_model) -> value. ``redact``
+# is set under a sensitive shape, where keys the caller wrote stay out of errors.
+# ``in_model`` is set inside a model the caller built, which is checked as it is.
+type _InputConverter = "Callable[[Any, bool, bool], Any]"
+
+# Sequences that are never meant as a list of their elements.
+_NOT_A_LIST = (str, bytes, bytearray, memoryview)
+
+# The dictionary form of a shape is named with this suffix, and the form an async
+# client takes for an input with a streaming body also with this prefix.
+_PARAMS_SUFFIX = "Params"
+_ASYNC_PREFIX = "Async"
+
+# Path segments shown for a value nested too deeply to be converted.
+_MAX_DEEP_PATH = 6
 
 
 # The generator synthesizes @input/@output onto operation I/O structures (see
@@ -108,6 +130,8 @@ class ModelRegistry:
             self._shape_names.add(service_error)
         self._codec = SchemaExtension(self._resolve_member_codec)
         self._field_names_ext = SchemaExtension(self._compute_field_names)
+        self._input_plan = SchemaExtension(self._resolve_input_plan)
+        self._input_converter = SchemaExtension(self._resolve_input_converter)
 
     def build(self, name: str) -> type:
         cached = self._classes.get(name)
@@ -142,6 +166,11 @@ class ModelRegistry:
                     built.__module__ = module
                     self._classes[name] = built
                     return built
+                # The dictionary form of an input shape is a TypedDict in the stub
+                # and a plain dict at runtime, so it costs nothing to import.
+                if self._is_params_name(name):
+                    self._classes[name] = dict
+                    return dict
                 raise AttributeError(name)
             schema = hydrate(getattr(self._schemas, const))
             canonical = self._renamed_schemas.get(const)
@@ -200,6 +229,43 @@ class ModelRegistry:
             self._error_correct(schema, kwargs, field_names, by_index)
         return kwargs
 
+    def build_input(
+        self, schema: Schema, members: Mapping[str, Any], operation: str
+    ) -> Any:
+        """Build an operation's input model from its keyword arguments.
+
+        Dictionaries are converted to the models they stand for, at any depth.
+        Model instances are checked and passed through as they are, never copied
+        or changed. ``None`` is the same as omitting a member, which takes the
+        member's default if it has one. An idempotency token left unset stays
+        unset here; the request pipeline generates it.
+
+        :param schema: The schema of the operation's input structure.
+        :param members: The keyword arguments, keyed by generated member name.
+        :param operation: The operation's name, used in error messages.
+        :raises TypeError: If a key is unknown, a member that must be set is
+            missing, or a value has the wrong shape. The message gives the path to
+            the problem and never includes a value, nor, under a sensitive shape,
+            a key the caller wrote.
+        """
+        try:
+            return self._input_struct(
+                schema, members, schema.get_trait(SensitiveTrait) is not None
+            )
+        except _InputError as error:
+            segments = error.path[::-1]
+            if error.too_deep and len(segments) > _MAX_DEEP_PATH:
+                segments = [*segments[:_MAX_DEEP_PATH], "..."]
+            path = "".join(segments).lstrip(".")
+            where = f" at {path}" if path else ""
+            raise TypeError(
+                f"Invalid {operation} input{where}: {error.message}"
+            ) from None
+        except RecursionError:
+            raise TypeError(
+                f"Invalid {operation} input: {_too_deep('').message}"
+            ) from None
+
     def _error_base(self) -> type:
         if self._service_error_name is None:
             return ModeledError
@@ -229,13 +295,52 @@ class ModelRegistry:
         is_error = schema.get_trait(ErrorTrait) is not None
         is_enum = schema.shape_type in (ShapeType.ENUM, ShapeType.INT_ENUM)
         carries_md = is_error or self._is_output(schema)
-        return tuple(
+        names = tuple(
             member_field_name(
                 member.expect_member_name(),
                 is_error=is_error,
                 carries_response_metadata=carries_md,
                 is_enum=is_enum,
             )
+            for member in schema.members_by_index
+        )
+        return escape_input_member_names(names) if self._is_input(schema) else names
+
+    def _is_params_name(self, name: str) -> bool:
+        """Whether a name is the dictionary form of a modeled shape.
+
+        CAUTION: InputParams in the code generator assigns these names. A form is
+        named after its shape, then as many underscores as it takes to not be the
+        name of a modeled shape, then ``Params``. A shape's own name may end in
+        underscores too, so they are taken off one at a time until a shape matches.
+        """
+        if not name.endswith(_PARAMS_SUFFIX):
+            return False
+        shape = name[: -len(_PARAMS_SUFFIX)]
+        while True:
+            # smithy.api#Unit has no schema constant; see build().
+            if self._const(shape) is not None or shape == "Unit":
+                return True
+            if shape.startswith(_ASYNC_PREFIX) and self._has_streaming_body(
+                shape[len(_ASYNC_PREFIX) :]
+            ):
+                return True
+            if not shape.endswith("_"):
+                return False
+            shape = shape[:-1]
+
+    def _const(self, name: str) -> str | None:
+        """The schema constant of a generated model name, if it is one."""
+        return self._renames.get(name) or self._ensure_index().get(name)
+
+    def _has_streaming_body(self, name: str) -> bool:
+        """Whether a name is an operation input with a streaming blob member."""
+        const = self._const(name)
+        if const is None:
+            return False
+        schema = hydrate(getattr(self._schemas, const))
+        return self._is_input(schema) and any(
+            member.shape_type is ShapeType.BLOB and self._is_streaming(member)
             for member in schema.members_by_index
         )
 
@@ -579,6 +684,273 @@ class ModelRegistry:
             result[0] = self.build(self._union_unknown_name(name))(tag="unknown")
         return result[0]
 
+    def _input_struct(
+        self, schema: Schema, value: Mapping[Any, Any], redact: bool
+    ) -> Any:
+        members, required, cls = schema.get_extension(self._input_plan)
+        kwargs: dict[str, Any] = {}
+        unknown: list[Any] | None = None
+        for key, item in value.items():
+            member = members.get(key)
+            if member is None:
+                if unknown is None:
+                    unknown = []
+                unknown.append(key)
+            elif item is not None:
+                convert = member.get_extension(self._input_converter)
+                if convert is None:
+                    kwargs[key] = item
+                else:
+                    try:
+                        kwargs[key] = convert(item, redact, False)
+                    except _InputError as error:
+                        error.path.append(f".{key}")
+                        raise
+                    except RecursionError:
+                        raise _too_deep(f".{key}") from None
+        if unknown is not None:
+            raise _InputError(_unknown_members(unknown, members, redact))
+        missing = [name for name in required if name not in kwargs]
+        if missing:
+            raise _InputError(_missing_members(missing))
+        return cls(**kwargs)
+
+    def _check_struct(self, schema: Schema, instance: Any, redact: bool) -> None:
+        """Check a model the caller built, which is used exactly as it is.
+
+        Its members must be models too: a dictionary inside a model is rejected
+        rather than converted, because converting it would change the model.
+        """
+        members, required, _ = schema.get_extension(self._input_plan)
+        for key, member in members.items():
+            item = getattr(instance, key, None)
+            if item is None:
+                continue
+            check = member.get_extension(self._input_converter)
+            if check is not None:
+                try:
+                    check(item, redact, True)
+                except _InputError as error:
+                    error.path.append(f".{key}")
+                    raise
+                except RecursionError:
+                    raise _too_deep(f".{key}") from None
+        missing = [name for name in required if getattr(instance, name, None) is None]
+        if missing:
+            raise _InputError(_missing_members(missing))
+
+    def _resolve_input_plan(
+        self, schema: Schema
+    ) -> tuple[dict[str, Schema], tuple[str, ...], type]:
+        """A structure's members by generated name, those that must be set, and its
+        model class."""
+        field_names = self._field_names(schema)
+        # An operation's own idempotency token may be left unset even when it is
+        # required, because the pipeline generates it. One nested in its input is
+        # not generated, so it must be set like any other required member.
+        own_token = self._is_input(schema)
+        members: dict[str, Schema] = {}
+        required: list[str] = []
+        for i, member in enumerate(schema.members_by_index):
+            if self._is_event_stream_member(member):
+                continue
+            members[field_names[i]] = member
+            if own_token and member.get_trait(IdempotencyTokenTrait) is not None:
+                continue
+            if (
+                member.get_trait(RequiredTrait) is not None
+                and member.get_trait(DefaultTrait) is None
+            ):
+                required.append(field_names[i])
+        cls = self.build(self._target_name(schema))
+        return members, tuple(required), cls
+
+    def _resolve_input_converter(self, member: Schema) -> _InputConverter | None:
+        """The conversion for a member's value, or None if it is used as given.
+
+        Resolved once per member and cached on its schema, as the codecs are.
+        """
+        st = member.shape_type
+        if st == ShapeType.STRUCTURE:
+            convert = self._input_struct_converter(member.expect_member_target())
+        elif st == ShapeType.UNION:
+            convert = self._input_union_converter(member.expect_member_target())
+        elif st == ShapeType.LIST:
+            collection = member.expect_member_target()
+            convert = self._input_list_converter(
+                collection.members_by_index[0],
+                collection.get_trait(SparseTrait) is not None,
+            )
+        elif st == ShapeType.MAP:
+            collection = member.expect_member_target()
+            convert = self._input_map_converter(
+                collection.members["value"],
+                sparse=collection.get_trait(SparseTrait) is not None,
+                sensitive_keys=collection.members["key"].get_trait(SensitiveTrait)
+                is not None,
+            )
+        else:
+            return None
+        # A member's traits include its target's. Everything under a sensitive
+        # member is the caller's data, including the keys of dictionaries.
+        if member.get_trait(SensitiveTrait) is None:
+            return convert
+        return lambda value, redact, in_model: convert(value, True, in_model)
+
+    def _input_struct_converter(self, target: Schema) -> _InputConverter:
+        name = self._target_name(target)
+        cls = self.build(name)
+
+        def convert(value: Any, redact: bool, in_model: bool) -> Any:
+            if isinstance(value, cls):
+                self._check_struct(target, value, redact)
+                return value
+            if in_model:
+                raise _unexpected_in_model(name, value)
+            if isinstance(value, Mapping):
+                return self._input_struct(
+                    target, cast("Mapping[Any, Any]", value), redact
+                )
+            raise _unexpected(f"{name} or a dict", value)
+
+        return convert
+
+    def _input_union_converter(self, target: Schema) -> _InputConverter:
+        name = self._target_name(target)
+        self.build(name)  # registers the variant classes
+        variants: dict[str, tuple[type, Schema]] = {}
+        keys: dict[type, str] = {}
+        for member in target.members_by_index:
+            member_name = member.expect_member_name()
+            key = member_field_name(
+                member_name,
+                is_error=False,
+                carries_response_metadata=False,
+                is_enum=False,
+            )
+            variant = self.build(self._union_variant_name(name, member_name))
+            variants[key] = (variant, member)
+            keys[variant] = key
+        unknown = self.build(self._union_unknown_name(name))
+
+        def convert_value(key: str, item: Any, redact: bool, in_model: bool) -> Any:
+            if item is None:
+                raise _InputError(
+                    f"the {key!r} variant of {name} is None; a variant must have a "
+                    "value"
+                )
+            convert_item = variants[key][1].get_extension(self._input_converter)
+            if convert_item is None:
+                return item
+            try:
+                return convert_item(item, redact, in_model)
+            except _InputError as error:
+                error.path.append(f".{key}")
+                raise
+            except RecursionError:
+                raise _too_deep(f".{key}") from None
+
+        def convert(value: Any, redact: bool, in_model: bool) -> Any:
+            key = keys.get(value.__class__)
+            if key is not None:
+                # A variant the caller built is checked and used as it is.
+                convert_value(key, value.value, redact, True)
+                return value
+            if isinstance(value, unknown):
+                raise _InputError(f"an unknown {name} variant cannot be sent")
+            if in_model:
+                raise _unexpected_in_model(f"a {name} variant", value)
+            if not isinstance(value, Mapping):
+                raise _unexpected(f"a {name} variant or a single-key dict", value)
+            mapping = cast("Mapping[Any, Any]", value)
+            # Exactly one key: one whose value is None is not left out, as it would
+            # be in a structure, because it names a variant all the same.
+            if len(mapping) != 1:
+                if not mapping:
+                    raise _InputError(
+                        f"a {name} dict sets no variant; set exactly one of "
+                        + ", ".join(repr(known) for known in variants)
+                    )
+                raise _InputError(
+                    f"a {name} dict must have exactly one key, got {len(mapping)}: "
+                    + ", ".join(
+                        _describe_key(k, redact and k not in variants) for k in mapping
+                    )
+                )
+            ((key, item),) = mapping.items()
+            if key not in variants:
+                raise _InputError(
+                    f"unknown variant {_describe_key(key, redact)} for {name}; "
+                    "set exactly one of " + ", ".join(repr(known) for known in variants)
+                )
+            return variants[key][0](value=convert_value(key, item, redact, False))
+
+        return convert
+
+    def _input_list_converter(self, element: Schema, sparse: bool) -> _InputConverter:
+        def convert(value: Any, redact: bool, in_model: bool) -> Any:
+            # A str is a Sequence of its characters, which is never what is meant.
+            if isinstance(value, _NOT_A_LIST) or not isinstance(value, Sequence):
+                raise _unexpected("a list", value)
+            items = cast("Sequence[Any]", value)
+            convert_item = element.get_extension(self._input_converter)
+            # A list inside a model is checked where it is; any other is copied.
+            out: list[Any] | None = None if in_model else []
+            for index, item in enumerate(items):
+                if item is None:
+                    if not sparse:
+                        error = _InputError("None is only allowed in a sparse list")
+                        error.path.append(f"[{index}]")
+                        raise error
+                elif convert_item is not None:
+                    try:
+                        item = convert_item(item, redact, in_model)
+                    except _InputError as error:
+                        error.path.append(f"[{index}]")
+                        raise
+                    except RecursionError:
+                        raise _too_deep(f"[{index}]") from None
+                if out is not None:
+                    out.append(item)
+            return items if out is None else out
+
+        return convert
+
+    def _input_map_converter(
+        self, value_member: Schema, *, sparse: bool, sensitive_keys: bool
+    ) -> _InputConverter:
+        def convert(value: Any, redact: bool, in_model: bool) -> Any:
+            if not isinstance(value, Mapping):
+                raise _unexpected("a dict", value)
+            entries = cast("Mapping[Any, Any]", value)
+            convert_item = value_member.get_extension(self._input_converter)
+            # Map keys are the caller's data, so sensitive ones stay out of paths.
+            names_keys = not (redact or sensitive_keys)
+            out: dict[str, Any] | None = None if in_model else {}
+            for key, item in entries.items():
+                if not isinstance(key, str):
+                    raise _InputError(f"map keys must be str, got {type(key).__name__}")
+                if item is None:
+                    if not sparse:
+                        error = _InputError("None is only allowed in a sparse map")
+                        error.path.append(f"[{key!r}]" if names_keys else "[<key>]")
+                        raise error
+                elif convert_item is not None:
+                    try:
+                        item = convert_item(item, redact, in_model)
+                    except _InputError as error:
+                        error.path.append(f"[{key!r}]" if names_keys else "[<key>]")
+                        raise
+                    except RecursionError:
+                        raise _too_deep(
+                            f"[{key!r}]" if names_keys else "[<key>]"
+                        ) from None
+                if out is not None:
+                    out[key] = item
+            return entries if out is None else out
+
+        return convert
+
     def _is_streaming(self, member: Schema) -> bool:
         try:
             target = member.expect_member_target()
@@ -661,6 +1033,11 @@ class ModelRegistry:
     def _target_name(self, schema: Schema) -> str:
         if generated := self._target_names.get(str(schema.id)):
             return generated
+        # A renamed shape may share its ID name with another shape, which the
+        # name-keyed index below would resolve it to. Its full ID tells them apart.
+        for const, renamed in self._renamed_schemas.items():
+            if hydrate(getattr(self._schemas, const)).id == schema.id:
+                return renamed
         index = self._ensure_index()
         const = index.get(schema.id.name)
         return (
@@ -834,6 +1211,72 @@ _CORRECTION_SCALARS: dict[ShapeType, Any] = {
     ShapeType.MAP: dict,
     ShapeType.DOCUMENT: lambda: _document(None),
 }
+
+
+# Never reaches a caller: build_input reports it as a TypeError.
+class _InputError(SmithyError):
+    """A problem with a keyword input, and the path to it, innermost segment first."""
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+        self.path: list[str] = []
+        self.too_deep = False
+
+
+def _unexpected(expected: str, value: Any) -> _InputError:
+    # Only the value's type is named; the value itself may be sensitive.
+    return _InputError(f"expected {expected}, got {type(value).__name__}")
+
+
+def _unexpected_in_model(expected: str, value: Any) -> _InputError:
+    error = _unexpected(expected, value)
+    if isinstance(value, Mapping):
+        error.message += "; a dict inside a model is not converted"
+    return error
+
+
+def _too_deep(segment: str) -> _InputError:
+    """The error for a value the interpreter's recursion limit stopped.
+
+    A value that contains itself never ends, and neither does its path, so only
+    the start of the path is reported. A value used in several places without
+    containing itself is converted at each of them and never gets here.
+    """
+    error = _InputError(
+        "nested too deeply to be converted; a dict, list, or model may contain itself"
+    )
+    error.too_deep = True
+    if segment:
+        error.path.append(segment)
+    return error
+
+
+def _describe_key(key: Any, redact: bool = False) -> str:
+    # Keys are named because the caller wrote them, unless they are sensitive data.
+    # Values are never included.
+    if redact:
+        return "<redacted>"
+    return repr(key) if isinstance(key, str) else f"<{type(key).__name__} key>"
+
+
+def _unknown_members(
+    keys: list[Any], members: Mapping[str, Schema], redact: bool
+) -> str:
+    described: list[str] = []
+    for key in keys:
+        description = _describe_key(key, redact)
+        if isinstance(key, str) and not redact:
+            suggestion = to_snake_case(key)
+            if suggestion != key and suggestion in members:
+                description += f" (did you mean {suggestion!r}?)"
+        described.append(description)
+    return f"unknown member{'s' if len(keys) > 1 else ''} " + ", ".join(described)
+
+
+def _missing_members(names: list[str]) -> str:
+    return f"missing required member{'s' if len(names) > 1 else ''} " + ", ".join(
+        repr(name) for name in names
+    )
 
 
 def _py_type(member: Schema) -> Any:

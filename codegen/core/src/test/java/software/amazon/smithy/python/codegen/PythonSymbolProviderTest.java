@@ -138,6 +138,88 @@ public class PythonSymbolProviderTest {
     }
 
     @Test
+    public void testOperationInputMembersNamedLikeMethodParametersAreEscaped() {
+        Model model = loadModel(OPERATION_PARAMETER_MODEL);
+        PythonSymbolProvider provider = createProvider(model);
+
+        assertEquals("plugins_", memberName(provider, model, "CreateThingInput$plugins"));
+        assertEquals("self_", memberName(provider, model, "CreateThingInput$self"));
+        assertEquals("name", memberName(provider, model, "CreateThingInput$name"));
+    }
+
+    @Test
+    public void testMethodParameterNamesAreNotEscapedOutsideOperationInputs() {
+        // Only an operation's input members share the method's keyword namespace.
+        Model model = loadModel(OPERATION_PARAMETER_MODEL);
+        PythonSymbolProvider provider = createProvider(model);
+
+        assertEquals("plugins", memberName(provider, model, "Thing$plugins"));
+        assertEquals("self", memberName(provider, model, "Thing$self"));
+        assertEquals("plugins", memberName(provider, model, "CreateThingOutput$plugins"));
+    }
+
+    @Test
+    public void testEscapedOperationParameterAvoidsExistingMemberNames() {
+        Model model = loadModel("""
+                $version: "2"
+                namespace smithy.example
+
+                service TestService {
+                    version: "2024-01-01"
+                    operations: [CreateThing]
+                }
+
+                operation CreateThing {
+                    input: CreateThingInput
+                }
+
+                structure CreateThingInput {
+                    plugins: String
+                    plugins_: String
+                    plugins__: String
+                    self: String
+                }
+                """);
+        PythonSymbolProvider provider = createProvider(model);
+
+        assertEquals("plugins___", memberName(provider, model, "CreateThingInput$plugins"));
+        assertEquals("plugins_", memberName(provider, model, "CreateThingInput$plugins_"));
+        assertEquals("plugins__", memberName(provider, model, "CreateThingInput$plugins__"));
+        assertEquals("self_", memberName(provider, model, "CreateThingInput$self"));
+    }
+
+    private static final String OPERATION_PARAMETER_MODEL = """
+            $version: "2"
+            namespace smithy.example
+
+            service TestService {
+                version: "2024-01-01"
+                operations: [CreateThing]
+            }
+
+            operation CreateThing {
+                input: CreateThingInput
+                output: CreateThingOutput
+            }
+
+            structure CreateThingInput {
+                plugins: String
+                self: String
+                name: String
+                thing: Thing
+            }
+
+            structure CreateThingOutput {
+                plugins: String
+            }
+
+            structure Thing {
+                plugins: String
+                self: String
+            }
+            """;
+
+    @Test
     public void testDataclassHooksAreEscaped() {
         Model model = loadModel("""
                 $version: "2"

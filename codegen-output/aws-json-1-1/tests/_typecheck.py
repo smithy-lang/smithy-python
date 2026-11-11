@@ -2,54 +2,82 @@
 
 from typing import Any
 
+from awsjson11.aio.client import AsyncJsonProtocolClient
+from awsjson11.client import JsonProtocolClient
 from awsjson11.models import (
     ComplexNestedErrorData,
     ContentTypeParametersInput,
+    ContentTypeParametersInputParams,
     ContentTypeParametersOutput,
     DatetimeOffsetsInput,
+    DatetimeOffsetsInputParams,
     DatetimeOffsetsOutput,
     EmptyOperationInput,
+    EmptyOperationInputParams,
     EmptyOperationOutput,
     EmptyStruct,
+    EmptyStructParams,
     EndpointOperationInput,
+    EndpointOperationInputParams,
     EndpointOperationOutput,
     EndpointWithHostLabelOperationInput,
+    EndpointWithHostLabelOperationInputParams,
     EndpointWithHostLabelOperationOutput,
     FractionalSecondsInput,
+    FractionalSecondsInputParams,
     FractionalSecondsOutput,
     GreetingStruct,
+    GreetingStructParams,
     GreetingWithErrorsInput,
+    GreetingWithErrorsInputParams,
     GreetingWithErrorsOutput,
     HostWithPathOperationInput,
+    HostWithPathOperationInputParams,
     HostWithPathOperationOutput,
     JsonEnumsInput,
+    JsonEnumsInputParams,
     JsonEnumsOutput,
     JsonIntEnumsInput,
+    JsonIntEnumsInputParams,
     JsonIntEnumsOutput,
     JsonUnionsInput,
+    JsonUnionsInputParams,
     JsonUnionsOutput,
     KitchenSink,
     KitchenSinkOperationInput,
+    KitchenSinkOperationInputParams,
     KitchenSinkOperationOutput,
+    KitchenSinkParams,
+    MyUnionParams,
     NullOperationInput,
+    NullOperationInputParams,
     NullOperationOutput,
     OperationWithOptionalInputOutputInput,
+    OperationWithOptionalInputOutputInputParams,
     OperationWithOptionalInputOutputOutput,
     PutAndGetInlineDocumentsInput,
+    PutAndGetInlineDocumentsInputParams,
     PutAndGetInlineDocumentsOutput,
     PutWithContentEncodingInput,
+    PutWithContentEncodingInputParams,
     PutWithContentEncodingOutput,
     SimpleScalarPropertiesInput,
+    SimpleScalarPropertiesInputParams,
     SimpleScalarPropertiesOutput,
     SimpleStruct,
+    SimpleStructParams,
     SparseNullsOperationInput,
+    SparseNullsOperationInputParams,
     SparseNullsOperationOutput,
     StructWithJsonName,
+    StructWithJsonNameParams,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check. The clients are typed inline rather than by a stub.
+# pyright: reportMissingTypeStubs=false
 
 _: Any = ...
 
@@ -95,3 +123,123 @@ SparseNullsOperationInput()
 SparseNullsOperationOutput()
 StructWithJsonName()
 GreetingStruct()
+_params_0: ContentTypeParametersInputParams = {}
+_params_1: DatetimeOffsetsInputParams = {}
+_params_2: EmptyOperationInputParams = {}
+_params_3: EmptyStructParams = {}
+_params_4: EndpointOperationInputParams = {}
+_params_5: EndpointWithHostLabelOperationInputParams = {"label": _}
+_params_6: FractionalSecondsInputParams = {}
+_params_7: GreetingWithErrorsInputParams = {}
+_params_8: HostWithPathOperationInputParams = {}
+_params_9: JsonEnumsInputParams = {}
+_params_10: JsonIntEnumsInputParams = {}
+_params_11: JsonUnionsInputParams = {}
+_params_12: KitchenSinkParams = {}
+_params_13: KitchenSinkOperationInputParams = {}
+_params_14: MyUnionParams = {"string_value": _}
+_params_15: NullOperationInputParams = {}
+_params_16: OperationWithOptionalInputOutputInputParams = {}
+_params_17: PutAndGetInlineDocumentsInputParams = {}
+_params_18: PutWithContentEncodingInputParams = {}
+_params_19: SimpleScalarPropertiesInputParams = {}
+_params_20: SimpleStructParams = {}
+_params_21: SparseNullsOperationInputParams = {}
+_params_22: StructWithJsonNameParams = {}
+_params_23: GreetingStructParams = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncJsonProtocolClient) -> None:
+    pass
+    await client.content_type_parameters()
+    await client.content_type_parameters(**_request(ContentTypeParametersInputParams))
+    await client.datetime_offsets()
+    await client.datetime_offsets(**_request(DatetimeOffsetsInputParams))
+    await client.empty_operation()
+    await client.empty_operation(**_request(EmptyOperationInputParams))
+    await client.endpoint_operation()
+    await client.endpoint_operation(**_request(EndpointOperationInputParams))
+    await client.endpoint_with_host_label_operation(label=_)
+    await client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputParams)
+    )
+    await client.fractional_seconds()
+    await client.fractional_seconds(**_request(FractionalSecondsInputParams))
+    await client.greeting_with_errors()
+    await client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    await client.host_with_path_operation()
+    await client.host_with_path_operation(**_request(HostWithPathOperationInputParams))
+    await client.json_enums()
+    await client.json_enums(**_request(JsonEnumsInputParams))
+    await client.json_int_enums()
+    await client.json_int_enums(**_request(JsonIntEnumsInputParams))
+    await client.json_unions()
+    await client.json_unions(**_request(JsonUnionsInputParams))
+    await client.kitchen_sink_operation()
+    await client.kitchen_sink_operation(**_request(KitchenSinkOperationInputParams))
+    await client.null_operation()
+    await client.null_operation(**_request(NullOperationInputParams))
+    await client.operation_with_optional_input_output()
+    await client.operation_with_optional_input_output(
+        **_request(OperationWithOptionalInputOutputInputParams)
+    )
+    await client.put_and_get_inline_documents()
+    await client.put_and_get_inline_documents(
+        **_request(PutAndGetInlineDocumentsInputParams)
+    )
+    await client.put_with_content_encoding()
+    await client.put_with_content_encoding(
+        **_request(PutWithContentEncodingInputParams)
+    )
+    await client.simple_scalar_properties()
+    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    await client.sparse_nulls_operation()
+    await client.sparse_nulls_operation(**_request(SparseNullsOperationInputParams))
+
+
+def check_sync_calls(client: JsonProtocolClient) -> None:
+    pass
+    client.content_type_parameters()
+    client.content_type_parameters(**_request(ContentTypeParametersInputParams))
+    client.datetime_offsets()
+    client.datetime_offsets(**_request(DatetimeOffsetsInputParams))
+    client.empty_operation()
+    client.empty_operation(**_request(EmptyOperationInputParams))
+    client.endpoint_operation()
+    client.endpoint_operation(**_request(EndpointOperationInputParams))
+    client.endpoint_with_host_label_operation(label=_)
+    client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputParams)
+    )
+    client.fractional_seconds()
+    client.fractional_seconds(**_request(FractionalSecondsInputParams))
+    client.greeting_with_errors()
+    client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    client.host_with_path_operation()
+    client.host_with_path_operation(**_request(HostWithPathOperationInputParams))
+    client.json_enums()
+    client.json_enums(**_request(JsonEnumsInputParams))
+    client.json_int_enums()
+    client.json_int_enums(**_request(JsonIntEnumsInputParams))
+    client.json_unions()
+    client.json_unions(**_request(JsonUnionsInputParams))
+    client.kitchen_sink_operation()
+    client.kitchen_sink_operation(**_request(KitchenSinkOperationInputParams))
+    client.null_operation()
+    client.null_operation(**_request(NullOperationInputParams))
+    client.operation_with_optional_input_output()
+    client.operation_with_optional_input_output(
+        **_request(OperationWithOptionalInputOutputInputParams)
+    )
+    client.put_and_get_inline_documents()
+    client.put_and_get_inline_documents(**_request(PutAndGetInlineDocumentsInputParams))
+    client.put_with_content_encoding()
+    client.put_with_content_encoding(**_request(PutWithContentEncodingInputParams))
+    client.simple_scalar_properties()
+    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    client.sparse_nulls_operation()
+    client.sparse_nulls_operation(**_request(SparseNullsOperationInputParams))

@@ -40,9 +40,10 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  * <p>Every case becomes a rules test, which resolves the case's parameter values with the
  * client's own endpoint resolver. Every operation input of a case also becomes a client test,
  * which calls the operation through the client with config from the input's built-in and
- * client parameters and checks the endpoint the client resolves. A client test the client
- * can't express is generated as skipped, with the reason. Cases keep the trait's {@code params}
- * and {@code expect} objects as they are.
+ * client parameters and checks the endpoint the client resolves. The input's operation
+ * parameters are generated as a dictionary of the call's keyword arguments, with nested values
+ * as models. A client test the client can't express is generated as skipped, with the reason.
+ * Cases keep the trait's {@code params} and {@code expect} objects as they are.
  */
 @SmithyInternalApi
 public final class EndpointTestGenerator implements Runnable {
@@ -226,6 +227,7 @@ public final class EndpointTestGenerator implements Runnable {
         }
         writer.addStdlibImport("collections.abc", "Awaitable");
         writer.addStdlibImport("collections.abc", "Callable");
+        writer.addStdlibImport("typing", "Concatenate");
         var client = context.symbolProvider().toSymbol(service);
         var ids = new CaseIds();
         writer.write("""
@@ -239,8 +241,8 @@ public final class EndpointTestGenerator implements Runnable {
                 @mark.parametrize(("config", "operation", "input", "expect"), CLIENT_CASES)
                 async def test_endpoint_client(
                     config: dict[str, Any],
-                    operation: Callable[[$T, Any], Awaitable[Any]],
-                    input: Any,
+                    operation: Callable[Concatenate[$T, ...], Awaitable[Any]],
+                    input: dict[str, Any],
                     expect: dict[str, Any],
                 ) -> None:
                     await $T(lambda capture: _client(config, capture), operation, input, expect$L)
@@ -283,8 +285,8 @@ public final class EndpointTestGenerator implements Runnable {
                         .toSymbol(operation)
                         .expectProperty(SymbolProperties.OPERATION_METHOD)
                         .getName(),
-                writer.consumer(w -> input.getOperationParams()
-                        .accept(new ValueNodeVisitor(context, w, inputShape))),
+                writer.consumer(w -> new ValueNodeVisitor(context, w, inputShape)
+                        .writeKeywordDictionary(input.getOperationParams())),
                 expectation(testCase.getExpect()),
                 id,
                 marks(writer, operation, skips));

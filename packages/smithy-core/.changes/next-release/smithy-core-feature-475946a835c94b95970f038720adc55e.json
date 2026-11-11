@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Generated clients take operation input members as keyword arguments. The client builds the input model from them before any other setup, converting dictionaries to the structures and unions they stand for at any depth. Models are passed through as they are, never copied or changed, but are checked like dictionaries, and a dictionary inside a model is rejected rather than converted. `None` is the same as omitting a member, which takes the member's default if it has one. A union dictionary has exactly one key, whose value is not `None`. An idempotency token left unset is generated once per call, so retries send the same one. Unknown keys, missing required members, malformed unions, unknown union variants, and a `str` passed for a list raise a `TypeError` that gives the path to the problem and never includes a value, nor, under a sensitive shape, a key the caller wrote."
+}

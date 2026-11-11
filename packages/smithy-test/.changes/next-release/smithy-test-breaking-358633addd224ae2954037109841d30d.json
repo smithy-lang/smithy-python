@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "`smithy_test.aio.check_client_case_async` takes a case's operation input as a mapping of keyword arguments and calls the operation with them, because generated client operations take input members as keyword arguments instead of an input object. Endpoint tests must be regenerated with a code generator that writes the input this way."
+}

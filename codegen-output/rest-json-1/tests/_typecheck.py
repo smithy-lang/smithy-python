@@ -2,262 +2,402 @@
 
 from typing import Any
 
+from restjson.aio.client import AsyncRestJsonProtocolClient
+from restjson.client import RestJsonProtocolClient
 from restjson.models import (
     AllQueryStringTypesInput,
+    AllQueryStringTypesInputParams,
     AllQueryStringTypesOutput,
+    AsyncStreamingTraitsInputParams,
+    AsyncStreamingTraitsRequireLengthInputParams,
+    AsyncStreamingTraitsWithMediaTypeInputParams,
     BlobPayloadEvent,
     ClientOptionalDefaults,
+    ClientOptionalDefaultsParams,
     ComplexNestedErrorData,
     ConstantAndVariableQueryStringInput,
+    ConstantAndVariableQueryStringInputParams,
     ConstantAndVariableQueryStringOutput,
     ConstantQueryStringInput,
+    ConstantQueryStringInputParams,
     ConstantQueryStringOutput,
     ContentTypeParametersInput,
+    ContentTypeParametersInputParams,
     ContentTypeParametersOutput,
     DatetimeOffsetsInput,
+    DatetimeOffsetsInputParams,
     DatetimeOffsetsOutput,
     Defaults,
+    DefaultsParams,
     Dialog,
+    DialogParams,
     DocumentTypeAsMapValueInput,
+    DocumentTypeAsMapValueInputParams,
     DocumentTypeAsMapValueOutput,
     DocumentTypeAsPayloadInput,
+    DocumentTypeAsPayloadInputParams,
     DocumentTypeAsPayloadOutput,
     DocumentTypeInput,
+    DocumentTypeInputParams,
     DocumentTypeOutput,
     DuplexStreamInput,
+    DuplexStreamInputParams,
     DuplexStreamOutput,
     DuplexStreamWithDistinctStreamsInput,
+    DuplexStreamWithDistinctStreamsInputParams,
     DuplexStreamWithDistinctStreamsOutput,
     DuplexStreamWithInitialMessagesInput,
+    DuplexStreamWithInitialMessagesInputParams,
     DuplexStreamWithInitialMessagesOutput,
     EmptyInputAndEmptyOutputInput,
+    EmptyInputAndEmptyOutputInputParams,
     EmptyInputAndEmptyOutputOutput,
     EndpointOperationInput,
+    EndpointOperationInputParams,
     EndpointOperationOutput,
     EndpointWithHostLabelOperationInput,
+    EndpointWithHostLabelOperationInputParams,
     EndpointWithHostLabelOperationOutput,
     Farewell,
+    FarewellParams,
     FractionalSecondsInput,
+    FractionalSecondsInputParams,
     FractionalSecondsOutput,
     GreetingStruct,
+    GreetingStructParams,
     GreetingWithErrorsInput,
+    GreetingWithErrorsInputParams,
     GreetingWithErrorsOutput,
     HeadersAndExplicitPayloadEvent,
     HeadersAndImplicitPayloadEvent,
     HeadersEvent,
     HostWithPathOperationInput,
+    HostWithPathOperationInputParams,
     HostWithPathOperationOutput,
     HttpChecksumRequiredInput,
+    HttpChecksumRequiredInputParams,
     HttpChecksumRequiredOutput,
     HttpEmptyPrefixHeadersInput,
+    HttpEmptyPrefixHeadersInputParams,
     HttpEmptyPrefixHeadersOutput,
     HttpEnumPayloadInput,
+    HttpEnumPayloadInputParams,
     HttpEnumPayloadOutput,
     HttpPayloadTraitsInput,
+    HttpPayloadTraitsInputParams,
     HttpPayloadTraitsOutput,
     HttpPayloadTraitsWithMediaTypeInput,
+    HttpPayloadTraitsWithMediaTypeInputParams,
     HttpPayloadTraitsWithMediaTypeOutput,
     HttpPayloadWithStructureInput,
+    HttpPayloadWithStructureInputParams,
     HttpPayloadWithStructureOutput,
     HttpPayloadWithUnionInput,
+    HttpPayloadWithUnionInputParams,
     HttpPayloadWithUnionOutput,
     HttpPrefixHeadersInResponseInput,
+    HttpPrefixHeadersInResponseInputParams,
     HttpPrefixHeadersInResponseOutput,
     HttpPrefixHeadersInput,
+    HttpPrefixHeadersInputParams,
     HttpPrefixHeadersOutput,
     HttpQueryParamsOnlyOperationInput,
+    HttpQueryParamsOnlyOperationInputParams,
     HttpQueryParamsOnlyOperationOutput,
     HttpRequestWithFloatLabelsInput,
+    HttpRequestWithFloatLabelsInputParams,
     HttpRequestWithFloatLabelsOutput,
     HttpRequestWithGreedyLabelInPathInput,
+    HttpRequestWithGreedyLabelInPathInputParams,
     HttpRequestWithGreedyLabelInPathOutput,
     HttpRequestWithLabelsAndTimestampFormatInput,
+    HttpRequestWithLabelsAndTimestampFormatInputParams,
     HttpRequestWithLabelsAndTimestampFormatOutput,
     HttpRequestWithLabelsInput,
+    HttpRequestWithLabelsInputParams,
     HttpRequestWithLabelsOutput,
     HttpRequestWithRegexLiteralInput,
+    HttpRequestWithRegexLiteralInputParams,
     HttpRequestWithRegexLiteralOutput,
     HttpResponseCodeInput,
+    HttpResponseCodeInputParams,
     HttpResponseCodeOutput,
     HttpStringPayloadInput,
+    HttpStringPayloadInputParams,
     HttpStringPayloadOutput,
     IgnoreQueryParamsInResponseInput,
+    IgnoreQueryParamsInResponseInputParams,
     IgnoreQueryParamsInResponseOutput,
     InputAndOutputWithHeadersInput,
+    InputAndOutputWithHeadersInputParams,
     InputAndOutputWithHeadersOutput,
     InputStreamInput,
+    InputStreamInputParams,
     InputStreamOutput,
     InputStreamWithInitialRequestInput,
+    InputStreamWithInitialRequestInputParams,
     InputStreamWithInitialRequestOutput,
     JsonBlobsInput,
+    JsonBlobsInputParams,
     JsonBlobsOutput,
     JsonEnumsInput,
+    JsonEnumsInputParams,
     JsonEnumsOutput,
     JsonIntEnumsInput,
+    JsonIntEnumsInputParams,
     JsonIntEnumsOutput,
     JsonListsInput,
+    JsonListsInputParams,
     JsonListsOutput,
     JsonMapsInput,
+    JsonMapsInputParams,
     JsonMapsOutput,
     JsonTimestampsInput,
+    JsonTimestampsInputParams,
     JsonTimestampsOutput,
     JsonUnionsInput,
+    JsonUnionsInputParams,
     JsonUnionsOutput,
     MalformedAcceptWithBodyInput,
+    MalformedAcceptWithBodyInputParams,
     MalformedAcceptWithBodyOutput,
     MalformedAcceptWithGenericStringInput,
+    MalformedAcceptWithGenericStringInputParams,
     MalformedAcceptWithGenericStringOutput,
     MalformedAcceptWithPayloadInput,
+    MalformedAcceptWithPayloadInputParams,
     MalformedAcceptWithPayloadOutput,
     MalformedBlobInput,
+    MalformedBlobInputParams,
     MalformedBlobOutput,
     MalformedBooleanInput,
+    MalformedBooleanInputParams,
     MalformedBooleanOutput,
     MalformedByteInput,
+    MalformedByteInputParams,
     MalformedByteOutput,
     MalformedContentTypeWithBodyInput,
+    MalformedContentTypeWithBodyInputParams,
     MalformedContentTypeWithBodyOutput,
     MalformedContentTypeWithGenericStringInput,
+    MalformedContentTypeWithGenericStringInputParams,
     MalformedContentTypeWithGenericStringOutput,
     MalformedContentTypeWithPayloadInput,
+    MalformedContentTypeWithPayloadInputParams,
     MalformedContentTypeWithPayloadOutput,
     MalformedContentTypeWithoutBodyEmptyInputInput,
+    MalformedContentTypeWithoutBodyEmptyInputInputParams,
     MalformedContentTypeWithoutBodyEmptyInputOutput,
     MalformedContentTypeWithoutBodyInput,
+    MalformedContentTypeWithoutBodyInputParams,
     MalformedContentTypeWithoutBodyOutput,
     MalformedDoubleInput,
+    MalformedDoubleInputParams,
     MalformedDoubleOutput,
     MalformedFloatInput,
+    MalformedFloatInputParams,
     MalformedFloatOutput,
     MalformedIntegerInput,
+    MalformedIntegerInputParams,
     MalformedIntegerOutput,
     MalformedListInput,
+    MalformedListInputParams,
     MalformedListOutput,
     MalformedLongInput,
+    MalformedLongInputParams,
     MalformedLongOutput,
     MalformedMapInput,
+    MalformedMapInputParams,
     MalformedMapOutput,
     MalformedRequestBodyInput,
+    MalformedRequestBodyInputParams,
     MalformedRequestBodyOutput,
     MalformedShortInput,
+    MalformedShortInputParams,
     MalformedShortOutput,
     MalformedStringInput,
+    MalformedStringInputParams,
     MalformedStringOutput,
     MalformedTimestampBodyDateTimeInput,
+    MalformedTimestampBodyDateTimeInputParams,
     MalformedTimestampBodyDateTimeOutput,
     MalformedTimestampBodyDefaultInput,
+    MalformedTimestampBodyDefaultInputParams,
     MalformedTimestampBodyDefaultOutput,
     MalformedTimestampBodyHttpDateInput,
+    MalformedTimestampBodyHttpDateInputParams,
     MalformedTimestampBodyHttpDateOutput,
     MalformedTimestampHeaderDateTimeInput,
+    MalformedTimestampHeaderDateTimeInputParams,
     MalformedTimestampHeaderDateTimeOutput,
     MalformedTimestampHeaderDefaultInput,
+    MalformedTimestampHeaderDefaultInputParams,
     MalformedTimestampHeaderDefaultOutput,
     MalformedTimestampHeaderEpochInput,
+    MalformedTimestampHeaderEpochInputParams,
     MalformedTimestampHeaderEpochOutput,
     MalformedTimestampPathDefaultInput,
+    MalformedTimestampPathDefaultInputParams,
     MalformedTimestampPathDefaultOutput,
     MalformedTimestampPathEpochInput,
+    MalformedTimestampPathEpochInputParams,
     MalformedTimestampPathEpochOutput,
     MalformedTimestampPathHttpDateInput,
+    MalformedTimestampPathHttpDateInputParams,
     MalformedTimestampPathHttpDateOutput,
     MalformedTimestampQueryDefaultInput,
+    MalformedTimestampQueryDefaultInputParams,
     MalformedTimestampQueryDefaultOutput,
     MalformedTimestampQueryEpochInput,
+    MalformedTimestampQueryEpochInputParams,
     MalformedTimestampQueryEpochOutput,
     MalformedTimestampQueryHttpDateInput,
+    MalformedTimestampQueryHttpDateInputParams,
     MalformedTimestampQueryHttpDateOutput,
     MalformedUnionInput,
+    MalformedUnionInputParams,
     MalformedUnionOutput,
     MediaTypeHeaderInput,
+    MediaTypeHeaderInputParams,
     MediaTypeHeaderOutput,
+    MyUnionParams,
     NestedPayload,
+    NestedPayloadParams,
+    NestedUnionParams,
     NoInputAndNoOutputInput,
+    NoInputAndNoOutputInputParams,
     NoInputAndNoOutputOutput,
     NoInputAndOutputInput,
+    NoInputAndOutputInputParams,
     NoInputAndOutputOutput,
     NullAndEmptyHeadersClientInput,
+    NullAndEmptyHeadersClientInputParams,
     NullAndEmptyHeadersClientOutput,
     NullAndEmptyHeadersServerInput,
+    NullAndEmptyHeadersServerInputParams,
     NullAndEmptyHeadersServerOutput,
     OmitsNullSerializesEmptyStringInput,
+    OmitsNullSerializesEmptyStringInputParams,
     OmitsNullSerializesEmptyStringOutput,
     OmitsSerializingEmptyListsInput,
+    OmitsSerializingEmptyListsInputParams,
     OmitsSerializingEmptyListsOutput,
     OperationWithDefaultsInput,
+    OperationWithDefaultsInputParams,
     OperationWithDefaultsOutput,
     OperationWithNestedStructureInput,
+    OperationWithNestedStructureInputParams,
     OperationWithNestedStructureOutput,
     OutputStreamInput,
+    OutputStreamInputParams,
     OutputStreamOutput,
     OutputStreamWithInitialResponseInput,
+    OutputStreamWithInitialResponseInputParams,
     OutputStreamWithInitialResponseOutput,
     PayloadConfig,
+    PayloadConfigParams,
     PayloadStructure,
+    PlayerActionParams,
     PostPlayerActionInput,
+    PostPlayerActionInputParams,
     PostPlayerActionOutput,
     PostUnionWithJsonNameInput,
+    PostUnionWithJsonNameInputParams,
     PostUnionWithJsonNameOutput,
     PutWithContentEncodingInput,
+    PutWithContentEncodingInputParams,
     PutWithContentEncodingOutput,
     QueryIdempotencyTokenAutoFillInput,
+    QueryIdempotencyTokenAutoFillInputParams,
     QueryIdempotencyTokenAutoFillOutput,
     QueryParamsAsStringListMapInput,
+    QueryParamsAsStringListMapInputParams,
     QueryParamsAsStringListMapOutput,
     QueryPrecedenceInput,
+    QueryPrecedenceInputParams,
     QueryPrecedenceOutput,
     RecursiveShapesInput,
     RecursiveShapesInputOutputNested1,
+    RecursiveShapesInputOutputNested1Params,
     RecursiveShapesInputOutputNested2,
+    RecursiveShapesInputOutputNested2Params,
+    RecursiveShapesInputParams,
     RecursiveShapesOutput,
     RenamedGreeting,
+    RenamedGreetingParams,
     ResponseCodeHttpFallbackInput,
+    ResponseCodeHttpFallbackInputParams,
     ResponseCodeHttpFallbackOutput,
     ResponseCodeRequiredInput,
+    ResponseCodeRequiredInputParams,
     ResponseCodeRequiredOutput,
     SimpleScalarPropertiesInput,
+    SimpleScalarPropertiesInputParams,
     SimpleScalarPropertiesOutput,
+    SimpleUnionParams,
     SingletonEvent,
     SparseJsonListsInput,
+    SparseJsonListsInputParams,
     SparseJsonListsOutput,
     SparseJsonMapsInput,
+    SparseJsonMapsInputParams,
     SparseJsonMapsOutput,
     StreamingTraitsInput,
+    StreamingTraitsInputParams,
     StreamingTraitsOutput,
     StreamingTraitsRequireLengthInput,
+    StreamingTraitsRequireLengthInputParams,
     StreamingTraitsRequireLengthOutput,
     StreamingTraitsWithMediaTypeInput,
+    StreamingTraitsWithMediaTypeInputParams,
     StreamingTraitsWithMediaTypeOutput,
     StringPayloadEvent,
     StructureListMember,
+    StructureListMemberParams,
     StructurePayloadEvent,
     TestBodyStructureInput,
+    TestBodyStructureInputParams,
     TestBodyStructureOutput,
     TestConfig,
+    TestConfigParams,
     TestGetNoInputNoPayloadInput,
+    TestGetNoInputNoPayloadInputParams,
     TestGetNoInputNoPayloadOutput,
     TestGetNoPayloadInput,
+    TestGetNoPayloadInputParams,
     TestGetNoPayloadOutput,
     TestPayloadBlobInput,
+    TestPayloadBlobInputParams,
     TestPayloadBlobOutput,
     TestPayloadStructureInput,
+    TestPayloadStructureInputParams,
     TestPayloadStructureOutput,
     TestPostNoInputNoPayloadInput,
+    TestPostNoInputNoPayloadInputParams,
     TestPostNoInputNoPayloadOutput,
     TestPostNoPayloadInput,
+    TestPostNoPayloadInputParams,
     TestPostNoPayloadOutput,
     TimestampFormatHeadersInput,
+    TimestampFormatHeadersInputParams,
     TimestampFormatHeadersOutput,
     TopLevel,
+    TopLevelParams,
     UnionPayloadEvent,
+    UnionPayloadParams,
+    UnionWithJsonNameParams,
     Unit,
     UnitInputAndOutputInput,
+    UnitInputAndOutputInputParams,
     UnitInputAndOutputOutput,
+    UnitParams,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check. The clients are typed inline rather than by a stub.
+# pyright: reportMissingTypeStubs=false
 
 _: Any = ...
 
@@ -511,3 +651,814 @@ UnitInputAndOutputOutput()
 RenamedGreeting()
 GreetingStruct()
 Unit()
+_params_0: AllQueryStringTypesInputParams = {}
+_params_1: ClientOptionalDefaultsParams = {}
+_params_2: ConstantAndVariableQueryStringInputParams = {}
+_params_3: ConstantQueryStringInputParams = {"hello": _}
+_params_4: ContentTypeParametersInputParams = {}
+_params_5: DatetimeOffsetsInputParams = {}
+_params_6: DefaultsParams = {}
+_params_7: DialogParams = {}
+_params_8: DocumentTypeAsMapValueInputParams = {}
+_params_9: DocumentTypeAsPayloadInputParams = {}
+_params_10: DocumentTypeInputParams = {}
+_params_11: DuplexStreamInputParams = {}
+_params_12: DuplexStreamWithDistinctStreamsInputParams = {}
+_params_13: DuplexStreamWithInitialMessagesInputParams = {"initial_request_member": _}
+_params_14: EmptyInputAndEmptyOutputInputParams = {}
+_params_15: EndpointOperationInputParams = {}
+_params_16: EndpointWithHostLabelOperationInputParams = {"label": _}
+_params_17: FarewellParams = {}
+_params_18: FractionalSecondsInputParams = {}
+_params_19: GreetingWithErrorsInputParams = {}
+_params_20: HostWithPathOperationInputParams = {}
+_params_21: HttpChecksumRequiredInputParams = {}
+_params_22: HttpEmptyPrefixHeadersInputParams = {}
+_params_23: HttpEnumPayloadInputParams = {}
+_params_24: HttpPayloadTraitsInputParams = {}
+_params_25: HttpPayloadTraitsWithMediaTypeInputParams = {}
+_params_26: HttpPayloadWithStructureInputParams = {}
+_params_27: HttpPayloadWithUnionInputParams = {}
+_params_28: HttpPrefixHeadersInputParams = {}
+_params_29: HttpPrefixHeadersInResponseInputParams = {}
+_params_30: HttpQueryParamsOnlyOperationInputParams = {}
+_params_31: HttpRequestWithFloatLabelsInputParams = {"float_": _, "double": _}
+_params_32: HttpRequestWithGreedyLabelInPathInputParams = {"foo": _, "baz": _}
+_params_33: HttpRequestWithLabelsAndTimestampFormatInputParams = {
+    "member_epoch_seconds": _,
+    "member_http_date": _,
+    "member_date_time": _,
+    "default_format": _,
+    "target_epoch_seconds": _,
+    "target_http_date": _,
+    "target_date_time": _,
+}
+_params_34: HttpRequestWithLabelsInputParams = {
+    "string": _,
+    "short": _,
+    "integer": _,
+    "long": _,
+    "float_": _,
+    "double": _,
+    "boolean": _,
+    "timestamp": _,
+}
+_params_35: HttpRequestWithRegexLiteralInputParams = {"str_": _}
+_params_36: HttpResponseCodeInputParams = {}
+_params_37: HttpStringPayloadInputParams = {}
+_params_38: IgnoreQueryParamsInResponseInputParams = {}
+_params_39: InputAndOutputWithHeadersInputParams = {}
+_params_40: InputStreamInputParams = {}
+_params_41: InputStreamWithInitialRequestInputParams = {"initial_request_member": _}
+_params_42: JsonBlobsInputParams = {}
+_params_43: JsonEnumsInputParams = {}
+_params_44: JsonIntEnumsInputParams = {}
+_params_45: JsonListsInputParams = {}
+_params_46: JsonMapsInputParams = {}
+_params_47: JsonTimestampsInputParams = {}
+_params_48: JsonUnionsInputParams = {}
+_params_49: MalformedAcceptWithBodyInputParams = {}
+_params_50: MalformedAcceptWithGenericStringInputParams = {}
+_params_51: MalformedAcceptWithPayloadInputParams = {}
+_params_52: MalformedBlobInputParams = {}
+_params_53: MalformedBooleanInputParams = {"boolean_in_path": _}
+_params_54: MalformedByteInputParams = {"byte_in_path": _}
+_params_55: MalformedContentTypeWithBodyInputParams = {}
+_params_56: MalformedContentTypeWithGenericStringInputParams = {}
+_params_57: MalformedContentTypeWithoutBodyEmptyInputInputParams = {}
+_params_58: MalformedContentTypeWithoutBodyInputParams = {}
+_params_59: MalformedContentTypeWithPayloadInputParams = {}
+_params_60: MalformedDoubleInputParams = {"double_in_path": _}
+_params_61: MalformedFloatInputParams = {"float_in_path": _}
+_params_62: MalformedIntegerInputParams = {"integer_in_path": _}
+_params_63: MalformedListInputParams = {}
+_params_64: MalformedLongInputParams = {"long_in_path": _}
+_params_65: MalformedMapInputParams = {}
+_params_66: MalformedRequestBodyInputParams = {}
+_params_67: MalformedShortInputParams = {"short_in_path": _}
+_params_68: MalformedStringInputParams = {}
+_params_69: MalformedTimestampBodyDateTimeInputParams = {"timestamp": _}
+_params_70: MalformedTimestampBodyDefaultInputParams = {"timestamp": _}
+_params_71: MalformedTimestampBodyHttpDateInputParams = {"timestamp": _}
+_params_72: MalformedTimestampHeaderDateTimeInputParams = {"timestamp": _}
+_params_73: MalformedTimestampHeaderDefaultInputParams = {"timestamp": _}
+_params_74: MalformedTimestampHeaderEpochInputParams = {"timestamp": _}
+_params_75: MalformedTimestampPathDefaultInputParams = {"timestamp": _}
+_params_76: MalformedTimestampPathEpochInputParams = {"timestamp": _}
+_params_77: MalformedTimestampPathHttpDateInputParams = {"timestamp": _}
+_params_78: MalformedTimestampQueryDefaultInputParams = {"timestamp": _}
+_params_79: MalformedTimestampQueryEpochInputParams = {"timestamp": _}
+_params_80: MalformedTimestampQueryHttpDateInputParams = {"timestamp": _}
+_params_81: MalformedUnionInputParams = {}
+_params_82: MediaTypeHeaderInputParams = {}
+_params_83: MyUnionParams = {"string_value": _}
+_params_84: NestedPayloadParams = {}
+_params_85: NestedUnionParams = {"string_value": _}
+_params_86: NoInputAndNoOutputInputParams = {}
+_params_87: NoInputAndOutputInputParams = {}
+_params_88: NullAndEmptyHeadersClientInputParams = {}
+_params_89: NullAndEmptyHeadersServerInputParams = {}
+_params_90: OmitsNullSerializesEmptyStringInputParams = {}
+_params_91: OmitsSerializingEmptyListsInputParams = {}
+_params_92: OperationWithDefaultsInputParams = {}
+_params_93: OperationWithNestedStructureInputParams = {"top_level": _}
+_params_94: OutputStreamInputParams = {}
+_params_95: OutputStreamWithInitialResponseInputParams = {}
+_params_96: PayloadConfigParams = {}
+_params_97: PlayerActionParams = {"quit": _}
+_params_98: PostPlayerActionInputParams = {}
+_params_99: PostUnionWithJsonNameInputParams = {}
+_params_100: PutWithContentEncodingInputParams = {}
+_params_101: QueryIdempotencyTokenAutoFillInputParams = {}
+_params_102: QueryParamsAsStringListMapInputParams = {}
+_params_103: QueryPrecedenceInputParams = {}
+_params_104: RecursiveShapesInputParams = {}
+_params_105: RecursiveShapesInputOutputNested1Params = {}
+_params_106: RecursiveShapesInputOutputNested2Params = {}
+_params_107: ResponseCodeHttpFallbackInputParams = {}
+_params_108: ResponseCodeRequiredInputParams = {}
+_params_109: SimpleScalarPropertiesInputParams = {}
+_params_110: SimpleUnionParams = {"int_": _}
+_params_111: SparseJsonListsInputParams = {}
+_params_112: SparseJsonMapsInputParams = {}
+_params_113: StreamingTraitsInputParams = {}
+_params_114: StreamingTraitsRequireLengthInputParams = {}
+_params_115: StreamingTraitsWithMediaTypeInputParams = {}
+_params_116: StructureListMemberParams = {}
+_params_117: TestBodyStructureInputParams = {}
+_params_118: TestConfigParams = {}
+_params_119: TestGetNoInputNoPayloadInputParams = {}
+_params_120: TestGetNoPayloadInputParams = {}
+_params_121: TestPayloadBlobInputParams = {}
+_params_122: TestPayloadStructureInputParams = {}
+_params_123: TestPostNoInputNoPayloadInputParams = {}
+_params_124: TestPostNoPayloadInputParams = {}
+_params_125: TimestampFormatHeadersInputParams = {}
+_params_126: TopLevelParams = {"dialog": _}
+_params_127: UnionPayloadParams = {"greeting": _}
+_params_128: UnionWithJsonNameParams = {"foo": _}
+_params_129: UnitInputAndOutputInputParams = {}
+_params_130: RenamedGreetingParams = {}
+_params_131: GreetingStructParams = {}
+_params_132: UnitParams = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncRestJsonProtocolClient) -> None:
+    pass
+    await client.all_query_string_types()
+    await client.all_query_string_types(**_request(AllQueryStringTypesInputParams))
+    await client.constant_and_variable_query_string()
+    await client.constant_and_variable_query_string(
+        **_request(ConstantAndVariableQueryStringInputParams)
+    )
+    await client.constant_query_string(hello=_)
+    await client.constant_query_string(**_request(ConstantQueryStringInputParams))
+    await client.content_type_parameters()
+    await client.content_type_parameters(**_request(ContentTypeParametersInputParams))
+    await client.datetime_offsets()
+    await client.datetime_offsets(**_request(DatetimeOffsetsInputParams))
+    await client.document_type()
+    await client.document_type(**_request(DocumentTypeInputParams))
+    await client.document_type_as_map_value()
+    await client.document_type_as_map_value(
+        **_request(DocumentTypeAsMapValueInputParams)
+    )
+    await client.document_type_as_payload()
+    await client.document_type_as_payload(**_request(DocumentTypeAsPayloadInputParams))
+    await client.duplex_stream()
+    await client.duplex_stream(**_request(DuplexStreamInputParams))
+    await client.duplex_stream_with_distinct_streams()
+    await client.duplex_stream_with_distinct_streams(
+        **_request(DuplexStreamWithDistinctStreamsInputParams)
+    )
+    await client.duplex_stream_with_initial_messages(initial_request_member=_)
+    await client.duplex_stream_with_initial_messages(
+        **_request(DuplexStreamWithInitialMessagesInputParams)
+    )
+    await client.empty_input_and_empty_output()
+    await client.empty_input_and_empty_output(
+        **_request(EmptyInputAndEmptyOutputInputParams)
+    )
+    await client.endpoint_operation()
+    await client.endpoint_operation(**_request(EndpointOperationInputParams))
+    await client.endpoint_with_host_label_operation(label=_)
+    await client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputParams)
+    )
+    await client.fractional_seconds()
+    await client.fractional_seconds(**_request(FractionalSecondsInputParams))
+    await client.greeting_with_errors()
+    await client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    await client.host_with_path_operation()
+    await client.host_with_path_operation(**_request(HostWithPathOperationInputParams))
+    await client.http_checksum_required()
+    await client.http_checksum_required(**_request(HttpChecksumRequiredInputParams))
+    await client.http_empty_prefix_headers()
+    await client.http_empty_prefix_headers(
+        **_request(HttpEmptyPrefixHeadersInputParams)
+    )
+    await client.http_enum_payload()
+    await client.http_enum_payload(**_request(HttpEnumPayloadInputParams))
+    await client.http_payload_traits()
+    await client.http_payload_traits(**_request(HttpPayloadTraitsInputParams))
+    await client.http_payload_traits_with_media_type()
+    await client.http_payload_traits_with_media_type(
+        **_request(HttpPayloadTraitsWithMediaTypeInputParams)
+    )
+    await client.http_payload_with_structure()
+    await client.http_payload_with_structure(
+        **_request(HttpPayloadWithStructureInputParams)
+    )
+    await client.http_payload_with_union()
+    await client.http_payload_with_union(**_request(HttpPayloadWithUnionInputParams))
+    await client.http_prefix_headers()
+    await client.http_prefix_headers(**_request(HttpPrefixHeadersInputParams))
+    await client.http_prefix_headers_in_response()
+    await client.http_prefix_headers_in_response(
+        **_request(HttpPrefixHeadersInResponseInputParams)
+    )
+    await client.http_query_params_only_operation()
+    await client.http_query_params_only_operation(
+        **_request(HttpQueryParamsOnlyOperationInputParams)
+    )
+    await client.http_request_with_float_labels(float_=_, double=_)
+    await client.http_request_with_float_labels(
+        **_request(HttpRequestWithFloatLabelsInputParams)
+    )
+    await client.http_request_with_greedy_label_in_path(foo=_, baz=_)
+    await client.http_request_with_greedy_label_in_path(
+        **_request(HttpRequestWithGreedyLabelInPathInputParams)
+    )
+    await client.http_request_with_labels(
+        string=_, short=_, integer=_, long=_, float_=_, double=_, boolean=_, timestamp=_
+    )
+    await client.http_request_with_labels(**_request(HttpRequestWithLabelsInputParams))
+    await client.http_request_with_labels_and_timestamp_format(
+        member_epoch_seconds=_,
+        member_http_date=_,
+        member_date_time=_,
+        default_format=_,
+        target_epoch_seconds=_,
+        target_http_date=_,
+        target_date_time=_,
+    )
+    await client.http_request_with_labels_and_timestamp_format(
+        **_request(HttpRequestWithLabelsAndTimestampFormatInputParams)
+    )
+    await client.http_request_with_regex_literal(str_=_)
+    await client.http_request_with_regex_literal(
+        **_request(HttpRequestWithRegexLiteralInputParams)
+    )
+    await client.http_response_code()
+    await client.http_response_code(**_request(HttpResponseCodeInputParams))
+    await client.http_string_payload()
+    await client.http_string_payload(**_request(HttpStringPayloadInputParams))
+    await client.ignore_query_params_in_response()
+    await client.ignore_query_params_in_response(
+        **_request(IgnoreQueryParamsInResponseInputParams)
+    )
+    await client.input_and_output_with_headers()
+    await client.input_and_output_with_headers(
+        **_request(InputAndOutputWithHeadersInputParams)
+    )
+    await client.input_stream()
+    await client.input_stream(**_request(InputStreamInputParams))
+    await client.input_stream_with_initial_request(initial_request_member=_)
+    await client.input_stream_with_initial_request(
+        **_request(InputStreamWithInitialRequestInputParams)
+    )
+    await client.json_blobs()
+    await client.json_blobs(**_request(JsonBlobsInputParams))
+    await client.json_enums()
+    await client.json_enums(**_request(JsonEnumsInputParams))
+    await client.json_int_enums()
+    await client.json_int_enums(**_request(JsonIntEnumsInputParams))
+    await client.json_lists()
+    await client.json_lists(**_request(JsonListsInputParams))
+    await client.json_maps()
+    await client.json_maps(**_request(JsonMapsInputParams))
+    await client.json_timestamps()
+    await client.json_timestamps(**_request(JsonTimestampsInputParams))
+    await client.json_unions()
+    await client.json_unions(**_request(JsonUnionsInputParams))
+    await client.malformed_accept_with_body()
+    await client.malformed_accept_with_body(
+        **_request(MalformedAcceptWithBodyInputParams)
+    )
+    await client.malformed_accept_with_generic_string()
+    await client.malformed_accept_with_generic_string(
+        **_request(MalformedAcceptWithGenericStringInputParams)
+    )
+    await client.malformed_accept_with_payload()
+    await client.malformed_accept_with_payload(
+        **_request(MalformedAcceptWithPayloadInputParams)
+    )
+    await client.malformed_blob()
+    await client.malformed_blob(**_request(MalformedBlobInputParams))
+    await client.malformed_boolean(boolean_in_path=_)
+    await client.malformed_boolean(**_request(MalformedBooleanInputParams))
+    await client.malformed_byte(byte_in_path=_)
+    await client.malformed_byte(**_request(MalformedByteInputParams))
+    await client.malformed_content_type_with_body()
+    await client.malformed_content_type_with_body(
+        **_request(MalformedContentTypeWithBodyInputParams)
+    )
+    await client.malformed_content_type_with_generic_string()
+    await client.malformed_content_type_with_generic_string(
+        **_request(MalformedContentTypeWithGenericStringInputParams)
+    )
+    await client.malformed_content_type_without_body()
+    await client.malformed_content_type_without_body(
+        **_request(MalformedContentTypeWithoutBodyInputParams)
+    )
+    await client.malformed_content_type_without_body_empty_input()
+    await client.malformed_content_type_without_body_empty_input(
+        **_request(MalformedContentTypeWithoutBodyEmptyInputInputParams)
+    )
+    await client.malformed_content_type_with_payload()
+    await client.malformed_content_type_with_payload(
+        **_request(MalformedContentTypeWithPayloadInputParams)
+    )
+    await client.malformed_double(double_in_path=_)
+    await client.malformed_double(**_request(MalformedDoubleInputParams))
+    await client.malformed_float(float_in_path=_)
+    await client.malformed_float(**_request(MalformedFloatInputParams))
+    await client.malformed_integer(integer_in_path=_)
+    await client.malformed_integer(**_request(MalformedIntegerInputParams))
+    await client.malformed_list()
+    await client.malformed_list(**_request(MalformedListInputParams))
+    await client.malformed_long(long_in_path=_)
+    await client.malformed_long(**_request(MalformedLongInputParams))
+    await client.malformed_map()
+    await client.malformed_map(**_request(MalformedMapInputParams))
+    await client.malformed_request_body()
+    await client.malformed_request_body(**_request(MalformedRequestBodyInputParams))
+    await client.malformed_short(short_in_path=_)
+    await client.malformed_short(**_request(MalformedShortInputParams))
+    await client.malformed_string()
+    await client.malformed_string(**_request(MalformedStringInputParams))
+    await client.malformed_timestamp_body_date_time(timestamp=_)
+    await client.malformed_timestamp_body_date_time(
+        **_request(MalformedTimestampBodyDateTimeInputParams)
+    )
+    await client.malformed_timestamp_body_default(timestamp=_)
+    await client.malformed_timestamp_body_default(
+        **_request(MalformedTimestampBodyDefaultInputParams)
+    )
+    await client.malformed_timestamp_body_http_date(timestamp=_)
+    await client.malformed_timestamp_body_http_date(
+        **_request(MalformedTimestampBodyHttpDateInputParams)
+    )
+    await client.malformed_timestamp_header_date_time(timestamp=_)
+    await client.malformed_timestamp_header_date_time(
+        **_request(MalformedTimestampHeaderDateTimeInputParams)
+    )
+    await client.malformed_timestamp_header_default(timestamp=_)
+    await client.malformed_timestamp_header_default(
+        **_request(MalformedTimestampHeaderDefaultInputParams)
+    )
+    await client.malformed_timestamp_header_epoch(timestamp=_)
+    await client.malformed_timestamp_header_epoch(
+        **_request(MalformedTimestampHeaderEpochInputParams)
+    )
+    await client.malformed_timestamp_path_default(timestamp=_)
+    await client.malformed_timestamp_path_default(
+        **_request(MalformedTimestampPathDefaultInputParams)
+    )
+    await client.malformed_timestamp_path_epoch(timestamp=_)
+    await client.malformed_timestamp_path_epoch(
+        **_request(MalformedTimestampPathEpochInputParams)
+    )
+    await client.malformed_timestamp_path_http_date(timestamp=_)
+    await client.malformed_timestamp_path_http_date(
+        **_request(MalformedTimestampPathHttpDateInputParams)
+    )
+    await client.malformed_timestamp_query_default(timestamp=_)
+    await client.malformed_timestamp_query_default(
+        **_request(MalformedTimestampQueryDefaultInputParams)
+    )
+    await client.malformed_timestamp_query_epoch(timestamp=_)
+    await client.malformed_timestamp_query_epoch(
+        **_request(MalformedTimestampQueryEpochInputParams)
+    )
+    await client.malformed_timestamp_query_http_date(timestamp=_)
+    await client.malformed_timestamp_query_http_date(
+        **_request(MalformedTimestampQueryHttpDateInputParams)
+    )
+    await client.malformed_union()
+    await client.malformed_union(**_request(MalformedUnionInputParams))
+    await client.media_type_header()
+    await client.media_type_header(**_request(MediaTypeHeaderInputParams))
+    await client.no_input_and_no_output()
+    await client.no_input_and_no_output(**_request(NoInputAndNoOutputInputParams))
+    await client.no_input_and_output()
+    await client.no_input_and_output(**_request(NoInputAndOutputInputParams))
+    await client.null_and_empty_headers_client()
+    await client.null_and_empty_headers_client(
+        **_request(NullAndEmptyHeadersClientInputParams)
+    )
+    await client.null_and_empty_headers_server()
+    await client.null_and_empty_headers_server(
+        **_request(NullAndEmptyHeadersServerInputParams)
+    )
+    await client.omits_null_serializes_empty_string()
+    await client.omits_null_serializes_empty_string(
+        **_request(OmitsNullSerializesEmptyStringInputParams)
+    )
+    await client.omits_serializing_empty_lists()
+    await client.omits_serializing_empty_lists(
+        **_request(OmitsSerializingEmptyListsInputParams)
+    )
+    await client.operation_with_defaults()
+    await client.operation_with_defaults(**_request(OperationWithDefaultsInputParams))
+    await client.operation_with_nested_structure(top_level=_)
+    await client.operation_with_nested_structure(
+        **_request(OperationWithNestedStructureInputParams)
+    )
+    await client.output_stream()
+    await client.output_stream(**_request(OutputStreamInputParams))
+    await client.output_stream_with_initial_response()
+    await client.output_stream_with_initial_response(
+        **_request(OutputStreamWithInitialResponseInputParams)
+    )
+    await client.post_player_action()
+    await client.post_player_action(**_request(PostPlayerActionInputParams))
+    await client.post_union_with_json_name()
+    await client.post_union_with_json_name(**_request(PostUnionWithJsonNameInputParams))
+    await client.put_with_content_encoding()
+    await client.put_with_content_encoding(
+        **_request(PutWithContentEncodingInputParams)
+    )
+    await client.query_idempotency_token_auto_fill()
+    await client.query_idempotency_token_auto_fill(
+        **_request(QueryIdempotencyTokenAutoFillInputParams)
+    )
+    await client.query_params_as_string_list_map()
+    await client.query_params_as_string_list_map(
+        **_request(QueryParamsAsStringListMapInputParams)
+    )
+    await client.query_precedence()
+    await client.query_precedence(**_request(QueryPrecedenceInputParams))
+    await client.recursive_shapes()
+    await client.recursive_shapes(**_request(RecursiveShapesInputParams))
+    await client.response_code_http_fallback()
+    await client.response_code_http_fallback(
+        **_request(ResponseCodeHttpFallbackInputParams)
+    )
+    await client.response_code_required()
+    await client.response_code_required(**_request(ResponseCodeRequiredInputParams))
+    await client.simple_scalar_properties()
+    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    await client.sparse_json_lists()
+    await client.sparse_json_lists(**_request(SparseJsonListsInputParams))
+    await client.sparse_json_maps()
+    await client.sparse_json_maps(**_request(SparseJsonMapsInputParams))
+    await client.streaming_traits()
+    await client.streaming_traits(**_request(StreamingTraitsInputParams))
+    await client.streaming_traits(**_request(AsyncStreamingTraitsInputParams))
+    await client.streaming_traits_require_length()
+    await client.streaming_traits_require_length(
+        **_request(StreamingTraitsRequireLengthInputParams)
+    )
+    await client.streaming_traits_require_length(
+        **_request(AsyncStreamingTraitsRequireLengthInputParams)
+    )
+    await client.streaming_traits_with_media_type()
+    await client.streaming_traits_with_media_type(
+        **_request(StreamingTraitsWithMediaTypeInputParams)
+    )
+    await client.streaming_traits_with_media_type(
+        **_request(AsyncStreamingTraitsWithMediaTypeInputParams)
+    )
+    await client.test_body_structure()
+    await client.test_body_structure(**_request(TestBodyStructureInputParams))
+    await client.test_get_no_input_no_payload()
+    await client.test_get_no_input_no_payload(
+        **_request(TestGetNoInputNoPayloadInputParams)
+    )
+    await client.test_get_no_payload()
+    await client.test_get_no_payload(**_request(TestGetNoPayloadInputParams))
+    await client.test_payload_blob()
+    await client.test_payload_blob(**_request(TestPayloadBlobInputParams))
+    await client.test_payload_structure()
+    await client.test_payload_structure(**_request(TestPayloadStructureInputParams))
+    await client.test_post_no_input_no_payload()
+    await client.test_post_no_input_no_payload(
+        **_request(TestPostNoInputNoPayloadInputParams)
+    )
+    await client.test_post_no_payload()
+    await client.test_post_no_payload(**_request(TestPostNoPayloadInputParams))
+    await client.timestamp_format_headers()
+    await client.timestamp_format_headers(**_request(TimestampFormatHeadersInputParams))
+    await client.unit_input_and_output()
+    await client.unit_input_and_output(**_request(UnitInputAndOutputInputParams))
+
+
+def check_sync_calls(client: RestJsonProtocolClient) -> None:
+    pass
+    client.all_query_string_types()
+    client.all_query_string_types(**_request(AllQueryStringTypesInputParams))
+    client.constant_and_variable_query_string()
+    client.constant_and_variable_query_string(
+        **_request(ConstantAndVariableQueryStringInputParams)
+    )
+    client.constant_query_string(hello=_)
+    client.constant_query_string(**_request(ConstantQueryStringInputParams))
+    client.content_type_parameters()
+    client.content_type_parameters(**_request(ContentTypeParametersInputParams))
+    client.datetime_offsets()
+    client.datetime_offsets(**_request(DatetimeOffsetsInputParams))
+    client.document_type()
+    client.document_type(**_request(DocumentTypeInputParams))
+    client.document_type_as_map_value()
+    client.document_type_as_map_value(**_request(DocumentTypeAsMapValueInputParams))
+    client.document_type_as_payload()
+    client.document_type_as_payload(**_request(DocumentTypeAsPayloadInputParams))
+    client.empty_input_and_empty_output()
+    client.empty_input_and_empty_output(**_request(EmptyInputAndEmptyOutputInputParams))
+    client.endpoint_operation()
+    client.endpoint_operation(**_request(EndpointOperationInputParams))
+    client.endpoint_with_host_label_operation(label=_)
+    client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputParams)
+    )
+    client.fractional_seconds()
+    client.fractional_seconds(**_request(FractionalSecondsInputParams))
+    client.greeting_with_errors()
+    client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    client.host_with_path_operation()
+    client.host_with_path_operation(**_request(HostWithPathOperationInputParams))
+    client.http_checksum_required()
+    client.http_checksum_required(**_request(HttpChecksumRequiredInputParams))
+    client.http_empty_prefix_headers()
+    client.http_empty_prefix_headers(**_request(HttpEmptyPrefixHeadersInputParams))
+    client.http_enum_payload()
+    client.http_enum_payload(**_request(HttpEnumPayloadInputParams))
+    client.http_payload_traits()
+    client.http_payload_traits(**_request(HttpPayloadTraitsInputParams))
+    client.http_payload_traits_with_media_type()
+    client.http_payload_traits_with_media_type(
+        **_request(HttpPayloadTraitsWithMediaTypeInputParams)
+    )
+    client.http_payload_with_structure()
+    client.http_payload_with_structure(**_request(HttpPayloadWithStructureInputParams))
+    client.http_payload_with_union()
+    client.http_payload_with_union(**_request(HttpPayloadWithUnionInputParams))
+    client.http_prefix_headers()
+    client.http_prefix_headers(**_request(HttpPrefixHeadersInputParams))
+    client.http_prefix_headers_in_response()
+    client.http_prefix_headers_in_response(
+        **_request(HttpPrefixHeadersInResponseInputParams)
+    )
+    client.http_query_params_only_operation()
+    client.http_query_params_only_operation(
+        **_request(HttpQueryParamsOnlyOperationInputParams)
+    )
+    client.http_request_with_float_labels(float_=_, double=_)
+    client.http_request_with_float_labels(
+        **_request(HttpRequestWithFloatLabelsInputParams)
+    )
+    client.http_request_with_greedy_label_in_path(foo=_, baz=_)
+    client.http_request_with_greedy_label_in_path(
+        **_request(HttpRequestWithGreedyLabelInPathInputParams)
+    )
+    client.http_request_with_labels(
+        string=_, short=_, integer=_, long=_, float_=_, double=_, boolean=_, timestamp=_
+    )
+    client.http_request_with_labels(**_request(HttpRequestWithLabelsInputParams))
+    client.http_request_with_labels_and_timestamp_format(
+        member_epoch_seconds=_,
+        member_http_date=_,
+        member_date_time=_,
+        default_format=_,
+        target_epoch_seconds=_,
+        target_http_date=_,
+        target_date_time=_,
+    )
+    client.http_request_with_labels_and_timestamp_format(
+        **_request(HttpRequestWithLabelsAndTimestampFormatInputParams)
+    )
+    client.http_request_with_regex_literal(str_=_)
+    client.http_request_with_regex_literal(
+        **_request(HttpRequestWithRegexLiteralInputParams)
+    )
+    client.http_response_code()
+    client.http_response_code(**_request(HttpResponseCodeInputParams))
+    client.http_string_payload()
+    client.http_string_payload(**_request(HttpStringPayloadInputParams))
+    client.ignore_query_params_in_response()
+    client.ignore_query_params_in_response(
+        **_request(IgnoreQueryParamsInResponseInputParams)
+    )
+    client.input_and_output_with_headers()
+    client.input_and_output_with_headers(
+        **_request(InputAndOutputWithHeadersInputParams)
+    )
+    client.json_blobs()
+    client.json_blobs(**_request(JsonBlobsInputParams))
+    client.json_enums()
+    client.json_enums(**_request(JsonEnumsInputParams))
+    client.json_int_enums()
+    client.json_int_enums(**_request(JsonIntEnumsInputParams))
+    client.json_lists()
+    client.json_lists(**_request(JsonListsInputParams))
+    client.json_maps()
+    client.json_maps(**_request(JsonMapsInputParams))
+    client.json_timestamps()
+    client.json_timestamps(**_request(JsonTimestampsInputParams))
+    client.json_unions()
+    client.json_unions(**_request(JsonUnionsInputParams))
+    client.malformed_accept_with_body()
+    client.malformed_accept_with_body(**_request(MalformedAcceptWithBodyInputParams))
+    client.malformed_accept_with_generic_string()
+    client.malformed_accept_with_generic_string(
+        **_request(MalformedAcceptWithGenericStringInputParams)
+    )
+    client.malformed_accept_with_payload()
+    client.malformed_accept_with_payload(
+        **_request(MalformedAcceptWithPayloadInputParams)
+    )
+    client.malformed_blob()
+    client.malformed_blob(**_request(MalformedBlobInputParams))
+    client.malformed_boolean(boolean_in_path=_)
+    client.malformed_boolean(**_request(MalformedBooleanInputParams))
+    client.malformed_byte(byte_in_path=_)
+    client.malformed_byte(**_request(MalformedByteInputParams))
+    client.malformed_content_type_with_body()
+    client.malformed_content_type_with_body(
+        **_request(MalformedContentTypeWithBodyInputParams)
+    )
+    client.malformed_content_type_with_generic_string()
+    client.malformed_content_type_with_generic_string(
+        **_request(MalformedContentTypeWithGenericStringInputParams)
+    )
+    client.malformed_content_type_without_body()
+    client.malformed_content_type_without_body(
+        **_request(MalformedContentTypeWithoutBodyInputParams)
+    )
+    client.malformed_content_type_without_body_empty_input()
+    client.malformed_content_type_without_body_empty_input(
+        **_request(MalformedContentTypeWithoutBodyEmptyInputInputParams)
+    )
+    client.malformed_content_type_with_payload()
+    client.malformed_content_type_with_payload(
+        **_request(MalformedContentTypeWithPayloadInputParams)
+    )
+    client.malformed_double(double_in_path=_)
+    client.malformed_double(**_request(MalformedDoubleInputParams))
+    client.malformed_float(float_in_path=_)
+    client.malformed_float(**_request(MalformedFloatInputParams))
+    client.malformed_integer(integer_in_path=_)
+    client.malformed_integer(**_request(MalformedIntegerInputParams))
+    client.malformed_list()
+    client.malformed_list(**_request(MalformedListInputParams))
+    client.malformed_long(long_in_path=_)
+    client.malformed_long(**_request(MalformedLongInputParams))
+    client.malformed_map()
+    client.malformed_map(**_request(MalformedMapInputParams))
+    client.malformed_request_body()
+    client.malformed_request_body(**_request(MalformedRequestBodyInputParams))
+    client.malformed_short(short_in_path=_)
+    client.malformed_short(**_request(MalformedShortInputParams))
+    client.malformed_string()
+    client.malformed_string(**_request(MalformedStringInputParams))
+    client.malformed_timestamp_body_date_time(timestamp=_)
+    client.malformed_timestamp_body_date_time(
+        **_request(MalformedTimestampBodyDateTimeInputParams)
+    )
+    client.malformed_timestamp_body_default(timestamp=_)
+    client.malformed_timestamp_body_default(
+        **_request(MalformedTimestampBodyDefaultInputParams)
+    )
+    client.malformed_timestamp_body_http_date(timestamp=_)
+    client.malformed_timestamp_body_http_date(
+        **_request(MalformedTimestampBodyHttpDateInputParams)
+    )
+    client.malformed_timestamp_header_date_time(timestamp=_)
+    client.malformed_timestamp_header_date_time(
+        **_request(MalformedTimestampHeaderDateTimeInputParams)
+    )
+    client.malformed_timestamp_header_default(timestamp=_)
+    client.malformed_timestamp_header_default(
+        **_request(MalformedTimestampHeaderDefaultInputParams)
+    )
+    client.malformed_timestamp_header_epoch(timestamp=_)
+    client.malformed_timestamp_header_epoch(
+        **_request(MalformedTimestampHeaderEpochInputParams)
+    )
+    client.malformed_timestamp_path_default(timestamp=_)
+    client.malformed_timestamp_path_default(
+        **_request(MalformedTimestampPathDefaultInputParams)
+    )
+    client.malformed_timestamp_path_epoch(timestamp=_)
+    client.malformed_timestamp_path_epoch(
+        **_request(MalformedTimestampPathEpochInputParams)
+    )
+    client.malformed_timestamp_path_http_date(timestamp=_)
+    client.malformed_timestamp_path_http_date(
+        **_request(MalformedTimestampPathHttpDateInputParams)
+    )
+    client.malformed_timestamp_query_default(timestamp=_)
+    client.malformed_timestamp_query_default(
+        **_request(MalformedTimestampQueryDefaultInputParams)
+    )
+    client.malformed_timestamp_query_epoch(timestamp=_)
+    client.malformed_timestamp_query_epoch(
+        **_request(MalformedTimestampQueryEpochInputParams)
+    )
+    client.malformed_timestamp_query_http_date(timestamp=_)
+    client.malformed_timestamp_query_http_date(
+        **_request(MalformedTimestampQueryHttpDateInputParams)
+    )
+    client.malformed_union()
+    client.malformed_union(**_request(MalformedUnionInputParams))
+    client.media_type_header()
+    client.media_type_header(**_request(MediaTypeHeaderInputParams))
+    client.no_input_and_no_output()
+    client.no_input_and_no_output(**_request(NoInputAndNoOutputInputParams))
+    client.no_input_and_output()
+    client.no_input_and_output(**_request(NoInputAndOutputInputParams))
+    client.null_and_empty_headers_client()
+    client.null_and_empty_headers_client(
+        **_request(NullAndEmptyHeadersClientInputParams)
+    )
+    client.null_and_empty_headers_server()
+    client.null_and_empty_headers_server(
+        **_request(NullAndEmptyHeadersServerInputParams)
+    )
+    client.omits_null_serializes_empty_string()
+    client.omits_null_serializes_empty_string(
+        **_request(OmitsNullSerializesEmptyStringInputParams)
+    )
+    client.omits_serializing_empty_lists()
+    client.omits_serializing_empty_lists(
+        **_request(OmitsSerializingEmptyListsInputParams)
+    )
+    client.operation_with_defaults()
+    client.operation_with_defaults(**_request(OperationWithDefaultsInputParams))
+    client.operation_with_nested_structure(top_level=_)
+    client.operation_with_nested_structure(
+        **_request(OperationWithNestedStructureInputParams)
+    )
+    client.post_player_action()
+    client.post_player_action(**_request(PostPlayerActionInputParams))
+    client.post_union_with_json_name()
+    client.post_union_with_json_name(**_request(PostUnionWithJsonNameInputParams))
+    client.put_with_content_encoding()
+    client.put_with_content_encoding(**_request(PutWithContentEncodingInputParams))
+    client.query_idempotency_token_auto_fill()
+    client.query_idempotency_token_auto_fill(
+        **_request(QueryIdempotencyTokenAutoFillInputParams)
+    )
+    client.query_params_as_string_list_map()
+    client.query_params_as_string_list_map(
+        **_request(QueryParamsAsStringListMapInputParams)
+    )
+    client.query_precedence()
+    client.query_precedence(**_request(QueryPrecedenceInputParams))
+    client.recursive_shapes()
+    client.recursive_shapes(**_request(RecursiveShapesInputParams))
+    client.response_code_http_fallback()
+    client.response_code_http_fallback(**_request(ResponseCodeHttpFallbackInputParams))
+    client.response_code_required()
+    client.response_code_required(**_request(ResponseCodeRequiredInputParams))
+    client.simple_scalar_properties()
+    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    client.sparse_json_lists()
+    client.sparse_json_lists(**_request(SparseJsonListsInputParams))
+    client.sparse_json_maps()
+    client.sparse_json_maps(**_request(SparseJsonMapsInputParams))
+    client.streaming_traits()
+    client.streaming_traits(**_request(StreamingTraitsInputParams))
+    client.streaming_traits_require_length()
+    client.streaming_traits_require_length(
+        **_request(StreamingTraitsRequireLengthInputParams)
+    )
+    client.streaming_traits_with_media_type()
+    client.streaming_traits_with_media_type(
+        **_request(StreamingTraitsWithMediaTypeInputParams)
+    )
+    client.test_body_structure()
+    client.test_body_structure(**_request(TestBodyStructureInputParams))
+    client.test_get_no_input_no_payload()
+    client.test_get_no_input_no_payload(**_request(TestGetNoInputNoPayloadInputParams))
+    client.test_get_no_payload()
+    client.test_get_no_payload(**_request(TestGetNoPayloadInputParams))
+    client.test_payload_blob()
+    client.test_payload_blob(**_request(TestPayloadBlobInputParams))
+    client.test_payload_structure()
+    client.test_payload_structure(**_request(TestPayloadStructureInputParams))
+    client.test_post_no_input_no_payload()
+    client.test_post_no_input_no_payload(
+        **_request(TestPostNoInputNoPayloadInputParams)
+    )
+    client.test_post_no_payload()
+    client.test_post_no_payload(**_request(TestPostNoPayloadInputParams))
+    client.timestamp_format_headers()
+    client.timestamp_format_headers(**_request(TimestampFormatHeadersInputParams))
+    client.unit_input_and_output()
+    client.unit_input_and_output(**_request(UnitInputAndOutputInputParams))

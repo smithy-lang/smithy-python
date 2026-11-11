@@ -15,35 +15,23 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..models import (
-        EmptyInputOutputInput,
         EmptyInputOutputOutput,
-        Float16Input,
         Float16Output,
-        FractionalSecondsInput,
         FractionalSecondsOutput,
-        GreetingWithErrorsInput,
         GreetingWithErrorsOutput,
-        NoInputOutputInput,
         NoInputOutputOutput,
-        OperationWithDefaultsInput,
         OperationWithDefaultsOutput,
-        OptionalInputOutputInput,
         OptionalInputOutputOutput,
-        RecursiveShapesInput,
         RecursiveShapesOutput,
-        RpcV2CborDenseMapsInput,
         RpcV2CborDenseMapsOutput,
-        RpcV2CborListsInput,
         RpcV2CborListsOutput,
-        RpcV2CborSparseMapsInput,
         RpcV2CborSparseMapsOutput,
-        RpcV2CborUnionsInput,
         RpcV2CborUnionsOutput,
-        SimpleScalarPropertiesInput,
         SimpleScalarPropertiesOutput,
-        SparseNullsOperationInput,
         SparseNullsOperationOutput,
     )
+    from collections.abc import Mapping, Sequence
+    from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
@@ -55,14 +43,12 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
     async def empty_input_output(
-        self, input: EmptyInputOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputOutputOutput:
         """
         Invokes the EmptyInputOutput operation.
 
         Args:
-            input:
-                An instance of `EmptyInputOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -72,17 +58,13 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `EmptyInputOutputOutput`.
         """
-        return await self._invoke(input, _models.EMPTY_INPUT_OUTPUT, [], plugins)
+        return await self._invoke(None, _models.EMPTY_INPUT_OUTPUT, [], plugins)
 
-    async def float16(
-        self, input: Float16Input, plugins: list[Plugin] | None = None
-    ) -> Float16Output:
+    async def float16(self, *, plugins: list[Plugin] | None = None) -> Float16Output:
         """
         Invokes the Float16 operation.
 
         Args:
-            input:
-                An instance of `Float16Input`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -92,17 +74,15 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `Float16Output`.
         """
-        return await self._invoke(input, _models.FLOAT16, [], plugins)
+        return await self._invoke(None, _models.FLOAT16, [], plugins)
 
     async def fractional_seconds(
-        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
 
         Args:
-            input:
-                An instance of `FractionalSecondsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -112,10 +92,10 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return await self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
+        return await self._invoke(None, _models.FRACTIONAL_SECONDS, [], plugins)
 
     async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values:
@@ -128,8 +108,6 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         properly deserialize successful and error responses.
 
         Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -139,17 +117,15 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return await self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
+        return await self._invoke(None, _models.GREETING_WITH_ERRORS, [], plugins)
 
     async def no_input_output(
-        self, input: NoInputOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> NoInputOutputOutput:
         """
         Invokes the NoInputOutput operation.
 
         Args:
-            input:
-                An instance of `NoInputOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -159,17 +135,27 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `NoInputOutputOutput`.
         """
-        return await self._invoke(input, _models.NO_INPUT_OUTPUT, [], plugins)
+        return await self._invoke(None, _models.NO_INPUT_OUTPUT, [], plugins)
 
     async def operation_with_defaults(
-        self, input: OperationWithDefaultsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        defaults: _models.Defaults | _models.DefaultsParams | None = None,
+        client_optional_defaults: _models.ClientOptionalDefaults
+        | _models.ClientOptionalDefaultsParams
+        | None = None,
+        top_level_default: str | None = None,
+        other_top_level_default: int | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> OperationWithDefaultsOutput:
         """
         Invokes the OperationWithDefaults operation.
 
+        The keyword arguments are the members of
+        `OperationWithDefaultsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `OperationWithDefaultsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -179,17 +165,29 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `OperationWithDefaultsOutput`.
         """
-        return await self._invoke(input, _models.OPERATION_WITH_DEFAULTS, [], plugins)
+        return await self._invoke(
+            {
+                "defaults": defaults,
+                "client_optional_defaults": client_optional_defaults,
+                "top_level_default": top_level_default,
+                "other_top_level_default": other_top_level_default,
+            },
+            _models.OPERATION_WITH_DEFAULTS,
+            [],
+            plugins,
+        )
 
     async def optional_input_output(
-        self, input: OptionalInputOutputInput, plugins: list[Plugin] | None = None
+        self, *, value: str | None = None, plugins: list[Plugin] | None = None
     ) -> OptionalInputOutputOutput:
         """
         Invokes the OptionalInputOutput operation.
 
+        The keyword arguments are the members of
+        `OptionalInputOutputInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `OptionalInputOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -199,17 +197,26 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `OptionalInputOutputOutput`.
         """
-        return await self._invoke(input, _models.OPTIONAL_INPUT_OUTPUT, [], plugins)
+        return await self._invoke(
+            {"value": value}, _models.OPTIONAL_INPUT_OUTPUT, [], plugins
+        )
 
     async def recursive_shapes(
-        self, input: RecursiveShapesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: _models.RecursiveShapesInputOutputNested1
+        | _models.RecursiveShapesInputOutputNested1Params
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RecursiveShapesOutput:
         """
         Invokes the RecursiveShapes operation.
 
+        The keyword arguments are the members of
+        `RecursiveShapesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `RecursiveShapesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -219,17 +226,31 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        return await self._invoke(input, _models.RECURSIVE_SHAPES, [], plugins)
+        return await self._invoke(
+            {"nested": nested}, _models.RECURSIVE_SHAPES, [], plugins
+        )
 
     async def rpc_v2_cbor_dense_maps(
-        self, input: RpcV2CborDenseMapsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        dense_struct_map: Mapping[
+            str, _models.GreetingStruct | _models.GreetingStructParams
+        ]
+        | None = None,
+        dense_number_map: Mapping[str, int] | None = None,
+        dense_boolean_map: Mapping[str, bool] | None = None,
+        dense_string_map: Mapping[str, str] | None = None,
+        dense_set_map: Mapping[str, Sequence[str]] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborDenseMapsOutput:
         """
         The example tests basic map serialization.
 
+        The keyword arguments are the members of
+        `RpcV2CborDenseMapsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `RpcV2CborDenseMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -239,10 +260,36 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `RpcV2CborDenseMapsOutput`.
         """
-        return await self._invoke(input, _models.RPC_V2_CBOR_DENSE_MAPS, [], plugins)
+        return await self._invoke(
+            {
+                "dense_struct_map": dense_struct_map,
+                "dense_number_map": dense_number_map,
+                "dense_boolean_map": dense_boolean_map,
+                "dense_string_map": dense_string_map,
+                "dense_set_map": dense_set_map,
+            },
+            _models.RPC_V2_CBOR_DENSE_MAPS,
+            [],
+            plugins,
+        )
 
     async def rpc_v2_cbor_lists(
-        self, input: RpcV2CborListsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        string_list: Sequence[str] | None = None,
+        string_set: Sequence[str] | None = None,
+        integer_list: Sequence[int] | None = None,
+        boolean_list: Sequence[bool] | None = None,
+        timestamp_list: Sequence[datetime] | None = None,
+        enum_list: Sequence[str] | None = None,
+        int_enum_list: Sequence[int] | None = None,
+        nested_string_list: Sequence[Sequence[str]] | None = None,
+        structure_list: Sequence[
+            _models.StructureListMember | _models.StructureListMemberParams
+        ]
+        | None = None,
+        blob_list: Sequence[bytes] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborListsOutput:
         """
         This test case serializes JSON lists for the following cases for both
@@ -253,9 +300,11 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         3.  Lists of lists.
         4.  Lists of structures.
 
+        The keyword arguments are the members of
+        `RpcV2CborListsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `RpcV2CborListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -265,17 +314,45 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `RpcV2CborListsOutput`.
         """
-        return await self._invoke(input, _models.RPC_V2_CBOR_LISTS, [], plugins)
+        return await self._invoke(
+            {
+                "string_list": string_list,
+                "string_set": string_set,
+                "integer_list": integer_list,
+                "boolean_list": boolean_list,
+                "timestamp_list": timestamp_list,
+                "enum_list": enum_list,
+                "int_enum_list": int_enum_list,
+                "nested_string_list": nested_string_list,
+                "structure_list": structure_list,
+                "blob_list": blob_list,
+            },
+            _models.RPC_V2_CBOR_LISTS,
+            [],
+            plugins,
+        )
 
     async def rpc_v2_cbor_sparse_maps(
-        self, input: RpcV2CborSparseMapsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        sparse_struct_map: Mapping[
+            str, _models.GreetingStruct | _models.GreetingStructParams | None
+        ]
+        | None = None,
+        sparse_number_map: Mapping[str, int | None] | None = None,
+        sparse_boolean_map: Mapping[str, bool | None] | None = None,
+        sparse_string_map: Mapping[str, str | None] | None = None,
+        sparse_set_map: Mapping[str, Sequence[str] | None] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborSparseMapsOutput:
         """
         Invokes the RpcV2CborSparseMaps operation.
 
+        The keyword arguments are the members of
+        `RpcV2CborSparseMapsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `RpcV2CborSparseMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -285,17 +362,34 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `RpcV2CborSparseMapsOutput`.
         """
-        return await self._invoke(input, _models.RPC_V2_CBOR_SPARSE_MAPS, [], plugins)
+        return await self._invoke(
+            {
+                "sparse_struct_map": sparse_struct_map,
+                "sparse_number_map": sparse_number_map,
+                "sparse_boolean_map": sparse_boolean_map,
+                "sparse_string_map": sparse_string_map,
+                "sparse_set_map": sparse_set_map,
+            },
+            _models.RPC_V2_CBOR_SPARSE_MAPS,
+            [],
+            plugins,
+        )
 
     async def rpc_v2_cbor_unions(
-        self, input: RpcV2CborUnionsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        contents: _models.RpcV2CborUnion | _models.RpcV2CborUnionParams | None = None,
+        other_value: str | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RpcV2CborUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
 
+        The keyword arguments are the members of
+        `RpcV2CborUnionsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `RpcV2CborUnionsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -305,17 +399,36 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `RpcV2CborUnionsOutput`.
         """
-        return await self._invoke(input, _models.RPC_V2_CBOR_UNIONS, [], plugins)
+        return await self._invoke(
+            {"contents": contents, "other_value": other_value},
+            _models.RPC_V2_CBOR_UNIONS,
+            [],
+            plugins,
+        )
 
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        true_boolean_value: bool | None = None,
+        false_boolean_value: bool | None = None,
+        byte_value: int | None = None,
+        double_value: float | None = None,
+        float_value: float | None = None,
+        integer_value: int | None = None,
+        long_value: int | None = None,
+        short_value: int | None = None,
+        string_value: str | None = None,
+        blob_value: bytes | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
 
+        The keyword arguments are the members of
+        `SimpleScalarPropertiesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -325,17 +438,39 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        return await self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
+        return await self._invoke(
+            {
+                "true_boolean_value": true_boolean_value,
+                "false_boolean_value": false_boolean_value,
+                "byte_value": byte_value,
+                "double_value": double_value,
+                "float_value": float_value,
+                "integer_value": integer_value,
+                "long_value": long_value,
+                "short_value": short_value,
+                "string_value": string_value,
+                "blob_value": blob_value,
+            },
+            _models.SIMPLE_SCALAR_PROPERTIES,
+            [],
+            plugins,
+        )
 
     async def sparse_nulls_operation(
-        self, input: SparseNullsOperationInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        sparse_string_list: Sequence[str | None] | None = None,
+        sparse_string_map: Mapping[str, str | None] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SparseNullsOperationOutput:
         """
         Invokes the SparseNullsOperation operation.
 
+        The keyword arguments are the members of
+        `SparseNullsOperationInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `SparseNullsOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -345,7 +480,15 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `SparseNullsOperationOutput`.
         """
-        return await self._invoke(input, _models.SPARSE_NULLS_OPERATION, [], plugins)
+        return await self._invoke(
+            {
+                "sparse_string_list": sparse_string_list,
+                "sparse_string_map": sparse_string_map,
+            },
+            _models.SPARSE_NULLS_OPERATION,
+            [],
+            plugins,
+        )
 
     async def _new_config(self) -> AsyncConfig:
         return AsyncConfig()

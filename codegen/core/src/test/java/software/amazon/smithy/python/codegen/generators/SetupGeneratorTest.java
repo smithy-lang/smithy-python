@@ -44,6 +44,22 @@ public class SetupGeneratorTest {
     public void readmeKeepsRawTripleQuotesInCodeSpans() {
         // The README is Markdown, not a docstring, so the docstring quote escaping
         // must not show up there as literal backslashes.
+        var manifest = generateSetup();
+        String readme = manifest.expectFileString("README.md");
+
+        assertTrue(readme.contains("Use `\"\"\"` here."), readme);
+    }
+
+    @Test
+    public void packageCarriesTheTypeMarker() {
+        // Without py.typed in the package, type checkers ignore an installed
+        // client's inline types and its model stub. The marker is an empty file.
+        var manifest = generateSetup();
+
+        assertEquals("", manifest.expectFileString("src/test_client/py.typed"));
+    }
+
+    private static MockManifest generateSetup() {
         var service = ServiceShape.builder()
                 .id("smithy.example#TestService")
                 .version("2024-01-01")
@@ -66,8 +82,6 @@ public class SetupGeneratorTest {
 
         SetupGenerator.generateSetup(settings, context);
         delegator.flushWriters();
-        String readme = manifest.expectFileString("README.md");
-
-        assertTrue(readme.contains("Use `\"\"\"` here."), readme);
+        return manifest;
     }
 }

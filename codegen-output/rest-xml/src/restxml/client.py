@@ -20,137 +20,74 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .models import (
-        AllQueryStringTypesInput,
         AllQueryStringTypesOutput,
-        BodyWithXmlNameInput,
         BodyWithXmlNameOutput,
-        ConstantAndVariableQueryStringInput,
         ConstantAndVariableQueryStringOutput,
-        ConstantQueryStringInput,
         ConstantQueryStringOutput,
-        ContentTypeParametersInput,
         ContentTypeParametersOutput,
-        DatetimeOffsetsInput,
         DatetimeOffsetsOutput,
-        EmptyInputAndEmptyOutputInput,
         EmptyInputAndEmptyOutputOutput,
-        EndpointOperationInput,
         EndpointOperationOutput,
-        EndpointWithHostLabelHeaderOperationInput,
         EndpointWithHostLabelHeaderOperationOutput,
-        EndpointWithHostLabelOperationInput,
         EndpointWithHostLabelOperationOutput,
-        FlattenedXmlMapInput,
         FlattenedXmlMapOutput,
-        FlattenedXmlMapWithXmlNameInput,
         FlattenedXmlMapWithXmlNameOutput,
-        FlattenedXmlMapWithXmlNamespaceInput,
         FlattenedXmlMapWithXmlNamespaceOutput,
-        FractionalSecondsInput,
         FractionalSecondsOutput,
-        GreetingWithErrorsInput,
         GreetingWithErrorsOutput,
-        HttpEmptyPrefixHeadersInput,
         HttpEmptyPrefixHeadersOutput,
-        HttpEnumPayloadInput,
         HttpEnumPayloadOutput,
-        HttpPayloadTraitsInput,
         HttpPayloadTraitsOutput,
-        HttpPayloadTraitsWithMediaTypeInput,
         HttpPayloadTraitsWithMediaTypeOutput,
-        HttpPayloadWithMemberXmlNameInput,
         HttpPayloadWithMemberXmlNameOutput,
-        HttpPayloadWithStructureInput,
         HttpPayloadWithStructureOutput,
-        HttpPayloadWithUnionInput,
         HttpPayloadWithUnionOutput,
-        HttpPayloadWithXmlNameInput,
         HttpPayloadWithXmlNameOutput,
-        HttpPayloadWithXmlNamespaceAndPrefixInput,
         HttpPayloadWithXmlNamespaceAndPrefixOutput,
-        HttpPayloadWithXmlNamespaceInput,
         HttpPayloadWithXmlNamespaceOutput,
-        HttpPrefixHeadersInput,
         HttpPrefixHeadersOutput,
-        HttpRequestWithFloatLabelsInput,
         HttpRequestWithFloatLabelsOutput,
-        HttpRequestWithGreedyLabelInPathInput,
         HttpRequestWithGreedyLabelInPathOutput,
-        HttpRequestWithLabelsAndTimestampFormatInput,
         HttpRequestWithLabelsAndTimestampFormatOutput,
-        HttpRequestWithLabelsInput,
         HttpRequestWithLabelsOutput,
-        HttpResponseCodeInput,
         HttpResponseCodeOutput,
-        HttpStringPayloadInput,
         HttpStringPayloadOutput,
-        IgnoreQueryParamsInResponseInput,
         IgnoreQueryParamsInResponseOutput,
-        InputAndOutputWithHeadersInput,
         InputAndOutputWithHeadersOutput,
-        NestedXmlMapWithXmlNameInput,
         NestedXmlMapWithXmlNameOutput,
-        NestedXmlMapsInput,
         NestedXmlMapsOutput,
-        NoInputAndNoOutputInput,
         NoInputAndNoOutputOutput,
-        NoInputAndOutputInput,
         NoInputAndOutputOutput,
-        NullAndEmptyHeadersClientInput,
         NullAndEmptyHeadersClientOutput,
-        NullAndEmptyHeadersServerInput,
         NullAndEmptyHeadersServerOutput,
-        OmitsNullSerializesEmptyStringInput,
         OmitsNullSerializesEmptyStringOutput,
-        PutWithContentEncodingInput,
         PutWithContentEncodingOutput,
-        QueryIdempotencyTokenAutoFillInput,
         QueryIdempotencyTokenAutoFillOutput,
-        QueryParamsAsStringListMapInput,
         QueryParamsAsStringListMapOutput,
-        QueryPrecedenceInput,
         QueryPrecedenceOutput,
-        RecursiveShapesInput,
         RecursiveShapesOutput,
-        SimpleScalarPropertiesInput,
         SimpleScalarPropertiesOutput,
-        TimestampFormatHeadersInput,
         TimestampFormatHeadersOutput,
-        XmlAttributesInMiddleInput,
         XmlAttributesInMiddleOutput,
-        XmlAttributesInput,
-        XmlAttributesOnPayloadInput,
         XmlAttributesOnPayloadOutput,
         XmlAttributesOutput,
-        XmlBlobsInput,
         XmlBlobsOutput,
-        XmlEmptyBlobsInput,
         XmlEmptyBlobsOutput,
-        XmlEmptyListsInput,
         XmlEmptyListsOutput,
-        XmlEmptyMapsInput,
         XmlEmptyMapsOutput,
-        XmlEmptyStringsInput,
         XmlEmptyStringsOutput,
-        XmlEnumsInput,
         XmlEnumsOutput,
-        XmlIntEnumsInput,
         XmlIntEnumsOutput,
-        XmlListsInput,
         XmlListsOutput,
-        XmlMapWithXmlNamespaceInput,
         XmlMapWithXmlNamespaceOutput,
-        XmlMapsInput,
         XmlMapsOutput,
-        XmlMapsXmlNameInput,
         XmlMapsXmlNameOutput,
-        XmlNamespacesInput,
         XmlNamespacesOutput,
-        XmlTimestampsInput,
         XmlTimestampsOutput,
-        XmlUnionsInput,
         XmlUnionsOutput,
     )
+    from collections.abc import Mapping, Sequence
+    from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
@@ -163,15 +100,38 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     def all_query_string_types(
         self,
-        input: AllQueryStringTypesInput | None = None,
+        *,
+        query_string: str | None = None,
+        query_string_list: Sequence[str] | None = None,
+        query_string_set: Sequence[str] | None = None,
+        query_byte: int | None = None,
+        query_short: int | None = None,
+        query_integer: int | None = None,
+        query_integer_list: Sequence[int] | None = None,
+        query_integer_set: Sequence[int] | None = None,
+        query_long: int | None = None,
+        query_float: float | None = None,
+        query_double: float | None = None,
+        query_double_list: Sequence[float] | None = None,
+        query_boolean: bool | None = None,
+        query_boolean_list: Sequence[bool] | None = None,
+        query_timestamp: datetime | None = None,
+        query_timestamp_list: Sequence[datetime] | None = None,
+        query_enum: str | None = None,
+        query_enum_list: Sequence[str] | None = None,
+        query_integer_enum: int | None = None,
+        query_integer_enum_list: Sequence[int] | None = None,
+        query_params_map_of_strings: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> AllQueryStringTypesOutput:
         """
         This example uses all query string types.
 
+        The keyword arguments are the members of
+        `AllQueryStringTypesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `AllQueryStringTypesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -181,20 +141,52 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `AllQueryStringTypesOutput`.
         """
-        return self._invoke(input, _models.ALL_QUERY_STRING_TYPES, [], plugins)
+        return self._invoke(
+            {
+                "query_string": query_string,
+                "query_string_list": query_string_list,
+                "query_string_set": query_string_set,
+                "query_byte": query_byte,
+                "query_short": query_short,
+                "query_integer": query_integer,
+                "query_integer_list": query_integer_list,
+                "query_integer_set": query_integer_set,
+                "query_long": query_long,
+                "query_float": query_float,
+                "query_double": query_double,
+                "query_double_list": query_double_list,
+                "query_boolean": query_boolean,
+                "query_boolean_list": query_boolean_list,
+                "query_timestamp": query_timestamp,
+                "query_timestamp_list": query_timestamp_list,
+                "query_enum": query_enum,
+                "query_enum_list": query_enum_list,
+                "query_integer_enum": query_integer_enum,
+                "query_integer_enum_list": query_integer_enum_list,
+                "query_params_map_of_strings": query_params_map_of_strings,
+            },
+            _models.ALL_QUERY_STRING_TYPES,
+            [],
+            plugins,
+        )
 
     def body_with_xml_name(
         self,
-        input: BodyWithXmlNameInput | None = None,
+        *,
+        nested: _models.PayloadWithXmlName
+        | _models.PayloadWithXmlNameParams
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> BodyWithXmlNameOutput:
         """
         The following example serializes a body that uses an XML name, changing
         the wrapper name.
 
+        The keyword arguments are the members of
+        `BodyWithXmlNameInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `BodyWithXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -204,11 +196,13 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `BodyWithXmlNameOutput`.
         """
-        return self._invoke(input, _models.BODY_WITH_XML_NAME, [], plugins)
+        return self._invoke({"nested": nested}, _models.BODY_WITH_XML_NAME, [], plugins)
 
     def constant_and_variable_query_string(
         self,
-        input: ConstantAndVariableQueryStringInput | None = None,
+        *,
+        baz: str | None = None,
+        maybe_set: str | None = None,
         plugins: list[Plugin] | None = None,
     ) -> ConstantAndVariableQueryStringOutput:
         """
@@ -216,9 +210,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         params. The fixed query string parameters and variable parameters must
         both be serialized (implementations may need to merge them together).
 
+        The keyword arguments are the members of
+        `ConstantAndVariableQueryStringInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `ConstantAndVariableQueryStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -229,11 +225,14 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
             An instance of `ConstantAndVariableQueryStringOutput`.
         """
         return self._invoke(
-            input, _models.CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
+            {"baz": baz, "maybe_set": maybe_set},
+            _models.CONSTANT_AND_VARIABLE_QUERY_STRING,
+            [],
+            plugins,
         )
 
     def constant_query_string(
-        self, input: ConstantQueryStringInput, plugins: list[Plugin] | None = None
+        self, *, hello: str, plugins: list[Plugin] | None = None
     ) -> ConstantQueryStringOutput:
         """
         This example uses a constant query string parameters and a label. This
@@ -241,9 +240,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         fixed query string parameter named \"hello\" should in no way conflict
         with the label, `{hello}`.
 
+        The keyword arguments are the members of
+        `ConstantQueryStringInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `ConstantQueryStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -253,20 +254,22 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `ConstantQueryStringOutput`.
         """
-        return self._invoke(input, _models.CONSTANT_QUERY_STRING, [], plugins)
+        return self._invoke(
+            {"hello": hello}, _models.CONSTANT_QUERY_STRING, [], plugins
+        )
 
     def content_type_parameters(
-        self,
-        input: ContentTypeParametersInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, value: int | None = None, plugins: list[Plugin] | None = None
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
         `Content-Type` header with parameters.
 
+        The keyword arguments are the members of
+        `ContentTypeParametersInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `ContentTypeParametersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -276,19 +279,17 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
-        return self._invoke(input, _models.CONTENT_TYPE_PARAMETERS, [], plugins)
+        return self._invoke(
+            {"value": value}, _models.CONTENT_TYPE_PARAMETERS, [], plugins
+        )
 
     def datetime_offsets(
-        self,
-        input: DatetimeOffsetsInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
 
         Args:
-            input:
-                An instance of `DatetimeOffsetsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -298,12 +299,10 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return self._invoke(input, _models.DATETIME_OFFSETS, [], plugins)
+        return self._invoke(None, _models.DATETIME_OFFSETS, [], plugins)
 
     def empty_input_and_empty_output(
-        self,
-        input: EmptyInputAndEmptyOutputInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -312,8 +311,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         this should be rare, code generators must support this.
 
         Args:
-            input:
-                An instance of `EmptyInputAndEmptyOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -323,19 +320,15 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
-        return self._invoke(input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins)
+        return self._invoke(None, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins)
 
     def endpoint_operation(
-        self,
-        input: EndpointOperationInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -345,19 +338,19 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
+        return self._invoke(None, _models.ENDPOINT_OPERATION, [], plugins)
 
     def endpoint_with_host_label_header_operation(
-        self,
-        input: EndpointWithHostLabelHeaderOperationInput,
-        plugins: list[Plugin] | None = None,
+        self, *, account_id: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelHeaderOperationOutput:
         """
         Invokes the EndpointWithHostLabelHeaderOperation operation.
 
+        The keyword arguments are the members of
+        `EndpointWithHostLabelHeaderOperationInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `EndpointWithHostLabelHeaderOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -368,20 +361,23 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
             An instance of `EndpointWithHostLabelHeaderOperationOutput`.
         """
         return self._invoke(
-            input, _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION, [], plugins
+            {"account_id": account_id},
+            _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION,
+            [],
+            plugins,
         )
 
     def endpoint_with_host_label_operation(
-        self,
-        input: EndpointWithHostLabelOperationInput,
-        plugins: list[Plugin] | None = None,
+        self, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
+        The keyword arguments are the members of
+        `EndpointWithHostLabelOperationInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `EndpointWithHostLabelOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -392,20 +388,23 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
         return self._invoke(
-            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            {"label": label}, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
 
     def flattened_xml_map(
         self,
-        input: FlattenedXmlMapInput | None = None,
+        *,
+        my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> FlattenedXmlMapOutput:
         """
         Flattened maps
 
+        The keyword arguments are the members of
+        `FlattenedXmlMapInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `FlattenedXmlMapInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -415,19 +414,22 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapOutput`.
         """
-        return self._invoke(input, _models.FLATTENED_XML_MAP, [], plugins)
+        return self._invoke({"my_map": my_map}, _models.FLATTENED_XML_MAP, [], plugins)
 
     def flattened_xml_map_with_xml_name(
         self,
-        input: FlattenedXmlMapWithXmlNameInput | None = None,
+        *,
+        my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> FlattenedXmlMapWithXmlNameOutput:
         """
         Flattened maps with @xmlName
 
+        The keyword arguments are the members of
+        `FlattenedXmlMapWithXmlNameInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `FlattenedXmlMapWithXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -437,19 +439,17 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
-        return self._invoke(input, _models.FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins)
+        return self._invoke(
+            {"my_map": my_map}, _models.FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins
+        )
 
     def flattened_xml_map_with_xml_namespace(
-        self,
-        input: FlattenedXmlMapWithXmlNamespaceInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         """
         Flattened maps with @xmlNamespace and @xmlName
 
         Args:
-            input:
-                An instance of `FlattenedXmlMapWithXmlNamespaceInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -460,20 +460,16 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
             An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
         return self._invoke(
-            input, _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            None, _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
         )
 
     def fractional_seconds(
-        self,
-        input: FractionalSecondsInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
 
         Args:
-            input:
-                An instance of `FractionalSecondsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -483,12 +479,10 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
+        return self._invoke(None, _models.FRACTIONAL_SECONDS, [], plugins)
 
     def greeting_with_errors(
-        self,
-        input: GreetingWithErrorsInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -498,8 +492,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         error responses based on the the presence of the
 
         Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -509,19 +501,23 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
+        return self._invoke(None, _models.GREETING_WITH_ERRORS, [], plugins)
 
     def http_empty_prefix_headers(
         self,
-        input: HttpEmptyPrefixHeadersInput | None = None,
+        *,
+        prefix_headers: Mapping[str, str] | None = None,
+        specific_header: str | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpEmptyPrefixHeadersOutput:
         """
         Clients that perform this test extract all headers from the response.
 
+        The keyword arguments are the members of
+        `HttpEmptyPrefixHeadersInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpEmptyPrefixHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -531,19 +527,24 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpEmptyPrefixHeadersOutput`.
         """
-        return self._invoke(input, _models.HTTP_EMPTY_PREFIX_HEADERS, [], plugins)
+        return self._invoke(
+            {"prefix_headers": prefix_headers, "specific_header": specific_header},
+            _models.HTTP_EMPTY_PREFIX_HEADERS,
+            [],
+            plugins,
+        )
 
     def http_enum_payload(
-        self,
-        input: HttpEnumPayloadInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
 
+        The keyword arguments are the members of
+        `HttpEnumPayloadInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpEnumPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -553,11 +554,15 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpEnumPayloadOutput`.
         """
-        return self._invoke(input, _models.HTTP_ENUM_PAYLOAD, [], plugins)
+        return self._invoke(
+            {"payload": payload}, _models.HTTP_ENUM_PAYLOAD, [], plugins
+        )
 
     def http_payload_traits(
         self,
-        input: HttpPayloadTraitsInput | None = None,
+        *,
+        foo: str | None = None,
+        blob: bytes | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadTraitsOutput:
         """
@@ -565,9 +570,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         XML document is synthesized because the payload is not a structure or a
         union type.
 
+        The keyword arguments are the members of
+        `HttpPayloadTraitsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadTraitsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -577,20 +584,26 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadTraitsOutput`.
         """
-        return self._invoke(input, _models.HTTP_PAYLOAD_TRAITS, [], plugins)
+        return self._invoke(
+            {"foo": foo, "blob": blob}, _models.HTTP_PAYLOAD_TRAITS, [], plugins
+        )
 
     def http_payload_traits_with_media_type(
         self,
-        input: HttpPayloadTraitsWithMediaTypeInput | None = None,
+        *,
+        foo: str | None = None,
+        blob: bytes | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadTraitsWithMediaTypeOutput:
         """
         This example uses a `@mediaType` trait on the payload to force a
         custom content-type to be serialized.
 
+        The keyword arguments are the members of
+        `HttpPayloadTraitsWithMediaTypeInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadTraitsWithMediaTypeInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -601,21 +614,29 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
             An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
         return self._invoke(
-            input, _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
+            {"foo": foo, "blob": blob},
+            _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
+            [],
+            plugins,
         )
 
     def http_payload_with_member_xml_name(
         self,
-        input: HttpPayloadWithMemberXmlNameInput | None = None,
+        *,
+        nested: _models.PayloadWithXmlName
+        | _models.PayloadWithXmlNameParams
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithMemberXmlNameOutput:
         """
         The following example serializes a payload that uses an XML name on the
         member, changing the wrapper name.
 
+        The keyword arguments are the members of
+        `HttpPayloadWithMemberXmlNameInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadWithMemberXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -626,12 +647,13 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
             An instance of `HttpPayloadWithMemberXmlNameOutput`.
         """
         return self._invoke(
-            input, _models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, [], plugins
+            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, [], plugins
         )
 
     def http_payload_with_structure(
         self,
-        input: HttpPayloadWithStructureInput | None = None,
+        *,
+        nested: _models.NestedPayload | _models.NestedPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithStructureOutput:
         """
@@ -639,9 +661,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         serializing a structure changes the wrapper element name to match the
         targeted structure.
 
+        The keyword arguments are the members of
+        `HttpPayloadWithStructureInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadWithStructureInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -651,19 +675,24 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithStructureOutput`.
         """
-        return self._invoke(input, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins)
+        return self._invoke(
+            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
+        )
 
     def http_payload_with_union(
         self,
-        input: HttpPayloadWithUnionInput | None = None,
+        *,
+        nested: _models.UnionPayload | _models.UnionPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithUnionOutput:
         """
         This example serializes a union in the payload.
 
+        The keyword arguments are the members of
+        `HttpPayloadWithUnionInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadWithUnionInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -673,20 +702,27 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithUnionOutput`.
         """
-        return self._invoke(input, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins)
+        return self._invoke(
+            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins
+        )
 
     def http_payload_with_xml_name(
         self,
-        input: HttpPayloadWithXmlNameInput | None = None,
+        *,
+        nested: _models.PayloadWithXmlName
+        | _models.PayloadWithXmlNameParams
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithXmlNameOutput:
         """
         The following example serializes a payload that uses an XML name,
         changing the wrapper name.
 
+        The keyword arguments are the members of
+        `HttpPayloadWithXmlNameInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadWithXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -696,19 +732,26 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithXmlNameOutput`.
         """
-        return self._invoke(input, _models.HTTP_PAYLOAD_WITH_XML_NAME, [], plugins)
+        return self._invoke(
+            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_XML_NAME, [], plugins
+        )
 
     def http_payload_with_xml_namespace(
         self,
-        input: HttpPayloadWithXmlNamespaceInput | None = None,
+        *,
+        nested: _models.PayloadWithXmlNamespace
+        | _models.PayloadWithXmlNamespaceParams
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithXmlNamespaceOutput:
         """
         The following example serializes a payload that uses an XML namespace.
 
+        The keyword arguments are the members of
+        `HttpPayloadWithXmlNamespaceInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadWithXmlNamespaceInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -718,19 +761,26 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithXmlNamespaceOutput`.
         """
-        return self._invoke(input, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE, [], plugins)
+        return self._invoke(
+            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE, [], plugins
+        )
 
     def http_payload_with_xml_namespace_and_prefix(
         self,
-        input: HttpPayloadWithXmlNamespaceAndPrefixInput | None = None,
+        *,
+        nested: _models.PayloadWithXmlNamespaceAndPrefix
+        | _models.PayloadWithXmlNamespaceAndPrefixParams
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput:
         """
         The following example serializes a payload that uses an XML namespace.
 
+        The keyword arguments are the members of
+        `HttpPayloadWithXmlNamespaceAndPrefixInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadWithXmlNamespaceAndPrefixInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -741,21 +791,28 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
             An instance of `HttpPayloadWithXmlNamespaceAndPrefixOutput`.
         """
         return self._invoke(
-            input, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, [], plugins
+            {"nested": nested},
+            _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX,
+            [],
+            plugins,
         )
 
     def http_prefix_headers(
         self,
-        input: HttpPrefixHeadersInput | None = None,
+        *,
+        foo: str | None = None,
+        foo_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPrefixHeadersOutput:
         """
         This examples adds headers to the input of a request and response by
         prefix.
 
+        The keyword arguments are the members of
+        `HttpPrefixHeadersInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPrefixHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -765,19 +822,21 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPrefixHeadersOutput`.
         """
-        return self._invoke(input, _models.HTTP_PREFIX_HEADERS, [], plugins)
+        return self._invoke(
+            {"foo": foo, "foo_map": foo_map}, _models.HTTP_PREFIX_HEADERS, [], plugins
+        )
 
     def http_request_with_float_labels(
-        self,
-        input: HttpRequestWithFloatLabelsInput,
-        plugins: list[Plugin] | None = None,
+        self, *, float_: float, double: float, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithFloatLabelsOutput:
         """
         Invokes the HttpRequestWithFloatLabels operation.
 
+        The keyword arguments are the members of
+        `HttpRequestWithFloatLabelsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpRequestWithFloatLabelsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -787,19 +846,24 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithFloatLabelsOutput`.
         """
-        return self._invoke(input, _models.HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins)
+        return self._invoke(
+            {"float_": float_, "double": double},
+            _models.HTTP_REQUEST_WITH_FLOAT_LABELS,
+            [],
+            plugins,
+        )
 
     def http_request_with_greedy_label_in_path(
-        self,
-        input: HttpRequestWithGreedyLabelInPathInput,
-        plugins: list[Plugin] | None = None,
+        self, *, foo: str, baz: str, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
 
+        The keyword arguments are the members of
+        `HttpRequestWithGreedyLabelInPathInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpRequestWithGreedyLabelInPathInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -810,19 +874,34 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
             An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
         return self._invoke(
-            input, _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
+            {"foo": foo, "baz": baz},
+            _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
+            [],
+            plugins,
         )
 
     def http_request_with_labels(
-        self, input: HttpRequestWithLabelsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        string: str,
+        short: int,
+        integer: int,
+        long: int,
+        float_: float,
+        double: float,
+        boolean: bool,
+        timestamp: datetime,
+        plugins: list[Plugin] | None = None,
     ) -> HttpRequestWithLabelsOutput:
         """
         The example tests how requests are serialized when there's no input
         payload but there are HTTP labels.
 
+        The keyword arguments are the members of
+        `HttpRequestWithLabelsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpRequestWithLabelsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -832,20 +911,43 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithLabelsOutput`.
         """
-        return self._invoke(input, _models.HTTP_REQUEST_WITH_LABELS, [], plugins)
+        return self._invoke(
+            {
+                "string": string,
+                "short": short,
+                "integer": integer,
+                "long": long,
+                "float_": float_,
+                "double": double,
+                "boolean": boolean,
+                "timestamp": timestamp,
+            },
+            _models.HTTP_REQUEST_WITH_LABELS,
+            [],
+            plugins,
+        )
 
     def http_request_with_labels_and_timestamp_format(
         self,
-        input: HttpRequestWithLabelsAndTimestampFormatInput,
+        *,
+        member_epoch_seconds: datetime,
+        member_http_date: datetime,
+        member_date_time: datetime,
+        default_format: datetime,
+        target_epoch_seconds: datetime,
+        target_http_date: datetime,
+        target_date_time: datetime,
         plugins: list[Plugin] | None = None,
     ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
         """
         The example tests how requests serialize different timestamp formats in
         the URI path.
 
+        The keyword arguments are the members of
+        `HttpRequestWithLabelsAndTimestampFormatInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpRequestWithLabelsAndTimestampFormatInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -856,20 +958,27 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
             An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
         return self._invoke(
-            input, _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
+            {
+                "member_epoch_seconds": member_epoch_seconds,
+                "member_http_date": member_http_date,
+                "member_date_time": member_date_time,
+                "default_format": default_format,
+                "target_epoch_seconds": target_epoch_seconds,
+                "target_http_date": target_http_date,
+                "target_date_time": target_date_time,
+            },
+            _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
+            [],
+            plugins,
         )
 
     def http_response_code(
-        self,
-        input: HttpResponseCodeInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> HttpResponseCodeOutput:
         """
         Invokes the HttpResponseCode operation.
 
         Args:
-            input:
-                An instance of `HttpResponseCodeInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -879,19 +988,19 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpResponseCodeOutput`.
         """
-        return self._invoke(input, _models.HTTP_RESPONSE_CODE, [], plugins)
+        return self._invoke(None, _models.HTTP_RESPONSE_CODE, [], plugins)
 
     def http_string_payload(
-        self,
-        input: HttpStringPayloadInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
 
+        The keyword arguments are the members of
+        `HttpStringPayloadInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpStringPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -901,12 +1010,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpStringPayloadOutput`.
         """
-        return self._invoke(input, _models.HTTP_STRING_PAYLOAD, [], plugins)
+        return self._invoke(
+            {"payload": payload}, _models.HTTP_STRING_PAYLOAD, [], plugins
+        )
 
     def ignore_query_params_in_response(
-        self,
-        input: IgnoreQueryParamsInResponseInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
@@ -914,8 +1023,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         request and response.
 
         Args:
-            input:
-                An instance of `IgnoreQueryParamsInResponseInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -925,20 +1032,38 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `IgnoreQueryParamsInResponseOutput`.
         """
-        return self._invoke(input, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins)
+        return self._invoke(None, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins)
 
     def input_and_output_with_headers(
         self,
-        input: InputAndOutputWithHeadersInput | None = None,
+        *,
+        header_string: str | None = None,
+        header_byte: int | None = None,
+        header_short: int | None = None,
+        header_integer: int | None = None,
+        header_long: int | None = None,
+        header_float: float | None = None,
+        header_double: float | None = None,
+        header_true_bool: bool | None = None,
+        header_false_bool: bool | None = None,
+        header_string_list: Sequence[str] | None = None,
+        header_string_set: Sequence[str] | None = None,
+        header_integer_list: Sequence[int] | None = None,
+        header_boolean_list: Sequence[bool] | None = None,
+        header_timestamp_list: Sequence[datetime] | None = None,
+        header_enum: str | None = None,
+        header_enum_list: Sequence[str] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> InputAndOutputWithHeadersOutput:
         """
         The example tests how requests and responses are serialized when there
         is no input or output payload but there are HTTP header bindings.
 
+        The keyword arguments are the members of
+        `InputAndOutputWithHeadersInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `InputAndOutputWithHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -948,19 +1073,45 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `InputAndOutputWithHeadersOutput`.
         """
-        return self._invoke(input, _models.INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins)
+        return self._invoke(
+            {
+                "header_string": header_string,
+                "header_byte": header_byte,
+                "header_short": header_short,
+                "header_integer": header_integer,
+                "header_long": header_long,
+                "header_float": header_float,
+                "header_double": header_double,
+                "header_true_bool": header_true_bool,
+                "header_false_bool": header_false_bool,
+                "header_string_list": header_string_list,
+                "header_string_set": header_string_set,
+                "header_integer_list": header_integer_list,
+                "header_boolean_list": header_boolean_list,
+                "header_timestamp_list": header_timestamp_list,
+                "header_enum": header_enum,
+                "header_enum_list": header_enum_list,
+            },
+            _models.INPUT_AND_OUTPUT_WITH_HEADERS,
+            [],
+            plugins,
+        )
 
     def nested_xml_maps(
         self,
-        input: NestedXmlMapsInput | None = None,
+        *,
+        nested_map: Mapping[str, Mapping[str, str]] | None = None,
+        flat_nested_map: Mapping[str, Mapping[str, str]] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NestedXmlMapsOutput:
         """
         Invokes the NestedXmlMaps operation.
 
+        The keyword arguments are the members of
+        `NestedXmlMapsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `NestedXmlMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -970,19 +1121,27 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NestedXmlMapsOutput`.
         """
-        return self._invoke(input, _models.NESTED_XML_MAPS, [], plugins)
+        return self._invoke(
+            {"nested_map": nested_map, "flat_nested_map": flat_nested_map},
+            _models.NESTED_XML_MAPS,
+            [],
+            plugins,
+        )
 
     def nested_xml_map_with_xml_name(
         self,
-        input: NestedXmlMapWithXmlNameInput | None = None,
+        *,
+        nested_xml_map_with_xml_name_map: Mapping[str, Mapping[str, str]] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NestedXmlMapWithXmlNameOutput:
         """
         Nested Xml Maps with key/values with @xmlName
 
+        The keyword arguments are the members of
+        `NestedXmlMapWithXmlNameInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `NestedXmlMapWithXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -992,12 +1151,15 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NestedXmlMapWithXmlNameOutput`.
         """
-        return self._invoke(input, _models.NESTED_XML_MAP_WITH_XML_NAME, [], plugins)
+        return self._invoke(
+            {"nested_xml_map_with_xml_name_map": nested_xml_map_with_xml_name_map},
+            _models.NESTED_XML_MAP_WITH_XML_NAME,
+            [],
+            plugins,
+        )
 
     def no_input_and_no_output(
-        self,
-        input: NoInputAndNoOutputInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1006,8 +1168,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         this.
 
         Args:
-            input:
-                An instance of `NoInputAndNoOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1017,12 +1177,10 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        return self._invoke(input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
+        return self._invoke(None, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
     def no_input_and_output(
-        self,
-        input: NoInputAndOutputInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1031,8 +1189,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         generators must support this.
 
         Args:
-            input:
-                An instance of `NoInputAndOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1042,20 +1198,25 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return self._invoke(input, _models.NO_INPUT_AND_OUTPUT, [], plugins)
+        return self._invoke(None, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
     def null_and_empty_headers_client(
         self,
-        input: NullAndEmptyHeadersClientInput | None = None,
+        *,
+        a: str | None = None,
+        b: str | None = None,
+        c: Sequence[str] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NullAndEmptyHeadersClientOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
         \"\"
 
+        The keyword arguments are the members of
+        `NullAndEmptyHeadersClientInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `NullAndEmptyHeadersClientInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1065,20 +1226,27 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NullAndEmptyHeadersClientOutput`.
         """
-        return self._invoke(input, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins)
+        return self._invoke(
+            {"a": a, "b": b, "c": c}, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
+        )
 
     def null_and_empty_headers_server(
         self,
-        input: NullAndEmptyHeadersServerInput | None = None,
+        *,
+        a: str | None = None,
+        b: str | None = None,
+        c: Sequence[str] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> NullAndEmptyHeadersServerOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
         \"\"
 
+        The keyword arguments are the members of
+        `NullAndEmptyHeadersServerInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `NullAndEmptyHeadersServerInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1088,19 +1256,25 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NullAndEmptyHeadersServerOutput`.
         """
-        return self._invoke(input, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins)
+        return self._invoke(
+            {"a": a, "b": b, "c": c}, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
+        )
 
     def omits_null_serializes_empty_string(
         self,
-        input: OmitsNullSerializesEmptyStringInput | None = None,
+        *,
+        null_value: str | None = None,
+        empty_string: str | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OmitsNullSerializesEmptyStringOutput:
         """
         Omits null, but serializes empty string value.
 
+        The keyword arguments are the members of
+        `OmitsNullSerializesEmptyStringInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `OmitsNullSerializesEmptyStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1111,20 +1285,27 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
             An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
         return self._invoke(
-            input, _models.OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
+            {"null_value": null_value, "empty_string": empty_string},
+            _models.OMITS_NULL_SERIALIZES_EMPTY_STRING,
+            [],
+            plugins,
         )
 
     def put_with_content_encoding(
         self,
-        input: PutWithContentEncodingInput | None = None,
+        *,
+        encoding: str | None = None,
+        data: str | None = None,
         plugins: list[Plugin] | None = None,
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
 
+        The keyword arguments are the members of
+        `PutWithContentEncodingInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `PutWithContentEncodingInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1134,19 +1315,24 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        return self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
+        return self._invoke(
+            {"encoding": encoding, "data": data},
+            _models.PUT_WITH_CONTENT_ENCODING,
+            [],
+            plugins,
+        )
 
     def query_idempotency_token_auto_fill(
-        self,
-        input: QueryIdempotencyTokenAutoFillInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, token: str | None = None, plugins: list[Plugin] | None = None
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
 
+        The keyword arguments are the members of
+        `QueryIdempotencyTokenAutoFillInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `QueryIdempotencyTokenAutoFillInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1157,20 +1343,24 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
         return self._invoke(
-            input, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            {"token": token}, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
 
     def query_params_as_string_list_map(
         self,
-        input: QueryParamsAsStringListMapInput | None = None,
+        *,
+        qux: str | None = None,
+        foo: Mapping[str, Sequence[str]] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryParamsAsStringListMapOutput:
         """
         Invokes the QueryParamsAsStringListMap operation.
 
+        The keyword arguments are the members of
+        `QueryParamsAsStringListMapInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `QueryParamsAsStringListMapInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1180,19 +1370,28 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `QueryParamsAsStringListMapOutput`.
         """
-        return self._invoke(input, _models.QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins)
+        return self._invoke(
+            {"qux": qux, "foo": foo},
+            _models.QUERY_PARAMS_AS_STRING_LIST_MAP,
+            [],
+            plugins,
+        )
 
     def query_precedence(
         self,
-        input: QueryPrecedenceInput | None = None,
+        *,
+        foo: str | None = None,
+        baz: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryPrecedenceOutput:
         """
         Invokes the QueryPrecedence operation.
 
+        The keyword arguments are the members of
+        `QueryPrecedenceInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `QueryPrecedenceInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1202,19 +1401,26 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `QueryPrecedenceOutput`.
         """
-        return self._invoke(input, _models.QUERY_PRECEDENCE, [], plugins)
+        return self._invoke(
+            {"foo": foo, "baz": baz}, _models.QUERY_PRECEDENCE, [], plugins
+        )
 
     def recursive_shapes(
         self,
-        input: RecursiveShapesInput | None = None,
+        *,
+        nested: _models.RecursiveShapesInputOutputNested1
+        | _models.RecursiveShapesInputOutputNested1Params
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> RecursiveShapesOutput:
         """
         Recursive shapes
 
+        The keyword arguments are the members of
+        `RecursiveShapesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `RecursiveShapesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1224,19 +1430,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        return self._invoke(input, _models.RECURSIVE_SHAPES, [], plugins)
+        return self._invoke({"nested": nested}, _models.RECURSIVE_SHAPES, [], plugins)
 
     def simple_scalar_properties(
         self,
-        input: SimpleScalarPropertiesInput | None = None,
+        *,
+        foo: str | None = None,
+        string_value: str | None = None,
+        true_boolean_value: bool | None = None,
+        false_boolean_value: bool | None = None,
+        byte_value: int | None = None,
+        short_value: int | None = None,
+        integer_value: int | None = None,
+        long_value: int | None = None,
+        float_value: float | None = None,
+        double_value: float | None = None,
         plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
 
+        The keyword arguments are the members of
+        `SimpleScalarPropertiesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1246,20 +1464,45 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        return self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
+        return self._invoke(
+            {
+                "foo": foo,
+                "string_value": string_value,
+                "true_boolean_value": true_boolean_value,
+                "false_boolean_value": false_boolean_value,
+                "byte_value": byte_value,
+                "short_value": short_value,
+                "integer_value": integer_value,
+                "long_value": long_value,
+                "float_value": float_value,
+                "double_value": double_value,
+            },
+            _models.SIMPLE_SCALAR_PROPERTIES,
+            [],
+            plugins,
+        )
 
     def timestamp_format_headers(
         self,
-        input: TimestampFormatHeadersInput | None = None,
+        *,
+        member_epoch_seconds: datetime | None = None,
+        member_http_date: datetime | None = None,
+        member_date_time: datetime | None = None,
+        default_format: datetime | None = None,
+        target_epoch_seconds: datetime | None = None,
+        target_http_date: datetime | None = None,
+        target_date_time: datetime | None = None,
         plugins: list[Plugin] | None = None,
     ) -> TimestampFormatHeadersOutput:
         """
         The example tests how timestamp request and response headers are
         serialized.
 
+        The keyword arguments are the members of
+        `TimestampFormatHeadersInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `TimestampFormatHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1269,19 +1512,36 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `TimestampFormatHeadersOutput`.
         """
-        return self._invoke(input, _models.TIMESTAMP_FORMAT_HEADERS, [], plugins)
+        return self._invoke(
+            {
+                "member_epoch_seconds": member_epoch_seconds,
+                "member_http_date": member_http_date,
+                "member_date_time": member_date_time,
+                "default_format": default_format,
+                "target_epoch_seconds": target_epoch_seconds,
+                "target_http_date": target_http_date,
+                "target_date_time": target_date_time,
+            },
+            _models.TIMESTAMP_FORMAT_HEADERS,
+            [],
+            plugins,
+        )
 
     def xml_attributes(
         self,
-        input: XmlAttributesInput | None = None,
+        *,
+        foo: str | None = None,
+        attr: str | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlAttributesOutput:
         """
         This example serializes an XML attributes on synthesized document.
 
+        The keyword arguments are the members of
+        `XmlAttributesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlAttributesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1291,11 +1551,16 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesOutput`.
         """
-        return self._invoke(input, _models.XML_ATTRIBUTES, [], plugins)
+        return self._invoke(
+            {"foo": foo, "attr": attr}, _models.XML_ATTRIBUTES, [], plugins
+        )
 
     def xml_attributes_in_middle(
         self,
-        input: XmlAttributesInMiddleInput | None = None,
+        *,
+        payload: _models.XmlAttributesInMiddlePayloadRequest
+        | _models.XmlAttributesInMiddlePayloadRequestParams
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlAttributesInMiddleOutput:
         """
@@ -1305,9 +1570,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         which is critical for languages like C# where attribute writing must
         happen before child elements.
 
+        The keyword arguments are the members of
+        `XmlAttributesInMiddleInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlAttributesInMiddleInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1317,20 +1584,27 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesInMiddleOutput`.
         """
-        return self._invoke(input, _models.XML_ATTRIBUTES_IN_MIDDLE, [], plugins)
+        return self._invoke(
+            {"payload": payload}, _models.XML_ATTRIBUTES_IN_MIDDLE, [], plugins
+        )
 
     def xml_attributes_on_payload(
         self,
-        input: XmlAttributesOnPayloadInput | None = None,
+        *,
+        payload: _models.XmlAttributesPayloadRequest
+        | _models.XmlAttributesPayloadRequestParams
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlAttributesOnPayloadOutput:
         """
         This example serializes an XML attributes on a document targeted by
         httpPayload.
 
+        The keyword arguments are the members of
+        `XmlAttributesOnPayloadInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlAttributesOnPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1340,17 +1614,21 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesOnPayloadOutput`.
         """
-        return self._invoke(input, _models.XML_ATTRIBUTES_ON_PAYLOAD, [], plugins)
+        return self._invoke(
+            {"payload": payload}, _models.XML_ATTRIBUTES_ON_PAYLOAD, [], plugins
+        )
 
     def xml_blobs(
-        self, input: XmlBlobsInput | None = None, plugins: list[Plugin] | None = None
+        self, *, data: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> XmlBlobsOutput:
         """
         Blobs are base64 encoded
 
+        The keyword arguments are the members of
+        `XmlBlobsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlBlobsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1360,19 +1638,19 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlBlobsOutput`.
         """
-        return self._invoke(input, _models.XML_BLOBS, [], plugins)
+        return self._invoke({"data": data}, _models.XML_BLOBS, [], plugins)
 
     def xml_empty_blobs(
-        self,
-        input: XmlEmptyBlobsInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, data: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> XmlEmptyBlobsOutput:
         """
         Blobs are base64 encoded
 
+        The keyword arguments are the members of
+        `XmlEmptyBlobsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlEmptyBlobsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1382,19 +1660,42 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        return self._invoke(input, _models.XML_EMPTY_BLOBS, [], plugins)
+        return self._invoke({"data": data}, _models.XML_EMPTY_BLOBS, [], plugins)
 
     def xml_empty_lists(
         self,
-        input: XmlEmptyListsInput | None = None,
+        *,
+        string_list: Sequence[str] | None = None,
+        string_set: Sequence[str] | None = None,
+        integer_list: Sequence[int] | None = None,
+        boolean_list: Sequence[bool] | None = None,
+        timestamp_list: Sequence[datetime] | None = None,
+        enum_list: Sequence[str] | None = None,
+        int_enum_list: Sequence[int] | None = None,
+        nested_string_list: Sequence[Sequence[str]] | None = None,
+        renamed_list_members: Sequence[str] | None = None,
+        flattened_list: Sequence[str] | None = None,
+        flattened_list2: Sequence[str] | None = None,
+        flattened_list_with_member_namespace: Sequence[str] | None = None,
+        flattened_list_with_namespace: Sequence[str] | None = None,
+        structure_list: Sequence[
+            _models.StructureListMember | _models.StructureListMemberParams
+        ]
+        | None = None,
+        flattened_structure_list: Sequence[
+            _models.StructureListMember | _models.StructureListMemberParams
+        ]
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlEmptyListsOutput:
         """
         Invokes the XmlEmptyLists operation.
 
+        The keyword arguments are the members of
+        `XmlEmptyListsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlEmptyListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1404,19 +1705,44 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
-        return self._invoke(input, _models.XML_EMPTY_LISTS, [], plugins)
+        return self._invoke(
+            {
+                "string_list": string_list,
+                "string_set": string_set,
+                "integer_list": integer_list,
+                "boolean_list": boolean_list,
+                "timestamp_list": timestamp_list,
+                "enum_list": enum_list,
+                "int_enum_list": int_enum_list,
+                "nested_string_list": nested_string_list,
+                "renamed_list_members": renamed_list_members,
+                "flattened_list": flattened_list,
+                "flattened_list2": flattened_list2,
+                "flattened_list_with_member_namespace": flattened_list_with_member_namespace,
+                "flattened_list_with_namespace": flattened_list_with_namespace,
+                "structure_list": structure_list,
+                "flattened_structure_list": flattened_structure_list,
+            },
+            _models.XML_EMPTY_LISTS,
+            [],
+            plugins,
+        )
 
     def xml_empty_maps(
         self,
-        input: XmlEmptyMapsInput | None = None,
+        *,
+        my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlEmptyMapsOutput:
         """
         Invokes the XmlEmptyMaps operation.
 
+        The keyword arguments are the members of
+        `XmlEmptyMapsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlEmptyMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1426,19 +1752,19 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyMapsOutput`.
         """
-        return self._invoke(input, _models.XML_EMPTY_MAPS, [], plugins)
+        return self._invoke({"my_map": my_map}, _models.XML_EMPTY_MAPS, [], plugins)
 
     def xml_empty_strings(
-        self,
-        input: XmlEmptyStringsInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, empty_string: str | None = None, plugins: list[Plugin] | None = None
     ) -> XmlEmptyStringsOutput:
         """
         Invokes the XmlEmptyStrings operation.
 
+        The keyword arguments are the members of
+        `XmlEmptyStringsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlEmptyStringsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1448,18 +1774,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyStringsOutput`.
         """
-        return self._invoke(input, _models.XML_EMPTY_STRINGS, [], plugins)
+        return self._invoke(
+            {"empty_string": empty_string}, _models.XML_EMPTY_STRINGS, [], plugins
+        )
 
     def xml_enums(
-        self, input: XmlEnumsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo_enum1: str | None = None,
+        foo_enum2: str | None = None,
+        foo_enum3: str | None = None,
+        foo_enum_list: Sequence[str] | None = None,
+        foo_enum_set: Sequence[str] | None = None,
+        foo_enum_map: Mapping[str, str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
+        The keyword arguments are the members of
+        `XmlEnumsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1469,18 +1807,40 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
-        return self._invoke(input, _models.XML_ENUMS, [], plugins)
+        return self._invoke(
+            {
+                "foo_enum1": foo_enum1,
+                "foo_enum2": foo_enum2,
+                "foo_enum3": foo_enum3,
+                "foo_enum_list": foo_enum_list,
+                "foo_enum_set": foo_enum_set,
+                "foo_enum_map": foo_enum_map,
+            },
+            _models.XML_ENUMS,
+            [],
+            plugins,
+        )
 
     def xml_int_enums(
-        self, input: XmlIntEnumsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        *,
+        int_enum1: int | None = None,
+        int_enum2: int | None = None,
+        int_enum3: int | None = None,
+        int_enum_list: Sequence[int] | None = None,
+        int_enum_set: Sequence[int] | None = None,
+        int_enum_map: Mapping[str, int] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlIntEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
+        The keyword arguments are the members of
+        `XmlIntEnumsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlIntEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1490,10 +1850,45 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
-        return self._invoke(input, _models.XML_INT_ENUMS, [], plugins)
+        return self._invoke(
+            {
+                "int_enum1": int_enum1,
+                "int_enum2": int_enum2,
+                "int_enum3": int_enum3,
+                "int_enum_list": int_enum_list,
+                "int_enum_set": int_enum_set,
+                "int_enum_map": int_enum_map,
+            },
+            _models.XML_INT_ENUMS,
+            [],
+            plugins,
+        )
 
     def xml_lists(
-        self, input: XmlListsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        *,
+        string_list: Sequence[str] | None = None,
+        string_set: Sequence[str] | None = None,
+        integer_list: Sequence[int] | None = None,
+        boolean_list: Sequence[bool] | None = None,
+        timestamp_list: Sequence[datetime] | None = None,
+        enum_list: Sequence[str] | None = None,
+        int_enum_list: Sequence[int] | None = None,
+        nested_string_list: Sequence[Sequence[str]] | None = None,
+        renamed_list_members: Sequence[str] | None = None,
+        flattened_list: Sequence[str] | None = None,
+        flattened_list2: Sequence[str] | None = None,
+        flattened_list_with_member_namespace: Sequence[str] | None = None,
+        flattened_list_with_namespace: Sequence[str] | None = None,
+        structure_list: Sequence[
+            _models.StructureListMember | _models.StructureListMemberParams
+        ]
+        | None = None,
+        flattened_structure_list: Sequence[
+            _models.StructureListMember | _models.StructureListMemberParams
+        ]
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlListsOutput:
         """
         This test case serializes XML lists for the following cases for both
@@ -1503,9 +1898,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         with @xmlNamespace. 8. Lists of structures. 9. Flattened XML list of
         structures
 
+        The keyword arguments are the members of
+        `XmlListsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1515,17 +1912,44 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlListsOutput`.
         """
-        return self._invoke(input, _models.XML_LISTS, [], plugins)
+        return self._invoke(
+            {
+                "string_list": string_list,
+                "string_set": string_set,
+                "integer_list": integer_list,
+                "boolean_list": boolean_list,
+                "timestamp_list": timestamp_list,
+                "enum_list": enum_list,
+                "int_enum_list": int_enum_list,
+                "nested_string_list": nested_string_list,
+                "renamed_list_members": renamed_list_members,
+                "flattened_list": flattened_list,
+                "flattened_list2": flattened_list2,
+                "flattened_list_with_member_namespace": flattened_list_with_member_namespace,
+                "flattened_list_with_namespace": flattened_list_with_namespace,
+                "structure_list": structure_list,
+                "flattened_structure_list": flattened_structure_list,
+            },
+            _models.XML_LISTS,
+            [],
+            plugins,
+        )
 
     def xml_maps(
-        self, input: XmlMapsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        *,
+        my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlMapsOutput:
         """
         The example tests basic map serialization.
 
+        The keyword arguments are the members of
+        `XmlMapsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1535,19 +1959,23 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapsOutput`.
         """
-        return self._invoke(input, _models.XML_MAPS, [], plugins)
+        return self._invoke({"my_map": my_map}, _models.XML_MAPS, [], plugins)
 
     def xml_maps_xml_name(
         self,
-        input: XmlMapsXmlNameInput | None = None,
+        *,
+        my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlMapsXmlNameOutput:
         """
         Invokes the XmlMapsXmlName operation.
 
+        The keyword arguments are the members of
+        `XmlMapsXmlNameInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlMapsXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1557,19 +1985,22 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapsXmlNameOutput`.
         """
-        return self._invoke(input, _models.XML_MAPS_XML_NAME, [], plugins)
+        return self._invoke({"my_map": my_map}, _models.XML_MAPS_XML_NAME, [], plugins)
 
     def xml_map_with_xml_namespace(
         self,
-        input: XmlMapWithXmlNamespaceInput | None = None,
+        *,
+        my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlMapWithXmlNamespaceOutput:
         """
         Maps with @xmlNamespace and @xmlName
 
+        The keyword arguments are the members of
+        `XmlMapWithXmlNamespaceInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlMapWithXmlNamespaceInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1579,19 +2010,26 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapWithXmlNamespaceOutput`.
         """
-        return self._invoke(input, _models.XML_MAP_WITH_XML_NAMESPACE, [], plugins)
+        return self._invoke(
+            {"my_map": my_map}, _models.XML_MAP_WITH_XML_NAMESPACE, [], plugins
+        )
 
     def xml_namespaces(
         self,
-        input: XmlNamespacesInput | None = None,
+        *,
+        nested: _models.XmlNamespaceNested
+        | _models.XmlNamespaceNestedParams
+        | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlNamespacesOutput:
         """
         Invokes the XmlNamespaces operation.
 
+        The keyword arguments are the members of
+        `XmlNamespacesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlNamespacesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1601,20 +2039,29 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
-        return self._invoke(input, _models.XML_NAMESPACES, [], plugins)
+        return self._invoke({"nested": nested}, _models.XML_NAMESPACES, [], plugins)
 
     def xml_timestamps(
         self,
-        input: XmlTimestampsInput | None = None,
+        *,
+        normal: datetime | None = None,
+        date_time: datetime | None = None,
+        date_time_on_target: datetime | None = None,
+        epoch_seconds: datetime | None = None,
+        epoch_seconds_on_target: datetime | None = None,
+        http_date: datetime | None = None,
+        http_date_on_target: datetime | None = None,
         plugins: list[Plugin] | None = None,
     ) -> XmlTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
         format of date-time and various @timestampFormat trait values.
 
+        The keyword arguments are the members of
+        `XmlTimestampsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlTimestampsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1624,17 +2071,35 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
-        return self._invoke(input, _models.XML_TIMESTAMPS, [], plugins)
+        return self._invoke(
+            {
+                "normal": normal,
+                "date_time": date_time,
+                "date_time_on_target": date_time_on_target,
+                "epoch_seconds": epoch_seconds,
+                "epoch_seconds_on_target": epoch_seconds_on_target,
+                "http_date": http_date,
+                "http_date_on_target": http_date_on_target,
+            },
+            _models.XML_TIMESTAMPS,
+            [],
+            plugins,
+        )
 
     def xml_unions(
-        self, input: XmlUnionsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        *,
+        union_value: _models.XmlUnionShape | _models.XmlUnionShapeParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> XmlUnionsOutput:
         """
         Invokes the XmlUnions operation.
 
+        The keyword arguments are the members of
+        `XmlUnionsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `XmlUnionsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1644,7 +2109,9 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlUnionsOutput`.
         """
-        return self._invoke(input, _models.XML_UNIONS, [], plugins)
+        return self._invoke(
+            {"union_value": union_value}, _models.XML_UNIONS, [], plugins
+        )
 
     def _new_config(self) -> RestXmlProtocolConfig:
         return RestXmlProtocolConfig.resolve()

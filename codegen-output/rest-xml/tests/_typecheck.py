@@ -2,157 +2,240 @@
 
 from typing import Any
 
+from restxml.aio.client import AsyncRestXmlProtocolClient
+from restxml.client import RestXmlProtocolClient
 from restxml.models import (
     AllQueryStringTypesInput,
+    AllQueryStringTypesInputParams,
     AllQueryStringTypesOutput,
     BodyWithXmlNameInput,
+    BodyWithXmlNameInputParams,
     BodyWithXmlNameOutput,
     ComplexNestedErrorData,
     ConstantAndVariableQueryStringInput,
+    ConstantAndVariableQueryStringInputParams,
     ConstantAndVariableQueryStringOutput,
     ConstantQueryStringInput,
+    ConstantQueryStringInputParams,
     ConstantQueryStringOutput,
     ContentTypeParametersInput,
+    ContentTypeParametersInputParams,
     ContentTypeParametersOutput,
     DatetimeOffsetsInput,
+    DatetimeOffsetsInputParams,
     DatetimeOffsetsOutput,
     EmptyInputAndEmptyOutputInput,
+    EmptyInputAndEmptyOutputInputParams,
     EmptyInputAndEmptyOutputOutput,
     EndpointOperationInput,
+    EndpointOperationInputParams,
     EndpointOperationOutput,
     EndpointWithHostLabelHeaderOperationInput,
+    EndpointWithHostLabelHeaderOperationInputParams,
     EndpointWithHostLabelHeaderOperationOutput,
     EndpointWithHostLabelOperationInput,
+    EndpointWithHostLabelOperationInputParams,
     EndpointWithHostLabelOperationOutput,
     FlattenedXmlMapInput,
+    FlattenedXmlMapInputParams,
     FlattenedXmlMapOutput,
     FlattenedXmlMapWithXmlNameInput,
+    FlattenedXmlMapWithXmlNameInputParams,
     FlattenedXmlMapWithXmlNameOutput,
     FlattenedXmlMapWithXmlNamespaceInput,
+    FlattenedXmlMapWithXmlNamespaceInputParams,
     FlattenedXmlMapWithXmlNamespaceOutput,
     FractionalSecondsInput,
+    FractionalSecondsInputParams,
     FractionalSecondsOutput,
     GreetingStruct,
+    GreetingStructParams,
     GreetingWithErrorsInput,
+    GreetingWithErrorsInputParams,
     GreetingWithErrorsOutput,
     HttpEmptyPrefixHeadersInput,
+    HttpEmptyPrefixHeadersInputParams,
     HttpEmptyPrefixHeadersOutput,
     HttpEnumPayloadInput,
+    HttpEnumPayloadInputParams,
     HttpEnumPayloadOutput,
     HttpPayloadTraitsInput,
+    HttpPayloadTraitsInputParams,
     HttpPayloadTraitsOutput,
     HttpPayloadTraitsWithMediaTypeInput,
+    HttpPayloadTraitsWithMediaTypeInputParams,
     HttpPayloadTraitsWithMediaTypeOutput,
     HttpPayloadWithMemberXmlNameInput,
+    HttpPayloadWithMemberXmlNameInputParams,
     HttpPayloadWithMemberXmlNameOutput,
     HttpPayloadWithStructureInput,
+    HttpPayloadWithStructureInputParams,
     HttpPayloadWithStructureOutput,
     HttpPayloadWithUnionInput,
+    HttpPayloadWithUnionInputParams,
     HttpPayloadWithUnionOutput,
     HttpPayloadWithXmlNameInput,
+    HttpPayloadWithXmlNameInputParams,
     HttpPayloadWithXmlNameOutput,
     HttpPayloadWithXmlNamespaceAndPrefixInput,
+    HttpPayloadWithXmlNamespaceAndPrefixInputParams,
     HttpPayloadWithXmlNamespaceAndPrefixOutput,
     HttpPayloadWithXmlNamespaceInput,
+    HttpPayloadWithXmlNamespaceInputParams,
     HttpPayloadWithXmlNamespaceOutput,
     HttpPrefixHeadersInput,
+    HttpPrefixHeadersInputParams,
     HttpPrefixHeadersOutput,
     HttpRequestWithFloatLabelsInput,
+    HttpRequestWithFloatLabelsInputParams,
     HttpRequestWithFloatLabelsOutput,
     HttpRequestWithGreedyLabelInPathInput,
+    HttpRequestWithGreedyLabelInPathInputParams,
     HttpRequestWithGreedyLabelInPathOutput,
     HttpRequestWithLabelsAndTimestampFormatInput,
+    HttpRequestWithLabelsAndTimestampFormatInputParams,
     HttpRequestWithLabelsAndTimestampFormatOutput,
     HttpRequestWithLabelsInput,
+    HttpRequestWithLabelsInputParams,
     HttpRequestWithLabelsOutput,
     HttpResponseCodeInput,
+    HttpResponseCodeInputParams,
     HttpResponseCodeOutput,
     HttpStringPayloadInput,
+    HttpStringPayloadInputParams,
     HttpStringPayloadOutput,
     IgnoreQueryParamsInResponseInput,
+    IgnoreQueryParamsInResponseInputParams,
     IgnoreQueryParamsInResponseOutput,
     InputAndOutputWithHeadersInput,
+    InputAndOutputWithHeadersInputParams,
     InputAndOutputWithHeadersOutput,
     NestedPayload,
+    NestedPayloadParams,
     NestedXmlMapWithXmlNameInput,
+    NestedXmlMapWithXmlNameInputParams,
     NestedXmlMapWithXmlNameOutput,
     NestedXmlMapsInput,
+    NestedXmlMapsInputParams,
     NestedXmlMapsOutput,
     NoInputAndNoOutputInput,
+    NoInputAndNoOutputInputParams,
     NoInputAndNoOutputOutput,
     NoInputAndOutputInput,
+    NoInputAndOutputInputParams,
     NoInputAndOutputOutput,
     NullAndEmptyHeadersClientInput,
+    NullAndEmptyHeadersClientInputParams,
     NullAndEmptyHeadersClientOutput,
     NullAndEmptyHeadersServerInput,
+    NullAndEmptyHeadersServerInputParams,
     NullAndEmptyHeadersServerOutput,
     OmitsNullSerializesEmptyStringInput,
+    OmitsNullSerializesEmptyStringInputParams,
     OmitsNullSerializesEmptyStringOutput,
     PayloadWithXmlName,
+    PayloadWithXmlNameParams,
     PayloadWithXmlNamespace,
     PayloadWithXmlNamespaceAndPrefix,
+    PayloadWithXmlNamespaceAndPrefixParams,
+    PayloadWithXmlNamespaceParams,
     PutWithContentEncodingInput,
+    PutWithContentEncodingInputParams,
     PutWithContentEncodingOutput,
     QueryIdempotencyTokenAutoFillInput,
+    QueryIdempotencyTokenAutoFillInputParams,
     QueryIdempotencyTokenAutoFillOutput,
     QueryParamsAsStringListMapInput,
+    QueryParamsAsStringListMapInputParams,
     QueryParamsAsStringListMapOutput,
     QueryPrecedenceInput,
+    QueryPrecedenceInputParams,
     QueryPrecedenceOutput,
     RecursiveShapesInput,
     RecursiveShapesInputOutputNested1,
+    RecursiveShapesInputOutputNested1Params,
     RecursiveShapesInputOutputNested2,
+    RecursiveShapesInputOutputNested2Params,
+    RecursiveShapesInputParams,
     RecursiveShapesOutput,
     SimpleScalarPropertiesInput,
+    SimpleScalarPropertiesInputParams,
     SimpleScalarPropertiesOutput,
     StructureListMember,
+    StructureListMemberParams,
     TimestampFormatHeadersInput,
+    TimestampFormatHeadersInputParams,
     TimestampFormatHeadersOutput,
+    UnionPayloadParams,
     XmlAttributesInMiddleInput,
+    XmlAttributesInMiddleInputParams,
     XmlAttributesInMiddleOutput,
     XmlAttributesInMiddlePayloadRequest,
+    XmlAttributesInMiddlePayloadRequestParams,
     XmlAttributesInMiddlePayloadResponse,
     XmlAttributesInput,
+    XmlAttributesInputParams,
     XmlAttributesOnPayloadInput,
+    XmlAttributesOnPayloadInputParams,
     XmlAttributesOnPayloadOutput,
     XmlAttributesOutput,
     XmlAttributesPayloadRequest,
+    XmlAttributesPayloadRequestParams,
     XmlAttributesPayloadResponse,
     XmlBlobsInput,
+    XmlBlobsInputParams,
     XmlBlobsOutput,
     XmlEmptyBlobsInput,
+    XmlEmptyBlobsInputParams,
     XmlEmptyBlobsOutput,
     XmlEmptyListsInput,
+    XmlEmptyListsInputParams,
     XmlEmptyListsOutput,
     XmlEmptyMapsInput,
+    XmlEmptyMapsInputParams,
     XmlEmptyMapsOutput,
     XmlEmptyStringsInput,
+    XmlEmptyStringsInputParams,
     XmlEmptyStringsOutput,
     XmlEnumsInput,
+    XmlEnumsInputParams,
     XmlEnumsOutput,
     XmlIntEnumsInput,
+    XmlIntEnumsInputParams,
     XmlIntEnumsOutput,
     XmlListsInput,
+    XmlListsInputParams,
     XmlListsOutput,
     XmlMapWithXmlNamespaceInput,
+    XmlMapWithXmlNamespaceInputParams,
     XmlMapWithXmlNamespaceOutput,
     XmlMapsInput,
+    XmlMapsInputParams,
     XmlMapsOutput,
     XmlMapsXmlNameInput,
+    XmlMapsXmlNameInputParams,
     XmlMapsXmlNameOutput,
     XmlNamespaceNested,
+    XmlNamespaceNestedParams,
     XmlNamespacesInput,
+    XmlNamespacesInputParams,
     XmlNamespacesOutput,
     XmlNestedUnionStruct,
+    XmlNestedUnionStructParams,
     XmlTimestampsInput,
+    XmlTimestampsInputParams,
     XmlTimestampsOutput,
+    XmlUnionShapeParams,
     XmlUnionsInput,
+    XmlUnionsInputParams,
     XmlUnionsOutput,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check. The clients are typed inline rather than by a stub.
+# pyright: reportMissingTypeStubs=false
 
 _: Any = ...
 
@@ -301,3 +384,483 @@ XmlTimestampsOutput()
 XmlUnionsInput()
 XmlUnionsOutput()
 GreetingStruct()
+_params_0: AllQueryStringTypesInputParams = {}
+_params_1: BodyWithXmlNameInputParams = {}
+_params_2: ConstantAndVariableQueryStringInputParams = {}
+_params_3: ConstantQueryStringInputParams = {"hello": _}
+_params_4: ContentTypeParametersInputParams = {}
+_params_5: DatetimeOffsetsInputParams = {}
+_params_6: EmptyInputAndEmptyOutputInputParams = {}
+_params_7: EndpointOperationInputParams = {}
+_params_8: EndpointWithHostLabelHeaderOperationInputParams = {"account_id": _}
+_params_9: EndpointWithHostLabelOperationInputParams = {"label": _}
+_params_10: FlattenedXmlMapInputParams = {}
+_params_11: FlattenedXmlMapWithXmlNameInputParams = {}
+_params_12: FlattenedXmlMapWithXmlNamespaceInputParams = {}
+_params_13: FractionalSecondsInputParams = {}
+_params_14: GreetingWithErrorsInputParams = {}
+_params_15: HttpEmptyPrefixHeadersInputParams = {}
+_params_16: HttpEnumPayloadInputParams = {}
+_params_17: HttpPayloadTraitsInputParams = {}
+_params_18: HttpPayloadTraitsWithMediaTypeInputParams = {}
+_params_19: HttpPayloadWithMemberXmlNameInputParams = {}
+_params_20: HttpPayloadWithStructureInputParams = {}
+_params_21: HttpPayloadWithUnionInputParams = {}
+_params_22: HttpPayloadWithXmlNameInputParams = {}
+_params_23: HttpPayloadWithXmlNamespaceAndPrefixInputParams = {}
+_params_24: HttpPayloadWithXmlNamespaceInputParams = {}
+_params_25: HttpPrefixHeadersInputParams = {}
+_params_26: HttpRequestWithFloatLabelsInputParams = {"float_": _, "double": _}
+_params_27: HttpRequestWithGreedyLabelInPathInputParams = {"foo": _, "baz": _}
+_params_28: HttpRequestWithLabelsAndTimestampFormatInputParams = {
+    "member_epoch_seconds": _,
+    "member_http_date": _,
+    "member_date_time": _,
+    "default_format": _,
+    "target_epoch_seconds": _,
+    "target_http_date": _,
+    "target_date_time": _,
+}
+_params_29: HttpRequestWithLabelsInputParams = {
+    "string": _,
+    "short": _,
+    "integer": _,
+    "long": _,
+    "float_": _,
+    "double": _,
+    "boolean": _,
+    "timestamp": _,
+}
+_params_30: HttpResponseCodeInputParams = {}
+_params_31: HttpStringPayloadInputParams = {}
+_params_32: IgnoreQueryParamsInResponseInputParams = {}
+_params_33: InputAndOutputWithHeadersInputParams = {}
+_params_34: NestedPayloadParams = {}
+_params_35: NestedXmlMapsInputParams = {}
+_params_36: NestedXmlMapWithXmlNameInputParams = {}
+_params_37: NoInputAndNoOutputInputParams = {}
+_params_38: NoInputAndOutputInputParams = {}
+_params_39: NullAndEmptyHeadersClientInputParams = {}
+_params_40: NullAndEmptyHeadersServerInputParams = {}
+_params_41: OmitsNullSerializesEmptyStringInputParams = {}
+_params_42: PayloadWithXmlNameParams = {}
+_params_43: PayloadWithXmlNamespaceParams = {}
+_params_44: PayloadWithXmlNamespaceAndPrefixParams = {}
+_params_45: PutWithContentEncodingInputParams = {}
+_params_46: QueryIdempotencyTokenAutoFillInputParams = {}
+_params_47: QueryParamsAsStringListMapInputParams = {}
+_params_48: QueryPrecedenceInputParams = {}
+_params_49: RecursiveShapesInputParams = {}
+_params_50: RecursiveShapesInputOutputNested1Params = {}
+_params_51: RecursiveShapesInputOutputNested2Params = {}
+_params_52: SimpleScalarPropertiesInputParams = {}
+_params_53: StructureListMemberParams = {}
+_params_54: TimestampFormatHeadersInputParams = {}
+_params_55: UnionPayloadParams = {"greeting": _}
+_params_56: XmlAttributesInMiddleInputParams = {}
+_params_57: XmlAttributesInMiddlePayloadRequestParams = {}
+_params_58: XmlAttributesInputParams = {}
+_params_59: XmlAttributesOnPayloadInputParams = {}
+_params_60: XmlAttributesPayloadRequestParams = {}
+_params_61: XmlBlobsInputParams = {}
+_params_62: XmlEmptyBlobsInputParams = {}
+_params_63: XmlEmptyListsInputParams = {}
+_params_64: XmlEmptyMapsInputParams = {}
+_params_65: XmlEmptyStringsInputParams = {}
+_params_66: XmlEnumsInputParams = {}
+_params_67: XmlIntEnumsInputParams = {}
+_params_68: XmlListsInputParams = {}
+_params_69: XmlMapsInputParams = {}
+_params_70: XmlMapsXmlNameInputParams = {}
+_params_71: XmlMapWithXmlNamespaceInputParams = {}
+_params_72: XmlNamespaceNestedParams = {}
+_params_73: XmlNamespacesInputParams = {}
+_params_74: XmlNestedUnionStructParams = {}
+_params_75: XmlTimestampsInputParams = {}
+_params_76: XmlUnionShapeParams = {"string_value": _}
+_params_77: XmlUnionsInputParams = {}
+_params_78: GreetingStructParams = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncRestXmlProtocolClient) -> None:
+    pass
+    await client.all_query_string_types()
+    await client.all_query_string_types(**_request(AllQueryStringTypesInputParams))
+    await client.body_with_xml_name()
+    await client.body_with_xml_name(**_request(BodyWithXmlNameInputParams))
+    await client.constant_and_variable_query_string()
+    await client.constant_and_variable_query_string(
+        **_request(ConstantAndVariableQueryStringInputParams)
+    )
+    await client.constant_query_string(hello=_)
+    await client.constant_query_string(**_request(ConstantQueryStringInputParams))
+    await client.content_type_parameters()
+    await client.content_type_parameters(**_request(ContentTypeParametersInputParams))
+    await client.datetime_offsets()
+    await client.datetime_offsets(**_request(DatetimeOffsetsInputParams))
+    await client.empty_input_and_empty_output()
+    await client.empty_input_and_empty_output(
+        **_request(EmptyInputAndEmptyOutputInputParams)
+    )
+    await client.endpoint_operation()
+    await client.endpoint_operation(**_request(EndpointOperationInputParams))
+    await client.endpoint_with_host_label_header_operation(account_id=_)
+    await client.endpoint_with_host_label_header_operation(
+        **_request(EndpointWithHostLabelHeaderOperationInputParams)
+    )
+    await client.endpoint_with_host_label_operation(label=_)
+    await client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputParams)
+    )
+    await client.flattened_xml_map()
+    await client.flattened_xml_map(**_request(FlattenedXmlMapInputParams))
+    await client.flattened_xml_map_with_xml_name()
+    await client.flattened_xml_map_with_xml_name(
+        **_request(FlattenedXmlMapWithXmlNameInputParams)
+    )
+    await client.flattened_xml_map_with_xml_namespace()
+    await client.flattened_xml_map_with_xml_namespace(
+        **_request(FlattenedXmlMapWithXmlNamespaceInputParams)
+    )
+    await client.fractional_seconds()
+    await client.fractional_seconds(**_request(FractionalSecondsInputParams))
+    await client.greeting_with_errors()
+    await client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    await client.http_empty_prefix_headers()
+    await client.http_empty_prefix_headers(
+        **_request(HttpEmptyPrefixHeadersInputParams)
+    )
+    await client.http_enum_payload()
+    await client.http_enum_payload(**_request(HttpEnumPayloadInputParams))
+    await client.http_payload_traits()
+    await client.http_payload_traits(**_request(HttpPayloadTraitsInputParams))
+    await client.http_payload_traits_with_media_type()
+    await client.http_payload_traits_with_media_type(
+        **_request(HttpPayloadTraitsWithMediaTypeInputParams)
+    )
+    await client.http_payload_with_member_xml_name()
+    await client.http_payload_with_member_xml_name(
+        **_request(HttpPayloadWithMemberXmlNameInputParams)
+    )
+    await client.http_payload_with_structure()
+    await client.http_payload_with_structure(
+        **_request(HttpPayloadWithStructureInputParams)
+    )
+    await client.http_payload_with_union()
+    await client.http_payload_with_union(**_request(HttpPayloadWithUnionInputParams))
+    await client.http_payload_with_xml_name()
+    await client.http_payload_with_xml_name(
+        **_request(HttpPayloadWithXmlNameInputParams)
+    )
+    await client.http_payload_with_xml_namespace()
+    await client.http_payload_with_xml_namespace(
+        **_request(HttpPayloadWithXmlNamespaceInputParams)
+    )
+    await client.http_payload_with_xml_namespace_and_prefix()
+    await client.http_payload_with_xml_namespace_and_prefix(
+        **_request(HttpPayloadWithXmlNamespaceAndPrefixInputParams)
+    )
+    await client.http_prefix_headers()
+    await client.http_prefix_headers(**_request(HttpPrefixHeadersInputParams))
+    await client.http_request_with_float_labels(float_=_, double=_)
+    await client.http_request_with_float_labels(
+        **_request(HttpRequestWithFloatLabelsInputParams)
+    )
+    await client.http_request_with_greedy_label_in_path(foo=_, baz=_)
+    await client.http_request_with_greedy_label_in_path(
+        **_request(HttpRequestWithGreedyLabelInPathInputParams)
+    )
+    await client.http_request_with_labels(
+        string=_, short=_, integer=_, long=_, float_=_, double=_, boolean=_, timestamp=_
+    )
+    await client.http_request_with_labels(**_request(HttpRequestWithLabelsInputParams))
+    await client.http_request_with_labels_and_timestamp_format(
+        member_epoch_seconds=_,
+        member_http_date=_,
+        member_date_time=_,
+        default_format=_,
+        target_epoch_seconds=_,
+        target_http_date=_,
+        target_date_time=_,
+    )
+    await client.http_request_with_labels_and_timestamp_format(
+        **_request(HttpRequestWithLabelsAndTimestampFormatInputParams)
+    )
+    await client.http_response_code()
+    await client.http_response_code(**_request(HttpResponseCodeInputParams))
+    await client.http_string_payload()
+    await client.http_string_payload(**_request(HttpStringPayloadInputParams))
+    await client.ignore_query_params_in_response()
+    await client.ignore_query_params_in_response(
+        **_request(IgnoreQueryParamsInResponseInputParams)
+    )
+    await client.input_and_output_with_headers()
+    await client.input_and_output_with_headers(
+        **_request(InputAndOutputWithHeadersInputParams)
+    )
+    await client.nested_xml_maps()
+    await client.nested_xml_maps(**_request(NestedXmlMapsInputParams))
+    await client.nested_xml_map_with_xml_name()
+    await client.nested_xml_map_with_xml_name(
+        **_request(NestedXmlMapWithXmlNameInputParams)
+    )
+    await client.no_input_and_no_output()
+    await client.no_input_and_no_output(**_request(NoInputAndNoOutputInputParams))
+    await client.no_input_and_output()
+    await client.no_input_and_output(**_request(NoInputAndOutputInputParams))
+    await client.null_and_empty_headers_client()
+    await client.null_and_empty_headers_client(
+        **_request(NullAndEmptyHeadersClientInputParams)
+    )
+    await client.null_and_empty_headers_server()
+    await client.null_and_empty_headers_server(
+        **_request(NullAndEmptyHeadersServerInputParams)
+    )
+    await client.omits_null_serializes_empty_string()
+    await client.omits_null_serializes_empty_string(
+        **_request(OmitsNullSerializesEmptyStringInputParams)
+    )
+    await client.put_with_content_encoding()
+    await client.put_with_content_encoding(
+        **_request(PutWithContentEncodingInputParams)
+    )
+    await client.query_idempotency_token_auto_fill()
+    await client.query_idempotency_token_auto_fill(
+        **_request(QueryIdempotencyTokenAutoFillInputParams)
+    )
+    await client.query_params_as_string_list_map()
+    await client.query_params_as_string_list_map(
+        **_request(QueryParamsAsStringListMapInputParams)
+    )
+    await client.query_precedence()
+    await client.query_precedence(**_request(QueryPrecedenceInputParams))
+    await client.recursive_shapes()
+    await client.recursive_shapes(**_request(RecursiveShapesInputParams))
+    await client.simple_scalar_properties()
+    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    await client.timestamp_format_headers()
+    await client.timestamp_format_headers(**_request(TimestampFormatHeadersInputParams))
+    await client.xml_attributes()
+    await client.xml_attributes(**_request(XmlAttributesInputParams))
+    await client.xml_attributes_in_middle()
+    await client.xml_attributes_in_middle(**_request(XmlAttributesInMiddleInputParams))
+    await client.xml_attributes_on_payload()
+    await client.xml_attributes_on_payload(
+        **_request(XmlAttributesOnPayloadInputParams)
+    )
+    await client.xml_blobs()
+    await client.xml_blobs(**_request(XmlBlobsInputParams))
+    await client.xml_empty_blobs()
+    await client.xml_empty_blobs(**_request(XmlEmptyBlobsInputParams))
+    await client.xml_empty_lists()
+    await client.xml_empty_lists(**_request(XmlEmptyListsInputParams))
+    await client.xml_empty_maps()
+    await client.xml_empty_maps(**_request(XmlEmptyMapsInputParams))
+    await client.xml_empty_strings()
+    await client.xml_empty_strings(**_request(XmlEmptyStringsInputParams))
+    await client.xml_enums()
+    await client.xml_enums(**_request(XmlEnumsInputParams))
+    await client.xml_int_enums()
+    await client.xml_int_enums(**_request(XmlIntEnumsInputParams))
+    await client.xml_lists()
+    await client.xml_lists(**_request(XmlListsInputParams))
+    await client.xml_maps()
+    await client.xml_maps(**_request(XmlMapsInputParams))
+    await client.xml_maps_xml_name()
+    await client.xml_maps_xml_name(**_request(XmlMapsXmlNameInputParams))
+    await client.xml_map_with_xml_namespace()
+    await client.xml_map_with_xml_namespace(
+        **_request(XmlMapWithXmlNamespaceInputParams)
+    )
+    await client.xml_namespaces()
+    await client.xml_namespaces(**_request(XmlNamespacesInputParams))
+    await client.xml_timestamps()
+    await client.xml_timestamps(**_request(XmlTimestampsInputParams))
+    await client.xml_unions()
+    await client.xml_unions(**_request(XmlUnionsInputParams))
+
+
+def check_sync_calls(client: RestXmlProtocolClient) -> None:
+    pass
+    client.all_query_string_types()
+    client.all_query_string_types(**_request(AllQueryStringTypesInputParams))
+    client.body_with_xml_name()
+    client.body_with_xml_name(**_request(BodyWithXmlNameInputParams))
+    client.constant_and_variable_query_string()
+    client.constant_and_variable_query_string(
+        **_request(ConstantAndVariableQueryStringInputParams)
+    )
+    client.constant_query_string(hello=_)
+    client.constant_query_string(**_request(ConstantQueryStringInputParams))
+    client.content_type_parameters()
+    client.content_type_parameters(**_request(ContentTypeParametersInputParams))
+    client.datetime_offsets()
+    client.datetime_offsets(**_request(DatetimeOffsetsInputParams))
+    client.empty_input_and_empty_output()
+    client.empty_input_and_empty_output(**_request(EmptyInputAndEmptyOutputInputParams))
+    client.endpoint_operation()
+    client.endpoint_operation(**_request(EndpointOperationInputParams))
+    client.endpoint_with_host_label_header_operation(account_id=_)
+    client.endpoint_with_host_label_header_operation(
+        **_request(EndpointWithHostLabelHeaderOperationInputParams)
+    )
+    client.endpoint_with_host_label_operation(label=_)
+    client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputParams)
+    )
+    client.flattened_xml_map()
+    client.flattened_xml_map(**_request(FlattenedXmlMapInputParams))
+    client.flattened_xml_map_with_xml_name()
+    client.flattened_xml_map_with_xml_name(
+        **_request(FlattenedXmlMapWithXmlNameInputParams)
+    )
+    client.flattened_xml_map_with_xml_namespace()
+    client.flattened_xml_map_with_xml_namespace(
+        **_request(FlattenedXmlMapWithXmlNamespaceInputParams)
+    )
+    client.fractional_seconds()
+    client.fractional_seconds(**_request(FractionalSecondsInputParams))
+    client.greeting_with_errors()
+    client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    client.http_empty_prefix_headers()
+    client.http_empty_prefix_headers(**_request(HttpEmptyPrefixHeadersInputParams))
+    client.http_enum_payload()
+    client.http_enum_payload(**_request(HttpEnumPayloadInputParams))
+    client.http_payload_traits()
+    client.http_payload_traits(**_request(HttpPayloadTraitsInputParams))
+    client.http_payload_traits_with_media_type()
+    client.http_payload_traits_with_media_type(
+        **_request(HttpPayloadTraitsWithMediaTypeInputParams)
+    )
+    client.http_payload_with_member_xml_name()
+    client.http_payload_with_member_xml_name(
+        **_request(HttpPayloadWithMemberXmlNameInputParams)
+    )
+    client.http_payload_with_structure()
+    client.http_payload_with_structure(**_request(HttpPayloadWithStructureInputParams))
+    client.http_payload_with_union()
+    client.http_payload_with_union(**_request(HttpPayloadWithUnionInputParams))
+    client.http_payload_with_xml_name()
+    client.http_payload_with_xml_name(**_request(HttpPayloadWithXmlNameInputParams))
+    client.http_payload_with_xml_namespace()
+    client.http_payload_with_xml_namespace(
+        **_request(HttpPayloadWithXmlNamespaceInputParams)
+    )
+    client.http_payload_with_xml_namespace_and_prefix()
+    client.http_payload_with_xml_namespace_and_prefix(
+        **_request(HttpPayloadWithXmlNamespaceAndPrefixInputParams)
+    )
+    client.http_prefix_headers()
+    client.http_prefix_headers(**_request(HttpPrefixHeadersInputParams))
+    client.http_request_with_float_labels(float_=_, double=_)
+    client.http_request_with_float_labels(
+        **_request(HttpRequestWithFloatLabelsInputParams)
+    )
+    client.http_request_with_greedy_label_in_path(foo=_, baz=_)
+    client.http_request_with_greedy_label_in_path(
+        **_request(HttpRequestWithGreedyLabelInPathInputParams)
+    )
+    client.http_request_with_labels(
+        string=_, short=_, integer=_, long=_, float_=_, double=_, boolean=_, timestamp=_
+    )
+    client.http_request_with_labels(**_request(HttpRequestWithLabelsInputParams))
+    client.http_request_with_labels_and_timestamp_format(
+        member_epoch_seconds=_,
+        member_http_date=_,
+        member_date_time=_,
+        default_format=_,
+        target_epoch_seconds=_,
+        target_http_date=_,
+        target_date_time=_,
+    )
+    client.http_request_with_labels_and_timestamp_format(
+        **_request(HttpRequestWithLabelsAndTimestampFormatInputParams)
+    )
+    client.http_response_code()
+    client.http_response_code(**_request(HttpResponseCodeInputParams))
+    client.http_string_payload()
+    client.http_string_payload(**_request(HttpStringPayloadInputParams))
+    client.ignore_query_params_in_response()
+    client.ignore_query_params_in_response(
+        **_request(IgnoreQueryParamsInResponseInputParams)
+    )
+    client.input_and_output_with_headers()
+    client.input_and_output_with_headers(
+        **_request(InputAndOutputWithHeadersInputParams)
+    )
+    client.nested_xml_maps()
+    client.nested_xml_maps(**_request(NestedXmlMapsInputParams))
+    client.nested_xml_map_with_xml_name()
+    client.nested_xml_map_with_xml_name(**_request(NestedXmlMapWithXmlNameInputParams))
+    client.no_input_and_no_output()
+    client.no_input_and_no_output(**_request(NoInputAndNoOutputInputParams))
+    client.no_input_and_output()
+    client.no_input_and_output(**_request(NoInputAndOutputInputParams))
+    client.null_and_empty_headers_client()
+    client.null_and_empty_headers_client(
+        **_request(NullAndEmptyHeadersClientInputParams)
+    )
+    client.null_and_empty_headers_server()
+    client.null_and_empty_headers_server(
+        **_request(NullAndEmptyHeadersServerInputParams)
+    )
+    client.omits_null_serializes_empty_string()
+    client.omits_null_serializes_empty_string(
+        **_request(OmitsNullSerializesEmptyStringInputParams)
+    )
+    client.put_with_content_encoding()
+    client.put_with_content_encoding(**_request(PutWithContentEncodingInputParams))
+    client.query_idempotency_token_auto_fill()
+    client.query_idempotency_token_auto_fill(
+        **_request(QueryIdempotencyTokenAutoFillInputParams)
+    )
+    client.query_params_as_string_list_map()
+    client.query_params_as_string_list_map(
+        **_request(QueryParamsAsStringListMapInputParams)
+    )
+    client.query_precedence()
+    client.query_precedence(**_request(QueryPrecedenceInputParams))
+    client.recursive_shapes()
+    client.recursive_shapes(**_request(RecursiveShapesInputParams))
+    client.simple_scalar_properties()
+    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    client.timestamp_format_headers()
+    client.timestamp_format_headers(**_request(TimestampFormatHeadersInputParams))
+    client.xml_attributes()
+    client.xml_attributes(**_request(XmlAttributesInputParams))
+    client.xml_attributes_in_middle()
+    client.xml_attributes_in_middle(**_request(XmlAttributesInMiddleInputParams))
+    client.xml_attributes_on_payload()
+    client.xml_attributes_on_payload(**_request(XmlAttributesOnPayloadInputParams))
+    client.xml_blobs()
+    client.xml_blobs(**_request(XmlBlobsInputParams))
+    client.xml_empty_blobs()
+    client.xml_empty_blobs(**_request(XmlEmptyBlobsInputParams))
+    client.xml_empty_lists()
+    client.xml_empty_lists(**_request(XmlEmptyListsInputParams))
+    client.xml_empty_maps()
+    client.xml_empty_maps(**_request(XmlEmptyMapsInputParams))
+    client.xml_empty_strings()
+    client.xml_empty_strings(**_request(XmlEmptyStringsInputParams))
+    client.xml_enums()
+    client.xml_enums(**_request(XmlEnumsInputParams))
+    client.xml_int_enums()
+    client.xml_int_enums(**_request(XmlIntEnumsInputParams))
+    client.xml_lists()
+    client.xml_lists(**_request(XmlListsInputParams))
+    client.xml_maps()
+    client.xml_maps(**_request(XmlMapsInputParams))
+    client.xml_maps_xml_name()
+    client.xml_maps_xml_name(**_request(XmlMapsXmlNameInputParams))
+    client.xml_map_with_xml_namespace()
+    client.xml_map_with_xml_namespace(**_request(XmlMapWithXmlNamespaceInputParams))
+    client.xml_namespaces()
+    client.xml_namespaces(**_request(XmlNamespacesInputParams))
+    client.xml_timestamps()
+    client.xml_timestamps(**_request(XmlTimestampsInputParams))
+    client.xml_unions()
+    client.xml_unions(**_request(XmlUnionsInputParams))

@@ -4,6 +4,7 @@
  */
 package software.amazon.smithy.python.codegen.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import software.amazon.smithy.build.FileManifest;
@@ -61,7 +63,88 @@ public class PythonCodegenTest {
         assertTrue(syncClient.contains("class Weather(Client[Config]):"));
         assertTrue(syncClient.contains("return self._invoke("));
         // Sync operations carry the same docs as async ones.
-        assertTrue(syncClient.contains("An instance of `GetCityInput`."));
+        assertTrue(syncClient.contains("An instance of `GetCityOutput`."));
+
+        // Modeled input members are keyword-only parameters of both clients, and the
+        // methods no longer take an input object.
+        for (var generated : new String[] {client, syncClient}) {
+            assertFalse(generated.contains("input: "));
+            assertGenerated(generated, """
+                        def get_city(
+                            self,
+                            *,
+                            city_id: str,
+                            plugins: list[Plugin] | None = None,
+                        ) -> GetCityOutput:
+                    """);
+            // An operation without input members is called with no arguments.
+            assertGenerated(generated, """
+                        def get_current_time(
+                            self,
+                            *,
+                            plugins: list[Plugin] | None = None,
+                        ) -> GetCurrentTimeOutput:
+                    """);
+            // The method resolves its operation through the models module, so no
+            // parameter may be named like the client's reference to it.
+            assertFalse(compact(generated).contains(",_models:"),
+                    "a parameter shadows the _models module reference");
+            // Required members have no default; defaulted members and the idempotency
+            // token may be omitted. Members named like the method's own parameters, or
+            // like the models module the method refers to, are escaped, past a modeled
+            // member that already has the escaped name.
+            assertGenerated(generated,
+                    """
+                                def create_connector(
+                                    self,
+                                    *,
+                                    name: str,
+                                    plugins__: Sequence[str],
+                                    plugins_: str | None = None,
+                                    self_: str | None = None,
+                                    _models__: str | None = None,
+                                    _models_: str | None = None,
+                                    client_token: str | None = None,
+                                    page_size: int | None = None,
+                                    connector: _models.Connector | _models.Connector_Params | None = None,
+                                    connectors: Sequence[_models.Connector | _models.Connector_Params] | None = None,
+                                    sparse_connectors: Sequence[_models.Connector | _models.Connector_Params | None] | None = None,
+                                    connectors_by_name: Mapping[str, _models.Connector | _models.Connector_Params] | None = None,
+                                    image: _models.ImageType | _models.ImageTypeParams | None = None,
+                                    recursive: _models.RecursiveUnion | _models.RecursiveUnionParams | None = None,
+                                    mutual: _models.MutuallyRecursiveA | _models.MutuallyRecursiveAParams | None = None,
+                                    connector_params: _models.ConnectorParams | _models.ConnectorParamsParams | None = None,
+                                    settings: Document | None = None,
+                                    kind: str | None = None,
+                                    created_after: datetime | None = None,
+                                    plugins: list[Plugin] | None = None,
+                                ) -> CreateConnectorOutput:
+                            """);
+            assertGenerated(generated, """
+                                {
+                                    "name": name,
+                                    "plugins__": plugins__,
+                                    "plugins_": plugins_,
+                                    "self_": self_,
+                                    "_models__": _models__,
+                                    "_models_": _models_,
+                    """);
+            // The operation is still resolved through the models module.
+            assertGenerated(generated, "_models.CREATE_CONNECTOR,");
+            // Types used only in annotations are never imported at runtime.
+            assertTrue(generated.contains("    from collections.abc import Mapping, Sequence\n"));
+            assertTrue(generated.contains("    from datetime import datetime\n"));
+            assertTrue(generated.contains("    from smithy_core.documents import Document\n"));
+        }
+        // The initial request of an event stream operation takes keywords too; the
+        // event stream member is sent through the returned stream.
+        assertGenerated(client, """
+                async def stream_atmospheric_conditions(
+                    self,
+                    *,
+                    city_id: str,
+                    plugins: list[Plugin] | None = None,
+                ) -> AsyncDuplexEventStream[""");
 
         var aioInit = Files.readString(tempDir.resolve("src/weather/aio/__init__.py"));
         assertTrue(aioInit.contains("__all__ = [\"AsyncWeather\", \"AsyncConfig\"]"));
@@ -83,6 +166,93 @@ public class PythonCodegenTest {
         assertTrue(models.contains("response_metadata: ResponseMetadata"));
         assertTrue(models.contains("response_metadata_:"));
 
+        // Every structure reachable from an operation input has a TypedDict form whose
+        // keys are the generated member names. Members that must be set are Required.
+        assertGenerated(models, """
+                class CreateConnectorInputParams(TypedDict, total=False):
+                    ""\"Dictionary form of `CreateConnectorInput`.""\"
+                    name: Required[str]
+                    plugins__: Required[Sequence[str]]
+                    plugins_: str | None
+                    self_: str | None
+                    _models__: str | None
+                    _models_: str | None
+                    client_token: str | None
+                    ""\"This field is autopopulated if not provided.""\"
+                    page_size: int | None
+                    connector: Connector | Connector_Params | None
+                """);
+        // The input model's fields have the names of the parameters.
+        assertGenerated(models, "_models__: str | None = ...");
+        assertGenerated(models, "_models_: str | None = ...");
+        // Members of nested structures are not parameters, so they are not escaped.
+        // The plain name of Connector's dictionary form is taken by a modeled shape.
+        assertGenerated(models, """
+                class Connector_Params(TypedDict, total=False):
+                    ""\"Dictionary form of `Connector`.""\"
+                    name: Required[str]
+                    version: int | None
+                    plugins: Sequence[str] | None
+                    image: ImageType | ImageTypeParams | None
+                """);
+        assertTrue(models.contains("class ConnectorParamsParams(TypedDict, total=False):"));
+        // A union's dictionary form sets exactly one variant.
+        assertGenerated(models, """
+                class ImageTypeRawParams(TypedDict):
+                    raw: bool
+
+                class ImageTypePngParams(TypedDict):
+                    png: PNGImage | PNGImageParams
+
+                ImageTypeParams = Union[ImageTypeRawParams | ImageTypePngParams]
+                """);
+        // Recursive shapes refer to their own dictionary forms.
+        assertGenerated(models, """
+                class RecursiveUnionNestedParams(TypedDict):
+                    nested: Mapping[str, RecursiveUnion | RecursiveUnionParams]
+                """);
+        assertTrue(models.contains("mutual: MutuallyRecursiveB | MutuallyRecursiveBParams | None"));
+        // An input with a streaming body has two forms. The plain one takes the bodies
+        // a sync client can send, so it unpacks into either client. The async one
+        // also takes async streams, as the model and the async client do.
+        assertTrue(models.contains("from smithy_core.aio.interfaces import StreamingBlob\n"));
+        assertTrue(models.contains("from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob\n"));
+        assertGenerated(models, """
+                    name: Required[str]
+                    image: Required[SyncStreamingBlob]
+
+                class AsyncUploadCityImageInputParams(TypedDict, total=False):
+                """);
+        assertGenerated(models, """
+                    name: Required[str]
+                    image: Required[StreamingBlob]
+                """);
+        assertTrue(models.contains("class UploadCityImageInputParams(TypedDict, total=False):"));
+        assertFalse(models.contains("AsyncCreateConnectorInputParams"));
+        // Each client's method takes the body its mode can send.
+        assertTrue(client.contains("    from smithy_core.aio.interfaces import StreamingBlob\n"));
+        assertTrue(syncClient.contains("    from smithy_core.interfaces import StreamingBlob\n"));
+        for (var generated : new String[] {client, syncClient}) {
+            assertGenerated(generated, """
+                        def upload_city_image(
+                            self,
+                            *,
+                            name: str,
+                            image: StreamingBlob,
+                            plugins: list[Plugin] | None = None,
+                        ) -> UploadCityImageOutput:
+                    """);
+        }
+        // The package is marked as typed, so the stub is used once it is installed.
+        assertEquals("", Files.readString(tempDir.resolve("src/weather/py.typed")));
+
+        // Dictionary forms are for input only: shapes that are only ever returned, and
+        // events, have none.
+        assertFalse(models.contains("class GetCityOutputParams"));
+        assertFalse(models.contains("class CitySummaryParams"));
+        assertFalse(models.contains("class HumiditySampleParams"));
+        assertFalse(models.contains("AtmosphericConditionsParams"));
+
         var runtimeModels = Files.readString(tempDir.resolve("src/weather/models.py"));
         assertTrue(runtimeModels.contains("_operation_names = ("));
         assertTrue(runtimeModels.contains("_operation_data[\"GET_CITY\"]"));
@@ -96,6 +266,9 @@ public class PythonCodegenTest {
 
         var schemas = readSchemaModules(tempDir.resolve("src/weather/_private"));
         assertTrue(schemas.contains("example.weather#fakeProtocol"));
+        // Escaping changes only the Python names; the wire names are untouched.
+        assertTrue(schemas.contains("\"_models\""));
+        assertTrue(schemas.contains("\"_models_\""));
         assertTrue(schemas.contains("aws.protocols#restJson1"));
         assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
         assertTrue(schemas.contains("\"name\": \"weather-auth\""));
@@ -181,6 +354,35 @@ public class PythonCodegenTest {
         assertTrue(models.contains("Shape250 as Shape250,"));
         assertTrue(Files.exists(tempDir.resolve("src/large/_private/models_0.pyi")));
         assertTrue(Files.exists(tempDir.resolve("src/large/_private/models_1.pyi")));
+
+        // A shape's dictionary form is declared in its partition and re-exported with
+        // it, so it is still imported from the public models module.
+        assertTrue(models.contains("GetLargeInputParams as GetLargeInputParams,"));
+        assertTrue(models.contains("Shape0Params as Shape0Params,"));
+        assertTrue(models.contains("Shape250Params as Shape250Params,"));
+        assertFalse(models.contains("class Shape0Params"));
+        // Only shapes reachable from an operation input have one.
+        assertFalse(models.contains("GetLargeOutputParams"));
+
+        var partitions = readFiles(tempDir.resolve("src/large/_private"), "models_*.pyi");
+        assertGenerated(partitions, "class GetLargeInputParams(TypedDict, total=False):");
+        assertGenerated(partitions, "root: Shape0 | Shape0Params | None");
+        assertGenerated(partitions, "class Shape250Params(TypedDict, total=False):");
+        // A member refers to its target's model and dictionary form by their own
+        // names, whether the target is declared in the same partition or another.
+        for (int i = 0; i < 250; i++) {
+            assertGenerated(partitions, String.format("next: Shape%1$d | Shape%1$dParams | None", i + 1));
+        }
+        assertFalse(partitions.contains(" as _Shape"));
+        // The chain of shapes crosses the partition boundary, and the dictionary form
+        // on the far side is imported through the public module, as its model is.
+        assertTrue(Pattern.compile("from \\.\\.models import \\(?[^()]*?\\bShape\\d+Params\\b")
+                .matcher(partitions)
+                .find());
+
+        // The client refers to both forms through the public models module.
+        var client = Files.readString(tempDir.resolve("src/large/aio/client.py"));
+        assertGenerated(client, "root: _models.Shape0 | _models.Shape0Params | None = None,");
     }
 
     @Test
@@ -260,8 +462,12 @@ public class PythonCodegenTest {
     }
 
     private static String readSchemaModules(Path directory) throws IOException {
+        return readFiles(directory, "schemas*.py");
+    }
+
+    private static String readFiles(Path directory, String glob) throws IOException {
         var result = new StringBuilder();
-        try (var files = Files.newDirectoryStream(directory, "schemas*.py")) {
+        try (var files = Files.newDirectoryStream(directory, glob)) {
             for (var file : files) {
                 result.append(Files.readString(file));
             }
@@ -282,5 +488,15 @@ public class PythonCodegenTest {
             }
         }
         throw new AssertionError("No schema partition contained " + declarations[0]);
+    }
+
+    // Compares ignoring layout, so the assertions hold whether or not a formatter
+    // was available to the generator.
+    private static void assertGenerated(String generated, String expected) {
+        assertTrue(compact(generated).contains(compact(expected)), () -> "missing from generated code:\n" + expected);
+    }
+
+    private static String compact(String code) {
+        return code.replaceAll("\\s+", "").replace(",)", ")").replace(",]", "]").replace(",}", "}");
     }
 }

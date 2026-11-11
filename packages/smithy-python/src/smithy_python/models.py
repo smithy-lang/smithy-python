@@ -88,6 +88,10 @@ _MODEL_MEMBER_NAMES: Final = frozenset(
 _ERROR_MEMBER_NAMES: Final = frozenset(
     {"is_retry_safe", "retry_after", "is_throttling_error", "fault"}
 )
+# The parameters every generated client method declares besides its input members.
+# The runtime escapes them on operation inputs, whose members are that method's
+# keyword parameters, so the generated stub has to as well.
+_OPERATION_PARAMETER_NAMES: Final = frozenset({"self", "plugins"})
 _RESPONSE_METADATA_DOC: Final = (
     "Metadata about the response that produced this output.\n\n"
     "Use this to recover the request identifiers a service's support team needs "
@@ -466,9 +470,13 @@ def _validate_member_names(context: GenerationContext[TypesSettings]) -> None:
 def _model_reserved_member_names(
     model: _model.Model,
 ) -> Callable[[_model.Shape], Collection[str]]:
-    outputs = {
-        operation.output for operation in model.iter_shapes(_model.OperationShape)
-    } | {shape.id for shape in model.iter_shapes() if shape.has_trait("output")}
+    operations = tuple(model.iter_shapes(_model.OperationShape))
+    inputs = {operation.input for operation in operations} | {
+        shape.id for shape in model.iter_shapes() if shape.has_trait("input")
+    }
+    outputs = {operation.output for operation in operations} | {
+        shape.id for shape in model.iter_shapes() if shape.has_trait("output")
+    }
 
     def reserved(shape: _model.Shape) -> Collection[str]:
         names = set(_MODEL_MEMBER_NAMES)
@@ -476,6 +484,8 @@ def _model_reserved_member_names(
             names.update(_ERROR_MEMBER_NAMES)
         if shape.has_trait("error") or shape.id in outputs:
             names.add("response_metadata")
+        if shape.id in inputs:
+            names.update(_OPERATION_PARAMETER_NAMES)
         return names
 
     return reserved

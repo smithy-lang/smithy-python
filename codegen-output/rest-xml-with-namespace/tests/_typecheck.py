@@ -2,18 +2,42 @@
 
 from typing import Any
 
+from restxmlwithnamespace.aio.client import AsyncRestXmlProtocolNamespaceClient
+from restxmlwithnamespace.client import RestXmlProtocolNamespaceClient
 from restxmlwithnamespace.models import (
     NestedWithNamespace,
+    NestedWithNamespaceParams,
     SimpleScalarPropertiesInput,
+    SimpleScalarPropertiesInputParams,
     SimpleScalarPropertiesOutput,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check. The clients are typed inline rather than by a stub.
+# pyright: reportMissingTypeStubs=false
 
 _: Any = ...
 
 NestedWithNamespace()
 SimpleScalarPropertiesInput()
 SimpleScalarPropertiesOutput()
+_params_0: NestedWithNamespaceParams = {}
+_params_1: SimpleScalarPropertiesInputParams = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncRestXmlProtocolNamespaceClient) -> None:
+    pass
+    await client.simple_scalar_properties()
+    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+
+
+def check_sync_calls(client: RestXmlProtocolNamespaceClient) -> None:
+    pass
+    client.simple_scalar_properties()
+    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))

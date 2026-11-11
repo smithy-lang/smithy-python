@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from my_handwritten_model.aio.client import AsyncMyHandwrittenModel
+from my_handwritten_model.client import MyHandwrittenModel
 from my_handwritten_model.models import (
     Alpha,
     DifferentShapeName,
@@ -12,17 +14,22 @@ from my_handwritten_model.models import (
     MetricEvent,
     NotificationEvent,
     PublishEventsInput,
+    PublishEventsInputParams,
     PublishEventsOutput,
     SubscribeToEventsInput,
+    SubscribeToEventsInputParams,
     SubscribeToEventsOutput,
     TradeEventStreamInput,
+    TradeEventStreamInputParams,
     TradeEventStreamOutput,
     Unit,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check. The clients are typed inline rather than by a stub.
+# pyright: reportMissingTypeStubs=false
 
 _: Any = ...
 
@@ -41,3 +48,24 @@ SubscribeToEventsInput()
 SubscribeToEventsOutput()
 TradeEventStreamInput()
 TradeEventStreamOutput()
+_params_0: PublishEventsInputParams = {}
+_params_1: SubscribeToEventsInputParams = {}
+_params_2: TradeEventStreamInputParams = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncMyHandwrittenModel) -> None:
+    pass
+    await client.publish_events()
+    await client.publish_events(**_request(PublishEventsInputParams))
+    await client.subscribe_to_events()
+    await client.subscribe_to_events(**_request(SubscribeToEventsInputParams))
+    await client.trade_event_stream()
+    await client.trade_event_stream(**_request(TradeEventStreamInputParams))
+
+
+def check_sync_calls(client: MyHandwrittenModel) -> None:
+    pass

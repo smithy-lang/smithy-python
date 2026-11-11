@@ -48,6 +48,27 @@ final class ValueNodeVisitor implements NodeVisitor<Void> {
         this.inputShape = inputShape;
     }
 
+    /**
+     * Writes the members of an operation's input as the keyword arguments of a call
+     * to its client method, one per line. Nested values are written as models.
+     *
+     * @param node The value of the input structure this visitor was created for.
+     */
+    void writeKeywordArguments(ObjectNode node) {
+        structureMemberShapes((StructureShape) inputShape, node, "$L = ");
+    }
+
+    /**
+     * Writes the members of an operation's input as a dictionary of the keyword
+     * arguments of a call to its client method, keyed by parameter name. Nested values
+     * are written as models.
+     *
+     * @param node The value of the input structure this visitor was created for.
+     */
+    void writeKeywordDictionary(ObjectNode node) {
+        writer.openBlock("{", "}", () -> structureMemberShapes((StructureShape) inputShape, node, "$S: "));
+    }
+
     @Override
     public Void arrayNode(ArrayNode node) {
         var openList = "[";
@@ -139,11 +160,12 @@ final class ValueNodeVisitor implements NodeVisitor<Void> {
         writer.openBlock("$T(",
                 ")",
                 context.symbolProvider().toSymbol(shape),
-                () -> structureMemberShapes(shape, node));
+                () -> structureMemberShapes(shape, node, "$L = "));
         return null;
     }
 
-    private Void structureMemberShapes(StructureShape container, ObjectNode node) {
+    // Writes one line per member that has a value. The key format takes the member's name.
+    private Void structureMemberShapes(StructureShape container, ObjectNode node, String keyFormat) {
         for (MemberShape member : container.members()) {
             var optionalValueNode = node.getMember(member.getMemberName());
             if (optionalValueNode.isEmpty()) {
@@ -159,10 +181,10 @@ final class ValueNodeVisitor implements NodeVisitor<Void> {
 
             var targetShape = model.expectShape(member.getTarget());
 
-            var formatString = "$L = $C,";
+            var formatString = keyFormat + "$C,";
             if (targetShape.isDocumentShape()) {
                 var docName = writer.format("$T", RuntimeTypes.DOCUMENT);
-                formatString = "$L = " + docName + "($C),";
+                formatString = keyFormat + docName + "($C),";
             }
 
             writer.write(formatString,

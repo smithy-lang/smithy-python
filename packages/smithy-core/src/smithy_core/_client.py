@@ -94,6 +94,24 @@ class ClientBase[C]:
         )
         return pipeline, call
 
+    def _build_input[I: SerializeableShape, O: DeserializeableShape](
+        self, input: I | dict[str, Any] | None, operation: APIOperation[I, O]
+    ) -> I:
+        """Build the input model from the keyword arguments of an operation call.
+
+        Runs before any client setup, so a call with invalid arguments fails without
+        resolving configuration. An input that is already a model is used as given.
+
+        :raises TypeError: If the keyword arguments don't fit the operation's input.
+        """
+        if input is None:
+            return operation.input()
+        if isinstance(input, dict):
+            return operation.model_registry.build_input(
+                operation.input_schema, input, operation.schema.id.name
+            )
+        return input
+
     def _raise_if_closed(self) -> None:
         if self._closed:
             raise ResourceLifecycleError(_CLOSED_MESSAGE)
@@ -132,13 +150,11 @@ class ClientBase[C]:
     def _prepare[I: SerializeableShape, O: DeserializeableShape](
         self,
         config: Any,
-        input: I | None,
+        input: I,
         operation: APIOperation[I, O],
         default_plugins: list[Callable[[C], None]],
         plugins: list[Callable[[C], None]] | None,
     ) -> Program[Any]:
-        if input is None:
-            input = operation.input()
         if default_plugins or plugins:
             # Keep operation-plugin mutations scoped to this call.
             config = deepcopy(config)

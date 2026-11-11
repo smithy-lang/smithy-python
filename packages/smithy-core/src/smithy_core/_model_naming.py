@@ -7,7 +7,7 @@ conformance test asserts it against the committed generated models for every mem
 """
 
 import re
-from collections.abc import Collection
+from collections.abc import Collection, Sequence
 
 _SNAKE_1 = re.compile(r"([A-Z]+)([A-Z][a-z])")
 _SNAKE_2 = re.compile(r"([a-z\d])([A-Z])")
@@ -27,6 +27,11 @@ _RESERVED_ERROR_MEMBERS = frozenset(
 )
 _ERROR_MESSAGE_MEMBER_NAMES = frozenset({"errormessage", "error_message", "message"})
 _RESPONSE_METADATA_MEMBER = "response_metadata"
+# The names every generated client method uses besides its input members: the
+# parameters it declares itself, and _models, the name a generated client imports
+# its models module under, which the method body resolves its operation through.
+# CAUTION: mirrors PythonSymbolProvider.OPERATION_PARAMETER_NAMES.
+_RESERVED_INPUT_MEMBERS = frozenset({"self", "plugins", "_models"})
 
 
 def to_snake_case(word: str) -> str:
@@ -66,6 +71,31 @@ def member_field_name(
     if is_enum:
         name = _escape_enum_underscores(name).upper()
     return name
+
+
+def escape_input_member_names(names: Sequence[str]) -> tuple[str, ...]:
+    """Escape the member names of an operation input that a client method reserves.
+
+    An operation's input members are the keyword parameters of its client method,
+    so a member named like one of the method's own parameters, or like the models
+    module the method body refers to, gets a trailing underscore, and more of them
+    while that collides with another member.
+
+    CAUTION: mirrors PythonSymbolProvider.escapeOperationParameter.
+
+    :param names: The names :py:func:`member_field_name` gives the input's members.
+    """
+    if _RESERVED_INPUT_MEMBERS.isdisjoint(names):
+        return tuple(names)
+    taken = set(names)
+    escaped: list[str] = []
+    for name in names:
+        if name in _RESERVED_INPUT_MEMBERS:
+            name += "_"
+            while name in taken:
+                name += "_"
+        escaped.append(name)
+    return tuple(escaped)
 
 
 def variant_class_name(

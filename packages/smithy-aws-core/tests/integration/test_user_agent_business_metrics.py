@@ -20,7 +20,6 @@ from awsjson10.aio.client import AsyncJSONRPC10Client
 from awsjson10.aio.config import AsyncJSONRPC10Config
 from awsjson10.client import JSONRPC10Client
 from awsjson10.config import JSONRPC10Config
-from awsjson10.models import EmptyInputAndEmptyOutputInput
 from smithy_aws_core.aio.identity.process import AsyncProcessCredentialsResolver
 from smithy_aws_core.identity.process import ProcessCredentialsResolver
 from smithy_http import HTTPResponse, tuples_to_fields
@@ -79,13 +78,13 @@ async def _invoke(sync: bool, calls: int, **config: Any) -> None:
     if sync:
         client = JSONRPC10Client(config=JSONRPC10Config.resolve(**config))
         for _ in range(calls):
-            client.empty_input_and_empty_output(EmptyInputAndEmptyOutputInput())
+            client.empty_input_and_empty_output()
         return
     async_client = AsyncJSONRPC10Client(
         config=await AsyncJSONRPC10Config.resolve(**config)
     )
     for _ in range(calls):
-        await async_client.empty_input_and_empty_output(EmptyInputAndEmptyOutputInput())
+        await async_client.empty_input_and_empty_output()
 
 
 def _business_metrics(user_agent: str) -> list[str]:

@@ -19,7 +19,7 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..models import SimpleScalarPropertiesInput, SimpleScalarPropertiesOutput
+    from ..models import SimpleScalarPropertiesOutput
 
 
 logger = logging.getLogger(__name__)
@@ -39,14 +39,31 @@ class AsyncRestXmlProtocolNamespaceClient(
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        string_value: str | None = None,
+        true_boolean_value: bool | None = None,
+        false_boolean_value: bool | None = None,
+        byte_value: int | None = None,
+        short_value: int | None = None,
+        integer_value: int | None = None,
+        long_value: int | None = None,
+        float_value: float | None = None,
+        nested: _models.NestedWithNamespace
+        | _models.NestedWithNamespaceParams
+        | None = None,
+        double_value: float | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
 
+        The keyword arguments are the members of
+        `SimpleScalarPropertiesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -56,7 +73,24 @@ class AsyncRestXmlProtocolNamespaceClient(
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        return await self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
+        return await self._invoke(
+            {
+                "foo": foo,
+                "string_value": string_value,
+                "true_boolean_value": true_boolean_value,
+                "false_boolean_value": false_boolean_value,
+                "byte_value": byte_value,
+                "short_value": short_value,
+                "integer_value": integer_value,
+                "long_value": long_value,
+                "float_value": float_value,
+                "nested": nested,
+                "double_value": double_value,
+            },
+            _models.SIMPLE_SCALAR_PROPERTIES,
+            [],
+            plugins,
+        )
 
     async def _new_config(self) -> AsyncRestXmlProtocolNamespaceConfig:
         return await AsyncRestXmlProtocolNamespaceConfig.resolve()

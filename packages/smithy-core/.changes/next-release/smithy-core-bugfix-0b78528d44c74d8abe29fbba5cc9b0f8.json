@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed a member that targets a renamed shape being built as another shape that has the same name in a different namespace."
+}

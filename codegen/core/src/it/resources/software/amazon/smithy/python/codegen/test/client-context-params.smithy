@@ -5,6 +5,7 @@ namespace example.ccp
 use aws.protocols#restJson1
 use smithy.rules#clientContextParams
 use smithy.rules#endpointRuleSet
+use smithy.rules#endpointTests
 
 @restJson1
 @clientContextParams(
@@ -33,10 +34,57 @@ use smithy.rules#endpointRuleSet
         { conditions: [], error: "No stage", type: "error" }
     ]
 })
+@endpointTests({
+    version: "1.0"
+    testCases: [
+        {
+            documentation: "Stage from config"
+            params: { Stage: "beta", ForcePathStyle: false, DisableS3ExpressSessionAuth: false }
+            expect: {
+                endpoint: { url: "https://beta.example.com" }
+            }
+            operationInputs: [
+                {
+                    operationName: "PutThing"
+                    clientParams: { Stage: "beta" }
+                    operationParams: {
+                        name: "n"
+                        tag: { key: "k" }
+                        plugins: ["p"]
+                    }
+                }
+                {
+                    operationName: "Ping"
+                    clientParams: { Stage: "beta" }
+                }
+            ]
+        }
+    ]
+})
 service ClientContextService {
     version: "2026-10-21"
-    operations: [Ping]
+    operations: [Ping, PutThing]
 }
 
 @http(method: "POST", uri: "/ping")
 operation Ping {}
+
+@http(method: "POST", uri: "/things")
+operation PutThing {
+    input := {
+        @required
+        name: String
+
+        tag: ThingTag
+
+        plugins: PluginNames
+    }
+}
+
+structure ThingTag {
+    key: String
+}
+
+list PluginNames {
+    member: String
+}

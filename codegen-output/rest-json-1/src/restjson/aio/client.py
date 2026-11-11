@@ -19,20 +19,13 @@ from smithy_http.plugins import user_agent_plugin
 
 from .. import models as _models
 from ..models import (
-    DuplexStreamInput,
     DuplexStreamOutput,
-    DuplexStreamWithDistinctStreamsInput,
     DuplexStreamWithDistinctStreamsOutput,
-    DuplexStreamWithInitialMessagesInput,
     DuplexStreamWithInitialMessagesOutput,
     EventStream,
-    InputStreamInput,
     InputStreamOutput,
-    InputStreamWithInitialRequestInput,
     InputStreamWithInitialRequestOutput,
-    OutputStreamInput,
     OutputStreamOutput,
-    OutputStreamWithInitialResponseInput,
     OutputStreamWithInitialResponseOutput,
     _EventStreamDeserializer,
 )
@@ -43,219 +36,118 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..models import (
-        AllQueryStringTypesInput,
         AllQueryStringTypesOutput,
-        ConstantAndVariableQueryStringInput,
         ConstantAndVariableQueryStringOutput,
-        ConstantQueryStringInput,
         ConstantQueryStringOutput,
-        ContentTypeParametersInput,
         ContentTypeParametersOutput,
-        DatetimeOffsetsInput,
         DatetimeOffsetsOutput,
-        DocumentTypeAsMapValueInput,
         DocumentTypeAsMapValueOutput,
-        DocumentTypeAsPayloadInput,
         DocumentTypeAsPayloadOutput,
-        DocumentTypeInput,
         DocumentTypeOutput,
-        EmptyInputAndEmptyOutputInput,
         EmptyInputAndEmptyOutputOutput,
-        EndpointOperationInput,
         EndpointOperationOutput,
-        EndpointWithHostLabelOperationInput,
         EndpointWithHostLabelOperationOutput,
-        FractionalSecondsInput,
         FractionalSecondsOutput,
-        GreetingWithErrorsInput,
         GreetingWithErrorsOutput,
-        HostWithPathOperationInput,
         HostWithPathOperationOutput,
-        HttpChecksumRequiredInput,
         HttpChecksumRequiredOutput,
-        HttpEmptyPrefixHeadersInput,
         HttpEmptyPrefixHeadersOutput,
-        HttpEnumPayloadInput,
         HttpEnumPayloadOutput,
-        HttpPayloadTraitsInput,
         HttpPayloadTraitsOutput,
-        HttpPayloadTraitsWithMediaTypeInput,
         HttpPayloadTraitsWithMediaTypeOutput,
-        HttpPayloadWithStructureInput,
         HttpPayloadWithStructureOutput,
-        HttpPayloadWithUnionInput,
         HttpPayloadWithUnionOutput,
-        HttpPrefixHeadersInResponseInput,
         HttpPrefixHeadersInResponseOutput,
-        HttpPrefixHeadersInput,
         HttpPrefixHeadersOutput,
-        HttpQueryParamsOnlyOperationInput,
         HttpQueryParamsOnlyOperationOutput,
-        HttpRequestWithFloatLabelsInput,
         HttpRequestWithFloatLabelsOutput,
-        HttpRequestWithGreedyLabelInPathInput,
         HttpRequestWithGreedyLabelInPathOutput,
-        HttpRequestWithLabelsAndTimestampFormatInput,
         HttpRequestWithLabelsAndTimestampFormatOutput,
-        HttpRequestWithLabelsInput,
         HttpRequestWithLabelsOutput,
-        HttpRequestWithRegexLiteralInput,
         HttpRequestWithRegexLiteralOutput,
-        HttpResponseCodeInput,
         HttpResponseCodeOutput,
-        HttpStringPayloadInput,
         HttpStringPayloadOutput,
-        IgnoreQueryParamsInResponseInput,
         IgnoreQueryParamsInResponseOutput,
-        InputAndOutputWithHeadersInput,
         InputAndOutputWithHeadersOutput,
-        JsonBlobsInput,
         JsonBlobsOutput,
-        JsonEnumsInput,
         JsonEnumsOutput,
-        JsonIntEnumsInput,
         JsonIntEnumsOutput,
-        JsonListsInput,
         JsonListsOutput,
-        JsonMapsInput,
         JsonMapsOutput,
-        JsonTimestampsInput,
         JsonTimestampsOutput,
-        JsonUnionsInput,
         JsonUnionsOutput,
-        MalformedAcceptWithBodyInput,
         MalformedAcceptWithBodyOutput,
-        MalformedAcceptWithGenericStringInput,
         MalformedAcceptWithGenericStringOutput,
-        MalformedAcceptWithPayloadInput,
         MalformedAcceptWithPayloadOutput,
-        MalformedBlobInput,
         MalformedBlobOutput,
-        MalformedBooleanInput,
         MalformedBooleanOutput,
-        MalformedByteInput,
         MalformedByteOutput,
-        MalformedContentTypeWithBodyInput,
         MalformedContentTypeWithBodyOutput,
-        MalformedContentTypeWithGenericStringInput,
         MalformedContentTypeWithGenericStringOutput,
-        MalformedContentTypeWithPayloadInput,
         MalformedContentTypeWithPayloadOutput,
-        MalformedContentTypeWithoutBodyEmptyInputInput,
         MalformedContentTypeWithoutBodyEmptyInputOutput,
-        MalformedContentTypeWithoutBodyInput,
         MalformedContentTypeWithoutBodyOutput,
-        MalformedDoubleInput,
         MalformedDoubleOutput,
-        MalformedFloatInput,
         MalformedFloatOutput,
-        MalformedIntegerInput,
         MalformedIntegerOutput,
-        MalformedListInput,
         MalformedListOutput,
-        MalformedLongInput,
         MalformedLongOutput,
-        MalformedMapInput,
         MalformedMapOutput,
-        MalformedRequestBodyInput,
         MalformedRequestBodyOutput,
-        MalformedShortInput,
         MalformedShortOutput,
-        MalformedStringInput,
         MalformedStringOutput,
-        MalformedTimestampBodyDateTimeInput,
         MalformedTimestampBodyDateTimeOutput,
-        MalformedTimestampBodyDefaultInput,
         MalformedTimestampBodyDefaultOutput,
-        MalformedTimestampBodyHttpDateInput,
         MalformedTimestampBodyHttpDateOutput,
-        MalformedTimestampHeaderDateTimeInput,
         MalformedTimestampHeaderDateTimeOutput,
-        MalformedTimestampHeaderDefaultInput,
         MalformedTimestampHeaderDefaultOutput,
-        MalformedTimestampHeaderEpochInput,
         MalformedTimestampHeaderEpochOutput,
-        MalformedTimestampPathDefaultInput,
         MalformedTimestampPathDefaultOutput,
-        MalformedTimestampPathEpochInput,
         MalformedTimestampPathEpochOutput,
-        MalformedTimestampPathHttpDateInput,
         MalformedTimestampPathHttpDateOutput,
-        MalformedTimestampQueryDefaultInput,
         MalformedTimestampQueryDefaultOutput,
-        MalformedTimestampQueryEpochInput,
         MalformedTimestampQueryEpochOutput,
-        MalformedTimestampQueryHttpDateInput,
         MalformedTimestampQueryHttpDateOutput,
-        MalformedUnionInput,
         MalformedUnionOutput,
-        MediaTypeHeaderInput,
         MediaTypeHeaderOutput,
-        NoInputAndNoOutputInput,
         NoInputAndNoOutputOutput,
-        NoInputAndOutputInput,
         NoInputAndOutputOutput,
-        NullAndEmptyHeadersClientInput,
         NullAndEmptyHeadersClientOutput,
-        NullAndEmptyHeadersServerInput,
         NullAndEmptyHeadersServerOutput,
-        OmitsNullSerializesEmptyStringInput,
         OmitsNullSerializesEmptyStringOutput,
-        OmitsSerializingEmptyListsInput,
         OmitsSerializingEmptyListsOutput,
-        OperationWithDefaultsInput,
         OperationWithDefaultsOutput,
-        OperationWithNestedStructureInput,
         OperationWithNestedStructureOutput,
-        PostPlayerActionInput,
         PostPlayerActionOutput,
-        PostUnionWithJsonNameInput,
         PostUnionWithJsonNameOutput,
-        PutWithContentEncodingInput,
         PutWithContentEncodingOutput,
-        QueryIdempotencyTokenAutoFillInput,
         QueryIdempotencyTokenAutoFillOutput,
-        QueryParamsAsStringListMapInput,
         QueryParamsAsStringListMapOutput,
-        QueryPrecedenceInput,
         QueryPrecedenceOutput,
-        RecursiveShapesInput,
         RecursiveShapesOutput,
-        ResponseCodeHttpFallbackInput,
         ResponseCodeHttpFallbackOutput,
-        ResponseCodeRequiredInput,
         ResponseCodeRequiredOutput,
-        SimpleScalarPropertiesInput,
         SimpleScalarPropertiesOutput,
-        SparseJsonListsInput,
         SparseJsonListsOutput,
-        SparseJsonMapsInput,
         SparseJsonMapsOutput,
-        StreamingTraitsInput,
         StreamingTraitsOutput,
-        StreamingTraitsRequireLengthInput,
         StreamingTraitsRequireLengthOutput,
-        StreamingTraitsWithMediaTypeInput,
         StreamingTraitsWithMediaTypeOutput,
-        TestBodyStructureInput,
         TestBodyStructureOutput,
-        TestGetNoInputNoPayloadInput,
         TestGetNoInputNoPayloadOutput,
-        TestGetNoPayloadInput,
         TestGetNoPayloadOutput,
-        TestPayloadBlobInput,
         TestPayloadBlobOutput,
-        TestPayloadStructureInput,
         TestPayloadStructureOutput,
-        TestPostNoInputNoPayloadInput,
         TestPostNoInputNoPayloadOutput,
-        TestPostNoPayloadInput,
         TestPostNoPayloadOutput,
-        TimestampFormatHeadersInput,
         TimestampFormatHeadersOutput,
-        UnitInputAndOutputInput,
         UnitInputAndOutputOutput,
     )
+    from collections.abc import Mapping, Sequence
+    from datetime import datetime
+    from smithy_core.aio.interfaces import StreamingBlob
+    from smithy_core.documents import Document
+    from smithy_core.types import JsonString
 
 
 logger = logging.getLogger(__name__)
@@ -267,14 +159,39 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
     async def all_query_string_types(
-        self, input: AllQueryStringTypesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        query_string: str | None = None,
+        query_string_list: Sequence[str] | None = None,
+        query_string_set: Sequence[str] | None = None,
+        query_byte: int | None = None,
+        query_short: int | None = None,
+        query_integer: int | None = None,
+        query_integer_list: Sequence[int] | None = None,
+        query_integer_set: Sequence[int] | None = None,
+        query_long: int | None = None,
+        query_float: float | None = None,
+        query_double: float | None = None,
+        query_double_list: Sequence[float] | None = None,
+        query_boolean: bool | None = None,
+        query_boolean_list: Sequence[bool] | None = None,
+        query_timestamp: datetime | None = None,
+        query_timestamp_list: Sequence[datetime] | None = None,
+        query_enum: str | None = None,
+        query_enum_list: Sequence[str] | None = None,
+        query_integer_enum: int | None = None,
+        query_integer_enum_list: Sequence[int] | None = None,
+        query_params_map_of_string_list: Mapping[str, Sequence[str]] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> AllQueryStringTypesOutput:
         """
         This example uses all query string types.
 
+        The keyword arguments are the members of
+        `AllQueryStringTypesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `AllQueryStringTypesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -284,11 +201,40 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `AllQueryStringTypesOutput`.
         """
-        return await self._invoke(input, _models.ALL_QUERY_STRING_TYPES, [], plugins)
+        return await self._invoke(
+            {
+                "query_string": query_string,
+                "query_string_list": query_string_list,
+                "query_string_set": query_string_set,
+                "query_byte": query_byte,
+                "query_short": query_short,
+                "query_integer": query_integer,
+                "query_integer_list": query_integer_list,
+                "query_integer_set": query_integer_set,
+                "query_long": query_long,
+                "query_float": query_float,
+                "query_double": query_double,
+                "query_double_list": query_double_list,
+                "query_boolean": query_boolean,
+                "query_boolean_list": query_boolean_list,
+                "query_timestamp": query_timestamp,
+                "query_timestamp_list": query_timestamp_list,
+                "query_enum": query_enum,
+                "query_enum_list": query_enum_list,
+                "query_integer_enum": query_integer_enum,
+                "query_integer_enum_list": query_integer_enum_list,
+                "query_params_map_of_string_list": query_params_map_of_string_list,
+            },
+            _models.ALL_QUERY_STRING_TYPES,
+            [],
+            plugins,
+        )
 
     async def constant_and_variable_query_string(
         self,
-        input: ConstantAndVariableQueryStringInput,
+        *,
+        baz: str | None = None,
+        maybe_set: str | None = None,
         plugins: list[Plugin] | None = None,
     ) -> ConstantAndVariableQueryStringOutput:
         """
@@ -296,9 +242,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         params. The fixed query string parameters and variable parameters must
         both be serialized (implementations may need to merge them together).
 
+        The keyword arguments are the members of
+        `ConstantAndVariableQueryStringInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `ConstantAndVariableQueryStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -309,11 +257,14 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `ConstantAndVariableQueryStringOutput`.
         """
         return await self._invoke(
-            input, _models.CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
+            {"baz": baz, "maybe_set": maybe_set},
+            _models.CONSTANT_AND_VARIABLE_QUERY_STRING,
+            [],
+            plugins,
         )
 
     async def constant_query_string(
-        self, input: ConstantQueryStringInput, plugins: list[Plugin] | None = None
+        self, *, hello: str, plugins: list[Plugin] | None = None
     ) -> ConstantQueryStringOutput:
         """
         This example uses a constant query string parameters and a label. This
@@ -321,9 +272,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         fixed query string parameter named \"hello\" should in no way conflict
         with the label, `{hello}`.
 
+        The keyword arguments are the members of
+        `ConstantQueryStringInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `ConstantQueryStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -333,18 +286,22 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `ConstantQueryStringOutput`.
         """
-        return await self._invoke(input, _models.CONSTANT_QUERY_STRING, [], plugins)
+        return await self._invoke(
+            {"hello": hello}, _models.CONSTANT_QUERY_STRING, [], plugins
+        )
 
     async def content_type_parameters(
-        self, input: ContentTypeParametersInput, plugins: list[Plugin] | None = None
+        self, *, value: int | None = None, plugins: list[Plugin] | None = None
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
         `Content-Type` header with parameters.
 
+        The keyword arguments are the members of
+        `ContentTypeParametersInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `ContentTypeParametersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -354,17 +311,17 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
-        return await self._invoke(input, _models.CONTENT_TYPE_PARAMETERS, [], plugins)
+        return await self._invoke(
+            {"value": value}, _models.CONTENT_TYPE_PARAMETERS, [], plugins
+        )
 
     async def datetime_offsets(
-        self, input: DatetimeOffsetsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
 
         Args:
-            input:
-                An instance of `DatetimeOffsetsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -374,17 +331,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return await self._invoke(input, _models.DATETIME_OFFSETS, [], plugins)
+        return await self._invoke(None, _models.DATETIME_OFFSETS, [], plugins)
 
     async def document_type(
-        self, input: DocumentTypeInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        string_value: str | None = None,
+        document_value: Document | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> DocumentTypeOutput:
         """
         This example serializes a document as part of the payload.
 
+        The keyword arguments are the members of
+        `DocumentTypeInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `DocumentTypeInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -394,17 +357,27 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `DocumentTypeOutput`.
         """
-        return await self._invoke(input, _models.DOCUMENT_TYPE, [], plugins)
+        return await self._invoke(
+            {"string_value": string_value, "document_value": document_value},
+            _models.DOCUMENT_TYPE,
+            [],
+            plugins,
+        )
 
     async def document_type_as_map_value(
-        self, input: DocumentTypeAsMapValueInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        doc_valued_map: Mapping[str, Document] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> DocumentTypeAsMapValueOutput:
         """
         This example serializes documents as the value of maps.
 
+        The keyword arguments are the members of
+        `DocumentTypeAsMapValueInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `DocumentTypeAsMapValueInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -415,18 +388,26 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `DocumentTypeAsMapValueOutput`.
         """
         return await self._invoke(
-            input, _models.DOCUMENT_TYPE_AS_MAP_VALUE, [], plugins
+            {"doc_valued_map": doc_valued_map},
+            _models.DOCUMENT_TYPE_AS_MAP_VALUE,
+            [],
+            plugins,
         )
 
     async def document_type_as_payload(
-        self, input: DocumentTypeAsPayloadInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        document_value: Document | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> DocumentTypeAsPayloadOutput:
         """
         This example serializes a document as the entire HTTP payload.
 
+        The keyword arguments are the members of
+        `DocumentTypeAsPayloadInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `DocumentTypeAsPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -436,17 +417,20 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `DocumentTypeAsPayloadOutput`.
         """
-        return await self._invoke(input, _models.DOCUMENT_TYPE_AS_PAYLOAD, [], plugins)
+        return await self._invoke(
+            {"document_value": document_value},
+            _models.DOCUMENT_TYPE_AS_PAYLOAD,
+            [],
+            plugins,
+        )
 
     async def duplex_stream(
-        self, input: DuplexStreamInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> AsyncDuplexEventStream[EventStream, EventStream, DuplexStreamOutput]:
         """
         Invokes the DuplexStream operation.
 
         Args:
-            input:
-                An instance of `DuplexStreamInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -457,23 +441,19 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An `AsyncDuplexEventStream` for bidirectional streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, _models.DUPLEX_STREAM, [], plugins
+            None, _models.DUPLEX_STREAM, [], plugins
         )
         return await pipeline.duplex_stream(
             call, EventStream, EventStream, _EventStreamDeserializer().deserialize
         )
 
     async def duplex_stream_with_distinct_streams(
-        self,
-        input: DuplexStreamWithDistinctStreamsInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> AsyncInputEventStream[EventStream, DuplexStreamWithDistinctStreamsOutput]:
         """
         Invokes the DuplexStreamWithDistinctStreams operation.
 
         Args:
-            input:
-                An instance of `DuplexStreamWithDistinctStreamsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -484,23 +464,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An `AsyncInputEventStream` for client-to-server streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, _models.DUPLEX_STREAM_WITH_DISTINCT_STREAMS, [], plugins
+            None, _models.DUPLEX_STREAM_WITH_DISTINCT_STREAMS, [], plugins
         )
         return await pipeline.input_stream(call, EventStream)
 
     async def duplex_stream_with_initial_messages(
-        self,
-        input: DuplexStreamWithInitialMessagesInput,
-        plugins: list[Plugin] | None = None,
+        self, *, initial_request_member: str, plugins: list[Plugin] | None = None
     ) -> AsyncDuplexEventStream[
         EventStream, EventStream, DuplexStreamWithInitialMessagesOutput
     ]:
         """
         Invokes the DuplexStreamWithInitialMessages operation.
 
+        The keyword arguments are the members of
+        `DuplexStreamWithInitialMessagesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `DuplexStreamWithInitialMessagesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -511,14 +491,17 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An `AsyncDuplexEventStream` for bidirectional streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, _models.DUPLEX_STREAM_WITH_INITIAL_MESSAGES, [], plugins
+            {"initial_request_member": initial_request_member},
+            _models.DUPLEX_STREAM_WITH_INITIAL_MESSAGES,
+            [],
+            plugins,
         )
         return await pipeline.duplex_stream(
             call, EventStream, EventStream, _EventStreamDeserializer().deserialize
         )
 
     async def empty_input_and_empty_output(
-        self, input: EmptyInputAndEmptyOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -527,8 +510,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         this should be rare, code generators must support this.
 
         Args:
-            input:
-                An instance of `EmptyInputAndEmptyOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -539,18 +520,16 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
         return await self._invoke(
-            input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            None, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
         )
 
     async def endpoint_operation(
-        self, input: EndpointOperationInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -560,19 +539,19 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return await self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
+        return await self._invoke(None, _models.ENDPOINT_OPERATION, [], plugins)
 
     async def endpoint_with_host_label_operation(
-        self,
-        input: EndpointWithHostLabelOperationInput,
-        plugins: list[Plugin] | None = None,
+        self, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
+        The keyword arguments are the members of
+        `EndpointWithHostLabelOperationInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `EndpointWithHostLabelOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -583,18 +562,16 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
         return await self._invoke(
-            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            {"label": label}, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
 
     async def fractional_seconds(
-        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
 
         Args:
-            input:
-                An instance of `FractionalSecondsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -604,10 +581,10 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return await self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
+        return await self._invoke(None, _models.FRACTIONAL_SECONDS, [], plugins)
 
     async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has four possible return values: 1. A successful response
@@ -617,8 +594,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         error responses based on the the presence of the
 
         Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -628,17 +603,15 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return await self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
+        return await self._invoke(None, _models.GREETING_WITH_ERRORS, [], plugins)
 
     async def host_with_path_operation(
-        self, input: HostWithPathOperationInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
 
         Args:
-            input:
-                An instance of `HostWithPathOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -648,17 +621,19 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        return await self._invoke(input, _models.HOST_WITH_PATH_OPERATION, [], plugins)
+        return await self._invoke(None, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
     async def http_checksum_required(
-        self, input: HttpChecksumRequiredInput, plugins: list[Plugin] | None = None
+        self, *, foo: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpChecksumRequiredOutput:
         """
         This example tests httpChecksumRequired trait
 
+        The keyword arguments are the members of
+        `HttpChecksumRequiredInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpChecksumRequiredInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -668,17 +643,25 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpChecksumRequiredOutput`.
         """
-        return await self._invoke(input, _models.HTTP_CHECKSUM_REQUIRED, [], plugins)
+        return await self._invoke(
+            {"foo": foo}, _models.HTTP_CHECKSUM_REQUIRED, [], plugins
+        )
 
     async def http_empty_prefix_headers(
-        self, input: HttpEmptyPrefixHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        prefix_headers: Mapping[str, str] | None = None,
+        specific_header: str | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpEmptyPrefixHeadersOutput:
         """
         Clients that perform this test extract all headers from the response.
 
+        The keyword arguments are the members of
+        `HttpEmptyPrefixHeadersInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpEmptyPrefixHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -688,17 +671,24 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpEmptyPrefixHeadersOutput`.
         """
-        return await self._invoke(input, _models.HTTP_EMPTY_PREFIX_HEADERS, [], plugins)
+        return await self._invoke(
+            {"prefix_headers": prefix_headers, "specific_header": specific_header},
+            _models.HTTP_EMPTY_PREFIX_HEADERS,
+            [],
+            plugins,
+        )
 
     async def http_enum_payload(
-        self, input: HttpEnumPayloadInput, plugins: list[Plugin] | None = None
+        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
 
+        The keyword arguments are the members of
+        `HttpEnumPayloadInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpEnumPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -708,19 +698,27 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpEnumPayloadOutput`.
         """
-        return await self._invoke(input, _models.HTTP_ENUM_PAYLOAD, [], plugins)
+        return await self._invoke(
+            {"payload": payload}, _models.HTTP_ENUM_PAYLOAD, [], plugins
+        )
 
     async def http_payload_traits(
-        self, input: HttpPayloadTraitsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        blob: bytes | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPayloadTraitsOutput:
         """
         This example serializes a blob shape in the payload. In this example, no
         JSON document is synthesized because the payload is not a structure or a
         union type.
 
+        The keyword arguments are the members of
+        `HttpPayloadTraitsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadTraitsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -730,20 +728,26 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpPayloadTraitsOutput`.
         """
-        return await self._invoke(input, _models.HTTP_PAYLOAD_TRAITS, [], plugins)
+        return await self._invoke(
+            {"foo": foo, "blob": blob}, _models.HTTP_PAYLOAD_TRAITS, [], plugins
+        )
 
     async def http_payload_traits_with_media_type(
         self,
-        input: HttpPayloadTraitsWithMediaTypeInput,
+        *,
+        foo: str | None = None,
+        blob: bytes | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpPayloadTraitsWithMediaTypeOutput:
         """
         This example uses a `@mediaType` trait on the payload to force a
         custom content-type to be serialized.
 
+        The keyword arguments are the members of
+        `HttpPayloadTraitsWithMediaTypeInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadTraitsWithMediaTypeInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -754,20 +758,28 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
         return await self._invoke(
-            input, _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
+            {"foo": foo, "blob": blob},
+            _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
+            [],
+            plugins,
         )
 
     async def http_payload_with_structure(
-        self, input: HttpPayloadWithStructureInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: _models.NestedPayload | _models.NestedPayloadParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithStructureOutput:
         """
         This example serializes a structure in the payload. Note that
         serializing a structure changes the wrapper element name to match the
         targeted structure.
 
+        The keyword arguments are the members of
+        `HttpPayloadWithStructureInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadWithStructureInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -778,18 +790,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `HttpPayloadWithStructureOutput`.
         """
         return await self._invoke(
-            input, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
+            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
         )
 
     async def http_payload_with_union(
-        self, input: HttpPayloadWithUnionInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: _models.UnionPayload | _models.UnionPayloadParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPayloadWithUnionOutput:
         """
         This example serializes a union in the payload.
 
+        The keyword arguments are the members of
+        `HttpPayloadWithUnionInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPayloadWithUnionInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -799,18 +816,26 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithUnionOutput`.
         """
-        return await self._invoke(input, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins)
+        return await self._invoke(
+            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins
+        )
 
     async def http_prefix_headers(
-        self, input: HttpPrefixHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        foo_map: Mapping[str, str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> HttpPrefixHeadersOutput:
         """
         This examples adds headers to the input of a request and response by
         prefix.
 
+        The keyword arguments are the members of
+        `HttpPrefixHeadersInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpPrefixHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -820,19 +845,17 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpPrefixHeadersOutput`.
         """
-        return await self._invoke(input, _models.HTTP_PREFIX_HEADERS, [], plugins)
+        return await self._invoke(
+            {"foo": foo, "foo_map": foo_map}, _models.HTTP_PREFIX_HEADERS, [], plugins
+        )
 
     async def http_prefix_headers_in_response(
-        self,
-        input: HttpPrefixHeadersInResponseInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> HttpPrefixHeadersInResponseOutput:
         """
         Clients that perform this test extract all headers from the response.
 
         Args:
-            input:
-                An instance of `HttpPrefixHeadersInResponseInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -843,20 +866,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `HttpPrefixHeadersInResponseOutput`.
         """
         return await self._invoke(
-            input, _models.HTTP_PREFIX_HEADERS_IN_RESPONSE, [], plugins
+            None, _models.HTTP_PREFIX_HEADERS_IN_RESPONSE, [], plugins
         )
 
     async def http_query_params_only_operation(
         self,
-        input: HttpQueryParamsOnlyOperationInput,
+        *,
+        query_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> HttpQueryParamsOnlyOperationOutput:
         """
         This example tests httpQueryParams when no other query parameters exist.
 
+        The keyword arguments are the members of
+        `HttpQueryParamsOnlyOperationInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpQueryParamsOnlyOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -867,20 +893,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `HttpQueryParamsOnlyOperationOutput`.
         """
         return await self._invoke(
-            input, _models.HTTP_QUERY_PARAMS_ONLY_OPERATION, [], plugins
+            {"query_map": query_map},
+            _models.HTTP_QUERY_PARAMS_ONLY_OPERATION,
+            [],
+            plugins,
         )
 
     async def http_request_with_float_labels(
-        self,
-        input: HttpRequestWithFloatLabelsInput,
-        plugins: list[Plugin] | None = None,
+        self, *, float_: float, double: float, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithFloatLabelsOutput:
         """
         Invokes the HttpRequestWithFloatLabels operation.
 
+        The keyword arguments are the members of
+        `HttpRequestWithFloatLabelsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpRequestWithFloatLabelsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -891,20 +920,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `HttpRequestWithFloatLabelsOutput`.
         """
         return await self._invoke(
-            input, _models.HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins
+            {"float_": float_, "double": double},
+            _models.HTTP_REQUEST_WITH_FLOAT_LABELS,
+            [],
+            plugins,
         )
 
     async def http_request_with_greedy_label_in_path(
-        self,
-        input: HttpRequestWithGreedyLabelInPathInput,
-        plugins: list[Plugin] | None = None,
+        self, *, foo: str, baz: str, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
 
+        The keyword arguments are the members of
+        `HttpRequestWithGreedyLabelInPathInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpRequestWithGreedyLabelInPathInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -915,19 +947,34 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
         return await self._invoke(
-            input, _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
+            {"foo": foo, "baz": baz},
+            _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
+            [],
+            plugins,
         )
 
     async def http_request_with_labels(
-        self, input: HttpRequestWithLabelsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        string: str,
+        short: int,
+        integer: int,
+        long: int,
+        float_: float,
+        double: float,
+        boolean: bool,
+        timestamp: datetime,
+        plugins: list[Plugin] | None = None,
     ) -> HttpRequestWithLabelsOutput:
         """
         The example tests how requests are serialized when there's no input
         payload but there are HTTP labels.
 
+        The keyword arguments are the members of
+        `HttpRequestWithLabelsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpRequestWithLabelsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -937,20 +984,43 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithLabelsOutput`.
         """
-        return await self._invoke(input, _models.HTTP_REQUEST_WITH_LABELS, [], plugins)
+        return await self._invoke(
+            {
+                "string": string,
+                "short": short,
+                "integer": integer,
+                "long": long,
+                "float_": float_,
+                "double": double,
+                "boolean": boolean,
+                "timestamp": timestamp,
+            },
+            _models.HTTP_REQUEST_WITH_LABELS,
+            [],
+            plugins,
+        )
 
     async def http_request_with_labels_and_timestamp_format(
         self,
-        input: HttpRequestWithLabelsAndTimestampFormatInput,
+        *,
+        member_epoch_seconds: datetime,
+        member_http_date: datetime,
+        member_date_time: datetime,
+        default_format: datetime,
+        target_epoch_seconds: datetime,
+        target_http_date: datetime,
+        target_date_time: datetime,
         plugins: list[Plugin] | None = None,
     ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
         """
         The example tests how requests serialize different timestamp formats in
         the URI path.
 
+        The keyword arguments are the members of
+        `HttpRequestWithLabelsAndTimestampFormatInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpRequestWithLabelsAndTimestampFormatInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -961,20 +1031,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
         return await self._invoke(
-            input, _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
+            {
+                "member_epoch_seconds": member_epoch_seconds,
+                "member_http_date": member_http_date,
+                "member_date_time": member_date_time,
+                "default_format": default_format,
+                "target_epoch_seconds": target_epoch_seconds,
+                "target_http_date": target_http_date,
+                "target_date_time": target_date_time,
+            },
+            _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
+            [],
+            plugins,
         )
 
     async def http_request_with_regex_literal(
-        self,
-        input: HttpRequestWithRegexLiteralInput,
-        plugins: list[Plugin] | None = None,
+        self, *, str_: str, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithRegexLiteralOutput:
         """
         Invokes the HttpRequestWithRegexLiteral operation.
 
+        The keyword arguments are the members of
+        `HttpRequestWithRegexLiteralInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpRequestWithRegexLiteralInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -985,18 +1066,16 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `HttpRequestWithRegexLiteralOutput`.
         """
         return await self._invoke(
-            input, _models.HTTP_REQUEST_WITH_REGEX_LITERAL, [], plugins
+            {"str_": str_}, _models.HTTP_REQUEST_WITH_REGEX_LITERAL, [], plugins
         )
 
     async def http_response_code(
-        self, input: HttpResponseCodeInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> HttpResponseCodeOutput:
         """
         Invokes the HttpResponseCode operation.
 
         Args:
-            input:
-                An instance of `HttpResponseCodeInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1006,17 +1085,19 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpResponseCodeOutput`.
         """
-        return await self._invoke(input, _models.HTTP_RESPONSE_CODE, [], plugins)
+        return await self._invoke(None, _models.HTTP_RESPONSE_CODE, [], plugins)
 
     async def http_string_payload(
-        self, input: HttpStringPayloadInput, plugins: list[Plugin] | None = None
+        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
 
+        The keyword arguments are the members of
+        `HttpStringPayloadInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `HttpStringPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1026,12 +1107,12 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpStringPayloadOutput`.
         """
-        return await self._invoke(input, _models.HTTP_STRING_PAYLOAD, [], plugins)
+        return await self._invoke(
+            {"payload": payload}, _models.HTTP_STRING_PAYLOAD, [], plugins
+        )
 
     async def ignore_query_params_in_response(
-        self,
-        input: IgnoreQueryParamsInResponseInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
@@ -1039,8 +1120,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         request and response.
 
         Args:
-            input:
-                An instance of `IgnoreQueryParamsInResponseInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1051,19 +1130,41 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `IgnoreQueryParamsInResponseOutput`.
         """
         return await self._invoke(
-            input, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
+            None, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
         )
 
     async def input_and_output_with_headers(
-        self, input: InputAndOutputWithHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        header_string: str | None = None,
+        header_byte: int | None = None,
+        header_short: int | None = None,
+        header_integer: int | None = None,
+        header_long: int | None = None,
+        header_float: float | None = None,
+        header_double: float | None = None,
+        header_true_bool: bool | None = None,
+        header_false_bool: bool | None = None,
+        header_string_list: Sequence[str] | None = None,
+        header_string_set: Sequence[str] | None = None,
+        header_integer_list: Sequence[int] | None = None,
+        header_boolean_list: Sequence[bool] | None = None,
+        header_timestamp_list: Sequence[datetime] | None = None,
+        header_enum: str | None = None,
+        header_enum_list: Sequence[str] | None = None,
+        header_integer_enum: int | None = None,
+        header_integer_enum_list: Sequence[int] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> InputAndOutputWithHeadersOutput:
         """
         The example tests how requests and responses are serialized when there
         is no input or output payload but there are HTTP header bindings.
 
+        The keyword arguments are the members of
+        `InputAndOutputWithHeadersInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `InputAndOutputWithHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1074,18 +1175,38 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `InputAndOutputWithHeadersOutput`.
         """
         return await self._invoke(
-            input, _models.INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins
+            {
+                "header_string": header_string,
+                "header_byte": header_byte,
+                "header_short": header_short,
+                "header_integer": header_integer,
+                "header_long": header_long,
+                "header_float": header_float,
+                "header_double": header_double,
+                "header_true_bool": header_true_bool,
+                "header_false_bool": header_false_bool,
+                "header_string_list": header_string_list,
+                "header_string_set": header_string_set,
+                "header_integer_list": header_integer_list,
+                "header_boolean_list": header_boolean_list,
+                "header_timestamp_list": header_timestamp_list,
+                "header_enum": header_enum,
+                "header_enum_list": header_enum_list,
+                "header_integer_enum": header_integer_enum,
+                "header_integer_enum_list": header_integer_enum_list,
+            },
+            _models.INPUT_AND_OUTPUT_WITH_HEADERS,
+            [],
+            plugins,
         )
 
     async def input_stream(
-        self, input: InputStreamInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> AsyncInputEventStream[EventStream, InputStreamOutput]:
         """
         Invokes the InputStream operation.
 
         Args:
-            input:
-                An instance of `InputStreamInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1096,21 +1217,21 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An `AsyncInputEventStream` for client-to-server streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, _models.INPUT_STREAM, [], plugins
+            None, _models.INPUT_STREAM, [], plugins
         )
         return await pipeline.input_stream(call, EventStream)
 
     async def input_stream_with_initial_request(
-        self,
-        input: InputStreamWithInitialRequestInput,
-        plugins: list[Plugin] | None = None,
+        self, *, initial_request_member: str, plugins: list[Plugin] | None = None
     ) -> AsyncInputEventStream[EventStream, InputStreamWithInitialRequestOutput]:
         """
         Invokes the InputStreamWithInitialRequest operation.
 
+        The keyword arguments are the members of
+        `InputStreamWithInitialRequestInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `InputStreamWithInitialRequestInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1121,19 +1242,24 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An `AsyncInputEventStream` for client-to-server streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, _models.INPUT_STREAM_WITH_INITIAL_REQUEST, [], plugins
+            {"initial_request_member": initial_request_member},
+            _models.INPUT_STREAM_WITH_INITIAL_REQUEST,
+            [],
+            plugins,
         )
         return await pipeline.input_stream(call, EventStream)
 
     async def json_blobs(
-        self, input: JsonBlobsInput, plugins: list[Plugin] | None = None
+        self, *, data: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> JsonBlobsOutput:
         """
         Blobs are base64 encoded
 
+        The keyword arguments are the members of
+        `JsonBlobsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `JsonBlobsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1143,18 +1269,28 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonBlobsOutput`.
         """
-        return await self._invoke(input, _models.JSON_BLOBS, [], plugins)
+        return await self._invoke({"data": data}, _models.JSON_BLOBS, [], plugins)
 
     async def json_enums(
-        self, input: JsonEnumsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo_enum1: str | None = None,
+        foo_enum2: str | None = None,
+        foo_enum3: str | None = None,
+        foo_enum_list: Sequence[str] | None = None,
+        foo_enum_set: Sequence[str] | None = None,
+        foo_enum_map: Mapping[str, str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> JsonEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
+        The keyword arguments are the members of
+        `JsonEnumsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `JsonEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1164,18 +1300,40 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonEnumsOutput`.
         """
-        return await self._invoke(input, _models.JSON_ENUMS, [], plugins)
+        return await self._invoke(
+            {
+                "foo_enum1": foo_enum1,
+                "foo_enum2": foo_enum2,
+                "foo_enum3": foo_enum3,
+                "foo_enum_list": foo_enum_list,
+                "foo_enum_set": foo_enum_set,
+                "foo_enum_map": foo_enum_map,
+            },
+            _models.JSON_ENUMS,
+            [],
+            plugins,
+        )
 
     async def json_int_enums(
-        self, input: JsonIntEnumsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        integer_enum1: int | None = None,
+        integer_enum2: int | None = None,
+        integer_enum3: int | None = None,
+        integer_enum_list: Sequence[int] | None = None,
+        integer_enum_set: Sequence[int] | None = None,
+        integer_enum_map: Mapping[str, int] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> JsonIntEnumsOutput:
         """
         This example serializes intEnums as top level properties, in lists,
         sets, and maps.
 
+        The keyword arguments are the members of
+        `JsonIntEnumsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `JsonIntEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1185,19 +1343,47 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonIntEnumsOutput`.
         """
-        return await self._invoke(input, _models.JSON_INT_ENUMS, [], plugins)
+        return await self._invoke(
+            {
+                "integer_enum1": integer_enum1,
+                "integer_enum2": integer_enum2,
+                "integer_enum3": integer_enum3,
+                "integer_enum_list": integer_enum_list,
+                "integer_enum_set": integer_enum_set,
+                "integer_enum_map": integer_enum_map,
+            },
+            _models.JSON_INT_ENUMS,
+            [],
+            plugins,
+        )
 
     async def json_lists(
-        self, input: JsonListsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        string_list: Sequence[str] | None = None,
+        string_set: Sequence[str] | None = None,
+        integer_list: Sequence[int] | None = None,
+        boolean_list: Sequence[bool] | None = None,
+        timestamp_list: Sequence[datetime] | None = None,
+        enum_list: Sequence[str] | None = None,
+        int_enum_list: Sequence[int] | None = None,
+        nested_string_list: Sequence[Sequence[str]] | None = None,
+        structure_list: Sequence[
+            _models.StructureListMember | _models.StructureListMemberParams
+        ]
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> JsonListsOutput:
         """
         This test case serializes JSON lists for the following cases for both
         input and output: 1. Normal JSON lists. 2. Normal JSON sets. 3. JSON
         lists of lists. 4. Lists of structures.
 
+        The keyword arguments are the members of
+        `JsonListsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `JsonListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1207,17 +1393,44 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonListsOutput`.
         """
-        return await self._invoke(input, _models.JSON_LISTS, [], plugins)
+        return await self._invoke(
+            {
+                "string_list": string_list,
+                "string_set": string_set,
+                "integer_list": integer_list,
+                "boolean_list": boolean_list,
+                "timestamp_list": timestamp_list,
+                "enum_list": enum_list,
+                "int_enum_list": int_enum_list,
+                "nested_string_list": nested_string_list,
+                "structure_list": structure_list,
+            },
+            _models.JSON_LISTS,
+            [],
+            plugins,
+        )
 
     async def json_maps(
-        self, input: JsonMapsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        dense_struct_map: Mapping[
+            str, _models.GreetingStruct | _models.GreetingStructParams
+        ]
+        | None = None,
+        dense_number_map: Mapping[str, int] | None = None,
+        dense_boolean_map: Mapping[str, bool] | None = None,
+        dense_string_map: Mapping[str, str] | None = None,
+        dense_set_map: Mapping[str, Sequence[str]] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> JsonMapsOutput:
         """
         The example tests basic map serialization.
 
+        The keyword arguments are the members of
+        `JsonMapsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `JsonMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1227,18 +1440,40 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonMapsOutput`.
         """
-        return await self._invoke(input, _models.JSON_MAPS, [], plugins)
+        return await self._invoke(
+            {
+                "dense_struct_map": dense_struct_map,
+                "dense_number_map": dense_number_map,
+                "dense_boolean_map": dense_boolean_map,
+                "dense_string_map": dense_string_map,
+                "dense_set_map": dense_set_map,
+            },
+            _models.JSON_MAPS,
+            [],
+            plugins,
+        )
 
     async def json_timestamps(
-        self, input: JsonTimestampsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        normal: datetime | None = None,
+        date_time: datetime | None = None,
+        date_time_on_target: datetime | None = None,
+        epoch_seconds: datetime | None = None,
+        epoch_seconds_on_target: datetime | None = None,
+        http_date: datetime | None = None,
+        http_date_on_target: datetime | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> JsonTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
         format of date-time and various @timestampFormat trait values.
 
+        The keyword arguments are the members of
+        `JsonTimestampsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `JsonTimestampsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1248,17 +1483,35 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonTimestampsOutput`.
         """
-        return await self._invoke(input, _models.JSON_TIMESTAMPS, [], plugins)
+        return await self._invoke(
+            {
+                "normal": normal,
+                "date_time": date_time,
+                "date_time_on_target": date_time_on_target,
+                "epoch_seconds": epoch_seconds,
+                "epoch_seconds_on_target": epoch_seconds_on_target,
+                "http_date": http_date,
+                "http_date_on_target": http_date_on_target,
+            },
+            _models.JSON_TIMESTAMPS,
+            [],
+            plugins,
+        )
 
     async def json_unions(
-        self, input: JsonUnionsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        contents: _models.MyUnion | _models.MyUnionParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> JsonUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
 
+        The keyword arguments are the members of
+        `JsonUnionsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `JsonUnionsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1268,17 +1521,17 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
-        return await self._invoke(input, _models.JSON_UNIONS, [], plugins)
+        return await self._invoke(
+            {"contents": contents}, _models.JSON_UNIONS, [], plugins
+        )
 
     async def malformed_accept_with_body(
-        self, input: MalformedAcceptWithBodyInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> MalformedAcceptWithBodyOutput:
         """
         Invokes the MalformedAcceptWithBody operation.
 
         Args:
-            input:
-                An instance of `MalformedAcceptWithBodyInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1288,21 +1541,15 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedAcceptWithBodyOutput`.
         """
-        return await self._invoke(
-            input, _models.MALFORMED_ACCEPT_WITH_BODY, [], plugins
-        )
+        return await self._invoke(None, _models.MALFORMED_ACCEPT_WITH_BODY, [], plugins)
 
     async def malformed_accept_with_generic_string(
-        self,
-        input: MalformedAcceptWithGenericStringInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> MalformedAcceptWithGenericStringOutput:
         """
         Invokes the MalformedAcceptWithGenericString operation.
 
         Args:
-            input:
-                An instance of `MalformedAcceptWithGenericStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1313,20 +1560,16 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedAcceptWithGenericStringOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_ACCEPT_WITH_GENERIC_STRING, [], plugins
+            None, _models.MALFORMED_ACCEPT_WITH_GENERIC_STRING, [], plugins
         )
 
     async def malformed_accept_with_payload(
-        self,
-        input: MalformedAcceptWithPayloadInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> MalformedAcceptWithPayloadOutput:
         """
         Invokes the MalformedAcceptWithPayload operation.
 
         Args:
-            input:
-                An instance of `MalformedAcceptWithPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1337,18 +1580,20 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedAcceptWithPayloadOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_ACCEPT_WITH_PAYLOAD, [], plugins
+            None, _models.MALFORMED_ACCEPT_WITH_PAYLOAD, [], plugins
         )
 
     async def malformed_blob(
-        self, input: MalformedBlobInput, plugins: list[Plugin] | None = None
+        self, *, blob: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> MalformedBlobOutput:
         """
         Invokes the MalformedBlob operation.
 
+        The keyword arguments are the members of
+        `MalformedBlobInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedBlobInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1358,17 +1603,25 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedBlobOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_BLOB, [], plugins)
+        return await self._invoke({"blob": blob}, _models.MALFORMED_BLOB, [], plugins)
 
     async def malformed_boolean(
-        self, input: MalformedBooleanInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        boolean_in_body: bool | None = None,
+        boolean_in_path: bool,
+        boolean_in_query: bool | None = None,
+        boolean_in_header: bool | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedBooleanOutput:
         """
         Invokes the MalformedBoolean operation.
 
+        The keyword arguments are the members of
+        `MalformedBooleanInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedBooleanInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1378,17 +1631,35 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedBooleanOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_BOOLEAN, [], plugins)
+        return await self._invoke(
+            {
+                "boolean_in_body": boolean_in_body,
+                "boolean_in_path": boolean_in_path,
+                "boolean_in_query": boolean_in_query,
+                "boolean_in_header": boolean_in_header,
+            },
+            _models.MALFORMED_BOOLEAN,
+            [],
+            plugins,
+        )
 
     async def malformed_byte(
-        self, input: MalformedByteInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        byte_in_body: int | None = None,
+        byte_in_path: int,
+        byte_in_query: int | None = None,
+        byte_in_header: int | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedByteOutput:
         """
         Invokes the MalformedByte operation.
 
+        The keyword arguments are the members of
+        `MalformedByteInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedByteInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1398,19 +1669,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedByteOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_BYTE, [], plugins)
+        return await self._invoke(
+            {
+                "byte_in_body": byte_in_body,
+                "byte_in_path": byte_in_path,
+                "byte_in_query": byte_in_query,
+                "byte_in_header": byte_in_header,
+            },
+            _models.MALFORMED_BYTE,
+            [],
+            plugins,
+        )
 
     async def malformed_content_type_with_body(
-        self,
-        input: MalformedContentTypeWithBodyInput,
-        plugins: list[Plugin] | None = None,
+        self, *, hi: str | None = None, plugins: list[Plugin] | None = None
     ) -> MalformedContentTypeWithBodyOutput:
         """
         Invokes the MalformedContentTypeWithBody operation.
 
+        The keyword arguments are the members of
+        `MalformedContentTypeWithBodyInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedContentTypeWithBodyInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1421,20 +1702,20 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedContentTypeWithBodyOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_CONTENT_TYPE_WITH_BODY, [], plugins
+            {"hi": hi}, _models.MALFORMED_CONTENT_TYPE_WITH_BODY, [], plugins
         )
 
     async def malformed_content_type_with_generic_string(
-        self,
-        input: MalformedContentTypeWithGenericStringInput,
-        plugins: list[Plugin] | None = None,
+        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> MalformedContentTypeWithGenericStringOutput:
         """
         Invokes the MalformedContentTypeWithGenericString operation.
 
+        The keyword arguments are the members of
+        `MalformedContentTypeWithGenericStringInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedContentTypeWithGenericStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1445,20 +1726,19 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedContentTypeWithGenericStringOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING, [], plugins
+            {"payload": payload},
+            _models.MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING,
+            [],
+            plugins,
         )
 
     async def malformed_content_type_without_body(
-        self,
-        input: MalformedContentTypeWithoutBodyInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> MalformedContentTypeWithoutBodyOutput:
         """
         Invokes the MalformedContentTypeWithoutBody operation.
 
         Args:
-            input:
-                An instance of `MalformedContentTypeWithoutBodyInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1469,20 +1749,20 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedContentTypeWithoutBodyOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY, [], plugins
+            None, _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY, [], plugins
         )
 
     async def malformed_content_type_without_body_empty_input(
-        self,
-        input: MalformedContentTypeWithoutBodyEmptyInputInput,
-        plugins: list[Plugin] | None = None,
+        self, *, header: str | None = None, plugins: list[Plugin] | None = None
     ) -> MalformedContentTypeWithoutBodyEmptyInputOutput:
         """
         Invokes the MalformedContentTypeWithoutBodyEmptyInput operation.
 
+        The keyword arguments are the members of
+        `MalformedContentTypeWithoutBodyEmptyInputInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedContentTypeWithoutBodyEmptyInputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1493,20 +1773,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedContentTypeWithoutBodyEmptyInputOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT, [], plugins
+            {"header": header},
+            _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT,
+            [],
+            plugins,
         )
 
     async def malformed_content_type_with_payload(
-        self,
-        input: MalformedContentTypeWithPayloadInput,
-        plugins: list[Plugin] | None = None,
+        self, *, payload: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> MalformedContentTypeWithPayloadOutput:
         """
         Invokes the MalformedContentTypeWithPayload operation.
 
+        The keyword arguments are the members of
+        `MalformedContentTypeWithPayloadInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedContentTypeWithPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1517,18 +1800,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedContentTypeWithPayloadOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_CONTENT_TYPE_WITH_PAYLOAD, [], plugins
+            {"payload": payload},
+            _models.MALFORMED_CONTENT_TYPE_WITH_PAYLOAD,
+            [],
+            plugins,
         )
 
     async def malformed_double(
-        self, input: MalformedDoubleInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        double_in_body: float | None = None,
+        double_in_path: float,
+        double_in_query: float | None = None,
+        double_in_header: float | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedDoubleOutput:
         """
         Invokes the MalformedDouble operation.
 
+        The keyword arguments are the members of
+        `MalformedDoubleInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedDoubleInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1538,17 +1832,35 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedDoubleOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_DOUBLE, [], plugins)
+        return await self._invoke(
+            {
+                "double_in_body": double_in_body,
+                "double_in_path": double_in_path,
+                "double_in_query": double_in_query,
+                "double_in_header": double_in_header,
+            },
+            _models.MALFORMED_DOUBLE,
+            [],
+            plugins,
+        )
 
     async def malformed_float(
-        self, input: MalformedFloatInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        float_in_body: float | None = None,
+        float_in_path: float,
+        float_in_query: float | None = None,
+        float_in_header: float | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedFloatOutput:
         """
         Invokes the MalformedFloat operation.
 
+        The keyword arguments are the members of
+        `MalformedFloatInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedFloatInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1558,17 +1870,35 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedFloatOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_FLOAT, [], plugins)
+        return await self._invoke(
+            {
+                "float_in_body": float_in_body,
+                "float_in_path": float_in_path,
+                "float_in_query": float_in_query,
+                "float_in_header": float_in_header,
+            },
+            _models.MALFORMED_FLOAT,
+            [],
+            plugins,
+        )
 
     async def malformed_integer(
-        self, input: MalformedIntegerInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        integer_in_body: int | None = None,
+        integer_in_path: int,
+        integer_in_query: int | None = None,
+        integer_in_header: int | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedIntegerOutput:
         """
         Invokes the MalformedInteger operation.
 
+        The keyword arguments are the members of
+        `MalformedIntegerInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedIntegerInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1578,17 +1908,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedIntegerOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_INTEGER, [], plugins)
+        return await self._invoke(
+            {
+                "integer_in_body": integer_in_body,
+                "integer_in_path": integer_in_path,
+                "integer_in_query": integer_in_query,
+                "integer_in_header": integer_in_header,
+            },
+            _models.MALFORMED_INTEGER,
+            [],
+            plugins,
+        )
 
     async def malformed_list(
-        self, input: MalformedListInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        body_list: Sequence[str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedListOutput:
         """
         Invokes the MalformedList operation.
 
+        The keyword arguments are the members of
+        `MalformedListInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedListInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1598,17 +1943,27 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedListOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_LIST, [], plugins)
+        return await self._invoke(
+            {"body_list": body_list}, _models.MALFORMED_LIST, [], plugins
+        )
 
     async def malformed_long(
-        self, input: MalformedLongInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        long_in_body: int | None = None,
+        long_in_path: int,
+        long_in_query: int | None = None,
+        long_in_header: int | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedLongOutput:
         """
         Invokes the MalformedLong operation.
 
+        The keyword arguments are the members of
+        `MalformedLongInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedLongInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1618,17 +1973,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedLongOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_LONG, [], plugins)
+        return await self._invoke(
+            {
+                "long_in_body": long_in_body,
+                "long_in_path": long_in_path,
+                "long_in_query": long_in_query,
+                "long_in_header": long_in_header,
+            },
+            _models.MALFORMED_LONG,
+            [],
+            plugins,
+        )
 
     async def malformed_map(
-        self, input: MalformedMapInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        body_map: Mapping[str, str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedMapOutput:
         """
         Invokes the MalformedMap operation.
 
+        The keyword arguments are the members of
+        `MalformedMapInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedMapInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1638,17 +2008,25 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedMapOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_MAP, [], plugins)
+        return await self._invoke(
+            {"body_map": body_map}, _models.MALFORMED_MAP, [], plugins
+        )
 
     async def malformed_request_body(
-        self, input: MalformedRequestBodyInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        int_: int | None = None,
+        float_: float | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedRequestBodyOutput:
         """
         Invokes the MalformedRequestBody operation.
 
+        The keyword arguments are the members of
+        `MalformedRequestBodyInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedRequestBodyInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1658,17 +2036,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedRequestBodyOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_REQUEST_BODY, [], plugins)
+        return await self._invoke(
+            {"int_": int_, "float_": float_},
+            _models.MALFORMED_REQUEST_BODY,
+            [],
+            plugins,
+        )
 
     async def malformed_short(
-        self, input: MalformedShortInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        short_in_body: int | None = None,
+        short_in_path: int,
+        short_in_query: int | None = None,
+        short_in_header: int | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedShortOutput:
         """
         Invokes the MalformedShort operation.
 
+        The keyword arguments are the members of
+        `MalformedShortInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedShortInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1678,17 +2069,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedShortOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_SHORT, [], plugins)
+        return await self._invoke(
+            {
+                "short_in_body": short_in_body,
+                "short_in_path": short_in_path,
+                "short_in_query": short_in_query,
+                "short_in_header": short_in_header,
+            },
+            _models.MALFORMED_SHORT,
+            [],
+            plugins,
+        )
 
     async def malformed_string(
-        self, input: MalformedStringInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        blob: str | JsonString | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedStringOutput:
         """
         Invokes the MalformedString operation.
 
+        The keyword arguments are the members of
+        `MalformedStringInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1698,19 +2104,19 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedStringOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_STRING, [], plugins)
+        return await self._invoke({"blob": blob}, _models.MALFORMED_STRING, [], plugins)
 
     async def malformed_timestamp_body_date_time(
-        self,
-        input: MalformedTimestampBodyDateTimeInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampBodyDateTimeOutput:
         """
         Invokes the MalformedTimestampBodyDateTime operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampBodyDateTimeInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampBodyDateTimeInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1721,20 +2127,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampBodyDateTimeOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_BODY_DATE_TIME, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_BODY_DATE_TIME,
+            [],
+            plugins,
         )
 
     async def malformed_timestamp_body_default(
-        self,
-        input: MalformedTimestampBodyDefaultInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampBodyDefaultOutput:
         """
         Invokes the MalformedTimestampBodyDefault operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampBodyDefaultInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampBodyDefaultInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1745,20 +2154,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampBodyDefaultOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_BODY_DEFAULT, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_BODY_DEFAULT,
+            [],
+            plugins,
         )
 
     async def malformed_timestamp_body_http_date(
-        self,
-        input: MalformedTimestampBodyHttpDateInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampBodyHttpDateOutput:
         """
         Invokes the MalformedTimestampBodyHttpDate operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampBodyHttpDateInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampBodyHttpDateInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1769,20 +2181,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampBodyHttpDateOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_BODY_HTTP_DATE, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_BODY_HTTP_DATE,
+            [],
+            plugins,
         )
 
     async def malformed_timestamp_header_date_time(
-        self,
-        input: MalformedTimestampHeaderDateTimeInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampHeaderDateTimeOutput:
         """
         Invokes the MalformedTimestampHeaderDateTime operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampHeaderDateTimeInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampHeaderDateTimeInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1793,20 +2208,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampHeaderDateTimeOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_HEADER_DATE_TIME, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_HEADER_DATE_TIME,
+            [],
+            plugins,
         )
 
     async def malformed_timestamp_header_default(
-        self,
-        input: MalformedTimestampHeaderDefaultInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampHeaderDefaultOutput:
         """
         Invokes the MalformedTimestampHeaderDefault operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampHeaderDefaultInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampHeaderDefaultInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1817,20 +2235,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampHeaderDefaultOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_HEADER_DEFAULT, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_HEADER_DEFAULT,
+            [],
+            plugins,
         )
 
     async def malformed_timestamp_header_epoch(
-        self,
-        input: MalformedTimestampHeaderEpochInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampHeaderEpochOutput:
         """
         Invokes the MalformedTimestampHeaderEpoch operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampHeaderEpochInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampHeaderEpochInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1841,20 +2262,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampHeaderEpochOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_HEADER_EPOCH, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_HEADER_EPOCH,
+            [],
+            plugins,
         )
 
     async def malformed_timestamp_path_default(
-        self,
-        input: MalformedTimestampPathDefaultInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampPathDefaultOutput:
         """
         Invokes the MalformedTimestampPathDefault operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampPathDefaultInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampPathDefaultInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1865,20 +2289,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampPathDefaultOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_PATH_DEFAULT, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_PATH_DEFAULT,
+            [],
+            plugins,
         )
 
     async def malformed_timestamp_path_epoch(
-        self,
-        input: MalformedTimestampPathEpochInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampPathEpochOutput:
         """
         Invokes the MalformedTimestampPathEpoch operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampPathEpochInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampPathEpochInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1889,20 +2316,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampPathEpochOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_PATH_EPOCH, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_PATH_EPOCH,
+            [],
+            plugins,
         )
 
     async def malformed_timestamp_path_http_date(
-        self,
-        input: MalformedTimestampPathHttpDateInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampPathHttpDateOutput:
         """
         Invokes the MalformedTimestampPathHttpDate operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampPathHttpDateInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampPathHttpDateInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1913,20 +2343,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampPathHttpDateOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_PATH_HTTP_DATE, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_PATH_HTTP_DATE,
+            [],
+            plugins,
         )
 
     async def malformed_timestamp_query_default(
-        self,
-        input: MalformedTimestampQueryDefaultInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampQueryDefaultOutput:
         """
         Invokes the MalformedTimestampQueryDefault operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampQueryDefaultInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampQueryDefaultInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1937,20 +2370,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampQueryDefaultOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_QUERY_DEFAULT, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_QUERY_DEFAULT,
+            [],
+            plugins,
         )
 
     async def malformed_timestamp_query_epoch(
-        self,
-        input: MalformedTimestampQueryEpochInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampQueryEpochOutput:
         """
         Invokes the MalformedTimestampQueryEpoch operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampQueryEpochInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampQueryEpochInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1961,20 +2397,23 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampQueryEpochOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_QUERY_EPOCH, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_QUERY_EPOCH,
+            [],
+            plugins,
         )
 
     async def malformed_timestamp_query_http_date(
-        self,
-        input: MalformedTimestampQueryHttpDateInput,
-        plugins: list[Plugin] | None = None,
+        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampQueryHttpDateOutput:
         """
         Invokes the MalformedTimestampQueryHttpDate operation.
 
+        The keyword arguments are the members of
+        `MalformedTimestampQueryHttpDateInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedTimestampQueryHttpDateInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1985,18 +2424,26 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `MalformedTimestampQueryHttpDateOutput`.
         """
         return await self._invoke(
-            input, _models.MALFORMED_TIMESTAMP_QUERY_HTTP_DATE, [], plugins
+            {"timestamp": timestamp},
+            _models.MALFORMED_TIMESTAMP_QUERY_HTTP_DATE,
+            [],
+            plugins,
         )
 
     async def malformed_union(
-        self, input: MalformedUnionInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        union: _models.SimpleUnion | _models.SimpleUnionParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MalformedUnionOutput:
         """
         Invokes the MalformedUnion operation.
 
+        The keyword arguments are the members of
+        `MalformedUnionInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MalformedUnionInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2006,18 +2453,25 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedUnionOutput`.
         """
-        return await self._invoke(input, _models.MALFORMED_UNION, [], plugins)
+        return await self._invoke(
+            {"union": union}, _models.MALFORMED_UNION, [], plugins
+        )
 
     async def media_type_header(
-        self, input: MediaTypeHeaderInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        json: str | JsonString | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> MediaTypeHeaderOutput:
         """
         This example ensures that mediaType strings are base64 encoded in
         headers.
 
+        The keyword arguments are the members of
+        `MediaTypeHeaderInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `MediaTypeHeaderInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2027,10 +2481,12 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MediaTypeHeaderOutput`.
         """
-        return await self._invoke(input, _models.MEDIA_TYPE_HEADER, [], plugins)
+        return await self._invoke(
+            {"json": json}, _models.MEDIA_TYPE_HEADER, [], plugins
+        )
 
     async def no_input_and_no_output(
-        self, input: NoInputAndNoOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -2039,8 +2495,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         this.
 
         Args:
-            input:
-                An instance of `NoInputAndNoOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2050,10 +2504,10 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        return await self._invoke(input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
+        return await self._invoke(None, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
     async def no_input_and_output(
-        self, input: NoInputAndOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -2062,8 +2516,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         generators must support this.
 
         Args:
-            input:
-                An instance of `NoInputAndOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2073,18 +2525,25 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return await self._invoke(input, _models.NO_INPUT_AND_OUTPUT, [], plugins)
+        return await self._invoke(None, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
     async def null_and_empty_headers_client(
-        self, input: NullAndEmptyHeadersClientInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        a: str | None = None,
+        b: str | None = None,
+        c: Sequence[str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NullAndEmptyHeadersClientOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
         \"\"
 
+        The keyword arguments are the members of
+        `NullAndEmptyHeadersClientInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `NullAndEmptyHeadersClientInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2095,19 +2554,26 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `NullAndEmptyHeadersClientOutput`.
         """
         return await self._invoke(
-            input, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
+            {"a": a, "b": b, "c": c}, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
         )
 
     async def null_and_empty_headers_server(
-        self, input: NullAndEmptyHeadersServerInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        a: str | None = None,
+        b: str | None = None,
+        c: Sequence[str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NullAndEmptyHeadersServerOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
         \"\"
 
+        The keyword arguments are the members of
+        `NullAndEmptyHeadersServerInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `NullAndEmptyHeadersServerInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2118,20 +2584,24 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `NullAndEmptyHeadersServerOutput`.
         """
         return await self._invoke(
-            input, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
+            {"a": a, "b": b, "c": c}, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
         )
 
     async def omits_null_serializes_empty_string(
         self,
-        input: OmitsNullSerializesEmptyStringInput,
+        *,
+        null_value: str | None = None,
+        empty_string: str | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OmitsNullSerializesEmptyStringOutput:
         """
         Omits null, but serializes empty string value.
 
+        The keyword arguments are the members of
+        `OmitsNullSerializesEmptyStringInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `OmitsNullSerializesEmptyStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2142,12 +2612,22 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
         return await self._invoke(
-            input, _models.OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
+            {"null_value": null_value, "empty_string": empty_string},
+            _models.OMITS_NULL_SERIALIZES_EMPTY_STRING,
+            [],
+            plugins,
         )
 
     async def omits_serializing_empty_lists(
         self,
-        input: OmitsSerializingEmptyListsInput,
+        *,
+        query_string_list: Sequence[str] | None = None,
+        query_integer_list: Sequence[int] | None = None,
+        query_double_list: Sequence[float] | None = None,
+        query_boolean_list: Sequence[bool] | None = None,
+        query_timestamp_list: Sequence[datetime] | None = None,
+        query_enum_list: Sequence[str] | None = None,
+        query_integer_enum_list: Sequence[int] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> OmitsSerializingEmptyListsOutput:
         """
@@ -2155,9 +2635,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         `Foo=`, empty lists cannot also be serialized as `Foo=` and instead
         must be omitted.
 
+        The keyword arguments are the members of
+        `OmitsSerializingEmptyListsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `OmitsSerializingEmptyListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2168,18 +2650,39 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `OmitsSerializingEmptyListsOutput`.
         """
         return await self._invoke(
-            input, _models.OMITS_SERIALIZING_EMPTY_LISTS, [], plugins
+            {
+                "query_string_list": query_string_list,
+                "query_integer_list": query_integer_list,
+                "query_double_list": query_double_list,
+                "query_boolean_list": query_boolean_list,
+                "query_timestamp_list": query_timestamp_list,
+                "query_enum_list": query_enum_list,
+                "query_integer_enum_list": query_integer_enum_list,
+            },
+            _models.OMITS_SERIALIZING_EMPTY_LISTS,
+            [],
+            plugins,
         )
 
     async def operation_with_defaults(
-        self, input: OperationWithDefaultsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        defaults: _models.Defaults | _models.DefaultsParams | None = None,
+        client_optional_defaults: _models.ClientOptionalDefaults
+        | _models.ClientOptionalDefaultsParams
+        | None = None,
+        top_level_default: str | None = None,
+        other_top_level_default: int | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> OperationWithDefaultsOutput:
         """
         Invokes the OperationWithDefaults operation.
 
+        The keyword arguments are the members of
+        `OperationWithDefaultsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `OperationWithDefaultsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2189,19 +2692,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `OperationWithDefaultsOutput`.
         """
-        return await self._invoke(input, _models.OPERATION_WITH_DEFAULTS, [], plugins)
+        return await self._invoke(
+            {
+                "defaults": defaults,
+                "client_optional_defaults": client_optional_defaults,
+                "top_level_default": top_level_default,
+                "other_top_level_default": other_top_level_default,
+            },
+            _models.OPERATION_WITH_DEFAULTS,
+            [],
+            plugins,
+        )
 
     async def operation_with_nested_structure(
         self,
-        input: OperationWithNestedStructureInput,
+        *,
+        top_level: _models.TopLevel | _models.TopLevelParams,
         plugins: list[Plugin] | None = None,
     ) -> OperationWithNestedStructureOutput:
         """
         Invokes the OperationWithNestedStructure operation.
 
+        The keyword arguments are the members of
+        `OperationWithNestedStructureInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `OperationWithNestedStructureInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2212,18 +2728,19 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `OperationWithNestedStructureOutput`.
         """
         return await self._invoke(
-            input, _models.OPERATION_WITH_NESTED_STRUCTURE, [], plugins
+            {"top_level": top_level},
+            _models.OPERATION_WITH_NESTED_STRUCTURE,
+            [],
+            plugins,
         )
 
     async def output_stream(
-        self, input: OutputStreamInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> AsyncOutputEventStream[EventStream, OutputStreamOutput]:
         """
         Invokes the OutputStream operation.
 
         Args:
-            input:
-                An instance of `OutputStreamInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2234,23 +2751,19 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An `AsyncOutputEventStream` for server-to-client streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, _models.OUTPUT_STREAM, [], plugins
+            None, _models.OUTPUT_STREAM, [], plugins
         )
         return await pipeline.output_stream(
             call, EventStream, _EventStreamDeserializer().deserialize
         )
 
     async def output_stream_with_initial_response(
-        self,
-        input: OutputStreamWithInitialResponseInput,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> AsyncOutputEventStream[EventStream, OutputStreamWithInitialResponseOutput]:
         """
         Invokes the OutputStreamWithInitialResponse operation.
 
         Args:
-            input:
-                An instance of `OutputStreamWithInitialResponseInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2261,21 +2774,26 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An `AsyncOutputEventStream` for server-to-client streaming.
         """
         pipeline, call = await self._prepare_call(
-            input, _models.OUTPUT_STREAM_WITH_INITIAL_RESPONSE, [], plugins
+            None, _models.OUTPUT_STREAM_WITH_INITIAL_RESPONSE, [], plugins
         )
         return await pipeline.output_stream(
             call, EventStream, _EventStreamDeserializer().deserialize
         )
 
     async def post_player_action(
-        self, input: PostPlayerActionInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        action: _models.PlayerAction | _models.PlayerActionParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> PostPlayerActionOutput:
         """
         This operation defines a union with a Unit member.
 
+        The keyword arguments are the members of
+        `PostPlayerActionInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `PostPlayerActionInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2285,17 +2803,26 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `PostPlayerActionOutput`.
         """
-        return await self._invoke(input, _models.POST_PLAYER_ACTION, [], plugins)
+        return await self._invoke(
+            {"action": action}, _models.POST_PLAYER_ACTION, [], plugins
+        )
 
     async def post_union_with_json_name(
-        self, input: PostUnionWithJsonNameInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        value: _models.UnionWithJsonName
+        | _models.UnionWithJsonNameParams
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> PostUnionWithJsonNameOutput:
         """
         This operation defines a union that uses jsonName on some members.
 
+        The keyword arguments are the members of
+        `PostUnionWithJsonNameInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `PostUnionWithJsonNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2305,17 +2832,25 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `PostUnionWithJsonNameOutput`.
         """
-        return await self._invoke(input, _models.POST_UNION_WITH_JSON_NAME, [], plugins)
+        return await self._invoke(
+            {"value": value}, _models.POST_UNION_WITH_JSON_NAME, [], plugins
+        )
 
     async def put_with_content_encoding(
-        self, input: PutWithContentEncodingInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        encoding: str | None = None,
+        data: str | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
 
+        The keyword arguments are the members of
+        `PutWithContentEncodingInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `PutWithContentEncodingInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2325,19 +2860,24 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        return await self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
+        return await self._invoke(
+            {"encoding": encoding, "data": data},
+            _models.PUT_WITH_CONTENT_ENCODING,
+            [],
+            plugins,
+        )
 
     async def query_idempotency_token_auto_fill(
-        self,
-        input: QueryIdempotencyTokenAutoFillInput,
-        plugins: list[Plugin] | None = None,
+        self, *, token: str | None = None, plugins: list[Plugin] | None = None
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
 
+        The keyword arguments are the members of
+        `QueryIdempotencyTokenAutoFillInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `QueryIdempotencyTokenAutoFillInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2348,20 +2888,24 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
         return await self._invoke(
-            input, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            {"token": token}, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
 
     async def query_params_as_string_list_map(
         self,
-        input: QueryParamsAsStringListMapInput,
+        *,
+        qux: str | None = None,
+        foo: Mapping[str, Sequence[str]] | None = None,
         plugins: list[Plugin] | None = None,
     ) -> QueryParamsAsStringListMapOutput:
         """
         Invokes the QueryParamsAsStringListMap operation.
 
+        The keyword arguments are the members of
+        `QueryParamsAsStringListMapInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `QueryParamsAsStringListMapInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2372,18 +2916,27 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `QueryParamsAsStringListMapOutput`.
         """
         return await self._invoke(
-            input, _models.QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins
+            {"qux": qux, "foo": foo},
+            _models.QUERY_PARAMS_AS_STRING_LIST_MAP,
+            [],
+            plugins,
         )
 
     async def query_precedence(
-        self, input: QueryPrecedenceInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        baz: Mapping[str, str] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> QueryPrecedenceOutput:
         """
         Invokes the QueryPrecedence operation.
 
+        The keyword arguments are the members of
+        `QueryPrecedenceInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `QueryPrecedenceInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2393,17 +2946,26 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `QueryPrecedenceOutput`.
         """
-        return await self._invoke(input, _models.QUERY_PRECEDENCE, [], plugins)
+        return await self._invoke(
+            {"foo": foo, "baz": baz}, _models.QUERY_PRECEDENCE, [], plugins
+        )
 
     async def recursive_shapes(
-        self, input: RecursiveShapesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: _models.RecursiveShapesInputOutputNested1
+        | _models.RecursiveShapesInputOutputNested1Params
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> RecursiveShapesOutput:
         """
         Recursive shapes
 
+        The keyword arguments are the members of
+        `RecursiveShapesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `RecursiveShapesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2413,17 +2975,17 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        return await self._invoke(input, _models.RECURSIVE_SHAPES, [], plugins)
+        return await self._invoke(
+            {"nested": nested}, _models.RECURSIVE_SHAPES, [], plugins
+        )
 
     async def response_code_http_fallback(
-        self, input: ResponseCodeHttpFallbackInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> ResponseCodeHttpFallbackOutput:
         """
         Invokes the ResponseCodeHttpFallback operation.
 
         Args:
-            input:
-                An instance of `ResponseCodeHttpFallbackInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2434,18 +2996,16 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `ResponseCodeHttpFallbackOutput`.
         """
         return await self._invoke(
-            input, _models.RESPONSE_CODE_HTTP_FALLBACK, [], plugins
+            None, _models.RESPONSE_CODE_HTTP_FALLBACK, [], plugins
         )
 
     async def response_code_required(
-        self, input: ResponseCodeRequiredInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> ResponseCodeRequiredOutput:
         """
         Invokes the ResponseCodeRequired operation.
 
         Args:
-            input:
-                An instance of `ResponseCodeRequiredInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2455,17 +3015,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `ResponseCodeRequiredOutput`.
         """
-        return await self._invoke(input, _models.RESPONSE_CODE_REQUIRED, [], plugins)
+        return await self._invoke(None, _models.RESPONSE_CODE_REQUIRED, [], plugins)
 
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        string_value: str | None = None,
+        true_boolean_value: bool | None = None,
+        false_boolean_value: bool | None = None,
+        byte_value: int | None = None,
+        short_value: int | None = None,
+        integer_value: int | None = None,
+        long_value: int | None = None,
+        float_value: float | None = None,
+        double_value: float | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
 
+        The keyword arguments are the members of
+        `SimpleScalarPropertiesInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2475,17 +3049,39 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        return await self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
+        return await self._invoke(
+            {
+                "foo": foo,
+                "string_value": string_value,
+                "true_boolean_value": true_boolean_value,
+                "false_boolean_value": false_boolean_value,
+                "byte_value": byte_value,
+                "short_value": short_value,
+                "integer_value": integer_value,
+                "long_value": long_value,
+                "float_value": float_value,
+                "double_value": double_value,
+            },
+            _models.SIMPLE_SCALAR_PROPERTIES,
+            [],
+            plugins,
+        )
 
     async def sparse_json_lists(
-        self, input: SparseJsonListsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        sparse_string_list: Sequence[str | None] | None = None,
+        sparse_short_list: Sequence[int | None] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SparseJsonListsOutput:
         """
         Invokes the SparseJsonLists operation.
 
+        The keyword arguments are the members of
+        `SparseJsonListsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `SparseJsonListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2495,17 +3091,37 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `SparseJsonListsOutput`.
         """
-        return await self._invoke(input, _models.SPARSE_JSON_LISTS, [], plugins)
+        return await self._invoke(
+            {
+                "sparse_string_list": sparse_string_list,
+                "sparse_short_list": sparse_short_list,
+            },
+            _models.SPARSE_JSON_LISTS,
+            [],
+            plugins,
+        )
 
     async def sparse_json_maps(
-        self, input: SparseJsonMapsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        sparse_struct_map: Mapping[
+            str, _models.GreetingStruct | _models.GreetingStructParams | None
+        ]
+        | None = None,
+        sparse_number_map: Mapping[str, int | None] | None = None,
+        sparse_boolean_map: Mapping[str, bool | None] | None = None,
+        sparse_string_map: Mapping[str, str | None] | None = None,
+        sparse_set_map: Mapping[str, Sequence[str] | None] | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SparseJsonMapsOutput:
         """
         This example tests sparse map serialization.
 
+        The keyword arguments are the members of
+        `SparseJsonMapsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `SparseJsonMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2515,19 +3131,36 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `SparseJsonMapsOutput`.
         """
-        return await self._invoke(input, _models.SPARSE_JSON_MAPS, [], plugins)
+        return await self._invoke(
+            {
+                "sparse_struct_map": sparse_struct_map,
+                "sparse_number_map": sparse_number_map,
+                "sparse_boolean_map": sparse_boolean_map,
+                "sparse_string_map": sparse_string_map,
+                "sparse_set_map": sparse_set_map,
+            },
+            _models.SPARSE_JSON_MAPS,
+            [],
+            plugins,
+        )
 
     async def streaming_traits(
-        self, input: StreamingTraitsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        blob: StreamingBlob | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> StreamingTraitsOutput:
         """
         This examples serializes a streaming blob shape in the request body. In
         this example, no JSON document is synthesized because the payload is not
         a structure or a union type.
 
+        The keyword arguments are the members of
+        `StreamingTraitsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `StreamingTraitsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2537,11 +3170,15 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `StreamingTraitsOutput`.
         """
-        return await self._invoke(input, _models.STREAMING_TRAITS, [], plugins)
+        return await self._invoke(
+            {"foo": foo, "blob": blob}, _models.STREAMING_TRAITS, [], plugins
+        )
 
     async def streaming_traits_require_length(
         self,
-        input: StreamingTraitsRequireLengthInput,
+        *,
+        foo: str | None = None,
+        blob: StreamingBlob | None = None,
         plugins: list[Plugin] | None = None,
     ) -> StreamingTraitsRequireLengthOutput:
         """
@@ -2549,9 +3186,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         length in the request body. In this example, no JSON document is
         synthesized because the payload is not a structure or a union type.
 
+        The keyword arguments are the members of
+        `StreamingTraitsRequireLengthInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `StreamingTraitsRequireLengthInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2562,12 +3201,17 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `StreamingTraitsRequireLengthOutput`.
         """
         return await self._invoke(
-            input, _models.STREAMING_TRAITS_REQUIRE_LENGTH, [], plugins
+            {"foo": foo, "blob": blob},
+            _models.STREAMING_TRAITS_REQUIRE_LENGTH,
+            [],
+            plugins,
         )
 
     async def streaming_traits_with_media_type(
         self,
-        input: StreamingTraitsWithMediaTypeInput,
+        *,
+        foo: str | None = None,
+        blob: StreamingBlob | None = None,
         plugins: list[Plugin] | None = None,
     ) -> StreamingTraitsWithMediaTypeOutput:
         """
@@ -2575,9 +3219,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         request body. This examples uses a `@mediaType` trait on the payload
         to force a custom content-type to be serialized.
 
+        The keyword arguments are the members of
+        `StreamingTraitsWithMediaTypeInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `StreamingTraitsWithMediaTypeInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2588,20 +3234,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `StreamingTraitsWithMediaTypeOutput`.
         """
         return await self._invoke(
-            input, _models.STREAMING_TRAITS_WITH_MEDIA_TYPE, [], plugins
+            {"foo": foo, "blob": blob},
+            _models.STREAMING_TRAITS_WITH_MEDIA_TYPE,
+            [],
+            plugins,
         )
 
     async def test_body_structure(
-        self, input: TestBodyStructureInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        test_id: str | None = None,
+        test_config: _models.TestConfig | _models.TestConfigParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> TestBodyStructureOutput:
         """
         This example operation serializes a structure in the HTTP body. It
         should ensure Content-Type: application/json is used in all requests and
         that an \"empty\" body is an empty JSON document ({}).
 
+        The keyword arguments are the members of
+        `TestBodyStructureInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `TestBodyStructureInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2611,10 +3266,15 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestBodyStructureOutput`.
         """
-        return await self._invoke(input, _models.TEST_BODY_STRUCTURE, [], plugins)
+        return await self._invoke(
+            {"test_id": test_id, "test_config": test_config},
+            _models.TEST_BODY_STRUCTURE,
+            [],
+            plugins,
+        )
 
     async def test_get_no_input_no_payload(
-        self, input: TestGetNoInputNoPayloadInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> TestGetNoInputNoPayloadOutput:
         """
         This example GET operation has no input and serializes a request without
@@ -2623,8 +3283,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         semantically cannot produce an HTTP body.
 
         Args:
-            input:
-                An instance of `TestGetNoInputNoPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2635,11 +3293,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `TestGetNoInputNoPayloadOutput`.
         """
         return await self._invoke(
-            input, _models.TEST_GET_NO_INPUT_NO_PAYLOAD, [], plugins
+            None, _models.TEST_GET_NO_INPUT_NO_PAYLOAD, [], plugins
         )
 
     async def test_get_no_payload(
-        self, input: TestGetNoPayloadInput, plugins: list[Plugin] | None = None
+        self, *, test_id: str | None = None, plugins: list[Plugin] | None = None
     ) -> TestGetNoPayloadOutput:
         """
         This example GET operation serializes a request without a modeled HTTP
@@ -2647,9 +3305,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         headers (Content-Length, Content-Type) to operations that semantically
         cannot produce an HTTP body.
 
+        The keyword arguments are the members of
+        `TestGetNoPayloadInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `TestGetNoPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2659,10 +3319,16 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestGetNoPayloadOutput`.
         """
-        return await self._invoke(input, _models.TEST_GET_NO_PAYLOAD, [], plugins)
+        return await self._invoke(
+            {"test_id": test_id}, _models.TEST_GET_NO_PAYLOAD, [], plugins
+        )
 
     async def test_payload_blob(
-        self, input: TestPayloadBlobInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        content_type: str | None = None,
+        data: bytes | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> TestPayloadBlobOutput:
         """
         This example operation serializes a payload targeting a blob. The Blob
@@ -2671,9 +3337,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         application/octet-stream\" header is used, and that we are not treating
         an empty body as an empty JSON document.
 
+        The keyword arguments are the members of
+        `TestPayloadBlobInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `TestPayloadBlobInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2683,19 +3351,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestPayloadBlobOutput`.
         """
-        return await self._invoke(input, _models.TEST_PAYLOAD_BLOB, [], plugins)
+        return await self._invoke(
+            {"content_type": content_type, "data": data},
+            _models.TEST_PAYLOAD_BLOB,
+            [],
+            plugins,
+        )
 
     async def test_payload_structure(
-        self, input: TestPayloadStructureInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        test_id: str | None = None,
+        payload_config: _models.PayloadConfig
+        | _models.PayloadConfigParams
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> TestPayloadStructureOutput:
         """
         This example operation serializes a payload targeting a structure. This
         enforces the same requirements as TestBodyStructure but with the body
         specified by the @httpPayload trait.
 
+        The keyword arguments are the members of
+        `TestPayloadStructureInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `TestPayloadStructureInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2705,10 +3386,15 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestPayloadStructureOutput`.
         """
-        return await self._invoke(input, _models.TEST_PAYLOAD_STRUCTURE, [], plugins)
+        return await self._invoke(
+            {"test_id": test_id, "payload_config": payload_config},
+            _models.TEST_PAYLOAD_STRUCTURE,
+            [],
+            plugins,
+        )
 
     async def test_post_no_input_no_payload(
-        self, input: TestPostNoInputNoPayloadInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> TestPostNoInputNoPayloadOutput:
         """
         This example POST operation has no input and serializes a request
@@ -2717,8 +3403,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         input.
 
         Args:
-            input:
-                An instance of `TestPostNoInputNoPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2729,20 +3413,22 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             An instance of `TestPostNoInputNoPayloadOutput`.
         """
         return await self._invoke(
-            input, _models.TEST_POST_NO_INPUT_NO_PAYLOAD, [], plugins
+            None, _models.TEST_POST_NO_INPUT_NO_PAYLOAD, [], plugins
         )
 
     async def test_post_no_payload(
-        self, input: TestPostNoPayloadInput, plugins: list[Plugin] | None = None
+        self, *, test_id: str | None = None, plugins: list[Plugin] | None = None
     ) -> TestPostNoPayloadOutput:
         """
         This example POST operation serializes a request without a modeled HTTP
         body. These tests are to ensure we do not attach a body or related
         headers (Content-Type) to a POST operation with no modeled payload.
 
+        The keyword arguments are the members of
+        `TestPostNoPayloadInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `TestPostNoPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2752,18 +3438,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestPostNoPayloadOutput`.
         """
-        return await self._invoke(input, _models.TEST_POST_NO_PAYLOAD, [], plugins)
+        return await self._invoke(
+            {"test_id": test_id}, _models.TEST_POST_NO_PAYLOAD, [], plugins
+        )
 
     async def timestamp_format_headers(
-        self, input: TimestampFormatHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        member_epoch_seconds: datetime | None = None,
+        member_http_date: datetime | None = None,
+        member_date_time: datetime | None = None,
+        default_format: datetime | None = None,
+        target_epoch_seconds: datetime | None = None,
+        target_http_date: datetime | None = None,
+        target_date_time: datetime | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> TimestampFormatHeadersOutput:
         """
         This example tests how timestamp request and response headers are
         serialized.
 
+        The keyword arguments are the members of
+        `TimestampFormatHeadersInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `TimestampFormatHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2773,18 +3472,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TimestampFormatHeadersOutput`.
         """
-        return await self._invoke(input, _models.TIMESTAMP_FORMAT_HEADERS, [], plugins)
+        return await self._invoke(
+            {
+                "member_epoch_seconds": member_epoch_seconds,
+                "member_http_date": member_http_date,
+                "member_date_time": member_date_time,
+                "default_format": default_format,
+                "target_epoch_seconds": target_epoch_seconds,
+                "target_http_date": target_http_date,
+                "target_date_time": target_date_time,
+            },
+            _models.TIMESTAMP_FORMAT_HEADERS,
+            [],
+            plugins,
+        )
 
     async def unit_input_and_output(
-        self, input: UnitInputAndOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> UnitInputAndOutputOutput:
         """
         This test is similar to NoInputAndNoOutput, but uses explicit Unit
         types.
 
         Args:
-            input:
-                An instance of `UnitInputAndOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2794,7 +3504,7 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `UnitInputAndOutputOutput`.
         """
-        return await self._invoke(input, _models.UNIT_INPUT_AND_OUTPUT, [], plugins)
+        return await self._invoke(None, _models.UNIT_INPUT_AND_OUTPUT, [], plugins)
 
     async def _new_config(self) -> AsyncRestJsonProtocolConfig:
         return await AsyncRestJsonProtocolConfig.resolve()

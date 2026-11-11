@@ -20,57 +20,34 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..models import (
-        DatetimeOffsetsInput,
         DatetimeOffsetsOutput,
-        EmptyInputAndEmptyOutputInput,
         EmptyInputAndEmptyOutputOutput,
-        EndpointOperationInput,
         EndpointOperationOutput,
-        EndpointWithHostLabelOperationInput,
         EndpointWithHostLabelOperationOutput,
-        FractionalSecondsInput,
         FractionalSecondsOutput,
-        GreetingWithErrorsInput,
         GreetingWithErrorsOutput,
-        HostWithPathOperationInput,
         HostWithPathOperationOutput,
-        IgnoresWrappingXmlNameInput,
         IgnoresWrappingXmlNameOutput,
-        NestedStructuresInput,
         NestedStructuresOutput,
-        NoInputAndOutputInput,
         NoInputAndOutputOutput,
-        PutWithContentEncodingInput,
         PutWithContentEncodingOutput,
-        QueryIdempotencyTokenAutoFillInput,
         QueryIdempotencyTokenAutoFillOutput,
-        QueryListsInput,
         QueryListsOutput,
-        QueryTimestampsInput,
         QueryTimestampsOutput,
-        RecursiveXmlShapesInput,
         RecursiveXmlShapesOutput,
-        SimpleInputParamsInput,
         SimpleInputParamsOutput,
-        SimpleScalarXmlPropertiesInput,
         SimpleScalarXmlPropertiesOutput,
-        XmlBlobsInput,
         XmlBlobsOperationOutput,
-        XmlEmptyBlobsInput,
         XmlEmptyBlobsOutput,
-        XmlEmptyListsInput,
         XmlEmptyListsOutput,
-        XmlEnumsInput,
         XmlEnumsOutput,
-        XmlIntEnumsInput,
         XmlIntEnumsOutput,
-        XmlListsInput,
         XmlListsOperationOutput,
-        XmlNamespacesInput,
         XmlNamespacesOutput,
-        XmlTimestampsInput,
         XmlTimestampsOutput,
     )
+    from collections.abc import Sequence
+    from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
@@ -82,14 +59,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
     async def datetime_offsets(
-        self, input: DatetimeOffsetsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
 
         Args:
-            input:
-                An instance of `DatetimeOffsetsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -99,10 +74,10 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return await self._invoke(input, _models.DATETIME_OFFSETS, [], plugins)
+        return await self._invoke(None, _models.DATETIME_OFFSETS, [], plugins)
 
     async def empty_input_and_empty_output(
-        self, input: EmptyInputAndEmptyOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -110,8 +85,6 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         generators must support this.
 
         Args:
-            input:
-                An instance of `EmptyInputAndEmptyOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -122,18 +95,16 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
         return await self._invoke(
-            input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            None, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
         )
 
     async def endpoint_operation(
-        self, input: EndpointOperationInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -143,19 +114,19 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return await self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
+        return await self._invoke(None, _models.ENDPOINT_OPERATION, [], plugins)
 
     async def endpoint_with_host_label_operation(
-        self,
-        input: EndpointWithHostLabelOperationInput,
-        plugins: list[Plugin] | None = None,
+        self, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
+        The keyword arguments are the members of
+        `EndpointWithHostLabelOperationInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `EndpointWithHostLabelOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -166,18 +137,16 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
         return await self._invoke(
-            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            {"label": label}, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
         )
 
     async def fractional_seconds(
-        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
 
         Args:
-            input:
-                An instance of `FractionalSecondsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -187,10 +156,10 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return await self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
+        return await self._invoke(None, _models.FRACTIONAL_SECONDS, [], plugins)
 
     async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -198,8 +167,6 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         error. 3. A BadRequest error.
 
         Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -209,17 +176,15 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return await self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
+        return await self._invoke(None, _models.GREETING_WITH_ERRORS, [], plugins)
 
     async def host_with_path_operation(
-        self, input: HostWithPathOperationInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
 
         Args:
-            input:
-                An instance of `HostWithPathOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -229,18 +194,16 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        return await self._invoke(input, _models.HOST_WITH_PATH_OPERATION, [], plugins)
+        return await self._invoke(None, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
     async def ignores_wrapping_xml_name(
-        self, input: IgnoresWrappingXmlNameInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> IgnoresWrappingXmlNameOutput:
         """
         The xmlName trait on the output structure is ignored in AWS Query. The
         wrapping element is always operation name + \"Response\".
 
         Args:
-            input:
-                An instance of `IgnoresWrappingXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -250,17 +213,22 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `IgnoresWrappingXmlNameOutput`.
         """
-        return await self._invoke(input, _models.IGNORES_WRAPPING_XML_NAME, [], plugins)
+        return await self._invoke(None, _models.IGNORES_WRAPPING_XML_NAME, [], plugins)
 
     async def nested_structures(
-        self, input: NestedStructuresInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        nested: _models.StructArg | _models.StructArgParams | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> NestedStructuresOutput:
         """
         This test serializes nested and recursive structure members.
 
+        The keyword arguments are the members of
+        `NestedStructuresInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `NestedStructuresInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -270,10 +238,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `NestedStructuresOutput`.
         """
-        return await self._invoke(input, _models.NESTED_STRUCTURES, [], plugins)
+        return await self._invoke(
+            {"nested": nested}, _models.NESTED_STRUCTURES, [], plugins
+        )
 
     async def no_input_and_output(
-        self, input: NoInputAndOutputInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -281,8 +251,6 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         rare, code generators must support this.
 
         Args:
-            input:
-                An instance of `NoInputAndOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -292,17 +260,23 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return await self._invoke(input, _models.NO_INPUT_AND_OUTPUT, [], plugins)
+        return await self._invoke(None, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
     async def put_with_content_encoding(
-        self, input: PutWithContentEncodingInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        encoding: str | None = None,
+        data: str | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
 
+        The keyword arguments are the members of
+        `PutWithContentEncodingInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `PutWithContentEncodingInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -312,19 +286,24 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        return await self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
+        return await self._invoke(
+            {"encoding": encoding, "data": data},
+            _models.PUT_WITH_CONTENT_ENCODING,
+            [],
+            plugins,
+        )
 
     async def query_idempotency_token_auto_fill(
-        self,
-        input: QueryIdempotencyTokenAutoFillInput,
-        plugins: list[Plugin] | None = None,
+        self, *, token: str | None = None, plugins: list[Plugin] | None = None
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
 
+        The keyword arguments are the members of
+        `QueryIdempotencyTokenAutoFillInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `QueryIdempotencyTokenAutoFillInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -335,18 +314,32 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
         return await self._invoke(
-            input, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            {"token": token}, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
         )
 
     async def query_lists(
-        self, input: QueryListsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        list_arg: Sequence[str] | None = None,
+        complex_list_arg: Sequence[
+            _models.GreetingStruct | _models.GreetingStructParams
+        ]
+        | None = None,
+        list_arg_with_xml_name_member: Sequence[str] | None = None,
+        list_arg_with_xml_name: Sequence[str] | None = None,
+        nested_with_list: _models.NestedStructWithList
+        | _models.NestedStructWithListParams
+        | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> QueryListsOutput:
         """
         This test serializes simple and complex lists.
 
+        The keyword arguments are the members of
+        `QueryListsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `QueryListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -356,10 +349,26 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `QueryListsOutput`.
         """
-        return await self._invoke(input, _models.QUERY_LISTS, [], plugins)
+        return await self._invoke(
+            {
+                "list_arg": list_arg,
+                "complex_list_arg": complex_list_arg,
+                "list_arg_with_xml_name_member": list_arg_with_xml_name_member,
+                "list_arg_with_xml_name": list_arg_with_xml_name,
+                "nested_with_list": nested_with_list,
+            },
+            _models.QUERY_LISTS,
+            [],
+            plugins,
+        )
 
     async def query_timestamps(
-        self, input: QueryTimestampsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        normal_format: datetime | None = None,
+        epoch_member: datetime | None = None,
+        epoch_target: datetime | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> QueryTimestampsOutput:
         """
         This test serializes timestamps. 1. Timestamps are serialized as RFC
@@ -367,9 +376,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         changes the format. 3. A timestampFormat trait on the shape targeted by
         the member changes the format.
 
+        The keyword arguments are the members of
+        `QueryTimestampsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `QueryTimestampsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -379,17 +390,24 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `QueryTimestampsOutput`.
         """
-        return await self._invoke(input, _models.QUERY_TIMESTAMPS, [], plugins)
+        return await self._invoke(
+            {
+                "normal_format": normal_format,
+                "epoch_member": epoch_member,
+                "epoch_target": epoch_target,
+            },
+            _models.QUERY_TIMESTAMPS,
+            [],
+            plugins,
+        )
 
     async def recursive_xml_shapes(
-        self, input: RecursiveXmlShapesInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> RecursiveXmlShapesOutput:
         """
         Recursive shapes
 
         Args:
-            input:
-                An instance of `RecursiveXmlShapesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -399,17 +417,35 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `RecursiveXmlShapesOutput`.
         """
-        return await self._invoke(input, _models.RECURSIVE_XML_SHAPES, [], plugins)
+        return await self._invoke(None, _models.RECURSIVE_XML_SHAPES, [], plugins)
 
     async def simple_input_params(
-        self, input: SimpleInputParamsInput, plugins: list[Plugin] | None = None
+        self,
+        *,
+        foo: str | None = None,
+        bar: str | None = None,
+        baz: bool | None = None,
+        bam: int | None = None,
+        float_value: float | None = None,
+        boo: float | None = None,
+        qux: bytes | None = None,
+        foo_enum: str | None = None,
+        has_query_name: str | None = None,
+        has_query_and_xml_name: str | None = None,
+        uses_xml_name: str | None = None,
+        distinct_query_name: str | None = None,
+        distinct_query_and_xml_name: str | None = None,
+        distinct_xml_name: str | None = None,
+        plugins: list[Plugin] | None = None,
     ) -> SimpleInputParamsOutput:
         """
         This test serializes strings, numbers, and boolean values.
 
+        The keyword arguments are the members of
+        `SimpleInputParamsInput`, which documents them. Nested structures
+        and unions may be passed as models or as dictionaries.
+
         Args:
-            input:
-                An instance of `SimpleInputParamsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -419,17 +455,35 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `SimpleInputParamsOutput`.
         """
-        return await self._invoke(input, _models.SIMPLE_INPUT_PARAMS, [], plugins)
+        return await self._invoke(
+            {
+                "foo": foo,
+                "bar": bar,
+                "baz": baz,
+                "bam": bam,
+                "float_value": float_value,
+                "boo": boo,
+                "qux": qux,
+                "foo_enum": foo_enum,
+                "has_query_name": has_query_name,
+                "has_query_and_xml_name": has_query_and_xml_name,
+                "uses_xml_name": uses_xml_name,
+                "distinct_query_name": distinct_query_name,
+                "distinct_query_and_xml_name": distinct_query_and_xml_name,
+                "distinct_xml_name": distinct_xml_name,
+            },
+            _models.SIMPLE_INPUT_PARAMS,
+            [],
+            plugins,
+        )
 
     async def simple_scalar_xml_properties(
-        self, input: SimpleScalarXmlPropertiesInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> SimpleScalarXmlPropertiesOutput:
         """
         Invokes the SimpleScalarXmlProperties operation.
 
         Args:
-            input:
-                An instance of `SimpleScalarXmlPropertiesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -440,18 +494,16 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
             An instance of `SimpleScalarXmlPropertiesOutput`.
         """
         return await self._invoke(
-            input, _models.SIMPLE_SCALAR_XML_PROPERTIES, [], plugins
+            None, _models.SIMPLE_SCALAR_XML_PROPERTIES, [], plugins
         )
 
     async def xml_blobs(
-        self, input: XmlBlobsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> XmlBlobsOperationOutput:
         """
         Blobs are base64 encoded
 
         Args:
-            input:
-                An instance of `XmlBlobsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -461,17 +513,15 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `XmlBlobsOperationOutput`.
         """
-        return await self._invoke(input, _models.XML_BLOBS, [], plugins)
+        return await self._invoke(None, _models.XML_BLOBS, [], plugins)
 
     async def xml_empty_blobs(
-        self, input: XmlEmptyBlobsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> XmlEmptyBlobsOutput:
         """
         Invokes the XmlEmptyBlobs operation.
 
         Args:
-            input:
-                An instance of `XmlEmptyBlobsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -481,17 +531,15 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        return await self._invoke(input, _models.XML_EMPTY_BLOBS, [], plugins)
+        return await self._invoke(None, _models.XML_EMPTY_BLOBS, [], plugins)
 
     async def xml_empty_lists(
-        self, input: XmlEmptyListsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> XmlEmptyListsOutput:
         """
         Invokes the XmlEmptyLists operation.
 
         Args:
-            input:
-                An instance of `XmlEmptyListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -501,18 +549,14 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
-        return await self._invoke(input, _models.XML_EMPTY_LISTS, [], plugins)
+        return await self._invoke(None, _models.XML_EMPTY_LISTS, [], plugins)
 
-    async def xml_enums(
-        self, input: XmlEnumsInput, plugins: list[Plugin] | None = None
-    ) -> XmlEnumsOutput:
+    async def xml_enums(self, *, plugins: list[Plugin] | None = None) -> XmlEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
         Args:
-            input:
-                An instance of `XmlEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -522,18 +566,16 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
-        return await self._invoke(input, _models.XML_ENUMS, [], plugins)
+        return await self._invoke(None, _models.XML_ENUMS, [], plugins)
 
     async def xml_int_enums(
-        self, input: XmlIntEnumsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> XmlIntEnumsOutput:
         """
         This example serializes intEnums as top level properties, in lists,
         sets, and maps.
 
         Args:
-            input:
-                An instance of `XmlIntEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -543,10 +585,10 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
-        return await self._invoke(input, _models.XML_INT_ENUMS, [], plugins)
+        return await self._invoke(None, _models.XML_INT_ENUMS, [], plugins)
 
     async def xml_lists(
-        self, input: XmlListsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> XmlListsOperationOutput:
         """
         This test case serializes XML lists for the following cases for both
@@ -556,8 +598,6 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         with @xmlNamespace. 8. Lists of structures.
 
         Args:
-            input:
-                An instance of `XmlListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -567,17 +607,15 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `XmlListsOperationOutput`.
         """
-        return await self._invoke(input, _models.XML_LISTS, [], plugins)
+        return await self._invoke(None, _models.XML_LISTS, [], plugins)
 
     async def xml_namespaces(
-        self, input: XmlNamespacesInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> XmlNamespacesOutput:
         """
         Invokes the XmlNamespaces operation.
 
         Args:
-            input:
-                An instance of `XmlNamespacesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -587,18 +625,16 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
-        return await self._invoke(input, _models.XML_NAMESPACES, [], plugins)
+        return await self._invoke(None, _models.XML_NAMESPACES, [], plugins)
 
     async def xml_timestamps(
-        self, input: XmlTimestampsInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> XmlTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
         format of date-time and various @timestampFormat trait values.
 
         Args:
-            input:
-                An instance of `XmlTimestampsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -608,7 +644,7 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
-        return await self._invoke(input, _models.XML_TIMESTAMPS, [], plugins)
+        return await self._invoke(None, _models.XML_TIMESTAMPS, [], plugins)
 
     async def _new_config(self) -> AsyncEC2ProtocolConfig:
         return await AsyncEC2ProtocolConfig.resolve()

@@ -2,87 +2,128 @@
 
 from typing import Any
 
+from awsquery.aio.client import AsyncQueryProtocolClient
+from awsquery.client import QueryProtocolClient
 from awsquery.models import (
     ComplexNestedErrorData,
     DatetimeOffsetsInput,
+    DatetimeOffsetsInputParams,
     DatetimeOffsetsOutput,
     EmptyInputAndEmptyOutputInput,
+    EmptyInputAndEmptyOutputInputParams,
     EmptyInputAndEmptyOutputOutput,
     EndpointOperationInput,
+    EndpointOperationInputParams,
     EndpointOperationOutput,
     EndpointWithHostLabelOperationInput,
+    EndpointWithHostLabelOperationInputParams,
     EndpointWithHostLabelOperationOutput,
     FlattenedXmlMapInput,
+    FlattenedXmlMapInputParams,
     FlattenedXmlMapOutput,
     FlattenedXmlMapWithXmlNameInput,
+    FlattenedXmlMapWithXmlNameInputParams,
     FlattenedXmlMapWithXmlNameOutput,
     FlattenedXmlMapWithXmlNamespaceInput,
+    FlattenedXmlMapWithXmlNamespaceInputParams,
     FlattenedXmlMapWithXmlNamespaceOutput,
     FractionalSecondsInput,
+    FractionalSecondsInputParams,
     FractionalSecondsOutput,
     GreetingStruct,
+    GreetingStructParams,
     GreetingWithErrorsInput,
+    GreetingWithErrorsInputParams,
     GreetingWithErrorsOutput,
     HostWithPathOperationInput,
+    HostWithPathOperationInputParams,
     HostWithPathOperationOutput,
     IgnoresWrappingXmlNameInput,
+    IgnoresWrappingXmlNameInputParams,
     IgnoresWrappingXmlNameOutput,
     NestedStructWithList,
+    NestedStructWithListParams,
     NestedStructWithMap,
+    NestedStructWithMapParams,
     NestedStructuresInput,
+    NestedStructuresInputParams,
     NestedStructuresOutput,
     NoInputAndNoOutputInput,
+    NoInputAndNoOutputInputParams,
     NoInputAndNoOutputOutput,
     NoInputAndOutputInput,
+    NoInputAndOutputInputParams,
     NoInputAndOutputOutput,
     PutWithContentEncodingInput,
+    PutWithContentEncodingInputParams,
     PutWithContentEncodingOutput,
     QueryIdempotencyTokenAutoFillInput,
+    QueryIdempotencyTokenAutoFillInputParams,
     QueryIdempotencyTokenAutoFillOutput,
     QueryListsInput,
+    QueryListsInputParams,
     QueryListsOutput,
     QueryMapsInput,
+    QueryMapsInputParams,
     QueryMapsOutput,
     QueryTimestampsInput,
+    QueryTimestampsInputParams,
     QueryTimestampsOutput,
     RecursiveXmlShapesInput,
+    RecursiveXmlShapesInputParams,
     RecursiveXmlShapesOutput,
     RecursiveXmlShapesOutputNested1,
     RecursiveXmlShapesOutputNested2,
     SimpleInputParamsInput,
+    SimpleInputParamsInputParams,
     SimpleInputParamsOutput,
     SimpleScalarXmlPropertiesInput,
+    SimpleScalarXmlPropertiesInputParams,
     SimpleScalarXmlPropertiesOutput,
     StructArg,
+    StructArgParams,
     StructureListMember,
     XmlBlobsInput,
+    XmlBlobsInputParams,
     XmlBlobsOperationOutput,
     XmlEmptyBlobsInput,
+    XmlEmptyBlobsInputParams,
     XmlEmptyBlobsOutput,
     XmlEmptyListsInput,
+    XmlEmptyListsInputParams,
     XmlEmptyListsOutput,
     XmlEmptyMapsInput,
+    XmlEmptyMapsInputParams,
     XmlEmptyMapsOutput,
     XmlEnumsInput,
+    XmlEnumsInputParams,
     XmlEnumsOutput,
     XmlIntEnumsInput,
+    XmlIntEnumsInputParams,
     XmlIntEnumsOutput,
     XmlListsInput,
+    XmlListsInputParams,
     XmlListsOperationOutput,
     XmlMapsInput,
+    XmlMapsInputParams,
     XmlMapsOperationOutput,
     XmlMapsXmlNameInput,
+    XmlMapsXmlNameInputParams,
     XmlMapsXmlNameOutput,
     XmlNamespaceNested,
     XmlNamespacesInput,
+    XmlNamespacesInputParams,
     XmlNamespacesOutput,
     XmlTimestampsInput,
+    XmlTimestampsInputParams,
     XmlTimestampsOutput,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check. The clients are typed inline rather than by a stub.
+# pyright: reportMissingTypeStubs=false
 
 _: Any = ...
 
@@ -161,3 +202,210 @@ XmlNamespacesOutput()
 XmlTimestampsInput()
 XmlTimestampsOutput()
 GreetingStruct()
+_params_0: DatetimeOffsetsInputParams = {}
+_params_1: EmptyInputAndEmptyOutputInputParams = {}
+_params_2: EndpointOperationInputParams = {}
+_params_3: EndpointWithHostLabelOperationInputParams = {"label": _}
+_params_4: FlattenedXmlMapInputParams = {}
+_params_5: FlattenedXmlMapWithXmlNameInputParams = {}
+_params_6: FlattenedXmlMapWithXmlNamespaceInputParams = {}
+_params_7: FractionalSecondsInputParams = {}
+_params_8: GreetingWithErrorsInputParams = {}
+_params_9: HostWithPathOperationInputParams = {}
+_params_10: IgnoresWrappingXmlNameInputParams = {}
+_params_11: NestedStructuresInputParams = {}
+_params_12: NestedStructWithListParams = {}
+_params_13: NestedStructWithMapParams = {}
+_params_14: NoInputAndNoOutputInputParams = {}
+_params_15: NoInputAndOutputInputParams = {}
+_params_16: PutWithContentEncodingInputParams = {}
+_params_17: QueryIdempotencyTokenAutoFillInputParams = {}
+_params_18: QueryListsInputParams = {}
+_params_19: QueryMapsInputParams = {}
+_params_20: QueryTimestampsInputParams = {}
+_params_21: RecursiveXmlShapesInputParams = {}
+_params_22: SimpleInputParamsInputParams = {}
+_params_23: SimpleScalarXmlPropertiesInputParams = {}
+_params_24: StructArgParams = {}
+_params_25: XmlBlobsInputParams = {}
+_params_26: XmlEmptyBlobsInputParams = {}
+_params_27: XmlEmptyListsInputParams = {}
+_params_28: XmlEmptyMapsInputParams = {}
+_params_29: XmlEnumsInputParams = {}
+_params_30: XmlIntEnumsInputParams = {}
+_params_31: XmlListsInputParams = {}
+_params_32: XmlMapsInputParams = {}
+_params_33: XmlMapsXmlNameInputParams = {}
+_params_34: XmlNamespacesInputParams = {}
+_params_35: XmlTimestampsInputParams = {}
+_params_36: GreetingStructParams = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncQueryProtocolClient) -> None:
+    pass
+    await client.datetime_offsets()
+    await client.datetime_offsets(**_request(DatetimeOffsetsInputParams))
+    await client.empty_input_and_empty_output()
+    await client.empty_input_and_empty_output(
+        **_request(EmptyInputAndEmptyOutputInputParams)
+    )
+    await client.endpoint_operation()
+    await client.endpoint_operation(**_request(EndpointOperationInputParams))
+    await client.endpoint_with_host_label_operation(label=_)
+    await client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputParams)
+    )
+    await client.flattened_xml_map()
+    await client.flattened_xml_map(**_request(FlattenedXmlMapInputParams))
+    await client.flattened_xml_map_with_xml_name()
+    await client.flattened_xml_map_with_xml_name(
+        **_request(FlattenedXmlMapWithXmlNameInputParams)
+    )
+    await client.flattened_xml_map_with_xml_namespace()
+    await client.flattened_xml_map_with_xml_namespace(
+        **_request(FlattenedXmlMapWithXmlNamespaceInputParams)
+    )
+    await client.fractional_seconds()
+    await client.fractional_seconds(**_request(FractionalSecondsInputParams))
+    await client.greeting_with_errors()
+    await client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    await client.host_with_path_operation()
+    await client.host_with_path_operation(**_request(HostWithPathOperationInputParams))
+    await client.ignores_wrapping_xml_name()
+    await client.ignores_wrapping_xml_name(
+        **_request(IgnoresWrappingXmlNameInputParams)
+    )
+    await client.nested_structures()
+    await client.nested_structures(**_request(NestedStructuresInputParams))
+    await client.no_input_and_no_output()
+    await client.no_input_and_no_output(**_request(NoInputAndNoOutputInputParams))
+    await client.no_input_and_output()
+    await client.no_input_and_output(**_request(NoInputAndOutputInputParams))
+    await client.put_with_content_encoding()
+    await client.put_with_content_encoding(
+        **_request(PutWithContentEncodingInputParams)
+    )
+    await client.query_idempotency_token_auto_fill()
+    await client.query_idempotency_token_auto_fill(
+        **_request(QueryIdempotencyTokenAutoFillInputParams)
+    )
+    await client.query_lists()
+    await client.query_lists(**_request(QueryListsInputParams))
+    await client.query_maps()
+    await client.query_maps(**_request(QueryMapsInputParams))
+    await client.query_timestamps()
+    await client.query_timestamps(**_request(QueryTimestampsInputParams))
+    await client.recursive_xml_shapes()
+    await client.recursive_xml_shapes(**_request(RecursiveXmlShapesInputParams))
+    await client.simple_input_params()
+    await client.simple_input_params(**_request(SimpleInputParamsInputParams))
+    await client.simple_scalar_xml_properties()
+    await client.simple_scalar_xml_properties(
+        **_request(SimpleScalarXmlPropertiesInputParams)
+    )
+    await client.xml_blobs()
+    await client.xml_blobs(**_request(XmlBlobsInputParams))
+    await client.xml_empty_blobs()
+    await client.xml_empty_blobs(**_request(XmlEmptyBlobsInputParams))
+    await client.xml_empty_lists()
+    await client.xml_empty_lists(**_request(XmlEmptyListsInputParams))
+    await client.xml_empty_maps()
+    await client.xml_empty_maps(**_request(XmlEmptyMapsInputParams))
+    await client.xml_enums()
+    await client.xml_enums(**_request(XmlEnumsInputParams))
+    await client.xml_int_enums()
+    await client.xml_int_enums(**_request(XmlIntEnumsInputParams))
+    await client.xml_lists()
+    await client.xml_lists(**_request(XmlListsInputParams))
+    await client.xml_maps()
+    await client.xml_maps(**_request(XmlMapsInputParams))
+    await client.xml_maps_xml_name()
+    await client.xml_maps_xml_name(**_request(XmlMapsXmlNameInputParams))
+    await client.xml_namespaces()
+    await client.xml_namespaces(**_request(XmlNamespacesInputParams))
+    await client.xml_timestamps()
+    await client.xml_timestamps(**_request(XmlTimestampsInputParams))
+
+
+def check_sync_calls(client: QueryProtocolClient) -> None:
+    pass
+    client.datetime_offsets()
+    client.datetime_offsets(**_request(DatetimeOffsetsInputParams))
+    client.empty_input_and_empty_output()
+    client.empty_input_and_empty_output(**_request(EmptyInputAndEmptyOutputInputParams))
+    client.endpoint_operation()
+    client.endpoint_operation(**_request(EndpointOperationInputParams))
+    client.endpoint_with_host_label_operation(label=_)
+    client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputParams)
+    )
+    client.flattened_xml_map()
+    client.flattened_xml_map(**_request(FlattenedXmlMapInputParams))
+    client.flattened_xml_map_with_xml_name()
+    client.flattened_xml_map_with_xml_name(
+        **_request(FlattenedXmlMapWithXmlNameInputParams)
+    )
+    client.flattened_xml_map_with_xml_namespace()
+    client.flattened_xml_map_with_xml_namespace(
+        **_request(FlattenedXmlMapWithXmlNamespaceInputParams)
+    )
+    client.fractional_seconds()
+    client.fractional_seconds(**_request(FractionalSecondsInputParams))
+    client.greeting_with_errors()
+    client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    client.host_with_path_operation()
+    client.host_with_path_operation(**_request(HostWithPathOperationInputParams))
+    client.ignores_wrapping_xml_name()
+    client.ignores_wrapping_xml_name(**_request(IgnoresWrappingXmlNameInputParams))
+    client.nested_structures()
+    client.nested_structures(**_request(NestedStructuresInputParams))
+    client.no_input_and_no_output()
+    client.no_input_and_no_output(**_request(NoInputAndNoOutputInputParams))
+    client.no_input_and_output()
+    client.no_input_and_output(**_request(NoInputAndOutputInputParams))
+    client.put_with_content_encoding()
+    client.put_with_content_encoding(**_request(PutWithContentEncodingInputParams))
+    client.query_idempotency_token_auto_fill()
+    client.query_idempotency_token_auto_fill(
+        **_request(QueryIdempotencyTokenAutoFillInputParams)
+    )
+    client.query_lists()
+    client.query_lists(**_request(QueryListsInputParams))
+    client.query_maps()
+    client.query_maps(**_request(QueryMapsInputParams))
+    client.query_timestamps()
+    client.query_timestamps(**_request(QueryTimestampsInputParams))
+    client.recursive_xml_shapes()
+    client.recursive_xml_shapes(**_request(RecursiveXmlShapesInputParams))
+    client.simple_input_params()
+    client.simple_input_params(**_request(SimpleInputParamsInputParams))
+    client.simple_scalar_xml_properties()
+    client.simple_scalar_xml_properties(
+        **_request(SimpleScalarXmlPropertiesInputParams)
+    )
+    client.xml_blobs()
+    client.xml_blobs(**_request(XmlBlobsInputParams))
+    client.xml_empty_blobs()
+    client.xml_empty_blobs(**_request(XmlEmptyBlobsInputParams))
+    client.xml_empty_lists()
+    client.xml_empty_lists(**_request(XmlEmptyListsInputParams))
+    client.xml_empty_maps()
+    client.xml_empty_maps(**_request(XmlEmptyMapsInputParams))
+    client.xml_enums()
+    client.xml_enums(**_request(XmlEnumsInputParams))
+    client.xml_int_enums()
+    client.xml_int_enums(**_request(XmlIntEnumsInputParams))
+    client.xml_lists()
+    client.xml_lists(**_request(XmlListsInputParams))
+    client.xml_maps()
+    client.xml_maps(**_request(XmlMapsInputParams))
+    client.xml_maps_xml_name()
+    client.xml_maps_xml_name(**_request(XmlMapsXmlNameInputParams))
+    client.xml_namespaces()
+    client.xml_namespaces(**_request(XmlNamespacesInputParams))
+    client.xml_timestamps()
+    client.xml_timestamps(**_request(XmlTimestampsInputParams))

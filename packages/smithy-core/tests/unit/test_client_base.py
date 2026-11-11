@@ -173,6 +173,67 @@ def test_omitted_input_is_built_from_the_operation() -> None:
     assert cast(Any, call).input is operation.input.return_value
 
 
+def test_keyword_members_are_converted_to_the_input_model() -> None:
+    operation: Any = Mock()
+    members = {"name": "value"}
+    client = _SyncClient()
+
+    _, call = client._prepare_call(members, operation, [], None)  # pyright: ignore[reportPrivateUsage]
+
+    operation.model_registry.build_input.assert_called_once_with(
+        operation.input_schema, members, operation.schema.id.name
+    )
+    assert cast(Any, call).input is operation.model_registry.build_input.return_value
+
+
+def test_input_model_instance_is_used_as_given() -> None:
+    operation: Any = Mock()
+    model = Mock()
+    client = _SyncClient()
+
+    _, call = client._prepare_call(model, operation, [], None)  # pyright: ignore[reportPrivateUsage]
+
+    operation.model_registry.build_input.assert_not_called()
+    assert cast(Any, call).input is model
+
+
+def test_invalid_keyword_members_fail_before_client_setup() -> None:
+    operation: Any = Mock()
+    operation.model_registry.build_input.side_effect = TypeError("invalid input")
+    client = _SyncClient()
+    client._new_config = Mock(side_effect=AssertionError("setup ran"))  # pyright: ignore[reportPrivateUsage]
+
+    with pytest.raises(TypeError, match="invalid input"):
+        client._prepare_call({"name": 1}, operation, [], None)  # pyright: ignore[reportPrivateUsage]
+
+    assert not client._setup_done  # pyright: ignore[reportPrivateUsage]
+
+
+async def test_async_invalid_keyword_members_fail_before_client_setup() -> None:
+    operation: Any = Mock()
+    operation.model_registry.build_input.side_effect = TypeError("invalid input")
+    client = _AsyncClient()
+    client._new_config = AsyncMock(side_effect=AssertionError("setup ran"))  # pyright: ignore[reportPrivateUsage]
+
+    with pytest.raises(TypeError, match="invalid input"):
+        await client._prepare_call({"name": 1}, operation, [], None)  # pyright: ignore[reportPrivateUsage]
+
+    assert not client._setup_done  # pyright: ignore[reportPrivateUsage]
+
+
+async def test_async_keyword_members_are_converted_to_the_input_model() -> None:
+    operation: Any = Mock()
+    members = {"name": "value"}
+    client = _AsyncClient()
+
+    _, call = await client._prepare_call(members, operation, [], None)  # pyright: ignore[reportPrivateUsage]
+
+    operation.model_registry.build_input.assert_called_once_with(
+        operation.input_schema, members, operation.schema.id.name
+    )
+    assert cast(Any, call).input is operation.model_registry.build_input.return_value
+
+
 def test_invoke_runs_the_prepared_pipeline() -> None:
     client = _SyncClient()
     pipeline: Any = Mock()

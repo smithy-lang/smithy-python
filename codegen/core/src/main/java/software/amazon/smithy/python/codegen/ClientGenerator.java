@@ -24,7 +24,6 @@ import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
-import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
@@ -42,12 +41,16 @@ final class ClientGenerator implements Runnable {
     private final Model model;
     private final ServiceShape service;
     private final SymbolProvider symbolProvider;
+    private final InputParams inputParams;
+    private final String modelsNamespace;
 
     ClientGenerator(GenerationContext context, ServiceShape service) {
         this.context = context;
         this.symbolProvider = context.symbolProvider();
         this.model = context.model();
         this.service = service;
+        this.inputParams = new InputParams(context);
+        this.modelsNamespace = context.settings().moduleName() + ".models";
     }
 
     @Override
@@ -193,45 +196,38 @@ final class ClientGenerator implements Runnable {
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
 
         var input = model.expectShape(operation.getInputShape());
-        var inputSymbol = symbolProvider.toSymbol(input);
 
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
 
-        // Input/output types are used ONLY in annotations here. Import them under
-        // TYPE_CHECKING and reference by bare name (with future-annotations deferring
-        // the annotations) so importing the client does not eagerly build every model
-        // class. Operations are resolved through the models module when invoked.
+        // The output type is used ONLY in an annotation here. Import it under
+        // TYPE_CHECKING and reference it by bare name (with future-annotations
+        // deferring the annotations) so importing the client does not eagerly build
+        // every model class. Operations are resolved through the models module when
+        // invoked.
         writer.getImportContainer().enableFutureAnnotations();
-        writer.getImportContainer()
-                .addTypeCheckingImport(
-                        inputSymbol.getNamespace(),
-                        inputSymbol.getName(),
-                        inputSymbol.getName());
         writer.getImportContainer()
                 .addTypeCheckingImport(
                         outputSymbol.getNamespace(),
                         outputSymbol.getName(),
                         outputSymbol.getName());
 
-        writer.putContext("input", inputSymbol.getName());
         writer.putContext("output", outputSymbol.getName());
         writer.putContext("plugin", pluginSymbol);
         writer.putContext("operationName", operationMethodSymbol.getName());
         writer.putContext("operation", "_models." + operationSymbol.getName());
-        // Sync callers may omit an input that has no required members.
-        var optionalInput = sync && input.members().stream().noneMatch(m -> m.hasTrait(RequiredTrait.class));
-        writer.putContext("optionalInput", optionalInput);
+        putInputMembers(writer, input);
         var template =
                 """
                         async def ${operationName:L}(
                             self,
-                            ${?optionalInput}input: ${input:L} | None = None,${/optionalInput}${^optionalInput}input: ${input:L},${/optionalInput}
-                            plugins: list[${plugin:T}] | None = None
+                            *,
+                            ${parameters:L|}
+                            plugins: list[${plugin:T}] | None = None,
                         ) -> ${output:L}:
                             ${?docs}${docs:C|}
                             ${/docs}return await self._invoke(
-                                input,
+                                ${members:L|},
                                 ${operation:L},
                                 [
                                     ${C|}
@@ -242,6 +238,65 @@ final class ClientGenerator implements Runnable {
         writer.putContext("docs", writer.consumer(w -> writeOperationDocs(w, operation, input, output)));
         writer.write(sync ? SyncVariant.toSyncCode(template) : template,
                 writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
+    }
+
+    /**
+     * Puts an operation's input members into the writer's context, as the keyword-only
+     * parameters of its method ({@code parameters}) and as the dictionary of them the
+     * method hands to the runtime ({@code members}), which builds the input model.
+     *
+     * <p>The parameters are in model order. They are all keyword-only, so required
+     * ones need not come first.
+     */
+    private void putInputMembers(PythonWriter writer, Shape input) {
+        var parameters = new StringBuilder();
+        var members = new StringBuilder();
+        for (var member : input.members()) {
+            if (!inputParams.isParameter(member)) {
+                continue;
+            }
+            var name = symbolProvider.toMemberName(member);
+            var type = inputParams.typeOf(member, symbol -> annotation(writer, symbol));
+            parameters.append(name).append(": ").append(type);
+            if (!inputParams.mustBeSet(member)) {
+                // None is the same as omitting the member.
+                parameters.append(" | None = None");
+            }
+            parameters.append(",\n");
+            members.append("    \"").append(name).append("\": ").append(name).append(",\n");
+        }
+        writer.putContext("parameters", parameters.toString().stripTrailing());
+        writer.putContext("members", members.isEmpty() ? "None" : "{\n" + members + "}");
+    }
+
+    /**
+     * Refers to a type that is used only in an annotation, without importing it at
+     * runtime: importing the client must not build model classes.
+     *
+     * <p>Models are reached through the {@code _models} module the client already
+     * imports, which also keeps a shape named like another imported type (for example
+     * {@code Plugin} or {@code Sequence}) from shadowing it. Everything else is
+     * imported under {@code TYPE_CHECKING}.
+     */
+    private String annotation(PythonWriter writer, Symbol unmapped) {
+        var symbol = writer.getSymbolMapper().apply(unmapped);
+        if (symbol.getNamespace().equals(modelsNamespace)) {
+            return "_models." + symbol.getName();
+        }
+        var imports = writer.getImportContainer();
+        if (!symbol.getNamespace().isEmpty()) {
+            imports.addTypeCheckingImport(symbol.getNamespace(), symbol.getName(), symbol.getName());
+        }
+        for (var reference : symbol.getReferences()) {
+            var referenced = reference.getSymbol();
+            if (!referenced.getNamespace().isEmpty()) {
+                imports.addTypeCheckingImport(
+                        referenced.getNamespace(),
+                        referenced.getName(),
+                        referenced.getName());
+            }
+        }
+        return symbol.getName();
     }
 
     private void writeOperationDocs(PythonWriter writer, OperationShape operation, Shape input, Shape output) {
@@ -264,16 +319,21 @@ final class ClientGenerator implements Runnable {
 
             var inputSymbolName = symbolProvider.toSymbol(input).getName();
             var outputSymbolName = symbolProvider.toSymbol(output).getName();
-            var inputDocs = String.format("An instance of `%s`.", inputSymbolName);
             var outputDocs = eventStreamOutputDocs != null ? eventStreamOutputDocs
                     : String.format("An instance of `%s`.", outputSymbolName);
 
+            writer.write("$L\n", operationDocs);
+            // Member docs live on the input model; repeating them here, in both
+            // clients, would multiply the size of the client modules.
+            if (input.members().stream().anyMatch(inputParams::isParameter)) {
+                writer.write("""
+                        The keyword arguments are the members of
+                        `$L`, which documents them. Nested structures
+                        and unions may be passed as models or as dictionaries.
+                        """, inputSymbolName);
+            }
             writer.write("""
-                    $L
-
                     Args:
-                        input:
-                            $L
                         plugins:
                             A list of callables that modify the configuration dynamically.
                             Changes made by these plugins only apply for the duration of the
@@ -282,7 +342,7 @@ final class ClientGenerator implements Runnable {
 
                     Returns:
                         ${L|}
-                    """, operationDocs, inputDocs, outputDocs);
+                    """, outputDocs);
         });
     }
 
@@ -311,8 +371,9 @@ final class ClientGenerator implements Runnable {
         writer.putContext("plugin", pluginSymbol);
 
         var input = model.expectShape(operation.getInputShape());
-        var inputSymbol = symbolProvider.toSymbol(input);
-        writer.putContext("input", inputSymbol);
+        // Annotations must be deferred: the parameter types are not imported at runtime.
+        writer.getImportContainer().enableFutureAnnotations();
+        putInputMembers(writer, input);
 
         var eventStreamIndex = EventStreamIndex.of(model);
         var inputStreamSymbol = eventStreamIndex.getInputInfo(operation)
@@ -344,12 +405,13 @@ final class ClientGenerator implements Runnable {
                 writer.write("""
                         async def ${operationName:L}(
                             self,
-                            input: ${input:T},
-                            plugins: list[${plugin:T}] | None = None
+                            *,
+                            ${parameters:L|}
+                            plugins: list[${plugin:T}] | None = None,
                         ) -> ${duplexEventStream:T}[${inputStream:T}, ${outputStream:T}, ${output:T}]:
                             ${C|}
                             pipeline, call = await self._prepare_call(
-                                input,
+                                ${members:L|},
                                 ${operation:L},
                                 [
                                     ${C|}
@@ -371,12 +433,13 @@ final class ClientGenerator implements Runnable {
                 writer.write("""
                         async def ${operationName:L}(
                             self,
-                            input: ${input:T},
-                            plugins: list[${plugin:T}] | None = None
+                            *,
+                            ${parameters:L|}
+                            plugins: list[${plugin:T}] | None = None,
                         ) -> ${inputEventStream:T}[${inputStream:T}, ${output:T}]:
                             ${C|}
                             pipeline, call = await self._prepare_call(
-                                input,
+                                ${members:L|},
                                 ${operation:L},
                                 [
                                     ${C|}
@@ -397,12 +460,13 @@ final class ClientGenerator implements Runnable {
             writer.write("""
                     async def ${operationName:L}(
                         self,
-                        input: ${input:T},
-                        plugins: list[${plugin:T}] | None = None
+                        *,
+                        ${parameters:L|}
+                        plugins: list[${plugin:T}] | None = None,
                     ) -> ${outputEventStream:T}[${outputStream:T}, ${output:T}]:
                         ${C|}
                         pipeline, call = await self._prepare_call(
-                            input,
+                            ${members:L|},
                             ${operation:L},
                             [
                                 ${C|}
