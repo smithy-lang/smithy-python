@@ -18,6 +18,9 @@ from smithy_core.exceptions import (
     UnsupportedStreamError,
 )
 from smithy_core.exceptions import (
+    Fault as _Fault,
+)
+from smithy_core.exceptions import (
     SmithyError as _SmithyError,
 )
 from smithy_core.interfaces import (
@@ -68,6 +71,13 @@ __all__ = [
 ]
 
 _EVENT_STREAM_CONTENT_TYPE = "application/vnd.amazon.eventstream"
+
+# Read by ID so smithy-http needs no dependency on the AWS trait classes.
+_AWS_QUERY_COMPATIBLE = ShapeID("aws.protocols#awsQueryCompatible")
+_AWS_QUERY_ERROR = ShapeID("aws.protocols#awsQueryError")
+_QUERY_MODE_HEADER = "x-amzn-query-mode"
+_QUERY_ERROR_HEADER = "x-amzn-query-error"
+_QUERY_ERROR_FAULTS: dict[str, _Fault] = {"Sender": "client", "Receiver": "server"}
 
 try:
     from smithy_cbor import CBORCodec
@@ -383,6 +393,8 @@ class RpcClientProtocol(HttpClientProtocol):
     _event_stream_http: tuple[str, ...] = ()
     # The serialized empty document, deserialized when a response omits the output.
     _empty_document: bytes = b"{}"
+    # Whether the service carries @awsQueryCompatible.
+    _query_compatible: bool = False
 
     def deserialize_response_program[
         OperationInput: SerializeableShape,
@@ -495,6 +507,54 @@ class RpcClientProtocol(HttpClientProtocol):
         return tuple(str(v) for v in versions)
 
     @staticmethod
+    def _resolve_query_compatible(service_schema: "StaticSchema | Schema") -> bool:
+        from smithy_core._schema_compact import hydrate
+
+        return hydrate(service_schema).get_trait(_AWS_QUERY_COMPATIBLE) is not None
+
+    def _query_mode_fields(self) -> list[tuple[str, str]]:
+        """Request fields that tell a query-compatible service the client is one."""
+        if not self._query_compatible:
+            return []
+        return [(_QUERY_MODE_HEADER, "true")]
+
+    def _resolve_query_error_id(
+        self, operation: APIOperation[Any, Any], response: HTTPResponse
+    ) -> ShapeID | None:
+        """Resolve the awsQuery error code a query-compatible service sends."""
+        query_error = self._query_error(response)
+        if query_error is None:
+            return None
+        code = query_error[0]
+        for error_schema in operation.error_schemas:
+            trait = error_schema.get_trait(_AWS_QUERY_ERROR)
+            value = trait.document_value if trait is not None else None
+            if isinstance(value, Mapping) and value.get("code") == code:
+                return error_schema.id
+        for error_schema in operation.error_schemas:
+            if error_schema.id.name == code:
+                return error_schema.id
+        return None
+
+    def _query_error_fault(self, response: HTTPResponse) -> _Fault:
+        query_error = self._query_error(response)
+        if query_error is None:
+            return None
+        return _QUERY_ERROR_FAULTS.get(query_error[1])
+
+    def _query_error(self, response: HTTPResponse) -> tuple[str, str] | None:
+        """Parse ``x-amzn-query-error`` as ``(code, type)``, if this service sends it."""
+        if not self._query_compatible or _QUERY_ERROR_HEADER not in response.fields:
+            return None
+        code, _, error_type = (
+            response.fields[_QUERY_ERROR_HEADER].as_string().partition(";")
+        )
+        code = code.strip()
+        if not code:
+            return None
+        return code, error_type.strip()
+
+    @staticmethod
     def _is_event_stream_member(member: Schema | None) -> bool:
         """Whether a ``@streaming`` member is an EVENT stream (union), not a data stream.
 
@@ -595,6 +655,7 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
         fields: list[tuple[str, str]] = [
             ("Smithy-Protocol", self._smithy_protocol),
             ("Accept", accept),
+            *self._query_mode_fields(),
         ]
 
         if self._is_event_stream_member(operation.input_stream_member):
@@ -745,6 +806,9 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
                 if isinstance(raw_type, str):
                     error_id = self._normalize_error_id(raw_type, operation)
 
+        if error_id is None or error_id not in error_registry:
+            error_id = self._resolve_query_error_id(operation, response) or error_id
+
         if error_id is not None and error_id in error_registry:
             error_shape = error_registry.get(error_id)
             if not issubclass(error_shape, ModeledError):
@@ -764,7 +828,8 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
             message += f" - id: {raw_type}"
         return CallError(
             message=message,
-            fault="client" if response.status < 500 else "server",
+            fault=self._query_error_fault(response)
+            or ("client" if response.status < 500 else "server"),
         )
 
     @staticmethod
@@ -801,6 +866,7 @@ class RpcV2CborClientProtocol(_RpcV2ProtocolBase):
         self._event_stream_http = self._resolve_event_stream_http(
             settings.service_schema, self._id
         )
+        self._query_compatible = self._resolve_query_compatible(settings.service_schema)
         self._codec = CBORCodec(default_namespace=settings.namespace)
 
     def _decode_document(self, body: bytes) -> object:
@@ -821,6 +887,7 @@ class RpcV2JsonClientProtocol(_RpcV2ProtocolBase):
         self._event_stream_http = self._resolve_event_stream_http(
             settings.service_schema, self._id
         )
+        self._query_compatible = self._resolve_query_compatible(settings.service_schema)
         # The protocol ignores @jsonName and @timestampFormat: members serialize under
         # their member names and timestamps as epoch-seconds. bigInteger/bigDecimal
         # travel as JSON strings to preserve arbitrary precision.

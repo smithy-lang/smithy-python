@@ -285,6 +285,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
         self._event_stream_http = self._resolve_event_stream_http(
             settings.service_schema, self._id
         )
+        self._query_compatible = self._resolve_query_compatible(settings.service_schema)
         self._codec: Final = JSONCodec(
             document_class=AWSJSONDocument,
             default_namespace=settings.namespace,
@@ -336,6 +337,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
                             "x-amz-target",
                             f"{self._service_name}.{operation.schema.id.name}",
                         ),
+                        *self._query_mode_fields(),
                     ]
                 ),
                 body=self._build_initial_request_body(input, context),
@@ -354,6 +356,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
                         "x-amz-target",
                         f"{self._service_name}.{operation.schema.id.name}",
                     ),
+                    *self._query_mode_fields(),
                 ]
             ),
             body=BytesIO(payload),
@@ -426,6 +429,9 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
             if document_error_id in error_registry:
                 error_id = document_error_id
 
+        if error_id is None or error_id not in error_registry:
+            error_id = self._resolve_query_error_id(operation, response) or error_id
+
         if error_id is not None and error_id in error_registry:
             error_shape = error_registry.get(error_id)
 
@@ -454,7 +460,9 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
 
         is_timeout = response.status == 408
         is_throttle = response.status == 429
-        fault = "client" if response.status < 500 else "server"
+        fault = self._query_error_fault(response) or (
+            "client" if response.status < 500 else "server"
+        )
 
         return CallError(
             message=message,
