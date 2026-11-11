@@ -21,7 +21,11 @@ from smithy_core.traits import Trait
 from smithy_core.types import TypedProperties
 from smithy_core.utils import read_streaming_blob
 from smithy_http import HTTPRequest, HTTPResponse, tuples_to_fields
-from smithy_http.protocols import RpcClientProtocol, RpcV2CborClientProtocol
+from smithy_http.protocols import (
+    RpcClientProtocol,
+    RpcV2CborClientProtocol,
+    RpcV2JsonClientProtocol,
+)
 
 _QUERY_COMPATIBLE = Trait.new(id=ShapeID("aws.protocols#awsQueryCompatible"))
 
@@ -114,6 +118,13 @@ _CASES = [
             (("smithy-protocol", "rpc-v2-cbor"), ("content-type", "application/cbor")),
         ),
         id="rpcv2Cbor",
+    ),
+    pytest.param(
+        _Case(
+            RpcV2JsonClientProtocol,
+            (("smithy-protocol", "rpc-v2-json"), ("content-type", "application/json")),
+        ),
+        id="rpcv2Json",
     ),
 ]
 
