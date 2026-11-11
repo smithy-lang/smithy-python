@@ -61,7 +61,6 @@
     "AsyncSigner": "rex-protocol[async]",
     "EventHeaderEncoder": "rex-class",
     "EventSigner": "rex-class",
-    "EventSignerProtocol": "rex-protocol",
     "HTTPRequest": "rex-protocol",
     "PropertyKey": "rex-class",
     "SigV4Signer": "rex-type_alias",
