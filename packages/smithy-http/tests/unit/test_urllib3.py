@@ -287,6 +287,16 @@ def test_exact_size_read_returns_the_connection(server: LocalHTTPServer) -> None
     assert server.ports[0] == server.ports[1]
 
 
+def test_body_iterates_in_64_kib_chunks(server: LocalHTTPServer) -> None:
+    payload = b"x" * (300 * 1024)
+    server.replies = [Reply(body=payload)]
+    client = Urllib3HTTPClient(_pool=urllib3.PoolManager())
+
+    chunks = list(_local_body(client, server))
+
+    assert [len(chunk) for chunk in chunks] == [64 * 1024] * 4 + [44 * 1024]
+
+
 def test_chunked_body_is_streamed(server: LocalHTTPServer) -> None:
     payload = b"x" * 300_000
     server.replies = [Reply(body=payload, chunked=True, chunk_size=1000)]
