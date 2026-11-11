@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 import pytest
+from aws_sdk_signers import AWSCredentialIdentity, SigV4ChunkSigner
 from smithy_aws_core._aws_chunked import CHUNK_SIZE, AwsChunkedReader
 from smithy_aws_core.aio._aws_chunked import AsyncAwsChunkedReader
 from smithy_core.exceptions import SmithyError
@@ -245,3 +246,77 @@ async def test_async_reader_close_leaves_the_payload_open() -> None:
 
     assert not source.closed
     source.seek(0)
+
+
+class _RecordingSigner:
+    """Signs each chunk and trailer with a counter, recording what it signed."""
+
+    def __init__(self) -> None:
+        self.signed: list[bytes | str] = []
+
+    def sign_chunk(self, data: bytes | bytearray | memoryview, /) -> str:
+        self.signed.append(bytes(data))
+        return f"sig{len(self.signed)}"
+
+    def sign_trailer(self, trailer: str, /) -> str:
+        self.signed.append(trailer)
+        return f"sig{len(self.signed)}"
+
+
+def test_signs_each_chunk_and_the_trailer() -> None:
+    signer = _RecordingSigner()
+
+    encoded = _encode(DATA, chunk_signer=signer)
+
+    trailer = f"x-amz-checksum-crc32:{CRC32}"
+    assert encoded == (
+        b"b;chunk-signature=sig1\r\nHello world\r\n"
+        b"0;chunk-signature=sig2\r\n"
+        + trailer.encode()
+        + b"\r\nx-amz-trailer-signature:sig3\r\n\r\n"
+    )
+    assert signer.signed == [DATA, b"", f"{trailer}\n"]
+
+
+def test_signs_chunks_with_sigv4() -> None:
+    # The S3 example of a payload signed in chunks, whose signatures match the CRT's.
+    signer = SigV4ChunkSigner(
+        seed_signature="4f232c4386841ef735655705268965c44a0e4690baa4adea153f7db9fa80a0a9",
+        identity=AWSCredentialIdentity(
+            access_key_id="AKIAIOSFODNN7EXAMPLE",
+            secret_access_key="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        ),
+        properties={"region": "us-east-1", "service": "s3", "date": "20130524T000000Z"},
+    )
+
+    encoded = _encode(b"a" * 66560, chunk_signer=signer)
+
+    assert encoded.startswith(
+        b"10000;chunk-signature="
+        b"ad80c730a21e5b8d04586a2213dd63b9a0e99e0e2307b0ade35a65485a288648\r\n"
+    )
+    assert (
+        b"\r\n400;chunk-signature="
+        b"0055627c9e194cb4542bae2aa5492e3c1575bbb81b612b7d234b86a503ef5497\r\n"
+    ) in encoded
+    assert (
+        b"\r\n0;chunk-signature="
+        b"b6c6ea8a5354eaf15b3cb7646744f4275b71ea724fed81ceb9323e279d449df9\r\n"
+        b"x-amz-checksum-crc32:"
+    ) in encoded
+    assert encoded.endswith(b"\r\n\r\n")
+    assert b"\r\nx-amz-trailer-signature:" in encoded
+
+
+async def test_async_reader_signs_like_the_sync_reader() -> None:
+    payload = bytes(range(256)) * 600
+    reader = AsyncAwsChunkedReader(
+        _chunks(payload),
+        decoded_length=len(payload),
+        checksum_algorithm="CRC32",
+        chunk_signer=_RecordingSigner(),
+    )
+
+    encoded = b"".join([chunk async for chunk in reader])
+
+    assert encoded == _encode(payload, chunk_signer=_RecordingSigner())

@@ -37,6 +37,7 @@
   },
   "aws_sdk_signers.signers": {
     "EventSigner": "class",
+    "SigV4ChunkSigner": "class",
     "SigV4Signer": "class"
   },
   "smithy_aws_checksums": {

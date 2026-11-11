@@ -19,6 +19,7 @@ from aws_sdk_signers import (
     EventSigner,
     Field,
     Fields,
+    SigV4ChunkSigner,
     SigV4Signer,
     SigV4SigningProperties,
     URI,
@@ -873,3 +874,127 @@ class TestAsyncSigV4Signer:
             path=path, signing_properties=properties
         )
         assert canonical_path == expected
+
+
+class TestSigV4ChunkSigner:
+    # The S3 example for signing a payload in chunks, whose 66560-byte payload of
+    # "a" is sent in a 65536-byte chunk, a 1024-byte chunk and an empty chunk. The
+    # signatures match those of the CRT's chunked signing tests.
+    IDENTITY = AWSCredentialIdentity(
+        access_key_id="AKIAIOSFODNN7EXAMPLE",
+        secret_access_key="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    )
+    PROPERTIES = SigV4SigningProperties(
+        region="us-east-1", service="s3", date="20130524T000000Z"
+    )
+    SEED_SIGNATURE = "4f232c4386841ef735655705268965c44a0e4690baa4adea153f7db9fa80a0a9"
+    CHUNK_SIGNATURES = (
+        "ad80c730a21e5b8d04586a2213dd63b9a0e99e0e2307b0ade35a65485a288648",
+        "0055627c9e194cb4542bae2aa5492e3c1575bbb81b612b7d234b86a503ef5497",
+        "b6c6ea8a5354eaf15b3cb7646744f4275b71ea724fed81ceb9323e279d449df9",
+    )
+    TRAILER_SIGNATURE = (
+        "df5735bd9f3295cd9386572292562fefc93ba94e80a0a1ddcbd652c4e0a75e6c"
+    )
+
+    def signed_request(self) -> AWSRequest:
+        request = AWSRequest(
+            destination=URI(
+                host="s3.amazonaws.com", path="/examplebucket/chunkObject.txt"
+            ),
+            method="PUT",
+            body=None,
+            fields=Fields(
+                [
+                    Field(name="host", values=["s3.amazonaws.com"]),
+                    Field(name="x-amz-storage-class", values=["REDUCED_REDUNDANCY"]),
+                    Field(name="content-encoding", values=["aws-chunked"]),
+                    Field(name="x-amz-decoded-content-length", values=["66560"]),
+                    Field(name="content-length", values=["66824"]),
+                    Field(
+                        name="x-amz-content-sha256",
+                        values=["STREAMING-AWS4-HMAC-SHA256-PAYLOAD"],
+                    ),
+                ]
+            ),
+        )
+        return SigV4Signer().sign(
+            request=request, identity=self.IDENTITY, properties=self.PROPERTIES
+        )
+
+    def sign_payload(self, signer: SigV4ChunkSigner) -> tuple[str, ...]:
+        return tuple(
+            signer.sign_chunk(data)
+            for data in (b"a" * 65536, bytearray(b"a" * 1024), memoryview(b""))
+        )
+
+    def test_chains_chunk_and_trailer_signatures(self) -> None:
+        signer = SigV4ChunkSigner(
+            seed_signature=self.SEED_SIGNATURE,
+            identity=self.IDENTITY,
+            properties=self.PROPERTIES,
+        )
+        assert self.sign_payload(signer) == self.CHUNK_SIGNATURES
+        trailer = "first:1st\nsecond:2nd\nthird:3rd\n"
+        assert signer.sign_trailer(trailer) == self.TRAILER_SIGNATURE
+
+    def test_continues_signature_of_signed_request(self) -> None:
+        request = self.signed_request()
+        assert (
+            request.fields["Authorization"]
+            .as_string()
+            .endswith(f"Signature={self.SEED_SIGNATURE}")
+        )
+        signer = SigV4ChunkSigner.from_signed_request(request, self.IDENTITY)
+        assert self.sign_payload(signer) == self.CHUNK_SIGNATURES
+
+    def test_reads_fields_whatever_their_case(self) -> None:
+        signed = self.signed_request()
+        request = copy.copy(signed)
+        request.fields = Fields(
+            [
+                Field(
+                    name="authorization",
+                    values=[signed.fields["Authorization"].as_string()],
+                ),
+                Field(
+                    name="x-amz-date", values=[signed.fields["X-Amz-Date"].as_string()]
+                ),
+            ]
+        )
+
+        signer = SigV4ChunkSigner.from_signed_request(request, self.IDENTITY)
+
+        assert self.sign_payload(signer) == self.CHUNK_SIGNATURES
+
+    def test_requires_date(self) -> None:
+        with pytest.raises(ValueError, match="date"):
+            SigV4ChunkSigner(
+                seed_signature=self.SEED_SIGNATURE,
+                identity=self.IDENTITY,
+                properties=SigV4SigningProperties(region="us-east-1", service="s3"),
+            )
+
+    @pytest.mark.parametrize(
+        "authorization",
+        [
+            None,
+            "Bearer token",
+            "AWS4-HMAC-SHA256 Credential=AKID/20130524/us-east-1/s3/aws4_request",
+            "AWS4-HMAC-SHA256 Credential=AKID/20200101/us-east-1/s3/aws4_request, "
+            "SignedHeaders=host, Signature=abc",
+            "AWS4-HMAC-SHA256 Credential=AKID/20130524/s3/aws4_request, "
+            "SignedHeaders=host, Signature=abc",
+        ],
+    )
+    def test_rejects_request_not_signed_with_sigv4(
+        self, authorization: str | None
+    ) -> None:
+        request = self.signed_request()
+        del request.fields["Authorization"]
+        if authorization is not None:
+            request.fields.set_field(
+                Field(name="Authorization", values=[authorization])
+            )
+        with pytest.raises(ValueError):
+            SigV4ChunkSigner.from_signed_request(request, self.IDENTITY)

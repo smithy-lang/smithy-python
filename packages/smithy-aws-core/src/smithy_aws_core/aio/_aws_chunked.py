@@ -10,7 +10,7 @@ from typing import Any
 
 from smithy_core.aio.types import AsyncBytesReader
 
-from .._aws_chunked import CHUNK_SIZE, AwsChunkedEncoder
+from .._aws_chunked import CHUNK_SIZE, AwsChunkedEncoder, ChunkSigner
 
 
 class AsyncAwsChunkedReader:
@@ -24,6 +24,8 @@ class AsyncAwsChunkedReader:
         retry.
     :param on_checksum: Called with the calculated digest once the payload has been
         read to the end.
+    :param chunk_signer: Signs each chunk and the trailer, for a payload that's
+        signed as it's sent.
     """
 
     def __init__(
@@ -35,6 +37,7 @@ class AsyncAwsChunkedReader:
         checksum: bytes | None = None,
         on_checksum: Callable[[bytes], None] | None = None,
         chunk_size: int = CHUNK_SIZE,
+        chunk_signer: ChunkSigner | None = None,
     ) -> None:
         self._source = AsyncBytesReader(source)
         self._encoder = AwsChunkedEncoder(
@@ -43,6 +46,7 @@ class AsyncAwsChunkedReader:
             checksum=checksum,
             on_checksum=on_checksum,
             chunk_size=chunk_size,
+            chunk_signer=chunk_signer,
         )
 
     async def __aiter__(self) -> AsyncIterator[bytes]:
