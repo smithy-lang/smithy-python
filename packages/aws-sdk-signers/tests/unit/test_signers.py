@@ -16,10 +16,10 @@ import pytest
 from aws_sdk_signers import (
     AWSCredentialIdentity,
     AWSRequest,
-    EventSigner,
     Field,
     Fields,
     SigV4ChunkSigner,
+    SigV4EventSigner,
     SigV4Signer,
     SigV4SigningProperties,
     URI,
@@ -511,12 +511,12 @@ class UnreadableAsyncStream:
         raise Exception("Read should not have been called!")
 
 
-class TestEventSigner:
+class TestSigV4EventSigner:
     def test_sign_wraps_event_message_payload(
         self,
         aws_identity: AWSCredentialIdentity,
     ) -> None:
-        signer = EventSigner(
+        signer = SigV4EventSigner(
             initial_signature=b"initial-signature",
             event_encoder_cls=EventHeaderEncoder,
         )
@@ -545,7 +545,7 @@ class TestEventSigner:
         self,
         aws_identity: AWSCredentialIdentity,
     ) -> None:
-        signer = EventSigner(
+        signer = SigV4EventSigner(
             initial_signature=b"initial-signature",
             event_encoder_cls=EventHeaderEncoder,
         )
@@ -566,7 +566,7 @@ class TestEventSigner:
         self,
         aws_identity: AWSCredentialIdentity,
     ) -> None:
-        signer = EventSigner(
+        signer = SigV4EventSigner(
             initial_signature=b"initial-signature",
             event_encoder_cls=EventHeaderEncoder,
         )
@@ -593,7 +593,7 @@ class TestEventSigner:
         self,
         aws_identity: AWSCredentialIdentity,
     ) -> None:
-        signer = EventSigner(
+        signer = SigV4EventSigner(
             initial_signature=b"initial-signature",
             event_encoder_cls=EventHeaderEncoder,
         )

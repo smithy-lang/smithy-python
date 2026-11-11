@@ -3,14 +3,14 @@
 import re
 from typing import TYPE_CHECKING, Protocol
 
-from aws_sdk_signers import EventSigner, SigV4SigningProperties
+from aws_sdk_signers import SigV4EventSigner, SigV4SigningProperties
 from aws_sdk_signers.aio.signers import AsyncSigV4Signer
 from smithy_core.aio.interfaces.auth import (
     AsyncAuthScheme,
     AsyncSigner,
 )
 from smithy_core.interfaces import TypedProperties as _TypedProperties
-from smithy_core.interfaces.auth import EventSigner as _EventSignerProtocol
+from smithy_core.interfaces.auth import EventSigner
 from smithy_core.types import PropertyKey
 from smithy_http.interfaces import HTTPRequest
 
@@ -83,14 +83,14 @@ class AsyncSigV4AuthScheme(
 
     def event_signer(
         self, *, request: HTTPRequest
-    ) -> _EventSignerProtocol[AWSCredentialsIdentity, SigV4SigningProperties] | None:
+    ) -> EventSigner[AWSCredentialsIdentity, SigV4SigningProperties] | None:
         if not HAS_EVENT_STREAM:
             return None
 
         auth_value = request.fields["Authorization"].as_string()
         signature: str = re.split("Signature=", auth_value)[-1]
 
-        return EventSigner(
+        return SigV4EventSigner(
             initial_signature=signature.encode("utf-8"),
             event_encoder_cls=EventHeaderEncoder,
         )
