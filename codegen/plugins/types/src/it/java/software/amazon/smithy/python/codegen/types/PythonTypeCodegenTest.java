@@ -77,86 +77,115 @@ public class PythonTypeCodegenTest {
     @Test
     public void testEveryShapeIsGeneratedAlongsideErrors(@TempDir Path tempDir) throws IOException {
         // Error shapes get their own synthetic operation; the shapes next to them must too.
-        List<String> errors = List.of("ErrorA", "ErrorB", "ErrorC", "ErrorD", "ErrorE");
-        List<String> structures = List.of(
-                "ShapeA",
-                "ShapeB",
-                "ShapeC",
-                "ShapeD",
-                "ShapeE",
-                "ShapeF",
-                "ShapeG",
-                "ShapeH");
-        StringBuilder source = new StringBuilder("$version: \"2.0\"\nnamespace example.errors\n");
-        for (String error : errors) {
-            source.append("@error(\"client\")\nstructure ").append(error).append(" { message: String }\n");
-        }
-        for (String structure : structures) {
-            source.append("structure ").append(structure).append(" { value: String }\n");
-        }
-        Model model = Model.assembler()
-                .addUnparsedModel("errors.smithy", source.toString())
-                .assemble()
-                .unwrap();
-        PluginContext context = PluginContext.builder()
-                .fileManifest(FileManifest.create(tempDir))
-                .settings(
-                        ObjectNode.builder()
-                                .withMember("module", "errors_test")
-                                .withMember("moduleVersion", "0.0.1")
-                                .build())
-                .model(model)
-                .build();
+        String models = generate(tempDir, errors() + structures(8), settings());
 
-        new PythonTypeCodegenPlugin().execute(context);
-
-        String models = Files.readString(tempDir.resolve("src/errors_test/models.py"));
-        List<String> missing = new ArrayList<>();
-        errors.stream().filter(name -> !models.contains("class " + name + "(")).forEach(missing::add);
-        structures.stream().filter(name -> !models.contains("class " + name + ":")).forEach(missing::add);
-        assertEquals(List.of(), missing, "shapes missing from models.py");
+        assertEquals(List.of(), missing(models, errorNames(), structureNames(8)), "shapes missing from models.py");
     }
 
     @Test
-    public void testErrorsAreGeneratedAlongsideInputsAndOutputs(@TempDir Path tempDir) throws IOException {
-        // With generateInputsAndOutputs, @input and @output shapes also get synthetic operations,
-        // and must not take the IDs of the errors and structures around them.
-        List<String> errors = List.of("ErrorA", "ErrorB", "ErrorC", "ErrorD", "ErrorE");
-        List<String> structures = List.of("ShapeA", "ShapeB", "ShapeC", "ShapeD");
-        List<String> operations = List.of("OpA", "OpB", "OpC", "OpD", "OpE", "OpF");
-        StringBuilder source = new StringBuilder("$version: \"2.0\"\nnamespace example.io\n");
-        for (String error : errors) {
+    public void testInputsAndOutputsAreGeneratedWhenEnabled(@TempDir Path tempDir) throws IOException {
+        // @input and @output shapes get synthetic operations too, and are generated when asked for.
+        String models = generate(
+                tempDir,
+                errors() + structures(4) + operations(),
+                settings().withMember("generateInputsAndOutputs", true));
+
+        List<String> expected = new ArrayList<>(structureNames(4));
+        expected.addAll(ioNames());
+        assertEquals(List.of(), missing(models, errorNames(), expected), "shapes missing from models.py");
+    }
+
+    @Test
+    public void testInputsAndOutputsAreGeneratedForServiceWhenEnabled(@TempDir Path tempDir) throws IOException {
+        String service =
+                "service IoService { operations: [OpA, OpB, OpC, OpD, OpE, OpF], errors: [ErrorA, ErrorB, ErrorC, ErrorD, ErrorE] }\n";
+        String models = generate(
+                tempDir,
+                errors() + operations() + service,
+                settings().withMember("service", "example.types#IoService")
+                        .withMember("generateInputsAndOutputs", true));
+
+        assertEquals(List.of(), missing(models, errorNames(), ioNames()), "shapes missing from models.py");
+    }
+
+    @Test
+    public void testInputsAndOutputsAreSkippedByDefault(@TempDir Path tempDir) throws IOException {
+        String models = generate(tempDir, errors() + structures(4) + operations(), settings());
+
+        assertEquals(List.of(), missing(models, errorNames(), structureNames(4)), "shapes missing from models.py");
+        List<String> generatedIo = ioNames().stream().filter(name -> models.contains("class " + name + ":")).toList();
+        assertEquals(List.of(), generatedIo, "input/output shapes generated without generateInputsAndOutputs");
+    }
+
+    private static final List<String> OPERATIONS = List.of("OpA", "OpB", "OpC", "OpD", "OpE", "OpF");
+
+    private static List<String> errorNames() {
+        return List.of("ErrorA", "ErrorB", "ErrorC", "ErrorD", "ErrorE");
+    }
+
+    private static List<String> structureNames(int count) {
+        return List.of("ShapeA", "ShapeB", "ShapeC", "ShapeD", "ShapeE", "ShapeF", "ShapeG", "ShapeH")
+                .subList(0, count);
+    }
+
+    private static List<String> ioNames() {
+        List<String> names = new ArrayList<>();
+        for (String operation : OPERATIONS) {
+            names.add(operation + "Input");
+            names.add(operation + "Output");
+        }
+        return names;
+    }
+
+    private static String errors() {
+        StringBuilder source = new StringBuilder();
+        for (String error : errorNames()) {
             source.append("@error(\"client\")\nstructure ").append(error).append(" { message: String }\n");
         }
-        for (String structure : structures) {
+        return source.toString();
+    }
+
+    private static String structures(int count) {
+        StringBuilder source = new StringBuilder();
+        for (String structure : structureNames(count)) {
             source.append("structure ").append(structure).append(" { value: String }\n");
         }
-        for (String operation : operations) {
+        return source.toString();
+    }
+
+    private static String operations() {
+        StringBuilder source = new StringBuilder();
+        for (String operation : OPERATIONS) {
             source.append("operation ")
                     .append(operation)
                     .append(" { input := { value: String }, output := { value: String } }\n");
         }
+        return source.toString();
+    }
+
+    private static ObjectNode.Builder settings() {
+        return ObjectNode.builder().withMember("module", "types_test").withMember("moduleVersion", "0.0.1");
+    }
+
+    private static String generate(Path tempDir, String shapes, ObjectNode.Builder settings) throws IOException {
         Model model = Model.assembler()
-                .addUnparsedModel("io.smithy", source.toString())
+                .addUnparsedModel("test.smithy", "$version: \"2.0\"\nnamespace example.types\n" + shapes)
                 .assemble()
                 .unwrap();
         PluginContext context = PluginContext.builder()
                 .fileManifest(FileManifest.create(tempDir))
-                .settings(
-                        ObjectNode.builder()
-                                .withMember("module", "io_test")
-                                .withMember("moduleVersion", "0.0.1")
-                                .withMember("generateInputsAndOutputs", true)
-                                .build())
+                .settings(settings.build())
                 .model(model)
                 .build();
-
         new PythonTypeCodegenPlugin().execute(context);
+        return Files.readString(tempDir.resolve("src/types_test/models.py"));
+    }
 
-        String models = Files.readString(tempDir.resolve("src/io_test/models.py"));
+    // Errors are declared as `class Name(...)`, other structures as `class Name:`.
+    private static List<String> missing(String models, List<String> errors, List<String> structures) {
         List<String> missing = new ArrayList<>();
         errors.stream().filter(name -> !models.contains("class " + name + "(")).forEach(missing::add);
         structures.stream().filter(name -> !models.contains("class " + name + ":")).forEach(missing::add);
-        assertEquals(List.of(), missing, "shapes missing from models.py");
+        return missing;
     }
 }
