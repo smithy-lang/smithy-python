@@ -2,11 +2,8 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 
-from ...identity.apikey import (
-    APIKeyIdentity,
-    APIKeyIdentityProperties,
-    APIKeyIdentityResolver,
-)
+from ...identity import APIKeyIdentity, APIKeyIdentityProperties
+from ...identity.apikey import APIKeyIdentityResolver
 
 __all__ = [
     "APIKeyIdentity",

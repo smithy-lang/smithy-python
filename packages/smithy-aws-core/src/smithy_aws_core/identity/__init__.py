@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.types import PropertyKey
 
-from .chain import IdentityChainError, UnclaimedSource
+from .chain.exceptions import IdentityChainError, UnclaimedSource
 from .components import (
     AWSCredentialsIdentity,
     AWSCredentialsResolver,

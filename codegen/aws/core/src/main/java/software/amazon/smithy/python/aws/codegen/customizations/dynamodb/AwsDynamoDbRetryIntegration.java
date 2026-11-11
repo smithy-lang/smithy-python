@@ -88,7 +88,7 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                 .name("AdaptiveRetryStrategy")
                 .build();
         final Symbol configSource = Symbol.builder()
-                .namespace("smithy_aws_core.config", ".")
+                .namespace("smithy_aws_core.config.types", ".")
                 .name("ConfigSource")
                 .build();
         final Symbol exponentialBackoffStrategy = Symbol.builder()

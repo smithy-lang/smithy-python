@@ -46,9 +46,9 @@ public final class AwsRuntimeTypes {
             "endpoints",
             "AWS_RULES_EXTENSION");
 
-    // smithy_aws_core.identity
+    // smithy_aws_core.identity.components
     public static final Symbol AWS_CREDENTIALS_IDENTITY = createSymbol(
-            "identity",
+            "identity.components",
             "AWSCredentialsIdentity");
 
     private AwsRuntimeTypes() {}

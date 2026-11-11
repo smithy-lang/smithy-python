@@ -4,7 +4,7 @@ from collections.abc import Awaitable, Callable
 from unittest.mock import AsyncMock
 
 import pytest
-from smithy_aws_core.aio import config as shared_config_module
+from smithy_aws_core.aio.config import context as shared_config_module
 from smithy_aws_core.aio.identity.chain.provider import AsyncChainSetup
 from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.identity.chain.providers.shared_config import (

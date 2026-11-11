@@ -7,7 +7,10 @@ from smithy_core.interfaces.auth import EventSigner
 
 if TYPE_CHECKING:
     from aws_sdk_signers import SigV4SigningProperties
-    from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+    from smithy_aws_core.identity.components import (
+        AWSCredentialsIdentity,
+        AWSIdentityProperties,
+    )
 
 __all__ = ["SigningConfig"]
 
