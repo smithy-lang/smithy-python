@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Mapping
 from dataclasses import dataclass
-from math import isfinite
+from math import ceil, isfinite, sqrt
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
@@ -21,6 +21,10 @@ if TYPE_CHECKING:
 
 __all__ = ["SchemaGenerator", "SchemaPlan"]
 
+_PARTITION_BALANCE_TOLERANCE: Final = 0.25
+_MIN_COMMON_OPERATION_COUNT: Final = 12
+_AFFINITY_PASSES: Final = 3
+
 
 @dataclass(frozen=True, slots=True)
 class SchemaPlan:
@@ -28,6 +32,7 @@ class SchemaPlan:
 
     shapes: tuple[_model.Shape, ...]
     partition_groups: tuple[tuple[_model.Shape, ...], ...]
+    operations_by_group: tuple[frozenset[_model.ShapeId], ...]
     names: Mapping[_model.ShapeId, str]
     strings: Mapping[str, str]
     traits: Mapping[_model.ShapeId, _TraitPlan]
@@ -40,7 +45,13 @@ class SchemaPlan:
         symbols: _symbols.SymbolProvider,
     ) -> SchemaPlan:
         """Plan schema order, filtered traits, names, and interned strings."""
-        emitted, partition_groups = _schema_order(shapes)
+        emitted, recursive_groups = _schema_order(shapes)
+        operations = _partition_operations(model, emitted)
+        partition_groups = _merge_operation_groups(operations, recursive_groups)
+        operations_by_group = _operations_by_group(
+            partition_groups,
+            _operation_closures(emitted, operations),
+        )
         included = _included_traits(model)
         inputs = {
             operation.input for operation in model.iter_shapes(_model.OperationShape)
@@ -71,6 +82,7 @@ class SchemaPlan:
         return cls(
             shapes=emitted,
             partition_groups=partition_groups,
+            operations_by_group=operations_by_group,
             names=MappingProxyType(
                 {shape.id: symbols.schema_name(shape.id) for shape in emitted}
             ),
@@ -173,9 +185,9 @@ def _write_schema_module(
 ) -> None:
     local = frozenset(shape.id for shape in shapes)
     if facade is not None and any(
-        member.target in plan.names and member.target not in local
+        target in plan.names and target not in local
         for shape in shapes
-        for member in shape.members.values()
+        for target in _schema_references(shape)
     ):
         writer.line("from . import ", facade)
         writer.line()
@@ -542,7 +554,7 @@ def _schema_order(
     positions = {shape.id: index for index, shape in enumerate(shapes)}
     graph = {
         shape.id: tuple(
-            member.target for member in shape.members.values() if member.target in by_id
+            target for target in _schema_references(shape) if target in by_id
         )
         for shape in shapes
     }
@@ -610,6 +622,61 @@ def _schema_order(
     return emitted, tuple(groups)
 
 
+def _schema_references(shape: _model.Shape) -> tuple[_model.ShapeId, ...]:
+    references = dict.fromkeys(member.target for member in shape.members.values())
+    if isinstance(shape, _model.OperationShape):
+        references.update(dict.fromkeys((shape.input, shape.output, *shape.errors)))
+    return tuple(references)
+
+
+def _merge_operation_groups(
+    operations: tuple[_model.OperationShape, ...],
+    groups: tuple[tuple[_model.Shape, ...], ...],
+) -> tuple[tuple[_model.Shape, ...], ...]:
+    group_by_shape: dict[_model.ShapeId, int] = {}
+    parents = list(range(len(groups)))
+    for index, group in enumerate(groups):
+        for shape in group:
+            group_by_shape[shape.id] = index
+
+    for operation in operations:
+        _merge_groups(parents, group_by_shape, operation.id, operation.input)
+        _merge_groups(parents, group_by_shape, operation.id, operation.output)
+        _merge_groups(parents, group_by_shape, operation.input, operation.output)
+
+    merged: dict[int, list[_model.Shape]] = {}
+    for index, group in enumerate(groups):
+        merged.setdefault(_find_group(parents, index), []).extend(group)
+    return tuple(tuple(group) for group in merged.values())
+
+
+def _merge_groups(
+    parents: list[int],
+    group_by_shape: Mapping[_model.ShapeId, int],
+    left_shape: _model.ShapeId,
+    right_shape: _model.ShapeId,
+) -> None:
+    left = group_by_shape.get(left_shape)
+    right = group_by_shape.get(right_shape)
+    if left is None or right is None:
+        return
+    left_root = _find_group(parents, left)
+    right_root = _find_group(parents, right)
+    if left_root != right_root:
+        parents[max(left_root, right_root)] = min(left_root, right_root)
+
+
+def _find_group(parents: list[int], group: int) -> int:
+    root = group
+    while parents[root] != root:
+        root = parents[root]
+    while parents[group] != group:
+        next_group = parents[group]
+        parents[group] = root
+        group = next_group
+    return root
+
+
 def _schema_partitions(
     plan: SchemaPlan,
     size: int,
@@ -629,27 +696,262 @@ def _schema_partitions(
         return tuple(partitions)
 
     weights = tuple(_schema_group_weight(plan, group) for group in groups)
-    partitions.clear()
+    layout = _source_balanced_layout(weights, partition_count)
+    layout = _improve_operation_affinity_layout(
+        tuple(map(len, groups)),
+        weights,
+        plan.operations_by_group,
+        layout,
+        size,
+    )
+    return tuple(
+        tuple(shape for group_index in partition for shape in groups[group_index])
+        for partition in layout
+    )
+
+
+def _source_balanced_layout(
+    weights: tuple[int, ...],
+    partition_count: int,
+) -> list[list[int]]:
+    partitions: list[list[int]] = []
     start = 0
     remaining_weight = sum(weights)
     for remaining_parts in range(partition_count, 1, -1):
         target = remaining_weight / remaining_parts
         end = start
         weight = 0
-        last_end = len(groups) - remaining_parts + 1
+        last_end = len(weights) - remaining_parts + 1
         while end < last_end:
             next_weight = weight + weights[end]
             if weight and abs(target - weight) <= abs(target - next_weight):
                 break
             weight = next_weight
             end += 1
-        partitions.append(
-            tuple(shape for group in groups[start:end] for shape in group)
-        )
+        partitions.append(list(range(start, end)))
         start = end
         remaining_weight -= weight
-    partitions.append(tuple(shape for group in groups[start:] for shape in group))
-    return tuple(partitions)
+    partitions.append(list(range(start, len(weights))))
+    return partitions
+
+
+def _operation_closures(
+    shapes: tuple[_model.Shape, ...],
+    operations: tuple[_model.OperationShape, ...],
+) -> dict[_model.ShapeId, frozenset[_model.ShapeId]]:
+    by_id = {shape.id: shape for shape in shapes}
+    closures: dict[_model.ShapeId, frozenset[_model.ShapeId]] = {}
+    for operation in operations:
+        visited: set[_model.ShapeId] = set()
+        pending = [operation.id]
+        while pending:
+            current = pending.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            current_shape = operation if current == operation.id else by_id.get(current)
+            if current_shape is None:
+                continue
+            for target in reversed(_schema_references(current_shape)):
+                if target in by_id and target not in visited:
+                    pending.append(target)
+        closures[operation.id] = frozenset(visited)
+    return closures
+
+
+def _partition_operations(
+    model: _model.Model,
+    shapes: tuple[_model.Shape, ...],
+) -> tuple[_model.OperationShape, ...]:
+    emitted = tuple(
+        shape for shape in shapes if isinstance(shape, _model.OperationShape)
+    )
+    if emitted:
+        return emitted
+    return tuple(model.iter_shapes(_model.OperationShape))
+
+
+def _operations_by_group(
+    groups: tuple[tuple[_model.Shape, ...], ...],
+    operation_closures: Mapping[_model.ShapeId, Collection[_model.ShapeId]],
+) -> tuple[frozenset[_model.ShapeId], ...]:
+    group_by_shape = {
+        shape.id: index for index, group in enumerate(groups) for shape in group
+    }
+    operations_by_group: list[set[_model.ShapeId]] = [set() for _ in groups]
+    for operation, closure in operation_closures.items():
+        for shape_id in closure:
+            if (group := group_by_shape.get(shape_id)) is not None:
+                operations_by_group[group].add(operation)
+    return tuple(frozenset(operations) for operations in operations_by_group)
+
+
+def _improve_operation_affinity_layout(
+    group_shape_counts: tuple[int, ...],
+    group_weights: tuple[int, ...],
+    group_operations: tuple[Collection[_model.ShapeId], ...],
+    initial_layout: list[list[int]],
+    target_size: int,
+) -> list[list[int]]:
+    assigned = [list(partition) for partition in initial_layout]
+    partition_count = len(assigned)
+    shape_counts = [0] * partition_count
+    source_weights = [0] * partition_count
+    operation_counts: list[dict[_model.ShapeId, int]] = []
+    operation_locations: dict[_model.ShapeId, set[int]] = {}
+    for partition, group_indexes in enumerate(assigned):
+        counts: dict[_model.ShapeId, int] = {}
+        for group_index in group_indexes:
+            shape_counts[partition] += group_shape_counts[group_index]
+            source_weights[partition] += group_weights[group_index]
+            for operation in sorted(group_operations[group_index]):
+                counts[operation] = counts.get(operation, 0) + 1
+        operation_counts.append(counts)
+        for operation in counts:
+            operation_locations.setdefault(operation, set()).add(partition)
+
+    ideal_source_weight = sum(group_weights) / partition_count
+    ideal_shape_count = sum(group_shape_counts) / partition_count
+    source_ceilings = [
+        max(
+            ceil(ideal_source_weight * (1 + _PARTITION_BALANCE_TOLERANCE)),
+            source_weight,
+        )
+        for source_weight in source_weights
+    ]
+    source_floors = [
+        min(
+            int(ideal_source_weight * (1 - _PARTITION_BALANCE_TOLERANCE)),
+            source_weight,
+        )
+        for source_weight in source_weights
+    ]
+    shape_ceilings = [
+        max(
+            shape_count,
+            ceil(
+                max(target_size, ideal_shape_count) * (1 + _PARTITION_BALANCE_TOLERANCE)
+            ),
+        )
+        for shape_count in shape_counts
+    ]
+    common_threshold = max(
+        _MIN_COMMON_OPERATION_COUNT,
+        ceil(sqrt(len(operation_locations))),
+    )
+
+    for _ in range(_AFFINITY_PASSES):
+        changed = False
+        for source in range(partition_count):
+            for group_index in tuple(assigned[source]):
+                if len(assigned[source]) == 1:
+                    continue
+                operations = group_operations[group_index]
+                if not 2 <= len(operations) <= common_threshold:
+                    continue
+                candidates = sorted(
+                    {
+                        partition
+                        for operation in sorted(operations)
+                        for partition in operation_locations[operation]
+                        if partition != source
+                    }
+                )
+                best: tuple[int, float, int] | None = None
+                for target in candidates:
+                    new_source_weight = (
+                        source_weights[source] - group_weights[group_index]
+                    )
+                    new_target_weight = (
+                        source_weights[target] + group_weights[group_index]
+                    )
+                    new_target_shapes = (
+                        shape_counts[target] + group_shape_counts[group_index]
+                    )
+                    if (
+                        new_source_weight < source_floors[source]
+                        or new_target_weight > source_ceilings[target]
+                        or new_target_shapes > shape_ceilings[target]
+                    ):
+                        continue
+                    delta = _operation_touch_delta(
+                        operations,
+                        operation_counts[source],
+                        operation_counts[target],
+                    )
+                    if delta >= 0:
+                        continue
+                    balance = abs(new_source_weight - ideal_source_weight) + abs(
+                        new_target_weight - ideal_source_weight
+                    )
+                    candidate = (delta, balance, target)
+                    if best is None or candidate < best:
+                        best = candidate
+                if best is None:
+                    continue
+
+                target = best[2]
+                assigned[source].remove(group_index)
+                assigned[target].append(group_index)
+                shape_counts[source] -= group_shape_counts[group_index]
+                shape_counts[target] += group_shape_counts[group_index]
+                source_weights[source] -= group_weights[group_index]
+                source_weights[target] += group_weights[group_index]
+                _update_operation_counts(
+                    source,
+                    operations,
+                    operation_counts,
+                    operation_locations,
+                    -1,
+                )
+                _update_operation_counts(
+                    target,
+                    operations,
+                    operation_counts,
+                    operation_locations,
+                    1,
+                )
+                changed = True
+        if not changed:
+            break
+
+    return [sorted(partition) for partition in assigned]
+
+
+def _operation_touch_delta(
+    operations: Collection[_model.ShapeId],
+    source_counts: Mapping[_model.ShapeId, int],
+    target_counts: Mapping[_model.ShapeId, int],
+) -> int:
+    delta = 0
+    for operation in sorted(operations):
+        if target_counts.get(operation, 0) == 0:
+            delta += 1
+        if source_counts.get(operation, 0) == 1:
+            delta -= 1
+    return delta
+
+
+def _update_operation_counts(
+    partition: int,
+    operations: Collection[_model.ShapeId],
+    operation_counts: list[dict[_model.ShapeId, int]],
+    operation_locations: Mapping[_model.ShapeId, set[int]],
+    adjustment: int,
+) -> None:
+    counts = operation_counts[partition]
+    for operation in sorted(operations):
+        current = counts.get(operation, 0)
+        updated = current + adjustment
+        if updated == 0:
+            counts.pop(operation)
+        else:
+            counts[operation] = updated
+        locations = operation_locations[operation]
+        if current == 0 and updated == 1:
+            locations.add(partition)
+        elif current == 1 and updated == 0:
+            locations.remove(partition)
 
 
 def _schema_group_weight(plan: SchemaPlan, group: tuple[_model.Shape, ...]) -> int:
@@ -662,7 +964,7 @@ def _schema_group_weight(plan: SchemaPlan, group: tuple[_model.Shape, ...]) -> i
 
 def _schema_shape_weight(plan: SchemaPlan, shape: _model.Shape) -> int:
     """Estimate compact-schema source bytes without rendering shapes twice."""
-    return (
+    weight = (
         60
         + len(shape.id.namespace)
         + 2 * len(shape.id.name)
@@ -675,6 +977,12 @@ def _schema_shape_weight(plan: SchemaPlan, shape: _model.Shape) -> int:
             for member in shape.members.values()
         )
     )
+    if isinstance(shape, _model.OperationShape):
+        weight += sum(
+            len(plan.names.get(target, target.name))
+            for target in (shape.input, shape.output, *shape.errors)
+        )
+    return weight
 
 
 def _source_size(parts: Collection[_SourcePart]) -> int:

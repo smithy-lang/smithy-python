@@ -30,7 +30,7 @@ the smaller partition files.
 class TypesSettings(ArtifactSettings):
     selector: Selector = field(default_factory=Selector.identity)
     generate_inputs_and_outputs: bool = False
-    schema_partition_size: int | None = 250
+    schema_partition_size: int | None = 100
     stub_partition_size: int | None = 250
 ```
 
@@ -38,7 +38,7 @@ The CLI uses these defaults. Python callers may set either target to a positive
 integer or `None`. A value of `None` emits that surface as one file.
 
 Partitioning starts when the number of planned items exceeds its target. A
-package with 250 schema shapes and 250 model declarations keeps the single-file
+package with 100 schema shapes and 250 model declarations keeps the single-file
 layout.
 
 ## Output Layout
@@ -93,21 +93,27 @@ Files under `<package>._private` remain private implementation details.
 
 ## Schema Partitions
 
-`SchemaPlan` provides schema shapes in deterministic emission order and groups
-each recursive strongly connected component. A recursive group stays in one
-partition so its schemas can use direct local references.
+`SchemaPlan` provides schema shapes in deterministic emission order. Recursive
+strongly connected components stay together so their schemas can use direct
+local references. An operation's selected input and output stay together; when
+operation schemas are part of the plan, the operation stays with them too.
 
 The schema partitioner:
 
-1. Packs recursive groups in plan order using the configured shape target.
+1. Packs the indivisible groups in plan order using the configured shape target.
 2. Uses the resulting partition count for the final layout.
 3. Estimates the emitted source size of each group.
 4. Selects contiguous boundaries that balance estimated source size.
+5. Uses operation reachability to move shared groups together when that reduces
+   the number of partitions touched by related operations.
 
 The estimate includes shape and member identifiers, schema references, and
 trait values. It uses plan metadata instead of rendering schemas a second time.
 The target determines the partition count. Final partitions may exceed the
-target to balance source size, and recursive groups remain indivisible.
+target to balance source size, and affinity groups remain indivisible. Affinity
+moves are bounded to keep source size and shape counts within 25% of the initial
+balanced layout. Shapes reached by nearly every operation are ignored so they
+do not pull unrelated operations into the same partition.
 
 The facade maps each schema constant to a partition index. Its `__getattr__`
 imports the selected partition, reads the constant, and caches the result in

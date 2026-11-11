@@ -100,7 +100,7 @@ class ArtifactSettings:
 class TypesSettings(ArtifactSettings):
     selector: Selector = field(default_factory=Selector.identity)
     generate_inputs_and_outputs: bool = False
-    schema_partition_size: int | None = 250
+    schema_partition_size: int | None = 100
     stub_partition_size: int | None = 250
 ```
 

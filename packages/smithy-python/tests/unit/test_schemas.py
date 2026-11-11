@@ -28,6 +28,7 @@ from smithy_python.schemas import (
     _TYPE_INTS,
     _UNIT_INT,
     SchemaGenerator,
+    _improve_operation_affinity_layout,
     _StringStore,
 )
 from smithy_python.selection import select_type_shapes
@@ -37,7 +38,7 @@ from smithy_python.symbols import SymbolProvider
 def _context(
     model_data: Mapping[str, object],
     *,
-    schema_partition_size: int | None = 250,
+    schema_partition_size: int | None = 100,
 ) -> GenerationContext[TypesSettings]:
     model = load_model(model_data)
     selection = select_type_shapes(model, generate_inputs_and_outputs=True)
@@ -308,7 +309,7 @@ def test_schema_generator_partitions_behind_lazy_facade(
     assert cycle_b.members["a"].expect_member_target() is cycle_a
 
 
-@pytest.mark.parametrize(("shape_count", "partition_count"), [(250, 0), (251, 2)])
+@pytest.mark.parametrize(("shape_count", "partition_count"), [(100, 0), (101, 2)])
 def test_schema_partition_threshold(
     tmp_path: Path,
     shape_count: int,
@@ -330,6 +331,92 @@ def test_schema_partition_threshold(
     assert len(tuple(private.glob("schemas_*.py"))) == partition_count
     facade = (private / "schemas.py").read_text()
     assert ("_PARTITIONS" in facade) is bool(partition_count)
+
+
+def test_schema_partition_groups_keep_operation_input_and_output_together() -> None:
+    context = _context(
+        {
+            "smithy": "2.0",
+            "shapes": {
+                "example#Input": {"type": "structure"},
+                "example#Output": {"type": "structure"},
+                "example#Operation": {
+                    "type": "operation",
+                    "input": {"target": "example#Input"},
+                    "output": {"target": "example#Output"},
+                },
+            },
+        }
+    )
+
+    groups = context.plan.schemas.partition_groups
+    operations_by_group = context.plan.schemas.operations_by_group
+
+    group_index = next(
+        index
+        for index, group in enumerate(groups)
+        if {str(shape.id) for shape in group} == {"example#Input", "example#Output"}
+    )
+    assert tuple(map(str, operations_by_group[group_index])) == ("example#Operation",)
+
+
+def test_operation_affinity_moves_shared_shapes_toward_related_operations() -> None:
+    create = ShapeId.from_string("example.affinity#Create")
+    describe = ShapeId.from_string("example.affinity#Describe")
+    unrelated = ShapeId.from_string("example.affinity#Unrelated")
+
+    optimized = _improve_operation_affinity_layout(
+        (1, 1, 1, 1),
+        (5, 5, 10, 5),
+        (
+            frozenset((create,)),
+            frozenset((create, describe)),
+            frozenset((unrelated,)),
+            frozenset((describe,)),
+        ),
+        [[0], [1, 2], [3]],
+        2,
+    )
+
+    assert optimized == [[0, 1], [2], [3]]
+
+
+def test_operation_affinity_is_independent_of_operation_iteration_order() -> None:
+    create = ShapeId.from_string("example.affinity#Create")
+    describe = ShapeId.from_string("example.affinity#Describe")
+    update = ShapeId.from_string("example.affinity#Update")
+    shape_counts = (1, 1, 1, 1, 1)
+    weights = (5, 5, 5, 5, 5)
+    initial_layout = [[0, 1], [2, 3], [4]]
+
+    forward = _improve_operation_affinity_layout(
+        shape_counts,
+        weights,
+        (
+            (create, describe),
+            (update,),
+            (describe, create),
+            (describe, update),
+            (update, create),
+        ),
+        initial_layout,
+        2,
+    )
+    reversed_operations = _improve_operation_affinity_layout(
+        shape_counts,
+        weights,
+        (
+            (describe, create),
+            (update,),
+            (create, describe),
+            (update, describe),
+            (create, update),
+        ),
+        initial_layout,
+        2,
+    )
+
+    assert forward == reversed_operations
 
 
 def test_schema_partitions_balance_emitted_size(tmp_path: Path) -> None:

@@ -44,7 +44,7 @@ class TypesSettings(ArtifactSettings):
 
     selector: _selection.Selector = field(default_factory=_selection.Selector.identity)
     generate_inputs_and_outputs: bool = False
-    schema_partition_size: int | None = 250
+    schema_partition_size: int | None = 100
     stub_partition_size: int | None = 250
 
     def __post_init__(self) -> None:

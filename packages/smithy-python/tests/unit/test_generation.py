@@ -33,7 +33,7 @@ def test_types_settings_default_to_identity_selection() -> None:
     )
     assert settings.selector == Selector.identity()
     assert not settings.generate_inputs_and_outputs
-    assert settings.schema_partition_size == 250
+    assert settings.schema_partition_size == 100
     assert settings.stub_partition_size == 250
 
 
