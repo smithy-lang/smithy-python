@@ -140,7 +140,7 @@ class AsyncHttpEventStreamMixin(
         auth_scheme: AsyncAuthScheme[Any, Any, Any, Any] | None = None,
     ) -> AsyncEventPublisher[Event]:
         _assert_event_stream()
-        signing_config: SigningConfig[Any] | None = None
+        signing_config: SigningConfig[Any, Any, Any, Any] | None = None
         if auth_scheme is not None:
             event_signer = auth_scheme.event_signer(request=request)
             if event_signer is not None:

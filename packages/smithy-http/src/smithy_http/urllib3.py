@@ -183,7 +183,7 @@ class _Urllib3ResponseBody:
     :py:class:`SmithyHTTPError`.
     """
 
-    def __init__(self, response: "urllib3.BaseHTTPResponse") -> None:
+    def __init__(self, response: "urllib3.response.BaseHTTPResponse") -> None:
         """Initialize the body.
 
         :param response: A response sent with ``preload_content=False``.

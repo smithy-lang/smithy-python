@@ -1,7 +1,8 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-# pyright: reportMissingTypeStubs=false
+import functools
 import os
+from importlib.metadata import PackageNotFoundError, version
 from typing import Any
 
 import smithy_core
@@ -123,13 +124,15 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
         return [
             UserAgentComponent(_USERAGENT_SDK_NAME, __version__),
             UserAgentComponent("md", "smithy-core", smithy_core.__version__),
-            *self._crt_version(),
+            *_crt_version(),
         ]
 
-    def _crt_version(self) -> list[UserAgentComponent]:
-        try:
-            import awscrt
 
-            return [UserAgentComponent("md", "awscrt", awscrt.__version__)]
-        except (ImportError, AttributeError):
-            return []
+# Cached since metadata lookups scan installed distributions on every request.
+@functools.cache
+def _crt_version() -> tuple[UserAgentComponent, ...]:
+    # Reading metadata keeps awscrt optional without loading its native module.
+    try:
+        return (UserAgentComponent("md", "awscrt", version("awscrt")),)
+    except PackageNotFoundError:
+        return ()

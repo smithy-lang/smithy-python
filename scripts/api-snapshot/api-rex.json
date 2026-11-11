@@ -622,6 +622,7 @@
     "EventError": "rex-exception",
     "EventMessage": "rex-class",
     "ExpectationNotMetError": "rex-exception",
+    "Identity": "rex-protocol",
     "SerializeableShape": "rex-protocol",
     "ShapeDeserializer": "rex-protocol",
     "SigningConfig": "rex-class",
@@ -649,7 +650,8 @@
     "SmithyError": "rex-exception"
   },
   "smithy_aws_event_stream.signing": {
-    "EventSigner": "rex-protocol"
+    "EventSigner": "rex-protocol",
+    "Identity": "rex-protocol"
   },
   "smithy_cbor": {
     "BytesReader": "rex-protocol",

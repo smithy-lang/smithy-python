@@ -13,7 +13,7 @@ static-analysis: ## Catches defects CI can find without running the code's tests
 	$(MAKE) changelog-check
 	$(MAKE) check-imports
 	$(MAKE) check-conventions
-#	$(MAKE) check-dependencies
+	$(MAKE) check-dependencies
 	$(MAKE) check-packaging
 	$(MAKE) check-import-stability
 	$(MAKE) check-api

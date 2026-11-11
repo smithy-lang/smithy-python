@@ -5,16 +5,16 @@ from copy import copy, deepcopy
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Self, cast
 
-import yarl
-
 if TYPE_CHECKING:
     # pyright doesn't like optional imports. This is reasonable because if we use these
     # in type hints then they'd result in runtime errors.
     # TODO: add integ tests that import these without the dependendency installed
     import aiohttp
+    import yarl
 
 try:
     import aiohttp
+    import yarl
 
     HAS_AIOHTTP = True
 except ImportError:
@@ -170,7 +170,7 @@ class AIOHTTPClient(AsyncHTTPClient):
         await body.seek(position)
         return None if position == end else body
 
-    def _serialize_uri(self, uri: URI) -> yarl.URL:
+    def _serialize_uri(self, uri: URI) -> "yarl.URL":
         """Serialize the URI, preserving the already-encoded query string as-is."""
         return yarl.URL.build(
             scheme=uri.scheme or "",

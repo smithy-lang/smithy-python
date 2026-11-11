@@ -77,6 +77,10 @@ def _declarations() -> Iterator[tuple[Path, str, Requirement]]:
     """Every requirement in every tracked pyproject.toml, with where it is declared."""
     tracked = run(["git", "ls-files", "*pyproject.toml"]).stdout.split()
     for rel in tracked:
+        # TODO: Check codegen-output-py once release tooling bumps smithy-python's
+        # generated runtime pins along with the package versions.
+        if rel.startswith("codegen-output-py/"):
+            continue
         pyproject = ROOT / rel
         data = tomllib.loads(pyproject.read_text())
         project = data.get("project", {})
