@@ -1,9 +1,8 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 
-from ...identity.components import AWSCredentialsIdentity
+from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
 from .chain import AsyncIdentityChain
 from .container import AsyncContainerCredentialsResolver
 from .environment import AsyncEnvironmentCredentialsResolver

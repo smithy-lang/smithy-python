@@ -2,15 +2,17 @@
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Protocol
+from typing import Protocol, TypedDict
 
-from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
 from smithy_core.interfaces.identity import Identity, IdentityResolver
+
+from ..business_metrics import AwsFeatureId
 
 __all__ = [
     "AWSCredentialsIdentity",
     "AWSCredentialsResolver",
     "AWSIdentityConfig",
+    "AWSIdentityProperties",
 ]
 
 
@@ -37,6 +39,15 @@ class AWSCredentialsIdentity(Identity):
 
     account_id: str | None = None
     """The AWS account's ID."""
+
+
+class AWSIdentityProperties(TypedDict, total=False):
+    """Identity properties that may carry explicit AWS credentials."""
+
+    access_key_id: str | None
+    secret_access_key: str | None
+    session_token: str | None
+    _feature_ids: dict[AwsFeatureId, None]
 
 
 type AWSCredentialsResolver = IdentityResolver[

@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Protocol
 
 from aws_sdk_signers import EventSigner, SigV4SigningProperties
 from aws_sdk_signers.aio.signers import AsyncSigV4Signer
-from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
 from smithy_core.aio.interfaces.auth import (
     AsyncAuthScheme,
     AsyncSigner,
@@ -16,7 +15,7 @@ from smithy_core.types import PropertyKey
 from smithy_http.interfaces import HTTPRequest
 
 from ...auth.sigv4 import _SigV4AuthSchemeBase  # pyright: ignore[reportPrivateUsage]
-from ...identity.components import AWSCredentialsIdentity
+from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
 from ..identity import AsyncAWSCredentialsResolver
 
 if TYPE_CHECKING:

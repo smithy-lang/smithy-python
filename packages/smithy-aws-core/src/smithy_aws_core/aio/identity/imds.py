@@ -5,7 +5,6 @@ import json
 import warnings
 from datetime import UTC, datetime
 
-from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.aio.utils import read_streaming_blob_async
@@ -14,7 +13,7 @@ from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.aio.interfaces import AsyncHTTPClient
 
 from ... import __version__
-from ...identity.components import AWSCredentialsIdentity
+from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
 from ...identity.imds import Config, Token
 
 _USER_AGENT_FIELD = Field(

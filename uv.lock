@@ -709,15 +709,11 @@ provides-extras = ["checksums", "eventstream", "json", "xml"]
 name = "smithy-aws-event-stream"
 source = { editable = "packages/smithy-aws-event-stream" }
 dependencies = [
-    { name = "aws-sdk-signers" },
     { name = "smithy-core" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "aws-sdk-signers", editable = "packages/aws-sdk-signers" },
-    { name = "smithy-core", editable = "packages/smithy-core" },
-]
+requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
 name = "smithy-cbor"

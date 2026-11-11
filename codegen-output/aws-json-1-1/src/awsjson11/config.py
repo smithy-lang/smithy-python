@@ -22,7 +22,10 @@ from smithy_aws_core.config.resolvers import (
 )
 from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
-from smithy_aws_core.identity import AWSCredentialsResolver
+from smithy_aws_core.identity.components import (
+    AWSCredentialsIdentity,
+    AWSIdentityProperties,
+)
 from smithy_aws_core.protocols import AwsJson11ClientProtocol
 from smithy_core.endpoints import BddEndpointResolver
 from smithy_core.interfaces import (
@@ -32,6 +35,7 @@ from smithy_core.interfaces import (
     ProtocolSettings,
 )
 from smithy_core.interfaces.auth import AuthScheme, AuthSchemeResolver
+from smithy_core.interfaces.identity import IdentityResolver
 from smithy_core.shapes import ShapeID
 from smithy_http.urllib3 import Urllib3HTTPClient
 
@@ -176,7 +180,9 @@ class JsonProtocolConfig(AwsConfig):
     use_fips_endpoint: bool | None = None
     """Whether to use FIPS-compliant regional endpoint."""
 
-    aws_credentials_identity_resolver: AWSCredentialsResolver | None = None
+    aws_credentials_identity_resolver: (
+        IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties] | None
+    ) = None
     """Resolves AWS Credentials. Required for operations that use Sigv4 Auth."""
 
     region: str | None = None

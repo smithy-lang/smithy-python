@@ -3,7 +3,6 @@
 from typing import Any, Self
 
 from aws_sdk_signers import SigV4Signer, SigV4SigningProperties
-from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces import TypedProperties as _TypedProperties
 from smithy_core.interfaces.auth import AuthScheme, Signer
@@ -15,6 +14,7 @@ from ..identity import AWS_IDENTITY_CONFIG
 from ..identity.components import (
     AWSCredentialsIdentity,
     AWSCredentialsResolver,
+    AWSIdentityProperties,
 )
 from ..traits import SigV4Trait
 

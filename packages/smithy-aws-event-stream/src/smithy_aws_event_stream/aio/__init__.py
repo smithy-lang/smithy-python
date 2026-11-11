@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 import contextlib
 import logging
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Protocol
+from collections.abc import Callable, Mapping
+from typing import Any
 
 from smithy_core.aio.interfaces import AsyncByteStream, AsyncWriter
 from smithy_core.aio.interfaces.eventstream import (
@@ -16,6 +16,7 @@ from smithy_core.aio.utils import close_async
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.exceptions import ExpectationNotMetError
+from smithy_core.interfaces.identity import Identity
 from smithy_core.serializers import SerializeableShape
 
 from .._private.deserializers import EventDeserializer as _EventDeserializer
@@ -24,20 +25,9 @@ from ..events import Event, EventMessage
 from ..exceptions import EventError
 from ..signing import SigningConfig
 
-if TYPE_CHECKING:
-    from aws_sdk_signers.interfaces.identity import (
-        AWSCredentialsIdentity,
-        AWSIdentityProperties,
-    )
-    from smithy_core.interfaces.identity import Identity
-
 __all__ = ["AsyncAWSEventPublisher", "AsyncAWSEventReceiver", "decode_event_async"]
 
 logger: logging.Logger = logging.getLogger(__name__)
-
-type _AsyncSigningConfig = SigningConfig[
-    AsyncIdentityResolver[_ResolvedCredentials, AWSIdentityProperties]
-]
 
 
 async def decode_event_async(source: AsyncByteStream) -> Event | None:
@@ -55,16 +45,18 @@ async def decode_event_async(source: AsyncByteStream) -> Event | None:
 class AsyncAWSEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
     """Publishes events to an AWS event stream."""
 
-    def __init__(
+    def __init__[I: Identity, IP: Mapping[str, Any], SP: Mapping[str, Any]](
         self,
         payload_codec: Codec,
         async_writer: AsyncWriter,
-        signing_config: "_AsyncSigningConfig | None" = None,
+        signing_config: "_AsyncSigningConfig[I, IP, SP] | None" = None,
         is_client_mode: bool = True,
         initial_message: EventMessage | None = None,
     ):
         self._writer = async_writer
-        self._signing_config = signing_config
+        # The publisher only hands the resolved identity to the signer, so it stores
+        # whichever consistent identity and property types the caller chose.
+        self._signing_config: _AsyncSigningConfig[Any, Any, Any] | None = signing_config
         self._serializer = _EventSerializer(
             payload_codec=payload_codec, is_client_mode=is_client_mode
         )
@@ -214,6 +206,6 @@ class AsyncAWSEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
         return self._closed
 
 
-if TYPE_CHECKING:
-    # Resolvers must return a smithy-core Identity that the signer also accepts.
-    class _ResolvedCredentials(Identity, AWSCredentialsIdentity, Protocol): ...
+type _AsyncSigningConfig[I: Identity, IP: Mapping[str, Any], SP: Mapping[str, Any]] = (
+    SigningConfig[I, IP, SP, AsyncIdentityResolver[I, IP]]
+)

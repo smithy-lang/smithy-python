@@ -5,13 +5,12 @@ import subprocess
 from datetime import UTC, datetime
 from typing import TypeGuard, cast
 
-from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import IdentityResolver
 
 from .._private.identity_features import record_features
 from ..business_metrics import AwsFeatureId
-from .components import AWSCredentialsIdentity
+from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
 __all__ = ["ProcessCredentialsResolver"]
 

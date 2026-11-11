@@ -1,28 +1,31 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import Any
 
 from smithy_core.interfaces.auth import EventSigner
-
-if TYPE_CHECKING:
-    from aws_sdk_signers import SigV4SigningProperties
-    from aws_sdk_signers.interfaces.identity import (
-        AWSCredentialsIdentity,
-        AWSIdentityProperties,
-    )
+from smithy_core.interfaces.identity import Identity
 
 __all__ = ["SigningConfig"]
 
 
 @dataclass
-class SigningConfig[R]:
+class SigningConfig[
+    I: Identity,
+    IP: Mapping[str, Any],
+    SP: Mapping[str, Any],
+    R,
+]:
     """What an event publisher needs to sign the events it sends.
 
+    :param I: The identity type the resolver returns and the signer accepts.
+    :param IP: The properties passed to the identity resolver.
+    :param SP: The properties passed to the signer.
     :param R: The identity resolver type, sync or async.
     """
 
-    signer: "EventSigner[AWSCredentialsIdentity, SigV4SigningProperties]"
-    signing_properties: "SigV4SigningProperties"
+    signer: EventSigner[I, SP]
+    signing_properties: SP
     identity_resolver: R
-    identity_properties: "AWSIdentityProperties"
+    identity_properties: IP

@@ -29,7 +29,6 @@ classifiers = [
 ]
 dependencies = [
     "smithy-core~=0.10.0",
-    "aws-sdk-signers~=0.5.0",
 ]
 
 [project.urls]

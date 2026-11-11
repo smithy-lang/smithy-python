@@ -29,7 +29,6 @@
   },
   "aws_sdk_signers.interfaces.identity": {
     "AWSCredentialsIdentity": "protocol",
-    "AWSIdentityProperties": "class",
     "Identity": "protocol"
   },
   "aws_sdk_signers.interfaces.io": {
@@ -251,7 +250,8 @@
   },
   "smithy_aws_core.identity.components": {
     "AWSCredentialsIdentity": "class",
-    "AWSIdentityConfig": "protocol"
+    "AWSIdentityConfig": "protocol",
+    "AWSIdentityProperties": "class"
   },
   "smithy_aws_core.identity.container": {
     "ContainerCredentialsConfig": "class"

@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Typed SigningConfig against aws_sdk_signers: signer is EventSigner[AWSCredentialsIdentity, SigV4SigningProperties], and identity_properties is aws_sdk_signers.interfaces.identity.AWSIdentityProperties. Added a dependency on aws-sdk-signers."
-}

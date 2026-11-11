@@ -326,6 +326,7 @@
     "AWSCredentialsIdentity": "rex-class",
     "AWSCredentialsResolver": "rex-type_alias",
     "AWSIdentityConfig": "rex-protocol",
+    "AWSIdentityProperties": "rex-class",
     "EnvironmentCredentialsResolver": "rex-class",
     "IdentityChainError": "rex-exception",
     "ProcessCredentialsResolver": "rex-class",
@@ -440,7 +441,7 @@
   },
   "smithy_aws_core.identity.components": {
     "AWSCredentialsResolver": "rex-type_alias",
-    "AWSIdentityProperties": "rex-class",
+    "AwsFeatureId": "rex-class",
     "Identity": "rex-protocol",
     "IdentityResolver": "rex-protocol"
   },
@@ -621,6 +622,7 @@
     "EventError": "rex-exception",
     "EventMessage": "rex-class",
     "ExpectationNotMetError": "rex-exception",
+    "Identity": "rex-protocol",
     "SerializeableShape": "rex-protocol",
     "ShapeDeserializer": "rex-protocol",
     "SigningConfig": "rex-class",
@@ -648,7 +650,8 @@
     "SmithyError": "rex-exception"
   },
   "smithy_aws_event_stream.signing": {
-    "EventSigner": "rex-protocol"
+    "EventSigner": "rex-protocol",
+    "Identity": "rex-protocol"
   },
   "smithy_cbor": {
     "BytesReader": "rex-protocol",

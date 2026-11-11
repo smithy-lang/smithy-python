@@ -7,12 +7,12 @@ from typing import Any, assert_type
 import pytest
 import smithy_aws_core.aio.identity.chain as chain_module
 import smithy_aws_core.identity.chain.resolver as resolver_module
-from aws_sdk_signers.interfaces.identity import AWSIdentityProperties
 from smithy_aws_core.aio.identity import AsyncIdentityChain
 from smithy_aws_core.aio.identity.chain.provider import AsyncNamedResolver
 from smithy_aws_core.business_metrics import AwsFeatureId
 from smithy_aws_core.identity import (
     AWSCredentialsIdentity,
+    AWSIdentityProperties,
 )
 from smithy_aws_core.identity.chain import (
     IdentityChainConfigurationError,
