@@ -1,4 +1,4 @@
 {
   "type": "bugfix",
-  "description": "Raised IdentityChainConfigurationError instead of RuntimeError for invalid identity chain setup."
+  "description": "Raised IdentityChainConfigurationError instead of RuntimeError for invalid identity chain setup. IdentityChainConfigurationError now also subclasses RuntimeError."
 }
