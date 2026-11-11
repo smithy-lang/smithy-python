@@ -8,7 +8,7 @@ from dataclasses import replace
 from inspect import isawaitable, iscoroutinefunction
 from typing import Any, Protocol
 
-from aws_sdk_signers.signers import ChunkSigner
+from aws_sdk_signers.signers import SigV4ChunkSigner
 from smithy_core._model_naming import member_field_name
 from smithy_core.auth import RESOLVED_IDENTITY
 from smithy_core.client import AUTH_SCHEME, OPERATION
@@ -28,7 +28,7 @@ from smithy_http import Field, HTTPResponse
 from smithy_http.interfaces import HTTPRequest
 from smithy_http.interfaces import HTTPResponse as HTTPResponseInterface
 
-from .._aws_chunked import AwsChunkedReader
+from .._aws_chunked import AwsChunkedReader, ChunkSigner
 from .._private.checksums import (
     DEFAULT_ALGORITHM,
     SUPPORTED_ALGORITHMS,
@@ -260,7 +260,7 @@ class FlexibleChecksumsInterceptor(
             # sent, continuing the signature of its headers.
             identity = properties[RESOLVED_IDENTITY]
             assert isinstance(identity, AWSCredentialsIdentity)  # noqa: S101
-            chunk_signer = ChunkSigner.from_signed_request(request, identity)
+            chunk_signer = SigV4ChunkSigner.from_signed_request(request, identity)
         # Each attempt encodes the payload again, after the client rewound it.
         request = copy(request)
         # Exactly the length the fields declare is sent, so the body always matches

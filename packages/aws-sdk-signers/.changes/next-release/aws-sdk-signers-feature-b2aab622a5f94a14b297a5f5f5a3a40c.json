@@ -1,4 +1,4 @@
 {
   "type": "feature",
-  "description": "Added `ChunkSigner`, which signs the chunks and trailer of an `aws-chunked` payload as it is sent, continuing the SigV4 signature of a request signed with the `STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER` payload hash. `ChunkSigner.from_signed_request` creates one from a signed request."
+  "description": "Added `SigV4ChunkSigner`, which signs the chunks and trailer of an `aws-chunked` payload as it is sent, continuing the SigV4 signature of a request signed with the `STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER` payload hash. `SigV4ChunkSigner.from_signed_request` creates one from a signed request."
 }

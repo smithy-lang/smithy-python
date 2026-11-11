@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, Mock
 import pytest
 from aws_sdk_signers import (
     AWSCredentialIdentity,
-    ChunkSigner,
+    SigV4ChunkSigner,
     SigV4Signer,
     SigV4SigningProperties,
 )
@@ -785,7 +785,7 @@ def _signed_and_transmitted(
 
 def _signed_encoding(request: Any, data: bytes, checksum: str) -> bytes:
     """Encode ``data`` as a request signed as it's sent should be."""
-    signer = ChunkSigner.from_signed_request(request, _IDENTITY)
+    signer = SigV4ChunkSigner.from_signed_request(request, _IDENTITY)
     trailer = f"x-amz-checksum-crc64nvme:{checksum}"
     return (
         f"{len(data):x};chunk-signature={signer.sign_chunk(data)}\r\n".encode()

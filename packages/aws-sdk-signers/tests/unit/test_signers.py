@@ -16,10 +16,10 @@ import pytest
 from aws_sdk_signers import (
     AWSCredentialIdentity,
     AWSRequest,
-    ChunkSigner,
     EventSigner,
     Field,
     Fields,
+    SigV4ChunkSigner,
     SigV4Signer,
     SigV4SigningProperties,
     URI,
@@ -876,7 +876,7 @@ class TestAsyncSigV4Signer:
         assert canonical_path == expected
 
 
-class TestChunkSigner:
+class TestSigV4ChunkSigner:
     # The S3 example for signing a payload in chunks, whose 66560-byte payload of
     # "a" is sent in a 65536-byte chunk, a 1024-byte chunk and an empty chunk. The
     # signatures match those of the CRT's chunked signing tests.
@@ -922,14 +922,14 @@ class TestChunkSigner:
             request=request, identity=self.IDENTITY, properties=self.PROPERTIES
         )
 
-    def sign_payload(self, signer: ChunkSigner) -> tuple[str, ...]:
+    def sign_payload(self, signer: SigV4ChunkSigner) -> tuple[str, ...]:
         return tuple(
             signer.sign_chunk(data)
             for data in (b"a" * 65536, bytearray(b"a" * 1024), memoryview(b""))
         )
 
     def test_chains_chunk_and_trailer_signatures(self) -> None:
-        signer = ChunkSigner(
+        signer = SigV4ChunkSigner(
             seed_signature=self.SEED_SIGNATURE,
             identity=self.IDENTITY,
             properties=self.PROPERTIES,
@@ -945,12 +945,31 @@ class TestChunkSigner:
             .as_string()
             .endswith(f"Signature={self.SEED_SIGNATURE}")
         )
-        signer = ChunkSigner.from_signed_request(request, self.IDENTITY)
+        signer = SigV4ChunkSigner.from_signed_request(request, self.IDENTITY)
+        assert self.sign_payload(signer) == self.CHUNK_SIGNATURES
+
+    def test_reads_fields_whatever_their_case(self) -> None:
+        signed = self.signed_request()
+        request = copy.copy(signed)
+        request.fields = Fields(
+            [
+                Field(
+                    name="authorization",
+                    values=[signed.fields["Authorization"].as_string()],
+                ),
+                Field(
+                    name="x-amz-date", values=[signed.fields["X-Amz-Date"].as_string()]
+                ),
+            ]
+        )
+
+        signer = SigV4ChunkSigner.from_signed_request(request, self.IDENTITY)
+
         assert self.sign_payload(signer) == self.CHUNK_SIGNATURES
 
     def test_requires_date(self) -> None:
         with pytest.raises(ValueError, match="date"):
-            ChunkSigner(
+            SigV4ChunkSigner(
                 seed_signature=self.SEED_SIGNATURE,
                 identity=self.IDENTITY,
                 properties=SigV4SigningProperties(region="us-east-1", service="s3"),
@@ -978,4 +997,4 @@ class TestChunkSigner:
                 Field(name="Authorization", values=[authorization])
             )
         with pytest.raises(ValueError):
-            ChunkSigner.from_signed_request(request, self.IDENTITY)
+            SigV4ChunkSigner.from_signed_request(request, self.IDENTITY)

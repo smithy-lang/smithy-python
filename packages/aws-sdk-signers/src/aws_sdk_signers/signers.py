@@ -36,8 +36,8 @@ __all__ = (
     "HEADERS_EXCLUDED_FROM_SIGNING",
     "SIGV4_TIMESTAMP_FORMAT",
     "UNSIGNED_PAYLOAD",
-    "ChunkSigner",
     "EventSigner",
+    "SigV4ChunkSigner",
     "SigV4Signer",
     "SigV4SigningProperties",
 )
@@ -90,7 +90,7 @@ class SigV4Signer(SigV4SignerBase):
         return hash_sync_body(request)
 
 
-class ChunkSigner:
+class SigV4ChunkSigner:
     """Signs the chunks and trailer of an ``aws-chunked`` payload as it's sent.
 
     Each signature chains from the one before it, starting from the signature of the
@@ -123,7 +123,7 @@ class ChunkSigner:
     @classmethod
     def from_signed_request(
         cls, request: "_SignedRequest", identity: _AWSCredentialsIdentity
-    ) -> "ChunkSigner":
+    ) -> "SigV4ChunkSigner":
         """Create a signer that continues the signature of a signed request.
 
         The seed signature and credential scope are read from the request's

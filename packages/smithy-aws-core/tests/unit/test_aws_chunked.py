@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 import pytest
-from aws_sdk_signers import AWSCredentialIdentity, ChunkSigner
+from aws_sdk_signers import AWSCredentialIdentity, SigV4ChunkSigner
 from smithy_aws_core._aws_chunked import CHUNK_SIZE, AwsChunkedReader
 from smithy_aws_core.aio._aws_chunked import AsyncAwsChunkedReader
 from smithy_core.exceptions import SmithyError
@@ -280,7 +280,7 @@ def test_signs_each_chunk_and_the_trailer() -> None:
 
 def test_signs_chunks_with_sigv4() -> None:
     # The S3 example of a payload signed in chunks, whose signatures match the CRT's.
-    signer = ChunkSigner(
+    signer = SigV4ChunkSigner(
         seed_signature="4f232c4386841ef735655705268965c44a0e4690baa4adea153f7db9fa80a0a9",
         identity=AWSCredentialIdentity(
             access_key_id="AKIAIOSFODNN7EXAMPLE",
