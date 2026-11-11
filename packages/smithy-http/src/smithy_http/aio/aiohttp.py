@@ -196,9 +196,10 @@ class AIOHTTPClient(AsyncHTTPClient):
 def _upload_data(source: Any, body: AsyncBytesReader | None) -> Any:
     """What aiohttp uploads for a request body, which it iterates.
 
-    AsyncBytesReader iterates in 1 KiB chunks by default, so a reader is read in
-    larger ones. An async iterable that isn't a reader is passed through, so each
-    item is sent as soon as it's produced rather than held until a chunk fills.
+    A reader is read in 128 KiB chunks, which uploads faster than the 64 KiB that
+    AsyncBytesReader iterates in by default. An async iterable that isn't a reader
+    is passed through, so each item is sent as soon as it's produced rather than
+    held until a chunk fills.
     """
     if body is None:
         return None
