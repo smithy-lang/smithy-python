@@ -15,7 +15,7 @@ static-analysis: ## Catches defects CI can find without running the code's tests
 #	$(MAKE) check-conventions
 #	$(MAKE) check-api
 #	$(MAKE) check-dependencies
-#	$(MAKE) check-packaging
+	$(MAKE) check-packaging
 	$(MAKE) check-import-stability
 	$(MAKE) import-cycles # TODO: remove when check-imports passes
 	$(MAKE) dynamic-imports # TODO: remove when check-imports passes
