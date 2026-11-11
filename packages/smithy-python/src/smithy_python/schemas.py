@@ -752,9 +752,11 @@ def _operation_closures(
             current_shape = operation if current == operation.id else by_id.get(current)
             if current_shape is None:
                 continue
-            for target in reversed(_schema_references(current_shape)):
-                if target in by_id and target not in visited:
-                    pending.append(target)
+            pending.extend(
+                target
+                for target in reversed(_schema_references(current_shape))
+                if target in by_id and target not in visited
+            )
         closures[operation.id] = frozenset(visited)
     return closures
 
