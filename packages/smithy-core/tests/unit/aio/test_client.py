@@ -675,30 +675,37 @@ def _token_call(
     )
 
 
-async def test_unset_idempotency_token_is_generated_once(
+async def test_unset_idempotency_token_is_generated_once_on_a_copy(
     token_generator: _CountingGenerator,
 ) -> None:
     harness = pipeline_harness(NonDuplexTransport())
+    input = TokenInput(message="hi")
 
-    await harness.pipeline(_token_call(TokenInput(message="hi")))
+    await harness.pipeline(_token_call(input))
 
     assert token_generator.calls == 1
     [serialized] = harness.protocol.serialized_inputs
+    assert serialized is not input
     assert serialized.client_token == "first-token"
     assert serialized.message == "hi"
+    # The caller's own input is never mutated.
+    assert input.client_token is None
 
 
+# Only an unset (None) token is filled; "" is an explicit caller value.
+@pytest.mark.parametrize("token", ["caller-token", ""], ids=["caller-token", "empty"])
 async def test_set_idempotency_token_is_sent_unchanged(
-    token_generator: _CountingGenerator,
+    token_generator: _CountingGenerator, token: str
 ) -> None:
     harness = pipeline_harness(NonDuplexTransport())
-    input = TokenInput(client_token="caller-token")
+    input = TokenInput(client_token=token)
 
     await harness.pipeline(_token_call(input))
 
     assert token_generator.calls == 0
-    assert harness.protocol.serialized_inputs[0] is input
-    assert input.client_token == "caller-token"
+    [serialized] = harness.protocol.serialized_inputs
+    assert serialized is input
+    assert serialized.client_token == token
 
 
 class _FailingTwiceTransport(BodyRecordingTransport):
@@ -738,21 +745,6 @@ async def test_idempotency_token_is_the_same_on_every_retry(
     assert token_generator.calls == 1
 
 
-async def test_empty_string_idempotency_token_is_sent_unchanged(
-    token_generator: _CountingGenerator,
-) -> None:
-    harness = pipeline_harness(NonDuplexTransport())
-    input = TokenInput(client_token="")
-
-    await harness.pipeline(_token_call(input))
-
-    # Only an unset (None) token is filled; "" is an explicit caller value.
-    assert token_generator.calls == 0
-    [serialized] = harness.protocol.serialized_inputs
-    assert serialized is input
-    assert serialized.client_token == ""
-
-
 _STRING_SCHEMA = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
 
 _PASCAL_TOKEN_OPERATION: APIOperation[Any, Any] = APIOperation(
@@ -787,20 +779,6 @@ async def test_pascal_case_token_member_is_filled_on_its_python_field(
 
     # The model member "ClientToken" maps to the Python field "client_token".
     [serialized] = harness.protocol.serialized_inputs
-    assert serialized.client_token == "first-token"
-
-
-async def test_caller_input_is_not_mutated_by_token_fill(
-    token_generator: _CountingGenerator,
-) -> None:
-    harness = pipeline_harness(NonDuplexTransport())
-    input = TokenInput(message="hi")
-
-    await harness.pipeline(_token_call(input))
-
-    assert input.client_token is None
-    [serialized] = harness.protocol.serialized_inputs
-    assert serialized is not input
     assert serialized.client_token == "first-token"
 
 
@@ -890,18 +868,6 @@ class _NonDataclassTokenInput:
         pass
 
 
-async def test_non_dataclass_input_is_passed_through(
-    token_generator: _CountingGenerator,
-) -> None:
-    harness = pipeline_harness(NonDuplexTransport())
-    input = _NonDataclassTokenInput()
-
-    await harness.pipeline(_token_call(input))
-
-    assert token_generator.calls == 0
-    assert harness.protocol.serialized_inputs[0] is input
-
-
 @dataclass(kw_only=True)
 class _PostInitTokenInput:
     client_token: str | None = None
@@ -960,11 +926,18 @@ class _MisnamedTokenInput:
         pass
 
 
-async def test_input_without_the_derived_field_is_passed_through(
-    token_generator: _CountingGenerator, caplog: pytest.LogCaptureFixture
+@pytest.mark.parametrize(
+    "input_type",
+    [_NonDataclassTokenInput, _MisnamedTokenInput],
+    ids=["non-dataclass", "misnamed-field"],
+)
+async def test_input_that_cannot_be_filled_is_passed_through_with_a_warning(
+    token_generator: _CountingGenerator,
+    caplog: pytest.LogCaptureFixture,
+    input_type: type[Any],
 ) -> None:
     harness = pipeline_harness(NonDuplexTransport())
-    input = _MisnamedTokenInput()
+    input = input_type()
 
     with caplog.at_level(logging.WARNING):
         await harness.pipeline(_token_call(input))
