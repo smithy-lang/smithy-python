@@ -90,19 +90,6 @@ class SigV4Signer(SigV4SignerBase):
         return hash_sync_body(request)
 
 
-class _SignedField(Protocol):
-    def as_string(self) -> str: ...
-
-
-class _SignedFields(Protocol):
-    def __getitem__(self, name: str, /) -> _SignedField: ...
-
-
-class _SignedRequest(Protocol):
-    @property
-    def fields(self) -> _SignedFields: ...
-
-
 class ChunkSigner:
     """Signs the chunks and trailer of an ``aws-chunked`` payload as it's sent.
 
@@ -135,7 +122,7 @@ class ChunkSigner:
 
     @classmethod
     def from_signed_request(
-        cls, request: _SignedRequest, identity: _AWSCredentialsIdentity
+        cls, request: "_SignedRequest", identity: _AWSCredentialsIdentity
     ) -> "ChunkSigner":
         """Create a signer that continues the signature of a signed request.
 
@@ -316,3 +303,16 @@ class EventSigner:
                 self._is_finalized = True
 
         return event
+
+
+class _SignedField(Protocol):
+    def as_string(self) -> str: ...
+
+
+class _SignedFields(Protocol):
+    def __getitem__(self, name: str, /) -> _SignedField: ...
+
+
+class _SignedRequest(Protocol):
+    @property
+    def fields(self) -> _SignedFields: ...

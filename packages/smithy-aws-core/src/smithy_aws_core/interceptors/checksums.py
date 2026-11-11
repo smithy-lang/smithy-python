@@ -8,7 +8,7 @@ from dataclasses import replace
 from inspect import isawaitable, iscoroutinefunction
 from typing import Any, Protocol
 
-from aws_sdk_signers import ChunkSigner
+from aws_sdk_signers.signers import ChunkSigner
 from smithy_core._model_naming import member_field_name
 from smithy_core.auth import RESOLVED_IDENTITY
 from smithy_core.client import AUTH_SCHEME, OPERATION
@@ -42,7 +42,7 @@ from .._private.checksums import (
 )
 from ..business_metrics import AwsFeatureId, register_feature_id
 from ..checksums import ChecksumStream, UnsupportedChecksumAlgorithmError
-from ..identity import AWSCredentialsIdentity
+from ..identity.components import AWSCredentialsIdentity
 from ..traits import HTTPChecksumTrait, SigV4Trait
 
 __all__ = [
