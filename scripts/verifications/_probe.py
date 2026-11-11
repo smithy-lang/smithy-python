@@ -86,17 +86,38 @@ def main() -> None:
     signals_before = {s: signal.getsignal(s) for s in _WATCHED_SIGNALS}
     modules_before = set(sys.modules)
 
+    original_filterwarnings = warnings.filterwarnings
+    original_simplefilter = warnings.simplefilter
+    # A dependency's own filters are its business, not an effect of our import.
+    third_party_filters: list[Any] = []
+
+    def attributed(original: Any) -> Any:
+        def install(*args: Any, **kwargs: Any) -> None:
+            before = list(warnings.filters)
+            where = blame()
+            original(*args, **kwargs)
+            if where is None:
+                third_party_filters.extend(
+                    f for f in warnings.filters if f not in before
+                )
+
+        return install
+
     error: dict[str, Any] | None = None
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
         filters_before = list(warnings.filters)
+        warnings.filterwarnings = attributed(original_filterwarnings)
+        warnings.simplefilter = attributed(original_simplefilter)
         start = time.perf_counter()
         try:
             importlib.import_module(module)
         except BaseException as e:
             error = _describe(e)
         elapsed = time.perf_counter() - start
-        filters_after = list(warnings.filters)
+        warnings.filterwarnings = original_filterwarnings
+        warnings.simplefilter = original_simplefilter
+        filters_after = [f for f in warnings.filters if f not in third_party_filters]
 
     environ_type.__getitem__ = original_getitem  # type: ignore[method-assign]
     environ_type.__setitem__ = original_setitem  # type: ignore[method-assign]

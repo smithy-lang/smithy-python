@@ -15,7 +15,7 @@ from .utils import close_async, seek_async
 __all__ = ["AsyncBytesProvider", "AsyncBytesReader", "AsyncSeekableBytesReader"]
 
 # The default chunk size for iterating streams.
-_DEFAULT_CHUNK_SIZE = 1024
+_DEFAULT_CHUNK_SIZE = 64 * 1024
 
 
 # asyncio has a StreamReader class which you might think would be appropriate here,
@@ -34,7 +34,7 @@ class AsyncBytesReader:
 
         :param data: The source data to read from.
         """
-        self._remainder = b""
+        self._remainder: bytes | memoryview = b""
 
         # pylint: disable-next=isinstance-second-argument-not-valid-type
         if isinstance(data, bytes | bytearray):
@@ -146,11 +146,11 @@ class AsyncBytesReader:
         # This takes the iterator as an arg here just to avoid mypy complaints, since
         # we know it's an iterator where this is called.
         # Items are joined once, since adding each to the result would copy it again
-        # for every item.
-        parts = [self._remainder]
+        # for every item. What's left of the last item is kept as a view of it, so
+        # each read copies only the bytes it returns, however small the reads are.
+        parts: list[bytes | memoryview] = [self._remainder]
         if size < 0:
-            async for element in iterator:
-                parts.append(element)
+            parts.extend([element async for element in iterator])
             self._remainder = b""
             return b"".join(parts)
 
@@ -162,9 +162,11 @@ class AsyncBytesReader:
                 if total >= size:
                     break
 
-        result = b"".join(parts)
-        self._remainder = result[size:]
-        return result[:size]
+        last = memoryview(parts[-1])
+        keep = len(last) - max(total - size, 0)
+        parts[-1] = last[:keep]
+        self._remainder = last[keep:]
+        return b"".join(parts)
 
 
 # Better named BufferedAsyncBytesReader

@@ -25,7 +25,7 @@ __all__ = [
     "UnsupportedChecksumAlgorithmError",
 ]
 
-_DEFAULT_CHUNK_SIZE = 1024
+_DEFAULT_CHUNK_SIZE = 64 * 1024
 
 
 @dataclass(kw_only=True)

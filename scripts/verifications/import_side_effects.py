@@ -8,7 +8,8 @@ or writing environment variables, starting threads, installing warning filters,
 signal handlers or excepthooks at import time overrides the application's own
 choices, makes behavior depend on import order, and freezes configuration before
 the application has set it. Environment access is attributed to the source line
-in our code that made it; the rest is attributed to the imported module.
+in our code that made it, and warning filters a dependency installs itself are
+not ours; the rest is attributed to the imported module.
 """
 
 from _common import Finding, main, probe, runtime_modules
