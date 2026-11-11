@@ -1,6 +1,6 @@
 .DEFAULT_GOAL:=help
 
-.PHONY: help check-imports check-conventions check-api check-dependencies check-packaging check-import-time install format-java check-java build-java generate-protocol-tests generate-codegen-output-py api-snapshot aio-check changelog-check canonical-imports dunder-all source-order dynamic-imports banned-imports ruff-extra docstrings declared-deps import-cycles dep-specifiers package-metadata version-consistency export-names exception-hierarchy secret-repr import-hygiene import-deprecations import-side-effects import-cost wheel-contents type-completeness optional-deps lowest-bounds gen ci lint-py check-py lint-rust check-rust third-party-licenses test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
+.PHONY: help check-imports check-conventions check-api check-dependencies check-packaging check-import-stability install format-java check-java build-java generate-protocol-tests generate-codegen-output-py api-snapshot aio-check changelog-check canonical-imports dunder-all source-order dynamic-imports banned-imports ruff-extra docstrings declared-deps import-cycles dep-specifiers package-metadata version-consistency export-names exception-hierarchy secret-repr import-hygiene import-deprecations import-side-effects import-cost wheel-contents type-completeness optional-deps lowest-bounds gen ci lint-py check-py lint-rust check-rust third-party-licenses test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
 
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -16,13 +16,11 @@ static-analysis: ## Catches defects CI can find without running the code's tests
 #	$(MAKE) check-api
 #	$(MAKE) check-dependencies
 #	$(MAKE) check-packaging
-#	$(MAKE) check-import-time
+	$(MAKE) check-import-stability
 	$(MAKE) import-cycles # TODO: remove when check-imports passes
 	$(MAKE) dynamic-imports # TODO: remove when check-imports passes
 	$(MAKE) banned-imports # TODO: remove when check-imports passes
 	$(MAKE) api-snapshot # TODO: remove when check-api passes
-	$(MAKE) import-deprecations # TODO: remove when check-import-time passes
-	$(MAKE) import-cost # TODO: remove when check-import-time passes
 	$(MAKE) typecheck-protocols # TODO: remove when check-api passes
 
 
@@ -92,7 +90,7 @@ check-packaging: ## Keeps what we publish to PyPI consistent across packages.
 	$(MAKE) wheel-contents
 
 
-check-import-time: ## Keeps importing our packages cheap and free of side effects.
+check-import-stability: ## Keeps importing our packages cheap and free of side effects.
 	$(MAKE) import-hygiene
 	$(MAKE) import-deprecations
 	$(MAKE) import-side-effects
