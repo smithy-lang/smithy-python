@@ -1,0 +1,15 @@
+{
+  "files": {
+    "README.md": "cb00d252893fb299db4c6569ec3abb219e606507fd61b8e45d46cfe0da47d35b",
+    "pyproject.toml": "76e930a07cc50a774b2d143abf3f020d8e8bd6c57838d8332689934208903221",
+    "src/restxml/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
+    "src/restxml/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/restxml/_private/schemas.py": "37cd48c2376936604f9dc2d6ab756f423d31f674d10702b0cbd18dc8d1453f17",
+    "src/restxml/_private/schemas_0.py": "6ff2aa9e2f527d932ce7090660ba66e08b10c11879a482d84610559675e689e2",
+    "src/restxml/_private/schemas_1.py": "0c49d27d60a5aebb582ebb8126f7e6a6a2ba64cab383106fd51335b2e21271ed",
+    "src/restxml/models.py": "e30e11c2ca184011e834949184a08275a8567136dc2d421cf53f81ea3145e2c3",
+    "src/restxml/models.pyi": "d6c5d7b7326fa1d342e0a805675528fd9ecb6c08e25b64221a0a2a44d32656b6",
+    "src/restxml/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "version": 1
+}

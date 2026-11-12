@@ -1,0 +1,13 @@
+{
+  "files": {
+    "README.md": "377281dbc896249f6395f7d63d1c0f4a3f8ed12dbe286778f00717980613ed4b",
+    "pyproject.toml": "d53c3c1f064ec4cf0c486c274c816ddc6cd1db90ef60b2a7dd3d8028f672e285",
+    "src/restxmlwithnamespace/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
+    "src/restxmlwithnamespace/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/restxmlwithnamespace/_private/schemas.py": "137bd653893beac8048795410649076c6c96e07e77d83e27204ce5d5fde0d41a",
+    "src/restxmlwithnamespace/models.py": "145e12580c29a5aa74560da64e03c0b087b7cfaabdd0e2deece15a3dc077fe8e",
+    "src/restxmlwithnamespace/models.pyi": "1955d2b33f1071340e3f33ba66798a92852a254a1255107b43ec5f8ad40a979d",
+    "src/restxmlwithnamespace/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "version": 1
+}

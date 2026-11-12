@@ -1,0 +1,114 @@
+{
+  "aws-json-1-0": {
+    "description": "Native Python types for the aws-json-1-0 projection",
+    "model": "models/aws-json-1-0.json",
+    "package": "awsjson10",
+    "service": "aws.protocoltests.json10#JsonRpc10",
+    "version": "0.0.1"
+  },
+  "aws-json-1-1": {
+    "description": "Native Python types for the aws-json-1-1 projection",
+    "model": "models/aws-json-1-1.json",
+    "package": "awsjson11",
+    "service": "aws.protocoltests.json#JsonProtocol",
+    "version": "0.0.1"
+  },
+  "aws-query": {
+    "description": "Native Python types for the aws-query projection",
+    "model": "models/aws-query.json",
+    "package": "awsquery",
+    "service": "aws.protocoltests.query#AwsQuery",
+    "version": "0.0.1"
+  },
+  "ec2-query": {
+    "description": "Native Python types for the ec2-query projection",
+    "model": "models/ec2-query.json",
+    "package": "ec2query",
+    "service": "aws.protocoltests.ec2#AwsEc2",
+    "version": "0.0.1"
+  },
+  "my-handwritten-json-model": {
+    "description": "Native Python types for the my-handwritten-json-model projection",
+    "model": "models/my-handwritten-json-model.json",
+    "package": "my_handwritten_json_model",
+    "service": "smithy.python.tests.handwritten.json#MyHandwrittenJsonModel",
+    "version": "0.0.1"
+  },
+  "my-handwritten-model": {
+    "description": "Native Python types for the my-handwritten-model projection",
+    "model": "models/my-handwritten-model.json",
+    "package": "my_handwritten_model",
+    "service": "smithy.python.tests.handwritten#MyHandwrittenModel",
+    "version": "0.0.1"
+  },
+  "non-query-compatible-rpcv2-cbor": {
+    "description": "Native Python types for the non-query-compatible-rpcv2-cbor projection",
+    "model": "models/non-query-compatible-rpcv2-cbor.json",
+    "package": "nonquerycompatiblerpcv2cbor",
+    "service": "aws.protocoltests.rpcv2cbor#NonQueryCompatibleRpcV2Protocol",
+    "version": "0.0.1"
+  },
+  "partitioned-types": {
+    "description": "Native schema and model stub partition stress fixture",
+    "model": "models/partitioned-types.json",
+    "package": "partitioned_types",
+    "service": "example#ExampleService",
+    "version": "1.0.0"
+  },
+  "query-compatible-aws-json-1-0": {
+    "description": "Native Python types for the query-compatible-aws-json-1-0 projection",
+    "model": "models/query-compatible-aws-json-1-0.json",
+    "package": "querycompatibleawsjson10",
+    "service": "aws.protocoltests.json10#QueryCompatibleJsonRpc10",
+    "version": "0.0.1"
+  },
+  "query-compatible-rpcv2-cbor": {
+    "description": "Native Python types for the query-compatible-rpcv2-cbor projection",
+    "model": "models/query-compatible-rpcv2-cbor.json",
+    "package": "querycompatiblerpcv2cbor",
+    "service": "aws.protocoltests.rpcv2cbor#QueryCompatibleRpcV2Protocol",
+    "version": "0.0.1"
+  },
+  "rest-json-1": {
+    "description": "Native Python types for the rest-json-1 projection",
+    "model": "models/rest-json-1.json",
+    "package": "restjson",
+    "service": "aws.protocoltests.restjson#RestJson",
+    "version": "0.0.1"
+  },
+  "rest-xml": {
+    "description": "Native Python types for the rest-xml projection",
+    "model": "models/rest-xml.json",
+    "package": "restxml",
+    "service": "aws.protocoltests.restxml#RestXml",
+    "version": "0.0.1"
+  },
+  "rest-xml-with-namespace": {
+    "description": "Native Python types for the rest-xml-with-namespace projection",
+    "model": "models/rest-xml-with-namespace.json",
+    "package": "restxmlwithnamespace",
+    "service": "aws.protocoltests.restxml.xmlns#RestXmlWithNamespace",
+    "version": "0.0.1"
+  },
+  "rpcv2-cbor": {
+    "description": "Native Python types for the rpcv2-cbor projection",
+    "model": "models/rpcv2-cbor.json",
+    "package": "rpcv2cbor",
+    "service": "smithy.protocoltests.rpcv2Cbor#RpcV2Protocol",
+    "version": "0.0.1"
+  },
+  "rpcv2-json": {
+    "description": "Native Python types for the rpcv2-json projection",
+    "model": "models/rpcv2-json.json",
+    "package": "rpcv2json",
+    "service": "smithy.protocoltests.rpcv2Json#RpcV2JsonProtocol",
+    "version": "0.0.1"
+  },
+  "types": {
+    "description": "Example Python codegen output",
+    "model": "model.json",
+    "package": "example_types",
+    "service": "example#ExampleService",
+    "version": "1.0.0"
+  }
+}

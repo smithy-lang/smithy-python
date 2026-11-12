@@ -1,6 +1,6 @@
 .DEFAULT_GOAL:=help
 
-.PHONY: help check-imports check-conventions check-api check-dependencies check-packaging check-import-stability install format-java check-java build-java generate-protocol-tests generate-codegen-output-py api-snapshot aio-check changelog-check canonical-imports dunder-all source-order dynamic-imports banned-imports ruff-extra docstrings declared-deps import-cycles dep-specifiers package-metadata version-consistency export-names exception-hierarchy secret-repr import-hygiene import-deprecations import-side-effects import-cost wheel-contents type-completeness optional-deps lowest-bounds gen ci lint-py check-py lint-rust check-rust third-party-licenses test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
+.PHONY: help check-imports check-conventions check-api check-dependencies check-packaging check-import-stability install format-java check-java build-java generate-protocol-tests generate-codegen-output-py check-codegen-output-py test-codegen-output-py api-snapshot aio-check changelog-check canonical-imports dunder-all source-order dynamic-imports banned-imports ruff-extra docstrings declared-deps import-cycles dep-specifiers package-metadata version-consistency export-names exception-hierarchy secret-repr import-hygiene import-deprecations import-side-effects import-cost wheel-contents type-completeness optional-deps lowest-bounds gen ci lint-py check-py lint-rust check-rust third-party-licenses test-py test-protocols typecheck-protocols static-analysis test-unit test-functional test-integration benchmark build-py clean
 
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -17,6 +17,7 @@ static-analysis: ## Catches defects CI can find without running the code's tests
 	$(MAKE) check-packaging
 	$(MAKE) check-import-stability
 	$(MAKE) check-api
+	$(MAKE) check-codegen-output-py
 
 
 test-unit: ## Runs the python unit tests.
@@ -34,7 +35,8 @@ test-functional: ## Runs the python functional tests and test-protocols.
 test-integration: ## Builds and tests the Java codegen and asserts the regenerated snapshots match.
 	$(MAKE) build-java
 	$(MAKE) generate-protocol-tests
-	$(MAKE) generate-codegen-output-py
+	$(MAKE) check-codegen-output-py
+	$(MAKE) test-codegen-output-py
 
 
 ci: ## Runs the full CI sequence locally.
@@ -132,17 +134,19 @@ generate-protocol-tests: ## Generates protocol-test clients, copies them to ./co
 	@echo "codegen-output is up to date."
 
 
-generate-codegen-output-py: ## Generates Python output and asserts no snapshot diff.
-	rm -rf codegen-output-py
+generate-codegen-output-py: ## Regenerates standalone types snapshots using only Python.
 	uv run python scripts/codegen-output-py/generate.py
-	@if ! git diff --quiet --exit-code -- codegen-output-py || [ -n "$$(git ls-files --others --exclude-standard -- codegen-output-py)" ]; then \
-		echo "ERROR: generated codegen-output-py differs from the committed snapshot."; \
-		echo "Review the diff and commit it if the change is intended:"; \
-		git --no-pager status --short -- codegen-output-py; \
-		git --no-pager diff -- codegen-output-py; \
-		exit 1; \
-	fi
-	@echo "codegen-output-py is up to date."
+
+
+check-codegen-output-py: ## Checks native snapshots, Ruff, and strict Pyright using only Python.
+	uv run python scripts/codegen-output-py/generate.py --check
+	uv run ruff check scripts/codegen-output-py codegen-output-py --config pyproject.toml
+	uv run ruff format --check scripts/codegen-output-py codegen-output-py --config pyproject.toml
+	uv run pyright --project scripts/codegen-output-py/pyrightconfig.json
+
+
+test-codegen-output-py: ## Checks native model/schema behavior against the ASTs and Java snapshots.
+	uv run pytest scripts/codegen-output-py/tests --no-cov
 
 
 api-snapshot: ## Records the public API surface and dual-mode mirrors of each package and asserts no git diff.

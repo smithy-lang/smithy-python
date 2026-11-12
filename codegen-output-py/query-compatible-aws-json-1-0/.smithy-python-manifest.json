@@ -1,0 +1,13 @@
+{
+  "files": {
+    "README.md": "9d9dc0e09a156d9f7690a98266d5ec9c0644da310a4906a8bf9c01597e72c931",
+    "pyproject.toml": "c95ce99f94867129f67812c1cfa3a3eb82f0a4e4c16c3b2f568e9667afa9827a",
+    "src/querycompatibleawsjson10/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
+    "src/querycompatibleawsjson10/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/querycompatibleawsjson10/_private/schemas.py": "2f50162ef491662b8ce67108211e9e4720c37ba997d4fcdf5c686c7439f1660a",
+    "src/querycompatibleawsjson10/models.py": "d1e4cf7e66b6cc7211088bf97f26733ebe0e5ef9e3bb4a6e299147706fc25f57",
+    "src/querycompatibleawsjson10/models.pyi": "1a81b46fde33b8cf3ea25608e2d26f8369a8338c8a668c2383866945176c61a9",
+    "src/querycompatibleawsjson10/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "version": 1
+}
