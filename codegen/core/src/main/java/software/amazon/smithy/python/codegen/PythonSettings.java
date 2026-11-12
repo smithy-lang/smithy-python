@@ -27,8 +27,6 @@ import software.amazon.smithy.utils.ToSmithyBuilder;
  * @param moduleName The name of the module to generate.
  * @param moduleVersion The version of the module to generate.
  * @param moduleDescription The optional module description for the module that will be generated.
- *     Empty for clients without a configured description; use {@link #moduleDescription(Model)}
- *     to resolve the effective description.
  * @param artifactType The type of artifact being generated (e.g. client/shapes/server)
  */
 @SmithyUnstableApi
@@ -60,34 +58,35 @@ public record PythonSettings(
                 builder.service,
                 builder.moduleName,
                 builder.moduleVersion,
-                configuredDescription(builder),
+                StringUtils.isBlank(builder.moduleDescription) ? "" : builder.moduleDescription,
                 builder.artifactType);
     }
 
-    private static String configuredDescription(Builder builder) {
-        if (!StringUtils.isBlank(builder.moduleDescription)) {
-            return builder.moduleDescription;
-        }
-        // Client defaults depend on the model, so they're resolved by moduleDescription(Model).
-        if (builder.artifactType == ArtifactType.CLIENT) {
-            return "";
-        }
-        return builder.moduleName + " " + builder.artifactType.name().toLowerCase(Locale.ENGLISH);
+    /**
+     * Gets the configured module description, or {@code "<module> <artifact type>"} if none was configured.
+     *
+     * @return Returns the module description.
+     */
+    @Override
+    public String moduleDescription() {
+        return StringUtils.isBlank(moduleDescription)
+                ? moduleName + " " + artifactType.name().toLowerCase(Locale.ENGLISH)
+                : moduleDescription;
     }
 
     /**
-     * Resolves the description of the generated package.
+     * Resolves the description used in the generated package metadata.
      *
-     * <p>A configured description is returned as-is. Otherwise, the default is derived
-     * from the service's {@code smithy.api#title} trait, falling back to the service
-     * shape's name.
+     * <p>A configured description is returned as-is. Otherwise, client descriptions are
+     * derived from the service's {@code smithy.api#title} trait, falling back to the
+     * service shape's name.
      *
      * @param model Model containing the service shape.
      * @return Returns the package description.
      */
     public String moduleDescription(Model model) {
-        if (!StringUtils.isBlank(moduleDescription)) {
-            return moduleDescription;
+        if (!StringUtils.isBlank(moduleDescription) || artifactType != ArtifactType.CLIENT) {
+            return moduleDescription();
         }
         var service = service(model);
         var name = service.getTrait(TitleTrait.class)

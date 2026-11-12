@@ -43,7 +43,7 @@ public final class SetupGenerator {
         var dependencies = gatherDependencies(context.writerDelegator().getDependencies().stream());
         var description = settings.moduleDescription(context.model());
         writePyproject(settings, description, context.writerDelegator(), dependencies);
-        writeReadme(settings, description, context);
+        writeReadme(settings, context);
     }
 
     /**
@@ -285,7 +285,6 @@ public final class SetupGenerator {
 
     private static void writeReadme(
             PythonSettings settings,
-            String description,
             GenerationContext context
     ) {
         var service = context.model().expectShape(settings.service());
@@ -295,13 +294,17 @@ public final class SetupGenerator {
                 .map(StringTrait::getValue)
                 .orElse(StringUtils.capitalize(settings.moduleName()));
 
+        var description = StringUtils.isBlank(settings.moduleDescription())
+                ? "Generated service client for " + title
+                : StringUtils.wrap(settings.moduleDescription(), 80);
+
         context.writerDelegator().useFileWriter("README.md", writer -> {
             writer.pushState(new ReadmeSection());
             writer.write("""
                     ## $L Client
 
                     $L
-                    """, title, StringUtils.wrap(description, 80));
+                    """, title, description);
 
             service.getTrait(DocumentationTrait.class).map(StringTrait::getValue).ifPresent(documentation -> {
                 writer.write("""

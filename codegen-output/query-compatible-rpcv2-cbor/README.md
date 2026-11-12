@@ -2,4 +2,4 @@
 
 ## Query Compatible RpcV2 Protocol Service Client
 
-Python client for Query Compatible RpcV2 Protocol Service
+querycompatiblerpcv2cbor client

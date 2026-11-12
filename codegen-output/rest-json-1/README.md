@@ -2,4 +2,4 @@
 
 ## Sample Rest Json Protocol Service Client
 
-Python client for Sample Rest Json Protocol Service
+restjson client

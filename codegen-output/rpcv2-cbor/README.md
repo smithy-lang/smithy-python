@@ -2,4 +2,4 @@
 
 ## RpcV2 Protocol Service Client
 
-Python client for RpcV2 Protocol Service
+rpcv2cbor client

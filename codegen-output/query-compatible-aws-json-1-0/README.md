@@ -2,4 +2,4 @@
 
 ## Query Compatible Json 1.0 Protocol Service Client
 
-Python client for Query Compatible Json 1.0 Protocol Service
+querycompatibleawsjson10 client
