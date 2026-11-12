@@ -309,15 +309,21 @@ public final class ModelStubGenerator implements Runnable {
         }
         var asyncSymbol = inputParams.asyncParamsSymbol(shape);
         writer.addImport(SYNC_STREAMING_BLOB.getNamespace(), SYNC_STREAMING_BLOB.getName(), SYNC_STREAMING_BLOB_ALIAS);
-        writeStructParams(writer, shape, paramsSymbol, true, String.format("""
-                Dictionary form of `%s` that either client accepts.
-
-                Its streaming body is one a sync client can send. Use `%s` \
-                for an async stream.""", modelName, asyncSymbol.getName()), typeResolver);
-        writeStructParams(writer, shape, asyncSymbol, false, String.format("""
-                Dictionary form of `%s` for the async client.
-
-                Its streaming body may also be an async stream.""", modelName), typeResolver);
+        writeStructParams(writer,
+                shape,
+                paramsSymbol,
+                true,
+                "Dictionary form of `" + modelName + "` that either client accepts.\n\n"
+                        + "Its streaming body is one a sync client can send. Use `" + asyncSymbol.getName()
+                        + "` for an async stream.",
+                typeResolver);
+        writeStructParams(writer,
+                shape,
+                asyncSymbol,
+                false,
+                "Dictionary form of `" + modelName + "` for the async client.\n\n"
+                        + "Its streaming body may also be an async stream.",
+                typeResolver);
     }
 
     private void writeStructParams(
