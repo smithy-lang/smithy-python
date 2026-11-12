@@ -1,0 +1,13 @@
+{
+  "files": {
+    "README.md": "767e060d5d96f9a0ca03b7855b5c44f45c5b06969c3246b7e7f03fefb92300ec",
+    "pyproject.toml": "d09f5af8330c8de6457c45a24952476adc4e53eb138a954e2221afd1b2be6cd3",
+    "src/awsjson10/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
+    "src/awsjson10/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/awsjson10/_private/schemas.py": "e915ac3d2ddf32319cc868437dc2f1320fa799993d72e08886f7ff12430f743e",
+    "src/awsjson10/models.py": "bab8e32bb4d8e30eea86ae4ae6edb727934e11209506353bc3c4baeef1d79b6d",
+    "src/awsjson10/models.pyi": "4484730b2e0464045ab86690fb55ebeb2c6469de6e545b5772b6b425ec54e65d",
+    "src/awsjson10/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "version": 1
+}

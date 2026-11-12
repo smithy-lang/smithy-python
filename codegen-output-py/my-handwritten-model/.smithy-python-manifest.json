@@ -1,0 +1,13 @@
+{
+  "files": {
+    "README.md": "47dc0fb73aa8673141f1fcde44fa3ba3995be83953b41c4f26e3ceb5c5b3ffda",
+    "pyproject.toml": "d15c8789a77a3152fb54c4b2e1f7d383e0df5872b597fc013a413d9112f93609",
+    "src/my_handwritten_model/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
+    "src/my_handwritten_model/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/my_handwritten_model/_private/schemas.py": "6b8ddc152fe086e6ef8277a04da92ea535791b8a90dd066d3defd9cb71a36ba9",
+    "src/my_handwritten_model/models.py": "ca3c2b4d5dab0e7da762ec0feceaeda02fd0656fdeb161e0417686a8b4279e24",
+    "src/my_handwritten_model/models.pyi": "a01e010947193acad3008148301f76d2e5de0dbbe09b149f325d64582b0815a3",
+    "src/my_handwritten_model/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "version": 1
+}

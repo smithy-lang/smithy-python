@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Resolve generated union variant names correctly when constructing serde conformance values."
+}

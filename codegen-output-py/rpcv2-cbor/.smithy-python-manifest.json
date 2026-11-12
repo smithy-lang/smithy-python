@@ -1,0 +1,13 @@
+{
+  "files": {
+    "README.md": "b856f842a89c64e9cb4ff9a7b27607b66029e73b50597d59041db28f4f2b5180",
+    "pyproject.toml": "afd2621f580244e35b7284be2b93083a6601b89335ef11f911a7085732b661c5",
+    "src/rpcv2cbor/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
+    "src/rpcv2cbor/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rpcv2cbor/_private/schemas.py": "28b99709dc00fee0b0c0c2fe99b5b2428f0d691f4c312e5e1e4190ac419fc53d",
+    "src/rpcv2cbor/models.py": "eaa2ad0e465fca15726e933adba4b0a2fe981e0746ffac21de01283136d8c187",
+    "src/rpcv2cbor/models.pyi": "32f751c92a3ac1bab5aeb4b65ceb733d0d0d7e9a5e25c05a9d32a1001cc4cf33",
+    "src/rpcv2cbor/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "version": 1
+}

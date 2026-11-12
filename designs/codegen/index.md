@@ -66,3 +66,4 @@ behavior of generated packages.
 * [Python Writer](writer.md)
 * [Standalone Types Generation](types.md)
 * [Code Generation Partitioning](partitioning.md)
+* [Native Python Codegen Snapshots](snapshots.md)

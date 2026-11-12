@@ -446,18 +446,21 @@ def test_generated_models_are_lazy_and_runtime_compatible(
         models.Original
 
 
+@pytest.mark.parametrize(("stub_partition_size", "partition_count"), [(1, 8), (2, 4)])
 def test_partitioned_stub_preserves_public_models(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    stub_partition_size: int,
+    partition_count: int,
 ) -> None:
     _, source_root = _generate(
         tmp_path,
-        stub_partition_size=2,
+        stub_partition_size=stub_partition_size,
     )
     package = source_root / _PACKAGE
     facade = (package / "models.pyi").read_text()
     partitions = sorted((package / "_private").glob("models_*.pyi"))
-    assert len(partitions) == 4
+    assert len(partitions) == partition_count
     assert "class Input(" not in facade
     assert "from ._private.models_0 import (" in facade
     assert "Input," in facade
@@ -872,7 +875,7 @@ def test_modeled_unit_does_not_shadow_prelude_unit(
     assert isinstance(decoded.action.value, models.Unit)
 
 
-@pytest.mark.parametrize("stub_partition_size", [None, 2])
+@pytest.mark.parametrize("stub_partition_size", [None, 1, 2])
 def test_generated_stub_passes_strict_pyright(
     tmp_path: Path,
     stub_partition_size: int | None,
@@ -892,7 +895,7 @@ def test_generated_stub_passes_strict_pyright(
     (tmp_path / "pyrightconfig.json").write_text(
         json.dumps(
             {
-                "include": ["check.py"],
+                "include": ["check.py", str(source_root)],
                 "extraPaths": [str(source_root)],
                 "typeCheckingMode": "strict",
             }
@@ -904,6 +907,39 @@ def test_generated_stub_passes_strict_pyright(
         "--project",
         str(tmp_path / "pyrightconfig.json"),
     )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        {"smithy": "2.0"},
+        {
+            "smithy": "2.0",
+            "shapes": {
+                "example#Item": {
+                    "type": "structure",
+                    "members": {"value": {"target": "smithy.api#String"}},
+                }
+            },
+        },
+    ],
+)
+def test_generated_runtime_with_empty_maps_passes_strict_pyright(
+    tmp_path: Path, model: dict[str, object]
+) -> None:
+    source_root = _generate_custom(tmp_path, model, "empty_maps")
+    config = tmp_path / "pyrightconfig.json"
+    config.write_text(
+        json.dumps(
+            {
+                "include": [str(source_root)],
+                "extraPaths": [str(source_root)],
+                "typeCheckingMode": "strict",
+            }
+        )
+    )
+    result = _run_tool("pyright", "--project", str(config))
     assert result.returncode == 0, result.stdout + result.stderr
 
 

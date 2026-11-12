@@ -1,0 +1,3048 @@
+{
+  "smithy": "2.0",
+  "shapes": {
+    "example#ExampleService": {
+      "type": "service",
+      "version": "2026-10-23",
+      "operations": [
+        {
+          "target": "example#GetExample"
+        }
+      ],
+      "rename": {
+        "example#Example": "RenamedExample",
+        "example#Value": "ExampleValue"
+      }
+    },
+    "example#GetExample": {
+      "type": "operation",
+      "input": {
+        "target": "example#GetExampleInput"
+      },
+      "output": {
+        "target": "example#GetExampleOutput"
+      },
+      "errors": [
+        {
+          "target": "example#ExampleError"
+        }
+      ]
+    },
+    "example#GetExampleInput": {
+      "type": "structure",
+      "traits": {
+        "smithy.api#documentation": "Input for retrieving an example."
+      },
+      "members": {
+        "id": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "partitioned": {
+          "target": "example#PartitionItem000"
+        }
+      }
+    },
+    "example#GetExampleOutput": {
+      "type": "structure",
+      "members": {
+        "example": {
+          "target": "example#Example"
+        },
+        "value": {
+          "target": "example#Value"
+        },
+        "events": {
+          "target": "example#EventStream"
+        }
+      }
+    },
+    "example#ExampleError": {
+      "type": "structure",
+      "traits": {
+        "smithy.api#documentation": "An example modeled error.",
+        "smithy.api#error": "client"
+      },
+      "members": {
+        "message": {
+          "target": "smithy.api#String"
+        },
+        "retryAfterSeconds": {
+          "target": "smithy.api#Integer"
+        }
+      }
+    },
+    "example#Example": {
+      "type": "structure",
+      "traits": {
+        "smithy.api#documentation": "A representative generated structure."
+      },
+      "members": {
+        "name": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The example name.",
+            "smithy.api#required": {}
+          }
+        },
+        "count": {
+          "target": "smithy.api#PrimitiveInteger"
+        },
+        "tags": {
+          "target": "example#TagList"
+        },
+        "attributes": {
+          "target": "example#Attributes"
+        },
+        "choice": {
+          "target": "example#Value"
+        },
+        "status": {
+          "target": "example#Status"
+        },
+        "code": {
+          "target": "example#Code"
+        }
+      }
+    },
+    "example#TagList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#String"
+      }
+    },
+    "example#Attributes": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.api#Document"
+      }
+    },
+    "example#Value": {
+      "type": "union",
+      "traits": {
+        "smithy.api#documentation": "A representative generated union."
+      },
+      "members": {
+        "text": {
+          "target": "smithy.api#String"
+        },
+        "number": {
+          "target": "smithy.api#Integer"
+        },
+        "empty": {
+          "target": "smithy.api#Unit"
+        }
+      }
+    },
+    "example#EventStream": {
+      "type": "union",
+      "traits": {
+        "smithy.api#streaming": {}
+      },
+      "members": {
+        "example": {
+          "target": "example#Example"
+        }
+      }
+    },
+    "example#Status": {
+      "type": "enum",
+      "members": {
+        "ACTIVE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "active"
+          }
+        },
+        "INACTIVE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "inactive"
+          }
+        }
+      }
+    },
+    "example#Code": {
+      "type": "intEnum",
+      "members": {
+        "OK": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": 200
+          }
+        },
+        "NOT_FOUND": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": 404
+          }
+        }
+      }
+    },
+    "example#PartitionItem000": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem001"
+        }
+      }
+    },
+    "example#PartitionItem001": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem002"
+        }
+      }
+    },
+    "example#PartitionItem002": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem003"
+        }
+      }
+    },
+    "example#PartitionItem003": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem004"
+        }
+      }
+    },
+    "example#PartitionItem004": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem005"
+        }
+      }
+    },
+    "example#PartitionItem005": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem006"
+        }
+      }
+    },
+    "example#PartitionItem006": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem007"
+        }
+      }
+    },
+    "example#PartitionItem007": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem008"
+        }
+      }
+    },
+    "example#PartitionItem008": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem009"
+        }
+      }
+    },
+    "example#PartitionItem009": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem010"
+        }
+      }
+    },
+    "example#PartitionItem010": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem011"
+        }
+      }
+    },
+    "example#PartitionItem011": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem012"
+        }
+      }
+    },
+    "example#PartitionItem012": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem013"
+        }
+      }
+    },
+    "example#PartitionItem013": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem014"
+        }
+      }
+    },
+    "example#PartitionItem014": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem015"
+        }
+      }
+    },
+    "example#PartitionItem015": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem016"
+        }
+      }
+    },
+    "example#PartitionItem016": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem017"
+        }
+      }
+    },
+    "example#PartitionItem017": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem018"
+        }
+      }
+    },
+    "example#PartitionItem018": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem019"
+        }
+      }
+    },
+    "example#PartitionItem019": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem020"
+        }
+      }
+    },
+    "example#PartitionItem020": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem021"
+        }
+      }
+    },
+    "example#PartitionItem021": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem022"
+        }
+      }
+    },
+    "example#PartitionItem022": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem023"
+        }
+      }
+    },
+    "example#PartitionItem023": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem024"
+        }
+      }
+    },
+    "example#PartitionItem024": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem025"
+        }
+      }
+    },
+    "example#PartitionItem025": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem026"
+        }
+      }
+    },
+    "example#PartitionItem026": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem027"
+        }
+      }
+    },
+    "example#PartitionItem027": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem028"
+        }
+      }
+    },
+    "example#PartitionItem028": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem029"
+        }
+      }
+    },
+    "example#PartitionItem029": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem030"
+        }
+      }
+    },
+    "example#PartitionItem030": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem031"
+        }
+      }
+    },
+    "example#PartitionItem031": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem032"
+        }
+      }
+    },
+    "example#PartitionItem032": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem033"
+        }
+      }
+    },
+    "example#PartitionItem033": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem034"
+        }
+      }
+    },
+    "example#PartitionItem034": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem035"
+        }
+      }
+    },
+    "example#PartitionItem035": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem036"
+        }
+      }
+    },
+    "example#PartitionItem036": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem037"
+        }
+      }
+    },
+    "example#PartitionItem037": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem038"
+        }
+      }
+    },
+    "example#PartitionItem038": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem039"
+        }
+      }
+    },
+    "example#PartitionItem039": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem040"
+        }
+      }
+    },
+    "example#PartitionItem040": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem041"
+        }
+      }
+    },
+    "example#PartitionItem041": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem042"
+        }
+      }
+    },
+    "example#PartitionItem042": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem043"
+        }
+      }
+    },
+    "example#PartitionItem043": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem044"
+        }
+      }
+    },
+    "example#PartitionItem044": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem045"
+        }
+      }
+    },
+    "example#PartitionItem045": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem046"
+        }
+      }
+    },
+    "example#PartitionItem046": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem047"
+        }
+      }
+    },
+    "example#PartitionItem047": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem048"
+        }
+      }
+    },
+    "example#PartitionItem048": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem049"
+        }
+      }
+    },
+    "example#PartitionItem049": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem050"
+        }
+      }
+    },
+    "example#PartitionItem050": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem051"
+        }
+      }
+    },
+    "example#PartitionItem051": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem052"
+        }
+      }
+    },
+    "example#PartitionItem052": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem053"
+        }
+      }
+    },
+    "example#PartitionItem053": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem054"
+        }
+      }
+    },
+    "example#PartitionItem054": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem055"
+        }
+      }
+    },
+    "example#PartitionItem055": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem056"
+        }
+      }
+    },
+    "example#PartitionItem056": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem057"
+        }
+      }
+    },
+    "example#PartitionItem057": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem058"
+        }
+      }
+    },
+    "example#PartitionItem058": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem059"
+        }
+      }
+    },
+    "example#PartitionItem059": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem060"
+        }
+      }
+    },
+    "example#PartitionItem060": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem061"
+        }
+      }
+    },
+    "example#PartitionItem061": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem062"
+        }
+      }
+    },
+    "example#PartitionItem062": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem063"
+        }
+      }
+    },
+    "example#PartitionItem063": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem064"
+        }
+      }
+    },
+    "example#PartitionItem064": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem065"
+        }
+      }
+    },
+    "example#PartitionItem065": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem066"
+        }
+      }
+    },
+    "example#PartitionItem066": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem067"
+        }
+      }
+    },
+    "example#PartitionItem067": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem068"
+        }
+      }
+    },
+    "example#PartitionItem068": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem069"
+        }
+      }
+    },
+    "example#PartitionItem069": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem070"
+        }
+      }
+    },
+    "example#PartitionItem070": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem071"
+        }
+      }
+    },
+    "example#PartitionItem071": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem072"
+        }
+      }
+    },
+    "example#PartitionItem072": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem073"
+        }
+      }
+    },
+    "example#PartitionItem073": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem074"
+        }
+      }
+    },
+    "example#PartitionItem074": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem075"
+        }
+      }
+    },
+    "example#PartitionItem075": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem076"
+        }
+      }
+    },
+    "example#PartitionItem076": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem077"
+        }
+      }
+    },
+    "example#PartitionItem077": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem078"
+        }
+      }
+    },
+    "example#PartitionItem078": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem079"
+        }
+      }
+    },
+    "example#PartitionItem079": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem080"
+        }
+      }
+    },
+    "example#PartitionItem080": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem081"
+        }
+      }
+    },
+    "example#PartitionItem081": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem082"
+        }
+      }
+    },
+    "example#PartitionItem082": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem083"
+        }
+      }
+    },
+    "example#PartitionItem083": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem084"
+        }
+      }
+    },
+    "example#PartitionItem084": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem085"
+        }
+      }
+    },
+    "example#PartitionItem085": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem086"
+        }
+      }
+    },
+    "example#PartitionItem086": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem087"
+        }
+      }
+    },
+    "example#PartitionItem087": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem088"
+        }
+      }
+    },
+    "example#PartitionItem088": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem089"
+        }
+      }
+    },
+    "example#PartitionItem089": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem090"
+        }
+      }
+    },
+    "example#PartitionItem090": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem091"
+        }
+      }
+    },
+    "example#PartitionItem091": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem092"
+        }
+      }
+    },
+    "example#PartitionItem092": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem093"
+        }
+      }
+    },
+    "example#PartitionItem093": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem094"
+        }
+      }
+    },
+    "example#PartitionItem094": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem095"
+        }
+      }
+    },
+    "example#PartitionItem095": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem096"
+        }
+      }
+    },
+    "example#PartitionItem096": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem097"
+        }
+      }
+    },
+    "example#PartitionItem097": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem098"
+        }
+      }
+    },
+    "example#PartitionItem098": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem099"
+        }
+      }
+    },
+    "example#PartitionItem099": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem100"
+        }
+      }
+    },
+    "example#PartitionItem100": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem101"
+        }
+      }
+    },
+    "example#PartitionItem101": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem102"
+        }
+      }
+    },
+    "example#PartitionItem102": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem103"
+        }
+      }
+    },
+    "example#PartitionItem103": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem104"
+        }
+      }
+    },
+    "example#PartitionItem104": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem105"
+        }
+      }
+    },
+    "example#PartitionItem105": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem106"
+        }
+      }
+    },
+    "example#PartitionItem106": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem107"
+        }
+      }
+    },
+    "example#PartitionItem107": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem108"
+        }
+      }
+    },
+    "example#PartitionItem108": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem109"
+        }
+      }
+    },
+    "example#PartitionItem109": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem110"
+        }
+      }
+    },
+    "example#PartitionItem110": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem111"
+        }
+      }
+    },
+    "example#PartitionItem111": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem112"
+        }
+      }
+    },
+    "example#PartitionItem112": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem113"
+        }
+      }
+    },
+    "example#PartitionItem113": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem114"
+        }
+      }
+    },
+    "example#PartitionItem114": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem115"
+        }
+      }
+    },
+    "example#PartitionItem115": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem116"
+        }
+      }
+    },
+    "example#PartitionItem116": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem117"
+        }
+      }
+    },
+    "example#PartitionItem117": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem118"
+        }
+      }
+    },
+    "example#PartitionItem118": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem119"
+        }
+      }
+    },
+    "example#PartitionItem119": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem120"
+        }
+      }
+    },
+    "example#PartitionItem120": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem121"
+        }
+      }
+    },
+    "example#PartitionItem121": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem122"
+        }
+      }
+    },
+    "example#PartitionItem122": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem123"
+        }
+      }
+    },
+    "example#PartitionItem123": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem124"
+        }
+      }
+    },
+    "example#PartitionItem124": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem125"
+        }
+      }
+    },
+    "example#PartitionItem125": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem126"
+        }
+      }
+    },
+    "example#PartitionItem126": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem127"
+        }
+      }
+    },
+    "example#PartitionItem127": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem128"
+        }
+      }
+    },
+    "example#PartitionItem128": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem129"
+        }
+      }
+    },
+    "example#PartitionItem129": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem130"
+        }
+      }
+    },
+    "example#PartitionItem130": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem131"
+        }
+      }
+    },
+    "example#PartitionItem131": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem132"
+        }
+      }
+    },
+    "example#PartitionItem132": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem133"
+        }
+      }
+    },
+    "example#PartitionItem133": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem134"
+        }
+      }
+    },
+    "example#PartitionItem134": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem135"
+        }
+      }
+    },
+    "example#PartitionItem135": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem136"
+        }
+      }
+    },
+    "example#PartitionItem136": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem137"
+        }
+      }
+    },
+    "example#PartitionItem137": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem138"
+        }
+      }
+    },
+    "example#PartitionItem138": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem139"
+        }
+      }
+    },
+    "example#PartitionItem139": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem140"
+        }
+      }
+    },
+    "example#PartitionItem140": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem141"
+        }
+      }
+    },
+    "example#PartitionItem141": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem142"
+        }
+      }
+    },
+    "example#PartitionItem142": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem143"
+        }
+      }
+    },
+    "example#PartitionItem143": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem144"
+        }
+      }
+    },
+    "example#PartitionItem144": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem145"
+        }
+      }
+    },
+    "example#PartitionItem145": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem146"
+        }
+      }
+    },
+    "example#PartitionItem146": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem147"
+        }
+      }
+    },
+    "example#PartitionItem147": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem148"
+        }
+      }
+    },
+    "example#PartitionItem148": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem149"
+        }
+      }
+    },
+    "example#PartitionItem149": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem150"
+        }
+      }
+    },
+    "example#PartitionItem150": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem151"
+        }
+      }
+    },
+    "example#PartitionItem151": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem152"
+        }
+      }
+    },
+    "example#PartitionItem152": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem153"
+        }
+      }
+    },
+    "example#PartitionItem153": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem154"
+        }
+      }
+    },
+    "example#PartitionItem154": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem155"
+        }
+      }
+    },
+    "example#PartitionItem155": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem156"
+        }
+      }
+    },
+    "example#PartitionItem156": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem157"
+        }
+      }
+    },
+    "example#PartitionItem157": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem158"
+        }
+      }
+    },
+    "example#PartitionItem158": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem159"
+        }
+      }
+    },
+    "example#PartitionItem159": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem160"
+        }
+      }
+    },
+    "example#PartitionItem160": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem161"
+        }
+      }
+    },
+    "example#PartitionItem161": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem162"
+        }
+      }
+    },
+    "example#PartitionItem162": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem163"
+        }
+      }
+    },
+    "example#PartitionItem163": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem164"
+        }
+      }
+    },
+    "example#PartitionItem164": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem165"
+        }
+      }
+    },
+    "example#PartitionItem165": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem166"
+        }
+      }
+    },
+    "example#PartitionItem166": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem167"
+        }
+      }
+    },
+    "example#PartitionItem167": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem168"
+        }
+      }
+    },
+    "example#PartitionItem168": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem169"
+        }
+      }
+    },
+    "example#PartitionItem169": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem170"
+        }
+      }
+    },
+    "example#PartitionItem170": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem171"
+        }
+      }
+    },
+    "example#PartitionItem171": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem172"
+        }
+      }
+    },
+    "example#PartitionItem172": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem173"
+        }
+      }
+    },
+    "example#PartitionItem173": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem174"
+        }
+      }
+    },
+    "example#PartitionItem174": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem175"
+        }
+      }
+    },
+    "example#PartitionItem175": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem176"
+        }
+      }
+    },
+    "example#PartitionItem176": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem177"
+        }
+      }
+    },
+    "example#PartitionItem177": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem178"
+        }
+      }
+    },
+    "example#PartitionItem178": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem179"
+        }
+      }
+    },
+    "example#PartitionItem179": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem180"
+        }
+      }
+    },
+    "example#PartitionItem180": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem181"
+        }
+      }
+    },
+    "example#PartitionItem181": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem182"
+        }
+      }
+    },
+    "example#PartitionItem182": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem183"
+        }
+      }
+    },
+    "example#PartitionItem183": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem184"
+        }
+      }
+    },
+    "example#PartitionItem184": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem185"
+        }
+      }
+    },
+    "example#PartitionItem185": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem186"
+        }
+      }
+    },
+    "example#PartitionItem186": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem187"
+        }
+      }
+    },
+    "example#PartitionItem187": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem188"
+        }
+      }
+    },
+    "example#PartitionItem188": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem189"
+        }
+      }
+    },
+    "example#PartitionItem189": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem190"
+        }
+      }
+    },
+    "example#PartitionItem190": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem191"
+        }
+      }
+    },
+    "example#PartitionItem191": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem192"
+        }
+      }
+    },
+    "example#PartitionItem192": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem193"
+        }
+      }
+    },
+    "example#PartitionItem193": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem194"
+        }
+      }
+    },
+    "example#PartitionItem194": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem195"
+        }
+      }
+    },
+    "example#PartitionItem195": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem196"
+        }
+      }
+    },
+    "example#PartitionItem196": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem197"
+        }
+      }
+    },
+    "example#PartitionItem197": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem198"
+        }
+      }
+    },
+    "example#PartitionItem198": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem199"
+        }
+      }
+    },
+    "example#PartitionItem199": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem200"
+        }
+      }
+    },
+    "example#PartitionItem200": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem201"
+        }
+      }
+    },
+    "example#PartitionItem201": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem202"
+        }
+      }
+    },
+    "example#PartitionItem202": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem203"
+        }
+      }
+    },
+    "example#PartitionItem203": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem204"
+        }
+      }
+    },
+    "example#PartitionItem204": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem205"
+        }
+      }
+    },
+    "example#PartitionItem205": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem206"
+        }
+      }
+    },
+    "example#PartitionItem206": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem207"
+        }
+      }
+    },
+    "example#PartitionItem207": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem208"
+        }
+      }
+    },
+    "example#PartitionItem208": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem209"
+        }
+      }
+    },
+    "example#PartitionItem209": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem210"
+        }
+      }
+    },
+    "example#PartitionItem210": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem211"
+        }
+      }
+    },
+    "example#PartitionItem211": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem212"
+        }
+      }
+    },
+    "example#PartitionItem212": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem213"
+        }
+      }
+    },
+    "example#PartitionItem213": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem214"
+        }
+      }
+    },
+    "example#PartitionItem214": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem215"
+        }
+      }
+    },
+    "example#PartitionItem215": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem216"
+        }
+      }
+    },
+    "example#PartitionItem216": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem217"
+        }
+      }
+    },
+    "example#PartitionItem217": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem218"
+        }
+      }
+    },
+    "example#PartitionItem218": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem219"
+        }
+      }
+    },
+    "example#PartitionItem219": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem220"
+        }
+      }
+    },
+    "example#PartitionItem220": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem221"
+        }
+      }
+    },
+    "example#PartitionItem221": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem222"
+        }
+      }
+    },
+    "example#PartitionItem222": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem223"
+        }
+      }
+    },
+    "example#PartitionItem223": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem224"
+        }
+      }
+    },
+    "example#PartitionItem224": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem225"
+        }
+      }
+    },
+    "example#PartitionItem225": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem226"
+        }
+      }
+    },
+    "example#PartitionItem226": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem227"
+        }
+      }
+    },
+    "example#PartitionItem227": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem228"
+        }
+      }
+    },
+    "example#PartitionItem228": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem229"
+        }
+      }
+    },
+    "example#PartitionItem229": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem230"
+        }
+      }
+    },
+    "example#PartitionItem230": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem231"
+        }
+      }
+    },
+    "example#PartitionItem231": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem232"
+        }
+      }
+    },
+    "example#PartitionItem232": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem233"
+        }
+      }
+    },
+    "example#PartitionItem233": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem234"
+        }
+      }
+    },
+    "example#PartitionItem234": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem235"
+        }
+      }
+    },
+    "example#PartitionItem235": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem236"
+        }
+      }
+    },
+    "example#PartitionItem236": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem237"
+        }
+      }
+    },
+    "example#PartitionItem237": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem238"
+        }
+      }
+    },
+    "example#PartitionItem238": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem239"
+        }
+      }
+    },
+    "example#PartitionItem239": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem240"
+        }
+      }
+    },
+    "example#PartitionItem240": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem241"
+        }
+      }
+    },
+    "example#PartitionItem241": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem242"
+        }
+      }
+    },
+    "example#PartitionItem242": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem243"
+        }
+      }
+    },
+    "example#PartitionItem243": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem244"
+        }
+      }
+    },
+    "example#PartitionItem244": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem245"
+        }
+      }
+    },
+    "example#PartitionItem245": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem246"
+        }
+      }
+    },
+    "example#PartitionItem246": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem247"
+        }
+      }
+    },
+    "example#PartitionItem247": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem248"
+        }
+      }
+    },
+    "example#PartitionItem248": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem249"
+        }
+      }
+    },
+    "example#PartitionItem249": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem250"
+        }
+      }
+    },
+    "example#PartitionItem250": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem251"
+        }
+      }
+    },
+    "example#PartitionItem251": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem252"
+        }
+      }
+    },
+    "example#PartitionItem252": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem253"
+        }
+      }
+    },
+    "example#PartitionItem253": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem254"
+        }
+      }
+    },
+    "example#PartitionItem254": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem255"
+        }
+      }
+    },
+    "example#PartitionItem255": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem256"
+        }
+      }
+    },
+    "example#PartitionItem256": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem257"
+        }
+      }
+    },
+    "example#PartitionItem257": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem258"
+        }
+      }
+    },
+    "example#PartitionItem258": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem259"
+        }
+      }
+    },
+    "example#PartitionItem259": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        },
+        "next": {
+          "target": "example#PartitionItem258"
+        }
+      }
+    }
+  }
+}
