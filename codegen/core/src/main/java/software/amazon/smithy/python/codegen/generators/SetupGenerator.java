@@ -375,7 +375,14 @@ public final class SetupGenerator {
 
                         Install the `sync` extra for the synchronous client's default HTTP \
                         transport, the `async` extra for the asynchronous client's default HTTP \
-                        transport, or both.
+                        transport, or both. In a project managed by uv, add the client with \
+                        the extras you need:
+
+                        ```sh
+                        $L
+                        ```
+
+                        Or install it with pip:
 
                         ```sh
                         $L
@@ -385,7 +392,11 @@ public final class SetupGenerator {
                         with an explicitly configured custom transport.
                         """,
                         installs.stream()
-                                .map(extra -> "pip install \"" + settings.moduleName() + "[" + extra + "]\"")
+                                .map(extra -> "uv add \"" + settings.moduleName() + "[" + extra + "]\"")
+                                .collect(Collectors.joining("\n")),
+                        installs.stream()
+                                .map(extra -> "pip install \"" + settings.moduleName() + "[" + extra
+                                        + "]\"")
                                 .collect(Collectors.joining("\n")));
             }
 

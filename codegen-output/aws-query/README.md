@@ -6,7 +6,15 @@ Python client for Sample Query Protocol Service
 
 ### Installation
 
-Install the `sync` extra for the synchronous client's default HTTP transport, the `async` extra for the asynchronous client's default HTTP transport, or both.
+Install the `sync` extra for the synchronous client's default HTTP transport, the `async` extra for the asynchronous client's default HTTP transport, or both. In a project managed by uv, add the client with the extras you need:
+
+```sh
+uv add "awsquery[sync]"
+uv add "awsquery[async]"
+uv add "awsquery[sync,async]"
+```
+
+Or install it with pip:
 
 ```sh
 pip install "awsquery[sync]"

@@ -6,7 +6,15 @@ Python client for My Handwritten JSON Model
 
 ### Installation
 
-Install the `sync` extra for the synchronous client's default HTTP transport, the `async` extra for the asynchronous client's default HTTP transport, or both.
+Install the `sync` extra for the synchronous client's default HTTP transport, the `async` extra for the asynchronous client's default HTTP transport, or both. In a project managed by uv, add the client with the extras you need:
+
+```sh
+uv add "my_handwritten_json_model[sync]"
+uv add "my_handwritten_json_model[async]"
+uv add "my_handwritten_json_model[sync,async]"
+```
+
+Or install it with pip:
 
 ```sh
 pip install "my_handwritten_json_model[sync]"

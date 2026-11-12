@@ -46,7 +46,9 @@ def test_missing_aiohttp_recommends_installing_the_extra(
     with pytest.raises(MissingDependencyError) as error:
         AIOHTTPClient()
 
-    assert 'pip install "smithy-http[aiohttp]"' in str(error.value)
+    message = str(error.value)
+    assert 'Install the optional dependency "smithy-http[aiohttp]".' in message
+    assert "pip install" not in message
 
 
 async def test_close_closes_session() -> None:

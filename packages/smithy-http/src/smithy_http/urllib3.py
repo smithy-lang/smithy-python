@@ -263,5 +263,5 @@ def _assert_urllib3() -> None:
     if not HAS_URLLIB3:
         raise MissingDependencyError(
             "Attempted to use the urllib3 component, but urllib3 is not installed. "
-            'Install it with: pip install "smithy-http[urllib3]"'
+            'Install the optional dependency "smithy-http[urllib3]".'
         )

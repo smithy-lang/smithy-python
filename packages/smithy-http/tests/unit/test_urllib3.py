@@ -84,7 +84,9 @@ def test_missing_urllib3_recommends_installing_the_extra(
     with pytest.raises(MissingDependencyError) as error:
         Urllib3HTTPClient()
 
-    assert 'pip install "smithy-http[urllib3]"' in str(error.value)
+    message = str(error.value)
+    assert 'Install the optional dependency "smithy-http[urllib3]".' in message
+    assert "pip install" not in message
 
 
 def test_repeated_response_headers_are_merged_case_insensitively() -> None:

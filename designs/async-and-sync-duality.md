@@ -4,7 +4,15 @@ Smithy-Python generated clients export two different classes that run in Python'
 
 ## Client mode extras
 
-Generated HTTP clients expose a `sync` and an `async` extra that install each mode's default HTTP transport (urllib3 for `sync`, aiohttp for `async`):
+Generated HTTP clients expose a `sync` and an `async` extra that install each mode's default HTTP transport (urllib3 for `sync`, aiohttp for `async`). In a project managed by uv:
+
+```sh
+uv add "aws_sdk_s3[sync]"
+uv add "aws_sdk_s3[async]"
+uv add "aws_sdk_s3[sync,async]"
+```
+
+Or with pip:
 
 ```sh
 pip install "aws_sdk_s3[sync]"

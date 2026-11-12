@@ -86,6 +86,7 @@ public class SetupGeneratorTest {
 
         var version = smithyHttp.version();
         assertAll(
+                () -> assertTrue(readme.contains("uv add \"test_client[sync,async]\""), readme),
                 () -> assertTrue(readme.contains("pip install \"test_client[sync,async]\""), readme),
                 () -> assertTrue(pyproject.contains("\"smithy_http[cbor]" + version + "\"\n]"), pyproject),
                 () -> assertTrue(pyproject.contains("sync = [\n    \"smithy_http[urllib3]" + version + "\"\n]"),
