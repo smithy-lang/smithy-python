@@ -2,4 +2,4 @@
 
 ## Non Query Compatible RpcV2 Protocol Service Client
 
-nonquerycompatiblerpcv2cbor client
+Python client for Non Query Compatible RpcV2 Protocol Service

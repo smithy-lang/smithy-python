@@ -3,7 +3,7 @@
 [project]
 name = "querycompatiblerpcv2cbor"
 version = "0.0.1"
-description = "querycompatiblerpcv2cbor client"
+description = "Python client for Query Compatible RpcV2 Protocol Service"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["smithy", "querycompatiblerpcv2cbor"]

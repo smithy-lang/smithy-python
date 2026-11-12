@@ -2,7 +2,7 @@
 
 ## Sample Query Protocol Service Client
 
-awsquery client
+Python client for Sample Query Protocol Service
 
 ### Documentation
 

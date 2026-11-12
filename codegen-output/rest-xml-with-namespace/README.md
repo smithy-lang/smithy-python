@@ -2,7 +2,7 @@
 
 ## Sample Rest Xml Protocol Service With Namespace Client
 
-restxmlwithnamespace client
+Python client for Sample Rest Xml Protocol Service With Namespace
 
 ### Documentation
 

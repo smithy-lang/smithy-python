@@ -2,4 +2,4 @@
 
 ## My Handwritten Model Client
 
-my_handwritten_model client
+Python client for My Handwritten Model

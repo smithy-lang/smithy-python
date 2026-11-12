@@ -13,6 +13,8 @@ import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.node.StringNode;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.traits.StringTrait;
+import software.amazon.smithy.model.traits.TitleTrait;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.StringUtils;
@@ -25,6 +27,8 @@ import software.amazon.smithy.utils.ToSmithyBuilder;
  * @param moduleName The name of the module to generate.
  * @param moduleVersion The version of the module to generate.
  * @param moduleDescription The optional module description for the module that will be generated.
+ *     Empty for clients without a configured description; use {@link #moduleDescription(Model)}
+ *     to resolve the effective description.
  * @param artifactType The type of artifact being generated (e.g. client/shapes/server)
  */
 @SmithyUnstableApi
@@ -56,10 +60,40 @@ public record PythonSettings(
                 builder.service,
                 builder.moduleName,
                 builder.moduleVersion,
-                StringUtils.isBlank(builder.moduleDescription)
-                        ? builder.moduleName + " " + builder.artifactType.name().toLowerCase(Locale.ENGLISH)
-                        : builder.moduleDescription,
+                configuredDescription(builder),
                 builder.artifactType);
+    }
+
+    private static String configuredDescription(Builder builder) {
+        if (!StringUtils.isBlank(builder.moduleDescription)) {
+            return builder.moduleDescription;
+        }
+        // Client defaults depend on the model, so they're resolved by moduleDescription(Model).
+        if (builder.artifactType == ArtifactType.CLIENT) {
+            return "";
+        }
+        return builder.moduleName + " " + builder.artifactType.name().toLowerCase(Locale.ENGLISH);
+    }
+
+    /**
+     * Resolves the description of the generated package.
+     *
+     * <p>A configured description is returned as-is. Otherwise, the default is derived
+     * from the service's {@code smithy.api#title} trait, falling back to the service
+     * shape's name.
+     *
+     * @param model Model containing the service shape.
+     * @return Returns the package description.
+     */
+    public String moduleDescription(Model model) {
+        if (!StringUtils.isBlank(moduleDescription)) {
+            return moduleDescription;
+        }
+        var service = service(model);
+        var name = service.getTrait(TitleTrait.class)
+                .map(StringTrait::getValue)
+                .orElse(service.getId().getName());
+        return "Python client for " + name;
     }
 
     /**

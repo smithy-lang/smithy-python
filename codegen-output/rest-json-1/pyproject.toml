@@ -3,7 +3,7 @@
 [project]
 name = "restjson"
 version = "0.0.1"
-description = "restjson client"
+description = "Python client for Sample Rest Json Protocol Service"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["smithy", "restjson"]
