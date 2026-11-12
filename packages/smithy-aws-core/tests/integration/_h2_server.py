@@ -16,17 +16,22 @@ import trustme
 from smithy_aws_event_stream.events import Event, EventMessage
 
 EVENT_STREAM_CONTENT_TYPE = "application/vnd.amazon.eventstream"
+# The defaults speak rpcv2Cbor; pass ``payload_content_type`` / ``smithy_protocol``
+# to H2BidiServer to speak another rpcv2 protocol (e.g. rpcv2Json).
+CBOR_CONTENT_TYPE = "application/cbor"
 # rpcv2 responses must echo the request's Smithy-Protocol header; clients treat a
-# response without it as malformed. This harness only speaks rpcv2Cbor.
+# response without it as malformed.
 SMITHY_PROTOCOL = "rpc-v2-cbor"
 
 
-def encode_event(event_type: str, payload: bytes) -> bytes:
+def encode_event(
+    event_type: str, payload: bytes, content_type: str = CBOR_CONTENT_TYPE
+) -> bytes:
     return EventMessage(
         headers={
             ":message-type": "event",
             ":event-type": event_type,
-            ":content-type": "application/cbor",
+            ":content-type": content_type,
         },
         payload=payload,
     ).encode()
@@ -42,13 +47,21 @@ Referee = Callable[["Event | None", "ServerStream"], Awaitable[bool]]
 class ServerStream:
     """The server's writable side of one event stream, handed to the referee."""
 
-    def __init__(self, conn: h2.connection.H2Connection, stream_id: int) -> None:
+    def __init__(
+        self,
+        conn: h2.connection.H2Connection,
+        stream_id: int,
+        content_type: str = CBOR_CONTENT_TYPE,
+    ) -> None:
         self._conn = conn
         self._stream_id = stream_id
+        self._content_type = content_type
 
     def send(self, event_type: str, payload: bytes) -> None:
         self._conn.send_data(
-            self._stream_id, encode_event(event_type, payload), end_stream=False
+            self._stream_id,
+            encode_event(event_type, payload, self._content_type),
+            end_stream=False,
         )
 
     def end(self) -> None:
@@ -62,11 +75,24 @@ class H2BidiServer:
     and thereafter handed each client event frame, deciding what to send back. The
     ``initial-request`` itself is recorded in ``received_event_types`` but not passed
     to the referee -- it is request setup, not a game move. ``received_event_types``
-    records every client frame's ``:event-type`` for post-hoc assertions.
+    records every client frame's ``:event-type`` for post-hoc assertions, and
+    ``received_content_types`` its ``:content-type``.
+
+    ``payload_content_type`` is the ``:content-type`` of the event frames the server
+    sends, and ``smithy_protocol`` the ``Smithy-Protocol`` response header value; both
+    default to rpcv2Cbor.
     """
 
-    def __init__(self, referee: Referee) -> None:
+    def __init__(
+        self,
+        referee: Referee,
+        *,
+        payload_content_type: str = CBOR_CONTENT_TYPE,
+        smithy_protocol: str = SMITHY_PROTOCOL,
+    ) -> None:
         self._referee = referee
+        self._payload_content_type = payload_content_type
+        self._smithy_protocol = smithy_protocol
         self._ca = trustme.CA()
         self._server_cert = self._ca.issue_cert("localhost", "127.0.0.1")
         self._ca_cert_ctx = self._ca.cert_pem.tempfile()
@@ -76,6 +102,7 @@ class H2BidiServer:
         self._server: asyncio.base_events.Server | None = None
         self._tasks: set[asyncio.Task[None]] = set()
         self.received_event_types: list[str] = []
+        self.received_content_types: list[str] = []
 
     async def __aenter__(self) -> "H2BidiServer":
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -115,25 +142,35 @@ class H2BidiServer:
         decoder = _FrameDecoder()
         stream: ServerStream | None = None
         done = False
+        client_ended = False
 
         try:
-            while not writer.is_closing() and not done:
+            # Keep the connection up after the game ends until the client half-closes
+            # its side, so the client's own end-of-stream lands on a live stream.
+            while not writer.is_closing() and not (done and client_ended):
                 data = await reader.read(65536)
                 if not data:
                     break
                 for h2_event in conn.receive_data(data):
                     if isinstance(h2_event, h2.events.RequestReceived):
-                        stream = ServerStream(conn, h2_event.stream_id)
+                        stream = ServerStream(
+                            conn, h2_event.stream_id, self._payload_content_type
+                        )
                         self._respond_headers(conn, stream)
+                    elif isinstance(h2_event, h2.events.StreamEnded):
+                        client_ended = True
                     elif isinstance(h2_event, h2.events.DataReceived):
                         conn.acknowledge_received_data(
                             len(h2_event.data), h2_event.stream_id
                         )
-                        if stream is None:
+                        if stream is None or done:
                             continue
                         for frame in decoder.feed(h2_event.data):
                             event_type = str(frame.message.headers.get(":event-type"))
                             self.received_event_types.append(event_type)
+                            self.received_content_types.append(
+                                str(frame.message.headers.get(":content-type"))
+                            )
                             if event_type == "initial-request":
                                 # Request setup, not a move: open the game off it.
                                 done = await self._referee(None, stream)
@@ -159,7 +196,7 @@ class H2BidiServer:
             [
                 (":status", "200"),
                 ("content-type", EVENT_STREAM_CONTENT_TYPE),
-                ("smithy-protocol", SMITHY_PROTOCOL),
+                ("smithy-protocol", self._smithy_protocol),
             ],
         )
 
