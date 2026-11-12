@@ -93,9 +93,9 @@ visible construction side effects.
 * A response header lookup table and list-header classification.
 * The modeled default response status.
 
-An operation schema extension separately caches the resolved `@http` and
-`@endpoint` traits, HTTP method, parsed path, static query string and names,
-response status, host-prefix pattern, and greedy label names.
+An operation schema extension separately caches the resolved `@http` trait,
+HTTP method, parsed path, static query string and names, response status, and
+greedy label names.
 
 The metadata uses tuples, immutable collections, read-only mappings, and frozen
 dataclasses so a cached value cannot be changed by one protocol instance and

@@ -22,7 +22,6 @@ from smithy_core.serializers import (
     SpecificShapeSerializer,
 )
 from smithy_core.traits import (
-    EndpointTrait,
     HTTPHeaderTrait,
     HTTPPrefixHeadersTrait,
     HTTPQueryTrait,
@@ -65,7 +64,6 @@ __all__ = [
     "HTTPResponseBindingSerializer",
     "HTTPResponseCodeSerializer",
     "HTTPResponseSerializer",
-    "HostPrefixSerializer",
     "RawPayloadSerializer",
 ]
 
@@ -82,7 +80,6 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         self,
         payload_codec: Codec,
         http_trait: HTTPTrait,
-        endpoint_trait: EndpointTrait | None = None,
         omit_empty_payload: bool = True,
         operation_metadata: HTTPOperationSchemaMetadata | None = None,
         event_stream_body: "Callable[[], AsyncStreamingBlob] | None" = None,
@@ -92,8 +89,6 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         :param payload_codec: The codec to use to serialize the HTTP payload, if one is
             present.
         :param http_trait: The HTTP trait of the operation being handled.
-        :param endpoint_trait: The optional endpoint trait of the operation being
-            handled.
         :param omit_empty_payload: Whether an empty payload should be omitted.
         :param operation_metadata: Optional cached operation binding metadata.
         :param event_stream_body: Creates the body that event stream events are
@@ -101,7 +96,6 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         """
         self._event_stream_body = event_stream_body
         self._http_trait = http_trait
-        self._endpoint_trait = endpoint_trait
         self._payload_codec = payload_codec
         self._omit_empty_payload = omit_empty_payload
         self._operation_metadata = operation_metadata
@@ -113,7 +107,6 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
             payload_codec=self._payload_codec,
             schema=schema,
             http_trait=self._http_trait,
-            endpoint_trait=self._endpoint_trait,
             omit_empty_payload=self._omit_empty_payload,
             operation_metadata=self._operation_metadata,
             event_stream_body=self._event_stream_body,
@@ -141,7 +134,6 @@ class HTTPBindingSerializer(InterceptingSerializer):
         payload_codec: Codec,
         schema: Schema,
         http_trait: HTTPTrait,
-        endpoint_trait: EndpointTrait | None = None,
         omit_empty_payload: bool = True,
         operation_metadata: HTTPOperationSchemaMetadata | None = None,
         event_stream_body: "Callable[[], AsyncStreamingBlob] | None" = None,
@@ -151,14 +143,13 @@ class HTTPBindingSerializer(InterceptingSerializer):
         :param payload_codec: The codec used to serialize document-bound members.
         :param schema: The structure schema whose members are being serialized.
         :param http_trait: The HTTP trait of the operation being handled.
-        :param endpoint_trait: The optional endpoint trait of the operation.
         :param omit_empty_payload: Whether an empty document payload should be omitted.
         :param operation_metadata: Optional cached operation binding metadata.
         :param event_stream_body: Creates the body that event stream events are
             written to. Event stream inputs are unsupported without it.
         """
-        self._operation_metadata = operation_metadata or (
-            HTTPOperationSchemaMetadata.from_traits(http_trait, endpoint_trait)
+        self._operation_metadata = (
+            operation_metadata or HTTPOperationSchemaMetadata.from_traits(http_trait)
         )
         self._binding_metadata: HTTPBindingSchemaMetadata = schema.get_extension(
             HTTP_BINDING_SCHEMA_EXTENSION
@@ -218,10 +209,6 @@ class HTTPBindingSerializer(InterceptingSerializer):
             self._operation_metadata.path,
             greedy_label_names=self._operation_metadata.greedy_label_names,
         )
-        self.host_prefix_serializer: HostPrefixSerializer = HostPrefixSerializer(
-            payload_serializer,
-            self._operation_metadata.host_prefix,
-        )
 
     def before(self, schema: Schema) -> ShapeSerializer:
         """Return the serializer for the HTTP binding of ``schema``."""
@@ -236,9 +223,6 @@ class HTTPBindingSerializer(InterceptingSerializer):
             case Binding.LABEL:
                 self.path_serializer.set_member_metadata(metadata)
                 return self.path_serializer
-            case Binding.HOST:
-                self.host_prefix_serializer.set_member_metadata(metadata)
-                return self.host_prefix_serializer
             case _:
                 return self._payload_serializer
 
@@ -293,7 +277,7 @@ class HTTPBindingSerializer(InterceptingSerializer):
         self._result = _HTTPRequest(
             method=self._operation_metadata.method,
             destination=URI(
-                host=self.host_prefix_serializer.host_prefix,
+                host="",
                 path=self.path_serializer.path,
                 query=join_query_params(
                     params=self.query_serializer.query_params,
@@ -328,16 +312,12 @@ class HTTPRequestBindingSerializer(InterceptingSerializer):
         self,
         payload_serializer: ShapeSerializer,
         path_pattern: PathPattern,
-        host_prefix_pattern: str,
         binding_matcher: RequestBindingMatcher,
     ) -> None:
         self._payload_serializer = payload_serializer
         self.header_serializer: HTTPHeaderSerializer = HTTPHeaderSerializer()
         self.query_serializer: HTTPQuerySerializer = HTTPQuerySerializer()
         self.path_serializer: HTTPPathSerializer = HTTPPathSerializer(path_pattern)
-        self.host_prefix_serializer: HostPrefixSerializer = HostPrefixSerializer(
-            payload_serializer, host_prefix_pattern
-        )
         self._binding_matcher = binding_matcher
 
     def before(self, schema: Schema) -> ShapeSerializer:
@@ -348,8 +328,6 @@ class HTTPRequestBindingSerializer(InterceptingSerializer):
                 return self.query_serializer
             case Binding.LABEL:
                 return self.path_serializer
-            case Binding.HOST:
-                return self.host_prefix_serializer
             case _:
                 return self._payload_serializer
 
@@ -983,54 +961,6 @@ class HTTPQueryMapValueSerializer(SpecificShapeSerializer):
     @contextmanager
     def begin_list(self, schema: Schema, size: int) -> Iterator[ShapeSerializer]:
         yield self
-
-
-class HostPrefixSerializer(SpecificShapeSerializer):
-    """Binds properites of a serializable shape to the HTTP URI host.
-
-    These properties are also bound to the payload.
-    """
-
-    def __init__(
-        self,
-        payload_serializer: ShapeSerializer,
-        host_prefix_pattern: str,
-    ) -> None:
-        """Initialize a HostPrefixSerializer.
-
-        :param host_prefix_pattern: The pattern to bind properties to.
-        :param payload_serializer: The payload serializer to additionally write
-            properties to.
-        """
-        self._prefix_params: dict[str, str] = {}
-        self._host_prefix_pattern = host_prefix_pattern
-        self._payload_serializer = payload_serializer
-        self._member_metadata: HTTPMemberBindingMetadata | None = None
-
-    def set_member_metadata(self, metadata: HTTPMemberBindingMetadata) -> None:
-        """Set the cached plan for the next top-level member write."""
-        self._member_metadata = metadata
-
-    @property
-    def host_prefix(self) -> str:
-        """The formatted host prefix.
-
-        This must not be accessed before serialization is complete, otherwise an
-        exception will be raised.
-        """
-        return self._host_prefix_pattern.format(**self._prefix_params)
-
-    def write_string(self, schema: Schema, value: str) -> None:
-        self._payload_serializer.write_string(schema, value)
-        self._prefix_params[self._name_for(schema)] = urlquote(value, safe=".")
-
-    def _name_for(self, schema: Schema) -> str:
-        if (
-            self._member_metadata is not None
-            and self._member_metadata.request_wire_name is not None
-        ):
-            return self._member_metadata.request_wire_name
-        return schema.expect_member_name()
 
 
 class HTTPResponseCodeSerializer(SpecificShapeSerializer):

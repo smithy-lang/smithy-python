@@ -21,11 +21,7 @@ public final class Ec2QueryProtocolGenerator implements ProtocolGenerator {
             // TODO: support the request compression trait
             // https://smithy.io/2.0/spec/behavior-traits.html#smithy-api-requestcompression-trait
             "SDKAppliedContentEncoding_ec2Query",
-            "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_ec2Query",
-
-            // TODO: support of the endpoint trait
-            "Ec2QueryEndpointTraitWithHostLabel",
-            "Ec2QueryEndpointTrait");
+            "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_ec2Query");
 
     @Override
     public ShapeId getProtocol() {

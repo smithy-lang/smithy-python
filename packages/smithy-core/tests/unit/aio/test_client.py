@@ -6,6 +6,7 @@ import uuid
 from collections.abc import AsyncIterator, Callable, Iterator
 from dataclasses import dataclass, field, replace
 from io import BytesIO, UnsupportedOperation
+from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -17,10 +18,11 @@ from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.auth import RESOLVED_IDENTITY, AuthOption
 from smithy_core.client import OPERATION as OPERATION_PROPERTY
 from smithy_core.client import ClientCall
-from smithy_core.endpoints import RESOLVED_ENDPOINT, EndpointAuthScheme
+from smithy_core.endpoints import HOST_PREFIX, RESOLVED_ENDPOINT, EndpointAuthScheme
 from smithy_core.exceptions import (
     CallError,
     ClientTimeoutError,
+    EndpointResolutionError,
     ResourceLifecycleError,
     SmithyError,
     UnsupportedAuthSchemeError,
@@ -50,7 +52,9 @@ from ._pipeline_harness import (
     DATA_STREAM_OPERATION,
     OPERATION,
     TOKEN_OPERATION,
+    UNARY_OPERATION,
     DuplexTransport,
+    HostPrefixInput,
     NonDuplexTransport,
     StubEndpoint,
     StubEndpointResolver,
@@ -62,6 +66,7 @@ from ._pipeline_harness import (
     TokenInput,
     UndeclaredTransport,
     client_call,
+    host_prefix_operation,
     pipeline_harness,
     retryable_client_call,
 )
@@ -1110,3 +1115,104 @@ async def test_failure_closing_a_body_does_not_hide_the_error() -> None:
 
     with pytest.raises(CallError, match="original"):
         await harness.pipeline(retryable_client_call())
+
+
+def _host_prefix_call(
+    host_prefix: str,
+    input: HostPrefixInput,
+    *,
+    disabled: bool = False,
+    retry_strategy: Any = None,
+) -> Any:
+    config = SimpleNamespace(disable_host_prefix_injection=disabled)
+    return replace(
+        retryable_client_call(retry_strategy),
+        input=input,
+        operation=host_prefix_operation(host_prefix),
+        context=TypedProperties({"config": config}),
+    )
+
+
+# Includes the cases from the appendix of the AWS SDK host prefix SEP.
+@pytest.mark.parametrize(
+    ("host_prefix", "input", "disabled", "host"),
+    [
+        ("data.", HostPrefixInput(), False, "data.example.com"),
+        (
+            "{Bucket}-{AccountId}.",
+            HostPrefixInput(bucket="SomeName", account_id="1234567890"),
+            False,
+            "SomeName-1234567890.example.com",
+        ),
+        ("data.", HostPrefixInput(), True, "example.com"),
+        (
+            "{Bucket}.",
+            HostPrefixInput(bucket="attacker.example:1"),
+            True,
+            "example.com",
+        ),
+    ],
+)
+async def test_host_prefix_is_prepended_to_the_resolved_endpoint_host(
+    host_prefix: str, input: HostPrefixInput, disabled: bool, host: str
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    call = _host_prefix_call(host_prefix, input, disabled=disabled)
+
+    await harness.pipeline(call)
+
+    [endpoint] = harness.protocol.service_endpoints
+    assert endpoint.uri.host == host
+    assert call.context[RESOLVED_ENDPOINT].uri.host == "example.com"
+    assert harness.protocol.serialized_inputs == [input]
+
+
+@pytest.mark.parametrize(
+    "bucket", [None, "", "attacker.example:1", "a.b", "-a", "a" * 64]
+)
+async def test_invalid_host_label_fails_the_call_before_it_is_sent(
+    bucket: str | None,
+) -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    resolver = StubEndpointResolver()
+    call = replace(
+        _host_prefix_call("{Bucket}.", HostPrefixInput(bucket=bucket)),
+        endpoint_resolver=resolver,
+    )
+
+    with pytest.raises(
+        EndpointResolutionError, match="Bucket is part of the endpoint host"
+    ):
+        await harness.pipeline(call)
+
+    assert resolver.resolved_inputs == []
+    assert harness.transport.send_calls == 0
+
+
+async def test_host_prefix_is_prepended_once_on_every_attempt() -> None:
+    harness = pipeline_harness(_FailingTwiceTransport())
+    strategy = SimpleRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=0),
+        max_attempts=3,
+    )
+    call = _host_prefix_call(
+        "{Bucket}.", HostPrefixInput(bucket="bucket"), retry_strategy=strategy
+    )
+
+    await harness.pipeline(call)
+
+    hosts = [endpoint.uri.host for endpoint in harness.protocol.service_endpoints]
+    assert hosts == ["bucket.example.com"] * 3
+    assert call.context[HOST_PREFIX] == "bucket."
+
+
+def test_host_prefix_and_label_field_names_are_cached() -> None:
+    operation = host_prefix_operation("{Bucket}-{AccountId}.")
+    first = operation._host_prefix  # pyright: ignore[reportPrivateUsage]
+
+    assert first == (
+        "{Bucket}-{AccountId}.",
+        (("Bucket", "bucket"), ("AccountId", "account_id")),
+    )
+    assert operation.__dict__["_host_prefix"] is first
+    assert UNARY_OPERATION._host_prefix is None  # pyright: ignore[reportPrivateUsage]

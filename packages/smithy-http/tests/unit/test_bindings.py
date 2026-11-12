@@ -5,7 +5,6 @@ from smithy_core.prelude import INTEGER, STRING
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
-    EndpointTrait,
     ErrorTrait,
     HostLabelTrait,
     HTTPErrorTrait,
@@ -145,7 +144,7 @@ def test_request_matching() -> None:
     prefix_member = GENERAL_BINDINGS.members["prefixHeaders"]
     assert matcher.match(prefix_member) == Binding.PREFIX_HEADERS
 
-    assert matcher.match(GENERAL_BINDINGS.members["hostLabel"]) == Binding.HOST
+    assert matcher.match(GENERAL_BINDINGS.members["hostLabel"]) == Binding.BODY
     assert matcher.match(GENERAL_BINDINGS.members["status"]) == Binding.BODY
     assert matcher.match(GENERAL_BINDINGS.members["body"]) == Binding.BODY
 
@@ -346,7 +345,6 @@ def test_http_operation_schema_extension_is_cached() -> None:
                     "uri": "/items/{id+}?fixed=value&flag",
                 }
             ),
-            EndpointTrait({"hostPrefix": "{account}."}),
         ],
     )
 
@@ -358,5 +356,4 @@ def test_http_operation_schema_extension_is_cached() -> None:
     assert metadata.query == "fixed=value&flag"
     assert metadata.query_literal_names == frozenset({"fixed", "flag"})
     assert metadata.response_status == 201
-    assert metadata.host_prefix == "{account}."
     assert metadata.greedy_label_names == frozenset({"id"})

@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Clients now prepend the `@endpoint` trait's host prefix, with its `@hostLabel` values, to the endpoint host. Set `disable_host_prefix_injection` to turn this off."
+}

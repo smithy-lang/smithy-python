@@ -34,10 +34,6 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
             // This requires support of the httpChecksumRequired trait
             "RestJsonHttpChecksumRequired",
 
-            // These require support of the endpoint trait
-            "RestJsonEndpointTraitWithHostLabel",
-            "RestJsonEndpointTrait",
-
             // TODO: support the request compression trait
             // https://smithy.io/2.0/spec/behavior-traits.html#smithy-api-requestcompression-trait
             "SDKAppliedContentEncoding_restJson1",

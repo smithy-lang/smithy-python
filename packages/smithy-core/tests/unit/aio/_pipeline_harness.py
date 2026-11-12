@@ -18,7 +18,7 @@ from smithy_core.retries import SimpleRetryStrategy
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import IdempotencyTokenTrait, StreamingTrait
+from smithy_core.traits import HostLabelTrait, IdempotencyTokenTrait, StreamingTrait
 from smithy_core.types import TypedProperties
 
 _STRING = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
@@ -182,6 +182,7 @@ class StubProtocol:
         self.serialize_request_calls = 0
         self.serialized_inputs: list[Any] = []
         self.set_service_endpoint_calls = 0
+        self.service_endpoints: list[Any] = []
         self.deserialize_response_calls = 0
         self.create_event_publisher_calls = 0
         self.create_event_receiver_calls = 0
@@ -205,6 +206,7 @@ class StubProtocol:
 
     def set_service_endpoint(self, *, request: Any, endpoint: Any) -> Any:
         self.set_service_endpoint_calls += 1
+        self.service_endpoints.append(endpoint)
         return request
 
     def deserialize_response_program(self, **kwargs: Any) -> Program[StubOutput]:
@@ -354,6 +356,39 @@ class TokenInput:
 
     client_token: str | None = None
     message: str | None = None
+
+    def serialize(self, serializer: ShapeSerializer) -> None:
+        pass
+
+
+def host_prefix_operation(host_prefix: str) -> APIOperation[Any, StubOutput]:
+    """An operation with an endpoint trait whose input has two host label members."""
+    return APIOperation(
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "com.example",
+            "HostPrefixOperation",
+            {"smithy.api#endpoint": {"hostPrefix": host_prefix}},
+            Schema.collection(
+                id=ShapeID("com.example#HostPrefixInput"),
+                members={
+                    "Bucket": {"target": _STRING, "traits": [HostLabelTrait()]},
+                    "AccountId": {"target": _STRING, "traits": [HostLabelTrait()]},
+                },
+            ),
+            _UNARY_OUTPUT_SCHEMA,
+            (),
+        ),
+        effective_auth_schemes=[],
+    )
+
+
+@dataclass(kw_only=True)
+class HostPrefixInput:
+    """Shaped like a generated operation input with host label members."""
+
+    bucket: str | None = None
+    account_id: str | None = None
 
     def serialize(self, serializer: ShapeSerializer) -> None:
         pass

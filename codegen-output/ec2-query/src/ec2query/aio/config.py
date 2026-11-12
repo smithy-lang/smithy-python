@@ -169,6 +169,7 @@ class _AsyncEC2ProtocolConfigOverrides(AsyncAwsConfigOverrides, total=False):
     auth_scheme_resolver: AuthSchemeResolver | None
     use_dualstack_endpoint: bool | None
     use_fips_endpoint: bool | None
+    disable_host_prefix_injection: bool | None
 
 
 @dataclass(kw_only=True, repr=False, init=False)
@@ -238,6 +239,12 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
     header.
     """
 
+    disable_host_prefix_injection: bool | None = None
+    """
+    Whether to skip prepending operations' modeled host prefixes to the
+    endpoint host.
+    """
+
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
         "use_dualstack_endpoint": FieldSpec(
             default=None, resolver=resolve_use_dualstack_endpoint_program
@@ -252,6 +259,7 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
         "aws_session_token": FieldSpec(default=None),
         "user_agent_extra": FieldSpec(default=None),
         "sdk_ua_app_id": FieldSpec(default=None),
+        "disable_host_prefix_injection": FieldSpec(default=None),
         **AsyncAwsConfig._FIELDS,
         "endpoint_uri": FieldSpec(
             default=None, resolver=EndpointUriResolver("ec2_protocol").program

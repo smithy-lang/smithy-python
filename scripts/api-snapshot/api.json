@@ -802,7 +802,6 @@
     "HTTPResponseBindingSerializer": "class",
     "HTTPResponseCodeSerializer": "class",
     "HTTPResponseSerializer": "class",
-    "HostPrefixSerializer": "class",
     "RawPayloadSerializer": "class"
   },
   "smithy_http.testing": {},

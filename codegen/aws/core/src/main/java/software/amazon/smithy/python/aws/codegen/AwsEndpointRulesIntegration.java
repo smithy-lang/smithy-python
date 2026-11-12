@@ -20,6 +20,7 @@ import software.amazon.smithy.model.pattern.UriPattern;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.traits.EndpointTrait;
 import software.amazon.smithy.model.traits.HttpTrait;
 import software.amazon.smithy.model.transform.ModelTransformer;
 import software.amazon.smithy.python.codegen.CodegenUtils;
@@ -43,7 +44,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  * Adds the region config property and registers the AWS rules extension for AWS services
  * and for services whose endpoint rules use AWS functions or built-ins. In generated
  * endpoint tests, the extension sets the AWS built-ins and test credentials. For S3, it
- * strips the bucket from the operation URIs because the rules place it.
+ * strips the bucket from the operation URIs because the rules place it. For S3 Control, it
+ * removes the {@code {AccountId}.} host prefix for the same reason.
  */
 @SmithyInternalApi
 public final class AwsEndpointRulesIntegration implements PythonIntegration {
@@ -74,8 +76,20 @@ public final class AwsEndpointRulesIntegration implements PythonIntegration {
     private static final String TEST_ACCESS_KEY_ID = "test-access-key-id";
     private static final String TEST_SECRET_ACCESS_KEY = "test-secret-access-key";
     private static final String S3_SDK_ID = "S3";
+    private static final String S3_CONTROL_SDK_ID = "S3 Control";
+    private static final String ACCOUNT_ID_HOST_PREFIX = "{AccountId}.";
     private static final String BUCKET = "Bucket";
     private static final String BUCKET_LABEL = "/{" + BUCKET + "}";
+
+    @Override
+    public Model preprocessModel(Model model, PythonSettings settings) {
+        var service = settings.service(model);
+        return switch (service.getTrait(ServiceTrait.class).map(ServiceTrait::getSdkId).orElse("")) {
+            case S3_SDK_ID -> stripBucketLabels(model, service);
+            case S3_CONTROL_SDK_ID -> stripAccountIdHostPrefix(model, service);
+            default -> model;
+        };
+    }
 
     /**
      * Strips the leading {@code /{Bucket}} from S3's operation URIs. S3's rules place the
@@ -84,12 +98,7 @@ public final class AwsEndpointRulesIntegration implements PythonIntegration {
      * so it isn't serialized into the body; the path serializer ignores a label that isn't
      * in the URI.
      */
-    @Override
-    public Model preprocessModel(Model model, PythonSettings settings) {
-        var service = settings.service(model);
-        if (!service.getTrait(ServiceTrait.class).map(ServiceTrait::getSdkId).orElse("").equals(S3_SDK_ID)) {
-            return model;
-        }
+    private static Model stripBucketLabels(Model model, ServiceShape service) {
         var replaced = new ArrayList<Shape>();
         for (OperationShape operation : TopDownIndex.of(model).getContainedOperations(service)) {
             var http = operation.getTrait(HttpTrait.class);
@@ -101,6 +110,22 @@ public final class AwsEndpointRulesIntegration implements PythonIntegration {
                 replaced.add(operation.toBuilder()
                         .addTrait(http.get().toBuilder().uri(UriPattern.parse(uri)).build())
                         .build());
+            }
+        }
+        return ModelTransformer.create().replaceShapes(model, replaced);
+    }
+
+    /**
+     * Removes S3 Control's {@code {AccountId}.} host prefix, as the endpoint rules SEP
+     * requires. The rules already place the account ID in the endpoint host, so the request
+     * would carry it twice.
+     */
+    private static Model stripAccountIdHostPrefix(Model model, ServiceShape service) {
+        var replaced = new ArrayList<Shape>();
+        for (OperationShape operation : TopDownIndex.of(model).getContainedOperations(service)) {
+            var endpoint = operation.getTrait(EndpointTrait.class);
+            if (endpoint.isPresent() && endpoint.get().getHostPrefix().toString().equals(ACCOUNT_ID_HOST_PREFIX)) {
+                replaced.add(operation.toBuilder().removeTrait(EndpointTrait.ID).build());
             }
         }
         return ModelTransformer.create().replaceShapes(model, replaced);

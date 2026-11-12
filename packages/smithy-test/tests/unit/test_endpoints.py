@@ -7,6 +7,7 @@ import pytest
 from smithy_core import URI
 from smithy_core.documents import Document
 from smithy_core.endpoints import (
+    HOST_PREFIX,
     RESOLVED_ENDPOINT,
     BddEndpointResolver,
     Endpoint,
@@ -131,8 +132,10 @@ class _Client:
     def __init__(self, interceptor: Interceptor[Any, Any, Any, Any]) -> None:
         self.interceptor = interceptor
 
-    async def send(self, destination: URI) -> None:
-        properties = TypedProperties()
+    async def send(
+        self, destination: URI, properties: TypedProperties | None = None
+    ) -> None:
+        properties = properties or TypedProperties()
         properties[RESOLVED_ENDPOINT] = self.ENDPOINT
         context: RequestContext[Any, Any] = RequestContext(
             request=Document(),
@@ -140,6 +143,9 @@ class _Client:
             properties=properties,
         )
         self.interceptor.read_before_signing(context)
+
+    async def send_with_host_prefix(self, destination: URI) -> None:
+        await self.send(destination, TypedProperties({HOST_PREFIX.key: "data."}))
 
     async def fail(self, input: None) -> None:
         raise EndpointResolutionError("Missing Region")
@@ -175,6 +181,21 @@ async def test_client_cases_fail_on_requests_outside_the_endpoint(
     with pytest.raises(AssertionError, match="Expected request destination"):
         await check_client_case_async(
             _client, _Client.send, destination, CLIENT_ENDPOINT
+        )
+
+
+async def test_client_cases_expect_the_host_prefix_on_the_destination() -> None:
+    destination = URI(host="data.h.example.com", path="/p", query="a=b")
+    await check_client_case_async(
+        _client, _Client.send_with_host_prefix, destination, CLIENT_ENDPOINT
+    )
+
+    with pytest.raises(AssertionError, match=r"with host prefix 'data\.'"):
+        await check_client_case_async(
+            _client,
+            _Client.send_with_host_prefix,
+            URI(host="h.example.com", path="/p", query="a=b"),
+            CLIENT_ENDPOINT,
         )
 
 
