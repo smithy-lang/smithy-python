@@ -3,7 +3,7 @@
 [project]
 name = "rpcv2json"
 version = "0.0.1"
-description = "rpcv2json client"
+description = "Python client for RpcV2 JSON Protocol Service"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["smithy", "rpcv2json"]

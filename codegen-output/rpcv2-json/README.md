@@ -2,4 +2,4 @@
 
 ## RpcV2 JSON Protocol Service Client
 
-rpcv2json client
+Python client for RpcV2 JSON Protocol Service
