@@ -213,7 +213,8 @@ def _upload_data(source: Any, body: AsyncBytesReader | None) -> Any:
 def _assert_aiohttp() -> None:
     if not HAS_AIOHTTP:
         raise MissingDependencyError(
-            "Attempted to use aiohttp component, but aiohttp is not installed."
+            "Attempted to use aiohttp component, but aiohttp is not installed. "
+            'Install it with: pip install "smithy-http[aiohttp]"'
         )
 
 

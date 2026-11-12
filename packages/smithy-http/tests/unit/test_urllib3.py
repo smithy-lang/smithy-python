@@ -9,9 +9,10 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
+import smithy_http.urllib3
 import urllib3
 from smithy_core import URI
-from smithy_core.exceptions import ClientTimeoutError
+from smithy_core.exceptions import ClientTimeoutError, MissingDependencyError
 from smithy_core.interfaces import is_bytes_reader
 from smithy_core.utils import read_streaming_blob
 from smithy_http import Field, Fields, HTTPRequest
@@ -73,6 +74,17 @@ def test_pool_keeps_the_configured_connections_per_host(
     assert pool.pool is not None
     assert pool.pool.maxsize == maxsize
     client.close()
+
+
+def test_missing_urllib3_recommends_installing_the_extra(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(smithy_http.urllib3, "HAS_URLLIB3", False)
+
+    with pytest.raises(MissingDependencyError) as error:
+        Urllib3HTTPClient()
+
+    assert 'pip install "smithy-http[urllib3]"' in str(error.value)
 
 
 def test_repeated_response_headers_are_merged_case_insensitively() -> None:

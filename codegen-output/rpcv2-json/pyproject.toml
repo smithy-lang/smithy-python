@@ -25,10 +25,18 @@ classifiers = [
 
 dependencies = [
     "smithy_core~=0.10.0",
-    "smithy_http[json, aiohttp, urllib3]~=0.7.0"
+    "smithy_http[json]~=0.7.0"
 ]
 
 [project.optional-dependencies]
+sync = [
+    "smithy_http[urllib3]~=0.7.0"
+]
+
+async = [
+    "smithy_http[aiohttp]~=0.7.0"
+]
+
 awscrt = [
     "smithy_http[awscrt]~=0.7.0"
 ]

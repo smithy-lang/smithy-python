@@ -3,3 +3,15 @@
 ## Non Query Compatible RpcV2 Protocol Service Client
 
 Python client for Non Query Compatible RpcV2 Protocol Service
+
+### Installation
+
+Install the `sync` extra for the synchronous client's default HTTP transport, the `async` extra for the asynchronous client's default HTTP transport, or both.
+
+```sh
+pip install "nonquerycompatiblerpcv2cbor[sync]"
+pip install "nonquerycompatiblerpcv2cbor[async]"
+pip install "nonquerycompatiblerpcv2cbor[sync,async]"
+```
+
+Without either extra, the models can be used, and either client works with an explicitly configured custom transport.

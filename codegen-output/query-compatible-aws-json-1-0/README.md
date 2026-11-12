@@ -3,3 +3,15 @@
 ## Query Compatible Json 1.0 Protocol Service Client
 
 Python client for Query Compatible Json 1.0 Protocol Service
+
+### Installation
+
+Install the `sync` extra for the synchronous client's default HTTP transport, the `async` extra for the asynchronous client's default HTTP transport, or both.
+
+```sh
+pip install "querycompatibleawsjson10[sync]"
+pip install "querycompatibleawsjson10[async]"
+pip install "querycompatibleawsjson10[sync,async]"
+```
+
+Without either extra, the models can be used, and either client works with an explicitly configured custom transport.

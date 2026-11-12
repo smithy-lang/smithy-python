@@ -7,9 +7,11 @@ from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import smithy_http.aio.aiohttp
 from smithy_core import URI
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import read_streaming_blob_async
+from smithy_core.exceptions import MissingDependencyError
 from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.aio.aiohttp import AIOHTTPClient, _AIOHTTPStreamingBody
 from smithy_http.exceptions import SmithyHTTPError
@@ -34,6 +36,17 @@ def _create_request() -> HTTPRequest:
         body=AsyncBytesReader(b""),
         fields=Fields(),
     )
+
+
+def test_missing_aiohttp_recommends_installing_the_extra(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(smithy_http.aio.aiohttp, "HAS_AIOHTTP", False)
+
+    with pytest.raises(MissingDependencyError) as error:
+        AIOHTTPClient()
+
+    assert 'pip install "smithy-http[aiohttp]"' in str(error.value)
 
 
 async def test_close_closes_session() -> None:

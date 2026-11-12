@@ -2,6 +2,22 @@
 
 Smithy-Python generated clients export two different classes that run in Python's synchronous and asynchronous (aio, async/await) operation modes respectively. For example, the `aws_sdk_s3` package will export both the `S3Client` (synchronous) and `AsyncS3Client` (asynchronous) classes. This allows the customer to operate one or both modes depending on application requirements.
 
+## Client mode extras
+
+Generated HTTP clients expose a `sync` and an `async` extra that install each mode's default HTTP transport (urllib3 for `sync`, aiohttp for `async`):
+
+```sh
+pip install "aws_sdk_s3[sync]"
+pip install "aws_sdk_s3[async]"
+pip install "aws_sdk_s3[sync,async]"
+```
+
+- A bare install, without either extra, does not install aiohttp or urllib3. It supports the shared models, and either client with an explicitly configured custom transport. Constructing a missing default transport fails with a `MissingDependencyError`.
+- Public import paths are unchanged.
+- Other extras keep their meaning: protocol requirements stay in the base package, and the `awscrt` extra still opts into the CRT transport.
+
+This describes the current single-distribution package. If the modes are ever split into separate distributions, how installs that use a custom transport migrate will be designed as part of that split.
+
 ## `make aio-check`
 
 `make aio-check` is a verification step that runs as part of CI's static analysis suite. It detects simple mechanical violations of sync/async duality, such as placing a class in the wrong location or with the wrong name.

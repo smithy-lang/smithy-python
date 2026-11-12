@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Breaking Changes
+
+* Generated HTTP clients no longer install aiohttp and urllib3 by default.
+  Install the `sync` extra for the synchronous client's default transport, the
+  `async` extra for the asynchronous client's default transport, or both, such
+  as `pip install "aws_sdk_s3[sync,async]"`. Clients configured with a custom
+  transport work without either extra. Imports are unchanged.
+
 ### Features
 
 * Generated AWS clients validate the checksums of response payloads for operations with the `aws.protocols#httpChecksum` trait, such as Amazon S3's `GetObject`. These clients depend on the `checksums` extra of `smithy-aws-core`.
