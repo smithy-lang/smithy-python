@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.Symbol;
@@ -214,45 +215,105 @@ final class ClientGenerator implements Runnable {
                         outputSymbol.getName(),
                         outputSymbol.getName());
 
-        writer.putContext("output", outputSymbol.getName());
-        writer.putContext("plugin", pluginSymbol);
         writer.putContext("operationName", operationMethodSymbol.getName());
         writer.putContext("operation", "_models." + operationSymbol.getName());
-        putInputMembers(writer, input);
-        var template =
+        writer.putContext("plugin", pluginSymbol);
+        writeOverloadedOperation(writer,
+                input,
+                sync,
+                outputSymbol.getName(),
+                w -> writeOperationDocs(w, operation, input, output),
                 """
-                        async def ${operationName:L}(
-                            self,
-                            *,
-                            ${parameters:L|}
-                            plugins: list[${plugin:T}] | None = None,
-                        ) -> ${output:L}:
-                            ${?docs}${docs:C|}
-                            ${/docs}return await self._invoke(
-                                ${members:L|},
-                                ${operation:L},
-                                [
-                                    ${C|}
-                                ],
-                                plugins,
-                            )
-                        """;
-        writer.putContext("docs", writer.consumer(w -> writeOperationDocs(w, operation, input, output)));
-        writer.write(sync ? SyncVariant.toSyncCode(template) : template,
+                        return await self._invoke(
+                            self._select_input(${operation:L}, args, kwargs),
+                            ${operation:L},
+                            [
+                                ${C|}
+                            ],
+                            plugins,
+                        )""",
                 writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
     }
 
     /**
-     * Puts an operation's input members into the writer's context, as the keyword-only
-     * parameters of its method ({@code parameters}) and as the dictionary of them the
-     * method hands to the runtime ({@code members}), which builds the input model.
+     * Writes an operation method: two overloads for callers and one implementation.
+     *
+     * <p>A caller passes either the whole request, positional-only so that it takes
+     * no keyword away from the members, or the request's members as keyword
+     * arguments. The keyword overload carries the documentation, where editors find
+     * the documentation of each argument; {@code ClientBase} copies it onto the
+     * implementation for {@code help()}. The implementation takes either, and its
+     * body hands {@code args} and {@code kwargs} to {@code _select_input}.
+     *
+     * <p>Expects {@code operationName}, {@code operation} and {@code plugin} in the
+     * writer's context.
+     *
+     * @param writer The writer to write the method with.
+     * @param input The operation's input shape.
+     * @param sync Whether the method is for the sync client.
+     * @param returns The method's return type, as written.
+     * @param docs Writes the method's documentation.
+     * @param body The async code template of the implementation's body.
+     * @param bodyArgs The positional arguments of the body template.
+     */
+    private void writeOverloadedOperation(
+            PythonWriter writer,
+            Shape input,
+            boolean sync,
+            String returns,
+            Consumer<PythonWriter> docs,
+            String body,
+            Object... bodyArgs
+    ) {
+        UnaryOperator<String> code = sync ? SyncVariant::toSyncCode : UnaryOperator.identity();
+        // Aliased because a method defined in the class body shadows a module name
+        // for the rest of the class, and an operation may be named Overload.
+        writer.addStdlibImport("typing", "overload", "_overload");
+        writer.putContext("returns", returns);
+        writer.putContext("request", requestType(writer, input, sync));
+        writer.putContext("parameters", parameters(writer, input));
+        writer.putContext("docs", writer.consumer(docs));
+        writer.putContext("body", writer.consumer(w -> w.write(code.apply(body), bodyArgs)));
+        writer.write(code.apply("""
+                @_overload
+                async def ${operationName:L}(
+                    self,
+                    request: ${request:L},
+                    /,
+                    *,
+                    plugins: list[${plugin:T}] | None = None,
+                ) -> ${returns:L}: ...
+
+                @_overload
+                async def ${operationName:L}(
+                    self,
+                    /,
+                    *,
+                    ${parameters:L|}
+                    plugins: list[${plugin:T}] | None = None,
+                ) -> ${returns:L}:
+                    ${docs:C|}
+
+                async def ${operationName:L}(
+                    self,
+                    /,
+                    *args: object,
+                    plugins: list[${plugin:T}] | None = None,
+                    **kwargs: object,
+                ) -> ${returns:L}:
+                    ${body:C|}
+                """));
+    }
+
+    /**
+     * Spells an operation's input members as the keyword-only parameters of its
+     * method's keyword overload.
      *
      * <p>The parameters are in model order. They are all keyword-only, so required
      * ones need not come first.
      */
-    private void putInputMembers(PythonWriter writer, Shape input) {
+    private String parameters(PythonWriter writer, Shape input) {
         var parameters = new StringBuilder();
-        var members = new StringBuilder();
         for (var member : input.members()) {
             if (!inputParams.isParameter(member)) {
                 continue;
@@ -265,10 +326,22 @@ final class ClientGenerator implements Runnable {
                 parameters.append(" | None = None");
             }
             parameters.append(",\n");
-            members.append("    \"").append(name).append("\": ").append(name).append(",\n");
         }
-        writer.putContext("parameters", parameters.toString().stripTrailing());
-        writer.putContext("members", members.isEmpty() ? "None" : "{\n" + members + "}");
+        return parameters.toString().stripTrailing();
+    }
+
+    /**
+     * Spells the type of an operation's whole request: its input model or its
+     * dictionary form. An input with a streaming body has a second dictionary form
+     * whose body may be an async stream, which only the async client accepts.
+     */
+    private String requestType(PythonWriter writer, Shape input, boolean sync) {
+        var type = annotation(writer, symbolProvider.toSymbol(input))
+                + " | " + annotation(writer, inputParams.paramsSymbol(input));
+        if (!sync && inputParams.hasAsyncParams(input)) {
+            type += " | " + annotation(writer, inputParams.asyncParamsSymbol(input));
+        }
+        return type;
     }
 
     /**
@@ -381,7 +454,6 @@ final class ClientGenerator implements Runnable {
         var input = model.expectShape(operation.getInputShape());
         // Annotations must be deferred: the parameter types are not imported at runtime.
         writer.getImportContainer().enableFutureAnnotations();
-        putInputMembers(writer, input);
 
         var eventStreamIndex = EventStreamIndex.of(model);
         var inputStreamSymbol = eventStreamIndex.getInputInfo(operation)
@@ -391,7 +463,6 @@ final class ClientGenerator implements Runnable {
 
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
-        writer.putContext("output", outputSymbol);
 
         var outputStreamSymbol = eventStreamIndex.getOutputInfo(operation)
                 .map(EventStreamInfo::getEventStreamTarget)
@@ -406,89 +477,63 @@ final class ClientGenerator implements Runnable {
         // pass a union into something that expects a `type[T]` and there is no equivalent for unions.
         // The only other way to type those signatures would be as UnionType, but then you've broadened
         // the type declaration so much that it's no better than Any.
-        if (inputStreamSymbol.isPresent()) {
-            if (outputStreamSymbol.isPresent()) {
-                writer.putContext("duplexEventStream", RuntimeTypes.DUPLEX_EVENT_STREAM);
-                var outputDocs = "An `AsyncDuplexEventStream` for bidirectional streaming.";
-                writer.write("""
-                        async def ${operationName:L}(
-                            self,
-                            *,
-                            ${parameters:L|}
-                            plugins: list[${plugin:T}] | None = None,
-                        ) -> ${duplexEventStream:T}[${inputStream:T}, ${outputStream:T}, ${output:T}]:
-                            ${C|}
-                            pipeline, call = await self._prepare_call(
-                                ${members:L|},
-                                ${operation:L},
-                                [
-                                    ${C|}
-                                ],
-                                plugins,
-                            )
-                            return await pipeline.duplex_stream(
-                                call,
-                                ${inputStream:T},
-                                ${outputStream:T},
-                                ${outputStreamDeserializer:T}().deserialize
-                            )
-                        """,
-                        writer.consumer(w -> writeOperationDocs(w, operation, input, output, outputDocs)),
-                        writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
-            } else {
-                writer.putContext("inputEventStream", RuntimeTypes.INPUT_EVENT_STREAM);
-                var outputDocs = "An `AsyncInputEventStream` for client-to-server streaming.";
-                writer.write("""
-                        async def ${operationName:L}(
-                            self,
-                            *,
-                            ${parameters:L|}
-                            plugins: list[${plugin:T}] | None = None,
-                        ) -> ${inputEventStream:T}[${inputStream:T}, ${output:T}]:
-                            ${C|}
-                            pipeline, call = await self._prepare_call(
-                                ${members:L|},
-                                ${operation:L},
-                                [
-                                    ${C|}
-                                ],
-                                plugins,
-                            )
-                            return await pipeline.input_stream(
-                                call,
-                                ${inputStream:T}
-                            )
-                        """,
-                        writer.consumer(w -> writeOperationDocs(w, operation, input, output, outputDocs)),
-                        writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
-            }
+        String returns;
+        String outputDocs;
+        String stream;
+        if (inputStreamSymbol.isPresent() && outputStreamSymbol.isPresent()) {
+            returns = writer.format("$T[$T, $T, $T]",
+                    RuntimeTypes.DUPLEX_EVENT_STREAM,
+                    inputStreamSymbol.get(),
+                    outputStreamSymbol.get(),
+                    outputSymbol);
+            outputDocs = "An `AsyncDuplexEventStream` for bidirectional streaming.";
+            stream = """
+                    return await pipeline.duplex_stream(
+                        call,
+                        ${inputStream:T},
+                        ${outputStream:T},
+                        ${outputStreamDeserializer:T}().deserialize
+                    )""";
+        } else if (inputStreamSymbol.isPresent()) {
+            returns = writer.format("$T[$T, $T]",
+                    RuntimeTypes.INPUT_EVENT_STREAM,
+                    inputStreamSymbol.get(),
+                    outputSymbol);
+            outputDocs = "An `AsyncInputEventStream` for client-to-server streaming.";
+            stream = """
+                    return await pipeline.input_stream(
+                        call,
+                        ${inputStream:T}
+                    )""";
         } else {
-            writer.putContext("outputEventStream", RuntimeTypes.OUTPUT_EVENT_STREAM);
-            var outputDocs = "An `AsyncOutputEventStream` for server-to-client streaming.";
-            writer.write("""
-                    async def ${operationName:L}(
-                        self,
-                        *,
-                        ${parameters:L|}
-                        plugins: list[${plugin:T}] | None = None,
-                    ) -> ${outputEventStream:T}[${outputStream:T}, ${output:T}]:
-                        ${C|}
+            returns = writer.format("$T[$T, $T]",
+                    RuntimeTypes.OUTPUT_EVENT_STREAM,
+                    outputStreamSymbol.orElseThrow(),
+                    outputSymbol);
+            outputDocs = "An `AsyncOutputEventStream` for server-to-client streaming.";
+            stream = """
+                    return await pipeline.output_stream(
+                        call,
+                        ${outputStream:T},
+                        ${outputStreamDeserializer:T}().deserialize
+                    )""";
+        }
+        // Sync clients don't support event streams, so this is only ever async.
+        writeOverloadedOperation(writer,
+                input,
+                false,
+                returns,
+                w -> writeOperationDocs(w, operation, input, output, outputDocs),
+                """
                         pipeline, call = await self._prepare_call(
-                            ${members:L|},
+                            self._select_input(${operation:L}, args, kwargs),
                             ${operation:L},
                             [
                                 ${C|}
                             ],
                             plugins,
                         )
-                        return await pipeline.output_stream(
-                            call,
-                            ${outputStream:T},
-                            ${outputStreamDeserializer:T}().deserialize
-                        )
-                    """,
-                    writer.consumer(w -> writeOperationDocs(w, operation, input, output, outputDocs)),
-                    writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
-        }
+                        """ + stream,
+                writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
     }
 }

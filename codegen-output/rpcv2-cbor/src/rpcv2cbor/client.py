@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import overload as _overload
 
 from smithy_core.client import Client
 from smithy_http.plugins import user_agent_plugin
@@ -42,8 +43,18 @@ class RpcV2Protocol(Client[Config]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     def empty_input_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyInputOutputInput | _models.EmptyInputOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyInputOutputOutput: ...
+
+    @_overload
+    def empty_input_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputOutputOutput:
         """
         Invokes the EmptyInputOutput operation.
@@ -58,9 +69,28 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `EmptyInputOutputOutput`.
         """
-        return self._invoke(None, _models.EMPTY_INPUT_OUTPUT, [], plugins)
 
-    def float16(self, *, plugins: list[Plugin] | None = None) -> Float16Output:
+    def empty_input_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyInputOutputOutput:
+        return self._invoke(
+            self._select_input(_models.EMPTY_INPUT_OUTPUT, args, kwargs),
+            _models.EMPTY_INPUT_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
+    def float16(
+        self,
+        request: _models.Float16Input | _models.Float16InputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> Float16Output: ...
+
+    @_overload
+    def float16(self, /, *, plugins: list[Plugin] | None = None) -> Float16Output:
         """
         Invokes the Float16 operation.
 
@@ -74,10 +104,29 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `Float16Output`.
         """
-        return self._invoke(None, _models.FLOAT16, [], plugins)
 
+    def float16(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> Float16Output:
+        return self._invoke(
+            self._select_input(_models.FLOAT16, args, kwargs),
+            _models.FLOAT16,
+            [],
+            plugins,
+        )
+
+    @_overload
     def fractional_seconds(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FractionalSecondsOutput: ...
+
+    @_overload
+    def fractional_seconds(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -92,10 +141,30 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return self._invoke(None, _models.FRACTIONAL_SECONDS, [], plugins)
 
+    def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FractionalSecondsOutput:
+        return self._invoke(
+            self._select_input(_models.FRACTIONAL_SECONDS, args, kwargs),
+            _models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def greeting_with_errors(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput
+        | _models.GreetingWithErrorsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    def greeting_with_errors(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values:
@@ -117,10 +186,29 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return self._invoke(None, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def no_input_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputOutputInput | _models.NoInputOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputOutputOutput: ...
+
+    @_overload
+    def no_input_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputOutputOutput:
         """
         Invokes the NoInputOutput operation.
@@ -135,10 +223,31 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `NoInputOutputOutput`.
         """
-        return self._invoke(None, _models.NO_INPUT_OUTPUT, [], plugins)
 
+    def no_input_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputOutputOutput:
+        return self._invoke(
+            self._select_input(_models.NO_INPUT_OUTPUT, args, kwargs),
+            _models.NO_INPUT_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     def operation_with_defaults(
         self,
+        request: _models.OperationWithDefaultsInput
+        | _models.OperationWithDefaultsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OperationWithDefaultsOutput: ...
+
+    @_overload
+    def operation_with_defaults(
+        self,
+        /,
         *,
         defaults: _models.Defaults | _models.DefaultsParams | None = None,
         client_optional_defaults: _models.ClientOptionalDefaults
@@ -161,20 +270,30 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `OperationWithDefaultsOutput`.
         """
+
+    def operation_with_defaults(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithDefaultsOutput:
         return self._invoke(
-            {
-                "defaults": defaults,
-                "client_optional_defaults": client_optional_defaults,
-                "top_level_default": top_level_default,
-                "other_top_level_default": other_top_level_default,
-            },
+            self._select_input(_models.OPERATION_WITH_DEFAULTS, args, kwargs),
             _models.OPERATION_WITH_DEFAULTS,
             [],
             plugins,
         )
 
+    @_overload
     def optional_input_output(
-        self, *, value: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.OptionalInputOutputInput
+        | _models.OptionalInputOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OptionalInputOutputOutput: ...
+
+    @_overload
+    def optional_input_output(
+        self, /, *, value: str | None = None, plugins: list[Plugin] | None = None
     ) -> OptionalInputOutputOutput:
         """
         Invokes the OptionalInputOutput operation.
@@ -189,12 +308,30 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `OptionalInputOutputOutput`.
         """
+
+    def optional_input_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OptionalInputOutputOutput:
         return self._invoke(
-            {"value": value}, _models.OPTIONAL_INPUT_OUTPUT, [], plugins
+            self._select_input(_models.OPTIONAL_INPUT_OUTPUT, args, kwargs),
+            _models.OPTIONAL_INPUT_OUTPUT,
+            [],
+            plugins,
         )
 
+    @_overload
     def recursive_shapes(
         self,
+        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RecursiveShapesOutput: ...
+
+    @_overload
+    def recursive_shapes(
+        self,
+        /,
         *,
         nested: _models.RecursiveShapesInputOutputNested1
         | _models.RecursiveShapesInputOutputNested1Params
@@ -214,10 +351,31 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        return self._invoke({"nested": nested}, _models.RECURSIVE_SHAPES, [], plugins)
 
+    def recursive_shapes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RecursiveShapesOutput:
+        return self._invoke(
+            self._select_input(_models.RECURSIVE_SHAPES, args, kwargs),
+            _models.RECURSIVE_SHAPES,
+            [],
+            plugins,
+        )
+
+    @_overload
     def rpc_v2_cbor_dense_maps(
         self,
+        request: _models.RpcV2CborDenseMapsInput
+        | _models.RpcV2CborDenseMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RpcV2CborDenseMapsOutput: ...
+
+    @_overload
+    def rpc_v2_cbor_dense_maps(
+        self,
+        /,
         *,
         dense_struct_map: Mapping[
             str, _models.GreetingStruct | _models.GreetingStructParams
@@ -242,21 +400,30 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `RpcV2CborDenseMapsOutput`.
         """
+
+    def rpc_v2_cbor_dense_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RpcV2CborDenseMapsOutput:
         return self._invoke(
-            {
-                "dense_struct_map": dense_struct_map,
-                "dense_number_map": dense_number_map,
-                "dense_boolean_map": dense_boolean_map,
-                "dense_string_map": dense_string_map,
-                "dense_set_map": dense_set_map,
-            },
+            self._select_input(_models.RPC_V2_CBOR_DENSE_MAPS, args, kwargs),
             _models.RPC_V2_CBOR_DENSE_MAPS,
             [],
             plugins,
         )
 
+    @_overload
     def rpc_v2_cbor_lists(
         self,
+        request: _models.RpcV2CborListsInput | _models.RpcV2CborListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RpcV2CborListsOutput: ...
+
+    @_overload
+    def rpc_v2_cbor_lists(
+        self,
+        /,
         *,
         string_list: Sequence[str] | None = None,
         string_set: Sequence[str] | None = None,
@@ -293,26 +460,31 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `RpcV2CborListsOutput`.
         """
+
+    def rpc_v2_cbor_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RpcV2CborListsOutput:
         return self._invoke(
-            {
-                "string_list": string_list,
-                "string_set": string_set,
-                "integer_list": integer_list,
-                "boolean_list": boolean_list,
-                "timestamp_list": timestamp_list,
-                "enum_list": enum_list,
-                "int_enum_list": int_enum_list,
-                "nested_string_list": nested_string_list,
-                "structure_list": structure_list,
-                "blob_list": blob_list,
-            },
+            self._select_input(_models.RPC_V2_CBOR_LISTS, args, kwargs),
             _models.RPC_V2_CBOR_LISTS,
             [],
             plugins,
         )
 
+    @_overload
     def rpc_v2_cbor_sparse_maps(
         self,
+        request: _models.RpcV2CborSparseMapsInput
+        | _models.RpcV2CborSparseMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RpcV2CborSparseMapsOutput: ...
+
+    @_overload
+    def rpc_v2_cbor_sparse_maps(
+        self,
+        /,
         *,
         sparse_struct_map: Mapping[
             str, _models.GreetingStruct | _models.GreetingStructParams | None
@@ -337,21 +509,30 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `RpcV2CborSparseMapsOutput`.
         """
+
+    def rpc_v2_cbor_sparse_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RpcV2CborSparseMapsOutput:
         return self._invoke(
-            {
-                "sparse_struct_map": sparse_struct_map,
-                "sparse_number_map": sparse_number_map,
-                "sparse_boolean_map": sparse_boolean_map,
-                "sparse_string_map": sparse_string_map,
-                "sparse_set_map": sparse_set_map,
-            },
+            self._select_input(_models.RPC_V2_CBOR_SPARSE_MAPS, args, kwargs),
             _models.RPC_V2_CBOR_SPARSE_MAPS,
             [],
             plugins,
         )
 
+    @_overload
     def rpc_v2_cbor_unions(
         self,
+        request: _models.RpcV2CborUnionsInput | _models.RpcV2CborUnionsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RpcV2CborUnionsOutput: ...
+
+    @_overload
+    def rpc_v2_cbor_unions(
+        self,
+        /,
         *,
         contents: _models.RpcV2CborUnion | _models.RpcV2CborUnionParams | None = None,
         other_value: str | None = None,
@@ -370,15 +551,31 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `RpcV2CborUnionsOutput`.
         """
+
+    def rpc_v2_cbor_unions(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RpcV2CborUnionsOutput:
         return self._invoke(
-            {"contents": contents, "other_value": other_value},
+            self._select_input(_models.RPC_V2_CBOR_UNIONS, args, kwargs),
             _models.RPC_V2_CBOR_UNIONS,
             [],
             plugins,
         )
 
+    @_overload
     def simple_scalar_properties(
         self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    def simple_scalar_properties(
+        self,
+        /,
         *,
         true_boolean_value: bool | None = None,
         false_boolean_value: bool | None = None,
@@ -405,26 +602,31 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
+
+    def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
         return self._invoke(
-            {
-                "true_boolean_value": true_boolean_value,
-                "false_boolean_value": false_boolean_value,
-                "byte_value": byte_value,
-                "double_value": double_value,
-                "float_value": float_value,
-                "integer_value": integer_value,
-                "long_value": long_value,
-                "short_value": short_value,
-                "string_value": string_value,
-                "blob_value": blob_value,
-            },
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
             _models.SIMPLE_SCALAR_PROPERTIES,
             [],
             plugins,
         )
 
+    @_overload
     def sparse_nulls_operation(
         self,
+        request: _models.SparseNullsOperationInput
+        | _models.SparseNullsOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SparseNullsOperationOutput: ...
+
+    @_overload
+    def sparse_nulls_operation(
+        self,
+        /,
         *,
         sparse_string_list: Sequence[str | None] | None = None,
         sparse_string_map: Mapping[str, str | None] | None = None,
@@ -443,11 +645,12 @@ class RpcV2Protocol(Client[Config]):
         Returns:
             An instance of `SparseNullsOperationOutput`.
         """
+
+    def sparse_nulls_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SparseNullsOperationOutput:
         return self._invoke(
-            {
-                "sparse_string_list": sparse_string_list,
-                "sparse_string_map": sparse_string_map,
-            },
+            self._select_input(_models.SPARSE_NULLS_OPERATION, args, kwargs),
             _models.SPARSE_NULLS_OPERATION,
             [],
             plugins,

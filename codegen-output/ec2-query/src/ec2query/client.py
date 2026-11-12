@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import cast, overload as _overload
 
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.chain.resolver import IdentityChain
@@ -58,8 +58,18 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     def datetime_offsets(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DatetimeOffsetsOutput: ...
+
+    @_overload
+    def datetime_offsets(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -74,10 +84,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return self._invoke(None, _models.DATETIME_OFFSETS, [], plugins)
 
+    def datetime_offsets(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DatetimeOffsetsOutput:
+        return self._invoke(
+            self._select_input(_models.DATETIME_OFFSETS, args, kwargs),
+            _models.DATETIME_OFFSETS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def empty_input_and_empty_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyInputAndEmptyOutputInput
+        | _models.EmptyInputAndEmptyOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyInputAndEmptyOutputOutput: ...
+
+    @_overload
+    def empty_input_and_empty_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -94,10 +124,29 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
-        return self._invoke(None, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins)
 
+    def empty_input_and_empty_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyInputAndEmptyOutputOutput:
+        return self._invoke(
+            self._select_input(_models.EMPTY_INPUT_AND_EMPTY_OUTPUT, args, kwargs),
+            _models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     def endpoint_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointOperationOutput: ...
+
+    @_overload
+    def endpoint_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -112,10 +161,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return self._invoke(None, _models.ENDPOINT_OPERATION, [], plugins)
 
+    def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointOperationOutput:
+        return self._invoke(
+            self._select_input(_models.ENDPOINT_OPERATION, args, kwargs),
+            _models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     def endpoint_with_host_label_operation(
-        self, *, label: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointWithHostLabelOperationInput
+        | _models.EndpointWithHostLabelOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput: ...
+
+    @_overload
+    def endpoint_with_host_label_operation(
+        self, /, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -130,12 +199,31 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
+
+    def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelOperationOutput:
         return self._invoke(
-            {"label": label}, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     def fractional_seconds(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FractionalSecondsOutput: ...
+
+    @_overload
+    def fractional_seconds(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -150,10 +238,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return self._invoke(None, _models.FRACTIONAL_SECONDS, [], plugins)
 
+    def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FractionalSecondsOutput:
+        return self._invoke(
+            self._select_input(_models.FRACTIONAL_SECONDS, args, kwargs),
+            _models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def greeting_with_errors(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput
+        | _models.GreetingWithErrorsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    def greeting_with_errors(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -170,10 +278,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return self._invoke(None, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def host_with_path_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HostWithPathOperationInput
+        | _models.HostWithPathOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HostWithPathOperationOutput: ...
+
+    @_overload
+    def host_with_path_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
@@ -188,10 +316,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        return self._invoke(None, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
+    def host_with_path_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HostWithPathOperationOutput:
+        return self._invoke(
+            self._select_input(_models.HOST_WITH_PATH_OPERATION, args, kwargs),
+            _models.HOST_WITH_PATH_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     def ignores_wrapping_xml_name(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.IgnoresWrappingXmlNameInput
+        | _models.IgnoresWrappingXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> IgnoresWrappingXmlNameOutput: ...
+
+    @_overload
+    def ignores_wrapping_xml_name(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> IgnoresWrappingXmlNameOutput:
         """
         The xmlName trait on the output structure is ignored in AWS Query. The
@@ -207,10 +355,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `IgnoresWrappingXmlNameOutput`.
         """
-        return self._invoke(None, _models.IGNORES_WRAPPING_XML_NAME, [], plugins)
 
+    def ignores_wrapping_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> IgnoresWrappingXmlNameOutput:
+        return self._invoke(
+            self._select_input(_models.IGNORES_WRAPPING_XML_NAME, args, kwargs),
+            _models.IGNORES_WRAPPING_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @_overload
     def nested_structures(
         self,
+        request: _models.NestedStructuresInput | _models.NestedStructuresInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NestedStructuresOutput: ...
+
+    @_overload
+    def nested_structures(
+        self,
+        /,
         *,
         nested: _models.StructArg | _models.StructArgParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -228,10 +396,29 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `NestedStructuresOutput`.
         """
-        return self._invoke({"nested": nested}, _models.NESTED_STRUCTURES, [], plugins)
 
+    def nested_structures(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NestedStructuresOutput:
+        return self._invoke(
+            self._select_input(_models.NESTED_STRUCTURES, args, kwargs),
+            _models.NESTED_STRUCTURES,
+            [],
+            plugins,
+        )
+
+    @_overload
     def no_input_and_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndOutputOutput: ...
+
+    @_overload
+    def no_input_and_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -248,10 +435,31 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return self._invoke(None, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
+    def no_input_and_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndOutputOutput:
+        return self._invoke(
+            self._select_input(_models.NO_INPUT_AND_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     def put_with_content_encoding(
         self,
+        request: _models.PutWithContentEncodingInput
+        | _models.PutWithContentEncodingInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutWithContentEncodingOutput: ...
+
+    @_overload
+    def put_with_content_encoding(
+        self,
+        /,
         *,
         encoding: str | None = None,
         data: str | None = None,
@@ -270,15 +478,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
+
+    def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutWithContentEncodingOutput:
         return self._invoke(
-            {"encoding": encoding, "data": data},
+            self._select_input(_models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
             _models.PUT_WITH_CONTENT_ENCODING,
             [],
             plugins,
         )
 
+    @_overload
     def query_idempotency_token_auto_fill(
-        self, *, token: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.QueryIdempotencyTokenAutoFillInput
+        | _models.QueryIdempotencyTokenAutoFillInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryIdempotencyTokenAutoFillOutput: ...
+
+    @_overload
+    def query_idempotency_token_auto_fill(
+        self, /, *, token: str | None = None, plugins: list[Plugin] | None = None
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
@@ -294,12 +517,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
+
+    def query_idempotency_token_auto_fill(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryIdempotencyTokenAutoFillOutput:
         return self._invoke(
-            {"token": token}, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            self._select_input(_models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, args, kwargs),
+            _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
+            [],
+            plugins,
         )
 
+    @_overload
     def query_lists(
         self,
+        request: _models.QueryListsInput | _models.QueryListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryListsOutput: ...
+
+    @_overload
+    def query_lists(
+        self,
+        /,
         *,
         list_arg: Sequence[str] | None = None,
         complex_list_arg: Sequence[
@@ -326,21 +567,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `QueryListsOutput`.
         """
+
+    def query_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryListsOutput:
         return self._invoke(
-            {
-                "list_arg": list_arg,
-                "complex_list_arg": complex_list_arg,
-                "list_arg_with_xml_name_member": list_arg_with_xml_name_member,
-                "list_arg_with_xml_name": list_arg_with_xml_name,
-                "nested_with_list": nested_with_list,
-            },
+            self._select_input(_models.QUERY_LISTS, args, kwargs),
             _models.QUERY_LISTS,
             [],
             plugins,
         )
 
+    @_overload
     def query_timestamps(
         self,
+        request: _models.QueryTimestampsInput | _models.QueryTimestampsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryTimestampsOutput: ...
+
+    @_overload
+    def query_timestamps(
+        self,
+        /,
         *,
         normal_format: datetime | None = None,
         epoch_member: datetime | None = None,
@@ -363,19 +613,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `QueryTimestampsOutput`.
         """
+
+    def query_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryTimestampsOutput:
         return self._invoke(
-            {
-                "normal_format": normal_format,
-                "epoch_member": epoch_member,
-                "epoch_target": epoch_target,
-            },
+            self._select_input(_models.QUERY_TIMESTAMPS, args, kwargs),
             _models.QUERY_TIMESTAMPS,
             [],
             plugins,
         )
 
+    @_overload
     def recursive_xml_shapes(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.RecursiveXmlShapesInput
+        | _models.RecursiveXmlShapesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RecursiveXmlShapesOutput: ...
+
+    @_overload
+    def recursive_xml_shapes(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> RecursiveXmlShapesOutput:
         """
         Recursive shapes
@@ -390,10 +651,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `RecursiveXmlShapesOutput`.
         """
-        return self._invoke(None, _models.RECURSIVE_XML_SHAPES, [], plugins)
 
+    def recursive_xml_shapes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RecursiveXmlShapesOutput:
+        return self._invoke(
+            self._select_input(_models.RECURSIVE_XML_SHAPES, args, kwargs),
+            _models.RECURSIVE_XML_SHAPES,
+            [],
+            plugins,
+        )
+
+    @_overload
     def simple_input_params(
         self,
+        request: _models.SimpleInputParamsInput | _models.SimpleInputParamsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleInputParamsOutput: ...
+
+    @_overload
+    def simple_input_params(
+        self,
+        /,
         *,
         foo: str | None = None,
         bar: str | None = None,
@@ -424,30 +705,30 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `SimpleInputParamsOutput`.
         """
+
+    def simple_input_params(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleInputParamsOutput:
         return self._invoke(
-            {
-                "foo": foo,
-                "bar": bar,
-                "baz": baz,
-                "bam": bam,
-                "float_value": float_value,
-                "boo": boo,
-                "qux": qux,
-                "foo_enum": foo_enum,
-                "has_query_name": has_query_name,
-                "has_query_and_xml_name": has_query_and_xml_name,
-                "uses_xml_name": uses_xml_name,
-                "distinct_query_name": distinct_query_name,
-                "distinct_query_and_xml_name": distinct_query_and_xml_name,
-                "distinct_xml_name": distinct_xml_name,
-            },
+            self._select_input(_models.SIMPLE_INPUT_PARAMS, args, kwargs),
             _models.SIMPLE_INPUT_PARAMS,
             [],
             plugins,
         )
 
+    @_overload
     def simple_scalar_xml_properties(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.SimpleScalarXmlPropertiesInput
+        | _models.SimpleScalarXmlPropertiesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarXmlPropertiesOutput: ...
+
+    @_overload
+    def simple_scalar_xml_properties(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> SimpleScalarXmlPropertiesOutput:
         """
         Invokes the SimpleScalarXmlProperties operation.
@@ -462,10 +743,29 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `SimpleScalarXmlPropertiesOutput`.
         """
-        return self._invoke(None, _models.SIMPLE_SCALAR_XML_PROPERTIES, [], plugins)
 
+    def simple_scalar_xml_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarXmlPropertiesOutput:
+        return self._invoke(
+            self._select_input(_models.SIMPLE_SCALAR_XML_PROPERTIES, args, kwargs),
+            _models.SIMPLE_SCALAR_XML_PROPERTIES,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_blobs(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlBlobsInput | _models.XmlBlobsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlBlobsOperationOutput: ...
+
+    @_overload
+    def xml_blobs(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlBlobsOperationOutput:
         """
         Blobs are base64 encoded
@@ -480,10 +780,29 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `XmlBlobsOperationOutput`.
         """
-        return self._invoke(None, _models.XML_BLOBS, [], plugins)
 
+    def xml_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlBlobsOperationOutput:
+        return self._invoke(
+            self._select_input(_models.XML_BLOBS, args, kwargs),
+            _models.XML_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_empty_blobs(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyBlobsInput | _models.XmlEmptyBlobsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyBlobsOutput: ...
+
+    @_overload
+    def xml_empty_blobs(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlEmptyBlobsOutput:
         """
         Invokes the XmlEmptyBlobs operation.
@@ -498,10 +817,29 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        return self._invoke(None, _models.XML_EMPTY_BLOBS, [], plugins)
 
+    def xml_empty_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyBlobsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_EMPTY_BLOBS, args, kwargs),
+            _models.XML_EMPTY_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_empty_lists(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyListsInput | _models.XmlEmptyListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyListsOutput: ...
+
+    @_overload
+    def xml_empty_lists(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlEmptyListsOutput:
         """
         Invokes the XmlEmptyLists operation.
@@ -516,9 +854,28 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
-        return self._invoke(None, _models.XML_EMPTY_LISTS, [], plugins)
 
-    def xml_enums(self, *, plugins: list[Plugin] | None = None) -> XmlEnumsOutput:
+    def xml_empty_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyListsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_EMPTY_LISTS, args, kwargs),
+            _models.XML_EMPTY_LISTS,
+            [],
+            plugins,
+        )
+
+    @_overload
+    def xml_enums(
+        self,
+        request: _models.XmlEnumsInput | _models.XmlEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEnumsOutput: ...
+
+    @_overload
+    def xml_enums(self, /, *, plugins: list[Plugin] | None = None) -> XmlEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
@@ -533,10 +890,29 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
-        return self._invoke(None, _models.XML_ENUMS, [], plugins)
 
+    def xml_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEnumsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_ENUMS, args, kwargs),
+            _models.XML_ENUMS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_int_enums(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlIntEnumsInput | _models.XmlIntEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlIntEnumsOutput: ...
+
+    @_overload
+    def xml_int_enums(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlIntEnumsOutput:
         """
         This example serializes intEnums as top level properties, in lists,
@@ -552,10 +928,29 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
-        return self._invoke(None, _models.XML_INT_ENUMS, [], plugins)
 
+    def xml_int_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlIntEnumsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_INT_ENUMS, args, kwargs),
+            _models.XML_INT_ENUMS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_lists(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlListsInput | _models.XmlListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlListsOperationOutput: ...
+
+    @_overload
+    def xml_lists(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlListsOperationOutput:
         """
         This test case serializes XML lists for the following cases for both
@@ -574,10 +969,29 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `XmlListsOperationOutput`.
         """
-        return self._invoke(None, _models.XML_LISTS, [], plugins)
 
+    def xml_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlListsOperationOutput:
+        return self._invoke(
+            self._select_input(_models.XML_LISTS, args, kwargs),
+            _models.XML_LISTS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_namespaces(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlNamespacesInput | _models.XmlNamespacesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlNamespacesOutput: ...
+
+    @_overload
+    def xml_namespaces(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlNamespacesOutput:
         """
         Invokes the XmlNamespaces operation.
@@ -592,10 +1006,29 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
-        return self._invoke(None, _models.XML_NAMESPACES, [], plugins)
 
+    def xml_namespaces(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlNamespacesOutput:
+        return self._invoke(
+            self._select_input(_models.XML_NAMESPACES, args, kwargs),
+            _models.XML_NAMESPACES,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_timestamps(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlTimestampsInput | _models.XmlTimestampsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlTimestampsOutput: ...
+
+    @_overload
+    def xml_timestamps(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
@@ -611,7 +1044,16 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
-        return self._invoke(None, _models.XML_TIMESTAMPS, [], plugins)
+
+    def xml_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlTimestampsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_TIMESTAMPS, args, kwargs),
+            _models.XML_TIMESTAMPS,
+            [],
+            plugins,
+        )
 
     def _new_config(self) -> EC2ProtocolConfig:
         return EC2ProtocolConfig.resolve()

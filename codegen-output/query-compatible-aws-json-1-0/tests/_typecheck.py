@@ -32,9 +32,15 @@ async def check_async_calls(client: AsyncQueryCompatibleJSONRPC10Client) -> None
     await client.query_compatible_operation(
         **_request(QueryCompatibleOperationInputParams)
     )
+    await client.query_compatible_operation(_request(QueryCompatibleOperationInput))
+    await client.query_compatible_operation(
+        _request(QueryCompatibleOperationInputParams)
+    )
 
 
 def check_sync_calls(client: QueryCompatibleJSONRPC10Client) -> None:
     pass
     client.query_compatible_operation()
     client.query_compatible_operation(**_request(QueryCompatibleOperationInputParams))
+    client.query_compatible_operation(_request(QueryCompatibleOperationInput))
+    client.query_compatible_operation(_request(QueryCompatibleOperationInputParams))

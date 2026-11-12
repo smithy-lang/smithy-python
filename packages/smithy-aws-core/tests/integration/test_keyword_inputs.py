@@ -338,12 +338,157 @@ async def test_streaming_request_unpacks_from_the_form_each_client_accepts(
     assert async_transport.bodies == [b"body", b"async body"]
 
 
-async def test_whole_input_object_is_not_accepted(sync: bool, tmp_path: Path) -> None:
+@pytest.mark.parametrize("form", ["model", "params"])
+async def test_whole_request_is_accepted_positionally(
+    sync: bool, tmp_path: Path, form: str
+) -> None:
+    client, transport, recorder = await _client(sync, tmp_path)
+    member = StructureListMember(a="1", b="2")
+    request: JsonListsInput | JsonListsInputParams
+    if form == "model":
+        request = JsonListsInput(string_list=["a"], structure_list=[member])
+    else:
+        request = {"string_list": ["a"], "structure_list": [member]}
+    before = repr(request)
+
+    await _result(client.json_lists(request))
+
+    assert json.loads(transport.bodies[0]) == {
+        "stringList": ["a"],
+        "myStructureList": [{"value": "1", "other": "2"}],
+    }
+    (received,) = recorder.inputs
+    assert type(received) is JsonListsInput
+    assert received.structure_list[0] is member
+    assert repr(request) == before
+
+
+async def test_whole_model_is_used_as_it_is(sync: bool, tmp_path: Path) -> None:
+    client, transport, recorder = await _client(sync, tmp_path)
+    request = JsonListsInput(string_list=None, structure_list=[StructureListMember()])
+
+    await _result(client.json_lists(request))
+
+    # None is the same as omitting a member, and the model is not copied.
+    assert json.loads(transport.bodies[0]) == {"myStructureList": [{}]}
+    (received,) = recorder.inputs
+    assert received is request
+
+
+async def test_whole_dictionary_treats_none_as_omitted(
+    sync: bool, tmp_path: Path
+) -> None:
     client, transport, _ = await _client(sync, tmp_path)
+    request: JsonListsInputParams = {
+        "string_list": None,
+        "structure_list": [{"a": None}],
+    }
 
-    with pytest.raises(TypeError):
-        await _result(client.json_lists(JsonListsInput(string_list=["a"])))
+    await _result(client.json_lists(request))
 
+    assert json.loads(transport.bodies[0]) == {"myStructureList": [{}]}
+    assert request == {"string_list": None, "structure_list": [{"a": None}]}
+
+
+async def test_whole_model_token_is_generated_without_changing_the_model(
+    sync: bool, tmp_path: Path
+) -> None:
+    client, transport, recorder = await _client(sync, tmp_path)
+    request = models.QueryIdempotencyTokenAutoFillInput()
+
+    await _result(client.query_idempotency_token_auto_fill(request))
+
+    assert recorder.inputs == [request]
+    assert request.token is None
+    (sent,) = _sent_tokens(transport)
+    assert uuid.UUID(sent).version == 4
+
+
+def _invalid_requests() -> list[tuple[str, tuple[Any, ...], dict[str, Any], str]]:
+    dialog: Any = {"language": "en"}
+    nested = models.OperationWithNestedStructureInput(top_level=TopLevel(dialog=dialog))
+    return [
+        (
+            "json_lists",
+            (JsonListsInput(),),
+            {"string_list": ["a"]},
+            r"JsonLists takes its request or keyword arguments, not both",
+        ),
+        (
+            "json_lists",
+            (JsonListsInput(), {}),
+            {},
+            r"JsonLists takes at most one positional argument, its request, "
+            r"but 2 were given",
+        ),
+        (
+            "json_lists",
+            (JsonUnionsInput(),),
+            {},
+            r"JsonLists takes a JsonListsInput or a dict as its request, "
+            r"got JsonUnionsInput",
+        ),
+        (
+            "json_lists",
+            (None,),
+            {},
+            r"JsonLists takes a JsonListsInput or a dict as its request, got None",
+        ),
+        # A dictionary is checked as keyword arguments are.
+        (
+            "json_lists",
+            ({"structure_list": [{"c": "2"}]},),
+            {},
+            r"at structure_list\[0\]: unknown member 'c'",
+        ),
+        # A model is checked as a model nested in keyword arguments is.
+        (
+            "operation_with_nested_structure",
+            (nested,),
+            {},
+            r"Invalid OperationWithNestedStructure input at top_level.dialog: "
+            r"expected Dialog, got dict",
+        ),
+        (
+            "constant_query_string",
+            (models.ConstantQueryStringInput(),),
+            {},
+            r"Invalid ConstantQueryString input: missing required member 'hello'",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("operation", "args", "members", "message"), _invalid_requests()
+)
+async def test_invalid_requests_fail_before_setup_and_interceptors(
+    sync: bool,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    operation: str,
+    args: tuple[Any, ...],
+    members: dict[str, Any],
+    message: str,
+) -> None:
+    def resolve(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("configuration was resolved")
+
+    monkeypatch.setattr(RestJsonProtocolConfig, "resolve", resolve)
+    monkeypatch.setattr(AsyncRestJsonProtocolConfig, "resolve", resolve)
+    client: Any = RestJsonProtocolClient() if sync else AsyncRestJsonProtocolClient()
+
+    with pytest.raises(TypeError, match=message):
+        await _result(getattr(client, operation)(*args, **members))
+
+    monkeypatch.undo()
+    client, transport, recorder = await _client(sync, tmp_path)
+    applied: list[Any] = []
+    with pytest.raises(TypeError, match=message):
+        await _result(
+            getattr(client, operation)(*args, **members, plugins=[applied.append])
+        )
+    assert applied == []
+    assert recorder.inputs == []
     assert transport.requests == []
 
 

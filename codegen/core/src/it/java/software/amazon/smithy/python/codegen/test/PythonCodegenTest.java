@@ -67,22 +67,49 @@ public class PythonCodegenTest {
         // Sync operations carry the same docs as async ones.
         assertTrue(syncClient.contains("An instance of `GetCityOutput`."));
 
-        // Modeled input members are keyword-only parameters of both clients, and the
-        // methods no longer take an input object.
+        // Each method of both clients has two overloads: one takes the whole request,
+        // positional-only, as the input model or its dictionary form; the other takes
+        // the modeled input members as keyword-only parameters. One implementation
+        // takes either and hands them to _select_input.
         for (var generated : new String[] {client, syncClient}) {
             assertFalse(generated.contains("input: "));
             assertGenerated(generated, """
                         def get_city(
                             self,
+                            request: _models.GetCityInput | _models.GetCityInputParams,
+                            /,
+                            *,
+                            plugins: list[Plugin] | None = None,
+                        ) -> GetCityOutput: ...
+                    """);
+            assertGenerated(generated, """
+                        def get_city(
+                            self,
+                            /,
                             *,
                             city_id: str,
                             plugins: list[Plugin] | None = None,
                         ) -> GetCityOutput:
                     """);
+            assertGenerated(generated, """
+                        def get_city(
+                            self,
+                            /,
+                            *args: object,
+                            plugins: list[Plugin] | None = None,
+                            **kwargs: object,
+                        ) -> GetCityOutput:
+                    """);
+            assertGenerated(generated, """
+                        self._invoke(
+                            self._select_input(_models.GET_CITY, args, kwargs),
+                            _models.GET_CITY,
+                    """);
             // An operation without input members is called with no arguments.
             assertGenerated(generated, """
                         def get_current_time(
                             self,
+                            /,
                             *,
                             plugins: list[Plugin] | None = None,
                         ) -> GetCurrentTimeOutput:
@@ -94,6 +121,7 @@ public class PythonCodegenTest {
                     """
                                 def create_connector(
                                     self,
+                                    /,
                                     *,
                                     name: str,
                                     plugins__: Sequence[str],
@@ -115,29 +143,49 @@ public class PythonCodegenTest {
                                     plugins: list[Plugin] | None = None,
                                 ) -> CreateConnectorOutput:
                             """);
+            // The members reach the runtime as the implementation's keyword arguments,
+            // and the operation is resolved through the models module.
             assertGenerated(generated, """
-                                {
-                                    "name": name,
-                                    "plugins__": plugins__,
-                                    "plugins_": plugins_,
-                                    "self_": self_,
+                                self._select_input(_models.CREATE_CONNECTOR, args, kwargs),
+                                _models.CREATE_CONNECTOR,
                     """);
-            // The operation is resolved through the models module.
-            assertGenerated(generated, "_models.CREATE_CONNECTOR,");
             // Types used only in annotations are never imported at runtime.
             assertTrue(generated.contains("    from collections.abc import Mapping, Sequence\n"));
             assertTrue(generated.contains("    from datetime import datetime\n"));
             assertTrue(generated.contains("    from smithy_core.documents import Document\n"));
         }
-        // The initial request of an event stream operation takes keywords too; the
-        // event stream member is sent through the returned stream.
+        // The initial request of an event stream operation takes the same two forms;
+        // the event stream member is sent through the returned stream.
         assertGenerated(client, """
                 async def stream_atmospheric_conditions(
                     self,
+                    request: _models.StreamAtmosphericConditionsInput
+                        | _models.StreamAtmosphericConditionsInputParams,
+                    /,
+                    *,
+                    plugins: list[Plugin] | None = None,
+                ) -> AsyncDuplexEventStream[""");
+        assertGenerated(client, """
+                async def stream_atmospheric_conditions(
+                    self,
+                    /,
                     *,
                     city_id: str,
                     plugins: list[Plugin] | None = None,
                 ) -> AsyncDuplexEventStream[""");
+        assertGenerated(client, """
+                async def stream_atmospheric_conditions(
+                    self,
+                    /,
+                    *args: object,
+                    plugins: list[Plugin] | None = None,
+                    **kwargs: object,
+                ) -> AsyncDuplexEventStream[""");
+        assertGenerated(client, """
+                pipeline, call = await self._prepare_call(
+                    self._select_input(_models.STREAM_ATMOSPHERIC_CONDITIONS, args, kwargs),
+                    _models.STREAM_ATMOSPHERIC_CONDITIONS,
+                """);
 
         var aioInit = Files.readString(tempDir.resolve("src/weather/aio/__init__.py"));
         assertTrue(aioInit.contains("__all__ = [\"AsyncWeather\", \"AsyncConfig\"]"));
@@ -224,6 +272,7 @@ public class PythonCodegenTest {
             assertGenerated(generated, """
                         def upload_city_image(
                             self,
+                            /,
                             *,
                             name: str,
                             image: StreamingBlob,

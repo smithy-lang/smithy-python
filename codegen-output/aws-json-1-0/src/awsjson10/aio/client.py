@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -47,8 +47,19 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def content_type_parameters(
-        self, *, value: int | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ContentTypeParametersInput
+        | _models.ContentTypeParametersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ContentTypeParametersOutput: ...
+
+    @_overload
+    async def content_type_parameters(
+        self, /, *, value: int | None = None, plugins: list[Plugin] | None = None
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -64,12 +75,30 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
+
+    async def content_type_parameters(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ContentTypeParametersOutput:
         return await self._invoke(
-            {"value": value}, _models.CONTENT_TYPE_PARAMETERS, [], plugins
+            self._select_input(_models.CONTENT_TYPE_PARAMETERS, args, kwargs),
+            _models.CONTENT_TYPE_PARAMETERS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def empty_input_and_empty_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyInputAndEmptyOutputInput
+        | _models.EmptyInputAndEmptyOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyInputAndEmptyOutputOutput: ...
+
+    @_overload
+    async def empty_input_and_empty_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -87,12 +116,29 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
+
+    async def empty_input_and_empty_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyInputAndEmptyOutputOutput:
         return await self._invoke(
-            None, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            self._select_input(_models.EMPTY_INPUT_AND_EMPTY_OUTPUT, args, kwargs),
+            _models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            [],
+            plugins,
         )
 
+    @_overload
     async def endpoint_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointOperationOutput: ...
+
+    @_overload
+    async def endpoint_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -107,10 +153,30 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return await self._invoke(None, _models.ENDPOINT_OPERATION, [], plugins)
 
+    async def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.ENDPOINT_OPERATION, args, kwargs),
+            _models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def endpoint_with_host_label_operation(
-        self, *, label: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointWithHostLabelOperationInput
+        | _models.EndpointWithHostLabelOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput: ...
+
+    @_overload
+    async def endpoint_with_host_label_operation(
+        self, /, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -125,12 +191,32 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
+
+    async def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelOperationOutput:
         return await self._invoke(
-            {"label": label}, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def greeting_with_errors(
-        self, *, greeting: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput
+        | _models.GreetingWithErrorsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    async def greeting_with_errors(
+        self, /, *, greeting: str | None = None, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -149,12 +235,30 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
+
+    async def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
         return await self._invoke(
-            {"greeting": greeting}, _models.GREETING_WITH_ERRORS, [], plugins
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def host_with_path_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HostWithPathOperationInput
+        | _models.HostWithPathOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HostWithPathOperationOutput: ...
+
+    @_overload
+    async def host_with_path_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
@@ -169,10 +273,30 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        return await self._invoke(None, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
+    async def host_with_path_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HostWithPathOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.HOST_WITH_PATH_OPERATION, args, kwargs),
+            _models.HOST_WITH_PATH_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def json_unions(
         self,
+        request: _models.JsonUnionsInput | _models.JsonUnionsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonUnionsOutput: ...
+
+    @_overload
+    async def json_unions(
+        self,
+        /,
         *,
         contents: _models.MyUnion | _models.MyUnionParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -191,12 +315,30 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
+
+    async def json_unions(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonUnionsOutput:
         return await self._invoke(
-            {"contents": contents}, _models.JSON_UNIONS, [], plugins
+            self._select_input(_models.JSON_UNIONS, args, kwargs),
+            _models.JSON_UNIONS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def no_input_and_no_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndNoOutputInput
+        | _models.NoInputAndNoOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndNoOutputOutput: ...
+
+    @_overload
+    async def no_input_and_no_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -214,10 +356,29 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        return await self._invoke(None, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
+    async def no_input_and_no_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndNoOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_NO_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_NO_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def no_input_and_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndOutputOutput: ...
+
+    @_overload
+    async def no_input_and_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -235,10 +396,31 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return await self._invoke(None, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
+    async def no_input_and_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def operation_with_defaults(
         self,
+        request: _models.OperationWithDefaultsInput
+        | _models.OperationWithDefaultsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OperationWithDefaultsOutput: ...
+
+    @_overload
+    async def operation_with_defaults(
+        self,
+        /,
         *,
         defaults: _models.Defaults | _models.DefaultsParams | None = None,
         client_optional_defaults: _models.ClientOptionalDefaults
@@ -261,20 +443,31 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `OperationWithDefaultsOutput`.
         """
+
+    async def operation_with_defaults(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithDefaultsOutput:
         return await self._invoke(
-            {
-                "defaults": defaults,
-                "client_optional_defaults": client_optional_defaults,
-                "top_level_default": top_level_default,
-                "other_top_level_default": other_top_level_default,
-            },
+            self._select_input(_models.OPERATION_WITH_DEFAULTS, args, kwargs),
             _models.OPERATION_WITH_DEFAULTS,
             [],
             plugins,
         )
 
+    @_overload
     async def operation_with_nested_structure(
         self,
+        request: _models.OperationWithNestedStructureInput
+        | _models.OperationWithNestedStructureInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OperationWithNestedStructureOutput: ...
+
+    @_overload
+    async def operation_with_nested_structure(
+        self,
+        /,
         *,
         top_level: _models.TopLevel | _models.TopLevelParams,
         plugins: list[Plugin] | None = None,
@@ -292,15 +485,30 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `OperationWithNestedStructureOutput`.
         """
+
+    async def operation_with_nested_structure(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithNestedStructureOutput:
         return await self._invoke(
-            {"top_level": top_level},
+            self._select_input(_models.OPERATION_WITH_NESTED_STRUCTURE, args, kwargs),
             _models.OPERATION_WITH_NESTED_STRUCTURE,
             [],
             plugins,
         )
 
+    @_overload
     async def operation_with_required_members(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.OperationWithRequiredMembersInput
+        | _models.OperationWithRequiredMembersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OperationWithRequiredMembersOutput: ...
+
+    @_overload
+    async def operation_with_required_members(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> OperationWithRequiredMembersOutput:
         """
         Invokes the OperationWithRequiredMembers operation.
@@ -315,12 +523,30 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `OperationWithRequiredMembersOutput`.
         """
+
+    async def operation_with_required_members(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithRequiredMembersOutput:
         return await self._invoke(
-            None, _models.OPERATION_WITH_REQUIRED_MEMBERS, [], plugins
+            self._select_input(_models.OPERATION_WITH_REQUIRED_MEMBERS, args, kwargs),
+            _models.OPERATION_WITH_REQUIRED_MEMBERS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def operation_with_required_members_with_defaults(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.OperationWithRequiredMembersWithDefaultsInput
+        | _models.OperationWithRequiredMembersWithDefaultsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OperationWithRequiredMembersWithDefaultsOutput: ...
+
+    @_overload
+    async def operation_with_required_members_with_defaults(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> OperationWithRequiredMembersWithDefaultsOutput:
         """
         Invokes the OperationWithRequiredMembersWithDefaults operation.
@@ -335,12 +561,33 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `OperationWithRequiredMembersWithDefaultsOutput`.
         """
+
+    async def operation_with_required_members_with_defaults(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithRequiredMembersWithDefaultsOutput:
         return await self._invoke(
-            None, _models.OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS, [], plugins
+            self._select_input(
+                _models.OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS, args, kwargs
+            ),
+            _models.OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def put_with_content_encoding(
         self,
+        request: _models.PutWithContentEncodingInput
+        | _models.PutWithContentEncodingInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutWithContentEncodingOutput: ...
+
+    @_overload
+    async def put_with_content_encoding(
+        self,
+        /,
         *,
         encoding: str | None = None,
         data: str | None = None,
@@ -359,15 +606,30 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
+
+    async def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutWithContentEncodingOutput:
         return await self._invoke(
-            {"encoding": encoding, "data": data},
+            self._select_input(_models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
             _models.PUT_WITH_CONTENT_ENCODING,
             [],
             plugins,
         )
 
+    @_overload
     async def query_incompatible_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.QueryIncompatibleOperationInput
+        | _models.QueryIncompatibleOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryIncompatibleOperationOutput: ...
+
+    @_overload
+    async def query_incompatible_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> QueryIncompatibleOperationOutput:
         """
         Invokes the QueryIncompatibleOperation operation.
@@ -382,12 +644,31 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `QueryIncompatibleOperationOutput`.
         """
+
+    async def query_incompatible_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryIncompatibleOperationOutput:
         return await self._invoke(
-            None, _models.QUERY_INCOMPATIBLE_OPERATION, [], plugins
+            self._select_input(_models.QUERY_INCOMPATIBLE_OPERATION, args, kwargs),
+            _models.QUERY_INCOMPATIBLE_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def simple_scalar_properties(
         self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    async def simple_scalar_properties(
+        self,
+        /,
         *,
         float_value: float | None = None,
         double_value: float | None = None,
@@ -406,8 +687,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
+
+    async def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
         return await self._invoke(
-            {"float_value": float_value, "double_value": double_value},
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
             _models.SIMPLE_SCALAR_PROPERTIES,
             [],
             plugins,

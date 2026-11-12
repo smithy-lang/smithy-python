@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import cast, overload as _overload
 
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.chain.resolver import IdentityChain
@@ -98,8 +98,20 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     def all_query_string_types(
         self,
+        request: _models.AllQueryStringTypesInput
+        | _models.AllQueryStringTypesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AllQueryStringTypesOutput: ...
+
+    @_overload
+    def all_query_string_types(
+        self,
+        /,
         *,
         query_string: str | None = None,
         query_string_list: Sequence[str] | None = None,
@@ -137,37 +149,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `AllQueryStringTypesOutput`.
         """
+
+    def all_query_string_types(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AllQueryStringTypesOutput:
         return self._invoke(
-            {
-                "query_string": query_string,
-                "query_string_list": query_string_list,
-                "query_string_set": query_string_set,
-                "query_byte": query_byte,
-                "query_short": query_short,
-                "query_integer": query_integer,
-                "query_integer_list": query_integer_list,
-                "query_integer_set": query_integer_set,
-                "query_long": query_long,
-                "query_float": query_float,
-                "query_double": query_double,
-                "query_double_list": query_double_list,
-                "query_boolean": query_boolean,
-                "query_boolean_list": query_boolean_list,
-                "query_timestamp": query_timestamp,
-                "query_timestamp_list": query_timestamp_list,
-                "query_enum": query_enum,
-                "query_enum_list": query_enum_list,
-                "query_integer_enum": query_integer_enum,
-                "query_integer_enum_list": query_integer_enum_list,
-                "query_params_map_of_strings": query_params_map_of_strings,
-            },
+            self._select_input(_models.ALL_QUERY_STRING_TYPES, args, kwargs),
             _models.ALL_QUERY_STRING_TYPES,
             [],
             plugins,
         )
 
+    @_overload
     def body_with_xml_name(
         self,
+        request: _models.BodyWithXmlNameInput | _models.BodyWithXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> BodyWithXmlNameOutput: ...
+
+    @_overload
+    def body_with_xml_name(
+        self,
+        /,
         *,
         nested: _models.PayloadWithXmlName
         | _models.PayloadWithXmlNameParams
@@ -188,10 +193,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `BodyWithXmlNameOutput`.
         """
-        return self._invoke({"nested": nested}, _models.BODY_WITH_XML_NAME, [], plugins)
 
+    def body_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> BodyWithXmlNameOutput:
+        return self._invoke(
+            self._select_input(_models.BODY_WITH_XML_NAME, args, kwargs),
+            _models.BODY_WITH_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @_overload
     def constant_and_variable_query_string(
         self,
+        request: _models.ConstantAndVariableQueryStringInput
+        | _models.ConstantAndVariableQueryStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ConstantAndVariableQueryStringOutput: ...
+
+    @_overload
+    def constant_and_variable_query_string(
+        self,
+        /,
         *,
         baz: str | None = None,
         maybe_set: str | None = None,
@@ -212,15 +238,32 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `ConstantAndVariableQueryStringOutput`.
         """
+
+    def constant_and_variable_query_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ConstantAndVariableQueryStringOutput:
         return self._invoke(
-            {"baz": baz, "maybe_set": maybe_set},
+            self._select_input(
+                _models.CONSTANT_AND_VARIABLE_QUERY_STRING, args, kwargs
+            ),
             _models.CONSTANT_AND_VARIABLE_QUERY_STRING,
             [],
             plugins,
         )
 
+    @_overload
     def constant_query_string(
-        self, *, hello: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ConstantQueryStringInput
+        | _models.ConstantQueryStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ConstantQueryStringOutput: ...
+
+    @_overload
+    def constant_query_string(
+        self, /, *, hello: str, plugins: list[Plugin] | None = None
     ) -> ConstantQueryStringOutput:
         """
         This example uses a constant query string parameters and a label. This
@@ -238,12 +281,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `ConstantQueryStringOutput`.
         """
+
+    def constant_query_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ConstantQueryStringOutput:
         return self._invoke(
-            {"hello": hello}, _models.CONSTANT_QUERY_STRING, [], plugins
+            self._select_input(_models.CONSTANT_QUERY_STRING, args, kwargs),
+            _models.CONSTANT_QUERY_STRING,
+            [],
+            plugins,
         )
 
+    @_overload
     def content_type_parameters(
-        self, *, value: int | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ContentTypeParametersInput
+        | _models.ContentTypeParametersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ContentTypeParametersOutput: ...
+
+    @_overload
+    def content_type_parameters(
+        self, /, *, value: int | None = None, plugins: list[Plugin] | None = None
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -259,12 +320,29 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
+
+    def content_type_parameters(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ContentTypeParametersOutput:
         return self._invoke(
-            {"value": value}, _models.CONTENT_TYPE_PARAMETERS, [], plugins
+            self._select_input(_models.CONTENT_TYPE_PARAMETERS, args, kwargs),
+            _models.CONTENT_TYPE_PARAMETERS,
+            [],
+            plugins,
         )
 
+    @_overload
     def datetime_offsets(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DatetimeOffsetsOutput: ...
+
+    @_overload
+    def datetime_offsets(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -279,10 +357,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return self._invoke(None, _models.DATETIME_OFFSETS, [], plugins)
 
+    def datetime_offsets(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DatetimeOffsetsOutput:
+        return self._invoke(
+            self._select_input(_models.DATETIME_OFFSETS, args, kwargs),
+            _models.DATETIME_OFFSETS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def empty_input_and_empty_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyInputAndEmptyOutputInput
+        | _models.EmptyInputAndEmptyOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyInputAndEmptyOutputOutput: ...
+
+    @_overload
+    def empty_input_and_empty_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -300,10 +398,29 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
-        return self._invoke(None, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins)
 
+    def empty_input_and_empty_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyInputAndEmptyOutputOutput:
+        return self._invoke(
+            self._select_input(_models.EMPTY_INPUT_AND_EMPTY_OUTPUT, args, kwargs),
+            _models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     def endpoint_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointOperationOutput: ...
+
+    @_overload
+    def endpoint_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -318,10 +435,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return self._invoke(None, _models.ENDPOINT_OPERATION, [], plugins)
 
+    def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointOperationOutput:
+        return self._invoke(
+            self._select_input(_models.ENDPOINT_OPERATION, args, kwargs),
+            _models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     def endpoint_with_host_label_header_operation(
-        self, *, account_id: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointWithHostLabelHeaderOperationInput
+        | _models.EndpointWithHostLabelHeaderOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelHeaderOperationOutput: ...
+
+    @_overload
+    def endpoint_with_host_label_header_operation(
+        self, /, *, account_id: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelHeaderOperationOutput:
         """
         Invokes the EndpointWithHostLabelHeaderOperation operation.
@@ -336,15 +473,32 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelHeaderOperationOutput`.
         """
+
+    def endpoint_with_host_label_header_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelHeaderOperationOutput:
         return self._invoke(
-            {"account_id": account_id},
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION, args, kwargs
+            ),
             _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION,
             [],
             plugins,
         )
 
+    @_overload
     def endpoint_with_host_label_operation(
-        self, *, label: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointWithHostLabelOperationInput
+        | _models.EndpointWithHostLabelOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput: ...
+
+    @_overload
+    def endpoint_with_host_label_operation(
+        self, /, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -359,12 +513,32 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
+
+    def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelOperationOutput:
         return self._invoke(
-            {"label": label}, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     def flattened_xml_map(
         self,
+        request: _models.FlattenedXmlMapInput | _models.FlattenedXmlMapInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapOutput: ...
+
+    @_overload
+    def flattened_xml_map(
+        self,
+        /,
         *,
         my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
@@ -382,10 +556,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapOutput`.
         """
-        return self._invoke({"my_map": my_map}, _models.FLATTENED_XML_MAP, [], plugins)
 
+    def flattened_xml_map(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapOutput:
+        return self._invoke(
+            self._select_input(_models.FLATTENED_XML_MAP, args, kwargs),
+            _models.FLATTENED_XML_MAP,
+            [],
+            plugins,
+        )
+
+    @_overload
     def flattened_xml_map_with_xml_name(
         self,
+        request: _models.FlattenedXmlMapWithXmlNameInput
+        | _models.FlattenedXmlMapWithXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNameOutput: ...
+
+    @_overload
+    def flattened_xml_map_with_xml_name(
+        self,
+        /,
         *,
         my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
@@ -403,12 +598,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
+
+    def flattened_xml_map_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapWithXmlNameOutput:
         return self._invoke(
-            {"my_map": my_map}, _models.FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins
+            self._select_input(_models.FLATTENED_XML_MAP_WITH_XML_NAME, args, kwargs),
+            _models.FLATTENED_XML_MAP_WITH_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     def flattened_xml_map_with_xml_namespace(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FlattenedXmlMapWithXmlNamespaceInput
+        | _models.FlattenedXmlMapWithXmlNamespaceInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNamespaceOutput: ...
+
+    @_overload
+    def flattened_xml_map_with_xml_namespace(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         """
         Flattened maps with @xmlNamespace and @xmlName
@@ -423,12 +636,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
+
+    def flattened_xml_map_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         return self._invoke(
-            None, _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            self._select_input(
+                _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, args, kwargs
+            ),
+            _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
+            [],
+            plugins,
         )
 
+    @_overload
     def fractional_seconds(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FractionalSecondsOutput: ...
+
+    @_overload
+    def fractional_seconds(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -443,10 +675,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return self._invoke(None, _models.FRACTIONAL_SECONDS, [], plugins)
 
+    def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FractionalSecondsOutput:
+        return self._invoke(
+            self._select_input(_models.FRACTIONAL_SECONDS, args, kwargs),
+            _models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def greeting_with_errors(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput
+        | _models.GreetingWithErrorsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    def greeting_with_errors(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -465,10 +717,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return self._invoke(None, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def http_empty_prefix_headers(
         self,
+        request: _models.HttpEmptyPrefixHeadersInput
+        | _models.HttpEmptyPrefixHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpEmptyPrefixHeadersOutput: ...
+
+    @_overload
+    def http_empty_prefix_headers(
+        self,
+        /,
         *,
         prefix_headers: Mapping[str, str] | None = None,
         specific_header: str | None = None,
@@ -487,15 +760,29 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpEmptyPrefixHeadersOutput`.
         """
+
+    def http_empty_prefix_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpEmptyPrefixHeadersOutput:
         return self._invoke(
-            {"prefix_headers": prefix_headers, "specific_header": specific_header},
+            self._select_input(_models.HTTP_EMPTY_PREFIX_HEADERS, args, kwargs),
             _models.HTTP_EMPTY_PREFIX_HEADERS,
             [],
             plugins,
         )
 
+    @_overload
     def http_enum_payload(
-        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpEnumPayloadInput | _models.HttpEnumPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpEnumPayloadOutput: ...
+
+    @_overload
+    def http_enum_payload(
+        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
@@ -510,12 +797,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpEnumPayloadOutput`.
         """
+
+    def http_enum_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpEnumPayloadOutput:
         return self._invoke(
-            {"payload": payload}, _models.HTTP_ENUM_PAYLOAD, [], plugins
+            self._select_input(_models.HTTP_ENUM_PAYLOAD, args, kwargs),
+            _models.HTTP_ENUM_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     def http_payload_traits(
         self,
+        request: _models.HttpPayloadTraitsInput | _models.HttpPayloadTraitsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadTraitsOutput: ...
+
+    @_overload
+    def http_payload_traits(
+        self,
+        /,
         *,
         foo: str | None = None,
         blob: bytes | None = None,
@@ -536,12 +841,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadTraitsOutput`.
         """
+
+    def http_payload_traits(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadTraitsOutput:
         return self._invoke(
-            {"foo": foo, "blob": blob}, _models.HTTP_PAYLOAD_TRAITS, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_TRAITS, args, kwargs),
+            _models.HTTP_PAYLOAD_TRAITS,
+            [],
+            plugins,
         )
 
+    @_overload
     def http_payload_traits_with_media_type(
         self,
+        request: _models.HttpPayloadTraitsWithMediaTypeInput
+        | _models.HttpPayloadTraitsWithMediaTypeInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadTraitsWithMediaTypeOutput: ...
+
+    @_overload
+    def http_payload_traits_with_media_type(
+        self,
+        /,
         *,
         foo: str | None = None,
         blob: bytes | None = None,
@@ -561,15 +885,33 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
+
+    def http_payload_traits_with_media_type(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadTraitsWithMediaTypeOutput:
         return self._invoke(
-            {"foo": foo, "blob": blob},
+            self._select_input(
+                _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, args, kwargs
+            ),
             _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
             [],
             plugins,
         )
 
+    @_overload
     def http_payload_with_member_xml_name(
         self,
+        request: _models.HttpPayloadWithMemberXmlNameInput
+        | _models.HttpPayloadWithMemberXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithMemberXmlNameOutput: ...
+
+    @_overload
+    def http_payload_with_member_xml_name(
+        self,
+        /,
         *,
         nested: _models.PayloadWithXmlName
         | _models.PayloadWithXmlNameParams
@@ -590,12 +932,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithMemberXmlNameOutput`.
         """
+
+    def http_payload_with_member_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithMemberXmlNameOutput:
         return self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     def http_payload_with_structure(
         self,
+        request: _models.HttpPayloadWithStructureInput
+        | _models.HttpPayloadWithStructureInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithStructureOutput: ...
+
+    @_overload
+    def http_payload_with_structure(
+        self,
+        /,
         *,
         nested: _models.NestedPayload | _models.NestedPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -615,12 +976,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithStructureOutput`.
         """
+
+    def http_payload_with_structure(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithStructureOutput:
         return self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_STRUCTURE, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_STRUCTURE,
+            [],
+            plugins,
         )
 
+    @_overload
     def http_payload_with_union(
         self,
+        request: _models.HttpPayloadWithUnionInput
+        | _models.HttpPayloadWithUnionInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithUnionOutput: ...
+
+    @_overload
+    def http_payload_with_union(
+        self,
+        /,
         *,
         nested: _models.UnionPayload | _models.UnionPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -638,12 +1018,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithUnionOutput`.
         """
+
+    def http_payload_with_union(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithUnionOutput:
         return self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_UNION, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_UNION,
+            [],
+            plugins,
         )
 
+    @_overload
     def http_payload_with_xml_name(
         self,
+        request: _models.HttpPayloadWithXmlNameInput
+        | _models.HttpPayloadWithXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithXmlNameOutput: ...
+
+    @_overload
+    def http_payload_with_xml_name(
+        self,
+        /,
         *,
         nested: _models.PayloadWithXmlName
         | _models.PayloadWithXmlNameParams
@@ -664,12 +1063,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithXmlNameOutput`.
         """
+
+    def http_payload_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithXmlNameOutput:
         return self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_XML_NAME, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_XML_NAME, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     def http_payload_with_xml_namespace(
         self,
+        request: _models.HttpPayloadWithXmlNamespaceInput
+        | _models.HttpPayloadWithXmlNamespaceInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithXmlNamespaceOutput: ...
+
+    @_overload
+    def http_payload_with_xml_namespace(
+        self,
+        /,
         *,
         nested: _models.PayloadWithXmlNamespace
         | _models.PayloadWithXmlNamespaceParams
@@ -689,12 +1107,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithXmlNamespaceOutput`.
         """
+
+    def http_payload_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithXmlNamespaceOutput:
         return self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_XML_NAMESPACE, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE,
+            [],
+            plugins,
         )
 
+    @_overload
     def http_payload_with_xml_namespace_and_prefix(
         self,
+        request: _models.HttpPayloadWithXmlNamespaceAndPrefixInput
+        | _models.HttpPayloadWithXmlNamespaceAndPrefixInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput: ...
+
+    @_overload
+    def http_payload_with_xml_namespace_and_prefix(
+        self,
+        /,
         *,
         nested: _models.PayloadWithXmlNamespaceAndPrefix
         | _models.PayloadWithXmlNamespaceAndPrefixParams
@@ -714,15 +1151,32 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithXmlNamespaceAndPrefixOutput`.
         """
+
+    def http_payload_with_xml_namespace_and_prefix(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput:
         return self._invoke(
-            {"nested": nested},
+            self._select_input(
+                _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, args, kwargs
+            ),
             _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX,
             [],
             plugins,
         )
 
+    @_overload
     def http_prefix_headers(
         self,
+        request: _models.HttpPrefixHeadersInput | _models.HttpPrefixHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPrefixHeadersOutput: ...
+
+    @_overload
+    def http_prefix_headers(
+        self,
+        /,
         *,
         foo: str | None = None,
         foo_map: Mapping[str, str] | None = None,
@@ -742,12 +1196,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPrefixHeadersOutput`.
         """
+
+    def http_prefix_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPrefixHeadersOutput:
         return self._invoke(
-            {"foo": foo, "foo_map": foo_map}, _models.HTTP_PREFIX_HEADERS, [], plugins
+            self._select_input(_models.HTTP_PREFIX_HEADERS, args, kwargs),
+            _models.HTTP_PREFIX_HEADERS,
+            [],
+            plugins,
         )
 
+    @_overload
     def http_request_with_float_labels(
-        self, *, float_: float, double: float, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpRequestWithFloatLabelsInput
+        | _models.HttpRequestWithFloatLabelsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithFloatLabelsOutput: ...
+
+    @_overload
+    def http_request_with_float_labels(
+        self, /, *, float_: float, double: float, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithFloatLabelsOutput:
         """
         Invokes the HttpRequestWithFloatLabels operation.
@@ -762,15 +1234,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithFloatLabelsOutput`.
         """
+
+    def http_request_with_float_labels(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithFloatLabelsOutput:
         return self._invoke(
-            {"float_": float_, "double": double},
+            self._select_input(_models.HTTP_REQUEST_WITH_FLOAT_LABELS, args, kwargs),
             _models.HTTP_REQUEST_WITH_FLOAT_LABELS,
             [],
             plugins,
         )
 
+    @_overload
     def http_request_with_greedy_label_in_path(
-        self, *, foo: str, baz: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpRequestWithGreedyLabelInPathInput
+        | _models.HttpRequestWithGreedyLabelInPathInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithGreedyLabelInPathOutput: ...
+
+    @_overload
+    def http_request_with_greedy_label_in_path(
+        self, /, *, foo: str, baz: str, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
@@ -785,15 +1272,33 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
+
+    def http_request_with_greedy_label_in_path(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithGreedyLabelInPathOutput:
         return self._invoke(
-            {"foo": foo, "baz": baz},
+            self._select_input(
+                _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, args, kwargs
+            ),
             _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
             [],
             plugins,
         )
 
+    @_overload
     def http_request_with_labels(
         self,
+        request: _models.HttpRequestWithLabelsInput
+        | _models.HttpRequestWithLabelsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithLabelsOutput: ...
+
+    @_overload
+    def http_request_with_labels(
+        self,
+        /,
         *,
         string: str,
         short: int,
@@ -821,24 +1326,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithLabelsOutput`.
         """
+
+    def http_request_with_labels(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithLabelsOutput:
         return self._invoke(
-            {
-                "string": string,
-                "short": short,
-                "integer": integer,
-                "long": long,
-                "float_": float_,
-                "double": double,
-                "boolean": boolean,
-                "timestamp": timestamp,
-            },
+            self._select_input(_models.HTTP_REQUEST_WITH_LABELS, args, kwargs),
             _models.HTTP_REQUEST_WITH_LABELS,
             [],
             plugins,
         )
 
+    @_overload
     def http_request_with_labels_and_timestamp_format(
         self,
+        request: _models.HttpRequestWithLabelsAndTimestampFormatInput
+        | _models.HttpRequestWithLabelsAndTimestampFormatInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithLabelsAndTimestampFormatOutput: ...
+
+    @_overload
+    def http_request_with_labels_and_timestamp_format(
+        self,
+        /,
         *,
         member_epoch_seconds: datetime,
         member_http_date: datetime,
@@ -863,23 +1375,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
+
+    def http_request_with_labels_and_timestamp_format(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
         return self._invoke(
-            {
-                "member_epoch_seconds": member_epoch_seconds,
-                "member_http_date": member_http_date,
-                "member_date_time": member_date_time,
-                "default_format": default_format,
-                "target_epoch_seconds": target_epoch_seconds,
-                "target_http_date": target_http_date,
-                "target_date_time": target_date_time,
-            },
+            self._select_input(
+                _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, args, kwargs
+            ),
             _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
             [],
             plugins,
         )
 
+    @_overload
     def http_response_code(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpResponseCodeInput | _models.HttpResponseCodeInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpResponseCodeOutput: ...
+
+    @_overload
+    def http_response_code(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> HttpResponseCodeOutput:
         """
         Invokes the HttpResponseCode operation.
@@ -894,10 +1414,29 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpResponseCodeOutput`.
         """
-        return self._invoke(None, _models.HTTP_RESPONSE_CODE, [], plugins)
 
+    def http_response_code(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpResponseCodeOutput:
+        return self._invoke(
+            self._select_input(_models.HTTP_RESPONSE_CODE, args, kwargs),
+            _models.HTTP_RESPONSE_CODE,
+            [],
+            plugins,
+        )
+
+    @_overload
     def http_string_payload(
-        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpStringPayloadInput | _models.HttpStringPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpStringPayloadOutput: ...
+
+    @_overload
+    def http_string_payload(
+        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
@@ -912,12 +1451,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `HttpStringPayloadOutput`.
         """
+
+    def http_string_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpStringPayloadOutput:
         return self._invoke(
-            {"payload": payload}, _models.HTTP_STRING_PAYLOAD, [], plugins
+            self._select_input(_models.HTTP_STRING_PAYLOAD, args, kwargs),
+            _models.HTTP_STRING_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     def ignore_query_params_in_response(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.IgnoreQueryParamsInResponseInput
+        | _models.IgnoreQueryParamsInResponseInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> IgnoreQueryParamsInResponseOutput: ...
+
+    @_overload
+    def ignore_query_params_in_response(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
@@ -934,10 +1491,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `IgnoreQueryParamsInResponseOutput`.
         """
-        return self._invoke(None, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins)
 
+    def ignore_query_params_in_response(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> IgnoreQueryParamsInResponseOutput:
+        return self._invoke(
+            self._select_input(_models.IGNORE_QUERY_PARAMS_IN_RESPONSE, args, kwargs),
+            _models.IGNORE_QUERY_PARAMS_IN_RESPONSE,
+            [],
+            plugins,
+        )
+
+    @_overload
     def input_and_output_with_headers(
         self,
+        request: _models.InputAndOutputWithHeadersInput
+        | _models.InputAndOutputWithHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> InputAndOutputWithHeadersOutput: ...
+
+    @_overload
+    def input_and_output_with_headers(
+        self,
+        /,
         *,
         header_string: str | None = None,
         header_byte: int | None = None,
@@ -971,32 +1549,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `InputAndOutputWithHeadersOutput`.
         """
+
+    def input_and_output_with_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> InputAndOutputWithHeadersOutput:
         return self._invoke(
-            {
-                "header_string": header_string,
-                "header_byte": header_byte,
-                "header_short": header_short,
-                "header_integer": header_integer,
-                "header_long": header_long,
-                "header_float": header_float,
-                "header_double": header_double,
-                "header_true_bool": header_true_bool,
-                "header_false_bool": header_false_bool,
-                "header_string_list": header_string_list,
-                "header_string_set": header_string_set,
-                "header_integer_list": header_integer_list,
-                "header_boolean_list": header_boolean_list,
-                "header_timestamp_list": header_timestamp_list,
-                "header_enum": header_enum,
-                "header_enum_list": header_enum_list,
-            },
+            self._select_input(_models.INPUT_AND_OUTPUT_WITH_HEADERS, args, kwargs),
             _models.INPUT_AND_OUTPUT_WITH_HEADERS,
             [],
             plugins,
         )
 
+    @_overload
     def nested_xml_maps(
         self,
+        request: _models.NestedXmlMapsInput | _models.NestedXmlMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NestedXmlMapsOutput: ...
+
+    @_overload
+    def nested_xml_maps(
+        self,
+        /,
         *,
         nested_map: Mapping[str, Mapping[str, str]] | None = None,
         flat_nested_map: Mapping[str, Mapping[str, str]] | None = None,
@@ -1015,15 +1591,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NestedXmlMapsOutput`.
         """
+
+    def nested_xml_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NestedXmlMapsOutput:
         return self._invoke(
-            {"nested_map": nested_map, "flat_nested_map": flat_nested_map},
+            self._select_input(_models.NESTED_XML_MAPS, args, kwargs),
             _models.NESTED_XML_MAPS,
             [],
             plugins,
         )
 
+    @_overload
     def nested_xml_map_with_xml_name(
         self,
+        request: _models.NestedXmlMapWithXmlNameInput
+        | _models.NestedXmlMapWithXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NestedXmlMapWithXmlNameOutput: ...
+
+    @_overload
+    def nested_xml_map_with_xml_name(
+        self,
+        /,
         *,
         nested_xml_map_with_xml_name_map: Mapping[str, Mapping[str, str]] | None = None,
         plugins: list[Plugin] | None = None,
@@ -1041,15 +1633,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NestedXmlMapWithXmlNameOutput`.
         """
+
+    def nested_xml_map_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NestedXmlMapWithXmlNameOutput:
         return self._invoke(
-            {"nested_xml_map_with_xml_name_map": nested_xml_map_with_xml_name_map},
+            self._select_input(_models.NESTED_XML_MAP_WITH_XML_NAME, args, kwargs),
             _models.NESTED_XML_MAP_WITH_XML_NAME,
             [],
             plugins,
         )
 
+    @_overload
     def no_input_and_no_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndNoOutputInput
+        | _models.NoInputAndNoOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndNoOutputOutput: ...
+
+    @_overload
+    def no_input_and_no_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1067,10 +1674,29 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        return self._invoke(None, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
+    def no_input_and_no_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndNoOutputOutput:
+        return self._invoke(
+            self._select_input(_models.NO_INPUT_AND_NO_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_NO_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     def no_input_and_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndOutputOutput: ...
+
+    @_overload
+    def no_input_and_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1088,10 +1714,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return self._invoke(None, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
+    def no_input_and_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndOutputOutput:
+        return self._invoke(
+            self._select_input(_models.NO_INPUT_AND_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     def null_and_empty_headers_client(
         self,
+        request: _models.NullAndEmptyHeadersClientInput
+        | _models.NullAndEmptyHeadersClientInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NullAndEmptyHeadersClientOutput: ...
+
+    @_overload
+    def null_and_empty_headers_client(
+        self,
+        /,
         *,
         a: str | None = None,
         b: str | None = None,
@@ -1112,12 +1759,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NullAndEmptyHeadersClientOutput`.
         """
+
+    def null_and_empty_headers_client(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NullAndEmptyHeadersClientOutput:
         return self._invoke(
-            {"a": a, "b": b, "c": c}, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
+            self._select_input(_models.NULL_AND_EMPTY_HEADERS_CLIENT, args, kwargs),
+            _models.NULL_AND_EMPTY_HEADERS_CLIENT,
+            [],
+            plugins,
         )
 
+    @_overload
     def null_and_empty_headers_server(
         self,
+        request: _models.NullAndEmptyHeadersServerInput
+        | _models.NullAndEmptyHeadersServerInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NullAndEmptyHeadersServerOutput: ...
+
+    @_overload
+    def null_and_empty_headers_server(
+        self,
+        /,
         *,
         a: str | None = None,
         b: str | None = None,
@@ -1138,12 +1804,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `NullAndEmptyHeadersServerOutput`.
         """
+
+    def null_and_empty_headers_server(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NullAndEmptyHeadersServerOutput:
         return self._invoke(
-            {"a": a, "b": b, "c": c}, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
+            self._select_input(_models.NULL_AND_EMPTY_HEADERS_SERVER, args, kwargs),
+            _models.NULL_AND_EMPTY_HEADERS_SERVER,
+            [],
+            plugins,
         )
 
+    @_overload
     def omits_null_serializes_empty_string(
         self,
+        request: _models.OmitsNullSerializesEmptyStringInput
+        | _models.OmitsNullSerializesEmptyStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OmitsNullSerializesEmptyStringOutput: ...
+
+    @_overload
+    def omits_null_serializes_empty_string(
+        self,
+        /,
         *,
         null_value: str | None = None,
         empty_string: str | None = None,
@@ -1162,15 +1847,33 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
+
+    def omits_null_serializes_empty_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OmitsNullSerializesEmptyStringOutput:
         return self._invoke(
-            {"null_value": null_value, "empty_string": empty_string},
+            self._select_input(
+                _models.OMITS_NULL_SERIALIZES_EMPTY_STRING, args, kwargs
+            ),
             _models.OMITS_NULL_SERIALIZES_EMPTY_STRING,
             [],
             plugins,
         )
 
+    @_overload
     def put_with_content_encoding(
         self,
+        request: _models.PutWithContentEncodingInput
+        | _models.PutWithContentEncodingInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutWithContentEncodingOutput: ...
+
+    @_overload
+    def put_with_content_encoding(
+        self,
+        /,
         *,
         encoding: str | None = None,
         data: str | None = None,
@@ -1189,15 +1892,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
+
+    def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutWithContentEncodingOutput:
         return self._invoke(
-            {"encoding": encoding, "data": data},
+            self._select_input(_models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
             _models.PUT_WITH_CONTENT_ENCODING,
             [],
             plugins,
         )
 
+    @_overload
     def query_idempotency_token_auto_fill(
-        self, *, token: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.QueryIdempotencyTokenAutoFillInput
+        | _models.QueryIdempotencyTokenAutoFillInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryIdempotencyTokenAutoFillOutput: ...
+
+    @_overload
+    def query_idempotency_token_auto_fill(
+        self, /, *, token: str | None = None, plugins: list[Plugin] | None = None
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
@@ -1213,12 +1931,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
+
+    def query_idempotency_token_auto_fill(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryIdempotencyTokenAutoFillOutput:
         return self._invoke(
-            {"token": token}, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            self._select_input(_models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, args, kwargs),
+            _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
+            [],
+            plugins,
         )
 
+    @_overload
     def query_params_as_string_list_map(
         self,
+        request: _models.QueryParamsAsStringListMapInput
+        | _models.QueryParamsAsStringListMapInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryParamsAsStringListMapOutput: ...
+
+    @_overload
+    def query_params_as_string_list_map(
+        self,
+        /,
         *,
         qux: str | None = None,
         foo: Mapping[str, Sequence[str]] | None = None,
@@ -1237,15 +1974,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `QueryParamsAsStringListMapOutput`.
         """
+
+    def query_params_as_string_list_map(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryParamsAsStringListMapOutput:
         return self._invoke(
-            {"qux": qux, "foo": foo},
+            self._select_input(_models.QUERY_PARAMS_AS_STRING_LIST_MAP, args, kwargs),
             _models.QUERY_PARAMS_AS_STRING_LIST_MAP,
             [],
             plugins,
         )
 
+    @_overload
     def query_precedence(
         self,
+        request: _models.QueryPrecedenceInput | _models.QueryPrecedenceInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryPrecedenceOutput: ...
+
+    @_overload
+    def query_precedence(
+        self,
+        /,
         *,
         foo: str | None = None,
         baz: Mapping[str, str] | None = None,
@@ -1264,12 +2016,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `QueryPrecedenceOutput`.
         """
+
+    def query_precedence(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryPrecedenceOutput:
         return self._invoke(
-            {"foo": foo, "baz": baz}, _models.QUERY_PRECEDENCE, [], plugins
+            self._select_input(_models.QUERY_PRECEDENCE, args, kwargs),
+            _models.QUERY_PRECEDENCE,
+            [],
+            plugins,
         )
 
+    @_overload
     def recursive_shapes(
         self,
+        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RecursiveShapesOutput: ...
+
+    @_overload
+    def recursive_shapes(
+        self,
+        /,
         *,
         nested: _models.RecursiveShapesInputOutputNested1
         | _models.RecursiveShapesInputOutputNested1Params
@@ -1289,10 +2059,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        return self._invoke({"nested": nested}, _models.RECURSIVE_SHAPES, [], plugins)
 
+    def recursive_shapes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RecursiveShapesOutput:
+        return self._invoke(
+            self._select_input(_models.RECURSIVE_SHAPES, args, kwargs),
+            _models.RECURSIVE_SHAPES,
+            [],
+            plugins,
+        )
+
+    @_overload
     def simple_scalar_properties(
         self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    def simple_scalar_properties(
+        self,
+        /,
         *,
         foo: str | None = None,
         string_value: str | None = None,
@@ -1319,26 +2110,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
+
+    def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
         return self._invoke(
-            {
-                "foo": foo,
-                "string_value": string_value,
-                "true_boolean_value": true_boolean_value,
-                "false_boolean_value": false_boolean_value,
-                "byte_value": byte_value,
-                "short_value": short_value,
-                "integer_value": integer_value,
-                "long_value": long_value,
-                "float_value": float_value,
-                "double_value": double_value,
-            },
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
             _models.SIMPLE_SCALAR_PROPERTIES,
             [],
             plugins,
         )
 
+    @_overload
     def timestamp_format_headers(
         self,
+        request: _models.TimestampFormatHeadersInput
+        | _models.TimestampFormatHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TimestampFormatHeadersOutput: ...
+
+    @_overload
+    def timestamp_format_headers(
+        self,
+        /,
         *,
         member_epoch_seconds: datetime | None = None,
         member_http_date: datetime | None = None,
@@ -1363,23 +2159,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `TimestampFormatHeadersOutput`.
         """
+
+    def timestamp_format_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TimestampFormatHeadersOutput:
         return self._invoke(
-            {
-                "member_epoch_seconds": member_epoch_seconds,
-                "member_http_date": member_http_date,
-                "member_date_time": member_date_time,
-                "default_format": default_format,
-                "target_epoch_seconds": target_epoch_seconds,
-                "target_http_date": target_http_date,
-                "target_date_time": target_date_time,
-            },
+            self._select_input(_models.TIMESTAMP_FORMAT_HEADERS, args, kwargs),
             _models.TIMESTAMP_FORMAT_HEADERS,
             [],
             plugins,
         )
 
+    @_overload
     def xml_attributes(
         self,
+        request: _models.XmlAttributesInput | _models.XmlAttributesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlAttributesOutput: ...
+
+    @_overload
+    def xml_attributes(
+        self,
+        /,
         *,
         foo: str | None = None,
         attr: str | None = None,
@@ -1398,12 +2201,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesOutput`.
         """
+
+    def xml_attributes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlAttributesOutput:
         return self._invoke(
-            {"foo": foo, "attr": attr}, _models.XML_ATTRIBUTES, [], plugins
+            self._select_input(_models.XML_ATTRIBUTES, args, kwargs),
+            _models.XML_ATTRIBUTES,
+            [],
+            plugins,
         )
 
+    @_overload
     def xml_attributes_in_middle(
         self,
+        request: _models.XmlAttributesInMiddleInput
+        | _models.XmlAttributesInMiddleInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlAttributesInMiddleOutput: ...
+
+    @_overload
+    def xml_attributes_in_middle(
+        self,
+        /,
         *,
         payload: _models.XmlAttributesInMiddlePayloadRequest
         | _models.XmlAttributesInMiddlePayloadRequestParams
@@ -1427,12 +2249,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesInMiddleOutput`.
         """
+
+    def xml_attributes_in_middle(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlAttributesInMiddleOutput:
         return self._invoke(
-            {"payload": payload}, _models.XML_ATTRIBUTES_IN_MIDDLE, [], plugins
+            self._select_input(_models.XML_ATTRIBUTES_IN_MIDDLE, args, kwargs),
+            _models.XML_ATTRIBUTES_IN_MIDDLE,
+            [],
+            plugins,
         )
 
+    @_overload
     def xml_attributes_on_payload(
         self,
+        request: _models.XmlAttributesOnPayloadInput
+        | _models.XmlAttributesOnPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlAttributesOnPayloadOutput: ...
+
+    @_overload
+    def xml_attributes_on_payload(
+        self,
+        /,
         *,
         payload: _models.XmlAttributesPayloadRequest
         | _models.XmlAttributesPayloadRequestParams
@@ -1453,12 +2294,29 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesOnPayloadOutput`.
         """
+
+    def xml_attributes_on_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlAttributesOnPayloadOutput:
         return self._invoke(
-            {"payload": payload}, _models.XML_ATTRIBUTES_ON_PAYLOAD, [], plugins
+            self._select_input(_models.XML_ATTRIBUTES_ON_PAYLOAD, args, kwargs),
+            _models.XML_ATTRIBUTES_ON_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     def xml_blobs(
-        self, *, data: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlBlobsInput | _models.XmlBlobsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlBlobsOutput: ...
+
+    @_overload
+    def xml_blobs(
+        self, /, *, data: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> XmlBlobsOutput:
         """
         Blobs are base64 encoded
@@ -1473,10 +2331,29 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlBlobsOutput`.
         """
-        return self._invoke({"data": data}, _models.XML_BLOBS, [], plugins)
 
+    def xml_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlBlobsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_BLOBS, args, kwargs),
+            _models.XML_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_empty_blobs(
-        self, *, data: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyBlobsInput | _models.XmlEmptyBlobsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyBlobsOutput: ...
+
+    @_overload
+    def xml_empty_blobs(
+        self, /, *, data: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> XmlEmptyBlobsOutput:
         """
         Blobs are base64 encoded
@@ -1491,10 +2368,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        return self._invoke({"data": data}, _models.XML_EMPTY_BLOBS, [], plugins)
 
+    def xml_empty_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyBlobsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_EMPTY_BLOBS, args, kwargs),
+            _models.XML_EMPTY_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_empty_lists(
         self,
+        request: _models.XmlEmptyListsInput | _models.XmlEmptyListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyListsOutput: ...
+
+    @_overload
+    def xml_empty_lists(
+        self,
+        /,
         *,
         string_list: Sequence[str] | None = None,
         string_set: Sequence[str] | None = None,
@@ -1533,31 +2430,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
+
+    def xml_empty_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyListsOutput:
         return self._invoke(
-            {
-                "string_list": string_list,
-                "string_set": string_set,
-                "integer_list": integer_list,
-                "boolean_list": boolean_list,
-                "timestamp_list": timestamp_list,
-                "enum_list": enum_list,
-                "int_enum_list": int_enum_list,
-                "nested_string_list": nested_string_list,
-                "renamed_list_members": renamed_list_members,
-                "flattened_list": flattened_list,
-                "flattened_list2": flattened_list2,
-                "flattened_list_with_member_namespace": flattened_list_with_member_namespace,
-                "flattened_list_with_namespace": flattened_list_with_namespace,
-                "structure_list": structure_list,
-                "flattened_structure_list": flattened_structure_list,
-            },
+            self._select_input(_models.XML_EMPTY_LISTS, args, kwargs),
             _models.XML_EMPTY_LISTS,
             [],
             plugins,
         )
 
+    @_overload
     def xml_empty_maps(
         self,
+        request: _models.XmlEmptyMapsInput | _models.XmlEmptyMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyMapsOutput: ...
+
+    @_overload
+    def xml_empty_maps(
+        self,
+        /,
         *,
         my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
         | None = None,
@@ -1576,10 +2472,29 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyMapsOutput`.
         """
-        return self._invoke({"my_map": my_map}, _models.XML_EMPTY_MAPS, [], plugins)
 
+    def xml_empty_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyMapsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_EMPTY_MAPS, args, kwargs),
+            _models.XML_EMPTY_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_empty_strings(
-        self, *, empty_string: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyStringsInput | _models.XmlEmptyStringsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyStringsOutput: ...
+
+    @_overload
+    def xml_empty_strings(
+        self, /, *, empty_string: str | None = None, plugins: list[Plugin] | None = None
     ) -> XmlEmptyStringsOutput:
         """
         Invokes the XmlEmptyStrings operation.
@@ -1594,12 +2509,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyStringsOutput`.
         """
+
+    def xml_empty_strings(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyStringsOutput:
         return self._invoke(
-            {"empty_string": empty_string}, _models.XML_EMPTY_STRINGS, [], plugins
+            self._select_input(_models.XML_EMPTY_STRINGS, args, kwargs),
+            _models.XML_EMPTY_STRINGS,
+            [],
+            plugins,
         )
 
+    @_overload
     def xml_enums(
         self,
+        request: _models.XmlEnumsInput | _models.XmlEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEnumsOutput: ...
+
+    @_overload
+    def xml_enums(
+        self,
+        /,
         *,
         foo_enum1: str | None = None,
         foo_enum2: str | None = None,
@@ -1623,22 +2556,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
+
+    def xml_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEnumsOutput:
         return self._invoke(
-            {
-                "foo_enum1": foo_enum1,
-                "foo_enum2": foo_enum2,
-                "foo_enum3": foo_enum3,
-                "foo_enum_list": foo_enum_list,
-                "foo_enum_set": foo_enum_set,
-                "foo_enum_map": foo_enum_map,
-            },
+            self._select_input(_models.XML_ENUMS, args, kwargs),
             _models.XML_ENUMS,
             [],
             plugins,
         )
 
+    @_overload
     def xml_int_enums(
         self,
+        request: _models.XmlIntEnumsInput | _models.XmlIntEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlIntEnumsOutput: ...
+
+    @_overload
+    def xml_int_enums(
+        self,
+        /,
         *,
         int_enum1: int | None = None,
         int_enum2: int | None = None,
@@ -1662,22 +2603,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
+
+    def xml_int_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlIntEnumsOutput:
         return self._invoke(
-            {
-                "int_enum1": int_enum1,
-                "int_enum2": int_enum2,
-                "int_enum3": int_enum3,
-                "int_enum_list": int_enum_list,
-                "int_enum_set": int_enum_set,
-                "int_enum_map": int_enum_map,
-            },
+            self._select_input(_models.XML_INT_ENUMS, args, kwargs),
             _models.XML_INT_ENUMS,
             [],
             plugins,
         )
 
+    @_overload
     def xml_lists(
         self,
+        request: _models.XmlListsInput | _models.XmlListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlListsOutput: ...
+
+    @_overload
+    def xml_lists(
+        self,
+        /,
         *,
         string_list: Sequence[str] | None = None,
         string_set: Sequence[str] | None = None,
@@ -1721,31 +2670,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlListsOutput`.
         """
+
+    def xml_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlListsOutput:
         return self._invoke(
-            {
-                "string_list": string_list,
-                "string_set": string_set,
-                "integer_list": integer_list,
-                "boolean_list": boolean_list,
-                "timestamp_list": timestamp_list,
-                "enum_list": enum_list,
-                "int_enum_list": int_enum_list,
-                "nested_string_list": nested_string_list,
-                "renamed_list_members": renamed_list_members,
-                "flattened_list": flattened_list,
-                "flattened_list2": flattened_list2,
-                "flattened_list_with_member_namespace": flattened_list_with_member_namespace,
-                "flattened_list_with_namespace": flattened_list_with_namespace,
-                "structure_list": structure_list,
-                "flattened_structure_list": flattened_structure_list,
-            },
+            self._select_input(_models.XML_LISTS, args, kwargs),
             _models.XML_LISTS,
             [],
             plugins,
         )
 
+    @_overload
     def xml_maps(
         self,
+        request: _models.XmlMapsInput | _models.XmlMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapsOutput: ...
+
+    @_overload
+    def xml_maps(
+        self,
+        /,
         *,
         my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
         | None = None,
@@ -1764,10 +2712,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapsOutput`.
         """
-        return self._invoke({"my_map": my_map}, _models.XML_MAPS, [], plugins)
 
+    def xml_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_MAPS, args, kwargs),
+            _models.XML_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_maps_xml_name(
         self,
+        request: _models.XmlMapsXmlNameInput | _models.XmlMapsXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapsXmlNameOutput: ...
+
+    @_overload
+    def xml_maps_xml_name(
+        self,
+        /,
         *,
         my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
         | None = None,
@@ -1786,10 +2754,31 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapsXmlNameOutput`.
         """
-        return self._invoke({"my_map": my_map}, _models.XML_MAPS_XML_NAME, [], plugins)
 
+    def xml_maps_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapsXmlNameOutput:
+        return self._invoke(
+            self._select_input(_models.XML_MAPS_XML_NAME, args, kwargs),
+            _models.XML_MAPS_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_map_with_xml_namespace(
         self,
+        request: _models.XmlMapWithXmlNamespaceInput
+        | _models.XmlMapWithXmlNamespaceInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapWithXmlNamespaceOutput: ...
+
+    @_overload
+    def xml_map_with_xml_namespace(
+        self,
+        /,
         *,
         my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
@@ -1807,12 +2796,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapWithXmlNamespaceOutput`.
         """
+
+    def xml_map_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapWithXmlNamespaceOutput:
         return self._invoke(
-            {"my_map": my_map}, _models.XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            self._select_input(_models.XML_MAP_WITH_XML_NAMESPACE, args, kwargs),
+            _models.XML_MAP_WITH_XML_NAMESPACE,
+            [],
+            plugins,
         )
 
+    @_overload
     def xml_namespaces(
         self,
+        request: _models.XmlNamespacesInput | _models.XmlNamespacesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlNamespacesOutput: ...
+
+    @_overload
+    def xml_namespaces(
+        self,
+        /,
         *,
         nested: _models.XmlNamespaceNested
         | _models.XmlNamespaceNestedParams
@@ -1832,10 +2839,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
-        return self._invoke({"nested": nested}, _models.XML_NAMESPACES, [], plugins)
 
+    def xml_namespaces(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlNamespacesOutput:
+        return self._invoke(
+            self._select_input(_models.XML_NAMESPACES, args, kwargs),
+            _models.XML_NAMESPACES,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_timestamps(
         self,
+        request: _models.XmlTimestampsInput | _models.XmlTimestampsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlTimestampsOutput: ...
+
+    @_overload
+    def xml_timestamps(
+        self,
+        /,
         *,
         normal: datetime | None = None,
         date_time: datetime | None = None,
@@ -1860,23 +2887,30 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
+
+    def xml_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlTimestampsOutput:
         return self._invoke(
-            {
-                "normal": normal,
-                "date_time": date_time,
-                "date_time_on_target": date_time_on_target,
-                "epoch_seconds": epoch_seconds,
-                "epoch_seconds_on_target": epoch_seconds_on_target,
-                "http_date": http_date,
-                "http_date_on_target": http_date_on_target,
-            },
+            self._select_input(_models.XML_TIMESTAMPS, args, kwargs),
             _models.XML_TIMESTAMPS,
             [],
             plugins,
         )
 
+    @_overload
     def xml_unions(
         self,
+        request: _models.XmlUnionsInput | _models.XmlUnionsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlUnionsOutput: ...
+
+    @_overload
+    def xml_unions(
+        self,
+        /,
         *,
         union_value: _models.XmlUnionShape | _models.XmlUnionShapeParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -1894,8 +2928,15 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Returns:
             An instance of `XmlUnionsOutput`.
         """
+
+    def xml_unions(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlUnionsOutput:
         return self._invoke(
-            {"union_value": union_value}, _models.XML_UNIONS, [], plugins
+            self._select_input(_models.XML_UNIONS, args, kwargs),
+            _models.XML_UNIONS,
+            [],
+            plugins,
         )
 
     def _new_config(self) -> RestXmlProtocolConfig:

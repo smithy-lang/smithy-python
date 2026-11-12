@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -38,8 +38,20 @@ class AsyncRestXmlProtocolNamespaceClient(
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def simple_scalar_properties(
         self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    async def simple_scalar_properties(
+        self,
+        /,
         *,
         foo: str | None = None,
         string_value: str | None = None,
@@ -69,20 +81,12 @@ class AsyncRestXmlProtocolNamespaceClient(
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
+
+    async def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
         return await self._invoke(
-            {
-                "foo": foo,
-                "string_value": string_value,
-                "true_boolean_value": true_boolean_value,
-                "false_boolean_value": false_boolean_value,
-                "byte_value": byte_value,
-                "short_value": short_value,
-                "integer_value": integer_value,
-                "long_value": long_value,
-                "float_value": float_value,
-                "nested": nested,
-                "double_value": double_value,
-            },
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
             _models.SIMPLE_SCALAR_PROPERTIES,
             [],
             plugins,

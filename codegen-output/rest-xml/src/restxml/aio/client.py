@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -98,8 +98,20 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def all_query_string_types(
         self,
+        request: _models.AllQueryStringTypesInput
+        | _models.AllQueryStringTypesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AllQueryStringTypesOutput: ...
+
+    @_overload
+    async def all_query_string_types(
+        self,
+        /,
         *,
         query_string: str | None = None,
         query_string_list: Sequence[str] | None = None,
@@ -137,37 +149,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `AllQueryStringTypesOutput`.
         """
+
+    async def all_query_string_types(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AllQueryStringTypesOutput:
         return await self._invoke(
-            {
-                "query_string": query_string,
-                "query_string_list": query_string_list,
-                "query_string_set": query_string_set,
-                "query_byte": query_byte,
-                "query_short": query_short,
-                "query_integer": query_integer,
-                "query_integer_list": query_integer_list,
-                "query_integer_set": query_integer_set,
-                "query_long": query_long,
-                "query_float": query_float,
-                "query_double": query_double,
-                "query_double_list": query_double_list,
-                "query_boolean": query_boolean,
-                "query_boolean_list": query_boolean_list,
-                "query_timestamp": query_timestamp,
-                "query_timestamp_list": query_timestamp_list,
-                "query_enum": query_enum,
-                "query_enum_list": query_enum_list,
-                "query_integer_enum": query_integer_enum,
-                "query_integer_enum_list": query_integer_enum_list,
-                "query_params_map_of_strings": query_params_map_of_strings,
-            },
+            self._select_input(_models.ALL_QUERY_STRING_TYPES, args, kwargs),
             _models.ALL_QUERY_STRING_TYPES,
             [],
             plugins,
         )
 
+    @_overload
     async def body_with_xml_name(
         self,
+        request: _models.BodyWithXmlNameInput | _models.BodyWithXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> BodyWithXmlNameOutput: ...
+
+    @_overload
+    async def body_with_xml_name(
+        self,
+        /,
         *,
         nested: _models.PayloadWithXmlName
         | _models.PayloadWithXmlNameParams
@@ -188,12 +193,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `BodyWithXmlNameOutput`.
         """
+
+    async def body_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> BodyWithXmlNameOutput:
         return await self._invoke(
-            {"nested": nested}, _models.BODY_WITH_XML_NAME, [], plugins
+            self._select_input(_models.BODY_WITH_XML_NAME, args, kwargs),
+            _models.BODY_WITH_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     async def constant_and_variable_query_string(
         self,
+        request: _models.ConstantAndVariableQueryStringInput
+        | _models.ConstantAndVariableQueryStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ConstantAndVariableQueryStringOutput: ...
+
+    @_overload
+    async def constant_and_variable_query_string(
+        self,
+        /,
         *,
         baz: str | None = None,
         maybe_set: str | None = None,
@@ -214,15 +238,32 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `ConstantAndVariableQueryStringOutput`.
         """
+
+    async def constant_and_variable_query_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ConstantAndVariableQueryStringOutput:
         return await self._invoke(
-            {"baz": baz, "maybe_set": maybe_set},
+            self._select_input(
+                _models.CONSTANT_AND_VARIABLE_QUERY_STRING, args, kwargs
+            ),
             _models.CONSTANT_AND_VARIABLE_QUERY_STRING,
             [],
             plugins,
         )
 
+    @_overload
     async def constant_query_string(
-        self, *, hello: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ConstantQueryStringInput
+        | _models.ConstantQueryStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ConstantQueryStringOutput: ...
+
+    @_overload
+    async def constant_query_string(
+        self, /, *, hello: str, plugins: list[Plugin] | None = None
     ) -> ConstantQueryStringOutput:
         """
         This example uses a constant query string parameters and a label. This
@@ -240,12 +281,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `ConstantQueryStringOutput`.
         """
+
+    async def constant_query_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ConstantQueryStringOutput:
         return await self._invoke(
-            {"hello": hello}, _models.CONSTANT_QUERY_STRING, [], plugins
+            self._select_input(_models.CONSTANT_QUERY_STRING, args, kwargs),
+            _models.CONSTANT_QUERY_STRING,
+            [],
+            plugins,
         )
 
+    @_overload
     async def content_type_parameters(
-        self, *, value: int | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ContentTypeParametersInput
+        | _models.ContentTypeParametersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ContentTypeParametersOutput: ...
+
+    @_overload
+    async def content_type_parameters(
+        self, /, *, value: int | None = None, plugins: list[Plugin] | None = None
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -261,12 +320,29 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
+
+    async def content_type_parameters(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ContentTypeParametersOutput:
         return await self._invoke(
-            {"value": value}, _models.CONTENT_TYPE_PARAMETERS, [], plugins
+            self._select_input(_models.CONTENT_TYPE_PARAMETERS, args, kwargs),
+            _models.CONTENT_TYPE_PARAMETERS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def datetime_offsets(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DatetimeOffsetsOutput: ...
+
+    @_overload
+    async def datetime_offsets(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -281,10 +357,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return await self._invoke(None, _models.DATETIME_OFFSETS, [], plugins)
 
+    async def datetime_offsets(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DatetimeOffsetsOutput:
+        return await self._invoke(
+            self._select_input(_models.DATETIME_OFFSETS, args, kwargs),
+            _models.DATETIME_OFFSETS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def empty_input_and_empty_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyInputAndEmptyOutputInput
+        | _models.EmptyInputAndEmptyOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyInputAndEmptyOutputOutput: ...
+
+    @_overload
+    async def empty_input_and_empty_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -302,12 +398,29 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
+
+    async def empty_input_and_empty_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyInputAndEmptyOutputOutput:
         return await self._invoke(
-            None, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            self._select_input(_models.EMPTY_INPUT_AND_EMPTY_OUTPUT, args, kwargs),
+            _models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            [],
+            plugins,
         )
 
+    @_overload
     async def endpoint_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointOperationOutput: ...
+
+    @_overload
+    async def endpoint_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -322,10 +435,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return await self._invoke(None, _models.ENDPOINT_OPERATION, [], plugins)
 
+    async def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.ENDPOINT_OPERATION, args, kwargs),
+            _models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def endpoint_with_host_label_header_operation(
-        self, *, account_id: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointWithHostLabelHeaderOperationInput
+        | _models.EndpointWithHostLabelHeaderOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelHeaderOperationOutput: ...
+
+    @_overload
+    async def endpoint_with_host_label_header_operation(
+        self, /, *, account_id: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelHeaderOperationOutput:
         """
         Invokes the EndpointWithHostLabelHeaderOperation operation.
@@ -340,15 +473,32 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelHeaderOperationOutput`.
         """
+
+    async def endpoint_with_host_label_header_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelHeaderOperationOutput:
         return await self._invoke(
-            {"account_id": account_id},
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION, args, kwargs
+            ),
             _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION,
             [],
             plugins,
         )
 
+    @_overload
     async def endpoint_with_host_label_operation(
-        self, *, label: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointWithHostLabelOperationInput
+        | _models.EndpointWithHostLabelOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput: ...
+
+    @_overload
+    async def endpoint_with_host_label_operation(
+        self, /, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -363,12 +513,32 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
+
+    async def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelOperationOutput:
         return await self._invoke(
-            {"label": label}, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def flattened_xml_map(
         self,
+        request: _models.FlattenedXmlMapInput | _models.FlattenedXmlMapInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapOutput: ...
+
+    @_overload
+    async def flattened_xml_map(
+        self,
+        /,
         *,
         my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
@@ -386,12 +556,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapOutput`.
         """
+
+    async def flattened_xml_map(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapOutput:
         return await self._invoke(
-            {"my_map": my_map}, _models.FLATTENED_XML_MAP, [], plugins
+            self._select_input(_models.FLATTENED_XML_MAP, args, kwargs),
+            _models.FLATTENED_XML_MAP,
+            [],
+            plugins,
         )
 
+    @_overload
     async def flattened_xml_map_with_xml_name(
         self,
+        request: _models.FlattenedXmlMapWithXmlNameInput
+        | _models.FlattenedXmlMapWithXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNameOutput: ...
+
+    @_overload
+    async def flattened_xml_map_with_xml_name(
+        self,
+        /,
         *,
         my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
@@ -409,12 +598,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
+
+    async def flattened_xml_map_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapWithXmlNameOutput:
         return await self._invoke(
-            {"my_map": my_map}, _models.FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins
+            self._select_input(_models.FLATTENED_XML_MAP_WITH_XML_NAME, args, kwargs),
+            _models.FLATTENED_XML_MAP_WITH_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     async def flattened_xml_map_with_xml_namespace(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FlattenedXmlMapWithXmlNamespaceInput
+        | _models.FlattenedXmlMapWithXmlNamespaceInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNamespaceOutput: ...
+
+    @_overload
+    async def flattened_xml_map_with_xml_namespace(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         """
         Flattened maps with @xmlNamespace and @xmlName
@@ -429,12 +636,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
+
+    async def flattened_xml_map_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         return await self._invoke(
-            None, _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            self._select_input(
+                _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, args, kwargs
+            ),
+            _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def fractional_seconds(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FractionalSecondsOutput: ...
+
+    @_overload
+    async def fractional_seconds(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -449,10 +675,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return await self._invoke(None, _models.FRACTIONAL_SECONDS, [], plugins)
 
+    async def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FractionalSecondsOutput:
+        return await self._invoke(
+            self._select_input(_models.FRACTIONAL_SECONDS, args, kwargs),
+            _models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def greeting_with_errors(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput
+        | _models.GreetingWithErrorsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    async def greeting_with_errors(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -471,10 +717,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return await self._invoke(None, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    async def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return await self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_empty_prefix_headers(
         self,
+        request: _models.HttpEmptyPrefixHeadersInput
+        | _models.HttpEmptyPrefixHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpEmptyPrefixHeadersOutput: ...
+
+    @_overload
+    async def http_empty_prefix_headers(
+        self,
+        /,
         *,
         prefix_headers: Mapping[str, str] | None = None,
         specific_header: str | None = None,
@@ -493,15 +760,29 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpEmptyPrefixHeadersOutput`.
         """
+
+    async def http_empty_prefix_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpEmptyPrefixHeadersOutput:
         return await self._invoke(
-            {"prefix_headers": prefix_headers, "specific_header": specific_header},
+            self._select_input(_models.HTTP_EMPTY_PREFIX_HEADERS, args, kwargs),
             _models.HTTP_EMPTY_PREFIX_HEADERS,
             [],
             plugins,
         )
 
+    @_overload
     async def http_enum_payload(
-        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpEnumPayloadInput | _models.HttpEnumPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpEnumPayloadOutput: ...
+
+    @_overload
+    async def http_enum_payload(
+        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
@@ -516,12 +797,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpEnumPayloadOutput`.
         """
+
+    async def http_enum_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpEnumPayloadOutput:
         return await self._invoke(
-            {"payload": payload}, _models.HTTP_ENUM_PAYLOAD, [], plugins
+            self._select_input(_models.HTTP_ENUM_PAYLOAD, args, kwargs),
+            _models.HTTP_ENUM_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_traits(
         self,
+        request: _models.HttpPayloadTraitsInput | _models.HttpPayloadTraitsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadTraitsOutput: ...
+
+    @_overload
+    async def http_payload_traits(
+        self,
+        /,
         *,
         foo: str | None = None,
         blob: bytes | None = None,
@@ -542,12 +841,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadTraitsOutput`.
         """
+
+    async def http_payload_traits(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadTraitsOutput:
         return await self._invoke(
-            {"foo": foo, "blob": blob}, _models.HTTP_PAYLOAD_TRAITS, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_TRAITS, args, kwargs),
+            _models.HTTP_PAYLOAD_TRAITS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_traits_with_media_type(
         self,
+        request: _models.HttpPayloadTraitsWithMediaTypeInput
+        | _models.HttpPayloadTraitsWithMediaTypeInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadTraitsWithMediaTypeOutput: ...
+
+    @_overload
+    async def http_payload_traits_with_media_type(
+        self,
+        /,
         *,
         foo: str | None = None,
         blob: bytes | None = None,
@@ -567,15 +885,33 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
+
+    async def http_payload_traits_with_media_type(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadTraitsWithMediaTypeOutput:
         return await self._invoke(
-            {"foo": foo, "blob": blob},
+            self._select_input(
+                _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, args, kwargs
+            ),
             _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
             [],
             plugins,
         )
 
+    @_overload
     async def http_payload_with_member_xml_name(
         self,
+        request: _models.HttpPayloadWithMemberXmlNameInput
+        | _models.HttpPayloadWithMemberXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithMemberXmlNameOutput: ...
+
+    @_overload
+    async def http_payload_with_member_xml_name(
+        self,
+        /,
         *,
         nested: _models.PayloadWithXmlName
         | _models.PayloadWithXmlNameParams
@@ -596,12 +932,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithMemberXmlNameOutput`.
         """
+
+    async def http_payload_with_member_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithMemberXmlNameOutput:
         return await self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_with_structure(
         self,
+        request: _models.HttpPayloadWithStructureInput
+        | _models.HttpPayloadWithStructureInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithStructureOutput: ...
+
+    @_overload
+    async def http_payload_with_structure(
+        self,
+        /,
         *,
         nested: _models.NestedPayload | _models.NestedPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -621,12 +976,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithStructureOutput`.
         """
+
+    async def http_payload_with_structure(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithStructureOutput:
         return await self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_STRUCTURE, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_STRUCTURE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_with_union(
         self,
+        request: _models.HttpPayloadWithUnionInput
+        | _models.HttpPayloadWithUnionInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithUnionOutput: ...
+
+    @_overload
+    async def http_payload_with_union(
+        self,
+        /,
         *,
         nested: _models.UnionPayload | _models.UnionPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -644,12 +1018,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithUnionOutput`.
         """
+
+    async def http_payload_with_union(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithUnionOutput:
         return await self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_UNION, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_UNION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_with_xml_name(
         self,
+        request: _models.HttpPayloadWithXmlNameInput
+        | _models.HttpPayloadWithXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithXmlNameOutput: ...
+
+    @_overload
+    async def http_payload_with_xml_name(
+        self,
+        /,
         *,
         nested: _models.PayloadWithXmlName
         | _models.PayloadWithXmlNameParams
@@ -670,12 +1063,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithXmlNameOutput`.
         """
+
+    async def http_payload_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithXmlNameOutput:
         return await self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_XML_NAME, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_XML_NAME, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_with_xml_namespace(
         self,
+        request: _models.HttpPayloadWithXmlNamespaceInput
+        | _models.HttpPayloadWithXmlNamespaceInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithXmlNamespaceOutput: ...
+
+    @_overload
+    async def http_payload_with_xml_namespace(
+        self,
+        /,
         *,
         nested: _models.PayloadWithXmlNamespace
         | _models.PayloadWithXmlNamespaceParams
@@ -695,12 +1107,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithXmlNamespaceOutput`.
         """
+
+    async def http_payload_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithXmlNamespaceOutput:
         return await self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_XML_NAMESPACE, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_with_xml_namespace_and_prefix(
         self,
+        request: _models.HttpPayloadWithXmlNamespaceAndPrefixInput
+        | _models.HttpPayloadWithXmlNamespaceAndPrefixInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput: ...
+
+    @_overload
+    async def http_payload_with_xml_namespace_and_prefix(
+        self,
+        /,
         *,
         nested: _models.PayloadWithXmlNamespaceAndPrefix
         | _models.PayloadWithXmlNamespaceAndPrefixParams
@@ -720,15 +1151,32 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithXmlNamespaceAndPrefixOutput`.
         """
+
+    async def http_payload_with_xml_namespace_and_prefix(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput:
         return await self._invoke(
-            {"nested": nested},
+            self._select_input(
+                _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, args, kwargs
+            ),
             _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX,
             [],
             plugins,
         )
 
+    @_overload
     async def http_prefix_headers(
         self,
+        request: _models.HttpPrefixHeadersInput | _models.HttpPrefixHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPrefixHeadersOutput: ...
+
+    @_overload
+    async def http_prefix_headers(
+        self,
+        /,
         *,
         foo: str | None = None,
         foo_map: Mapping[str, str] | None = None,
@@ -748,12 +1196,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPrefixHeadersOutput`.
         """
+
+    async def http_prefix_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPrefixHeadersOutput:
         return await self._invoke(
-            {"foo": foo, "foo_map": foo_map}, _models.HTTP_PREFIX_HEADERS, [], plugins
+            self._select_input(_models.HTTP_PREFIX_HEADERS, args, kwargs),
+            _models.HTTP_PREFIX_HEADERS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_request_with_float_labels(
-        self, *, float_: float, double: float, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpRequestWithFloatLabelsInput
+        | _models.HttpRequestWithFloatLabelsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithFloatLabelsOutput: ...
+
+    @_overload
+    async def http_request_with_float_labels(
+        self, /, *, float_: float, double: float, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithFloatLabelsOutput:
         """
         Invokes the HttpRequestWithFloatLabels operation.
@@ -768,15 +1234,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithFloatLabelsOutput`.
         """
+
+    async def http_request_with_float_labels(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithFloatLabelsOutput:
         return await self._invoke(
-            {"float_": float_, "double": double},
+            self._select_input(_models.HTTP_REQUEST_WITH_FLOAT_LABELS, args, kwargs),
             _models.HTTP_REQUEST_WITH_FLOAT_LABELS,
             [],
             plugins,
         )
 
+    @_overload
     async def http_request_with_greedy_label_in_path(
-        self, *, foo: str, baz: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpRequestWithGreedyLabelInPathInput
+        | _models.HttpRequestWithGreedyLabelInPathInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithGreedyLabelInPathOutput: ...
+
+    @_overload
+    async def http_request_with_greedy_label_in_path(
+        self, /, *, foo: str, baz: str, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
@@ -791,15 +1272,33 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
+
+    async def http_request_with_greedy_label_in_path(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithGreedyLabelInPathOutput:
         return await self._invoke(
-            {"foo": foo, "baz": baz},
+            self._select_input(
+                _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, args, kwargs
+            ),
             _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
             [],
             plugins,
         )
 
+    @_overload
     async def http_request_with_labels(
         self,
+        request: _models.HttpRequestWithLabelsInput
+        | _models.HttpRequestWithLabelsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithLabelsOutput: ...
+
+    @_overload
+    async def http_request_with_labels(
+        self,
+        /,
         *,
         string: str,
         short: int,
@@ -827,24 +1326,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithLabelsOutput`.
         """
+
+    async def http_request_with_labels(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithLabelsOutput:
         return await self._invoke(
-            {
-                "string": string,
-                "short": short,
-                "integer": integer,
-                "long": long,
-                "float_": float_,
-                "double": double,
-                "boolean": boolean,
-                "timestamp": timestamp,
-            },
+            self._select_input(_models.HTTP_REQUEST_WITH_LABELS, args, kwargs),
             _models.HTTP_REQUEST_WITH_LABELS,
             [],
             plugins,
         )
 
+    @_overload
     async def http_request_with_labels_and_timestamp_format(
         self,
+        request: _models.HttpRequestWithLabelsAndTimestampFormatInput
+        | _models.HttpRequestWithLabelsAndTimestampFormatInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithLabelsAndTimestampFormatOutput: ...
+
+    @_overload
+    async def http_request_with_labels_and_timestamp_format(
+        self,
+        /,
         *,
         member_epoch_seconds: datetime,
         member_http_date: datetime,
@@ -869,23 +1375,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
+
+    async def http_request_with_labels_and_timestamp_format(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
         return await self._invoke(
-            {
-                "member_epoch_seconds": member_epoch_seconds,
-                "member_http_date": member_http_date,
-                "member_date_time": member_date_time,
-                "default_format": default_format,
-                "target_epoch_seconds": target_epoch_seconds,
-                "target_http_date": target_http_date,
-                "target_date_time": target_date_time,
-            },
+            self._select_input(
+                _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, args, kwargs
+            ),
             _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
             [],
             plugins,
         )
 
+    @_overload
     async def http_response_code(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpResponseCodeInput | _models.HttpResponseCodeInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpResponseCodeOutput: ...
+
+    @_overload
+    async def http_response_code(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> HttpResponseCodeOutput:
         """
         Invokes the HttpResponseCode operation.
@@ -900,10 +1414,29 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpResponseCodeOutput`.
         """
-        return await self._invoke(None, _models.HTTP_RESPONSE_CODE, [], plugins)
 
+    async def http_response_code(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpResponseCodeOutput:
+        return await self._invoke(
+            self._select_input(_models.HTTP_RESPONSE_CODE, args, kwargs),
+            _models.HTTP_RESPONSE_CODE,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_string_payload(
-        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpStringPayloadInput | _models.HttpStringPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpStringPayloadOutput: ...
+
+    @_overload
+    async def http_string_payload(
+        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
@@ -918,12 +1451,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpStringPayloadOutput`.
         """
+
+    async def http_string_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpStringPayloadOutput:
         return await self._invoke(
-            {"payload": payload}, _models.HTTP_STRING_PAYLOAD, [], plugins
+            self._select_input(_models.HTTP_STRING_PAYLOAD, args, kwargs),
+            _models.HTTP_STRING_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     async def ignore_query_params_in_response(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.IgnoreQueryParamsInResponseInput
+        | _models.IgnoreQueryParamsInResponseInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> IgnoreQueryParamsInResponseOutput: ...
+
+    @_overload
+    async def ignore_query_params_in_response(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
@@ -940,12 +1491,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `IgnoreQueryParamsInResponseOutput`.
         """
+
+    async def ignore_query_params_in_response(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> IgnoreQueryParamsInResponseOutput:
         return await self._invoke(
-            None, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
+            self._select_input(_models.IGNORE_QUERY_PARAMS_IN_RESPONSE, args, kwargs),
+            _models.IGNORE_QUERY_PARAMS_IN_RESPONSE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def input_and_output_with_headers(
         self,
+        request: _models.InputAndOutputWithHeadersInput
+        | _models.InputAndOutputWithHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> InputAndOutputWithHeadersOutput: ...
+
+    @_overload
+    async def input_and_output_with_headers(
+        self,
+        /,
         *,
         header_string: str | None = None,
         header_byte: int | None = None,
@@ -979,32 +1549,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `InputAndOutputWithHeadersOutput`.
         """
+
+    async def input_and_output_with_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> InputAndOutputWithHeadersOutput:
         return await self._invoke(
-            {
-                "header_string": header_string,
-                "header_byte": header_byte,
-                "header_short": header_short,
-                "header_integer": header_integer,
-                "header_long": header_long,
-                "header_float": header_float,
-                "header_double": header_double,
-                "header_true_bool": header_true_bool,
-                "header_false_bool": header_false_bool,
-                "header_string_list": header_string_list,
-                "header_string_set": header_string_set,
-                "header_integer_list": header_integer_list,
-                "header_boolean_list": header_boolean_list,
-                "header_timestamp_list": header_timestamp_list,
-                "header_enum": header_enum,
-                "header_enum_list": header_enum_list,
-            },
+            self._select_input(_models.INPUT_AND_OUTPUT_WITH_HEADERS, args, kwargs),
             _models.INPUT_AND_OUTPUT_WITH_HEADERS,
             [],
             plugins,
         )
 
+    @_overload
     async def nested_xml_maps(
         self,
+        request: _models.NestedXmlMapsInput | _models.NestedXmlMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NestedXmlMapsOutput: ...
+
+    @_overload
+    async def nested_xml_maps(
+        self,
+        /,
         *,
         nested_map: Mapping[str, Mapping[str, str]] | None = None,
         flat_nested_map: Mapping[str, Mapping[str, str]] | None = None,
@@ -1023,15 +1591,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NestedXmlMapsOutput`.
         """
+
+    async def nested_xml_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NestedXmlMapsOutput:
         return await self._invoke(
-            {"nested_map": nested_map, "flat_nested_map": flat_nested_map},
+            self._select_input(_models.NESTED_XML_MAPS, args, kwargs),
             _models.NESTED_XML_MAPS,
             [],
             plugins,
         )
 
+    @_overload
     async def nested_xml_map_with_xml_name(
         self,
+        request: _models.NestedXmlMapWithXmlNameInput
+        | _models.NestedXmlMapWithXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NestedXmlMapWithXmlNameOutput: ...
+
+    @_overload
+    async def nested_xml_map_with_xml_name(
+        self,
+        /,
         *,
         nested_xml_map_with_xml_name_map: Mapping[str, Mapping[str, str]] | None = None,
         plugins: list[Plugin] | None = None,
@@ -1049,15 +1633,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NestedXmlMapWithXmlNameOutput`.
         """
+
+    async def nested_xml_map_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NestedXmlMapWithXmlNameOutput:
         return await self._invoke(
-            {"nested_xml_map_with_xml_name_map": nested_xml_map_with_xml_name_map},
+            self._select_input(_models.NESTED_XML_MAP_WITH_XML_NAME, args, kwargs),
             _models.NESTED_XML_MAP_WITH_XML_NAME,
             [],
             plugins,
         )
 
+    @_overload
     async def no_input_and_no_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndNoOutputInput
+        | _models.NoInputAndNoOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndNoOutputOutput: ...
+
+    @_overload
+    async def no_input_and_no_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1075,10 +1674,29 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        return await self._invoke(None, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
+    async def no_input_and_no_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndNoOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_NO_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_NO_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def no_input_and_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndOutputOutput: ...
+
+    @_overload
+    async def no_input_and_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1096,10 +1714,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return await self._invoke(None, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
+    async def no_input_and_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def null_and_empty_headers_client(
         self,
+        request: _models.NullAndEmptyHeadersClientInput
+        | _models.NullAndEmptyHeadersClientInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NullAndEmptyHeadersClientOutput: ...
+
+    @_overload
+    async def null_and_empty_headers_client(
+        self,
+        /,
         *,
         a: str | None = None,
         b: str | None = None,
@@ -1120,12 +1759,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NullAndEmptyHeadersClientOutput`.
         """
+
+    async def null_and_empty_headers_client(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NullAndEmptyHeadersClientOutput:
         return await self._invoke(
-            {"a": a, "b": b, "c": c}, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
+            self._select_input(_models.NULL_AND_EMPTY_HEADERS_CLIENT, args, kwargs),
+            _models.NULL_AND_EMPTY_HEADERS_CLIENT,
+            [],
+            plugins,
         )
 
+    @_overload
     async def null_and_empty_headers_server(
         self,
+        request: _models.NullAndEmptyHeadersServerInput
+        | _models.NullAndEmptyHeadersServerInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NullAndEmptyHeadersServerOutput: ...
+
+    @_overload
+    async def null_and_empty_headers_server(
+        self,
+        /,
         *,
         a: str | None = None,
         b: str | None = None,
@@ -1146,12 +1804,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NullAndEmptyHeadersServerOutput`.
         """
+
+    async def null_and_empty_headers_server(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NullAndEmptyHeadersServerOutput:
         return await self._invoke(
-            {"a": a, "b": b, "c": c}, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
+            self._select_input(_models.NULL_AND_EMPTY_HEADERS_SERVER, args, kwargs),
+            _models.NULL_AND_EMPTY_HEADERS_SERVER,
+            [],
+            plugins,
         )
 
+    @_overload
     async def omits_null_serializes_empty_string(
         self,
+        request: _models.OmitsNullSerializesEmptyStringInput
+        | _models.OmitsNullSerializesEmptyStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OmitsNullSerializesEmptyStringOutput: ...
+
+    @_overload
+    async def omits_null_serializes_empty_string(
+        self,
+        /,
         *,
         null_value: str | None = None,
         empty_string: str | None = None,
@@ -1170,15 +1847,33 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
+
+    async def omits_null_serializes_empty_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OmitsNullSerializesEmptyStringOutput:
         return await self._invoke(
-            {"null_value": null_value, "empty_string": empty_string},
+            self._select_input(
+                _models.OMITS_NULL_SERIALIZES_EMPTY_STRING, args, kwargs
+            ),
             _models.OMITS_NULL_SERIALIZES_EMPTY_STRING,
             [],
             plugins,
         )
 
+    @_overload
     async def put_with_content_encoding(
         self,
+        request: _models.PutWithContentEncodingInput
+        | _models.PutWithContentEncodingInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutWithContentEncodingOutput: ...
+
+    @_overload
+    async def put_with_content_encoding(
+        self,
+        /,
         *,
         encoding: str | None = None,
         data: str | None = None,
@@ -1197,15 +1892,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
+
+    async def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutWithContentEncodingOutput:
         return await self._invoke(
-            {"encoding": encoding, "data": data},
+            self._select_input(_models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
             _models.PUT_WITH_CONTENT_ENCODING,
             [],
             plugins,
         )
 
+    @_overload
     async def query_idempotency_token_auto_fill(
-        self, *, token: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.QueryIdempotencyTokenAutoFillInput
+        | _models.QueryIdempotencyTokenAutoFillInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryIdempotencyTokenAutoFillOutput: ...
+
+    @_overload
+    async def query_idempotency_token_auto_fill(
+        self, /, *, token: str | None = None, plugins: list[Plugin] | None = None
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
@@ -1221,12 +1931,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
+
+    async def query_idempotency_token_auto_fill(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryIdempotencyTokenAutoFillOutput:
         return await self._invoke(
-            {"token": token}, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            self._select_input(_models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, args, kwargs),
+            _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
+            [],
+            plugins,
         )
 
+    @_overload
     async def query_params_as_string_list_map(
         self,
+        request: _models.QueryParamsAsStringListMapInput
+        | _models.QueryParamsAsStringListMapInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryParamsAsStringListMapOutput: ...
+
+    @_overload
+    async def query_params_as_string_list_map(
+        self,
+        /,
         *,
         qux: str | None = None,
         foo: Mapping[str, Sequence[str]] | None = None,
@@ -1245,15 +1974,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `QueryParamsAsStringListMapOutput`.
         """
+
+    async def query_params_as_string_list_map(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryParamsAsStringListMapOutput:
         return await self._invoke(
-            {"qux": qux, "foo": foo},
+            self._select_input(_models.QUERY_PARAMS_AS_STRING_LIST_MAP, args, kwargs),
             _models.QUERY_PARAMS_AS_STRING_LIST_MAP,
             [],
             plugins,
         )
 
+    @_overload
     async def query_precedence(
         self,
+        request: _models.QueryPrecedenceInput | _models.QueryPrecedenceInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryPrecedenceOutput: ...
+
+    @_overload
+    async def query_precedence(
+        self,
+        /,
         *,
         foo: str | None = None,
         baz: Mapping[str, str] | None = None,
@@ -1272,12 +2016,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `QueryPrecedenceOutput`.
         """
+
+    async def query_precedence(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryPrecedenceOutput:
         return await self._invoke(
-            {"foo": foo, "baz": baz}, _models.QUERY_PRECEDENCE, [], plugins
+            self._select_input(_models.QUERY_PRECEDENCE, args, kwargs),
+            _models.QUERY_PRECEDENCE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def recursive_shapes(
         self,
+        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RecursiveShapesOutput: ...
+
+    @_overload
+    async def recursive_shapes(
+        self,
+        /,
         *,
         nested: _models.RecursiveShapesInputOutputNested1
         | _models.RecursiveShapesInputOutputNested1Params
@@ -1297,12 +2059,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
+
+    async def recursive_shapes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RecursiveShapesOutput:
         return await self._invoke(
-            {"nested": nested}, _models.RECURSIVE_SHAPES, [], plugins
+            self._select_input(_models.RECURSIVE_SHAPES, args, kwargs),
+            _models.RECURSIVE_SHAPES,
+            [],
+            plugins,
         )
 
+    @_overload
     async def simple_scalar_properties(
         self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    async def simple_scalar_properties(
+        self,
+        /,
         *,
         foo: str | None = None,
         string_value: str | None = None,
@@ -1329,26 +2110,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
+
+    async def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
         return await self._invoke(
-            {
-                "foo": foo,
-                "string_value": string_value,
-                "true_boolean_value": true_boolean_value,
-                "false_boolean_value": false_boolean_value,
-                "byte_value": byte_value,
-                "short_value": short_value,
-                "integer_value": integer_value,
-                "long_value": long_value,
-                "float_value": float_value,
-                "double_value": double_value,
-            },
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
             _models.SIMPLE_SCALAR_PROPERTIES,
             [],
             plugins,
         )
 
+    @_overload
     async def timestamp_format_headers(
         self,
+        request: _models.TimestampFormatHeadersInput
+        | _models.TimestampFormatHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TimestampFormatHeadersOutput: ...
+
+    @_overload
+    async def timestamp_format_headers(
+        self,
+        /,
         *,
         member_epoch_seconds: datetime | None = None,
         member_http_date: datetime | None = None,
@@ -1373,23 +2159,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `TimestampFormatHeadersOutput`.
         """
+
+    async def timestamp_format_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TimestampFormatHeadersOutput:
         return await self._invoke(
-            {
-                "member_epoch_seconds": member_epoch_seconds,
-                "member_http_date": member_http_date,
-                "member_date_time": member_date_time,
-                "default_format": default_format,
-                "target_epoch_seconds": target_epoch_seconds,
-                "target_http_date": target_http_date,
-                "target_date_time": target_date_time,
-            },
+            self._select_input(_models.TIMESTAMP_FORMAT_HEADERS, args, kwargs),
             _models.TIMESTAMP_FORMAT_HEADERS,
             [],
             plugins,
         )
 
+    @_overload
     async def xml_attributes(
         self,
+        request: _models.XmlAttributesInput | _models.XmlAttributesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlAttributesOutput: ...
+
+    @_overload
+    async def xml_attributes(
+        self,
+        /,
         *,
         foo: str | None = None,
         attr: str | None = None,
@@ -1408,12 +2201,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesOutput`.
         """
+
+    async def xml_attributes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlAttributesOutput:
         return await self._invoke(
-            {"foo": foo, "attr": attr}, _models.XML_ATTRIBUTES, [], plugins
+            self._select_input(_models.XML_ATTRIBUTES, args, kwargs),
+            _models.XML_ATTRIBUTES,
+            [],
+            plugins,
         )
 
+    @_overload
     async def xml_attributes_in_middle(
         self,
+        request: _models.XmlAttributesInMiddleInput
+        | _models.XmlAttributesInMiddleInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlAttributesInMiddleOutput: ...
+
+    @_overload
+    async def xml_attributes_in_middle(
+        self,
+        /,
         *,
         payload: _models.XmlAttributesInMiddlePayloadRequest
         | _models.XmlAttributesInMiddlePayloadRequestParams
@@ -1437,12 +2249,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesInMiddleOutput`.
         """
+
+    async def xml_attributes_in_middle(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlAttributesInMiddleOutput:
         return await self._invoke(
-            {"payload": payload}, _models.XML_ATTRIBUTES_IN_MIDDLE, [], plugins
+            self._select_input(_models.XML_ATTRIBUTES_IN_MIDDLE, args, kwargs),
+            _models.XML_ATTRIBUTES_IN_MIDDLE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def xml_attributes_on_payload(
         self,
+        request: _models.XmlAttributesOnPayloadInput
+        | _models.XmlAttributesOnPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlAttributesOnPayloadOutput: ...
+
+    @_overload
+    async def xml_attributes_on_payload(
+        self,
+        /,
         *,
         payload: _models.XmlAttributesPayloadRequest
         | _models.XmlAttributesPayloadRequestParams
@@ -1463,12 +2294,29 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesOnPayloadOutput`.
         """
+
+    async def xml_attributes_on_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlAttributesOnPayloadOutput:
         return await self._invoke(
-            {"payload": payload}, _models.XML_ATTRIBUTES_ON_PAYLOAD, [], plugins
+            self._select_input(_models.XML_ATTRIBUTES_ON_PAYLOAD, args, kwargs),
+            _models.XML_ATTRIBUTES_ON_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     async def xml_blobs(
-        self, *, data: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlBlobsInput | _models.XmlBlobsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlBlobsOutput: ...
+
+    @_overload
+    async def xml_blobs(
+        self, /, *, data: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> XmlBlobsOutput:
         """
         Blobs are base64 encoded
@@ -1483,10 +2331,29 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlBlobsOutput`.
         """
-        return await self._invoke({"data": data}, _models.XML_BLOBS, [], plugins)
 
+    async def xml_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlBlobsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_BLOBS, args, kwargs),
+            _models.XML_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_empty_blobs(
-        self, *, data: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyBlobsInput | _models.XmlEmptyBlobsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyBlobsOutput: ...
+
+    @_overload
+    async def xml_empty_blobs(
+        self, /, *, data: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> XmlEmptyBlobsOutput:
         """
         Blobs are base64 encoded
@@ -1501,10 +2368,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        return await self._invoke({"data": data}, _models.XML_EMPTY_BLOBS, [], plugins)
 
+    async def xml_empty_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyBlobsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_EMPTY_BLOBS, args, kwargs),
+            _models.XML_EMPTY_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_empty_lists(
         self,
+        request: _models.XmlEmptyListsInput | _models.XmlEmptyListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyListsOutput: ...
+
+    @_overload
+    async def xml_empty_lists(
+        self,
+        /,
         *,
         string_list: Sequence[str] | None = None,
         string_set: Sequence[str] | None = None,
@@ -1543,31 +2430,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
+
+    async def xml_empty_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyListsOutput:
         return await self._invoke(
-            {
-                "string_list": string_list,
-                "string_set": string_set,
-                "integer_list": integer_list,
-                "boolean_list": boolean_list,
-                "timestamp_list": timestamp_list,
-                "enum_list": enum_list,
-                "int_enum_list": int_enum_list,
-                "nested_string_list": nested_string_list,
-                "renamed_list_members": renamed_list_members,
-                "flattened_list": flattened_list,
-                "flattened_list2": flattened_list2,
-                "flattened_list_with_member_namespace": flattened_list_with_member_namespace,
-                "flattened_list_with_namespace": flattened_list_with_namespace,
-                "structure_list": structure_list,
-                "flattened_structure_list": flattened_structure_list,
-            },
+            self._select_input(_models.XML_EMPTY_LISTS, args, kwargs),
             _models.XML_EMPTY_LISTS,
             [],
             plugins,
         )
 
+    @_overload
     async def xml_empty_maps(
         self,
+        request: _models.XmlEmptyMapsInput | _models.XmlEmptyMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyMapsOutput: ...
+
+    @_overload
+    async def xml_empty_maps(
+        self,
+        /,
         *,
         my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
         | None = None,
@@ -1586,12 +2472,29 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyMapsOutput`.
         """
+
+    async def xml_empty_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyMapsOutput:
         return await self._invoke(
-            {"my_map": my_map}, _models.XML_EMPTY_MAPS, [], plugins
+            self._select_input(_models.XML_EMPTY_MAPS, args, kwargs),
+            _models.XML_EMPTY_MAPS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def xml_empty_strings(
-        self, *, empty_string: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyStringsInput | _models.XmlEmptyStringsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyStringsOutput: ...
+
+    @_overload
+    async def xml_empty_strings(
+        self, /, *, empty_string: str | None = None, plugins: list[Plugin] | None = None
     ) -> XmlEmptyStringsOutput:
         """
         Invokes the XmlEmptyStrings operation.
@@ -1606,12 +2509,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyStringsOutput`.
         """
+
+    async def xml_empty_strings(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyStringsOutput:
         return await self._invoke(
-            {"empty_string": empty_string}, _models.XML_EMPTY_STRINGS, [], plugins
+            self._select_input(_models.XML_EMPTY_STRINGS, args, kwargs),
+            _models.XML_EMPTY_STRINGS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def xml_enums(
         self,
+        request: _models.XmlEnumsInput | _models.XmlEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEnumsOutput: ...
+
+    @_overload
+    async def xml_enums(
+        self,
+        /,
         *,
         foo_enum1: str | None = None,
         foo_enum2: str | None = None,
@@ -1635,22 +2556,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
+
+    async def xml_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEnumsOutput:
         return await self._invoke(
-            {
-                "foo_enum1": foo_enum1,
-                "foo_enum2": foo_enum2,
-                "foo_enum3": foo_enum3,
-                "foo_enum_list": foo_enum_list,
-                "foo_enum_set": foo_enum_set,
-                "foo_enum_map": foo_enum_map,
-            },
+            self._select_input(_models.XML_ENUMS, args, kwargs),
             _models.XML_ENUMS,
             [],
             plugins,
         )
 
+    @_overload
     async def xml_int_enums(
         self,
+        request: _models.XmlIntEnumsInput | _models.XmlIntEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlIntEnumsOutput: ...
+
+    @_overload
+    async def xml_int_enums(
+        self,
+        /,
         *,
         int_enum1: int | None = None,
         int_enum2: int | None = None,
@@ -1674,22 +2603,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
+
+    async def xml_int_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlIntEnumsOutput:
         return await self._invoke(
-            {
-                "int_enum1": int_enum1,
-                "int_enum2": int_enum2,
-                "int_enum3": int_enum3,
-                "int_enum_list": int_enum_list,
-                "int_enum_set": int_enum_set,
-                "int_enum_map": int_enum_map,
-            },
+            self._select_input(_models.XML_INT_ENUMS, args, kwargs),
             _models.XML_INT_ENUMS,
             [],
             plugins,
         )
 
+    @_overload
     async def xml_lists(
         self,
+        request: _models.XmlListsInput | _models.XmlListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlListsOutput: ...
+
+    @_overload
+    async def xml_lists(
+        self,
+        /,
         *,
         string_list: Sequence[str] | None = None,
         string_set: Sequence[str] | None = None,
@@ -1733,31 +2670,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlListsOutput`.
         """
+
+    async def xml_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlListsOutput:
         return await self._invoke(
-            {
-                "string_list": string_list,
-                "string_set": string_set,
-                "integer_list": integer_list,
-                "boolean_list": boolean_list,
-                "timestamp_list": timestamp_list,
-                "enum_list": enum_list,
-                "int_enum_list": int_enum_list,
-                "nested_string_list": nested_string_list,
-                "renamed_list_members": renamed_list_members,
-                "flattened_list": flattened_list,
-                "flattened_list2": flattened_list2,
-                "flattened_list_with_member_namespace": flattened_list_with_member_namespace,
-                "flattened_list_with_namespace": flattened_list_with_namespace,
-                "structure_list": structure_list,
-                "flattened_structure_list": flattened_structure_list,
-            },
+            self._select_input(_models.XML_LISTS, args, kwargs),
             _models.XML_LISTS,
             [],
             plugins,
         )
 
+    @_overload
     async def xml_maps(
         self,
+        request: _models.XmlMapsInput | _models.XmlMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapsOutput: ...
+
+    @_overload
+    async def xml_maps(
+        self,
+        /,
         *,
         my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
         | None = None,
@@ -1776,10 +2712,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapsOutput`.
         """
-        return await self._invoke({"my_map": my_map}, _models.XML_MAPS, [], plugins)
 
+    async def xml_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_MAPS, args, kwargs),
+            _models.XML_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_maps_xml_name(
         self,
+        request: _models.XmlMapsXmlNameInput | _models.XmlMapsXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapsXmlNameOutput: ...
+
+    @_overload
+    async def xml_maps_xml_name(
+        self,
+        /,
         *,
         my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
         | None = None,
@@ -1798,12 +2754,31 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapsXmlNameOutput`.
         """
+
+    async def xml_maps_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapsXmlNameOutput:
         return await self._invoke(
-            {"my_map": my_map}, _models.XML_MAPS_XML_NAME, [], plugins
+            self._select_input(_models.XML_MAPS_XML_NAME, args, kwargs),
+            _models.XML_MAPS_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     async def xml_map_with_xml_namespace(
         self,
+        request: _models.XmlMapWithXmlNamespaceInput
+        | _models.XmlMapWithXmlNamespaceInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapWithXmlNamespaceOutput: ...
+
+    @_overload
+    async def xml_map_with_xml_namespace(
+        self,
+        /,
         *,
         my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
@@ -1821,12 +2796,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapWithXmlNamespaceOutput`.
         """
+
+    async def xml_map_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapWithXmlNamespaceOutput:
         return await self._invoke(
-            {"my_map": my_map}, _models.XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            self._select_input(_models.XML_MAP_WITH_XML_NAMESPACE, args, kwargs),
+            _models.XML_MAP_WITH_XML_NAMESPACE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def xml_namespaces(
         self,
+        request: _models.XmlNamespacesInput | _models.XmlNamespacesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlNamespacesOutput: ...
+
+    @_overload
+    async def xml_namespaces(
+        self,
+        /,
         *,
         nested: _models.XmlNamespaceNested
         | _models.XmlNamespaceNestedParams
@@ -1846,12 +2839,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
+
+    async def xml_namespaces(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlNamespacesOutput:
         return await self._invoke(
-            {"nested": nested}, _models.XML_NAMESPACES, [], plugins
+            self._select_input(_models.XML_NAMESPACES, args, kwargs),
+            _models.XML_NAMESPACES,
+            [],
+            plugins,
         )
 
+    @_overload
     async def xml_timestamps(
         self,
+        request: _models.XmlTimestampsInput | _models.XmlTimestampsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlTimestampsOutput: ...
+
+    @_overload
+    async def xml_timestamps(
+        self,
+        /,
         *,
         normal: datetime | None = None,
         date_time: datetime | None = None,
@@ -1876,23 +2887,30 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
+
+    async def xml_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlTimestampsOutput:
         return await self._invoke(
-            {
-                "normal": normal,
-                "date_time": date_time,
-                "date_time_on_target": date_time_on_target,
-                "epoch_seconds": epoch_seconds,
-                "epoch_seconds_on_target": epoch_seconds_on_target,
-                "http_date": http_date,
-                "http_date_on_target": http_date_on_target,
-            },
+            self._select_input(_models.XML_TIMESTAMPS, args, kwargs),
             _models.XML_TIMESTAMPS,
             [],
             plugins,
         )
 
+    @_overload
     async def xml_unions(
         self,
+        request: _models.XmlUnionsInput | _models.XmlUnionsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlUnionsOutput: ...
+
+    @_overload
+    async def xml_unions(
+        self,
+        /,
         *,
         union_value: _models.XmlUnionShape | _models.XmlUnionShapeParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -1910,8 +2928,15 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlUnionsOutput`.
         """
+
+    async def xml_unions(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlUnionsOutput:
         return await self._invoke(
-            {"union_value": union_value}, _models.XML_UNIONS, [], plugins
+            self._select_input(_models.XML_UNIONS, args, kwargs),
+            _models.XML_UNIONS,
+            [],
+            plugins,
         )
 
     async def _new_config(self) -> AsyncRestXmlProtocolConfig:

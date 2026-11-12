@@ -34,6 +34,12 @@ async def check_async_calls(client: AsyncNonQueryCompatibleRpcV2ProtocolClient) 
     await client.non_query_compatible_operation(
         **_request(NonQueryCompatibleOperationInputParams)
     )
+    await client.non_query_compatible_operation(
+        _request(NonQueryCompatibleOperationInput)
+    )
+    await client.non_query_compatible_operation(
+        _request(NonQueryCompatibleOperationInputParams)
+    )
 
 
 def check_sync_calls(client: NonQueryCompatibleRpcV2ProtocolClient) -> None:
@@ -41,4 +47,8 @@ def check_sync_calls(client: NonQueryCompatibleRpcV2ProtocolClient) -> None:
     client.non_query_compatible_operation()
     client.non_query_compatible_operation(
         **_request(NonQueryCompatibleOperationInputParams)
+    )
+    client.non_query_compatible_operation(_request(NonQueryCompatibleOperationInput))
+    client.non_query_compatible_operation(
+        _request(NonQueryCompatibleOperationInputParams)
     )

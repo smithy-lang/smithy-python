@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -66,8 +66,18 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def datetime_offsets(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DatetimeOffsetsOutput: ...
+
+    @_overload
+    async def datetime_offsets(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -82,10 +92,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return await self._invoke(None, _models.DATETIME_OFFSETS, [], plugins)
 
+    async def datetime_offsets(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DatetimeOffsetsOutput:
+        return await self._invoke(
+            self._select_input(_models.DATETIME_OFFSETS, args, kwargs),
+            _models.DATETIME_OFFSETS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def empty_input_and_empty_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyInputAndEmptyOutputInput
+        | _models.EmptyInputAndEmptyOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyInputAndEmptyOutputOutput: ...
+
+    @_overload
+    async def empty_input_and_empty_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -102,12 +132,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
+
+    async def empty_input_and_empty_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyInputAndEmptyOutputOutput:
         return await self._invoke(
-            None, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            self._select_input(_models.EMPTY_INPUT_AND_EMPTY_OUTPUT, args, kwargs),
+            _models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            [],
+            plugins,
         )
 
+    @_overload
     async def endpoint_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointOperationOutput: ...
+
+    @_overload
+    async def endpoint_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -122,10 +169,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return await self._invoke(None, _models.ENDPOINT_OPERATION, [], plugins)
 
+    async def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.ENDPOINT_OPERATION, args, kwargs),
+            _models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def endpoint_with_host_label_operation(
-        self, *, label: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointWithHostLabelOperationInput
+        | _models.EndpointWithHostLabelOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput: ...
+
+    @_overload
+    async def endpoint_with_host_label_operation(
+        self, /, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -140,12 +207,31 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
+
+    async def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelOperationOutput:
         return await self._invoke(
-            {"label": label}, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def flattened_xml_map(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FlattenedXmlMapInput | _models.FlattenedXmlMapInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapOutput: ...
+
+    @_overload
+    async def flattened_xml_map(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FlattenedXmlMapOutput:
         """
         Flattened maps
@@ -160,10 +246,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapOutput`.
         """
-        return await self._invoke(None, _models.FLATTENED_XML_MAP, [], plugins)
 
+    async def flattened_xml_map(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapOutput:
+        return await self._invoke(
+            self._select_input(_models.FLATTENED_XML_MAP, args, kwargs),
+            _models.FLATTENED_XML_MAP,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def flattened_xml_map_with_xml_name(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FlattenedXmlMapWithXmlNameInput
+        | _models.FlattenedXmlMapWithXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNameOutput: ...
+
+    @_overload
+    async def flattened_xml_map_with_xml_name(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FlattenedXmlMapWithXmlNameOutput:
         """
         Flattened maps with @xmlName
@@ -178,12 +284,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
+
+    async def flattened_xml_map_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapWithXmlNameOutput:
         return await self._invoke(
-            None, _models.FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins
+            self._select_input(_models.FLATTENED_XML_MAP_WITH_XML_NAME, args, kwargs),
+            _models.FLATTENED_XML_MAP_WITH_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     async def flattened_xml_map_with_xml_namespace(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FlattenedXmlMapWithXmlNamespaceInput
+        | _models.FlattenedXmlMapWithXmlNamespaceInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNamespaceOutput: ...
+
+    @_overload
+    async def flattened_xml_map_with_xml_namespace(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         """
         Flattened maps with @xmlNamespace and @xmlName
@@ -198,12 +322,31 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
+
+    async def flattened_xml_map_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         return await self._invoke(
-            None, _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            self._select_input(
+                _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, args, kwargs
+            ),
+            _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def fractional_seconds(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FractionalSecondsOutput: ...
+
+    @_overload
+    async def fractional_seconds(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -218,10 +361,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return await self._invoke(None, _models.FRACTIONAL_SECONDS, [], plugins)
 
+    async def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FractionalSecondsOutput:
+        return await self._invoke(
+            self._select_input(_models.FRACTIONAL_SECONDS, args, kwargs),
+            _models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def greeting_with_errors(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput
+        | _models.GreetingWithErrorsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    async def greeting_with_errors(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -238,10 +401,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return await self._invoke(None, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    async def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return await self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def host_with_path_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HostWithPathOperationInput
+        | _models.HostWithPathOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HostWithPathOperationOutput: ...
+
+    @_overload
+    async def host_with_path_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
@@ -256,10 +439,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        return await self._invoke(None, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
+    async def host_with_path_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HostWithPathOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.HOST_WITH_PATH_OPERATION, args, kwargs),
+            _models.HOST_WITH_PATH_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def ignores_wrapping_xml_name(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.IgnoresWrappingXmlNameInput
+        | _models.IgnoresWrappingXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> IgnoresWrappingXmlNameOutput: ...
+
+    @_overload
+    async def ignores_wrapping_xml_name(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> IgnoresWrappingXmlNameOutput:
         """
         The xmlName trait on the output structure is ignored in AWS Query. The
@@ -276,10 +479,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `IgnoresWrappingXmlNameOutput`.
         """
-        return await self._invoke(None, _models.IGNORES_WRAPPING_XML_NAME, [], plugins)
 
+    async def ignores_wrapping_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> IgnoresWrappingXmlNameOutput:
+        return await self._invoke(
+            self._select_input(_models.IGNORES_WRAPPING_XML_NAME, args, kwargs),
+            _models.IGNORES_WRAPPING_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def nested_structures(
         self,
+        request: _models.NestedStructuresInput | _models.NestedStructuresInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NestedStructuresOutput: ...
+
+    @_overload
+    async def nested_structures(
+        self,
+        /,
         *,
         nested: _models.StructArg | _models.StructArgParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -297,12 +520,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `NestedStructuresOutput`.
         """
+
+    async def nested_structures(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NestedStructuresOutput:
         return await self._invoke(
-            {"nested": nested}, _models.NESTED_STRUCTURES, [], plugins
+            self._select_input(_models.NESTED_STRUCTURES, args, kwargs),
+            _models.NESTED_STRUCTURES,
+            [],
+            plugins,
         )
 
+    @_overload
     async def no_input_and_no_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndNoOutputInput
+        | _models.NoInputAndNoOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndNoOutputOutput: ...
+
+    @_overload
+    async def no_input_and_no_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -320,10 +561,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        return await self._invoke(None, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
+    async def no_input_and_no_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndNoOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_NO_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_NO_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def no_input_and_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndOutputOutput: ...
+
+    @_overload
+    async def no_input_and_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -340,10 +600,31 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return await self._invoke(None, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
+    async def no_input_and_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def put_with_content_encoding(
         self,
+        request: _models.PutWithContentEncodingInput
+        | _models.PutWithContentEncodingInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutWithContentEncodingOutput: ...
+
+    @_overload
+    async def put_with_content_encoding(
+        self,
+        /,
         *,
         encoding: str | None = None,
         data: str | None = None,
@@ -362,15 +643,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
+
+    async def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutWithContentEncodingOutput:
         return await self._invoke(
-            {"encoding": encoding, "data": data},
+            self._select_input(_models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
             _models.PUT_WITH_CONTENT_ENCODING,
             [],
             plugins,
         )
 
+    @_overload
     async def query_idempotency_token_auto_fill(
-        self, *, token: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.QueryIdempotencyTokenAutoFillInput
+        | _models.QueryIdempotencyTokenAutoFillInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryIdempotencyTokenAutoFillOutput: ...
+
+    @_overload
+    async def query_idempotency_token_auto_fill(
+        self, /, *, token: str | None = None, plugins: list[Plugin] | None = None
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
@@ -386,12 +682,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
+
+    async def query_idempotency_token_auto_fill(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryIdempotencyTokenAutoFillOutput:
         return await self._invoke(
-            {"token": token}, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            self._select_input(_models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, args, kwargs),
+            _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
+            [],
+            plugins,
         )
 
+    @_overload
     async def query_lists(
         self,
+        request: _models.QueryListsInput | _models.QueryListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryListsOutput: ...
+
+    @_overload
+    async def query_lists(
+        self,
+        /,
         *,
         list_arg: Sequence[str] | None = None,
         complex_list_arg: Sequence[
@@ -419,22 +733,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `QueryListsOutput`.
         """
+
+    async def query_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryListsOutput:
         return await self._invoke(
-            {
-                "list_arg": list_arg,
-                "complex_list_arg": complex_list_arg,
-                "flattened_list_arg": flattened_list_arg,
-                "list_arg_with_xml_name_member": list_arg_with_xml_name_member,
-                "flattened_list_arg_with_xml_name": flattened_list_arg_with_xml_name,
-                "nested_with_list": nested_with_list,
-            },
+            self._select_input(_models.QUERY_LISTS, args, kwargs),
             _models.QUERY_LISTS,
             [],
             plugins,
         )
 
+    @_overload
     async def query_maps(
         self,
+        request: _models.QueryMapsInput | _models.QueryMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryMapsOutput: ...
+
+    @_overload
+    async def query_maps(
+        self,
+        /,
         *,
         map_arg: Mapping[str, str] | None = None,
         renamed_map_arg: Mapping[str, str] | None = None,
@@ -464,24 +786,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `QueryMapsOutput`.
         """
+
+    async def query_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryMapsOutput:
         return await self._invoke(
-            {
-                "map_arg": map_arg,
-                "renamed_map_arg": renamed_map_arg,
-                "complex_map_arg": complex_map_arg,
-                "map_with_xml_member_name": map_with_xml_member_name,
-                "flattened_map": flattened_map,
-                "flattened_map_with_xml_name": flattened_map_with_xml_name,
-                "map_of_lists": map_of_lists,
-                "nested_struct_with_map": nested_struct_with_map,
-            },
+            self._select_input(_models.QUERY_MAPS, args, kwargs),
             _models.QUERY_MAPS,
             [],
             plugins,
         )
 
+    @_overload
     async def query_timestamps(
         self,
+        request: _models.QueryTimestampsInput | _models.QueryTimestampsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryTimestampsOutput: ...
+
+    @_overload
+    async def query_timestamps(
+        self,
+        /,
         *,
         normal_format: datetime | None = None,
         epoch_member: datetime | None = None,
@@ -504,19 +832,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `QueryTimestampsOutput`.
         """
+
+    async def query_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryTimestampsOutput:
         return await self._invoke(
-            {
-                "normal_format": normal_format,
-                "epoch_member": epoch_member,
-                "epoch_target": epoch_target,
-            },
+            self._select_input(_models.QUERY_TIMESTAMPS, args, kwargs),
             _models.QUERY_TIMESTAMPS,
             [],
             plugins,
         )
 
+    @_overload
     async def recursive_xml_shapes(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.RecursiveXmlShapesInput
+        | _models.RecursiveXmlShapesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RecursiveXmlShapesOutput: ...
+
+    @_overload
+    async def recursive_xml_shapes(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> RecursiveXmlShapesOutput:
         """
         Recursive shapes
@@ -531,10 +870,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `RecursiveXmlShapesOutput`.
         """
-        return await self._invoke(None, _models.RECURSIVE_XML_SHAPES, [], plugins)
 
+    async def recursive_xml_shapes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RecursiveXmlShapesOutput:
+        return await self._invoke(
+            self._select_input(_models.RECURSIVE_XML_SHAPES, args, kwargs),
+            _models.RECURSIVE_XML_SHAPES,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def simple_input_params(
         self,
+        request: _models.SimpleInputParamsInput | _models.SimpleInputParamsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleInputParamsOutput: ...
+
+    @_overload
+    async def simple_input_params(
+        self,
+        /,
         *,
         foo: str | None = None,
         bar: str | None = None,
@@ -560,25 +919,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `SimpleInputParamsOutput`.
         """
+
+    async def simple_input_params(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleInputParamsOutput:
         return await self._invoke(
-            {
-                "foo": foo,
-                "bar": bar,
-                "baz": baz,
-                "bam": bam,
-                "float_value": float_value,
-                "boo": boo,
-                "qux": qux,
-                "foo_enum": foo_enum,
-                "integer_enum": integer_enum,
-            },
+            self._select_input(_models.SIMPLE_INPUT_PARAMS, args, kwargs),
             _models.SIMPLE_INPUT_PARAMS,
             [],
             plugins,
         )
 
+    @_overload
     async def simple_scalar_xml_properties(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.SimpleScalarXmlPropertiesInput
+        | _models.SimpleScalarXmlPropertiesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarXmlPropertiesOutput: ...
+
+    @_overload
+    async def simple_scalar_xml_properties(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> SimpleScalarXmlPropertiesOutput:
         """
         Invokes the SimpleScalarXmlProperties operation.
@@ -593,12 +957,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `SimpleScalarXmlPropertiesOutput`.
         """
+
+    async def simple_scalar_xml_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarXmlPropertiesOutput:
         return await self._invoke(
-            None, _models.SIMPLE_SCALAR_XML_PROPERTIES, [], plugins
+            self._select_input(_models.SIMPLE_SCALAR_XML_PROPERTIES, args, kwargs),
+            _models.SIMPLE_SCALAR_XML_PROPERTIES,
+            [],
+            plugins,
         )
 
+    @_overload
     async def xml_blobs(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlBlobsInput | _models.XmlBlobsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlBlobsOperationOutput: ...
+
+    @_overload
+    async def xml_blobs(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlBlobsOperationOutput:
         """
         Blobs are base64 encoded
@@ -613,10 +994,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `XmlBlobsOperationOutput`.
         """
-        return await self._invoke(None, _models.XML_BLOBS, [], plugins)
 
+    async def xml_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlBlobsOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_BLOBS, args, kwargs),
+            _models.XML_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_empty_blobs(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyBlobsInput | _models.XmlEmptyBlobsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyBlobsOutput: ...
+
+    @_overload
+    async def xml_empty_blobs(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlEmptyBlobsOutput:
         """
         Invokes the XmlEmptyBlobs operation.
@@ -631,10 +1031,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        return await self._invoke(None, _models.XML_EMPTY_BLOBS, [], plugins)
 
+    async def xml_empty_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyBlobsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_EMPTY_BLOBS, args, kwargs),
+            _models.XML_EMPTY_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_empty_lists(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyListsInput | _models.XmlEmptyListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyListsOutput: ...
+
+    @_overload
+    async def xml_empty_lists(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlEmptyListsOutput:
         """
         Invokes the XmlEmptyLists operation.
@@ -649,10 +1068,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
-        return await self._invoke(None, _models.XML_EMPTY_LISTS, [], plugins)
 
+    async def xml_empty_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyListsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_EMPTY_LISTS, args, kwargs),
+            _models.XML_EMPTY_LISTS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_empty_maps(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyMapsInput | _models.XmlEmptyMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyMapsOutput: ...
+
+    @_overload
+    async def xml_empty_maps(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlEmptyMapsOutput:
         """
         Invokes the XmlEmptyMaps operation.
@@ -667,9 +1105,30 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `XmlEmptyMapsOutput`.
         """
-        return await self._invoke(None, _models.XML_EMPTY_MAPS, [], plugins)
 
-    async def xml_enums(self, *, plugins: list[Plugin] | None = None) -> XmlEnumsOutput:
+    async def xml_empty_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyMapsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_EMPTY_MAPS, args, kwargs),
+            _models.XML_EMPTY_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
+    async def xml_enums(
+        self,
+        request: _models.XmlEnumsInput | _models.XmlEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEnumsOutput: ...
+
+    @_overload
+    async def xml_enums(
+        self, /, *, plugins: list[Plugin] | None = None
+    ) -> XmlEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
@@ -684,10 +1143,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
-        return await self._invoke(None, _models.XML_ENUMS, [], plugins)
 
+    async def xml_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEnumsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_ENUMS, args, kwargs),
+            _models.XML_ENUMS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_int_enums(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlIntEnumsInput | _models.XmlIntEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlIntEnumsOutput: ...
+
+    @_overload
+    async def xml_int_enums(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlIntEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -703,10 +1181,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
-        return await self._invoke(None, _models.XML_INT_ENUMS, [], plugins)
 
+    async def xml_int_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlIntEnumsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_INT_ENUMS, args, kwargs),
+            _models.XML_INT_ENUMS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_lists(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlListsInput | _models.XmlListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlListsOperationOutput: ...
+
+    @_overload
+    async def xml_lists(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlListsOperationOutput:
         """
         This test case serializes XML lists for the following cases for both
@@ -724,10 +1221,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `XmlListsOperationOutput`.
         """
-        return await self._invoke(None, _models.XML_LISTS, [], plugins)
 
+    async def xml_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlListsOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_LISTS, args, kwargs),
+            _models.XML_LISTS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_maps(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlMapsInput | _models.XmlMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapsOperationOutput: ...
+
+    @_overload
+    async def xml_maps(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlMapsOperationOutput:
         """
         The example tests basic map serialization.
@@ -742,10 +1258,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `XmlMapsOperationOutput`.
         """
-        return await self._invoke(None, _models.XML_MAPS, [], plugins)
 
+    async def xml_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapsOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_MAPS, args, kwargs),
+            _models.XML_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_maps_xml_name(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlMapsXmlNameInput | _models.XmlMapsXmlNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapsXmlNameOutput: ...
+
+    @_overload
+    async def xml_maps_xml_name(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlMapsXmlNameOutput:
         """
         Invokes the XmlMapsXmlName operation.
@@ -760,10 +1295,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `XmlMapsXmlNameOutput`.
         """
-        return await self._invoke(None, _models.XML_MAPS_XML_NAME, [], plugins)
 
+    async def xml_maps_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapsXmlNameOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_MAPS_XML_NAME, args, kwargs),
+            _models.XML_MAPS_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_namespaces(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlNamespacesInput | _models.XmlNamespacesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlNamespacesOutput: ...
+
+    @_overload
+    async def xml_namespaces(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlNamespacesOutput:
         """
         Invokes the XmlNamespaces operation.
@@ -778,10 +1332,29 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
-        return await self._invoke(None, _models.XML_NAMESPACES, [], plugins)
 
+    async def xml_namespaces(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlNamespacesOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_NAMESPACES, args, kwargs),
+            _models.XML_NAMESPACES,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_timestamps(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlTimestampsInput | _models.XmlTimestampsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlTimestampsOutput: ...
+
+    @_overload
+    async def xml_timestamps(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> XmlTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
@@ -797,7 +1370,16 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
-        return await self._invoke(None, _models.XML_TIMESTAMPS, [], plugins)
+
+    async def xml_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlTimestampsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_TIMESTAMPS, args, kwargs),
+            _models.XML_TIMESTAMPS,
+            [],
+            plugins,
+        )
 
     async def _new_config(self) -> AsyncQueryProtocolConfig:
         return await AsyncQueryProtocolConfig.resolve()

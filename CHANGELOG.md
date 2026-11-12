@@ -5,11 +5,15 @@
 ### Breaking Changes
 
 * Generated client operations take the members of their input as keyword-only
-  parameters instead of an input object: `client.assume_role(role_arn="...",
-  role_session_name="...")` rather than `client.assume_role(AssumeRoleInput(...))`.
-  An operation without input members is called with no arguments. Interceptors
-  still receive the input model, which the client builds from the keyword
-  arguments before any other client setup.
+  parameters, `client.assume_role(role_arn="...", role_session_name="...")`, or
+  the whole request as a single positional argument, either the input model,
+  `client.assume_role(AssumeRoleInput(...))`, or its dictionary form,
+  `client.assume_role({"role_arn": "...", "role_session_name": "..."})`. The two
+  can't be mixed in one call. The request is positional-only, so it takes no
+  member's name: a member named `input` is still passed as `input=`. An operation
+  without input members is called with no arguments. Interceptors still receive
+  the input model, which the client builds from the arguments before any other
+  client setup.
 * Members marked `@required` are required keyword parameters, including members
   of input structures and `@clientOptional` members. A member with a default may
   be omitted, and so may an idempotency token. Passing `None` is the same as

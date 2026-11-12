@@ -253,18 +253,30 @@ class ModelRegistry:
                 schema, members, schema.get_trait(SensitiveTrait) is not None
             )
         except _InputError as error:
-            segments = error.path[::-1]
-            if error.too_deep and len(segments) > _MAX_DEEP_PATH:
-                segments = [*segments[:_MAX_DEEP_PATH], "..."]
-            path = "".join(segments).lstrip(".")
-            where = f" at {path}" if path else ""
-            raise TypeError(
-                f"Invalid {operation} input{where}: {error.message}"
-            ) from None
+            raise _invalid_input(operation, error) from None
         except RecursionError:
-            raise TypeError(
-                f"Invalid {operation} input: {_too_deep('').message}"
-            ) from None
+            raise _invalid_input(operation, _too_deep("")) from None
+
+    def check_input(self, schema: Schema, instance: Any, operation: str) -> None:
+        """Check an operation's input model that the caller passed whole.
+
+        The model is checked as a model nested in keyword arguments is, and is
+        used exactly as it is: members that must be set are, and every model
+        inside it is checked too.
+
+        :param schema: The schema of the operation's input structure.
+        :param instance: The input model.
+        :param operation: The operation's name, used in error messages.
+        :raises TypeError: As ``build_input`` does.
+        """
+        try:
+            self._check_struct(
+                schema, instance, schema.get_trait(SensitiveTrait) is not None
+            )
+        except _InputError as error:
+            raise _invalid_input(operation, error) from None
+        except RecursionError:
+            raise _invalid_input(operation, _too_deep("")) from None
 
     def _error_base(self) -> type:
         if self._service_error_name is None:
@@ -1249,6 +1261,16 @@ def _too_deep(segment: str) -> _InputError:
     if segment:
         error.path.append(segment)
     return error
+
+
+def _invalid_input(operation: str, error: _InputError) -> TypeError:
+    """The error a caller gets for an operation input that doesn't fit."""
+    segments = error.path[::-1]
+    if error.too_deep and len(segments) > _MAX_DEEP_PATH:
+        segments = [*segments[:_MAX_DEEP_PATH], "..."]
+    path = "".join(segments).lstrip(".")
+    where = f" at {path}" if path else ""
+    return TypeError(f"Invalid {operation} input{where}: {error.message}")
 
 
 def _describe_key(key: Any, redact: bool = False) -> str:

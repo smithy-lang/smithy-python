@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import overload as _overload
 
 from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.eventstream import AsyncDuplexEventStream
@@ -28,8 +29,18 @@ class AsyncMyHandwrittenJsonModel(AsyncClient[AsyncConfig]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def trade_event_stream(
-        self, *, session_id: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.TradeEventStreamInput | _models.TradeEventStreamInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AsyncDuplexEventStream[TradeEvents, TradeEvents, TradeEventStreamOutput]: ...
+
+    @_overload
+    async def trade_event_stream(
+        self, /, *, session_id: str | None = None, plugins: list[Plugin] | None = None
     ) -> AsyncDuplexEventStream[TradeEvents, TradeEvents, TradeEventStreamOutput]:
         """
         Bidirectional (duplex) stream. The non-stream members (sessionId,
@@ -46,8 +57,15 @@ class AsyncMyHandwrittenJsonModel(AsyncClient[AsyncConfig]):
         Returns:
             An `AsyncDuplexEventStream` for bidirectional streaming.
         """
+
+    async def trade_event_stream(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AsyncDuplexEventStream[TradeEvents, TradeEvents, TradeEventStreamOutput]:
         pipeline, call = await self._prepare_call(
-            {"session_id": session_id}, _models.TRADE_EVENT_STREAM, [], plugins
+            self._select_input(_models.TRADE_EVENT_STREAM, args, kwargs),
+            _models.TRADE_EVENT_STREAM,
+            [],
+            plugins,
         )
         return await pipeline.duplex_stream(
             call, TradeEvents, TradeEvents, _TradeEventsDeserializer().deserialize

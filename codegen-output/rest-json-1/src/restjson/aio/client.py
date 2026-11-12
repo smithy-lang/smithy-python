@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -158,8 +158,20 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def all_query_string_types(
         self,
+        request: _models.AllQueryStringTypesInput
+        | _models.AllQueryStringTypesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AllQueryStringTypesOutput: ...
+
+    @_overload
+    async def all_query_string_types(
+        self,
+        /,
         *,
         query_string: str | None = None,
         query_string_list: Sequence[str] | None = None,
@@ -197,37 +209,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `AllQueryStringTypesOutput`.
         """
+
+    async def all_query_string_types(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AllQueryStringTypesOutput:
         return await self._invoke(
-            {
-                "query_string": query_string,
-                "query_string_list": query_string_list,
-                "query_string_set": query_string_set,
-                "query_byte": query_byte,
-                "query_short": query_short,
-                "query_integer": query_integer,
-                "query_integer_list": query_integer_list,
-                "query_integer_set": query_integer_set,
-                "query_long": query_long,
-                "query_float": query_float,
-                "query_double": query_double,
-                "query_double_list": query_double_list,
-                "query_boolean": query_boolean,
-                "query_boolean_list": query_boolean_list,
-                "query_timestamp": query_timestamp,
-                "query_timestamp_list": query_timestamp_list,
-                "query_enum": query_enum,
-                "query_enum_list": query_enum_list,
-                "query_integer_enum": query_integer_enum,
-                "query_integer_enum_list": query_integer_enum_list,
-                "query_params_map_of_string_list": query_params_map_of_string_list,
-            },
+            self._select_input(_models.ALL_QUERY_STRING_TYPES, args, kwargs),
             _models.ALL_QUERY_STRING_TYPES,
             [],
             plugins,
         )
 
+    @_overload
     async def constant_and_variable_query_string(
         self,
+        request: _models.ConstantAndVariableQueryStringInput
+        | _models.ConstantAndVariableQueryStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ConstantAndVariableQueryStringOutput: ...
+
+    @_overload
+    async def constant_and_variable_query_string(
+        self,
+        /,
         *,
         baz: str | None = None,
         maybe_set: str | None = None,
@@ -248,15 +254,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `ConstantAndVariableQueryStringOutput`.
         """
+
+    async def constant_and_variable_query_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ConstantAndVariableQueryStringOutput:
         return await self._invoke(
-            {"baz": baz, "maybe_set": maybe_set},
+            self._select_input(
+                _models.CONSTANT_AND_VARIABLE_QUERY_STRING, args, kwargs
+            ),
             _models.CONSTANT_AND_VARIABLE_QUERY_STRING,
             [],
             plugins,
         )
 
+    @_overload
     async def constant_query_string(
-        self, *, hello: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ConstantQueryStringInput
+        | _models.ConstantQueryStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ConstantQueryStringOutput: ...
+
+    @_overload
+    async def constant_query_string(
+        self, /, *, hello: str, plugins: list[Plugin] | None = None
     ) -> ConstantQueryStringOutput:
         """
         This example uses a constant query string parameters and a label. This
@@ -274,12 +297,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `ConstantQueryStringOutput`.
         """
+
+    async def constant_query_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ConstantQueryStringOutput:
         return await self._invoke(
-            {"hello": hello}, _models.CONSTANT_QUERY_STRING, [], plugins
+            self._select_input(_models.CONSTANT_QUERY_STRING, args, kwargs),
+            _models.CONSTANT_QUERY_STRING,
+            [],
+            plugins,
         )
 
+    @_overload
     async def content_type_parameters(
-        self, *, value: int | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ContentTypeParametersInput
+        | _models.ContentTypeParametersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ContentTypeParametersOutput: ...
+
+    @_overload
+    async def content_type_parameters(
+        self, /, *, value: int | None = None, plugins: list[Plugin] | None = None
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -295,12 +336,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
+
+    async def content_type_parameters(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ContentTypeParametersOutput:
         return await self._invoke(
-            {"value": value}, _models.CONTENT_TYPE_PARAMETERS, [], plugins
+            self._select_input(_models.CONTENT_TYPE_PARAMETERS, args, kwargs),
+            _models.CONTENT_TYPE_PARAMETERS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def datetime_offsets(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DatetimeOffsetsOutput: ...
+
+    @_overload
+    async def datetime_offsets(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -315,10 +373,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return await self._invoke(None, _models.DATETIME_OFFSETS, [], plugins)
 
+    async def datetime_offsets(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DatetimeOffsetsOutput:
+        return await self._invoke(
+            self._select_input(_models.DATETIME_OFFSETS, args, kwargs),
+            _models.DATETIME_OFFSETS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def document_type(
         self,
+        request: _models.DocumentTypeInput | _models.DocumentTypeInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DocumentTypeOutput: ...
+
+    @_overload
+    async def document_type(
+        self,
+        /,
         *,
         string_value: str | None = None,
         document_value: Document | None = None,
@@ -337,15 +415,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `DocumentTypeOutput`.
         """
+
+    async def document_type(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DocumentTypeOutput:
         return await self._invoke(
-            {"string_value": string_value, "document_value": document_value},
+            self._select_input(_models.DOCUMENT_TYPE, args, kwargs),
             _models.DOCUMENT_TYPE,
             [],
             plugins,
         )
 
+    @_overload
     async def document_type_as_map_value(
         self,
+        request: _models.DocumentTypeAsMapValueInput
+        | _models.DocumentTypeAsMapValueInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DocumentTypeAsMapValueOutput: ...
+
+    @_overload
+    async def document_type_as_map_value(
+        self,
+        /,
         *,
         doc_valued_map: Mapping[str, Document] | None = None,
         plugins: list[Plugin] | None = None,
@@ -363,15 +457,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `DocumentTypeAsMapValueOutput`.
         """
+
+    async def document_type_as_map_value(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DocumentTypeAsMapValueOutput:
         return await self._invoke(
-            {"doc_valued_map": doc_valued_map},
+            self._select_input(_models.DOCUMENT_TYPE_AS_MAP_VALUE, args, kwargs),
             _models.DOCUMENT_TYPE_AS_MAP_VALUE,
             [],
             plugins,
         )
 
+    @_overload
     async def document_type_as_payload(
         self,
+        request: _models.DocumentTypeAsPayloadInput
+        | _models.DocumentTypeAsPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DocumentTypeAsPayloadOutput: ...
+
+    @_overload
+    async def document_type_as_payload(
+        self,
+        /,
         *,
         document_value: Document | None = None,
         plugins: list[Plugin] | None = None,
@@ -389,15 +499,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `DocumentTypeAsPayloadOutput`.
         """
+
+    async def document_type_as_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DocumentTypeAsPayloadOutput:
         return await self._invoke(
-            {"document_value": document_value},
+            self._select_input(_models.DOCUMENT_TYPE_AS_PAYLOAD, args, kwargs),
             _models.DOCUMENT_TYPE_AS_PAYLOAD,
             [],
             plugins,
         )
 
+    @_overload
     async def duplex_stream(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.DuplexStreamInput | _models.DuplexStreamInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AsyncDuplexEventStream[EventStream, EventStream, DuplexStreamOutput]: ...
+
+    @_overload
+    async def duplex_stream(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> AsyncDuplexEventStream[EventStream, EventStream, DuplexStreamOutput]:
         """
         Invokes the DuplexStream operation.
@@ -412,15 +536,33 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An `AsyncDuplexEventStream` for bidirectional streaming.
         """
+
+    async def duplex_stream(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AsyncDuplexEventStream[EventStream, EventStream, DuplexStreamOutput]:
         pipeline, call = await self._prepare_call(
-            None, _models.DUPLEX_STREAM, [], plugins
+            self._select_input(_models.DUPLEX_STREAM, args, kwargs),
+            _models.DUPLEX_STREAM,
+            [],
+            plugins,
         )
         return await pipeline.duplex_stream(
             call, EventStream, EventStream, _EventStreamDeserializer().deserialize
         )
 
+    @_overload
     async def duplex_stream_with_distinct_streams(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.DuplexStreamWithDistinctStreamsInput
+        | _models.DuplexStreamWithDistinctStreamsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AsyncInputEventStream[EventStream, DuplexStreamWithDistinctStreamsOutput]: ...
+
+    @_overload
+    async def duplex_stream_with_distinct_streams(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> AsyncInputEventStream[EventStream, DuplexStreamWithDistinctStreamsOutput]:
         """
         Invokes the DuplexStreamWithDistinctStreams operation.
@@ -435,13 +577,35 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An `AsyncInputEventStream` for client-to-server streaming.
         """
+
+    async def duplex_stream_with_distinct_streams(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AsyncInputEventStream[EventStream, DuplexStreamWithDistinctStreamsOutput]:
         pipeline, call = await self._prepare_call(
-            None, _models.DUPLEX_STREAM_WITH_DISTINCT_STREAMS, [], plugins
+            self._select_input(
+                _models.DUPLEX_STREAM_WITH_DISTINCT_STREAMS, args, kwargs
+            ),
+            _models.DUPLEX_STREAM_WITH_DISTINCT_STREAMS,
+            [],
+            plugins,
         )
         return await pipeline.input_stream(call, EventStream)
 
+    @_overload
     async def duplex_stream_with_initial_messages(
-        self, *, initial_request_member: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.DuplexStreamWithInitialMessagesInput
+        | _models.DuplexStreamWithInitialMessagesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AsyncDuplexEventStream[
+        EventStream, EventStream, DuplexStreamWithInitialMessagesOutput
+    ]: ...
+
+    @_overload
+    async def duplex_stream_with_initial_messages(
+        self, /, *, initial_request_member: str, plugins: list[Plugin] | None = None
     ) -> AsyncDuplexEventStream[
         EventStream, EventStream, DuplexStreamWithInitialMessagesOutput
     ]:
@@ -458,8 +622,16 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An `AsyncDuplexEventStream` for bidirectional streaming.
         """
+
+    async def duplex_stream_with_initial_messages(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AsyncDuplexEventStream[
+        EventStream, EventStream, DuplexStreamWithInitialMessagesOutput
+    ]:
         pipeline, call = await self._prepare_call(
-            {"initial_request_member": initial_request_member},
+            self._select_input(
+                _models.DUPLEX_STREAM_WITH_INITIAL_MESSAGES, args, kwargs
+            ),
             _models.DUPLEX_STREAM_WITH_INITIAL_MESSAGES,
             [],
             plugins,
@@ -468,8 +640,19 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
             call, EventStream, EventStream, _EventStreamDeserializer().deserialize
         )
 
+    @_overload
     async def empty_input_and_empty_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyInputAndEmptyOutputInput
+        | _models.EmptyInputAndEmptyOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyInputAndEmptyOutputOutput: ...
+
+    @_overload
+    async def empty_input_and_empty_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -487,12 +670,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
+
+    async def empty_input_and_empty_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyInputAndEmptyOutputOutput:
         return await self._invoke(
-            None, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            self._select_input(_models.EMPTY_INPUT_AND_EMPTY_OUTPUT, args, kwargs),
+            _models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            [],
+            plugins,
         )
 
+    @_overload
     async def endpoint_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointOperationOutput: ...
+
+    @_overload
+    async def endpoint_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -507,10 +707,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return await self._invoke(None, _models.ENDPOINT_OPERATION, [], plugins)
 
+    async def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.ENDPOINT_OPERATION, args, kwargs),
+            _models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def endpoint_with_host_label_operation(
-        self, *, label: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointWithHostLabelOperationInput
+        | _models.EndpointWithHostLabelOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput: ...
+
+    @_overload
+    async def endpoint_with_host_label_operation(
+        self, /, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -525,12 +745,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
+
+    async def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelOperationOutput:
         return await self._invoke(
-            {"label": label}, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def fractional_seconds(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FractionalSecondsOutput: ...
+
+    @_overload
+    async def fractional_seconds(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -545,10 +784,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return await self._invoke(None, _models.FRACTIONAL_SECONDS, [], plugins)
 
+    async def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FractionalSecondsOutput:
+        return await self._invoke(
+            self._select_input(_models.FRACTIONAL_SECONDS, args, kwargs),
+            _models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def greeting_with_errors(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput
+        | _models.GreetingWithErrorsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    async def greeting_with_errors(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has four possible return values: 1. A successful response
@@ -567,10 +826,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return await self._invoke(None, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    async def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return await self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def host_with_path_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HostWithPathOperationInput
+        | _models.HostWithPathOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HostWithPathOperationOutput: ...
+
+    @_overload
+    async def host_with_path_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
@@ -585,10 +864,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        return await self._invoke(None, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
+    async def host_with_path_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HostWithPathOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.HOST_WITH_PATH_OPERATION, args, kwargs),
+            _models.HOST_WITH_PATH_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_checksum_required(
-        self, *, foo: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpChecksumRequiredInput
+        | _models.HttpChecksumRequiredInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpChecksumRequiredOutput: ...
+
+    @_overload
+    async def http_checksum_required(
+        self, /, *, foo: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpChecksumRequiredOutput:
         """
         This example tests httpChecksumRequired trait
@@ -603,12 +902,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpChecksumRequiredOutput`.
         """
+
+    async def http_checksum_required(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpChecksumRequiredOutput:
         return await self._invoke(
-            {"foo": foo}, _models.HTTP_CHECKSUM_REQUIRED, [], plugins
+            self._select_input(_models.HTTP_CHECKSUM_REQUIRED, args, kwargs),
+            _models.HTTP_CHECKSUM_REQUIRED,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_empty_prefix_headers(
         self,
+        request: _models.HttpEmptyPrefixHeadersInput
+        | _models.HttpEmptyPrefixHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpEmptyPrefixHeadersOutput: ...
+
+    @_overload
+    async def http_empty_prefix_headers(
+        self,
+        /,
         *,
         prefix_headers: Mapping[str, str] | None = None,
         specific_header: str | None = None,
@@ -627,15 +945,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpEmptyPrefixHeadersOutput`.
         """
+
+    async def http_empty_prefix_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpEmptyPrefixHeadersOutput:
         return await self._invoke(
-            {"prefix_headers": prefix_headers, "specific_header": specific_header},
+            self._select_input(_models.HTTP_EMPTY_PREFIX_HEADERS, args, kwargs),
             _models.HTTP_EMPTY_PREFIX_HEADERS,
             [],
             plugins,
         )
 
+    @_overload
     async def http_enum_payload(
-        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpEnumPayloadInput | _models.HttpEnumPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpEnumPayloadOutput: ...
+
+    @_overload
+    async def http_enum_payload(
+        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
@@ -650,12 +982,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpEnumPayloadOutput`.
         """
+
+    async def http_enum_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpEnumPayloadOutput:
         return await self._invoke(
-            {"payload": payload}, _models.HTTP_ENUM_PAYLOAD, [], plugins
+            self._select_input(_models.HTTP_ENUM_PAYLOAD, args, kwargs),
+            _models.HTTP_ENUM_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_traits(
         self,
+        request: _models.HttpPayloadTraitsInput | _models.HttpPayloadTraitsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadTraitsOutput: ...
+
+    @_overload
+    async def http_payload_traits(
+        self,
+        /,
         *,
         foo: str | None = None,
         blob: bytes | None = None,
@@ -676,12 +1026,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpPayloadTraitsOutput`.
         """
+
+    async def http_payload_traits(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadTraitsOutput:
         return await self._invoke(
-            {"foo": foo, "blob": blob}, _models.HTTP_PAYLOAD_TRAITS, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_TRAITS, args, kwargs),
+            _models.HTTP_PAYLOAD_TRAITS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_traits_with_media_type(
         self,
+        request: _models.HttpPayloadTraitsWithMediaTypeInput
+        | _models.HttpPayloadTraitsWithMediaTypeInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadTraitsWithMediaTypeOutput: ...
+
+    @_overload
+    async def http_payload_traits_with_media_type(
+        self,
+        /,
         *,
         foo: str | None = None,
         blob: bytes | None = None,
@@ -701,15 +1070,33 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
+
+    async def http_payload_traits_with_media_type(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadTraitsWithMediaTypeOutput:
         return await self._invoke(
-            {"foo": foo, "blob": blob},
+            self._select_input(
+                _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, args, kwargs
+            ),
             _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
             [],
             plugins,
         )
 
+    @_overload
     async def http_payload_with_structure(
         self,
+        request: _models.HttpPayloadWithStructureInput
+        | _models.HttpPayloadWithStructureInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithStructureOutput: ...
+
+    @_overload
+    async def http_payload_with_structure(
+        self,
+        /,
         *,
         nested: _models.NestedPayload | _models.NestedPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -729,12 +1116,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithStructureOutput`.
         """
+
+    async def http_payload_with_structure(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithStructureOutput:
         return await self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_STRUCTURE, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_STRUCTURE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_with_union(
         self,
+        request: _models.HttpPayloadWithUnionInput
+        | _models.HttpPayloadWithUnionInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithUnionOutput: ...
+
+    @_overload
+    async def http_payload_with_union(
+        self,
+        /,
         *,
         nested: _models.UnionPayload | _models.UnionPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -752,12 +1158,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithUnionOutput`.
         """
+
+    async def http_payload_with_union(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithUnionOutput:
         return await self._invoke(
-            {"nested": nested}, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_UNION, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_UNION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_prefix_headers(
         self,
+        request: _models.HttpPrefixHeadersInput | _models.HttpPrefixHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPrefixHeadersOutput: ...
+
+    @_overload
+    async def http_prefix_headers(
+        self,
+        /,
         *,
         foo: str | None = None,
         foo_map: Mapping[str, str] | None = None,
@@ -777,12 +1201,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpPrefixHeadersOutput`.
         """
+
+    async def http_prefix_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPrefixHeadersOutput:
         return await self._invoke(
-            {"foo": foo, "foo_map": foo_map}, _models.HTTP_PREFIX_HEADERS, [], plugins
+            self._select_input(_models.HTTP_PREFIX_HEADERS, args, kwargs),
+            _models.HTTP_PREFIX_HEADERS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_prefix_headers_in_response(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpPrefixHeadersInResponseInput
+        | _models.HttpPrefixHeadersInResponseInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPrefixHeadersInResponseOutput: ...
+
+    @_overload
+    async def http_prefix_headers_in_response(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> HttpPrefixHeadersInResponseOutput:
         """
         Clients that perform this test extract all headers from the response.
@@ -797,12 +1239,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpPrefixHeadersInResponseOutput`.
         """
+
+    async def http_prefix_headers_in_response(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPrefixHeadersInResponseOutput:
         return await self._invoke(
-            None, _models.HTTP_PREFIX_HEADERS_IN_RESPONSE, [], plugins
+            self._select_input(_models.HTTP_PREFIX_HEADERS_IN_RESPONSE, args, kwargs),
+            _models.HTTP_PREFIX_HEADERS_IN_RESPONSE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_query_params_only_operation(
         self,
+        request: _models.HttpQueryParamsOnlyOperationInput
+        | _models.HttpQueryParamsOnlyOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpQueryParamsOnlyOperationOutput: ...
+
+    @_overload
+    async def http_query_params_only_operation(
+        self,
+        /,
         *,
         query_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
@@ -820,15 +1281,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpQueryParamsOnlyOperationOutput`.
         """
+
+    async def http_query_params_only_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpQueryParamsOnlyOperationOutput:
         return await self._invoke(
-            {"query_map": query_map},
+            self._select_input(_models.HTTP_QUERY_PARAMS_ONLY_OPERATION, args, kwargs),
             _models.HTTP_QUERY_PARAMS_ONLY_OPERATION,
             [],
             plugins,
         )
 
+    @_overload
     async def http_request_with_float_labels(
-        self, *, float_: float, double: float, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpRequestWithFloatLabelsInput
+        | _models.HttpRequestWithFloatLabelsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithFloatLabelsOutput: ...
+
+    @_overload
+    async def http_request_with_float_labels(
+        self, /, *, float_: float, double: float, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithFloatLabelsOutput:
         """
         Invokes the HttpRequestWithFloatLabels operation.
@@ -843,15 +1319,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithFloatLabelsOutput`.
         """
+
+    async def http_request_with_float_labels(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithFloatLabelsOutput:
         return await self._invoke(
-            {"float_": float_, "double": double},
+            self._select_input(_models.HTTP_REQUEST_WITH_FLOAT_LABELS, args, kwargs),
             _models.HTTP_REQUEST_WITH_FLOAT_LABELS,
             [],
             plugins,
         )
 
+    @_overload
     async def http_request_with_greedy_label_in_path(
-        self, *, foo: str, baz: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpRequestWithGreedyLabelInPathInput
+        | _models.HttpRequestWithGreedyLabelInPathInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithGreedyLabelInPathOutput: ...
+
+    @_overload
+    async def http_request_with_greedy_label_in_path(
+        self, /, *, foo: str, baz: str, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
@@ -866,15 +1357,33 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
+
+    async def http_request_with_greedy_label_in_path(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithGreedyLabelInPathOutput:
         return await self._invoke(
-            {"foo": foo, "baz": baz},
+            self._select_input(
+                _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, args, kwargs
+            ),
             _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
             [],
             plugins,
         )
 
+    @_overload
     async def http_request_with_labels(
         self,
+        request: _models.HttpRequestWithLabelsInput
+        | _models.HttpRequestWithLabelsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithLabelsOutput: ...
+
+    @_overload
+    async def http_request_with_labels(
+        self,
+        /,
         *,
         string: str,
         short: int,
@@ -902,24 +1411,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithLabelsOutput`.
         """
+
+    async def http_request_with_labels(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithLabelsOutput:
         return await self._invoke(
-            {
-                "string": string,
-                "short": short,
-                "integer": integer,
-                "long": long,
-                "float_": float_,
-                "double": double,
-                "boolean": boolean,
-                "timestamp": timestamp,
-            },
+            self._select_input(_models.HTTP_REQUEST_WITH_LABELS, args, kwargs),
             _models.HTTP_REQUEST_WITH_LABELS,
             [],
             plugins,
         )
 
+    @_overload
     async def http_request_with_labels_and_timestamp_format(
         self,
+        request: _models.HttpRequestWithLabelsAndTimestampFormatInput
+        | _models.HttpRequestWithLabelsAndTimestampFormatInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithLabelsAndTimestampFormatOutput: ...
+
+    @_overload
+    async def http_request_with_labels_and_timestamp_format(
+        self,
+        /,
         *,
         member_epoch_seconds: datetime,
         member_http_date: datetime,
@@ -944,23 +1460,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
+
+    async def http_request_with_labels_and_timestamp_format(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
         return await self._invoke(
-            {
-                "member_epoch_seconds": member_epoch_seconds,
-                "member_http_date": member_http_date,
-                "member_date_time": member_date_time,
-                "default_format": default_format,
-                "target_epoch_seconds": target_epoch_seconds,
-                "target_http_date": target_http_date,
-                "target_date_time": target_date_time,
-            },
+            self._select_input(
+                _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, args, kwargs
+            ),
             _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
             [],
             plugins,
         )
 
+    @_overload
     async def http_request_with_regex_literal(
-        self, *, str_: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpRequestWithRegexLiteralInput
+        | _models.HttpRequestWithRegexLiteralInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithRegexLiteralOutput: ...
+
+    @_overload
+    async def http_request_with_regex_literal(
+        self, /, *, str_: str, plugins: list[Plugin] | None = None
     ) -> HttpRequestWithRegexLiteralOutput:
         """
         Invokes the HttpRequestWithRegexLiteral operation.
@@ -975,12 +1500,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithRegexLiteralOutput`.
         """
+
+    async def http_request_with_regex_literal(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithRegexLiteralOutput:
         return await self._invoke(
-            {"str_": str_}, _models.HTTP_REQUEST_WITH_REGEX_LITERAL, [], plugins
+            self._select_input(_models.HTTP_REQUEST_WITH_REGEX_LITERAL, args, kwargs),
+            _models.HTTP_REQUEST_WITH_REGEX_LITERAL,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_response_code(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpResponseCodeInput | _models.HttpResponseCodeInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpResponseCodeOutput: ...
+
+    @_overload
+    async def http_response_code(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> HttpResponseCodeOutput:
         """
         Invokes the HttpResponseCode operation.
@@ -995,10 +1537,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpResponseCodeOutput`.
         """
-        return await self._invoke(None, _models.HTTP_RESPONSE_CODE, [], plugins)
 
+    async def http_response_code(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpResponseCodeOutput:
+        return await self._invoke(
+            self._select_input(_models.HTTP_RESPONSE_CODE, args, kwargs),
+            _models.HTTP_RESPONSE_CODE,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_string_payload(
-        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpStringPayloadInput | _models.HttpStringPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpStringPayloadOutput: ...
+
+    @_overload
+    async def http_string_payload(
+        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
@@ -1013,12 +1574,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `HttpStringPayloadOutput`.
         """
+
+    async def http_string_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpStringPayloadOutput:
         return await self._invoke(
-            {"payload": payload}, _models.HTTP_STRING_PAYLOAD, [], plugins
+            self._select_input(_models.HTTP_STRING_PAYLOAD, args, kwargs),
+            _models.HTTP_STRING_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     async def ignore_query_params_in_response(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.IgnoreQueryParamsInResponseInput
+        | _models.IgnoreQueryParamsInResponseInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> IgnoreQueryParamsInResponseOutput: ...
+
+    @_overload
+    async def ignore_query_params_in_response(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
@@ -1035,12 +1614,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `IgnoreQueryParamsInResponseOutput`.
         """
+
+    async def ignore_query_params_in_response(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> IgnoreQueryParamsInResponseOutput:
         return await self._invoke(
-            None, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
+            self._select_input(_models.IGNORE_QUERY_PARAMS_IN_RESPONSE, args, kwargs),
+            _models.IGNORE_QUERY_PARAMS_IN_RESPONSE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def input_and_output_with_headers(
         self,
+        request: _models.InputAndOutputWithHeadersInput
+        | _models.InputAndOutputWithHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> InputAndOutputWithHeadersOutput: ...
+
+    @_overload
+    async def input_and_output_with_headers(
+        self,
+        /,
         *,
         header_string: str | None = None,
         header_byte: int | None = None,
@@ -1076,34 +1674,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `InputAndOutputWithHeadersOutput`.
         """
+
+    async def input_and_output_with_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> InputAndOutputWithHeadersOutput:
         return await self._invoke(
-            {
-                "header_string": header_string,
-                "header_byte": header_byte,
-                "header_short": header_short,
-                "header_integer": header_integer,
-                "header_long": header_long,
-                "header_float": header_float,
-                "header_double": header_double,
-                "header_true_bool": header_true_bool,
-                "header_false_bool": header_false_bool,
-                "header_string_list": header_string_list,
-                "header_string_set": header_string_set,
-                "header_integer_list": header_integer_list,
-                "header_boolean_list": header_boolean_list,
-                "header_timestamp_list": header_timestamp_list,
-                "header_enum": header_enum,
-                "header_enum_list": header_enum_list,
-                "header_integer_enum": header_integer_enum,
-                "header_integer_enum_list": header_integer_enum_list,
-            },
+            self._select_input(_models.INPUT_AND_OUTPUT_WITH_HEADERS, args, kwargs),
             _models.INPUT_AND_OUTPUT_WITH_HEADERS,
             [],
             plugins,
         )
 
+    @_overload
     async def input_stream(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.InputStreamInput | _models.InputStreamInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AsyncInputEventStream[EventStream, InputStreamOutput]: ...
+
+    @_overload
+    async def input_stream(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> AsyncInputEventStream[EventStream, InputStreamOutput]:
         """
         Invokes the InputStream operation.
@@ -1118,13 +1711,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An `AsyncInputEventStream` for client-to-server streaming.
         """
+
+    async def input_stream(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AsyncInputEventStream[EventStream, InputStreamOutput]:
         pipeline, call = await self._prepare_call(
-            None, _models.INPUT_STREAM, [], plugins
+            self._select_input(_models.INPUT_STREAM, args, kwargs),
+            _models.INPUT_STREAM,
+            [],
+            plugins,
         )
         return await pipeline.input_stream(call, EventStream)
 
+    @_overload
     async def input_stream_with_initial_request(
-        self, *, initial_request_member: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.InputStreamWithInitialRequestInput
+        | _models.InputStreamWithInitialRequestInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AsyncInputEventStream[EventStream, InputStreamWithInitialRequestOutput]: ...
+
+    @_overload
+    async def input_stream_with_initial_request(
+        self, /, *, initial_request_member: str, plugins: list[Plugin] | None = None
     ) -> AsyncInputEventStream[EventStream, InputStreamWithInitialRequestOutput]:
         """
         Invokes the InputStreamWithInitialRequest operation.
@@ -1139,16 +1750,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An `AsyncInputEventStream` for client-to-server streaming.
         """
+
+    async def input_stream_with_initial_request(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AsyncInputEventStream[EventStream, InputStreamWithInitialRequestOutput]:
         pipeline, call = await self._prepare_call(
-            {"initial_request_member": initial_request_member},
+            self._select_input(_models.INPUT_STREAM_WITH_INITIAL_REQUEST, args, kwargs),
             _models.INPUT_STREAM_WITH_INITIAL_REQUEST,
             [],
             plugins,
         )
         return await pipeline.input_stream(call, EventStream)
 
+    @_overload
     async def json_blobs(
-        self, *, data: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.JsonBlobsInput | _models.JsonBlobsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonBlobsOutput: ...
+
+    @_overload
+    async def json_blobs(
+        self, /, *, data: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> JsonBlobsOutput:
         """
         Blobs are base64 encoded
@@ -1163,10 +1788,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonBlobsOutput`.
         """
-        return await self._invoke({"data": data}, _models.JSON_BLOBS, [], plugins)
 
+    async def json_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonBlobsOutput:
+        return await self._invoke(
+            self._select_input(_models.JSON_BLOBS, args, kwargs),
+            _models.JSON_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def json_enums(
         self,
+        request: _models.JsonEnumsInput | _models.JsonEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonEnumsOutput: ...
+
+    @_overload
+    async def json_enums(
+        self,
+        /,
         *,
         foo_enum1: str | None = None,
         foo_enum2: str | None = None,
@@ -1190,22 +1835,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonEnumsOutput`.
         """
+
+    async def json_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonEnumsOutput:
         return await self._invoke(
-            {
-                "foo_enum1": foo_enum1,
-                "foo_enum2": foo_enum2,
-                "foo_enum3": foo_enum3,
-                "foo_enum_list": foo_enum_list,
-                "foo_enum_set": foo_enum_set,
-                "foo_enum_map": foo_enum_map,
-            },
+            self._select_input(_models.JSON_ENUMS, args, kwargs),
             _models.JSON_ENUMS,
             [],
             plugins,
         )
 
+    @_overload
     async def json_int_enums(
         self,
+        request: _models.JsonIntEnumsInput | _models.JsonIntEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonIntEnumsOutput: ...
+
+    @_overload
+    async def json_int_enums(
+        self,
+        /,
         *,
         integer_enum1: int | None = None,
         integer_enum2: int | None = None,
@@ -1229,22 +1882,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonIntEnumsOutput`.
         """
+
+    async def json_int_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonIntEnumsOutput:
         return await self._invoke(
-            {
-                "integer_enum1": integer_enum1,
-                "integer_enum2": integer_enum2,
-                "integer_enum3": integer_enum3,
-                "integer_enum_list": integer_enum_list,
-                "integer_enum_set": integer_enum_set,
-                "integer_enum_map": integer_enum_map,
-            },
+            self._select_input(_models.JSON_INT_ENUMS, args, kwargs),
             _models.JSON_INT_ENUMS,
             [],
             plugins,
         )
 
+    @_overload
     async def json_lists(
         self,
+        request: _models.JsonListsInput | _models.JsonListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonListsOutput: ...
+
+    @_overload
+    async def json_lists(
+        self,
+        /,
         *,
         string_list: Sequence[str] | None = None,
         string_set: Sequence[str] | None = None,
@@ -1276,25 +1937,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonListsOutput`.
         """
+
+    async def json_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonListsOutput:
         return await self._invoke(
-            {
-                "string_list": string_list,
-                "string_set": string_set,
-                "integer_list": integer_list,
-                "boolean_list": boolean_list,
-                "timestamp_list": timestamp_list,
-                "enum_list": enum_list,
-                "int_enum_list": int_enum_list,
-                "nested_string_list": nested_string_list,
-                "structure_list": structure_list,
-            },
+            self._select_input(_models.JSON_LISTS, args, kwargs),
             _models.JSON_LISTS,
             [],
             plugins,
         )
 
+    @_overload
     async def json_maps(
         self,
+        request: _models.JsonMapsInput | _models.JsonMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonMapsOutput: ...
+
+    @_overload
+    async def json_maps(
+        self,
+        /,
         *,
         dense_struct_map: Mapping[
             str, _models.GreetingStruct | _models.GreetingStructParams
@@ -1319,21 +1985,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonMapsOutput`.
         """
+
+    async def json_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonMapsOutput:
         return await self._invoke(
-            {
-                "dense_struct_map": dense_struct_map,
-                "dense_number_map": dense_number_map,
-                "dense_boolean_map": dense_boolean_map,
-                "dense_string_map": dense_string_map,
-                "dense_set_map": dense_set_map,
-            },
+            self._select_input(_models.JSON_MAPS, args, kwargs),
             _models.JSON_MAPS,
             [],
             plugins,
         )
 
+    @_overload
     async def json_timestamps(
         self,
+        request: _models.JsonTimestampsInput | _models.JsonTimestampsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonTimestampsOutput: ...
+
+    @_overload
+    async def json_timestamps(
+        self,
+        /,
         *,
         normal: datetime | None = None,
         date_time: datetime | None = None,
@@ -1358,23 +2033,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonTimestampsOutput`.
         """
+
+    async def json_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonTimestampsOutput:
         return await self._invoke(
-            {
-                "normal": normal,
-                "date_time": date_time,
-                "date_time_on_target": date_time_on_target,
-                "epoch_seconds": epoch_seconds,
-                "epoch_seconds_on_target": epoch_seconds_on_target,
-                "http_date": http_date,
-                "http_date_on_target": http_date_on_target,
-            },
+            self._select_input(_models.JSON_TIMESTAMPS, args, kwargs),
             _models.JSON_TIMESTAMPS,
             [],
             plugins,
         )
 
+    @_overload
     async def json_unions(
         self,
+        request: _models.JsonUnionsInput | _models.JsonUnionsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonUnionsOutput: ...
+
+    @_overload
+    async def json_unions(
+        self,
+        /,
         *,
         contents: _models.MyUnion | _models.MyUnionParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -1393,12 +2075,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
+
+    async def json_unions(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonUnionsOutput:
         return await self._invoke(
-            {"contents": contents}, _models.JSON_UNIONS, [], plugins
+            self._select_input(_models.JSON_UNIONS, args, kwargs),
+            _models.JSON_UNIONS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def malformed_accept_with_body(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedAcceptWithBodyInput
+        | _models.MalformedAcceptWithBodyInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedAcceptWithBodyOutput: ...
+
+    @_overload
+    async def malformed_accept_with_body(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> MalformedAcceptWithBodyOutput:
         """
         Invokes the MalformedAcceptWithBody operation.
@@ -1413,10 +2113,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedAcceptWithBodyOutput`.
         """
-        return await self._invoke(None, _models.MALFORMED_ACCEPT_WITH_BODY, [], plugins)
 
+    async def malformed_accept_with_body(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedAcceptWithBodyOutput:
+        return await self._invoke(
+            self._select_input(_models.MALFORMED_ACCEPT_WITH_BODY, args, kwargs),
+            _models.MALFORMED_ACCEPT_WITH_BODY,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def malformed_accept_with_generic_string(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedAcceptWithGenericStringInput
+        | _models.MalformedAcceptWithGenericStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedAcceptWithGenericStringOutput: ...
+
+    @_overload
+    async def malformed_accept_with_generic_string(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> MalformedAcceptWithGenericStringOutput:
         """
         Invokes the MalformedAcceptWithGenericString operation.
@@ -1431,12 +2151,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedAcceptWithGenericStringOutput`.
         """
+
+    async def malformed_accept_with_generic_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedAcceptWithGenericStringOutput:
         return await self._invoke(
-            None, _models.MALFORMED_ACCEPT_WITH_GENERIC_STRING, [], plugins
+            self._select_input(
+                _models.MALFORMED_ACCEPT_WITH_GENERIC_STRING, args, kwargs
+            ),
+            _models.MALFORMED_ACCEPT_WITH_GENERIC_STRING,
+            [],
+            plugins,
         )
 
+    @_overload
     async def malformed_accept_with_payload(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedAcceptWithPayloadInput
+        | _models.MalformedAcceptWithPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedAcceptWithPayloadOutput: ...
+
+    @_overload
+    async def malformed_accept_with_payload(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> MalformedAcceptWithPayloadOutput:
         """
         Invokes the MalformedAcceptWithPayload operation.
@@ -1451,12 +2191,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedAcceptWithPayloadOutput`.
         """
+
+    async def malformed_accept_with_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedAcceptWithPayloadOutput:
         return await self._invoke(
-            None, _models.MALFORMED_ACCEPT_WITH_PAYLOAD, [], plugins
+            self._select_input(_models.MALFORMED_ACCEPT_WITH_PAYLOAD, args, kwargs),
+            _models.MALFORMED_ACCEPT_WITH_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     async def malformed_blob(
-        self, *, blob: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedBlobInput | _models.MalformedBlobInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedBlobOutput: ...
+
+    @_overload
+    async def malformed_blob(
+        self, /, *, blob: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> MalformedBlobOutput:
         """
         Invokes the MalformedBlob operation.
@@ -1471,10 +2228,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedBlobOutput`.
         """
-        return await self._invoke({"blob": blob}, _models.MALFORMED_BLOB, [], plugins)
 
+    async def malformed_blob(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedBlobOutput:
+        return await self._invoke(
+            self._select_input(_models.MALFORMED_BLOB, args, kwargs),
+            _models.MALFORMED_BLOB,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def malformed_boolean(
         self,
+        request: _models.MalformedBooleanInput | _models.MalformedBooleanInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedBooleanOutput: ...
+
+    @_overload
+    async def malformed_boolean(
+        self,
+        /,
         *,
         boolean_in_body: bool | None = None,
         boolean_in_path: bool,
@@ -1495,20 +2272,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedBooleanOutput`.
         """
+
+    async def malformed_boolean(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedBooleanOutput:
         return await self._invoke(
-            {
-                "boolean_in_body": boolean_in_body,
-                "boolean_in_path": boolean_in_path,
-                "boolean_in_query": boolean_in_query,
-                "boolean_in_header": boolean_in_header,
-            },
+            self._select_input(_models.MALFORMED_BOOLEAN, args, kwargs),
             _models.MALFORMED_BOOLEAN,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_byte(
         self,
+        request: _models.MalformedByteInput | _models.MalformedByteInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedByteOutput: ...
+
+    @_overload
+    async def malformed_byte(
+        self,
+        /,
         *,
         byte_in_body: int | None = None,
         byte_in_path: int,
@@ -1529,20 +2316,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedByteOutput`.
         """
+
+    async def malformed_byte(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedByteOutput:
         return await self._invoke(
-            {
-                "byte_in_body": byte_in_body,
-                "byte_in_path": byte_in_path,
-                "byte_in_query": byte_in_query,
-                "byte_in_header": byte_in_header,
-            },
+            self._select_input(_models.MALFORMED_BYTE, args, kwargs),
             _models.MALFORMED_BYTE,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_content_type_with_body(
-        self, *, hi: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedContentTypeWithBodyInput
+        | _models.MalformedContentTypeWithBodyInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedContentTypeWithBodyOutput: ...
+
+    @_overload
+    async def malformed_content_type_with_body(
+        self, /, *, hi: str | None = None, plugins: list[Plugin] | None = None
     ) -> MalformedContentTypeWithBodyOutput:
         """
         Invokes the MalformedContentTypeWithBody operation.
@@ -1557,12 +2354,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedContentTypeWithBodyOutput`.
         """
+
+    async def malformed_content_type_with_body(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedContentTypeWithBodyOutput:
         return await self._invoke(
-            {"hi": hi}, _models.MALFORMED_CONTENT_TYPE_WITH_BODY, [], plugins
+            self._select_input(_models.MALFORMED_CONTENT_TYPE_WITH_BODY, args, kwargs),
+            _models.MALFORMED_CONTENT_TYPE_WITH_BODY,
+            [],
+            plugins,
         )
 
+    @_overload
     async def malformed_content_type_with_generic_string(
-        self, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedContentTypeWithGenericStringInput
+        | _models.MalformedContentTypeWithGenericStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedContentTypeWithGenericStringOutput: ...
+
+    @_overload
+    async def malformed_content_type_with_generic_string(
+        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
     ) -> MalformedContentTypeWithGenericStringOutput:
         """
         Invokes the MalformedContentTypeWithGenericString operation.
@@ -1577,15 +2392,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedContentTypeWithGenericStringOutput`.
         """
+
+    async def malformed_content_type_with_generic_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedContentTypeWithGenericStringOutput:
         return await self._invoke(
-            {"payload": payload},
+            self._select_input(
+                _models.MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING, args, kwargs
+            ),
             _models.MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_content_type_without_body(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedContentTypeWithoutBodyInput
+        | _models.MalformedContentTypeWithoutBodyInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedContentTypeWithoutBodyOutput: ...
+
+    @_overload
+    async def malformed_content_type_without_body(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> MalformedContentTypeWithoutBodyOutput:
         """
         Invokes the MalformedContentTypeWithoutBody operation.
@@ -1600,12 +2432,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedContentTypeWithoutBodyOutput`.
         """
+
+    async def malformed_content_type_without_body(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedContentTypeWithoutBodyOutput:
         return await self._invoke(
-            None, _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY, [], plugins
+            self._select_input(
+                _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY, args, kwargs
+            ),
+            _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY,
+            [],
+            plugins,
         )
 
+    @_overload
     async def malformed_content_type_without_body_empty_input(
-        self, *, header: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedContentTypeWithoutBodyEmptyInputInput
+        | _models.MalformedContentTypeWithoutBodyEmptyInputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedContentTypeWithoutBodyEmptyInputOutput: ...
+
+    @_overload
+    async def malformed_content_type_without_body_empty_input(
+        self, /, *, header: str | None = None, plugins: list[Plugin] | None = None
     ) -> MalformedContentTypeWithoutBodyEmptyInputOutput:
         """
         Invokes the MalformedContentTypeWithoutBodyEmptyInput operation.
@@ -1620,15 +2472,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedContentTypeWithoutBodyEmptyInputOutput`.
         """
+
+    async def malformed_content_type_without_body_empty_input(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedContentTypeWithoutBodyEmptyInputOutput:
         return await self._invoke(
-            {"header": header},
+            self._select_input(
+                _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT, args, kwargs
+            ),
             _models.MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_content_type_with_payload(
-        self, *, payload: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedContentTypeWithPayloadInput
+        | _models.MalformedContentTypeWithPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedContentTypeWithPayloadOutput: ...
+
+    @_overload
+    async def malformed_content_type_with_payload(
+        self, /, *, payload: bytes | None = None, plugins: list[Plugin] | None = None
     ) -> MalformedContentTypeWithPayloadOutput:
         """
         Invokes the MalformedContentTypeWithPayload operation.
@@ -1643,15 +2512,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedContentTypeWithPayloadOutput`.
         """
+
+    async def malformed_content_type_with_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedContentTypeWithPayloadOutput:
         return await self._invoke(
-            {"payload": payload},
+            self._select_input(
+                _models.MALFORMED_CONTENT_TYPE_WITH_PAYLOAD, args, kwargs
+            ),
             _models.MALFORMED_CONTENT_TYPE_WITH_PAYLOAD,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_double(
         self,
+        request: _models.MalformedDoubleInput | _models.MalformedDoubleInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedDoubleOutput: ...
+
+    @_overload
+    async def malformed_double(
+        self,
+        /,
         *,
         double_in_body: float | None = None,
         double_in_path: float,
@@ -1672,20 +2558,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedDoubleOutput`.
         """
+
+    async def malformed_double(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedDoubleOutput:
         return await self._invoke(
-            {
-                "double_in_body": double_in_body,
-                "double_in_path": double_in_path,
-                "double_in_query": double_in_query,
-                "double_in_header": double_in_header,
-            },
+            self._select_input(_models.MALFORMED_DOUBLE, args, kwargs),
             _models.MALFORMED_DOUBLE,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_float(
         self,
+        request: _models.MalformedFloatInput | _models.MalformedFloatInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedFloatOutput: ...
+
+    @_overload
+    async def malformed_float(
+        self,
+        /,
         *,
         float_in_body: float | None = None,
         float_in_path: float,
@@ -1706,20 +2602,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedFloatOutput`.
         """
+
+    async def malformed_float(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedFloatOutput:
         return await self._invoke(
-            {
-                "float_in_body": float_in_body,
-                "float_in_path": float_in_path,
-                "float_in_query": float_in_query,
-                "float_in_header": float_in_header,
-            },
+            self._select_input(_models.MALFORMED_FLOAT, args, kwargs),
             _models.MALFORMED_FLOAT,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_integer(
         self,
+        request: _models.MalformedIntegerInput | _models.MalformedIntegerInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedIntegerOutput: ...
+
+    @_overload
+    async def malformed_integer(
+        self,
+        /,
         *,
         integer_in_body: int | None = None,
         integer_in_path: int,
@@ -1740,20 +2646,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedIntegerOutput`.
         """
+
+    async def malformed_integer(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedIntegerOutput:
         return await self._invoke(
-            {
-                "integer_in_body": integer_in_body,
-                "integer_in_path": integer_in_path,
-                "integer_in_query": integer_in_query,
-                "integer_in_header": integer_in_header,
-            },
+            self._select_input(_models.MALFORMED_INTEGER, args, kwargs),
             _models.MALFORMED_INTEGER,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_list(
         self,
+        request: _models.MalformedListInput | _models.MalformedListInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedListOutput: ...
+
+    @_overload
+    async def malformed_list(
+        self,
+        /,
         *,
         body_list: Sequence[str] | None = None,
         plugins: list[Plugin] | None = None,
@@ -1771,12 +2687,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedListOutput`.
         """
+
+    async def malformed_list(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedListOutput:
         return await self._invoke(
-            {"body_list": body_list}, _models.MALFORMED_LIST, [], plugins
+            self._select_input(_models.MALFORMED_LIST, args, kwargs),
+            _models.MALFORMED_LIST,
+            [],
+            plugins,
         )
 
+    @_overload
     async def malformed_long(
         self,
+        request: _models.MalformedLongInput | _models.MalformedLongInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedLongOutput: ...
+
+    @_overload
+    async def malformed_long(
+        self,
+        /,
         *,
         long_in_body: int | None = None,
         long_in_path: int,
@@ -1797,20 +2731,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedLongOutput`.
         """
+
+    async def malformed_long(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedLongOutput:
         return await self._invoke(
-            {
-                "long_in_body": long_in_body,
-                "long_in_path": long_in_path,
-                "long_in_query": long_in_query,
-                "long_in_header": long_in_header,
-            },
+            self._select_input(_models.MALFORMED_LONG, args, kwargs),
             _models.MALFORMED_LONG,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_map(
         self,
+        request: _models.MalformedMapInput | _models.MalformedMapInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedMapOutput: ...
+
+    @_overload
+    async def malformed_map(
+        self,
+        /,
         *,
         body_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
@@ -1828,12 +2772,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedMapOutput`.
         """
+
+    async def malformed_map(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedMapOutput:
         return await self._invoke(
-            {"body_map": body_map}, _models.MALFORMED_MAP, [], plugins
+            self._select_input(_models.MALFORMED_MAP, args, kwargs),
+            _models.MALFORMED_MAP,
+            [],
+            plugins,
         )
 
+    @_overload
     async def malformed_request_body(
         self,
+        request: _models.MalformedRequestBodyInput
+        | _models.MalformedRequestBodyInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedRequestBodyOutput: ...
+
+    @_overload
+    async def malformed_request_body(
+        self,
+        /,
         *,
         int_: int | None = None,
         float_: float | None = None,
@@ -1852,15 +2815,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedRequestBodyOutput`.
         """
+
+    async def malformed_request_body(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedRequestBodyOutput:
         return await self._invoke(
-            {"int_": int_, "float_": float_},
+            self._select_input(_models.MALFORMED_REQUEST_BODY, args, kwargs),
             _models.MALFORMED_REQUEST_BODY,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_short(
         self,
+        request: _models.MalformedShortInput | _models.MalformedShortInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedShortOutput: ...
+
+    @_overload
+    async def malformed_short(
+        self,
+        /,
         *,
         short_in_body: int | None = None,
         short_in_path: int,
@@ -1881,20 +2859,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedShortOutput`.
         """
+
+    async def malformed_short(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedShortOutput:
         return await self._invoke(
-            {
-                "short_in_body": short_in_body,
-                "short_in_path": short_in_path,
-                "short_in_query": short_in_query,
-                "short_in_header": short_in_header,
-            },
+            self._select_input(_models.MALFORMED_SHORT, args, kwargs),
             _models.MALFORMED_SHORT,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_string(
         self,
+        request: _models.MalformedStringInput | _models.MalformedStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedStringOutput: ...
+
+    @_overload
+    async def malformed_string(
+        self,
+        /,
         *,
         blob: str | JsonString | None = None,
         plugins: list[Plugin] | None = None,
@@ -1912,10 +2900,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedStringOutput`.
         """
-        return await self._invoke({"blob": blob}, _models.MALFORMED_STRING, [], plugins)
 
+    async def malformed_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedStringOutput:
+        return await self._invoke(
+            self._select_input(_models.MALFORMED_STRING, args, kwargs),
+            _models.MALFORMED_STRING,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def malformed_timestamp_body_date_time(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampBodyDateTimeInput
+        | _models.MalformedTimestampBodyDateTimeInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampBodyDateTimeOutput: ...
+
+    @_overload
+    async def malformed_timestamp_body_date_time(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampBodyDateTimeOutput:
         """
         Invokes the MalformedTimestampBodyDateTime operation.
@@ -1930,15 +2938,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampBodyDateTimeOutput`.
         """
+
+    async def malformed_timestamp_body_date_time(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampBodyDateTimeOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(
+                _models.MALFORMED_TIMESTAMP_BODY_DATE_TIME, args, kwargs
+            ),
             _models.MALFORMED_TIMESTAMP_BODY_DATE_TIME,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_timestamp_body_default(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampBodyDefaultInput
+        | _models.MalformedTimestampBodyDefaultInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampBodyDefaultOutput: ...
+
+    @_overload
+    async def malformed_timestamp_body_default(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampBodyDefaultOutput:
         """
         Invokes the MalformedTimestampBodyDefault operation.
@@ -1953,15 +2978,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampBodyDefaultOutput`.
         """
+
+    async def malformed_timestamp_body_default(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampBodyDefaultOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(_models.MALFORMED_TIMESTAMP_BODY_DEFAULT, args, kwargs),
             _models.MALFORMED_TIMESTAMP_BODY_DEFAULT,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_timestamp_body_http_date(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampBodyHttpDateInput
+        | _models.MalformedTimestampBodyHttpDateInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampBodyHttpDateOutput: ...
+
+    @_overload
+    async def malformed_timestamp_body_http_date(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampBodyHttpDateOutput:
         """
         Invokes the MalformedTimestampBodyHttpDate operation.
@@ -1976,15 +3016,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampBodyHttpDateOutput`.
         """
+
+    async def malformed_timestamp_body_http_date(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampBodyHttpDateOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(
+                _models.MALFORMED_TIMESTAMP_BODY_HTTP_DATE, args, kwargs
+            ),
             _models.MALFORMED_TIMESTAMP_BODY_HTTP_DATE,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_timestamp_header_date_time(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampHeaderDateTimeInput
+        | _models.MalformedTimestampHeaderDateTimeInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampHeaderDateTimeOutput: ...
+
+    @_overload
+    async def malformed_timestamp_header_date_time(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampHeaderDateTimeOutput:
         """
         Invokes the MalformedTimestampHeaderDateTime operation.
@@ -1999,15 +3056,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampHeaderDateTimeOutput`.
         """
+
+    async def malformed_timestamp_header_date_time(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampHeaderDateTimeOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(
+                _models.MALFORMED_TIMESTAMP_HEADER_DATE_TIME, args, kwargs
+            ),
             _models.MALFORMED_TIMESTAMP_HEADER_DATE_TIME,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_timestamp_header_default(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampHeaderDefaultInput
+        | _models.MalformedTimestampHeaderDefaultInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampHeaderDefaultOutput: ...
+
+    @_overload
+    async def malformed_timestamp_header_default(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampHeaderDefaultOutput:
         """
         Invokes the MalformedTimestampHeaderDefault operation.
@@ -2022,15 +3096,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampHeaderDefaultOutput`.
         """
+
+    async def malformed_timestamp_header_default(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampHeaderDefaultOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(
+                _models.MALFORMED_TIMESTAMP_HEADER_DEFAULT, args, kwargs
+            ),
             _models.MALFORMED_TIMESTAMP_HEADER_DEFAULT,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_timestamp_header_epoch(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampHeaderEpochInput
+        | _models.MalformedTimestampHeaderEpochInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampHeaderEpochOutput: ...
+
+    @_overload
+    async def malformed_timestamp_header_epoch(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampHeaderEpochOutput:
         """
         Invokes the MalformedTimestampHeaderEpoch operation.
@@ -2045,15 +3136,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampHeaderEpochOutput`.
         """
+
+    async def malformed_timestamp_header_epoch(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampHeaderEpochOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(_models.MALFORMED_TIMESTAMP_HEADER_EPOCH, args, kwargs),
             _models.MALFORMED_TIMESTAMP_HEADER_EPOCH,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_timestamp_path_default(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampPathDefaultInput
+        | _models.MalformedTimestampPathDefaultInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampPathDefaultOutput: ...
+
+    @_overload
+    async def malformed_timestamp_path_default(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampPathDefaultOutput:
         """
         Invokes the MalformedTimestampPathDefault operation.
@@ -2068,15 +3174,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampPathDefaultOutput`.
         """
+
+    async def malformed_timestamp_path_default(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampPathDefaultOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(_models.MALFORMED_TIMESTAMP_PATH_DEFAULT, args, kwargs),
             _models.MALFORMED_TIMESTAMP_PATH_DEFAULT,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_timestamp_path_epoch(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampPathEpochInput
+        | _models.MalformedTimestampPathEpochInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampPathEpochOutput: ...
+
+    @_overload
+    async def malformed_timestamp_path_epoch(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampPathEpochOutput:
         """
         Invokes the MalformedTimestampPathEpoch operation.
@@ -2091,15 +3212,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampPathEpochOutput`.
         """
+
+    async def malformed_timestamp_path_epoch(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampPathEpochOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(_models.MALFORMED_TIMESTAMP_PATH_EPOCH, args, kwargs),
             _models.MALFORMED_TIMESTAMP_PATH_EPOCH,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_timestamp_path_http_date(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampPathHttpDateInput
+        | _models.MalformedTimestampPathHttpDateInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampPathHttpDateOutput: ...
+
+    @_overload
+    async def malformed_timestamp_path_http_date(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampPathHttpDateOutput:
         """
         Invokes the MalformedTimestampPathHttpDate operation.
@@ -2114,15 +3250,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampPathHttpDateOutput`.
         """
+
+    async def malformed_timestamp_path_http_date(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampPathHttpDateOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(
+                _models.MALFORMED_TIMESTAMP_PATH_HTTP_DATE, args, kwargs
+            ),
             _models.MALFORMED_TIMESTAMP_PATH_HTTP_DATE,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_timestamp_query_default(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampQueryDefaultInput
+        | _models.MalformedTimestampQueryDefaultInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampQueryDefaultOutput: ...
+
+    @_overload
+    async def malformed_timestamp_query_default(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampQueryDefaultOutput:
         """
         Invokes the MalformedTimestampQueryDefault operation.
@@ -2137,15 +3290,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampQueryDefaultOutput`.
         """
+
+    async def malformed_timestamp_query_default(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampQueryDefaultOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(_models.MALFORMED_TIMESTAMP_QUERY_DEFAULT, args, kwargs),
             _models.MALFORMED_TIMESTAMP_QUERY_DEFAULT,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_timestamp_query_epoch(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampQueryEpochInput
+        | _models.MalformedTimestampQueryEpochInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampQueryEpochOutput: ...
+
+    @_overload
+    async def malformed_timestamp_query_epoch(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampQueryEpochOutput:
         """
         Invokes the MalformedTimestampQueryEpoch operation.
@@ -2160,15 +3328,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampQueryEpochOutput`.
         """
+
+    async def malformed_timestamp_query_epoch(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampQueryEpochOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(_models.MALFORMED_TIMESTAMP_QUERY_EPOCH, args, kwargs),
             _models.MALFORMED_TIMESTAMP_QUERY_EPOCH,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_timestamp_query_http_date(
-        self, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        request: _models.MalformedTimestampQueryHttpDateInput
+        | _models.MalformedTimestampQueryHttpDateInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedTimestampQueryHttpDateOutput: ...
+
+    @_overload
+    async def malformed_timestamp_query_http_date(
+        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
     ) -> MalformedTimestampQueryHttpDateOutput:
         """
         Invokes the MalformedTimestampQueryHttpDate operation.
@@ -2183,15 +3366,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedTimestampQueryHttpDateOutput`.
         """
+
+    async def malformed_timestamp_query_http_date(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedTimestampQueryHttpDateOutput:
         return await self._invoke(
-            {"timestamp": timestamp},
+            self._select_input(
+                _models.MALFORMED_TIMESTAMP_QUERY_HTTP_DATE, args, kwargs
+            ),
             _models.MALFORMED_TIMESTAMP_QUERY_HTTP_DATE,
             [],
             plugins,
         )
 
+    @_overload
     async def malformed_union(
         self,
+        request: _models.MalformedUnionInput | _models.MalformedUnionInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MalformedUnionOutput: ...
+
+    @_overload
+    async def malformed_union(
+        self,
+        /,
         *,
         union: _models.SimpleUnion | _models.SimpleUnionParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -2209,12 +3409,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MalformedUnionOutput`.
         """
+
+    async def malformed_union(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MalformedUnionOutput:
         return await self._invoke(
-            {"union": union}, _models.MALFORMED_UNION, [], plugins
+            self._select_input(_models.MALFORMED_UNION, args, kwargs),
+            _models.MALFORMED_UNION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def media_type_header(
         self,
+        request: _models.MediaTypeHeaderInput | _models.MediaTypeHeaderInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> MediaTypeHeaderOutput: ...
+
+    @_overload
+    async def media_type_header(
+        self,
+        /,
         *,
         json: str | JsonString | None = None,
         plugins: list[Plugin] | None = None,
@@ -2233,12 +3451,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `MediaTypeHeaderOutput`.
         """
+
+    async def media_type_header(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> MediaTypeHeaderOutput:
         return await self._invoke(
-            {"json": json}, _models.MEDIA_TYPE_HEADER, [], plugins
+            self._select_input(_models.MEDIA_TYPE_HEADER, args, kwargs),
+            _models.MEDIA_TYPE_HEADER,
+            [],
+            plugins,
         )
 
+    @_overload
     async def no_input_and_no_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndNoOutputInput
+        | _models.NoInputAndNoOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndNoOutputOutput: ...
+
+    @_overload
+    async def no_input_and_no_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -2256,10 +3492,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        return await self._invoke(None, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
+    async def no_input_and_no_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndNoOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_NO_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_NO_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def no_input_and_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndOutputOutput: ...
+
+    @_overload
+    async def no_input_and_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -2277,10 +3532,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return await self._invoke(None, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
+    async def no_input_and_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def null_and_empty_headers_client(
         self,
+        request: _models.NullAndEmptyHeadersClientInput
+        | _models.NullAndEmptyHeadersClientInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NullAndEmptyHeadersClientOutput: ...
+
+    @_overload
+    async def null_and_empty_headers_client(
+        self,
+        /,
         *,
         a: str | None = None,
         b: str | None = None,
@@ -2301,12 +3577,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `NullAndEmptyHeadersClientOutput`.
         """
+
+    async def null_and_empty_headers_client(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NullAndEmptyHeadersClientOutput:
         return await self._invoke(
-            {"a": a, "b": b, "c": c}, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
+            self._select_input(_models.NULL_AND_EMPTY_HEADERS_CLIENT, args, kwargs),
+            _models.NULL_AND_EMPTY_HEADERS_CLIENT,
+            [],
+            plugins,
         )
 
+    @_overload
     async def null_and_empty_headers_server(
         self,
+        request: _models.NullAndEmptyHeadersServerInput
+        | _models.NullAndEmptyHeadersServerInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NullAndEmptyHeadersServerOutput: ...
+
+    @_overload
+    async def null_and_empty_headers_server(
+        self,
+        /,
         *,
         a: str | None = None,
         b: str | None = None,
@@ -2327,12 +3622,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `NullAndEmptyHeadersServerOutput`.
         """
+
+    async def null_and_empty_headers_server(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NullAndEmptyHeadersServerOutput:
         return await self._invoke(
-            {"a": a, "b": b, "c": c}, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
+            self._select_input(_models.NULL_AND_EMPTY_HEADERS_SERVER, args, kwargs),
+            _models.NULL_AND_EMPTY_HEADERS_SERVER,
+            [],
+            plugins,
         )
 
+    @_overload
     async def omits_null_serializes_empty_string(
         self,
+        request: _models.OmitsNullSerializesEmptyStringInput
+        | _models.OmitsNullSerializesEmptyStringInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OmitsNullSerializesEmptyStringOutput: ...
+
+    @_overload
+    async def omits_null_serializes_empty_string(
+        self,
+        /,
         *,
         null_value: str | None = None,
         empty_string: str | None = None,
@@ -2351,15 +3665,33 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
+
+    async def omits_null_serializes_empty_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OmitsNullSerializesEmptyStringOutput:
         return await self._invoke(
-            {"null_value": null_value, "empty_string": empty_string},
+            self._select_input(
+                _models.OMITS_NULL_SERIALIZES_EMPTY_STRING, args, kwargs
+            ),
             _models.OMITS_NULL_SERIALIZES_EMPTY_STRING,
             [],
             plugins,
         )
 
+    @_overload
     async def omits_serializing_empty_lists(
         self,
+        request: _models.OmitsSerializingEmptyListsInput
+        | _models.OmitsSerializingEmptyListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OmitsSerializingEmptyListsOutput: ...
+
+    @_overload
+    async def omits_serializing_empty_lists(
+        self,
+        /,
         *,
         query_string_list: Sequence[str] | None = None,
         query_integer_list: Sequence[int] | None = None,
@@ -2385,23 +3717,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `OmitsSerializingEmptyListsOutput`.
         """
+
+    async def omits_serializing_empty_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OmitsSerializingEmptyListsOutput:
         return await self._invoke(
-            {
-                "query_string_list": query_string_list,
-                "query_integer_list": query_integer_list,
-                "query_double_list": query_double_list,
-                "query_boolean_list": query_boolean_list,
-                "query_timestamp_list": query_timestamp_list,
-                "query_enum_list": query_enum_list,
-                "query_integer_enum_list": query_integer_enum_list,
-            },
+            self._select_input(_models.OMITS_SERIALIZING_EMPTY_LISTS, args, kwargs),
             _models.OMITS_SERIALIZING_EMPTY_LISTS,
             [],
             plugins,
         )
 
+    @_overload
     async def operation_with_defaults(
         self,
+        request: _models.OperationWithDefaultsInput
+        | _models.OperationWithDefaultsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OperationWithDefaultsOutput: ...
+
+    @_overload
+    async def operation_with_defaults(
+        self,
+        /,
         *,
         defaults: _models.Defaults | _models.DefaultsParams | None = None,
         client_optional_defaults: _models.ClientOptionalDefaults
@@ -2424,20 +3764,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `OperationWithDefaultsOutput`.
         """
+
+    async def operation_with_defaults(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithDefaultsOutput:
         return await self._invoke(
-            {
-                "defaults": defaults,
-                "client_optional_defaults": client_optional_defaults,
-                "top_level_default": top_level_default,
-                "other_top_level_default": other_top_level_default,
-            },
+            self._select_input(_models.OPERATION_WITH_DEFAULTS, args, kwargs),
             _models.OPERATION_WITH_DEFAULTS,
             [],
             plugins,
         )
 
+    @_overload
     async def operation_with_nested_structure(
         self,
+        request: _models.OperationWithNestedStructureInput
+        | _models.OperationWithNestedStructureInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OperationWithNestedStructureOutput: ...
+
+    @_overload
+    async def operation_with_nested_structure(
+        self,
+        /,
         *,
         top_level: _models.TopLevel | _models.TopLevelParams,
         plugins: list[Plugin] | None = None,
@@ -2455,15 +3806,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `OperationWithNestedStructureOutput`.
         """
+
+    async def operation_with_nested_structure(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithNestedStructureOutput:
         return await self._invoke(
-            {"top_level": top_level},
+            self._select_input(_models.OPERATION_WITH_NESTED_STRUCTURE, args, kwargs),
             _models.OPERATION_WITH_NESTED_STRUCTURE,
             [],
             plugins,
         )
 
+    @_overload
     async def output_stream(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.OutputStreamInput | _models.OutputStreamInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AsyncOutputEventStream[EventStream, OutputStreamOutput]: ...
+
+    @_overload
+    async def output_stream(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> AsyncOutputEventStream[EventStream, OutputStreamOutput]:
         """
         Invokes the OutputStream operation.
@@ -2478,15 +3843,33 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An `AsyncOutputEventStream` for server-to-client streaming.
         """
+
+    async def output_stream(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AsyncOutputEventStream[EventStream, OutputStreamOutput]:
         pipeline, call = await self._prepare_call(
-            None, _models.OUTPUT_STREAM, [], plugins
+            self._select_input(_models.OUTPUT_STREAM, args, kwargs),
+            _models.OUTPUT_STREAM,
+            [],
+            plugins,
         )
         return await pipeline.output_stream(
             call, EventStream, _EventStreamDeserializer().deserialize
         )
 
+    @_overload
     async def output_stream_with_initial_response(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.OutputStreamWithInitialResponseInput
+        | _models.OutputStreamWithInitialResponseInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AsyncOutputEventStream[EventStream, OutputStreamWithInitialResponseOutput]: ...
+
+    @_overload
+    async def output_stream_with_initial_response(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> AsyncOutputEventStream[EventStream, OutputStreamWithInitialResponseOutput]:
         """
         Invokes the OutputStreamWithInitialResponse operation.
@@ -2501,15 +3884,35 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An `AsyncOutputEventStream` for server-to-client streaming.
         """
+
+    async def output_stream_with_initial_response(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AsyncOutputEventStream[EventStream, OutputStreamWithInitialResponseOutput]:
         pipeline, call = await self._prepare_call(
-            None, _models.OUTPUT_STREAM_WITH_INITIAL_RESPONSE, [], plugins
+            self._select_input(
+                _models.OUTPUT_STREAM_WITH_INITIAL_RESPONSE, args, kwargs
+            ),
+            _models.OUTPUT_STREAM_WITH_INITIAL_RESPONSE,
+            [],
+            plugins,
         )
         return await pipeline.output_stream(
             call, EventStream, _EventStreamDeserializer().deserialize
         )
 
+    @_overload
     async def post_player_action(
         self,
+        request: _models.PostPlayerActionInput | _models.PostPlayerActionInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PostPlayerActionOutput: ...
+
+    @_overload
+    async def post_player_action(
+        self,
+        /,
         *,
         action: _models.PlayerAction | _models.PlayerActionParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -2527,12 +3930,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `PostPlayerActionOutput`.
         """
+
+    async def post_player_action(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PostPlayerActionOutput:
         return await self._invoke(
-            {"action": action}, _models.POST_PLAYER_ACTION, [], plugins
+            self._select_input(_models.POST_PLAYER_ACTION, args, kwargs),
+            _models.POST_PLAYER_ACTION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def post_union_with_json_name(
         self,
+        request: _models.PostUnionWithJsonNameInput
+        | _models.PostUnionWithJsonNameInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PostUnionWithJsonNameOutput: ...
+
+    @_overload
+    async def post_union_with_json_name(
+        self,
+        /,
         *,
         value: _models.UnionWithJsonName
         | _models.UnionWithJsonNameParams
@@ -2552,12 +3974,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `PostUnionWithJsonNameOutput`.
         """
+
+    async def post_union_with_json_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PostUnionWithJsonNameOutput:
         return await self._invoke(
-            {"value": value}, _models.POST_UNION_WITH_JSON_NAME, [], plugins
+            self._select_input(_models.POST_UNION_WITH_JSON_NAME, args, kwargs),
+            _models.POST_UNION_WITH_JSON_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     async def put_with_content_encoding(
         self,
+        request: _models.PutWithContentEncodingInput
+        | _models.PutWithContentEncodingInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutWithContentEncodingOutput: ...
+
+    @_overload
+    async def put_with_content_encoding(
+        self,
+        /,
         *,
         encoding: str | None = None,
         data: str | None = None,
@@ -2576,15 +4017,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
+
+    async def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutWithContentEncodingOutput:
         return await self._invoke(
-            {"encoding": encoding, "data": data},
+            self._select_input(_models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
             _models.PUT_WITH_CONTENT_ENCODING,
             [],
             plugins,
         )
 
+    @_overload
     async def query_idempotency_token_auto_fill(
-        self, *, token: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.QueryIdempotencyTokenAutoFillInput
+        | _models.QueryIdempotencyTokenAutoFillInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryIdempotencyTokenAutoFillOutput: ...
+
+    @_overload
+    async def query_idempotency_token_auto_fill(
+        self, /, *, token: str | None = None, plugins: list[Plugin] | None = None
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
@@ -2600,12 +4056,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
+
+    async def query_idempotency_token_auto_fill(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryIdempotencyTokenAutoFillOutput:
         return await self._invoke(
-            {"token": token}, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            self._select_input(_models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, args, kwargs),
+            _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
+            [],
+            plugins,
         )
 
+    @_overload
     async def query_params_as_string_list_map(
         self,
+        request: _models.QueryParamsAsStringListMapInput
+        | _models.QueryParamsAsStringListMapInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryParamsAsStringListMapOutput: ...
+
+    @_overload
+    async def query_params_as_string_list_map(
+        self,
+        /,
         *,
         qux: str | None = None,
         foo: Mapping[str, Sequence[str]] | None = None,
@@ -2624,15 +4099,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `QueryParamsAsStringListMapOutput`.
         """
+
+    async def query_params_as_string_list_map(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryParamsAsStringListMapOutput:
         return await self._invoke(
-            {"qux": qux, "foo": foo},
+            self._select_input(_models.QUERY_PARAMS_AS_STRING_LIST_MAP, args, kwargs),
             _models.QUERY_PARAMS_AS_STRING_LIST_MAP,
             [],
             plugins,
         )
 
+    @_overload
     async def query_precedence(
         self,
+        request: _models.QueryPrecedenceInput | _models.QueryPrecedenceInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryPrecedenceOutput: ...
+
+    @_overload
+    async def query_precedence(
+        self,
+        /,
         *,
         foo: str | None = None,
         baz: Mapping[str, str] | None = None,
@@ -2651,12 +4141,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `QueryPrecedenceOutput`.
         """
+
+    async def query_precedence(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryPrecedenceOutput:
         return await self._invoke(
-            {"foo": foo, "baz": baz}, _models.QUERY_PRECEDENCE, [], plugins
+            self._select_input(_models.QUERY_PRECEDENCE, args, kwargs),
+            _models.QUERY_PRECEDENCE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def recursive_shapes(
         self,
+        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RecursiveShapesOutput: ...
+
+    @_overload
+    async def recursive_shapes(
+        self,
+        /,
         *,
         nested: _models.RecursiveShapesInputOutputNested1
         | _models.RecursiveShapesInputOutputNested1Params
@@ -2676,12 +4184,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
+
+    async def recursive_shapes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RecursiveShapesOutput:
         return await self._invoke(
-            {"nested": nested}, _models.RECURSIVE_SHAPES, [], plugins
+            self._select_input(_models.RECURSIVE_SHAPES, args, kwargs),
+            _models.RECURSIVE_SHAPES,
+            [],
+            plugins,
         )
 
+    @_overload
     async def response_code_http_fallback(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ResponseCodeHttpFallbackInput
+        | _models.ResponseCodeHttpFallbackInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ResponseCodeHttpFallbackOutput: ...
+
+    @_overload
+    async def response_code_http_fallback(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> ResponseCodeHttpFallbackOutput:
         """
         Invokes the ResponseCodeHttpFallback operation.
@@ -2696,12 +4222,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `ResponseCodeHttpFallbackOutput`.
         """
+
+    async def response_code_http_fallback(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ResponseCodeHttpFallbackOutput:
         return await self._invoke(
-            None, _models.RESPONSE_CODE_HTTP_FALLBACK, [], plugins
+            self._select_input(_models.RESPONSE_CODE_HTTP_FALLBACK, args, kwargs),
+            _models.RESPONSE_CODE_HTTP_FALLBACK,
+            [],
+            plugins,
         )
 
+    @_overload
     async def response_code_required(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ResponseCodeRequiredInput
+        | _models.ResponseCodeRequiredInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ResponseCodeRequiredOutput: ...
+
+    @_overload
+    async def response_code_required(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> ResponseCodeRequiredOutput:
         """
         Invokes the ResponseCodeRequired operation.
@@ -2716,10 +4260,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `ResponseCodeRequiredOutput`.
         """
-        return await self._invoke(None, _models.RESPONSE_CODE_REQUIRED, [], plugins)
 
+    async def response_code_required(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ResponseCodeRequiredOutput:
+        return await self._invoke(
+            self._select_input(_models.RESPONSE_CODE_REQUIRED, args, kwargs),
+            _models.RESPONSE_CODE_REQUIRED,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def simple_scalar_properties(
         self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    async def simple_scalar_properties(
+        self,
+        /,
         *,
         foo: str | None = None,
         string_value: str | None = None,
@@ -2746,26 +4311,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
+
+    async def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
         return await self._invoke(
-            {
-                "foo": foo,
-                "string_value": string_value,
-                "true_boolean_value": true_boolean_value,
-                "false_boolean_value": false_boolean_value,
-                "byte_value": byte_value,
-                "short_value": short_value,
-                "integer_value": integer_value,
-                "long_value": long_value,
-                "float_value": float_value,
-                "double_value": double_value,
-            },
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
             _models.SIMPLE_SCALAR_PROPERTIES,
             [],
             plugins,
         )
 
+    @_overload
     async def sparse_json_lists(
         self,
+        request: _models.SparseJsonListsInput | _models.SparseJsonListsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SparseJsonListsOutput: ...
+
+    @_overload
+    async def sparse_json_lists(
+        self,
+        /,
         *,
         sparse_string_list: Sequence[str | None] | None = None,
         sparse_short_list: Sequence[int | None] | None = None,
@@ -2784,18 +4353,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `SparseJsonListsOutput`.
         """
+
+    async def sparse_json_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SparseJsonListsOutput:
         return await self._invoke(
-            {
-                "sparse_string_list": sparse_string_list,
-                "sparse_short_list": sparse_short_list,
-            },
+            self._select_input(_models.SPARSE_JSON_LISTS, args, kwargs),
             _models.SPARSE_JSON_LISTS,
             [],
             plugins,
         )
 
+    @_overload
     async def sparse_json_maps(
         self,
+        request: _models.SparseJsonMapsInput | _models.SparseJsonMapsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SparseJsonMapsOutput: ...
+
+    @_overload
+    async def sparse_json_maps(
+        self,
+        /,
         *,
         sparse_struct_map: Mapping[
             str, _models.GreetingStruct | _models.GreetingStructParams | None
@@ -2820,21 +4401,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `SparseJsonMapsOutput`.
         """
+
+    async def sparse_json_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SparseJsonMapsOutput:
         return await self._invoke(
-            {
-                "sparse_struct_map": sparse_struct_map,
-                "sparse_number_map": sparse_number_map,
-                "sparse_boolean_map": sparse_boolean_map,
-                "sparse_string_map": sparse_string_map,
-                "sparse_set_map": sparse_set_map,
-            },
+            self._select_input(_models.SPARSE_JSON_MAPS, args, kwargs),
             _models.SPARSE_JSON_MAPS,
             [],
             plugins,
         )
 
+    @_overload
     async def streaming_traits(
         self,
+        request: _models.StreamingTraitsInput
+        | _models.StreamingTraitsInputParams
+        | _models.AsyncStreamingTraitsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> StreamingTraitsOutput: ...
+
+    @_overload
+    async def streaming_traits(
+        self,
+        /,
         *,
         foo: str | None = None,
         blob: StreamingBlob | None = None,
@@ -2855,12 +4447,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `StreamingTraitsOutput`.
         """
+
+    async def streaming_traits(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> StreamingTraitsOutput:
         return await self._invoke(
-            {"foo": foo, "blob": blob}, _models.STREAMING_TRAITS, [], plugins
+            self._select_input(_models.STREAMING_TRAITS, args, kwargs),
+            _models.STREAMING_TRAITS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def streaming_traits_require_length(
         self,
+        request: _models.StreamingTraitsRequireLengthInput
+        | _models.StreamingTraitsRequireLengthInputParams
+        | _models.AsyncStreamingTraitsRequireLengthInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> StreamingTraitsRequireLengthOutput: ...
+
+    @_overload
+    async def streaming_traits_require_length(
+        self,
+        /,
         *,
         foo: str | None = None,
         blob: StreamingBlob | None = None,
@@ -2881,15 +4493,32 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `StreamingTraitsRequireLengthOutput`.
         """
+
+    async def streaming_traits_require_length(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> StreamingTraitsRequireLengthOutput:
         return await self._invoke(
-            {"foo": foo, "blob": blob},
+            self._select_input(_models.STREAMING_TRAITS_REQUIRE_LENGTH, args, kwargs),
             _models.STREAMING_TRAITS_REQUIRE_LENGTH,
             [],
             plugins,
         )
 
+    @_overload
     async def streaming_traits_with_media_type(
         self,
+        request: _models.StreamingTraitsWithMediaTypeInput
+        | _models.StreamingTraitsWithMediaTypeInputParams
+        | _models.AsyncStreamingTraitsWithMediaTypeInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> StreamingTraitsWithMediaTypeOutput: ...
+
+    @_overload
+    async def streaming_traits_with_media_type(
+        self,
+        /,
         *,
         foo: str | None = None,
         blob: StreamingBlob | None = None,
@@ -2910,15 +4539,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `StreamingTraitsWithMediaTypeOutput`.
         """
+
+    async def streaming_traits_with_media_type(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> StreamingTraitsWithMediaTypeOutput:
         return await self._invoke(
-            {"foo": foo, "blob": blob},
+            self._select_input(_models.STREAMING_TRAITS_WITH_MEDIA_TYPE, args, kwargs),
             _models.STREAMING_TRAITS_WITH_MEDIA_TYPE,
             [],
             plugins,
         )
 
+    @_overload
     async def test_body_structure(
         self,
+        request: _models.TestBodyStructureInput | _models.TestBodyStructureInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TestBodyStructureOutput: ...
+
+    @_overload
+    async def test_body_structure(
+        self,
+        /,
         *,
         test_id: str | None = None,
         test_config: _models.TestConfig | _models.TestConfigParams | None = None,
@@ -2939,15 +4583,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestBodyStructureOutput`.
         """
+
+    async def test_body_structure(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TestBodyStructureOutput:
         return await self._invoke(
-            {"test_id": test_id, "test_config": test_config},
+            self._select_input(_models.TEST_BODY_STRUCTURE, args, kwargs),
             _models.TEST_BODY_STRUCTURE,
             [],
             plugins,
         )
 
+    @_overload
     async def test_get_no_input_no_payload(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.TestGetNoInputNoPayloadInput
+        | _models.TestGetNoInputNoPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TestGetNoInputNoPayloadOutput: ...
+
+    @_overload
+    async def test_get_no_input_no_payload(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> TestGetNoInputNoPayloadOutput:
         """
         This example GET operation has no input and serializes a request without
@@ -2965,12 +4624,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestGetNoInputNoPayloadOutput`.
         """
+
+    async def test_get_no_input_no_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TestGetNoInputNoPayloadOutput:
         return await self._invoke(
-            None, _models.TEST_GET_NO_INPUT_NO_PAYLOAD, [], plugins
+            self._select_input(_models.TEST_GET_NO_INPUT_NO_PAYLOAD, args, kwargs),
+            _models.TEST_GET_NO_INPUT_NO_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     async def test_get_no_payload(
-        self, *, test_id: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.TestGetNoPayloadInput | _models.TestGetNoPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TestGetNoPayloadOutput: ...
+
+    @_overload
+    async def test_get_no_payload(
+        self, /, *, test_id: str | None = None, plugins: list[Plugin] | None = None
     ) -> TestGetNoPayloadOutput:
         """
         This example GET operation serializes a request without a modeled HTTP
@@ -2988,12 +4664,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestGetNoPayloadOutput`.
         """
+
+    async def test_get_no_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TestGetNoPayloadOutput:
         return await self._invoke(
-            {"test_id": test_id}, _models.TEST_GET_NO_PAYLOAD, [], plugins
+            self._select_input(_models.TEST_GET_NO_PAYLOAD, args, kwargs),
+            _models.TEST_GET_NO_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     async def test_payload_blob(
         self,
+        request: _models.TestPayloadBlobInput | _models.TestPayloadBlobInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TestPayloadBlobOutput: ...
+
+    @_overload
+    async def test_payload_blob(
+        self,
+        /,
         *,
         content_type: str | None = None,
         data: bytes | None = None,
@@ -3016,15 +4710,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestPayloadBlobOutput`.
         """
+
+    async def test_payload_blob(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TestPayloadBlobOutput:
         return await self._invoke(
-            {"content_type": content_type, "data": data},
+            self._select_input(_models.TEST_PAYLOAD_BLOB, args, kwargs),
             _models.TEST_PAYLOAD_BLOB,
             [],
             plugins,
         )
 
+    @_overload
     async def test_payload_structure(
         self,
+        request: _models.TestPayloadStructureInput
+        | _models.TestPayloadStructureInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TestPayloadStructureOutput: ...
+
+    @_overload
+    async def test_payload_structure(
+        self,
+        /,
         *,
         test_id: str | None = None,
         payload_config: _models.PayloadConfig
@@ -3047,15 +4757,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestPayloadStructureOutput`.
         """
+
+    async def test_payload_structure(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TestPayloadStructureOutput:
         return await self._invoke(
-            {"test_id": test_id, "payload_config": payload_config},
+            self._select_input(_models.TEST_PAYLOAD_STRUCTURE, args, kwargs),
             _models.TEST_PAYLOAD_STRUCTURE,
             [],
             plugins,
         )
 
+    @_overload
     async def test_post_no_input_no_payload(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.TestPostNoInputNoPayloadInput
+        | _models.TestPostNoInputNoPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TestPostNoInputNoPayloadOutput: ...
+
+    @_overload
+    async def test_post_no_input_no_payload(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> TestPostNoInputNoPayloadOutput:
         """
         This example POST operation has no input and serializes a request
@@ -3073,12 +4798,29 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestPostNoInputNoPayloadOutput`.
         """
+
+    async def test_post_no_input_no_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TestPostNoInputNoPayloadOutput:
         return await self._invoke(
-            None, _models.TEST_POST_NO_INPUT_NO_PAYLOAD, [], plugins
+            self._select_input(_models.TEST_POST_NO_INPUT_NO_PAYLOAD, args, kwargs),
+            _models.TEST_POST_NO_INPUT_NO_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     async def test_post_no_payload(
-        self, *, test_id: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.TestPostNoPayloadInput | _models.TestPostNoPayloadInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TestPostNoPayloadOutput: ...
+
+    @_overload
+    async def test_post_no_payload(
+        self, /, *, test_id: str | None = None, plugins: list[Plugin] | None = None
     ) -> TestPostNoPayloadOutput:
         """
         This example POST operation serializes a request without a modeled HTTP
@@ -3095,12 +4837,31 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TestPostNoPayloadOutput`.
         """
+
+    async def test_post_no_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TestPostNoPayloadOutput:
         return await self._invoke(
-            {"test_id": test_id}, _models.TEST_POST_NO_PAYLOAD, [], plugins
+            self._select_input(_models.TEST_POST_NO_PAYLOAD, args, kwargs),
+            _models.TEST_POST_NO_PAYLOAD,
+            [],
+            plugins,
         )
 
+    @_overload
     async def timestamp_format_headers(
         self,
+        request: _models.TimestampFormatHeadersInput
+        | _models.TimestampFormatHeadersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TimestampFormatHeadersOutput: ...
+
+    @_overload
+    async def timestamp_format_headers(
+        self,
+        /,
         *,
         member_epoch_seconds: datetime | None = None,
         member_http_date: datetime | None = None,
@@ -3125,23 +4886,30 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `TimestampFormatHeadersOutput`.
         """
+
+    async def timestamp_format_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TimestampFormatHeadersOutput:
         return await self._invoke(
-            {
-                "member_epoch_seconds": member_epoch_seconds,
-                "member_http_date": member_http_date,
-                "member_date_time": member_date_time,
-                "default_format": default_format,
-                "target_epoch_seconds": target_epoch_seconds,
-                "target_http_date": target_http_date,
-                "target_date_time": target_date_time,
-            },
+            self._select_input(_models.TIMESTAMP_FORMAT_HEADERS, args, kwargs),
             _models.TIMESTAMP_FORMAT_HEADERS,
             [],
             plugins,
         )
 
+    @_overload
     async def unit_input_and_output(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.UnitInputAndOutputInput
+        | _models.UnitInputAndOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> UnitInputAndOutputOutput: ...
+
+    @_overload
+    async def unit_input_and_output(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> UnitInputAndOutputOutput:
         """
         This test is similar to NoInputAndNoOutput, but uses explicit Unit
@@ -3157,7 +4925,16 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Returns:
             An instance of `UnitInputAndOutputOutput`.
         """
-        return await self._invoke(None, _models.UNIT_INPUT_AND_OUTPUT, [], plugins)
+
+    async def unit_input_and_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> UnitInputAndOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.UNIT_INPUT_AND_OUTPUT, args, kwargs),
+            _models.UNIT_INPUT_AND_OUTPUT,
+            [],
+            plugins,
+        )
 
     async def _new_config(self) -> AsyncRestJsonProtocolConfig:
         return await AsyncRestJsonProtocolConfig.resolve()

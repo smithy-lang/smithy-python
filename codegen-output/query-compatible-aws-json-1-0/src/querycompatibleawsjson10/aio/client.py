@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -32,8 +32,19 @@ class AsyncQueryCompatibleJSONRPC10Client(
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def query_compatible_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.QueryCompatibleOperationInput
+        | _models.QueryCompatibleOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryCompatibleOperationOutput: ...
+
+    @_overload
+    async def query_compatible_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> QueryCompatibleOperationOutput:
         """
         Invokes the QueryCompatibleOperation operation.
@@ -48,7 +59,16 @@ class AsyncQueryCompatibleJSONRPC10Client(
         Returns:
             An instance of `QueryCompatibleOperationOutput`.
         """
-        return await self._invoke(None, _models.QUERY_COMPATIBLE_OPERATION, [], plugins)
+
+    async def query_compatible_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryCompatibleOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.QUERY_COMPATIBLE_OPERATION, args, kwargs),
+            _models.QUERY_COMPATIBLE_OPERATION,
+            [],
+            plugins,
+        )
 
     async def _new_config(self) -> AsyncQueryCompatibleJSONRPC10Config:
         return await AsyncQueryCompatibleJSONRPC10Config.resolve()

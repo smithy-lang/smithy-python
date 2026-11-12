@@ -4,12 +4,17 @@
 
 Usage: python3 full_docs_check.py <generated project directory>
 
-The generated modules are parsed and compiled, never imported, and every check
-reads the decoded docstrings, so the escaping of the source is checked too. A
-module that does not compile is reported, and then no docs are read at all.
+The generated modules are parsed and compiled, and every check reads the decoded
+docstrings, so the escaping of the source is checked too. A module that does not
+compile is reported, and then no docs are read at all.
+
+Once the docs are read from the source, both clients are imported, which needs the
+runtime packages the generated client depends on. Importing a client defines its
+operation methods, and each must then have the docs of its keyword overload.
 """
 
 import ast
+import importlib
 import inspect
 import re
 import sys
@@ -138,17 +143,73 @@ def fields(cls):
     return found
 
 
+def is_overload(node):
+    for decorator in node.decorator_list:
+        if isinstance(decorator, ast.Attribute):
+            name = decorator.attr
+        else:
+            name = getattr(decorator, "id", "")
+        if name.endswith("overload"):
+            return True
+    return False
+
+
+def names(arguments):
+    return [argument.arg for argument in arguments]
+
+
 def methods(tree, client):
-    found = {}
+    """Reads each operation method of a client from its definitions.
+
+    A method is two overloads and an implementation, in that order. The first
+    overload takes the whole request, positionally; the second takes its members as
+    keyword arguments and is the only one with docs. The implementation takes either.
+
+    Returns each method's keyword parameters and docs, which are the keyword
+    overload's, and the type of the request the first overload takes.
+    """
+    definitions = {}
     for node in classes(tree)[client].body:
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
         if node.name.startswith("_"):
             continue
-        keywords = node.args.kwonlyargs
+        definitions.setdefault(node.name, []).append(node)
+    found, requests = {}, {}
+    for name, nodes in definitions.items():
+        what = "%s %s" % (client, name)
+        if [is_overload(node) for node in nodes] != [True, True, False]:
+            FAILURES.append(what + " is not two overloads and an implementation")
+            continue
+        whole, keyword, implementation = nodes
+
+        equal(names(whole.args.posonlyargs), ["self", "request"], what + " request")
+        equal(names(whole.args.kwonlyargs), ["plugins"], what + " request keywords")
+        equal(ast.get_docstring(whole), None, what + " request overload docs")
+        requests[name] = ast.unparse(whole.args.posonlyargs[1].annotation)
+
+        equal(names(keyword.args.posonlyargs), ["self"], what + " keyword overload")
+        check(not keyword.args.args, what + " keyword overload positional parameters")
+        check(not keyword.args.vararg, what + " keyword overload *args")
+        check(not keyword.args.kwarg, what + " keyword overload **kwargs")
+
+        # Its docs are the keyword overload's, given to it at runtime, not repeated.
+        equal(ast.get_docstring(implementation), None, what + " implementation docs")
+        equal(
+            (
+                names(implementation.args.posonlyargs),
+                getattr(implementation.args.vararg, "arg", None),
+                names(implementation.args.kwonlyargs),
+                getattr(implementation.args.kwarg, "arg", None),
+            ),
+            (["self"], "args", ["plugins"], "kwargs"),
+            what + " implementation parameters",
+        )
+
+        keywords = keyword.args.kwonlyargs
         annotations = {arg.arg: ast.unparse(arg.annotation) for arg in keywords}
-        found[node.name] = (annotations, ast.get_docstring(node))
-    return found
+        found[name] = (annotations, ast.get_docstring(keyword))
+    return found, requests
 
 
 def sections(doc):
@@ -187,12 +248,18 @@ def check_operations(models, sync, aio):
     # Sync clients have no event streams; everything else is documented alike.
     equal(
         sorted(sync),
-        ["assume_access", "migrate_session", "upload_document"],
+        ["assume_access", "migrate_session", "overload", "upload_document"],
         "sync operations",
     )
     equal(
         sorted(aio),
-        ["assume_access", "migrate_session", "upload_document", "watch_access"],
+        [
+            "assume_access",
+            "migrate_session",
+            "overload",
+            "upload_document",
+            "watch_access",
+        ],
         "async operations",
     )
     for name in sync:
@@ -272,6 +339,26 @@ def check_operations(models, sync, aio):
             ["The name of the document.", "The bytes of the document."],
             label + " upload_document docs",
         )
+
+        # A member named `input` is a keyword like any other: the whole request is
+        # positional, so it takes no keyword's name.
+        annotations, doc = client["overload"]
+        _, entries, returns = sections(doc)
+        expected = ["input", "tag", "plugins"]
+        equal(list(annotations), expected, label + " overload parameters")
+        equal(annotations["input"], "str | None", label + " overload input type")
+        equal(list(entries), expected, label + " overload Args entries")
+        equal(
+            entries["input"],
+            ["The text to check, which is not the request itself."],
+            label + " overload input docs",
+        )
+        equal(
+            entries["tag"],
+            ["A tag to check the text against."],
+            label + " overload tag docs",
+        )
+        equal(returns, "An instance of `OverloadOutput`.", label + " overload Returns")
 
     # The initial request of an event stream operation is documented too; its
     # events are sent through the stream, so they are not a parameter.
@@ -424,6 +511,58 @@ def check_params(models):
     )
 
 
+def check_requests(sync, aio):
+    # The whole request is the input model or its dictionary form. Only the async
+    # client takes the form whose body may be an async stream.
+    for label, client, expected in (
+        ("sync", sync, {}),
+        (
+            "async",
+            aio,
+            {
+                "upload_document": "_models.UploadDocumentInput"
+                " | _models.UploadDocumentInputParams"
+                " | _models.AsyncUploadDocumentInputParams",
+                "watch_access": "_models.WatchAccessInput"
+                " | _models.WatchAccessInputParams",
+            },
+        ),
+    ):
+        for name in ("assume_access", "overload", "upload_document", "watch_access"):
+            if name not in client:
+                continue
+            shape = "".join(part.title() for part in name.split("_"))
+            plain = "_models.%sInput | _models.%sInputParams" % (shape, shape)
+            equal(
+                client[name],
+                expected.get(name, plain),
+                "%s %s request type" % (label, name),
+            )
+
+
+def check_runtime(sync, aio):
+    # Importing a client runs its class body, which defines every overload, so a
+    # method named like a name the class body uses breaks it.
+    sys.path.insert(0, str(PACKAGE.parent))
+    for label, module, client, documented in (
+        ("sync", "docs_client.client", "DocsService", sync),
+        ("async", "docs_client.aio.client", "AsyncDocsService", aio),
+    ):
+        try:
+            cls = getattr(importlib.import_module(module), client)
+        except Exception as error:
+            FAILURES.append("%s cannot be imported: %r" % (module, error))
+            continue
+        # Each implementation has its keyword overload's docs, for help().
+        for name, (_, doc) in documented.items():
+            runtime = getattr(cls, name).__doc__
+            equal(
+                runtime and inspect.cleandoc(runtime),
+                doc,
+                "%s %s runtime docs" % (label, name),
+            )
+
+
 def main():
     # The stub is read through its re-exports, so every partition stub is tried too.
     # models.py is not read, but it has the same member docs and is what is imported.
@@ -431,11 +570,15 @@ def main():
     trees = [load(name) for name in ("client.py", "aio/client.py", "models.py")]
     # Docs can only be read from modules that compile, so every module is tried first.
     if not FAILURES:
-        sync = methods(trees[0], "DocsService")
-        aio = methods(trees[1], "AsyncDocsService")
-        check_operations(models, sync, aio)
-        check_literals(models, sync, aio)
-        check_params(models)
+        sync, sync_requests = methods(trees[0], "DocsService")
+        aio, aio_requests = methods(trees[1], "AsyncDocsService")
+        # Every method must have been read before its docs can be checked.
+        if not FAILURES:
+            check_operations(models, sync, aio)
+            check_literals(models, sync, aio)
+            check_params(models)
+            check_requests(sync_requests, aio_requests)
+            check_runtime(sync, aio)
     if FAILURES:
         print("%d documentation checks failed:\n" % len(FAILURES))
         print("\n\n".join(FAILURES))

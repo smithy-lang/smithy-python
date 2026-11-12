@@ -32,7 +32,7 @@ from my_handwritten_model.aio.client import AsyncMyHandwrittenModel
 from my_handwritten_model.aio.config import AsyncConfig
 from smithy_cbor import CBORCodec
 
-from ._simon_says import GameProtocol, play_simon_says
+from ._simon_says import REQUEST_FORMS, GameProtocol, RequestForm, play_simon_says
 
 _RPCV2_CBOR = GameProtocol(
     client_class=AsyncMyHandwrittenModel,
@@ -44,5 +44,6 @@ _RPCV2_CBOR = GameProtocol(
 )
 
 
-async def test_simon_says_duplex() -> None:
-    await play_simon_says(_RPCV2_CBOR)
+@pytest.mark.parametrize("request_form", REQUEST_FORMS)
+async def test_simon_says_duplex(request_form: RequestForm) -> None:
+    await play_simon_says(_RPCV2_CBOR, request_form)

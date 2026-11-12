@@ -34,9 +34,13 @@ async def check_async_calls(client: AsyncRestXmlProtocolNamespaceClient) -> None
     pass
     await client.simple_scalar_properties()
     await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInputParams))
 
 
 def check_sync_calls(client: RestXmlProtocolNamespaceClient) -> None:
     pass
     client.simple_scalar_properties()
     client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInputParams))

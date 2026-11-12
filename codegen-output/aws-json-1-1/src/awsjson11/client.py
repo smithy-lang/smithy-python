@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import cast, overload as _overload
 
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.chain.resolver import IdentityChain
@@ -53,8 +53,19 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     def content_type_parameters(
-        self, *, value: int | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ContentTypeParametersInput
+        | _models.ContentTypeParametersInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ContentTypeParametersOutput: ...
+
+    @_overload
+    def content_type_parameters(
+        self, /, *, value: int | None = None, plugins: list[Plugin] | None = None
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -70,12 +81,29 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
+
+    def content_type_parameters(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ContentTypeParametersOutput:
         return self._invoke(
-            {"value": value}, _models.CONTENT_TYPE_PARAMETERS, [], plugins
+            self._select_input(_models.CONTENT_TYPE_PARAMETERS, args, kwargs),
+            _models.CONTENT_TYPE_PARAMETERS,
+            [],
+            plugins,
         )
 
+    @_overload
     def datetime_offsets(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DatetimeOffsetsOutput: ...
+
+    @_overload
+    def datetime_offsets(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -90,10 +118,29 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return self._invoke(None, _models.DATETIME_OFFSETS, [], plugins)
 
+    def datetime_offsets(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DatetimeOffsetsOutput:
+        return self._invoke(
+            self._select_input(_models.DATETIME_OFFSETS, args, kwargs),
+            _models.DATETIME_OFFSETS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def empty_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyOperationInput | _models.EmptyOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyOperationOutput: ...
+
+    @_overload
+    def empty_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EmptyOperationOutput:
         """
         Invokes the EmptyOperation operation.
@@ -108,10 +155,29 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `EmptyOperationOutput`.
         """
-        return self._invoke(None, _models.EMPTY_OPERATION, [], plugins)
 
+    def empty_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyOperationOutput:
+        return self._invoke(
+            self._select_input(_models.EMPTY_OPERATION, args, kwargs),
+            _models.EMPTY_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     def endpoint_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointOperationOutput: ...
+
+    @_overload
+    def endpoint_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -126,10 +192,30 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return self._invoke(None, _models.ENDPOINT_OPERATION, [], plugins)
 
+    def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointOperationOutput:
+        return self._invoke(
+            self._select_input(_models.ENDPOINT_OPERATION, args, kwargs),
+            _models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     def endpoint_with_host_label_operation(
-        self, *, label: str, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointWithHostLabelOperationInput
+        | _models.EndpointWithHostLabelOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput: ...
+
+    @_overload
+    def endpoint_with_host_label_operation(
+        self, /, *, label: str, plugins: list[Plugin] | None = None
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -144,12 +230,31 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
+
+    def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelOperationOutput:
         return self._invoke(
-            {"label": label}, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     def fractional_seconds(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FractionalSecondsOutput: ...
+
+    @_overload
+    def fractional_seconds(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -164,10 +269,30 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return self._invoke(None, _models.FRACTIONAL_SECONDS, [], plugins)
 
+    def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FractionalSecondsOutput:
+        return self._invoke(
+            self._select_input(_models.FRACTIONAL_SECONDS, args, kwargs),
+            _models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def greeting_with_errors(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput
+        | _models.GreetingWithErrorsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    def greeting_with_errors(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -186,10 +311,30 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return self._invoke(None, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def host_with_path_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HostWithPathOperationInput
+        | _models.HostWithPathOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HostWithPathOperationOutput: ...
+
+    @_overload
+    def host_with_path_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
@@ -204,10 +349,30 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        return self._invoke(None, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
+    def host_with_path_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HostWithPathOperationOutput:
+        return self._invoke(
+            self._select_input(_models.HOST_WITH_PATH_OPERATION, args, kwargs),
+            _models.HOST_WITH_PATH_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     def json_enums(
         self,
+        request: _models.JsonEnumsInput | _models.JsonEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonEnumsOutput: ...
+
+    @_overload
+    def json_enums(
+        self,
+        /,
         *,
         foo_enum1: str | None = None,
         foo_enum2: str | None = None,
@@ -231,22 +396,30 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `JsonEnumsOutput`.
         """
+
+    def json_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonEnumsOutput:
         return self._invoke(
-            {
-                "foo_enum1": foo_enum1,
-                "foo_enum2": foo_enum2,
-                "foo_enum3": foo_enum3,
-                "foo_enum_list": foo_enum_list,
-                "foo_enum_set": foo_enum_set,
-                "foo_enum_map": foo_enum_map,
-            },
+            self._select_input(_models.JSON_ENUMS, args, kwargs),
             _models.JSON_ENUMS,
             [],
             plugins,
         )
 
+    @_overload
     def json_int_enums(
         self,
+        request: _models.JsonIntEnumsInput | _models.JsonIntEnumsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonIntEnumsOutput: ...
+
+    @_overload
+    def json_int_enums(
+        self,
+        /,
         *,
         int_enum1: int | None = None,
         int_enum2: int | None = None,
@@ -270,22 +443,30 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `JsonIntEnumsOutput`.
         """
+
+    def json_int_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonIntEnumsOutput:
         return self._invoke(
-            {
-                "int_enum1": int_enum1,
-                "int_enum2": int_enum2,
-                "int_enum3": int_enum3,
-                "int_enum_list": int_enum_list,
-                "int_enum_set": int_enum_set,
-                "int_enum_map": int_enum_map,
-            },
+            self._select_input(_models.JSON_INT_ENUMS, args, kwargs),
             _models.JSON_INT_ENUMS,
             [],
             plugins,
         )
 
+    @_overload
     def json_unions(
         self,
+        request: _models.JsonUnionsInput | _models.JsonUnionsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonUnionsOutput: ...
+
+    @_overload
+    def json_unions(
+        self,
+        /,
         *,
         contents: _models.MyUnion | _models.MyUnionParams | None = None,
         plugins: list[Plugin] | None = None,
@@ -304,10 +485,31 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
-        return self._invoke({"contents": contents}, _models.JSON_UNIONS, [], plugins)
 
+    def json_unions(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonUnionsOutput:
+        return self._invoke(
+            self._select_input(_models.JSON_UNIONS, args, kwargs),
+            _models.JSON_UNIONS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def kitchen_sink_operation(
         self,
+        request: _models.KitchenSinkOperationInput
+        | _models.KitchenSinkOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> KitchenSinkOperationOutput: ...
+
+    @_overload
+    def kitchen_sink_operation(
+        self,
+        /,
         *,
         blob: bytes | None = None,
         boolean: bool | None = None,
@@ -356,42 +558,29 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `KitchenSinkOperationOutput`.
         """
+
+    def kitchen_sink_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> KitchenSinkOperationOutput:
         return self._invoke(
-            {
-                "blob": blob,
-                "boolean": boolean,
-                "double": double,
-                "empty_struct": empty_struct,
-                "float_": float_,
-                "httpdate_timestamp": httpdate_timestamp,
-                "integer": integer,
-                "iso8601_timestamp": iso8601_timestamp,
-                "json_value": json_value,
-                "list_of_lists": list_of_lists,
-                "list_of_maps_of_strings": list_of_maps_of_strings,
-                "list_of_strings": list_of_strings,
-                "list_of_structs": list_of_structs,
-                "long": long,
-                "map_of_lists_of_strings": map_of_lists_of_strings,
-                "map_of_maps": map_of_maps,
-                "map_of_strings": map_of_strings,
-                "map_of_structs": map_of_structs,
-                "recursive_list": recursive_list,
-                "recursive_map": recursive_map,
-                "recursive_struct": recursive_struct,
-                "simple_struct": simple_struct,
-                "string": string,
-                "struct_with_json_name": struct_with_json_name,
-                "timestamp": timestamp,
-                "unix_timestamp": unix_timestamp,
-            },
+            self._select_input(_models.KITCHEN_SINK_OPERATION, args, kwargs),
             _models.KITCHEN_SINK_OPERATION,
             [],
             plugins,
         )
 
+    @_overload
     def null_operation(
-        self, *, string: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NullOperationInput | _models.NullOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NullOperationOutput: ...
+
+    @_overload
+    def null_operation(
+        self, /, *, string: str | None = None, plugins: list[Plugin] | None = None
     ) -> NullOperationOutput:
         """
         Invokes the NullOperation operation.
@@ -406,10 +595,30 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `NullOperationOutput`.
         """
-        return self._invoke({"string": string}, _models.NULL_OPERATION, [], plugins)
 
+    def null_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NullOperationOutput:
+        return self._invoke(
+            self._select_input(_models.NULL_OPERATION, args, kwargs),
+            _models.NULL_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     def operation_with_optional_input_output(
-        self, *, value: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.OperationWithOptionalInputOutputInput
+        | _models.OperationWithOptionalInputOutputInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OperationWithOptionalInputOutputOutput: ...
+
+    @_overload
+    def operation_with_optional_input_output(
+        self, /, *, value: str | None = None, plugins: list[Plugin] | None = None
     ) -> OperationWithOptionalInputOutputOutput:
         """
         Invokes the OperationWithOptionalInputOutput operation.
@@ -424,12 +633,33 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `OperationWithOptionalInputOutputOutput`.
         """
+
+    def operation_with_optional_input_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithOptionalInputOutputOutput:
         return self._invoke(
-            {"value": value}, _models.OPERATION_WITH_OPTIONAL_INPUT_OUTPUT, [], plugins
+            self._select_input(
+                _models.OPERATION_WITH_OPTIONAL_INPUT_OUTPUT, args, kwargs
+            ),
+            _models.OPERATION_WITH_OPTIONAL_INPUT_OUTPUT,
+            [],
+            plugins,
         )
 
+    @_overload
     def put_and_get_inline_documents(
         self,
+        request: _models.PutAndGetInlineDocumentsInput
+        | _models.PutAndGetInlineDocumentsInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutAndGetInlineDocumentsOutput: ...
+
+    @_overload
+    def put_and_get_inline_documents(
+        self,
+        /,
         *,
         inline_document: Document | None = None,
         plugins: list[Plugin] | None = None,
@@ -447,15 +677,31 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `PutAndGetInlineDocumentsOutput`.
         """
+
+    def put_and_get_inline_documents(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutAndGetInlineDocumentsOutput:
         return self._invoke(
-            {"inline_document": inline_document},
+            self._select_input(_models.PUT_AND_GET_INLINE_DOCUMENTS, args, kwargs),
             _models.PUT_AND_GET_INLINE_DOCUMENTS,
             [],
             plugins,
         )
 
+    @_overload
     def put_with_content_encoding(
         self,
+        request: _models.PutWithContentEncodingInput
+        | _models.PutWithContentEncodingInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutWithContentEncodingOutput: ...
+
+    @_overload
+    def put_with_content_encoding(
+        self,
+        /,
         *,
         encoding: str | None = None,
         data: str | None = None,
@@ -474,15 +720,31 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
+
+    def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutWithContentEncodingOutput:
         return self._invoke(
-            {"encoding": encoding, "data": data},
+            self._select_input(_models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
             _models.PUT_WITH_CONTENT_ENCODING,
             [],
             plugins,
         )
 
+    @_overload
     def simple_scalar_properties(
         self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    def simple_scalar_properties(
+        self,
+        /,
         *,
         float_value: float | None = None,
         double_value: float | None = None,
@@ -501,15 +763,31 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
+
+    def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
         return self._invoke(
-            {"float_value": float_value, "double_value": double_value},
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
             _models.SIMPLE_SCALAR_PROPERTIES,
             [],
             plugins,
         )
 
+    @_overload
     def sparse_nulls_operation(
         self,
+        request: _models.SparseNullsOperationInput
+        | _models.SparseNullsOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SparseNullsOperationOutput: ...
+
+    @_overload
+    def sparse_nulls_operation(
+        self,
+        /,
         *,
         sparse_string_list: Sequence[str | None] | None = None,
         sparse_string_map: Mapping[str, str | None] | None = None,
@@ -528,11 +806,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Returns:
             An instance of `SparseNullsOperationOutput`.
         """
+
+    def sparse_nulls_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SparseNullsOperationOutput:
         return self._invoke(
-            {
-                "sparse_string_list": sparse_string_list,
-                "sparse_string_map": sparse_string_map,
-            },
+            self._select_input(_models.SPARSE_NULLS_OPERATION, args, kwargs),
             _models.SPARSE_NULLS_OPERATION,
             [],
             plugins,

@@ -8,7 +8,7 @@ use aws.protocols#restJson1
 @restJson1
 service DocsService {
     version: "2026-11-11"
-    operations: [AssumeAccess, MigrateSession, UploadDocument, WatchAccess]
+    operations: [AssumeAccess, MigrateSession, Overload, UploadDocument, WatchAccess]
 }
 
 /// Returns temporary access for a session.
@@ -79,6 +79,22 @@ operation MigrateSession {
         /// they like on the session, regardless of its permissions.
         /// </important>
         admin: String
+    }
+}
+
+// Its method is named like the decorator that declares the forms of every
+// operation method, and its member like the request those forms take, so neither
+// name may be taken by the client.
+
+/// Checks a request for a session.
+@http(method: "POST", uri: "/overload")
+operation Overload {
+    input := {
+        /// The text to check, which is not the request itself.
+        input: String
+
+        /// A tag to check the text against.
+        tag: SessionTag
     }
 }
 

@@ -40,6 +40,8 @@ async def check_async_calls(client: AsyncMyHandwrittenJsonModel) -> None:
     pass
     await client.trade_event_stream()
     await client.trade_event_stream(**_request(TradeEventStreamInputParams))
+    await client.trade_event_stream(_request(TradeEventStreamInput))
+    await client.trade_event_stream(_request(TradeEventStreamInputParams))
 
 
 def check_sync_calls(client: MyHandwrittenJsonModel) -> None:

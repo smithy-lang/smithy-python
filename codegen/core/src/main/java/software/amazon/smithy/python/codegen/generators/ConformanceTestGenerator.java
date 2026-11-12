@@ -140,9 +140,10 @@ public final class ConformanceTestGenerator implements Runnable {
         }
     }
 
-    // Calls every operation of both clients, with only its required members and
-    // with a whole request unpacked from the input's dictionary form, so the type
-    // checker verifies the generated method signatures against the stub.
+    // Calls every operation of both clients, with only its required members, with a
+    // whole request unpacked from the input's dictionary form, and with a whole
+    // request passed positionally as the input model or its dictionary form, so the
+    // type checker verifies the generated method signatures against the stub.
     private void writeOperationCalls(PythonWriter writer) {
         var inputParams = new InputParams(context);
         var service = settings.service(model);
@@ -158,15 +159,24 @@ public final class ConformanceTestGenerator implements Runnable {
             var input = model.expectShape(operation.getInputShape());
             var arguments = new StringBuilder();
             appendRequired(arguments, input, inputParams, name -> name + "=_");
+            var inputModel = symbolProvider.toSymbol(input);
+            writer.addImport(inputModel.getNamespace(), inputModel.getName());
+            var plainForm = inputParams.paramsSymbol(input);
+            writer.addImport(plainForm.getNamespace(), plainForm.getName());
             var calls = new ArrayList<String>();
             calls.add(String.format("client.%s(%s)", method, arguments));
-            // The plain dictionary form unpacks into either client.
-            calls.add(String.format("client.%s(**_request(%s))", method, inputParams.paramsSymbol(input).getName()));
+            // The plain dictionary form unpacks into either client, and either client
+            // takes it, or the input model, as the whole request.
+            calls.add(String.format("client.%s(**_request(%s))", method, plainForm.getName()));
+            calls.add(String.format("client.%s(_request(%s))", method, inputModel.getName()));
+            calls.add(String.format("client.%s(_request(%s))", method, plainForm.getName()));
             calls.forEach(call -> asyncCalls.add("await " + call));
             if (inputParams.hasAsyncParams(input)) {
+                // Only the async client takes the form whose body may be an async stream.
                 var asyncForm = inputParams.asyncParamsSymbol(input).getName();
                 writer.addImport(settings.moduleName() + ".models", asyncForm);
                 asyncCalls.add(String.format("await client.%s(**_request(%s))", method, asyncForm));
+                asyncCalls.add(String.format("await client.%s(_request(%s))", method, asyncForm));
             }
             // Sync clients don't support event streams.
             if (eventStreamIndex.getInputInfo(operation).isEmpty()

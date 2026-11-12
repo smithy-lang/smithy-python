@@ -2,7 +2,8 @@
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import Callable
 from copy import deepcopy
-from typing import Any, ClassVar
+from types import FunctionType
+from typing import Any, ClassVar, cast, get_overloads
 
 from .deserializers import DeserializeableShape
 from .exceptions import ExpectationNotMetError, ResourceLifecycleError
@@ -32,6 +33,19 @@ class ClientBase[C]:
     _client_plugins: ClassVar[tuple[Callable[[Any], None], ...]] = ()
     _pipeline_type: ClassVar[type[Any]]
     _call_type: ClassVar[type[Any]]
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        # A generated operation method is overloaded: it takes its whole request, or
+        # its members as keyword arguments. Its documentation is written once, on the
+        # keyword overload, which the generator writes last and where editors find
+        # the documentation of each argument. The implementation gets the same
+        # documentation so that help() shows it too.
+        for value in vars(cls).values():
+            if isinstance(value, FunctionType) and value.__doc__ is None:
+                docs = [o.__doc__ for o in get_overloads(value) if o.__doc__]
+                if docs:
+                    value.__doc__ = docs[-1]
 
     def __init__(
         self,
@@ -93,6 +107,48 @@ class ClientBase[C]:
             retry_strategy=retry_strategy,
         )
         return pipeline, call
+
+    def _select_input[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        operation: APIOperation[I, O],
+        args: tuple[object, ...],
+        members: dict[str, object],
+    ) -> I | dict[str, Any]:
+        """Choose what a generated operation method's input is built from.
+
+        The method takes either its whole request, positionally, as the input model
+        or its dictionary form, or the request's members as keyword arguments. The
+        result is handed to ``_invoke`` or ``_prepare_call``, which build the model.
+        A model is checked here and used as it is.
+
+        :param operation: The operation being called.
+        :param args: The method's positional arguments, after ``self``.
+        :param members: The method's keyword arguments, other than ``plugins``.
+        :raises TypeError: If more than one positional argument is given, the request
+            is given with keyword arguments, the request is not the operation's input
+            model or a dict, or the model doesn't fit the operation's input.
+        """
+        if len(args) == 0:
+            return members
+        name = operation.schema.id.name
+        if len(args) != 1:
+            raise TypeError(
+                f"{name} takes at most one positional argument, its request, "
+                f"but {len(args)} were given"
+            )
+        if members:
+            raise TypeError(f"{name} takes its request or keyword arguments, not both")
+        request = args[0]
+        if isinstance(request, dict):
+            return cast("dict[str, Any]", request)
+        input_type = operation.input
+        if isinstance(request, input_type):
+            operation.model_registry.check_input(operation.input_schema, request, name)
+            return request
+        raise TypeError(
+            f"{name} takes a {input_type.__name__} or a dict as its request, "
+            f"got {'None' if request is None else type(request).__name__}"
+        )
 
     def _build_input[I: SerializeableShape, O: DeserializeableShape](
         self, input: I | dict[str, Any] | None, operation: APIOperation[I, O]

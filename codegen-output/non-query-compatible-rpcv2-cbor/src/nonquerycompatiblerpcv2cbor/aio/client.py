@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -32,8 +32,19 @@ class AsyncNonQueryCompatibleRpcV2ProtocolClient(
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def non_query_compatible_operation(
-        self, *, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NonQueryCompatibleOperationInput
+        | _models.NonQueryCompatibleOperationInputParams,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NonQueryCompatibleOperationOutput: ...
+
+    @_overload
+    async def non_query_compatible_operation(
+        self, /, *, plugins: list[Plugin] | None = None
     ) -> NonQueryCompatibleOperationOutput:
         """
         Invokes the NonQueryCompatibleOperation operation.
@@ -48,8 +59,15 @@ class AsyncNonQueryCompatibleRpcV2ProtocolClient(
         Returns:
             An instance of `NonQueryCompatibleOperationOutput`.
         """
+
+    async def non_query_compatible_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NonQueryCompatibleOperationOutput:
         return await self._invoke(
-            None, _models.NON_QUERY_COMPATIBLE_OPERATION, [], plugins
+            self._select_input(_models.NON_QUERY_COMPATIBLE_OPERATION, args, kwargs),
+            _models.NON_QUERY_COMPATIBLE_OPERATION,
+            [],
+            plugins,
         )
 
     async def _new_config(self) -> AsyncNonQueryCompatibleRpcV2ProtocolConfig:

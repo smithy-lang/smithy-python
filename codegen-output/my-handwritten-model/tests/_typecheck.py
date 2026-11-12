@@ -60,10 +60,16 @@ async def check_async_calls(client: AsyncMyHandwrittenModel) -> None:
     pass
     await client.publish_events()
     await client.publish_events(**_request(PublishEventsInputParams))
+    await client.publish_events(_request(PublishEventsInput))
+    await client.publish_events(_request(PublishEventsInputParams))
     await client.subscribe_to_events()
     await client.subscribe_to_events(**_request(SubscribeToEventsInputParams))
+    await client.subscribe_to_events(_request(SubscribeToEventsInput))
+    await client.subscribe_to_events(_request(SubscribeToEventsInputParams))
     await client.trade_event_stream()
     await client.trade_event_stream(**_request(TradeEventStreamInputParams))
+    await client.trade_event_stream(_request(TradeEventStreamInput))
+    await client.trade_event_stream(_request(TradeEventStreamInputParams))
 
 
 def check_sync_calls(client: MyHandwrittenModel) -> None:
