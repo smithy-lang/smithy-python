@@ -3,7 +3,7 @@
 [project]
 name = "awsjson10"
 version = "0.0.1"
-description = "awsjson10 client"
+description = "Python client for Sample Json 1.0 Protocol Service"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["smithy", "awsjson10"]

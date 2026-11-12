@@ -3,7 +3,7 @@
 [project]
 name = "ec2query"
 version = "0.0.1"
-description = "ec2query client"
+description = "Python client for Sample Ec2 Protocol Service"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["smithy", "ec2query"]

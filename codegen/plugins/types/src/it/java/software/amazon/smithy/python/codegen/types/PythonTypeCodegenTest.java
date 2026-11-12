@@ -4,6 +4,11 @@
  */
 package software.amazon.smithy.python.codegen.types;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -39,7 +44,7 @@ public class PythonTypeCodegenTest {
     }
 
     @Test
-    public void testCodegenWithoutService(@TempDir Path tempDir) {
+    public void testCodegenWithoutService(@TempDir Path tempDir) throws IOException {
         PythonTypeCodegenPlugin plugin = new PythonTypeCodegenPlugin();
         Model model = Model.assembler(PythonTypeCodegenTest.class.getClassLoader())
                 .discoverModels(PythonTypeCodegenTest.class.getClassLoader())
@@ -55,5 +60,14 @@ public class PythonTypeCodegenTest {
                 .model(model)
                 .build();
         plugin.execute(context);
+
+        // Without a selected service, describe the package by its module name rather
+        // than the internal synthetic service.
+        var expected = "Python types for types_test";
+        String pyproject = Files.readString(tempDir.resolve("pyproject.toml"));
+        String readme = Files.readString(tempDir.resolve("README.md"));
+        assertAll(
+                () -> assertTrue(pyproject.contains("description = \"" + expected + "\"\n"), pyproject),
+                () -> assertTrue(readme.contains("\n" + expected + "\n"), readme));
     }
 }

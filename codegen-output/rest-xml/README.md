@@ -2,7 +2,7 @@
 
 ## Sample Rest Xml Protocol Service Client
 
-restxml client
+Python client for Sample Rest Xml Protocol Service
 
 ### Documentation
 

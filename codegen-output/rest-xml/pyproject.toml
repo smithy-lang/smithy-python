@@ -3,7 +3,7 @@
 [project]
 name = "restxml"
 version = "0.0.1"
-description = "restxml client"
+description = "Python client for Sample Rest Xml Protocol Service"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["smithy", "restxml"]
