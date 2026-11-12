@@ -1214,7 +1214,6 @@ async def test_empty_input_and_empty_output_response_empty_input_and_empty_outpu
         assert deep_equal(actual, expected)
 
 
-@mark.xfail()
 async def test_rest_xml_endpoint_trait_request_endpoint_operation() -> None:
     """
     Operations can prepend to the given host if they define the endpoint
@@ -1288,7 +1287,6 @@ async def test_rest_xml_endpoint_trait_request_endpoint_operation() -> None:
         )
 
 
-@mark.xfail()
 async def test_rest_xml_endpoint_trait_with_host_label_and_http_binding_request_endpoint_with_host_label_header_operation() -> (
     None
 ):
@@ -1367,7 +1365,6 @@ async def test_rest_xml_endpoint_trait_with_host_label_and_http_binding_request_
         )
 
 
-@mark.xfail()
 async def test_rest_xml_endpoint_trait_with_host_label_request_endpoint_with_host_label_operation() -> (
     None
 ):

@@ -18,6 +18,7 @@ from .exceptions import ExpectationNotMetError, SmithyError
 from .shapes import ShapeID, ShapeType
 from .traits import (
     DynamicTrait,
+    EndpointTrait,
     IdempotencyTokenTrait,
     LongPollTrait,
     StreamingTrait,
@@ -517,3 +518,34 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
             carries_response_metadata=False,
             is_enum=False,
         )
+
+    @cached_property
+    def _host_prefix(self) -> tuple[str, tuple[tuple[str, str], ...]] | None:
+        """The endpoint trait's host prefix, and the label and Python attribute name
+        of each input member it reads, or None.
+
+        Cached because the client reads it on every call.
+        """
+        trait = self.schema.get_trait(EndpointTrait)
+        if trait is None:
+            return None
+
+        from string import Formatter
+
+        from ._model_naming import member_field_name
+
+        # Labels are member names, which are valid format fields.
+        labels = tuple(
+            (
+                label,
+                member_field_name(
+                    label,
+                    is_error=False,
+                    carries_response_metadata=False,
+                    is_enum=False,
+                ),
+            )
+            for _, label, _, _ in Formatter().parse(trait.host_prefix)
+            if label
+        )
+        return trait.host_prefix, labels

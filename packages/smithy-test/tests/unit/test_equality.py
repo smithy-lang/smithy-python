@@ -65,3 +65,9 @@ def test_xml_equal_keeps_same_named_sibling_order() -> None:
 def test_xml_equal_compares_namespace_declarations() -> None:
     assert not xml_equal(b'<A xmlns:p="urn:x"/>', b"<A/>")
     assert not xml_equal(b"<A>1</A>", b"<A>2</A>")
+
+
+def test_xml_equal_compares_empty_bodies() -> None:
+    assert xml_equal(b"", b"")
+    assert not xml_equal(b"", b"<A/>")
+    assert not xml_equal(b"<A/>", b"")

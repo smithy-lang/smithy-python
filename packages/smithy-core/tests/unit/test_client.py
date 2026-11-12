@@ -18,10 +18,12 @@ from smithy_core.retries import (
 
 from .aio._pipeline_harness import (
     TOKEN_OPERATION,
+    HostPrefixInput,
     StubOutput,
     StubProtocol,
     StubResponse,
     TokenInput,
+    host_prefix_operation,
     retryable_client_call,
 )
 
@@ -213,3 +215,20 @@ def test_sync_pipeline_fills_unset_idempotency_token() -> None:
     [serialized] = protocol.serialized_inputs
     assert serialized.client_token == "sync-token"
     assert input.client_token is None
+
+
+def test_sync_pipeline_prepends_host_prefix() -> None:
+    protocol = _SyncProtocol()
+    pipeline: RequestPipeline[Any, Any] = RequestPipeline(
+        protocol=cast(Any, protocol), transport=cast(Any, _SyncTransport())
+    )
+    call = replace(
+        retryable_client_call(),
+        input=HostPrefixInput(bucket="bucket"),
+        operation=host_prefix_operation("{Bucket}."),
+    )
+
+    pipeline(call)
+
+    [endpoint] = protocol.service_endpoints
+    assert endpoint.uri.host == "bucket.example.com"

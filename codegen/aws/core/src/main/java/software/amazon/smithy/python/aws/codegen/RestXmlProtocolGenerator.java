@@ -23,12 +23,7 @@ public final class RestXmlProtocolGenerator implements ProtocolGenerator {
             // TODO: support the request compression trait
             // https://smithy.io/2.0/spec/behavior-traits.html#smithy-api-requestcompression-trait
             "SDKAppliedContentEncoding_restXml",
-            "SDKAppendedGzipAfterProvidedEncoding_restXml",
-
-            // TODO: support of the endpoint trait
-            "RestXmlEndpointTraitWithHostLabelAndHttpBinding",
-            "RestXmlEndpointTraitWithHostLabel",
-            "RestXmlEndpointTrait");
+            "SDKAppendedGzipAfterProvidedEncoding_restXml");
 
     @Override
     public ShapeId getProtocol() {

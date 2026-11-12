@@ -8,7 +8,6 @@ from smithy_core.shapes import ShapeType
 from smithy_core.traits import (
     ErrorFault,
     ErrorTrait,
-    HostLabelTrait,
     HTTPErrorTrait,
     HTTPHeaderTrait,
     HTTPLabelTrait,
@@ -50,9 +49,6 @@ class Binding(Enum):
     QUERY_PARAMS = 7
     """Indicates the member is bound to the query string as multiple key-value pairs."""
 
-    HOST = 8
-    """Indicates the member is bound to a prefix to the host AND to the body."""
-
 
 @dataclass(init=False)
 class _BindingMatcher:
@@ -86,9 +82,7 @@ class _BindingMatcher:
         for member in members:
             binding = self._do_match(member)
             self.bindings[member.expect_member_index()] = binding
-            found_body = (
-                found_body or binding is Binding.BODY or binding is Binding.HOST
-            )
+            found_body = found_body or binding is Binding.BODY
             if binding is Binding.PAYLOAD:
                 found_payload = True
                 self.payload_member = member
@@ -140,8 +134,6 @@ class RequestBindingMatcher(_BindingMatcher):
             return Binding.PREFIX_HEADERS
         if HTTPPayloadTrait.id in member.traits:
             return Binding.PAYLOAD
-        if HostLabelTrait.id in member.traits:
-            return Binding.HOST
         return Binding.BODY
 
 

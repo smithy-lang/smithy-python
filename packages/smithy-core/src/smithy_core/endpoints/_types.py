@@ -65,6 +65,13 @@ RESOLVED_ENDPOINT: PropertyKey[_Endpoint] = PropertyKey(
 Resolvers cache endpoints, so other calls may share this object: don't modify it.
 """
 
+HOST_PREFIX: PropertyKey[str] = PropertyKey(key="host_prefix", value_type=str)
+"""A call context property holding the operation's expanded endpoint host prefix.
+
+It's prepended to the host of every attempt's resolved endpoint. It's unset when the
+operation has no host prefix or the config sets ``disable_host_prefix_injection``.
+"""
+
 ENDPOINT_PARAMETERS: PropertyKey[Mapping[str, Any]] = PropertyKey(
     key="endpoint_parameters",
     value_type=Mapping[str, Any],

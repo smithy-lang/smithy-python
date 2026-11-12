@@ -43,8 +43,10 @@ def xml_equal(a: bytes, b: bytes) -> bool:
     Only the order of same-named sibling elements (such as list items) is
     significant; structure members, attributes, whitespace-only text, and
     whitespace around text may differ. Namespace declarations are compared as
-    attributes.
+    attributes. An empty body only equals another empty body.
     """
+    if not a or not b:
+        return a == b
     return _canonical_xml(a) == _canonical_xml(b)
 
 
