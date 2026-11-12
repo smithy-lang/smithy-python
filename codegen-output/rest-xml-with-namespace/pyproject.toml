@@ -3,7 +3,7 @@
 [project]
 name = "restxmlwithnamespace"
 version = "0.0.1"
-description = "restxmlwithnamespace client"
+description = "Python client for Sample Rest Xml Protocol Service With Namespace"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["smithy", "restxmlwithnamespace"]

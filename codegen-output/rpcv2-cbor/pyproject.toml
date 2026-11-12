@@ -3,7 +3,7 @@
 [project]
 name = "rpcv2cbor"
 version = "0.0.1"
-description = "rpcv2cbor client"
+description = "Python client for RpcV2 Protocol Service"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["smithy", "rpcv2cbor"]

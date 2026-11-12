@@ -3,7 +3,7 @@
 [project]
 name = "my_handwritten_model"
 version = "0.0.1"
-description = "my_handwritten_model client"
+description = "Python client for My Handwritten Model"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["smithy", "my_handwritten_model"]

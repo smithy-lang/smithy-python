@@ -5,7 +5,6 @@
 package software.amazon.smithy.python.codegen;
 
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.Objects;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.Model;
@@ -56,9 +55,8 @@ public record PythonSettings(
                 builder.service,
                 builder.moduleName,
                 builder.moduleVersion,
-                StringUtils.isBlank(builder.moduleDescription)
-                        ? builder.moduleName + " " + builder.artifactType.name().toLowerCase(Locale.ENGLISH)
-                        : builder.moduleDescription,
+                // Unset descriptions stay empty; SetupGenerator resolves them from the service.
+                StringUtils.isBlank(builder.moduleDescription) ? "" : builder.moduleDescription,
                 builder.artifactType);
     }
 
@@ -87,10 +85,9 @@ public record PythonSettings(
     public static PythonSettings fromNode(ObjectNode config) {
         config.warnIfAdditionalProperties(Arrays.asList(SERVICE, MODULE_NAME, MODULE_DESCRIPTION, MODULE_VERSION));
 
-        String moduleName = config.expectStringMember(MODULE_NAME).getValue();
         Builder builder = builder()
                 .service(config.expectStringMember(SERVICE).expectShapeId())
-                .moduleName(moduleName)
+                .moduleName(config.expectStringMember(MODULE_NAME).getValue())
                 .moduleVersion(config.expectStringMember(MODULE_VERSION).getValue());
         config.getStringMember(MODULE_DESCRIPTION).map(StringNode::getValue).ifPresent(builder::moduleDescription);
         return builder.build();

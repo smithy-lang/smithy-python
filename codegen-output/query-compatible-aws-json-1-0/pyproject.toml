@@ -3,7 +3,7 @@
 [project]
 name = "querycompatibleawsjson10"
 version = "0.0.1"
-description = "querycompatibleawsjson10 client"
+description = "Python client for Query Compatible Json 1.0 Protocol Service"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["smithy", "querycompatibleawsjson10"]

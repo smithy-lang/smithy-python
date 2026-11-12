@@ -41,8 +41,24 @@ public final class SetupGenerator {
             GenerationContext context
     ) {
         var dependencies = gatherDependencies(context.writerDelegator().getDependencies().stream());
-        writePyproject(settings, context.writerDelegator(), dependencies);
-        writeReadme(settings, context);
+        var description = resolveDescription(settings, context);
+        writePyproject(settings, description, context.writerDelegator(), dependencies);
+        writeReadme(settings, description, context);
+    }
+
+    /**
+     * Use the configured description if set, otherwise describe the client or types
+     * package by the service's {@code smithy.api#title} trait or else the service shape's name.
+     */
+    private static String resolveDescription(PythonSettings settings, GenerationContext context) {
+        if (!StringUtils.isBlank(settings.moduleDescription())) {
+            return settings.moduleDescription();
+        }
+        var service = context.model().expectShape(settings.service());
+        var artifact = settings.artifactType() == PythonSettings.ArtifactType.TYPES ? "types" : "client";
+        return "Python " + artifact + " for " + service.getTrait(TitleTrait.class)
+                .map(StringTrait::getValue)
+                .orElse(service.getId().getName());
     }
 
     /**
@@ -106,6 +122,7 @@ public final class SetupGenerator {
      */
     private static void writePyproject(
             PythonSettings settings,
+            String description,
             WriterDelegator<PythonWriter> writers,
             Map<String, Map<String, SymbolDependency>> dependencies
     ) {
@@ -139,7 +156,7 @@ public final class SetupGenerator {
                         "Programming Language :: Python :: 3.14",
                         "Programming Language :: Python :: 3.15"
                     ]
-                    """, settings.moduleName(), settings.moduleVersion(), settings.moduleDescription());
+                    """, settings.moduleName(), settings.moduleVersion(), description);
 
             Optional.ofNullable(dependencies.get(PythonDependency.Type.DEPENDENCY.getType())).ifPresent(deps -> {
                 writer.openBlock("dependencies = [", "]\n", () -> writeDependencyList(writer, deps.values()));
@@ -283,6 +300,7 @@ public final class SetupGenerator {
 
     private static void writeReadme(
             PythonSettings settings,
+            String description,
             GenerationContext context
     ) {
         var service = context.model().expectShape(settings.service());
@@ -292,17 +310,13 @@ public final class SetupGenerator {
                 .map(StringTrait::getValue)
                 .orElse(StringUtils.capitalize(settings.moduleName()));
 
-        var description = StringUtils.isBlank(settings.moduleDescription())
-                ? "Generated service client for " + title
-                : StringUtils.wrap(settings.moduleDescription(), 80);
-
         context.writerDelegator().useFileWriter("README.md", writer -> {
             writer.pushState(new ReadmeSection());
             writer.write("""
                     ## $L Client
 
                     $L
-                    """, title, description);
+                    """, title, StringUtils.wrap(description, 80));
 
             service.getTrait(DocumentationTrait.class).map(StringTrait::getValue).ifPresent(documentation -> {
                 writer.write("""
