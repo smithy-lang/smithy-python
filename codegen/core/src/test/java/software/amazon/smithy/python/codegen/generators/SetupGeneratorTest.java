@@ -18,6 +18,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import software.amazon.smithy.build.MockManifest;
 import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.TitleTrait;
@@ -78,43 +79,24 @@ public class SetupGeneratorTest {
         assertTrue(readme.contains("Use `\"\"\"` here."), readme);
     }
 
-    @Test
-    public void defaultDescriptionUsesServiceTitle() {
-        // Without an explicit moduleDescription, the pyproject.toml description should be
-        // derived from the standard smithy.api#title trait, while the README keeps its
-        // legacy "<module> client" description.
-        assertDescription(
-                service("smithy.example#DynamoDB", "Amazon DynamoDB"),
-                null,
-                ArtifactType.CLIENT,
-                "Python client for Amazon DynamoDB",
-                "test_client client");
-    }
-
     static Stream<Arguments> packageDescriptionCases() {
         var titled = service("smithy.example#Weather", "Example Weather Service");
         var untitled = service("smithy.example#Weather", null);
         var client = ArtifactType.CLIENT;
         var types = ArtifactType.TYPES;
         var titledDefault = "Python client for Example Weather Service";
+        var titledTypesDefault = "Python types for Example Weather Service";
         return Stream.of(
-                Arguments.of("explicit",
-                        titled,
-                        "Custom description",
-                        client,
-                        "Custom description",
-                        "Custom description"),
-                Arguments.of("explicit old default",
-                        titled,
-                        "test_client client",
-                        client,
-                        "test_client client",
-                        "test_client client"),
-                Arguments.of("blank", titled, "   ", client, titledDefault, "test_client client"),
-                Arguments.of("titled", titled, null, client, titledDefault, "test_client client"),
-                Arguments.of("untitled", untitled, null, client, "Python client for Weather", "test_client client"),
-                Arguments.of("types default", titled, null, types, "test_client types", "test_client types"),
-                Arguments.of("types explicit", titled, "Custom types", types, "Custom types", "Custom types"));
+                Arguments.of("explicit", titled, "Custom description", client, "Custom description"),
+                Arguments.of("explicit old default", titled, "test_client client", client, "test_client client"),
+                Arguments.of("blank", titled, "   ", client, titledDefault),
+                Arguments.of("titled", titled, null, client, titledDefault),
+                Arguments.of("untitled", untitled, null, client, "Python client for Weather"),
+                Arguments.of("types default", titled, null, types, titledTypesDefault),
+                Arguments.of("types untitled", untitled, null, types, "Python types for Weather"),
+                Arguments.of("types blank", titled, "   ", types, titledTypesDefault),
+                Arguments.of("types explicit", titled, "Custom types", types, "Custom types"),
+                Arguments.of("types explicit old default", titled, "test_client types", types, "test_client types"));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -124,10 +106,9 @@ public class SetupGeneratorTest {
             ServiceShape service,
             String moduleDescription,
             ArtifactType artifactType,
-            String expectedPyproject,
-            String expectedLegacy
+            String expected
     ) {
-        assertDescription(service, moduleDescription, artifactType, expectedPyproject, expectedLegacy);
+        assertDescription(service, moduleDescription, artifactType, expected);
     }
 
     private static ServiceShape service(String id, String title) {
@@ -142,17 +123,30 @@ public class SetupGeneratorTest {
             ServiceShape service,
             String moduleDescription,
             ArtifactType artifactType,
-            String expectedPyproject,
-            String expectedLegacy
+            String expected
     ) {
         var model = Model.builder().addShape(service).build();
-        var settings = PythonSettings.builder()
-                .service(service.getId())
-                .moduleName("test_client")
-                .moduleVersion("0.0.1")
-                .moduleDescription(moduleDescription)
-                .artifactType(artifactType)
-                .build();
+        PythonSettings settings;
+        if (artifactType == ArtifactType.CLIENT) {
+            // Clients are configured through the plugin's settings parsing.
+            var config = ObjectNode.builder()
+                    .withMember("service", service.getId().toString())
+                    .withMember("module", "test_client")
+                    .withMember("moduleVersion", "0.0.1");
+            if (moduleDescription != null) {
+                config.withMember("moduleDescription", moduleDescription);
+            }
+            settings = PythonSettings.fromNode(config.build());
+        } else {
+            // The types plugin converts its own settings through the builder.
+            settings = PythonSettings.builder()
+                    .service(service.getId())
+                    .moduleName("test_client")
+                    .moduleVersion("0.0.1")
+                    .moduleDescription(moduleDescription)
+                    .artifactType(artifactType)
+                    .build();
+        }
         var manifest = new MockManifest();
         var delegator = new PythonDelegator(manifest, new PythonSymbolProvider(model, settings), settings);
         var context = GenerationContext.builder()
@@ -167,11 +161,9 @@ public class SetupGeneratorTest {
         String pyproject = manifest.expectFileString("pyproject.toml");
         String readme = manifest.expectFileString("README.md");
 
-        // pyproject.toml uses the model-aware description, while the README and the
-        // no-argument accessor keep their legacy "<module> <artifact type>" default.
+        // Both generated files carry the same resolved description.
         assertAll(
-                () -> assertTrue(pyproject.contains("description = \"" + expectedPyproject + "\"\n"), pyproject),
-                () -> assertTrue(readme.contains("\n" + expectedLegacy + "\n"), readme),
-                () -> assertEquals(expectedLegacy, settings.moduleDescription()));
+                () -> assertTrue(pyproject.contains("description = \"" + expected + "\"\n"), pyproject),
+                () -> assertTrue(readme.contains("\n" + expected + "\n"), readme));
     }
 }

@@ -5,7 +5,6 @@
 package software.amazon.smithy.python.codegen;
 
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.Objects;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.Model;
@@ -13,8 +12,6 @@ import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.node.StringNode;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
-import software.amazon.smithy.model.traits.StringTrait;
-import software.amazon.smithy.model.traits.TitleTrait;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.StringUtils;
@@ -58,41 +55,9 @@ public record PythonSettings(
                 builder.service,
                 builder.moduleName,
                 builder.moduleVersion,
+                // Unset descriptions stay empty; SetupGenerator resolves them from the service.
                 StringUtils.isBlank(builder.moduleDescription) ? "" : builder.moduleDescription,
                 builder.artifactType);
-    }
-
-    /**
-     * Gets the configured module description, or {@code "<module> <artifact type>"} if none was configured.
-     *
-     * @return Returns the module description.
-     */
-    @Override
-    public String moduleDescription() {
-        return StringUtils.isBlank(moduleDescription)
-                ? moduleName + " " + artifactType.name().toLowerCase(Locale.ENGLISH)
-                : moduleDescription;
-    }
-
-    /**
-     * Resolves the description used in the generated package metadata.
-     *
-     * <p>A configured description is returned as-is. Otherwise, client descriptions are
-     * derived from the service's {@code smithy.api#title} trait, falling back to the
-     * service shape's name.
-     *
-     * @param model Model containing the service shape.
-     * @return Returns the package description.
-     */
-    public String moduleDescription(Model model) {
-        if (!StringUtils.isBlank(moduleDescription) || artifactType != ArtifactType.CLIENT) {
-            return moduleDescription();
-        }
-        var service = service(model);
-        var name = service.getTrait(TitleTrait.class)
-                .map(StringTrait::getValue)
-                .orElse(service.getId().getName());
-        return "Python client for " + name;
     }
 
     /**
@@ -120,10 +85,9 @@ public record PythonSettings(
     public static PythonSettings fromNode(ObjectNode config) {
         config.warnIfAdditionalProperties(Arrays.asList(SERVICE, MODULE_NAME, MODULE_DESCRIPTION, MODULE_VERSION));
 
-        String moduleName = config.expectStringMember(MODULE_NAME).getValue();
         Builder builder = builder()
                 .service(config.expectStringMember(SERVICE).expectShapeId())
-                .moduleName(moduleName)
+                .moduleName(config.expectStringMember(MODULE_NAME).getValue())
                 .moduleVersion(config.expectStringMember(MODULE_VERSION).getValue());
         config.getStringMember(MODULE_DESCRIPTION).map(StringNode::getValue).ifPresent(builder::moduleDescription);
         return builder.build();
