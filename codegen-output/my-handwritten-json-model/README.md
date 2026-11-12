@@ -2,7 +2,7 @@
 
 ## My Handwritten JSON Model Client
 
-my_handwritten_json_model client
+Python client for My Handwritten JSON Model
 
 ### Documentation
 
