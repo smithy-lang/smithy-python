@@ -57,10 +57,6 @@ class RestXmlProtocolNamespaceClient(Client[RestXmlProtocolNamespaceConfig]):
         """
         Invokes the SimpleScalarProperties operation.
 
-        The keyword arguments are the members of
-        `SimpleScalarPropertiesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.

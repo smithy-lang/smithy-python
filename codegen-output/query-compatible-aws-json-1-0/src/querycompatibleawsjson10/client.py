@@ -19,7 +19,7 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .models import QueryCompatibleOperationInput, QueryCompatibleOperationOutput
+    from .models import QueryCompatibleOperationOutput
 
 
 logger = logging.getLogger(__name__)
@@ -31,16 +31,12 @@ class QueryCompatibleJSONRPC10Client(Client[QueryCompatibleJSONRPC10Config]):
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
     def query_compatible_operation(
-        self,
-        input: QueryCompatibleOperationInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> QueryCompatibleOperationOutput:
         """
         Invokes the QueryCompatibleOperation operation.
 
         Args:
-            input:
-                An instance of `QueryCompatibleOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -50,7 +46,7 @@ class QueryCompatibleJSONRPC10Client(Client[QueryCompatibleJSONRPC10Config]):
         Returns:
             An instance of `QueryCompatibleOperationOutput`.
         """
-        return self._invoke(input, _models.QUERY_COMPATIBLE_OPERATION, [], plugins)
+        return self._invoke(None, _models.QUERY_COMPATIBLE_OPERATION, [], plugins)
 
     def _new_config(self) -> QueryCompatibleJSONRPC10Config:
         return QueryCompatibleJSONRPC10Config.resolve()

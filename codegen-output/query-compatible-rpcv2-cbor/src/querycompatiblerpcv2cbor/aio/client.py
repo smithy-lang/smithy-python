@@ -19,7 +19,7 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..models import QueryCompatibleOperationInput, QueryCompatibleOperationOutput
+    from ..models import QueryCompatibleOperationOutput
 
 
 logger = logging.getLogger(__name__)
@@ -33,14 +33,12 @@ class AsyncQueryCompatibleRpcV2ProtocolClient(
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
     async def query_compatible_operation(
-        self, input: QueryCompatibleOperationInput, plugins: list[Plugin] | None = None
+        self, *, plugins: list[Plugin] | None = None
     ) -> QueryCompatibleOperationOutput:
         """
         Invokes the QueryCompatibleOperation operation.
 
         Args:
-            input:
-                An instance of `QueryCompatibleOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -50,9 +48,7 @@ class AsyncQueryCompatibleRpcV2ProtocolClient(
         Returns:
             An instance of `QueryCompatibleOperationOutput`.
         """
-        return await self._invoke(
-            input, _models.QUERY_COMPATIBLE_OPERATION, [], plugins
-        )
+        return await self._invoke(None, _models.QUERY_COMPATIBLE_OPERATION, [], plugins)
 
     async def _new_config(self) -> AsyncQueryCompatibleRpcV2ProtocolConfig:
         return await AsyncQueryCompatibleRpcV2ProtocolConfig.resolve()

@@ -177,20 +177,19 @@ def test_required_member_with_a_default_may_be_omitted() -> None:
     assert built.page_size == 25
 
 
-@pytest.mark.parametrize("members", [{}, {"client_token": None}])
-def test_unset_idempotency_token_is_generated_for_each_call(
-    members: dict[str, Any],
-) -> None:
+@pytest.mark.parametrize(
+    "members", [{}, {"client_token": None}], ids=["omitted", "none"]
+)
+def test_unset_idempotency_token_is_left_unset(members: dict[str, Any]) -> None:
     registry = _registry(DEFAULTS_INPUT=DEFAULTS_INPUT)
     given = {"name": "n", **members}
 
-    first = registry.build_input(hydrate(DEFAULTS_INPUT), given, "Operation")
-    second = registry.build_input(hydrate(DEFAULTS_INPUT), given, "Operation")
+    built = registry.build_input(hydrate(DEFAULTS_INPUT), given, "Operation")
 
-    assert isinstance(first.client_token, str)
-    assert first.client_token
-    assert first.client_token != second.client_token
-    # The token goes on the model the client builds, never into the caller's dict.
+    # ClientToken is required, yet an operation's own token may be omitted. The
+    # pipeline generates it once the interceptors have run, so building the input
+    # neither demands the token nor fills it.
+    assert built.client_token is None
     assert given == {"name": "n", **members}
 
 

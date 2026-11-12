@@ -410,6 +410,7 @@ class QueryIdempotencyTokenAutoFillInputParams(TypedDict, total=False):
     """Dictionary form of `QueryIdempotencyTokenAutoFillInput`."""
 
     token: str | None
+    """This field is autopopulated if not provided."""
 
 @dataclass(kw_only=True)
 class QueryIdempotencyTokenAutoFillOutput(_SerdeShape):

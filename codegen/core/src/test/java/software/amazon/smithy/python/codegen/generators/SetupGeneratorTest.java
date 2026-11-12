@@ -5,6 +5,7 @@
 package software.amazon.smithy.python.codegen.generators;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -51,6 +52,21 @@ public class SetupGeneratorTest {
     }
 
     @Test
+    public void readmeKeepsBackslashesAndDollarSignsLiteral() {
+        // Markdown code is verbatim, down to a backslash before the closing backtick,
+        // so the backslash escaping of a Python string must not show up in the README
+        // either. It is written with $L, where a dollar sign that was escaped for the
+        // writer stays doubled. Outside code, Markdown may escape the dollar sign.
+        var manifest = generateSetup();
+        String readme = manifest.expectFileString("README.md");
+
+        assertTrue(readme.contains("`D:\\Users\\%USERNAME%\\`"), readme);
+        assertTrue(readme.contains("`$LATEST`"), readme);
+        assertTrue(readme.contains("$5"), readme);
+        assertFalse(readme.contains("$$"), readme);
+    }
+
+    @Test
     public void packageCarriesTheTypeMarker() {
         // Without py.typed in the package, type checkers ignore an installed
         // client's inline types and its model stub. The marker is an empty file.
@@ -63,7 +79,8 @@ public class SetupGeneratorTest {
         var service = ServiceShape.builder()
                 .id("smithy.example#TestService")
                 .version("2024-01-01")
-                .addTrait(new DocumentationTrait("Use <code>\"\"\"</code> here."))
+                .addTrait(new DocumentationTrait("Use <code>\"\"\"</code> here.\n\n"
+                        + "A new `D:\\Users\\%USERNAME%\\` folder costs $5 for each `$LATEST` version."))
                 .build();
         var model = Model.builder().addShape(service).build();
         var settings = PythonSettings.builder()

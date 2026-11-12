@@ -472,6 +472,7 @@ class RpcV2CborListsInputParams(TypedDict, total=False):
     enum_list: Sequence[str] | None
     int_enum_list: Sequence[int] | None
     nested_string_list: Sequence[Sequence[str]] | None
+    """A list of lists of strings."""
     structure_list: Sequence[StructureListMember | StructureListMemberParams] | None
     blob_list: Sequence[bytes] | None
 

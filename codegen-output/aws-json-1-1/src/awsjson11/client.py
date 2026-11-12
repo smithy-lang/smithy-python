@@ -60,10 +60,6 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         The example tests how servers must support requests containing a
         `Content-Type` header with parameters.
 
-        The keyword arguments are the members of
-        `ContentTypeParametersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -137,10 +133,6 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
-
-        The keyword arguments are the members of
-        `EndpointWithHostLabelOperationInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -229,10 +221,6 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        The keyword arguments are the members of
-        `JsonEnumsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -272,10 +260,6 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         This example serializes intEnums as top level properties, in lists,
         sets, and maps.
 
-        The keyword arguments are the members of
-        `JsonIntEnumsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -309,11 +293,8 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         This operation uses unions for inputs and outputs.
 
-        The keyword arguments are the members of
-        `JsonUnionsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            contents: A union with a representative set of types for members.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -365,10 +346,6 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the KitchenSinkOperation operation.
 
-        The keyword arguments are the members of
-        `KitchenSinkOperationInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -419,10 +396,6 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the NullOperation operation.
 
-        The keyword arguments are the members of
-        `NullOperationInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -440,10 +413,6 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     ) -> OperationWithOptionalInputOutputOutput:
         """
         Invokes the OperationWithOptionalInputOutput operation.
-
-        The keyword arguments are the members of
-        `OperationWithOptionalInputOutputInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -467,10 +436,6 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     ) -> PutAndGetInlineDocumentsOutput:
         """
         This example serializes an inline document as part of the payload.
-
-        The keyword arguments are the members of
-        `PutAndGetInlineDocumentsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -499,10 +464,6 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        The keyword arguments are the members of
-        `PutWithContentEncodingInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -530,10 +491,6 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the SimpleScalarProperties operation.
 
-        The keyword arguments are the members of
-        `SimpleScalarPropertiesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -560,10 +517,6 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     ) -> SparseNullsOperationOutput:
         """
         Invokes the SparseNullsOperation operation.
-
-        The keyword arguments are the members of
-        `SparseNullsOperationInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:

@@ -91,6 +91,7 @@ _ERROR_MEMBER_NAMES: Final = frozenset(
 # The parameters every generated client method declares besides its input members.
 # The runtime escapes them on operation inputs, whose members are that method's
 # keyword parameters, so the generated stub has to as well.
+# CAUTION: mirrors smithy_core._model_naming._RESERVED_INPUT_MEMBERS.
 _OPERATION_PARAMETER_NAMES: Final = frozenset({"self", "plugins"})
 _RESPONSE_METADATA_DOC: Final = (
     "Metadata about the response that produced this output.\n\n"

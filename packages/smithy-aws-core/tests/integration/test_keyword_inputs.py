@@ -11,9 +11,11 @@ on the wire.
 import inspect
 import json
 import os
+import uuid
 from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any, cast
+from urllib.parse import parse_qs
 
 import pytest
 
@@ -137,6 +139,18 @@ async def _result(call: Any) -> Any:
     return await call if inspect.isawaitable(call) else call
 
 
+def _sent_tokens(transport: _Transport) -> list[str]:
+    """The idempotency token of each request sent, which is its whole query."""
+    tokens: list[str] = []
+    for request in transport.requests:
+        raw: str = request.destination.query
+        query = parse_qs(raw, keep_blank_values=True)
+        assert list(query) == ["token"]
+        (token,) = query["token"]
+        tokens.append(token)
+    return tokens
+
+
 async def test_inline_dictionaries_are_sent_and_reach_interceptors_as_models(
     sync: bool, tmp_path: Path
 ) -> None:
@@ -249,13 +263,14 @@ async def test_unset_idempotency_token_is_generated_for_each_call(
     await _result(client.query_idempotency_token_auto_fill())
     await _result(client.query_idempotency_token_auto_fill(token=None))
 
-    # Interceptors see the token that is sent, and each call has its own.
-    tokens = [received.token for received in recorder.inputs]
-    assert all(isinstance(token, str) and token for token in tokens)
-    assert tokens[0] != tokens[1]
-    assert [request.destination.query for request in transport.requests] == [
-        f"token={token}" for token in tokens
-    ]
+    # The token is generated once the interceptors that may change the input have
+    # run, so the first hook sees it as the caller left it.
+    assert [received.token for received in recorder.inputs] == [None, None]
+    # Each call is sent with a generated token of its own.
+    first, second = _sent_tokens(transport)
+    assert uuid.UUID(first).version == 4
+    assert uuid.UUID(second).version == 4
+    assert first != second
 
 
 async def test_generated_idempotency_token_is_the_same_on_every_attempt(
@@ -268,10 +283,11 @@ async def test_generated_idempotency_token_is_the_same_on_every_attempt(
     await _result(client.query_idempotency_token_auto_fill())
 
     (received,) = recorder.inputs
-    assert received.token
-    assert [request.destination.query for request in transport.requests] == [
-        f"token={received.token}"
-    ] * 3
+    assert received.token is None
+    # All three attempts are sent with the one token generated for the call.
+    sent = _sent_tokens(transport)
+    assert uuid.UUID(sent[0]).version == 4
+    assert sent == [sent[0]] * 3
 
 
 @pytest.mark.parametrize("token", ["t-1", ""])

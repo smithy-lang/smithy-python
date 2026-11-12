@@ -79,9 +79,9 @@ def test_event_stream_members_are_not_model_fields(
     assert verify_models(models, schemas, codec=_Codec(), pyi_path=str(stub)) == 1
 
 
-_PARAMS_STUB = """
+_THING_STUB = """
 from dataclasses import dataclass
-from typing import TypedDict, Union
+from typing import TypedDict
 
 @dataclass
 class Thing:
@@ -89,6 +89,9 @@ class Thing:
 
 class ThingParams(TypedDict, total=False):
     name: str | None
+"""
+_CHOICE_STUB = """
+from typing import TypedDict, Union
 
 class ChoiceTextParams(TypedDict):
     text: str
@@ -96,6 +99,35 @@ class ChoiceTextParams(TypedDict):
 ChoiceParams = Union[ChoiceTextParams]
 """
 _PARAMS_NAMES = frozenset({"ThingParams", "ChoiceTextParams", "ChoiceParams"})
+
+
+def _write_params_stub(tmp_path: Path, partitioned: bool) -> Path:
+    """Write the stub whole, or as a facade over two partitions that refer to it."""
+    stub = tmp_path / "models.pyi"
+    if not partitioned:
+        stub.write_text(_THING_STUB + _CHOICE_STUB)
+        return stub
+    private = tmp_path / "_private"
+    private.mkdir()
+    # A partition imports what another declares through the facade, as generated
+    # partitions do, so following the stub's imports has to stop at the cycle.
+    (private / "models_0.pyi").write_text(
+        "from ..models import ChoiceParams as ChoiceParams\n" + _THING_STUB
+    )
+    (private / "models_1.pyi").write_text(
+        "from ..models import ThingParams as ThingParams\n" + _CHOICE_STUB
+    )
+    stub.write_text(
+        "from ._private.models_0 import (\n"
+        "    Thing as Thing,\n"
+        "    ThingParams as ThingParams,\n"
+        ")\n"
+        "from ._private.models_1 import (\n"
+        "    ChoiceParams as ChoiceParams,\n"
+        "    ChoiceTextParams as ChoiceTextParams,\n"
+        ")\n"
+    )
+    return stub
 
 
 def _thing_modules() -> tuple[ModuleType, ModuleType]:
@@ -118,25 +150,43 @@ def _thing_modules() -> tuple[ModuleType, ModuleType]:
     return models, schemas
 
 
-def test_dictionary_forms_in_the_stub_are_dict_at_runtime(tmp_path: Path) -> None:
+@pytest.mark.parametrize("partitioned", [False, True])
+def test_dictionary_forms_in_the_stub_are_dict_at_runtime(
+    tmp_path: Path, partitioned: bool
+) -> None:
     models, schemas = _thing_modules()
     for name in _PARAMS_NAMES:
         setattr(models, name, dict)
-    stub = tmp_path / "models.pyi"
-    stub.write_text(_PARAMS_STUB)
+    stub = _write_params_stub(tmp_path, partitioned)
 
     assert verify_models(models, schemas, pyi_path=str(stub)) == 1
 
 
+@pytest.mark.parametrize("partitioned", [False, True])
 @pytest.mark.parametrize("missing", sorted(_PARAMS_NAMES))
 def test_dictionary_form_missing_at_runtime_is_reported(
-    tmp_path: Path, missing: str
+    tmp_path: Path, missing: str, partitioned: bool
 ) -> None:
     models, schemas = _thing_modules()
     for name in _PARAMS_NAMES - {missing}:
         setattr(models, name, dict)
-    stub = tmp_path / "models.pyi"
-    stub.write_text(_PARAMS_STUB)
+    stub = _write_params_stub(tmp_path, partitioned)
 
     with pytest.raises(ConformanceError, match=f"{missing}: .*not `dict` at runtime"):
+        verify_models(models, schemas, pyi_path=str(stub))
+
+
+@pytest.mark.parametrize("partitioned", [False, True])
+@pytest.mark.parametrize("wrong", sorted(_PARAMS_NAMES))
+def test_dictionary_form_that_is_not_dict_at_runtime_is_reported(
+    tmp_path: Path, wrong: str, partitioned: bool
+) -> None:
+    models, schemas = _thing_modules()
+    for name in _PARAMS_NAMES:
+        setattr(models, name, dict)
+    # A class of its own would make the name a second model, not a dictionary.
+    setattr(models, wrong, type(wrong, (), {}))
+    stub = _write_params_stub(tmp_path, partitioned)
+
+    with pytest.raises(ConformanceError, match=f"{wrong}: .*not `dict` at runtime"):
         verify_models(models, schemas, pyi_path=str(stub))

@@ -120,10 +120,6 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
-        The keyword arguments are the members of
-        `EndpointWithHostLabelOperationInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -222,10 +218,6 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         This test serializes nested and recursive structure members.
 
-        The keyword arguments are the members of
-        `NestedStructuresInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -268,10 +260,6 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        The keyword arguments are the members of
-        `PutWithContentEncodingInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -295,11 +283,8 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Automatically adds idempotency tokens.
 
-        The keyword arguments are the members of
-        `QueryIdempotencyTokenAutoFillInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            token: This field is autopopulated if not provided.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -330,10 +315,6 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
     ) -> QueryListsOutput:
         """
         This test serializes simple and complex lists.
-
-        The keyword arguments are the members of
-        `QueryListsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -371,10 +352,6 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         3339 date-time values by default. 2. A timestampFormat trait on a member
         changes the format. 3. A timestampFormat trait on the shape targeted by
         the member changes the format.
-
-        The keyword arguments are the members of
-        `QueryTimestampsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -436,10 +413,6 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
     ) -> SimpleInputParamsOutput:
         """
         This test serializes strings, numbers, and boolean values.
-
-        The keyword arguments are the members of
-        `SimpleInputParamsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:

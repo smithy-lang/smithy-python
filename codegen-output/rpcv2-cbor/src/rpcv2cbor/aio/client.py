@@ -151,10 +151,6 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         """
         Invokes the OperationWithDefaults operation.
 
-        The keyword arguments are the members of
-        `OperationWithDefaultsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -183,10 +179,6 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         """
         Invokes the OptionalInputOutput operation.
 
-        The keyword arguments are the members of
-        `OptionalInputOutputInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -211,10 +203,6 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
     ) -> RecursiveShapesOutput:
         """
         Invokes the RecursiveShapes operation.
-
-        The keyword arguments are the members of
-        `RecursiveShapesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -245,10 +233,6 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
     ) -> RpcV2CborDenseMapsOutput:
         """
         The example tests basic map serialization.
-
-        The keyword arguments are the members of
-        `RpcV2CborDenseMapsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -300,11 +284,8 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         3.  Lists of lists.
         4.  Lists of structures.
 
-        The keyword arguments are the members of
-        `RpcV2CborListsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            nested_string_list: A list of lists of strings.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -348,10 +329,6 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
         """
         Invokes the RpcV2CborSparseMaps operation.
 
-        The keyword arguments are the members of
-        `RpcV2CborSparseMapsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -384,10 +361,6 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
     ) -> RpcV2CborUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
-
-        The keyword arguments are the members of
-        `RpcV2CborUnionsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -423,10 +396,6 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
-
-        The keyword arguments are the members of
-        `SimpleScalarPropertiesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -465,10 +434,6 @@ class AsyncRpcV2Protocol(AsyncClient[AsyncConfig]):
     ) -> SparseNullsOperationOutput:
         """
         Invokes the SparseNullsOperation operation.
-
-        The keyword arguments are the members of
-        `SparseNullsOperationInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:

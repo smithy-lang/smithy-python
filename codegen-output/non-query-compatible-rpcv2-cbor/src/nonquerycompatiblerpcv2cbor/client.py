@@ -19,10 +19,7 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .models import (
-        NonQueryCompatibleOperationInput,
-        NonQueryCompatibleOperationOutput,
-    )
+    from .models import NonQueryCompatibleOperationOutput
 
 
 logger = logging.getLogger(__name__)
@@ -36,16 +33,12 @@ class NonQueryCompatibleRpcV2ProtocolClient(
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
     def non_query_compatible_operation(
-        self,
-        input: NonQueryCompatibleOperationInput | None = None,
-        plugins: list[Plugin] | None = None,
+        self, *, plugins: list[Plugin] | None = None
     ) -> NonQueryCompatibleOperationOutput:
         """
         Invokes the NonQueryCompatibleOperation operation.
 
         Args:
-            input:
-                An instance of `NonQueryCompatibleOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -55,7 +48,7 @@ class NonQueryCompatibleRpcV2ProtocolClient(
         Returns:
             An instance of `NonQueryCompatibleOperationOutput`.
         """
-        return self._invoke(input, _models.NON_QUERY_COMPATIBLE_OPERATION, [], plugins)
+        return self._invoke(None, _models.NON_QUERY_COMPATIBLE_OPERATION, [], plugins)
 
     def _new_config(self) -> NonQueryCompatibleRpcV2ProtocolConfig:
         return NonQueryCompatibleRpcV2ProtocolConfig.resolve()

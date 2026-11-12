@@ -15,8 +15,7 @@ from restxmlwithnamespace.models import (
 
 # Static type fixture: pyright over this validates models.pyi and the
 # client method signatures. Not executed as a test; it only needs to
-# type-check. The clients are typed inline rather than by a stub.
-# pyright: reportMissingTypeStubs=false
+# type-check.
 
 _: Any = ...
 

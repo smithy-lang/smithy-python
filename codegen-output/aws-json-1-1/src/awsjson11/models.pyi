@@ -365,6 +365,7 @@ class JsonUnionsInputParams(TypedDict, total=False):
     """Dictionary form of `JsonUnionsInput`."""
 
     contents: MyUnion | MyUnionParams | None
+    """A union with a representative set of types for members."""
 
 @dataclass(kw_only=True)
 class JsonUnionsOutput(_SerdeShape):

@@ -562,8 +562,6 @@ def test_operation_parameter_names_are_escaped_on_inputs_in_stub_and_runtime(
     members = {
         "plugins": {"target": "smithy.api#String"},
         "self": {"target": "smithy.api#String"},
-        # The name generated clients import the models module under.
-        "_models": {"target": "smithy.api#String"},
     }
     source_root = _generate_custom(
         tmp_path,
@@ -584,11 +582,9 @@ def test_operation_parameter_names_are_escaped_on_inputs_in_stub_and_runtime(
     input_stub, nested_stub = stub.split("class Nested(_SerdeShape):")
     assert "plugins_: str | None = ..." in input_stub
     assert "self_: str | None = ..." in input_stub
-    assert "_models_: str | None = ..." in input_stub
     # Members of other structures are not parameters and keep their names.
     assert "plugins: str | None = ..." in nested_stub
     assert "self: str | None = ..." in nested_stub
-    assert "_models: str | None = ..." in nested_stub
 
     monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
         str(source_root)
@@ -596,8 +592,6 @@ def test_operation_parameter_names_are_escaped_on_inputs_in_stub_and_runtime(
     models = importlib.import_module(f"{package}.models")
     built = models.Input(plugins_="p", self_="s", nested=models.Nested(plugins="n"))
     assert (built.plugins_, built.self_, built.nested.plugins) == ("p", "s", "n")
-    assert models.Input(_models_="m")._models_ == "m"
-    assert models.Nested(_models="m")._models == "m"
 
 
 def test_stub_and_runtime_use_the_same_member_names(

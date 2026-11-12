@@ -18,11 +18,8 @@
   `TypeError` before the request is sent.
 * A member of an operation input whose Python name is `plugins` or `self` is
   generated as `plugins_` or `self_`, because it would collide with a parameter
-  every client method declares. Only the Python name changes, not the wire
-  representation, and members of nested structures are not affected.
-* Generated endpoint tests give a case's operation input to
-  `smithy_test.aio.check_client_case_async` as a dictionary of keyword arguments
-  instead of an input object, so they need a `smithy-test` whose check takes one.
+  every client method already declares. Only the Python name changes, not the
+  wire representation, and members of nested structures are not affected.
 
 ### Features
 
@@ -40,8 +37,10 @@
   converted outside a model. A member a model sets to `None` stays unset, even if
   it has a default.
 * An operation's idempotency token is generated when it is omitted or `None`. It
-  is generated once per call, before interceptors run, so every retry sends the
-  same token. A token the caller passes is sent unchanged, even an empty one.
+  is generated once per call, after every interceptor's
+  `modify_before_serialization` hook has run and before the request is
+  serialized, so every retry sends the same token. A token the caller passes is
+  sent unchanged, even an empty one.
 * Every structure and union reachable from an operation input has a `TypedDict`
   form named with a `Params` suffix, such as `AssumeRoleInputParams`, declared in
   the generated model stubs. At runtime the name is plain `dict`, so importing it

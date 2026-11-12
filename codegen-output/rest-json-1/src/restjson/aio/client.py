@@ -187,10 +187,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This example uses all query string types.
 
-        The keyword arguments are the members of
-        `AllQueryStringTypesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -242,10 +238,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         params. The fixed query string parameters and variable parameters must
         both be serialized (implementations may need to merge them together).
 
-        The keyword arguments are the members of
-        `ConstantAndVariableQueryStringInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -272,10 +264,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         fixed query string parameter named \"hello\" should in no way conflict
         with the label, `{hello}`.
 
-        The keyword arguments are the members of
-        `ConstantQueryStringInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -296,10 +284,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         The example tests how servers must support requests containing a
         `Content-Type` header with parameters.
-
-        The keyword arguments are the members of
-        `ContentTypeParametersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -343,10 +327,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This example serializes a document as part of the payload.
 
-        The keyword arguments are the members of
-        `DocumentTypeInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -373,10 +353,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This example serializes documents as the value of maps.
 
-        The keyword arguments are the members of
-        `DocumentTypeAsMapValueInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -402,10 +378,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> DocumentTypeAsPayloadOutput:
         """
         This example serializes a document as the entire HTTP payload.
-
-        The keyword arguments are the members of
-        `DocumentTypeAsPayloadInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -476,10 +448,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the DuplexStreamWithInitialMessages operation.
 
-        The keyword arguments are the members of
-        `DuplexStreamWithInitialMessagesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -546,10 +514,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
-
-        The keyword arguments are the members of
-        `EndpointWithHostLabelOperationInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -629,10 +593,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This example tests httpChecksumRequired trait
 
-        The keyword arguments are the members of
-        `HttpChecksumRequiredInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -657,10 +617,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Clients that perform this test extract all headers from the response.
 
-        The keyword arguments are the members of
-        `HttpEmptyPrefixHeadersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -683,10 +639,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
-
-        The keyword arguments are the members of
-        `HttpEnumPayloadInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -714,10 +666,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         JSON document is synthesized because the payload is not a structure or a
         union type.
 
-        The keyword arguments are the members of
-        `HttpPayloadTraitsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -742,10 +690,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This example uses a `@mediaType` trait on the payload to force a
         custom content-type to be serialized.
-
-        The keyword arguments are the members of
-        `HttpPayloadTraitsWithMediaTypeInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -775,10 +719,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         serializing a structure changes the wrapper element name to match the
         targeted structure.
 
-        The keyword arguments are the members of
-        `HttpPayloadWithStructureInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -801,10 +741,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> HttpPayloadWithUnionOutput:
         """
         This example serializes a union in the payload.
-
-        The keyword arguments are the members of
-        `HttpPayloadWithUnionInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -830,10 +766,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This examples adds headers to the input of a request and response by
         prefix.
-
-        The keyword arguments are the members of
-        `HttpPrefixHeadersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -878,10 +810,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This example tests httpQueryParams when no other query parameters exist.
 
-        The keyword arguments are the members of
-        `HttpQueryParamsOnlyOperationInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -905,10 +833,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the HttpRequestWithFloatLabels operation.
 
-        The keyword arguments are the members of
-        `HttpRequestWithFloatLabelsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -931,10 +855,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
-
-        The keyword arguments are the members of
-        `HttpRequestWithGreedyLabelInPathInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -970,11 +890,9 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         The example tests how requests are serialized when there's no input
         payload but there are HTTP labels.
 
-        The keyword arguments are the members of
-        `HttpRequestWithLabelsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            boolean: Serialized in the path as true or false.
+            timestamp: Note that this member has no format, so it's serialized as an RFC 3399 date-time.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1016,10 +934,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         The example tests how requests serialize different timestamp formats in
         the URI path.
 
-        The keyword arguments are the members of
-        `HttpRequestWithLabelsAndTimestampFormatInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1050,10 +964,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> HttpRequestWithRegexLiteralOutput:
         """
         Invokes the HttpRequestWithRegexLiteral operation.
-
-        The keyword arguments are the members of
-        `HttpRequestWithRegexLiteralInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1092,10 +1002,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
-
-        The keyword arguments are the members of
-        `HttpStringPayloadInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1160,10 +1066,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         The example tests how requests and responses are serialized when there
         is no input or output payload but there are HTTP header bindings.
 
-        The keyword arguments are the members of
-        `InputAndOutputWithHeadersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1227,10 +1129,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the InputStreamWithInitialRequest operation.
 
-        The keyword arguments are the members of
-        `InputStreamWithInitialRequestInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1254,10 +1152,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> JsonBlobsOutput:
         """
         Blobs are base64 encoded
-
-        The keyword arguments are the members of
-        `JsonBlobsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1285,10 +1179,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
-
-        The keyword arguments are the members of
-        `JsonEnumsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1328,10 +1218,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This example serializes intEnums as top level properties, in lists,
         sets, and maps.
-
-        The keyword arguments are the members of
-        `JsonIntEnumsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1379,11 +1265,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         input and output: 1. Normal JSON lists. 2. Normal JSON sets. 3. JSON
         lists of lists. 4. Lists of structures.
 
-        The keyword arguments are the members of
-        `JsonListsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            nested_string_list: A list of lists of strings.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1426,10 +1309,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         The example tests basic map serialization.
 
-        The keyword arguments are the members of
-        `JsonMapsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1469,10 +1348,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         This tests how timestamps are serialized, including using the default
         format of date-time and various @timestampFormat trait values.
 
-        The keyword arguments are the members of
-        `JsonTimestampsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1507,11 +1382,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This operation uses unions for inputs and outputs.
 
-        The keyword arguments are the members of
-        `JsonUnionsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            contents: A union with a representative set of types for members.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1589,10 +1461,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedBlob operation.
 
-        The keyword arguments are the members of
-        `MalformedBlobInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1616,10 +1484,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedBooleanOutput:
         """
         Invokes the MalformedBoolean operation.
-
-        The keyword arguments are the members of
-        `MalformedBooleanInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1655,10 +1519,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedByte operation.
 
-        The keyword arguments are the members of
-        `MalformedByteInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1687,10 +1547,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedContentTypeWithBody operation.
 
-        The keyword arguments are the members of
-        `MalformedContentTypeWithBodyInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1710,10 +1566,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedContentTypeWithGenericStringOutput:
         """
         Invokes the MalformedContentTypeWithGenericString operation.
-
-        The keyword arguments are the members of
-        `MalformedContentTypeWithGenericStringInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1758,10 +1610,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedContentTypeWithoutBodyEmptyInput operation.
 
-        The keyword arguments are the members of
-        `MalformedContentTypeWithoutBodyEmptyInputInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1784,10 +1632,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedContentTypeWithPayloadOutput:
         """
         Invokes the MalformedContentTypeWithPayload operation.
-
-        The keyword arguments are the members of
-        `MalformedContentTypeWithPayloadInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1817,10 +1661,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedDoubleOutput:
         """
         Invokes the MalformedDouble operation.
-
-        The keyword arguments are the members of
-        `MalformedDoubleInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1856,10 +1696,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedFloat operation.
 
-        The keyword arguments are the members of
-        `MalformedFloatInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1894,10 +1730,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedInteger operation.
 
-        The keyword arguments are the members of
-        `MalformedIntegerInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1929,10 +1761,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedList operation.
 
-        The keyword arguments are the members of
-        `MalformedListInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1958,10 +1786,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedLongOutput:
         """
         Invokes the MalformedLong operation.
-
-        The keyword arguments are the members of
-        `MalformedLongInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1994,10 +1818,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedMap operation.
 
-        The keyword arguments are the members of
-        `MalformedMapInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2021,10 +1841,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedRequestBodyOutput:
         """
         Invokes the MalformedRequestBody operation.
-
-        The keyword arguments are the members of
-        `MalformedRequestBodyInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2054,10 +1870,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedShortOutput:
         """
         Invokes the MalformedShort operation.
-
-        The keyword arguments are the members of
-        `MalformedShortInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2090,10 +1902,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedString operation.
 
-        The keyword arguments are the members of
-        `MalformedStringInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2111,10 +1919,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedTimestampBodyDateTimeOutput:
         """
         Invokes the MalformedTimestampBodyDateTime operation.
-
-        The keyword arguments are the members of
-        `MalformedTimestampBodyDateTimeInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2139,10 +1943,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampBodyDefault operation.
 
-        The keyword arguments are the members of
-        `MalformedTimestampBodyDefaultInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2165,10 +1965,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedTimestampBodyHttpDateOutput:
         """
         Invokes the MalformedTimestampBodyHttpDate operation.
-
-        The keyword arguments are the members of
-        `MalformedTimestampBodyHttpDateInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2193,10 +1989,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampHeaderDateTime operation.
 
-        The keyword arguments are the members of
-        `MalformedTimestampHeaderDateTimeInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2219,10 +2011,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedTimestampHeaderDefaultOutput:
         """
         Invokes the MalformedTimestampHeaderDefault operation.
-
-        The keyword arguments are the members of
-        `MalformedTimestampHeaderDefaultInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2247,10 +2035,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampHeaderEpoch operation.
 
-        The keyword arguments are the members of
-        `MalformedTimestampHeaderEpochInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2273,10 +2057,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedTimestampPathDefaultOutput:
         """
         Invokes the MalformedTimestampPathDefault operation.
-
-        The keyword arguments are the members of
-        `MalformedTimestampPathDefaultInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2301,10 +2081,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampPathEpoch operation.
 
-        The keyword arguments are the members of
-        `MalformedTimestampPathEpochInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2327,10 +2103,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedTimestampPathHttpDateOutput:
         """
         Invokes the MalformedTimestampPathHttpDate operation.
-
-        The keyword arguments are the members of
-        `MalformedTimestampPathHttpDateInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2355,10 +2127,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampQueryDefault operation.
 
-        The keyword arguments are the members of
-        `MalformedTimestampQueryDefaultInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2382,10 +2150,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampQueryEpoch operation.
 
-        The keyword arguments are the members of
-        `MalformedTimestampQueryEpochInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2408,10 +2172,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> MalformedTimestampQueryHttpDateOutput:
         """
         Invokes the MalformedTimestampQueryHttpDate operation.
-
-        The keyword arguments are the members of
-        `MalformedTimestampQueryHttpDateInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2439,10 +2199,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the MalformedUnion operation.
 
-        The keyword arguments are the members of
-        `MalformedUnionInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2466,10 +2222,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This example ensures that mediaType strings are base64 encoded in
         headers.
-
-        The keyword arguments are the members of
-        `MediaTypeHeaderInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2539,10 +2291,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Null headers are not sent over the wire, empty headers are serialized to
         \"\"
 
-        The keyword arguments are the members of
-        `NullAndEmptyHeadersClientInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2569,10 +2317,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Null headers are not sent over the wire, empty headers are serialized to
         \"\"
 
-        The keyword arguments are the members of
-        `NullAndEmptyHeadersServerInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2596,10 +2340,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> OmitsNullSerializesEmptyStringOutput:
         """
         Omits null, but serializes empty string value.
-
-        The keyword arguments are the members of
-        `OmitsNullSerializesEmptyStringInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2634,10 +2374,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         Omits serializing empty lists. Because empty strings are serilized as
         `Foo=`, empty lists cannot also be serialized as `Foo=` and instead
         must be omitted.
-
-        The keyword arguments are the members of
-        `OmitsSerializingEmptyListsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2678,10 +2414,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the OperationWithDefaults operation.
 
-        The keyword arguments are the members of
-        `OperationWithDefaultsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2712,10 +2444,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> OperationWithNestedStructureOutput:
         """
         Invokes the OperationWithNestedStructure operation.
-
-        The keyword arguments are the members of
-        `OperationWithNestedStructureInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2789,10 +2517,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This operation defines a union with a Unit member.
 
-        The keyword arguments are the members of
-        `PostPlayerActionInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2818,10 +2542,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This operation defines a union that uses jsonName on some members.
 
-        The keyword arguments are the members of
-        `PostUnionWithJsonNameInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2846,10 +2566,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        The keyword arguments are the members of
-        `PutWithContentEncodingInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2873,11 +2589,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Automatically adds idempotency tokens.
 
-        The keyword arguments are the members of
-        `QueryIdempotencyTokenAutoFillInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            token: This field is autopopulated if not provided.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2900,10 +2613,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> QueryParamsAsStringListMapOutput:
         """
         Invokes the QueryParamsAsStringListMap operation.
-
-        The keyword arguments are the members of
-        `QueryParamsAsStringListMapInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2932,10 +2641,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the QueryPrecedence operation.
 
-        The keyword arguments are the members of
-        `QueryPrecedenceInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -2960,10 +2665,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
     ) -> RecursiveShapesOutput:
         """
         Recursive shapes
-
-        The keyword arguments are the members of
-        `RecursiveShapesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -3035,10 +2736,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the SimpleScalarProperties operation.
 
-        The keyword arguments are the members of
-        `SimpleScalarPropertiesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -3077,10 +2774,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         Invokes the SparseJsonLists operation.
 
-        The keyword arguments are the members of
-        `SparseJsonListsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -3117,10 +2810,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This example tests sparse map serialization.
 
-        The keyword arguments are the members of
-        `SparseJsonMapsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -3156,10 +2845,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         this example, no JSON document is synthesized because the payload is not
         a structure or a union type.
 
-        The keyword arguments are the members of
-        `StreamingTraitsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -3185,10 +2870,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         This examples serializes a streaming blob shape with a required content
         length in the request body. In this example, no JSON document is
         synthesized because the payload is not a structure or a union type.
-
-        The keyword arguments are the members of
-        `StreamingTraitsRequireLengthInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -3219,10 +2900,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         request body. This examples uses a `@mediaType` trait on the payload
         to force a custom content-type to be serialized.
 
-        The keyword arguments are the members of
-        `StreamingTraitsWithMediaTypeInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -3251,10 +2928,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         This example operation serializes a structure in the HTTP body. It
         should ensure Content-Type: application/json is used in all requests and
         that an \"empty\" body is an empty JSON document ({}).
-
-        The keyword arguments are the members of
-        `TestBodyStructureInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -3305,10 +2978,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         headers (Content-Length, Content-Type) to operations that semantically
         cannot produce an HTTP body.
 
-        The keyword arguments are the members of
-        `TestGetNoPayloadInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -3336,10 +3005,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         what data will be sent. This test ensures only a generic \"Content-Type:
         application/octet-stream\" header is used, and that we are not treating
         an empty body as an empty JSON document.
-
-        The keyword arguments are the members of
-        `TestPayloadBlobInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -3371,10 +3036,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         This example operation serializes a payload targeting a structure. This
         enforces the same requirements as TestBodyStructure but with the body
         specified by the @httpPayload trait.
-
-        The keyword arguments are the members of
-        `TestPayloadStructureInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -3424,10 +3085,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         body. These tests are to ensure we do not attach a body or related
         headers (Content-Type) to a POST operation with no modeled payload.
 
-        The keyword arguments are the members of
-        `TestPostNoPayloadInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -3457,10 +3114,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         """
         This example tests how timestamp request and response headers are
         serialized.
-
-        The keyword arguments are the members of
-        `TimestampFormatHeadersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:

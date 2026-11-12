@@ -127,10 +127,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         This example uses all query string types.
 
-        The keyword arguments are the members of
-        `AllQueryStringTypesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -182,10 +178,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The following example serializes a body that uses an XML name, changing
         the wrapper name.
 
-        The keyword arguments are the members of
-        `BodyWithXmlNameInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -209,10 +201,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         This example uses fixed query string params and variable query string
         params. The fixed query string parameters and variable parameters must
         both be serialized (implementations may need to merge them together).
-
-        The keyword arguments are the members of
-        `ConstantAndVariableQueryStringInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -240,10 +228,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         fixed query string parameter named \"hello\" should in no way conflict
         with the label, `{hello}`.
 
-        The keyword arguments are the members of
-        `ConstantQueryStringInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -264,10 +248,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         The example tests how servers must support requests containing a
         `Content-Type` header with parameters.
-
-        The keyword arguments are the members of
-        `ContentTypeParametersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -346,10 +326,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelHeaderOperation operation.
 
-        The keyword arguments are the members of
-        `EndpointWithHostLabelHeaderOperationInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -372,10 +348,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
-
-        The keyword arguments are the members of
-        `EndpointWithHostLabelOperationInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -400,10 +372,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Flattened maps
 
-        The keyword arguments are the members of
-        `FlattenedXmlMapInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -424,10 +392,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> FlattenedXmlMapWithXmlNameOutput:
         """
         Flattened maps with @xmlName
-
-        The keyword arguments are the members of
-        `FlattenedXmlMapWithXmlNameInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -513,10 +477,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Clients that perform this test extract all headers from the response.
 
-        The keyword arguments are the members of
-        `HttpEmptyPrefixHeadersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -539,10 +499,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
-
-        The keyword arguments are the members of
-        `HttpEnumPayloadInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -570,10 +526,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         XML document is synthesized because the payload is not a structure or a
         union type.
 
-        The keyword arguments are the members of
-        `HttpPayloadTraitsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -598,10 +550,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         This example uses a `@mediaType` trait on the payload to force a
         custom content-type to be serialized.
-
-        The keyword arguments are the members of
-        `HttpPayloadTraitsWithMediaTypeInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -632,10 +580,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The following example serializes a payload that uses an XML name on the
         member, changing the wrapper name.
 
-        The keyword arguments are the members of
-        `HttpPayloadWithMemberXmlNameInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -661,10 +605,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         serializing a structure changes the wrapper element name to match the
         targeted structure.
 
-        The keyword arguments are the members of
-        `HttpPayloadWithStructureInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -687,10 +627,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> HttpPayloadWithUnionOutput:
         """
         This example serializes a union in the payload.
-
-        The keyword arguments are the members of
-        `HttpPayloadWithUnionInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -718,10 +654,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The following example serializes a payload that uses an XML name,
         changing the wrapper name.
 
-        The keyword arguments are the members of
-        `HttpPayloadWithXmlNameInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -747,10 +679,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         The following example serializes a payload that uses an XML namespace.
 
-        The keyword arguments are the members of
-        `HttpPayloadWithXmlNamespaceInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -775,10 +703,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput:
         """
         The following example serializes a payload that uses an XML namespace.
-
-        The keyword arguments are the members of
-        `HttpPayloadWithXmlNamespaceAndPrefixInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -808,10 +732,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         This examples adds headers to the input of a request and response by
         prefix.
 
-        The keyword arguments are the members of
-        `HttpPrefixHeadersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -831,10 +751,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> HttpRequestWithFloatLabelsOutput:
         """
         Invokes the HttpRequestWithFloatLabels operation.
-
-        The keyword arguments are the members of
-        `HttpRequestWithFloatLabelsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -858,10 +774,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
-
-        The keyword arguments are the members of
-        `HttpRequestWithGreedyLabelInPathInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -897,11 +809,9 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The example tests how requests are serialized when there's no input
         payload but there are HTTP labels.
 
-        The keyword arguments are the members of
-        `HttpRequestWithLabelsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            boolean: Serialized in the path as true or false.
+            timestamp: Note that this member has no format, so it's serialized as an RFC 3399 date-time.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -942,10 +852,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         The example tests how requests serialize different timestamp formats in
         the URI path.
-
-        The keyword arguments are the members of
-        `HttpRequestWithLabelsAndTimestampFormatInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -995,10 +901,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
-
-        The keyword arguments are the members of
-        `HttpStringPayloadInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1059,10 +961,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The example tests how requests and responses are serialized when there
         is no input or output payload but there are HTTP header bindings.
 
-        The keyword arguments are the members of
-        `InputAndOutputWithHeadersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1107,10 +1005,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the NestedXmlMaps operation.
 
-        The keyword arguments are the members of
-        `NestedXmlMapsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1136,10 +1030,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> NestedXmlMapWithXmlNameOutput:
         """
         Nested Xml Maps with key/values with @xmlName
-
-        The keyword arguments are the members of
-        `NestedXmlMapWithXmlNameInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1212,10 +1102,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Null headers are not sent over the wire, empty headers are serialized to
         \"\"
 
-        The keyword arguments are the members of
-        `NullAndEmptyHeadersClientInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1242,10 +1128,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Null headers are not sent over the wire, empty headers are serialized to
         \"\"
 
-        The keyword arguments are the members of
-        `NullAndEmptyHeadersServerInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1269,10 +1151,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> OmitsNullSerializesEmptyStringOutput:
         """
         Omits null, but serializes empty string value.
-
-        The keyword arguments are the members of
-        `OmitsNullSerializesEmptyStringInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1301,10 +1179,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        The keyword arguments are the members of
-        `PutWithContentEncodingInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1328,11 +1202,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Automatically adds idempotency tokens.
 
-        The keyword arguments are the members of
-        `QueryIdempotencyTokenAutoFillInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            token: This field is autopopulated if not provided.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1355,10 +1226,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> QueryParamsAsStringListMapOutput:
         """
         Invokes the QueryParamsAsStringListMap operation.
-
-        The keyword arguments are the members of
-        `QueryParamsAsStringListMapInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1387,10 +1254,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the QueryPrecedence operation.
 
-        The keyword arguments are the members of
-        `QueryPrecedenceInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1415,10 +1278,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> RecursiveShapesOutput:
         """
         Recursive shapes
-
-        The keyword arguments are the members of
-        `RecursiveShapesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1449,10 +1308,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
-
-        The keyword arguments are the members of
-        `SimpleScalarPropertiesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1498,10 +1353,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The example tests how timestamp request and response headers are
         serialized.
 
-        The keyword arguments are the members of
-        `TimestampFormatHeadersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1537,10 +1388,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         This example serializes an XML attributes on synthesized document.
 
-        The keyword arguments are the members of
-        `XmlAttributesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1570,10 +1417,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         which is critical for languages like C# where attribute writing must
         happen before child elements.
 
-        The keyword arguments are the members of
-        `XmlAttributesInMiddleInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1600,10 +1443,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         This example serializes an XML attributes on a document targeted by
         httpPayload.
 
-        The keyword arguments are the members of
-        `XmlAttributesOnPayloadInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1624,10 +1463,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Blobs are base64 encoded
 
-        The keyword arguments are the members of
-        `XmlBlobsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1645,10 +1480,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> XmlEmptyBlobsOutput:
         """
         Blobs are base64 encoded
-
-        The keyword arguments are the members of
-        `XmlEmptyBlobsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1691,11 +1522,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the XmlEmptyLists operation.
 
-        The keyword arguments are the members of
-        `XmlEmptyListsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            nested_string_list: A list of lists of strings.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1738,10 +1566,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the XmlEmptyMaps operation.
 
-        The keyword arguments are the members of
-        `XmlEmptyMapsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1759,10 +1583,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> XmlEmptyStringsOutput:
         """
         Invokes the XmlEmptyStrings operation.
-
-        The keyword arguments are the members of
-        `XmlEmptyStringsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1792,10 +1612,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
-
-        The keyword arguments are the members of
-        `XmlEnumsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1835,10 +1651,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
-
-        The keyword arguments are the members of
-        `XmlIntEnumsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -1898,11 +1710,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         with @xmlNamespace. 8. Lists of structures. 9. Flattened XML list of
         structures
 
-        The keyword arguments are the members of
-        `XmlListsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            nested_string_list: A list of lists of strings.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1945,10 +1754,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         The example tests basic map serialization.
 
-        The keyword arguments are the members of
-        `XmlMapsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1971,10 +1776,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the XmlMapsXmlName operation.
 
-        The keyword arguments are the members of
-        `XmlMapsXmlNameInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -1995,10 +1796,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> XmlMapWithXmlNamespaceOutput:
         """
         Maps with @xmlNamespace and @xmlName
-
-        The keyword arguments are the members of
-        `XmlMapWithXmlNamespaceInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2024,10 +1821,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> XmlNamespacesOutput:
         """
         Invokes the XmlNamespaces operation.
-
-        The keyword arguments are the members of
-        `XmlNamespacesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2056,10 +1849,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         This tests how timestamps are serialized, including using the default
         format of date-time and various @timestampFormat trait values.
-
-        The keyword arguments are the members of
-        `XmlTimestampsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -2094,10 +1883,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
     ) -> XmlUnionsOutput:
         """
         Invokes the XmlUnions operation.
-
-        The keyword arguments are the members of
-        `XmlUnionsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:

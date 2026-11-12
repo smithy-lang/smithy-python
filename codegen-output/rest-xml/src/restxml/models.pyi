@@ -809,7 +809,12 @@ class HttpRequestWithLabelsInputParams(TypedDict, total=False):
     float_: Required[float]
     double: Required[float]
     boolean: Required[bool]
+    """Serialized in the path as true or false."""
     timestamp: Required[datetime]
+    """
+    Note that this member has no format, so it's serialized as an RFC 3399
+    date-time.
+    """
 
 @dataclass(kw_only=True)
 class HttpRequestWithLabelsOutput(_SerdeShape):
@@ -1224,6 +1229,7 @@ class QueryIdempotencyTokenAutoFillInputParams(TypedDict, total=False):
     """Dictionary form of `QueryIdempotencyTokenAutoFillInput`."""
 
     token: str | None
+    """This field is autopopulated if not provided."""
 
 @dataclass(kw_only=True)
 class QueryIdempotencyTokenAutoFillOutput(_SerdeShape):
@@ -1685,6 +1691,7 @@ class XmlEmptyListsInputParams(TypedDict, total=False):
     enum_list: Sequence[str] | None
     int_enum_list: Sequence[int] | None
     nested_string_list: Sequence[Sequence[str]] | None
+    """A list of lists of strings."""
     renamed_list_members: Sequence[str] | None
     flattened_list: Sequence[str] | None
     flattened_list2: Sequence[str] | None
@@ -1881,6 +1888,7 @@ class XmlListsInputParams(TypedDict, total=False):
     enum_list: Sequence[str] | None
     int_enum_list: Sequence[int] | None
     nested_string_list: Sequence[Sequence[str]] | None
+    """A list of lists of strings."""
     renamed_list_members: Sequence[str] | None
     flattened_list: Sequence[str] | None
     flattened_list2: Sequence[str] | None

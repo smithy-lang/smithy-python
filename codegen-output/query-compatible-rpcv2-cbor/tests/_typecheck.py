@@ -2,16 +2,39 @@
 
 from typing import Any
 
+from querycompatiblerpcv2cbor.aio.client import AsyncQueryCompatibleRpcV2ProtocolClient
+from querycompatiblerpcv2cbor.client import QueryCompatibleRpcV2ProtocolClient
 from querycompatiblerpcv2cbor.models import (
     QueryCompatibleOperationInput,
+    QueryCompatibleOperationInputParams,
     QueryCompatibleOperationOutput,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check.
 
 _: Any = ...
 
 QueryCompatibleOperationInput()
 QueryCompatibleOperationOutput()
+_params_0: QueryCompatibleOperationInputParams = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncQueryCompatibleRpcV2ProtocolClient) -> None:
+    pass
+    await client.query_compatible_operation()
+    await client.query_compatible_operation(
+        **_request(QueryCompatibleOperationInputParams)
+    )
+
+
+def check_sync_calls(client: QueryCompatibleRpcV2ProtocolClient) -> None:
+    pass
+    client.query_compatible_operation()
+    client.query_compatible_operation(**_request(QueryCompatibleOperationInputParams))

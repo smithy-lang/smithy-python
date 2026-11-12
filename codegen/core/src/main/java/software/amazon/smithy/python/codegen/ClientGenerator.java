@@ -117,6 +117,8 @@ final class ClientGenerator implements Runnable {
         UnaryOperator<String> code = sync ? SyncVariant::toSyncCode : UnaryOperator.identity();
         var serviceSymbol = writer.getSymbolMapper().apply(symbolProvider.toSymbol(service));
         writer.addLocallyDefinedSymbol(serviceSymbol);
+        // CAUTION: operation methods refer to this name beside their keyword
+        // parameters, so PythonSymbolProvider.OPERATION_PARAMETER_NAMES reserves it.
         writer.addImport(context.settings().moduleName(), "models", "_models");
         writer.addLogger();
 
@@ -317,23 +319,29 @@ final class ClientGenerator implements Runnable {
                             operation.getId().getName())),
                     context);
 
-            var inputSymbolName = symbolProvider.toSymbol(input).getName();
             var outputSymbolName = symbolProvider.toSymbol(output).getName();
             var outputDocs = eventStreamOutputDocs != null ? eventStreamOutputDocs
                     : String.format("An instance of `%s`.", outputSymbolName);
 
             writer.write("$L\n", operationDocs);
-            // Member docs live on the input model; repeating them here, in both
-            // clients, would multiply the size of the client modules.
-            if (input.members().stream().anyMatch(inputParams::isParameter)) {
-                writer.write("""
-                        The keyword arguments are the members of
-                        `$L`, which documents them. Nested structures
-                        and unions may be passed as models or as dictionaries.
-                        """, inputSymbolName);
+            // Each member is documented here too, in both clients, under the name of
+            // its parameter: an editor shows a call's documentation from the method
+            // being called, not from the input model its arguments end up in. The
+            // docs are the ones the model's field gets, so a token the client fills
+            // says so here as well.
+            writer.write("Args:");
+            writer.indent();
+            for (var member : input.members()) {
+                if (inputParams.isParameter(member)) {
+                    CodegenUtils.getMemberDocs(model, member)
+                            .ifPresent(docs -> writer.writeParameterDocs(
+                                    symbolProvider.toMemberName(member),
+                                    docs,
+                                    context));
+                }
             }
+            writer.dedent();
             writer.write("""
-                    Args:
                         plugins:
                             A list of callables that modify the configuration dynamically.
                             Changes made by these plugins only apply for the duration of the

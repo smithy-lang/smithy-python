@@ -42,10 +42,6 @@ class AsyncMyHandwrittenModel(AsyncClient[AsyncConfig]):
         Input-only stream: the client sends events, the server returns a
         summary.
 
-        The keyword arguments are the members of
-        `PublishEventsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -70,10 +66,6 @@ class AsyncMyHandwrittenModel(AsyncClient[AsyncConfig]):
     ) -> AsyncOutputEventStream[SubscribeEventStream, SubscribeToEventsOutput]:
         """
         Output-only stream: the client subscribes, the server streams events.
-
-        The keyword arguments are the members of
-        `SubscribeToEventsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -102,10 +94,6 @@ class AsyncMyHandwrittenModel(AsyncClient[AsyncConfig]):
         Bidirectional (duplex) stream. The non-stream members (sessionId,
         greeting) are carried as the initial-request and initial-response
         messages.
-
-        The keyword arguments are the members of
-        `TradeEventStreamInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:

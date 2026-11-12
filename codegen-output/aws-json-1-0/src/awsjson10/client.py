@@ -54,10 +54,6 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         The example tests how servers must support requests containing a
         `Content-Type` header with parameters.
 
-        The keyword arguments are the members of
-        `ContentTypeParametersInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -117,10 +113,6 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
-        The keyword arguments are the members of
-        `EndpointWithHostLabelOperationInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -144,10 +136,6 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         error. 3. A ComplexError error. Implementations must be able to
         successfully take a response and properly deserialize successful and
         error responses.
-
-        The keyword arguments are the members of
-        `GreetingWithErrorsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -190,11 +178,8 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         """
         This operation uses unions for inputs and outputs.
 
-        The keyword arguments are the members of
-        `JsonUnionsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
+            contents: A union with a representative set of types for members.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -262,10 +247,6 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         """
         Invokes the OperationWithDefaults operation.
 
-        The keyword arguments are the members of
-        `OperationWithDefaultsInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -296,10 +277,6 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
     ) -> OperationWithNestedStructureOutput:
         """
         Invokes the OperationWithNestedStructure operation.
-
-        The keyword arguments are the members of
-        `OperationWithNestedStructureInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:
@@ -366,10 +343,6 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        The keyword arguments are the members of
-        `PutWithContentEncodingInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
-
         Args:
             plugins:
                 A list of callables that modify the configuration dynamically.
@@ -414,10 +387,6 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
-
-        The keyword arguments are the members of
-        `SimpleScalarPropertiesInput`, which documents them. Nested structures
-        and unions may be passed as models or as dictionaries.
 
         Args:
             plugins:

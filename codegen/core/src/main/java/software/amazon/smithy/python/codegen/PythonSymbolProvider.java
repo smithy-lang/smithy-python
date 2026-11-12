@@ -160,7 +160,7 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
             var reserved = memberName;
             var escaped = escapeOperationParameter(container, memberName);
             LOGGER.warning(() -> format(
-                    "Escaped generated Python name for Smithy member %s from \"%s\" to \"%s\" because \"%s\" is a parameter of every client operation method.",
+                    "Escaped generated Python name for Smithy member %s from \"%s\" to \"%s\" because every client operation method already uses the name \"%s\".",
                     shape.getId(),
                     reserved,
                     escaped,
@@ -214,7 +214,7 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
 
     /**
      * Appends underscores to an operation input member's name until it no longer
-     * collides with a parameter of the client method or with another member.
+     * collides with a name the client method already uses or with another member.
      *
      * <p>CAUTION: smithy_core._model_naming.escape_input_member_names mirrors this.
      */

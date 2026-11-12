@@ -101,8 +101,7 @@ public final class ConformanceTestGenerator implements Runnable {
         context.writerDelegator().useFileWriter(filename, "tests._typecheck", writer -> {
             writer.write("# Static type fixture: pyright over this validates models.pyi and the");
             writer.write("# client method signatures. Not executed as a test; it only needs to");
-            writer.write("# type-check. The clients are typed inline rather than by a stub.");
-            writer.write("# pyright: reportMissingTypeStubs=false\n");
+            writer.write("# type-check.\n");
             // Fills required members: Any is assignable to every field type, so the fixture
             // verifies the stub's constructor accepts each kwarg, not the value's type.
             writer.addStdlibImport("typing", "Any");
