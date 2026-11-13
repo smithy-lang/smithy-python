@@ -15,7 +15,7 @@ class AsyncEventPublisher[E: SerializeableShape](Protocol):
     async def __aenter__(self) -> Self:
         return self
 
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         await self.close()
 
     async def send(self, event: E) -> None:
@@ -53,7 +53,7 @@ class AsyncEventReceiver[E: DeserializeableShape](Protocol):
     async def __aenter__(self) -> Self:
         return self
 
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         await self.close()
 
     async def receive(self) -> E | None:

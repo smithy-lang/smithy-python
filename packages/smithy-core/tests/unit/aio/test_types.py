@@ -1,8 +1,9 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
+from collections.abc import AsyncIterator
 from io import BytesIO
-from typing import Self
+from typing import Any, Self
 from unittest.mock import Mock
 
 import pytest
@@ -557,3 +558,76 @@ async def test_aexit_flushes() -> None:
     # The draining task should be able to complete without errors. When next it
     # tries to get a chunk, the provider's iterator will exit.
     await drain_task
+
+
+class _AwaitableReader:
+    """A reader whose plain read() returns an awaitable, like an AwaitableBytesReader."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = BytesIO(data)
+
+    def read(self, size: int = -1) -> Any:
+        async def read() -> bytes:
+            return self._data.read(size)
+
+        return read()
+
+
+async def test_read_awaitable_bytes_reader() -> None:
+    reader = AsyncBytesReader(_AwaitableReader(b"foo"))
+
+    assert await reader.read(2) == b"fo"
+    assert await reader.read() == b"o"
+
+
+async def test_buffered_seekable_read_awaitable_bytes_reader() -> None:
+    reader = AsyncSeekableBytesReader(_AwaitableReader(b"foo"))
+
+    assert await reader.read() == b"foo"
+    await reader.seek(0)
+    assert await reader.read() == b"foo"
+
+
+async def _small_chunks(count: int, size: int) -> AsyncIterator[bytes]:
+    for i in range(count):
+        yield bytes([i % 256]) * size
+
+
+async def test_read_many_small_items_from_iterator() -> None:
+    expected = b"".join([bytes([i % 256]) * 16 for i in range(10_000)])
+    reader = AsyncBytesReader(_small_chunks(10_000, 16))
+
+    assert await reader.read(128 * 1024) == expected[: 128 * 1024]
+    assert await reader.read() == expected[128 * 1024 :]
+
+
+async def _large_items(data: bytes, size: int) -> AsyncIterator[bytes]:
+    for i in range(0, len(data), size):
+        yield data[i : i + size]
+
+
+async def test_reads_of_any_size_return_the_items_in_order() -> None:
+    expected = bytes(range(256)) * 1000
+    reader = AsyncBytesReader(_large_items(expected, 100_000))
+
+    chunks: list[bytes] = []
+    for size in [1, 1000, 70_000, 3, 150_000, 99_996, 0, 10]:
+        chunks.append(chunk := await reader.read(size))
+        assert type(chunk) is bytes
+        assert len(chunk) == min(size, len(expected) - sum(map(len, chunks[:-1])))
+    chunks.append(await reader.read())
+
+    assert b"".join(chunks) == expected
+    assert await reader.read() == b""
+
+
+@pytest.mark.parametrize("source", ["reader", "iterable"])
+async def test_iterates_in_64_kib_chunks(source: str) -> None:
+    data = b"x" * (300 * 1024)
+    reader = AsyncBytesReader(
+        BytesIO(data) if source == "reader" else _large_items(data, 1_000_000)
+    )
+
+    chunks = [chunk async for chunk in reader]
+
+    assert [len(chunk) for chunk in chunks] == [64 * 1024] * 4 + [44 * 1024]

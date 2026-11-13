@@ -4,6 +4,7 @@
  */
 package software.amazon.smithy.python.codegen;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.Model;
@@ -98,6 +99,13 @@ final class ValueNodeVisitor implements NodeVisitor<Void> {
             writer.writeInline(CodegenUtils.getDatetimeConstructor(writer, parsed));
         } else if (inputShape.isFloatShape() || inputShape.isDoubleShape()) {
             writer.writeInline("float($L)", node.getValue());
+        } else if (inputShape.isBigDecimalShape()) {
+            // A float literal would lose precision past ~17 digits and produce the
+            // wrong type, so build the Decimal from the exact model text.
+            writer.addStdlibImport("decimal", "Decimal");
+            var value = node.getValue();
+            var text = value instanceof BigDecimal bd ? bd.toPlainString() : value.toString();
+            writer.writeInline("Decimal($S)", text);
         } else {
             writer.writeInline("$L", node.getValue());
         }

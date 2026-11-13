@@ -1,0 +1,48 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Unset `@idempotencyToken` input members are now auto-filled with a UUID v4 before serialization. The same token is sent on every retry."
+    },
+    {
+      "type": "feature",
+      "description": "Added `RpcV2JsonTrait` for the `smithy.protocols#rpcv2Json` protocol trait."
+    },
+    {
+      "type": "feature",
+      "description": "Clients now prepend the `@endpoint` trait's host prefix, with its `@hostLabel` values, to the endpoint host. Set `disable_host_prefix_injection` to turn this off."
+    },
+    {
+      "type": "feature",
+      "description": "Added ResourceLifecycleError, a SmithyError and RuntimeError subclass, raised when an operation is invoked on or a with block enters a closed client."
+    },
+    {
+      "type": "enhancement",
+      "description": "Clients now close the response bodies of failed attempts and failed calls, so they no longer hold connections until they are garbage collected."
+    },
+    {
+      "type": "enhancement",
+      "description": "Completed type annotations and __all__ declarations for the public API."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed `RpcV2CborTrait` failing to construct from a `DynamicTrait`."
+    },
+    {
+      "type": "bugfix",
+      "description": "`AsyncBytesReader` now joins the items of an async iterable once per read instead of copying the result for each item, which made reading many small items up to 16 times faster."
+    },
+    {
+      "type": "bugfix",
+      "description": "Excluded the URI password from repr."
+    },
+    {
+      "type": "bugfix",
+      "description": "Iterating an `AsyncBytesReader`, such as an async streaming output with `async for`, now yields 64 KiB chunks instead of 1 KiB ones, which made validated S3 `GetObject` downloads read with `async for` about 15 times faster. Small reads from large items also no longer copy the rest of the item on every read."
+    },
+    {
+      "type": "bugfix",
+      "description": "`AsyncBytesReader` now awaits the result of a plain `read()` that returns an awaitable, as an `AwaitableBytesReader`'s does, instead of returning the awaitable as data."
+    }
+  ]
+}

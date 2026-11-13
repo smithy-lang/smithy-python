@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.5.0
+
+### Breaking Changes
+* Made SigningConfig generic in its identity, identity properties, and signing properties, so it depends only on smithy-core and rejects a signer and identity resolver that disagree.
+
+### Enhancements
+* Completed type annotations and __all__ declarations for the public API.
+* Imported symbols from their defining modules.
+* Added docstrings to the public API and ordered public definitions first.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.10.0` to `~=0.11.0`.
+
 ## v0.4.0
 
 ### Breaking Changes

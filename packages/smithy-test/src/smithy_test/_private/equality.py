@@ -23,7 +23,7 @@ def deep_equal(a: object, b: object) -> bool:
         a_seq = cast(Sequence[object], a)
         b_seq = cast(Sequence[object], b)
         return len(a_seq) == len(b_seq) and all(
-            deep_equal(x, y) for x, y in zip(a_seq, b_seq)
+            deep_equal(x, y) for x, y in zip(a_seq, b_seq, strict=True)
         )
     if isinstance(a, dict) and isinstance(b, dict):
         a_map = cast(Mapping[object, object], a)
@@ -43,8 +43,10 @@ def xml_equal(a: bytes, b: bytes) -> bool:
     Only the order of same-named sibling elements (such as list items) is
     significant; structure members, attributes, whitespace-only text, and
     whitespace around text may differ. Namespace declarations are compared as
-    attributes.
+    attributes. An empty body only equals another empty body.
     """
+    if not a or not b:
+        return a == b
     return _canonical_xml(a) == _canonical_xml(b)
 
 

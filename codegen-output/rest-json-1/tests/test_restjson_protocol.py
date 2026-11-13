@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 import json
+from unittest.mock import patch
 from urllib.parse import parse_qsl
 
 from pytest import fail, mark, raises
@@ -2075,7 +2076,6 @@ async def test_rest_json_empty_input_and_empty_output_json_object_output_respons
         assert deep_equal(actual, expected)
 
 
-@mark.xfail()
 async def test_rest_json_endpoint_trait_request_endpoint_operation() -> None:
     """
     Operations can prepend to the given host if they define the endpoint
@@ -2149,7 +2149,6 @@ async def test_rest_json_endpoint_trait_request_endpoint_operation() -> None:
         )
 
 
-@mark.xfail()
 async def test_rest_json_endpoint_trait_with_host_label_request_endpoint_with_host_label_operation() -> (
     None
 ):
@@ -10936,7 +10935,10 @@ async def test_sdk_appended_gzip_after_provided_encoding_rest_json1_request_put_
         )
 
 
-@mark.xfail()
+@patch(
+    "smithy_core._pipeline._default_idempotency_token",
+    new=lambda: "00000000-0000-4000-8000-000000000000",
+)
 async def test_rest_json_query_idempotency_token_auto_fill_request_query_idempotency_token_auto_fill() -> (
     None
 ):
@@ -11011,6 +11013,10 @@ async def test_rest_json_query_idempotency_token_auto_fill_request_query_idempot
         )
 
 
+@patch(
+    "smithy_core._pipeline._default_idempotency_token",
+    new=lambda: "00000000-0000-4000-8000-000000000000",
+)
 async def test_rest_json_query_idempotency_token_auto_fill_is_set_request_query_idempotency_token_auto_fill() -> (
     None
 ):

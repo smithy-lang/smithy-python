@@ -14,4 +14,5 @@ class _InterceptorConfig(Protocol):
 
 
 def user_agent_plugin(config: _InterceptorConfig) -> None:
+    """Add the interceptor that sets the User-Agent header."""
     config.interceptors.append(UserAgentInterceptor())

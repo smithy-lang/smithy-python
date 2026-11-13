@@ -28,6 +28,162 @@ __all__ = [
 ]
 
 
+@dataclass(init=False, frozen=True)
+class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
+    """The ``aws.protocols#restJson1`` protocol trait."""
+
+    http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    event_stream_http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+
+    def __init__(self, value: DocumentValue | DynamicTrait = None):
+        super().__init__(value)
+        http, event_stream_http = _parse_http_protocol_values(value)
+        object.__setattr__(self, "http", http)
+        object.__setattr__(self, "event_stream_http", event_stream_http)
+
+
+@dataclass(init=False, frozen=True)
+class RestXmlTrait(Trait, id=ShapeID("aws.protocols#restXml")):
+    """The ``aws.protocols#restXml`` protocol trait."""
+
+
+@dataclass(init=False, frozen=True)
+class AwsJson1_0Trait(Trait, id=ShapeID("aws.protocols#awsJson1_0")):
+    """The ``aws.protocols#awsJson1_0`` protocol trait."""
+
+    http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    event_stream_http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+
+    def __init__(self, value: DocumentValue | DynamicTrait = None):
+        super().__init__(value)
+        http, event_stream_http = _parse_http_protocol_values(value)
+        object.__setattr__(self, "http", http)
+        object.__setattr__(self, "event_stream_http", event_stream_http)
+
+
+@dataclass(init=False, frozen=True)
+class AwsJson1_1Trait(Trait, id=ShapeID("aws.protocols#awsJson1_1")):
+    """The ``aws.protocols#awsJson1_1`` protocol trait."""
+
+    http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    event_stream_http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+
+    def __init__(self, value: DocumentValue | DynamicTrait = None):
+        super().__init__(value)
+        http, event_stream_http = _parse_http_protocol_values(value)
+        object.__setattr__(self, "http", http)
+        object.__setattr__(self, "event_stream_http", event_stream_http)
+
+
+@dataclass(frozen=True)
+class AwsQueryTrait(Trait, id=ShapeID("aws.protocols#awsQuery")):
+    """The ``aws.protocols#awsQuery`` protocol trait."""
+
+    def __post_init__(self) -> None:
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class AwsQueryErrorTrait(Trait, id=ShapeID("aws.protocols#awsQueryError")):
+    """Sets the error code and HTTP status an awsQuery error is returned with."""
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.document_value, Mapping)
+        assert isinstance(self.document_value.get("code"), str)
+        assert isinstance(self.document_value.get("httpResponseCode"), int)
+
+    @property
+    def code(self) -> str:
+        """The error code the service returns for the error."""
+        return self.document_value["code"]  # type: ignore
+
+    @property
+    def http_response_code(self) -> int:
+        """The HTTP status code the service returns for the error."""
+        return self.document_value["httpResponseCode"]  # type: ignore
+
+
+@dataclass(frozen=True)
+class Ec2QueryTrait(Trait, id=ShapeID("aws.protocols#ec2Query")):
+    """The ``aws.protocols#ec2Query`` protocol trait."""
+
+    def __post_init__(self) -> None:
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class Ec2QueryNameTrait(Trait, id=ShapeID("aws.protocols#ec2QueryName")):
+    """Overrides the name a member is serialized under in ec2Query requests."""
+
+    document_value: str | None = None
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.document_value, str)
+
+    @property
+    def value(self) -> str:
+        """The serialized member name."""
+        return self.document_value  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class HTTPChecksumTrait(Trait, id=ShapeID("aws.protocols#httpChecksum")):
+    """Indicates that an operation supports checksums of its HTTP payloads.
+
+    See the `httpChecksum trait documentation
+    <https://smithy.io/2.0/aws/aws-core.html#aws-protocols-httpchecksum-trait>`_.
+    """
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.document_value, Mapping)
+
+    @property
+    def request_checksum_required(self) -> bool:
+        """Whether a checksum of the request payload must be sent."""
+        return self.document_value.get("requestChecksumRequired", False)  # type: ignore
+
+    @property
+    def request_algorithm_member(self) -> str | None:
+        """The input member that names the request checksum algorithm."""
+        return self.document_value.get("requestAlgorithmMember")  # type: ignore
+
+    @property
+    def request_validation_mode_member(self) -> str | None:
+        """The input member that enables validation of the response checksum."""
+        return self.document_value.get("requestValidationModeMember")  # type: ignore
+
+    @property
+    def response_algorithms(self) -> tuple[str, ...]:
+        """The algorithms the service may use for response checksums."""
+        return tuple(self.document_value.get("responseAlgorithms", ()))  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class SigV4Trait(Trait, id=ShapeID("aws.auth#sigv4")):
+    """Configures SigV4 signing for a service."""
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.document_value, Mapping)
+        assert isinstance(self.document_value["name"], str)
+
+    @property
+    def name(self) -> str:
+        """The signing name of the service."""
+        return self.document_value["name"]  # type: ignore
+
+
 def _parse_http_protocol_values(
     value: DocumentValue | DynamicTrait | None,
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
@@ -60,139 +216,3 @@ def _parse_http_protocol_values(
         event_stream_http_versions_list.append(entry)
 
     return http_versions, tuple(event_stream_http_versions_list)
-
-
-@dataclass(init=False, frozen=True)
-class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
-    http: Sequence[str] = field(
-        repr=False, hash=False, compare=False, default_factory=tuple
-    )
-    event_stream_http: Sequence[str] = field(
-        repr=False, hash=False, compare=False, default_factory=tuple
-    )
-
-    def __init__(self, value: DocumentValue | DynamicTrait = None):
-        super().__init__(value)
-        http, event_stream_http = _parse_http_protocol_values(value)
-        object.__setattr__(self, "http", http)
-        object.__setattr__(self, "event_stream_http", event_stream_http)
-
-
-@dataclass(init=False, frozen=True)
-class RestXmlTrait(Trait, id=ShapeID("aws.protocols#restXml")):
-    pass
-
-
-@dataclass(init=False, frozen=True)
-class AwsJson1_0Trait(Trait, id=ShapeID("aws.protocols#awsJson1_0")):
-    http: Sequence[str] = field(
-        repr=False, hash=False, compare=False, default_factory=tuple
-    )
-    event_stream_http: Sequence[str] = field(
-        repr=False, hash=False, compare=False, default_factory=tuple
-    )
-
-    def __init__(self, value: DocumentValue | DynamicTrait = None):
-        super().__init__(value)
-        http, event_stream_http = _parse_http_protocol_values(value)
-        object.__setattr__(self, "http", http)
-        object.__setattr__(self, "event_stream_http", event_stream_http)
-
-
-@dataclass(init=False, frozen=True)
-class AwsJson1_1Trait(Trait, id=ShapeID("aws.protocols#awsJson1_1")):
-    http: Sequence[str] = field(
-        repr=False, hash=False, compare=False, default_factory=tuple
-    )
-    event_stream_http: Sequence[str] = field(
-        repr=False, hash=False, compare=False, default_factory=tuple
-    )
-
-    def __init__(self, value: DocumentValue | DynamicTrait = None):
-        super().__init__(value)
-        http, event_stream_http = _parse_http_protocol_values(value)
-        object.__setattr__(self, "http", http)
-        object.__setattr__(self, "event_stream_http", event_stream_http)
-
-
-@dataclass(frozen=True)
-class AwsQueryTrait(Trait, id=ShapeID("aws.protocols#awsQuery")):
-    def __post_init__(self):
-        assert self.document_value is None
-
-
-@dataclass(init=False, frozen=True)
-class AwsQueryErrorTrait(Trait, id=ShapeID("aws.protocols#awsQueryError")):
-    def __post_init__(self):
-        assert isinstance(self.document_value, Mapping)
-        assert isinstance(self.document_value.get("code"), str)
-        assert isinstance(self.document_value.get("httpResponseCode"), int)
-
-    @property
-    def code(self) -> str:
-        return self.document_value["code"]  # type: ignore
-
-    @property
-    def http_response_code(self) -> int:
-        return self.document_value["httpResponseCode"]  # type: ignore
-
-
-@dataclass(frozen=True)
-class Ec2QueryTrait(Trait, id=ShapeID("aws.protocols#ec2Query")):
-    def __post_init__(self):
-        assert self.document_value is None
-
-
-@dataclass(init=False, frozen=True)
-class Ec2QueryNameTrait(Trait, id=ShapeID("aws.protocols#ec2QueryName")):
-    document_value: str | None = None
-
-    def __post_init__(self):
-        assert isinstance(self.document_value, str)
-
-    @property
-    def value(self) -> str:
-        return self.document_value  # type: ignore
-
-
-@dataclass(init=False, frozen=True)
-class HTTPChecksumTrait(Trait, id=ShapeID("aws.protocols#httpChecksum")):
-    """Indicates that an operation supports checksums of its HTTP payloads.
-
-    See the `httpChecksum trait documentation
-    <https://smithy.io/2.0/aws/aws-core.html#aws-protocols-httpchecksum-trait>`_.
-    """
-
-    def __post_init__(self):
-        assert isinstance(self.document_value, Mapping)
-
-    @property
-    def request_checksum_required(self) -> bool:
-        """Whether a checksum of the request payload must be sent."""
-        return self.document_value.get("requestChecksumRequired", False)  # type: ignore
-
-    @property
-    def request_algorithm_member(self) -> str | None:
-        """The input member that names the request checksum algorithm."""
-        return self.document_value.get("requestAlgorithmMember")  # type: ignore
-
-    @property
-    def request_validation_mode_member(self) -> str | None:
-        """The input member that enables validation of the response checksum."""
-        return self.document_value.get("requestValidationModeMember")  # type: ignore
-
-    @property
-    def response_algorithms(self) -> tuple[str, ...]:
-        """The algorithms the service may use for response checksums."""
-        return tuple(self.document_value.get("responseAlgorithms", ()))  # type: ignore
-
-
-@dataclass(init=False, frozen=True)
-class SigV4Trait(Trait, id=ShapeID("aws.auth#sigv4")):
-    def __post_init__(self):
-        assert isinstance(self.document_value, Mapping)
-        assert isinstance(self.document_value["name"], str)
-
-    @property
-    def name(self) -> str:
-        return self.document_value["name"]  # type: ignore

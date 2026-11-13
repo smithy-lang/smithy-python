@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import logging
 from collections.abc import Callable, Mapping, Sequence
+from functools import partial
 from importlib import metadata
 from typing import Any, cast
 
@@ -27,7 +28,7 @@ from .provider import (
 __all__ = ("IdentityChain",)
 
 _CHAIN_PROVIDER_ENTRY_POINT_GROUP = "smithy_aws_core.identity.chain_providers"
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class _IdentityChainBase[I: Identity]:
@@ -66,7 +67,7 @@ class _IdentityChainBase[I: Identity]:
         failures: list[IdentityResolverFailure] = []
         for resolver in self._resolvers:
             try:
-                return (yield lambda: resolver.get_identity(properties=properties))
+                return (yield partial(resolver.get_identity, properties=properties))
             except SmithyIdentityError as error:
                 if isinstance(resolver, _NamedResolverBase):
                     provider_name = resolver.provider_name
@@ -182,7 +183,7 @@ def _assemble(
 
     for provider in providers:
         setup.set_current_provider(provider)
-        yield lambda: provider.setup(identity_type, setup)
+        yield partial(provider.setup, identity_type, setup)
         if setup.terminal:
             break
 

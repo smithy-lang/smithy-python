@@ -55,6 +55,25 @@ class DependencySet(Collection[Dependency]):
         for dependency in dependencies:
             self.add(dependency)
 
+    def __contains__(self, value: object) -> bool:
+        if not isinstance(value, Dependency):
+            return False
+        return self._dependencies.get((value.package, value.group)) == value
+
+    def __iter__(self) -> Iterator[Dependency]:
+        return iter(
+            sorted(
+                self._dependencies.values(),
+                key=lambda dependency: (
+                    _GROUP_ORDER[dependency.group],
+                    dependency.package,
+                ),
+            )
+        )
+
+    def __len__(self) -> int:
+        return len(self._dependencies)
+
     def add(self, dependency: Dependency) -> None:
         """Add a dependency, merging extras or rejecting version conflicts."""
         key = (dependency.package, dependency.group)
@@ -80,25 +99,6 @@ class DependencySet(Collection[Dependency]):
     def for_group(self, group: DependencyGroup) -> tuple[Dependency, ...]:
         """Return one dependency group in deterministic package order."""
         return tuple(dependency for dependency in self if dependency.group == group)
-
-    def __contains__(self, value: object) -> bool:
-        if not isinstance(value, Dependency):
-            return False
-        return self._dependencies.get((value.package, value.group)) == value
-
-    def __iter__(self) -> Iterator[Dependency]:
-        return iter(
-            sorted(
-                self._dependencies.values(),
-                key=lambda dependency: (
-                    _GROUP_ORDER[dependency.group],
-                    dependency.package,
-                ),
-            )
-        )
-
-    def __len__(self) -> int:
-        return len(self._dependencies)
 
 
 SMITHY_CORE = Dependency(

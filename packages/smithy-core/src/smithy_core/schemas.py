@@ -18,6 +18,7 @@ from .exceptions import ExpectationNotMetError, SmithyError
 from .shapes import ShapeID, ShapeType
 from .traits import (
     DynamicTrait,
+    EndpointTrait,
     IdempotencyTokenTrait,
     LongPollTrait,
     StreamingTrait,
@@ -114,6 +115,24 @@ class Schema:
 
         object.__setattr__(self, "_extensions", _EMPTY_SCHEMA_EXTENSIONS)
         object.__setattr__(self, "_members_by_index", None)
+
+    def __contains__(self, item: Any) -> bool:
+        """Returns whether the schema has the given member or trait."""
+        match item:
+            case type():
+                if issubclass(item, Trait):
+                    return item.id in self.traits
+                return False
+            case ShapeID():
+                if (member := item.member) is not None:
+                    if self.id.with_member(member) == item:
+                        return member in self.members
+                    return False
+                return item in self.traits
+            case str():
+                return item in self.members
+            case _:
+                return False
 
     @property
     def member_name(self) -> str | None:
@@ -238,40 +257,6 @@ class Schema:
             return self._compute_extension(extension)
         return value
 
-    def _compute_extension[T](self, extension: "SchemaExtension[T]") -> T:
-        """Grow an extension array or populate an uncomputed extension slot."""
-        extensions = self._extensions
-        extension_id = extension.id
-        if isinstance(extensions, tuple):
-            extensions = [_SCHEMA_EXTENSION_NOT_COMPUTED] * (extension_id + 1)
-            object.__setattr__(self, "_extensions", extensions)
-        elif extension_id >= len(extensions):
-            extensions.extend(
-                [_SCHEMA_EXTENSION_NOT_COMPUTED] * (extension_id + 1 - len(extensions))
-            )
-
-        value = extension.provider(self)
-        extensions[extension_id] = value
-        return value
-
-    def __contains__(self, item: Any):
-        """Returns whether the schema has the given member or trait."""
-        match item:
-            case type():
-                if issubclass(item, Trait):
-                    return item.id in self.traits
-                return False
-            case ShapeID():
-                if (member := item.member) is not None:
-                    if self.id.with_member(member) == item:
-                        return member in self.members
-                    return False
-                return item in self.traits
-            case str():
-                return item in self.members
-            case _:
-                return False
-
     @classmethod
     def collection(
         cls,
@@ -349,6 +334,22 @@ class Schema:
             member_target=target,
             member_index=index,
         )
+
+    def _compute_extension[T](self, extension: "SchemaExtension[T]") -> T:
+        """Grow an extension array or populate an uncomputed extension slot."""
+        extensions = self._extensions
+        extension_id = extension.id
+        if isinstance(extensions, tuple):
+            extensions = [_SCHEMA_EXTENSION_NOT_COMPUTED] * (extension_id + 1)
+            object.__setattr__(self, "_extensions", extensions)
+        elif extension_id >= len(extensions):
+            extensions.extend(
+                [_SCHEMA_EXTENSION_NOT_COMPUTED] * (extension_id + 1 - len(extensions))
+            )
+
+        value = extension.provider(self)
+        extensions[extension_id] = value
+        return value
 
 
 _SCHEMA_EXTENSION_IDS = count()
@@ -495,3 +496,56 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
         """Whether the service may hold the request open until information is
         available."""
         return self.schema.get_trait(LongPollTrait) is not None
+
+    @cached_property
+    def _idempotency_token_field(self) -> str | None:
+        """Python attribute name of the idempotency token member, or None.
+
+        Cached because the client reads it on every call.
+        """
+        member = self.idempotency_token_member
+        if member is None:
+            return None
+
+        # Imported here so that importing schemas doesn't load the naming module.
+        from ._model_naming import member_field_name
+
+        # Same derivation the generated input dataclass used for its field names.
+        # Operation inputs are never errors, enums or outputs.
+        return member_field_name(
+            member.expect_member_name(),
+            is_error=False,
+            carries_response_metadata=False,
+            is_enum=False,
+        )
+
+    @cached_property
+    def _host_prefix(self) -> tuple[str, tuple[tuple[str, str], ...]] | None:
+        """The endpoint trait's host prefix, and the label and Python attribute name
+        of each input member it reads, or None.
+
+        Cached because the client reads it on every call.
+        """
+        trait = self.schema.get_trait(EndpointTrait)
+        if trait is None:
+            return None
+
+        from string import Formatter
+
+        from ._model_naming import member_field_name
+
+        # Labels are member names, which are valid format fields.
+        labels = tuple(
+            (
+                label,
+                member_field_name(
+                    label,
+                    is_error=False,
+                    carries_response_metadata=False,
+                    is_enum=False,
+                ),
+            )
+            for _, label, _, _ in Formatter().parse(trait.host_prefix)
+            if label
+        )
+        return trait.host_prefix, labels

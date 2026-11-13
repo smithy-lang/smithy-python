@@ -8,8 +8,8 @@ dependencies = []
 
 [dependency-groups]
 test = [
-    "pytest>=9.0.3",
-    "pytest-asyncio>=0.25.3",
+    "pytest>=9.0.3,<10.0.0",
+    "pytest-asyncio>=1.3.0,<1.4.0",
     "pytest-cov>=6.0.0",
     "freezegun>=1.5.1",
 ]
@@ -42,7 +42,7 @@ smithy_xml = { workspace = true }
 smithy_aws_core = { workspace = true }
 smithy_aws_event_stream = { workspace = true }
 aws_sdk_signers = {workspace = true }
-smithy_checksums = { workspace = true }
+smithy_aws_checksums = { workspace = true }
 smithy_python = { workspace = true }
 
 [tool.pyright]
@@ -53,6 +53,10 @@ enableExperimentalFeatures = true
 exclude = [
     "**/__pycache__",
     "packages/smithy-aws-core/tests/integration",
+    # Import generated clients, which static-analysis runs before installing.
+    "packages/smithy-aws-core/tests/functional",
+    "packages/smithy-http/tests/functional",
+    "packages/smithy-test/tests/functional",
 ]
 
 [tool.pytest.ini_options]

@@ -28,52 +28,6 @@ if TYPE_CHECKING:
     from smithy_xml import XMLCodec
 
 
-def _assert_xml() -> None:
-    if not _HAS_XML:
-        raise MissingDependencyError(
-            "Attempted to use XML codec, but smithy-xml is not installed."
-        )
-
-
-def _parse_aws_query_error_code(
-    element: Element | None, wrapper_elements: tuple[str, ...]
-) -> str | None:
-    """Parse the ``Code`` field from a wrapped awsQuery error response."""
-    if element is None:
-        return None
-
-    if wrapper_elements:
-        if local_name(element.tag) != wrapper_elements[0]:
-            return None
-        for wrapper in wrapper_elements[1:]:
-            next_element = find_child(element, wrapper)
-            if next_element is None:
-                return None
-            element = next_element
-
-    code_element = find_child(element, "Code")
-    return code_element.text if code_element is not None else None
-
-
-def _resolve_aws_query_error_shape_id(
-    *,
-    code: str,
-    operation: APIOperation[Any, Any],
-    error_registry: TypeRegistry,
-    default_namespace: str,
-) -> ShapeID | None:
-    """Resolve an awsQuery error code to a modeled error shape ID."""
-    for error_schema in operation.error_schemas:
-        trait = error_schema.get_trait(AwsQueryErrorTrait)
-        if trait is not None and trait.code == code:
-            if error_schema.id in error_registry:
-                return error_schema.id
-            break
-
-    fallback_id = ShapeID.from_parts(namespace=default_namespace, name=code)
-    return fallback_id if fallback_id in error_registry else None
-
-
 def create_aws_query_error(
     *,
     body: bytes | Element | None,
@@ -128,3 +82,49 @@ def create_aws_query_error(
         is_retry_safe=is_throttle or is_timeout or None,
         retry_after=retry_after,
     )
+
+
+def _assert_xml() -> None:
+    if not _HAS_XML:
+        raise MissingDependencyError(
+            "Attempted to use XML codec, but smithy-xml is not installed."
+        )
+
+
+def _parse_aws_query_error_code(
+    element: Element | None, wrapper_elements: tuple[str, ...]
+) -> str | None:
+    """Parse the ``Code`` field from a wrapped awsQuery error response."""
+    if element is None:
+        return None
+
+    if wrapper_elements:
+        if local_name(element.tag) != wrapper_elements[0]:
+            return None
+        for wrapper in wrapper_elements[1:]:
+            next_element = find_child(element, wrapper)
+            if next_element is None:
+                return None
+            element = next_element
+
+    code_element = find_child(element, "Code")
+    return code_element.text if code_element is not None else None
+
+
+def _resolve_aws_query_error_shape_id(
+    *,
+    code: str,
+    operation: APIOperation[Any, Any],
+    error_registry: TypeRegistry,
+    default_namespace: str,
+) -> ShapeID | None:
+    """Resolve an awsQuery error code to a modeled error shape ID."""
+    for error_schema in operation.error_schemas:
+        trait = error_schema.get_trait(AwsQueryErrorTrait)
+        if trait is not None and trait.code == code:
+            if error_schema.id in error_registry:
+                return error_schema.id
+            break
+
+    fallback_id = ShapeID.from_parts(namespace=default_namespace, name=code)
+    return fallback_id if fallback_id in error_registry else None

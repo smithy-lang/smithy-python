@@ -49,12 +49,14 @@ class JsonString(str):
     _json = None
 
     def as_json(self) -> Any:
+        """Return the parsed JSON value, parsing it on first access."""
         if not self._json:
             self._json = json.loads(self)
         return self._json
 
     @staticmethod
     def from_json(j: Any) -> "JsonString":
+        """Create a JSON string by serializing ``j``."""
         json_string = JsonString(json.dumps(j))
         json_string._json = j
         return json_string
@@ -66,12 +68,14 @@ class JsonBlob(bytes):
     _json = None
 
     def as_json(self) -> Any:
+        """Return the parsed JSON value, parsing it on first access."""
         if not self._json:
             self._json = json.loads(self.decode(encoding="utf-8"))
         return self._json
 
     @staticmethod
     def from_json(j: Any) -> "JsonBlob":
+        """Create a JSON blob by serializing ``j``."""
         json_string = JsonBlob(json.dumps(j).encode(encoding="utf-8"))
         json_string._json = j
         return json_string
@@ -96,6 +100,23 @@ class UnknownEnumMixin:
     _smithy_unknown: bool = False
     _smithy_corrected: bool = False
 
+    def __eq__(self, other: object) -> bool:
+        if self._smithy_corrected or getattr(other, "_smithy_corrected", False):
+            return self is other
+        return super().__eq__(other)
+
+    def __ne__(self, other: object) -> bool:
+        result = self.__eq__(other)
+        return result if result is NotImplemented else not result
+
+    def __hash__(self) -> int:
+        return super().__hash__()
+
+    @property
+    def is_unknown(self) -> bool:
+        """True if this value was not known at SDK generation time."""
+        return self._smithy_unknown
+
     @classmethod
     def _unknown(cls, value: Any) -> Self:
         member_type: Any = cls._member_type_
@@ -116,23 +137,6 @@ class UnknownEnumMixin:
         if isinstance(value, cls._member_type_):
             return cls._unknown(value)
         return None
-
-    def __eq__(self, other: object) -> bool:
-        if self._smithy_corrected or getattr(other, "_smithy_corrected", False):
-            return self is other
-        return super().__eq__(other)
-
-    def __ne__(self, other: object) -> bool:
-        result = self.__eq__(other)
-        return result if result is NotImplemented else not result
-
-    def __hash__(self) -> int:
-        return super().__hash__()
-
-    @property
-    def is_unknown(self) -> bool:
-        """True if this value was not known at SDK generation time."""
-        return self._smithy_unknown
 
 
 class TimestampFormat(Enum):
@@ -214,6 +218,7 @@ class PathPattern:
         )
 
     def format(self, *args: object, **kwargs: str) -> str:
+        """Fill in the path labels, rejecting ``/`` in non-greedy labels."""
         if args:
             raise ValueError("PathPattern formatting requires only keyword arguments.")
 

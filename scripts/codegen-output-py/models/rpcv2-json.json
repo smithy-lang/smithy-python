@@ -1,0 +1,1544 @@
+{
+  "smithy": "2.0",
+  "metadata": {
+    "suppressions": [
+      {
+        "id": "HttpMethodSemantics",
+        "namespace": "com.amazonaws.glacier"
+      },
+      {
+        "id": "HttpMethodSemantics",
+        "namespace": "com.amazonaws.s3"
+      },
+      {
+        "id": "EnumTrait",
+        "namespace": "com.amazonaws.s3"
+      },
+      {
+        "id": "UnreferencedShape",
+        "namespace": "aws.protocoltests.config",
+        "reason": "These shapes are intended to be used to validate vendorParams in\nprotocol tests, so they naturally will not be connected to a service.\n"
+      },
+      {
+        "id": "DeprecatedTrait",
+        "namespace": "*",
+        "reason": "Some of the AWS protocols make use of deprecated traits, and some are\nthemselves deprecated traits. As this package is intended to test those\nprotocols, the warnings should be suppressed."
+      }
+    ],
+    "validators": [
+      {
+        "configuration": {
+          "selector": "operation :not(< service)"
+        },
+        "id": "UnboundTestOperation",
+        "message": "This operation in the AWS protocol tests is not bound to a service.",
+        "name": "EmitEachSelector",
+        "namespaces": [
+          "aws.protocoltests.json10",
+          "aws.protocoltests.json",
+          "aws.protocoltests.query",
+          "aws.protocoltests.ec2",
+          "aws.protocoltests.restjson.validation",
+          "aws.protocoltests.restjson",
+          "aws.protocoltests.restxml",
+          "aws.protocoltests.restxml.xmlns",
+          "com.amazonaws.apigateway",
+          "com.amazonaws.glacier",
+          "com.amazonaws.machinelearning",
+          "com.amazonaws.s3"
+        ],
+        "severity": "WARNING"
+      },
+      {
+        "configuration": {
+          "selector": "operation :not(< service)"
+        },
+        "id": "UnboundTestOperation",
+        "message": "This operation in the Smithy protocol tests is not bound to a service.",
+        "name": "EmitEachSelector",
+        "namespaces": [
+          "smithy.protocoltests.rpcv2Cbor",
+          "smithy.protocoltests.rpcv2Json"
+        ],
+        "severity": "WARNING"
+      }
+    ]
+  },
+  "shapes": {
+    "smithy.framework#ValidationException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "A summary of the validation failure.",
+            "smithy.api#required": {}
+          }
+        },
+        "fieldList": {
+          "target": "smithy.framework#ValidationExceptionFieldList",
+          "traits": {
+            "smithy.api#documentation": "A list of specific failures encountered while validating the input.\nA member can appear in this list more than once if it failed to satisfy multiple constraints."
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "A standard error for input validation failures.\nThis should be thrown by services when a member of the input structure\nfalls outside of the modeled or documented constraints.",
+        "smithy.api#error": "client"
+      }
+    },
+    "smithy.framework#ValidationExceptionField": {
+      "type": "structure",
+      "members": {
+        "path": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "A JSONPointer expression to the structure member whose value failed to satisfy the modeled constraints.",
+            "smithy.api#required": {}
+          }
+        },
+        "message": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "A detailed description of the validation failure.",
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "Describes one specific validation failure for an input member."
+      }
+    },
+    "smithy.framework#ValidationExceptionFieldList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.framework#ValidationExceptionField"
+      }
+    },
+    "smithy.protocols#StringList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#String"
+      },
+      "traits": {
+        "smithy.api#documentation": "A list of String shapes.",
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.protocols#rpcv2Json": {
+      "type": "structure",
+      "members": {
+        "http": {
+          "target": "smithy.protocols#StringList",
+          "traits": {
+            "smithy.api#documentation": "Priority ordered list of supported HTTP protocol versions."
+          }
+        },
+        "eventStreamHttp": {
+          "target": "smithy.protocols#StringList",
+          "traits": {
+            "smithy.api#documentation": "Priority ordered list of supported HTTP protocol versions\nthat are required when using event streams."
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "An RPC-based protocol that serializes JSON payloads.",
+        "smithy.api#protocolDefinition": {
+          "traits": [
+            "smithy.api#cors",
+            "smithy.api#endpoint",
+            "smithy.api#hostLabel",
+            "smithy.api#httpError",
+            "smithy.api#requestCompression"
+          ]
+        },
+        "smithy.api#trait": {
+          "selector": "service"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#BigDecimalOperation": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#BigDecimalStructure"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#BigDecimalStructure"
+      },
+      "traits": {}
+    },
+    "smithy.protocoltests.rpcv2Json#BigDecimalStructure": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#BigDecimal"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#BigIntegerOperation": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#BigIntegerStructure"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#BigIntegerStructure"
+      },
+      "traits": {}
+    },
+    "smithy.protocoltests.rpcv2Json#BigIntegerStructure": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#BigInteger"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#ClientOptionalDefaults": {
+      "type": "structure",
+      "members": {
+        "member": {
+          "target": "smithy.api#Integer",
+          "traits": {
+            "smithy.api#clientOptional": {},
+            "smithy.api#default": 0
+          }
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#ComplexError": {
+      "type": "structure",
+      "members": {
+        "TopLevel": {
+          "target": "smithy.api#String"
+        },
+        "Nested": {
+          "target": "smithy.protocoltests.rpcv2Json#ComplexNestedErrorData"
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "This error is thrown when a request is invalid.",
+        "smithy.api#error": "client"
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#ComplexNestedErrorData": {
+      "type": "structure",
+      "members": {
+        "Foo": {
+          "target": "smithy.api#String"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#Defaults": {
+      "type": "structure",
+      "mixins": [
+        {
+          "target": "smithy.protocoltests.rpcv2Json#DefaultsMixin"
+        }
+      ],
+      "members": {}
+    },
+    "smithy.protocoltests.rpcv2Json#DefaultsMixin": {
+      "type": "structure",
+      "members": {
+        "defaultString": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#default": "hi"
+          }
+        },
+        "defaultBoolean": {
+          "target": "smithy.api#Boolean",
+          "traits": {
+            "smithy.api#default": true
+          }
+        },
+        "defaultList": {
+          "target": "smithy.protocoltests.rpcv2Json#TestStringList",
+          "traits": {
+            "smithy.api#default": []
+          }
+        },
+        "defaultTimestamp": {
+          "target": "smithy.api#Timestamp",
+          "traits": {
+            "smithy.api#default": 0
+          }
+        },
+        "defaultBlob": {
+          "target": "smithy.api#Blob",
+          "traits": {
+            "smithy.api#default": "YWJj"
+          }
+        },
+        "defaultByte": {
+          "target": "smithy.api#Byte",
+          "traits": {
+            "smithy.api#default": 1
+          }
+        },
+        "defaultShort": {
+          "target": "smithy.api#Short",
+          "traits": {
+            "smithy.api#default": 1
+          }
+        },
+        "defaultInteger": {
+          "target": "smithy.api#Integer",
+          "traits": {
+            "smithy.api#default": 10
+          }
+        },
+        "defaultLong": {
+          "target": "smithy.api#Long",
+          "traits": {
+            "smithy.api#default": 100
+          }
+        },
+        "defaultFloat": {
+          "target": "smithy.api#Float",
+          "traits": {
+            "smithy.api#default": 1.0
+          }
+        },
+        "defaultDouble": {
+          "target": "smithy.api#Double",
+          "traits": {
+            "smithy.api#default": 1.0
+          }
+        },
+        "defaultMap": {
+          "target": "smithy.protocoltests.rpcv2Json#TestStringMap",
+          "traits": {
+            "smithy.api#default": {}
+          }
+        },
+        "defaultEnum": {
+          "target": "smithy.protocoltests.rpcv2Json#TestEnum",
+          "traits": {
+            "smithy.api#default": "FOO"
+          }
+        },
+        "defaultIntEnum": {
+          "target": "smithy.protocoltests.rpcv2Json#TestIntEnum",
+          "traits": {
+            "smithy.api#default": 1
+          }
+        },
+        "emptyString": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#default": ""
+          }
+        },
+        "falseBoolean": {
+          "target": "smithy.api#Boolean",
+          "traits": {
+            "smithy.api#default": false
+          }
+        },
+        "emptyBlob": {
+          "target": "smithy.api#Blob",
+          "traits": {
+            "smithy.api#default": ""
+          }
+        },
+        "zeroByte": {
+          "target": "smithy.api#Byte",
+          "traits": {
+            "smithy.api#default": 0
+          }
+        },
+        "zeroShort": {
+          "target": "smithy.api#Short",
+          "traits": {
+            "smithy.api#default": 0
+          }
+        },
+        "zeroInteger": {
+          "target": "smithy.api#Integer",
+          "traits": {
+            "smithy.api#default": 0
+          }
+        },
+        "zeroLong": {
+          "target": "smithy.api#Long",
+          "traits": {
+            "smithy.api#default": 0
+          }
+        },
+        "zeroFloat": {
+          "target": "smithy.api#Float",
+          "traits": {
+            "smithy.api#default": 0.0
+          }
+        },
+        "zeroDouble": {
+          "target": "smithy.api#Double",
+          "traits": {
+            "smithy.api#default": 0.0
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#mixin": {}
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#DenseBooleanMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.api#Boolean"
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#DenseNumberMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.api#Integer"
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#DenseSetMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.protocoltests.shared#StringSet"
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#DenseStringMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.api#String"
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#DenseStructMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.protocoltests.shared#GreetingStruct"
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#EmptyInputOutput": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#EmptyStructure"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#EmptyStructure"
+      },
+      "traits": {}
+    },
+    "smithy.protocoltests.rpcv2Json#EmptyStructure": {
+      "type": "structure",
+      "members": {}
+    },
+    "smithy.protocoltests.rpcv2Json#FractionalSeconds": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.api#Unit"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#FractionalSecondsOutput"
+      },
+      "traits": {
+        "smithy.api#tags": [
+          "client-only"
+        ]
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#FractionalSecondsOutput": {
+      "type": "structure",
+      "members": {
+        "datetime": {
+          "target": "smithy.api#Timestamp"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#GreetingWithErrors": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.api#Unit"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#GreetingWithErrorsOutput"
+      },
+      "errors": [
+        {
+          "target": "smithy.protocoltests.rpcv2Json#ComplexError"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#InvalidGreeting"
+        }
+      ],
+      "traits": {
+        "smithy.api#documentation": "This operation has three possible return values:\n\n1. A successful response in the form of GreetingWithErrorsOutput\n2. An InvalidGreeting error.\n3. A ComplexError error.\n\nImplementations must be able to successfully take a response and\nproperly deserialize successful and error responses.",
+        "smithy.api#idempotent": {}
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#GreetingWithErrorsOutput": {
+      "type": "structure",
+      "members": {
+        "greeting": {
+          "target": "smithy.api#String"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#InvalidGreeting": {
+      "type": "structure",
+      "members": {
+        "Message": {
+          "target": "smithy.api#String"
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "This error is thrown when an invalid greeting value is provided.",
+        "smithy.api#error": "client"
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#NoInputOutput": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.api#Unit"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "traits": {}
+    },
+    "smithy.protocoltests.rpcv2Json#OperationWithDefaults": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#OperationWithDefaultsInput"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#OperationWithDefaultsOutput"
+      },
+      "errors": [
+        {
+          "target": "smithy.framework#ValidationException"
+        }
+      ],
+      "traits": {}
+    },
+    "smithy.protocoltests.rpcv2Json#OperationWithDefaultsInput": {
+      "type": "structure",
+      "members": {
+        "defaults": {
+          "target": "smithy.protocoltests.rpcv2Json#Defaults"
+        },
+        "clientOptionalDefaults": {
+          "target": "smithy.protocoltests.rpcv2Json#ClientOptionalDefaults"
+        },
+        "topLevelDefault": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#default": "hi"
+          }
+        },
+        "otherTopLevelDefault": {
+          "target": "smithy.api#Integer",
+          "traits": {
+            "smithy.api#default": 0
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#OperationWithDefaultsOutput": {
+      "type": "structure",
+      "mixins": [
+        {
+          "target": "smithy.protocoltests.rpcv2Json#DefaultsMixin"
+        }
+      ],
+      "members": {},
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#OptionalInputOutput": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#SimpleStructure"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#SimpleStructure"
+      },
+      "traits": {}
+    },
+    "smithy.protocoltests.rpcv2Json#RecursiveShapes": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#RecursiveShapesInputOutput"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#RecursiveShapesInputOutput"
+      },
+      "traits": {}
+    },
+    "smithy.protocoltests.rpcv2Json#RecursiveShapesInputOutput": {
+      "type": "structure",
+      "members": {
+        "nested": {
+          "target": "smithy.protocoltests.rpcv2Json#RecursiveShapesInputOutputNested1"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#RecursiveShapesInputOutputNested1": {
+      "type": "structure",
+      "members": {
+        "foo": {
+          "target": "smithy.api#String"
+        },
+        "nested": {
+          "target": "smithy.protocoltests.rpcv2Json#RecursiveShapesInputOutputNested2"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#RecursiveShapesInputOutputNested2": {
+      "type": "structure",
+      "members": {
+        "bar": {
+          "target": "smithy.api#String"
+        },
+        "recursiveMember": {
+          "target": "smithy.protocoltests.rpcv2Json#RecursiveShapesInputOutputNested1"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#RpcV2JsonDenseMaps": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#RpcV2JsonDenseMapsInputOutput"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#RpcV2JsonDenseMapsInputOutput"
+      },
+      "errors": [
+        {
+          "target": "smithy.framework#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.api#documentation": "The example tests basic map serialization."
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#RpcV2JsonDenseMapsInputOutput": {
+      "type": "structure",
+      "members": {
+        "denseStructMap": {
+          "target": "smithy.protocoltests.rpcv2Json#DenseStructMap"
+        },
+        "denseNumberMap": {
+          "target": "smithy.protocoltests.rpcv2Json#DenseNumberMap"
+        },
+        "denseBooleanMap": {
+          "target": "smithy.protocoltests.rpcv2Json#DenseBooleanMap"
+        },
+        "denseStringMap": {
+          "target": "smithy.protocoltests.rpcv2Json#DenseStringMap"
+        },
+        "denseSetMap": {
+          "target": "smithy.protocoltests.rpcv2Json#DenseSetMap"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#RpcV2JsonListInputOutput": {
+      "type": "structure",
+      "members": {
+        "stringList": {
+          "target": "smithy.protocoltests.shared#StringList"
+        },
+        "stringSet": {
+          "target": "smithy.protocoltests.shared#StringSet"
+        },
+        "integerList": {
+          "target": "smithy.protocoltests.shared#IntegerList"
+        },
+        "booleanList": {
+          "target": "smithy.protocoltests.shared#BooleanList"
+        },
+        "timestampList": {
+          "target": "smithy.protocoltests.shared#TimestampList"
+        },
+        "enumList": {
+          "target": "smithy.protocoltests.shared#FooEnumList"
+        },
+        "intEnumList": {
+          "target": "smithy.protocoltests.shared#IntegerEnumList"
+        },
+        "nestedStringList": {
+          "target": "smithy.protocoltests.shared#NestedStringList"
+        },
+        "structureList": {
+          "target": "smithy.protocoltests.rpcv2Json#StructureList"
+        },
+        "blobList": {
+          "target": "smithy.protocoltests.shared#BlobList"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#RpcV2JsonLists": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#RpcV2JsonListInputOutput"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#RpcV2JsonListInputOutput"
+      },
+      "errors": [
+        {
+          "target": "smithy.framework#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.api#documentation": "This test case serializes JSON lists for the following cases for both\ninput and output:\n\n1. Normal lists.\n2. Normal sets.\n3. Lists of lists.\n4. Lists of structures.",
+        "smithy.api#idempotent": {}
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#RpcV2JsonProtocol": {
+      "type": "service",
+      "version": "2020-07-14",
+      "operations": [
+        {
+          "target": "smithy.protocoltests.rpcv2Json#BigDecimalOperation"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#BigIntegerOperation"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#EmptyInputOutput"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#FractionalSeconds"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#GreetingWithErrors"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#NoInputOutput"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#OperationWithDefaults"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#OptionalInputOutput"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#RecursiveShapes"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#RpcV2JsonDenseMaps"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#RpcV2JsonLists"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#RpcV2JsonSparseMaps"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#SimpleScalarProperties"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#SparseNullsOperation"
+        },
+        {
+          "target": "smithy.protocoltests.rpcv2Json#TimestampFormatIgnored"
+        }
+      ],
+      "traits": {
+        "smithy.api#title": "RpcV2 JSON Protocol Service",
+        "smithy.protocols#rpcv2Json": {}
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#RpcV2JsonSparseMaps": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#RpcV2JsonSparseMapsInputOutput"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#RpcV2JsonSparseMapsInputOutput"
+      },
+      "errors": [
+        {
+          "target": "smithy.framework#ValidationException"
+        }
+      ],
+      "traits": {}
+    },
+    "smithy.protocoltests.rpcv2Json#RpcV2JsonSparseMapsInputOutput": {
+      "type": "structure",
+      "members": {
+        "sparseStructMap": {
+          "target": "smithy.protocoltests.rpcv2Json#SparseStructMap"
+        },
+        "sparseNumberMap": {
+          "target": "smithy.protocoltests.rpcv2Json#SparseNumberMap"
+        },
+        "sparseBooleanMap": {
+          "target": "smithy.protocoltests.rpcv2Json#SparseBooleanMap"
+        },
+        "sparseStringMap": {
+          "target": "smithy.protocoltests.shared#SparseStringMap"
+        },
+        "sparseSetMap": {
+          "target": "smithy.protocoltests.rpcv2Json#SparseSetMap"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#SimpleScalarProperties": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#SimpleScalarStructure"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#SimpleScalarStructure"
+      },
+      "traits": {}
+    },
+    "smithy.protocoltests.rpcv2Json#SimpleScalarStructure": {
+      "type": "structure",
+      "members": {
+        "trueBooleanValue": {
+          "target": "smithy.api#Boolean"
+        },
+        "falseBooleanValue": {
+          "target": "smithy.api#Boolean"
+        },
+        "byteValue": {
+          "target": "smithy.api#Byte"
+        },
+        "doubleValue": {
+          "target": "smithy.api#Double"
+        },
+        "floatValue": {
+          "target": "smithy.api#Float"
+        },
+        "integerValue": {
+          "target": "smithy.api#Integer"
+        },
+        "longValue": {
+          "target": "smithy.api#Long"
+        },
+        "shortValue": {
+          "target": "smithy.api#Short"
+        },
+        "stringValue": {
+          "target": "smithy.api#String"
+        },
+        "blobValue": {
+          "target": "smithy.api#Blob"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#SimpleStructure": {
+      "type": "structure",
+      "members": {
+        "value": {
+          "target": "smithy.api#String"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#SparseBooleanMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.api#Boolean"
+      },
+      "traits": {
+        "smithy.api#sparse": {}
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#SparseNullsOperation": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#SparseNullsOperationInputOutput"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#SparseNullsOperationInputOutput"
+      },
+      "traits": {}
+    },
+    "smithy.protocoltests.rpcv2Json#SparseNullsOperationInputOutput": {
+      "type": "structure",
+      "members": {
+        "sparseStringList": {
+          "target": "smithy.protocoltests.shared#SparseStringList"
+        },
+        "sparseStringMap": {
+          "target": "smithy.protocoltests.shared#SparseStringMap"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#SparseNumberMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.api#Integer"
+      },
+      "traits": {
+        "smithy.api#sparse": {}
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#SparseSetMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.protocoltests.shared#StringSet"
+      },
+      "traits": {
+        "smithy.api#sparse": {}
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#SparseStructMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.protocoltests.shared#GreetingStruct"
+      },
+      "traits": {
+        "smithy.api#sparse": {}
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#StructureList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.protocoltests.rpcv2Json#StructureListMember"
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#StructureListMember": {
+      "type": "structure",
+      "members": {
+        "a": {
+          "target": "smithy.api#String"
+        },
+        "b": {
+          "target": "smithy.api#String"
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#TestEnum": {
+      "type": "enum",
+      "members": {
+        "FOO": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "FOO"
+          }
+        },
+        "BAR": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "BAR"
+          }
+        },
+        "BAZ": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "BAZ"
+          }
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#TestIntEnum": {
+      "type": "intEnum",
+      "members": {
+        "ONE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": 1
+          }
+        },
+        "TWO": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": 2
+          }
+        }
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#TestStringList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#String"
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#TestStringMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.api#String"
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#TimestampFormatIgnored": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.protocoltests.rpcv2Json#TimestampFormatIgnoredIO"
+      },
+      "output": {
+        "target": "smithy.protocoltests.rpcv2Json#TimestampFormatIgnoredIO"
+      },
+      "traits": {
+        "smithy.api#documentation": "This operation tests that the rpcv2Json protocol always uses epoch-seconds\nfor timestamp serialization, regardless of the `timestampFormat` trait.\nMembers targeting `DateTime` (date-time), `HttpDate` (http-date), and\n`EpochSeconds` (epoch-seconds) must all serialize as JSON numbers."
+      }
+    },
+    "smithy.protocoltests.rpcv2Json#TimestampFormatIgnoredIO": {
+      "type": "structure",
+      "members": {
+        "dateTime": {
+          "target": "smithy.protocoltests.shared#DateTime"
+        },
+        "httpDate": {
+          "target": "smithy.protocoltests.shared#HttpDate"
+        },
+        "epochSeconds": {
+          "target": "smithy.protocoltests.shared#EpochSeconds"
+        },
+        "normal": {
+          "target": "smithy.api#Timestamp"
+        }
+      }
+    },
+    "smithy.protocoltests.shared#BlobList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#Blob"
+      }
+    },
+    "smithy.protocoltests.shared#BooleanList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#Boolean"
+      }
+    },
+    "smithy.protocoltests.shared#DateTime": {
+      "type": "timestamp",
+      "traits": {
+        "smithy.api#timestampFormat": "date-time"
+      }
+    },
+    "smithy.protocoltests.shared#EpochSeconds": {
+      "type": "timestamp",
+      "traits": {
+        "smithy.api#timestampFormat": "epoch-seconds"
+      }
+    },
+    "smithy.protocoltests.shared#FooEnum": {
+      "type": "enum",
+      "members": {
+        "FOO": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "Foo"
+          }
+        },
+        "BAZ": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "Baz"
+          }
+        },
+        "BAR": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "Bar"
+          }
+        },
+        "ONE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "1"
+          }
+        },
+        "ZERO": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "0"
+          }
+        }
+      }
+    },
+    "smithy.protocoltests.shared#FooEnumList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.protocoltests.shared#FooEnum"
+      }
+    },
+    "smithy.protocoltests.shared#GreetingStruct": {
+      "type": "structure",
+      "members": {
+        "hi": {
+          "target": "smithy.api#String"
+        }
+      }
+    },
+    "smithy.protocoltests.shared#HttpDate": {
+      "type": "timestamp",
+      "traits": {
+        "smithy.api#timestampFormat": "http-date"
+      }
+    },
+    "smithy.protocoltests.shared#IntegerEnum": {
+      "type": "intEnum",
+      "members": {
+        "A": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": 1
+          }
+        },
+        "B": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": 2
+          }
+        },
+        "C": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": 3
+          }
+        }
+      }
+    },
+    "smithy.protocoltests.shared#IntegerEnumList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.protocoltests.shared#IntegerEnum"
+      }
+    },
+    "smithy.protocoltests.shared#IntegerList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#Integer"
+      }
+    },
+    "smithy.protocoltests.shared#NestedStringList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.protocoltests.shared#StringList"
+      },
+      "traits": {
+        "smithy.api#documentation": "A list of lists of strings."
+      }
+    },
+    "smithy.protocoltests.shared#SparseStringList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#String"
+      },
+      "traits": {
+        "smithy.api#sparse": {}
+      }
+    },
+    "smithy.protocoltests.shared#SparseStringMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.api#String"
+      },
+      "traits": {
+        "smithy.api#sparse": {}
+      }
+    },
+    "smithy.protocoltests.shared#StringList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#String"
+      }
+    },
+    "smithy.protocoltests.shared#StringSet": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#String"
+      },
+      "traits": {
+        "smithy.api#uniqueItems": {}
+      }
+    },
+    "smithy.protocoltests.shared#TimestampList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#Timestamp"
+      }
+    },
+    "smithy.test#AppliesTo": {
+      "type": "enum",
+      "members": {
+        "CLIENT": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#documentation": "The test only applies to client implementations.",
+            "smithy.api#enumValue": "client"
+          }
+        },
+        "SERVER": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#documentation": "The test only applies to server implementations.",
+            "smithy.api#enumValue": "server"
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.test#HttpMessageMixin": {
+      "type": "structure",
+      "members": {
+        "headers": {
+          "target": "smithy.test#StringMap",
+          "traits": {
+            "smithy.api#documentation": "Defines a map of expected HTTP headers.\n\nHeaders that are not listed in this map are ignored unless they are\nexplicitly forbidden through `forbidHeaders`."
+          }
+        },
+        "forbidHeaders": {
+          "target": "smithy.test#StringList",
+          "traits": {
+            "smithy.api#documentation": "A list of header field names that must not appear in the serialized\nHTTP request."
+          }
+        },
+        "requireHeaders": {
+          "target": "smithy.test#StringList",
+          "traits": {
+            "smithy.api#documentation": "A list of header field names that must appear in the serialized\nHTTP message, but no assertion is made on the value.\n\nHeaders listed in `headers` do not need to appear in this list."
+          }
+        },
+        "body": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The expected HTTP message body.\n\nIf no request body is defined, then no assertions are made about\nthe body of the message."
+          }
+        },
+        "bodyMediaType": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The media type of the `body`.\n\nThis is used to help test runners to parse and validate the expected\ndata against generated data."
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "A mixin that adds HTTP message members and supporting protocol test members,\nsuitable for both requests and responses.",
+        "smithy.api#mixin": {},
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.test#HttpRequestMixin": {
+      "type": "structure",
+      "mixins": [
+        {
+          "target": "smithy.test#HttpMessageMixin"
+        }
+      ],
+      "members": {
+        "method": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The expected serialized HTTP request method.",
+            "smithy.api#length": {
+              "min": 1
+            },
+            "smithy.api#required": {}
+          }
+        },
+        "uri": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The request-target of the HTTP request, not including\nthe query string (for example, \"/foo/bar\").",
+            "smithy.api#length": {
+              "min": 1
+            },
+            "smithy.api#required": {}
+          }
+        },
+        "host": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The host / endpoint provided to the client, not including the path\nor scheme (for example, \"example.com\")."
+          }
+        },
+        "resolvedHost": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The host / endpoint that the client should send to, not including\nthe path or scheme (for example, \"prefix.example.com\").\n\nThis can differ from the host provided to the client if the `hostPrefix`\nmember of the `endpoint` trait is set, for instance."
+          }
+        },
+        "queryParams": {
+          "target": "smithy.test#StringList",
+          "traits": {
+            "smithy.api#documentation": "A list of the expected serialized query string parameters.\n\nEach element in the list is a query string key value pair\nthat starts with the query string parameter name optionally\nfollowed by \"=\", optionally followed by the query string\nparameter value. For example, \"foo=bar\", \"foo=\", and \"foo\"\nare all valid values. The query string parameter name and\nthe value MUST appear in the format in which it is expected\nto be sent over the wire; if a key or value needs to be\npercent-encoded, then it MUST appear percent-encoded in this list.\n\nA serialized HTTP request is not in compliance with the protocol\nif any query string parameter defined in `queryParams` is not\ndefined in the request or if the value of a query string parameter\nin the request differs from the expected value.\n\n`queryParams` applies no constraints on additional query parameters."
+          }
+        },
+        "forbidQueryParams": {
+          "target": "smithy.test#StringList",
+          "traits": {
+            "smithy.api#documentation": "A list of query string parameter names that must not appear in the\nserialized HTTP request.\n\nEach value MUST appear in the format in which it is sent over the\nwire; if a key needs to be percent-encoded, then it MUST appear\npercent-encoded in this list."
+          }
+        },
+        "requireQueryParams": {
+          "target": "smithy.test#StringList",
+          "traits": {
+            "smithy.api#documentation": "A list of query string parameter names that MUST appear in the\nserialized request URI, but no assertion is made on the value.\n\nEach value MUST appear in the format in which it is sent over the\nwire; if a key needs to be percent-encoded, then it MUST appear\npercent-encoded in this list."
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "A mixin that adds HTTP request members and supporting protocol test members.",
+        "smithy.api#mixin": {},
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.test#HttpRequestTestCase": {
+      "type": "structure",
+      "mixins": [
+        {
+          "target": "smithy.test#HttpRequestMixin"
+        }
+      ],
+      "members": {
+        "id": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The identifier of the test case. This identifier can be used by\nprotocol test implementations to filter out unsupported test\ncases by ID, to generate test case names, etc. The provided `id`\nMUST match Smithy's `identifier` ABNF. No two `httpRequestTests`\ntest cases can share the same ID.",
+            "smithy.api#pattern": "^[A-Za-z_][A-Za-z0-9_]+$",
+            "smithy.api#required": {}
+          }
+        },
+        "protocol": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The name of the protocol to test.",
+            "smithy.api#idRef": {
+              "selector": "[trait|protocolDefinition]",
+              "failWhenMissing": true
+            },
+            "smithy.api#required": {}
+          }
+        },
+        "authScheme": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The optional authentication scheme shape ID to assume. It's\npossible that specific authentication schemes might influence\nthe serialization logic of an HTTP request.",
+            "smithy.api#idRef": {
+              "selector": "[trait|authDefinition]",
+              "failWhenMissing": true
+            }
+          }
+        },
+        "params": {
+          "target": "smithy.api#Document",
+          "traits": {
+            "smithy.api#documentation": "Defines the input parameters used to generated the HTTP request.\n\nThese parameters MUST be compatible with the input of the operation."
+          }
+        },
+        "vendorParams": {
+          "target": "smithy.api#Document",
+          "traits": {
+            "smithy.api#documentation": "Defines vendor-specific parameters that are used to influence the\nrequest. For example, some vendors might utilize environment\nvariables, configuration files on disk, or other means to influence\nthe serialization formats used by clients or servers.\n\nIf a `vendorParamsShape` is set, these parameters MUST be compatible\nwith that shape's definition."
+          }
+        },
+        "vendorParamsShape": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "A shape to be used to validate the `vendorParams` member contents.\n\nIf set, the parameters in `vendorParams` MUST be compatible with this\nshape's definition.",
+            "smithy.api#idRef": {
+              "failWhenMissing": true
+            }
+          }
+        },
+        "documentation": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "A description of the test and what is being asserted."
+          }
+        },
+        "tags": {
+          "target": "smithy.test#NonEmptyStringList",
+          "traits": {
+            "smithy.api#documentation": "Applies a list of tags to the test."
+          }
+        },
+        "appliesTo": {
+          "target": "smithy.test#AppliesTo",
+          "traits": {
+            "smithy.api#documentation": "Indicates that the test case is only to be implemented by \"client\" or\n\"server\" implementations. This property is useful for identifying and\ntesting edge cases of clients and servers that are impossible or\nundesirable to test in *both* client and server implementations."
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.test#HttpResponseMixin": {
+      "type": "structure",
+      "mixins": [
+        {
+          "target": "smithy.test#HttpMessageMixin"
+        }
+      ],
+      "members": {
+        "code": {
+          "target": "smithy.api#Integer",
+          "traits": {
+            "smithy.api#documentation": "Defines the HTTP response code.",
+            "smithy.api#range": {
+              "min": 100,
+              "max": 599
+            },
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "A mixin that adds HTTP response members and supporting protocol test members.",
+        "smithy.api#mixin": {},
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.test#HttpResponseTestCase": {
+      "type": "structure",
+      "mixins": [
+        {
+          "target": "smithy.test#HttpResponseMixin"
+        }
+      ],
+      "members": {
+        "id": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The identifier of the test case. This identifier can be used by\nprotocol test implementations to filter out unsupported test\ncases by ID, to generate test case names, etc. The provided `id`\nMUST match Smithy's `identifier` ABNF. No two `httpResponseTests`\ntest cases can share the same ID.",
+            "smithy.api#pattern": "^[A-Za-z_][A-Za-z0-9_]+$",
+            "smithy.api#required": {}
+          }
+        },
+        "protocol": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The shape ID of the protocol to test.",
+            "smithy.api#idRef": {
+              "selector": "[trait|protocolDefinition]",
+              "failWhenMissing": true
+            },
+            "smithy.api#required": {}
+          }
+        },
+        "authScheme": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The optional authentication scheme shape ID to assume. It's possible\nthat specific authentication schemes might influence the serialization\nlogic of an HTTP response.",
+            "smithy.api#idRef": {
+              "selector": "[trait|authDefinition]",
+              "failWhenMissing": true
+            }
+          }
+        },
+        "params": {
+          "target": "smithy.api#Document",
+          "traits": {
+            "smithy.api#documentation": "Defines the output parameters deserialized from the HTTP response.\n\nThese parameters MUST be compatible with the output of the operation."
+          }
+        },
+        "vendorParams": {
+          "target": "smithy.api#Document",
+          "traits": {
+            "smithy.api#documentation": "Defines vendor-specific parameters that are used to influence the\nresponse. For example, some vendors might utilize environment\nvariables, configuration files on disk, or other means to influence\nthe serialization formats used by clients or servers.\n\nIf a `vendorParamsShape` is set, these parameters MUST be compatible\nwith that shape's definition."
+          }
+        },
+        "vendorParamsShape": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "A shape to be used to validate the `vendorParams` member contents.\n\nIf set, the parameters in `vendorParams` MUST be compatible with this\nshape's definition.",
+            "smithy.api#idRef": {
+              "failWhenMissing": true
+            }
+          }
+        },
+        "documentation": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "A description of the test and what is being asserted."
+          }
+        },
+        "tags": {
+          "target": "smithy.test#NonEmptyStringList",
+          "traits": {
+            "smithy.api#documentation": "Applies a list of tags to the test."
+          }
+        },
+        "appliesTo": {
+          "target": "smithy.test#AppliesTo",
+          "traits": {
+            "smithy.api#documentation": "Indicates that the test case is only to be implemented by \"client\" or\n\"server\" implementations. This property is useful for identifying and\ntesting edge cases of clients and servers that are impossible or\nundesirable to test in *both* client and server implementations."
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.test#NonEmptyString": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1
+        },
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.test#NonEmptyStringList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.test#NonEmptyString"
+      },
+      "traits": {
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.test#StringList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#String"
+      },
+      "traits": {
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.test#StringMap": {
+      "type": "map",
+      "key": {
+        "target": "smithy.api#String"
+      },
+      "value": {
+        "target": "smithy.api#String"
+      },
+      "traits": {
+        "smithy.api#private": {}
+      }
+    }
+  }
+}

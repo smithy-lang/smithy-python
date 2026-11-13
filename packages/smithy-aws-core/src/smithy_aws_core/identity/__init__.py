@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.types import PropertyKey
 
-from .chain import IdentityChainError, UnclaimedSource
+from .chain.exceptions import IdentityChainError, UnclaimedSource
 from .components import (
     AWSCredentialsIdentity,
     AWSCredentialsResolver,
@@ -14,6 +14,7 @@ from .process import ProcessCredentialsResolver
 from .static import StaticCredentialsResolver
 
 __all__ = (
+    "AWS_IDENTITY_CONFIG",
     "AWSCredentialsIdentity",
     "AWSCredentialsResolver",
     "AWSIdentityProperties",
@@ -25,3 +26,4 @@ __all__ = (
 )
 
 AWS_IDENTITY_CONFIG = PropertyKey(key="config", value_type=AWSIdentityConfig)
+"""Property key for the client config identity resolvers read credentials from."""

@@ -34,6 +34,14 @@ class Model:
         self._metadata: Mapping[str, Node] = MappingProxyType(dict(metadata))
         self._shapes: Mapping[ShapeId, Shape] = MappingProxyType(dict(shapes))
 
+    def __contains__(self, shape_id: object) -> bool:
+        if isinstance(shape_id, str):
+            try:
+                shape_id = as_shape_id(shape_id)
+            except ModelError:
+                return False
+        return isinstance(shape_id, ShapeId) and self.find_shape(shape_id) is not None
+
     @property
     def smithy_version(self) -> str:
         """The ``smithy`` version string from the JSON AST."""
@@ -48,14 +56,6 @@ class Model:
     def shapes(self) -> Mapping[ShapeId, Shape]:
         """All top-level shapes, including prelude shapes."""
         return self._shapes
-
-    def __contains__(self, shape_id: object) -> bool:
-        if isinstance(shape_id, str):
-            try:
-                shape_id = as_shape_id(shape_id)
-            except ModelError:
-                return False
-        return isinstance(shape_id, ShapeId) and self.find_shape(shape_id) is not None
 
     def find_shape(self, shape_id: ShapeId | str) -> Shape | None:
         """Return the shape (or member) with this ID, or None."""

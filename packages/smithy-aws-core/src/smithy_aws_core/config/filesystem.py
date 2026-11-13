@@ -6,7 +6,7 @@ from typing import Protocol, runtime_checkable
 
 __all__ = ["DefaultFileSystem", "FileSystem"]
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @runtime_checkable

@@ -13,7 +13,11 @@ from .._client import ClientBase as _ClientBase
 from .._pipeline import RequestPipelineBase
 from ..client import ClientCall
 from ..deserializers import DeserializeableShape, ShapeDeserializer
-from ..exceptions import UnsupportedStreamError, UnsupportedTransportError
+from ..exceptions import (
+    ResourceLifecycleError,
+    UnsupportedStreamError,
+    UnsupportedTransportError,
+)
 from ..interceptors import (
     OutputContext,
     RequestContext,
@@ -40,6 +44,7 @@ if TYPE_CHECKING:
 AUTH_SCHEME = PropertyKey(
     key="auth_scheme", value_type=AsyncAuthScheme[Any, Any, Any, Any]
 )
+"""Property key for the auth scheme selected for the call."""
 
 
 class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
@@ -300,7 +305,7 @@ class AsyncClient[C](_ClientBase[C]):
 
     async def __aenter__(self) -> Self:
         if self._closed:
-            raise RuntimeError("Cannot enter a client that has been closed.")
+            raise ResourceLifecycleError("Cannot enter a client that has been closed.")
         return self
 
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:

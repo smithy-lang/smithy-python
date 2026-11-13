@@ -30,14 +30,18 @@ if TYPE_CHECKING:
 class AsyncByteStream(Protocol):
     """A file-like object with an async read method."""
 
-    async def read(self, size: int = -1) -> bytes: ...
+    async def read(self, size: int = -1) -> bytes:
+        """Read up to ``size`` bytes, or all remaining bytes if ``size`` is negative."""
+        ...
 
 
 @runtime_checkable
 class AsyncWriter(Protocol):
     """An object with an async write method."""
 
-    async def write(self, data: bytes) -> None: ...
+    async def write(self, data: bytes) -> None:
+        """Write ``data`` to the underlying sink."""
+        ...
 
 
 type StreamingBlob = AnyStreamingBlob

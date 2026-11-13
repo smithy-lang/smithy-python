@@ -31,15 +31,8 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 public class RestJsonProtocolGenerator implements ProtocolGenerator {
 
     private static final Set<String> TESTS_TO_SKIP = Set.of(
-            // This requires support of idempotency autofill
-            "RestJsonQueryIdempotencyTokenAutoFill",
-
             // This requires support of the httpChecksumRequired trait
             "RestJsonHttpChecksumRequired",
-
-            // These require support of the endpoint trait
-            "RestJsonEndpointTraitWithHostLabel",
-            "RestJsonEndpointTrait",
 
             // TODO: support the request compression trait
             // https://smithy.io/2.0/spec/behavior-traits.html#smithy-api-requestcompression-trait

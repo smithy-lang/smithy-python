@@ -607,6 +607,20 @@ headers. Setting `endpoint_uri` supplies `SDK::Endpoint`, so the rules apply
 their custom-endpoint behavior, such as rejecting FIPS with a custom endpoint.
 Setting `endpoint_resolver=StaticEndpointResolver()` bypasses the rules.
 
+### Host Prefixes
+
+An operation's `@endpoint` trait can give a host prefix, such as `data.` or
+`{Bucket}.`, whose labels name `@hostLabel` input members. The pipeline expands
+the prefix once per call, after serialization, and stores it under the
+`HOST_PREFIX` context property. Each attempt prepends it to the resolved
+endpoint's host before `set_service_endpoint`, so it applies to every protocol
+and to a configured `endpoint_uri`. `RESOLVED_ENDPOINT` stays the resolver's
+result. A label value that isn't a valid host label raises
+`EndpointResolutionError` before the request is sent. Host labels don't change
+serialization, so a label member is still sent to its own binding. Setting
+`disable_host_prefix_injection`, a config field of clients with `@endpoint`
+operations, turns the prefix off.
+
 ### Endpoint Auth Schemes
 
 Endpoint rules can attach `authSchemes` to an endpoint, as every S3 endpoint
@@ -657,9 +671,6 @@ Testing has two layers:
 ## Follow-Up Work
 
 - Applying rule headers in `set_service_endpoint`, which S3 Control needs.
-- The endpoint trait's `hostPrefix` and the `disable_host_prefix_injection`
-  setting. Today `set_service_endpoint` replaces the host the REST serializers
-  build, which drops the prefix.
 - A Python lowering for dynamic clients and Python code generation.
 - Legacy endpoint-driven auth resolution for S3, SES v2, EventBridge, and
   CloudFront KeyValueStore. This is required once smithy-python supports SigV4a
@@ -668,19 +679,10 @@ Testing has two layers:
 ## Appendix: Performance
 
 The benchmark times 1,000 resolutions after 100 warmup calls, with the same
-input on every call and the SDK's caches off. Here it times the resolver's
-`resolve_endpoint`, so each call binds the config and input and walks the BDD,
-with the operation's plan already built. These ran on CPython 3.14.10, in three
-rounds, and each value is the fastest round's mean, because interference slowed
-single rounds on the m7i host by up to 60%. boto3's numbers come from an earlier
-run of the same benchmark, with botocore 1.43.108 on CPython 3.14.8. Both ran on
-m7i.xlarge and m7g.xlarge in us-east-1. The hit columns time the same calls with
-the caches on, after a first warmup call that misses and fills them. For L1
-hits, every timed call finds its values in L1. For L2 hits, L1 is cleared before
-each call, outside the timed region, so every timed call misses L1 and finds its
-endpoint in L2. The hit columns come from a later run of the same engine on new
-instances. The resolver in this benchmark was **partially optimized**; more
-improvements are still possible.
+input on every call. Here it times the resolver's `resolve_endpoint`. These ran
+on CPython 3.14.10. boto3's ran on botocore 1.43.108 on CPython 3.14.8. Both ran
+on m7i.xlarge and m7g.xlarge in us-east-1. The resolver in this benchmark was
+**partially optimized**; more improvements are still possible.
 
 Mean time per call, in µs:
 

@@ -22,6 +22,12 @@ Outside it:
   - functions and methods must not be named ``async_*`` or ``*_async``.
   - no ``async def``.
 
+Public members a sync twin shares with its aio counterpart must take the same
+argument names, so code switching calling styles keeps its keyword arguments.
+Members on only one side are allowed, since some capabilities (event streams,
+duplex streaming) are async-only by design. Only twins under ``packages/`` are
+compared, since that requires importing them.
+
 A symbol is private when its name, an enclosing class, or a module path segment
 is ``_``-prefixed, or it is nested in a function.
 
@@ -32,14 +38,17 @@ the findings.
 
 import argparse
 import ast
+import importlib
+import inspect
 import re
 import sys
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 ROOT = Path(__file__).resolve().parent.parent.parent
+PACKAGES_DIR = ROOT / "packages"
 DEFAULT_SRC_GLOBS = ("packages/*/src", "clients/*/src")
 AIO = "aio"
 
@@ -90,6 +99,7 @@ def main() -> int:
     src_dirs: list[Path] = args.src_dirs or _default_src_dirs()
     findings, modules = _load([src.resolve() for src in src_dirs])
     findings.extend(_check_modules(modules))
+    findings.extend(_check_parity(modules))
 
     sys.stdout.write(dual_mode_tree(modules))
     if findings:
@@ -107,7 +117,7 @@ def main() -> int:
 def check(src_dirs: list[Path]) -> list[Finding]:
     """Checks all package source roots under the given src directories."""
     findings, modules = _load(src_dirs)
-    return findings + _check_modules(modules)
+    return findings + _check_modules(modules) + _check_parity(modules)
 
 
 def dual_mode_report() -> str:
@@ -122,28 +132,15 @@ def dual_mode_tree(modules: "list[_Module]") -> str:
     Each aio symbol is listed under its module with its sync twin, which is shown
     with its module when that isn't the aio module's mirror outside ``aio``.
     """
-    sync_defs: dict[tuple[str, str], list[_Module]] = {}
-    for module in modules:
-        if module.in_aio or module.private:
-            continue
-        for name in _public_defs(module):
-            sync_defs.setdefault((_root_of(module), name), []).append(module)
-
     rows: dict[tuple[str, ...], list[tuple[str, str]]] = {}
-    for module in modules:
-        if not module.in_aio or module.private:
-            continue
-        mirror = ".".join(p for p in module.name.split(".") if p != AIO)
-        for name in _public_defs(module):
-            twin = _sync_name(name)
-            if twin is None:
-                continue
-            candidates = sync_defs.get((_root_of(module), twin))
-            if not candidates:
-                continue
-            found = next((m for m in candidates if m.name == mirror), candidates[0])
-            shown = twin if found.name == mirror else f"{twin}  ({found.name})"
-            rows.setdefault(_display_path(module), []).append((name, shown))
+    for pair in _twin_pairs(modules):
+        mirror = ".".join(p for p in pair.aio.name.split(".") if p != AIO)
+        shown = (
+            pair.twin
+            if pair.sync.name == mirror
+            else f"{pair.twin}  ({pair.sync.name})"
+        )
+        rows.setdefault(_display_path(pair.aio), []).append((pair.name, shown))
 
     lines = ["Dual-mode symbols (async in aio, sync twin outside):"]
     previous: tuple[str, ...] = ()
@@ -206,6 +203,108 @@ def _check_modules(modules: "list[_Module]") -> list[Finding]:
             findings.extend(_aio_imports(module))
         findings.extend(checker.findings)
     return findings
+
+
+def _check_parity(modules: "list[_Module]") -> list[Finding]:
+    findings: list[Finding] = []
+    for pair in _twin_pairs(modules):
+        if not pair.aio.path.is_relative_to(PACKAGES_DIR):
+            continue
+        async_obj = getattr(importlib.import_module(pair.aio.name), pair.name)
+        sync_obj = getattr(importlib.import_module(pair.sync.name), pair.twin)
+        label = f"{pair.aio.name}.{pair.name} / {pair.sync.name}.{pair.twin}"
+        line = next(
+            (
+                n.lineno
+                for n in pair.aio.tree.body
+                if isinstance(n, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
+                and n.name == pair.name
+            ),
+            0,
+        )
+        findings.extend(
+            Finding(pair.aio.path, line, 1, "error", message)
+            for message in _parity_differences(label, async_obj, sync_obj)
+        )
+    return findings
+
+
+@dataclass(frozen=True)
+class _TwinPair:
+    aio: "_Module"
+    name: str
+    sync: "_Module"
+    twin: str
+
+
+def _twin_pairs(modules: "list[_Module]") -> Iterator[_TwinPair]:
+    """Public aio symbols with a sync twin, preferring the twin in the aio module's mirror."""
+    sync_defs: dict[tuple[str, str], list[_Module]] = {}
+    for module in modules:
+        if module.in_aio or module.private:
+            continue
+        for name in _public_defs(module):
+            sync_defs.setdefault((_root_of(module), name), []).append(module)
+
+    for module in modules:
+        if not module.in_aio or module.private:
+            continue
+        mirror = ".".join(p for p in module.name.split(".") if p != AIO)
+        for name in _public_defs(module):
+            twin = _sync_name(name)
+            if twin is None:
+                continue
+            candidates = sync_defs.get((_root_of(module), twin))
+            if not candidates:
+                continue
+            found = next((m for m in candidates if m.name == mirror), candidates[0])
+            yield _TwinPair(module, name, found, twin)
+
+
+def _parity_differences(label: str, async_obj: Any, sync_obj: Any) -> list[str]:
+    if inspect.isclass(async_obj) and inspect.isclass(sync_obj):
+        async_members = _public_members(async_obj)
+        sync_members = _public_members(sync_obj)
+        messages: list[str] = []
+        for name in sorted(async_members.keys() & sync_members.keys()):
+            messages += _signature_difference(
+                f"{label}.{name}", async_members[name], sync_members[name]
+            )
+        return messages
+    if callable(async_obj) and callable(sync_obj):
+        return _signature_difference(label, async_obj, sync_obj)
+    return [f"{label}: kinds differ"]
+
+
+def _public_members(cls: type) -> dict[str, Any]:
+    members: dict[str, Any] = {}
+    for klass in reversed(cls.__mro__):
+        if klass is object or klass.__module__ in ("typing", "abc", "builtins"):
+            continue
+        for name, value in vars(klass).items():
+            if not name.startswith("_"):
+                members[name] = value
+    return members
+
+
+def _signature_difference(label: str, async_obj: Any, sync_obj: Any) -> list[str]:
+    async_sig, sync_sig = _signature(async_obj), _signature(sync_obj)
+    if async_sig is None or sync_sig is None or async_sig == sync_sig:
+        return []
+    return [f"{label}: argument names differ: async {async_sig} / sync {sync_sig}"]
+
+
+def _signature(obj: Any) -> tuple[str, ...] | None:
+    func = obj.fget if isinstance(obj, property) else getattr(obj, "__func__", obj)
+    if not callable(func):
+        return None
+    try:
+        sig = inspect.signature(func)
+    except (TypeError, ValueError):
+        return None
+    return tuple(
+        p.name for p in sig.parameters.values() if p.name not in ("self", "cls")
+    )
 
 
 @dataclass

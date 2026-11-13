@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import software.amazon.smithy.aws.traits.ServiceTrait;
+import software.amazon.smithy.aws.traits.protocols.AwsQueryCompatibleTrait;
+import software.amazon.smithy.aws.traits.protocols.AwsQueryErrorTrait;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.KnowledgeIndex;
 import software.amazon.smithy.model.shapes.Shape;
@@ -70,7 +72,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public final class SchemaTraitFilterIndex implements KnowledgeIndex {
 
-    // smithy-python reads this at runtime via schema.traits.get(...) in rpcv2Cbor unit detection.
+    // smithy-python reads this at runtime via schema.traits.get(...) in rpcv2Cbor and rpcv2Json
+    // unit detection.
     private static final ShapeId ORIGINAL_SHAPE_ID = ShapeId.from("smithy.synthetic#originalShapeId");
 
     // Traits a protocol/auth meta-trait references but that must still never reach a schema.
@@ -95,7 +98,7 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     InputTrait.ID, // runtime input-structure nullability (@input members optional)
                     OutputTrait.ID, // runtime injects response_metadata on output structures
                     TimestampFormatTrait.ID, // read per-member by smithy_http / smithy_aws_core serde
-                    ORIGINAL_SHAPE_ID, // rpcv2Cbor unit detection
+                    ORIGINAL_SHAPE_ID, // rpcv2Cbor and rpcv2Json unit detection
                     ServiceTrait.ID, // service metadata, including sdkId used by package docs
                     ContextParamTrait.ID, // endpoint parameter plans read these at runtime
                     StaticContextParamsTrait.ID,
@@ -123,7 +126,11 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     HttpPrefixHeadersTrait.ID,
                     HttpQueryParamsTrait.ID,
                     HttpResponseCodeTrait.ID,
-                    HostLabelTrait.ID));
+                    HostLabelTrait.ID,
+                    // awsJson1_0 and rpcv2 read these at runtime for query compatibility;
+                    // their protocol definitions don't reference them.
+                    AwsQueryCompatibleTrait.ID,
+                    AwsQueryErrorTrait.ID));
 
     private final Map<Shape, Boolean> cache = new HashMap<>();
     private final Model model;

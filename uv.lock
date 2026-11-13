@@ -5,10 +5,10 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "aws-sdk-signers",
+    "smithy-aws-checksums",
     "smithy-aws-core",
     "smithy-aws-event-stream",
     "smithy-cbor",
-    "smithy-checksums",
     "smithy-core",
     "smithy-http",
     "smithy-json",
@@ -666,6 +666,11 @@ wheels = [
 ]
 
 [[package]]
+name = "smithy-aws-checksums"
+version = "0.1.0"
+source = { editable = "packages/smithy-aws-checksums" }
+
+[[package]]
 name = "smithy-aws-core"
 source = { editable = "packages/smithy-aws-core" }
 dependencies = [
@@ -676,7 +681,7 @@ dependencies = [
 
 [package.optional-dependencies]
 checksums = [
-    { name = "smithy-checksums" },
+    { name = "smithy-aws-checksums" },
 ]
 eventstream = [
     { name = "smithy-aws-event-stream" },
@@ -691,8 +696,8 @@ xml = [
 [package.metadata]
 requires-dist = [
     { name = "aws-sdk-signers", editable = "packages/aws-sdk-signers" },
+    { name = "smithy-aws-checksums", marker = "extra == 'checksums'", editable = "packages/smithy-aws-checksums" },
     { name = "smithy-aws-event-stream", marker = "extra == 'eventstream'", editable = "packages/smithy-aws-event-stream" },
-    { name = "smithy-checksums", marker = "extra == 'checksums'", editable = "packages/smithy-checksums" },
     { name = "smithy-core", editable = "packages/smithy-core" },
     { name = "smithy-http", editable = "packages/smithy-http" },
     { name = "smithy-json", marker = "extra == 'json'", editable = "packages/smithy-json" },
@@ -721,11 +726,6 @@ dependencies = [
 requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
-name = "smithy-checksums"
-version = "0.0.0"
-source = { editable = "packages/smithy-checksums" }
-
-[[package]]
 name = "smithy-core"
 source = { editable = "packages/smithy-core" }
 
@@ -737,7 +737,7 @@ typing = [
 [package.metadata]
 
 [package.metadata.requires-dev]
-typing = [{ name = "typing-extensions", specifier = ">=4.13.0" }]
+typing = [{ name = "typing-extensions", specifier = ">=4.14.0" }]
 
 [[package]]
 name = "smithy-http"
@@ -757,6 +757,12 @@ awscrt = [
 cbor = [
     { name = "smithy-cbor" },
 ]
+eventstream = [
+    { name = "smithy-aws-event-stream" },
+]
+json = [
+    { name = "smithy-json" },
+]
 urllib3 = [
     { name = "urllib3" },
 ]
@@ -765,12 +771,14 @@ urllib3 = [
 requires-dist = [
     { name = "aiohttp", marker = "extra == 'aiohttp'", specifier = ">=3.11.12,<4.0" },
     { name = "awscrt", marker = "extra == 'awscrt'", specifier = "~=0.32.0" },
+    { name = "smithy-aws-event-stream", marker = "extra == 'eventstream'", editable = "packages/smithy-aws-event-stream" },
     { name = "smithy-cbor", marker = "extra == 'cbor'", editable = "packages/smithy-cbor" },
     { name = "smithy-core", editable = "packages/smithy-core" },
+    { name = "smithy-json", marker = "extra == 'json'", editable = "packages/smithy-json" },
     { name = "urllib3", marker = "extra == 'urllib3'", specifier = ">=2.0,<3.0" },
-    { name = "yarl", marker = "extra == 'aiohttp'" },
+    { name = "yarl", marker = "extra == 'aiohttp'", specifier = ">=1.17.0" },
 ]
-provides-extras = ["aiohttp", "awscrt", "cbor", "urllib3"]
+provides-extras = ["aiohttp", "awscrt", "cbor", "eventstream", "json", "urllib3"]
 
 [[package]]
 name = "smithy-json"
@@ -816,8 +824,8 @@ changelog = [{ name = "jinja2", specifier = ">=3.1.6" }]
 lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 test = [
     { name = "freezegun", specifier = ">=1.5.1" },
-    { name = "pytest", specifier = ">=9.0.3" },
-    { name = "pytest-asyncio", specifier = ">=0.25.3" },
+    { name = "pytest", specifier = ">=9.0.3,<10.0.0" },
+    { name = "pytest-asyncio", specifier = ">=1.3.0,<1.4.0" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
 ]
 typing = [
@@ -828,6 +836,18 @@ typing = [
 [[package]]
 name = "smithy-test"
 source = { editable = "packages/smithy-test" }
+dependencies = [
+    { name = "smithy-aws-core" },
+    { name = "smithy-core" },
+    { name = "smithy-http" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "smithy-aws-core", editable = "packages/smithy-aws-core" },
+    { name = "smithy-core", editable = "packages/smithy-core" },
+    { name = "smithy-http", editable = "packages/smithy-http" },
+]
 
 [[package]]
 name = "smithy-xml"

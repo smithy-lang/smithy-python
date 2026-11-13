@@ -10,13 +10,13 @@ from collections.abc import Callable, Collection
 from dataclasses import dataclass, replace
 
 from . import dependencies as _dependencies
+from .exceptions import ModelError
 from .model import (
     DECLARATION_TYPES,
     ListShape,
     MapShape,
     MemberShape,
     Model,
-    ModelError,
     Shape,
     ShapeId,
     ShapeType,

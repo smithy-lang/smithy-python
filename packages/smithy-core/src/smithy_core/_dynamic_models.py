@@ -52,86 +52,6 @@ type _Writer = "Callable[[ShapeSerializer, Schema, Any], None]"
 type _Reader = "Callable[[ShapeDeserializer, Schema], Any]"
 
 
-def _scalar(write_name: str, read_name: str) -> tuple[_Writer, _Reader]:
-    def w(s: ShapeSerializer, m: Schema, v: Any) -> None:
-        getattr(s, write_name)(m, v)
-
-    def r(d: ShapeDeserializer, m: Schema) -> Any:
-        return getattr(d, read_name)(m)
-
-    return w, r
-
-
-_SCALAR_CODECS: dict[ShapeType, tuple[_Writer, _Reader]] = {
-    ShapeType.BOOLEAN: _scalar("write_boolean", "read_boolean"),
-    ShapeType.STRING: _scalar("write_string", "read_string"),
-    ShapeType.TIMESTAMP: _scalar("write_timestamp", "read_timestamp"),
-    ShapeType.BLOB: _scalar("write_blob", "read_blob"),
-    ShapeType.BYTE: _scalar("write_byte", "read_byte"),
-    ShapeType.SHORT: _scalar("write_short", "read_short"),
-    ShapeType.INTEGER: _scalar("write_integer", "read_integer"),
-    ShapeType.LONG: _scalar("write_long", "read_long"),
-    ShapeType.FLOAT: _scalar("write_float", "read_float"),
-    ShapeType.DOUBLE: _scalar("write_double", "read_double"),
-    ShapeType.BIG_INTEGER: _scalar("write_big_integer", "read_big_integer"),
-    ShapeType.BIG_DECIMAL: _scalar("write_big_decimal", "read_big_decimal"),
-    ShapeType.DOCUMENT: _scalar("write_document", "read_document"),
-}
-
-_PY_SCALAR: dict[ShapeType, Any] = {
-    ShapeType.BOOLEAN: bool,
-    ShapeType.STRING: str,
-    ShapeType.ENUM: str,
-    ShapeType.TIMESTAMP: datetime.datetime,
-    ShapeType.BLOB: bytes,
-    ShapeType.BYTE: int,
-    ShapeType.SHORT: int,
-    ShapeType.INTEGER: int,
-    ShapeType.INT_ENUM: int,
-    ShapeType.LONG: int,
-    ShapeType.FLOAT: float,
-    ShapeType.DOUBLE: float,
-    ShapeType.BIG_INTEGER: int,
-    ShapeType.BIG_DECIMAL: Decimal,
-    ShapeType.DOCUMENT: Any,
-    ShapeType.LIST: list,
-    ShapeType.MAP: dict,
-}
-
-
-# Sentinel: a mandatory member (no dataclass default); emitted as a 2-tuple field.
-_MANDATORY = object()
-
-# Client error-correction defaults by scalar shape type (Smithy spec § client error
-# correction). Mirrors MemberErrorCorrectionGenerator. Enum/int-enum fill the raw
-# placeholder the dynamic serde uses ("" / -1), not an enum instance.
-_CORRECTION_SCALARS: dict[ShapeType, Any] = {
-    ShapeType.BOOLEAN: lambda: False,
-    ShapeType.STRING: lambda: "",
-    ShapeType.ENUM: lambda: "",
-    ShapeType.INT_ENUM: lambda: -1,
-    ShapeType.BYTE: lambda: 0,
-    ShapeType.SHORT: lambda: 0,
-    ShapeType.INTEGER: lambda: 0,
-    ShapeType.LONG: lambda: 0,
-    ShapeType.BIG_INTEGER: lambda: 0,
-    ShapeType.FLOAT: lambda: 0.0,
-    ShapeType.DOUBLE: lambda: 0.0,
-    ShapeType.BIG_DECIMAL: lambda: Decimal(0),
-    ShapeType.BLOB: lambda: b"",
-    ShapeType.TIMESTAMP: lambda: datetime.datetime.fromtimestamp(0, tz=datetime.UTC),
-    ShapeType.LIST: list,
-    ShapeType.MAP: dict,
-    ShapeType.DOCUMENT: lambda: _document(None),
-}
-
-
-def _document(value: Any) -> Any:
-    from .documents import Document
-
-    return Document(value)
-
-
 # The generator synthesizes @input/@output onto operation I/O structures (see
 # SchemaGenerator.filterTraits), so these are the authoritative nullability signals.
 _INPUT_TRAIT = ShapeID("smithy.api#input")
@@ -188,45 +108,6 @@ class ModelRegistry:
             self._shape_names.add(service_error)
         self._codec = SchemaExtension(self._resolve_member_codec)
         self._field_names_ext = SchemaExtension(self._compute_field_names)
-
-    def _error_base(self) -> type:
-        if self._service_error_name is None:
-            return ModeledError
-        return getattr(self._models_module, self._service_error_name)
-
-    @property
-    def _models_module_name(self) -> str:
-        return self._schemas.__name__.rsplit(".", 2)[0] + ".models"
-
-    @property
-    def _models_module(self) -> ModuleType:
-        import sys
-
-        return sys.modules[self._models_module_name]
-
-    def _field_names(self, schema: Schema) -> tuple[str, ...]:
-        return schema.get_extension(self._field_names_ext)
-
-    def _is_input(self, schema: Schema) -> bool:
-        return schema.get_trait(_INPUT_TRAIT) is not None
-
-    def _is_output(self, schema: Schema) -> bool:
-        return schema.get_trait(_OUTPUT_TRAIT) is not None
-
-    def _compute_field_names(self, schema: Schema) -> tuple[str, ...]:
-        self._ensure_index()
-        is_error = schema.get_trait(ErrorTrait) is not None
-        is_enum = schema.shape_type in (ShapeType.ENUM, ShapeType.INT_ENUM)
-        carries_md = is_error or self._is_output(schema)
-        return tuple(
-            member_field_name(
-                member.expect_member_name(),
-                is_error=is_error,
-                carries_response_metadata=carries_md,
-                is_enum=is_enum,
-            )
-            for member in schema.members_by_index
-        )
 
     def build(self, name: str) -> type:
         cached = self._classes.get(name)
@@ -286,16 +167,6 @@ class ModelRegistry:
             self._classes[name] = built
             return built
 
-    def _build_union_deserializer(self, union_name: str) -> type:
-        # Ensure the union (and its variants + schema) are registered.
-        self.build(union_name)
-        registry = self
-
-        def deserialize(self: Any, deserializer: ShapeDeserializer) -> Any:
-            return registry._deserialize_union(deserializer, union_name)
-
-        return type(f"_{union_name}Deserializer", (), {"deserialize": deserialize})
-
     def serialize_members(
         self, instance: Any, serializer: ShapeSerializer, schema: Schema
     ) -> None:
@@ -328,6 +199,55 @@ class ModelRegistry:
         if not self._is_input(schema):
             self._error_correct(schema, kwargs, field_names, by_index)
         return kwargs
+
+    def _error_base(self) -> type:
+        if self._service_error_name is None:
+            return ModeledError
+        return getattr(self._models_module, self._service_error_name)
+
+    @property
+    def _models_module_name(self) -> str:
+        return self._schemas.__name__.rsplit(".", 2)[0] + ".models"
+
+    @property
+    def _models_module(self) -> ModuleType:
+        import sys
+
+        return sys.modules[self._models_module_name]
+
+    def _field_names(self, schema: Schema) -> tuple[str, ...]:
+        return schema.get_extension(self._field_names_ext)
+
+    def _is_input(self, schema: Schema) -> bool:
+        return schema.get_trait(_INPUT_TRAIT) is not None
+
+    def _is_output(self, schema: Schema) -> bool:
+        return schema.get_trait(_OUTPUT_TRAIT) is not None
+
+    def _compute_field_names(self, schema: Schema) -> tuple[str, ...]:
+        self._ensure_index()
+        is_error = schema.get_trait(ErrorTrait) is not None
+        is_enum = schema.shape_type in (ShapeType.ENUM, ShapeType.INT_ENUM)
+        carries_md = is_error or self._is_output(schema)
+        return tuple(
+            member_field_name(
+                member.expect_member_name(),
+                is_error=is_error,
+                carries_response_metadata=carries_md,
+                is_enum=is_enum,
+            )
+            for member in schema.members_by_index
+        )
+
+    def _build_union_deserializer(self, union_name: str) -> type:
+        # Ensure the union (and its variants + schema) are registered.
+        self.build(union_name)
+        registry = self
+
+        def deserialize(self: Any, deserializer: ShapeDeserializer) -> Any:
+            return registry._deserialize_union(deserializer, union_name)
+
+        return type(f"_{union_name}Deserializer", (), {"deserialize": deserialize})
 
     def _error_correct(
         self,
@@ -833,6 +753,87 @@ class ModelRegistry:
                     )
             self._index = index
         return self._index
+
+
+def _scalar(write_name: str, read_name: str) -> tuple[_Writer, _Reader]:
+    def w(s: ShapeSerializer, m: Schema, v: Any) -> None:
+        getattr(s, write_name)(m, v)
+
+    def r(d: ShapeDeserializer, m: Schema) -> Any:
+        return getattr(d, read_name)(m)
+
+    return w, r
+
+
+_SCALAR_CODECS: dict[ShapeType, tuple[_Writer, _Reader]] = {
+    ShapeType.BOOLEAN: _scalar("write_boolean", "read_boolean"),
+    ShapeType.STRING: _scalar("write_string", "read_string"),
+    ShapeType.TIMESTAMP: _scalar("write_timestamp", "read_timestamp"),
+    ShapeType.BLOB: _scalar("write_blob", "read_blob"),
+    ShapeType.BYTE: _scalar("write_byte", "read_byte"),
+    ShapeType.SHORT: _scalar("write_short", "read_short"),
+    ShapeType.INTEGER: _scalar("write_integer", "read_integer"),
+    ShapeType.LONG: _scalar("write_long", "read_long"),
+    ShapeType.FLOAT: _scalar("write_float", "read_float"),
+    ShapeType.DOUBLE: _scalar("write_double", "read_double"),
+    ShapeType.BIG_INTEGER: _scalar("write_big_integer", "read_big_integer"),
+    ShapeType.BIG_DECIMAL: _scalar("write_big_decimal", "read_big_decimal"),
+    ShapeType.DOCUMENT: _scalar("write_document", "read_document"),
+}
+
+_PY_SCALAR: dict[ShapeType, Any] = {
+    ShapeType.BOOLEAN: bool,
+    ShapeType.STRING: str,
+    ShapeType.ENUM: str,
+    ShapeType.TIMESTAMP: datetime.datetime,
+    ShapeType.BLOB: bytes,
+    ShapeType.BYTE: int,
+    ShapeType.SHORT: int,
+    ShapeType.INTEGER: int,
+    ShapeType.INT_ENUM: int,
+    ShapeType.LONG: int,
+    ShapeType.FLOAT: float,
+    ShapeType.DOUBLE: float,
+    ShapeType.BIG_INTEGER: int,
+    ShapeType.BIG_DECIMAL: Decimal,
+    ShapeType.DOCUMENT: Any,
+    ShapeType.LIST: list,
+    ShapeType.MAP: dict,
+}
+
+
+# Sentinel: a mandatory member (no dataclass default); emitted as a 2-tuple field.
+_MANDATORY = object()
+
+
+def _document(value: Any) -> Any:
+    from .documents import Document
+
+    return Document(value)
+
+
+# Client error-correction defaults by scalar shape type (Smithy spec § client error
+# correction). Mirrors MemberErrorCorrectionGenerator. Enum/int-enum fill the raw
+# placeholder the dynamic serde uses ("" / -1), not an enum instance.
+_CORRECTION_SCALARS: dict[ShapeType, Any] = {
+    ShapeType.BOOLEAN: lambda: False,
+    ShapeType.STRING: lambda: "",
+    ShapeType.ENUM: lambda: "",
+    ShapeType.INT_ENUM: lambda: -1,
+    ShapeType.BYTE: lambda: 0,
+    ShapeType.SHORT: lambda: 0,
+    ShapeType.INTEGER: lambda: 0,
+    ShapeType.LONG: lambda: 0,
+    ShapeType.BIG_INTEGER: lambda: 0,
+    ShapeType.FLOAT: lambda: 0.0,
+    ShapeType.DOUBLE: lambda: 0.0,
+    ShapeType.BIG_DECIMAL: lambda: Decimal(0),
+    ShapeType.BLOB: lambda: b"",
+    ShapeType.TIMESTAMP: lambda: datetime.datetime.fromtimestamp(0, tz=datetime.UTC),
+    ShapeType.LIST: list,
+    ShapeType.MAP: dict,
+    ShapeType.DOCUMENT: lambda: _document(None),
+}
 
 
 def _py_type(member: Schema) -> Any:

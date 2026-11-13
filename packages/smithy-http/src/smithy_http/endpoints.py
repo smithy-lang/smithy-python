@@ -27,6 +27,8 @@ class HTTPEndpoint(Endpoint):
         headers: interfaces.Fields | None = None,
     ) -> None:
         self.uri = uri
-        self.properties = properties if properties is not None else TypedProperties()
+        self.properties: _TypedProperties = (
+            properties if properties is not None else TypedProperties()
+        )
         headers = headers if headers is not None else Fields()
         self.properties[HEADERS] = headers

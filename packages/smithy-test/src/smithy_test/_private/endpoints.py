@@ -6,7 +6,12 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from smithy_core import URI
-from smithy_core.endpoints import ENDPOINT_HEADERS, RESOLVED_ENDPOINT, RulesExtension
+from smithy_core.endpoints import (
+    ENDPOINT_HEADERS,
+    HOST_PREFIX,
+    RESOLVED_ENDPOINT,
+    RulesExtension,
+)
 from smithy_core.exceptions import SmithyError
 from smithy_core.interceptors import Interceptor, RequestContext
 from smithy_core.interfaces import Endpoint
@@ -37,10 +42,11 @@ UNBOUND_OPERATION: APIOperation[Any, Any] = APIOperation(
 class EndpointCaptured(SmithyError):
     """Stops a call once its endpoint is applied to the request."""
 
-    def __init__(self, endpoint: Endpoint, request: Any) -> None:
+    def __init__(self, endpoint: Endpoint, request: Any, host_prefix: str) -> None:
         super().__init__("Endpoint captured")
         self.endpoint = endpoint
         self.request = request
+        self.host_prefix = host_prefix
 
 
 class CaptureEndpoint(Interceptor[Any, Any, Any, Any]):
@@ -48,7 +54,9 @@ class CaptureEndpoint(Interceptor[Any, Any, Any, Any]):
 
     def read_before_signing(self, context: RequestContext[Any, Any]) -> None:
         raise EndpointCaptured(
-            context.properties[RESOLVED_ENDPOINT], context.transport_request
+            context.properties[RESOLVED_ENDPOINT],
+            context.transport_request,
+            context.properties.get(HOST_PREFIX, ""),
         )
 
 
@@ -80,6 +88,32 @@ def check_endpoint(
     _check("properties", properties, expected_properties)
 
 
+def check_error(expect: Mapping[str, Any], error: Exception) -> None:
+    if "error" not in expect:
+        raise AssertionError(
+            f"Expected {expect['endpoint']['url']}, got the error {error}"
+        ) from error
+    _check("error", str(error), expect["error"])
+
+
+def check_destination(endpoint: Endpoint, request: Any, host_prefix: str) -> None:
+    destination = getattr(request, "destination", None)
+    if destination is None:
+        return
+    uri = endpoint.uri
+    if (
+        (destination.scheme, destination.host, destination.port)
+        != (uri.scheme, host_prefix + uri.host, uri.port)
+        or not _extends(destination.path, (uri.path or "").rstrip("/"), "/")
+        or not _extends(destination.query, uri.query, "&")
+    ):
+        prefixed = f" with host prefix {host_prefix!r}" if host_prefix else ""
+        raise AssertionError(
+            f"Expected request destination under {uri.build()}{prefixed},"
+            f" got {destination.build()}"
+        )
+
+
 def _expected_auth_schemes(
     entries: Sequence[Mapping[str, Any]], extensions: Sequence[RulesExtension]
 ) -> list[dict[str, Any]]:
@@ -97,31 +131,6 @@ def _expected_auth_schemes(
             scheme = factory(entry)
             expected.append({"scheme_id": str(scheme.scheme_id), **scheme.properties})
     return expected
-
-
-def check_error(expect: Mapping[str, Any], error: Exception) -> None:
-    if "error" not in expect:
-        raise AssertionError(
-            f"Expected {expect['endpoint']['url']}, got the error {error}"
-        ) from error
-    _check("error", str(error), expect["error"])
-
-
-def check_destination(endpoint: Endpoint, request: Any) -> None:
-    destination = getattr(request, "destination", None)
-    if destination is None:
-        return
-    uri = endpoint.uri
-    if (
-        (destination.scheme, destination.host, destination.port)
-        != (uri.scheme, uri.host, uri.port)
-        or not _extends(destination.path, (uri.path or "").rstrip("/"), "/")
-        or not _extends(destination.query, uri.query, "&")
-    ):
-        raise AssertionError(
-            f"Expected request destination under {uri.build()},"
-            f" got {destination.build()}"
-        )
 
 
 def _extends(value: str | None, base: str | None, separator: str) -> bool:

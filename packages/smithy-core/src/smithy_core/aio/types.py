@@ -3,7 +3,7 @@
 import asyncio
 from collections import deque
 from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
-from inspect import iscoroutinefunction
+from inspect import isawaitable, iscoroutinefunction
 from io import BytesIO
 from typing import Any, Self, cast
 
@@ -15,7 +15,7 @@ from .utils import close_async, seek_async
 __all__ = ["AsyncBytesProvider", "AsyncBytesReader", "AsyncSeekableBytesReader"]
 
 # The default chunk size for iterating streams.
-_DEFAULT_CHUNK_SIZE = 1024
+_DEFAULT_CHUNK_SIZE = 64 * 1024
 
 
 # asyncio has a StreamReader class which you might think would be appropriate here,
@@ -34,7 +34,7 @@ class AsyncBytesReader:
 
         :param data: The source data to read from.
         """
-        self._remainder = b""
+        self._remainder: bytes | memoryview = b""
 
         # pylint: disable-next=isinstance-second-argument-not-valid-type
         if isinstance(data, bytes | bytearray):
@@ -66,8 +66,12 @@ class AsyncBytesReader:
             self._data.read
         ):
             # Python's runtime_checkable can't actually tell the difference between
-            # sync and async, so we have to check ourselves.
-            return self._data.read(size)
+            # sync and async, so we have to check ourselves. A plain read() can still
+            # return an awaitable, as an AwaitableBytesReader's does.
+            data: Any = self._data.read(size)
+            if isawaitable(data):
+                data = await data
+            return data
 
         if isinstance(self._data, AsyncByteStream):  # type: ignore - TODO(pyright)
             return await self._data.read(size)
@@ -141,21 +145,28 @@ class AsyncBytesReader:
     ) -> bytes:
         # This takes the iterator as an arg here just to avoid mypy complaints, since
         # we know it's an iterator where this is called.
-        result = self._remainder
+        # Items are joined once, since adding each to the result would copy it again
+        # for every item. What's left of the last item is kept as a view of it, so
+        # each read copies only the bytes it returns, however small the reads are.
+        parts: list[bytes | memoryview] = [self._remainder]
         if size < 0:
-            async for element in iterator:
-                result += element
+            parts.extend([element async for element in iterator])
             self._remainder = b""
-            return result
+            return b"".join(parts)
 
-        if len(result) < size:
+        total = len(self._remainder)
+        if total < size:
             async for element in iterator:
-                result += element
-                if len(result) >= size:
+                parts.append(element)
+                total += len(element)
+                if total >= size:
                     break
 
-        self._remainder = result[size:]
-        return result[:size]
+        last = memoryview(parts[-1])
+        keep = len(last) - max(total - size, 0)
+        parts[-1] = last[:keep]
+        self._remainder = last[keep:]
+        return b"".join(parts)
 
 
 # Better named BufferedAsyncBytesReader
@@ -357,6 +368,7 @@ class AsyncBytesProvider:
         await self.close(flush=True)
 
     async def write(self, data: bytes) -> None:
+        """Buffer ``data``, waiting while the buffer is full."""
         if self._closed:
             raise SmithyError("Attempted to write to a closed provider.")
 

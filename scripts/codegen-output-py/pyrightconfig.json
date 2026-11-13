@@ -1,0 +1,28 @@
+{
+  "typeCheckingMode": "strict",
+  "enableExperimentalFeatures": true,
+  "include": [
+    "../../codegen-output-py",
+    "generate.py",
+    "refresh_models.py",
+    "tests/_typecheck.py"
+  ],
+  "extraPaths": [
+    "../../codegen-output-py/aws-json-1-0/src",
+    "../../codegen-output-py/aws-json-1-1/src",
+    "../../codegen-output-py/aws-query/src",
+    "../../codegen-output-py/ec2-query/src",
+    "../../codegen-output-py/my-handwritten-json-model/src",
+    "../../codegen-output-py/my-handwritten-model/src",
+    "../../codegen-output-py/non-query-compatible-rpcv2-cbor/src",
+    "../../codegen-output-py/partitioned-types/src",
+    "../../codegen-output-py/query-compatible-aws-json-1-0/src",
+    "../../codegen-output-py/query-compatible-rpcv2-cbor/src",
+    "../../codegen-output-py/rest-json-1/src",
+    "../../codegen-output-py/rest-xml/src",
+    "../../codegen-output-py/rest-xml-with-namespace/src",
+    "../../codegen-output-py/rpcv2-cbor/src",
+    "../../codegen-output-py/rpcv2-json/src",
+    "../../codegen-output-py/types/src"
+  ]
+}

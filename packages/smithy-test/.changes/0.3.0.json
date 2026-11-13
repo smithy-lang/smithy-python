@@ -1,0 +1,44 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Add HTTP mocking API"
+    },
+    {
+      "type": "enhancement",
+      "description": "Support model conformance checks for partitioned stub re-exports."
+    },
+    {
+      "type": "enhancement",
+      "description": "Resolve generated union variant names correctly when constructing serde conformance values."
+    },
+    {
+      "type": "enhancement",
+      "description": "`check_client_case_async` now expects the request host to start with the operation's expanded host prefix."
+    },
+    {
+      "type": "enhancement",
+      "description": "Support event stream operations, including duplex, in mock_async."
+    },
+    {
+      "type": "enhancement",
+      "description": "Added docstrings to the public API and ordered public definitions first."
+    },
+    {
+      "type": "bugfix",
+      "description": "`xml_equal` now compares empty bodies instead of failing to parse them."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-core` from `~=0.10.0` to `~=0.11.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-http` from `~=0.7.0` to `~=0.8.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-aws-core` from `~=0.13.0` to `~=0.14.0`."
+    }
+  ]
+}

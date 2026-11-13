@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
+import zlib
 from io import BytesIO
 
 import pytest
@@ -107,6 +108,20 @@ def test_iter_chunks_validates() -> None:
     assert stream.validated
 
 
+def test_iterates_in_64_kib_chunks() -> None:
+    data = b"x" * (300 * 1024)
+    stream = ChecksumStream(
+        BytesIO(data),
+        checksum_algorithm="CRC32",
+        expected=zlib.crc32(data).to_bytes(4, "big"),
+    )
+
+    chunks = list(stream)
+
+    assert [len(chunk) for chunk in chunks] == [64 * 1024] * 4 + [44 * 1024]
+    assert stream.validated
+
+
 def test_has_the_interface_of_a_bytes_reader() -> None:
     stream = _stream(BytesIO(DATA))
 
@@ -133,4 +148,14 @@ def test_close_closes_the_source() -> None:
     stream = _stream(source)
 
     stream.close()
+    assert source.closed
+
+
+def test_with_block_closes_the_source() -> None:
+    source = BytesIO(DATA)
+
+    with _stream(source) as stream:
+        assert stream.read() == DATA
+
+    assert stream.closed
     assert source.closed

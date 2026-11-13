@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.0
+
+### Bug fixes
+* Raised ExpectationNotMetError instead of Exception when a document is not a timestamp.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.10.0` to `~=0.11.0`.
+
 ## v0.4.0
 
 ### Breaking Changes

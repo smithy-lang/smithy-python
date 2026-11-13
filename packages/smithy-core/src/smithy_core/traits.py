@@ -52,6 +52,7 @@ __all__ = [
     "RequiredTrait",
     "RequiresLengthTrait",
     "RpcV2CborTrait",
+    "RpcV2JsonTrait",
     "SensitiveTrait",
     "SparseTrait",
     "StaticContextParamsTrait",
@@ -145,19 +146,26 @@ class Trait:
 
 @dataclass(init=False, frozen=True)
 class DefaultTrait(Trait, id=ShapeID("smithy.api#default")):
+    """Sets the default value of a shape or member."""
+
     @property
     def value(self) -> "DocumentValue":
+        """The default value."""
         return self.document_value
 
 
 @dataclass(init=False, frozen=True)
 class SparseTrait(Trait, id=ShapeID("smithy.api#sparse")):
-    def __post_init__(self):
+    """Indicates that a list or map may contain null values."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class TimestampFormatTrait(Trait, id=ShapeID("smithy.api#timestampFormat")):
+    """Sets the format a timestamp is serialized in."""
+
     format: TimestampFormat
 
     def __init__(self, value: "DocumentValue | DynamicTrait" = None):
@@ -167,12 +175,16 @@ class TimestampFormatTrait(Trait, id=ShapeID("smithy.api#timestampFormat")):
 
 
 class ErrorFault(Enum):
+    """Whether an error is the client's fault or the server's."""
+
     CLIENT = "client"
     SERVER = "server"
 
 
 @dataclass(init=False, frozen=True)
 class ErrorTrait(Trait, id=ShapeID("smithy.api#error")):
+    """Marks a structure as an error."""
+
     fault: ErrorFault
 
     def __init__(self, value: "DocumentValue | DynamicTrait" = None):
@@ -183,86 +195,113 @@ class ErrorTrait(Trait, id=ShapeID("smithy.api#error")):
 
 @dataclass(init=False, frozen=True)
 class RequiredTrait(Trait, id=ShapeID("smithy.api#required")):
-    def __post_init__(self):
+    """Marks a member as required."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class InternalTrait(Trait, id=ShapeID("smithy.api#internal")):
-    def __post_init__(self):
+    """Marks a shape as internal to the service."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class SensitiveTrait(Trait, id=ShapeID("smithy.api#sensitive")):
-    def __post_init__(self):
+    """Marks a shape as holding sensitive data that must not be logged."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class StreamingTrait(Trait, id=ShapeID("smithy.api#streaming")):
-    def __post_init__(self):
+    """Marks a blob or union as streamed rather than buffered."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class RequiresLengthTrait(Trait, id=ShapeID("smithy.api#requiresLength")):
-    def __post_init__(self):
+    """Indicates that a streaming blob must have a known length."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class UnitTypeTrait(Trait, id=ShapeID("smithy.api#unitType")):
-    def __post_init__(self):
+    """Marks a structure as the unit type."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class MediaTypeTrait(Trait, id=ShapeID("smithy.api#mediaType")):
+    """Sets the media type of a blob or string."""
+
     document_value: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
     def value(self) -> str:
+        """The media type."""
         return self.document_value  # type: ignore
 
 
 @dataclass(init=False, frozen=True)
 class EventHeaderTrait(Trait, id=ShapeID("smithy.api#eventHeader")):
-    def __post_init__(self):
+    """Binds an event member to an event stream header."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class EventPayloadTrait(Trait, id=ShapeID("smithy.api#eventPayload")):
-    def __post_init__(self):
+    """Binds an event member to the event stream payload."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class JSONNameTrait(Trait, id=ShapeID("smithy.api#jsonName")):
+    """Overrides the JSON key a member is serialized under."""
+
     document_value: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
     def value(self) -> str:
+        """The JSON key."""
         return self.document_value  # type: ignore
 
 
 @dataclass(init=False, frozen=True)
 class IdempotencyTokenTrait(Trait, id=ShapeID("smithy.api#idempotencyToken")):
-    def __post_init__(self):
+    """Marks a member as an idempotency token the client fills in when unset."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class EnumValueTrait(Trait, id=ShapeID("smithy.api#enumValue")):
+    """Sets the serialized value of an enum member."""
+
     @property
     def value(self) -> str | int:
+        """The serialized enum value."""
         assert isinstance(self.document_value, str | int)
         return self.document_value
 
@@ -272,7 +311,7 @@ class LongPollTrait(Trait, id=ShapeID("smithy.api#longPoll")):
     """Indicates that the service may hold the request open while waiting for
     information to become available."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, Mapping)
         assert isinstance(self.document_value["timeoutMillis"], int)
 
@@ -285,6 +324,8 @@ class LongPollTrait(Trait, id=ShapeID("smithy.api#longPoll")):
 # TODO: Get all this moved over to the http package
 @dataclass(init=False, frozen=True)
 class HTTPTrait(Trait, id=ShapeID("smithy.api#http")):
+    """Binds an operation to an HTTP method, URI pattern and status code."""
+
     path: PathPattern = field(repr=False, hash=False, compare=False)
     code: int = field(repr=False, hash=False, compare=False)
     query: str | None = field(default=None, repr=False, hash=False, compare=False)
@@ -307,92 +348,120 @@ class HTTPTrait(Trait, id=ShapeID("smithy.api#http")):
 
     @property
     def method(self) -> str:
+        """The HTTP method."""
         return self.document_value["method"]  # type: ignore
 
 
 @dataclass(init=False, frozen=True)
 class HTTPErrorTrait(Trait, id=ShapeID("smithy.api#httpError")):
-    def __post_init__(self):
+    """Sets the HTTP status code of an error."""
+
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, int)
 
     @property
     def code(self) -> int:
+        """The HTTP status code."""
         return self.document_value  # type: ignore
 
 
 @dataclass(init=False, frozen=True)
 class HTTPHeaderTrait(Trait, id=ShapeID("smithy.api#httpHeader")):
-    def __post_init__(self):
+    """Binds a member to an HTTP header."""
+
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
     def key(self) -> str:
+        """The header name."""
         return self.document_value  # type: ignore
 
 
 @dataclass(init=False, frozen=True)
 class HTTPLabelTrait(Trait, id=ShapeID("smithy.api#httpLabel")):
-    def __post_init__(self):
+    """Binds a member to a label in the HTTP path."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class HTTPPayloadTrait(Trait, id=ShapeID("smithy.api#httpPayload")):
-    def __post_init__(self):
+    """Binds a member to the HTTP body."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class HTTPPrefixHeadersTrait(Trait, id=ShapeID("smithy.api#httpPrefixHeaders")):
-    def __post_init__(self):
+    """Binds a map member to the HTTP headers that share a prefix."""
+
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
     def prefix(self) -> str:
+        """The header name prefix."""
         return self.document_value  # type: ignore
 
 
 @dataclass(init=False, frozen=True)
 class HTTPQueryTrait(Trait, id=ShapeID("smithy.api#httpQuery")):
-    def __post_init__(self):
+    """Binds a member to an HTTP query parameter."""
+
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
     def key(self) -> str:
+        """The query parameter name."""
         return self.document_value  # type: ignore
 
 
 @dataclass(init=False, frozen=True)
 class HTTPQueryParamsTrait(Trait, id=ShapeID("smithy.api#httpQueryParams")):
-    def __post_init__(self):
+    """Binds a map member to the HTTP query parameters."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class HTTPResponseCodeTrait(Trait, id=ShapeID("smithy.api#httpResponseCode")):
-    def __post_init__(self):
+    """Binds a member to the HTTP status code."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class HTTPChecksumRequiredTrait(Trait, id=ShapeID("smithy.api#httpChecksumRequired")):
-    def __post_init__(self):
+    """Indicates that an operation requires a checksum of its HTTP payload."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)
 class EndpointTrait(Trait, id=ShapeID("smithy.api#endpoint")):
-    def __post_init__(self):
+    """Sets a host prefix for an operation's endpoint."""
+
+    def __post_init__(self) -> None:
         assert isinstance(self.document_value, str)
 
     @property
     def host_prefix(self) -> str:
+        """The host prefix pattern."""
         return self.document_value["hostPrefix"]  # type: ignore
 
 
 @dataclass(init=False, frozen=True)
 class HostLabelTrait(Trait, id=ShapeID("smithy.api#hostLabel")):
-    def __post_init__(self):
+    """Binds a member to a label in the endpoint host prefix."""
+
+    def __post_init__(self) -> None:
         assert self.document_value is None
 
 
@@ -405,6 +474,8 @@ class APIKeyLocation(Enum):
 
 @dataclass(init=False, frozen=True)
 class HTTPAPIKeyAuthTrait(Trait, id=ShapeID("smithy.api#httpApiKeyAuth")):
+    """Configures API key auth for a service."""
+
     location: APIKeyLocation = field(repr=False, hash=False, compare=False)
 
     def __init__(self, value: "DocumentValue | DynamicTrait" = None):
@@ -419,15 +490,156 @@ class HTTPAPIKeyAuthTrait(Trait, id=ShapeID("smithy.api#httpApiKeyAuth")):
 
     @property
     def name(self) -> str:
+        """The name of the header or query parameter that carries the key."""
         return self.document_value["name"]  # type: ignore
 
     @property
     def scheme(self) -> str | None:
+        """The scheme the key is prefixed with in the header, if any."""
         return self.document_value.get("scheme")  # type: ignore
 
 
+@dataclass(init=False, frozen=True)
+class RpcV2CborTrait(Trait, id=ShapeID("smithy.protocols#rpcv2Cbor")):
+    """The ``smithy.protocols#rpcv2Cbor`` protocol trait."""
+
+    http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    event_stream_http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        http, event_stream_http = _parse_http_protocol_values(self.document_value)
+        object.__setattr__(self, "http", http)
+        object.__setattr__(self, "event_stream_http", event_stream_http)
+
+
+@dataclass(init=False, frozen=True)
+class RpcV2JsonTrait(Trait, id=ShapeID("smithy.protocols#rpcv2Json")):
+    """The ``smithy.protocols#rpcv2Json`` protocol trait."""
+
+    http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    event_stream_http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        http, event_stream_http = _parse_http_protocol_values(self.document_value)
+        object.__setattr__(self, "http", http)
+        object.__setattr__(self, "event_stream_http", event_stream_http)
+
+
+@dataclass(init=False, frozen=True)
+class XMLNameTrait(Trait, id=ShapeID("smithy.api#xmlName")):
+    """Overrides the XML element or attribute name of a shape or member."""
+
+    document_value: str | None = None
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.document_value, str)
+
+    @property
+    def value(self) -> str:
+        """The XML name."""
+        return self.document_value  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class XMLNamespaceTrait(Trait, id=ShapeID("smithy.api#xmlNamespace")):
+    """Sets the XML namespace of a shape or member."""
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.document_value, Mapping)
+        assert isinstance(self.document_value["uri"], str)
+        assert isinstance(self.document_value.get("prefix"), str | None)
+
+    @property
+    def uri(self) -> str:
+        """The namespace URI."""
+        return self.document_value["uri"]  # type: ignore
+
+    @property
+    def prefix(self) -> str | None:
+        """The namespace prefix, if any."""
+        return self.document_value.get("prefix")  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class XMLFlattenedTrait(Trait, id=ShapeID("smithy.api#xmlFlattened")):
+    """Serializes a list or map without a wrapping element."""
+
+    def __post_init__(self) -> None:
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class XMLAttributeTrait(Trait, id=ShapeID("smithy.api#xmlAttribute")):
+    """Serializes a member as an XML attribute."""
+
+    def __post_init__(self) -> None:
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class ContextParamTrait(Trait, id=ShapeID("smithy.rules#contextParam")):
+    """Binds a member to an endpoint ruleset parameter."""
+
+    name: str = field(repr=False, hash=False, compare=False)
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        assert isinstance(self.document_value, Mapping)
+        name = self.document_value["name"]
+        assert isinstance(name, str)
+        object.__setattr__(self, "name", name)
+
+
+@dataclass(init=False, frozen=True)
+class StaticContextParamsTrait(Trait, id=ShapeID("smithy.rules#staticContextParams")):
+    """Sets constant endpoint ruleset parameters for an operation."""
+
+    values: Mapping[str, "DocumentValue"] = field(repr=False, hash=False, compare=False)
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        assert isinstance(self.document_value, Mapping)
+
+        values: dict[str, DocumentValue] = {}
+        for name, definition in self.document_value.items():
+            assert isinstance(definition, Mapping)
+            values[name] = definition["value"]
+        object.__setattr__(self, "values", values)
+
+
+@dataclass(init=False, frozen=True)
+class OperationContextParamsTrait(
+    Trait, id=ShapeID("smithy.rules#operationContextParams")
+):
+    """Binds endpoint ruleset parameters to JMESPath expressions over the input."""
+
+    paths: Mapping[str, str] = field(repr=False, hash=False, compare=False)
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        assert isinstance(self.document_value, Mapping)
+
+        paths: dict[str, str] = {}
+        for name, definition in self.document_value.items():
+            assert isinstance(definition, Mapping)
+            path = definition["path"]
+            assert isinstance(path, str)
+            paths[name] = path
+        object.__setattr__(self, "paths", paths)
+
+
 def _parse_http_protocol_values(
-    value: "DocumentValue | DynamicTrait | None",
+    value: "DocumentValue",
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Parse ``{"http": [...], "eventStreamHttp": [...]}`` into (http, eventStreamHttp).
 
@@ -455,105 +667,3 @@ def _parse_http_protocol_values(
         event_stream_http.append(entry)
 
     return tuple(http), tuple(event_stream_http)
-
-
-@dataclass(init=False, frozen=True)
-class RpcV2CborTrait(Trait, id=ShapeID("smithy.protocols#rpcv2Cbor")):
-    http: Sequence[str] = field(
-        repr=False, hash=False, compare=False, default_factory=tuple
-    )
-    event_stream_http: Sequence[str] = field(
-        repr=False, hash=False, compare=False, default_factory=tuple
-    )
-
-    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
-        super().__init__(value)
-        http, event_stream_http = _parse_http_protocol_values(value)
-        object.__setattr__(self, "http", http)
-        object.__setattr__(self, "event_stream_http", event_stream_http)
-
-
-@dataclass(init=False, frozen=True)
-class XMLNameTrait(Trait, id=ShapeID("smithy.api#xmlName")):
-    document_value: str | None = None
-
-    def __post_init__(self):
-        assert isinstance(self.document_value, str)
-
-    @property
-    def value(self) -> str:
-        return self.document_value  # type: ignore
-
-
-@dataclass(init=False, frozen=True)
-class XMLNamespaceTrait(Trait, id=ShapeID("smithy.api#xmlNamespace")):
-    def __post_init__(self):
-        assert isinstance(self.document_value, Mapping)
-        assert isinstance(self.document_value["uri"], str)
-        assert isinstance(self.document_value.get("prefix"), str | None)
-
-    @property
-    def uri(self) -> str:
-        return self.document_value["uri"]  # type: ignore
-
-    @property
-    def prefix(self) -> str | None:
-        return self.document_value.get("prefix")  # type: ignore
-
-
-@dataclass(init=False, frozen=True)
-class XMLFlattenedTrait(Trait, id=ShapeID("smithy.api#xmlFlattened")):
-    def __post_init__(self):
-        assert self.document_value is None
-
-
-@dataclass(init=False, frozen=True)
-class XMLAttributeTrait(Trait, id=ShapeID("smithy.api#xmlAttribute")):
-    def __post_init__(self):
-        assert self.document_value is None
-
-
-@dataclass(init=False, frozen=True)
-class ContextParamTrait(Trait, id=ShapeID("smithy.rules#contextParam")):
-    name: str = field(repr=False, hash=False, compare=False)
-
-    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
-        super().__init__(value)
-        assert isinstance(self.document_value, Mapping)
-        name = self.document_value["name"]
-        assert isinstance(name, str)
-        object.__setattr__(self, "name", name)
-
-
-@dataclass(init=False, frozen=True)
-class StaticContextParamsTrait(Trait, id=ShapeID("smithy.rules#staticContextParams")):
-    values: Mapping[str, "DocumentValue"] = field(repr=False, hash=False, compare=False)
-
-    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
-        super().__init__(value)
-        assert isinstance(self.document_value, Mapping)
-
-        values: dict[str, DocumentValue] = {}
-        for name, definition in self.document_value.items():
-            assert isinstance(definition, Mapping)
-            values[name] = definition["value"]
-        object.__setattr__(self, "values", values)
-
-
-@dataclass(init=False, frozen=True)
-class OperationContextParamsTrait(
-    Trait, id=ShapeID("smithy.rules#operationContextParams")
-):
-    paths: Mapping[str, str] = field(repr=False, hash=False, compare=False)
-
-    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
-        super().__init__(value)
-        assert isinstance(self.document_value, Mapping)
-
-        paths: dict[str, str] = {}
-        for name, definition in self.document_value.items():
-            assert isinstance(definition, Mapping)
-            path = definition["path"]
-            assert isinstance(path, str)
-            paths[name] = path
-        object.__setattr__(self, "paths", paths)

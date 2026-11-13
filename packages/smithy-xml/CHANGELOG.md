@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.0
+
+### Enhancements
+* Added docstrings to the public API and ordered public definitions first.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.10.0` to `~=0.11.0`.
+
 ## v0.3.0
 
 ### Breaking Changes

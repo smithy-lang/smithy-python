@@ -128,19 +128,71 @@ class Document:
                 case _:
                     self._type = ShapeType.DOCUMENT
 
-    def _is_raw_map(
-        self, value: Mapping[str, "Document"] | Mapping[str, DocumentValue]
-    ) -> TypeGuard[Mapping[str, DocumentValue]]:
-        return len(value) != 0 and not isinstance(next(iter(value.values())), Document)
+    def __getitem__(self, key: str | int | slice) -> "Document":
+        match key:
+            case str():
+                return self.as_map()[key]
+            case int():
+                return self.as_list()[key]
+            case slice():
+                return Document(self.as_list()[key], schema=self._schema)
 
-    def _is_raw_list(
-        self, value: Sequence["Document"] | Sequence[DocumentValue]
-    ) -> TypeGuard[Sequence[DocumentValue]]:
-        return (
-            len(value) != 0
-            and not isinstance(value, str | bytes)
-            and not isinstance(next(iter(value)), Document)
-        )
+    def __setitem__(
+        self,
+        key: str | int,
+        value: "Document | list[Document] | dict[str, Document] | DocumentValue",
+    ) -> None:
+        if isinstance(key, str):
+            schema = self._schema
+            if schema.shape_type is ShapeType.STRUCTURE:
+                schema = schema.members[key]
+            elif schema.shape_type is ShapeType.MAP:
+                schema = schema.members["value"]
+
+            if not isinstance(value, Document):
+                value = Document(value, schema=schema)
+            else:
+                value = value._with_schema(schema)
+
+            self.as_map()[key] = value
+        else:
+            schema = self._schema
+            if schema.shape_type is ShapeType.LIST:
+                schema = schema.members["member"]
+
+            if not isinstance(value, Document):
+                value = Document(value, schema=schema)
+            else:
+                value = value._with_schema(schema)
+
+            self.as_list()[key] = value
+        self._raw_value = None
+
+    def __delitem__(self, key: str | int) -> None:
+        if isinstance(key, str):
+            del self.as_map()[key]
+        else:
+            del self.as_list()[key]
+        self._raw_value = None
+
+    def __repr__(self) -> str:
+        value: str
+        if self._value is not None:
+            value = repr(self._value)
+        else:
+            value = repr(self._raw_value)
+
+        if self._schema is _DOCUMENT:
+            return f"Document(value={value})"
+        return f"Document(value={value}, schema={self._schema})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Document):
+            return False
+        # Note that the schema isn't important to equality. If some subclass, such as a
+        # JsonDocument, cares about the schema then it's responsible for transforming
+        # the output of `as_value` to the canonical form.
+        return self.as_value() == other.as_value()
 
     @property
     def shape_type(self) -> ShapeType:
@@ -214,19 +266,6 @@ class Document:
             f"Expected list, found {type(self._value)}: {self._value}"
         )
 
-    def _wrap_list(self, value: Sequence[DocumentValue]) -> list["Document"]:
-        schema = self._schema
-        if schema.shape_type is ShapeType.LIST:
-            schema = self._schema.members["member"]
-        return [self._new_document(e, schema) for e in value]
-
-    def _new_document(
-        self,
-        value: DocumentValue | dict[str, "Document"] | list["Document"],
-        schema: Schema,
-    ) -> "Document":
-        return Document(value, schema=schema)
-
     def as_map(self) -> dict[str, "Document"]:
         """Asserts the document is a map and returns it."""
         if isinstance(self._value, Mapping):
@@ -237,18 +276,6 @@ class Document:
         raise ExpectationNotMetError(
             f"Expected map, found {type(self._value)}: {self._value}"
         )
-
-    def _wrap_map(self, value: Mapping[str, DocumentValue]) -> dict[str, "Document"]:
-        if self._schema.shape_type not in (ShapeType.STRUCTURE, ShapeType.UNION):
-            member_schema = self._schema
-            if self._schema.shape_type is ShapeType.MAP:
-                member_schema = self._schema.members["value"]
-            return {k: self._new_document(v, member_schema) for k, v in value.items()}
-
-        result: dict[str, Document] = {}
-        for k, v in value.items():
-            result[k] = self._new_document(v, self._schema.members[k])
-        return result
 
     def as_value(self) -> DocumentValue:
         """Converts the document to a plain, protocol-agnostic DocumentValue and returns
@@ -271,9 +298,11 @@ class Document:
         return shape_class.deserialize(_DocumentDeserializer(self))
 
     def serialize(self, serializer: ShapeSerializer) -> None:
+        """Write the document to ``serializer`` as a document."""
         serializer.write_document(self._schema, self)
 
     def serialize_contents(self, serializer: ShapeSerializer) -> None:
+        """Write the document's contents to ``serializer`` as its own shape type."""
         if self.is_none():
             serializer.write_null(self._schema)
             return
@@ -295,7 +324,7 @@ class Document:
                     self._schema, len(map_value)
                 ) as map_serializer:
                     for key, value in map_value.items():
-                        map_serializer.entry(key, lambda s: value.serialize(s))
+                        map_serializer.entry(key, value.serialize)
             case ShapeType.STRING | ShapeType.ENUM:
                 serializer.write_string(self._schema, self.as_string())
             case ShapeType.BOOLEAN:
@@ -332,6 +361,7 @@ class Document:
                 )
 
     def serialize_members(self, serializer: ShapeSerializer) -> None:
+        """Write each member of a structure or union document to ``serializer``."""
         for value in self.as_map().values():
             value.serialize(serializer)
 
@@ -351,45 +381,44 @@ class Document:
         """Gets a named member of the document or a default value."""
         return self.as_map().get(name, default)
 
-    def __getitem__(self, key: str | int | slice) -> "Document":
-        match key:
-            case str():
-                return self.as_map()[key]
-            case int():
-                return self.as_list()[key]
-            case slice():
-                return Document(self.as_list()[key], schema=self._schema)
+    def _is_raw_map(
+        self, value: Mapping[str, "Document"] | Mapping[str, DocumentValue]
+    ) -> TypeGuard[Mapping[str, DocumentValue]]:
+        return len(value) != 0 and not isinstance(next(iter(value.values())), Document)
 
-    def __setitem__(
+    def _is_raw_list(
+        self, value: Sequence["Document"] | Sequence[DocumentValue]
+    ) -> TypeGuard[Sequence[DocumentValue]]:
+        return (
+            len(value) != 0
+            and not isinstance(value, str | bytes)
+            and not isinstance(next(iter(value)), Document)
+        )
+
+    def _wrap_list(self, value: Sequence[DocumentValue]) -> list["Document"]:
+        schema = self._schema
+        if schema.shape_type is ShapeType.LIST:
+            schema = self._schema.members["member"]
+        return [self._new_document(e, schema) for e in value]
+
+    def _new_document(
         self,
-        key: str | int,
-        value: "Document | list[Document] | dict[str, Document] | DocumentValue",
-    ) -> None:
-        if isinstance(key, str):
-            schema = self._schema
-            if schema.shape_type is ShapeType.STRUCTURE:
-                schema = schema.members[key]
-            elif schema.shape_type is ShapeType.MAP:
-                schema = schema.members["value"]
+        value: DocumentValue | dict[str, "Document"] | list["Document"],
+        schema: Schema,
+    ) -> "Document":
+        return Document(value, schema=schema)
 
-            if not isinstance(value, Document):
-                value = Document(value, schema=schema)
-            else:
-                value = value._with_schema(schema)
+    def _wrap_map(self, value: Mapping[str, DocumentValue]) -> dict[str, "Document"]:
+        if self._schema.shape_type not in (ShapeType.STRUCTURE, ShapeType.UNION):
+            member_schema = self._schema
+            if self._schema.shape_type is ShapeType.MAP:
+                member_schema = self._schema.members["value"]
+            return {k: self._new_document(v, member_schema) for k, v in value.items()}
 
-            self.as_map()[key] = value
-        else:
-            schema = self._schema
-            if schema.shape_type is ShapeType.LIST:
-                schema = schema.members["member"]
-
-            if not isinstance(value, Document):
-                value = Document(value, schema=schema)
-            else:
-                value = value._with_schema(schema)
-
-            self.as_list()[key] = value
-        self._raw_value = None
+        result: dict[str, Document] = {}
+        for k, v in value.items():
+            result[k] = self._new_document(v, self._schema.members[k])
+        return result
 
     def _with_schema(self, schema: Schema) -> "Document":
         if self.shape_type in [ShapeType.STRUCTURE, ShapeType.MAP, ShapeType.UNION]:
@@ -399,31 +428,58 @@ class Document:
         else:
             return Document(self._value, schema=schema)
 
-    def __delitem__(self, key: str | int) -> None:
-        if isinstance(key, str):
-            del self.as_map()[key]
-        else:
-            del self.as_list()[key]
-        self._raw_value = None
 
-    def __repr__(self) -> str:
-        value: str
-        if self._value is not None:
-            value = repr(self._value)
-        else:
-            value = repr(self._raw_value)
+class TypeRegistry:
+    """A registry for on-demand deserialization of types by using a mapping of shape IDs
+    to their deserializers."""
 
-        if self._schema is _DOCUMENT:
-            return f"Document(value={value})"
-        return f"Document(value={value}, schema={self._schema})"
+    def __init__(
+        self,
+        types: dict[ShapeID, type[DeserializeableShape]],
+        sub_registry: "TypeRegistry | None" = None,
+    ):
+        """Initialize a TypeRegistry.
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Document):
-            return False
-        # Note that the schema isn't important to equality. If some subclass, such as a
-        # JsonDocument, cares about the schema then it's responsible for transforming
-        # the output of `as_value` to the canonical form.
-        return self.as_value() == other.as_value()
+        :param types: A mapping of ShapeID to the shapes they deserialize to.
+        :param sub_registry: A registry to delegate to if an ID is not found in types.
+        """
+        self._types = types
+        self._sub_registry = sub_registry
+
+    def __getitem__(self, shape: ShapeID) -> type[DeserializeableShape]:
+        """Get the deserializable shape for the given shape ID.
+
+        :param shape: The shape ID to get from the registry.
+        :returns: The corresponding deserializable shape.
+        :raises KeyError: If the shape ID is not found in the registry.
+        """
+        return self.get(shape)
+
+    def __contains__(self, item: object, /) -> bool:
+        """Check if the registry contains the given shape.
+
+        :param item: The shape ID to check for.
+        """
+        return item in self._types or (
+            self._sub_registry is not None and item in self._sub_registry
+        )
+
+    def get(self, shape: ShapeID) -> type[DeserializeableShape]:
+        """Get the deserializable shape for the given shape ID.
+
+        :param shape: The shape ID to get from the registry.
+        :returns: The corresponding deserializable shape.
+        :raises KeyError: If the shape ID is not found in the registry.
+        """
+        if shape in self._types:
+            return self._types[shape]
+        if self._sub_registry is not None:
+            return self._sub_registry.get(shape)
+        raise KeyError(f"Unknown shape: {shape}")
+
+    def deserialize(self, document: Document) -> DeserializeableShape:
+        """Deserialize ``document`` into the shape its discriminator names."""
+        return document.as_shape(self.get(document.discriminator))
 
 
 class _DocumentSerializer(ShapeSerializer):
@@ -560,7 +616,7 @@ class _DocumentMapSerializer(MapSerializer):
     def result(self) -> Document:
         return self._result
 
-    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
+    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]) -> None:
         value_writer(self._delegate)
         self._result[key] = self._delegate.expect_result()
         self._delegate.result = None
@@ -644,55 +700,3 @@ class _DocumentDeserializer(ShapeDeserializer):
     @override
     def read_timestamp(self, schema: "Schema") -> datetime.datetime:
         return self._value.as_timestamp()
-
-
-class TypeRegistry:
-    """A registry for on-demand deserialization of types by using a mapping of shape IDs
-    to their deserializers."""
-
-    def __init__(
-        self,
-        types: dict[ShapeID, type[DeserializeableShape]],
-        sub_registry: "TypeRegistry | None" = None,
-    ):
-        """Initialize a TypeRegistry.
-
-        :param types: A mapping of ShapeID to the shapes they deserialize to.
-        :param sub_registry: A registry to delegate to if an ID is not found in types.
-        """
-        self._types = types
-        self._sub_registry = sub_registry
-
-    def get(self, shape: ShapeID) -> type[DeserializeableShape]:
-        """Get the deserializable shape for the given shape ID.
-
-        :param shape: The shape ID to get from the registry.
-        :returns: The corresponding deserializable shape.
-        :raises KeyError: If the shape ID is not found in the registry.
-        """
-        if shape in self._types:
-            return self._types[shape]
-        if self._sub_registry is not None:
-            return self._sub_registry.get(shape)
-        raise KeyError(f"Unknown shape: {shape}")
-
-    def __getitem__(self, shape: ShapeID):
-        """Get the deserializable shape for the given shape ID.
-
-        :param shape: The shape ID to get from the registry.
-        :returns: The corresponding deserializable shape.
-        :raises KeyError: If the shape ID is not found in the registry.
-        """
-        return self.get(shape)
-
-    def __contains__(self, item: object, /):
-        """Check if the registry contains the given shape.
-
-        :param item: The shape ID to check for.
-        """
-        return item in self._types or (
-            self._sub_registry is not None and item in self._sub_registry
-        )
-
-    def deserialize(self, document: Document) -> DeserializeableShape:
-        return document.as_shape(self.get(document.discriminator))

@@ -10,6 +10,7 @@ from smithy_aws_core.aio.identity.chain.provider import (
 from smithy_aws_core.business_metrics import AwsFeatureId
 from smithy_aws_core.config.file_parser import StandardizedOutput
 from smithy_aws_core.config.merged_config import MergedConfig
+from smithy_aws_core.identity.chain.exceptions import IdentityChainConfigurationError
 from smithy_aws_core.identity.chain.ordering import Standard, StandardProvider
 from smithy_aws_core.identity.chain.provider import ChainSetup
 from smithy_core.interfaces.identity import Identity
@@ -107,7 +108,8 @@ def test_add_terminal_resolver_stops_assembly() -> None:
 
     assert setup.terminal
     with pytest.raises(
-        RuntimeError, match="Cannot add a resolver after a terminal resolver"
+        IdentityChainConfigurationError,
+        match="Cannot add a resolver after a terminal resolver",
     ):
         setup.add_resolver(AsyncMock())
 
@@ -118,7 +120,8 @@ def test_cannot_change_provider_after_terminal() -> None:
     setup.add_terminal_resolver(AsyncMock())
 
     with pytest.raises(
-        RuntimeError, match="Cannot change provider after a terminal resolver"
+        IdentityChainConfigurationError,
+        match="Cannot change provider after a terminal resolver",
     ):
         setup.set_current_provider(_FakeProvider())
 
@@ -127,7 +130,8 @@ def test_cannot_add_without_current_provider() -> None:
     setup = AsyncChainSetup()
 
     with pytest.raises(
-        RuntimeError, match="Cannot add a resolver without a current provider"
+        IdentityChainConfigurationError,
+        match="Cannot add a resolver without a current provider",
     ):
         setup.add_resolver(AsyncMock())
 
@@ -136,7 +140,8 @@ def test_set_config_file_cannot_overwrite() -> None:
     setup = AsyncChainSetup(config_file=_empty_config())
 
     with pytest.raises(
-        RuntimeError, match="Cannot overwrite a config file already present"
+        IdentityChainConfigurationError,
+        match="Cannot overwrite a config file already present",
     ):
         setup.set_config_file(_empty_config())
 

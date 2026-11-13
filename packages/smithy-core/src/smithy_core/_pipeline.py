@@ -8,17 +8,29 @@ the few hooks below.
 """
 
 import logging
+import uuid
 from collections.abc import Mapping, Sequence
 from copy import copy
 from dataclasses import replace
+from functools import partial
 from typing import Any, ClassVar, Protocol
 
 from . import URI
 from .auth import RESOLVED_IDENTITY, AuthParams
 from .deserializers import DeserializeableShape
-from .endpoints import RESOLVED_ENDPOINT, EndpointAuthScheme, EndpointResolverParams
+from .endpoints import (
+    HOST_PREFIX,
+    RESOLVED_ENDPOINT,
+    EndpointAuthScheme,
+    EndpointResolverParams,
+)
+from .endpoints import Endpoint as _Endpoint
+from .endpoints._standard_library import (
+    _is_valid_host_label,  # pyright: ignore[reportPrivateUsage]
+)
 from .exceptions import (
     ClientTimeoutError,
+    EndpointResolutionError,
     RetryError,
     SmithyError,
     UnsupportedAuthSchemeError,
@@ -121,6 +133,9 @@ class RequestPipelineBase[TRequest, TResponse]:
         )
         output_context = yield from self._handle_execution(call, request_future)
         output_context = self._finalize_execution(call, output_context)
+        if isinstance(output_context.response, Exception):
+            # A success turned into an error by an interceptor leaves its body open.
+            yield from self._release_response(output_context.transport_response)
 
         self._attach_response_metadata(output_context)
 
@@ -160,7 +175,8 @@ class RequestPipelineBase[TRequest, TResponse]:
                 response=transport_response,
                 context=output_context.properties,
             )
-            setattr(result, "response_metadata", metadata)
+            target: Any = result
+            target.response_metadata = metadata
         except Exception as e:
             # Metadata is diagnostic and must never fail a call. Both statements
             # above can raise: a broken protocol, or the assignment itself if the
@@ -175,9 +191,17 @@ class RequestPipelineBase[TRequest, TResponse]:
         try:
             interceptor.read_before_execution(input_context)
 
+            # Filled after the whole modify_before_serialization chain, so an
+            # interceptor that returns a new input still gets a token, and
+            # read_before_execution sees the caller's own input. Serialization runs
+            # once per call, so every retry attempt sends the same token.
             input_context = replace(
                 input_context,
-                request=interceptor.modify_before_serialization(input_context),
+                request=_fill_idempotency_token(
+                    interceptor.modify_before_serialization(input_context),
+                    call.operation,
+                    self._logger,
+                ),
             )
 
             interceptor.read_before_serialization(input_context)
@@ -189,6 +213,11 @@ class RequestPipelineBase[TRequest, TResponse]:
                 endpoint=_UNRESOLVED,
                 context=input_context.properties,
             )
+            host_prefix = _expand_host_prefix(
+                input_context.request, call.operation, input_context.properties
+            )
+            if host_prefix is not None:
+                input_context.properties[HOST_PREFIX] = host_prefix
             request_context = RequestContext(
                 request=input_context.request,
                 transport_request=transport_request,
@@ -251,8 +280,7 @@ class RequestPipelineBase[TRequest, TResponse]:
         )
         while True:
             if retry_token.retry_delay:
-                delay = retry_token.retry_delay
-                yield lambda: self._sleep(delay)
+                yield partial(self._sleep, retry_token.retry_delay)
 
             try:
                 output_context = yield from self._send_with_rate_limiting(
@@ -277,12 +305,11 @@ class RequestPipelineBase[TRequest, TResponse]:
             if isinstance(output_context.response, Exception):
                 last_output_context = output_context
                 error = output_context.response
-                token = retry_token
                 try:
-                    retry_token = (
-                        yield lambda: retry_strategy.refresh_retry_token_for_retry(
-                            token_to_renew=token, error=error
-                        )
+                    retry_token = yield partial(
+                        retry_strategy.refresh_retry_token_for_retry,
+                        token_to_renew=retry_token,
+                        error=error,
                     )
                 except RetryError as retry_error:
                     # Long-polling operations back off even when the retry quota
@@ -308,8 +335,7 @@ class RequestPipelineBase[TRequest, TResponse]:
                     error.add_note(f"Retry not attempted: {e}")
                     return output_context
             else:
-                token = retry_token
-                yield lambda: retry_strategy.record_success(token=token)
+                yield partial(retry_strategy.record_success, token=retry_token)
                 return output_context
 
     def _send_with_rate_limiting[I: SerializeableShape, O: DeserializeableShape](
@@ -333,7 +359,7 @@ class RequestPipelineBase[TRequest, TResponse]:
             try:
                 # Waits go through _sleep so the async driver never blocks its loop.
                 for wait in adaptive.rate_limiter._send_token_waits():  # pyright: ignore[reportPrivateUsage]
-                    yield lambda: self._sleep(wait)
+                    yield partial(self._sleep, wait)
             except Exception as e:
                 self._fail_request_future(request_future, e)
                 raise
@@ -408,10 +434,13 @@ class RequestPipelineBase[TRequest, TResponse]:
             self._logger.debug("Endpoint resolver result: %s", endpoint)
             request_context.properties[RESOLVED_ENDPOINT] = endpoint
 
+            service_endpoint = endpoint
+            if (host_prefix := request_context.properties.get(HOST_PREFIX)) is not None:
+                service_endpoint = _prefix_host(endpoint, host_prefix)
             request_context = replace(
                 request_context,
                 transport_request=self.protocol.set_service_endpoint(
-                    request=request_context.transport_request, endpoint=endpoint
+                    request=request_context.transport_request, endpoint=service_endpoint
                 ),
             )
 
@@ -520,7 +549,26 @@ class RequestPipelineBase[TRequest, TResponse]:
                 properties=request_context.properties,
             )
 
-        return self._finalize_attempt(call, output_context)
+        output_context = self._finalize_attempt(call, output_context)
+        if isinstance(output_context.response, Exception):
+            # The caller never sees a failed attempt's response, so release it now
+            # rather than holding its connection until it's garbage collected.
+            yield from self._release_response(output_context.transport_response)
+        return output_context
+
+    def _release_response(self, response: Any) -> Program[None]:
+        """Close the body of a response that won't be returned to the caller.
+
+        A body that was already read or closed is closed again, which streams
+        allow. Failures are logged and ignored, since they'd hide the error that
+        made the response unneeded.
+        """
+        if (body := getattr(response, "body", None)) is None:
+            return
+        try:
+            yield lambda: _close(body)
+        except Exception as e:
+            self._logger.debug("Unable to close response body: %s", e)
 
     def _resolve_auth[I: SerializeableShape, O: DeserializeableShape](
         self, call: CallLike[Any, Any], params: AuthParams[I, O]
@@ -612,6 +660,13 @@ def _timeout_message(error: Exception) -> str:
     return f"A timeout error occurred ({cause})."
 
 
+def _close(stream: Any) -> Any:
+    """Close a stream, returning the stream's own (possibly awaitable) result."""
+    if (close := getattr(stream, "close", None)) is not None:
+        return close()
+    return None
+
+
 def _seek(stream: Any, offset: int, whence: int = 0) -> Any:
     """Seek a stream, returning the stream's own (possibly awaitable) result."""
     if (seekable := getattr(stream, "seekable", None)) is not None and not seekable():
@@ -632,3 +687,86 @@ def _rewind_position(body: Any) -> Program[int | None]:
         return (yield lambda: _seek(body, 0, 1))
     except (OSError, ValueError, NotImplementedError):
         return None
+
+
+def _default_idempotency_token() -> str:
+    # Protocol tests patch this to pin the token. It is not a public hook.
+    return str(uuid.uuid4())
+
+
+def _fill_idempotency_token[I: SerializeableShape](
+    input: I, operation: APIOperation[I, Any], logger: logging.Logger
+) -> I:
+    """Return the input with its idempotency token set, if the caller left it unset.
+
+    A token set by the caller or by an interceptor is sent as-is. The caller's input
+    is never mutated: a generated token goes on a copy. Inputs that aren't
+    dataclasses with the derived field, such as hand-written shapes, are passed
+    through unchanged and a warning is logged.
+    """
+    field_name = operation._idempotency_token_field  # pyright: ignore[reportPrivateUsage]
+    if field_name is None or getattr(input, field_name, None) is not None:
+        return input
+    if field_name not in getattr(type(input), "__dataclass_fields__", {}):
+        logger.warning(
+            "Not filling idempotency token: input %s has no dataclass field %r, so "
+            "the request is sent without one",
+            type(input).__name__,
+            field_name,
+        )
+        return input
+
+    # A shallow copy plus a direct set, rather than dataclasses.replace, so the
+    # input's __init__ and __post_init__ don't run again. object.__setattr__ also
+    # works on frozen dataclasses.
+    filled = copy(input)
+    object.__setattr__(filled, field_name, _default_idempotency_token())
+    return filled
+
+
+def _expand_host_prefix(
+    input: SerializeableShape,
+    operation: APIOperation[Any, Any],
+    context: TypedProperties,
+) -> str | None:
+    """Expand the operation's endpoint host prefix with the input's host labels.
+
+    Returns None if the operation has no host prefix or the config disables it.
+
+    :raises EndpointResolutionError: If a host label value isn't a valid host label.
+    """
+    host_prefix = operation._host_prefix  # pyright: ignore[reportPrivateUsage]
+    if host_prefix is None or getattr(
+        context.get("config"), "disable_host_prefix_injection", False
+    ):
+        return None
+    template, labels = host_prefix
+    values: dict[str, str] = {}
+    for label, field_name in labels:
+        value: str | None = getattr(input, field_name, None)
+        if value is None or not _is_valid_host_label(value, allow_sub_domains=False):
+            raise EndpointResolutionError(
+                f"{label} is part of the endpoint host, so it must be 1 to 63 "
+                f"letters, digits, or hyphens that start and end with a letter or "
+                f"digit, but was {value!r}"
+            )
+        values[label] = value
+    return template.format_map(values)
+
+
+def _prefix_host(endpoint: Endpoint, host_prefix: str) -> Endpoint:
+    uri = endpoint.uri
+    return _Endpoint(
+        uri=URI(
+            scheme=uri.scheme,
+            username=uri.username,
+            password=uri.password,
+            host=host_prefix + uri.host,
+            port=uri.port,
+            path=uri.path,
+            query=uri.query,
+            fragment=uri.fragment,
+        ),
+        properties=endpoint.properties,
+        auth_schemes=endpoint.auth_schemes,
+    )

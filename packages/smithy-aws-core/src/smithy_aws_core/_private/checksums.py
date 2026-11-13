@@ -14,18 +14,18 @@ from typing import TYPE_CHECKING, Final
 
 from smithy_core.exceptions import MissingDependencyError
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 try:
-    import smithy_checksums
+    import smithy_aws_checksums
 
     _HAS_CHECKSUMS = True
 except ImportError:
     _HAS_CHECKSUMS = False  # type: ignore
 
 if TYPE_CHECKING:
-    import smithy_checksums
-    from smithy_checksums import Checksum
+    import smithy_aws_checksums
+    from smithy_aws_checksums import Checksum
 
 _RESPONSE_VALIDATION_ORDER: Final = (
     "CRC32C",
@@ -58,13 +58,13 @@ _NON_CHECKSUM_HEADERS: Final = frozenset(
 
 
 def assert_checksums_installed() -> None:
-    """Raise if smithy-checksums, which calculates checksums, isn't installed.
+    """Raise if smithy-aws-checksums, which calculates checksums, isn't installed.
 
-    :raises MissingDependencyError: If smithy-checksums isn't installed.
+    :raises MissingDependencyError: If smithy-aws-checksums isn't installed.
     """
     if not _HAS_CHECKSUMS:
         raise MissingDependencyError(
-            "Attempted to use checksums, but smithy-checksums is not installed. "
+            "Attempted to use checksums, but smithy-aws-checksums is not installed. "
             "Install smithy-aws-core[checksums]."
         )
 
@@ -74,12 +74,12 @@ def create_checksum(algorithm: str) -> "Checksum":
 
     :param algorithm: The name of the algorithm.
     :raises ValueError: If the algorithm isn't in ``SUPPORTED_ALGORITHMS``.
-    :raises MissingDependencyError: If smithy-checksums isn't installed.
+    :raises MissingDependencyError: If smithy-aws-checksums isn't installed.
     """
     if algorithm.upper() not in SUPPORTED_ALGORITHMS:
         raise ValueError(f"Unsupported checksum algorithm: {algorithm!r}")
     assert_checksums_installed()
-    return smithy_checksums.new(algorithm)
+    return smithy_aws_checksums.new(algorithm)
 
 
 def checksum_header(algorithm: str) -> str:

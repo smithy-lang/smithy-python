@@ -22,7 +22,7 @@ _ROLE_ARN = "role_arn"
 class ProfileSessionCredentialsProvider:
     """Adds a resolver for session credentials from the active profile."""
 
-    feature_ids = (AwsFeatureId.CREDENTIALS_PROFILE,)
+    feature_ids: tuple[AwsFeatureId, ...] = (AwsFeatureId.CREDENTIALS_PROFILE,)
     """The features recorded when this provider's resolver returns credentials."""
 
     @property
@@ -66,7 +66,7 @@ class ProfileSessionCredentialsProvider:
 class ProfileStaticCredentialsProvider:
     """Adds a resolver for static credentials from the active profile."""
 
-    feature_ids = (AwsFeatureId.CREDENTIALS_PROFILE,)
+    feature_ids: tuple[AwsFeatureId, ...] = (AwsFeatureId.CREDENTIALS_PROFILE,)
     """The features recorded when this provider's resolver returns credentials."""
 
     @property

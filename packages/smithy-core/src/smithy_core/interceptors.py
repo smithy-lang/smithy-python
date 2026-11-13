@@ -10,6 +10,7 @@ from .interfaces import TypedProperties
 from .serializers import SerializeableShape
 
 __all__ = [
+    "AnyInterceptor",
     "InputContext",
     "Interceptor",
     "InterceptorChain",
@@ -23,6 +24,8 @@ _LOGGER = logging.getLogger(__name__)
 
 @dataclass(kw_only=True, frozen=True, slots=True)
 class InputContext[Request: SerializeableShape]:
+    """Context available before the request is serialized."""
+
     request: Request
     """The modeled request for the operation being invoked."""
 
@@ -34,6 +37,8 @@ class InputContext[Request: SerializeableShape]:
 class RequestContext[Request: SerializeableShape, TransportRequest](
     InputContext[Request]
 ):
+    """Context available once the transport request exists."""
+
     transport_request: TransportRequest
     """The transmittable request for the operation being invoked."""
 
@@ -42,6 +47,8 @@ class RequestContext[Request: SerializeableShape, TransportRequest](
 class ResponseContext[Request: SerializeableShape, TransportRequest, TransportResponse](
     RequestContext[Request, TransportRequest]
 ):
+    """Context available once the transport response has arrived."""
+
     transport_response: TransportResponse
     """The transmitted response for the operation being invoked."""
 
@@ -53,6 +60,8 @@ class OutputContext[
     TransportRequest,
     TransportResponse,
 ](ResponseContext[Request, TransportRequest, TransportResponse]):
+    """Context available once the response has been deserialized."""
+
     response: Response | Exception
     """The modeled response for the operation being invoked."""
 

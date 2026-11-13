@@ -4,6 +4,7 @@ from ._resolver import BddEndpointResolver, StaticEndpointResolver, resolve_stat
 from ._types import (
     ENDPOINT_HEADERS,
     ENDPOINT_PARAMETERS,
+    HOST_PREFIX,
     RESOLVED_ENDPOINT,
     STATIC_ENDPOINT_CONFIG,
     BuiltinBinding,
@@ -20,6 +21,7 @@ from ._types import (
 __all__ = [
     "ENDPOINT_HEADERS",
     "ENDPOINT_PARAMETERS",
+    "HOST_PREFIX",
     "RESOLVED_ENDPOINT",
     "STATIC_ENDPOINT_CONFIG",
     "BddEndpointResolver",

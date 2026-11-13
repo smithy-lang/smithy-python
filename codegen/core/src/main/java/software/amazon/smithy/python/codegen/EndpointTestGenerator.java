@@ -20,7 +20,6 @@ import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.StructureShape;
-import software.amazon.smithy.model.traits.EndpointTrait;
 import software.amazon.smithy.python.codegen.generators.ConfigGenerator;
 import software.amazon.smithy.python.codegen.generators.EndpointBddGenerator;
 import software.amazon.smithy.python.codegen.integrations.EndpointRulesExtension;
@@ -287,20 +286,13 @@ public final class EndpointTestGenerator implements Runnable {
                         .accept(new ValueNodeVisitor(context, w, inputShape))),
                 expectation(testCase.getExpect()),
                 id,
-                marks(writer, operation, skips));
+                marks(writer, skips));
     }
 
-    // A skip for a case the client can't express, or an expected failure for a known gap.
-    private static String marks(PythonWriter writer, OperationShape operation, List<String> skips) {
+    // A skip for a case the client can't express.
+    private static String marks(PythonWriter writer, List<String> skips) {
         if (!skips.isEmpty()) {
             return writer.format("\n    marks=mark.skip(reason=$S),", String.join("; ", skips));
-        }
-        var hostLabels = operation.getTrait(EndpointTrait.class)
-                .map(trait -> !trait.getHostPrefix().getLabels().isEmpty())
-                .orElse(false);
-        if (hostLabels) {
-            return writer.format("\n    marks=mark.xfail(reason=$S, strict=True),",
-                    "Host labels in an endpoint trait's hostPrefix aren't serialized yet");
         }
         return "";
     }

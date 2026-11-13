@@ -21,7 +21,7 @@ from .provider import AsyncChainSetup
 __all__ = ("AsyncIdentityChain",)
 
 _CHAIN_PROVIDER_ENTRY_POINT_GROUP = "smithy_aws_core.aio.identity.chain_providers"
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class AsyncIdentityChain[I: Identity](

@@ -9,6 +9,7 @@ clients with :py:class:`smithy_aws_core.aio.checksums.AsyncChecksumStream`.
 from collections.abc import Iterator
 from dataclasses import dataclass
 from io import BytesIO
+from typing import Any, Self
 
 from smithy_core.exceptions import CallError, Fault, SmithyError
 from smithy_core.interfaces import BytesReader
@@ -24,7 +25,7 @@ __all__ = [
     "UnsupportedChecksumAlgorithmError",
 ]
 
-_DEFAULT_CHUNK_SIZE = 1024
+_DEFAULT_CHUNK_SIZE = 64 * 1024
 
 
 @dataclass(kw_only=True)
@@ -45,7 +46,7 @@ class ChecksumMismatchError(CallError):
 
     def __post_init__(self) -> None:
         if not self.message:
-            self.message = (
+            self.message: str = (
                 f"Expected a {self.algorithm} checksum of "
                 f"{encode_digest(self.expected)}, but the payload's checksum was "
                 f"{encode_digest(self.actual)}."
@@ -99,6 +100,12 @@ class ChecksumStream:
             BytesIO(source) if isinstance(source, bytes | bytearray) else source
         )
         self._validator = ChecksumValidator(checksum_algorithm, expected)
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        self.close()
 
     def __iter__(self) -> Iterator[bytes]:
         return self.iter_chunks()

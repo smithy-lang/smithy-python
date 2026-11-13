@@ -309,6 +309,16 @@ class StreamingJSONEncoder:
             else:
                 self._sink.write(repr(value).encode("utf-8"))
 
+    def write_bool(self, value: bool) -> None:
+        self._sink.write(b"true" if value else b"false")
+
+    def write_null(self):
+        self._sink.write(b"null")
+
+    def flush(self) -> None:
+        if isinstance(self._sink, Flushable):
+            self._sink.flush()
+
     def _write_non_numeric_float(self, value: float | Decimal) -> bool:
         if value != value:
             self._sink.write(b'"NaN"')
@@ -323,13 +333,3 @@ class StreamingJSONEncoder:
             return True
 
         return False
-
-    def write_bool(self, value: bool) -> None:
-        self._sink.write(b"true" if value else b"false")
-
-    def write_null(self):
-        self._sink.write(b"null")
-
-    def flush(self) -> None:
-        if isinstance(self._sink, Flushable):
-            self._sink.flush()

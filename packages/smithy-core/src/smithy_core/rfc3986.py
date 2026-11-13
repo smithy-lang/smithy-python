@@ -43,6 +43,7 @@ __all__ = [
     "UNRESERVED_HOST_MATCHER",
     "UNRESERVED_RE",
     "ZONE_ID",
+    "variations",
 ]
 
 # #########################
@@ -51,12 +52,15 @@ __all__ = [
 
 # Escape the '*' for use in regular expressions
 SUB_DELIMITERS_RE = r"!$&'()\*+,;="
+"""Regex character class body of the RFC 3986 sub-delims."""
 # We need to escape the '-' in this case:
 UNRESERVED_RE = r"A-Za-z0-9._~\-"
+"""Regex character class body of the RFC 3986 unreserved characters."""
 
 # Percent encoded character values
 PERCENT_ENCODED = PCT_ENCODED = "%[A-Fa-f0-9]{2}"
 PCHAR = "([" + UNRESERVED_RE + SUB_DELIMITERS_RE + ":@]|%s)" % PCT_ENCODED
+"""Pattern for one RFC 3986 path character."""
 
 # #########################
 # Authority Matcher Section
@@ -71,15 +75,17 @@ REGULAR_NAME_RE = REG_NAME = "((?:{}|[{}])*)".format(
 IPv4_RE = r"([0-9]{1,3}\.){3}[0-9]{1,3}"
 # Hexadecimal characters used in each piece of an IPv6 address
 HEXDIG_RE = "[0-9A-Fa-f]{1,4}"
+"""Pattern for one 16-bit piece of an IPv6 address."""
 # Least-significant 32 bits of an IPv6 address
 LS32_RE = "({hex}:{hex}|{ipv4})".format(hex=HEXDIG_RE, ipv4=IPv4_RE)
+"""Pattern for the least-significant 32 bits of an IPv6 address."""
 # Substitutions into the following patterns for IPv6 patterns defined
 # http://tools.ietf.org/html/rfc3986#page-20
 _subs = {"hex": HEXDIG_RE, "ls32": LS32_RE}
 
 # Below: h16 = hexdig, see: https://tools.ietf.org/html/rfc5234 for details
 # about ABNF (Augmented Backus-Naur Form) use in the comments
-variations = [
+variations: list[str] = [
     #                            6( h16 ":" ) ls32
     "(%(hex)s:){6}%(ls32)s" % _subs,
     #                       "::" 5( h16 ":" ) ls32
@@ -100,20 +106,22 @@ variations = [
     "((%(hex)s:){0,6}%(hex)s)?::" % _subs,
 ]
 
-IPv6_RE = "(({})|({})|({})|({})|({})|({})|({})|({})|({}))".format(*variations)
+IPv6_RE: str = "(({})|({})|({})|({})|({})|({})|({})|({})|({}))".format(*variations)
 
 IPv_FUTURE_RE = r"v[0-9A-Fa-f]+\.[%s]+" % (UNRESERVED_RE + SUB_DELIMITERS_RE + ":")
 
 # RFC 6874 Zone ID ABNF
 ZONE_ID = "(?:[" + UNRESERVED_RE + "]|" + PCT_ENCODED + ")+"
+"""Pattern for an RFC 6874 IPv6 zone ID."""
 
-IPv6_ADDRZ_RFC4007_RE = IPv6_RE + "(?:(?:%25|%)" + ZONE_ID + ")?"
-IPv6_ADDRZ_RE = IPv6_RE + "(?:%25" + ZONE_ID + ")?"
+IPv6_ADDRZ_RFC4007_RE: str = IPv6_RE + "(?:(?:%25|%)" + ZONE_ID + ")?"
+IPv6_ADDRZ_RE: str = IPv6_RE + "(?:%25" + ZONE_ID + ")?"
 
 IP_LITERAL_RE = r"\[({}|{})\]".format(
     IPv6_ADDRZ_RFC4007_RE,
     IPv_FUTURE_RE,
 )
+"""Pattern for a bracketed IPv6 or IPvFuture literal."""
 
 # Pattern for matching the host piece of the authority
 HOST_RE = HOST_PATTERN = "({}|{}|{})".format(
@@ -135,11 +143,12 @@ HOST_RE = HOST_PATTERN = "({}|{}|{})".format(
 # URIReference
 
 HOST_MATCHER = re.compile("^" + HOST_RE + "$")
-IPv4_MATCHER = re.compile("^" + IPv4_RE + "$")
-IPv6_MATCHER = re.compile(r"^\[" + IPv6_ADDRZ_RFC4007_RE + r"\]$")
+"""Matches a complete RFC 3986 host."""
+IPv4_MATCHER: re.Pattern[str] = re.compile("^" + IPv4_RE + "$")
+IPv6_MATCHER: re.Pattern[str] = re.compile(r"^\[" + IPv6_ADDRZ_RFC4007_RE + r"\]$")
 
 # Used by host validator
-IPv6_NO_RFC4007_MATCHER = re.compile(r"^\[%s\]$" % (IPv6_ADDRZ_RE))
+IPv6_NO_RFC4007_MATCHER: re.Pattern[str] = re.compile(r"^\[%s\]$" % (IPv6_ADDRZ_RE))
 
 # #########################
 # End misc.py

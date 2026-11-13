@@ -22,7 +22,7 @@ __all__ = [
     "tuples_to_fields",
 ]
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 _VALID_FIELD_POSITIONS = frozenset(get_args(FieldPosition))
 
@@ -48,7 +48,7 @@ class Field(interfaces.Field):
         self.values: list[str] = list(values) if values is not None else []
         if kind not in _VALID_FIELD_POSITIONS:
             raise ValueError(f"Unknown field kind: {kind!r}")
-        self.kind = kind
+        self.kind: FieldPosition = kind
 
     def __eq__(self, other: object) -> bool:
         """Name, values, and kind must match.
@@ -88,8 +88,8 @@ class Field(interfaces.Field):
         If the ``Field`` has zero values, the empty string is returned. If the ``Field``
         has exactly one value, the value is returned unmodified.
 
-        For ``Field``s with more than one value, the values are joined by a comma and a
-        space. For such multi-valued ``Field``s, any values that already contain
+        For ``Field``s with more than one value, the values are joined by
+        ``delimiter``. For such multi-valued ``Field``s, any values that already contain
         commas or double quotes will be surrounded by double quotes. Within any values
         that get quoted, pre-existing double quotes and backslashes are escaped with a
         backslash.
@@ -99,7 +99,7 @@ class Field(interfaces.Field):
             return ""
         if value_count == 1:
             return self.values[0]
-        return ", ".join(quote_and_escape_field_value(val) for val in self.values)
+        return delimiter.join(quote_and_escape_field_value(val) for val in self.values)
 
     def as_tuples(self) -> list[tuple[str, str]]:
         """Get list of ``name``, ``value`` tuples where each tuple represents one
@@ -108,6 +108,8 @@ class Field(interfaces.Field):
 
 
 class Fields(interfaces.Fields):
+    """Collection of header and trailer entries mapped by name."""
+
     def __init__(
         self,
         initial: Iterable[interfaces.Field] | None = None,
@@ -134,7 +136,7 @@ class Fields(interfaces.Fields):
                 "following normalized field names appear more than once: "
                 f"{', '.join(non_unique_names)}."
             )
-        init_tuples = zip(init_field_names, init_fields)
+        init_tuples = zip(init_field_names, init_fields, strict=True)
         self.entries: dict[str, interfaces.Field] = OrderedDict(init_tuples)
         self.encoding: str = encoding
 
@@ -187,6 +189,7 @@ class Fields(interfaces.Fields):
     def get(
         self, key: str, default: interfaces.Field | None = None
     ) -> interfaces.Field | None:
+        """Return the field named ``key``, or ``default`` if absent."""
         return self[key] if key in self else default
 
     def get_by_type(self, kind: FieldPosition) -> list[interfaces.Field]:

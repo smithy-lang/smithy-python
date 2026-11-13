@@ -15,6 +15,7 @@ import ast
 import dataclasses
 import datetime
 from decimal import Decimal
+from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
 
@@ -68,11 +69,14 @@ def _structures(schemas: ModuleType, models: ModuleType) -> dict[str, Any]:
     # differ. The registry's rename map (symbol -> schema constant) is the
     # authoritative symbol<->schema pairing, so key each schema by the symbol
     # the client actually exposes rather than the ambiguous id name.
-    const_to_symbol: dict[str, str] = {}
     registry = getattr(models, "_registry", None)
-    if registry is not None:
-        for symbol, const in getattr(registry, "_renames", {}).items():
-            const_to_symbol[const] = symbol
+    const_to_symbol: dict[str, str] = (
+        {}
+        if registry is None
+        else {
+            const: symbol for symbol, const in getattr(registry, "_renames", {}).items()
+        }
+    )
     out: dict[str, Any] = {}
     for const in dir(schemas):
         if not (const.replace("_", "").isupper() and const[:1].isalpha()):
@@ -176,9 +180,19 @@ def _trivial_value(member: Any, models: ModuleType) -> Any:
         nested = getattr(models, target.id.name)
         return _build_instance(nested, target, models)
     if st == ShapeType.UNION:
+        from smithy_core._model_naming import variant_class_name
+
         target = member.expect_member_target()
         first = target.members_by_index[0]
-        variant = getattr(models, target.id.name + first.expect_member_name())
+        registry = getattr(models, "_registry", None)
+        target_names = getattr(registry, "_target_names", {})
+        container = target_names.get(str(target.id), target.id.name)
+        name = variant_class_name(
+            container,
+            first.expect_member_name(),
+            getattr(registry, "_shape_names", ()),
+        )
+        variant = getattr(models, name)
         return variant(value=_trivial_value(first, models))
     return None
 
@@ -187,15 +201,7 @@ def _assert_stub_matches(
     pyi_path: str, models: ModuleType, structs: dict[str, Any]
 ) -> None:
     """AST-parse models.pyi and assert its class field surface matches runtime."""
-    tree = ast.parse(open(pyi_path).read())
-    stub_fields: dict[str, set[str]] = {}
-    for node in tree.body:
-        if isinstance(node, ast.ClassDef):
-            stub_fields[node.name] = {
-                stmt.target.id
-                for stmt in node.body
-                if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name)
-            }
+    stub_fields = _stub_fields(Path(pyi_path), set())
     for name in structs:
         if name not in stub_fields:
             raise ConformanceError(
@@ -216,6 +222,37 @@ def _assert_stub_matches(
                 f"{name}: models.pyi fields {sorted(stub_fields[name])} != "
                 f"runtime local fields {sorted(local_runtime)}"
             )
+
+
+def _stub_fields(path: Path, visited: set[Path]) -> dict[str, set[str]]:
+    path = path.resolve()
+    if path in visited:
+        return {}
+    visited.add(path)
+
+    tree = ast.parse(path.read_text())
+    stub_fields: dict[str, set[str]] = {}
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef):
+            stub_fields[node.name] = {
+                stmt.target.id
+                for stmt in node.body
+                if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name)
+            }
+        elif isinstance(node, ast.ImportFrom) and node.level and node.module:
+            base = path.parent
+            for _ in range(node.level - 1):
+                base = base.parent
+            imported_path = base.joinpath(*node.module.split(".")).with_suffix(".pyi")
+            if not imported_path.exists():
+                continue
+            imported = _stub_fields(imported_path, visited)
+            for name in node.names:
+                if name.name == "*":
+                    stub_fields.update(imported)
+                elif name.name in imported:
+                    stub_fields[name.asname or name.name] = imported[name.name]
+    return stub_fields
 
 
 def _is_error(schema: Any) -> bool:

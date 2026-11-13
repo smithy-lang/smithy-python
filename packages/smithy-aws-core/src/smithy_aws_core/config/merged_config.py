@@ -100,22 +100,6 @@ class MergedConfig:
         """All services sections from config file."""
         return self._services
 
-    @staticmethod
-    def _merge_profiles(
-        config_profiles: SectionMap,
-        credentials_profiles: SectionMap,
-    ) -> SectionMap:
-        """Merge profiles from config and credentials files. Credentials wins for duplicates."""
-        merged: SectionMap = {}
-        for name, section in config_profiles.items():
-            merged[name] = Section(properties=dict(section.properties))
-        for name, section in credentials_profiles.items():
-            if name in merged:
-                merged[name].properties.update(section.properties)
-            else:
-                merged[name] = Section(properties=dict(section.properties))
-        return merged
-
     def get_service_config(
         self, profile_name: str, service_id: str, key: str
     ) -> str | None:
@@ -159,3 +143,19 @@ class MergedConfig:
             return None
 
         return service_props.get(key.lower())
+
+    @staticmethod
+    def _merge_profiles(
+        config_profiles: SectionMap,
+        credentials_profiles: SectionMap,
+    ) -> SectionMap:
+        """Merge profiles from config and credentials files. Credentials wins for duplicates."""
+        merged: SectionMap = {}
+        for name, section in config_profiles.items():
+            merged[name] = Section(properties=dict(section.properties))
+        for name, section in credentials_profiles.items():
+            if name in merged:
+                merged[name].properties.update(section.properties)
+            else:
+                merged[name] = Section(properties=dict(section.properties))
+        return merged

@@ -1,6 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from functools import cached_property
 from urllib.parse import urlunparse
@@ -10,7 +10,7 @@ from .exceptions import SmithyError
 
 __all__ = ["URI", "HostType", "SmithyError", "interfaces", "rfc3986"]
 
-__version__ = "0.10.0"
+__version__ = "0.11.0"
 
 
 class HostType(Enum):
@@ -39,7 +39,7 @@ class URI(interfaces.URI):
     username: str | None = None
     """Username part of the userinfo URI component."""
 
-    password: str | None = None
+    password: str | None = field(default=None, repr=False)
     """Password part of the userinfo URI component."""
 
     host: str
@@ -69,6 +69,20 @@ class URI(interfaces.URI):
         ):
             raise SmithyError(f"Invalid host: {host}")
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, URI):
+            return False
+        return (
+            self.scheme == other.scheme
+            and self.host == other.host
+            and self.port == other.port
+            and self.path == other.path
+            and self.query == other.query
+            and self.username == other.username
+            and self.password == other.password
+            and self.fragment == other.fragment
+        )
+
     @property
     def netloc(self) -> str:
         """Construct netloc string in format ``{username}:{password}@{host}:{port}``
@@ -78,6 +92,27 @@ class URI(interfaces.URI):
         if it is a valid IPv6 endpoint URI per :rfc:`3986#section-3.2.2`.
         """
         return self._netloc
+
+    @property
+    def host_type(self) -> HostType:
+        """Return the type of host."""
+        return self._host_type
+
+    def build(self) -> str:
+        """Construct URI string representation.
+
+        Validate host. Returns a string of the form
+        ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
+        """
+        components = (
+            self.scheme,
+            self.netloc,
+            self.path or "",
+            "",  # params
+            self.query,
+            self.fragment,
+        )
+        return urlunparse(components)
 
     # cached_property does NOT behave like property, it actually allows for setting.
     # Therefore we need a layer of indirection.
@@ -101,11 +136,6 @@ class URI(interfaces.URI):
 
         return f"{userinfo}{host}{port}"
 
-    @property
-    def host_type(self) -> HostType:
-        """Return the type of host."""
-        return self._host_type
-
     @cached_property
     def _host_type(self) -> HostType:
         if rfc3986.IPv6_MATCHER.match(f"[{self.host}]"):
@@ -115,33 +145,3 @@ class URI(interfaces.URI):
         if rfc3986.HOST_MATCHER.match(self.host):
             return HostType.DOMAIN
         return HostType.UNKNOWN
-
-    def build(self) -> str:
-        """Construct URI string representation.
-
-        Validate host. Returns a string of the form
-        ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
-        """
-        components = (
-            self.scheme,
-            self.netloc,
-            self.path or "",
-            "",  # params
-            self.query,
-            self.fragment,
-        )
-        return urlunparse(components)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, URI):
-            return False
-        return (
-            self.scheme == other.scheme
-            and self.host == other.host
-            and self.port == other.port
-            and self.path == other.path
-            and self.query == other.query
-            and self.username == other.username
-            and self.password == other.password
-            and self.fragment == other.fragment
-        )

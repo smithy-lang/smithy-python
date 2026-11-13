@@ -89,6 +89,28 @@
                 }
             }
         },
+        "query-compatible-aws-json-1-0": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.json10#QueryCompatibleJsonRpc10"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.json10#QueryCompatibleJsonRpc10",
+                    "module": "querycompatibleawsjson10",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
         "aws-json-1-1": {
             "transforms": [
                 {
@@ -177,6 +199,72 @@
                 }
             }
         },
+        "rpcv2-json": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "smithy.protocoltests.rpcv2Json#RpcV2JsonProtocol"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "smithy.protocoltests.rpcv2Json#RpcV2JsonProtocol",
+                    "module": "rpcv2json",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
+        "query-compatible-rpcv2-cbor": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.rpcv2cbor#QueryCompatibleRpcV2Protocol"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.rpcv2cbor#QueryCompatibleRpcV2Protocol",
+                    "module": "querycompatiblerpcv2cbor",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
+        "non-query-compatible-rpcv2-cbor": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.rpcv2cbor#NonQueryCompatibleRpcV2Protocol"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.rpcv2cbor#NonQueryCompatibleRpcV2Protocol",
+                    "module": "nonquerycompatiblerpcv2cbor",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
         "my-handwritten-model": {
             "transforms": [
                 {
@@ -195,6 +283,28 @@
                 "python-client-codegen": {
                     "service": "smithy.python.tests.handwritten#MyHandwrittenModel",
                     "module": "my_handwritten_model",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
+        "my-handwritten-json-model": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "smithy.python.tests.handwritten.json#MyHandwrittenJsonModel"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "smithy.python.tests.handwritten.json#MyHandwrittenJsonModel",
+                    "module": "my_handwritten_json_model",
                     "moduleVersion": "0.0.1"
                 }
             }

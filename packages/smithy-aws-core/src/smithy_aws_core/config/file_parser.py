@@ -24,7 +24,7 @@ __all__ = [
     "standardize",
 ]
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Type aliases
@@ -34,6 +34,8 @@ _VALID_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9_\-/.%@:+]+$")
 
 
 class FileType(Enum):
+    """The kind of shared AWS file being parsed."""
+
     CONFIG = "config"
     CREDENTIALS = "credentials"
 

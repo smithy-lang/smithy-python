@@ -1,0 +1,443 @@
+{
+  "smithy": "2.0",
+  "metadata": {
+    "suppressions": [
+      {
+        "id": "HttpMethodSemantics",
+        "namespace": "com.amazonaws.glacier"
+      },
+      {
+        "id": "HttpMethodSemantics",
+        "namespace": "com.amazonaws.s3"
+      },
+      {
+        "id": "EnumTrait",
+        "namespace": "com.amazonaws.s3"
+      },
+      {
+        "id": "UnreferencedShape",
+        "namespace": "aws.protocoltests.config",
+        "reason": "These shapes are intended to be used to validate vendorParams in\nprotocol tests, so they naturally will not be connected to a service.\n"
+      },
+      {
+        "id": "DeprecatedTrait",
+        "namespace": "*",
+        "reason": "Some of the AWS protocols make use of deprecated traits, and some are\nthemselves deprecated traits. As this package is intended to test those\nprotocols, the warnings should be suppressed."
+      }
+    ],
+    "validators": [
+      {
+        "configuration": {
+          "selector": "operation :not(< service)"
+        },
+        "id": "UnboundTestOperation",
+        "message": "This operation in the AWS protocol tests is not bound to a service.",
+        "name": "EmitEachSelector",
+        "namespaces": [
+          "aws.protocoltests.json10",
+          "aws.protocoltests.json",
+          "aws.protocoltests.query",
+          "aws.protocoltests.ec2",
+          "aws.protocoltests.restjson.validation",
+          "aws.protocoltests.restjson",
+          "aws.protocoltests.restxml",
+          "aws.protocoltests.restxml.xmlns",
+          "com.amazonaws.apigateway",
+          "com.amazonaws.glacier",
+          "com.amazonaws.machinelearning",
+          "com.amazonaws.s3"
+        ],
+        "severity": "WARNING"
+      },
+      {
+        "configuration": {
+          "selector": "operation :not(< service)"
+        },
+        "id": "UnboundTestOperation",
+        "message": "This operation in the Smithy protocol tests is not bound to a service.",
+        "name": "EmitEachSelector",
+        "namespaces": [
+          "smithy.protocoltests.rpcv2Cbor",
+          "smithy.protocoltests.rpcv2Json"
+        ],
+        "severity": "WARNING"
+      }
+    ]
+  },
+  "shapes": {
+    "smithy.protocols#StringList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#String"
+      },
+      "traits": {
+        "smithy.api#documentation": "A list of String shapes.",
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.protocols#rpcv2Cbor": {
+      "type": "structure",
+      "members": {
+        "http": {
+          "target": "smithy.protocols#StringList",
+          "traits": {
+            "smithy.api#documentation": "Priority ordered list of supported HTTP protocol versions."
+          }
+        },
+        "eventStreamHttp": {
+          "target": "smithy.protocols#StringList",
+          "traits": {
+            "smithy.api#documentation": "Priority ordered list of supported HTTP protocol versions\nthat are required when using event streams."
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "An RPC-based protocol that serializes CBOR payloads.",
+        "smithy.api#protocolDefinition": {
+          "traits": [
+            "smithy.api#cors",
+            "smithy.api#endpoint",
+            "smithy.api#hostLabel",
+            "smithy.api#httpError",
+            "smithy.api#requestCompression"
+          ]
+        },
+        "smithy.api#trait": {
+          "selector": "service"
+        },
+        "smithy.api#traitValidators": {
+          "rpcv2Cbor.NoDocuments": {
+            "selector": "service ~> member :test(> document)",
+            "message": "This protocol does not support document types in most possible scenarios.",
+            "severity": "DANGER"
+          }
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#Alpha": {
+      "type": "structure",
+      "members": {
+        "id": {
+          "target": "smithy.api#String"
+        },
+        "timestamp": {
+          "target": "smithy.api#Timestamp"
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#DifferentShapeName": {
+      "type": "structure",
+      "members": {
+        "name": {
+          "target": "smithy.api#String"
+        },
+        "number": {
+          "target": "smithy.api#Integer"
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#Gamma": {
+      "type": "structure",
+      "members": {
+        "sequenceNumber": {
+          "target": "smithy.api#Integer",
+          "traits": {
+            "smithy.api#eventHeader": {}
+          }
+        },
+        "payload": {
+          "target": "smithy.python.tests.handwritten#GammaPayload",
+          "traits": {
+            "smithy.api#eventPayload": {}
+          }
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#GammaPayload": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "smithy.api#String"
+        },
+        "values": {
+          "target": "smithy.python.tests.handwritten#IntegerList"
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#HeartbeatEvent": {
+      "type": "structure",
+      "members": {
+        "timestamp": {
+          "target": "smithy.api#Timestamp"
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#IntegerList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#Integer"
+      }
+    },
+    "smithy.python.tests.handwritten#LogEvent": {
+      "type": "structure",
+      "members": {
+        "level": {
+          "target": "smithy.api#String"
+        },
+        "message": {
+          "target": "smithy.api#String"
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#MetricEvent": {
+      "type": "structure",
+      "members": {
+        "name": {
+          "target": "smithy.api#String"
+        },
+        "value": {
+          "target": "smithy.api#Double"
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#MyHandwrittenModel": {
+      "type": "service",
+      "version": "2020-07-14",
+      "operations": [
+        {
+          "target": "smithy.python.tests.handwritten#PublishEvents"
+        },
+        {
+          "target": "smithy.python.tests.handwritten#SubscribeToEvents"
+        },
+        {
+          "target": "smithy.python.tests.handwritten#TradeEventStream"
+        }
+      ],
+      "traits": {
+        "smithy.api#title": "My Handwritten Model",
+        "smithy.protocols#rpcv2Cbor": {
+          "http": [
+            "h2",
+            "http/1.1"
+          ],
+          "eventStreamHttp": [
+            "h2"
+          ]
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#NotificationEvent": {
+      "type": "structure",
+      "members": {
+        "topic": {
+          "target": "smithy.api#String"
+        },
+        "payload": {
+          "target": "smithy.api#String"
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#PublishEventStream": {
+      "type": "union",
+      "members": {
+        "log": {
+          "target": "smithy.python.tests.handwritten#LogEvent"
+        },
+        "metric": {
+          "target": "smithy.python.tests.handwritten#MetricEvent"
+        }
+      },
+      "traits": {
+        "smithy.api#streaming": {}
+      }
+    },
+    "smithy.python.tests.handwritten#PublishEvents": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.python.tests.handwritten#PublishEventsInput"
+      },
+      "output": {
+        "target": "smithy.python.tests.handwritten#PublishEventsOutput"
+      },
+      "traits": {
+        "smithy.api#documentation": "Input-only stream: the client sends events, the server returns a summary."
+      }
+    },
+    "smithy.python.tests.handwritten#PublishEventsInput": {
+      "type": "structure",
+      "members": {
+        "channel": {
+          "target": "smithy.api#String"
+        },
+        "events": {
+          "target": "smithy.python.tests.handwritten#PublishEventStream"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "smithy.python.tests.handwritten#PublishEventsOutput": {
+      "type": "structure",
+      "members": {
+        "eventCount": {
+          "target": "smithy.api#Integer"
+        },
+        "message": {
+          "target": "smithy.api#String"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "smithy.python.tests.handwritten#StreamServiceError": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "smithy.api#String"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "server"
+      }
+    },
+    "smithy.python.tests.handwritten#SubscribeEventStream": {
+      "type": "union",
+      "members": {
+        "notification": {
+          "target": "smithy.python.tests.handwritten#NotificationEvent"
+        },
+        "heartbeat": {
+          "target": "smithy.python.tests.handwritten#HeartbeatEvent"
+        }
+      },
+      "traits": {
+        "smithy.api#streaming": {}
+      }
+    },
+    "smithy.python.tests.handwritten#SubscribeToEvents": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.python.tests.handwritten#SubscribeToEventsInput"
+      },
+      "output": {
+        "target": "smithy.python.tests.handwritten#SubscribeToEventsOutput"
+      },
+      "traits": {
+        "smithy.api#documentation": "Output-only stream: the client subscribes, the server streams events."
+      }
+    },
+    "smithy.python.tests.handwritten#SubscribeToEventsInput": {
+      "type": "structure",
+      "members": {
+        "channel": {
+          "target": "smithy.api#String"
+        },
+        "maxEvents": {
+          "target": "smithy.api#Integer"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "smithy.python.tests.handwritten#SubscribeToEventsOutput": {
+      "type": "structure",
+      "members": {
+        "subscriptionId": {
+          "target": "smithy.api#String"
+        },
+        "events": {
+          "target": "smithy.python.tests.handwritten#SubscribeEventStream"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "smithy.python.tests.handwritten#ThrottlingEvent": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "smithy.api#String"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client",
+        "smithy.api#retryable": {
+          "throttling": true
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#TradeEventStream": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.python.tests.handwritten#TradeEventStreamInput"
+      },
+      "output": {
+        "target": "smithy.python.tests.handwritten#TradeEventStreamOutput"
+      },
+      "errors": [
+        {
+          "target": "smithy.python.tests.handwritten#StreamServiceError"
+        }
+      ],
+      "traits": {
+        "smithy.api#documentation": "Bidirectional (duplex) stream. The non-stream members (sessionId, greeting) are\ncarried as the initial-request and initial-response messages."
+      }
+    },
+    "smithy.python.tests.handwritten#TradeEventStreamInput": {
+      "type": "structure",
+      "members": {
+        "sessionId": {
+          "target": "smithy.api#String"
+        },
+        "events": {
+          "target": "smithy.python.tests.handwritten#TradeEvents"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "smithy.python.tests.handwritten#TradeEventStreamOutput": {
+      "type": "structure",
+      "members": {
+        "greeting": {
+          "target": "smithy.api#String"
+        },
+        "events": {
+          "target": "smithy.python.tests.handwritten#TradeEvents"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "smithy.python.tests.handwritten#TradeEvents": {
+      "type": "union",
+      "members": {
+        "alpha": {
+          "target": "smithy.python.tests.handwritten#Alpha"
+        },
+        "beta": {
+          "target": "smithy.api#Unit"
+        },
+        "gamma": {
+          "target": "smithy.python.tests.handwritten#Gamma"
+        },
+        "delta": {
+          "target": "smithy.python.tests.handwritten#DifferentShapeName"
+        },
+        "throttle": {
+          "target": "smithy.python.tests.handwritten#ThrottlingEvent"
+        }
+      },
+      "traits": {
+        "smithy.api#streaming": {}
+      }
+    }
+  }
+}

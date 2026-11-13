@@ -15,6 +15,7 @@ __all__ = [
     "Fault",
     "MissingDependencyError",
     "ModeledError",
+    "ResourceLifecycleError",
     "RetryError",
     "SerializationError",
     "SmithyError",
@@ -87,7 +88,7 @@ class CallError(SmithyError):
     This is always set, so it is safe to access without a null check.
     """
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__init__(self.message)
 
 
@@ -136,6 +137,10 @@ class RetryError(SmithyError):
 
 class ExpectationNotMetError(SmithyError):
     """Exception type for exceptions thrown by unmet assertions."""
+
+
+class ResourceLifecycleError(SmithyError, RuntimeError):
+    """A resource was used after it was closed."""
 
 
 class SmithyIdentityError(SmithyError):

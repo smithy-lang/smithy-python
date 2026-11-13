@@ -32,7 +32,7 @@ def test_field_multi_valued_basics() -> None:
         (['"'], '"'),
         (['val"1'], 'val"1'),
         (["val\\1"], "val\\1"),
-        # Multi-valued fields are joined with one comma and one space as separator.
+        # Multi-valued fields are joined with one comma as separator.
         (["val1", "val2"], "val1,val2"),
         (["val1", "val2", "val3", "val4"], "val1,val2,val3,val4"),
         (["©väl", "val2"], "©väl,val2"),

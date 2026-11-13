@@ -26,38 +26,6 @@ from smithy_core.utils import serialize_float
 from ...traits import Ec2QueryNameTrait
 
 
-def _percent_encode_query(value: str) -> str:
-    """Encode a query key or value using RFC 3986 percent-encoding."""
-    return quote(value, safe="-_.~")
-
-
-def _resolve_name(schema: Schema, default: str) -> str:
-    """Return ``@xmlName`` when present, otherwise ``default``."""
-    if (xml_name := schema.get_trait(XMLNameTrait)) is not None:
-        return xml_name.value
-    return default
-
-
-def _capitalize(value: str) -> str:
-    """Uppercase the first character, leaving the rest untouched."""
-    return value[:1].upper() + value[1:] if value else value
-
-
-def _resolve_ec2_name(schema: Schema, default: str) -> str:
-    """Resolve an ec2Query key: ``@ec2QueryName``, else capitalized ``@xmlName``,
-    else the capitalized default."""
-    if (ec2_name := schema.get_trait(Ec2QueryNameTrait)) is not None:
-        return ec2_name.value
-    if (xml_name := schema.get_trait(XMLNameTrait)) is not None:
-        return _capitalize(xml_name.value)
-    return _capitalize(default)
-
-
-def _is_flattened(schema: Schema) -> bool:
-    """Return whether a collection is ``@xmlFlattened``."""
-    return schema.get_trait(XMLFlattenedTrait) is not None
-
-
 class QueryShapeSerializer(ShapeSerializer):
     """Serializes Smithy shapes into AWS Query form parameters.
 
@@ -340,3 +308,35 @@ class Ec2QueryListSerializer(InterceptingSerializer):
 
     def after(self, schema: Schema) -> None:
         pass
+
+
+def _percent_encode_query(value: str) -> str:
+    """Encode a query key or value using RFC 3986 percent-encoding."""
+    return quote(value, safe="-_.~")
+
+
+def _resolve_name(schema: Schema, default: str) -> str:
+    """Return ``@xmlName`` when present, otherwise ``default``."""
+    if (xml_name := schema.get_trait(XMLNameTrait)) is not None:
+        return xml_name.value
+    return default
+
+
+def _capitalize(value: str) -> str:
+    """Uppercase the first character, leaving the rest untouched."""
+    return value[:1].upper() + value[1:] if value else value
+
+
+def _resolve_ec2_name(schema: Schema, default: str) -> str:
+    """Resolve an ec2Query key: ``@ec2QueryName``, else capitalized ``@xmlName``,
+    else the capitalized default."""
+    if (ec2_name := schema.get_trait(Ec2QueryNameTrait)) is not None:
+        return ec2_name.value
+    if (xml_name := schema.get_trait(XMLNameTrait)) is not None:
+        return _capitalize(xml_name.value)
+    return _capitalize(default)
+
+
+def _is_flattened(schema: Schema) -> bool:
+    """Return whether a collection is ``@xmlFlattened``."""
+    return schema.get_trait(XMLFlattenedTrait) is not None

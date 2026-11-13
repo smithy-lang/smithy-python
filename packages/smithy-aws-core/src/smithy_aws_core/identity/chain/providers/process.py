@@ -24,7 +24,7 @@ class ProcessConfigurationError(SmithyError):
 class ProfileCredentialProcessProvider:
     """Adds a process credential resolver configured by the active profile."""
 
-    feature_ids = (
+    feature_ids: tuple[AwsFeatureId, ...] = (
         AwsFeatureId.CREDENTIALS_PROFILE_PROCESS,
         AwsFeatureId.CREDENTIALS_PROCESS,
     )

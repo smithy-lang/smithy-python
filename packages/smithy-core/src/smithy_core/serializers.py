@@ -241,7 +241,7 @@ class MapSerializer(Protocol):
     any data needed between entries.
     """
 
-    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
+    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]) -> None:
         """Write a map entry.
 
         :param key: The entry's key.
@@ -258,10 +258,14 @@ class InterceptingSerializer(ShapeSerializer, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def before(self, schema: "Schema") -> ShapeSerializer: ...
+    def before(self, schema: "Schema") -> ShapeSerializer:
+        """Write any data needed before the value of ``schema`` and return its serializer."""
+        ...
 
     @abstractmethod
-    def after(self, schema: "Schema") -> None: ...
+    def after(self, schema: "Schema") -> None:
+        """Write any data needed after the value of ``schema``."""
+        ...
 
     @contextmanager
     def begin_struct(self, schema: "Schema") -> Iterator[ShapeSerializer]:

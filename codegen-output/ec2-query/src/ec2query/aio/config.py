@@ -13,11 +13,11 @@ from typing import (
 )
 
 from smithy_aws_core.aio.auth.sigv4 import AsyncSigV4AuthScheme
-from smithy_aws_core.aio.config import AsyncFileSystem
 from smithy_aws_core.aio.config.aws_config import (
     AsyncAwsConfig,
     AsyncAwsConfigOverrides,
 )
+from smithy_aws_core.aio.config.filesystem import AsyncFileSystem
 from smithy_aws_core.config.resolvers import (
     EndpointUriResolver,
     resolve_use_dualstack_endpoint_program,
@@ -25,7 +25,10 @@ from smithy_aws_core.config.resolvers import (
 )
 from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
-from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+from smithy_aws_core.identity.components import (
+    AWSCredentialsIdentity,
+    AWSIdentityProperties,
+)
 from smithy_aws_core.protocols import Ec2QueryClientProtocol
 from smithy_core.aio.interfaces import AsyncEndpointResolver
 from smithy_core.aio.interfaces.auth import AsyncAuthScheme
@@ -166,6 +169,7 @@ class _AsyncEC2ProtocolConfigOverrides(AsyncAwsConfigOverrides, total=False):
     auth_scheme_resolver: AuthSchemeResolver | None
     use_dualstack_endpoint: bool | None
     use_fips_endpoint: bool | None
+    disable_host_prefix_injection: bool | None
 
 
 @dataclass(kw_only=True, repr=False, init=False)
@@ -235,6 +239,12 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
     header.
     """
 
+    disable_host_prefix_injection: bool | None = None
+    """
+    Whether to skip prepending operations' modeled host prefixes to the
+    endpoint host.
+    """
+
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
         "use_dualstack_endpoint": FieldSpec(
             default=None, resolver=resolve_use_dualstack_endpoint_program
@@ -249,6 +259,7 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
         "aws_session_token": FieldSpec(default=None),
         "user_agent_extra": FieldSpec(default=None),
         "sdk_ua_app_id": FieldSpec(default=None),
+        "disable_host_prefix_injection": FieldSpec(default=None),
         **AsyncAwsConfig._FIELDS,
         "endpoint_uri": FieldSpec(
             default=None, resolver=EndpointUriResolver("ec2_protocol").program

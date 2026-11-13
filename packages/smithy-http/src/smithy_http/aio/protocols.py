@@ -36,12 +36,14 @@ from ..protocols import (
     HttpClientProtocol,
     RpcClientProtocol,
     RpcV2CborClientProtocol,
+    RpcV2JsonClientProtocol,
 )
 
 __all__ = [
     "AsyncHttpEventStreamMixin",
     "AsyncRpcEventStreamMixin",
     "AsyncRpcV2CborClientProtocol",
+    "AsyncRpcV2JsonClientProtocol",
 ]
 
 try:
@@ -138,7 +140,7 @@ class AsyncHttpEventStreamMixin(
         auth_scheme: AsyncAuthScheme[Any, Any, Any, Any] | None = None,
     ) -> AsyncEventPublisher[Event]:
         _assert_event_stream()
-        signing_config: SigningConfig[Any] | None = None
+        signing_config: SigningConfig[Any, Any, Any, Any] | None = None
         if auth_scheme is not None:
             event_signer = auth_scheme.event_signer(request=request)
             if event_signer is not None:
@@ -290,6 +292,10 @@ class AsyncRpcEventStreamMixin(AsyncHttpEventStreamMixin, RpcClientProtocol):
 
 class AsyncRpcV2CborClientProtocol(AsyncRpcEventStreamMixin, RpcV2CborClientProtocol):
     """An implementation of the smithy.protocols#rpcv2Cbor protocol."""
+
+
+class AsyncRpcV2JsonClientProtocol(AsyncRpcEventStreamMixin, RpcV2JsonClientProtocol):
+    """An implementation of the smithy.protocols#rpcv2Json protocol."""
 
 
 def _assert_event_stream() -> None:

@@ -14,6 +14,7 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.SmithyUnstableApi;
+import software.amazon.smithy.utils.StringUtils;
 import software.amazon.smithy.utils.ToSmithyBuilder;
 
 /**
@@ -64,11 +65,17 @@ public record PythonTypeCodegenSettings(
     }
 
     public PythonSettings toPythonSettings(ShapeId service) {
+        // Without a selected service, describe the package by its module name rather
+        // than the internal synthetic service.
+        var description = moduleDescription;
+        if (this.service.isEmpty() && StringUtils.isBlank(description)) {
+            description = "Python types for " + moduleName;
+        }
         return PythonSettings.builder()
                 .service(service)
                 .moduleName(moduleName)
                 .moduleVersion(moduleVersion)
-                .moduleDescription(moduleDescription)
+                .moduleDescription(description)
                 .artifactType(PythonSettings.ArtifactType.TYPES)
                 .build();
     }

@@ -2,4 +2,4 @@
 
 ## Sample Json 1.0 Protocol Service Client
 
-awsjson10 client
+Python client for Sample Json 1.0 Protocol Service

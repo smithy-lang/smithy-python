@@ -33,6 +33,18 @@ class ShapeID:
             if not self._name or not self._member:
                 raise SmithyError(f"Invalid shape id: {id}")
 
+    def __str__(self) -> str:
+        return self._id
+
+    def __repr__(self) -> str:
+        return f"ShapeId({self._id})"
+
+    def __eq__(self, other: object) -> bool:
+        return self._id == str(other)
+
+    def __hash__(self) -> int:
+        return hash(self._id)
+
     @property
     def namespace(self) -> str:
         """The namespace of the shape."""
@@ -72,18 +84,6 @@ class ShapeID:
             name=self.name,
             member=member,
         )
-
-    def __str__(self) -> str:
-        return self._id
-
-    def __repr__(self) -> str:
-        return f"ShapeId({self._id})"
-
-    def __eq__(self, other: object) -> bool:
-        return self._id == str(other)
-
-    def __hash__(self) -> int:
-        return hash(self._id)
 
     @classmethod
     def from_parts(

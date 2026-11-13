@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "enhancement",
+      "description": "Added docstrings to the public API and ordered public definitions first."
+    }
+  ]
+}

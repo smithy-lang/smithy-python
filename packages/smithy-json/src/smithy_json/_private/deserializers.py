@@ -24,10 +24,6 @@ from . import (
 )
 
 
-def _reject_constant(value: str) -> None:
-    raise ValueError(f"Invalid JSON constant: {value}")
-
-
 class JSONShapeDeserializer(ShapeDeserializer):
     """Deserializes Smithy shapes from a fully materialized JSON value."""
 
@@ -190,3 +186,7 @@ class JSONShapeDeserializer(ShapeDeserializer):
                 )
             self._json_names[schema.id] = members
         return members
+
+
+def _reject_constant(value: str) -> None:
+    raise ValueError(f"Invalid JSON constant: {value}")

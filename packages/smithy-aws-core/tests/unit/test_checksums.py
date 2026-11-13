@@ -57,7 +57,9 @@ def test_unsupported_algorithms_are_rejected(algorithm: str) -> None:
         create_checksum(algorithm)
 
 
-def test_checksums_require_smithy_checksums(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_checksums_require_smithy_aws_checksums(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(checksums, "_HAS_CHECKSUMS", False)
     match = r"smithy-aws-core\[checksums\]"
     with pytest.raises(MissingDependencyError, match=match):

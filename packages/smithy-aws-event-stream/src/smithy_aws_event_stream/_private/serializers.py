@@ -25,7 +25,7 @@ from . import (
     get_payload_member,
 )
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 _DEFAULT_STRING_CONTENT_TYPE = "text/plain"
 _DEFAULT_BLOB_CONTENT_TYPE = "application/octet-stream"
@@ -118,13 +118,6 @@ class EventHeaderSerializer(SpecificShapeSerializer):
     def __init__(self, headers: dict[str, HEADER_VALUE]) -> None:
         self._headers = headers
 
-    def _invalid_state(
-        self, schema: "Schema | None" = None, message: str | None = None
-    ) -> Never:
-        if message is None:
-            message = f"Invalid header value type: {schema}"
-        raise InvalidHeaderValue(message)
-
     def write_boolean(self, schema: "Schema", value: bool) -> None:
         self._headers[schema.expect_member_name()] = value
 
@@ -148,6 +141,13 @@ class EventHeaderSerializer(SpecificShapeSerializer):
 
     def write_timestamp(self, schema: "Schema", value: datetime.datetime) -> None:
         self._headers[schema.expect_member_name()] = value
+
+    def _invalid_state(
+        self, schema: "Schema | None" = None, message: str | None = None
+    ) -> Never:
+        if message is None:
+            message = f"Invalid header value type: {schema}"
+        raise InvalidHeaderValue(message)
 
 
 class RawPayloadSerializer(SpecificShapeSerializer):

@@ -21,14 +21,7 @@ public final class AwsQueryProtocolGenerator implements ProtocolGenerator {
             // TODO: support the request compression trait
             // https://smithy.io/2.0/spec/behavior-traits.html#smithy-api-requestcompression-trait
             "SDKAppliedContentEncoding_awsQuery",
-            "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_awsQuery",
-
-            // TODO: support idempotency token autofill
-            "QueryProtocolIdempotencyTokenAutoFill",
-
-            // TODO: support of the endpoint trait
-            "AwsQueryEndpointTraitWithHostLabel",
-            "AwsQueryEndpointTrait");
+            "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_awsQuery");
 
     @Override
     public ShapeId getProtocol() {

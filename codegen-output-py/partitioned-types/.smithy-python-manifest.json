@@ -1,0 +1,18 @@
+{
+  "files": {
+    "README.md": "20221d6b4a6eb9d45105b926f3bf80197e6ed2bdcab748c5f15e9e6e28dd11ec",
+    "pyproject.toml": "6980c970f57d31dca2a1ef73e2933e1936b3eb7803a5a7dd2116ced729945a03",
+    "src/partitioned_types/__init__.py": "27ea4bc5ba93a6fc6e1f11e9784565de24e9249f0d3e77a9e2fb64fa47d11012",
+    "src/partitioned_types/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/partitioned_types/_private/models_0.pyi": "43e2d95e8b75e1a63f4a6d7a60ead524045f688617e6433271a82b9d6eec3b95",
+    "src/partitioned_types/_private/models_1.pyi": "84d482c80640d546ced883fc90ee028e1a67b0606c956f4bedc4e997c4b34b81",
+    "src/partitioned_types/_private/schemas.py": "6968c15944aa9c55c1842cfe11c0c0dd88269850ee4d1e7c58a3d22e2ab7222f",
+    "src/partitioned_types/_private/schemas_0.py": "be67800d8f0a27d41db9ce7b6b34c3b01b19cc0963b6d77821105cecffc6e355",
+    "src/partitioned_types/_private/schemas_1.py": "c27d7745e33745720f0d175f50fccc4c5755b43a35112634856087eca30b6f3a",
+    "src/partitioned_types/_private/schemas_2.py": "a25fbc37916761685d7e90171fdde28361ee0f4d24e43dd3a887e26c3f0cc7c3",
+    "src/partitioned_types/models.py": "8c2b0f2d0a149d87a6213112cc12b8e01bac84f7bf73c91f9d5aba63512fcd30",
+    "src/partitioned_types/models.pyi": "713c888831f64f57c9430b272844fb8680f8c1f133d8c7792009065791397d9b",
+    "src/partitioned_types/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "version": 1
+}

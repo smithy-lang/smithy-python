@@ -29,11 +29,14 @@ import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
+import software.amazon.smithy.model.knowledge.OperationIndex;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.DefaultTrait;
+import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
+import software.amazon.smithy.model.traits.IdempotencyTokenTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
@@ -177,6 +180,33 @@ public final class CodegenUtils {
     public static boolean isEventStreamMember(Model model, MemberShape member) {
         var target = model.expectShape(member.getTarget());
         return target.isUnionShape() && target.hasTrait(StreamingTrait.class);
+    }
+
+    /**
+     * The note appended to the docs of an idempotency token member the client fills.
+     * Matches botocore's wording.
+     */
+    public static final String IDEMPOTENCY_TOKEN_DOCS = "This field is autopopulated if not provided.";
+
+    /**
+     * Gets the documentation to generate for a member.
+     *
+     * <p>This is the member's documentation trait (or its target's). Members the client
+     * auto-fills, {@code @idempotencyToken} members of an operation input, also get
+     * {@link #IDEMPOTENCY_TOKEN_DOCS} as a final paragraph, or as their only docs.
+     *
+     * @param model The model being generated.
+     * @param member The member to document.
+     * @return Returns the member's documentation, if it has any.
+     */
+    public static Optional<String> getMemberDocs(Model model, MemberShape member) {
+        var docs = member.getMemberTrait(model, DocumentationTrait.class).map(DocumentationTrait::getValue);
+        if (!member.hasTrait(IdempotencyTokenTrait.class)
+                || !OperationIndex.of(model).isInputStructure(member.getContainer())) {
+            return docs;
+        }
+        return Optional.of(docs.map(value -> value + "\n\n" + IDEMPOTENCY_TOKEN_DOCS)
+                .orElse(IDEMPOTENCY_TOKEN_DOCS));
     }
 
     /**

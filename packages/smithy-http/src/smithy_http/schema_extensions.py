@@ -8,8 +8,6 @@ from urllib.parse import unquote
 from smithy_core.schemas import Schema, SchemaExtension
 from smithy_core.shapes import ShapeType
 from smithy_core.traits import (
-    EndpointTrait,
-    HostLabelTrait,
     HTTPHeaderTrait,
     HTTPLabelTrait,
     HTTPPrefixHeadersTrait,
@@ -65,7 +63,7 @@ class HTTPMemberBindingMetadata:
     """The member's response-direction binding."""
 
     request_wire_name: str | None
-    """Request header, query, prefix, label, or host-label name."""
+    """Request header, query, prefix, or label name."""
 
     response_wire_name: str | None
     """Response header or prefix name."""
@@ -258,19 +256,12 @@ class HTTPOperationSchemaMetadata:
     response_status: int
     """The operation's default HTTP response status."""
 
-    host_prefix: str
-    """The operation's endpoint host-prefix pattern."""
-
     greedy_label_names: frozenset[str]
     """Names of greedy labels in the URI path."""
 
     @classmethod
-    def from_traits(
-        cls,
-        http_trait: HTTPTrait,
-        endpoint_trait: EndpointTrait | None = None,
-    ) -> "HTTPOperationSchemaMetadata":
-        """Build operation metadata from already-resolved traits."""
+    def from_traits(cls, http_trait: HTTPTrait) -> "HTTPOperationSchemaMetadata":
+        """Build operation metadata from an already-resolved ``@http`` trait."""
         query = http_trait.query
         query_literal_names: frozenset[str] = (
             frozenset(unquote(entry.partition("=")[0]) for entry in query.split("&"))
@@ -284,9 +275,6 @@ class HTTPOperationSchemaMetadata:
             query=query,
             query_literal_names=query_literal_names,
             response_status=http_trait.code,
-            host_prefix=endpoint_trait.host_prefix
-            if endpoint_trait is not None
-            else "",
             greedy_label_names=frozenset(http_trait.path.greedy_labels),
         )
 
@@ -300,8 +288,6 @@ def _wire_name(member: Schema, binding: Binding) -> str | None:
         case Binding.PREFIX_HEADERS:
             return member.expect_trait(HTTPPrefixHeadersTrait).prefix
         case Binding.LABEL if HTTPLabelTrait in member:
-            return member.expect_member_name()
-        case Binding.HOST if HostLabelTrait in member:
             return member.expect_member_name()
         case _:
             return None
@@ -457,9 +443,7 @@ def _build_http_binding_schema_metadata(schema: Schema) -> HTTPBindingSchemaMeta
         members=member_metadata,
         request=HTTPRequestBindingMetadata(
             bindings=request_bindings,
-            body_members=tuple(
-                binding in (Binding.BODY, Binding.HOST) for binding in request_bindings
-            ),
+            body_members=tuple(binding is Binding.BODY for binding in request_bindings),
             has_body=request_matcher.has_body,
             payload=request_payload,
             event_stream_member=request_matcher.event_stream_member,
@@ -489,10 +473,7 @@ def _build_http_binding_schema_metadata(schema: Schema) -> HTTPBindingSchemaMeta
 def _build_http_operation_schema_metadata(
     schema: Schema,
 ) -> HTTPOperationSchemaMetadata:
-    return HTTPOperationSchemaMetadata.from_traits(
-        http_trait=schema.expect_trait(HTTPTrait),
-        endpoint_trait=schema.get_trait(EndpointTrait),
-    )
+    return HTTPOperationSchemaMetadata.from_traits(schema.expect_trait(HTTPTrait))
 
 
 HTTP_BINDING_SCHEMA_EXTENSION = SchemaExtension(_build_http_binding_schema_metadata)

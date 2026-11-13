@@ -13,8 +13,8 @@ from typing import (
 )
 
 from smithy_aws_core.auth.sigv4 import SigV4AuthScheme
-from smithy_aws_core.config import FileSystem
 from smithy_aws_core.config.aws_config import AwsConfig, AwsConfigOverrides
+from smithy_aws_core.config.filesystem import FileSystem
 from smithy_aws_core.config.resolvers import (
     EndpointUriResolver,
     resolve_use_dualstack_endpoint_program,
@@ -22,7 +22,10 @@ from smithy_aws_core.config.resolvers import (
 )
 from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
-from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+from smithy_aws_core.identity.components import (
+    AWSCredentialsIdentity,
+    AWSIdentityProperties,
+)
 from smithy_aws_core.protocols import Ec2QueryClientProtocol
 from smithy_core.endpoints import BddEndpointResolver
 from smithy_core.interfaces import (
@@ -161,6 +164,7 @@ class _EC2ProtocolConfigOverrides(AwsConfigOverrides, total=False):
     auth_scheme_resolver: AuthSchemeResolver | None
     use_dualstack_endpoint: bool | None
     use_fips_endpoint: bool | None
+    disable_host_prefix_injection: bool | None
 
 
 @dataclass(kw_only=True, repr=False, init=False)
@@ -230,6 +234,12 @@ class EC2ProtocolConfig(AwsConfig):
     header.
     """
 
+    disable_host_prefix_injection: bool | None = None
+    """
+    Whether to skip prepending operations' modeled host prefixes to the
+    endpoint host.
+    """
+
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
         "use_dualstack_endpoint": FieldSpec(
             default=None, resolver=resolve_use_dualstack_endpoint_program
@@ -244,6 +254,7 @@ class EC2ProtocolConfig(AwsConfig):
         "aws_session_token": FieldSpec(default=None),
         "user_agent_extra": FieldSpec(default=None),
         "sdk_ua_app_id": FieldSpec(default=None),
+        "disable_host_prefix_injection": FieldSpec(default=None),
         **AwsConfig._FIELDS,
         "endpoint_uri": FieldSpec(
             default=None, resolver=EndpointUriResolver("ec2_protocol").program

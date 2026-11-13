@@ -5,10 +5,12 @@ __all__ = (
     "AWSSDKWarning",
     "BaseAWSSDKException",
     "MissingExpectedParameterException",
+    "ResourceLifecycleError",
 )
 
 
-class AWSSDKWarning(UserWarning): ...
+class AWSSDKWarning(UserWarning):
+    """Base category for warnings the SDK emits."""
 
 
 class BaseAWSSDKException(Exception):
@@ -17,3 +19,7 @@ class BaseAWSSDKException(Exception):
 
 class MissingExpectedParameterException(BaseAWSSDKException, ValueError):
     """Some APIs require specific signing properties to be present."""
+
+
+class ResourceLifecycleError(BaseAWSSDKException, RuntimeError):
+    """A resource was used after it was closed or finalized."""

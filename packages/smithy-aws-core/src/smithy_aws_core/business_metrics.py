@@ -26,7 +26,7 @@ __all__ = [
     "register_feature_id",
 ]
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @unique
@@ -53,7 +53,10 @@ class AwsFeatureId(StrEnum):
     FLEXIBLE_CHECKSUMS_RES_WHEN_REQUIRED = "c"
     CREDENTIALS_CODE = "e"
     CREDENTIALS_ENV_VARS = "g"
+    CREDENTIALS_ENV_VARS_STS_WEB_ID_TOKEN = "h"  # noqa: S105
+    CREDENTIALS_STS_ASSUME_ROLE_WEB_ID = "k"
     CREDENTIALS_PROFILE = "n"
+    CREDENTIALS_PROFILE_STS_WEB_ID_TOKEN = "q"  # noqa: S105
     CREDENTIALS_PROFILE_PROCESS = "v"
     CREDENTIALS_PROCESS = "w"
     FLEXIBLE_CHECKSUMS_REQ_MD5 = "AE"
@@ -108,13 +111,6 @@ def add_feature_id(
         features[feature_id] = None
 
 
-def _is_feature_id(value: AwsFeatureId) -> bool:
-    if not isinstance(value, AwsFeatureId):  # pyright: ignore[reportUnnecessaryIsInstance]
-        logger.debug("Ignoring unknown feature ID: %r", value)
-        return False
-    return True
-
-
 def normalize_feature_ids(value: object) -> tuple[AwsFeatureId, ...]:
     """Turn a ``feature_ids`` value into a tuple of feature IDs.
 
@@ -157,3 +153,10 @@ def encode_feature_ids(feature_ids: Iterable[AwsFeatureId]) -> str:
             break
         encoded = candidate
     return encoded
+
+
+def _is_feature_id(value: AwsFeatureId) -> bool:
+    if not isinstance(value, AwsFeatureId):  # pyright: ignore[reportUnnecessaryIsInstance]
+        logger.debug("Ignoring unknown feature ID: %r", value)
+        return False
+    return True

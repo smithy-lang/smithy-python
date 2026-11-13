@@ -26,7 +26,7 @@ __all__ = [
     "validate_sdk_ua_app_id",
 ]
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 _SDK_UA_APP_ID_MAX_LENGTH = 50
 
@@ -55,7 +55,7 @@ def validate_region(value: object) -> None:
         )
 
 
-def validate_retry_mode(retry_mode: str):
+def validate_retry_mode(retry_mode: str) -> None:
     """Validate retry mode.
 
     Valid values: 'standard', 'adaptive'
@@ -82,7 +82,7 @@ def validate_retry_mode(retry_mode: str):
 
 def validate_max_attempts(
     max_attempts: object,
-):
+) -> None:
     """Validate max_attempts
 
     :param max_attempts: The max attempts value.
@@ -170,16 +170,6 @@ def validate_response_checksum_validation(value: object) -> None:
     )
 
 
-def _validate_choice(name: str, value: object, choices: object) -> None:
-    if value is None:
-        return
-    valid = get_args(choices)
-    if value not in valid:
-        raise ConfigValidationError(
-            f"Invalid value for {name!r}: {value!r}. Must be one of {valid}."
-        )
-
-
 def validate_account_id_endpoint_mode(value: object) -> None:
     """Validate the account ID endpoint mode.
 
@@ -192,4 +182,14 @@ def validate_account_id_endpoint_mode(value: object) -> None:
         raise ConfigValidationError(
             f"Invalid value for 'account_id_endpoint_mode': {value!r}. "
             f"Must be one of {_ACCOUNT_ID_ENDPOINT_MODES}."
+        )
+
+
+def _validate_choice(name: str, value: object, choices: object) -> None:
+    if value is None:
+        return
+    valid = get_args(choices)
+    if value not in valid:
+        raise ConfigValidationError(
+            f"Invalid value for {name!r}: {value!r}. Must be one of {valid}."
         )

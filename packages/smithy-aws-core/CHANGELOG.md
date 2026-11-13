@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.14.0
+
+### Features
+* Added support for the `aws.protocols#awsQueryCompatible` trait to `AwsJson10ClientProtocol`.
+* Request checksums of streaming payloads sent over HTTPS with a known length, such as S3 `PutObject` and `UploadPart` bodies, are now calculated while the payload is uploaded and sent in an `aws-chunked` trailer, so the payload is read only once. These requests use `Transfer-Encoding: chunked`, so custom HTTP clients must support chunked uploads. Async clients now also send checksums for asynchronous payloads, using the new `AsyncFlexibleChecksumsInterceptor` in `smithy_aws_core.aio.interceptors.checksums`. Exactly the declared content length is sent. A longer payload is cut off at that length, and a shorter one fails the request.
+* Streaming payloads with a known length sent over HTTP with SigV4, such as S3 `PutObject` bodies sent to an `http://` endpoint, are now signed chunk by chunk as they are uploaded, with the checksum in a signed `aws-chunked` trailer. The payload is read only once and is no longer buffered in memory to sign it, and a payload that can't be rewound now gets the default checksum instead of none. Anonymous requests over HTTP send the checksum in an unsigned trailer.
+
+### Enhancements
+* Made the EventSigner import alias in smithy_aws_core.aio.auth.sigv4 private.
+* Completed type annotations and __all__ declarations for the public API.
+* Added the `CREDENTIALS_ENV_VARS_STS_WEB_ID_TOKEN`, `CREDENTIALS_STS_ASSUME_ROLE_WEB_ID`, and `CREDENTIALS_PROFILE_STS_WEB_ID_TOKEN` feature IDs for tracking web identity credentials in the User-Agent header.
+* `AsyncSigV4AuthScheme.event_signer` now returns an `aws_sdk_signers.SigV4EventSigner`, the new name of `EventSigner`.
+* Imported symbols from their defining modules.
+
+### Bug fixes
+* Raised IdentityChainConfigurationError instead of RuntimeError for invalid identity chain setup. IdentityChainConfigurationError now also subclasses RuntimeError.
+* Iterating a `ChecksumStream`, such as a validated S3 `GetObject` body read with a `for` loop, now yields 64 KiB chunks instead of 1 KiB ones, which made these downloads about 4 times faster.
+* Sync clients now return a readable stream for streaming outputs whether or not the response checksum was validated, and `ChecksumStream` can be used in a `with` block.
+* Read the awscrt version for the User-Agent from package metadata instead of importing awscrt.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.10.0` to `~=0.11.0`.
+* Bump `smithy-http` from `~=0.7.0` to `~=0.8.0`.
+* Bump `aws-sdk-signers` from `~=0.5.0` to `~=0.6.0`.
+* Bump `smithy-aws-event-stream` from `~=0.4.0` to `~=0.5.0`.
+* Bump `smithy-json` from `~=0.4.0` to `~=0.5.0`.
+* Bump `smithy-xml` from `~=0.3.0` to `~=0.4.0`.
+
 ## v0.13.0
 
 ### Breaking Changes
@@ -32,11 +60,11 @@
 * `AWSCredentialsIdentity` no longer includes `secret_access_key` or `session_token` in its repr, which keeps them out of debug logs.
 
 ### Dependencies
-* Added a `checksums` extra that installs `smithy-checksums`.
+* Added a `checksums` extra that installs `smithy-aws-checksums`.
 * Bump `smithy-core` from `~=0.9.0` to `~=0.10.0`.
 * Bump `smithy-http` from `~=0.6.0` to `~=0.7.0`.
 * Bump `aws-sdk-signers` from `~=0.4.0` to `~=0.5.0`.
-* Bump `smithy-checksums` from `~=0.0.0` to `~=0.1.0`.
+* Bump `smithy-aws-checksums` from `~=0.0.0` to `~=0.1.0`.
 * Bump `smithy-aws-event-stream` from `~=0.3.0` to `~=0.4.0`.
 * Bump `smithy-json` from `~=0.3.0` to `~=0.4.0`.
 * Bump `smithy-xml` from `~=0.2.0` to `~=0.3.0`.

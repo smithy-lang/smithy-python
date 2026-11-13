@@ -3,19 +3,19 @@
 import re
 from typing import TYPE_CHECKING, Protocol
 
-from aws_sdk_signers import EventSigner, SigV4SigningProperties
-from aws_sdk_signers.aio import AsyncSigV4Signer
+from aws_sdk_signers import SigV4EventSigner, SigV4SigningProperties
+from aws_sdk_signers.aio.signers import AsyncSigV4Signer
 from smithy_core.aio.interfaces.auth import (
     AsyncAuthScheme,
     AsyncSigner,
 )
 from smithy_core.interfaces import TypedProperties as _TypedProperties
-from smithy_core.interfaces.auth import EventSigner as EventSignerProtocol
+from smithy_core.interfaces.auth import EventSigner
 from smithy_core.types import PropertyKey
 from smithy_http.interfaces import HTTPRequest
 
 from ...auth.sigv4 import _SigV4AuthSchemeBase  # pyright: ignore[reportPrivateUsage]
-from ...identity import AWSCredentialsIdentity, AWSIdentityProperties
+from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
 from ..identity import AsyncAWSCredentialsResolver
 
 if TYPE_CHECKING:
@@ -30,11 +30,14 @@ except ImportError:
 
 
 class AsyncSigV4Config(Protocol):
+    """Client config the SigV4 auth scheme reads its region and credentials resolver from."""
+
     region: str | None
     aws_credentials_identity_resolver: AsyncAWSCredentialsResolver | None
 
 
 SIGV4_CONFIG = PropertyKey(key="config", value_type=AsyncSigV4Config)
+"""Property key for the client config the SigV4 auth scheme reads."""
 
 type SigV4Signer = AsyncSigner[
     HTTPRequest, AWSCredentialsIdentity, SigV4SigningProperties
@@ -80,14 +83,14 @@ class AsyncSigV4AuthScheme(
 
     def event_signer(
         self, *, request: HTTPRequest
-    ) -> EventSignerProtocol[AWSCredentialsIdentity, SigV4SigningProperties] | None:
+    ) -> EventSigner[AWSCredentialsIdentity, SigV4SigningProperties] | None:
         if not HAS_EVENT_STREAM:
             return None
 
         auth_value = request.fields["Authorization"].as_string()
         signature: str = re.split("Signature=", auth_value)[-1]
 
-        return EventSigner(
+        return SigV4EventSigner(
             initial_signature=signature.encode("utf-8"),
             event_encoder_cls=EventHeaderEncoder,
         )

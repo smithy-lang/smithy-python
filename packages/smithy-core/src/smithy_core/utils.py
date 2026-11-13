@@ -33,8 +33,10 @@ __all__ = [
 ]
 
 RFC3339 = "%Y-%m-%dT%H:%M:%SZ"
+"""``strftime`` format for RFC 3339 timestamps in whole seconds."""
 # Same as RFC3339, but with microsecond precision.
 RFC3339_MICRO = "%Y-%m-%dT%H:%M:%S.%fZ"
+"""``strftime`` format for RFC 3339 timestamps with microseconds."""
 
 
 def ensure_utc(value: datetime) -> datetime:

@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 #  pyright: reportPrivateUsage=false
 from collections.abc import AsyncIterator
+from io import BytesIO
 from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -12,6 +13,8 @@ from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.aio.aiohttp import AIOHTTPClient, _AIOHTTPStreamingBody
 from smithy_http.exceptions import SmithyHTTPError
+
+from .._local_server import LocalHTTPServer, Reply
 
 
 def _create_client() -> tuple[AIOHTTPClient, MagicMock]:
@@ -83,6 +86,47 @@ async def test_send_preserves_explicitly_framed_empty_body() -> None:
 
     await client.send(request)
 
+    data = session.request.call_args.kwargs["data"]
+    assert data is not None
+    assert [chunk async for chunk in data] == []
+
+
+async def test_send_reads_bodies_in_large_chunks() -> None:
+    # AsyncBytesReader iterates in 1 KiB chunks by default, which made uploads
+    # about 25x slower than larger chunks.
+    client, session = _create_client()
+    size = 300 * 1024
+    request = HTTPRequest(
+        method="PUT",
+        destination=URI(scheme="https", host="example.com", path="/"),
+        body=BytesIO(b"x" * size),
+        fields=Fields([Field(name="content-length", values=[str(size)])]),
+    )
+
+    await client.send(request)
+
+    chunks = [chunk async for chunk in session.request.call_args.kwargs["data"]]
+    assert [len(chunk) for chunk in chunks] == [128 * 1024, 128 * 1024, 44 * 1024]
+
+
+async def test_send_passes_async_iterables_through() -> None:
+    # Re-chunking would hold back each item until a full chunk had arrived.
+    client, session = _create_client()
+
+    async def chunks() -> AsyncIterator[bytes]:
+        yield b"a" * 10
+        yield b"b" * 10
+
+    body = chunks()
+    request = HTTPRequest(
+        method="PUT",
+        destination=URI(scheme="https", host="example.com", path="/"),
+        body=body,
+        fields=Fields([Field(name="content-length", values=["20"])]),
+    )
+
+    await client.send(request)
+
     assert session.request.call_args.kwargs["data"] is body
 
 
@@ -92,6 +136,45 @@ async def test_send_disables_redirects() -> None:
     await client.send(_create_request())
 
     assert session.request.call_args.kwargs["allow_redirects"] is False
+
+
+async def test_trailer_fields_are_not_sent_as_headers() -> None:
+    client, session = _create_client()
+    request = _create_request()
+    request.fields.set_field(Field(name="x-amz-meta-a", values=["1"]))
+    request.fields.set_field(
+        Field(name="x-amz-checksum-crc32", values=["AAAAAA=="], kind="trailer")
+    )
+
+    await client.send(request)
+
+    assert session.request.call_args.kwargs["headers"] == [("x-amz-meta-a", "1")]
+
+
+async def test_chunked_transfer_encoding_is_requested_with_the_flag() -> None:
+    # aiohttp raises ValueError if the header is passed along with chunked=True,
+    # and only chunks a body when asked with the flag.
+    client, session = _create_client()
+    request = _create_request()
+    request.method = "PUT"
+    request.fields.set_field(Field(name="Transfer-Encoding", values=["chunked"]))
+    request.fields.set_field(Field(name="x-amz-meta-a", values=["1"]))
+
+    await client.send(request)
+
+    kwargs = session.request.call_args.kwargs
+    assert kwargs["chunked"] is True
+    assert kwargs["headers"] == [("x-amz-meta-a", "1")]
+
+
+async def test_requests_without_chunked_transfer_encoding_leave_framing_to_aiohttp() -> (
+    None
+):
+    client, session = _create_client()
+
+    await client.send(_create_request())
+
+    assert session.request.call_args.kwargs["chunked"] is None
 
 
 async def test_send_skips_automatic_content_type() -> None:
@@ -233,3 +316,24 @@ async def test_prepare_body_does_not_consume_nonseekable_body() -> None:
 
 def test_does_not_support_duplex_streaming() -> None:
     assert AIOHTTPClient.SUPPORTS_DUPLEX_STREAMING is False
+
+
+async def test_closing_a_read_body_keeps_its_connection() -> None:
+    # The client closes the bodies of failed attempts, which it has usually read
+    # already, so that close must leave the connection reusable.
+    with LocalHTTPServer() as server:
+        server.replies = [Reply(status=503, body=b"busy"), Reply(body=b"ok")]
+        request = HTTPRequest(
+            destination=URI(scheme="http", host="127.0.0.1", port=server.port),
+            method="GET",
+            fields=Fields(),
+        )
+        async with AIOHTTPClient() as client:
+            failed = await client.send(request)
+            assert await read_streaming_blob_async(failed.body) == b"busy"
+            await cast(Any, failed.body).close()
+
+            succeeded = await client.send(request)
+            assert await read_streaming_blob_async(succeeded.body) == b"ok"
+
+        assert server.ports[0] == server.ports[1]

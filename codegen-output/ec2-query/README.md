@@ -2,7 +2,7 @@
 
 ## Sample Ec2 Protocol Service Client
 
-ec2query client
+Python client for Sample Ec2 Protocol Service
 
 ### Documentation
 

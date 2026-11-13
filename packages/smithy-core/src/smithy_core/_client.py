@@ -5,7 +5,7 @@ from copy import deepcopy
 from typing import Any, ClassVar
 
 from .deserializers import DeserializeableShape
-from .exceptions import ExpectationNotMetError
+from .exceptions import ExpectationNotMetError, ResourceLifecycleError
 from .interceptors import InterceptorChain
 from .program import Program
 from .retries import RETRY_STRATEGY, RetryStrategyResolver
@@ -96,7 +96,7 @@ class ClientBase[C]:
 
     def _raise_if_closed(self) -> None:
         if self._closed:
-            raise RuntimeError(_CLOSED_MESSAGE)
+            raise ResourceLifecycleError(_CLOSED_MESSAGE)
 
     def _close(self) -> Program[None]:
         """Close the transport once; callers hold the setup lock."""

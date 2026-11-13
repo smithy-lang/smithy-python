@@ -49,6 +49,8 @@ def retry_operation(
         if isinstance(response, Exception):
             error = response
         else:
+            # TODO: Clients don't retry 5xx responses: the protocols mark unmodeled
+            # errors retry-safe only for 408 and 429. This sets it so 5xx retries.
             error = CallError(
                 fault="server" if response >= 500 else "client",
                 message=f"HTTP {response}",
@@ -221,6 +223,8 @@ class TestAdaptiveRetryPipeline:
         call.retryable.return_value = True
         call.retry_strategy = strategy
         call.retry_scope = None
+        # A MagicMock attribute would look like a token field name.
+        call.operation._idempotency_token_field = None
         return call
 
     def _request_context(self) -> RequestContext[Any, Any]:
