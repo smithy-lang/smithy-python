@@ -37,7 +37,7 @@ from ._model_naming import (
 from ._schema_compact import hydrate
 from .deserializers import ShapeDeserializer
 from .exceptions import ModeledError, SerializationError, SmithyError
-from .schemas import Schema, SchemaExtension
+from .schemas import APIOperation, Schema, SchemaExtension
 from .serializers import ShapeSerializer
 from .shapes import ShapeID, ShapeType
 from .traits import (
@@ -117,6 +117,7 @@ class ModelRegistry:
         # resolution unambiguous when service renames distinguish same-named shapes
         # from different namespaces.
         self._target_names = dict(target_names or {})
+        self._type_names: dict[ShapeID, str] | None = None
         self._renamed_schemas = {
             schema_name: model_name for model_name, schema_name in self._renames.items()
         }
@@ -195,6 +196,30 @@ class ModelRegistry:
             self._classes[canonical] = built
             self._classes[name] = built
             return built
+
+    def build_operation(
+        self,
+        schema_name: str,
+        error_ids: Sequence[str],
+        auth_scheme_ids: Sequence[str],
+    ) -> APIOperation[Any, Any]:
+        """Return an operation backed by a compact schema in the schemas module.
+
+        Input, output, and error types resolve through this registry's target
+        names, so renamed declarations are built by their generated names. No
+        schema is hydrated and no model class is built until first use.
+        """
+        if self._type_names is None:
+            self._type_names = {
+                ShapeID(shape_id): name for shape_id, name in self._target_names.items()
+            }
+        return APIOperation[Any, Any](
+            static_schema=getattr(self._schemas, schema_name),
+            model_registry=self,
+            error_ids=tuple(map(ShapeID, error_ids)),
+            effective_auth_schemes=tuple(map(ShapeID, auth_scheme_ids)),
+            type_names=self._type_names,
+        )
 
     def serialize_members(
         self, instance: Any, serializer: ShapeSerializer, schema: Schema

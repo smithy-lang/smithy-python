@@ -416,15 +416,24 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
     effective_auth_schemes: Sequence[ShapeID] = ()
     """A list of effective auth schemes for the operation."""
 
+    type_names: Mapping[ShapeID, str] = field(
+        default_factory=dict[ShapeID, str], repr=False
+    )
+    """Model names for input, output, and error shapes, keyed by shape ID.
+
+    Types are built by their shape ID name when absent. Generators supply names
+    for declarations they renamed, such as through a service ``rename``.
+    """
+
     @cached_property
     def input(self) -> type[I]:
         """The input type of the operation (built on first access)."""
-        return self.model_registry.build(self.input_schema.id.name)
+        return self._build(self.input_schema.id)
 
     @cached_property
     def output(self) -> type[O]:
         """The output type of the operation (built on first access)."""
-        return self.model_registry.build(self.output_schema.id.name)
+        return self._build(self.output_schema.id)
 
     @cached_property
     def error_registry(self) -> "TypeRegistry":
@@ -434,9 +443,8 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
         """
         from .documents import TypeRegistry
 
-        registry = self.model_registry
         return TypeRegistry(
-            {error_id: registry.build(error_id.name) for error_id in self.error_ids}
+            {error_id: self._build(error_id) for error_id in self.error_ids}
         )
 
     @cached_property
@@ -496,6 +504,9 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
         """Whether the service may hold the request open until information is
         available."""
         return self.schema.get_trait(LongPollTrait) is not None
+
+    def _build(self, shape_id: ShapeID) -> Any:
+        return self.model_registry.build(self.type_names.get(shape_id, shape_id.name))
 
     @cached_property
     def _idempotency_token_field(self) -> str | None:

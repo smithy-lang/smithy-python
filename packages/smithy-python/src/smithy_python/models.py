@@ -16,7 +16,7 @@ from . import model as _model
 from . import symbols as _symbols
 
 if TYPE_CHECKING:
-    from .generation import GenerationContext, ModelPlan, TypesSettings
+    from .generation import GenerationContext, ModelArtifactSettings, ModelPlan
     from .writer import PythonWriter
 
 __all__ = ["ModelGenerator"]
@@ -25,7 +25,7 @@ __all__ = ["ModelGenerator"]
 class ModelGenerator:
     """Emit lazy runtime models and the complete static model stub."""
 
-    def generate(self, context: GenerationContext[TypesSettings]) -> None:
+    def generate(self, context: GenerationContext[ModelArtifactSettings]) -> None:
         """Register ``models.py`` and ``models.pyi`` with the file manifest."""
         _validate_member_names(context)
         package = context.settings.package
@@ -72,6 +72,7 @@ def _core_reference(name: str, module: str) -> _symbols.TypeReference:
 
 
 _MODEL_REGISTRY: Final = _core_reference("ModelRegistry", "_dynamic_models")
+_API_OPERATION: Final = _core_reference("APIOperation", "schemas")
 _MODELED_ERROR: Final = _core_reference("ModeledError", "exceptions")
 _SHAPE_SERIALIZER: Final = _core_reference("ShapeSerializer", "serializers")
 _SHAPE_DESERIALIZER: Final = _core_reference("ShapeDeserializer", "deserializers")
@@ -147,6 +148,9 @@ def _write_runtime(writer: PythonWriter, plan: ModelPlan) -> None:
     writer.line()
     _write_mapping(writer, "_TARGET_NAMES", plan.target_names)
     writer.line()
+    if plan.operations:
+        _write_operations(writer, plan)
+        writer.line()
     additional = exports[len(plan.registry_index) + 1 :]
     if additional:
         writer.line(
@@ -159,7 +163,9 @@ def _write_runtime(writer: PythonWriter, plan: ModelPlan) -> None:
     writer.line(
         "__all__ = (",
         _quote(exports[0]),
-        ", *_MODEL_NAMES)  # pyright: ignore[reportUnsupportedDunderAll]",
+        ", *_MODEL_NAMES",
+        ", *_OPERATIONS" if plan.operations else "",
+        ")  # pyright: ignore[reportUnsupportedDunderAll]",
     )
     writer.line()
     writer.line()
@@ -177,6 +183,13 @@ def _write_runtime(writer: PythonWriter, plan: ModelPlan) -> None:
     writer.line()
     writer.line("def __getattr__(name: str):")
     with writer.indent():
+        if plan.operations:
+            writer.line("if (data := _OPERATIONS.get(name)) is not None:")
+            with writer.indent():
+                writer.line(
+                    "return globals().setdefault(",
+                    "name, _registry.build_operation(name, *data))",
+                )
         writer.line("value = _registry.build(name)")
         writer.line("globals()[name] = value")
         writer.line("return value")
@@ -187,11 +200,24 @@ def _write_runtime(writer: PythonWriter, plan: ModelPlan) -> None:
         writer.line("return sorted({*globals(), *__all__})")
 
 
+def _write_operations(writer: PythonWriter, plan: ModelPlan) -> None:
+    writer.line("_OPERATIONS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {")
+    with writer.indent():
+        for operation in plan.operations:
+            writer.line(_quote(operation.name), ": (")
+            with writer.indent():
+                for ids in (operation.error_ids, operation.auth_scheme_ids):
+                    values = ", ".join(_quote(str(shape_id)) for shape_id in ids)
+                    writer.line("(", values, "," if len(ids) == 1 else "", "),")
+            writer.line("),")
+    writer.line("}")
+
+
 class _StubEmitter:
     def __init__(
         self,
         writer: PythonWriter,
-        context: GenerationContext[TypesSettings],
+        context: GenerationContext[ModelArtifactSettings],
         *,
         external_bases: bool = False,
     ) -> None:
@@ -220,6 +246,7 @@ class _StubEmitter:
         self._write_preamble()
         self._write_shapes(self.plan.shapes)
         self._write_unit()
+        self._write_operations()
 
     def write_facade(self, partitions: tuple[tuple[_model.Shape, ...], ...]) -> None:
         """Write the public stub facade and re-export private declarations."""
@@ -235,6 +262,7 @@ class _StubEmitter:
             writer.line()
         self._write_preamble()
         self._write_unit()
+        self._write_operations()
 
     def write_partition(self, shapes: tuple[_model.Shape, ...]) -> None:
         """Write declarations assigned to one private stub partition."""
@@ -252,7 +280,9 @@ class _StubEmitter:
         writer = self.writer
         writer.line("__all__ = [")
         with writer.indent():
-            for name in sorted(_model_exports(self.plan)):
+            for name in sorted(
+                (*_model_exports(self.plan), *(o.name for o in self.plan.operations))
+            ):
                 writer.line(_quote(name), ",")
         writer.line("]")
         writer.line()
@@ -303,6 +333,24 @@ class _StubEmitter:
             writer.line("class Unit(", self.serde_shape, "):")
             with writer.indent():
                 writer.line("pass")
+
+    def _write_operations(self) -> None:
+        if self.plan.operations:
+            self.writer.line()
+        for operation in self.plan.operations:
+            self.writer.line(
+                operation.name,
+                ": ",
+                _symbols.TypeReference(
+                    _API_OPERATION.name,
+                    _API_OPERATION.module,
+                    arguments=(
+                        self._public_reference(operation.input_name),
+                        self._public_reference(operation.output_name),
+                    ),
+                    dependencies=_API_OPERATION.dependencies,
+                ),
+            )
 
     def _write_structure(self, shape: _model.Shape) -> None:
         writer = self.writer
@@ -555,7 +603,7 @@ def _is_event_stream_member(model: _model.Model, member: _model.MemberShape) -> 
     return target.type is _model.ShapeType.UNION and target.has_trait("streaming")
 
 
-def _validate_member_names(context: GenerationContext[TypesSettings]) -> None:
+def _validate_member_names(context: GenerationContext[ModelArtifactSettings]) -> None:
     reserved = _model_reserved_member_names(context.model)
     for shape in context.plan.models.shapes:
         names: set[str] = set()

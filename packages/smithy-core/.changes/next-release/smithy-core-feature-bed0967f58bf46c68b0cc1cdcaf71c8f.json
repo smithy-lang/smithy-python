@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `APIOperation.type_names`, which maps input, output, and error shape IDs to the model names an operation builds."
+}

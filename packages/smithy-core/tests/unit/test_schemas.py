@@ -490,3 +490,43 @@ def test_host_prefix_reads_generated_input_field(
         }
     )
     assert _expand_host_prefix(input, operation, TypedProperties()) == "data."
+
+
+def test_operation_builds_types_by_shape_id_name_by_default() -> None:
+    io: StaticSchema = (ShapeType.STRUCTURE.value, "com.example", "OperationIO", 0)
+    operation = APIOperation[Any, Any](
+        static_schema=(ShapeType.OPERATION.value, "com.example", "Op", 0, io, io, ()),
+        model_registry=_StubRegistry({"OperationIO": int, "Failure": str}),
+        error_ids=[ShapeID("com.example#Failure")],
+    )
+    assert operation.input is int
+    assert operation.output is int
+    assert operation.error_registry[ShapeID("com.example#Failure")] is str
+
+
+def test_operation_builds_renamed_types_by_shape_id() -> None:
+    inputs: StaticSchema = (ShapeType.STRUCTURE.value, "com.example", "Shared", 0)
+    output: StaticSchema = (ShapeType.STRUCTURE.value, "other.example", "Shared", 0)
+    error_id = ShapeID("com.example#Failure")
+    operation = APIOperation[Any, Any](
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "com.example",
+            "Op",
+            0,
+            inputs,
+            output,
+            (),
+        ),
+        model_registry=_StubRegistry(
+            {"Shared": int, "OtherShared": float, "ServiceFailure": str}
+        ),
+        error_ids=[error_id],
+        type_names={
+            ShapeID("other.example#Shared"): "OtherShared",
+            error_id: "ServiceFailure",
+        },
+    )
+    assert operation.input is int
+    assert operation.output is float
+    assert operation.error_registry[error_id] is str

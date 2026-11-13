@@ -22,7 +22,9 @@ __all__ = [
     "ClientSettings",
     "GenerationContext",
     "GenerationPlan",
+    "ModelArtifactSettings",
     "ModelPlan",
+    "OperationModel",
     "TypesSettings",
 ]
 
@@ -40,20 +42,30 @@ class ArtifactSettings:
 
 
 @dataclass(frozen=True, slots=True)
-class TypesSettings(ArtifactSettings):
+class ModelArtifactSettings(ArtifactSettings):
+    """Settings for artifacts that emit schemas and models."""
+
+    schema_partition_size: int | None = field(default=100, kw_only=True)
+    stub_partition_size: int | None = field(default=250, kw_only=True)
+
+    def __post_init__(self) -> None:
+        if any(
+            size is not None and size < 1
+            for size in (self.schema_partition_size, self.stub_partition_size)
+        ):
+            raise ValueError("Partition sizes must be positive")
+
+
+@dataclass(frozen=True, slots=True)
+class TypesSettings(ModelArtifactSettings):
     """Settings for a standalone types package."""
 
     selector: _selection.Selector = field(default_factory=_selection.Selector.identity)
     generate_inputs_and_outputs: bool = False
-    schema_partition_size: int | None = 100
-    stub_partition_size: int | None = 250
-
-    def __post_init__(self) -> None:
-        _validate_partition_sizes(self.schema_partition_size, self.stub_partition_size)
 
 
 @dataclass(frozen=True, slots=True)
-class ClientSettings(ArtifactSettings):
+class ClientSettings(ModelArtifactSettings):
     """Settings for a service client package.
 
     Protocol selection is interpreted by the client protocol contribution, not
@@ -61,13 +73,25 @@ class ClientSettings(ArtifactSettings):
     """
 
     protocol: _model.ShapeId | None = None
-    schema_partition_size: int | None = 100
-    stub_partition_size: int | None = 250
 
     def __post_init__(self) -> None:
-        _validate_partition_sizes(self.schema_partition_size, self.stub_partition_size)
+        ModelArtifactSettings.__post_init__(self)
         if self.protocol is not None and self.protocol.is_member:
             raise ValueError("A protocol must be a non-member shape ID")
+
+
+@dataclass(frozen=True, slots=True)
+class OperationModel:
+    """Data needed to construct one lazy ``APIOperation`` export.
+
+    ``name`` is both the exported constant and its compact schema constant.
+    """
+
+    name: str
+    input_name: str
+    output_name: str
+    error_ids: tuple[_model.ShapeId, ...]
+    auth_scheme_ids: tuple[_model.ShapeId, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,6 +107,7 @@ class ModelPlan:
     target_names: Mapping[str, str]
     shape_names: frozenset[str]
     includes_unit: bool
+    operations: tuple[OperationModel, ...] = ()
 
     @classmethod
     def from_shapes(
@@ -90,6 +115,7 @@ class ModelPlan:
         shapes: tuple[_model.Shape, ...],
         symbols: _symbols.SymbolProvider,
         schema_names: Mapping[_model.ShapeId, str],
+        operations: tuple[OperationModel, ...] = (),
     ) -> ModelPlan:
         """Plan declaration and union names in stable shape order."""
         model_shapes: list[_model.Shape] = []
@@ -139,6 +165,7 @@ class ModelPlan:
                 )
             ),
             includes_unit=includes_unit,
+            operations=operations,
         )
 
 
@@ -190,8 +217,3 @@ class ArtifactGenerator[SettingsT: ArtifactSettings](Protocol):
     def generate(self, context: GenerationContext[SettingsT]) -> None:
         """Register every generated file and dependency."""
         ...
-
-
-def _validate_partition_sizes(*sizes: int | None) -> None:
-    if any(size is not None and size < 1 for size in sizes):
-        raise ValueError("Partition sizes must be positive")
