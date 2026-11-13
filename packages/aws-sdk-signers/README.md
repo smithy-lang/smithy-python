@@ -12,11 +12,13 @@ the changelog carefully before upgrading.
 ## Getting Started
 
 Currently, the `aws-sdk-signers` module provides two high level signers,
-`AsyncSigV4Signer` and `SigV4Signer`.
+`SigV4Signer` at the package root and `AsyncSigV4Signer` in
+`aws_sdk_signers.aio.signers`. It also provides `SigV4ChunkSigner` and
+`SigV4EventSigner` for signing chunked payloads and event stream messages.
 
 Both of these signers takes three inputs to their primary `sign` method.
 
-* A [**SigV4SigningProperties**](https://github.com/smithy-lang/smithy-python/blob/3d205be8ece1c5f4c992a29ce9757c5562e59322/packages/aws-sdk-signers/src/aws_sdk_signers/signers.py#L43-L49) object defining:
+* A [**SigV4SigningProperties**](src/aws_sdk_signers/_sigv4.py#L46) object defining:
   * The service for the request,
   * The intended AWS region (e.g. us-west-2),
   * An optional date that will be auto-populated with the current time if not supplied,
@@ -25,7 +27,7 @@ Both of these signers takes three inputs to their primary `sign` method.
   * An optional boolean, uri_encode_path, to toggle double-encoding the URI path. True by default.
   * An optional boolean, normalize_path, to toggle removing dot segments from the URI path. True by default.
   * S3 requests should set content_checksum_enabled to True and both uri_encode_path and normalize_path to False.
-* An [**AWSRequest**](https://github.com/smithy-lang/smithy-python/blob/3d205be8ece1c5f4c992a29ce9757c5562e59322/packages/aws-sdk-signers/src/aws_sdk_signers/_http.py#L335), similar to the [AWSRequest object](https://github.com/boto/botocore/blob/7d197f9e1fe903ba3badee62a1ecac916ba2cfb5/botocore/awsrequest.py#L433) from boto3 or the [Request object](https://requests.readthedocs.io/en/latest/api/#requests.Request) from Requests.
+* An [**AWSRequest**](src/aws_sdk_signers/_http.py#L338), similar to the [AWSRequest object](https://github.com/boto/botocore/blob/7d197f9e1fe903ba3badee62a1ecac916ba2cfb5/botocore/awsrequest.py#L433) from boto3 or the [Request object](https://requests.readthedocs.io/en/latest/api/#requests.Request) from Requests.
 * An [**AWSCredentialIdentity**](https://github.com/smithy-lang/smithy-python/blob/3d205be8ece1c5f4c992a29ce9757c5562e59322/packages/aws-sdk-signers/src/aws_sdk_signers/_identity.py#L11), a dataclass holding standard AWS credential information.
 
 ## License

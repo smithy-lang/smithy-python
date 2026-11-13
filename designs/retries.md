@@ -31,7 +31,7 @@ class RetryStrategy(Protocol):
     max_attempts: int
     """Upper limit on total attempt count (initial attempt plus retries)."""
 
-    async def acquire_initial_retry_token(
+    def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
     ) -> RetryToken:
         """Called before any retries (for the first attempt at the operation).
@@ -44,7 +44,7 @@ class RetryStrategy(Protocol):
         """
         ...
 
-    async def refresh_retry_token_for_retry(
+    def refresh_retry_token_for_retry(
         self, *, token_to_renew: RetryToken, error: Exception
     ) -> RetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
@@ -55,7 +55,7 @@ class RetryStrategy(Protocol):
         """
         ...
 
-    async def record_success(self, *, token: RetryToken) -> None:
+    def record_success(self, *, token: RetryToken) -> None:
         """Return token after successful completion of an operation.
 
         :param token: The token used for the previous successful attempt.
@@ -133,8 +133,8 @@ default backoff strategy called `ExponentialRetryBackoffStrategy` is available
 that uses exponential backoff with configurable jitter.
 
 Having the backoff calculation be stateless and separate allows the
-`BackoffStrategy` to handle any extra context that may have wider scope. For
-example, a `BackoffStrategy` could use a token bucket to limit retries
+`RetryStrategy` to handle any extra context that may have wider scope. For
+example, `StandardRetryStrategy` uses a token bucket to limit retries
 client-wide so that the client can limit the amount of load it is placing on the
 server. Decoupling this logic from the straightforward math of delay computation
 allows both components to be evolved separately.
@@ -145,11 +145,11 @@ A request using a `RetryStrategy` would look something like the following
 example:
 
 ```python
-try:
-    retry_token = await retry_strategy.acquire_initial_retry_token()
-except RetryError:
+if not retryable:
     transport_response = await transport_client.send(serialized_request)
     return await self._deserialize(transport_response)
+
+retry_token = retry_strategy.acquire_initial_retry_token()
 
 while True:
     await asyncio.sleep(retry_token.retry_delay)
@@ -161,14 +161,14 @@ while True:
 
     if isinstance(response, Exception):
         try:
-            retry_token = await retry_strategy.refresh_retry_token_for_retry(
+            retry_token = retry_strategy.refresh_retry_token_for_retry(
                 token_to_renew=retry_token,
-                error=e
+                error=response
             )
             continue
-        except RetryError as retry_error:
-            raise retry_error from e
+        except RetryError:
+            raise response
 
-    await retry_strategy.record_success(token=retry_token)
+    retry_strategy.record_success(token=retry_token)
     return response
 ```

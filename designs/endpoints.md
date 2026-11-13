@@ -14,15 +14,12 @@ boto3, which evaluates rule-set trees, takes 131 µs.
 
 ## Motivation
 
-Today, generated AWS clients use `AsyncStandardRegionalEndpointsResolver`, which
-builds `<prefix>.<region>.amazonaws.com` and ignores the service's rules. That
-host is wrong in partitions with other DNS suffixes, such as China and the ISO
-Regions. Clients also can't bind some parameters the rules need yet: the config
-has no FIPS or dual-stack fields, and the identity's account ID, which
-DynamoDB's account-based endpoints read, resolves after the endpoint. Generic
-clients default to `StaticEndpointResolver`, which only forwards
-`endpoint_uri`. Code generation already embeds the raw `endpointBdd` trait in
-every service schema, but nothing reads it yet.
+A fixed regional endpoint, `<prefix>.<region>.amazonaws.com`, ignores the
+service's rules. That host is wrong in partitions with other DNS suffixes, such
+as China and the ISO Regions. The rules also read parameters that a fixed
+endpoint doesn't need: FIPS and dual-stack settings from the config, and the
+identity's account ID, which DynamoDB's account-based endpoints read, so the
+identity has to resolve before the endpoint.
 
 Endpoint rules are the only complete description of a service's endpoints, and
 every AWS model has them. Resolution runs on every attempt, and a workload that
@@ -148,12 +145,11 @@ flowchart LR
     config -- "constructs" --> resolver
     bdd -. "passed to" .-> resolver
     extension -. "passed to" .-> resolver
-    resolver -- "delegates to" --> sync_resolver
-    sync_resolver --> binding & engine
+    resolver --> binding & engine
 
     classDef new stroke:#34a853,stroke-width:3px
     classDef removed stroke:#ea4335,stroke-width:3px,stroke-dasharray:5 5
-    class generator,bdd,resolver,sync_resolver,binding,engine,extension new
+    class generator,bdd,resolver,binding,engine,extension new
     class raw removed
 ```
 
@@ -182,10 +178,10 @@ These are the new public names. Everything else is private:
 | `AWS_RULES_EXTENSION`                                                            | `smithy_aws_core.endpoints`                       | The AWS rules functions, built-ins, and partition data                                        |
 
 Resolution never awaits, so the engine, `ParamPlan`, and the rules libraries are
-sync code under `smithy_core.endpoints` and `smithy_aws_core.endpoints`. This
-design defines the sync `EndpointResolver` protocol in `smithy_core.interfaces`,
-which is a placeholder today. `BddEndpointResolver` implements it and holds the
-resolution logic, and sync and async clients both call it.
+sync code under `smithy_core.endpoints` and `smithy_aws_core.endpoints`.
+`BddEndpointResolver` implements the sync `EndpointResolver` protocol in
+`smithy_core.interfaces` and holds the resolution logic, and sync and async
+clients both call it.
 
 ### What a Generated Client Gets
 
@@ -390,7 +386,7 @@ The AWS extension binds these built-ins:
 | `AWS::Region`                                               | `region`                                                                   |
 | `AWS::UseFIPS`                                              | `use_fips_endpoint`                                                        |
 | `AWS::UseDualStack`                                         | `use_dualstack_endpoint`                                                   |
-| `AWS::Auth::AccountIdEndpointMode`                          | `account_id_endpoint_mode`                                                 |
+| `AWS::Auth::AccountIdEndpointMode`                          | `account_id_endpoint_mode`, or `disabled` for no auth scheme or `noAuth`   |
 | `AWS::Auth::AccountId`                                      | `account_id` of the identity under `RESOLVED_IDENTITY`                     |
 | Other `AWS::S3::*` and `AWS::S3Control::*`                  | not bound: each is also a client context parameter, so it reads that field |
 | `AWS::S3::UseGlobalEndpoint`, `AWS::STS::UseGlobalEndpoint` | not bound                                                                  |
@@ -499,16 +495,22 @@ type EndpointAuthSchemeFactory = Callable[[Mapping[str, Any]], EndpointAuthSchem
 
 @dataclass(frozen=True, slots=True)
 class RulesExtension:
-    functions: Mapping[str, Callable[..., Any]]
+    functions: Mapping[str, Callable[..., Any]] = field(
+        default_factory=dict[str, Callable[..., Any]]
+    )
     """Rules functions by rules-language name. Their result must depend only on their
     arguments, with no side effects, because resolved endpoints are cached by
     parameter values. Given None for an unset value, they return None."""
 
-    builtins: Mapping[str, BuiltinBinding]
+    builtins: Mapping[str, BuiltinBinding] = field(
+        default_factory=dict[str, BuiltinBinding]
+    )
     """Built-in IDs mapped to a config attribute name, or to a getter that receives
     the config and the call context."""
 
-    auth_schemes: Mapping[str, EndpointAuthSchemeFactory]
+    auth_schemes: Mapping[str, EndpointAuthSchemeFactory] = field(
+        default_factory=dict[str, EndpointAuthSchemeFactory]
+    )
     """Auth scheme names, as endpoint rules write them in ``authSchemes``, mapped to
     factories that build the endpoint's auth scheme from the rules' entry."""
 ```
@@ -572,20 +574,9 @@ fields are set in code only.
 
 ### Request Pipeline
 
-The shared request pipeline now resolves the auth scheme and the identity
-before the endpoint. Green marks the steps that move. Today, they resolve after
-the endpoint, just before signing:
-
-```mermaid
-flowchart LR
-    b1["read_before_attempt"] --> b2["Resolve endpoint"] --> b3["set_service_endpoint"] --> b4["Signing hooks"] --> b5["Resolve auth scheme"] --> b6["Resolve identity"] --> b7["Sign"]
-
-    classDef moved stroke:#34a853,stroke-width:3px
-    class b5,b6 moved
-```
-
-With this design, they resolve first, so the endpoint rules can read the
-identity:
+The shared request pipeline resolves the auth scheme and the identity before
+the endpoint, so the endpoint rules can read the identity. Green marks those
+steps:
 
 ```mermaid
 flowchart LR

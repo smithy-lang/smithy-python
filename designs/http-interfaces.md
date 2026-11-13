@@ -22,8 +22,8 @@ Requests and responses are represented by minimal, async-compatible interfaces.
 Since Smithy clients are expected to be capable of using non-HTTP transport protocols,
 such as MQTT, any HTTP-specific properties will exist in their own sub-interfaces.
 
-Request bodies are defined as an `AsyncIterable[bytes]` instead of some file-like
-object. This allows flexibility both within protocols and specific transfer settings
+Request bodies are defined as an `AnyStreamingBlob`, which accepts `bytes`,
+`bytearray`, sync or async readers, and `AsyncIterable[bytes]`. This allows flexibility both within protocols and specific transfer settings
 to defer message framing to a lower layer. There are mechanisms within protocols, such
 as HTTP’s `Content-Encoding`, which enable application-specific content framing within
 a message.
@@ -33,10 +33,10 @@ class Request(Protocol):
     """Protocol-agnostic representation of a request."""
 
     destination: URI
-    body: AsyncIterable[bytes]
+    body: AnyStreamingBlob = b""
 
-    async def consume_body(self) -> bytes:
-        """Iterate over request body and return as bytes."""
+    def consume_body(self) -> bytes:
+        """Read the request body into bytes."""
         ...
 
 
@@ -44,12 +44,12 @@ class Response(Protocol):
     """Protocol-agnostic representation of a response."""
 
     @property
-    def body(self) -> AsyncIterable[bytes]:
-        """The response payload as iterable of chunks of bytes."""
+    def body(self) -> AnyStreamingBlob:
+        """The response payload."""
         ...
 
-    async def consume_body(self) -> bytes:
-        """Iterate over response body and return as bytes."""
+    def consume_body(self) -> bytes:
+        """Read the response body into bytes."""
         ...
 
 
@@ -148,25 +148,16 @@ for a given key. Built-in joining methods are included to support HTTP client
 implementations that only understand headers as a simple map.
 
 ```python
-class FieldPosition(Enum):
-    """The type of a field.
+FieldPosition = Literal["header", "trailer"]
+"""The type of a field.
 
-    Defines its placement in a request or response.
-    """
+Defines its placement in a request or response.
 
-    HEADER = 0
-    """Header field.
+header: Header field. In HTTP this is a header as defined in RFC 9110 Section 6.3.
+trailer: Trailer field. In HTTP this is a trailer as defined in RFC 9110 Section 6.5.
 
-    In HTTP this is a header as defined in RFC 9110 Section 6.3. Implementations of
-    other protocols may use this FieldPosition for similar types of metadata.
-    """
-
-    TRAILER = 1
-    """Trailer field.
-
-    In HTTP this is a trailer as defined in RFC 9110 Section 6.5. Implementations of
-    other protocols may use this FieldPosition for similar types of metadata.
-    """
+Implementations of other protocols may use this FieldPosition for similar types of metadata.
+"""
 
 
 class Field(Protocol):
@@ -182,7 +173,7 @@ class Field(Protocol):
 
     name: str
     values: list[str]
-    kind: FieldPosition = FieldPosition.HEADER
+    kind: FieldPosition = "header"
 
     def add(self, value: str) -> None:
         """Append a value to a field."""
@@ -196,7 +187,7 @@ class Field(Protocol):
         """Remove all matching entries from list."""
         ...
 
-    def as_string(self) -> str:
+    def as_string(self, delimiter: str = ",") -> str:
         """Serialize the ``Field``'s values into a single line string."""
         ...
 
@@ -211,8 +202,8 @@ class Fields(Protocol):
     fields."""
 
     # Entries are keyed off the name of a provided Field
-    entries: OrderedDict[str, Field]
-    encoding: str | None = "utf-8"
+    entries: dict[str, Field]
+    encoding: str = "utf-8"
 
     def set_field(self, field: Field) -> None:
         """Alias for __setitem__ to utilize the field.name for the entry key."""
@@ -249,17 +240,27 @@ class Fields(Protocol):
     def __iter__(self) -> Iterator[Field]:
         """Allow iteration over entries."""
         ...
+
+    def __len__(self) -> int:
+        """Get total number of Field entries."""
+        ...
+
+    def __contains__(self, key: str) -> bool:
+        """Allows in/not in checks on Field entries."""
+        ...
 ```
 
 ## HTTP client interface
 
 HTTP clients are represented by a simple interface that defines a single `send` method,
-which takes a request and some configuration and asynchronously return a response.
+which takes a request and some configuration and returns a response. The sync
+`HTTPClient` lives in `smithy_http.interfaces` and the async `AsyncHTTPClient` in
+`smithy_http.aio.interfaces`.
 Having a minimal interface makes it much easier to implement these interfaces on top of
 a variety http libraries.
 
 Clients that support duplex (bidirectional) event streaming, which in practice
-requires HTTP/2, implement the `DuplexClientTransport` protocol by setting the
+requires HTTP/2, implement the `AsyncDuplexClientTransport` protocol by setting the
 `SUPPORTS_DUPLEX_STREAMING` class attribute to `True`. Clients are assumed not to
 support it otherwise, and duplex stream operations invoked with such a client fail
 fast with an `UnsupportedTransportError`. This prevents clients that cannot support
@@ -280,10 +281,17 @@ class HTTPRequestConfiguration:
 
 
 class HTTPClient(Protocol):
-    """An asynchronous HTTP client interface."""
+    """A synchronous HTTP client interface."""
 
-    async def send(
-        self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
+
+    def __init__(self, *, client_config: HTTPClientConfiguration | None) -> None: ...
+
+    def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
     ) -> HTTPResponse:
         """Send HTTP request over the wire and return the response.
 
@@ -291,6 +299,19 @@ class HTTPClient(Protocol):
         :param request_config: Configuration specific to this request.
         """
         ...
+
+
+class AsyncHTTPClient(AsyncClientTransport[HTTPRequest, HTTPResponse], Protocol):
+    """An asynchronous HTTP client interface."""
+
+    def __init__(self, *, client_config: HTTPClientConfiguration | None) -> None: ...
+
+    async def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> HTTPResponse: ...
 ```
 
 # FAQs

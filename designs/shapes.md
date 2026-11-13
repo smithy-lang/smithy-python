@@ -10,7 +10,7 @@ are generated into python types and type hints from a Smithy model.
 
 | Shape Type | Python Type |
 |------------|-------------|
-| blob | Union[bytes, bytearray] |
+| blob | bytes |
 | boolean | bool |
 | string | str |
 | byte | int |
@@ -22,14 +22,14 @@ are generated into python types and type hints from a Smithy model.
 | bigInteger | int |
 | bigDecimal | decimal.Decimal |
 | timestamp | datetime.datetime |
-| document | Document = dict[str, 'Document'] | list['Document'] | str | int | float | bool | None |
+| document | smithy_core.documents.Document |
 
 ## Trait-influenced shapes
 
 ### enum
 
 ```python
-class StringEnum(StrEnum):
+class StringEnum(UnknownEnumMixin, StrEnum):
     SPAM = "spam"
     EGGS = "eggs"
     SPAM_EGGS = "spam:eggs"
@@ -42,6 +42,8 @@ To enable dot-completion support and programmatic understanding of known
 values, a `StrEnum` will also be provided. Since `StrEnum` inherits from `str`,
 customers will be able to directly pass values from the enum class without
 issue. Documentation will reference the generated class for discoverability.
+`UnknownEnumMixin` turns an unrecognized value into a pseudo-member flagged by
+`is_unknown` instead of raising.
 
 The generated class cannot be part of the type signature as a `Union` because
 that would harm forwards compatibility. While each value inherits from the base
@@ -99,7 +101,7 @@ appear in every referencing structure.
 ### intEnums
 
 ```python
-class MyIntEnum(IntEnum):
+class MyIntEnum(UnknownEnumMixin, IntEnum):
     SPAM = 1
     EGGS = 2
 ```
@@ -113,45 +115,41 @@ values, an `IntEnum` will also be provided. Since `IntEnum` inherits from
 without issue. Documentation will reference the generated class for
 discoverability.
 
-This is essentially identical to the solution for string enums. The generated
-accessor alternative, however, is not possible for int enums since there is no
-suitable placeholder value for the unknown variant.
+This is essentially identical to the solution for string enums, including the
+handling of unknown values.
 
 ### streaming blobs
 
 A blob with the streaming trait will continue to support `bytes` as input.
-Additionally, it will support passing in a `ByteStream` which is any class that
+Additionally, it will support passing in a `BytesReader` which is any class that
 implements a `read` method that accepts a `size` param and returns bytes.
-It will also accept an async variant of that same type or an `AsyncIterable`.
+It will also accept an `AwaitableBytesReader`, whose `read` returns an
+awaitable, or an `AsyncIterable[bytes]`.
 
-Both `ByteStream` and `AsyncByteStream` will be implemented as [Protocols
+Both `BytesReader` and `AwaitableBytesReader` will be implemented as [Protocols
 ](https://www.python.org/dev/peps/pep-0544/), which are a way of defining
 structural subtyping in Python.
 
 ```python
 @runtime_checkable
-class ByteStream(Protocol):
-    def read(self, size: int = -1) -> bytes:
+class BytesReader(Protocol):
+    def read(self, size: int = -1, /) -> bytes:
         ...
 
 
 @runtime_checkable
-class AsyncByteStream(Protocol):
-    async def read(self, size: int = -1) -> bytes:
+class AwaitableBytesReader(Protocol):
+    def read(self, size: int = -1) -> Awaitable[bytes]:
         ...
 
 
-StreamingBlob = Union[
-    ByteStream,
-    AsyncByteStream,
-    bytes,
-    bytearray,
-    AsyncIterable,
-]
+type StreamingBlob = (
+    BytesReader | bytes | bytearray | AwaitableBytesReader | AsyncIterable[bytes]
+)
 ```
 
 The type signature of members targeting blobs with the streaming trait will be
-the union `StreamingBlob`.
+`smithy_core.aio.interfaces.StreamingBlob`.
 
 ### mediaType
 
@@ -189,8 +187,8 @@ class JsonBlob(bytes):
         return json_string
 ```
 
-A member with a json media type could then accept any json-compatible type in
-addition to their base types. Deserializers would always deserialize into a
+A member with a json media type is typed `str | JsonString` or
+`bytes | JsonBlob`. Deserializers would always deserialize into a
 `JsonString` or `JsonBlob` to ensure that the parsing is lazy and that adding
 the mediaType trait is backwards-compatible.
 
@@ -207,7 +205,6 @@ client.send_json(json=json.dumps(my_json.encode(encoding="utf-8")))
 returned_json = json.loads(client.get_json().decode(encoding="utf-8"))
 
 # With JsonBlob. All of the above are also possible.
-client.send_json(json=my_json)
 client.send_json(json=JsonBlob.from_json(my_json))
 returned_json = client.get_json().as_json()
 ```
@@ -219,9 +216,8 @@ demand. Additionally, more can be be added with plugins to the code generators.
 
 | Shape Type | Python Type | Type Hint |
 |------------|-------------|-----------|
-| list | list | List[str] |
-| set | set | Set[str] |
-| map | dict | Mapping[str, str] |
+| list | list | list[str] |
+| map | dict | dict[str, str] |
 
 ## Structures
 
@@ -314,81 +310,60 @@ will have to explitictly do so.
 
 ## Errors
 
-Modeled errors are specialized structures that have a `code` and `message`.
+Modeled errors are specialized structures that have a `fault` and `message`.
 
 ```python
-# Defined in a shared library, used for all common errors in generic library
-# code.
+# Defined in smithy_core.exceptions, used for all common errors in generic
+# library code.
 class SmithyError(Exception):
     pass
 
 
-# This is just an example of a direct implementation of a SmithyError. This
-# would also be defined in generic library code.
-class HttpClientError(SmithyError):
-    def __init__(
-        self,
-        error: Exception,
-        request: Optional[HttpRequest] = None,
-        response: Optional[HttpResponse] = None
-    ):
-        super().__init__(
-            f"An HTTP client raised an unhaneled exception: {error}")
-        self.request = request
-        self.response = response
-        self.error = error
-
-
-# Generated per service and used for all service-specific errors. This would
-# be the base error for customizations, for instance.
-class ServiceError(SmithyError):
+# Defined in smithy_http.exceptions, the base for errors raised in HTTP
+# clients.
+class SmithyHTTPError(SmithyError):
     pass
 
 
-# Generated per service and used for all modeled errors.
-@dataclass
-class ApiError(ServiceError):
-    code: ClassVar[str]
-    fault: ClassVar[Literal["client", "server"]]
+# Defined in smithy_core.exceptions, the base for application-level errors.
+@dataclass(kw_only=True)
+class CallError(SmithyError):
+    fault: Fault = None
+    message: str = field(default="", kw_only=False)
 
-    message: str
-
-    def __post_init__(self):
-        # This has to be done in post_init because dataclass won't
-        # call it otherwise. A custom __init__ would get squashed
-        # by subclasses.
+    def __post_init__(self) -> None:
         super().__init__(self.message)
 
 
+# Defined in smithy_core.exceptions, the base for modeled errors.
 @dataclass(kw_only=True)
-class ModeledException(ApiException):
-    code: Literal["ModeledException"] = "ModeledException"
-    fault: ClassVar[Literal["client"]] = "client"
-
-    modeled_member: List[str]
+class ModeledError(CallError):
+    fault: Fault = "client"
 
 
-@dataclass
-class UnknownException(ApiException):
-    code: ClassVar[Literal["Unknown"]] = "Unknown"
-    fault: ClassVar[Literal["client"]] = "client"
+# Generated per service and used for all modeled errors of the service.
+class ServiceError(ModeledError):
+    pass
+
+
+@dataclass(kw_only=True)
+class ModeledException(ServiceError):
+    modeled_member: list[str]
+    fault: str | None = "client"
 ```
 
 All errors will inherit from a base `SmithyError` class. This will allow
 customers to catch nearly any exception generated by client if they so choose.
 This class will be hand written inside a shared library.
 
-Each generated service will have two static errors generated: `ServiceError`
-and `ApiError`. `ServiceError` will be inherited by every error specific to the
-service, including errors raised in service-specific customizations. `ApiError`
-will be inherited by all modeled errors.
+Each generated service will have one static error generated: `ServiceError`,
+which subclasses `ModeledError`. `ServiceError` will be inherited by all
+modeled errors of the service.
 
 Modeled errors will differ from normal structures in three respects:
 
-* They will inherit from `ApiError`.
-* They will have a static `code` property generated, which will default to the
-  name of the error shape.
-* They will have a static `fault` property generated based on the error trait.
+* They will inherit from `ServiceError`.
+* They will have a `fault` field whose default is based on the error trait.
 * They will have a consistent `message` property, which will replace any member
   with a name case-insensitively matching `message`, `error_message`, or
   `errormessage`.
@@ -451,14 +426,12 @@ class SampleStruct:
     union_member: MyUnion
 ```
 
-This allows for exhaustiveness checks since all variants are known ahead of time,
-and as of python 3.10+ it also allows isinstance checks as if inheritance were
-being used.
+This allows for exhaustiveness checks since all variants are known ahead of time.
+The `Union` alias exists only in the generated `.pyi` stub. At runtime `MyUnion`
+is an empty marker class, so isinstance checks have to use the variant classes.
 
 ```python
 def handle_with_instance(my_union: Any):
-    if not isinstance(my_union, MyUnion):
-        return
     if isinstance(my_union, MyUnionMemberA):
         print(value.decode(encoding="utf-8"))
     elif isinstance(my_union, MyUnionMemberB):
@@ -550,7 +523,7 @@ except ImportError:
   them to not deal with the fact that the unknown variant exits.
 
 The only advantage this has over using native unions is the ability to use
-isinstance checks on versions prior to 3.10.
+isinstance checks against the parent class.
 
 # FAQs
 
