@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 # pyright: reportPrivateUsage=false
-"""Generate standalone types snapshots from checked-in Smithy JSON ASTs."""
+"""Generate types and client snapshots from checked-in Smithy JSON ASTs."""
 
 import argparse
 import hashlib
@@ -17,6 +17,11 @@ from smithy_python.cli import main as generate
 _ROOT = Path(__file__).resolve().parents[2]
 _INPUTS = Path(__file__).parent
 _OUTPUT = _ROOT / "codegen-output-py"
+# Each artifact, its projection inputs, and its extra command options.
+_ARTIFACTS = (
+    ("types", "projections.json", ("--include-operation-io",)),
+    ("client", "client-projections.json", ()),
+)
 
 
 def main() -> None:
@@ -30,30 +35,31 @@ def main() -> None:
     # A fresh tree also detects removed projections and obsolete partitions.
     with TemporaryDirectory(prefix="smithy-python-snapshots-") as temporary:
         staged = Path(temporary)
-        projections = json.loads((_INPUTS / "projections.json").read_text())
-        for name, settings in sorted(projections.items()):
-            result = generate(
-                (
-                    "generate",
-                    "types",
-                    "--model",
-                    str(_INPUTS / settings["model"]),
-                    "--output",
-                    str(staged / name),
-                    "--service",
-                    settings["service"],
-                    "--package",
-                    settings["package"],
-                    "--package-version",
-                    settings["version"],
-                    "--package-description",
-                    settings["description"],
-                    "--include-operation-io",
-                ),
-                environ={},
-            )
-            if result:
-                raise SystemExit(result)
+        for artifact, inputs, options in _ARTIFACTS:
+            projections = json.loads((_INPUTS / inputs).read_text())
+            for name, settings in sorted(projections.items()):
+                result = generate(
+                    (
+                        "generate",
+                        artifact,
+                        "--model",
+                        str(_INPUTS / settings["model"]),
+                        "--output",
+                        str(staged / name),
+                        "--service",
+                        settings["service"],
+                        "--package",
+                        settings["package"],
+                        "--package-version",
+                        settings["version"],
+                        "--package-description",
+                        settings["description"],
+                        *options,
+                    ),
+                    environ={},
+                )
+                if result:
+                    raise SystemExit(result)
         _format_output(staged)
         expected = _files(staged)
         actual = _files(args.output)
