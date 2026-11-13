@@ -91,7 +91,13 @@ public record PythonTypeCodegenSettings(
      * @return Returns the extracted settings.
      */
     public static PythonTypeCodegenSettings fromNode(ObjectNode config) {
-        config.warnIfAdditionalProperties(Arrays.asList(SERVICE, MODULE_NAME, MODULE_DESCRIPTION, MODULE_VERSION));
+        config.warnIfAdditionalProperties(Arrays.asList(
+                SERVICE,
+                MODULE_NAME,
+                MODULE_DESCRIPTION,
+                MODULE_VERSION,
+                SELECTOR,
+                GENERATE_INPUTS_AND_OUTPUTS));
 
         String moduleName = config.expectStringMember(MODULE_NAME).getValue();
         Builder builder = builder()

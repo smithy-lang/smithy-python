@@ -40,6 +40,13 @@ import software.amazon.smithy.python.codegen.writer.PythonDelegator;
 
 final class DirectedPythonTypeCodegen
         implements DirectedCodegen<GenerationContext, PythonSettings, PythonIntegration> {
+
+    private final boolean generateInputsAndOutputs;
+
+    DirectedPythonTypeCodegen(boolean generateInputsAndOutputs) {
+        this.generateInputsAndOutputs = generateInputsAndOutputs;
+    }
+
     @Override
     public SymbolProvider createSymbolProvider(CreateSymbolProviderDirective<PythonSettings> directive) {
         return new PythonSymbolProvider(directive.model(), directive.settings());
@@ -79,7 +86,7 @@ final class DirectedPythonTypeCodegen
 
     @Override
     public void generateStructure(GenerateStructureDirective<GenerationContext, PythonSettings> directive) {
-        // If we're only generating data shapes, there's no need to generate input or output shapes.
+        // Types-only codegen skips input and output shapes unless generateInputsAndOutputs is set.
         if (!shouldGenerateStructure(directive.settings(), directive.shape())) {
             return;
         }
@@ -98,8 +105,9 @@ final class DirectedPythonTypeCodegen
         if (shape.getId().getNamespace().equals("smithy.synthetic")) {
             return false;
         }
-        return !(settings.artifactType().equals(PythonSettings.ArtifactType.TYPES)
-                && (shape.hasTrait(InputTrait.class) || shape.hasTrait(OutputTrait.class)));
+        return generateInputsAndOutputs
+                || !(settings.artifactType().equals(PythonSettings.ArtifactType.TYPES)
+                        && (shape.hasTrait(InputTrait.class) || shape.hasTrait(OutputTrait.class)));
     }
 
     @Override
