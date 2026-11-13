@@ -30,7 +30,7 @@ from smithy_http.aio.crt import AWSCRTHTTPClient
 from smithy_http.aio.protocols import AsyncRpcV2JsonClientProtocol
 from smithy_json import JSONCodec
 
-from ._simon_says import GameProtocol, play_simon_says
+from ._simon_says import REQUEST_FORMS, GameProtocol, RequestForm, play_simon_says
 
 # codec=None: the referee encodes and decodes event payloads with the client's own
 # protocol payload codec, so it cannot drift from what the client puts on the wire.
@@ -62,5 +62,6 @@ async def test_client_uses_rpcv2json_codec() -> None:
         await transport.close()
 
 
-async def test_simon_says_duplex() -> None:
-    await play_simon_says(_RPCV2_JSON)
+@pytest.mark.parametrize("request_form", REQUEST_FORMS)
+async def test_simon_says_duplex(request_form: RequestForm) -> None:
+    await play_simon_says(_RPCV2_JSON, request_form)

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Self, Union
+from typing import Self, TypedDict, Union
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
@@ -132,6 +132,11 @@ class TradeEventStreamInput(_SerdeShape):
     """Dataclass for TradeEventStreamInput structure."""
 
     session_id: str | None = ...
+
+class TradeEventStreamInputDict(TypedDict, total=False):
+    """Dictionary form of `TradeEventStreamInput`."""
+
+    session_id: str | None
 
 @dataclass(kw_only=True)
 class TradeEventStreamOutput(_SerdeShape):

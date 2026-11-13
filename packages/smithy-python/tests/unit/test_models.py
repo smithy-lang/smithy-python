@@ -630,6 +630,57 @@ def test_idempotency_token_members_of_inputs_are_documented_as_autopopulated(
     assert stub.count(note) == 2
 
 
+def test_operation_parameter_names_are_escaped_on_inputs_in_stub_and_runtime(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The runtime escapes input members named like a client method's own
+    # parameters, so the stub must declare the same names.
+    package = "generated_input_parameters"
+    members = {
+        "plugins": {"target": "smithy.api#String"},
+        "self": {"target": "smithy.api#String"},
+        "_models": {"target": "smithy.api#String"},
+    }
+    source_root = _generate_custom(
+        tmp_path,
+        {
+            "smithy": "2.0",
+            "shapes": {
+                "example#Input": {
+                    "type": "structure",
+                    "traits": {"smithy.api#input": {}},
+                    "members": {**members, "nested": {"target": "example#Nested"}},
+                },
+                "example#Nested": {"type": "structure", "members": members},
+            },
+        },
+        package,
+    )
+    stub = (source_root / package / "models.pyi").read_text()
+    input_stub, nested_stub = stub.split("class Nested(_SerdeShape):")
+    assert "plugins_: str | None = ..." in input_stub
+    assert "self_: str | None = ..." in input_stub
+    assert "_models_: str | None = ..." in input_stub
+    # Members of other structures are not parameters and keep their names.
+    assert "plugins: str | None = ..." in nested_stub
+    assert "self: str | None = ..." in nested_stub
+    assert "_models: str | None = ..." in nested_stub
+
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(source_root)
+    )
+    models = importlib.import_module(f"{package}.models")
+    built = models.Input(
+        plugins_="p",
+        self_="s",
+        _models_="m",
+        nested=models.Nested(plugins="n", _models="nm"),
+    )
+    assert (built.plugins_, built.self_, built._models_) == ("p", "s", "m")
+    assert (built.nested.plugins, built.nested._models) == ("n", "nm")
+
+
 def test_stub_and_runtime_use_the_same_member_names(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

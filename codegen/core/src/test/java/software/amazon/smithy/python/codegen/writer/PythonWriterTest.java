@@ -101,6 +101,49 @@ public class PythonWriterTest {
                 out.substring(out.indexOf("\"\"\"")).trim());
     }
 
+    @Test
+    public void testWriteDocsKeepsBackslashesAndDollarSignsLiteral() {
+        // Storage Gateway documents `DOMAIN\User1` and WorkSpaces `D:\Users\%USERNAME%\`.
+        // Written as they are, `\U` opens a Unicode escape that does not compile, and
+        // the backslash before the closing backtick is not a Markdown escape to drop.
+        // Every backslash is doubled so that it decodes to itself; `$` is written once.
+        PythonWriter writer = createWriter(CURRENT_PACKAGE);
+        writer.writeDocs("<p>Use <code>DOMAIN\\User1</code> in <code>D:\\Users\\%USERNAME%\\</code>"
+                + " for <code>$LATEST</code>.</p>", createAwsContext());
+        String out = writer.toString();
+
+        assertEquals("\"\"\"Use `DOMAIN\\\\User1` in `D:\\\\Users\\\\%USERNAME%\\\\` for `$LATEST`.\"\"\"",
+                out.substring(out.indexOf("\"\"\"")).trim());
+    }
+
+    @Test
+    public void testParameterDocsPutTheLeadParagraphOnTheFirstLine() {
+        // Signature help shows only the first physical line of an Args entry, so the
+        // opening paragraph is not wrapped. Nothing after it is dropped or reflowed.
+        PythonWriter writer = createWriter(CURRENT_PACKAGE);
+        writer.writeParameterDocs("duration_seconds",
+                "<p>The duration, in seconds, of the role session. The value specified can range from"
+                        + " 900 seconds (15 minutes) up to the maximum session duration set for the role.</p>"
+                        + "<note><p>Role chaining limits your session to one hour, which costs $5.</p></note>"
+                        + "<pre><code>duration_seconds = 900\nprint(duration_seconds)</code></pre>"
+                        + "<p>The default is one hour.</p>",
+                createAwsContext());
+        String out = writer.toString();
+
+        assertEquals("""
+                duration_seconds: The duration, in seconds, of the role session. The value specified can \
+                range from 900 seconds (15 minutes) up to the maximum session duration set for the role.
+
+                    Note:
+                        Role chaining limits your session to one hour, which costs $5.
+
+                        duration_seconds = 900
+                        print(duration_seconds)
+
+                    The default is one hour.
+                """, out.substring(out.indexOf("duration_seconds:")));
+    }
+
     private static GenerationContext createAwsContext() {
         GenerationContext context = mock(GenerationContext.class);
         Model model = mock(Model.class);

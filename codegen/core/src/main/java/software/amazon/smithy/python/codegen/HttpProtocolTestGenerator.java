@@ -26,7 +26,6 @@ import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.OperationIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.node.Node;
-import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
@@ -34,7 +33,9 @@ import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.StructureShape;
+import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.IdempotencyTokenTrait;
+import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.AppliesTo;
@@ -194,11 +195,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
 
-                    // Generate the input using the expected shape and params
+                    // The test case's params are the keyword arguments of the call.
                     var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
-                    writer.write("input_ = $C\n",
-                            (Runnable) () -> testCase.getParams()
-                                    .accept(new ValueNodeVisitor(context, writer, inputShape)));
 
                     // Execute the command, and catch the expected exception
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail");
@@ -206,7 +204,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     writer.addStdlibImport("urllib.parse", "parse_qsl");
                     writer.write("""
                             try:
-                                await client.$1T(input_)
+                                await client.$1T(
+                                    ${13C|}
+                                )
                                 fail("Expected '$2T' exception to be thrown!")
                             except $2T as err:
                                 actual = err.request
@@ -269,7 +269,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             (Runnable) () -> writeExpectedHeaders(testCase, operation),
                             toLowerCase(testCase.getForbidHeaders()),
                             toLowerCase(testCase.getRequireHeaders()),
-                            writer.consumer(w -> writeRequestBodyComparison(testCase, w)));
+                            writer.consumer(w -> writeRequestBodyComparison(testCase, w)),
+                            (Runnable) () -> new ValueNodeVisitor(context, writer, inputShape)
+                                    .writeKeywordArguments(testCase.getParams()));
                 });
     }
 
@@ -499,18 +501,18 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 (Runnable) () -> writeTestBody(testCase, writer),
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
-                    // Create an empty input object to pass
+                    // The input is irrelevant to the canned response, so pass only what
+                    // the client requires.
                     var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
                     var outputShape = model.expectShape(operation.getOutputShape(), StructureShape.class);
-                    writer.write("input_ = $C\n",
-                            (Runnable) () -> (ObjectNode.builder().build())
-                                    .accept(new ValueNodeVisitor(context, writer, inputShape)));
 
                     // Execute the command, fail if unexpected exception
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
                     writer.write("""
                             try:
-                                actual = await client.$T(input_)
+                                actual = await client.$T(
+                                    ${C|}
+                                )
                             except Exception as err:
                                 fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
                             else:
@@ -521,6 +523,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             context.symbolProvider()
                                     .toSymbol(operation)
                                     .expectProperty(SymbolProperties.OPERATION_METHOD),
+                            (Runnable) () -> writeRequiredArguments(inputShape),
                             (Runnable) () -> testCase.getParams()
                                     .accept(new ValueNodeVisitor(context, writer, outputShape)),
                             (Runnable) () -> assertResponseEqual(testCase, operation));
@@ -557,17 +560,17 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 (Runnable) () -> writeTestBody(testCase, writer),
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
-                    // Create an empty input object to pass
+                    // The input is irrelevant to the canned response, so pass only what
+                    // the client requires.
                     var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
-                    writer.write("input_ = $C\n",
-                            (Runnable) () -> (Node.objectNode())
-                                    .accept(new ValueNodeVisitor(context, writer, inputShape)));
                     // Execute the command, fail if unexpected exception
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
                     writer.write(
                             """
                                     try:
-                                        await client.$1T(input_)
+                                        await client.$1T(
+                                            ${3C|}
+                                        )
                                         fail("Expected '$2L' exception to be thrown!")
                                     except Exception as err:
                                         if type(err).__name__ != $2S:
@@ -576,9 +579,53 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             context.symbolProvider()
                                     .toSymbol(operation)
                                     .expectProperty(SymbolProperties.OPERATION_METHOD),
-                            error.getId().getName());
+                            error.getId().getName(),
+                            (Runnable) () -> writeRequiredArguments(inputShape));
                     // TODO: Correctly assert the status code and other values
                 });
+    }
+
+    // Writes a placeholder keyword argument for every input member the client
+    // requires, so a call can be made when the test does not care about the input.
+    private void writeRequiredArguments(StructureShape inputShape) {
+        var inputParams = new InputParams(context);
+        var arguments = Node.objectNodeBuilder();
+        for (MemberShape member : inputShape.members()) {
+            if (inputParams.isParameter(member) && inputParams.mustBeSet(member)) {
+                arguments.withMember(member.getMemberName(), placeholder(model.expectShape(member.getTarget())));
+            }
+        }
+        new ValueNodeVisitor(context, writer, inputShape).writeKeywordArguments(arguments.build());
+    }
+
+    // The smallest value of a shape that the generated models accept.
+    private Node placeholder(Shape shape) {
+        return switch (shape.getType()) {
+            case BOOLEAN -> Node.from(false);
+            case BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE, BIG_INTEGER, BIG_DECIMAL, TIMESTAMP -> Node.from(0);
+            case INT_ENUM -> Node.from(shape.asIntEnumShape().get().getEnumValues().values().iterator().next());
+            case ENUM -> Node.from(shape.asEnumShape().get().getEnumValues().values().iterator().next());
+            case LIST -> Node.arrayNode();
+            case MAP -> Node.objectNode();
+            case STRUCTURE -> {
+                var members = Node.objectNodeBuilder();
+                for (MemberShape member : shape.members()) {
+                    if (member.hasTrait(RequiredTrait.class)
+                            && member.getMemberTrait(model, DefaultTrait.class).isEmpty()) {
+                        members.withMember(
+                                member.getMemberName(),
+                                placeholder(model.expectShape(member.getTarget())));
+                    }
+                }
+                yield members.build();
+            }
+            case UNION -> {
+                var member = shape.members().iterator().next();
+                yield Node.objectNode()
+                        .withMember(member.getMemberName(), placeholder(model.expectShape(member.getTarget())));
+            }
+            default -> Node.from("x");
+        };
     }
 
     private void assertResponseEqual(HttpMessageTestCase testCase, Shape operationOrError) {

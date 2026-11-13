@@ -188,11 +188,55 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * @return Returns the writer.
      */
     public PythonWriter writeDocs(String docs, GenerationContext context) {
+        // Formatted docs are literal text, so they are written with $L: as a format
+        // string, their dollar signs would be taken for the writer's own.
         String formatted = formatDocs(docs, context);
         if (formatted.contains("\n")) {
-            writeMultiLineDocs(() -> write(formatted));
+            writeMultiLineDocs(() -> write("$L", formatted));
         } else {
-            writeSingleLineDocs(() -> writeInline(formatted));
+            writeSingleLineDocs(() -> writeInline("$L", formatted));
+        }
+        return this;
+    }
+
+    /**
+     * Writes the documentation of a parameter as an entry of the Google-style
+     * {@code Args} section of a docstring that is being written.
+     *
+     * <p>Editors that show the documentation of the argument being typed take it
+     * from the first physical line of the entry. So the paragraph that opens the
+     * documentation is written whole on that line, after the name, and the rest
+     * follows beneath it as it was formatted. Documentation that opens with anything
+     * else, such as a list, is written whole beneath the name instead: its lines
+     * cannot be joined without changing what they mean.
+     *
+     * @param name The name of the parameter.
+     * @param docs Documentation to write.
+     * @param context The generation context used to determine service type and formatting.
+     * @return Returns the writer.
+     */
+    public PythonWriter writeParameterDocs(String name, String docs, GenerationContext context) {
+        // Like all formatted docs, these are literal text and are written with $L.
+        String formatted = formatDocs(docs, context);
+        if (formatted.isEmpty()) {
+            return this;
+        }
+        int leadEnd = MarkdownConverter.leadParagraphEnd(formatted);
+        if (leadEnd < 0) {
+            write("$L", name + ":");
+            indent();
+            write("$L", formatted);
+            dedent();
+            return this;
+        }
+        write("$L", name + ": " + formatted.substring(0, leadEnd).replace('\n', ' '));
+        // Only blank lines are dropped: the next block may be indented code.
+        String rest = formatted.substring(leadEnd).replaceFirst("^(?:[ \\t]*\\n)+", "");
+        if (!rest.isEmpty()) {
+            indent();
+            write("");
+            write("$L", rest);
+            dedent();
         }
         return this;
     }
@@ -231,8 +275,12 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      *
      * <p>For AWS services, expects HTML input. For generic clients, expects CommonMark input.
      *
-     * <p>Quotes that would close the surrounding docstring are escaped. Use
-     * {@link #formatMarkdown} for documentation written outside a docstring.
+     * <p>Backslashes, and quotes that would close the surrounding docstring, are
+     * escaped for a Python string. Use {@link #formatMarkdown} for documentation
+     * written outside a docstring.
+     *
+     * <p>The result is literal text. Write it with {@code $L}, as {@link #writeDocs}
+     * does: it is not escaped for use as a format string.
      *
      * @param docs Documentation to format.
      * @param context The generation context used to determine service type and formatting.
@@ -247,7 +295,8 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * Python docstrings, such as the README.
      *
      * <p>This applies the same conversion as {@link #formatDocs} without escaping
-     * quotes for docstrings.
+     * anything for a Python string. The result is literal text too, to be written
+     * with {@code $L}.
      *
      * @param docs Documentation to format.
      * @param context The generation context used to determine service type and formatting.

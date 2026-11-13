@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Self, Union
+from typing import Self, TypedDict, Union
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
@@ -88,6 +88,11 @@ class PublishEventsInput(_SerdeShape):
     """Dataclass for PublishEventsInput structure."""
 
     channel: str | None = ...
+
+class PublishEventsInputDict(TypedDict, total=False):
+    """Dictionary form of `PublishEventsInput`."""
+
+    channel: str | None
 
 @dataclass(kw_only=True)
 class PublishEventsOutput(_SerdeShape):
@@ -182,6 +187,12 @@ class SubscribeToEventsInput(_SerdeShape):
     channel: str | None = ...
     max_events: int | None = ...
 
+class SubscribeToEventsInputDict(TypedDict, total=False):
+    """Dictionary form of `SubscribeToEventsInput`."""
+
+    channel: str | None
+    max_events: int | None
+
 @dataclass(kw_only=True)
 class SubscribeToEventsOutput(_SerdeShape):
     """Dataclass for SubscribeToEventsOutput structure."""
@@ -259,6 +270,11 @@ class TradeEventStreamInput(_SerdeShape):
     """Dataclass for TradeEventStreamInput structure."""
 
     session_id: str | None = ...
+
+class TradeEventStreamInputDict(TypedDict, total=False):
+    """Dictionary form of `TradeEventStreamInput`."""
+
+    session_id: str | None
 
 @dataclass(kw_only=True)
 class TradeEventStreamOutput(_SerdeShape):

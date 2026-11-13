@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -20,135 +20,70 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..models import (
-        AllQueryStringTypesInput,
         AllQueryStringTypesOutput,
-        BodyWithXmlNameInput,
         BodyWithXmlNameOutput,
-        ConstantAndVariableQueryStringInput,
         ConstantAndVariableQueryStringOutput,
-        ConstantQueryStringInput,
         ConstantQueryStringOutput,
-        ContentTypeParametersInput,
         ContentTypeParametersOutput,
-        DatetimeOffsetsInput,
         DatetimeOffsetsOutput,
-        EmptyInputAndEmptyOutputInput,
         EmptyInputAndEmptyOutputOutput,
-        EndpointOperationInput,
         EndpointOperationOutput,
-        EndpointWithHostLabelHeaderOperationInput,
         EndpointWithHostLabelHeaderOperationOutput,
-        EndpointWithHostLabelOperationInput,
         EndpointWithHostLabelOperationOutput,
-        FlattenedXmlMapInput,
         FlattenedXmlMapOutput,
-        FlattenedXmlMapWithXmlNameInput,
         FlattenedXmlMapWithXmlNameOutput,
-        FlattenedXmlMapWithXmlNamespaceInput,
         FlattenedXmlMapWithXmlNamespaceOutput,
-        FractionalSecondsInput,
         FractionalSecondsOutput,
-        GreetingWithErrorsInput,
         GreetingWithErrorsOutput,
-        HttpEmptyPrefixHeadersInput,
         HttpEmptyPrefixHeadersOutput,
-        HttpEnumPayloadInput,
         HttpEnumPayloadOutput,
-        HttpPayloadTraitsInput,
         HttpPayloadTraitsOutput,
-        HttpPayloadTraitsWithMediaTypeInput,
         HttpPayloadTraitsWithMediaTypeOutput,
-        HttpPayloadWithMemberXmlNameInput,
         HttpPayloadWithMemberXmlNameOutput,
-        HttpPayloadWithStructureInput,
         HttpPayloadWithStructureOutput,
-        HttpPayloadWithUnionInput,
         HttpPayloadWithUnionOutput,
-        HttpPayloadWithXmlNameInput,
         HttpPayloadWithXmlNameOutput,
-        HttpPayloadWithXmlNamespaceAndPrefixInput,
         HttpPayloadWithXmlNamespaceAndPrefixOutput,
-        HttpPayloadWithXmlNamespaceInput,
         HttpPayloadWithXmlNamespaceOutput,
-        HttpPrefixHeadersInput,
         HttpPrefixHeadersOutput,
-        HttpRequestWithFloatLabelsInput,
         HttpRequestWithFloatLabelsOutput,
-        HttpRequestWithGreedyLabelInPathInput,
         HttpRequestWithGreedyLabelInPathOutput,
-        HttpRequestWithLabelsAndTimestampFormatInput,
         HttpRequestWithLabelsAndTimestampFormatOutput,
-        HttpRequestWithLabelsInput,
         HttpRequestWithLabelsOutput,
-        HttpResponseCodeInput,
         HttpResponseCodeOutput,
-        HttpStringPayloadInput,
         HttpStringPayloadOutput,
-        IgnoreQueryParamsInResponseInput,
         IgnoreQueryParamsInResponseOutput,
-        InputAndOutputWithHeadersInput,
         InputAndOutputWithHeadersOutput,
-        NestedXmlMapWithXmlNameInput,
         NestedXmlMapWithXmlNameOutput,
-        NestedXmlMapsInput,
         NestedXmlMapsOutput,
-        NoInputAndNoOutputInput,
         NoInputAndNoOutputOutput,
-        NoInputAndOutputInput,
         NoInputAndOutputOutput,
-        NullAndEmptyHeadersClientInput,
         NullAndEmptyHeadersClientOutput,
-        NullAndEmptyHeadersServerInput,
         NullAndEmptyHeadersServerOutput,
-        OmitsNullSerializesEmptyStringInput,
         OmitsNullSerializesEmptyStringOutput,
-        PutWithContentEncodingInput,
         PutWithContentEncodingOutput,
-        QueryIdempotencyTokenAutoFillInput,
         QueryIdempotencyTokenAutoFillOutput,
-        QueryParamsAsStringListMapInput,
         QueryParamsAsStringListMapOutput,
-        QueryPrecedenceInput,
         QueryPrecedenceOutput,
-        RecursiveShapesInput,
         RecursiveShapesOutput,
-        SimpleScalarPropertiesInput,
         SimpleScalarPropertiesOutput,
-        TimestampFormatHeadersInput,
         TimestampFormatHeadersOutput,
-        XmlAttributesInMiddleInput,
         XmlAttributesInMiddleOutput,
-        XmlAttributesInput,
-        XmlAttributesOnPayloadInput,
         XmlAttributesOnPayloadOutput,
         XmlAttributesOutput,
-        XmlBlobsInput,
         XmlBlobsOutput,
-        XmlEmptyBlobsInput,
         XmlEmptyBlobsOutput,
-        XmlEmptyListsInput,
         XmlEmptyListsOutput,
-        XmlEmptyMapsInput,
         XmlEmptyMapsOutput,
-        XmlEmptyStringsInput,
         XmlEmptyStringsOutput,
-        XmlEnumsInput,
         XmlEnumsOutput,
-        XmlIntEnumsInput,
         XmlIntEnumsOutput,
-        XmlListsInput,
         XmlListsOutput,
-        XmlMapWithXmlNamespaceInput,
         XmlMapWithXmlNamespaceOutput,
-        XmlMapsInput,
         XmlMapsOutput,
-        XmlMapsXmlNameInput,
         XmlMapsXmlNameOutput,
-        XmlNamespacesInput,
         XmlNamespacesOutput,
-        XmlTimestampsInput,
         XmlTimestampsOutput,
-        XmlUnionsInput,
         XmlUnionsOutput,
     )
 
@@ -161,15 +96,28 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def all_query_string_types(
-        self, input: AllQueryStringTypesInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.AllQueryStringTypesInput
+        | _models.AllQueryStringTypesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> AllQueryStringTypesOutput: ...
+
+    @_overload
+    async def all_query_string_types(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.AllQueryStringTypesInputDict],
     ) -> AllQueryStringTypesOutput:
         """
         This example uses all query string types.
 
         Args:
-            input:
-                An instance of `AllQueryStringTypesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -179,18 +127,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `AllQueryStringTypesOutput`.
         """
-        return await self._invoke(input, _models.ALL_QUERY_STRING_TYPES, [], plugins)
 
+    async def all_query_string_types(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> AllQueryStringTypesOutput:
+        return await self._invoke(
+            self._select_input(_models.ALL_QUERY_STRING_TYPES, args, kwargs),
+            _models.ALL_QUERY_STRING_TYPES,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def body_with_xml_name(
-        self, input: BodyWithXmlNameInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.BodyWithXmlNameInput | _models.BodyWithXmlNameInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> BodyWithXmlNameOutput: ...
+
+    @_overload
+    async def body_with_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.BodyWithXmlNameInputDict],
     ) -> BodyWithXmlNameOutput:
         """
         The following example serializes a body that uses an XML name, changing
         the wrapper name.
 
         Args:
-            input:
-                An instance of `BodyWithXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -200,12 +169,34 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `BodyWithXmlNameOutput`.
         """
-        return await self._invoke(input, _models.BODY_WITH_XML_NAME, [], plugins)
 
+    async def body_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> BodyWithXmlNameOutput:
+        return await self._invoke(
+            self._select_input(_models.BODY_WITH_XML_NAME, args, kwargs),
+            _models.BODY_WITH_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def constant_and_variable_query_string(
         self,
-        input: ConstantAndVariableQueryStringInput,
+        request: _models.ConstantAndVariableQueryStringInput
+        | _models.ConstantAndVariableQueryStringInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> ConstantAndVariableQueryStringOutput: ...
+
+    @_overload
+    async def constant_and_variable_query_string(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ConstantAndVariableQueryStringInputDict],
     ) -> ConstantAndVariableQueryStringOutput:
         """
         This example uses fixed query string params and variable query string
@@ -213,8 +204,6 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         both be serialized (implementations may need to merge them together).
 
         Args:
-            input:
-                An instance of `ConstantAndVariableQueryStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -224,12 +213,36 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `ConstantAndVariableQueryStringOutput`.
         """
+
+    async def constant_and_variable_query_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ConstantAndVariableQueryStringOutput:
         return await self._invoke(
-            input, _models.CONSTANT_AND_VARIABLE_QUERY_STRING, [], plugins
+            self._select_input(
+                _models.CONSTANT_AND_VARIABLE_QUERY_STRING, args, kwargs
+            ),
+            _models.CONSTANT_AND_VARIABLE_QUERY_STRING,
+            [],
+            plugins,
         )
 
+    @_overload
     async def constant_query_string(
-        self, input: ConstantQueryStringInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ConstantQueryStringInput
+        | _models.ConstantQueryStringInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ConstantQueryStringOutput: ...
+
+    @_overload
+    async def constant_query_string(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ConstantQueryStringInputDict],
     ) -> ConstantQueryStringOutput:
         """
         This example uses a constant query string parameters and a label. This
@@ -238,8 +251,6 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         with the label, `{hello}`.
 
         Args:
-            input:
-                An instance of `ConstantQueryStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -249,18 +260,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `ConstantQueryStringOutput`.
         """
-        return await self._invoke(input, _models.CONSTANT_QUERY_STRING, [], plugins)
 
+    async def constant_query_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ConstantQueryStringOutput:
+        return await self._invoke(
+            self._select_input(_models.CONSTANT_QUERY_STRING, args, kwargs),
+            _models.CONSTANT_QUERY_STRING,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def content_type_parameters(
-        self, input: ContentTypeParametersInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ContentTypeParametersInput
+        | _models.ContentTypeParametersInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ContentTypeParametersOutput: ...
+
+    @_overload
+    async def content_type_parameters(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ContentTypeParametersInputDict],
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
         `Content-Type` header with parameters.
 
         Args:
-            input:
-                An instance of `ContentTypeParametersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -270,17 +303,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
-        return await self._invoke(input, _models.CONTENT_TYPE_PARAMETERS, [], plugins)
 
+    async def content_type_parameters(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ContentTypeParametersOutput:
+        return await self._invoke(
+            self._select_input(_models.CONTENT_TYPE_PARAMETERS, args, kwargs),
+            _models.CONTENT_TYPE_PARAMETERS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def datetime_offsets(
-        self, input: DatetimeOffsetsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DatetimeOffsetsOutput: ...
+
+    @_overload
+    async def datetime_offsets(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DatetimeOffsetsInputDict],
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
 
         Args:
-            input:
-                An instance of `DatetimeOffsetsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -290,10 +344,34 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return await self._invoke(input, _models.DATETIME_OFFSETS, [], plugins)
 
+    async def datetime_offsets(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DatetimeOffsetsOutput:
+        return await self._invoke(
+            self._select_input(_models.DATETIME_OFFSETS, args, kwargs),
+            _models.DATETIME_OFFSETS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def empty_input_and_empty_output(
-        self, input: EmptyInputAndEmptyOutputInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyInputAndEmptyOutputInput
+        | _models.EmptyInputAndEmptyOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyInputAndEmptyOutputOutput: ...
+
+    @_overload
+    async def empty_input_and_empty_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EmptyInputAndEmptyOutputInputDict],
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -302,8 +380,6 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         this should be rare, code generators must support this.
 
         Args:
-            input:
-                An instance of `EmptyInputAndEmptyOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -313,19 +389,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
+
+    async def empty_input_and_empty_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyInputAndEmptyOutputOutput:
         return await self._invoke(
-            input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            self._select_input(_models.EMPTY_INPUT_AND_EMPTY_OUTPUT, args, kwargs),
+            _models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            [],
+            plugins,
         )
 
+    @_overload
     async def endpoint_operation(
-        self, input: EndpointOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointOperationOutput: ...
+
+    @_overload
+    async def endpoint_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointOperationInputDict],
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -335,19 +430,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return await self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
 
+    async def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.ENDPOINT_OPERATION, args, kwargs),
+            _models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def endpoint_with_host_label_header_operation(
         self,
-        input: EndpointWithHostLabelHeaderOperationInput,
+        request: _models.EndpointWithHostLabelHeaderOperationInput
+        | _models.EndpointWithHostLabelHeaderOperationInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelHeaderOperationOutput: ...
+
+    @_overload
+    async def endpoint_with_host_label_header_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointWithHostLabelHeaderOperationInputDict],
     ) -> EndpointWithHostLabelHeaderOperationOutput:
         """
         Invokes the EndpointWithHostLabelHeaderOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointWithHostLabelHeaderOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -357,21 +472,41 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelHeaderOperationOutput`.
         """
+
+    async def endpoint_with_host_label_header_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelHeaderOperationOutput:
         return await self._invoke(
-            input, _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def endpoint_with_host_label_operation(
         self,
-        input: EndpointWithHostLabelOperationInput,
+        request: _models.EndpointWithHostLabelOperationInput
+        | _models.EndpointWithHostLabelOperationInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput: ...
+
+    @_overload
+    async def endpoint_with_host_label_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputDict],
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointWithHostLabelOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -381,19 +516,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
+
+    async def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelOperationOutput:
         return await self._invoke(
-            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def flattened_xml_map(
-        self, input: FlattenedXmlMapInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FlattenedXmlMapInput | _models.FlattenedXmlMapInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapOutput: ...
+
+    @_overload
+    async def flattened_xml_map(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FlattenedXmlMapInputDict],
     ) -> FlattenedXmlMapOutput:
         """
         Flattened maps
 
         Args:
-            input:
-                An instance of `FlattenedXmlMapInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -403,19 +559,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapOutput`.
         """
-        return await self._invoke(input, _models.FLATTENED_XML_MAP, [], plugins)
 
+    async def flattened_xml_map(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapOutput:
+        return await self._invoke(
+            self._select_input(_models.FLATTENED_XML_MAP, args, kwargs),
+            _models.FLATTENED_XML_MAP,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def flattened_xml_map_with_xml_name(
         self,
-        input: FlattenedXmlMapWithXmlNameInput,
+        request: _models.FlattenedXmlMapWithXmlNameInput
+        | _models.FlattenedXmlMapWithXmlNameInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNameOutput: ...
+
+    @_overload
+    async def flattened_xml_map_with_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FlattenedXmlMapWithXmlNameInputDict],
     ) -> FlattenedXmlMapWithXmlNameOutput:
         """
         Flattened maps with @xmlName
 
         Args:
-            input:
-                An instance of `FlattenedXmlMapWithXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -425,21 +601,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
+
+    async def flattened_xml_map_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapWithXmlNameOutput:
         return await self._invoke(
-            input, _models.FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins
+            self._select_input(_models.FLATTENED_XML_MAP_WITH_XML_NAME, args, kwargs),
+            _models.FLATTENED_XML_MAP_WITH_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     async def flattened_xml_map_with_xml_namespace(
         self,
-        input: FlattenedXmlMapWithXmlNamespaceInput,
+        request: _models.FlattenedXmlMapWithXmlNamespaceInput
+        | _models.FlattenedXmlMapWithXmlNamespaceInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNamespaceOutput: ...
+
+    @_overload
+    async def flattened_xml_map_with_xml_namespace(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FlattenedXmlMapWithXmlNamespaceInputDict],
     ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         """
         Flattened maps with @xmlNamespace and @xmlName
 
         Args:
-            input:
-                An instance of `FlattenedXmlMapWithXmlNamespaceInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -449,19 +643,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
+
+    async def flattened_xml_map_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         return await self._invoke(
-            input, _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            self._select_input(
+                _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, args, kwargs
+            ),
+            _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def fractional_seconds(
-        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FractionalSecondsOutput: ...
+
+    @_overload
+    async def fractional_seconds(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FractionalSecondsInputDict],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
 
         Args:
-            input:
-                An instance of `FractionalSecondsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -471,10 +686,33 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return await self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
 
+    async def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FractionalSecondsOutput:
+        return await self._invoke(
+            self._select_input(_models.FRACTIONAL_SECONDS, args, kwargs),
+            _models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput | _models.GreetingWithErrorsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    async def greeting_with_errors(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputDict],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -484,8 +722,6 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         error responses based on the the presence of the
 
         Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -495,17 +731,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return await self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    async def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return await self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_empty_prefix_headers(
-        self, input: HttpEmptyPrefixHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpEmptyPrefixHeadersInput
+        | _models.HttpEmptyPrefixHeadersInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpEmptyPrefixHeadersOutput: ...
+
+    @_overload
+    async def http_empty_prefix_headers(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpEmptyPrefixHeadersInputDict],
     ) -> HttpEmptyPrefixHeadersOutput:
         """
         Clients that perform this test extract all headers from the response.
 
         Args:
-            input:
-                An instance of `HttpEmptyPrefixHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -515,17 +773,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpEmptyPrefixHeadersOutput`.
         """
-        return await self._invoke(input, _models.HTTP_EMPTY_PREFIX_HEADERS, [], plugins)
 
+    async def http_empty_prefix_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpEmptyPrefixHeadersOutput:
+        return await self._invoke(
+            self._select_input(_models.HTTP_EMPTY_PREFIX_HEADERS, args, kwargs),
+            _models.HTTP_EMPTY_PREFIX_HEADERS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_enum_payload(
-        self, input: HttpEnumPayloadInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpEnumPayloadInput | _models.HttpEnumPayloadInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpEnumPayloadOutput: ...
+
+    @_overload
+    async def http_enum_payload(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpEnumPayloadInputDict],
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
 
         Args:
-            input:
-                An instance of `HttpEnumPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -535,10 +814,33 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpEnumPayloadOutput`.
         """
-        return await self._invoke(input, _models.HTTP_ENUM_PAYLOAD, [], plugins)
 
+    async def http_enum_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpEnumPayloadOutput:
+        return await self._invoke(
+            self._select_input(_models.HTTP_ENUM_PAYLOAD, args, kwargs),
+            _models.HTTP_ENUM_PAYLOAD,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_payload_traits(
-        self, input: HttpPayloadTraitsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpPayloadTraitsInput | _models.HttpPayloadTraitsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadTraitsOutput: ...
+
+    @_overload
+    async def http_payload_traits(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadTraitsInputDict],
     ) -> HttpPayloadTraitsOutput:
         """
         This example serializes a blob shape in the payload. In this example, no
@@ -546,8 +848,6 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         union type.
 
         Args:
-            input:
-                An instance of `HttpPayloadTraitsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -557,20 +857,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadTraitsOutput`.
         """
-        return await self._invoke(input, _models.HTTP_PAYLOAD_TRAITS, [], plugins)
 
+    async def http_payload_traits(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadTraitsOutput:
+        return await self._invoke(
+            self._select_input(_models.HTTP_PAYLOAD_TRAITS, args, kwargs),
+            _models.HTTP_PAYLOAD_TRAITS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_payload_traits_with_media_type(
         self,
-        input: HttpPayloadTraitsWithMediaTypeInput,
+        request: _models.HttpPayloadTraitsWithMediaTypeInput
+        | _models.HttpPayloadTraitsWithMediaTypeInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadTraitsWithMediaTypeOutput: ...
+
+    @_overload
+    async def http_payload_traits_with_media_type(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadTraitsWithMediaTypeInputDict],
     ) -> HttpPayloadTraitsWithMediaTypeOutput:
         """
         This example uses a `@mediaType` trait on the payload to force a
         custom content-type to be serialized.
 
         Args:
-            input:
-                An instance of `HttpPayloadTraitsWithMediaTypeInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -580,22 +900,42 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
+
+    async def http_payload_traits_with_media_type(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadTraitsWithMediaTypeOutput:
         return await self._invoke(
-            input, _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, [], plugins
+            self._select_input(
+                _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE, args, kwargs
+            ),
+            _models.HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_with_member_xml_name(
         self,
-        input: HttpPayloadWithMemberXmlNameInput,
+        request: _models.HttpPayloadWithMemberXmlNameInput
+        | _models.HttpPayloadWithMemberXmlNameInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithMemberXmlNameOutput: ...
+
+    @_overload
+    async def http_payload_with_member_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithMemberXmlNameInputDict],
     ) -> HttpPayloadWithMemberXmlNameOutput:
         """
         The following example serializes a payload that uses an XML name on the
         member, changing the wrapper name.
 
         Args:
-            input:
-                An instance of `HttpPayloadWithMemberXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -605,12 +945,34 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithMemberXmlNameOutput`.
         """
+
+    async def http_payload_with_member_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithMemberXmlNameOutput:
         return await self._invoke(
-            input, _models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_MEMBER_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_with_structure(
-        self, input: HttpPayloadWithStructureInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpPayloadWithStructureInput
+        | _models.HttpPayloadWithStructureInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithStructureOutput: ...
+
+    @_overload
+    async def http_payload_with_structure(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithStructureInputDict],
     ) -> HttpPayloadWithStructureOutput:
         """
         This example serializes a structure in the payload. Note that
@@ -618,8 +980,6 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         targeted structure.
 
         Args:
-            input:
-                An instance of `HttpPayloadWithStructureInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -629,19 +989,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithStructureOutput`.
         """
+
+    async def http_payload_with_structure(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithStructureOutput:
         return await self._invoke(
-            input, _models.HTTP_PAYLOAD_WITH_STRUCTURE, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_STRUCTURE, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_STRUCTURE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_with_union(
-        self, input: HttpPayloadWithUnionInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpPayloadWithUnionInput
+        | _models.HttpPayloadWithUnionInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithUnionOutput: ...
+
+    @_overload
+    async def http_payload_with_union(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithUnionInputDict],
     ) -> HttpPayloadWithUnionOutput:
         """
         This example serializes a union in the payload.
 
         Args:
-            input:
-                An instance of `HttpPayloadWithUnionInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -651,18 +1031,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithUnionOutput`.
         """
-        return await self._invoke(input, _models.HTTP_PAYLOAD_WITH_UNION, [], plugins)
 
+    async def http_payload_with_union(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithUnionOutput:
+        return await self._invoke(
+            self._select_input(_models.HTTP_PAYLOAD_WITH_UNION, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_UNION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_payload_with_xml_name(
-        self, input: HttpPayloadWithXmlNameInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpPayloadWithXmlNameInput
+        | _models.HttpPayloadWithXmlNameInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithXmlNameOutput: ...
+
+    @_overload
+    async def http_payload_with_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithXmlNameInputDict],
     ) -> HttpPayloadWithXmlNameOutput:
         """
         The following example serializes a payload that uses an XML name,
         changing the wrapper name.
 
         Args:
-            input:
-                An instance of `HttpPayloadWithXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -672,21 +1074,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithXmlNameOutput`.
         """
+
+    async def http_payload_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithXmlNameOutput:
         return await self._invoke(
-            input, _models.HTTP_PAYLOAD_WITH_XML_NAME, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_XML_NAME, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_with_xml_namespace(
         self,
-        input: HttpPayloadWithXmlNamespaceInput,
+        request: _models.HttpPayloadWithXmlNamespaceInput
+        | _models.HttpPayloadWithXmlNamespaceInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithXmlNamespaceOutput: ...
+
+    @_overload
+    async def http_payload_with_xml_namespace(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithXmlNamespaceInputDict],
     ) -> HttpPayloadWithXmlNamespaceOutput:
         """
         The following example serializes a payload that uses an XML namespace.
 
         Args:
-            input:
-                An instance of `HttpPayloadWithXmlNamespaceInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -696,21 +1116,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithXmlNamespaceOutput`.
         """
+
+    async def http_payload_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithXmlNamespaceOutput:
         return await self._invoke(
-            input, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE, [], plugins
+            self._select_input(_models.HTTP_PAYLOAD_WITH_XML_NAMESPACE, args, kwargs),
+            _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_payload_with_xml_namespace_and_prefix(
         self,
-        input: HttpPayloadWithXmlNamespaceAndPrefixInput,
+        request: _models.HttpPayloadWithXmlNamespaceAndPrefixInput
+        | _models.HttpPayloadWithXmlNamespaceAndPrefixInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput: ...
+
+    @_overload
+    async def http_payload_with_xml_namespace_and_prefix(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithXmlNamespaceAndPrefixInputDict],
     ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput:
         """
         The following example serializes a payload that uses an XML namespace.
 
         Args:
-            input:
-                An instance of `HttpPayloadWithXmlNamespaceAndPrefixInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -720,20 +1158,41 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPayloadWithXmlNamespaceAndPrefixOutput`.
         """
+
+    async def http_payload_with_xml_namespace_and_prefix(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput:
         return await self._invoke(
-            input, _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, [], plugins
+            self._select_input(
+                _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX, args, kwargs
+            ),
+            _models.HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_prefix_headers(
-        self, input: HttpPrefixHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpPrefixHeadersInput | _models.HttpPrefixHeadersInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpPrefixHeadersOutput: ...
+
+    @_overload
+    async def http_prefix_headers(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPrefixHeadersInputDict],
     ) -> HttpPrefixHeadersOutput:
         """
         This examples adds headers to the input of a request and response by
         prefix.
 
         Args:
-            input:
-                An instance of `HttpPrefixHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -743,19 +1202,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpPrefixHeadersOutput`.
         """
-        return await self._invoke(input, _models.HTTP_PREFIX_HEADERS, [], plugins)
 
+    async def http_prefix_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpPrefixHeadersOutput:
+        return await self._invoke(
+            self._select_input(_models.HTTP_PREFIX_HEADERS, args, kwargs),
+            _models.HTTP_PREFIX_HEADERS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_request_with_float_labels(
         self,
-        input: HttpRequestWithFloatLabelsInput,
+        request: _models.HttpRequestWithFloatLabelsInput
+        | _models.HttpRequestWithFloatLabelsInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithFloatLabelsOutput: ...
+
+    @_overload
+    async def http_request_with_float_labels(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithFloatLabelsInputDict],
     ) -> HttpRequestWithFloatLabelsOutput:
         """
         Invokes the HttpRequestWithFloatLabels operation.
 
         Args:
-            input:
-                An instance of `HttpRequestWithFloatLabelsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -765,21 +1244,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithFloatLabelsOutput`.
         """
+
+    async def http_request_with_float_labels(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithFloatLabelsOutput:
         return await self._invoke(
-            input, _models.HTTP_REQUEST_WITH_FLOAT_LABELS, [], plugins
+            self._select_input(_models.HTTP_REQUEST_WITH_FLOAT_LABELS, args, kwargs),
+            _models.HTTP_REQUEST_WITH_FLOAT_LABELS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_request_with_greedy_label_in_path(
         self,
-        input: HttpRequestWithGreedyLabelInPathInput,
+        request: _models.HttpRequestWithGreedyLabelInPathInput
+        | _models.HttpRequestWithGreedyLabelInPathInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithGreedyLabelInPathOutput: ...
+
+    @_overload
+    async def http_request_with_greedy_label_in_path(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithGreedyLabelInPathInputDict],
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
 
         Args:
-            input:
-                An instance of `HttpRequestWithGreedyLabelInPathInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -789,20 +1286,42 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
+
+    async def http_request_with_greedy_label_in_path(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithGreedyLabelInPathOutput:
         return await self._invoke(
-            input, _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, [], plugins
+            self._select_input(
+                _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH, args, kwargs
+            ),
+            _models.HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_request_with_labels(
-        self, input: HttpRequestWithLabelsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpRequestWithLabelsInput
+        | _models.HttpRequestWithLabelsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithLabelsOutput: ...
+
+    @_overload
+    async def http_request_with_labels(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithLabelsInputDict],
     ) -> HttpRequestWithLabelsOutput:
         """
         The example tests how requests are serialized when there's no input
         payload but there are HTTP labels.
 
         Args:
-            input:
-                An instance of `HttpRequestWithLabelsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -812,20 +1331,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithLabelsOutput`.
         """
-        return await self._invoke(input, _models.HTTP_REQUEST_WITH_LABELS, [], plugins)
 
+    async def http_request_with_labels(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithLabelsOutput:
+        return await self._invoke(
+            self._select_input(_models.HTTP_REQUEST_WITH_LABELS, args, kwargs),
+            _models.HTTP_REQUEST_WITH_LABELS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_request_with_labels_and_timestamp_format(
         self,
-        input: HttpRequestWithLabelsAndTimestampFormatInput,
+        request: _models.HttpRequestWithLabelsAndTimestampFormatInput
+        | _models.HttpRequestWithLabelsAndTimestampFormatInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> HttpRequestWithLabelsAndTimestampFormatOutput: ...
+
+    @_overload
+    async def http_request_with_labels_and_timestamp_format(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithLabelsAndTimestampFormatInputDict],
     ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
         """
         The example tests how requests serialize different timestamp formats in
         the URI path.
 
         Args:
-            input:
-                An instance of `HttpRequestWithLabelsAndTimestampFormatInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -835,19 +1374,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
+
+    async def http_request_with_labels_and_timestamp_format(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
         return await self._invoke(
-            input, _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, [], plugins
+            self._select_input(
+                _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT, args, kwargs
+            ),
+            _models.HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT,
+            [],
+            plugins,
         )
 
+    @_overload
     async def http_response_code(
-        self, input: HttpResponseCodeInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpResponseCodeInput | _models.HttpResponseCodeInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpResponseCodeOutput: ...
+
+    @_overload
+    async def http_response_code(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpResponseCodeInputDict],
     ) -> HttpResponseCodeOutput:
         """
         Invokes the HttpResponseCode operation.
 
         Args:
-            input:
-                An instance of `HttpResponseCodeInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -857,17 +1417,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpResponseCodeOutput`.
         """
-        return await self._invoke(input, _models.HTTP_RESPONSE_CODE, [], plugins)
 
+    async def http_response_code(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpResponseCodeOutput:
+        return await self._invoke(
+            self._select_input(_models.HTTP_RESPONSE_CODE, args, kwargs),
+            _models.HTTP_RESPONSE_CODE,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def http_string_payload(
-        self, input: HttpStringPayloadInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HttpStringPayloadInput | _models.HttpStringPayloadInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HttpStringPayloadOutput: ...
+
+    @_overload
+    async def http_string_payload(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpStringPayloadInputDict],
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
 
         Args:
-            input:
-                An instance of `HttpStringPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -877,12 +1458,34 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `HttpStringPayloadOutput`.
         """
-        return await self._invoke(input, _models.HTTP_STRING_PAYLOAD, [], plugins)
 
+    async def http_string_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HttpStringPayloadOutput:
+        return await self._invoke(
+            self._select_input(_models.HTTP_STRING_PAYLOAD, args, kwargs),
+            _models.HTTP_STRING_PAYLOAD,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def ignore_query_params_in_response(
         self,
-        input: IgnoreQueryParamsInResponseInput,
+        request: _models.IgnoreQueryParamsInResponseInput
+        | _models.IgnoreQueryParamsInResponseInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> IgnoreQueryParamsInResponseOutput: ...
+
+    @_overload
+    async def ignore_query_params_in_response(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.IgnoreQueryParamsInResponseInputDict],
     ) -> IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
@@ -890,8 +1493,6 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         request and response.
 
         Args:
-            input:
-                An instance of `IgnoreQueryParamsInResponseInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -901,20 +1502,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `IgnoreQueryParamsInResponseOutput`.
         """
+
+    async def ignore_query_params_in_response(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> IgnoreQueryParamsInResponseOutput:
         return await self._invoke(
-            input, _models.IGNORE_QUERY_PARAMS_IN_RESPONSE, [], plugins
+            self._select_input(_models.IGNORE_QUERY_PARAMS_IN_RESPONSE, args, kwargs),
+            _models.IGNORE_QUERY_PARAMS_IN_RESPONSE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def input_and_output_with_headers(
-        self, input: InputAndOutputWithHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.InputAndOutputWithHeadersInput
+        | _models.InputAndOutputWithHeadersInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> InputAndOutputWithHeadersOutput: ...
+
+    @_overload
+    async def input_and_output_with_headers(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.InputAndOutputWithHeadersInputDict],
     ) -> InputAndOutputWithHeadersOutput:
         """
         The example tests how requests and responses are serialized when there
         is no input or output payload but there are HTTP header bindings.
 
         Args:
-            input:
-                An instance of `InputAndOutputWithHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -924,19 +1545,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `InputAndOutputWithHeadersOutput`.
         """
+
+    async def input_and_output_with_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> InputAndOutputWithHeadersOutput:
         return await self._invoke(
-            input, _models.INPUT_AND_OUTPUT_WITH_HEADERS, [], plugins
+            self._select_input(_models.INPUT_AND_OUTPUT_WITH_HEADERS, args, kwargs),
+            _models.INPUT_AND_OUTPUT_WITH_HEADERS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def nested_xml_maps(
-        self, input: NestedXmlMapsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NestedXmlMapsInput | _models.NestedXmlMapsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NestedXmlMapsOutput: ...
+
+    @_overload
+    async def nested_xml_maps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NestedXmlMapsInputDict],
     ) -> NestedXmlMapsOutput:
         """
         Invokes the NestedXmlMaps operation.
 
         Args:
-            input:
-                An instance of `NestedXmlMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -946,17 +1586,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NestedXmlMapsOutput`.
         """
-        return await self._invoke(input, _models.NESTED_XML_MAPS, [], plugins)
 
+    async def nested_xml_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NestedXmlMapsOutput:
+        return await self._invoke(
+            self._select_input(_models.NESTED_XML_MAPS, args, kwargs),
+            _models.NESTED_XML_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def nested_xml_map_with_xml_name(
-        self, input: NestedXmlMapWithXmlNameInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NestedXmlMapWithXmlNameInput
+        | _models.NestedXmlMapWithXmlNameInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NestedXmlMapWithXmlNameOutput: ...
+
+    @_overload
+    async def nested_xml_map_with_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NestedXmlMapWithXmlNameInputDict],
     ) -> NestedXmlMapWithXmlNameOutput:
         """
         Nested Xml Maps with key/values with @xmlName
 
         Args:
-            input:
-                An instance of `NestedXmlMapWithXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -966,12 +1628,33 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NestedXmlMapWithXmlNameOutput`.
         """
+
+    async def nested_xml_map_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NestedXmlMapWithXmlNameOutput:
         return await self._invoke(
-            input, _models.NESTED_XML_MAP_WITH_XML_NAME, [], plugins
+            self._select_input(_models.NESTED_XML_MAP_WITH_XML_NAME, args, kwargs),
+            _models.NESTED_XML_MAP_WITH_XML_NAME,
+            [],
+            plugins,
         )
 
+    @_overload
     async def no_input_and_no_output(
-        self, input: NoInputAndNoOutputInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndNoOutputInput | _models.NoInputAndNoOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndNoOutputOutput: ...
+
+    @_overload
+    async def no_input_and_no_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndNoOutputInputDict],
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -980,8 +1663,6 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         this.
 
         Args:
-            input:
-                An instance of `NoInputAndNoOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -991,10 +1672,33 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        return await self._invoke(input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
+    async def no_input_and_no_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndNoOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_NO_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_NO_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def no_input_and_output(
-        self, input: NoInputAndOutputInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndOutputOutput: ...
+
+    @_overload
+    async def no_input_and_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndOutputInputDict],
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1003,8 +1707,6 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         generators must support this.
 
         Args:
-            input:
-                An instance of `NoInputAndOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1014,18 +1716,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return await self._invoke(input, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
+    async def no_input_and_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def null_and_empty_headers_client(
-        self, input: NullAndEmptyHeadersClientInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NullAndEmptyHeadersClientInput
+        | _models.NullAndEmptyHeadersClientInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NullAndEmptyHeadersClientOutput: ...
+
+    @_overload
+    async def null_and_empty_headers_client(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NullAndEmptyHeadersClientInputDict],
     ) -> NullAndEmptyHeadersClientOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
         \"\"
 
         Args:
-            input:
-                An instance of `NullAndEmptyHeadersClientInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1035,20 +1759,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NullAndEmptyHeadersClientOutput`.
         """
+
+    async def null_and_empty_headers_client(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NullAndEmptyHeadersClientOutput:
         return await self._invoke(
-            input, _models.NULL_AND_EMPTY_HEADERS_CLIENT, [], plugins
+            self._select_input(_models.NULL_AND_EMPTY_HEADERS_CLIENT, args, kwargs),
+            _models.NULL_AND_EMPTY_HEADERS_CLIENT,
+            [],
+            plugins,
         )
 
+    @_overload
     async def null_and_empty_headers_server(
-        self, input: NullAndEmptyHeadersServerInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NullAndEmptyHeadersServerInput
+        | _models.NullAndEmptyHeadersServerInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NullAndEmptyHeadersServerOutput: ...
+
+    @_overload
+    async def null_and_empty_headers_server(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NullAndEmptyHeadersServerInputDict],
     ) -> NullAndEmptyHeadersServerOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
         \"\"
 
         Args:
-            input:
-                An instance of `NullAndEmptyHeadersServerInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1058,21 +1802,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `NullAndEmptyHeadersServerOutput`.
         """
+
+    async def null_and_empty_headers_server(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NullAndEmptyHeadersServerOutput:
         return await self._invoke(
-            input, _models.NULL_AND_EMPTY_HEADERS_SERVER, [], plugins
+            self._select_input(_models.NULL_AND_EMPTY_HEADERS_SERVER, args, kwargs),
+            _models.NULL_AND_EMPTY_HEADERS_SERVER,
+            [],
+            plugins,
         )
 
+    @_overload
     async def omits_null_serializes_empty_string(
         self,
-        input: OmitsNullSerializesEmptyStringInput,
+        request: _models.OmitsNullSerializesEmptyStringInput
+        | _models.OmitsNullSerializesEmptyStringInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> OmitsNullSerializesEmptyStringOutput: ...
+
+    @_overload
+    async def omits_null_serializes_empty_string(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OmitsNullSerializesEmptyStringInputDict],
     ) -> OmitsNullSerializesEmptyStringOutput:
         """
         Omits null, but serializes empty string value.
 
         Args:
-            input:
-                An instance of `OmitsNullSerializesEmptyStringInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1082,19 +1844,41 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
+
+    async def omits_null_serializes_empty_string(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OmitsNullSerializesEmptyStringOutput:
         return await self._invoke(
-            input, _models.OMITS_NULL_SERIALIZES_EMPTY_STRING, [], plugins
+            self._select_input(
+                _models.OMITS_NULL_SERIALIZES_EMPTY_STRING, args, kwargs
+            ),
+            _models.OMITS_NULL_SERIALIZES_EMPTY_STRING,
+            [],
+            plugins,
         )
 
+    @_overload
     async def put_with_content_encoding(
-        self, input: PutWithContentEncodingInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.PutWithContentEncodingInput
+        | _models.PutWithContentEncodingInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutWithContentEncodingOutput: ...
+
+    @_overload
+    async def put_with_content_encoding(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.PutWithContentEncodingInputDict],
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
 
         Args:
-            input:
-                An instance of `PutWithContentEncodingInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1104,19 +1888,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        return await self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
 
+    async def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutWithContentEncodingOutput:
+        return await self._invoke(
+            self._select_input(_models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
+            _models.PUT_WITH_CONTENT_ENCODING,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def query_idempotency_token_auto_fill(
         self,
-        input: QueryIdempotencyTokenAutoFillInput,
+        request: _models.QueryIdempotencyTokenAutoFillInput
+        | _models.QueryIdempotencyTokenAutoFillInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> QueryIdempotencyTokenAutoFillOutput: ...
+
+    @_overload
+    async def query_idempotency_token_auto_fill(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryIdempotencyTokenAutoFillInputDict],
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
 
         Args:
-            input:
-                An instance of `QueryIdempotencyTokenAutoFillInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1126,21 +1930,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
+
+    async def query_idempotency_token_auto_fill(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryIdempotencyTokenAutoFillOutput:
         return await self._invoke(
-            input, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            self._select_input(_models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, args, kwargs),
+            _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
+            [],
+            plugins,
         )
 
+    @_overload
     async def query_params_as_string_list_map(
         self,
-        input: QueryParamsAsStringListMapInput,
+        request: _models.QueryParamsAsStringListMapInput
+        | _models.QueryParamsAsStringListMapInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> QueryParamsAsStringListMapOutput: ...
+
+    @_overload
+    async def query_params_as_string_list_map(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryParamsAsStringListMapInputDict],
     ) -> QueryParamsAsStringListMapOutput:
         """
         Invokes the QueryParamsAsStringListMap operation.
 
         Args:
-            input:
-                An instance of `QueryParamsAsStringListMapInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1150,19 +1972,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `QueryParamsAsStringListMapOutput`.
         """
+
+    async def query_params_as_string_list_map(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryParamsAsStringListMapOutput:
         return await self._invoke(
-            input, _models.QUERY_PARAMS_AS_STRING_LIST_MAP, [], plugins
+            self._select_input(_models.QUERY_PARAMS_AS_STRING_LIST_MAP, args, kwargs),
+            _models.QUERY_PARAMS_AS_STRING_LIST_MAP,
+            [],
+            plugins,
         )
 
+    @_overload
     async def query_precedence(
-        self, input: QueryPrecedenceInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.QueryPrecedenceInput | _models.QueryPrecedenceInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryPrecedenceOutput: ...
+
+    @_overload
+    async def query_precedence(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryPrecedenceInputDict],
     ) -> QueryPrecedenceOutput:
         """
         Invokes the QueryPrecedence operation.
 
         Args:
-            input:
-                An instance of `QueryPrecedenceInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1172,17 +2013,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `QueryPrecedenceOutput`.
         """
-        return await self._invoke(input, _models.QUERY_PRECEDENCE, [], plugins)
 
+    async def query_precedence(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryPrecedenceOutput:
+        return await self._invoke(
+            self._select_input(_models.QUERY_PRECEDENCE, args, kwargs),
+            _models.QUERY_PRECEDENCE,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def recursive_shapes(
-        self, input: RecursiveShapesInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RecursiveShapesOutput: ...
+
+    @_overload
+    async def recursive_shapes(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RecursiveShapesInputDict],
     ) -> RecursiveShapesOutput:
         """
         Recursive shapes
 
         Args:
-            input:
-                An instance of `RecursiveShapesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1192,17 +2054,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        return await self._invoke(input, _models.RECURSIVE_SHAPES, [], plugins)
 
+    async def recursive_shapes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RecursiveShapesOutput:
+        return await self._invoke(
+            self._select_input(_models.RECURSIVE_SHAPES, args, kwargs),
+            _models.RECURSIVE_SHAPES,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    async def simple_scalar_properties(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputDict],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
 
         Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1212,18 +2096,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        return await self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
 
+    async def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
+        return await self._invoke(
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
+            _models.SIMPLE_SCALAR_PROPERTIES,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def timestamp_format_headers(
-        self, input: TimestampFormatHeadersInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.TimestampFormatHeadersInput
+        | _models.TimestampFormatHeadersInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TimestampFormatHeadersOutput: ...
+
+    @_overload
+    async def timestamp_format_headers(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TimestampFormatHeadersInputDict],
     ) -> TimestampFormatHeadersOutput:
         """
         The example tests how timestamp request and response headers are
         serialized.
 
         Args:
-            input:
-                An instance of `TimestampFormatHeadersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1233,17 +2139,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `TimestampFormatHeadersOutput`.
         """
-        return await self._invoke(input, _models.TIMESTAMP_FORMAT_HEADERS, [], plugins)
 
+    async def timestamp_format_headers(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TimestampFormatHeadersOutput:
+        return await self._invoke(
+            self._select_input(_models.TIMESTAMP_FORMAT_HEADERS, args, kwargs),
+            _models.TIMESTAMP_FORMAT_HEADERS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_attributes(
-        self, input: XmlAttributesInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlAttributesInput | _models.XmlAttributesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlAttributesOutput: ...
+
+    @_overload
+    async def xml_attributes(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlAttributesInputDict],
     ) -> XmlAttributesOutput:
         """
         This example serializes an XML attributes on synthesized document.
 
         Args:
-            input:
-                An instance of `XmlAttributesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1253,10 +2180,34 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesOutput`.
         """
-        return await self._invoke(input, _models.XML_ATTRIBUTES, [], plugins)
 
+    async def xml_attributes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlAttributesOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_ATTRIBUTES, args, kwargs),
+            _models.XML_ATTRIBUTES,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_attributes_in_middle(
-        self, input: XmlAttributesInMiddleInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlAttributesInMiddleInput
+        | _models.XmlAttributesInMiddleInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlAttributesInMiddleOutput: ...
+
+    @_overload
+    async def xml_attributes_in_middle(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlAttributesInMiddleInputDict],
     ) -> XmlAttributesInMiddleOutput:
         """
         This example serializes an XML attribute on a payload when it's defined
@@ -1266,8 +2217,6 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         happen before child elements.
 
         Args:
-            input:
-                An instance of `XmlAttributesInMiddleInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1277,18 +2226,40 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesInMiddleOutput`.
         """
-        return await self._invoke(input, _models.XML_ATTRIBUTES_IN_MIDDLE, [], plugins)
 
+    async def xml_attributes_in_middle(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlAttributesInMiddleOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_ATTRIBUTES_IN_MIDDLE, args, kwargs),
+            _models.XML_ATTRIBUTES_IN_MIDDLE,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_attributes_on_payload(
-        self, input: XmlAttributesOnPayloadInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlAttributesOnPayloadInput
+        | _models.XmlAttributesOnPayloadInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlAttributesOnPayloadOutput: ...
+
+    @_overload
+    async def xml_attributes_on_payload(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlAttributesOnPayloadInputDict],
     ) -> XmlAttributesOnPayloadOutput:
         """
         This example serializes an XML attributes on a document targeted by
         httpPayload.
 
         Args:
-            input:
-                An instance of `XmlAttributesOnPayloadInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1298,17 +2269,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlAttributesOnPayloadOutput`.
         """
-        return await self._invoke(input, _models.XML_ATTRIBUTES_ON_PAYLOAD, [], plugins)
 
+    async def xml_attributes_on_payload(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlAttributesOnPayloadOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_ATTRIBUTES_ON_PAYLOAD, args, kwargs),
+            _models.XML_ATTRIBUTES_ON_PAYLOAD,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_blobs(
-        self, input: XmlBlobsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlBlobsInput | _models.XmlBlobsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlBlobsOutput: ...
+
+    @_overload
+    async def xml_blobs(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlBlobsInputDict],
     ) -> XmlBlobsOutput:
         """
         Blobs are base64 encoded
 
         Args:
-            input:
-                An instance of `XmlBlobsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1318,17 +2310,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlBlobsOutput`.
         """
-        return await self._invoke(input, _models.XML_BLOBS, [], plugins)
 
+    async def xml_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlBlobsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_BLOBS, args, kwargs),
+            _models.XML_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_empty_blobs(
-        self, input: XmlEmptyBlobsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyBlobsInput | _models.XmlEmptyBlobsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyBlobsOutput: ...
+
+    @_overload
+    async def xml_empty_blobs(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyBlobsInputDict],
     ) -> XmlEmptyBlobsOutput:
         """
         Blobs are base64 encoded
 
         Args:
-            input:
-                An instance of `XmlEmptyBlobsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1338,17 +2351,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        return await self._invoke(input, _models.XML_EMPTY_BLOBS, [], plugins)
 
+    async def xml_empty_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyBlobsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_EMPTY_BLOBS, args, kwargs),
+            _models.XML_EMPTY_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_empty_lists(
-        self, input: XmlEmptyListsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyListsInput | _models.XmlEmptyListsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyListsOutput: ...
+
+    @_overload
+    async def xml_empty_lists(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyListsInputDict],
     ) -> XmlEmptyListsOutput:
         """
         Invokes the XmlEmptyLists operation.
 
         Args:
-            input:
-                An instance of `XmlEmptyListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1358,17 +2392,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
-        return await self._invoke(input, _models.XML_EMPTY_LISTS, [], plugins)
 
+    async def xml_empty_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyListsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_EMPTY_LISTS, args, kwargs),
+            _models.XML_EMPTY_LISTS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_empty_maps(
-        self, input: XmlEmptyMapsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyMapsInput | _models.XmlEmptyMapsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyMapsOutput: ...
+
+    @_overload
+    async def xml_empty_maps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyMapsInputDict],
     ) -> XmlEmptyMapsOutput:
         """
         Invokes the XmlEmptyMaps operation.
 
         Args:
-            input:
-                An instance of `XmlEmptyMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1378,17 +2433,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyMapsOutput`.
         """
-        return await self._invoke(input, _models.XML_EMPTY_MAPS, [], plugins)
 
+    async def xml_empty_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyMapsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_EMPTY_MAPS, args, kwargs),
+            _models.XML_EMPTY_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_empty_strings(
-        self, input: XmlEmptyStringsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEmptyStringsInput | _models.XmlEmptyStringsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyStringsOutput: ...
+
+    @_overload
+    async def xml_empty_strings(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyStringsInputDict],
     ) -> XmlEmptyStringsOutput:
         """
         Invokes the XmlEmptyStrings operation.
 
         Args:
-            input:
-                An instance of `XmlEmptyStringsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1398,18 +2474,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEmptyStringsOutput`.
         """
-        return await self._invoke(input, _models.XML_EMPTY_STRINGS, [], plugins)
 
+    async def xml_empty_strings(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyStringsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_EMPTY_STRINGS, args, kwargs),
+            _models.XML_EMPTY_STRINGS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_enums(
-        self, input: XmlEnumsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEnumsInput | _models.XmlEnumsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEnumsOutput: ...
+
+    @_overload
+    async def xml_enums(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEnumsInputDict],
     ) -> XmlEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
         Args:
-            input:
-                An instance of `XmlEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1419,18 +2516,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
-        return await self._invoke(input, _models.XML_ENUMS, [], plugins)
 
+    async def xml_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEnumsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_ENUMS, args, kwargs),
+            _models.XML_ENUMS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_int_enums(
-        self, input: XmlIntEnumsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlIntEnumsInput | _models.XmlIntEnumsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlIntEnumsOutput: ...
+
+    @_overload
+    async def xml_int_enums(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlIntEnumsInputDict],
     ) -> XmlIntEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
         Args:
-            input:
-                An instance of `XmlIntEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1440,10 +2558,33 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
-        return await self._invoke(input, _models.XML_INT_ENUMS, [], plugins)
 
+    async def xml_int_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlIntEnumsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_INT_ENUMS, args, kwargs),
+            _models.XML_INT_ENUMS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_lists(
-        self, input: XmlListsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlListsInput | _models.XmlListsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlListsOutput: ...
+
+    @_overload
+    async def xml_lists(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlListsInputDict],
     ) -> XmlListsOutput:
         """
         This test case serializes XML lists for the following cases for both
@@ -1454,8 +2595,6 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         structures
 
         Args:
-            input:
-                An instance of `XmlListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1465,17 +2604,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlListsOutput`.
         """
-        return await self._invoke(input, _models.XML_LISTS, [], plugins)
 
+    async def xml_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlListsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_LISTS, args, kwargs),
+            _models.XML_LISTS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_maps(
-        self, input: XmlMapsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlMapsInput | _models.XmlMapsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapsOutput: ...
+
+    @_overload
+    async def xml_maps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlMapsInputDict],
     ) -> XmlMapsOutput:
         """
         The example tests basic map serialization.
 
         Args:
-            input:
-                An instance of `XmlMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1485,17 +2645,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapsOutput`.
         """
-        return await self._invoke(input, _models.XML_MAPS, [], plugins)
 
+    async def xml_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_MAPS, args, kwargs),
+            _models.XML_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_maps_xml_name(
-        self, input: XmlMapsXmlNameInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlMapsXmlNameInput | _models.XmlMapsXmlNameInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapsXmlNameOutput: ...
+
+    @_overload
+    async def xml_maps_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlMapsXmlNameInputDict],
     ) -> XmlMapsXmlNameOutput:
         """
         Invokes the XmlMapsXmlName operation.
 
         Args:
-            input:
-                An instance of `XmlMapsXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1505,17 +2686,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapsXmlNameOutput`.
         """
-        return await self._invoke(input, _models.XML_MAPS_XML_NAME, [], plugins)
 
+    async def xml_maps_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapsXmlNameOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_MAPS_XML_NAME, args, kwargs),
+            _models.XML_MAPS_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_map_with_xml_namespace(
-        self, input: XmlMapWithXmlNamespaceInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlMapWithXmlNamespaceInput
+        | _models.XmlMapWithXmlNamespaceInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapWithXmlNamespaceOutput: ...
+
+    @_overload
+    async def xml_map_with_xml_namespace(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlMapWithXmlNamespaceInputDict],
     ) -> XmlMapWithXmlNamespaceOutput:
         """
         Maps with @xmlNamespace and @xmlName
 
         Args:
-            input:
-                An instance of `XmlMapWithXmlNamespaceInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1525,19 +2728,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlMapWithXmlNamespaceOutput`.
         """
+
+    async def xml_map_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapWithXmlNamespaceOutput:
         return await self._invoke(
-            input, _models.XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            self._select_input(_models.XML_MAP_WITH_XML_NAMESPACE, args, kwargs),
+            _models.XML_MAP_WITH_XML_NAMESPACE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def xml_namespaces(
-        self, input: XmlNamespacesInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlNamespacesInput | _models.XmlNamespacesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlNamespacesOutput: ...
+
+    @_overload
+    async def xml_namespaces(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlNamespacesInputDict],
     ) -> XmlNamespacesOutput:
         """
         Invokes the XmlNamespaces operation.
 
         Args:
-            input:
-                An instance of `XmlNamespacesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1547,18 +2769,39 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
-        return await self._invoke(input, _models.XML_NAMESPACES, [], plugins)
 
+    async def xml_namespaces(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlNamespacesOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_NAMESPACES, args, kwargs),
+            _models.XML_NAMESPACES,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_timestamps(
-        self, input: XmlTimestampsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlTimestampsInput | _models.XmlTimestampsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlTimestampsOutput: ...
+
+    @_overload
+    async def xml_timestamps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlTimestampsInputDict],
     ) -> XmlTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
         format of date-time and various @timestampFormat trait values.
 
         Args:
-            input:
-                An instance of `XmlTimestampsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1568,17 +2811,38 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
-        return await self._invoke(input, _models.XML_TIMESTAMPS, [], plugins)
 
+    async def xml_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlTimestampsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_TIMESTAMPS, args, kwargs),
+            _models.XML_TIMESTAMPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def xml_unions(
-        self, input: XmlUnionsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlUnionsInput | _models.XmlUnionsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlUnionsOutput: ...
+
+    @_overload
+    async def xml_unions(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlUnionsInputDict],
     ) -> XmlUnionsOutput:
         """
         Invokes the XmlUnions operation.
 
         Args:
-            input:
-                An instance of `XmlUnionsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1588,7 +2852,16 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Returns:
             An instance of `XmlUnionsOutput`.
         """
-        return await self._invoke(input, _models.XML_UNIONS, [], plugins)
+
+    async def xml_unions(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlUnionsOutput:
+        return await self._invoke(
+            self._select_input(_models.XML_UNIONS, args, kwargs),
+            _models.XML_UNIONS,
+            [],
+            plugins,
+        )
 
     async def _new_config(self) -> AsyncRestXmlProtocolConfig:
         return await AsyncRestXmlProtocolConfig.resolve()

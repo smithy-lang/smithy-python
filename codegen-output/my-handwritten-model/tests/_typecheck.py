@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from my_handwritten_model.aio.client import AsyncMyHandwrittenModel
+from my_handwritten_model.client import MyHandwrittenModel
 from my_handwritten_model.models import (
     Alpha,
     DifferentShapeName,
@@ -12,17 +14,21 @@ from my_handwritten_model.models import (
     MetricEvent,
     NotificationEvent,
     PublishEventsInput,
+    PublishEventsInputDict,
     PublishEventsOutput,
     SubscribeToEventsInput,
+    SubscribeToEventsInputDict,
     SubscribeToEventsOutput,
     TradeEventStreamInput,
+    TradeEventStreamInputDict,
     TradeEventStreamOutput,
     Unit,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check.
 
 _: Any = ...
 
@@ -41,3 +47,30 @@ SubscribeToEventsInput()
 SubscribeToEventsOutput()
 TradeEventStreamInput()
 TradeEventStreamOutput()
+_params_0: PublishEventsInputDict = {}
+_params_1: SubscribeToEventsInputDict = {}
+_params_2: TradeEventStreamInputDict = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncMyHandwrittenModel) -> None:
+    pass
+    await client.publish_events()
+    await client.publish_events(**_request(PublishEventsInputDict))
+    await client.publish_events(_request(PublishEventsInput))
+    await client.publish_events(_request(PublishEventsInputDict))
+    await client.subscribe_to_events()
+    await client.subscribe_to_events(**_request(SubscribeToEventsInputDict))
+    await client.subscribe_to_events(_request(SubscribeToEventsInput))
+    await client.subscribe_to_events(_request(SubscribeToEventsInputDict))
+    await client.trade_event_stream()
+    await client.trade_event_stream(**_request(TradeEventStreamInputDict))
+    await client.trade_event_stream(_request(TradeEventStreamInput))
+    await client.trade_event_stream(_request(TradeEventStreamInputDict))
+
+
+def check_sync_calls(client: MyHandwrittenModel) -> None:
+    pass

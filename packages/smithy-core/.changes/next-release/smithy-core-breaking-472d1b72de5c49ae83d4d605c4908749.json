@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "A member of an operation input whose Python name is `plugins` or `self` is now built as `plugins_` or `self_`, because input members are the keyword parameters of the client method, which already declares parameters with those names. Clients must be regenerated with a code generator that escapes the same names."
+}

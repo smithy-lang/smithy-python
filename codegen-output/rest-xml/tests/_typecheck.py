@@ -2,157 +2,239 @@
 
 from typing import Any
 
+from restxml.aio.client import AsyncRestXmlProtocolClient
+from restxml.client import RestXmlProtocolClient
 from restxml.models import (
     AllQueryStringTypesInput,
+    AllQueryStringTypesInputDict,
     AllQueryStringTypesOutput,
     BodyWithXmlNameInput,
+    BodyWithXmlNameInputDict,
     BodyWithXmlNameOutput,
     ComplexNestedErrorData,
     ConstantAndVariableQueryStringInput,
+    ConstantAndVariableQueryStringInputDict,
     ConstantAndVariableQueryStringOutput,
     ConstantQueryStringInput,
+    ConstantQueryStringInputDict,
     ConstantQueryStringOutput,
     ContentTypeParametersInput,
+    ContentTypeParametersInputDict,
     ContentTypeParametersOutput,
     DatetimeOffsetsInput,
+    DatetimeOffsetsInputDict,
     DatetimeOffsetsOutput,
     EmptyInputAndEmptyOutputInput,
+    EmptyInputAndEmptyOutputInputDict,
     EmptyInputAndEmptyOutputOutput,
     EndpointOperationInput,
+    EndpointOperationInputDict,
     EndpointOperationOutput,
     EndpointWithHostLabelHeaderOperationInput,
+    EndpointWithHostLabelHeaderOperationInputDict,
     EndpointWithHostLabelHeaderOperationOutput,
     EndpointWithHostLabelOperationInput,
+    EndpointWithHostLabelOperationInputDict,
     EndpointWithHostLabelOperationOutput,
     FlattenedXmlMapInput,
+    FlattenedXmlMapInputDict,
     FlattenedXmlMapOutput,
     FlattenedXmlMapWithXmlNameInput,
+    FlattenedXmlMapWithXmlNameInputDict,
     FlattenedXmlMapWithXmlNameOutput,
     FlattenedXmlMapWithXmlNamespaceInput,
+    FlattenedXmlMapWithXmlNamespaceInputDict,
     FlattenedXmlMapWithXmlNamespaceOutput,
     FractionalSecondsInput,
+    FractionalSecondsInputDict,
     FractionalSecondsOutput,
     GreetingStruct,
+    GreetingStructDict,
     GreetingWithErrorsInput,
+    GreetingWithErrorsInputDict,
     GreetingWithErrorsOutput,
     HttpEmptyPrefixHeadersInput,
+    HttpEmptyPrefixHeadersInputDict,
     HttpEmptyPrefixHeadersOutput,
     HttpEnumPayloadInput,
+    HttpEnumPayloadInputDict,
     HttpEnumPayloadOutput,
     HttpPayloadTraitsInput,
+    HttpPayloadTraitsInputDict,
     HttpPayloadTraitsOutput,
     HttpPayloadTraitsWithMediaTypeInput,
+    HttpPayloadTraitsWithMediaTypeInputDict,
     HttpPayloadTraitsWithMediaTypeOutput,
     HttpPayloadWithMemberXmlNameInput,
+    HttpPayloadWithMemberXmlNameInputDict,
     HttpPayloadWithMemberXmlNameOutput,
     HttpPayloadWithStructureInput,
+    HttpPayloadWithStructureInputDict,
     HttpPayloadWithStructureOutput,
     HttpPayloadWithUnionInput,
+    HttpPayloadWithUnionInputDict,
     HttpPayloadWithUnionOutput,
     HttpPayloadWithXmlNameInput,
+    HttpPayloadWithXmlNameInputDict,
     HttpPayloadWithXmlNameOutput,
     HttpPayloadWithXmlNamespaceAndPrefixInput,
+    HttpPayloadWithXmlNamespaceAndPrefixInputDict,
     HttpPayloadWithXmlNamespaceAndPrefixOutput,
     HttpPayloadWithXmlNamespaceInput,
+    HttpPayloadWithXmlNamespaceInputDict,
     HttpPayloadWithXmlNamespaceOutput,
     HttpPrefixHeadersInput,
+    HttpPrefixHeadersInputDict,
     HttpPrefixHeadersOutput,
     HttpRequestWithFloatLabelsInput,
+    HttpRequestWithFloatLabelsInputDict,
     HttpRequestWithFloatLabelsOutput,
     HttpRequestWithGreedyLabelInPathInput,
+    HttpRequestWithGreedyLabelInPathInputDict,
     HttpRequestWithGreedyLabelInPathOutput,
     HttpRequestWithLabelsAndTimestampFormatInput,
+    HttpRequestWithLabelsAndTimestampFormatInputDict,
     HttpRequestWithLabelsAndTimestampFormatOutput,
     HttpRequestWithLabelsInput,
+    HttpRequestWithLabelsInputDict,
     HttpRequestWithLabelsOutput,
     HttpResponseCodeInput,
+    HttpResponseCodeInputDict,
     HttpResponseCodeOutput,
     HttpStringPayloadInput,
+    HttpStringPayloadInputDict,
     HttpStringPayloadOutput,
     IgnoreQueryParamsInResponseInput,
+    IgnoreQueryParamsInResponseInputDict,
     IgnoreQueryParamsInResponseOutput,
     InputAndOutputWithHeadersInput,
+    InputAndOutputWithHeadersInputDict,
     InputAndOutputWithHeadersOutput,
     NestedPayload,
+    NestedPayloadDict,
     NestedXmlMapWithXmlNameInput,
+    NestedXmlMapWithXmlNameInputDict,
     NestedXmlMapWithXmlNameOutput,
     NestedXmlMapsInput,
+    NestedXmlMapsInputDict,
     NestedXmlMapsOutput,
     NoInputAndNoOutputInput,
+    NoInputAndNoOutputInputDict,
     NoInputAndNoOutputOutput,
     NoInputAndOutputInput,
+    NoInputAndOutputInputDict,
     NoInputAndOutputOutput,
     NullAndEmptyHeadersClientInput,
+    NullAndEmptyHeadersClientInputDict,
     NullAndEmptyHeadersClientOutput,
     NullAndEmptyHeadersServerInput,
+    NullAndEmptyHeadersServerInputDict,
     NullAndEmptyHeadersServerOutput,
     OmitsNullSerializesEmptyStringInput,
+    OmitsNullSerializesEmptyStringInputDict,
     OmitsNullSerializesEmptyStringOutput,
     PayloadWithXmlName,
+    PayloadWithXmlNameDict,
     PayloadWithXmlNamespace,
     PayloadWithXmlNamespaceAndPrefix,
+    PayloadWithXmlNamespaceAndPrefixDict,
+    PayloadWithXmlNamespaceDict,
     PutWithContentEncodingInput,
+    PutWithContentEncodingInputDict,
     PutWithContentEncodingOutput,
     QueryIdempotencyTokenAutoFillInput,
+    QueryIdempotencyTokenAutoFillInputDict,
     QueryIdempotencyTokenAutoFillOutput,
     QueryParamsAsStringListMapInput,
+    QueryParamsAsStringListMapInputDict,
     QueryParamsAsStringListMapOutput,
     QueryPrecedenceInput,
+    QueryPrecedenceInputDict,
     QueryPrecedenceOutput,
     RecursiveShapesInput,
+    RecursiveShapesInputDict,
     RecursiveShapesInputOutputNested1,
+    RecursiveShapesInputOutputNested1Dict,
     RecursiveShapesInputOutputNested2,
+    RecursiveShapesInputOutputNested2Dict,
     RecursiveShapesOutput,
     SimpleScalarPropertiesInput,
+    SimpleScalarPropertiesInputDict,
     SimpleScalarPropertiesOutput,
     StructureListMember,
+    StructureListMemberDict,
     TimestampFormatHeadersInput,
+    TimestampFormatHeadersInputDict,
     TimestampFormatHeadersOutput,
+    UnionPayloadDict,
     XmlAttributesInMiddleInput,
+    XmlAttributesInMiddleInputDict,
     XmlAttributesInMiddleOutput,
     XmlAttributesInMiddlePayloadRequest,
+    XmlAttributesInMiddlePayloadRequestDict,
     XmlAttributesInMiddlePayloadResponse,
     XmlAttributesInput,
+    XmlAttributesInputDict,
     XmlAttributesOnPayloadInput,
+    XmlAttributesOnPayloadInputDict,
     XmlAttributesOnPayloadOutput,
     XmlAttributesOutput,
     XmlAttributesPayloadRequest,
+    XmlAttributesPayloadRequestDict,
     XmlAttributesPayloadResponse,
     XmlBlobsInput,
+    XmlBlobsInputDict,
     XmlBlobsOutput,
     XmlEmptyBlobsInput,
+    XmlEmptyBlobsInputDict,
     XmlEmptyBlobsOutput,
     XmlEmptyListsInput,
+    XmlEmptyListsInputDict,
     XmlEmptyListsOutput,
     XmlEmptyMapsInput,
+    XmlEmptyMapsInputDict,
     XmlEmptyMapsOutput,
     XmlEmptyStringsInput,
+    XmlEmptyStringsInputDict,
     XmlEmptyStringsOutput,
     XmlEnumsInput,
+    XmlEnumsInputDict,
     XmlEnumsOutput,
     XmlIntEnumsInput,
+    XmlIntEnumsInputDict,
     XmlIntEnumsOutput,
     XmlListsInput,
+    XmlListsInputDict,
     XmlListsOutput,
     XmlMapWithXmlNamespaceInput,
+    XmlMapWithXmlNamespaceInputDict,
     XmlMapWithXmlNamespaceOutput,
     XmlMapsInput,
+    XmlMapsInputDict,
     XmlMapsOutput,
     XmlMapsXmlNameInput,
+    XmlMapsXmlNameInputDict,
     XmlMapsXmlNameOutput,
     XmlNamespaceNested,
+    XmlNamespaceNestedDict,
     XmlNamespacesInput,
+    XmlNamespacesInputDict,
     XmlNamespacesOutput,
     XmlNestedUnionStruct,
+    XmlNestedUnionStructDict,
     XmlTimestampsInput,
+    XmlTimestampsInputDict,
     XmlTimestampsOutput,
+    XmlUnionShapeDict,
     XmlUnionsInput,
+    XmlUnionsInputDict,
     XmlUnionsOutput,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check.
 
 _: Any = ...
 
@@ -301,3 +383,855 @@ XmlTimestampsOutput()
 XmlUnionsInput()
 XmlUnionsOutput()
 GreetingStruct()
+_params_0: AllQueryStringTypesInputDict = {}
+_params_1: BodyWithXmlNameInputDict = {}
+_params_2: ConstantAndVariableQueryStringInputDict = {}
+_params_3: ConstantQueryStringInputDict = {"hello": _}
+_params_4: ContentTypeParametersInputDict = {}
+_params_5: DatetimeOffsetsInputDict = {}
+_params_6: EmptyInputAndEmptyOutputInputDict = {}
+_params_7: EndpointOperationInputDict = {}
+_params_8: EndpointWithHostLabelHeaderOperationInputDict = {"account_id": _}
+_params_9: EndpointWithHostLabelOperationInputDict = {"label": _}
+_params_10: FlattenedXmlMapInputDict = {}
+_params_11: FlattenedXmlMapWithXmlNameInputDict = {}
+_params_12: FlattenedXmlMapWithXmlNamespaceInputDict = {}
+_params_13: FractionalSecondsInputDict = {}
+_params_14: GreetingWithErrorsInputDict = {}
+_params_15: HttpEmptyPrefixHeadersInputDict = {}
+_params_16: HttpEnumPayloadInputDict = {}
+_params_17: HttpPayloadTraitsInputDict = {}
+_params_18: HttpPayloadTraitsWithMediaTypeInputDict = {}
+_params_19: HttpPayloadWithMemberXmlNameInputDict = {}
+_params_20: HttpPayloadWithStructureInputDict = {}
+_params_21: HttpPayloadWithUnionInputDict = {}
+_params_22: HttpPayloadWithXmlNameInputDict = {}
+_params_23: HttpPayloadWithXmlNamespaceAndPrefixInputDict = {}
+_params_24: HttpPayloadWithXmlNamespaceInputDict = {}
+_params_25: HttpPrefixHeadersInputDict = {}
+_params_26: HttpRequestWithFloatLabelsInputDict = {"float_": _, "double": _}
+_params_27: HttpRequestWithGreedyLabelInPathInputDict = {"foo": _, "baz": _}
+_params_28: HttpRequestWithLabelsAndTimestampFormatInputDict = {
+    "member_epoch_seconds": _,
+    "member_http_date": _,
+    "member_date_time": _,
+    "default_format": _,
+    "target_epoch_seconds": _,
+    "target_http_date": _,
+    "target_date_time": _,
+}
+_params_29: HttpRequestWithLabelsInputDict = {
+    "string": _,
+    "short": _,
+    "integer": _,
+    "long": _,
+    "float_": _,
+    "double": _,
+    "boolean": _,
+    "timestamp": _,
+}
+_params_30: HttpResponseCodeInputDict = {}
+_params_31: HttpStringPayloadInputDict = {}
+_params_32: IgnoreQueryParamsInResponseInputDict = {}
+_params_33: InputAndOutputWithHeadersInputDict = {}
+_params_34: NestedPayloadDict = {}
+_params_35: NestedXmlMapsInputDict = {}
+_params_36: NestedXmlMapWithXmlNameInputDict = {}
+_params_37: NoInputAndNoOutputInputDict = {}
+_params_38: NoInputAndOutputInputDict = {}
+_params_39: NullAndEmptyHeadersClientInputDict = {}
+_params_40: NullAndEmptyHeadersServerInputDict = {}
+_params_41: OmitsNullSerializesEmptyStringInputDict = {}
+_params_42: PayloadWithXmlNameDict = {}
+_params_43: PayloadWithXmlNamespaceDict = {}
+_params_44: PayloadWithXmlNamespaceAndPrefixDict = {}
+_params_45: PutWithContentEncodingInputDict = {}
+_params_46: QueryIdempotencyTokenAutoFillInputDict = {}
+_params_47: QueryParamsAsStringListMapInputDict = {}
+_params_48: QueryPrecedenceInputDict = {}
+_params_49: RecursiveShapesInputDict = {}
+_params_50: RecursiveShapesInputOutputNested1Dict = {}
+_params_51: RecursiveShapesInputOutputNested2Dict = {}
+_params_52: SimpleScalarPropertiesInputDict = {}
+_params_53: StructureListMemberDict = {}
+_params_54: TimestampFormatHeadersInputDict = {}
+_params_55: UnionPayloadDict = {"greeting": _}
+_params_56: XmlAttributesInMiddleInputDict = {}
+_params_57: XmlAttributesInMiddlePayloadRequestDict = {}
+_params_58: XmlAttributesInputDict = {}
+_params_59: XmlAttributesOnPayloadInputDict = {}
+_params_60: XmlAttributesPayloadRequestDict = {}
+_params_61: XmlBlobsInputDict = {}
+_params_62: XmlEmptyBlobsInputDict = {}
+_params_63: XmlEmptyListsInputDict = {}
+_params_64: XmlEmptyMapsInputDict = {}
+_params_65: XmlEmptyStringsInputDict = {}
+_params_66: XmlEnumsInputDict = {}
+_params_67: XmlIntEnumsInputDict = {}
+_params_68: XmlListsInputDict = {}
+_params_69: XmlMapsInputDict = {}
+_params_70: XmlMapsXmlNameInputDict = {}
+_params_71: XmlMapWithXmlNamespaceInputDict = {}
+_params_72: XmlNamespaceNestedDict = {}
+_params_73: XmlNamespacesInputDict = {}
+_params_74: XmlNestedUnionStructDict = {}
+_params_75: XmlTimestampsInputDict = {}
+_params_76: XmlUnionShapeDict = {"string_value": _}
+_params_77: XmlUnionsInputDict = {}
+_params_78: GreetingStructDict = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncRestXmlProtocolClient) -> None:
+    pass
+    await client.all_query_string_types()
+    await client.all_query_string_types(**_request(AllQueryStringTypesInputDict))
+    await client.all_query_string_types(_request(AllQueryStringTypesInput))
+    await client.all_query_string_types(_request(AllQueryStringTypesInputDict))
+    await client.body_with_xml_name()
+    await client.body_with_xml_name(**_request(BodyWithXmlNameInputDict))
+    await client.body_with_xml_name(_request(BodyWithXmlNameInput))
+    await client.body_with_xml_name(_request(BodyWithXmlNameInputDict))
+    await client.constant_and_variable_query_string()
+    await client.constant_and_variable_query_string(
+        **_request(ConstantAndVariableQueryStringInputDict)
+    )
+    await client.constant_and_variable_query_string(
+        _request(ConstantAndVariableQueryStringInput)
+    )
+    await client.constant_and_variable_query_string(
+        _request(ConstantAndVariableQueryStringInputDict)
+    )
+    await client.constant_query_string(hello=_)
+    await client.constant_query_string(**_request(ConstantQueryStringInputDict))
+    await client.constant_query_string(_request(ConstantQueryStringInput))
+    await client.constant_query_string(_request(ConstantQueryStringInputDict))
+    await client.content_type_parameters()
+    await client.content_type_parameters(**_request(ContentTypeParametersInputDict))
+    await client.content_type_parameters(_request(ContentTypeParametersInput))
+    await client.content_type_parameters(_request(ContentTypeParametersInputDict))
+    await client.datetime_offsets()
+    await client.datetime_offsets(**_request(DatetimeOffsetsInputDict))
+    await client.datetime_offsets(_request(DatetimeOffsetsInput))
+    await client.datetime_offsets(_request(DatetimeOffsetsInputDict))
+    await client.empty_input_and_empty_output()
+    await client.empty_input_and_empty_output(
+        **_request(EmptyInputAndEmptyOutputInputDict)
+    )
+    await client.empty_input_and_empty_output(_request(EmptyInputAndEmptyOutputInput))
+    await client.empty_input_and_empty_output(
+        _request(EmptyInputAndEmptyOutputInputDict)
+    )
+    await client.endpoint_operation()
+    await client.endpoint_operation(**_request(EndpointOperationInputDict))
+    await client.endpoint_operation(_request(EndpointOperationInput))
+    await client.endpoint_operation(_request(EndpointOperationInputDict))
+    await client.endpoint_with_host_label_header_operation(account_id=_)
+    await client.endpoint_with_host_label_header_operation(
+        **_request(EndpointWithHostLabelHeaderOperationInputDict)
+    )
+    await client.endpoint_with_host_label_header_operation(
+        _request(EndpointWithHostLabelHeaderOperationInput)
+    )
+    await client.endpoint_with_host_label_header_operation(
+        _request(EndpointWithHostLabelHeaderOperationInputDict)
+    )
+    await client.endpoint_with_host_label_operation(label=_)
+    await client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputDict)
+    )
+    await client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInput)
+    )
+    await client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInputDict)
+    )
+    await client.flattened_xml_map()
+    await client.flattened_xml_map(**_request(FlattenedXmlMapInputDict))
+    await client.flattened_xml_map(_request(FlattenedXmlMapInput))
+    await client.flattened_xml_map(_request(FlattenedXmlMapInputDict))
+    await client.flattened_xml_map_with_xml_name()
+    await client.flattened_xml_map_with_xml_name(
+        **_request(FlattenedXmlMapWithXmlNameInputDict)
+    )
+    await client.flattened_xml_map_with_xml_name(
+        _request(FlattenedXmlMapWithXmlNameInput)
+    )
+    await client.flattened_xml_map_with_xml_name(
+        _request(FlattenedXmlMapWithXmlNameInputDict)
+    )
+    await client.flattened_xml_map_with_xml_namespace()
+    await client.flattened_xml_map_with_xml_namespace(
+        **_request(FlattenedXmlMapWithXmlNamespaceInputDict)
+    )
+    await client.flattened_xml_map_with_xml_namespace(
+        _request(FlattenedXmlMapWithXmlNamespaceInput)
+    )
+    await client.flattened_xml_map_with_xml_namespace(
+        _request(FlattenedXmlMapWithXmlNamespaceInputDict)
+    )
+    await client.fractional_seconds()
+    await client.fractional_seconds(**_request(FractionalSecondsInputDict))
+    await client.fractional_seconds(_request(FractionalSecondsInput))
+    await client.fractional_seconds(_request(FractionalSecondsInputDict))
+    await client.greeting_with_errors()
+    await client.greeting_with_errors(**_request(GreetingWithErrorsInputDict))
+    await client.greeting_with_errors(_request(GreetingWithErrorsInput))
+    await client.greeting_with_errors(_request(GreetingWithErrorsInputDict))
+    await client.http_empty_prefix_headers()
+    await client.http_empty_prefix_headers(**_request(HttpEmptyPrefixHeadersInputDict))
+    await client.http_empty_prefix_headers(_request(HttpEmptyPrefixHeadersInput))
+    await client.http_empty_prefix_headers(_request(HttpEmptyPrefixHeadersInputDict))
+    await client.http_enum_payload()
+    await client.http_enum_payload(**_request(HttpEnumPayloadInputDict))
+    await client.http_enum_payload(_request(HttpEnumPayloadInput))
+    await client.http_enum_payload(_request(HttpEnumPayloadInputDict))
+    await client.http_payload_traits()
+    await client.http_payload_traits(**_request(HttpPayloadTraitsInputDict))
+    await client.http_payload_traits(_request(HttpPayloadTraitsInput))
+    await client.http_payload_traits(_request(HttpPayloadTraitsInputDict))
+    await client.http_payload_traits_with_media_type()
+    await client.http_payload_traits_with_media_type(
+        **_request(HttpPayloadTraitsWithMediaTypeInputDict)
+    )
+    await client.http_payload_traits_with_media_type(
+        _request(HttpPayloadTraitsWithMediaTypeInput)
+    )
+    await client.http_payload_traits_with_media_type(
+        _request(HttpPayloadTraitsWithMediaTypeInputDict)
+    )
+    await client.http_payload_with_member_xml_name()
+    await client.http_payload_with_member_xml_name(
+        **_request(HttpPayloadWithMemberXmlNameInputDict)
+    )
+    await client.http_payload_with_member_xml_name(
+        _request(HttpPayloadWithMemberXmlNameInput)
+    )
+    await client.http_payload_with_member_xml_name(
+        _request(HttpPayloadWithMemberXmlNameInputDict)
+    )
+    await client.http_payload_with_structure()
+    await client.http_payload_with_structure(
+        **_request(HttpPayloadWithStructureInputDict)
+    )
+    await client.http_payload_with_structure(_request(HttpPayloadWithStructureInput))
+    await client.http_payload_with_structure(
+        _request(HttpPayloadWithStructureInputDict)
+    )
+    await client.http_payload_with_union()
+    await client.http_payload_with_union(**_request(HttpPayloadWithUnionInputDict))
+    await client.http_payload_with_union(_request(HttpPayloadWithUnionInput))
+    await client.http_payload_with_union(_request(HttpPayloadWithUnionInputDict))
+    await client.http_payload_with_xml_name()
+    await client.http_payload_with_xml_name(**_request(HttpPayloadWithXmlNameInputDict))
+    await client.http_payload_with_xml_name(_request(HttpPayloadWithXmlNameInput))
+    await client.http_payload_with_xml_name(_request(HttpPayloadWithXmlNameInputDict))
+    await client.http_payload_with_xml_namespace()
+    await client.http_payload_with_xml_namespace(
+        **_request(HttpPayloadWithXmlNamespaceInputDict)
+    )
+    await client.http_payload_with_xml_namespace(
+        _request(HttpPayloadWithXmlNamespaceInput)
+    )
+    await client.http_payload_with_xml_namespace(
+        _request(HttpPayloadWithXmlNamespaceInputDict)
+    )
+    await client.http_payload_with_xml_namespace_and_prefix()
+    await client.http_payload_with_xml_namespace_and_prefix(
+        **_request(HttpPayloadWithXmlNamespaceAndPrefixInputDict)
+    )
+    await client.http_payload_with_xml_namespace_and_prefix(
+        _request(HttpPayloadWithXmlNamespaceAndPrefixInput)
+    )
+    await client.http_payload_with_xml_namespace_and_prefix(
+        _request(HttpPayloadWithXmlNamespaceAndPrefixInputDict)
+    )
+    await client.http_prefix_headers()
+    await client.http_prefix_headers(**_request(HttpPrefixHeadersInputDict))
+    await client.http_prefix_headers(_request(HttpPrefixHeadersInput))
+    await client.http_prefix_headers(_request(HttpPrefixHeadersInputDict))
+    await client.http_request_with_float_labels(float_=_, double=_)
+    await client.http_request_with_float_labels(
+        **_request(HttpRequestWithFloatLabelsInputDict)
+    )
+    await client.http_request_with_float_labels(
+        _request(HttpRequestWithFloatLabelsInput)
+    )
+    await client.http_request_with_float_labels(
+        _request(HttpRequestWithFloatLabelsInputDict)
+    )
+    await client.http_request_with_greedy_label_in_path(foo=_, baz=_)
+    await client.http_request_with_greedy_label_in_path(
+        **_request(HttpRequestWithGreedyLabelInPathInputDict)
+    )
+    await client.http_request_with_greedy_label_in_path(
+        _request(HttpRequestWithGreedyLabelInPathInput)
+    )
+    await client.http_request_with_greedy_label_in_path(
+        _request(HttpRequestWithGreedyLabelInPathInputDict)
+    )
+    await client.http_request_with_labels(
+        string=_, short=_, integer=_, long=_, float_=_, double=_, boolean=_, timestamp=_
+    )
+    await client.http_request_with_labels(**_request(HttpRequestWithLabelsInputDict))
+    await client.http_request_with_labels(_request(HttpRequestWithLabelsInput))
+    await client.http_request_with_labels(_request(HttpRequestWithLabelsInputDict))
+    await client.http_request_with_labels_and_timestamp_format(
+        member_epoch_seconds=_,
+        member_http_date=_,
+        member_date_time=_,
+        default_format=_,
+        target_epoch_seconds=_,
+        target_http_date=_,
+        target_date_time=_,
+    )
+    await client.http_request_with_labels_and_timestamp_format(
+        **_request(HttpRequestWithLabelsAndTimestampFormatInputDict)
+    )
+    await client.http_request_with_labels_and_timestamp_format(
+        _request(HttpRequestWithLabelsAndTimestampFormatInput)
+    )
+    await client.http_request_with_labels_and_timestamp_format(
+        _request(HttpRequestWithLabelsAndTimestampFormatInputDict)
+    )
+    await client.http_response_code()
+    await client.http_response_code(**_request(HttpResponseCodeInputDict))
+    await client.http_response_code(_request(HttpResponseCodeInput))
+    await client.http_response_code(_request(HttpResponseCodeInputDict))
+    await client.http_string_payload()
+    await client.http_string_payload(**_request(HttpStringPayloadInputDict))
+    await client.http_string_payload(_request(HttpStringPayloadInput))
+    await client.http_string_payload(_request(HttpStringPayloadInputDict))
+    await client.ignore_query_params_in_response()
+    await client.ignore_query_params_in_response(
+        **_request(IgnoreQueryParamsInResponseInputDict)
+    )
+    await client.ignore_query_params_in_response(
+        _request(IgnoreQueryParamsInResponseInput)
+    )
+    await client.ignore_query_params_in_response(
+        _request(IgnoreQueryParamsInResponseInputDict)
+    )
+    await client.input_and_output_with_headers()
+    await client.input_and_output_with_headers(
+        **_request(InputAndOutputWithHeadersInputDict)
+    )
+    await client.input_and_output_with_headers(_request(InputAndOutputWithHeadersInput))
+    await client.input_and_output_with_headers(
+        _request(InputAndOutputWithHeadersInputDict)
+    )
+    await client.nested_xml_maps()
+    await client.nested_xml_maps(**_request(NestedXmlMapsInputDict))
+    await client.nested_xml_maps(_request(NestedXmlMapsInput))
+    await client.nested_xml_maps(_request(NestedXmlMapsInputDict))
+    await client.nested_xml_map_with_xml_name()
+    await client.nested_xml_map_with_xml_name(
+        **_request(NestedXmlMapWithXmlNameInputDict)
+    )
+    await client.nested_xml_map_with_xml_name(_request(NestedXmlMapWithXmlNameInput))
+    await client.nested_xml_map_with_xml_name(
+        _request(NestedXmlMapWithXmlNameInputDict)
+    )
+    await client.no_input_and_no_output()
+    await client.no_input_and_no_output(**_request(NoInputAndNoOutputInputDict))
+    await client.no_input_and_no_output(_request(NoInputAndNoOutputInput))
+    await client.no_input_and_no_output(_request(NoInputAndNoOutputInputDict))
+    await client.no_input_and_output()
+    await client.no_input_and_output(**_request(NoInputAndOutputInputDict))
+    await client.no_input_and_output(_request(NoInputAndOutputInput))
+    await client.no_input_and_output(_request(NoInputAndOutputInputDict))
+    await client.null_and_empty_headers_client()
+    await client.null_and_empty_headers_client(
+        **_request(NullAndEmptyHeadersClientInputDict)
+    )
+    await client.null_and_empty_headers_client(_request(NullAndEmptyHeadersClientInput))
+    await client.null_and_empty_headers_client(
+        _request(NullAndEmptyHeadersClientInputDict)
+    )
+    await client.null_and_empty_headers_server()
+    await client.null_and_empty_headers_server(
+        **_request(NullAndEmptyHeadersServerInputDict)
+    )
+    await client.null_and_empty_headers_server(_request(NullAndEmptyHeadersServerInput))
+    await client.null_and_empty_headers_server(
+        _request(NullAndEmptyHeadersServerInputDict)
+    )
+    await client.omits_null_serializes_empty_string()
+    await client.omits_null_serializes_empty_string(
+        **_request(OmitsNullSerializesEmptyStringInputDict)
+    )
+    await client.omits_null_serializes_empty_string(
+        _request(OmitsNullSerializesEmptyStringInput)
+    )
+    await client.omits_null_serializes_empty_string(
+        _request(OmitsNullSerializesEmptyStringInputDict)
+    )
+    await client.put_with_content_encoding()
+    await client.put_with_content_encoding(**_request(PutWithContentEncodingInputDict))
+    await client.put_with_content_encoding(_request(PutWithContentEncodingInput))
+    await client.put_with_content_encoding(_request(PutWithContentEncodingInputDict))
+    await client.query_idempotency_token_auto_fill()
+    await client.query_idempotency_token_auto_fill(
+        **_request(QueryIdempotencyTokenAutoFillInputDict)
+    )
+    await client.query_idempotency_token_auto_fill(
+        _request(QueryIdempotencyTokenAutoFillInput)
+    )
+    await client.query_idempotency_token_auto_fill(
+        _request(QueryIdempotencyTokenAutoFillInputDict)
+    )
+    await client.query_params_as_string_list_map()
+    await client.query_params_as_string_list_map(
+        **_request(QueryParamsAsStringListMapInputDict)
+    )
+    await client.query_params_as_string_list_map(
+        _request(QueryParamsAsStringListMapInput)
+    )
+    await client.query_params_as_string_list_map(
+        _request(QueryParamsAsStringListMapInputDict)
+    )
+    await client.query_precedence()
+    await client.query_precedence(**_request(QueryPrecedenceInputDict))
+    await client.query_precedence(_request(QueryPrecedenceInput))
+    await client.query_precedence(_request(QueryPrecedenceInputDict))
+    await client.recursive_shapes()
+    await client.recursive_shapes(**_request(RecursiveShapesInputDict))
+    await client.recursive_shapes(_request(RecursiveShapesInput))
+    await client.recursive_shapes(_request(RecursiveShapesInputDict))
+    await client.simple_scalar_properties()
+    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))
+    await client.timestamp_format_headers()
+    await client.timestamp_format_headers(**_request(TimestampFormatHeadersInputDict))
+    await client.timestamp_format_headers(_request(TimestampFormatHeadersInput))
+    await client.timestamp_format_headers(_request(TimestampFormatHeadersInputDict))
+    await client.xml_attributes()
+    await client.xml_attributes(**_request(XmlAttributesInputDict))
+    await client.xml_attributes(_request(XmlAttributesInput))
+    await client.xml_attributes(_request(XmlAttributesInputDict))
+    await client.xml_attributes_in_middle()
+    await client.xml_attributes_in_middle(**_request(XmlAttributesInMiddleInputDict))
+    await client.xml_attributes_in_middle(_request(XmlAttributesInMiddleInput))
+    await client.xml_attributes_in_middle(_request(XmlAttributesInMiddleInputDict))
+    await client.xml_attributes_on_payload()
+    await client.xml_attributes_on_payload(**_request(XmlAttributesOnPayloadInputDict))
+    await client.xml_attributes_on_payload(_request(XmlAttributesOnPayloadInput))
+    await client.xml_attributes_on_payload(_request(XmlAttributesOnPayloadInputDict))
+    await client.xml_blobs()
+    await client.xml_blobs(**_request(XmlBlobsInputDict))
+    await client.xml_blobs(_request(XmlBlobsInput))
+    await client.xml_blobs(_request(XmlBlobsInputDict))
+    await client.xml_empty_blobs()
+    await client.xml_empty_blobs(**_request(XmlEmptyBlobsInputDict))
+    await client.xml_empty_blobs(_request(XmlEmptyBlobsInput))
+    await client.xml_empty_blobs(_request(XmlEmptyBlobsInputDict))
+    await client.xml_empty_lists()
+    await client.xml_empty_lists(**_request(XmlEmptyListsInputDict))
+    await client.xml_empty_lists(_request(XmlEmptyListsInput))
+    await client.xml_empty_lists(_request(XmlEmptyListsInputDict))
+    await client.xml_empty_maps()
+    await client.xml_empty_maps(**_request(XmlEmptyMapsInputDict))
+    await client.xml_empty_maps(_request(XmlEmptyMapsInput))
+    await client.xml_empty_maps(_request(XmlEmptyMapsInputDict))
+    await client.xml_empty_strings()
+    await client.xml_empty_strings(**_request(XmlEmptyStringsInputDict))
+    await client.xml_empty_strings(_request(XmlEmptyStringsInput))
+    await client.xml_empty_strings(_request(XmlEmptyStringsInputDict))
+    await client.xml_enums()
+    await client.xml_enums(**_request(XmlEnumsInputDict))
+    await client.xml_enums(_request(XmlEnumsInput))
+    await client.xml_enums(_request(XmlEnumsInputDict))
+    await client.xml_int_enums()
+    await client.xml_int_enums(**_request(XmlIntEnumsInputDict))
+    await client.xml_int_enums(_request(XmlIntEnumsInput))
+    await client.xml_int_enums(_request(XmlIntEnumsInputDict))
+    await client.xml_lists()
+    await client.xml_lists(**_request(XmlListsInputDict))
+    await client.xml_lists(_request(XmlListsInput))
+    await client.xml_lists(_request(XmlListsInputDict))
+    await client.xml_maps()
+    await client.xml_maps(**_request(XmlMapsInputDict))
+    await client.xml_maps(_request(XmlMapsInput))
+    await client.xml_maps(_request(XmlMapsInputDict))
+    await client.xml_maps_xml_name()
+    await client.xml_maps_xml_name(**_request(XmlMapsXmlNameInputDict))
+    await client.xml_maps_xml_name(_request(XmlMapsXmlNameInput))
+    await client.xml_maps_xml_name(_request(XmlMapsXmlNameInputDict))
+    await client.xml_map_with_xml_namespace()
+    await client.xml_map_with_xml_namespace(**_request(XmlMapWithXmlNamespaceInputDict))
+    await client.xml_map_with_xml_namespace(_request(XmlMapWithXmlNamespaceInput))
+    await client.xml_map_with_xml_namespace(_request(XmlMapWithXmlNamespaceInputDict))
+    await client.xml_namespaces()
+    await client.xml_namespaces(**_request(XmlNamespacesInputDict))
+    await client.xml_namespaces(_request(XmlNamespacesInput))
+    await client.xml_namespaces(_request(XmlNamespacesInputDict))
+    await client.xml_timestamps()
+    await client.xml_timestamps(**_request(XmlTimestampsInputDict))
+    await client.xml_timestamps(_request(XmlTimestampsInput))
+    await client.xml_timestamps(_request(XmlTimestampsInputDict))
+    await client.xml_unions()
+    await client.xml_unions(**_request(XmlUnionsInputDict))
+    await client.xml_unions(_request(XmlUnionsInput))
+    await client.xml_unions(_request(XmlUnionsInputDict))
+
+
+def check_sync_calls(client: RestXmlProtocolClient) -> None:
+    pass
+    client.all_query_string_types()
+    client.all_query_string_types(**_request(AllQueryStringTypesInputDict))
+    client.all_query_string_types(_request(AllQueryStringTypesInput))
+    client.all_query_string_types(_request(AllQueryStringTypesInputDict))
+    client.body_with_xml_name()
+    client.body_with_xml_name(**_request(BodyWithXmlNameInputDict))
+    client.body_with_xml_name(_request(BodyWithXmlNameInput))
+    client.body_with_xml_name(_request(BodyWithXmlNameInputDict))
+    client.constant_and_variable_query_string()
+    client.constant_and_variable_query_string(
+        **_request(ConstantAndVariableQueryStringInputDict)
+    )
+    client.constant_and_variable_query_string(
+        _request(ConstantAndVariableQueryStringInput)
+    )
+    client.constant_and_variable_query_string(
+        _request(ConstantAndVariableQueryStringInputDict)
+    )
+    client.constant_query_string(hello=_)
+    client.constant_query_string(**_request(ConstantQueryStringInputDict))
+    client.constant_query_string(_request(ConstantQueryStringInput))
+    client.constant_query_string(_request(ConstantQueryStringInputDict))
+    client.content_type_parameters()
+    client.content_type_parameters(**_request(ContentTypeParametersInputDict))
+    client.content_type_parameters(_request(ContentTypeParametersInput))
+    client.content_type_parameters(_request(ContentTypeParametersInputDict))
+    client.datetime_offsets()
+    client.datetime_offsets(**_request(DatetimeOffsetsInputDict))
+    client.datetime_offsets(_request(DatetimeOffsetsInput))
+    client.datetime_offsets(_request(DatetimeOffsetsInputDict))
+    client.empty_input_and_empty_output()
+    client.empty_input_and_empty_output(**_request(EmptyInputAndEmptyOutputInputDict))
+    client.empty_input_and_empty_output(_request(EmptyInputAndEmptyOutputInput))
+    client.empty_input_and_empty_output(_request(EmptyInputAndEmptyOutputInputDict))
+    client.endpoint_operation()
+    client.endpoint_operation(**_request(EndpointOperationInputDict))
+    client.endpoint_operation(_request(EndpointOperationInput))
+    client.endpoint_operation(_request(EndpointOperationInputDict))
+    client.endpoint_with_host_label_header_operation(account_id=_)
+    client.endpoint_with_host_label_header_operation(
+        **_request(EndpointWithHostLabelHeaderOperationInputDict)
+    )
+    client.endpoint_with_host_label_header_operation(
+        _request(EndpointWithHostLabelHeaderOperationInput)
+    )
+    client.endpoint_with_host_label_header_operation(
+        _request(EndpointWithHostLabelHeaderOperationInputDict)
+    )
+    client.endpoint_with_host_label_operation(label=_)
+    client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputDict)
+    )
+    client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInput)
+    )
+    client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInputDict)
+    )
+    client.flattened_xml_map()
+    client.flattened_xml_map(**_request(FlattenedXmlMapInputDict))
+    client.flattened_xml_map(_request(FlattenedXmlMapInput))
+    client.flattened_xml_map(_request(FlattenedXmlMapInputDict))
+    client.flattened_xml_map_with_xml_name()
+    client.flattened_xml_map_with_xml_name(
+        **_request(FlattenedXmlMapWithXmlNameInputDict)
+    )
+    client.flattened_xml_map_with_xml_name(_request(FlattenedXmlMapWithXmlNameInput))
+    client.flattened_xml_map_with_xml_name(
+        _request(FlattenedXmlMapWithXmlNameInputDict)
+    )
+    client.flattened_xml_map_with_xml_namespace()
+    client.flattened_xml_map_with_xml_namespace(
+        **_request(FlattenedXmlMapWithXmlNamespaceInputDict)
+    )
+    client.flattened_xml_map_with_xml_namespace(
+        _request(FlattenedXmlMapWithXmlNamespaceInput)
+    )
+    client.flattened_xml_map_with_xml_namespace(
+        _request(FlattenedXmlMapWithXmlNamespaceInputDict)
+    )
+    client.fractional_seconds()
+    client.fractional_seconds(**_request(FractionalSecondsInputDict))
+    client.fractional_seconds(_request(FractionalSecondsInput))
+    client.fractional_seconds(_request(FractionalSecondsInputDict))
+    client.greeting_with_errors()
+    client.greeting_with_errors(**_request(GreetingWithErrorsInputDict))
+    client.greeting_with_errors(_request(GreetingWithErrorsInput))
+    client.greeting_with_errors(_request(GreetingWithErrorsInputDict))
+    client.http_empty_prefix_headers()
+    client.http_empty_prefix_headers(**_request(HttpEmptyPrefixHeadersInputDict))
+    client.http_empty_prefix_headers(_request(HttpEmptyPrefixHeadersInput))
+    client.http_empty_prefix_headers(_request(HttpEmptyPrefixHeadersInputDict))
+    client.http_enum_payload()
+    client.http_enum_payload(**_request(HttpEnumPayloadInputDict))
+    client.http_enum_payload(_request(HttpEnumPayloadInput))
+    client.http_enum_payload(_request(HttpEnumPayloadInputDict))
+    client.http_payload_traits()
+    client.http_payload_traits(**_request(HttpPayloadTraitsInputDict))
+    client.http_payload_traits(_request(HttpPayloadTraitsInput))
+    client.http_payload_traits(_request(HttpPayloadTraitsInputDict))
+    client.http_payload_traits_with_media_type()
+    client.http_payload_traits_with_media_type(
+        **_request(HttpPayloadTraitsWithMediaTypeInputDict)
+    )
+    client.http_payload_traits_with_media_type(
+        _request(HttpPayloadTraitsWithMediaTypeInput)
+    )
+    client.http_payload_traits_with_media_type(
+        _request(HttpPayloadTraitsWithMediaTypeInputDict)
+    )
+    client.http_payload_with_member_xml_name()
+    client.http_payload_with_member_xml_name(
+        **_request(HttpPayloadWithMemberXmlNameInputDict)
+    )
+    client.http_payload_with_member_xml_name(
+        _request(HttpPayloadWithMemberXmlNameInput)
+    )
+    client.http_payload_with_member_xml_name(
+        _request(HttpPayloadWithMemberXmlNameInputDict)
+    )
+    client.http_payload_with_structure()
+    client.http_payload_with_structure(**_request(HttpPayloadWithStructureInputDict))
+    client.http_payload_with_structure(_request(HttpPayloadWithStructureInput))
+    client.http_payload_with_structure(_request(HttpPayloadWithStructureInputDict))
+    client.http_payload_with_union()
+    client.http_payload_with_union(**_request(HttpPayloadWithUnionInputDict))
+    client.http_payload_with_union(_request(HttpPayloadWithUnionInput))
+    client.http_payload_with_union(_request(HttpPayloadWithUnionInputDict))
+    client.http_payload_with_xml_name()
+    client.http_payload_with_xml_name(**_request(HttpPayloadWithXmlNameInputDict))
+    client.http_payload_with_xml_name(_request(HttpPayloadWithXmlNameInput))
+    client.http_payload_with_xml_name(_request(HttpPayloadWithXmlNameInputDict))
+    client.http_payload_with_xml_namespace()
+    client.http_payload_with_xml_namespace(
+        **_request(HttpPayloadWithXmlNamespaceInputDict)
+    )
+    client.http_payload_with_xml_namespace(_request(HttpPayloadWithXmlNamespaceInput))
+    client.http_payload_with_xml_namespace(
+        _request(HttpPayloadWithXmlNamespaceInputDict)
+    )
+    client.http_payload_with_xml_namespace_and_prefix()
+    client.http_payload_with_xml_namespace_and_prefix(
+        **_request(HttpPayloadWithXmlNamespaceAndPrefixInputDict)
+    )
+    client.http_payload_with_xml_namespace_and_prefix(
+        _request(HttpPayloadWithXmlNamespaceAndPrefixInput)
+    )
+    client.http_payload_with_xml_namespace_and_prefix(
+        _request(HttpPayloadWithXmlNamespaceAndPrefixInputDict)
+    )
+    client.http_prefix_headers()
+    client.http_prefix_headers(**_request(HttpPrefixHeadersInputDict))
+    client.http_prefix_headers(_request(HttpPrefixHeadersInput))
+    client.http_prefix_headers(_request(HttpPrefixHeadersInputDict))
+    client.http_request_with_float_labels(float_=_, double=_)
+    client.http_request_with_float_labels(
+        **_request(HttpRequestWithFloatLabelsInputDict)
+    )
+    client.http_request_with_float_labels(_request(HttpRequestWithFloatLabelsInput))
+    client.http_request_with_float_labels(_request(HttpRequestWithFloatLabelsInputDict))
+    client.http_request_with_greedy_label_in_path(foo=_, baz=_)
+    client.http_request_with_greedy_label_in_path(
+        **_request(HttpRequestWithGreedyLabelInPathInputDict)
+    )
+    client.http_request_with_greedy_label_in_path(
+        _request(HttpRequestWithGreedyLabelInPathInput)
+    )
+    client.http_request_with_greedy_label_in_path(
+        _request(HttpRequestWithGreedyLabelInPathInputDict)
+    )
+    client.http_request_with_labels(
+        string=_, short=_, integer=_, long=_, float_=_, double=_, boolean=_, timestamp=_
+    )
+    client.http_request_with_labels(**_request(HttpRequestWithLabelsInputDict))
+    client.http_request_with_labels(_request(HttpRequestWithLabelsInput))
+    client.http_request_with_labels(_request(HttpRequestWithLabelsInputDict))
+    client.http_request_with_labels_and_timestamp_format(
+        member_epoch_seconds=_,
+        member_http_date=_,
+        member_date_time=_,
+        default_format=_,
+        target_epoch_seconds=_,
+        target_http_date=_,
+        target_date_time=_,
+    )
+    client.http_request_with_labels_and_timestamp_format(
+        **_request(HttpRequestWithLabelsAndTimestampFormatInputDict)
+    )
+    client.http_request_with_labels_and_timestamp_format(
+        _request(HttpRequestWithLabelsAndTimestampFormatInput)
+    )
+    client.http_request_with_labels_and_timestamp_format(
+        _request(HttpRequestWithLabelsAndTimestampFormatInputDict)
+    )
+    client.http_response_code()
+    client.http_response_code(**_request(HttpResponseCodeInputDict))
+    client.http_response_code(_request(HttpResponseCodeInput))
+    client.http_response_code(_request(HttpResponseCodeInputDict))
+    client.http_string_payload()
+    client.http_string_payload(**_request(HttpStringPayloadInputDict))
+    client.http_string_payload(_request(HttpStringPayloadInput))
+    client.http_string_payload(_request(HttpStringPayloadInputDict))
+    client.ignore_query_params_in_response()
+    client.ignore_query_params_in_response(
+        **_request(IgnoreQueryParamsInResponseInputDict)
+    )
+    client.ignore_query_params_in_response(_request(IgnoreQueryParamsInResponseInput))
+    client.ignore_query_params_in_response(
+        _request(IgnoreQueryParamsInResponseInputDict)
+    )
+    client.input_and_output_with_headers()
+    client.input_and_output_with_headers(**_request(InputAndOutputWithHeadersInputDict))
+    client.input_and_output_with_headers(_request(InputAndOutputWithHeadersInput))
+    client.input_and_output_with_headers(_request(InputAndOutputWithHeadersInputDict))
+    client.nested_xml_maps()
+    client.nested_xml_maps(**_request(NestedXmlMapsInputDict))
+    client.nested_xml_maps(_request(NestedXmlMapsInput))
+    client.nested_xml_maps(_request(NestedXmlMapsInputDict))
+    client.nested_xml_map_with_xml_name()
+    client.nested_xml_map_with_xml_name(**_request(NestedXmlMapWithXmlNameInputDict))
+    client.nested_xml_map_with_xml_name(_request(NestedXmlMapWithXmlNameInput))
+    client.nested_xml_map_with_xml_name(_request(NestedXmlMapWithXmlNameInputDict))
+    client.no_input_and_no_output()
+    client.no_input_and_no_output(**_request(NoInputAndNoOutputInputDict))
+    client.no_input_and_no_output(_request(NoInputAndNoOutputInput))
+    client.no_input_and_no_output(_request(NoInputAndNoOutputInputDict))
+    client.no_input_and_output()
+    client.no_input_and_output(**_request(NoInputAndOutputInputDict))
+    client.no_input_and_output(_request(NoInputAndOutputInput))
+    client.no_input_and_output(_request(NoInputAndOutputInputDict))
+    client.null_and_empty_headers_client()
+    client.null_and_empty_headers_client(**_request(NullAndEmptyHeadersClientInputDict))
+    client.null_and_empty_headers_client(_request(NullAndEmptyHeadersClientInput))
+    client.null_and_empty_headers_client(_request(NullAndEmptyHeadersClientInputDict))
+    client.null_and_empty_headers_server()
+    client.null_and_empty_headers_server(**_request(NullAndEmptyHeadersServerInputDict))
+    client.null_and_empty_headers_server(_request(NullAndEmptyHeadersServerInput))
+    client.null_and_empty_headers_server(_request(NullAndEmptyHeadersServerInputDict))
+    client.omits_null_serializes_empty_string()
+    client.omits_null_serializes_empty_string(
+        **_request(OmitsNullSerializesEmptyStringInputDict)
+    )
+    client.omits_null_serializes_empty_string(
+        _request(OmitsNullSerializesEmptyStringInput)
+    )
+    client.omits_null_serializes_empty_string(
+        _request(OmitsNullSerializesEmptyStringInputDict)
+    )
+    client.put_with_content_encoding()
+    client.put_with_content_encoding(**_request(PutWithContentEncodingInputDict))
+    client.put_with_content_encoding(_request(PutWithContentEncodingInput))
+    client.put_with_content_encoding(_request(PutWithContentEncodingInputDict))
+    client.query_idempotency_token_auto_fill()
+    client.query_idempotency_token_auto_fill(
+        **_request(QueryIdempotencyTokenAutoFillInputDict)
+    )
+    client.query_idempotency_token_auto_fill(
+        _request(QueryIdempotencyTokenAutoFillInput)
+    )
+    client.query_idempotency_token_auto_fill(
+        _request(QueryIdempotencyTokenAutoFillInputDict)
+    )
+    client.query_params_as_string_list_map()
+    client.query_params_as_string_list_map(
+        **_request(QueryParamsAsStringListMapInputDict)
+    )
+    client.query_params_as_string_list_map(_request(QueryParamsAsStringListMapInput))
+    client.query_params_as_string_list_map(
+        _request(QueryParamsAsStringListMapInputDict)
+    )
+    client.query_precedence()
+    client.query_precedence(**_request(QueryPrecedenceInputDict))
+    client.query_precedence(_request(QueryPrecedenceInput))
+    client.query_precedence(_request(QueryPrecedenceInputDict))
+    client.recursive_shapes()
+    client.recursive_shapes(**_request(RecursiveShapesInputDict))
+    client.recursive_shapes(_request(RecursiveShapesInput))
+    client.recursive_shapes(_request(RecursiveShapesInputDict))
+    client.simple_scalar_properties()
+    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))
+    client.timestamp_format_headers()
+    client.timestamp_format_headers(**_request(TimestampFormatHeadersInputDict))
+    client.timestamp_format_headers(_request(TimestampFormatHeadersInput))
+    client.timestamp_format_headers(_request(TimestampFormatHeadersInputDict))
+    client.xml_attributes()
+    client.xml_attributes(**_request(XmlAttributesInputDict))
+    client.xml_attributes(_request(XmlAttributesInput))
+    client.xml_attributes(_request(XmlAttributesInputDict))
+    client.xml_attributes_in_middle()
+    client.xml_attributes_in_middle(**_request(XmlAttributesInMiddleInputDict))
+    client.xml_attributes_in_middle(_request(XmlAttributesInMiddleInput))
+    client.xml_attributes_in_middle(_request(XmlAttributesInMiddleInputDict))
+    client.xml_attributes_on_payload()
+    client.xml_attributes_on_payload(**_request(XmlAttributesOnPayloadInputDict))
+    client.xml_attributes_on_payload(_request(XmlAttributesOnPayloadInput))
+    client.xml_attributes_on_payload(_request(XmlAttributesOnPayloadInputDict))
+    client.xml_blobs()
+    client.xml_blobs(**_request(XmlBlobsInputDict))
+    client.xml_blobs(_request(XmlBlobsInput))
+    client.xml_blobs(_request(XmlBlobsInputDict))
+    client.xml_empty_blobs()
+    client.xml_empty_blobs(**_request(XmlEmptyBlobsInputDict))
+    client.xml_empty_blobs(_request(XmlEmptyBlobsInput))
+    client.xml_empty_blobs(_request(XmlEmptyBlobsInputDict))
+    client.xml_empty_lists()
+    client.xml_empty_lists(**_request(XmlEmptyListsInputDict))
+    client.xml_empty_lists(_request(XmlEmptyListsInput))
+    client.xml_empty_lists(_request(XmlEmptyListsInputDict))
+    client.xml_empty_maps()
+    client.xml_empty_maps(**_request(XmlEmptyMapsInputDict))
+    client.xml_empty_maps(_request(XmlEmptyMapsInput))
+    client.xml_empty_maps(_request(XmlEmptyMapsInputDict))
+    client.xml_empty_strings()
+    client.xml_empty_strings(**_request(XmlEmptyStringsInputDict))
+    client.xml_empty_strings(_request(XmlEmptyStringsInput))
+    client.xml_empty_strings(_request(XmlEmptyStringsInputDict))
+    client.xml_enums()
+    client.xml_enums(**_request(XmlEnumsInputDict))
+    client.xml_enums(_request(XmlEnumsInput))
+    client.xml_enums(_request(XmlEnumsInputDict))
+    client.xml_int_enums()
+    client.xml_int_enums(**_request(XmlIntEnumsInputDict))
+    client.xml_int_enums(_request(XmlIntEnumsInput))
+    client.xml_int_enums(_request(XmlIntEnumsInputDict))
+    client.xml_lists()
+    client.xml_lists(**_request(XmlListsInputDict))
+    client.xml_lists(_request(XmlListsInput))
+    client.xml_lists(_request(XmlListsInputDict))
+    client.xml_maps()
+    client.xml_maps(**_request(XmlMapsInputDict))
+    client.xml_maps(_request(XmlMapsInput))
+    client.xml_maps(_request(XmlMapsInputDict))
+    client.xml_maps_xml_name()
+    client.xml_maps_xml_name(**_request(XmlMapsXmlNameInputDict))
+    client.xml_maps_xml_name(_request(XmlMapsXmlNameInput))
+    client.xml_maps_xml_name(_request(XmlMapsXmlNameInputDict))
+    client.xml_map_with_xml_namespace()
+    client.xml_map_with_xml_namespace(**_request(XmlMapWithXmlNamespaceInputDict))
+    client.xml_map_with_xml_namespace(_request(XmlMapWithXmlNamespaceInput))
+    client.xml_map_with_xml_namespace(_request(XmlMapWithXmlNamespaceInputDict))
+    client.xml_namespaces()
+    client.xml_namespaces(**_request(XmlNamespacesInputDict))
+    client.xml_namespaces(_request(XmlNamespacesInput))
+    client.xml_namespaces(_request(XmlNamespacesInputDict))
+    client.xml_timestamps()
+    client.xml_timestamps(**_request(XmlTimestampsInputDict))
+    client.xml_timestamps(_request(XmlTimestampsInput))
+    client.xml_timestamps(_request(XmlTimestampsInputDict))
+    client.xml_unions()
+    client.xml_unions(**_request(XmlUnionsInputDict))
+    client.xml_unions(_request(XmlUnionsInput))
+    client.xml_unions(_request(XmlUnionsInputDict))

@@ -68,6 +68,9 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     private static final String SHAPES_FILE = "models";
     private static final String SCHEMAS_FILE = "_private/schemas";
     private static final Set<String> CLIENT_RESERVED_METHOD_NAMES = Set.of("close");
+    // The names every generated client method uses besides its input members: the
+    // parameters it declares, and the models module alias its body references.
+    private static final Set<String> OPERATION_PARAMETER_NAMES = Set.of("self", "plugins", "_models");
 
     private final Model model;
     private final ReservedWordSymbolProvider.Escaper escaper;
@@ -146,17 +149,25 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
             return "message";
         }
 
-        var memberName = escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getMemberName()));
-        if (memberName.startsWith("__") && !memberName.endsWith("__")) {
-            memberName += "___";
-        }
-
-        // Escape words that are only reserved for error members.
-        if (shape.hasTrait(ErrorTrait.class)) {
-            memberName = errorMemberEscaper.escapeMemberName(memberName);
-        }
-
+        var memberName = escapeMemberWord(shape);
         var container = model.expectShape(shape.getContainer());
+
+        // An operation's input members are the keyword parameters of its client
+        // method, so a member named like one of the method's own parameters, or
+        // like a module alias its body uses, is escaped. Members of nested
+        // structures are not parameters and keep their names.
+        if (OPERATION_PARAMETER_NAMES.contains(memberName)
+                && operationIndex.isInputStructure(container)) {
+            var reserved = memberName;
+            var escaped = escapeOperationParameter(container, memberName);
+            LOGGER.warning(() -> format(
+                    "Escaped generated Python name for Smithy member %s from \"%s\" to \"%s\" because every client operation method already uses the name \"%s\".",
+                    shape.getId(),
+                    reserved,
+                    escaped,
+                    reserved));
+            return escaped;
+        }
 
         // The response metadata attribute is added to operation outputs and errors
         // by the generator, so a modeled member of the same name is escaped to keep
@@ -186,6 +197,38 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
             memberName = memberName.toUpperCase(Locale.ENGLISH);
         }
         return memberName;
+    }
+
+    // The snake-cased member name with Python's reserved words escaped.
+    private String escapeMemberWord(MemberShape shape) {
+        var memberName = escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getMemberName()));
+        if (memberName.startsWith("__") && !memberName.endsWith("__")) {
+            memberName += "___";
+        }
+
+        // Escape words that are only reserved for error members.
+        if (shape.hasTrait(ErrorTrait.class)) {
+            memberName = errorMemberEscaper.escapeMemberName(memberName);
+        }
+        return memberName;
+    }
+
+    /**
+     * Appends underscores to an operation input member's name until it no longer
+     * collides with a name the client method already uses or with another member.
+     *
+     * <p>CAUTION: smithy_core._model_naming.escape_input_member_names mirrors this.
+     */
+    private String escapeOperationParameter(Shape container, String memberName) {
+        var taken = new HashSet<String>();
+        for (MemberShape sibling : container.members()) {
+            taken.add(escapeMemberWord(sibling));
+        }
+        var escaped = escapeWord(memberName);
+        while (taken.contains(escaped)) {
+            escaped = escapeWord(escaped);
+        }
+        return escaped;
     }
 
     /**

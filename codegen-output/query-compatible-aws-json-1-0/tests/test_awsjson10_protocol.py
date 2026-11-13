@@ -17,7 +17,7 @@ from smithy_http.interfaces import (
 
 from querycompatibleawsjson10.aio.client import AsyncQueryCompatibleJSONRPC10Client
 from querycompatibleawsjson10.aio.config import AsyncQueryCompatibleJSONRPC10Config
-from querycompatibleawsjson10.models import QueryCompatibleOperationInput, ServiceError
+from querycompatibleawsjson10.models import ServiceError
 
 
 async def test_query_compatible_aws_json10_cbor_sends_query_mode_header_request_query_compatible_operation() -> (
@@ -39,10 +39,8 @@ async def test_query_compatible_aws_json10_cbor_sends_query_mode_header_request_
         )
     )
 
-    input_ = QueryCompatibleOperationInput()
-
     try:
-        await client.query_compatible_operation(input_)
+        await client.query_compatible_operation()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -120,10 +118,8 @@ async def test_query_compatible_aws_json10_no_custom_code_error_error_query_comp
         )
     )
 
-    input_ = QueryCompatibleOperationInput()
-
     try:
-        await client.query_compatible_operation(input_)
+        await client.query_compatible_operation()
         fail("Expected 'NoCustomCodeError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "NoCustomCodeError":
@@ -154,10 +150,8 @@ async def test_query_compatible_aws_json10_custom_code_error_error_query_compati
         )
     )
 
-    input_ = QueryCompatibleOperationInput()
-
     try:
-        await client.query_compatible_operation(input_)
+        await client.query_compatible_operation()
         fail("Expected 'CustomCodeError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "CustomCodeError":

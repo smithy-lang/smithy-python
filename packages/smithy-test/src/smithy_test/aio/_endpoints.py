@@ -8,7 +8,7 @@ is ``{"endpoint": {"url": ..., "headers": ..., "properties": ...}}`` or
 """
 
 from collections.abc import Awaitable, Callable, Mapping, Sequence
-from typing import Any
+from typing import Any, Concatenate
 
 from smithy_core.endpoints import RulesExtension
 from smithy_core.exceptions import EndpointResolutionError
@@ -23,10 +23,10 @@ from .._private.endpoints import (
 )
 
 
-async def check_client_case_async[C, I](
+async def check_client_case_async[C](
     client: Callable[[Interceptor[Any, Any, Any, Any]], Awaitable[C]],
-    operation: Callable[[C, I], Awaitable[Any]],
-    input: I,
+    operation: Callable[Concatenate[C, ...], Awaitable[Any]],
+    input: Mapping[str, Any],
     expect: Mapping[str, Any],
     *,
     extensions: Sequence[RulesExtension] = (),
@@ -36,8 +36,10 @@ async def check_client_case_async[C, I](
     :param client: Builds the client with an interceptor added to its config, which
         stops the call once its endpoint is applied to the request, so nothing is
         signed or sent.
-    :param operation: The client's operation method.
-    :param input: The operation input.
+    :param operation: The client's operation method, which takes the members of its
+        input as keyword arguments.
+    :param input: The keyword arguments of the call, by parameter name. The values are
+        passed as they are, so a nested value may be a model or a dictionary.
     :param expect: The case's expected endpoint or error.
     :param extensions: The rules extensions the client's endpoint resolver uses. Their
         factories build the auth schemes in the expected endpoint.
@@ -47,7 +49,7 @@ async def check_client_case_async[C, I](
     """
     instance = await client(CaptureEndpoint())
     try:
-        await operation(instance, input)
+        await operation(instance, **input)
     except EndpointCaptured as captured:
         check_endpoint(expect, captured.endpoint, extensions)
         check_destination(captured.endpoint, captured.request, captured.host_prefix)

@@ -503,20 +503,33 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
 
         Cached because the client reads it on every call.
         """
-        member = self.idempotency_token_member
-        if member is None:
+        token = self.idempotency_token_member
+        if token is None:
             return None
 
         # Imported here so that importing schemas doesn't load the naming module.
-        from ._model_naming import member_field_name
+        from ._model_naming import escape_input_member_names, member_field_name
 
         # Same derivation the generated input dataclass used for its field names.
         # Operation inputs are never errors, enums or outputs.
-        return member_field_name(
-            member.expect_member_name(),
-            is_error=False,
-            carries_response_metadata=False,
-            is_enum=False,
+        input_schema = self.input_schema
+        members = tuple(input_schema.members.values())
+        names = tuple(
+            member_field_name(
+                member.expect_member_name(),
+                is_error=False,
+                carries_response_metadata=False,
+                is_enum=False,
+            )
+            for member in members
+        )
+        # A member named like one of the client method's own parameters is escaped
+        # past its siblings, so the token's name depends on every member's.
+        # CAUTION: ModelRegistry._compute_field_names escapes on the same condition.
+        if input_schema.get_trait(ShapeID("smithy.api#input")) is not None:
+            names = escape_input_member_names(names)
+        return next(
+            name for member, name in zip(members, names, strict=True) if member is token
         )
 
     @cached_property
@@ -532,13 +545,35 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
 
         from string import Formatter
 
-        from ._model_naming import member_field_name
+        from ._model_naming import escape_input_member_names, member_field_name
 
-        # Labels are member names, which are valid format fields.
+        # Same derivation the generated input dataclass used for its field names.
+        # Operation inputs are never errors, enums or outputs.
+        input_schema = self.input_schema
+        member_names = tuple(input_schema.members)
+        names = tuple(
+            member_field_name(
+                name,
+                is_error=False,
+                carries_response_metadata=False,
+                is_enum=False,
+            )
+            for name in member_names
+        )
+        # A member named like one of the client method's own parameters is escaped
+        # past its siblings, so a label's name depends on every member's.
+        # CAUTION: ModelRegistry._compute_field_names escapes on the same condition.
+        if input_schema.get_trait(ShapeID("smithy.api#input")) is not None:
+            names = escape_input_member_names(names)
+        field_names = dict(zip(member_names, names, strict=True))
+
+        # Labels are member names, which are valid format fields. A label that names
+        # no member keeps its plain derivation, so expansion reports it as invalid.
         labels = tuple(
             (
                 label,
-                member_field_name(
+                field_names.get(label)
+                or member_field_name(
                     label,
                     is_error=False,
                     carries_response_metadata=False,

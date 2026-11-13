@@ -20,7 +20,7 @@ commands, fails -- which a single ``initial-request``-only assertion could not c
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
 from types import ModuleType
-from typing import Any
+from typing import Any, Literal
 
 from smithy_aws_event_stream.events import Event
 from smithy_core import URI
@@ -62,6 +62,13 @@ class GameProtocol:
     payload_content_type: str
     smithy_protocol: str
     codec: Codec | None = None
+
+
+RequestForm = Literal["keywords", "model", "params"]
+"""How the game's request is passed: as keyword arguments, or whole and positionally
+as the input model or its dictionary form."""
+
+REQUEST_FORMS: tuple[RequestForm, ...] = ("keywords", "model", "params")
 
 
 def action(command: str) -> str:
@@ -127,8 +134,14 @@ def simon_referee(
     return referee, moves
 
 
-async def play_simon_says(protocol: GameProtocol) -> None:
-    """Play one full game and assert the client obeyed every command."""
+async def play_simon_says(
+    protocol: GameProtocol, request_form: RequestForm = "keywords"
+) -> None:
+    """Play one full game and assert the client obeyed every command.
+
+    ``request_form`` is how the operation's request is passed; every form starts
+    the same game.
+    """
     models = protocol.models
     bound: dict[str, Codec] = {}
     if protocol.codec is not None:
@@ -152,9 +165,14 @@ async def play_simon_says(protocol: GameProtocol) -> None:
         bound.setdefault("codec", config.protocol.payload_codec)
         client = protocol.client_class(config)
 
-        stream = await client.trade_event_stream(
-            models.TradeEventStreamInput(session_id="player-1")
-        )
+        if request_form == "keywords":
+            stream = await client.trade_event_stream(session_id="player-1")
+        elif request_form == "model":
+            stream = await client.trade_event_stream(
+                models.TradeEventStreamInput(session_id="player-1")
+            )
+        else:
+            stream = await client.trade_event_stream({"session_id": "player-1"})
         output, output_stream = await stream.await_output()
         assert output.greeting == "lets play"
 

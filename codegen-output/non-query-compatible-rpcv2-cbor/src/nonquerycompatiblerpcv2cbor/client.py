@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.chain.resolver import IdentityChain
@@ -19,10 +19,7 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .models import (
-        NonQueryCompatibleOperationInput,
-        NonQueryCompatibleOperationOutput,
-    )
+    from .models import NonQueryCompatibleOperationOutput
 
 
 logger = logging.getLogger(__name__)
@@ -35,17 +32,28 @@ class NonQueryCompatibleRpcV2ProtocolClient(
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     def non_query_compatible_operation(
         self,
-        input: NonQueryCompatibleOperationInput | None = None,
+        request: _models.NonQueryCompatibleOperationInput
+        | _models.NonQueryCompatibleOperationInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> NonQueryCompatibleOperationOutput: ...
+
+    @_overload
+    def non_query_compatible_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NonQueryCompatibleOperationInputDict],
     ) -> NonQueryCompatibleOperationOutput:
         """
         Invokes the NonQueryCompatibleOperation operation.
 
         Args:
-            input:
-                An instance of `NonQueryCompatibleOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -55,7 +63,16 @@ class NonQueryCompatibleRpcV2ProtocolClient(
         Returns:
             An instance of `NonQueryCompatibleOperationOutput`.
         """
-        return self._invoke(input, _models.NON_QUERY_COMPATIBLE_OPERATION, [], plugins)
+
+    def non_query_compatible_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NonQueryCompatibleOperationOutput:
+        return self._invoke(
+            self._select_input(_models.NON_QUERY_COMPATIBLE_OPERATION, args, kwargs),
+            _models.NON_QUERY_COMPATIBLE_OPERATION,
+            [],
+            plugins,
+        )
 
     def _new_config(self) -> NonQueryCompatibleRpcV2ProtocolConfig:
         return NonQueryCompatibleRpcV2ProtocolConfig.resolve()

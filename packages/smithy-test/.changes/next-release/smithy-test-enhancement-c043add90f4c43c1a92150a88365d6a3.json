@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "`verify_models` expects operation input members named `plugins` or `self` under their escaped names."
+}

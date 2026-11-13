@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 import pytest
@@ -125,7 +126,10 @@ class _Request:
 
 
 class _Client:
-    """Runs the hook the capture interceptor uses, as the request pipeline does."""
+    """Runs the hook the capture interceptor uses, as the request pipeline does.
+
+    Its operations take keyword arguments only, as a generated client's do.
+    """
 
     ENDPOINT = Endpoint(uri=URI(host="h.example.com", path="/p", query="a=b"))
 
@@ -133,7 +137,7 @@ class _Client:
         self.interceptor = interceptor
 
     async def send(
-        self, destination: URI, properties: TypedProperties | None = None
+        self, *, destination: URI, properties: TypedProperties | None = None
     ) -> None:
         properties = properties or TypedProperties()
         properties[RESOLVED_ENDPOINT] = self.ENDPOINT
@@ -144,13 +148,16 @@ class _Client:
         )
         self.interceptor.read_before_signing(context)
 
-    async def send_with_host_prefix(self, destination: URI) -> None:
-        await self.send(destination, TypedProperties({HOST_PREFIX.key: "data."}))
+    async def send_with_host_prefix(self, *, destination: URI) -> None:
+        await self.send(
+            destination=destination,
+            properties=TypedProperties({HOST_PREFIX.key: "data."}),
+        )
 
-    async def fail(self, input: None) -> None:
+    async def fail(self) -> None:
         raise EndpointResolutionError("Missing Region")
 
-    async def complete(self, input: None) -> None:
+    async def complete(self) -> None:
         pass
 
 
@@ -163,7 +170,37 @@ CLIENT_ENDPOINT = {"endpoint": {"url": "https://h.example.com/p?a=b"}}
 
 async def test_client_cases_check_the_captured_endpoint_and_request() -> None:
     destination = URI(host="h.example.com", path="/p/op", query="a=b&x=y")
-    await check_client_case_async(_client, _Client.send, destination, CLIENT_ENDPOINT)
+    await check_client_case_async(
+        _client, _Client.send, {"destination": destination}, CLIENT_ENDPOINT
+    )
+
+
+async def test_client_cases_pass_the_input_as_keyword_arguments() -> None:
+    calls: list[dict[str, Any]] = []
+
+    async def operation(
+        client: _Client, *, name: str, tag: object, plugins: None = None
+    ) -> None:
+        calls.append({"name": name, "tag": tag, "plugins": plugins})
+        raise EndpointResolutionError("Missing Region")
+
+    # A read-only mapping shows the input is unpacked, not changed, and a value
+    # that is a model is handed to the operation as the same object.
+    tag = object()
+    input = MappingProxyType({"name": "n", "tag": tag})
+    await check_client_case_async(
+        _client, operation, input, {"error": "Missing Region"}
+    )
+
+    assert calls == [{"name": "n", "tag": tag, "plugins": None}]
+    assert calls[0]["tag"] is tag
+
+
+async def test_client_cases_reject_input_the_operation_does_not_take() -> None:
+    with pytest.raises(TypeError, match="unexpected keyword argument 'unknown'"):
+        await check_client_case_async(
+            _client, _Client.fail, {"unknown": 1}, {"error": "Missing Region"}
+        )
 
 
 @pytest.mark.parametrize(
@@ -180,37 +217,40 @@ async def test_client_cases_fail_on_requests_outside_the_endpoint(
 ) -> None:
     with pytest.raises(AssertionError, match="Expected request destination"):
         await check_client_case_async(
-            _client, _Client.send, destination, CLIENT_ENDPOINT
+            _client, _Client.send, {"destination": destination}, CLIENT_ENDPOINT
         )
 
 
 async def test_client_cases_expect_the_host_prefix_on_the_destination() -> None:
     destination = URI(host="data.h.example.com", path="/p", query="a=b")
     await check_client_case_async(
-        _client, _Client.send_with_host_prefix, destination, CLIENT_ENDPOINT
+        _client,
+        _Client.send_with_host_prefix,
+        {"destination": destination},
+        CLIENT_ENDPOINT,
     )
 
     with pytest.raises(AssertionError, match=r"with host prefix 'data\.'"):
         await check_client_case_async(
             _client,
             _Client.send_with_host_prefix,
-            URI(host="h.example.com", path="/p", query="a=b"),
+            {"destination": URI(host="h.example.com", path="/p", query="a=b")},
             CLIENT_ENDPOINT,
         )
 
 
 async def test_client_cases_check_resolution_errors() -> None:
     await check_client_case_async(
-        _client, _Client.fail, None, {"error": "Missing Region"}
+        _client, _Client.fail, {}, {"error": "Missing Region"}
     )
     with pytest.raises(AssertionError, match="got the error Missing Region"):
         await check_client_case_async(
-            _client, _Client.fail, None, {"endpoint": {"url": "https://h.example.com"}}
+            _client, _Client.fail, {}, {"endpoint": {"url": "https://h.example.com"}}
         )
 
 
 async def test_client_cases_fail_when_no_endpoint_is_resolved() -> None:
     with pytest.raises(AssertionError, match="without resolving an endpoint"):
         await check_client_case_async(
-            _client, _Client.complete, None, {"error": "Missing Region"}
+            _client, _Client.complete, {}, {"error": "Missing Region"}
         )

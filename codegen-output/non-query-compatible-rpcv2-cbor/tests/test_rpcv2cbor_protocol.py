@@ -20,10 +20,7 @@ from nonquerycompatiblerpcv2cbor.aio.client import (
 from nonquerycompatiblerpcv2cbor.aio.config import (
     AsyncNonQueryCompatibleRpcV2ProtocolConfig,
 )
-from nonquerycompatiblerpcv2cbor.models import (
-    NonQueryCompatibleOperationInput,
-    ServiceError,
-)
+from nonquerycompatiblerpcv2cbor.models import ServiceError
 
 
 async def test_non_query_compatible_rpc_v2_cbor_forbids_query_mode_header_request_non_query_compatible_operation() -> (
@@ -42,10 +39,8 @@ async def test_non_query_compatible_rpc_v2_cbor_forbids_query_mode_header_reques
         )
     )
 
-    input_ = NonQueryCompatibleOperationInput()
-
     try:
-        await client.non_query_compatible_operation(input_)
+        await client.non_query_compatible_operation()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request

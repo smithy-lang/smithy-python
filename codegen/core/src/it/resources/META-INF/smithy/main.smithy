@@ -24,7 +24,110 @@ service Weather {
         GetCurrentTime
         TestUnionListOperation
         StreamAtmosphericConditions
+        CreateConnector
+        UploadCityImage
     ]
+}
+
+// Exercises a streaming request body. The two clients accept different bodies, so
+// the input has a dictionary form for each.
+@idempotent
+@http(method: "PUT", uri: "/city-images/{name}")
+operation UploadCityImage {
+    input := {
+        @required
+        @httpLabel
+        name: String
+
+        @required
+        @httpPayload
+        image: CityImageData
+    }
+}
+
+// Exercises keyword operation inputs: required, defaulted, and idempotency token
+// members, every kind of nested shape, and members named like the parameters every
+// client method declares.
+@http(method: "POST", uri: "/connectors")
+operation CreateConnector {
+    input := {
+        @required
+        name: String
+
+        // Collides with the per-request `plugins` parameter. The modeled
+        // `plugins_` member below takes the first escaped name.
+        @required
+        plugins: StringList
+
+        plugins_: String
+
+        // Collides with the bound instance parameter.
+        self: String
+
+        @required
+        @idempotencyToken
+        clientToken: String
+
+        @required
+        pageSize: Integer = 10
+
+        connector: Connector
+
+        connectors: ConnectorList
+
+        sparseConnectors: SparseConnectorList
+
+        connectorsByName: ConnectorMap
+
+        image: ImageType
+
+        recursive: RecursiveUnion
+
+        mutual: MutuallyRecursiveA
+
+        // A shape whose name already ends in the dictionary-form suffix.
+        connectorParams: ConnectorDict
+
+        settings: Document
+
+        kind: StringYesNo
+
+        createdAfter: Timestamp
+    }
+
+    output := {
+        connector: Connector
+    }
+}
+
+structure Connector {
+    @required
+    name: String
+
+    @required
+    version: Integer = 1
+
+    plugins: StringList
+
+    image: ImageType
+}
+
+structure ConnectorDict {
+    value: String
+}
+
+list ConnectorList {
+    member: Connector
+}
+
+@sparse
+list SparseConnectorList {
+    member: Connector
+}
+
+map ConnectorMap {
+    key: String
+    value: Connector
 }
 
 resource City {

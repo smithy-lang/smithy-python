@@ -162,7 +162,7 @@ class Client[C](_ClientBase[C]):
 
     def _invoke[I: SerializeableShape, O: DeserializeableShape](
         self,
-        input: I | None,
+        input: I | dict[str, Any] | None,
         operation: APIOperation[I, O],
         default_plugins: list[Callable[[C], None]],
         plugins: list[Callable[[C], None]] | None,
@@ -172,13 +172,14 @@ class Client[C](_ClientBase[C]):
 
     def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
         self,
-        input: I | None,
+        input: I | dict[str, Any] | None,
         operation: APIOperation[I, O],
         default_plugins: list[Callable[[C], None]],
         plugins: list[Callable[[C], None]] | None,
     ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+        model = self._build_input(input, operation)
         self._raise_if_closed()
         config = self._ensure_setup()
         return run_program(
-            self._prepare(config, input, operation, default_plugins, plugins)
+            self._prepare(config, model, operation, default_plugins, plugins)
         )

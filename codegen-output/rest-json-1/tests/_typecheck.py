@@ -2,262 +2,401 @@
 
 from typing import Any
 
+from restjson.aio.client import AsyncRestJsonProtocolClient
+from restjson.client import RestJsonProtocolClient
 from restjson.models import (
     AllQueryStringTypesInput,
+    AllQueryStringTypesInputDict,
     AllQueryStringTypesOutput,
+    AsyncStreamingTraitsInputDict,
+    AsyncStreamingTraitsRequireLengthInputDict,
+    AsyncStreamingTraitsWithMediaTypeInputDict,
     BlobPayloadEvent,
     ClientOptionalDefaults,
+    ClientOptionalDefaultsDict,
     ComplexNestedErrorData,
     ConstantAndVariableQueryStringInput,
+    ConstantAndVariableQueryStringInputDict,
     ConstantAndVariableQueryStringOutput,
     ConstantQueryStringInput,
+    ConstantQueryStringInputDict,
     ConstantQueryStringOutput,
     ContentTypeParametersInput,
+    ContentTypeParametersInputDict,
     ContentTypeParametersOutput,
     DatetimeOffsetsInput,
+    DatetimeOffsetsInputDict,
     DatetimeOffsetsOutput,
     Defaults,
+    DefaultsDict,
     Dialog,
+    DialogDict,
     DocumentTypeAsMapValueInput,
+    DocumentTypeAsMapValueInputDict,
     DocumentTypeAsMapValueOutput,
     DocumentTypeAsPayloadInput,
+    DocumentTypeAsPayloadInputDict,
     DocumentTypeAsPayloadOutput,
     DocumentTypeInput,
+    DocumentTypeInputDict,
     DocumentTypeOutput,
     DuplexStreamInput,
+    DuplexStreamInputDict,
     DuplexStreamOutput,
     DuplexStreamWithDistinctStreamsInput,
+    DuplexStreamWithDistinctStreamsInputDict,
     DuplexStreamWithDistinctStreamsOutput,
     DuplexStreamWithInitialMessagesInput,
+    DuplexStreamWithInitialMessagesInputDict,
     DuplexStreamWithInitialMessagesOutput,
     EmptyInputAndEmptyOutputInput,
+    EmptyInputAndEmptyOutputInputDict,
     EmptyInputAndEmptyOutputOutput,
     EndpointOperationInput,
+    EndpointOperationInputDict,
     EndpointOperationOutput,
     EndpointWithHostLabelOperationInput,
+    EndpointWithHostLabelOperationInputDict,
     EndpointWithHostLabelOperationOutput,
     Farewell,
+    FarewellDict,
     FractionalSecondsInput,
+    FractionalSecondsInputDict,
     FractionalSecondsOutput,
     GreetingStruct,
+    GreetingStructDict,
     GreetingWithErrorsInput,
+    GreetingWithErrorsInputDict,
     GreetingWithErrorsOutput,
     HeadersAndExplicitPayloadEvent,
     HeadersAndImplicitPayloadEvent,
     HeadersEvent,
     HostWithPathOperationInput,
+    HostWithPathOperationInputDict,
     HostWithPathOperationOutput,
     HttpChecksumRequiredInput,
+    HttpChecksumRequiredInputDict,
     HttpChecksumRequiredOutput,
     HttpEmptyPrefixHeadersInput,
+    HttpEmptyPrefixHeadersInputDict,
     HttpEmptyPrefixHeadersOutput,
     HttpEnumPayloadInput,
+    HttpEnumPayloadInputDict,
     HttpEnumPayloadOutput,
     HttpPayloadTraitsInput,
+    HttpPayloadTraitsInputDict,
     HttpPayloadTraitsOutput,
     HttpPayloadTraitsWithMediaTypeInput,
+    HttpPayloadTraitsWithMediaTypeInputDict,
     HttpPayloadTraitsWithMediaTypeOutput,
     HttpPayloadWithStructureInput,
+    HttpPayloadWithStructureInputDict,
     HttpPayloadWithStructureOutput,
     HttpPayloadWithUnionInput,
+    HttpPayloadWithUnionInputDict,
     HttpPayloadWithUnionOutput,
     HttpPrefixHeadersInResponseInput,
+    HttpPrefixHeadersInResponseInputDict,
     HttpPrefixHeadersInResponseOutput,
     HttpPrefixHeadersInput,
+    HttpPrefixHeadersInputDict,
     HttpPrefixHeadersOutput,
     HttpQueryParamsOnlyOperationInput,
+    HttpQueryParamsOnlyOperationInputDict,
     HttpQueryParamsOnlyOperationOutput,
     HttpRequestWithFloatLabelsInput,
+    HttpRequestWithFloatLabelsInputDict,
     HttpRequestWithFloatLabelsOutput,
     HttpRequestWithGreedyLabelInPathInput,
+    HttpRequestWithGreedyLabelInPathInputDict,
     HttpRequestWithGreedyLabelInPathOutput,
     HttpRequestWithLabelsAndTimestampFormatInput,
+    HttpRequestWithLabelsAndTimestampFormatInputDict,
     HttpRequestWithLabelsAndTimestampFormatOutput,
     HttpRequestWithLabelsInput,
+    HttpRequestWithLabelsInputDict,
     HttpRequestWithLabelsOutput,
     HttpRequestWithRegexLiteralInput,
+    HttpRequestWithRegexLiteralInputDict,
     HttpRequestWithRegexLiteralOutput,
     HttpResponseCodeInput,
+    HttpResponseCodeInputDict,
     HttpResponseCodeOutput,
     HttpStringPayloadInput,
+    HttpStringPayloadInputDict,
     HttpStringPayloadOutput,
     IgnoreQueryParamsInResponseInput,
+    IgnoreQueryParamsInResponseInputDict,
     IgnoreQueryParamsInResponseOutput,
     InputAndOutputWithHeadersInput,
+    InputAndOutputWithHeadersInputDict,
     InputAndOutputWithHeadersOutput,
     InputStreamInput,
+    InputStreamInputDict,
     InputStreamOutput,
     InputStreamWithInitialRequestInput,
+    InputStreamWithInitialRequestInputDict,
     InputStreamWithInitialRequestOutput,
     JsonBlobsInput,
+    JsonBlobsInputDict,
     JsonBlobsOutput,
     JsonEnumsInput,
+    JsonEnumsInputDict,
     JsonEnumsOutput,
     JsonIntEnumsInput,
+    JsonIntEnumsInputDict,
     JsonIntEnumsOutput,
     JsonListsInput,
+    JsonListsInputDict,
     JsonListsOutput,
     JsonMapsInput,
+    JsonMapsInputDict,
     JsonMapsOutput,
     JsonTimestampsInput,
+    JsonTimestampsInputDict,
     JsonTimestampsOutput,
     JsonUnionsInput,
+    JsonUnionsInputDict,
     JsonUnionsOutput,
     MalformedAcceptWithBodyInput,
+    MalformedAcceptWithBodyInputDict,
     MalformedAcceptWithBodyOutput,
     MalformedAcceptWithGenericStringInput,
+    MalformedAcceptWithGenericStringInputDict,
     MalformedAcceptWithGenericStringOutput,
     MalformedAcceptWithPayloadInput,
+    MalformedAcceptWithPayloadInputDict,
     MalformedAcceptWithPayloadOutput,
     MalformedBlobInput,
+    MalformedBlobInputDict,
     MalformedBlobOutput,
     MalformedBooleanInput,
+    MalformedBooleanInputDict,
     MalformedBooleanOutput,
     MalformedByteInput,
+    MalformedByteInputDict,
     MalformedByteOutput,
     MalformedContentTypeWithBodyInput,
+    MalformedContentTypeWithBodyInputDict,
     MalformedContentTypeWithBodyOutput,
     MalformedContentTypeWithGenericStringInput,
+    MalformedContentTypeWithGenericStringInputDict,
     MalformedContentTypeWithGenericStringOutput,
     MalformedContentTypeWithPayloadInput,
+    MalformedContentTypeWithPayloadInputDict,
     MalformedContentTypeWithPayloadOutput,
     MalformedContentTypeWithoutBodyEmptyInputInput,
+    MalformedContentTypeWithoutBodyEmptyInputInputDict,
     MalformedContentTypeWithoutBodyEmptyInputOutput,
     MalformedContentTypeWithoutBodyInput,
+    MalformedContentTypeWithoutBodyInputDict,
     MalformedContentTypeWithoutBodyOutput,
     MalformedDoubleInput,
+    MalformedDoubleInputDict,
     MalformedDoubleOutput,
     MalformedFloatInput,
+    MalformedFloatInputDict,
     MalformedFloatOutput,
     MalformedIntegerInput,
+    MalformedIntegerInputDict,
     MalformedIntegerOutput,
     MalformedListInput,
+    MalformedListInputDict,
     MalformedListOutput,
     MalformedLongInput,
+    MalformedLongInputDict,
     MalformedLongOutput,
     MalformedMapInput,
+    MalformedMapInputDict,
     MalformedMapOutput,
     MalformedRequestBodyInput,
+    MalformedRequestBodyInputDict,
     MalformedRequestBodyOutput,
     MalformedShortInput,
+    MalformedShortInputDict,
     MalformedShortOutput,
     MalformedStringInput,
+    MalformedStringInputDict,
     MalformedStringOutput,
     MalformedTimestampBodyDateTimeInput,
+    MalformedTimestampBodyDateTimeInputDict,
     MalformedTimestampBodyDateTimeOutput,
     MalformedTimestampBodyDefaultInput,
+    MalformedTimestampBodyDefaultInputDict,
     MalformedTimestampBodyDefaultOutput,
     MalformedTimestampBodyHttpDateInput,
+    MalformedTimestampBodyHttpDateInputDict,
     MalformedTimestampBodyHttpDateOutput,
     MalformedTimestampHeaderDateTimeInput,
+    MalformedTimestampHeaderDateTimeInputDict,
     MalformedTimestampHeaderDateTimeOutput,
     MalformedTimestampHeaderDefaultInput,
+    MalformedTimestampHeaderDefaultInputDict,
     MalformedTimestampHeaderDefaultOutput,
     MalformedTimestampHeaderEpochInput,
+    MalformedTimestampHeaderEpochInputDict,
     MalformedTimestampHeaderEpochOutput,
     MalformedTimestampPathDefaultInput,
+    MalformedTimestampPathDefaultInputDict,
     MalformedTimestampPathDefaultOutput,
     MalformedTimestampPathEpochInput,
+    MalformedTimestampPathEpochInputDict,
     MalformedTimestampPathEpochOutput,
     MalformedTimestampPathHttpDateInput,
+    MalformedTimestampPathHttpDateInputDict,
     MalformedTimestampPathHttpDateOutput,
     MalformedTimestampQueryDefaultInput,
+    MalformedTimestampQueryDefaultInputDict,
     MalformedTimestampQueryDefaultOutput,
     MalformedTimestampQueryEpochInput,
+    MalformedTimestampQueryEpochInputDict,
     MalformedTimestampQueryEpochOutput,
     MalformedTimestampQueryHttpDateInput,
+    MalformedTimestampQueryHttpDateInputDict,
     MalformedTimestampQueryHttpDateOutput,
     MalformedUnionInput,
+    MalformedUnionInputDict,
     MalformedUnionOutput,
     MediaTypeHeaderInput,
+    MediaTypeHeaderInputDict,
     MediaTypeHeaderOutput,
+    MyUnionDict,
     NestedPayload,
+    NestedPayloadDict,
+    NestedUnionDict,
     NoInputAndNoOutputInput,
+    NoInputAndNoOutputInputDict,
     NoInputAndNoOutputOutput,
     NoInputAndOutputInput,
+    NoInputAndOutputInputDict,
     NoInputAndOutputOutput,
     NullAndEmptyHeadersClientInput,
+    NullAndEmptyHeadersClientInputDict,
     NullAndEmptyHeadersClientOutput,
     NullAndEmptyHeadersServerInput,
+    NullAndEmptyHeadersServerInputDict,
     NullAndEmptyHeadersServerOutput,
     OmitsNullSerializesEmptyStringInput,
+    OmitsNullSerializesEmptyStringInputDict,
     OmitsNullSerializesEmptyStringOutput,
     OmitsSerializingEmptyListsInput,
+    OmitsSerializingEmptyListsInputDict,
     OmitsSerializingEmptyListsOutput,
     OperationWithDefaultsInput,
+    OperationWithDefaultsInputDict,
     OperationWithDefaultsOutput,
     OperationWithNestedStructureInput,
+    OperationWithNestedStructureInputDict,
     OperationWithNestedStructureOutput,
     OutputStreamInput,
+    OutputStreamInputDict,
     OutputStreamOutput,
     OutputStreamWithInitialResponseInput,
+    OutputStreamWithInitialResponseInputDict,
     OutputStreamWithInitialResponseOutput,
     PayloadConfig,
+    PayloadConfigDict,
     PayloadStructure,
+    PlayerActionDict,
     PostPlayerActionInput,
+    PostPlayerActionInputDict,
     PostPlayerActionOutput,
     PostUnionWithJsonNameInput,
+    PostUnionWithJsonNameInputDict,
     PostUnionWithJsonNameOutput,
     PutWithContentEncodingInput,
+    PutWithContentEncodingInputDict,
     PutWithContentEncodingOutput,
     QueryIdempotencyTokenAutoFillInput,
+    QueryIdempotencyTokenAutoFillInputDict,
     QueryIdempotencyTokenAutoFillOutput,
     QueryParamsAsStringListMapInput,
+    QueryParamsAsStringListMapInputDict,
     QueryParamsAsStringListMapOutput,
     QueryPrecedenceInput,
+    QueryPrecedenceInputDict,
     QueryPrecedenceOutput,
     RecursiveShapesInput,
+    RecursiveShapesInputDict,
     RecursiveShapesInputOutputNested1,
+    RecursiveShapesInputOutputNested1Dict,
     RecursiveShapesInputOutputNested2,
+    RecursiveShapesInputOutputNested2Dict,
     RecursiveShapesOutput,
     RenamedGreeting,
+    RenamedGreetingDict,
     ResponseCodeHttpFallbackInput,
+    ResponseCodeHttpFallbackInputDict,
     ResponseCodeHttpFallbackOutput,
     ResponseCodeRequiredInput,
+    ResponseCodeRequiredInputDict,
     ResponseCodeRequiredOutput,
     SimpleScalarPropertiesInput,
+    SimpleScalarPropertiesInputDict,
     SimpleScalarPropertiesOutput,
+    SimpleUnionDict,
     SingletonEvent,
     SparseJsonListsInput,
+    SparseJsonListsInputDict,
     SparseJsonListsOutput,
     SparseJsonMapsInput,
+    SparseJsonMapsInputDict,
     SparseJsonMapsOutput,
     StreamingTraitsInput,
+    StreamingTraitsInputDict,
     StreamingTraitsOutput,
     StreamingTraitsRequireLengthInput,
+    StreamingTraitsRequireLengthInputDict,
     StreamingTraitsRequireLengthOutput,
     StreamingTraitsWithMediaTypeInput,
+    StreamingTraitsWithMediaTypeInputDict,
     StreamingTraitsWithMediaTypeOutput,
     StringPayloadEvent,
     StructureListMember,
+    StructureListMemberDict,
     StructurePayloadEvent,
     TestBodyStructureInput,
+    TestBodyStructureInputDict,
     TestBodyStructureOutput,
     TestConfig,
+    TestConfigDict,
     TestGetNoInputNoPayloadInput,
+    TestGetNoInputNoPayloadInputDict,
     TestGetNoInputNoPayloadOutput,
     TestGetNoPayloadInput,
+    TestGetNoPayloadInputDict,
     TestGetNoPayloadOutput,
     TestPayloadBlobInput,
+    TestPayloadBlobInputDict,
     TestPayloadBlobOutput,
     TestPayloadStructureInput,
+    TestPayloadStructureInputDict,
     TestPayloadStructureOutput,
     TestPostNoInputNoPayloadInput,
+    TestPostNoInputNoPayloadInputDict,
     TestPostNoInputNoPayloadOutput,
     TestPostNoPayloadInput,
+    TestPostNoPayloadInputDict,
     TestPostNoPayloadOutput,
     TimestampFormatHeadersInput,
+    TimestampFormatHeadersInputDict,
     TimestampFormatHeadersOutput,
     TopLevel,
+    TopLevelDict,
+    UnionPayloadDict,
     UnionPayloadEvent,
+    UnionWithJsonNameDict,
     Unit,
+    UnitDict,
     UnitInputAndOutputInput,
+    UnitInputAndOutputInputDict,
     UnitInputAndOutputOutput,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check.
 
 _: Any = ...
 
@@ -511,3 +650,1531 @@ UnitInputAndOutputOutput()
 RenamedGreeting()
 GreetingStruct()
 Unit()
+_params_0: AllQueryStringTypesInputDict = {}
+_params_1: ClientOptionalDefaultsDict = {}
+_params_2: ConstantAndVariableQueryStringInputDict = {}
+_params_3: ConstantQueryStringInputDict = {"hello": _}
+_params_4: ContentTypeParametersInputDict = {}
+_params_5: DatetimeOffsetsInputDict = {}
+_params_6: DefaultsDict = {}
+_params_7: DialogDict = {}
+_params_8: DocumentTypeAsMapValueInputDict = {}
+_params_9: DocumentTypeAsPayloadInputDict = {}
+_params_10: DocumentTypeInputDict = {}
+_params_11: DuplexStreamInputDict = {}
+_params_12: DuplexStreamWithDistinctStreamsInputDict = {}
+_params_13: DuplexStreamWithInitialMessagesInputDict = {"initial_request_member": _}
+_params_14: EmptyInputAndEmptyOutputInputDict = {}
+_params_15: EndpointOperationInputDict = {}
+_params_16: EndpointWithHostLabelOperationInputDict = {"label": _}
+_params_17: FarewellDict = {}
+_params_18: FractionalSecondsInputDict = {}
+_params_19: GreetingWithErrorsInputDict = {}
+_params_20: HostWithPathOperationInputDict = {}
+_params_21: HttpChecksumRequiredInputDict = {}
+_params_22: HttpEmptyPrefixHeadersInputDict = {}
+_params_23: HttpEnumPayloadInputDict = {}
+_params_24: HttpPayloadTraitsInputDict = {}
+_params_25: HttpPayloadTraitsWithMediaTypeInputDict = {}
+_params_26: HttpPayloadWithStructureInputDict = {}
+_params_27: HttpPayloadWithUnionInputDict = {}
+_params_28: HttpPrefixHeadersInputDict = {}
+_params_29: HttpPrefixHeadersInResponseInputDict = {}
+_params_30: HttpQueryParamsOnlyOperationInputDict = {}
+_params_31: HttpRequestWithFloatLabelsInputDict = {"float_": _, "double": _}
+_params_32: HttpRequestWithGreedyLabelInPathInputDict = {"foo": _, "baz": _}
+_params_33: HttpRequestWithLabelsAndTimestampFormatInputDict = {
+    "member_epoch_seconds": _,
+    "member_http_date": _,
+    "member_date_time": _,
+    "default_format": _,
+    "target_epoch_seconds": _,
+    "target_http_date": _,
+    "target_date_time": _,
+}
+_params_34: HttpRequestWithLabelsInputDict = {
+    "string": _,
+    "short": _,
+    "integer": _,
+    "long": _,
+    "float_": _,
+    "double": _,
+    "boolean": _,
+    "timestamp": _,
+}
+_params_35: HttpRequestWithRegexLiteralInputDict = {"str_": _}
+_params_36: HttpResponseCodeInputDict = {}
+_params_37: HttpStringPayloadInputDict = {}
+_params_38: IgnoreQueryParamsInResponseInputDict = {}
+_params_39: InputAndOutputWithHeadersInputDict = {}
+_params_40: InputStreamInputDict = {}
+_params_41: InputStreamWithInitialRequestInputDict = {"initial_request_member": _}
+_params_42: JsonBlobsInputDict = {}
+_params_43: JsonEnumsInputDict = {}
+_params_44: JsonIntEnumsInputDict = {}
+_params_45: JsonListsInputDict = {}
+_params_46: JsonMapsInputDict = {}
+_params_47: JsonTimestampsInputDict = {}
+_params_48: JsonUnionsInputDict = {}
+_params_49: MalformedAcceptWithBodyInputDict = {}
+_params_50: MalformedAcceptWithGenericStringInputDict = {}
+_params_51: MalformedAcceptWithPayloadInputDict = {}
+_params_52: MalformedBlobInputDict = {}
+_params_53: MalformedBooleanInputDict = {"boolean_in_path": _}
+_params_54: MalformedByteInputDict = {"byte_in_path": _}
+_params_55: MalformedContentTypeWithBodyInputDict = {}
+_params_56: MalformedContentTypeWithGenericStringInputDict = {}
+_params_57: MalformedContentTypeWithoutBodyEmptyInputInputDict = {}
+_params_58: MalformedContentTypeWithoutBodyInputDict = {}
+_params_59: MalformedContentTypeWithPayloadInputDict = {}
+_params_60: MalformedDoubleInputDict = {"double_in_path": _}
+_params_61: MalformedFloatInputDict = {"float_in_path": _}
+_params_62: MalformedIntegerInputDict = {"integer_in_path": _}
+_params_63: MalformedListInputDict = {}
+_params_64: MalformedLongInputDict = {"long_in_path": _}
+_params_65: MalformedMapInputDict = {}
+_params_66: MalformedRequestBodyInputDict = {}
+_params_67: MalformedShortInputDict = {"short_in_path": _}
+_params_68: MalformedStringInputDict = {}
+_params_69: MalformedTimestampBodyDateTimeInputDict = {"timestamp": _}
+_params_70: MalformedTimestampBodyDefaultInputDict = {"timestamp": _}
+_params_71: MalformedTimestampBodyHttpDateInputDict = {"timestamp": _}
+_params_72: MalformedTimestampHeaderDateTimeInputDict = {"timestamp": _}
+_params_73: MalformedTimestampHeaderDefaultInputDict = {"timestamp": _}
+_params_74: MalformedTimestampHeaderEpochInputDict = {"timestamp": _}
+_params_75: MalformedTimestampPathDefaultInputDict = {"timestamp": _}
+_params_76: MalformedTimestampPathEpochInputDict = {"timestamp": _}
+_params_77: MalformedTimestampPathHttpDateInputDict = {"timestamp": _}
+_params_78: MalformedTimestampQueryDefaultInputDict = {"timestamp": _}
+_params_79: MalformedTimestampQueryEpochInputDict = {"timestamp": _}
+_params_80: MalformedTimestampQueryHttpDateInputDict = {"timestamp": _}
+_params_81: MalformedUnionInputDict = {}
+_params_82: MediaTypeHeaderInputDict = {}
+_params_83: MyUnionDict = {"string_value": _}
+_params_84: NestedPayloadDict = {}
+_params_85: NestedUnionDict = {"string_value": _}
+_params_86: NoInputAndNoOutputInputDict = {}
+_params_87: NoInputAndOutputInputDict = {}
+_params_88: NullAndEmptyHeadersClientInputDict = {}
+_params_89: NullAndEmptyHeadersServerInputDict = {}
+_params_90: OmitsNullSerializesEmptyStringInputDict = {}
+_params_91: OmitsSerializingEmptyListsInputDict = {}
+_params_92: OperationWithDefaultsInputDict = {}
+_params_93: OperationWithNestedStructureInputDict = {"top_level": _}
+_params_94: OutputStreamInputDict = {}
+_params_95: OutputStreamWithInitialResponseInputDict = {}
+_params_96: PayloadConfigDict = {}
+_params_97: PlayerActionDict = {"quit": _}
+_params_98: PostPlayerActionInputDict = {}
+_params_99: PostUnionWithJsonNameInputDict = {}
+_params_100: PutWithContentEncodingInputDict = {}
+_params_101: QueryIdempotencyTokenAutoFillInputDict = {}
+_params_102: QueryParamsAsStringListMapInputDict = {}
+_params_103: QueryPrecedenceInputDict = {}
+_params_104: RecursiveShapesInputDict = {}
+_params_105: RecursiveShapesInputOutputNested1Dict = {}
+_params_106: RecursiveShapesInputOutputNested2Dict = {}
+_params_107: ResponseCodeHttpFallbackInputDict = {}
+_params_108: ResponseCodeRequiredInputDict = {}
+_params_109: SimpleScalarPropertiesInputDict = {}
+_params_110: SimpleUnionDict = {"int_": _}
+_params_111: SparseJsonListsInputDict = {}
+_params_112: SparseJsonMapsInputDict = {}
+_params_113: StreamingTraitsInputDict = {}
+_params_114: StreamingTraitsRequireLengthInputDict = {}
+_params_115: StreamingTraitsWithMediaTypeInputDict = {}
+_params_116: StructureListMemberDict = {}
+_params_117: TestBodyStructureInputDict = {}
+_params_118: TestConfigDict = {}
+_params_119: TestGetNoInputNoPayloadInputDict = {}
+_params_120: TestGetNoPayloadInputDict = {}
+_params_121: TestPayloadBlobInputDict = {}
+_params_122: TestPayloadStructureInputDict = {}
+_params_123: TestPostNoInputNoPayloadInputDict = {}
+_params_124: TestPostNoPayloadInputDict = {}
+_params_125: TimestampFormatHeadersInputDict = {}
+_params_126: TopLevelDict = {"dialog": _}
+_params_127: UnionPayloadDict = {"greeting": _}
+_params_128: UnionWithJsonNameDict = {"foo": _}
+_params_129: UnitInputAndOutputInputDict = {}
+_params_130: RenamedGreetingDict = {}
+_params_131: GreetingStructDict = {}
+_params_132: UnitDict = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncRestJsonProtocolClient) -> None:
+    pass
+    await client.all_query_string_types()
+    await client.all_query_string_types(**_request(AllQueryStringTypesInputDict))
+    await client.all_query_string_types(_request(AllQueryStringTypesInput))
+    await client.all_query_string_types(_request(AllQueryStringTypesInputDict))
+    await client.constant_and_variable_query_string()
+    await client.constant_and_variable_query_string(
+        **_request(ConstantAndVariableQueryStringInputDict)
+    )
+    await client.constant_and_variable_query_string(
+        _request(ConstantAndVariableQueryStringInput)
+    )
+    await client.constant_and_variable_query_string(
+        _request(ConstantAndVariableQueryStringInputDict)
+    )
+    await client.constant_query_string(hello=_)
+    await client.constant_query_string(**_request(ConstantQueryStringInputDict))
+    await client.constant_query_string(_request(ConstantQueryStringInput))
+    await client.constant_query_string(_request(ConstantQueryStringInputDict))
+    await client.content_type_parameters()
+    await client.content_type_parameters(**_request(ContentTypeParametersInputDict))
+    await client.content_type_parameters(_request(ContentTypeParametersInput))
+    await client.content_type_parameters(_request(ContentTypeParametersInputDict))
+    await client.datetime_offsets()
+    await client.datetime_offsets(**_request(DatetimeOffsetsInputDict))
+    await client.datetime_offsets(_request(DatetimeOffsetsInput))
+    await client.datetime_offsets(_request(DatetimeOffsetsInputDict))
+    await client.document_type()
+    await client.document_type(**_request(DocumentTypeInputDict))
+    await client.document_type(_request(DocumentTypeInput))
+    await client.document_type(_request(DocumentTypeInputDict))
+    await client.document_type_as_map_value()
+    await client.document_type_as_map_value(**_request(DocumentTypeAsMapValueInputDict))
+    await client.document_type_as_map_value(_request(DocumentTypeAsMapValueInput))
+    await client.document_type_as_map_value(_request(DocumentTypeAsMapValueInputDict))
+    await client.document_type_as_payload()
+    await client.document_type_as_payload(**_request(DocumentTypeAsPayloadInputDict))
+    await client.document_type_as_payload(_request(DocumentTypeAsPayloadInput))
+    await client.document_type_as_payload(_request(DocumentTypeAsPayloadInputDict))
+    await client.duplex_stream()
+    await client.duplex_stream(**_request(DuplexStreamInputDict))
+    await client.duplex_stream(_request(DuplexStreamInput))
+    await client.duplex_stream(_request(DuplexStreamInputDict))
+    await client.duplex_stream_with_distinct_streams()
+    await client.duplex_stream_with_distinct_streams(
+        **_request(DuplexStreamWithDistinctStreamsInputDict)
+    )
+    await client.duplex_stream_with_distinct_streams(
+        _request(DuplexStreamWithDistinctStreamsInput)
+    )
+    await client.duplex_stream_with_distinct_streams(
+        _request(DuplexStreamWithDistinctStreamsInputDict)
+    )
+    await client.duplex_stream_with_initial_messages(initial_request_member=_)
+    await client.duplex_stream_with_initial_messages(
+        **_request(DuplexStreamWithInitialMessagesInputDict)
+    )
+    await client.duplex_stream_with_initial_messages(
+        _request(DuplexStreamWithInitialMessagesInput)
+    )
+    await client.duplex_stream_with_initial_messages(
+        _request(DuplexStreamWithInitialMessagesInputDict)
+    )
+    await client.empty_input_and_empty_output()
+    await client.empty_input_and_empty_output(
+        **_request(EmptyInputAndEmptyOutputInputDict)
+    )
+    await client.empty_input_and_empty_output(_request(EmptyInputAndEmptyOutputInput))
+    await client.empty_input_and_empty_output(
+        _request(EmptyInputAndEmptyOutputInputDict)
+    )
+    await client.endpoint_operation()
+    await client.endpoint_operation(**_request(EndpointOperationInputDict))
+    await client.endpoint_operation(_request(EndpointOperationInput))
+    await client.endpoint_operation(_request(EndpointOperationInputDict))
+    await client.endpoint_with_host_label_operation(label=_)
+    await client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputDict)
+    )
+    await client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInput)
+    )
+    await client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInputDict)
+    )
+    await client.fractional_seconds()
+    await client.fractional_seconds(**_request(FractionalSecondsInputDict))
+    await client.fractional_seconds(_request(FractionalSecondsInput))
+    await client.fractional_seconds(_request(FractionalSecondsInputDict))
+    await client.greeting_with_errors()
+    await client.greeting_with_errors(**_request(GreetingWithErrorsInputDict))
+    await client.greeting_with_errors(_request(GreetingWithErrorsInput))
+    await client.greeting_with_errors(_request(GreetingWithErrorsInputDict))
+    await client.host_with_path_operation()
+    await client.host_with_path_operation(**_request(HostWithPathOperationInputDict))
+    await client.host_with_path_operation(_request(HostWithPathOperationInput))
+    await client.host_with_path_operation(_request(HostWithPathOperationInputDict))
+    await client.http_checksum_required()
+    await client.http_checksum_required(**_request(HttpChecksumRequiredInputDict))
+    await client.http_checksum_required(_request(HttpChecksumRequiredInput))
+    await client.http_checksum_required(_request(HttpChecksumRequiredInputDict))
+    await client.http_empty_prefix_headers()
+    await client.http_empty_prefix_headers(**_request(HttpEmptyPrefixHeadersInputDict))
+    await client.http_empty_prefix_headers(_request(HttpEmptyPrefixHeadersInput))
+    await client.http_empty_prefix_headers(_request(HttpEmptyPrefixHeadersInputDict))
+    await client.http_enum_payload()
+    await client.http_enum_payload(**_request(HttpEnumPayloadInputDict))
+    await client.http_enum_payload(_request(HttpEnumPayloadInput))
+    await client.http_enum_payload(_request(HttpEnumPayloadInputDict))
+    await client.http_payload_traits()
+    await client.http_payload_traits(**_request(HttpPayloadTraitsInputDict))
+    await client.http_payload_traits(_request(HttpPayloadTraitsInput))
+    await client.http_payload_traits(_request(HttpPayloadTraitsInputDict))
+    await client.http_payload_traits_with_media_type()
+    await client.http_payload_traits_with_media_type(
+        **_request(HttpPayloadTraitsWithMediaTypeInputDict)
+    )
+    await client.http_payload_traits_with_media_type(
+        _request(HttpPayloadTraitsWithMediaTypeInput)
+    )
+    await client.http_payload_traits_with_media_type(
+        _request(HttpPayloadTraitsWithMediaTypeInputDict)
+    )
+    await client.http_payload_with_structure()
+    await client.http_payload_with_structure(
+        **_request(HttpPayloadWithStructureInputDict)
+    )
+    await client.http_payload_with_structure(_request(HttpPayloadWithStructureInput))
+    await client.http_payload_with_structure(
+        _request(HttpPayloadWithStructureInputDict)
+    )
+    await client.http_payload_with_union()
+    await client.http_payload_with_union(**_request(HttpPayloadWithUnionInputDict))
+    await client.http_payload_with_union(_request(HttpPayloadWithUnionInput))
+    await client.http_payload_with_union(_request(HttpPayloadWithUnionInputDict))
+    await client.http_prefix_headers()
+    await client.http_prefix_headers(**_request(HttpPrefixHeadersInputDict))
+    await client.http_prefix_headers(_request(HttpPrefixHeadersInput))
+    await client.http_prefix_headers(_request(HttpPrefixHeadersInputDict))
+    await client.http_prefix_headers_in_response()
+    await client.http_prefix_headers_in_response(
+        **_request(HttpPrefixHeadersInResponseInputDict)
+    )
+    await client.http_prefix_headers_in_response(
+        _request(HttpPrefixHeadersInResponseInput)
+    )
+    await client.http_prefix_headers_in_response(
+        _request(HttpPrefixHeadersInResponseInputDict)
+    )
+    await client.http_query_params_only_operation()
+    await client.http_query_params_only_operation(
+        **_request(HttpQueryParamsOnlyOperationInputDict)
+    )
+    await client.http_query_params_only_operation(
+        _request(HttpQueryParamsOnlyOperationInput)
+    )
+    await client.http_query_params_only_operation(
+        _request(HttpQueryParamsOnlyOperationInputDict)
+    )
+    await client.http_request_with_float_labels(float_=_, double=_)
+    await client.http_request_with_float_labels(
+        **_request(HttpRequestWithFloatLabelsInputDict)
+    )
+    await client.http_request_with_float_labels(
+        _request(HttpRequestWithFloatLabelsInput)
+    )
+    await client.http_request_with_float_labels(
+        _request(HttpRequestWithFloatLabelsInputDict)
+    )
+    await client.http_request_with_greedy_label_in_path(foo=_, baz=_)
+    await client.http_request_with_greedy_label_in_path(
+        **_request(HttpRequestWithGreedyLabelInPathInputDict)
+    )
+    await client.http_request_with_greedy_label_in_path(
+        _request(HttpRequestWithGreedyLabelInPathInput)
+    )
+    await client.http_request_with_greedy_label_in_path(
+        _request(HttpRequestWithGreedyLabelInPathInputDict)
+    )
+    await client.http_request_with_labels(
+        string=_, short=_, integer=_, long=_, float_=_, double=_, boolean=_, timestamp=_
+    )
+    await client.http_request_with_labels(**_request(HttpRequestWithLabelsInputDict))
+    await client.http_request_with_labels(_request(HttpRequestWithLabelsInput))
+    await client.http_request_with_labels(_request(HttpRequestWithLabelsInputDict))
+    await client.http_request_with_labels_and_timestamp_format(
+        member_epoch_seconds=_,
+        member_http_date=_,
+        member_date_time=_,
+        default_format=_,
+        target_epoch_seconds=_,
+        target_http_date=_,
+        target_date_time=_,
+    )
+    await client.http_request_with_labels_and_timestamp_format(
+        **_request(HttpRequestWithLabelsAndTimestampFormatInputDict)
+    )
+    await client.http_request_with_labels_and_timestamp_format(
+        _request(HttpRequestWithLabelsAndTimestampFormatInput)
+    )
+    await client.http_request_with_labels_and_timestamp_format(
+        _request(HttpRequestWithLabelsAndTimestampFormatInputDict)
+    )
+    await client.http_request_with_regex_literal(str_=_)
+    await client.http_request_with_regex_literal(
+        **_request(HttpRequestWithRegexLiteralInputDict)
+    )
+    await client.http_request_with_regex_literal(
+        _request(HttpRequestWithRegexLiteralInput)
+    )
+    await client.http_request_with_regex_literal(
+        _request(HttpRequestWithRegexLiteralInputDict)
+    )
+    await client.http_response_code()
+    await client.http_response_code(**_request(HttpResponseCodeInputDict))
+    await client.http_response_code(_request(HttpResponseCodeInput))
+    await client.http_response_code(_request(HttpResponseCodeInputDict))
+    await client.http_string_payload()
+    await client.http_string_payload(**_request(HttpStringPayloadInputDict))
+    await client.http_string_payload(_request(HttpStringPayloadInput))
+    await client.http_string_payload(_request(HttpStringPayloadInputDict))
+    await client.ignore_query_params_in_response()
+    await client.ignore_query_params_in_response(
+        **_request(IgnoreQueryParamsInResponseInputDict)
+    )
+    await client.ignore_query_params_in_response(
+        _request(IgnoreQueryParamsInResponseInput)
+    )
+    await client.ignore_query_params_in_response(
+        _request(IgnoreQueryParamsInResponseInputDict)
+    )
+    await client.input_and_output_with_headers()
+    await client.input_and_output_with_headers(
+        **_request(InputAndOutputWithHeadersInputDict)
+    )
+    await client.input_and_output_with_headers(_request(InputAndOutputWithHeadersInput))
+    await client.input_and_output_with_headers(
+        _request(InputAndOutputWithHeadersInputDict)
+    )
+    await client.input_stream()
+    await client.input_stream(**_request(InputStreamInputDict))
+    await client.input_stream(_request(InputStreamInput))
+    await client.input_stream(_request(InputStreamInputDict))
+    await client.input_stream_with_initial_request(initial_request_member=_)
+    await client.input_stream_with_initial_request(
+        **_request(InputStreamWithInitialRequestInputDict)
+    )
+    await client.input_stream_with_initial_request(
+        _request(InputStreamWithInitialRequestInput)
+    )
+    await client.input_stream_with_initial_request(
+        _request(InputStreamWithInitialRequestInputDict)
+    )
+    await client.json_blobs()
+    await client.json_blobs(**_request(JsonBlobsInputDict))
+    await client.json_blobs(_request(JsonBlobsInput))
+    await client.json_blobs(_request(JsonBlobsInputDict))
+    await client.json_enums()
+    await client.json_enums(**_request(JsonEnumsInputDict))
+    await client.json_enums(_request(JsonEnumsInput))
+    await client.json_enums(_request(JsonEnumsInputDict))
+    await client.json_int_enums()
+    await client.json_int_enums(**_request(JsonIntEnumsInputDict))
+    await client.json_int_enums(_request(JsonIntEnumsInput))
+    await client.json_int_enums(_request(JsonIntEnumsInputDict))
+    await client.json_lists()
+    await client.json_lists(**_request(JsonListsInputDict))
+    await client.json_lists(_request(JsonListsInput))
+    await client.json_lists(_request(JsonListsInputDict))
+    await client.json_maps()
+    await client.json_maps(**_request(JsonMapsInputDict))
+    await client.json_maps(_request(JsonMapsInput))
+    await client.json_maps(_request(JsonMapsInputDict))
+    await client.json_timestamps()
+    await client.json_timestamps(**_request(JsonTimestampsInputDict))
+    await client.json_timestamps(_request(JsonTimestampsInput))
+    await client.json_timestamps(_request(JsonTimestampsInputDict))
+    await client.json_unions()
+    await client.json_unions(**_request(JsonUnionsInputDict))
+    await client.json_unions(_request(JsonUnionsInput))
+    await client.json_unions(_request(JsonUnionsInputDict))
+    await client.malformed_accept_with_body()
+    await client.malformed_accept_with_body(
+        **_request(MalformedAcceptWithBodyInputDict)
+    )
+    await client.malformed_accept_with_body(_request(MalformedAcceptWithBodyInput))
+    await client.malformed_accept_with_body(_request(MalformedAcceptWithBodyInputDict))
+    await client.malformed_accept_with_generic_string()
+    await client.malformed_accept_with_generic_string(
+        **_request(MalformedAcceptWithGenericStringInputDict)
+    )
+    await client.malformed_accept_with_generic_string(
+        _request(MalformedAcceptWithGenericStringInput)
+    )
+    await client.malformed_accept_with_generic_string(
+        _request(MalformedAcceptWithGenericStringInputDict)
+    )
+    await client.malformed_accept_with_payload()
+    await client.malformed_accept_with_payload(
+        **_request(MalformedAcceptWithPayloadInputDict)
+    )
+    await client.malformed_accept_with_payload(
+        _request(MalformedAcceptWithPayloadInput)
+    )
+    await client.malformed_accept_with_payload(
+        _request(MalformedAcceptWithPayloadInputDict)
+    )
+    await client.malformed_blob()
+    await client.malformed_blob(**_request(MalformedBlobInputDict))
+    await client.malformed_blob(_request(MalformedBlobInput))
+    await client.malformed_blob(_request(MalformedBlobInputDict))
+    await client.malformed_boolean(boolean_in_path=_)
+    await client.malformed_boolean(**_request(MalformedBooleanInputDict))
+    await client.malformed_boolean(_request(MalformedBooleanInput))
+    await client.malformed_boolean(_request(MalformedBooleanInputDict))
+    await client.malformed_byte(byte_in_path=_)
+    await client.malformed_byte(**_request(MalformedByteInputDict))
+    await client.malformed_byte(_request(MalformedByteInput))
+    await client.malformed_byte(_request(MalformedByteInputDict))
+    await client.malformed_content_type_with_body()
+    await client.malformed_content_type_with_body(
+        **_request(MalformedContentTypeWithBodyInputDict)
+    )
+    await client.malformed_content_type_with_body(
+        _request(MalformedContentTypeWithBodyInput)
+    )
+    await client.malformed_content_type_with_body(
+        _request(MalformedContentTypeWithBodyInputDict)
+    )
+    await client.malformed_content_type_with_generic_string()
+    await client.malformed_content_type_with_generic_string(
+        **_request(MalformedContentTypeWithGenericStringInputDict)
+    )
+    await client.malformed_content_type_with_generic_string(
+        _request(MalformedContentTypeWithGenericStringInput)
+    )
+    await client.malformed_content_type_with_generic_string(
+        _request(MalformedContentTypeWithGenericStringInputDict)
+    )
+    await client.malformed_content_type_without_body()
+    await client.malformed_content_type_without_body(
+        **_request(MalformedContentTypeWithoutBodyInputDict)
+    )
+    await client.malformed_content_type_without_body(
+        _request(MalformedContentTypeWithoutBodyInput)
+    )
+    await client.malformed_content_type_without_body(
+        _request(MalformedContentTypeWithoutBodyInputDict)
+    )
+    await client.malformed_content_type_without_body_empty_input()
+    await client.malformed_content_type_without_body_empty_input(
+        **_request(MalformedContentTypeWithoutBodyEmptyInputInputDict)
+    )
+    await client.malformed_content_type_without_body_empty_input(
+        _request(MalformedContentTypeWithoutBodyEmptyInputInput)
+    )
+    await client.malformed_content_type_without_body_empty_input(
+        _request(MalformedContentTypeWithoutBodyEmptyInputInputDict)
+    )
+    await client.malformed_content_type_with_payload()
+    await client.malformed_content_type_with_payload(
+        **_request(MalformedContentTypeWithPayloadInputDict)
+    )
+    await client.malformed_content_type_with_payload(
+        _request(MalformedContentTypeWithPayloadInput)
+    )
+    await client.malformed_content_type_with_payload(
+        _request(MalformedContentTypeWithPayloadInputDict)
+    )
+    await client.malformed_double(double_in_path=_)
+    await client.malformed_double(**_request(MalformedDoubleInputDict))
+    await client.malformed_double(_request(MalformedDoubleInput))
+    await client.malformed_double(_request(MalformedDoubleInputDict))
+    await client.malformed_float(float_in_path=_)
+    await client.malformed_float(**_request(MalformedFloatInputDict))
+    await client.malformed_float(_request(MalformedFloatInput))
+    await client.malformed_float(_request(MalformedFloatInputDict))
+    await client.malformed_integer(integer_in_path=_)
+    await client.malformed_integer(**_request(MalformedIntegerInputDict))
+    await client.malformed_integer(_request(MalformedIntegerInput))
+    await client.malformed_integer(_request(MalformedIntegerInputDict))
+    await client.malformed_list()
+    await client.malformed_list(**_request(MalformedListInputDict))
+    await client.malformed_list(_request(MalformedListInput))
+    await client.malformed_list(_request(MalformedListInputDict))
+    await client.malformed_long(long_in_path=_)
+    await client.malformed_long(**_request(MalformedLongInputDict))
+    await client.malformed_long(_request(MalformedLongInput))
+    await client.malformed_long(_request(MalformedLongInputDict))
+    await client.malformed_map()
+    await client.malformed_map(**_request(MalformedMapInputDict))
+    await client.malformed_map(_request(MalformedMapInput))
+    await client.malformed_map(_request(MalformedMapInputDict))
+    await client.malformed_request_body()
+    await client.malformed_request_body(**_request(MalformedRequestBodyInputDict))
+    await client.malformed_request_body(_request(MalformedRequestBodyInput))
+    await client.malformed_request_body(_request(MalformedRequestBodyInputDict))
+    await client.malformed_short(short_in_path=_)
+    await client.malformed_short(**_request(MalformedShortInputDict))
+    await client.malformed_short(_request(MalformedShortInput))
+    await client.malformed_short(_request(MalformedShortInputDict))
+    await client.malformed_string()
+    await client.malformed_string(**_request(MalformedStringInputDict))
+    await client.malformed_string(_request(MalformedStringInput))
+    await client.malformed_string(_request(MalformedStringInputDict))
+    await client.malformed_timestamp_body_date_time(timestamp=_)
+    await client.malformed_timestamp_body_date_time(
+        **_request(MalformedTimestampBodyDateTimeInputDict)
+    )
+    await client.malformed_timestamp_body_date_time(
+        _request(MalformedTimestampBodyDateTimeInput)
+    )
+    await client.malformed_timestamp_body_date_time(
+        _request(MalformedTimestampBodyDateTimeInputDict)
+    )
+    await client.malformed_timestamp_body_default(timestamp=_)
+    await client.malformed_timestamp_body_default(
+        **_request(MalformedTimestampBodyDefaultInputDict)
+    )
+    await client.malformed_timestamp_body_default(
+        _request(MalformedTimestampBodyDefaultInput)
+    )
+    await client.malformed_timestamp_body_default(
+        _request(MalformedTimestampBodyDefaultInputDict)
+    )
+    await client.malformed_timestamp_body_http_date(timestamp=_)
+    await client.malformed_timestamp_body_http_date(
+        **_request(MalformedTimestampBodyHttpDateInputDict)
+    )
+    await client.malformed_timestamp_body_http_date(
+        _request(MalformedTimestampBodyHttpDateInput)
+    )
+    await client.malformed_timestamp_body_http_date(
+        _request(MalformedTimestampBodyHttpDateInputDict)
+    )
+    await client.malformed_timestamp_header_date_time(timestamp=_)
+    await client.malformed_timestamp_header_date_time(
+        **_request(MalformedTimestampHeaderDateTimeInputDict)
+    )
+    await client.malformed_timestamp_header_date_time(
+        _request(MalformedTimestampHeaderDateTimeInput)
+    )
+    await client.malformed_timestamp_header_date_time(
+        _request(MalformedTimestampHeaderDateTimeInputDict)
+    )
+    await client.malformed_timestamp_header_default(timestamp=_)
+    await client.malformed_timestamp_header_default(
+        **_request(MalformedTimestampHeaderDefaultInputDict)
+    )
+    await client.malformed_timestamp_header_default(
+        _request(MalformedTimestampHeaderDefaultInput)
+    )
+    await client.malformed_timestamp_header_default(
+        _request(MalformedTimestampHeaderDefaultInputDict)
+    )
+    await client.malformed_timestamp_header_epoch(timestamp=_)
+    await client.malformed_timestamp_header_epoch(
+        **_request(MalformedTimestampHeaderEpochInputDict)
+    )
+    await client.malformed_timestamp_header_epoch(
+        _request(MalformedTimestampHeaderEpochInput)
+    )
+    await client.malformed_timestamp_header_epoch(
+        _request(MalformedTimestampHeaderEpochInputDict)
+    )
+    await client.malformed_timestamp_path_default(timestamp=_)
+    await client.malformed_timestamp_path_default(
+        **_request(MalformedTimestampPathDefaultInputDict)
+    )
+    await client.malformed_timestamp_path_default(
+        _request(MalformedTimestampPathDefaultInput)
+    )
+    await client.malformed_timestamp_path_default(
+        _request(MalformedTimestampPathDefaultInputDict)
+    )
+    await client.malformed_timestamp_path_epoch(timestamp=_)
+    await client.malformed_timestamp_path_epoch(
+        **_request(MalformedTimestampPathEpochInputDict)
+    )
+    await client.malformed_timestamp_path_epoch(
+        _request(MalformedTimestampPathEpochInput)
+    )
+    await client.malformed_timestamp_path_epoch(
+        _request(MalformedTimestampPathEpochInputDict)
+    )
+    await client.malformed_timestamp_path_http_date(timestamp=_)
+    await client.malformed_timestamp_path_http_date(
+        **_request(MalformedTimestampPathHttpDateInputDict)
+    )
+    await client.malformed_timestamp_path_http_date(
+        _request(MalformedTimestampPathHttpDateInput)
+    )
+    await client.malformed_timestamp_path_http_date(
+        _request(MalformedTimestampPathHttpDateInputDict)
+    )
+    await client.malformed_timestamp_query_default(timestamp=_)
+    await client.malformed_timestamp_query_default(
+        **_request(MalformedTimestampQueryDefaultInputDict)
+    )
+    await client.malformed_timestamp_query_default(
+        _request(MalformedTimestampQueryDefaultInput)
+    )
+    await client.malformed_timestamp_query_default(
+        _request(MalformedTimestampQueryDefaultInputDict)
+    )
+    await client.malformed_timestamp_query_epoch(timestamp=_)
+    await client.malformed_timestamp_query_epoch(
+        **_request(MalformedTimestampQueryEpochInputDict)
+    )
+    await client.malformed_timestamp_query_epoch(
+        _request(MalformedTimestampQueryEpochInput)
+    )
+    await client.malformed_timestamp_query_epoch(
+        _request(MalformedTimestampQueryEpochInputDict)
+    )
+    await client.malformed_timestamp_query_http_date(timestamp=_)
+    await client.malformed_timestamp_query_http_date(
+        **_request(MalformedTimestampQueryHttpDateInputDict)
+    )
+    await client.malformed_timestamp_query_http_date(
+        _request(MalformedTimestampQueryHttpDateInput)
+    )
+    await client.malformed_timestamp_query_http_date(
+        _request(MalformedTimestampQueryHttpDateInputDict)
+    )
+    await client.malformed_union()
+    await client.malformed_union(**_request(MalformedUnionInputDict))
+    await client.malformed_union(_request(MalformedUnionInput))
+    await client.malformed_union(_request(MalformedUnionInputDict))
+    await client.media_type_header()
+    await client.media_type_header(**_request(MediaTypeHeaderInputDict))
+    await client.media_type_header(_request(MediaTypeHeaderInput))
+    await client.media_type_header(_request(MediaTypeHeaderInputDict))
+    await client.no_input_and_no_output()
+    await client.no_input_and_no_output(**_request(NoInputAndNoOutputInputDict))
+    await client.no_input_and_no_output(_request(NoInputAndNoOutputInput))
+    await client.no_input_and_no_output(_request(NoInputAndNoOutputInputDict))
+    await client.no_input_and_output()
+    await client.no_input_and_output(**_request(NoInputAndOutputInputDict))
+    await client.no_input_and_output(_request(NoInputAndOutputInput))
+    await client.no_input_and_output(_request(NoInputAndOutputInputDict))
+    await client.null_and_empty_headers_client()
+    await client.null_and_empty_headers_client(
+        **_request(NullAndEmptyHeadersClientInputDict)
+    )
+    await client.null_and_empty_headers_client(_request(NullAndEmptyHeadersClientInput))
+    await client.null_and_empty_headers_client(
+        _request(NullAndEmptyHeadersClientInputDict)
+    )
+    await client.null_and_empty_headers_server()
+    await client.null_and_empty_headers_server(
+        **_request(NullAndEmptyHeadersServerInputDict)
+    )
+    await client.null_and_empty_headers_server(_request(NullAndEmptyHeadersServerInput))
+    await client.null_and_empty_headers_server(
+        _request(NullAndEmptyHeadersServerInputDict)
+    )
+    await client.omits_null_serializes_empty_string()
+    await client.omits_null_serializes_empty_string(
+        **_request(OmitsNullSerializesEmptyStringInputDict)
+    )
+    await client.omits_null_serializes_empty_string(
+        _request(OmitsNullSerializesEmptyStringInput)
+    )
+    await client.omits_null_serializes_empty_string(
+        _request(OmitsNullSerializesEmptyStringInputDict)
+    )
+    await client.omits_serializing_empty_lists()
+    await client.omits_serializing_empty_lists(
+        **_request(OmitsSerializingEmptyListsInputDict)
+    )
+    await client.omits_serializing_empty_lists(
+        _request(OmitsSerializingEmptyListsInput)
+    )
+    await client.omits_serializing_empty_lists(
+        _request(OmitsSerializingEmptyListsInputDict)
+    )
+    await client.operation_with_defaults()
+    await client.operation_with_defaults(**_request(OperationWithDefaultsInputDict))
+    await client.operation_with_defaults(_request(OperationWithDefaultsInput))
+    await client.operation_with_defaults(_request(OperationWithDefaultsInputDict))
+    await client.operation_with_nested_structure(top_level=_)
+    await client.operation_with_nested_structure(
+        **_request(OperationWithNestedStructureInputDict)
+    )
+    await client.operation_with_nested_structure(
+        _request(OperationWithNestedStructureInput)
+    )
+    await client.operation_with_nested_structure(
+        _request(OperationWithNestedStructureInputDict)
+    )
+    await client.output_stream()
+    await client.output_stream(**_request(OutputStreamInputDict))
+    await client.output_stream(_request(OutputStreamInput))
+    await client.output_stream(_request(OutputStreamInputDict))
+    await client.output_stream_with_initial_response()
+    await client.output_stream_with_initial_response(
+        **_request(OutputStreamWithInitialResponseInputDict)
+    )
+    await client.output_stream_with_initial_response(
+        _request(OutputStreamWithInitialResponseInput)
+    )
+    await client.output_stream_with_initial_response(
+        _request(OutputStreamWithInitialResponseInputDict)
+    )
+    await client.post_player_action()
+    await client.post_player_action(**_request(PostPlayerActionInputDict))
+    await client.post_player_action(_request(PostPlayerActionInput))
+    await client.post_player_action(_request(PostPlayerActionInputDict))
+    await client.post_union_with_json_name()
+    await client.post_union_with_json_name(**_request(PostUnionWithJsonNameInputDict))
+    await client.post_union_with_json_name(_request(PostUnionWithJsonNameInput))
+    await client.post_union_with_json_name(_request(PostUnionWithJsonNameInputDict))
+    await client.put_with_content_encoding()
+    await client.put_with_content_encoding(**_request(PutWithContentEncodingInputDict))
+    await client.put_with_content_encoding(_request(PutWithContentEncodingInput))
+    await client.put_with_content_encoding(_request(PutWithContentEncodingInputDict))
+    await client.query_idempotency_token_auto_fill()
+    await client.query_idempotency_token_auto_fill(
+        **_request(QueryIdempotencyTokenAutoFillInputDict)
+    )
+    await client.query_idempotency_token_auto_fill(
+        _request(QueryIdempotencyTokenAutoFillInput)
+    )
+    await client.query_idempotency_token_auto_fill(
+        _request(QueryIdempotencyTokenAutoFillInputDict)
+    )
+    await client.query_params_as_string_list_map()
+    await client.query_params_as_string_list_map(
+        **_request(QueryParamsAsStringListMapInputDict)
+    )
+    await client.query_params_as_string_list_map(
+        _request(QueryParamsAsStringListMapInput)
+    )
+    await client.query_params_as_string_list_map(
+        _request(QueryParamsAsStringListMapInputDict)
+    )
+    await client.query_precedence()
+    await client.query_precedence(**_request(QueryPrecedenceInputDict))
+    await client.query_precedence(_request(QueryPrecedenceInput))
+    await client.query_precedence(_request(QueryPrecedenceInputDict))
+    await client.recursive_shapes()
+    await client.recursive_shapes(**_request(RecursiveShapesInputDict))
+    await client.recursive_shapes(_request(RecursiveShapesInput))
+    await client.recursive_shapes(_request(RecursiveShapesInputDict))
+    await client.response_code_http_fallback()
+    await client.response_code_http_fallback(
+        **_request(ResponseCodeHttpFallbackInputDict)
+    )
+    await client.response_code_http_fallback(_request(ResponseCodeHttpFallbackInput))
+    await client.response_code_http_fallback(
+        _request(ResponseCodeHttpFallbackInputDict)
+    )
+    await client.response_code_required()
+    await client.response_code_required(**_request(ResponseCodeRequiredInputDict))
+    await client.response_code_required(_request(ResponseCodeRequiredInput))
+    await client.response_code_required(_request(ResponseCodeRequiredInputDict))
+    await client.simple_scalar_properties()
+    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))
+    await client.sparse_json_lists()
+    await client.sparse_json_lists(**_request(SparseJsonListsInputDict))
+    await client.sparse_json_lists(_request(SparseJsonListsInput))
+    await client.sparse_json_lists(_request(SparseJsonListsInputDict))
+    await client.sparse_json_maps()
+    await client.sparse_json_maps(**_request(SparseJsonMapsInputDict))
+    await client.sparse_json_maps(_request(SparseJsonMapsInput))
+    await client.sparse_json_maps(_request(SparseJsonMapsInputDict))
+    await client.streaming_traits()
+    await client.streaming_traits(**_request(StreamingTraitsInputDict))
+    await client.streaming_traits(_request(StreamingTraitsInput))
+    await client.streaming_traits(_request(StreamingTraitsInputDict))
+    await client.streaming_traits(**_request(AsyncStreamingTraitsInputDict))
+    await client.streaming_traits(_request(AsyncStreamingTraitsInputDict))
+    await client.streaming_traits_require_length()
+    await client.streaming_traits_require_length(
+        **_request(StreamingTraitsRequireLengthInputDict)
+    )
+    await client.streaming_traits_require_length(
+        _request(StreamingTraitsRequireLengthInput)
+    )
+    await client.streaming_traits_require_length(
+        _request(StreamingTraitsRequireLengthInputDict)
+    )
+    await client.streaming_traits_require_length(
+        **_request(AsyncStreamingTraitsRequireLengthInputDict)
+    )
+    await client.streaming_traits_require_length(
+        _request(AsyncStreamingTraitsRequireLengthInputDict)
+    )
+    await client.streaming_traits_with_media_type()
+    await client.streaming_traits_with_media_type(
+        **_request(StreamingTraitsWithMediaTypeInputDict)
+    )
+    await client.streaming_traits_with_media_type(
+        _request(StreamingTraitsWithMediaTypeInput)
+    )
+    await client.streaming_traits_with_media_type(
+        _request(StreamingTraitsWithMediaTypeInputDict)
+    )
+    await client.streaming_traits_with_media_type(
+        **_request(AsyncStreamingTraitsWithMediaTypeInputDict)
+    )
+    await client.streaming_traits_with_media_type(
+        _request(AsyncStreamingTraitsWithMediaTypeInputDict)
+    )
+    await client.test_body_structure()
+    await client.test_body_structure(**_request(TestBodyStructureInputDict))
+    await client.test_body_structure(_request(TestBodyStructureInput))
+    await client.test_body_structure(_request(TestBodyStructureInputDict))
+    await client.test_get_no_input_no_payload()
+    await client.test_get_no_input_no_payload(
+        **_request(TestGetNoInputNoPayloadInputDict)
+    )
+    await client.test_get_no_input_no_payload(_request(TestGetNoInputNoPayloadInput))
+    await client.test_get_no_input_no_payload(
+        _request(TestGetNoInputNoPayloadInputDict)
+    )
+    await client.test_get_no_payload()
+    await client.test_get_no_payload(**_request(TestGetNoPayloadInputDict))
+    await client.test_get_no_payload(_request(TestGetNoPayloadInput))
+    await client.test_get_no_payload(_request(TestGetNoPayloadInputDict))
+    await client.test_payload_blob()
+    await client.test_payload_blob(**_request(TestPayloadBlobInputDict))
+    await client.test_payload_blob(_request(TestPayloadBlobInput))
+    await client.test_payload_blob(_request(TestPayloadBlobInputDict))
+    await client.test_payload_structure()
+    await client.test_payload_structure(**_request(TestPayloadStructureInputDict))
+    await client.test_payload_structure(_request(TestPayloadStructureInput))
+    await client.test_payload_structure(_request(TestPayloadStructureInputDict))
+    await client.test_post_no_input_no_payload()
+    await client.test_post_no_input_no_payload(
+        **_request(TestPostNoInputNoPayloadInputDict)
+    )
+    await client.test_post_no_input_no_payload(_request(TestPostNoInputNoPayloadInput))
+    await client.test_post_no_input_no_payload(
+        _request(TestPostNoInputNoPayloadInputDict)
+    )
+    await client.test_post_no_payload()
+    await client.test_post_no_payload(**_request(TestPostNoPayloadInputDict))
+    await client.test_post_no_payload(_request(TestPostNoPayloadInput))
+    await client.test_post_no_payload(_request(TestPostNoPayloadInputDict))
+    await client.timestamp_format_headers()
+    await client.timestamp_format_headers(**_request(TimestampFormatHeadersInputDict))
+    await client.timestamp_format_headers(_request(TimestampFormatHeadersInput))
+    await client.timestamp_format_headers(_request(TimestampFormatHeadersInputDict))
+    await client.unit_input_and_output()
+    await client.unit_input_and_output(**_request(UnitInputAndOutputInputDict))
+    await client.unit_input_and_output(_request(UnitInputAndOutputInput))
+    await client.unit_input_and_output(_request(UnitInputAndOutputInputDict))
+
+
+def check_sync_calls(client: RestJsonProtocolClient) -> None:
+    pass
+    client.all_query_string_types()
+    client.all_query_string_types(**_request(AllQueryStringTypesInputDict))
+    client.all_query_string_types(_request(AllQueryStringTypesInput))
+    client.all_query_string_types(_request(AllQueryStringTypesInputDict))
+    client.constant_and_variable_query_string()
+    client.constant_and_variable_query_string(
+        **_request(ConstantAndVariableQueryStringInputDict)
+    )
+    client.constant_and_variable_query_string(
+        _request(ConstantAndVariableQueryStringInput)
+    )
+    client.constant_and_variable_query_string(
+        _request(ConstantAndVariableQueryStringInputDict)
+    )
+    client.constant_query_string(hello=_)
+    client.constant_query_string(**_request(ConstantQueryStringInputDict))
+    client.constant_query_string(_request(ConstantQueryStringInput))
+    client.constant_query_string(_request(ConstantQueryStringInputDict))
+    client.content_type_parameters()
+    client.content_type_parameters(**_request(ContentTypeParametersInputDict))
+    client.content_type_parameters(_request(ContentTypeParametersInput))
+    client.content_type_parameters(_request(ContentTypeParametersInputDict))
+    client.datetime_offsets()
+    client.datetime_offsets(**_request(DatetimeOffsetsInputDict))
+    client.datetime_offsets(_request(DatetimeOffsetsInput))
+    client.datetime_offsets(_request(DatetimeOffsetsInputDict))
+    client.document_type()
+    client.document_type(**_request(DocumentTypeInputDict))
+    client.document_type(_request(DocumentTypeInput))
+    client.document_type(_request(DocumentTypeInputDict))
+    client.document_type_as_map_value()
+    client.document_type_as_map_value(**_request(DocumentTypeAsMapValueInputDict))
+    client.document_type_as_map_value(_request(DocumentTypeAsMapValueInput))
+    client.document_type_as_map_value(_request(DocumentTypeAsMapValueInputDict))
+    client.document_type_as_payload()
+    client.document_type_as_payload(**_request(DocumentTypeAsPayloadInputDict))
+    client.document_type_as_payload(_request(DocumentTypeAsPayloadInput))
+    client.document_type_as_payload(_request(DocumentTypeAsPayloadInputDict))
+    client.empty_input_and_empty_output()
+    client.empty_input_and_empty_output(**_request(EmptyInputAndEmptyOutputInputDict))
+    client.empty_input_and_empty_output(_request(EmptyInputAndEmptyOutputInput))
+    client.empty_input_and_empty_output(_request(EmptyInputAndEmptyOutputInputDict))
+    client.endpoint_operation()
+    client.endpoint_operation(**_request(EndpointOperationInputDict))
+    client.endpoint_operation(_request(EndpointOperationInput))
+    client.endpoint_operation(_request(EndpointOperationInputDict))
+    client.endpoint_with_host_label_operation(label=_)
+    client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputDict)
+    )
+    client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInput)
+    )
+    client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInputDict)
+    )
+    client.fractional_seconds()
+    client.fractional_seconds(**_request(FractionalSecondsInputDict))
+    client.fractional_seconds(_request(FractionalSecondsInput))
+    client.fractional_seconds(_request(FractionalSecondsInputDict))
+    client.greeting_with_errors()
+    client.greeting_with_errors(**_request(GreetingWithErrorsInputDict))
+    client.greeting_with_errors(_request(GreetingWithErrorsInput))
+    client.greeting_with_errors(_request(GreetingWithErrorsInputDict))
+    client.host_with_path_operation()
+    client.host_with_path_operation(**_request(HostWithPathOperationInputDict))
+    client.host_with_path_operation(_request(HostWithPathOperationInput))
+    client.host_with_path_operation(_request(HostWithPathOperationInputDict))
+    client.http_checksum_required()
+    client.http_checksum_required(**_request(HttpChecksumRequiredInputDict))
+    client.http_checksum_required(_request(HttpChecksumRequiredInput))
+    client.http_checksum_required(_request(HttpChecksumRequiredInputDict))
+    client.http_empty_prefix_headers()
+    client.http_empty_prefix_headers(**_request(HttpEmptyPrefixHeadersInputDict))
+    client.http_empty_prefix_headers(_request(HttpEmptyPrefixHeadersInput))
+    client.http_empty_prefix_headers(_request(HttpEmptyPrefixHeadersInputDict))
+    client.http_enum_payload()
+    client.http_enum_payload(**_request(HttpEnumPayloadInputDict))
+    client.http_enum_payload(_request(HttpEnumPayloadInput))
+    client.http_enum_payload(_request(HttpEnumPayloadInputDict))
+    client.http_payload_traits()
+    client.http_payload_traits(**_request(HttpPayloadTraitsInputDict))
+    client.http_payload_traits(_request(HttpPayloadTraitsInput))
+    client.http_payload_traits(_request(HttpPayloadTraitsInputDict))
+    client.http_payload_traits_with_media_type()
+    client.http_payload_traits_with_media_type(
+        **_request(HttpPayloadTraitsWithMediaTypeInputDict)
+    )
+    client.http_payload_traits_with_media_type(
+        _request(HttpPayloadTraitsWithMediaTypeInput)
+    )
+    client.http_payload_traits_with_media_type(
+        _request(HttpPayloadTraitsWithMediaTypeInputDict)
+    )
+    client.http_payload_with_structure()
+    client.http_payload_with_structure(**_request(HttpPayloadWithStructureInputDict))
+    client.http_payload_with_structure(_request(HttpPayloadWithStructureInput))
+    client.http_payload_with_structure(_request(HttpPayloadWithStructureInputDict))
+    client.http_payload_with_union()
+    client.http_payload_with_union(**_request(HttpPayloadWithUnionInputDict))
+    client.http_payload_with_union(_request(HttpPayloadWithUnionInput))
+    client.http_payload_with_union(_request(HttpPayloadWithUnionInputDict))
+    client.http_prefix_headers()
+    client.http_prefix_headers(**_request(HttpPrefixHeadersInputDict))
+    client.http_prefix_headers(_request(HttpPrefixHeadersInput))
+    client.http_prefix_headers(_request(HttpPrefixHeadersInputDict))
+    client.http_prefix_headers_in_response()
+    client.http_prefix_headers_in_response(
+        **_request(HttpPrefixHeadersInResponseInputDict)
+    )
+    client.http_prefix_headers_in_response(_request(HttpPrefixHeadersInResponseInput))
+    client.http_prefix_headers_in_response(
+        _request(HttpPrefixHeadersInResponseInputDict)
+    )
+    client.http_query_params_only_operation()
+    client.http_query_params_only_operation(
+        **_request(HttpQueryParamsOnlyOperationInputDict)
+    )
+    client.http_query_params_only_operation(_request(HttpQueryParamsOnlyOperationInput))
+    client.http_query_params_only_operation(
+        _request(HttpQueryParamsOnlyOperationInputDict)
+    )
+    client.http_request_with_float_labels(float_=_, double=_)
+    client.http_request_with_float_labels(
+        **_request(HttpRequestWithFloatLabelsInputDict)
+    )
+    client.http_request_with_float_labels(_request(HttpRequestWithFloatLabelsInput))
+    client.http_request_with_float_labels(_request(HttpRequestWithFloatLabelsInputDict))
+    client.http_request_with_greedy_label_in_path(foo=_, baz=_)
+    client.http_request_with_greedy_label_in_path(
+        **_request(HttpRequestWithGreedyLabelInPathInputDict)
+    )
+    client.http_request_with_greedy_label_in_path(
+        _request(HttpRequestWithGreedyLabelInPathInput)
+    )
+    client.http_request_with_greedy_label_in_path(
+        _request(HttpRequestWithGreedyLabelInPathInputDict)
+    )
+    client.http_request_with_labels(
+        string=_, short=_, integer=_, long=_, float_=_, double=_, boolean=_, timestamp=_
+    )
+    client.http_request_with_labels(**_request(HttpRequestWithLabelsInputDict))
+    client.http_request_with_labels(_request(HttpRequestWithLabelsInput))
+    client.http_request_with_labels(_request(HttpRequestWithLabelsInputDict))
+    client.http_request_with_labels_and_timestamp_format(
+        member_epoch_seconds=_,
+        member_http_date=_,
+        member_date_time=_,
+        default_format=_,
+        target_epoch_seconds=_,
+        target_http_date=_,
+        target_date_time=_,
+    )
+    client.http_request_with_labels_and_timestamp_format(
+        **_request(HttpRequestWithLabelsAndTimestampFormatInputDict)
+    )
+    client.http_request_with_labels_and_timestamp_format(
+        _request(HttpRequestWithLabelsAndTimestampFormatInput)
+    )
+    client.http_request_with_labels_and_timestamp_format(
+        _request(HttpRequestWithLabelsAndTimestampFormatInputDict)
+    )
+    client.http_request_with_regex_literal(str_=_)
+    client.http_request_with_regex_literal(
+        **_request(HttpRequestWithRegexLiteralInputDict)
+    )
+    client.http_request_with_regex_literal(_request(HttpRequestWithRegexLiteralInput))
+    client.http_request_with_regex_literal(
+        _request(HttpRequestWithRegexLiteralInputDict)
+    )
+    client.http_response_code()
+    client.http_response_code(**_request(HttpResponseCodeInputDict))
+    client.http_response_code(_request(HttpResponseCodeInput))
+    client.http_response_code(_request(HttpResponseCodeInputDict))
+    client.http_string_payload()
+    client.http_string_payload(**_request(HttpStringPayloadInputDict))
+    client.http_string_payload(_request(HttpStringPayloadInput))
+    client.http_string_payload(_request(HttpStringPayloadInputDict))
+    client.ignore_query_params_in_response()
+    client.ignore_query_params_in_response(
+        **_request(IgnoreQueryParamsInResponseInputDict)
+    )
+    client.ignore_query_params_in_response(_request(IgnoreQueryParamsInResponseInput))
+    client.ignore_query_params_in_response(
+        _request(IgnoreQueryParamsInResponseInputDict)
+    )
+    client.input_and_output_with_headers()
+    client.input_and_output_with_headers(**_request(InputAndOutputWithHeadersInputDict))
+    client.input_and_output_with_headers(_request(InputAndOutputWithHeadersInput))
+    client.input_and_output_with_headers(_request(InputAndOutputWithHeadersInputDict))
+    client.json_blobs()
+    client.json_blobs(**_request(JsonBlobsInputDict))
+    client.json_blobs(_request(JsonBlobsInput))
+    client.json_blobs(_request(JsonBlobsInputDict))
+    client.json_enums()
+    client.json_enums(**_request(JsonEnumsInputDict))
+    client.json_enums(_request(JsonEnumsInput))
+    client.json_enums(_request(JsonEnumsInputDict))
+    client.json_int_enums()
+    client.json_int_enums(**_request(JsonIntEnumsInputDict))
+    client.json_int_enums(_request(JsonIntEnumsInput))
+    client.json_int_enums(_request(JsonIntEnumsInputDict))
+    client.json_lists()
+    client.json_lists(**_request(JsonListsInputDict))
+    client.json_lists(_request(JsonListsInput))
+    client.json_lists(_request(JsonListsInputDict))
+    client.json_maps()
+    client.json_maps(**_request(JsonMapsInputDict))
+    client.json_maps(_request(JsonMapsInput))
+    client.json_maps(_request(JsonMapsInputDict))
+    client.json_timestamps()
+    client.json_timestamps(**_request(JsonTimestampsInputDict))
+    client.json_timestamps(_request(JsonTimestampsInput))
+    client.json_timestamps(_request(JsonTimestampsInputDict))
+    client.json_unions()
+    client.json_unions(**_request(JsonUnionsInputDict))
+    client.json_unions(_request(JsonUnionsInput))
+    client.json_unions(_request(JsonUnionsInputDict))
+    client.malformed_accept_with_body()
+    client.malformed_accept_with_body(**_request(MalformedAcceptWithBodyInputDict))
+    client.malformed_accept_with_body(_request(MalformedAcceptWithBodyInput))
+    client.malformed_accept_with_body(_request(MalformedAcceptWithBodyInputDict))
+    client.malformed_accept_with_generic_string()
+    client.malformed_accept_with_generic_string(
+        **_request(MalformedAcceptWithGenericStringInputDict)
+    )
+    client.malformed_accept_with_generic_string(
+        _request(MalformedAcceptWithGenericStringInput)
+    )
+    client.malformed_accept_with_generic_string(
+        _request(MalformedAcceptWithGenericStringInputDict)
+    )
+    client.malformed_accept_with_payload()
+    client.malformed_accept_with_payload(
+        **_request(MalformedAcceptWithPayloadInputDict)
+    )
+    client.malformed_accept_with_payload(_request(MalformedAcceptWithPayloadInput))
+    client.malformed_accept_with_payload(_request(MalformedAcceptWithPayloadInputDict))
+    client.malformed_blob()
+    client.malformed_blob(**_request(MalformedBlobInputDict))
+    client.malformed_blob(_request(MalformedBlobInput))
+    client.malformed_blob(_request(MalformedBlobInputDict))
+    client.malformed_boolean(boolean_in_path=_)
+    client.malformed_boolean(**_request(MalformedBooleanInputDict))
+    client.malformed_boolean(_request(MalformedBooleanInput))
+    client.malformed_boolean(_request(MalformedBooleanInputDict))
+    client.malformed_byte(byte_in_path=_)
+    client.malformed_byte(**_request(MalformedByteInputDict))
+    client.malformed_byte(_request(MalformedByteInput))
+    client.malformed_byte(_request(MalformedByteInputDict))
+    client.malformed_content_type_with_body()
+    client.malformed_content_type_with_body(
+        **_request(MalformedContentTypeWithBodyInputDict)
+    )
+    client.malformed_content_type_with_body(_request(MalformedContentTypeWithBodyInput))
+    client.malformed_content_type_with_body(
+        _request(MalformedContentTypeWithBodyInputDict)
+    )
+    client.malformed_content_type_with_generic_string()
+    client.malformed_content_type_with_generic_string(
+        **_request(MalformedContentTypeWithGenericStringInputDict)
+    )
+    client.malformed_content_type_with_generic_string(
+        _request(MalformedContentTypeWithGenericStringInput)
+    )
+    client.malformed_content_type_with_generic_string(
+        _request(MalformedContentTypeWithGenericStringInputDict)
+    )
+    client.malformed_content_type_without_body()
+    client.malformed_content_type_without_body(
+        **_request(MalformedContentTypeWithoutBodyInputDict)
+    )
+    client.malformed_content_type_without_body(
+        _request(MalformedContentTypeWithoutBodyInput)
+    )
+    client.malformed_content_type_without_body(
+        _request(MalformedContentTypeWithoutBodyInputDict)
+    )
+    client.malformed_content_type_without_body_empty_input()
+    client.malformed_content_type_without_body_empty_input(
+        **_request(MalformedContentTypeWithoutBodyEmptyInputInputDict)
+    )
+    client.malformed_content_type_without_body_empty_input(
+        _request(MalformedContentTypeWithoutBodyEmptyInputInput)
+    )
+    client.malformed_content_type_without_body_empty_input(
+        _request(MalformedContentTypeWithoutBodyEmptyInputInputDict)
+    )
+    client.malformed_content_type_with_payload()
+    client.malformed_content_type_with_payload(
+        **_request(MalformedContentTypeWithPayloadInputDict)
+    )
+    client.malformed_content_type_with_payload(
+        _request(MalformedContentTypeWithPayloadInput)
+    )
+    client.malformed_content_type_with_payload(
+        _request(MalformedContentTypeWithPayloadInputDict)
+    )
+    client.malformed_double(double_in_path=_)
+    client.malformed_double(**_request(MalformedDoubleInputDict))
+    client.malformed_double(_request(MalformedDoubleInput))
+    client.malformed_double(_request(MalformedDoubleInputDict))
+    client.malformed_float(float_in_path=_)
+    client.malformed_float(**_request(MalformedFloatInputDict))
+    client.malformed_float(_request(MalformedFloatInput))
+    client.malformed_float(_request(MalformedFloatInputDict))
+    client.malformed_integer(integer_in_path=_)
+    client.malformed_integer(**_request(MalformedIntegerInputDict))
+    client.malformed_integer(_request(MalformedIntegerInput))
+    client.malformed_integer(_request(MalformedIntegerInputDict))
+    client.malformed_list()
+    client.malformed_list(**_request(MalformedListInputDict))
+    client.malformed_list(_request(MalformedListInput))
+    client.malformed_list(_request(MalformedListInputDict))
+    client.malformed_long(long_in_path=_)
+    client.malformed_long(**_request(MalformedLongInputDict))
+    client.malformed_long(_request(MalformedLongInput))
+    client.malformed_long(_request(MalformedLongInputDict))
+    client.malformed_map()
+    client.malformed_map(**_request(MalformedMapInputDict))
+    client.malformed_map(_request(MalformedMapInput))
+    client.malformed_map(_request(MalformedMapInputDict))
+    client.malformed_request_body()
+    client.malformed_request_body(**_request(MalformedRequestBodyInputDict))
+    client.malformed_request_body(_request(MalformedRequestBodyInput))
+    client.malformed_request_body(_request(MalformedRequestBodyInputDict))
+    client.malformed_short(short_in_path=_)
+    client.malformed_short(**_request(MalformedShortInputDict))
+    client.malformed_short(_request(MalformedShortInput))
+    client.malformed_short(_request(MalformedShortInputDict))
+    client.malformed_string()
+    client.malformed_string(**_request(MalformedStringInputDict))
+    client.malformed_string(_request(MalformedStringInput))
+    client.malformed_string(_request(MalformedStringInputDict))
+    client.malformed_timestamp_body_date_time(timestamp=_)
+    client.malformed_timestamp_body_date_time(
+        **_request(MalformedTimestampBodyDateTimeInputDict)
+    )
+    client.malformed_timestamp_body_date_time(
+        _request(MalformedTimestampBodyDateTimeInput)
+    )
+    client.malformed_timestamp_body_date_time(
+        _request(MalformedTimestampBodyDateTimeInputDict)
+    )
+    client.malformed_timestamp_body_default(timestamp=_)
+    client.malformed_timestamp_body_default(
+        **_request(MalformedTimestampBodyDefaultInputDict)
+    )
+    client.malformed_timestamp_body_default(
+        _request(MalformedTimestampBodyDefaultInput)
+    )
+    client.malformed_timestamp_body_default(
+        _request(MalformedTimestampBodyDefaultInputDict)
+    )
+    client.malformed_timestamp_body_http_date(timestamp=_)
+    client.malformed_timestamp_body_http_date(
+        **_request(MalformedTimestampBodyHttpDateInputDict)
+    )
+    client.malformed_timestamp_body_http_date(
+        _request(MalformedTimestampBodyHttpDateInput)
+    )
+    client.malformed_timestamp_body_http_date(
+        _request(MalformedTimestampBodyHttpDateInputDict)
+    )
+    client.malformed_timestamp_header_date_time(timestamp=_)
+    client.malformed_timestamp_header_date_time(
+        **_request(MalformedTimestampHeaderDateTimeInputDict)
+    )
+    client.malformed_timestamp_header_date_time(
+        _request(MalformedTimestampHeaderDateTimeInput)
+    )
+    client.malformed_timestamp_header_date_time(
+        _request(MalformedTimestampHeaderDateTimeInputDict)
+    )
+    client.malformed_timestamp_header_default(timestamp=_)
+    client.malformed_timestamp_header_default(
+        **_request(MalformedTimestampHeaderDefaultInputDict)
+    )
+    client.malformed_timestamp_header_default(
+        _request(MalformedTimestampHeaderDefaultInput)
+    )
+    client.malformed_timestamp_header_default(
+        _request(MalformedTimestampHeaderDefaultInputDict)
+    )
+    client.malformed_timestamp_header_epoch(timestamp=_)
+    client.malformed_timestamp_header_epoch(
+        **_request(MalformedTimestampHeaderEpochInputDict)
+    )
+    client.malformed_timestamp_header_epoch(
+        _request(MalformedTimestampHeaderEpochInput)
+    )
+    client.malformed_timestamp_header_epoch(
+        _request(MalformedTimestampHeaderEpochInputDict)
+    )
+    client.malformed_timestamp_path_default(timestamp=_)
+    client.malformed_timestamp_path_default(
+        **_request(MalformedTimestampPathDefaultInputDict)
+    )
+    client.malformed_timestamp_path_default(
+        _request(MalformedTimestampPathDefaultInput)
+    )
+    client.malformed_timestamp_path_default(
+        _request(MalformedTimestampPathDefaultInputDict)
+    )
+    client.malformed_timestamp_path_epoch(timestamp=_)
+    client.malformed_timestamp_path_epoch(
+        **_request(MalformedTimestampPathEpochInputDict)
+    )
+    client.malformed_timestamp_path_epoch(_request(MalformedTimestampPathEpochInput))
+    client.malformed_timestamp_path_epoch(
+        _request(MalformedTimestampPathEpochInputDict)
+    )
+    client.malformed_timestamp_path_http_date(timestamp=_)
+    client.malformed_timestamp_path_http_date(
+        **_request(MalformedTimestampPathHttpDateInputDict)
+    )
+    client.malformed_timestamp_path_http_date(
+        _request(MalformedTimestampPathHttpDateInput)
+    )
+    client.malformed_timestamp_path_http_date(
+        _request(MalformedTimestampPathHttpDateInputDict)
+    )
+    client.malformed_timestamp_query_default(timestamp=_)
+    client.malformed_timestamp_query_default(
+        **_request(MalformedTimestampQueryDefaultInputDict)
+    )
+    client.malformed_timestamp_query_default(
+        _request(MalformedTimestampQueryDefaultInput)
+    )
+    client.malformed_timestamp_query_default(
+        _request(MalformedTimestampQueryDefaultInputDict)
+    )
+    client.malformed_timestamp_query_epoch(timestamp=_)
+    client.malformed_timestamp_query_epoch(
+        **_request(MalformedTimestampQueryEpochInputDict)
+    )
+    client.malformed_timestamp_query_epoch(_request(MalformedTimestampQueryEpochInput))
+    client.malformed_timestamp_query_epoch(
+        _request(MalformedTimestampQueryEpochInputDict)
+    )
+    client.malformed_timestamp_query_http_date(timestamp=_)
+    client.malformed_timestamp_query_http_date(
+        **_request(MalformedTimestampQueryHttpDateInputDict)
+    )
+    client.malformed_timestamp_query_http_date(
+        _request(MalformedTimestampQueryHttpDateInput)
+    )
+    client.malformed_timestamp_query_http_date(
+        _request(MalformedTimestampQueryHttpDateInputDict)
+    )
+    client.malformed_union()
+    client.malformed_union(**_request(MalformedUnionInputDict))
+    client.malformed_union(_request(MalformedUnionInput))
+    client.malformed_union(_request(MalformedUnionInputDict))
+    client.media_type_header()
+    client.media_type_header(**_request(MediaTypeHeaderInputDict))
+    client.media_type_header(_request(MediaTypeHeaderInput))
+    client.media_type_header(_request(MediaTypeHeaderInputDict))
+    client.no_input_and_no_output()
+    client.no_input_and_no_output(**_request(NoInputAndNoOutputInputDict))
+    client.no_input_and_no_output(_request(NoInputAndNoOutputInput))
+    client.no_input_and_no_output(_request(NoInputAndNoOutputInputDict))
+    client.no_input_and_output()
+    client.no_input_and_output(**_request(NoInputAndOutputInputDict))
+    client.no_input_and_output(_request(NoInputAndOutputInput))
+    client.no_input_and_output(_request(NoInputAndOutputInputDict))
+    client.null_and_empty_headers_client()
+    client.null_and_empty_headers_client(**_request(NullAndEmptyHeadersClientInputDict))
+    client.null_and_empty_headers_client(_request(NullAndEmptyHeadersClientInput))
+    client.null_and_empty_headers_client(_request(NullAndEmptyHeadersClientInputDict))
+    client.null_and_empty_headers_server()
+    client.null_and_empty_headers_server(**_request(NullAndEmptyHeadersServerInputDict))
+    client.null_and_empty_headers_server(_request(NullAndEmptyHeadersServerInput))
+    client.null_and_empty_headers_server(_request(NullAndEmptyHeadersServerInputDict))
+    client.omits_null_serializes_empty_string()
+    client.omits_null_serializes_empty_string(
+        **_request(OmitsNullSerializesEmptyStringInputDict)
+    )
+    client.omits_null_serializes_empty_string(
+        _request(OmitsNullSerializesEmptyStringInput)
+    )
+    client.omits_null_serializes_empty_string(
+        _request(OmitsNullSerializesEmptyStringInputDict)
+    )
+    client.omits_serializing_empty_lists()
+    client.omits_serializing_empty_lists(
+        **_request(OmitsSerializingEmptyListsInputDict)
+    )
+    client.omits_serializing_empty_lists(_request(OmitsSerializingEmptyListsInput))
+    client.omits_serializing_empty_lists(_request(OmitsSerializingEmptyListsInputDict))
+    client.operation_with_defaults()
+    client.operation_with_defaults(**_request(OperationWithDefaultsInputDict))
+    client.operation_with_defaults(_request(OperationWithDefaultsInput))
+    client.operation_with_defaults(_request(OperationWithDefaultsInputDict))
+    client.operation_with_nested_structure(top_level=_)
+    client.operation_with_nested_structure(
+        **_request(OperationWithNestedStructureInputDict)
+    )
+    client.operation_with_nested_structure(_request(OperationWithNestedStructureInput))
+    client.operation_with_nested_structure(
+        _request(OperationWithNestedStructureInputDict)
+    )
+    client.post_player_action()
+    client.post_player_action(**_request(PostPlayerActionInputDict))
+    client.post_player_action(_request(PostPlayerActionInput))
+    client.post_player_action(_request(PostPlayerActionInputDict))
+    client.post_union_with_json_name()
+    client.post_union_with_json_name(**_request(PostUnionWithJsonNameInputDict))
+    client.post_union_with_json_name(_request(PostUnionWithJsonNameInput))
+    client.post_union_with_json_name(_request(PostUnionWithJsonNameInputDict))
+    client.put_with_content_encoding()
+    client.put_with_content_encoding(**_request(PutWithContentEncodingInputDict))
+    client.put_with_content_encoding(_request(PutWithContentEncodingInput))
+    client.put_with_content_encoding(_request(PutWithContentEncodingInputDict))
+    client.query_idempotency_token_auto_fill()
+    client.query_idempotency_token_auto_fill(
+        **_request(QueryIdempotencyTokenAutoFillInputDict)
+    )
+    client.query_idempotency_token_auto_fill(
+        _request(QueryIdempotencyTokenAutoFillInput)
+    )
+    client.query_idempotency_token_auto_fill(
+        _request(QueryIdempotencyTokenAutoFillInputDict)
+    )
+    client.query_params_as_string_list_map()
+    client.query_params_as_string_list_map(
+        **_request(QueryParamsAsStringListMapInputDict)
+    )
+    client.query_params_as_string_list_map(_request(QueryParamsAsStringListMapInput))
+    client.query_params_as_string_list_map(
+        _request(QueryParamsAsStringListMapInputDict)
+    )
+    client.query_precedence()
+    client.query_precedence(**_request(QueryPrecedenceInputDict))
+    client.query_precedence(_request(QueryPrecedenceInput))
+    client.query_precedence(_request(QueryPrecedenceInputDict))
+    client.recursive_shapes()
+    client.recursive_shapes(**_request(RecursiveShapesInputDict))
+    client.recursive_shapes(_request(RecursiveShapesInput))
+    client.recursive_shapes(_request(RecursiveShapesInputDict))
+    client.response_code_http_fallback()
+    client.response_code_http_fallback(**_request(ResponseCodeHttpFallbackInputDict))
+    client.response_code_http_fallback(_request(ResponseCodeHttpFallbackInput))
+    client.response_code_http_fallback(_request(ResponseCodeHttpFallbackInputDict))
+    client.response_code_required()
+    client.response_code_required(**_request(ResponseCodeRequiredInputDict))
+    client.response_code_required(_request(ResponseCodeRequiredInput))
+    client.response_code_required(_request(ResponseCodeRequiredInputDict))
+    client.simple_scalar_properties()
+    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))
+    client.sparse_json_lists()
+    client.sparse_json_lists(**_request(SparseJsonListsInputDict))
+    client.sparse_json_lists(_request(SparseJsonListsInput))
+    client.sparse_json_lists(_request(SparseJsonListsInputDict))
+    client.sparse_json_maps()
+    client.sparse_json_maps(**_request(SparseJsonMapsInputDict))
+    client.sparse_json_maps(_request(SparseJsonMapsInput))
+    client.sparse_json_maps(_request(SparseJsonMapsInputDict))
+    client.streaming_traits()
+    client.streaming_traits(**_request(StreamingTraitsInputDict))
+    client.streaming_traits(_request(StreamingTraitsInput))
+    client.streaming_traits(_request(StreamingTraitsInputDict))
+    client.streaming_traits_require_length()
+    client.streaming_traits_require_length(
+        **_request(StreamingTraitsRequireLengthInputDict)
+    )
+    client.streaming_traits_require_length(_request(StreamingTraitsRequireLengthInput))
+    client.streaming_traits_require_length(
+        _request(StreamingTraitsRequireLengthInputDict)
+    )
+    client.streaming_traits_with_media_type()
+    client.streaming_traits_with_media_type(
+        **_request(StreamingTraitsWithMediaTypeInputDict)
+    )
+    client.streaming_traits_with_media_type(_request(StreamingTraitsWithMediaTypeInput))
+    client.streaming_traits_with_media_type(
+        _request(StreamingTraitsWithMediaTypeInputDict)
+    )
+    client.test_body_structure()
+    client.test_body_structure(**_request(TestBodyStructureInputDict))
+    client.test_body_structure(_request(TestBodyStructureInput))
+    client.test_body_structure(_request(TestBodyStructureInputDict))
+    client.test_get_no_input_no_payload()
+    client.test_get_no_input_no_payload(**_request(TestGetNoInputNoPayloadInputDict))
+    client.test_get_no_input_no_payload(_request(TestGetNoInputNoPayloadInput))
+    client.test_get_no_input_no_payload(_request(TestGetNoInputNoPayloadInputDict))
+    client.test_get_no_payload()
+    client.test_get_no_payload(**_request(TestGetNoPayloadInputDict))
+    client.test_get_no_payload(_request(TestGetNoPayloadInput))
+    client.test_get_no_payload(_request(TestGetNoPayloadInputDict))
+    client.test_payload_blob()
+    client.test_payload_blob(**_request(TestPayloadBlobInputDict))
+    client.test_payload_blob(_request(TestPayloadBlobInput))
+    client.test_payload_blob(_request(TestPayloadBlobInputDict))
+    client.test_payload_structure()
+    client.test_payload_structure(**_request(TestPayloadStructureInputDict))
+    client.test_payload_structure(_request(TestPayloadStructureInput))
+    client.test_payload_structure(_request(TestPayloadStructureInputDict))
+    client.test_post_no_input_no_payload()
+    client.test_post_no_input_no_payload(**_request(TestPostNoInputNoPayloadInputDict))
+    client.test_post_no_input_no_payload(_request(TestPostNoInputNoPayloadInput))
+    client.test_post_no_input_no_payload(_request(TestPostNoInputNoPayloadInputDict))
+    client.test_post_no_payload()
+    client.test_post_no_payload(**_request(TestPostNoPayloadInputDict))
+    client.test_post_no_payload(_request(TestPostNoPayloadInput))
+    client.test_post_no_payload(_request(TestPostNoPayloadInputDict))
+    client.timestamp_format_headers()
+    client.timestamp_format_headers(**_request(TimestampFormatHeadersInputDict))
+    client.timestamp_format_headers(_request(TimestampFormatHeadersInput))
+    client.timestamp_format_headers(_request(TimestampFormatHeadersInputDict))
+    client.unit_input_and_output()
+    client.unit_input_and_output(**_request(UnitInputAndOutputInputDict))
+    client.unit_input_and_output(_request(UnitInputAndOutputInput))
+    client.unit_input_and_output(_request(UnitInputAndOutputInputDict))

@@ -94,20 +94,13 @@ def _assert_fields_match_schema(name: str, cls: type, schema: Any) -> None:
     if not dataclasses.is_dataclass(cls):
         raise ConformanceError(f"{name}: built class is not a dataclass")
     field_names = {f.name for f in dataclasses.fields(cls)}
-    for member in schema.members_by_index:
+    # a runtime field must exist for every modeled member (name derived by the
+    # same ported namer the registry uses)
+    for member, fname in zip(
+        schema.members_by_index, _member_field_names(schema), strict=True
+    ):
         if _is_event_stream_member(member):
             continue
-        # a runtime field must exist for every modeled member (name derived by the
-        # same ported namer the registry uses)
-        from smithy_core._model_naming import member_field_name
-
-        is_error = _is_error(schema)
-        fname = member_field_name(
-            member.expect_member_name(),
-            is_error=is_error,
-            carries_response_metadata=is_error or _is_output(schema),
-            is_enum=False,
-        )
         if fname not in field_names:
             raise ConformanceError(
                 f"{name}: schema member {member.expect_member_name()!r} -> field "
@@ -130,25 +123,35 @@ def _assert_round_trips(
 
 def _build_instance(cls: type, schema: Any, models: ModuleType) -> Any:
     """Construct an instance filling required members with trivial values."""
-    from smithy_core._model_naming import member_field_name
-
     kwargs: dict[str, Any] = {}
-    is_error = _is_error(schema)
-    for member in schema.members_by_index:
+    for member, fname in zip(
+        schema.members_by_index, _member_field_names(schema), strict=True
+    ):
         if _is_event_stream_member(member):
             continue
         required = member.get_trait(RequiredTrait) is not None
         has_default = member.get_trait(DefaultTrait) is not None
         if not required or has_default or _is_input(schema):
             continue
-        fname = member_field_name(
+        kwargs[fname] = _trivial_value(member, models)
+    return cls(**kwargs)
+
+
+def _member_field_names(schema: Any) -> tuple[str, ...]:
+    """The generated field name of every member, in member-index order."""
+    from smithy_core._model_naming import escape_input_member_names, member_field_name
+
+    is_error = _is_error(schema)
+    names = tuple(
+        member_field_name(
             member.expect_member_name(),
             is_error=is_error,
             carries_response_metadata=is_error or _is_output(schema),
             is_enum=False,
         )
-        kwargs[fname] = _trivial_value(member, models)
-    return cls(**kwargs)
+        for member in schema.members_by_index
+    )
+    return escape_input_member_names(names) if _is_input(schema) else names
 
 
 def _trivial_value(member: Any, models: ModuleType) -> Any:
@@ -222,6 +225,14 @@ def _assert_stub_matches(
                 f"{name}: models.pyi fields {sorted(stub_fields[name])} != "
                 f"runtime local fields {sorted(local_runtime)}"
             )
+    # A dictionary form is declared only in the stub. Its name must still import,
+    # as plain dict, or annotating with it fails at runtime.
+    for name in sorted(_dictionary_forms(Path(pyi_path), set())):
+        if getattr(models, name, None) is not dict:
+            raise ConformanceError(
+                f"{name}: declared in models.pyi as a dictionary form, but is "
+                "not `dict` at runtime"
+            )
 
 
 def _stub_fields(path: Path, visited: set[Path]) -> dict[str, set[str]]:
@@ -253,6 +264,52 @@ def _stub_fields(path: Path, visited: set[Path]) -> dict[str, set[str]]:
                 elif name.name in imported:
                     stub_fields[name.asname or name.name] = imported[name.name]
     return stub_fields
+
+
+def _dictionary_forms(path: Path, visited: set[Path]) -> set[str]:
+    """The dictionary forms a stub exposes, under the names it exposes them by.
+
+    They are the TypedDict classes it declares and the unions made only of those.
+    A partitioned stub declares none itself: it re-exports them from its partition
+    stubs, which are followed as :py:func:`_stub_fields` follows them. A union and
+    its alternatives are always declared in the same file.
+    """
+    path = path.resolve()
+    if path in visited:
+        return set()
+    visited.add(path)
+
+    tree = ast.parse(path.read_text())
+    typed_dicts = {
+        node.name
+        for node in tree.body
+        if isinstance(node, ast.ClassDef)
+        and any(isinstance(b, ast.Name) and b.id == "TypedDict" for b in node.bases)
+    }
+    forms = set(typed_dicts)
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            target = node.targets[0]
+            if len(node.targets) != 1 or not isinstance(target, ast.Name):
+                continue
+            used = {n.id for n in ast.walk(node.value) if isinstance(n, ast.Name)}
+            members = used - {"Union"}
+            if members and members <= typed_dicts:
+                forms.add(target.id)
+        elif isinstance(node, ast.ImportFrom) and node.level and node.module:
+            base = path.parent
+            for _ in range(node.level - 1):
+                base = base.parent
+            imported_path = base.joinpath(*node.module.split(".")).with_suffix(".pyi")
+            if not imported_path.exists():
+                continue
+            imported = _dictionary_forms(imported_path, visited)
+            for name in node.names:
+                if name.name == "*":
+                    forms |= imported
+                elif name.name in imported:
+                    forms.add(name.asname or name.name)
+    return forms
 
 
 def _is_error(schema: Any) -> bool:
