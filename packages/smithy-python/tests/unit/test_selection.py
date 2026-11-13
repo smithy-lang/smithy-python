@@ -10,14 +10,12 @@ from pathlib import Path
 import pytest
 from smithy_python.cli import main
 
-_TYPES_OPTIONS = ("--package", "example_types", "--package-version", "1.0.0")
+_CBOR: dict[str, object] = {"smithy.protocols#rpcv2Cbor": {}}
 
 
 def _artifact_args(artifact: str, *options: str) -> list[str]:
-    args = ["generate", artifact]
-    if artifact == "types":
-        args.extend(_TYPES_OPTIONS)
-    args.extend(options)
+    args = ["generate", artifact, "--package", f"example_{artifact}"]
+    args.extend(("--package-version", "1.0.0", *options))
     return args
 
 
@@ -26,7 +24,7 @@ def _artifact_args(artifact: str, *options: str) -> list[str]:
     ("service", "expected", "diagnostic"),
     [
         (None, 2, "example#First, example#Second"),
-        ("example#Second", 1, "generation is not implemented yet"),
+        ("example#Second", 0, "excluded 1 eligible data shape(s) outside the closure"),
         ("Second", 2, "absolute"),
         ("example##Second", 2, "shape ID"),
         (" example#Second", 2, "shape ID"),
@@ -49,8 +47,8 @@ def test_cli_service_selection(
         {
             "smithy": "2.0",
             "shapes": {
-                "example#First": {"type": "service"},
-                "example#Second": {"type": "service"},
+                "example#First": {"type": "service", "traits": _CBOR},
+                "example#Second": {"type": "service", "traits": _CBOR},
                 "example#Base": {
                     "type": "service",
                     "traits": {"smithy.api#mixin": {}},
@@ -66,13 +64,9 @@ def test_cli_service_selection(
     argv = _artifact_args(artifact, "--output", str(output))
     if service is not None:
         argv.extend(("--service", service))
-    if artifact == "types" and service in (None, "example#Second"):
+    if artifact == "types" and service is None:
         expected = 0
-        diagnostic = (
-            ""
-            if service is None
-            else "excluded 1 eligible data shape(s) outside the closure"
-        )
+        diagnostic = ""
     assert main(argv, environ={}, stdin=BytesIO(source)) == expected
     captured = capsys.readouterr()
     assert captured.out == ""
@@ -100,10 +94,10 @@ def test_cli_implicit_service(
         "example#Base": {"type": "service", "traits": {"smithy.api#mixin": {}}}
     }
     if has_service:
-        shapes["example#Service"] = {"type": "service"}
+        shapes["example#Service"] = {"type": "service", "traits": _CBOR}
     source = json.dumps({"smithy": "2.0", "shapes": shapes}).encode()
     argv = _artifact_args(artifact)
-    expected = 0 if artifact == "types" else 1 if has_service else 2
+    expected = 0 if artifact == "types" or has_service else 2
     assert (
         main(
             argv,
@@ -114,10 +108,9 @@ def test_cli_implicit_service(
     )
     captured = capsys.readouterr()
     assert captured.out == ""
-    assert ("not implemented" in captured.err) is (artifact == "client" and has_service)
     if artifact == "client" and not has_service:
         assert "service" in captured.err
-    assert (tmp_path / "output").exists() is (artifact == "types")
+    assert (tmp_path / "output").exists() is (artifact == "types" or has_service)
 
 
 @pytest.mark.parametrize("artifact", ["client", "types"])
@@ -132,7 +125,7 @@ def test_cli_reports_only_excluded_eligible_data(
         {
             "smithy": "2.0",
             "shapes": {
-                "example#Service": {"type": "service"},
+                "example#Service": {"type": "service", "traits": _CBOR},
                 "example#Unused": {"type": "string"},
                 "example#Trait": {
                     "type": "structure",
@@ -152,9 +145,7 @@ def test_cli_reports_only_excluded_eligible_data(
     environ = {"SMITHY_PLUGIN_DIR": str(output)} if plugin else {}
     if not plugin:
         argv.extend(("--output", str(output)))
-    assert main(argv, environ=environ, stdin=BytesIO(source)) == (
-        0 if artifact == "types" else 1
-    )
+    assert main(argv, environ=environ, stdin=BytesIO(source)) == 0
     captured = capsys.readouterr()
     assert captured.out == ""
     expected = ""
@@ -162,10 +153,9 @@ def test_cli_reports_only_excluded_eligible_data(
         expected = (
             "smithy-python: excluded 1 eligible data shape(s) "
             "outside the closure of service example#Service\n"
-            "smithy-python: error: client generation is not implemented yet\n"
         )
     assert captured.err == expected
-    assert output.exists() is (artifact == "types")
+    assert output.exists()
 
 
 def test_cli_conflicts_are_model_errors(

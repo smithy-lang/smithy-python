@@ -838,6 +838,7 @@
     "main": "function"
   },
   "smithy_python.clients": {
+    "ClientGenerator": "class",
     "ClientPlan": "class",
     "OperationPlan": "class",
     "normalize_client_model": "function"
@@ -846,7 +847,8 @@
     "Dependency": "class",
     "DependencySet": "class",
     "HATCHLING": "Dependency",
-    "SMITHY_CORE": "Dependency"
+    "SMITHY_CORE": "Dependency",
+    "SMITHY_HTTP": "Dependency"
   },
   "smithy_python.environment": {
     "PluginEnvironment": "class"
@@ -877,6 +879,12 @@
   "smithy_python.model": {},
   "smithy_python.models": {
     "ModelGenerator": "class"
+  },
+  "smithy_python.protocols": {
+    "DEFAULT_PROTOCOLS": "mappingproxy",
+    "ProtocolContribution": "class",
+    "RPCV2_CBOR": "ProtocolContribution",
+    "select_protocol": "function"
   },
   "smithy_python.schemas": {
     "SchemaGenerator": "class",
