@@ -48,6 +48,8 @@ final class DirectedPythonClientCodegen
 
     private static final Logger LOGGER = Logger.getLogger(DirectedPythonClientCodegen.class.getName());
 
+    private GenerationContext context;
+
     @Override
     public SymbolProvider createSymbolProvider(CreateSymbolProviderDirective<PythonSettings> directive) {
         return new PythonSymbolProvider(directive.model(), directive.settings());
@@ -55,7 +57,7 @@ final class DirectedPythonClientCodegen
 
     @Override
     public GenerationContext createContext(CreateContextDirective<PythonSettings, PythonIntegration> directive) {
-        return GenerationContext.builder()
+        context = GenerationContext.builder()
                 .model(directive.model())
                 .settings(directive.settings())
                 .symbolProvider(directive.symbolProvider())
@@ -70,6 +72,16 @@ final class DirectedPythonClientCodegen
                         directive.model(),
                         directive.service()))
                 .build();
+        return context;
+    }
+
+    /**
+     * Releases resources held by the generation, whether or not it succeeded.
+     */
+    void close() {
+        if (context != null) {
+            context.pandocWorker().close();
+        }
     }
 
     private ProtocolGenerator resolveProtocolGenerator(

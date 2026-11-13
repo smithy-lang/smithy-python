@@ -12,6 +12,7 @@ import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
+import software.amazon.smithy.python.codegen.writer.PandocWorker;
 import software.amazon.smithy.python.codegen.writer.PythonDelegator;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyBuilder;
@@ -32,6 +33,7 @@ public final class GenerationContext
     private final PythonDelegator delegator;
     private final List<PythonIntegration> integrations;
     private final ProtocolGenerator protocolGenerator;
+    private final PandocWorker pandocWorker = new PandocWorker();
 
     private GenerationContext(Builder builder) {
         model = builder.model;
@@ -89,6 +91,18 @@ public final class GenerationContext
         return protocolGenerator != null
                 ? protocolGenerator.getApplicationProtocol(this)
                 : ApplicationProtocol.createDefaultHttpApplicationProtocol();
+    }
+
+    /**
+     * Gets the Pandoc worker shared by this generation's documentation conversions.
+     *
+     * <p>The plugin that runs the generation closes it when the generation ends.
+     * This is an internal API.
+     *
+     * @return Returns the Pandoc worker.
+     */
+    public PandocWorker pandocWorker() {
+        return pandocWorker;
     }
 
     /**

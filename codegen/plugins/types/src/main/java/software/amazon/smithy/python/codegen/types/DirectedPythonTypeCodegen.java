@@ -40,6 +40,9 @@ import software.amazon.smithy.python.codegen.writer.PythonDelegator;
 
 final class DirectedPythonTypeCodegen
         implements DirectedCodegen<GenerationContext, PythonSettings, PythonIntegration> {
+
+    private GenerationContext context;
+
     @Override
     public SymbolProvider createSymbolProvider(CreateSymbolProviderDirective<PythonSettings> directive) {
         return new PythonSymbolProvider(directive.model(), directive.settings());
@@ -47,7 +50,7 @@ final class DirectedPythonTypeCodegen
 
     @Override
     public GenerationContext createContext(CreateContextDirective<PythonSettings, PythonIntegration> directive) {
-        return GenerationContext.builder()
+        context = GenerationContext.builder()
                 .model(directive.model())
                 .settings(directive.settings())
                 .symbolProvider(directive.symbolProvider())
@@ -58,6 +61,16 @@ final class DirectedPythonTypeCodegen
                         directive.settings()))
                 .integrations(directive.integrations())
                 .build();
+        return context;
+    }
+
+    /**
+     * Releases resources held by the generation, whether or not it succeeded.
+     */
+    void close() {
+        if (context != null) {
+            context.pandocWorker().close();
+        }
     }
 
     @Override
