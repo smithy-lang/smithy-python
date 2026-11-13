@@ -193,11 +193,7 @@ class _StubEmitter:
         self.symbols = context.symbols
         self.module = f"{context.settings.package}.models"
         self.external_bases = external_bases
-        self.serde_shape: str | _symbols.TypeReference = (
-            _symbols.TypeReference("_SerdeShape", "..models")
-            if external_bases
-            else "_SerdeShape"
-        )
+        self.serde_shape = "_SerdeShape"
         self.service_error: str | _symbols.TypeReference = (
             _symbols.TypeReference("ServiceError", "..models")
             if external_bases
@@ -233,6 +229,14 @@ class _StubEmitter:
 
     def write_partition(self, shapes: tuple[_model.Shape, ...]) -> None:
         """Write declarations assigned to one private stub partition."""
+        if any(
+            shape.type in (_model.ShapeType.STRUCTURE, _model.ShapeType.UNION)
+            for shape in shapes
+        ):
+            self.writer.line(
+                "from ..models import _SerdeShape  # pyright: ignore[reportPrivateUsage]"
+            )
+            self.writer.line()
         self._write_shapes(shapes)
 
     def _write_preamble(self) -> None:
@@ -449,7 +453,7 @@ def _stub_shape_names(plan: ModelPlan, shape: _model.Shape) -> tuple[str, ...]:
 
 def _write_mapping(writer: PythonWriter, name: str, values: Mapping[str, str]) -> None:
     if not values:
-        writer.line(name, " = {}")
+        writer.line(name, ": dict[str, str] = {}")
         return
     writer.line(name, " = {")
     with writer.indent():

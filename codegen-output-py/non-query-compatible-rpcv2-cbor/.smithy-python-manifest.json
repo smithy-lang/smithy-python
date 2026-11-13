@@ -1,0 +1,13 @@
+{
+  "files": {
+    "README.md": "0596f3af522471b12c17e5e2cb0f2e42bfeb3a7d910ca77e185f1bd493d12764",
+    "pyproject.toml": "387175323e3c45838b46b83a0b1190986426e9f6ce6af0512cf8f34f437010a3",
+    "src/nonquerycompatiblerpcv2cbor/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
+    "src/nonquerycompatiblerpcv2cbor/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/nonquerycompatiblerpcv2cbor/_private/schemas.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/nonquerycompatiblerpcv2cbor/models.py": "1baf2fd582c07639bd15e8d7162d003c2de4983b562d3b0b4cfc963fea29c89b",
+    "src/nonquerycompatiblerpcv2cbor/models.pyi": "5baac8c3bf71dc1d6d71297457d046b5b8fbd883273ee0b3ddc3458c0e58220b",
+    "src/nonquerycompatiblerpcv2cbor/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "version": 1
+}

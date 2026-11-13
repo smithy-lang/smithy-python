@@ -1,0 +1,308 @@
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Self
+
+from smithy_core.deserializers import ShapeDeserializer
+from smithy_core.exceptions import ModeledError
+from smithy_core.response import ResponseMetadata
+from smithy_core.serializers import ShapeSerializer
+
+__all__ = [
+    "Alpha",
+    "DifferentShapeName",
+    "Gamma",
+    "GammaPayload",
+    "HeartbeatEvent",
+    "LogEvent",
+    "MetricEvent",
+    "NotificationEvent",
+    "PublishEventStream",
+    "PublishEventStreamLog",
+    "PublishEventStreamMetric",
+    "PublishEventStreamUnknown",
+    "PublishEventsInput",
+    "PublishEventsOutput",
+    "ServiceError",
+    "StreamServiceError",
+    "SubscribeEventStream",
+    "SubscribeEventStreamHeartbeat",
+    "SubscribeEventStreamNotification",
+    "SubscribeEventStreamUnknown",
+    "SubscribeToEventsInput",
+    "SubscribeToEventsOutput",
+    "ThrottlingEvent",
+    "TradeEventStreamInput",
+    "TradeEventStreamOutput",
+    "TradeEvents",
+    "TradeEventsAlpha",
+    "TradeEventsBeta",
+    "TradeEventsDelta",
+    "TradeEventsGamma",
+    "TradeEventsThrottle",
+    "TradeEventsUnknown",
+    "Unit",
+]
+
+class _SerdeShape:
+    def serialize(self, serializer: ShapeSerializer) -> None: ...
+    def serialize_members(self, serializer: ShapeSerializer) -> None: ...
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
+
+class ServiceError(ModeledError):
+    """
+    Base error for all errors in the service.
+
+    Some exceptions do not extend from this class, including synthetic,
+    implicit, and shared exception types.
+    """
+
+@dataclass(kw_only=True)
+class Alpha(_SerdeShape):
+    "Dataclass for Alpha structure."
+
+    id: str | None = ...
+    timestamp: datetime | None = ...
+
+@dataclass(kw_only=True)
+class DifferentShapeName(_SerdeShape):
+    "Dataclass for DifferentShapeName structure."
+
+    name: str | None = ...
+    number: int | None = ...
+
+@dataclass(kw_only=True)
+class Gamma(_SerdeShape):
+    "Dataclass for Gamma structure."
+
+    sequence_number: int | None = ...
+    payload: GammaPayload | None = ...
+
+@dataclass(kw_only=True)
+class GammaPayload(_SerdeShape):
+    "Dataclass for GammaPayload structure."
+
+    message: str | None = ...
+    values: list[int] | None = ...
+
+@dataclass(kw_only=True)
+class HeartbeatEvent(_SerdeShape):
+    "Dataclass for HeartbeatEvent structure."
+
+    timestamp: datetime | None = ...
+
+@dataclass(kw_only=True)
+class LogEvent(_SerdeShape):
+    "Dataclass for LogEvent structure."
+
+    level: str | None = ...
+    message: str | None = ...
+
+@dataclass(kw_only=True)
+class MetricEvent(_SerdeShape):
+    "Dataclass for MetricEvent structure."
+
+    name: str | None = ...
+    value: float | None = ...
+
+@dataclass(kw_only=True)
+class NotificationEvent(_SerdeShape):
+    "Dataclass for NotificationEvent structure."
+
+    topic: str | None = ...
+    payload: str | None = ...
+
+@dataclass
+class PublishEventStreamLog(_SerdeShape):
+    value: LogEvent
+
+@dataclass
+class PublishEventStreamMetric(_SerdeShape):
+    value: MetricEvent
+
+@dataclass
+class PublishEventStreamUnknown(_SerdeShape):
+    """
+    Represents an unknown variant.
+
+    If you receive this value, you will need to update your library to
+    receive the parsed value.
+
+    This value may not be deliberately sent.
+    """
+
+    tag: str
+
+PublishEventStream = (
+    PublishEventStreamLog | PublishEventStreamMetric | PublishEventStreamUnknown
+)
+
+class _PublishEventStreamDeserializer:
+    def deserialize(self, deserializer: ShapeDeserializer) -> PublishEventStream: ...
+
+@dataclass(kw_only=True)
+class PublishEventsInput(_SerdeShape):
+    "Dataclass for PublishEventsInput structure."
+
+    channel: str | None = ...
+
+@dataclass(kw_only=True)
+class PublishEventsOutput(_SerdeShape):
+    "Dataclass for PublishEventsOutput structure."
+
+    event_count: int | None = ...
+    message: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class StreamServiceError(ServiceError, _SerdeShape):
+    "Dataclass for StreamServiceError structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass
+class SubscribeEventStreamNotification(_SerdeShape):
+    value: NotificationEvent
+
+@dataclass
+class SubscribeEventStreamHeartbeat(_SerdeShape):
+    value: HeartbeatEvent
+
+@dataclass
+class SubscribeEventStreamUnknown(_SerdeShape):
+    """
+    Represents an unknown variant.
+
+    If you receive this value, you will need to update your library to
+    receive the parsed value.
+
+    This value may not be deliberately sent.
+    """
+
+    tag: str
+
+SubscribeEventStream = (
+    SubscribeEventStreamNotification
+    | SubscribeEventStreamHeartbeat
+    | SubscribeEventStreamUnknown
+)
+
+class _SubscribeEventStreamDeserializer:
+    def deserialize(self, deserializer: ShapeDeserializer) -> SubscribeEventStream: ...
+
+@dataclass(kw_only=True)
+class SubscribeToEventsInput(_SerdeShape):
+    "Dataclass for SubscribeToEventsInput structure."
+
+    channel: str | None = ...
+    max_events: int | None = ...
+
+@dataclass(kw_only=True)
+class SubscribeToEventsOutput(_SerdeShape):
+    "Dataclass for SubscribeToEventsOutput structure."
+
+    subscription_id: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class ThrottlingEvent(ServiceError, _SerdeShape):
+    "Dataclass for ThrottlingEvent structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class TradeEventStreamInput(_SerdeShape):
+    "Dataclass for TradeEventStreamInput structure."
+
+    session_id: str | None = ...
+
+@dataclass(kw_only=True)
+class TradeEventStreamOutput(_SerdeShape):
+    "Dataclass for TradeEventStreamOutput structure."
+
+    greeting: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass
+class TradeEventsAlpha(_SerdeShape):
+    value: Alpha
+
+@dataclass
+class TradeEventsBeta(_SerdeShape):
+    value: Unit
+
+@dataclass
+class TradeEventsGamma(_SerdeShape):
+    value: Gamma
+
+@dataclass
+class TradeEventsDelta(_SerdeShape):
+    value: DifferentShapeName
+
+@dataclass
+class TradeEventsThrottle(_SerdeShape):
+    value: ThrottlingEvent
+
+@dataclass
+class TradeEventsUnknown(_SerdeShape):
+    """
+    Represents an unknown variant.
+
+    If you receive this value, you will need to update your library to
+    receive the parsed value.
+
+    This value may not be deliberately sent.
+    """
+
+    tag: str
+
+TradeEvents = (
+    TradeEventsAlpha
+    | TradeEventsBeta
+    | TradeEventsGamma
+    | TradeEventsDelta
+    | TradeEventsThrottle
+    | TradeEventsUnknown
+)
+
+class _TradeEventsDeserializer:
+    def deserialize(self, deserializer: ShapeDeserializer) -> TradeEvents: ...
+
+@dataclass(kw_only=True)
+class Unit(_SerdeShape):
+    pass
