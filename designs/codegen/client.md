@@ -57,10 +57,12 @@ types settings. It adds an optional protocol selection. Service resolution
 belongs to selection. Types-only options such as selectors and
 `--include-operation-io` do not apply to clients.
 
-The shared emitters accept any settings that carry the model and schema fields
-they consume. The client context carries its plan type as an explicit type
-parameter. Client code passes `ClientSettings` and `ClientPlan` directly and
-never constructs `TypesSettings` or replaces a plan after construction.
+The shared schema and model emitters accept a
+`GenerationContext[ModelArtifactSettings]`. `ModelArtifactSettings` holds the
+package and partition fields both artifacts use, and `TypesSettings` and
+`ClientSettings` extend it. Client generation passes its `ClientSettings` and the
+schema and model plans from its `ClientPlan`. It never constructs
+`TypesSettings` or replaces a plan after construction.
 
 ## Operation Discovery
 
@@ -141,17 +143,25 @@ when the trait's definition shape is absent from the input AST.
 
 ## Operation Emission
 
-Model emission adds a lazy operation table. Each operation constant constructs
-an `APIOperation` from its compact schema, registry, effective error IDs, and
-auth scheme IDs. The public stub declares
+Model emission adds a lazy `_OPERATIONS` table that maps each operation
+constant to its effective error IDs and auth scheme IDs. The module
+`__getattr__` builds an operation on first access with
+`ModelRegistry.build_operation`, which wraps the compact schema in an
+`APIOperation`. The public stub declares
 `APIOperation[OperationInput, OperationOutput]`. Importing models or clients
 does not construct model classes.
 
 Python model plans can rename declarations. `APIOperation.input`, `.output`,
-and `.error_registry` resolve classes through an explicit shape-ID-to-declaration
-mapping, the same mapping model plans use for member targets. Resolution by
-`schema.id.name` or by scanning module globals would return the wrong class for
-renamed declarations.
+and `.error_registry` resolve classes through `APIOperation.type_names`, a
+shape-ID-to-declaration mapping. `build_operation` fills it from the registry's
+target names, the same mapping model plans use for member targets. Resolution by
+`schema.id.name` alone returns the wrong class when a service rename separates
+two shapes with the same name.
+
+Effective auth scheme IDs follow Smithy's `NO_AUTH_AWARE` mode. Service schemes
+are ordered by shape ID unless an `auth` trait on the operation, or else the
+service, orders them. `smithy.api#noAuth` is appended when no scheme applies or
+the operation has `optionalAuth`.
 
 ## Protocols
 

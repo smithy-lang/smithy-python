@@ -34,8 +34,8 @@ class OperationPlan:
 class ClientPlan:
     """A normalized service and the shared plans needed by client emitters.
 
-    Schema/model plans contain data shapes at this stage. Control schema names
-    are reserved by ``symbols``; operation/schema emission is a subsequent phase.
+    The schema plan covers selected data shapes, contained operations, and the
+    service. The model plan covers data declarations and lazy operation exports.
     Planning neither writes files nor resolves a protocol implementation.
     """
 
@@ -74,14 +74,31 @@ class ClientPlan:
             operations=operations,
             reserved_member_names=_models._model_reserved_member_names(model),  # pyright: ignore[reportPrivateUsage]
         )
-        shared = _generation.GenerationPlan.from_selection(model, selection, symbols)
+        schemas = _schemas.SchemaPlan.from_shapes(
+            model,
+            (*selection.shapes, *operations, service),
+            symbols,
+            retained_traits=() if settings.protocol is None else (settings.protocol,),
+        )
+        operation_models = tuple(
+            _generation.OperationModel(
+                name=symbols.schema_name(operation.id),
+                input_name=symbols.declaration_name(operation.input),
+                output_name=symbols.declaration_name(operation.output),
+                error_ids=operation.errors,
+                auth_scheme_ids=_effective_auth_schemes(model, service, operation),
+            )
+            for operation in operations
+        )
         return cls(
             model=model,
             selection=selection,
             settings=settings,
             symbols=symbols,
-            schemas=shared.schemas,
-            models=shared.models,
+            schemas=schemas,
+            models=_generation.ModelPlan.from_shapes(
+                selection.shapes, symbols, schemas.names, operation_models
+            ),
             operations=tuple(
                 OperationPlan(
                     operation=operation,
@@ -177,6 +194,58 @@ _INPUT = _model.ShapeId("smithy.api", "input")
 _OUTPUT = _model.ShapeId("smithy.api", "output")
 _ORIGINAL = _model.ShapeId("smithy.synthetic", "originalShapeId")
 _EMPTY_TRAIT: Mapping[str, _model.Node] = MappingProxyType({})
+_AUTH = _model.ShapeId("smithy.api", "auth")
+_AUTH_DEFINITION = _model.ShapeId("smithy.api", "authDefinition")
+_OPTIONAL_AUTH = _model.ShapeId("smithy.api", "optionalAuth")
+_NO_AUTH = _model.ShapeId("smithy.api", "noAuth")
+# The embedded prelude omits trait definitions, so its auth traits are listed.
+_PRELUDE_AUTH_SCHEMES = frozenset(
+    _model.ShapeId("smithy.api", name)
+    for name in ("httpApiKeyAuth", "httpBasicAuth", "httpBearerAuth", "httpDigestAuth")
+)
+
+
+def _effective_auth_schemes(
+    model: _model.Model,
+    service: _model.ServiceShape,
+    operation: _model.OperationShape,
+) -> tuple[_model.ShapeId, ...]:
+    """Smithy's effective auth schemes in ``NO_AUTH_AWARE`` mode.
+
+    Service schemes are ordered by shape ID unless an ``auth`` trait on the
+    operation, or else the service, orders them. ``noAuth`` is appended when no
+    scheme applies or the operation has ``optionalAuth``.
+    """
+    supported = sorted(
+        (
+            trait_id
+            for trait_id in service.traits
+            if trait_id in _PRELUDE_AUTH_SCHEMES
+            or (
+                (definition := model.find_shape(trait_id)) is not None
+                and definition.has_trait(_AUTH_DEFINITION)
+            )
+        ),
+        key=str,
+    )
+    priority = (
+        operation.get_trait(_AUTH)
+        if operation.has_trait(_AUTH)
+        else service.get_trait(_AUTH)
+    )
+    schemes = (
+        supported
+        if not isinstance(priority, tuple)
+        else [
+            scheme_id
+            for value in priority
+            if isinstance(value, str)
+            and (scheme_id := _model.ShapeId.from_string(value)) in supported
+        ]
+    )
+    if not schemes or operation.has_trait(_OPTIONAL_AUTH):
+        schemes.append(_NO_AUTH)
+    return tuple(schemes)
 
 
 def _reference_counts(model: _model.Model) -> Counter[_model.ShapeId]:
