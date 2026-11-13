@@ -837,6 +837,11 @@
   "smithy_python.cli": {
     "main": "function"
   },
+  "smithy_python.clients": {
+    "ClientPlan": "class",
+    "OperationPlan": "class",
+    "normalize_client_model": "function"
+  },
   "smithy_python.dependencies": {
     "Dependency": "class",
     "DependencySet": "class",
@@ -861,6 +866,7 @@
   "smithy_python.generation": {
     "ArtifactGenerator": "protocol",
     "ArtifactSettings": "class",
+    "ClientSettings": "class",
     "GenerationContext": "class",
     "GenerationPlan": "class",
     "ModelPlan": "class",
@@ -876,11 +882,13 @@
   },
   "smithy_python.selection": {
     "Selection": "class",
+    "contained_operations": "function",
     "resolve_service": "function",
     "select_shapes": "function",
     "select_type_shapes": "function"
   },
   "smithy_python.symbols": {
+    "ClientSymbolProvider": "class",
     "SymbolProvider": "class",
     "TypeReference": "class"
   },

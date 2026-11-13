@@ -19,6 +19,7 @@ from . import symbols as _symbols
 __all__ = [
     "ArtifactGenerator",
     "ArtifactSettings",
+    "ClientSettings",
     "GenerationContext",
     "GenerationPlan",
     "ModelPlan",
@@ -48,11 +49,25 @@ class TypesSettings(ArtifactSettings):
     stub_partition_size: int | None = 250
 
     def __post_init__(self) -> None:
-        if any(
-            size is not None and size < 1
-            for size in (self.schema_partition_size, self.stub_partition_size)
-        ):
-            raise ValueError("Partition sizes must be positive")
+        _validate_partition_sizes(self.schema_partition_size, self.stub_partition_size)
+
+
+@dataclass(frozen=True, slots=True)
+class ClientSettings(ArtifactSettings):
+    """Settings for a service client package.
+
+    Protocol selection is interpreted by the client protocol contribution, not
+    by model normalization. Partition targets match standalone types defaults.
+    """
+
+    protocol: _model.ShapeId | None = None
+    schema_partition_size: int | None = 100
+    stub_partition_size: int | None = 250
+
+    def __post_init__(self) -> None:
+        _validate_partition_sizes(self.schema_partition_size, self.stub_partition_size)
+        if self.protocol is not None and self.protocol.is_member:
+            raise ValueError("A protocol must be a non-member shape ID")
 
 
 @dataclass(frozen=True, slots=True)
@@ -175,3 +190,8 @@ class ArtifactGenerator[SettingsT: ArtifactSettings](Protocol):
     def generate(self, context: GenerationContext[SettingsT]) -> None:
         """Register every generated file and dependency."""
         ...
+
+
+def _validate_partition_sizes(*sizes: int | None) -> None:
+    if any(size is not None and size < 1 for size in sizes):
+        raise ValueError("Partition sizes must be positive")
