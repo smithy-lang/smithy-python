@@ -83,6 +83,13 @@ _SELF: Final = _symbols.TypeReference("Self", "typing")
 _STR_ENUM: Final = _symbols.TypeReference("StrEnum", "enum")
 _INT_ENUM: Final = _symbols.TypeReference("IntEnum", "enum")
 _SCHEMAS: Final = _symbols.TypeReference("schemas", "._private")
+_TYPED_DICT: Final = _symbols.TypeReference("TypedDict", "typing")
+_REQUIRED: Final = _symbols.TypeReference("Required", "typing")
+_SEQUENCE: Final = _symbols.TypeReference("Sequence", "collections.abc")
+_MAPPING: Final = _symbols.TypeReference("Mapping", "collections.abc")
+_UNIT_ID: Final = _model.ShapeId("smithy.api", "Unit")
+
+type _SourcePart = str | _symbols.TypeReference
 
 _ERROR_MESSAGE_NAMES: Final = frozenset({"errormessage", "error_message", "message"})
 _DOCSTRING_WIDTH: Final = 72
@@ -318,12 +325,98 @@ class _StubEmitter:
             match shape.type:
                 case _model.ShapeType.STRUCTURE:
                     self._write_structure(shape)
+                    self._write_structure_dict(shape)
                 case _model.ShapeType.UNION:
                     self._write_union(shape)
+                    self._write_union_dict(shape)
                 case _model.ShapeType.ENUM | _model.ShapeType.INT_ENUM:
                     self._write_enum(shape)
                 case _:
                     pass
+
+    # The dictionary a caller may pass in place of an input model. It exists only
+    # in the stub. At runtime its name resolves to plain ``dict``.
+    def _write_structure_dict(self, shape: _model.Shape) -> None:
+        name = self.plan.input_dict_names.get(shape.id)
+        if name is None:
+            return
+        writer = self.writer
+        model_name = self.plan.declaration_names.get(shape.id, "Unit")
+        writer.line()
+        writer.line("class ", name, "(", _TYPED_DICT, ", total=False):")
+        with writer.indent():
+            writer.line(_quote(f"Dictionary form of `{model_name}`."))
+            for member in shape.members.values():
+                if _is_event_stream_member(self.model, member) or (
+                    shape.has_trait("error")
+                    and member.name.lower() in _ERROR_MESSAGE_NAMES
+                ):
+                    continue
+                parts = self._dict_type(member.target)
+                if self._must_be_set(shape, member):
+                    parts = (_REQUIRED, "[", *parts, "]")
+                else:
+                    parts = (*parts, " | None")
+                writer.line(self.symbols.member_name(member.id), ": ", *parts)
+                if docs := _member_documentation(member, shape.id in self.inputs):
+                    _write_docstring(writer, docs)
+
+    # A union's dictionary form sets exactly one variant, so a type checker
+    # rejects a dictionary that sets none or more than one.
+    def _write_union_dict(self, shape: _model.Shape) -> None:
+        name = self.plan.input_dict_names.get(shape.id)
+        if name is None:
+            return
+        writer = self.writer
+        variants: list[_symbols.TypeReference] = []
+        for member in shape.members.values():
+            variant = self.plan.input_dict_names[member.id]
+            variants.append(self._public_reference(variant))
+            writer.line()
+            writer.line("class ", variant, "(", _TYPED_DICT, "):")
+            with writer.indent():
+                writer.line(
+                    self.symbols.member_name(member.id),
+                    ": ",
+                    *self._dict_type(member.target),
+                )
+                if docs := _documentation(member):
+                    _write_docstring(writer, docs)
+        writer.line()
+        writer.line(name, " = ", *_join_types(variants))
+        _write_docstring(
+            writer,
+            f"Dictionary form of `{self.plan.declaration_names[shape.id]}`, "
+            "setting exactly one variant.",
+        )
+
+    def _dict_type(self, target_id: _model.ShapeId) -> tuple[_SourcePart, ...]:
+        target = self.model.get_shape(target_id)
+        if isinstance(target, _model.ListShape | _model.MapShape):
+            element = (
+                target.member if isinstance(target, _model.ListShape) else target.value
+            )
+            parts = self._dict_type(element.target)
+            if target.has_trait("sparse"):
+                parts = (*parts, " | None")
+            if isinstance(target, _model.ListShape):
+                return (_SEQUENCE, "[", *parts, "]")
+            return (_MAPPING, "[str, ", *parts, "]")
+        if (name := self.plan.input_dict_names.get(target.id)) is not None:
+            return (
+                self._type_reference(target.id),
+                " | ",
+                self._public_reference(name),
+            )
+        return (self._type_reference(target.id),)
+
+    def _must_be_set(self, shape: _model.Shape, member: _model.MemberShape) -> bool:
+        # Keyword inputs enforce @required, unlike input models. A defaulted
+        # member and an input's idempotency token may be omitted.
+        # CAUTION: smithy_core._dynamic_models.ModelRegistry enforces the same rule.
+        if not member.has_trait("required") or member.has_trait("default"):
+            return False
+        return not (member.has_trait("idempotencyToken") and shape.id in self.inputs)
 
     def _write_unit(self) -> None:
         writer = self.writer
@@ -333,6 +426,11 @@ class _StubEmitter:
             writer.line("class Unit(", self.serde_shape, "):")
             with writer.indent():
                 writer.line("pass")
+        if (name := self.plan.input_dict_names.get(_UNIT_ID)) is not None:
+            writer.line()
+            writer.line("class ", name, "(", _TYPED_DICT, ", total=False):")
+            with writer.indent():
+                writer.line(_quote("Dictionary form of `Unit`."))
 
     def _write_operations(self) -> None:
         if self.plan.operations:
@@ -499,12 +597,18 @@ def _model_exports(plan: ModelPlan) -> tuple[str, ...]:
 
 def _stub_shape_names(plan: ModelPlan, shape: _model.Shape) -> tuple[str, ...]:
     declaration = plan.declaration_names[shape.id]
+    dicts = plan.input_dict_names
     if shape.type is not _model.ShapeType.UNION:
-        return (declaration,)
+        return (declaration, *((dicts[shape.id],) if shape.id in dicts else ()))
     return (
         *(plan.union_variant_names[member.id] for member in shape.members.values()),
         plan.union_unknown_names[shape.id],
         declaration,
+        *(
+            (*(dicts[member.id] for member in shape.members.values()), dicts[shape.id])
+            if shape.id in dicts
+            else ()
+        ),
     )
 
 

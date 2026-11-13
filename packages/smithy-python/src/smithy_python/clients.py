@@ -1,6 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Client model normalization and semantic planning, without output emission."""
+"""Client model normalization, planning, and package generation."""
 
 from __future__ import annotations
 
@@ -9,14 +9,69 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from types import MappingProxyType
 
+from . import _client_emitter
+from . import dependencies as _dependencies
+from . import files as _files
 from . import generation as _generation
 from . import model as _model
 from . import models as _models
+from . import protocols as _protocols
 from . import schemas as _schemas
 from . import selection as _selection
 from . import symbols as _symbols
 
-__all__ = ["ClientPlan", "OperationPlan", "normalize_client_model"]
+__all__ = ["ClientGenerator", "ClientPlan", "OperationPlan", "normalize_client_model"]
+
+
+class ClientGenerator:
+    """Generate a client package with paired sync and async clients."""
+
+    def __init__(
+        self,
+        plan: ClientPlan,
+        *,
+        protocols: Mapping[
+            _model.ShapeId, _protocols.ProtocolContribution
+        ] = _protocols.DEFAULT_PROTOCOLS,
+    ) -> None:
+        self._plan = plan
+        self._protocols = protocols
+
+    def generate(
+        self, context: _generation.GenerationContext[_generation.ClientSettings]
+    ) -> None:
+        """Register every file and dependency in the generation context.
+
+        :raises CodegenError: If no supported protocol can be selected, or the
+            service needs a feature client generation does not support yet.
+        """
+        plan = self._plan
+        service = plan.selection.service
+        assert service is not None  # noqa: S101 - ClientPlan requires a service
+        protocol = _protocols.select_protocol(
+            service, context.settings.protocol, self._protocols
+        )
+        _client_emitter.check_supported(plan)
+        _schemas.SchemaGenerator().generate(context)
+        _models.ModelGenerator().generate(context)
+        _client_emitter.write_client(context, plan, protocol)
+
+    def context(
+        self,
+        dependencies: _dependencies.DependencySet | None = None,
+    ) -> _generation.GenerationContext[_generation.ClientSettings]:
+        """Return a generation context backed by this generator's plan."""
+        plan = self._plan
+        dependencies = dependencies or _dependencies.DependencySet()
+        return _generation.GenerationContext(
+            model=plan.model,
+            selection=plan.selection,
+            settings=plan.settings,
+            symbols=plan.symbols,
+            plan=_generation.GenerationPlan(schemas=plan.schemas, models=plan.models),
+            dependencies=dependencies,
+            files=_files.FileManifest(dependencies),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,7 +133,10 @@ class ClientPlan:
             model,
             (*selection.shapes, *operations, service),
             symbols,
-            retained_traits=() if settings.protocol is None else (settings.protocol,),
+            retained_traits=(
+                *_protocols.DEFAULT_PROTOCOLS,
+                *(() if settings.protocol is None else (settings.protocol,)),
+            ),
         )
         operation_models = tuple(
             _generation.OperationModel(
@@ -97,7 +155,11 @@ class ClientPlan:
             symbols=symbols,
             schemas=schemas,
             models=_generation.ModelPlan.from_shapes(
-                selection.shapes, symbols, schemas.names, operation_models
+                selection.shapes,
+                symbols,
+                schemas.names,
+                operation_models,
+                _input_dict_names(model, operations, symbols),
             ),
             operations=tuple(
                 OperationPlan(
@@ -260,3 +322,71 @@ def _reference_counts(model: _model.Model) -> Counter[_model.ShapeId]:
             counts.update(shape.identifiers.values())
             counts.update(shape.properties.values())
     return counts
+
+
+_DICT_SUFFIX = "Dict"
+
+
+def _input_dict_names(
+    model: _model.Model,
+    operations: tuple[_model.OperationShape, ...],
+    symbols: _symbols.ClientSymbolProvider,
+) -> Mapping[_model.ShapeId, str]:
+    """Name the dictionary forms of shapes reachable from operation inputs.
+
+    A form is its model's name, then underscores until the name is free, then
+    ``Dict``. Shapes are named in shape ID order and union members follow their
+    union, so adding a shape renames no other form.
+
+    CAUTION: smithy_core._dynamic_models.ModelRegistry._is_dict_name resolves
+    these names at runtime by taking the suffix and underscores back off.
+    """
+    reachable: dict[_model.ShapeId, _model.Shape] = {}
+    pending = [model.get_shape(operation.input) for operation in operations]
+    while pending:
+        shape = pending.pop()
+        if isinstance(shape, _model.ListShape):
+            pending.append(model.get_target(shape.member))
+        elif isinstance(shape, _model.MapShape):
+            pending.append(model.get_target(shape.value))
+        elif shape.type in _DICT_TYPES and shape.id not in reachable:
+            reachable[shape.id] = shape
+            pending.extend(
+                target
+                for member in shape.members.values()
+                if not _is_event_stream(target := model.get_target(member))
+            )
+
+    taken = set(symbols.model_names()) | {"ServiceError"}
+    names: dict[_model.ShapeId, str] = {}
+
+    def allocate(shape_id: _model.ShapeId, name: str) -> None:
+        separator = ""
+        while f"{name}{separator}{_DICT_SUFFIX}" in taken:
+            separator += "_"
+        names[shape_id] = f"{name}{separator}{_DICT_SUFFIX}"
+        taken.add(names[shape_id])
+
+    for shape_id in sorted(reachable, key=str):
+        shape = reachable[shape_id]
+        allocate(shape_id, _declaration_name(symbols, shape_id))
+        if shape.type is _model.ShapeType.UNION:
+            for member in shape.members.values():
+                allocate(member.id, symbols.union_variant_name(member.id))
+    return MappingProxyType(names)
+
+
+_DICT_TYPES = frozenset({_model.ShapeType.STRUCTURE, _model.ShapeType.UNION})
+
+
+def _declaration_name(
+    symbols: _symbols.SymbolProvider, shape_id: _model.ShapeId
+) -> str:
+    return "Unit" if shape_id == _UNIT else symbols.declaration_name(shape_id)
+
+
+def _is_event_stream(shape: _model.Shape) -> bool:
+    return shape.type is _model.ShapeType.UNION and shape.has_trait("streaming")
+
+
+_UNIT = _model.ShapeId("smithy.api", "Unit")
