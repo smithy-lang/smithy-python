@@ -1,4 +1,0 @@
-{
-  "type": "enhancement",
-  "description": "Made the EventSigner import alias in smithy_aws_core.aio.auth.sigv4 private."
-}

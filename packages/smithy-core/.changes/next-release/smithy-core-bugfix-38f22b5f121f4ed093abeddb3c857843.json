@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Fixed `RpcV2CborTrait` failing to construct from a `DynamicTrait`."
-}

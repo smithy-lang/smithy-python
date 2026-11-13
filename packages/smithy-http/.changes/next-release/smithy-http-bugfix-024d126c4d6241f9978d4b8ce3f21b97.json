@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Derived the CRT timeout error from SmithyHTTPError."
-}

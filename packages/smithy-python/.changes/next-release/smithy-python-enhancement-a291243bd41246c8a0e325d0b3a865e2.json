@@ -1,4 +1,0 @@
-{
-  "type": "enhancement",
-  "description": "Generated docs for `@idempotencyToken` members of operation inputs now note that the field is autopopulated if not provided."
-}

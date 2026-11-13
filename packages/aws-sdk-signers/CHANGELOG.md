@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.6.0
+
+### Breaking Changes
+* Renamed `EventSigner` to `SigV4EventSigner`, to match `SigV4Signer` and `SigV4ChunkSigner`.
+
+### Features
+* Added ResourceLifecycleError, a BaseAWSSDKException and RuntimeError subclass, raised when EventSigner signs after the final empty event.
+* Added `SigV4ChunkSigner`, which signs the chunks and trailer of an `aws-chunked` payload as it is sent, continuing the SigV4 signature of a request signed with the `STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER` payload hash. `SigV4ChunkSigner.from_signed_request` creates one from a signed request.
+
+### Enhancements
+* Completed type annotations and __all__ declarations for the public API.
+
+### Bug fixes
+* Fixed SigV4 signature mismatches (HTTP 403) on requests that send a header with more than one value, such as `Content-Encoding` with `gzip` and `aws-chunked`. The signer now trims each value and joins them with a bare comma, without quoting, which matches how services rebuild repeated headers before checking the signature. Fields with no values and trailer fields are no longer signed as headers. The `Field` interface also declares a bare comma as the default `as_string()` delimiter.
+* Excluded secret credentials and the URI password from repr.
+
 ## v0.5.0
 
 ### Breaking Changes

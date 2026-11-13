@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Excluded the URI password from repr."
-}

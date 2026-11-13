@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Excluded secret credentials and the URI password from repr."
-}

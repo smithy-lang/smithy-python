@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added `RpcV2JsonTrait` for the `smithy.protocols#rpcv2Json` protocol trait."
-}

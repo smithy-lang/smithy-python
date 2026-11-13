@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "`AIOHTTPClient` now reads request bodies that are readers, such as open files, in 128 KiB chunks instead of 1 KiB ones, which made uploads about 25 times faster on fast connections. An async iterable body is now passed to aiohttp unchanged, so each item is sent as soon as it's produced."
-}

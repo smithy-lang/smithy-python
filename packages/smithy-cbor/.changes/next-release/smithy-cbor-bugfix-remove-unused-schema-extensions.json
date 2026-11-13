@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Removed unused CBOR schema extension scaffolding that was never connected to serialization or deserialization."
-}

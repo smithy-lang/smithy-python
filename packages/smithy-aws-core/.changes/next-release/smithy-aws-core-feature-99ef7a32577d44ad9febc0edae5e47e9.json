@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Streaming payloads with a known length sent over HTTP with SigV4, such as S3 `PutObject` bodies sent to an `http://` endpoint, are now signed chunk by chunk as they are uploaded, with the checksum in a signed `aws-chunked` trailer. The payload is read only once and is no longer buffered in memory to sign it, and a payload that can't be rewound now gets the default checksum instead of none. Anonymous requests over HTTP send the checksum in an unsigned trailer."
-}

@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.0
+
+### Features
+* Partition large generated schema and model stub files to reduce memory usage and static analysis time.
+
+### Enhancements
+* Added docstrings to the public API and ordered public definitions first.
+* Completed type annotations and __all__ declarations for the public API.
+* Make empty model registry maps and private stub partition imports pass strict type checking, including services without data shapes.
+* Generated docs for `@idempotencyToken` members of operation inputs now note that the field is autopopulated if not provided.
+* Imported symbols from their defining modules.
+
 ## v0.2.0
 
 ### Breaking Changes

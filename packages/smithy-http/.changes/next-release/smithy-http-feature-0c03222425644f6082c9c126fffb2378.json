@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added support for the `aws.protocols#awsQueryCompatible` trait to `RpcV2CborClientProtocol` and `RpcV2JsonClientProtocol`."
-}

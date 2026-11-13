@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.0
+
+### Bug fixes
+* Removed unused CBOR schema extension scaffolding that was never connected to serialization or deserialization.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.10.0` to `~=0.11.0`.
+
 ## v0.2.0
 
 ### Breaking Changes

@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Made SigningConfig generic in its identity, identity properties, and signing properties, so it depends only on smithy-core and rejects a signer and identity resolver that disagree."
-}

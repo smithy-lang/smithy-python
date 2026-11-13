@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Iterating a `ChecksumStream`, such as a validated S3 `GetObject` body read with a `for` loop, now yields 64 KiB chunks instead of 1 KiB ones, which made these downloads about 4 times faster."
-}

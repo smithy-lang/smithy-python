@@ -1,0 +1,28 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Partition large generated schema and model stub files to reduce memory usage and static analysis time."
+    },
+    {
+      "type": "enhancement",
+      "description": "Added docstrings to the public API and ordered public definitions first."
+    },
+    {
+      "type": "enhancement",
+      "description": "Completed type annotations and __all__ declarations for the public API."
+    },
+    {
+      "type": "enhancement",
+      "description": "Make empty model registry maps and private stub partition imports pass strict type checking, including services without data shapes."
+    },
+    {
+      "type": "enhancement",
+      "description": "Generated docs for `@idempotencyToken` members of operation inputs now note that the field is autopopulated if not provided."
+    },
+    {
+      "type": "enhancement",
+      "description": "Imported symbols from their defining modules."
+    }
+  ]
+}

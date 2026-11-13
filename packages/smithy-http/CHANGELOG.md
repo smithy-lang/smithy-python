@@ -1,5 +1,39 @@
 # Changelog
 
+## v0.8.0
+
+### Breaking Changes
+* Removed the eventloop parameter from AWSCRTHTTPClient.
+* Removed `HostPrefixSerializer` and `Binding.HOST`. `@hostLabel` no longer changes where a member is serialized and smithy-core now applies host prefixes.
+
+### Features
+* Added support for the `aws.protocols#awsQueryCompatible` trait to `RpcV2CborClientProtocol` and `RpcV2JsonClientProtocol`.
+* Added `RpcV2JsonClientProtocol` and `AsyncRpcV2JsonClientProtocol`, implementations of the `smithy.protocols#rpcv2Json` protocol, and a `json` extra that installs `smithy-json`.
+
+### Enhancements
+* Documented HTTPQueryMapValueSerializer.
+* Completed type annotations and __all__ declarations for the public API.
+* Allow MockHTTPClient and AsyncMockHTTPClient responses to have stream bodies.
+* Imported symbols from their defining modules.
+
+### Bug fixes
+* Iterating a `Urllib3HTTPClient` response body now yields 64 KiB chunks instead of 1 KiB ones.
+* RPC v2 protocols (including `RpcV2CborClientProtocol` and `AsyncRpcV2CborClientProtocol`) now treat a response whose `Smithy-Protocol` header does not match the request as malformed, raising a `CallError` based solely on the HTTP status code without interpreting the body.
+* Declared smithy-aws-event-stream as the eventstream extra, bounded yarl, and raised MissingDependencyError when the aiohttp extra is not installed.
+* `Urllib3HTTPClient` now streams request bodies that are readers with a known length or chunked transfer encoding, such as an open file, instead of reading the whole body into memory first. Uploads are sent in 128 KiB blocks.
+* Derived the CRT timeout error from SmithyHTTPError.
+* `Field.as_string()` now joins values with its `delimiter` argument, a bare comma by default, instead of always using a comma and a space. The `Field` interface now declares the `delimiter` parameter. `AIOHTTPClient` and `Urllib3HTTPClient` no longer send trailer fields as headers, matching `AWSCRTHTTPClient`.
+* `AIOHTTPClient` now reads request bodies that are readers, such as open files, in 128 KiB chunks instead of 1 KiB ones, which made uploads about 25 times faster on fast connections. An async iterable body is now passed to aiohttp unchanged, so each item is sent as soon as it's produced.
+* `AIOHTTPClient` now sends requests that set `Transfer-Encoding: chunked` using aiohttp's chunked uploads. Previously aiohttp rejected the header with a `ValueError`.
+* RPC v2 protocols now raise a `CallError` instead of an unrelated exception for error responses whose body cannot be decoded or whose `__type` is not an absolute shape ID, and resolve `__type` values with a `:`-delimited suffix to the modeled error.
+* The urllib3 HTTP client now streams response bodies instead of reading each one into memory. A streaming output, such as an S3 `GetObject` body, holds its connection until it is read to the end or closed, so use it in a `with` block to release the connection early.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.10.0` to `~=0.11.0`.
+* Bump `smithy-cbor` from `~=0.2.0` to `~=0.3.0`.
+* Bump `smithy-json` from `~=0.4.0` to `~=0.5.0`.
+* Bump `smithy-aws-event-stream` from `~=0.4.0` to `~=0.5.0`.
+
 ## v0.7.0
 
 ### Breaking Changes

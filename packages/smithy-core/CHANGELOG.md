@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.11.0
+
+### Features
+* Unset `@idempotencyToken` input members are now auto-filled with a UUID v4 before serialization. The same token is sent on every retry.
+* Added `RpcV2JsonTrait` for the `smithy.protocols#rpcv2Json` protocol trait.
+* Clients now prepend the `@endpoint` trait's host prefix, with its `@hostLabel` values, to the endpoint host. Set `disable_host_prefix_injection` to turn this off.
+* Added ResourceLifecycleError, a SmithyError and RuntimeError subclass, raised when an operation is invoked on or a with block enters a closed client.
+
+### Enhancements
+* Clients now close the response bodies of failed attempts and failed calls, so they no longer hold connections until they are garbage collected.
+* Completed type annotations and __all__ declarations for the public API.
+
+### Bug fixes
+* Fixed `RpcV2CborTrait` failing to construct from a `DynamicTrait`.
+* `AsyncBytesReader` now joins the items of an async iterable once per read instead of copying the result for each item, which made reading many small items up to 16 times faster.
+* Excluded the URI password from repr.
+* Iterating an `AsyncBytesReader`, such as an async streaming output with `async for`, now yields 64 KiB chunks instead of 1 KiB ones, which made validated S3 `GetObject` downloads read with `async for` about 15 times faster. Small reads from large items also no longer copy the rest of the item on every read.
+* `AsyncBytesReader` now awaits the result of a plain `read()` that returns an awaitable, as an `AwaitableBytesReader`'s does, instead of returning the awaitable as data.
+
 ## v0.10.0
 
 ### Breaking Changes

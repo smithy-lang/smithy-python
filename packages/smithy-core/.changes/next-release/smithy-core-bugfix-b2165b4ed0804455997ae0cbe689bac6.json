@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "`AsyncBytesReader` now awaits the result of a plain `read()` that returns an awaitable, as an `AwaitableBytesReader`'s does, instead of returning the awaitable as data."
-}

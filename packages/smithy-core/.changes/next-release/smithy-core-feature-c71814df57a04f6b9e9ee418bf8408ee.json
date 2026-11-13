@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added ResourceLifecycleError, a SmithyError and RuntimeError subclass, raised when an operation is invoked on or a with block enters a closed client."
-}

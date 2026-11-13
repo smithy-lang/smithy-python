@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Declared smithy-aws-event-stream as the eventstream extra, bounded yarl, and raised MissingDependencyError when the aiohttp extra is not installed."
-}

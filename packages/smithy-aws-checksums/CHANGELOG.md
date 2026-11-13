@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.1
+
+### Enhancements
+* Added docstrings to the public API and ordered public definitions first.
+
 ## v0.1.0
 
 ### Features

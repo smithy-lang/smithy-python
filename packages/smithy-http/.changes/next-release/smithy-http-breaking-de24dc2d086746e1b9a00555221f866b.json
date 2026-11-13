@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Removed `HostPrefixSerializer` and `Binding.HOST`. `@hostLabel` no longer changes where a member is serialized and smithy-core now applies host prefixes."
-}

@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.3.0
+
+### Features
+* Add HTTP mocking API
+
+### Enhancements
+* Support model conformance checks for partitioned stub re-exports.
+* Resolve generated union variant names correctly when constructing serde conformance values.
+* `check_client_case_async` now expects the request host to start with the operation's expanded host prefix.
+* Support event stream operations, including duplex, in mock_async.
+* Added docstrings to the public API and ordered public definitions first.
+
+### Bug fixes
+* `xml_equal` now compares empty bodies instead of failing to parse them.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.10.0` to `~=0.11.0`.
+* Bump `smithy-http` from `~=0.7.0` to `~=0.8.0`.
+* Bump `smithy-aws-core` from `~=0.13.0` to `~=0.14.0`.
+
 ## v0.2.0
 
 ### Features

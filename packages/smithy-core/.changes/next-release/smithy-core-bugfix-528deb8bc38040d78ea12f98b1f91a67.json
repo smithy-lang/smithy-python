@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Iterating an `AsyncBytesReader`, such as an async streaming output with `async for`, now yields 64 KiB chunks instead of 1 KiB ones, which made validated S3 `GetObject` downloads read with `async for` about 15 times faster. Small reads from large items also no longer copy the rest of the item on every read."
-}

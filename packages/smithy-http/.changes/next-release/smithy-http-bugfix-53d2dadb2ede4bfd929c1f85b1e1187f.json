@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Iterating a `Urllib3HTTPClient` response body now yields 64 KiB chunks instead of 1 KiB ones."
-}

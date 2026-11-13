@@ -1,4 +1,0 @@
-{
-  "type": "enhancement",
-  "description": "Support event stream operations, including duplex, in mock_async."
-}

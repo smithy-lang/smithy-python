@@ -1,0 +1,28 @@
+{
+  "changes": [
+    {
+      "type": "breaking",
+      "description": "Renamed `EventSigner` to `SigV4EventSigner`, to match `SigV4Signer` and `SigV4ChunkSigner`."
+    },
+    {
+      "type": "feature",
+      "description": "Added ResourceLifecycleError, a BaseAWSSDKException and RuntimeError subclass, raised when EventSigner signs after the final empty event."
+    },
+    {
+      "type": "feature",
+      "description": "Added `SigV4ChunkSigner`, which signs the chunks and trailer of an `aws-chunked` payload as it is sent, continuing the SigV4 signature of a request signed with the `STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER` payload hash. `SigV4ChunkSigner.from_signed_request` creates one from a signed request."
+    },
+    {
+      "type": "enhancement",
+      "description": "Completed type annotations and __all__ declarations for the public API."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed SigV4 signature mismatches (HTTP 403) on requests that send a header with more than one value, such as `Content-Encoding` with `gzip` and `aws-chunked`. The signer now trims each value and joins them with a bare comma, without quoting, which matches how services rebuild repeated headers before checking the signature. Fields with no values and trailer fields are no longer signed as headers. The `Field` interface also declares a bare comma as the default `as_string()` delimiter."
+    },
+    {
+      "type": "bugfix",
+      "description": "Excluded secret credentials and the URI password from repr."
+    }
+  ]
+}

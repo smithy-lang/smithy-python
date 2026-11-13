@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Read the awscrt version for the User-Agent from package metadata instead of importing awscrt."
-}
