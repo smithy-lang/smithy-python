@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "The errors raised when aiohttp or urllib3 is missing now identify the matching smithy-http extra without prescribing a package manager."
+}

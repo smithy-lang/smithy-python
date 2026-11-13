@@ -4,6 +4,7 @@
  */
 package software.amazon.smithy.python.codegen.generators;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -34,6 +35,13 @@ import software.amazon.smithy.utils.StringUtils;
 @SmithyInternalApi
 public final class SetupGenerator {
 
+    // Client mode extras, each mapped to the smithy_http extra that provides that mode's default
+    // transport. These transports are opt-in rather than base requirements so that customers only
+    // install what the modes they use need.
+    private static final List<Map.Entry<String, String>> MODE_TRANSPORT_EXTRAS = List.of(
+            Map.entry("sync", "urllib3"),
+            Map.entry("async", "aiohttp"));
+
     private SetupGenerator() {}
 
     public static void generateSetup(
@@ -42,8 +50,10 @@ public final class SetupGenerator {
     ) {
         var dependencies = gatherDependencies(context.writerDelegator().getDependencies().stream());
         var description = resolveDescription(settings, context);
+        var extras = collectOptionalDependencies(
+                dependencies.getOrDefault(PythonDependency.Type.DEPENDENCY.getType(), Map.of()));
         writePyproject(settings, description, context.writerDelegator(), dependencies);
-        writeReadme(settings, description, context);
+        writeReadme(settings, description, context, extras);
     }
 
     /**
@@ -251,6 +261,23 @@ public final class SetupGenerator {
             Map<String, SymbolDependency> dependencies
     ) {
         var extras = new LinkedHashMap<String, List<String>>();
+        var smithyHttp = dependencies.get(SmithyPythonDependency.SMITHY_HTTP.packageName());
+        if (smithyHttp == null) {
+            return extras;
+        }
+        var smithyHttpExtras = getOptionalDependencies(smithyHttp);
+
+        // Expose each requested default transport through the extra for the client mode that
+        // uses it (e.g. pip install <client>[sync]) instead of requiring it in the base package.
+        // Like awscrt below, this re-exports smithy_http's extra so the version constraint stays
+        // sourced from smithy-http. The base requirement drops these, see
+        // getRequiredOptionalDependencies.
+        for (var mode : MODE_TRANSPORT_EXTRAS) {
+            if (smithyHttpExtras.contains(mode.getValue())) {
+                extras.put(mode.getKey(),
+                        List.of("smithy_http[" + mode.getValue() + "]" + smithyHttp.getVersion()));
+            }
+        }
 
         // Let users opt into the CRT transport (AWSCRTHTTPClient) without guessing a compatible
         // awscrt version, by re-exporting smithy_http's awscrt extra. This keeps the version
@@ -258,19 +285,33 @@ public final class SetupGenerator {
         // already requires awscrt as a hard dependency, where there is nothing to opt into. No
         // client defaults to CRT today, so the guard is currently always taken; it remains as a
         // safeguard should a client ever pull awscrt as a hard dependency again.
-        var smithyHttp = dependencies.get(SmithyPythonDependency.SMITHY_HTTP.packageName());
-        if (smithyHttp != null && !getOptionalDependencies(smithyHttp).contains("awscrt")) {
+        if (!smithyHttpExtras.contains("awscrt")) {
             extras.put("awscrt", List.of("smithy_http[awscrt]" + smithyHttp.getVersion()));
         }
 
         return extras;
     }
 
+    /**
+     * Get the optional dependencies to require along with a dependency, leaving out the default
+     * transports of base dependencies, which are exposed through client mode extras instead.
+     * Other dependency groups, such as test dependencies, keep their requested extras.
+     */
+    private static List<String> getRequiredOptionalDependencies(SymbolDependency dependency) {
+        var optional = getOptionalDependencies(dependency);
+        if (!dependency.getDependencyType().equals(PythonDependency.Type.DEPENDENCY.getType())
+                || !dependency.getPackageName().equals(SmithyPythonDependency.SMITHY_HTTP.packageName())) {
+            return optional;
+        }
+        var transports = MODE_TRANSPORT_EXTRAS.stream().map(Map.Entry::getValue).toList();
+        return optional.stream().filter(extra -> !transports.contains(extra)).toList();
+    }
+
     private static void writeDependencyList(PythonWriter writer, Collection<SymbolDependency> dependencies) {
         for (var iter = dependencies.iterator(); iter.hasNext();) {
             writer.pushState();
             var dependency = iter.next();
-            writer.putContext("deps", getOptionalDependencies(dependency));
+            writer.putContext("deps", getRequiredOptionalDependencies(dependency));
             writer.putContext("isLink", dependency.getProperty(SymbolProperties.IS_LINK).orElse(false));
             writer.putContext("last", !iter.hasNext());
             writer.write("""
@@ -301,7 +342,8 @@ public final class SetupGenerator {
     private static void writeReadme(
             PythonSettings settings,
             String description,
-            GenerationContext context
+            GenerationContext context,
+            Map<String, List<String>> extras
     ) {
         var service = context.model().expectShape(settings.service());
 
@@ -310,6 +352,11 @@ public final class SetupGenerator {
                 .map(StringTrait::getValue)
                 .orElse(StringUtils.capitalize(settings.moduleName()));
 
+        var modes = MODE_TRANSPORT_EXTRAS.stream()
+                .map(Map.Entry::getKey)
+                .filter(extras::containsKey)
+                .toList();
+
         context.writerDelegator().useFileWriter("README.md", writer -> {
             writer.pushState(new ReadmeSection());
             writer.write("""
@@ -317,6 +364,41 @@ public final class SetupGenerator {
 
                     $L
                     """, title, StringUtils.wrap(description, 80));
+
+            if (!modes.isEmpty()) {
+                var installs = new ArrayList<>(modes);
+                if (modes.size() > 1) {
+                    installs.add(String.join(",", modes));
+                }
+                writer.write("""
+                        ### Installation
+
+                        Install the `sync` extra for the synchronous client's default HTTP \
+                        transport, the `async` extra for the asynchronous client's default HTTP \
+                        transport, or both. In a project managed by uv, add the client with \
+                        the extras you need:
+
+                        ```sh
+                        $L
+                        ```
+
+                        Or install it with pip:
+
+                        ```sh
+                        $L
+                        ```
+
+                        Without either extra, the models can be used, and either client works \
+                        with an explicitly configured custom transport.
+                        """,
+                        installs.stream()
+                                .map(extra -> "uv add \"" + settings.moduleName() + "[" + extra + "]\"")
+                                .collect(Collectors.joining("\n")),
+                        installs.stream()
+                                .map(extra -> "pip install \"" + settings.moduleName() + "[" + extra
+                                        + "]\"")
+                                .collect(Collectors.joining("\n")));
+            }
 
             service.getTrait(DocumentationTrait.class).map(StringTrait::getValue).ifPresent(documentation -> {
                 writer.write("""

@@ -3,3 +3,23 @@
 ## Sample Json 1.1 Protocol Service Client
 
 Python client for Sample Json 1.1 Protocol Service
+
+### Installation
+
+Install the `sync` extra for the synchronous client's default HTTP transport, the `async` extra for the asynchronous client's default HTTP transport, or both. In a project managed by uv, add the client with the extras you need:
+
+```sh
+uv add "awsjson11[sync]"
+uv add "awsjson11[async]"
+uv add "awsjson11[sync,async]"
+```
+
+Or install it with pip:
+
+```sh
+pip install "awsjson11[sync]"
+pip install "awsjson11[async]"
+pip install "awsjson11[sync,async]"
+```
+
+Without either extra, the models can be used, and either client works with an explicitly configured custom transport.

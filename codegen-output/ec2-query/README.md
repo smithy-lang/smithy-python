@@ -4,6 +4,26 @@
 
 Python client for Sample Ec2 Protocol Service
 
+### Installation
+
+Install the `sync` extra for the synchronous client's default HTTP transport, the `async` extra for the asynchronous client's default HTTP transport, or both. In a project managed by uv, add the client with the extras you need:
+
+```sh
+uv add "ec2query[sync]"
+uv add "ec2query[async]"
+uv add "ec2query[sync,async]"
+```
+
+Or install it with pip:
+
+```sh
+pip install "ec2query[sync]"
+pip install "ec2query[async]"
+pip install "ec2query[sync,async]"
+```
+
+Without either extra, the models can be used, and either client works with an explicitly configured custom transport.
+
 ### Documentation
 
 An EC2 query service that sends query requests and XML responses.

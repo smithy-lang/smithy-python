@@ -4,6 +4,26 @@
 
 Python client for Sample Rest Xml Protocol Service With Namespace
 
+### Installation
+
+Install the `sync` extra for the synchronous client's default HTTP transport, the `async` extra for the asynchronous client's default HTTP transport, or both. In a project managed by uv, add the client with the extras you need:
+
+```sh
+uv add "restxmlwithnamespace[sync]"
+uv add "restxmlwithnamespace[async]"
+uv add "restxmlwithnamespace[sync,async]"
+```
+
+Or install it with pip:
+
+```sh
+pip install "restxmlwithnamespace[sync]"
+pip install "restxmlwithnamespace[async]"
+pip install "restxmlwithnamespace[sync,async]"
+```
+
+Without either extra, the models can be used, and either client works with an explicitly configured custom transport.
+
 ### Documentation
 
 A REST XML service that sends XML requests and responses. This service

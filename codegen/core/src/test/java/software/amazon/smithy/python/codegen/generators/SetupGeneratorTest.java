@@ -48,6 +48,55 @@ public class SetupGeneratorTest {
                 extras);
     }
 
+    /**
+     * The sync (urllib3) and async (aiohttp) default transports are opt-in through {@code sync}
+     * and {@code async} mode extras rather than base requirements, while unrelated smithy_http
+     * extras (here the cbor protocol extra) stay in the base requirement. The README shows how to
+     * install them.
+     */
+    @Test
+    public void movesDefaultTransportsIntoModeExtras() {
+        var service = service("smithy.example#TestService", null);
+        var model = Model.builder().addShape(service).build();
+        var settings = PythonSettings.builder()
+                .service(service.getId())
+                .moduleName("test_client")
+                .moduleVersion("0.0.1")
+                .build();
+        var manifest = new MockManifest();
+        var delegator = new PythonDelegator(manifest, new PythonSymbolProvider(model, settings), settings);
+        var context = GenerationContext.builder()
+                .model(model)
+                .settings(settings)
+                .fileManifest(manifest)
+                .writerDelegator(delegator)
+                .build();
+        var smithyHttp = SmithyPythonDependency.SMITHY_HTTP;
+        delegator.useFileWriter("test_client/client.py", "test_client.client", writer -> {
+            writer.addDependency(smithyHttp.withOptionalDependencies("cbor"));
+            writer.addDependency(smithyHttp.withOptionalDependencies("aiohttp"));
+            writer.addDependency(smithyHttp.withOptionalDependencies("urllib3"));
+            writer.addDependency(smithyHttp.withOptionalDependencies("aiohttp", "urllib3").asTestDependency());
+        });
+
+        SetupGenerator.generateSetup(settings, context);
+        delegator.flushWriters();
+        String pyproject = manifest.expectFileString("pyproject.toml");
+        String readme = manifest.expectFileString("README.md");
+
+        var version = smithyHttp.version();
+        assertAll(
+                () -> assertTrue(readme.contains("uv add \"test_client[sync,async]\""), readme),
+                () -> assertTrue(readme.contains("pip install \"test_client[sync,async]\""), readme),
+                () -> assertTrue(pyproject.contains("\"smithy_http[cbor]" + version + "\"\n]"), pyproject),
+                () -> assertTrue(pyproject.contains("sync = [\n    \"smithy_http[urllib3]" + version + "\"\n]"),
+                        pyproject),
+                () -> assertTrue(pyproject.contains("async = [\n    \"smithy_http[aiohttp]" + version + "\"\n]"),
+                        pyproject),
+                () -> assertTrue(pyproject.contains("[dependency-groups]\ntest = [\n    \"smithy_http[aiohttp, urllib3]"
+                        + version + "\"\n]"), pyproject));
+    }
+
     @Test
     public void readmeKeepsRawTripleQuotesInCodeSpans() {
         // The README is Markdown, not a docstring, so the docstring quote escaping
