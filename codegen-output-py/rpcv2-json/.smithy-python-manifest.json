@@ -1,0 +1,13 @@
+{
+  "files": {
+    "README.md": "94b31362a2e131ea489a05430091f33d2320726f788873fd27452809a3d6aa6e",
+    "pyproject.toml": "640aeb917e3ccd802def14ecc7faad3f450bdb58b9f9f878d667f6329e4a5385",
+    "src/rpcv2json/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
+    "src/rpcv2json/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rpcv2json/_private/schemas.py": "4b6f857c9ca2c01c266c4c4450efbe90d61f38c6eea485ac27c64c6d77b3a673",
+    "src/rpcv2json/models.py": "9bee571614e1f16c21be9de13c3681bb6c13c4a79aaf74c9e9f6c8bc357c8f49",
+    "src/rpcv2json/models.pyi": "3e69f95d47602c24b54823d168672865160932ac836218efc151a0653105b24c",
+    "src/rpcv2json/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "version": 1
+}

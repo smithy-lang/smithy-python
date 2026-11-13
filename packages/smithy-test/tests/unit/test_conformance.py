@@ -190,3 +190,47 @@ def test_dictionary_form_that_is_not_dict_at_runtime_is_reported(
 
     with pytest.raises(ConformanceError, match=f"{wrong}: .*not `dict` at runtime"):
         verify_models(models, schemas, pyi_path=str(stub))
+
+
+def test_serde_conformance_capitalizes_union_member_names() -> None:
+    choice: StaticSchema = (
+        ShapeType.UNION.value,
+        "example",
+        "Choice",
+        0,
+        ("myValue",),
+        ((ShapeType.STRING.value, 0),),
+    )
+    request: StaticSchema = (
+        ShapeType.STRUCTURE.value,
+        "example",
+        "Request",
+        0,
+        ("choice",),
+        ((lambda: choice, _REQUIRED),),
+    )
+    schemas = ModuleType("example._private.schemas")
+    schemas.CHOICE = choice  # type: ignore[attr-defined]
+    schemas.REQUEST = request  # type: ignore[attr-defined]
+
+    @dataclass
+    class ChoiceMyValue:
+        value: str
+
+    @dataclass
+    class Request:
+        choice: ChoiceMyValue
+
+    models = ModuleType("example.models")
+    models.ChoiceMyValue = ChoiceMyValue  # type: ignore[attr-defined]
+    models.Request = Request  # type: ignore[attr-defined]
+
+    class _Codec:
+        def serialize(self, value: Request) -> bytes:
+            assert value.choice == ChoiceMyValue(value="x")
+            return b""
+
+        def deserialize(self, body: bytes, cls: type[Request]) -> Request:
+            return cls(choice=ChoiceMyValue(value="x"))
+
+    assert verify_models(models, schemas, codec=_Codec()) == 1

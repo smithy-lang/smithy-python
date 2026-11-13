@@ -6,6 +6,9 @@ from typing import Any
 
 import pytest
 from smithy_core._dynamic_models import ModelRegistry
+from smithy_core._pipeline import (
+    _expand_host_prefix,  # pyright: ignore[reportPrivateUsage]
+)
 from smithy_core._schema_compact import StaticSchema
 from smithy_core.exceptions import ExpectationNotMetError, SmithyError
 from smithy_core.schemas import APIOperation, Schema, SchemaExtension
@@ -16,6 +19,7 @@ from smithy_core.traits import (
     SensitiveTrait,
     Trait,
 )
+from smithy_core.types import TypedProperties
 
 ID: ShapeID = ShapeID("ns.foo#bar")
 STRING = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
@@ -394,3 +398,84 @@ def test_operation_idempotency_token_field_is_the_generated_input_field(
     # when the input model has no such field.
     field_name = operation._idempotency_token_field  # pyright: ignore[reportPrivateUsage]
     assert field_name == expected
+
+
+@pytest.mark.parametrize(
+    ("members", "label", "is_input", "field_names"),
+    [
+        pytest.param(("self",), "self", True, ("self_",), id="self"),
+        pytest.param(("plugins",), "plugins", True, ("plugins_",), id="plugins"),
+        # Escaped past a sibling that already has the underscore-suffixed name.
+        pytest.param(
+            ("plugins_", "plugins"),
+            "plugins",
+            True,
+            ("plugins_", "plugins__"),
+            id="plugins-beside-sibling",
+        ),
+        # Only a structure with the input trait has its members escaped.
+        pytest.param(("plugins",), "plugins", False, ("plugins",), id="not-an-input"),
+        # The sibling that already has the suffixed name keeps it.
+        pytest.param(
+            ("plugins", "plugins_"),
+            "plugins_",
+            True,
+            ("plugins__", "plugins_"),
+            id="label-is-the-sibling",
+        ),
+    ],
+)
+def test_host_prefix_reads_generated_input_field(
+    members: tuple[str, ...],
+    label: str,
+    is_input: bool,
+    field_names: tuple[str, ...],
+) -> None:
+    input_schema: StaticSchema = (
+        ShapeType.STRUCTURE.value,
+        "com.example",
+        "OperationInput",
+        {"smithy.api#input": None} if is_input else 0,
+        members,
+        tuple(
+            (
+                ShapeType.STRING.value,
+                {"smithy.api#hostLabel": None, "smithy.api#required": None}
+                if name == label
+                else 0,
+            )
+            for name in members
+        ),
+    )
+    schemas = ModuleType("com.example._private.schemas")
+    schemas.__dict__["OPERATION_INPUT"] = input_schema
+    operation = APIOperation[Any, Any](
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "com.example",
+            "Operation",
+            {"smithy.api#endpoint": {"hostPrefix": "{" + label + "}."}},
+            input_schema,
+            input_schema,
+            (),
+        ),
+        model_registry=ModelRegistry(schemas),
+        effective_auth_schemes=[],
+    )
+
+    # The input model's fields are in member order, as the generated client has them.
+    assert tuple(model_field.name for model_field in fields(operation.input)) == (
+        field_names
+    )
+
+    # Every member is set, each to a different valid host label, so reading any
+    # field but the label's own gives a different host.
+    input = operation.input(
+        **{
+            field_name: "data" if member == label else f"sibling{index}"
+            for index, (member, field_name) in enumerate(
+                zip(members, field_names, strict=True)
+            )
+        }
+    )
+    assert _expand_host_prefix(input, operation, TypedProperties()) == "data."

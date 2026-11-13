@@ -28,11 +28,7 @@ public final class AwsJson10ProtocolGenerator implements ProtocolGenerator {
             "AwsJson10ClientPopulatesDefaultValuesInInput",
             "AwsJson10ClientSkipsTopLevelDefaultValuesInInput",
             "AwsJson10ClientUsesExplicitlyProvidedMemberValuesOverDefaults",
-            "AwsJson10ClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
-
-            // TODO: support the endpoint trait.
-            "AwsJson10EndpointTrait",
-            "AwsJson10EndpointTraitWithHostLabel");
+            "AwsJson10ClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional");
 
     @Override
     public ShapeId getProtocol() {

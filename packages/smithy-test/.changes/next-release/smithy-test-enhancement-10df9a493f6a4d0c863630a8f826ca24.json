@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "`check_client_case_async` now expects the request host to start with the operation's expanded host prefix."
+}

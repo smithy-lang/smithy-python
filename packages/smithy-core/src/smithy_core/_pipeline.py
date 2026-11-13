@@ -18,9 +18,19 @@ from typing import Any, ClassVar, Protocol
 from . import URI
 from .auth import RESOLVED_IDENTITY, AuthParams
 from .deserializers import DeserializeableShape
-from .endpoints import RESOLVED_ENDPOINT, EndpointAuthScheme, EndpointResolverParams
+from .endpoints import (
+    HOST_PREFIX,
+    RESOLVED_ENDPOINT,
+    EndpointAuthScheme,
+    EndpointResolverParams,
+)
+from .endpoints import Endpoint as _Endpoint
+from .endpoints._standard_library import (
+    _is_valid_host_label,  # pyright: ignore[reportPrivateUsage]
+)
 from .exceptions import (
     ClientTimeoutError,
+    EndpointResolutionError,
     RetryError,
     SmithyError,
     UnsupportedAuthSchemeError,
@@ -203,6 +213,11 @@ class RequestPipelineBase[TRequest, TResponse]:
                 endpoint=_UNRESOLVED,
                 context=input_context.properties,
             )
+            host_prefix = _expand_host_prefix(
+                input_context.request, call.operation, input_context.properties
+            )
+            if host_prefix is not None:
+                input_context.properties[HOST_PREFIX] = host_prefix
             request_context = RequestContext(
                 request=input_context.request,
                 transport_request=transport_request,
@@ -419,10 +434,13 @@ class RequestPipelineBase[TRequest, TResponse]:
             self._logger.debug("Endpoint resolver result: %s", endpoint)
             request_context.properties[RESOLVED_ENDPOINT] = endpoint
 
+            service_endpoint = endpoint
+            if (host_prefix := request_context.properties.get(HOST_PREFIX)) is not None:
+                service_endpoint = _prefix_host(endpoint, host_prefix)
             request_context = replace(
                 request_context,
                 transport_request=self.protocol.set_service_endpoint(
-                    request=request_context.transport_request, endpoint=endpoint
+                    request=request_context.transport_request, endpoint=service_endpoint
                 ),
             )
 
@@ -704,3 +722,51 @@ def _fill_idempotency_token[I: SerializeableShape](
     filled = copy(input)
     object.__setattr__(filled, field_name, _default_idempotency_token())
     return filled
+
+
+def _expand_host_prefix(
+    input: SerializeableShape,
+    operation: APIOperation[Any, Any],
+    context: TypedProperties,
+) -> str | None:
+    """Expand the operation's endpoint host prefix with the input's host labels.
+
+    Returns None if the operation has no host prefix or the config disables it.
+
+    :raises EndpointResolutionError: If a host label value isn't a valid host label.
+    """
+    host_prefix = operation._host_prefix  # pyright: ignore[reportPrivateUsage]
+    if host_prefix is None or getattr(
+        context.get("config"), "disable_host_prefix_injection", False
+    ):
+        return None
+    template, labels = host_prefix
+    values: dict[str, str] = {}
+    for label, field_name in labels:
+        value: str | None = getattr(input, field_name, None)
+        if value is None or not _is_valid_host_label(value, allow_sub_domains=False):
+            raise EndpointResolutionError(
+                f"{label} is part of the endpoint host, so it must be 1 to 63 "
+                f"letters, digits, or hyphens that start and end with a letter or "
+                f"digit, but was {value!r}"
+            )
+        values[label] = value
+    return template.format_map(values)
+
+
+def _prefix_host(endpoint: Endpoint, host_prefix: str) -> Endpoint:
+    uri = endpoint.uri
+    return _Endpoint(
+        uri=URI(
+            scheme=uri.scheme,
+            username=uri.username,
+            password=uri.password,
+            host=host_prefix + uri.host,
+            port=uri.port,
+            path=uri.path,
+            query=uri.query,
+            fragment=uri.fragment,
+        ),
+        properties=endpoint.properties,
+        auth_schemes=endpoint.auth_schemes,
+    )

@@ -226,7 +226,6 @@ async def test_query_empty_input_and_empty_output_response_empty_input_and_empty
         assert deep_equal(actual, expected)
 
 
-@mark.xfail()
 async def test_aws_query_endpoint_trait_request_endpoint_operation() -> None:
     """
     Operations can prepend to the given host if they define the endpoint
@@ -306,7 +305,6 @@ async def test_aws_query_endpoint_trait_request_endpoint_operation() -> None:
         )
 
 
-@mark.xfail()
 async def test_aws_query_endpoint_trait_with_host_label_request_endpoint_with_host_label_operation() -> (
     None
 ):

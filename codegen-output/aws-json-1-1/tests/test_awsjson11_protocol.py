@@ -431,7 +431,6 @@ async def test_json_1_1_service_responds_with_no_payload_response_empty_operatio
         assert deep_equal(actual, expected)
 
 
-@mark.xfail()
 async def test_aws_json11_endpoint_trait_request_endpoint_operation() -> None:
     """
     Operations can prepend to the given host if they define the endpoint
@@ -506,7 +505,6 @@ async def test_aws_json11_endpoint_trait_request_endpoint_operation() -> None:
         )
 
 
-@mark.xfail()
 async def test_aws_json11_endpoint_trait_with_host_label_request_endpoint_with_host_label_operation() -> (
     None
 ):

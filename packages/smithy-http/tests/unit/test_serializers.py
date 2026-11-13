@@ -32,7 +32,6 @@ from smithy_core.serializers import (
 )
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
-    EndpointTrait,
     HostLabelTrait,
     HTTPHeaderTrait,
     HTTPLabelTrait,
@@ -1188,7 +1187,6 @@ class HTTPMessageTestCase:
     http_trait: HTTPTrait = field(
         default_factory=lambda: HTTPTrait({"method": "POST", "code": 200, "uri": "/"})
     )
-    endpoint_trait: EndpointTrait | None = None
 
 
 # All of these test cases need to be created indirectly because they have mutable
@@ -1767,20 +1765,11 @@ def host_cases() -> list[HTTPMessageTestCase]:
         HTTPMessageTestCase(
             HostLabel("foo"),
             HTTPMessage(
-                destination=URI(host="foo.", path="/"),
                 body=AsyncBytesReader(BytesIO(b'{"label":"foo"}')),
                 fields=tuples_to_fields(
                     [("content-type", "application/json"), ("content-length", "15")]
                 ),
             ),
-            endpoint_trait=EndpointTrait({"hostPrefix": "{label}."}),
-        ),
-        HTTPMessageTestCase(
-            HTTPHeaders(),
-            HTTPMessage(
-                destination=URI(host="foo.", path="/"),
-            ),
-            endpoint_trait=EndpointTrait({"hostPrefix": "foo."}),
         ),
     ]
 
@@ -1928,7 +1917,6 @@ async def test_serialize_http_request(case: HTTPMessageTestCase) -> None:
         payload_codec=JSONCodec(),
         schema=case.shape.SCHEMA,
         http_trait=case.http_trait,
-        endpoint_trait=case.endpoint_trait,
     )
     case.shape.serialize_members(serializer)
     actual = serializer.build_request()

@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "`xml_equal` now compares empty bodies instead of failing to parse them."
+}

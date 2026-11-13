@@ -183,9 +183,19 @@ def _trivial_value(member: Any, models: ModuleType) -> Any:
         nested = getattr(models, target.id.name)
         return _build_instance(nested, target, models)
     if st == ShapeType.UNION:
+        from smithy_core._model_naming import variant_class_name
+
         target = member.expect_member_target()
         first = target.members_by_index[0]
-        variant = getattr(models, target.id.name + first.expect_member_name())
+        registry = getattr(models, "_registry", None)
+        target_names = getattr(registry, "_target_names", {})
+        container = target_names.get(str(target.id), target.id.name)
+        name = variant_class_name(
+            container,
+            first.expect_member_name(),
+            getattr(registry, "_shape_names", ()),
+        )
+        variant = getattr(models, name)
         return variant(value=_trivial_value(first, models))
     return None
 

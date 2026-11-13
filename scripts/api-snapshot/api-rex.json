@@ -844,6 +844,7 @@
     "EndpointAuthSchemeFactory": "rex-type_alias",
     "EndpointBdd": "rex-class",
     "EndpointResolverParams": "rex-class",
+    "HOST_PREFIX": "rex-PropertyKey",
     "RESOLVED_ENDPOINT": "rex-PropertyKey",
     "RulesExtension": "rex-class",
     "STATIC_ENDPOINT_CONFIG": "rex-PropertyKey",
@@ -910,6 +911,7 @@
   },
   "smithy_core.schemas": {
     "DynamicTrait": "rex-class",
+    "EndpointTrait": "rex-class",
     "ExpectationNotMetError": "rex-exception",
     "IdempotencyTokenTrait": "rex-class",
     "LongPollTrait": "rex-class",
@@ -1091,7 +1093,6 @@
     "HTTPQueryParamsTrait": "rex-class",
     "HTTPQueryTrait": "rex-class",
     "HTTPResponseCodeTrait": "rex-class",
-    "HostLabelTrait": "rex-class",
     "Schema": "rex-class",
     "ShapeType": "rex-class",
     "StreamingTrait": "rex-class"
@@ -1218,14 +1219,12 @@
   },
   "smithy_http.schema_extensions": {
     "Binding": "rex-class",
-    "EndpointTrait": "rex-class",
     "HTTPHeaderTrait": "rex-class",
     "HTTPLabelTrait": "rex-class",
     "HTTPPrefixHeadersTrait": "rex-class",
     "HTTPQueryTrait": "rex-class",
     "HTTPResponseBindingDispatch": "rex-type_alias",
     "HTTPTrait": "rex-class",
-    "HostLabelTrait": "rex-class",
     "MediaTypeTrait": "rex-class",
     "PathPattern": "rex-class",
     "RequestBindingMatcher": "rex-class",
@@ -1241,7 +1240,6 @@
   "smithy_http.serializers": {
     "Binding": "rex-class",
     "Codec": "rex-protocol",
-    "EndpointTrait": "rex-class",
     "Field": "rex-class",
     "Fields": "rex-class",
     "HTTPBindingSchemaMetadata": "rex-class",

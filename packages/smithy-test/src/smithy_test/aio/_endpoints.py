@@ -44,14 +44,15 @@ async def check_client_case_async[C](
     :param extensions: The rules extensions the client's endpoint resolver uses. Their
         factories build the auth schemes in the expected endpoint.
     :raises AssertionError: If the call doesn't resolve the expected endpoint or error,
-        or doesn't send its request to the endpoint's host, under its path and query.
+        or doesn't send its request to the endpoint's host with the operation's host
+        prefix, under its path and query.
     """
     instance = await client(CaptureEndpoint())
     try:
         await operation(instance, **input)
     except EndpointCaptured as captured:
         check_endpoint(expect, captured.endpoint, extensions)
-        check_destination(captured.endpoint, captured.request)
+        check_destination(captured.endpoint, captured.request, captured.host_prefix)
     except EndpointResolutionError as e:
         check_error(expect, e)
     else:

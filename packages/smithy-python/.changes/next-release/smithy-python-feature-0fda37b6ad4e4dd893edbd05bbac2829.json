@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Partition large generated schema and model stub files to reduce memory usage and static analysis time."
+}
