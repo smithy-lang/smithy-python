@@ -29,6 +29,8 @@ classifiers = [
 ]
 dependencies = [
     "smithy-core~=0.10.0",
+    "smithy-http~=0.7.0",
+    "smithy-aws-core~=0.13.0",
 ]
 
 [project.urls]

@@ -2,9 +2,8 @@
 #  SPDX-License-Identifier: Apache-2.0
 """End-to-end User Agent 2.1 business metrics through a generated AWS client.
 
-Drives the generated awsJson1.0 client (``codegen-output/aws-json-1-0``) with a stub
-transport that records each request's User-Agent header, and checks the ``m/``
-section the SDK sends for the features each call uses.
+Drives the generated awsJson1.0 client (``codegen-output/aws-json-1-0``) and checks
+the ``m/`` section of the User-Agent the SDK sends for the features each call uses.
 """
 
 import os
@@ -23,27 +22,24 @@ from awsjson10.config import JSONRPC10Config
 from smithy_aws_core.aio.identity.process import AsyncProcessCredentialsResolver
 from smithy_aws_core.identity.process import ProcessCredentialsResolver
 from smithy_http import HTTPResponse, tuples_to_fields
+from smithy_test import HTTPMockController, mock
+from smithy_test.aio import mock_async
 
 _JSON_CONTENT_TYPE = ("content-type", "application/x-amz-json-1.0")
 
 
+# The mock replaces the credentials resolver, so tests of credential sources
+# record requests with this transport instead.
 class _RecordingTransport:
-    """Returns canned responses and records the User-Agent of every request."""
+    """Returns empty responses and records the User-Agent of every request."""
 
     TIMEOUT_EXCEPTIONS = ()
 
-    def __init__(self, *, throttle_first: bool = False) -> None:
+    def __init__(self) -> None:
         self.user_agents: list[str] = []
-        self._throttle_first = throttle_first
 
     def send(self, request: Any, *, request_config: Any = None) -> HTTPResponse:
         self.user_agents.append(request.fields["User-Agent"].as_string())
-        if self._throttle_first and len(self.user_agents) == 1:
-            return HTTPResponse(
-                status=429,
-                fields=tuples_to_fields([_JSON_CONTENT_TYPE]),
-                body=b'{"__type":"ThrottlingException"}',
-            )
         return HTTPResponse(
             status=200,
             fields=tuples_to_fields([_JSON_CONTENT_TYPE]),
@@ -63,8 +59,8 @@ def sync(request: pytest.FixtureRequest) -> bool:
     return request.param
 
 
-def _transport(sync: bool, **kwargs: Any) -> _RecordingTransport:
-    return (_RecordingTransport if sync else _AsyncRecordingTransport)(**kwargs)
+def _transport(sync: bool) -> _RecordingTransport:
+    return (_RecordingTransport if sync else _AsyncRecordingTransport)()
 
 
 def _process_resolver(sync: bool, script: Path) -> Any:
@@ -133,52 +129,89 @@ async def _call(
     return transport.user_agents
 
 
+async def _call_mocked(
+    sync: bool,
+    tmp_path: Path,
+    metrics: str,
+    *,
+    throttle_first: bool = False,
+    **config: Any,
+) -> None:
+    missing = str(tmp_path / "missing")
+    config = {
+        "config_file_path": missing,
+        "credentials_file_path": missing,
+        "region": "us-west-2",
+        "aws_access_key_id": "AKID",
+        "aws_secret_access_key": "secret",
+        **config,
+    }
+    if sync:
+        client = JSONRPC10Client(config=JSONRPC10Config.resolve(**config))
+        with _expect_metrics(mock(client), metrics, throttle_first):
+            client.empty_input_and_empty_output()
+        return
+    async_client = AsyncJSONRPC10Client(
+        config=await AsyncJSONRPC10Config.resolve(**config)
+    )
+    with _expect_metrics(await mock_async(async_client), metrics, throttle_first):
+        await async_client.empty_input_and_empty_output()
+
+
+def _expect_metrics(
+    controller: HTTPMockController, metrics: str, throttle_first: bool
+) -> HTTPMockController:
+    expectation = controller.expect_request(
+        headers={"User-Agent": lambda ua: _business_metrics(ua) == [metrics]}
+    )
+    if throttle_first:
+        expectation.times(2).respond_with(
+            status_code=429,
+            headers=dict([_JSON_CONTENT_TYPE]),
+            body='{"__type":"ThrottlingException"}',
+        )
+    expectation.respond_with(headers=dict([_JSON_CONTENT_TYPE]), body="{}")
+    return controller
+
+
 async def test_reports_standard_retry_mode_by_default(
     sync: bool, tmp_path: Path
 ) -> None:
-    user_agents = await _call(sync, tmp_path, _transport(sync))
-    assert _business_metrics(user_agents[0]) == ["m/E,e"]
+    await _call_mocked(sync, tmp_path, "m/E,e")
 
 
 async def test_reports_adaptive_retry_mode(sync: bool, tmp_path: Path) -> None:
-    user_agents = await _call(sync, tmp_path, _transport(sync), retry_mode="adaptive")
-    assert _business_metrics(user_agents[0]) == ["m/F,e"]
+    await _call_mocked(sync, tmp_path, "m/F,e", retry_mode="adaptive")
 
 
 async def test_reports_adaptive_retry_mode_from_environment(
     sync: bool, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("AWS_RETRY_MODE", "adaptive")
-    user_agents = await _call(sync, tmp_path, _transport(sync))
-    assert _business_metrics(user_agents[0]) == ["m/F,e"]
+    await _call_mocked(sync, tmp_path, "m/F,e")
 
 
 async def test_reports_endpoint_override(sync: bool, tmp_path: Path) -> None:
-    user_agents = await _call(
-        sync, tmp_path, _transport(sync), endpoint_uri="https://localhost:8443"
-    )
-    assert _business_metrics(user_agents[0]) == ["m/E,N,e"]
+    await _call_mocked(sync, tmp_path, "m/E,N,e", endpoint_uri="https://localhost:8443")
 
 
 async def test_reports_endpoint_override_from_environment(
     sync: bool, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("AWS_ENDPOINT_URL_JSON_RPC_10", "https://localhost:8443")
-    user_agents = await _call(sync, tmp_path, _transport(sync))
-    assert _business_metrics(user_agents[0]) == ["m/E,N,e"]
+    await _call_mocked(sync, tmp_path, "m/E,N,e")
 
 
 async def test_retried_call_sends_same_business_metrics_once(
     sync: bool, tmp_path: Path
 ) -> None:
-    user_agents = await _call(
+    await _call_mocked(
         sync,
         tmp_path,
-        _transport(sync, throttle_first=True),
+        "m/E,N,e",
+        throttle_first=True,
         endpoint_uri="https://localhost:8443",
     )
-    assert len(user_agents) == 2
-    assert [_business_metrics(ua) for ua in user_agents] == [["m/E,N,e"], ["m/E,N,e"]]
 
 
 async def test_reports_process_resolver_used_directly(
