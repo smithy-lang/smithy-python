@@ -1400,15 +1400,18 @@
     "xml_equal": "rex-function"
   },
   "smithy_test.aio": {
+    "AsyncHTTPMockController": "rex-class[async]",
     "check_client_case_async": "rex-function[async]",
     "http_mock": "rex-module",
     "mock_async": "rex-function[async]"
   },
   "smithy_test.aio.http_mock": {
+    "AsyncBytesProvider": "rex-class[async]",
     "AsyncClient": "rex-class[async]",
     "AsyncHTTPClient": "rex-protocol[async]",
     "AsyncMockHTTPClient": "rex-class[async]",
     "HTTPMockController": "rex-class",
+    "HTTPMockError": "rex-exception",
     "HTTPRequest": "rex-protocol",
     "HTTPRequestConfiguration": "rex-class",
     "HTTPResponse": "rex-class",

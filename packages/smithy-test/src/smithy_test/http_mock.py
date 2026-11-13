@@ -60,6 +60,8 @@ class HTTPMockController:
         self._expectations: list[HTTPMockExpectation] = []
         self._capture: MockHTTPClientBase | None = None
         self._position = 0
+        self._pending_bodies: dict[int, tuple[int, Any]] = {}
+        self._late_failures: list[str] = []
 
     def __enter__(self) -> Self:
         return self
@@ -73,14 +75,10 @@ class HTTPMockController:
         # An error raised in the block is the more useful one to report.
         if exc_type is not None:
             return
-        unmet = [
-            f"Expectation {i}: matched {e._used} of {e._times} requests"
-            for i, e in enumerate(self._expectations, start=1)
-            if e._used < e._times
-        ]
+        unmet = self._unmet()
         if unmet:
             raise HTTPMockMismatchError(
-                "\n  ".join(["Not every expected request was sent:", *unmet])
+                "\n  ".join(["Not every expectation was met:", *unmet])
             )
 
     @property
@@ -118,10 +116,12 @@ class HTTPMockController:
         return expectation
 
     def _exchange(
-        self, request: HTTPRequest, body: bytes, number: int
+        self, request: HTTPRequest, body: bytes | None, number: int
     ) -> tuple[int, list[tuple[str, str]], AnyStreamingBlob]:
         """Match a request, then return the status, headers and body to answer it.
 
+        :param body: The request body, or None if it's still being sent. Its matcher
+            then runs from ``_check_body`` once the body is complete.
         :raises HTTPMockError: If no requests are expected.
         :raises HTTPMockMismatchError: If the request doesn't match its expectation.
         :raises NoResponse: If the matching expectation has no response.
@@ -139,11 +139,37 @@ class HTTPMockController:
         ):
             self._position += 1
         expectation = expectations[self._position]
-        failures, cause = mismatches(expectation._matchers, request, body)
+        matchers = expectation._matchers
+        if body is None and "body" in matchers:
+            self._pending_bodies[number] = (self._position, matchers["body"])
+            matchers = {k: m for k, m in matchers.items() if k != "body"}
+        failures, cause = mismatches(matchers, request, body or b"")
         if failures:
             heading = f"Request {number} didn't match expectation {self._position + 1}:"
             raise HTTPMockMismatchError("\n  ".join([heading, *failures])) from cause
         return expectation._respond()
+
+    def _check_body(self, number: int, request: HTTPRequest, body: bytes) -> None:
+        """Run the body matcher ``_exchange`` deferred, keeping failures for exit."""
+        pending = self._pending_bodies.pop(number, None)
+        if pending is None:
+            return
+        position, matcher = pending
+        failures, _ = mismatches({"body": matcher}, request, body)
+        self._late_failures.extend(
+            f"Request {number} didn't match expectation {position + 1}: {failure}"
+            for failure in failures
+        )
+
+    def _unmet(self) -> list[str]:
+        return [
+            *self._late_failures,
+            *(
+                f"Expectation {i}: matched {e._used} of {e._times} requests"
+                for i, e in enumerate(self._expectations, start=1)
+                if e._used < e._times
+            ),
+        ]
 
 
 class HTTPMockExpectation:

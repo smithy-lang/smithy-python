@@ -98,5 +98,6 @@ Dual-mode symbols (async in aio, sync twin outside):
   smithy_test/
     aio/
       http_mock.py
-        mock_async  mock
-49 dual-mode symbol(s).
+        AsyncHTTPMockController  HTTPMockController
+        mock_async               mock
+50 dual-mode symbol(s).

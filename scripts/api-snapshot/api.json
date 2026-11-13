@@ -894,6 +894,7 @@
   "smithy_test": {},
   "smithy_test.aio": {},
   "smithy_test.aio.http_mock": {
+    "AsyncHTTPMockController": "class[async]",
     "mock_async": "function[async]"
   },
   "smithy_test.http_mock": {
