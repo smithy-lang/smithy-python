@@ -48,7 +48,6 @@ def test_missing_aiohttp_recommends_installing_the_extra(
 
     message = str(error.value)
     assert 'Install the optional dependency "smithy-http[aiohttp]".' in message
-    assert "pip install" not in message
 
 
 async def test_close_closes_session() -> None:

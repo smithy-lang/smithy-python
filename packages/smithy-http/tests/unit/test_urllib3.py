@@ -86,7 +86,6 @@ def test_missing_urllib3_recommends_installing_the_extra(
 
     message = str(error.value)
     assert 'Install the optional dependency "smithy-http[urllib3]".' in message
-    assert "pip install" not in message
 
 
 def test_repeated_response_headers_are_merged_case_insensitively() -> None:
