@@ -37,8 +37,13 @@ class FileManifest:
         """Dependencies recorded by writers owned by this manifest."""
         return self._dependencies
 
-    def python_module(self, path: str, module: str) -> _writer.PythonWriter:
-        """Return the shared writer for a generated Python module."""
+    def python_module(
+        self, path: str, module: str, *, future_annotations: bool = False
+    ) -> _writer.PythonWriter:
+        """Return the shared writer for a generated Python module.
+
+        ``future_annotations`` applies when the module is first registered.
+        """
         path = _normalize_path(path)
         self._claim_public_path(path)
         existing = self._files.get(path)
@@ -57,6 +62,7 @@ class FileManifest:
             module,
             dependencies=self._dependencies,
             stub=path.endswith(".pyi"),
+            future_annotations=future_annotations,
         )
         self._files[path] = _PythonFile(module, writer)
         return writer

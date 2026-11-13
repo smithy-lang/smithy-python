@@ -1,0 +1,18 @@
+{
+  "files": {
+    "README.md": "5342d0e6fd3d9d50c76bad8f4c6559812437b588fc964cf42f4f7706d0b327f6",
+    "pyproject.toml": "a70249cceb1596a6e4d90174fea1dac1d2dcddf8fe364635f89ba7f2b7e9cda3",
+    "src/rpcv2cbor_client/__init__.py": "c8267efbae8c45cca2f1c7f4dccc6da6ce3fc6c99488ed58988b0747b85af0c5",
+    "src/rpcv2cbor_client/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rpcv2cbor_client/_private/schemas.py": "e680aa6c6d25909e6d09e091b0a7c40ef73e8a3d318fce665925c52acb5fb27f",
+    "src/rpcv2cbor_client/aio/__init__.py": "31ed3d77a0cc3cc768d548990ef7216e9eb278a7161cb34f1f74d3310100f497",
+    "src/rpcv2cbor_client/aio/client.py": "0c1d028b3cbb670a97219aaeed13f21a6fabcee6e5c57313d727aee616b7dc8e",
+    "src/rpcv2cbor_client/aio/config.py": "901cc7d8a26a07a33e263fb455b73cd416439ad67f085bbdfd43f1c196c8311d",
+    "src/rpcv2cbor_client/client.py": "5db8d2f687a182c4ea67f88a77201a45bf38632d055effdcf3d21b35b6b5f508",
+    "src/rpcv2cbor_client/config.py": "760818e0daced8b45291a96a7572bf1246e2fb05ffa98ef35245df2a86a105c2",
+    "src/rpcv2cbor_client/models.py": "4f7443ca5d6a248346c39518734d165e4c6aa272347da8b12938dd4300368681",
+    "src/rpcv2cbor_client/models.pyi": "1034372fafed1220d9ba996c3a50a274c43a6cd8932c7091011fab068078067f",
+    "src/rpcv2cbor_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "version": 1
+}

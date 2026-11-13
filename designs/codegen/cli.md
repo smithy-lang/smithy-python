@@ -25,6 +25,11 @@ the following process options:
 Settings specific to each artifact will be added with the functionality that
 consumes them.
 
+`client` and `types` both require `--package` and `--package-version`, and
+accept `--package-description`. `client` also accepts `--protocol SHAPE_ID`,
+which selects one protocol trait when the service has more than one. See
+[Python Client Generation](client.md#protocols).
+
 ### Service Selection
 
 The CLI does not require a service to be named. It resolves the service to
@@ -83,7 +88,15 @@ command identifies the artifact to generate:
         "client": {
             "plugins": {
                 "run::python-client": {
-                    "command": ["smithy-python", "generate", "client"]
+                    "command": [
+                        "smithy-python",
+                        "generate",
+                        "client",
+                        "--package",
+                        "example_client",
+                        "--package-version",
+                        "1.0.0"
+                    ]
                 }
             }
         }
@@ -91,7 +104,7 @@ command identifies the artifact to generate:
 }
 ```
 
-Artifact-specific options will be appended to `command` after they are defined.
+Artifact options are appended to `command`.
 The `run` plugin can also pass settings through its `env` property, so an option
 MAY additionally be read from an environment variable. A command-line option
 takes precedence over its environment variable.

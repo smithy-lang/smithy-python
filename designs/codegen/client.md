@@ -166,9 +166,8 @@ the operation has `optionalAuth`.
 ## Protocols
 
 A protocol registry maps modeled protocol IDs to protocol contributions. A
-contribution provides sync/async runtime references, dependencies, and checks
-for supported model features. RPCv2 CBOR is built in. Tests can inject a
-registry.
+contribution provides sync/async protocol and transport references and their
+dependencies. RPCv2 CBOR is built in. Tests can inject a registry.
 
 An explicit protocol selection must be modeled on the service and present in
 the registry. Without one, the generator selects the sole supported modeled
@@ -202,29 +201,38 @@ Generated packages use this layout:
 
 Package initialization lazily exports both clients and configs. Each config
 exposes protocol/transport overrides, endpoint URI/resolver, auth
-resolver/schemes, retries, interceptors, and HTTP request settings. Sync and
-async types and defaults come from one shared config plan. Client and types
-artifacts share package metadata emission, dependency tracking, README
-generation, and manifest ownership.
+resolver/schemes, retries, and interceptors. Both configs default to
+`DefaultAuthResolver`, `StaticEndpointResolver`, the contribution's protocol,
+and its transport: `Urllib3HTTPClient` for sync and `AIOHTTPClient` for async.
+Client and types artifacts share package metadata emission, dependency
+tracking, README generation, and manifest ownership.
 
 Runtime dependencies are recorded in the catalog, including the CBOR and
 transport extras on `smithy-http`. Generated packages depend on runtime
 packages only. The generator imports no runtime packages.
 
-Client modules use postponed annotations and import model classes under
-`TYPE_CHECKING`, so importing a client does not load models. The writer keeps
-scope-aware alias allocation, and names imported for method bodies survive
-collisions with input parameters.
+Client modules use postponed annotations and refer to models through the lazy
+`models` module, as in `models.GreetOutput`. Importing a client builds no model
+class. The writer keeps scope-aware alias allocation, so imported names survive
+collisions with operation method names.
 
 ## Operation Signatures
 
-Client methods take keyword-only input members and accept nested dictionaries,
-with `Params` TypedDicts describing them. Input conversion is the runtime's
-shared conversion, called from generated methods.
+Each operation method has two overloads. One takes the whole request as the
+input model or its dictionary form. The other takes the request's members as
+keyword arguments, typed with `Unpack` over the dictionary form. The
+implementation passes both to the runtime's `_select_input` and `_invoke`, so
+input conversion stays in the runtime.
+
+Every structure and union reachable from an operation input has a `TypedDict`
+form in the model stub, named with a `Dict` suffix. A union's form is a union of
+single-key dictionaries, one per variant. Lists and maps accept `Sequence` and
+`Mapping` of models or dictionaries. A `@required` member without a default is
+`Required`, except an input's idempotency token, which the client fills in. At
+runtime each form's name resolves to `dict`.
 
 One member-name plan drives signatures, model fields, dictionary keys, and
-runtime metadata. It covers `self`, `plugins`, imported module names such as
-`_models`, escaped siblings, defaults, and idempotency tokens.
+runtime metadata. It covers `self`, `plugins`, defaults, and idempotency tokens.
 
 ## Supported Features
 

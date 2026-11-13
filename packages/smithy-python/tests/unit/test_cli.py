@@ -58,30 +58,87 @@ def test_information_commands(
     assert capsys.readouterr().out.startswith(expected)
 
 
-def test_client_generation_is_explicitly_unavailable(
+CBOR_MODEL = json.dumps(
+    {
+        "smithy": "2.0",
+        "shapes": {
+            "example#Service": {
+                "type": "service",
+                "operations": [{"target": "example#Ping"}],
+                "traits": {"smithy.protocols#rpcv2Cbor": {}},
+            },
+            "example#Ping": {"type": "operation"},
+        },
+    }
+)
+
+
+def test_client_generation_writes_complete_package(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = tmp_path / "model.json"
+    model.write_text(CBOR_MODEL)
+    output = tmp_path / "output"
+
+    args = ("generate", "client", "--package", "example_client")
+    args += ("--package-version", "1.0.0", "--model", str(model))
+    assert main((*args, "--output", str(output)), environ={}) == 0
+    assert capsys.readouterr().err == ""
+    files = {
+        path.relative_to(output).as_posix()
+        for path in output.rglob("*")
+        if path.is_file()
+    }
+    assert {
+        "src/example_client/client.py",
+        "src/example_client/config.py",
+        "src/example_client/aio/__init__.py",
+        "src/example_client/aio/client.py",
+        "src/example_client/aio/config.py",
+    } <= files
+    project = tomllib.loads((output / "pyproject.toml").read_text())
+    assert project["project"]["description"] == "example_client client package"
+    assert project["project"]["dependencies"] == [
+        "smithy-core~=0.10.0",
+        "smithy-http[aiohttp,cbor,urllib3]~=0.9.0",
+    ]
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(output / "src")
+    )
+    package = importlib.import_module("example_client")
+    assert package.Service.__name__ == "Service"
+    assert package.AsyncConfig.__module__ == "example_client.aio.config"
+
+
+@pytest.mark.parametrize(
+    ("protocol", "code", "expected"),
+    [
+        ("smithy.protocols#rpcv2Json", 1, "is not a trait on service"),
+        ("smithy.protocols#rpcv2Cbor$member", 2, "not member"),
+        ("not a shape id", 2, "--protocol"),
+    ],
+)
+def test_client_generation_validates_protocol_selection(
+    protocol: str,
+    code: int,
+    expected: str,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    model = tmp_path / "model.json"
-    model.write_text(VALID_MODEL)
-
+    args = ("generate", "client", "--package", "example_client")
+    args += ("--package-version", "1.0.0", "--output", str(tmp_path / "out"))
     assert (
         main(
-            (
-                "generate",
-                "client",
-                "--model",
-                str(model),
-                "--output",
-                str(tmp_path / "output"),
-            ),
+            (*args, "--protocol", protocol),
             environ={},
+            stdin=BytesIO(CBOR_MODEL.encode()),
         )
-        == 1
+        == code
     )
-    assert capsys.readouterr().err == (
-        "smithy-python: error: client generation is not implemented yet\n"
-    )
+    assert expected in capsys.readouterr().err
+    assert not (tmp_path / "out").exists()
 
 
 def test_types_generation_writes_complete_package(
@@ -257,13 +314,24 @@ def test_run_plugin_invocation_reads_standard_input(
 ) -> None:
     assert (
         main(
-            ("generate", "client"),
+            (
+                "generate",
+                "client",
+                "--package",
+                "example_client",
+                "--package-version",
+                "1.0.0",
+                "--package",
+                "example_client",
+                "--package-version",
+                "1.0.0",
+            ),
             environ={"SMITHY_PLUGIN_DIR": str(tmp_path)},
             stdin=BytesIO(VALID_MODEL.encode()),
         )
         == 1
     )
-    assert "generation is not implemented yet" in capsys.readouterr().err
+    assert "has no supported protocol" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize(
@@ -363,7 +431,16 @@ def test_run_plugin_rejects_direct_invocation_options(
 ) -> None:
     assert (
         main(
-            ("generate", "client", option, str(tmp_path / "value")),
+            (
+                "generate",
+                "client",
+                "--package",
+                "example_client",
+                "--package-version",
+                "1.0.0",
+                option,
+                str(tmp_path / "value"),
+            ),
             environ={"SMITHY_PLUGIN_DIR": str(tmp_path)},
             stdin=BytesIO(b"{}"),
         )
@@ -380,7 +457,22 @@ def test_direct_invocation_requires_output(
     model = tmp_path / "model.json"
     model.write_text("{}")
 
-    assert main(("generate", "client", "--model", str(model)), environ={}) == 2
+    assert (
+        main(
+            (
+                "generate",
+                "client",
+                "--package",
+                "example_client",
+                "--package-version",
+                "1.0.0",
+                "--model",
+                str(model),
+            ),
+            environ={},
+        )
+        == 2
+    )
     assert "Direct invocation requires --output" in capsys.readouterr().err
 
 
@@ -389,7 +481,16 @@ def test_invocation_rejects_empty_model(
 ) -> None:
     assert (
         main(
-            ("generate", "client", "--output", str(tmp_path)),
+            (
+                "generate",
+                "client",
+                "--package",
+                "example_client",
+                "--package-version",
+                "1.0.0",
+                "--output",
+                str(tmp_path),
+            ),
             environ={},
             stdin=BytesIO(),
         )
@@ -403,7 +504,16 @@ def test_direct_invocation_rejects_interactive_model_input(
 ) -> None:
     assert (
         main(
-            ("generate", "client", "--output", str(tmp_path)),
+            (
+                "generate",
+                "client",
+                "--package",
+                "example_client",
+                "--package-version",
+                "1.0.0",
+                "--output",
+                str(tmp_path),
+            ),
             environ={},
             stdin=_InteractiveStdin(),
         )
@@ -425,6 +535,10 @@ def test_invocation_reports_missing_model(
             (
                 "generate",
                 "client",
+                "--package",
+                "example_client",
+                "--package-version",
+                "1.0.0",
                 "--model",
                 str(missing),
                 "--output",
@@ -446,6 +560,10 @@ def test_invocation_reports_model_path_that_is_a_directory(
             (
                 "generate",
                 "client",
+                "--package",
+                "example_client",
+                "--package-version",
+                "1.0.0",
                 "--model",
                 "",
                 "--output",
@@ -476,6 +594,10 @@ def test_invocation_reports_model_io_error(
             (
                 "generate",
                 "client",
+                "--package",
+                "example_client",
+                "--package-version",
+                "1.0.0",
                 "--model",
                 str(model),
                 "--output",
