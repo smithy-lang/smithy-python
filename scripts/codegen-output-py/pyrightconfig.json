@@ -22,6 +22,7 @@
     "../../codegen-output-py/rest-xml/src",
     "../../codegen-output-py/rest-xml-with-namespace/src",
     "../../codegen-output-py/rpcv2-cbor/src",
+    "../../codegen-output-py/rpcv2-cbor-client/src",
     "../../codegen-output-py/rpcv2-json/src",
     "../../codegen-output-py/types/src"
   ]

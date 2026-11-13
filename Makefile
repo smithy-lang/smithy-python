@@ -134,7 +134,7 @@ generate-protocol-tests: ## Generates protocol-test clients, copies them to ./co
 	@echo "codegen-output is up to date."
 
 
-generate-codegen-output-py: ## Regenerates standalone types snapshots using only Python.
+generate-codegen-output-py: ## Regenerates types and client snapshots using only Python.
 	uv run python scripts/codegen-output-py/generate.py
 
 

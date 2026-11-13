@@ -118,7 +118,6 @@ _ANY4: Final = (_ANY, _ANY, _ANY, _ANY)
 _CAST: Final = _typing("cast")
 _OVERLOAD: Final = _typing("overload")
 _UNPACK: Final = _typing("Unpack")
-_TYPE_ALIAS: Final = _typing("TypeAlias")
 _TYPE_CHECKING: Final = _typing("TYPE_CHECKING")
 _CALLABLE: Final = TypeReference("Callable", "collections.abc")
 _DATACLASS: Final = TypeReference("dataclass", "dataclasses")
@@ -363,9 +362,7 @@ def _write_config(
             writer.line("self.transport = transport or ", mode.transport, "()")
     writer.line()
     writer.line()
-    writer.line(
-        "Plugin: ", _TYPE_ALIAS, " = ", _CALLABLE, "[[", mode.config, "], None]"
-    )
+    writer.line("type Plugin = ", _CALLABLE, "[[", mode.config, "], None]")
     writer.line(
         _models._quote(  # pyright: ignore[reportPrivateUsage]
             "A callable that customizes the client configuration."

@@ -1,7 +1,8 @@
 # Python Codegen Snapshots
 
-`codegen-output-py` records the model and schema surface currently supported by
-`smithy-python generate types`. It gives the Python generator the same model
+`codegen-output-py` records the model, schema, and client surface currently
+supported by `smithy-python generate types` and `smithy-python generate client`.
+It gives the Python generator the same model
 families as the Java-generated `codegen-output` tree without making the Python
 workflow depend on Java, Gradle, Maven, or the Smithy CLI.
 
@@ -44,15 +45,31 @@ CBOR service has no standalone declaration roots, so its snapshot contains an
 empty schema module and the `ServiceError` base. Java's synthetic operation
 input/output structures are deliberately absent.
 
-Each snapshot contains only:
+Each types snapshot contains only:
 
 * `models.py` and `models.pyi`, with private model stub partitions when needed;
 * `_private/schemas.py`, with private schema partitions when needed;
 * package initialization, `py.typed`, package metadata, and a README;
 * the Python generator's file ownership and content hash manifest.
 
-No client, config, auth, endpoint, protocol implementation, user agent, or
-generated protocol tests are included.
+Types snapshots contain no client, config, auth, endpoint, protocol
+implementation, user agent, or generated protocol tests.
+
+### Client snapshots
+
+`scripts/codegen-output-py/client-projections.json` declares client
+projections, generated with the public `client` command.
+
+| Projection | Import package | Operations |
+| --- | --- | ---: |
+| `rpcv2-cbor-client` | `rpcv2cbor_client` | 14 |
+
+It reuses the `rpcv2-cbor` model input. Its import package differs from the
+types snapshot's, so both resolve in one Pyright project. Each client snapshot
+adds `client.py`, `config.py`, and their `aio` counterparts to the types files,
+plus service and operation schemas and lazy operation exports. Tests compare its
+operation methods with the Java client and send one call through fake sync and
+async transports.
 
 ## Inputs and maintenance
 

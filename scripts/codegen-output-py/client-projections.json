@@ -1,0 +1,9 @@
+{
+  "rpcv2-cbor-client": {
+    "description": "Python client for the rpcv2-cbor projection",
+    "model": "models/rpcv2-cbor.json",
+    "package": "rpcv2cbor_client",
+    "service": "smithy.protocoltests.rpcv2Cbor#RpcV2Protocol",
+    "version": "0.0.1"
+  }
+}
