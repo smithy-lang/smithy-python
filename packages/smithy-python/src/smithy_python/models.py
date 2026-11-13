@@ -51,12 +51,14 @@ class ModelGenerator:
         partitions = tuple(
             shapes[index : index + size] for index in range(0, len(shapes), size)
         )
+        width = len(str(len(partitions) - 1))
         facade.write_facade(partitions)
         for index, shapes in enumerate(partitions):
+            module = f"models_{index:0{width}d}"
             _StubEmitter(
                 context.files.python_module(
-                    f"src/{directory}/_private/models_{index}.pyi",
-                    f"{package}._private.models_{index}",
+                    f"src/{directory}/_private/{module}.pyi",
+                    f"{package}._private.{module}",
                 ),
                 context,
                 external_bases=True,
@@ -222,8 +224,9 @@ class _StubEmitter:
     def write_facade(self, partitions: tuple[tuple[_model.Shape, ...], ...]) -> None:
         """Write the public stub facade and re-export private declarations."""
         writer = self.writer
+        width = len(str(len(partitions) - 1))
         for index, shapes in enumerate(partitions):
-            writer.line(f"from ._private.models_{index} import (")
+            writer.line(f"from ._private.models_{index:0{width}d} import (")
             with writer.indent():
                 for shape in shapes:
                     for name in _stub_shape_names(self.plan, shape):

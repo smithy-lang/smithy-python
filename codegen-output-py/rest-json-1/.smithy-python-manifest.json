@@ -4,7 +4,7 @@
     "pyproject.toml": "bcd2a9ccdcf9626c5ef3825e24d9b2a112bc9d9b74746ab3afd713e031e915c7",
     "src/restjson/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
     "src/restjson/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "src/restjson/_private/schemas.py": "2001fd5788e5783a4c90ca5d86074c4fcb699633b4034931281da5d72ce4d4b8",
+    "src/restjson/_private/schemas.py": "133535695424fa890dd8cefb8f7f9957138813ae689c7d168e79763296813bcb",
     "src/restjson/_private/schemas_0.py": "182604613d3df3c24bc70da886afd1095e14e18d39bc5fd508439a1721db13b3",
     "src/restjson/_private/schemas_1.py": "87d9ecab54acafdfa40e9633036e3944e61aef924a0766a576d7d7287d24647d",
     "src/restjson/_private/schemas_2.py": "dc8532ce2dd4734ec88e61d6a26e0f6c45156aeb977f23855b2be53b5f882160",

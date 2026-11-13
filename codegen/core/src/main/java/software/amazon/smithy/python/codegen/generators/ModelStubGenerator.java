@@ -6,6 +6,7 @@ package software.amazon.smithy.python.codegen.generators;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import software.amazon.smithy.codegen.core.Symbol;
@@ -90,11 +91,12 @@ public final class ModelStubGenerator implements Runnable {
         for (int start = 0; start < modelShapes.size(); start += STUB_PARTITION_SIZE) {
             partitions.add(modelShapes.subList(start, Math.min(start + STUB_PARTITION_SIZE, modelShapes.size())));
         }
+        int width = Integer.toString(partitions.size() - 1).length();
         context.writerDelegator().useFileWriter(filename, namespace, writer -> {
             for (int i = 0; i < partitions.size(); i++) {
                 var partition = partitions.get(i);
                 writer.openBlock(
-                        String.format("from ._private.models_%d import (", i),
+                        String.format(Locale.ROOT, "from ._private.models_%0" + width + "d import (", i),
                         ")",
                         () -> {
                             for (var shape : partition) {
@@ -110,8 +112,9 @@ public final class ModelStubGenerator implements Runnable {
         });
 
         for (int i = 0; i < partitions.size(); i++) {
-            var partitionFilename = String.format("src/%s/_private/models_%d.pyi", module, i);
-            var partitionNamespace = String.format("%s._private.models_%d", module, i);
+            var partitionModule = String.format(Locale.ROOT, "models_%0" + width + "d", i);
+            var partitionFilename = String.format("src/%s/_private/%s.pyi", module, partitionModule);
+            var partitionNamespace = String.format("%s._private.%s", module, partitionModule);
             var partition = partitions.get(i);
             context.writerDelegator().useFileWriter(partitionFilename, partitionNamespace, writer -> {
                 writer.addImport(module + ".models", "_SerdeShape");
