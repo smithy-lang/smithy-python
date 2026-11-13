@@ -118,8 +118,8 @@ final class ClientGenerator implements Runnable {
         UnaryOperator<String> code = sync ? SyncVariant::toSyncCode : UnaryOperator.identity();
         var serviceSymbol = writer.getSymbolMapper().apply(symbolProvider.toSymbol(service));
         writer.addLocallyDefinedSymbol(serviceSymbol);
-        // CAUTION: operation methods refer to this name beside their keyword
-        // parameters, so PythonSymbolProvider.OPERATION_PARAMETER_NAMES reserves it.
+        // Model types in annotations are qualified with this module alias, so the
+        // client refers to them without importing every model class eagerly.
         writer.addImport(context.settings().moduleName(), "models", "_models");
         writer.addLogger();
 
@@ -222,7 +222,7 @@ final class ClientGenerator implements Runnable {
                 input,
                 sync,
                 outputSymbol.getName(),
-                w -> writeOperationDocs(w, operation, input, output),
+                w -> writeOperationDocs(w, operation, output),
                 """
                         return await self._invoke(
                             self._select_input(${operation:L}, args, kwargs),
@@ -240,10 +240,13 @@ final class ClientGenerator implements Runnable {
      *
      * <p>A caller passes either the whole request, positional-only so that it takes
      * no keyword away from the members, or the request's members as keyword
-     * arguments. The keyword overload carries the documentation, where editors find
-     * the documentation of each argument; {@code ClientBase} copies it onto the
-     * implementation for {@code help()}. The implementation takes either, and its
-     * body hands {@code args} and {@code kwargs} to {@code _select_input}.
+     * arguments. The keyword overload types them as {@code **kwargs} unpacking the
+     * request's dictionary form, so editors find each argument's type and
+     * documentation on that form's keys, which carry the members' full docs. The
+     * keyword overload carries the operation's own documentation; {@code ClientBase}
+     * copies it onto the implementation for {@code help()}. The implementation takes
+     * either, and its body hands {@code args} and {@code kwargs} to
+     * {@code _select_input}.
      *
      * <p>Expects {@code operationName}, {@code operation} and {@code plugin} in the
      * writer's context.
@@ -269,9 +272,10 @@ final class ClientGenerator implements Runnable {
         // Aliased because a method defined in the class body shadows a module name
         // for the rest of the class, and an operation may be named Overload.
         writer.addStdlibImport("typing", "overload", "_overload");
+        writer.addStdlibImport("typing", "Unpack", "_Unpack");
         writer.putContext("returns", returns);
         writer.putContext("request", requestType(writer, input, sync));
-        writer.putContext("parameters", parameters(writer, input));
+        writer.putContext("keywords", keywordsType(writer, input, sync));
         writer.putContext("docs", writer.consumer(docs));
         writer.putContext("body", writer.consumer(w -> w.write(code.apply(body), bodyArgs)));
         writer.write(code.apply("""
@@ -289,8 +293,8 @@ final class ClientGenerator implements Runnable {
                     self,
                     /,
                     *,
-                    ${parameters:L|}
                     plugins: list[${plugin:T}] | None = None,
+                    **kwargs: _Unpack[${keywords:L}],
                 ) -> ${returns:L}:
                     ${docs:C|}
 
@@ -306,28 +310,17 @@ final class ClientGenerator implements Runnable {
     }
 
     /**
-     * Spells an operation's input members as the keyword-only parameters of its
-     * method's keyword overload.
+     * Spells the dictionary form an operation method's keyword overload unpacks.
      *
-     * <p>The parameters are in model order. They are all keyword-only, so required
-     * ones need not come first.
+     * <p>An input with a streaming body has a second form whose body may also be an
+     * async stream; the async client unpacks that one, and the sync client the plain
+     * form, whose bodies it accepts.
      */
-    private String parameters(PythonWriter writer, Shape input) {
-        var parameters = new StringBuilder();
-        for (var member : input.members()) {
-            if (!inputParams.isParameter(member)) {
-                continue;
-            }
-            var name = symbolProvider.toMemberName(member);
-            var type = inputParams.typeOf(member, symbol -> annotation(writer, symbol));
-            parameters.append(name).append(": ").append(type);
-            if (!inputParams.mustBeSet(member)) {
-                // None is the same as omitting the member.
-                parameters.append(" | None = None");
-            }
-            parameters.append(",\n");
-        }
-        return parameters.toString().stripTrailing();
+    private String keywordsType(PythonWriter writer, Shape input, boolean sync) {
+        var params = !sync && inputParams.hasAsyncParams(input)
+                ? inputParams.asyncParamsSymbol(input)
+                : inputParams.paramsSymbol(input);
+        return annotation(writer, params);
     }
 
     /**
@@ -374,14 +367,13 @@ final class ClientGenerator implements Runnable {
         return symbol.getName();
     }
 
-    private void writeOperationDocs(PythonWriter writer, OperationShape operation, Shape input, Shape output) {
-        writeOperationDocs(writer, operation, input, output, null);
+    private void writeOperationDocs(PythonWriter writer, OperationShape operation, Shape output) {
+        writeOperationDocs(writer, operation, output, null);
     }
 
     private void writeOperationDocs(
             PythonWriter writer,
             OperationShape operation,
-            Shape input,
             Shape output,
             String eventStreamOutputDocs
     ) {
@@ -397,23 +389,11 @@ final class ClientGenerator implements Runnable {
                     : String.format("An instance of `%s`.", outputSymbolName);
 
             writer.write("$L\n", operationDocs);
-            // Each member is documented here too, in both clients, under the name of
-            // its parameter: an editor shows a call's documentation from the method
-            // being called, not from the input model its arguments end up in. The
-            // docs are the ones the model's field gets, so a token the client fills
-            // says so here as well.
+            // The members are not repeated here: the keyword overload unpacks the
+            // request's dictionary form, whose keys carry each member's full docs,
+            // so an editor shows them from there. Only the method's own parameter
+            // is documented.
             writer.write("Args:");
-            writer.indent();
-            for (var member : input.members()) {
-                if (inputParams.isParameter(member)) {
-                    CodegenUtils.getMemberDocs(model, member)
-                            .ifPresent(docs -> writer.writeParameterDocs(
-                                    symbolProvider.toMemberName(member),
-                                    docs,
-                                    context));
-                }
-            }
-            writer.dedent();
             writer.write("""
                         plugins:
                             A list of callables that modify the configuration dynamically.
@@ -523,7 +503,7 @@ final class ClientGenerator implements Runnable {
                 input,
                 false,
                 returns,
-                w -> writeOperationDocs(w, operation, input, output, outputDocs),
+                w -> writeOperationDocs(w, operation, output, outputDocs),
                 """
                         pipeline, call = await self._prepare_call(
                             self._select_input(${operation:L}, args, kwargs),

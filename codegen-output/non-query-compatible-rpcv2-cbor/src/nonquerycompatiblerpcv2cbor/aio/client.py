@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast, overload as _overload
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -44,7 +44,11 @@ class AsyncNonQueryCompatibleRpcV2ProtocolClient(
 
     @_overload
     async def non_query_compatible_operation(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NonQueryCompatibleOperationInputParams],
     ) -> NonQueryCompatibleOperationOutput:
         """
         Invokes the NonQueryCompatibleOperation operation.

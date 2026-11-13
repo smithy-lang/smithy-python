@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import overload as _overload
+from typing import Unpack as _Unpack, overload as _overload
 
 from smithy_core.client import Client
 from smithy_http.plugins import user_agent_plugin
@@ -32,9 +32,6 @@ if TYPE_CHECKING:
         SparseNullsOperationOutput,
         TimestampFormatIgnoredOutput,
     )
-    from collections.abc import Mapping, Sequence
-    from datetime import datetime
-    from decimal import Decimal
 
 
 logger = logging.getLogger(__name__)
@@ -57,7 +54,11 @@ class RpcV2JsonProtocol(Client[Config]):
 
     @_overload
     def big_decimal_operation(
-        self, /, *, value: Decimal | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.BigDecimalOperationInputParams],
     ) -> BigDecimalOperationOutput:
         """
         Invokes the BigDecimalOperation operation.
@@ -95,7 +96,11 @@ class RpcV2JsonProtocol(Client[Config]):
 
     @_overload
     def big_integer_operation(
-        self, /, *, value: int | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.BigIntegerOperationInputParams],
     ) -> BigIntegerOperationOutput:
         """
         Invokes the BigIntegerOperation operation.
@@ -132,7 +137,11 @@ class RpcV2JsonProtocol(Client[Config]):
 
     @_overload
     def empty_input_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EmptyInputOutputInputParams],
     ) -> EmptyInputOutputOutput:
         """
         Invokes the EmptyInputOutput operation.
@@ -169,7 +178,11 @@ class RpcV2JsonProtocol(Client[Config]):
 
     @_overload
     def fractional_seconds(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FractionalSecondsInputParams],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -207,7 +220,11 @@ class RpcV2JsonProtocol(Client[Config]):
 
     @_overload
     def greeting_with_errors(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputParams],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values:
@@ -251,7 +268,11 @@ class RpcV2JsonProtocol(Client[Config]):
 
     @_overload
     def no_input_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputOutputInputParams],
     ) -> NoInputOutputOutput:
         """
         Invokes the NoInputOutput operation.
@@ -292,13 +313,8 @@ class RpcV2JsonProtocol(Client[Config]):
         self,
         /,
         *,
-        defaults: _models.Defaults | _models.DefaultsParams | None = None,
-        client_optional_defaults: _models.ClientOptionalDefaults
-        | _models.ClientOptionalDefaultsParams
-        | None = None,
-        top_level_default: str | None = None,
-        other_top_level_default: int | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithDefaultsInputParams],
     ) -> OperationWithDefaultsOutput:
         """
         Invokes the OperationWithDefaults operation.
@@ -336,7 +352,11 @@ class RpcV2JsonProtocol(Client[Config]):
 
     @_overload
     def optional_input_output(
-        self, /, *, value: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OptionalInputOutputInputParams],
     ) -> OptionalInputOutputOutput:
         """
         Invokes the OptionalInputOutput operation.
@@ -376,10 +396,8 @@ class RpcV2JsonProtocol(Client[Config]):
         self,
         /,
         *,
-        nested: _models.RecursiveShapesInputOutputNested1
-        | _models.RecursiveShapesInputOutputNested1Params
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RecursiveShapesInputParams],
     ) -> RecursiveShapesOutput:
         """
         Invokes the RecursiveShapes operation.
@@ -420,15 +438,8 @@ class RpcV2JsonProtocol(Client[Config]):
         self,
         /,
         *,
-        dense_struct_map: Mapping[
-            str, _models.GreetingStruct | _models.GreetingStructParams
-        ]
-        | None = None,
-        dense_number_map: Mapping[str, int] | None = None,
-        dense_boolean_map: Mapping[str, bool] | None = None,
-        dense_string_map: Mapping[str, str] | None = None,
-        dense_set_map: Mapping[str, Sequence[str]] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RpcV2JsonDenseMapsInputParams],
     ) -> RpcV2JsonDenseMapsOutput:
         """
         The example tests basic map serialization.
@@ -468,20 +479,8 @@ class RpcV2JsonProtocol(Client[Config]):
         self,
         /,
         *,
-        string_list: Sequence[str] | None = None,
-        string_set: Sequence[str] | None = None,
-        integer_list: Sequence[int] | None = None,
-        boolean_list: Sequence[bool] | None = None,
-        timestamp_list: Sequence[datetime] | None = None,
-        enum_list: Sequence[str] | None = None,
-        int_enum_list: Sequence[int] | None = None,
-        nested_string_list: Sequence[Sequence[str]] | None = None,
-        structure_list: Sequence[
-            _models.StructureListMember | _models.StructureListMemberParams
-        ]
-        | None = None,
-        blob_list: Sequence[bytes] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RpcV2JsonListsInputParams],
     ) -> RpcV2JsonListsOutput:
         """
         This test case serializes JSON lists for the following cases for both
@@ -493,7 +492,6 @@ class RpcV2JsonProtocol(Client[Config]):
         4.  Lists of structures.
 
         Args:
-            nested_string_list: A list of lists of strings.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -529,15 +527,8 @@ class RpcV2JsonProtocol(Client[Config]):
         self,
         /,
         *,
-        sparse_struct_map: Mapping[
-            str, _models.GreetingStruct | _models.GreetingStructParams | None
-        ]
-        | None = None,
-        sparse_number_map: Mapping[str, int | None] | None = None,
-        sparse_boolean_map: Mapping[str, bool | None] | None = None,
-        sparse_string_map: Mapping[str, str | None] | None = None,
-        sparse_set_map: Mapping[str, Sequence[str] | None] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RpcV2JsonSparseMapsInputParams],
     ) -> RpcV2JsonSparseMapsOutput:
         """
         Invokes the RpcV2JsonSparseMaps operation.
@@ -578,17 +569,8 @@ class RpcV2JsonProtocol(Client[Config]):
         self,
         /,
         *,
-        true_boolean_value: bool | None = None,
-        false_boolean_value: bool | None = None,
-        byte_value: int | None = None,
-        double_value: float | None = None,
-        float_value: float | None = None,
-        integer_value: int | None = None,
-        long_value: int | None = None,
-        short_value: int | None = None,
-        string_value: str | None = None,
-        blob_value: bytes | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputParams],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
@@ -629,9 +611,8 @@ class RpcV2JsonProtocol(Client[Config]):
         self,
         /,
         *,
-        sparse_string_list: Sequence[str | None] | None = None,
-        sparse_string_map: Mapping[str, str | None] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SparseNullsOperationInputParams],
     ) -> SparseNullsOperationOutput:
         """
         Invokes the SparseNullsOperation operation.
@@ -672,11 +653,8 @@ class RpcV2JsonProtocol(Client[Config]):
         self,
         /,
         *,
-        date_time: datetime | None = None,
-        http_date: datetime | None = None,
-        epoch_seconds: datetime | None = None,
-        normal: datetime | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TimestampFormatIgnoredInputParams],
     ) -> TimestampFormatIgnoredOutput:
         """
         This operation tests that the rpcv2Json protocol always uses

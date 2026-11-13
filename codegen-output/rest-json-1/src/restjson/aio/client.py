@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast, overload as _overload
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -143,11 +143,6 @@ if TYPE_CHECKING:
         TimestampFormatHeadersOutput,
         UnitInputAndOutputOutput,
     )
-    from collections.abc import Mapping, Sequence
-    from datetime import datetime
-    from smithy_core.aio.interfaces import StreamingBlob
-    from smithy_core.documents import Document
-    from smithy_core.types import JsonString
 
 
 logger = logging.getLogger(__name__)
@@ -173,28 +168,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        query_string: str | None = None,
-        query_string_list: Sequence[str] | None = None,
-        query_string_set: Sequence[str] | None = None,
-        query_byte: int | None = None,
-        query_short: int | None = None,
-        query_integer: int | None = None,
-        query_integer_list: Sequence[int] | None = None,
-        query_integer_set: Sequence[int] | None = None,
-        query_long: int | None = None,
-        query_float: float | None = None,
-        query_double: float | None = None,
-        query_double_list: Sequence[float] | None = None,
-        query_boolean: bool | None = None,
-        query_boolean_list: Sequence[bool] | None = None,
-        query_timestamp: datetime | None = None,
-        query_timestamp_list: Sequence[datetime] | None = None,
-        query_enum: str | None = None,
-        query_enum_list: Sequence[str] | None = None,
-        query_integer_enum: int | None = None,
-        query_integer_enum_list: Sequence[int] | None = None,
-        query_params_map_of_string_list: Mapping[str, Sequence[str]] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.AllQueryStringTypesInputParams],
     ) -> AllQueryStringTypesOutput:
         """
         This example uses all query string types.
@@ -235,9 +210,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        baz: str | None = None,
-        maybe_set: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ConstantAndVariableQueryStringInputParams],
     ) -> ConstantAndVariableQueryStringOutput:
         """
         This example uses fixed query string params and variable query string
@@ -279,7 +253,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def constant_query_string(
-        self, /, *, hello: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ConstantQueryStringInputParams],
     ) -> ConstantQueryStringOutput:
         """
         This example uses a constant query string parameters and a label. This
@@ -320,7 +298,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def content_type_parameters(
-        self, /, *, value: int | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ContentTypeParametersInputParams],
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -358,7 +340,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def datetime_offsets(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DatetimeOffsetsInputParams],
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -398,9 +384,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        string_value: str | None = None,
-        document_value: Document | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DocumentTypeInputParams],
     ) -> DocumentTypeOutput:
         """
         This example serializes a document as part of the payload.
@@ -441,8 +426,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        doc_valued_map: Mapping[str, Document] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DocumentTypeAsMapValueInputParams],
     ) -> DocumentTypeAsMapValueOutput:
         """
         This example serializes documents as the value of maps.
@@ -483,8 +468,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        document_value: Document | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DocumentTypeAsPayloadInputParams],
     ) -> DocumentTypeAsPayloadOutput:
         """
         This example serializes a document as the entire HTTP payload.
@@ -521,7 +506,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def duplex_stream(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DuplexStreamInputParams],
     ) -> AsyncDuplexEventStream[EventStream, EventStream, DuplexStreamOutput]:
         """
         Invokes the DuplexStream operation.
@@ -562,7 +551,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def duplex_stream_with_distinct_streams(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DuplexStreamWithDistinctStreamsInputParams],
     ) -> AsyncInputEventStream[EventStream, DuplexStreamWithDistinctStreamsOutput]:
         """
         Invokes the DuplexStreamWithDistinctStreams operation.
@@ -605,7 +598,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def duplex_stream_with_initial_messages(
-        self, /, *, initial_request_member: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DuplexStreamWithInitialMessagesInputParams],
     ) -> AsyncDuplexEventStream[
         EventStream, EventStream, DuplexStreamWithInitialMessagesOutput
     ]:
@@ -652,7 +649,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def empty_input_and_empty_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EmptyInputAndEmptyOutputInputParams],
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -692,7 +693,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def endpoint_operation(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointOperationInputParams],
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -730,7 +735,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def endpoint_with_host_label_operation(
-        self, /, *, label: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputParams],
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -769,7 +778,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def fractional_seconds(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FractionalSecondsInputParams],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -807,7 +820,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def greeting_with_errors(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputParams],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has four possible return values: 1. A successful response
@@ -849,7 +866,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def host_with_path_operation(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HostWithPathOperationInputParams],
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
@@ -887,7 +908,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def http_checksum_required(
-        self, /, *, foo: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpChecksumRequiredInputParams],
     ) -> HttpChecksumRequiredOutput:
         """
         This example tests httpChecksumRequired trait
@@ -928,9 +953,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        prefix_headers: Mapping[str, str] | None = None,
-        specific_header: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpEmptyPrefixHeadersInputParams],
     ) -> HttpEmptyPrefixHeadersOutput:
         """
         Clients that perform this test extract all headers from the response.
@@ -967,7 +991,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def http_enum_payload(
-        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpEnumPayloadInputParams],
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
@@ -1007,9 +1035,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        blob: bytes | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadTraitsInputParams],
     ) -> HttpPayloadTraitsOutput:
         """
         This example serializes a blob shape in the payload. In this example, no
@@ -1052,9 +1079,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        blob: bytes | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadTraitsWithMediaTypeInputParams],
     ) -> HttpPayloadTraitsWithMediaTypeOutput:
         """
         This example uses a `@mediaType` trait on the payload to force a
@@ -1098,8 +1124,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.NestedPayload | _models.NestedPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithStructureInputParams],
     ) -> HttpPayloadWithStructureOutput:
         """
         This example serializes a structure in the payload. Note that
@@ -1142,8 +1168,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.UnionPayload | _models.UnionPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithUnionInputParams],
     ) -> HttpPayloadWithUnionOutput:
         """
         This example serializes a union in the payload.
@@ -1183,9 +1209,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        foo_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPrefixHeadersInputParams],
     ) -> HttpPrefixHeadersOutput:
         """
         This examples adds headers to the input of a request and response by
@@ -1224,7 +1249,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def http_prefix_headers_in_response(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPrefixHeadersInResponseInputParams],
     ) -> HttpPrefixHeadersInResponseOutput:
         """
         Clients that perform this test extract all headers from the response.
@@ -1265,8 +1294,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        query_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpQueryParamsOnlyOperationInputParams],
     ) -> HttpQueryParamsOnlyOperationOutput:
         """
         This example tests httpQueryParams when no other query parameters exist.
@@ -1304,7 +1333,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def http_request_with_float_labels(
-        self, /, *, float_: float, double: float, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithFloatLabelsInputParams],
     ) -> HttpRequestWithFloatLabelsOutput:
         """
         Invokes the HttpRequestWithFloatLabels operation.
@@ -1342,7 +1375,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def http_request_with_greedy_label_in_path(
-        self, /, *, foo: str, baz: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithGreedyLabelInPathInputParams],
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
@@ -1385,23 +1422,14 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        string: str,
-        short: int,
-        integer: int,
-        long: int,
-        float_: float,
-        double: float,
-        boolean: bool,
-        timestamp: datetime,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithLabelsInputParams],
     ) -> HttpRequestWithLabelsOutput:
         """
         The example tests how requests are serialized when there's no input
         payload but there are HTTP labels.
 
         Args:
-            boolean: Serialized in the path as true or false.
-            timestamp: Note that this member has no format, so it's serialized as an RFC 3399 date-time.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1437,14 +1465,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        member_epoch_seconds: datetime,
-        member_http_date: datetime,
-        member_date_time: datetime,
-        default_format: datetime,
-        target_epoch_seconds: datetime,
-        target_http_date: datetime,
-        target_date_time: datetime,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithLabelsAndTimestampFormatInputParams],
     ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
         """
         The example tests how requests serialize different timestamp formats in
@@ -1485,7 +1507,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def http_request_with_regex_literal(
-        self, /, *, str_: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithRegexLiteralInputParams],
     ) -> HttpRequestWithRegexLiteralOutput:
         """
         Invokes the HttpRequestWithRegexLiteral operation.
@@ -1522,7 +1548,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def http_response_code(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpResponseCodeInputParams],
     ) -> HttpResponseCodeOutput:
         """
         Invokes the HttpResponseCode operation.
@@ -1559,7 +1589,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def http_string_payload(
-        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpStringPayloadInputParams],
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
@@ -1597,7 +1631,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def ignore_query_params_in_response(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.IgnoreQueryParamsInResponseInputParams],
     ) -> IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
@@ -1640,25 +1678,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        header_string: str | None = None,
-        header_byte: int | None = None,
-        header_short: int | None = None,
-        header_integer: int | None = None,
-        header_long: int | None = None,
-        header_float: float | None = None,
-        header_double: float | None = None,
-        header_true_bool: bool | None = None,
-        header_false_bool: bool | None = None,
-        header_string_list: Sequence[str] | None = None,
-        header_string_set: Sequence[str] | None = None,
-        header_integer_list: Sequence[int] | None = None,
-        header_boolean_list: Sequence[bool] | None = None,
-        header_timestamp_list: Sequence[datetime] | None = None,
-        header_enum: str | None = None,
-        header_enum_list: Sequence[str] | None = None,
-        header_integer_enum: int | None = None,
-        header_integer_enum_list: Sequence[int] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.InputAndOutputWithHeadersInputParams],
     ) -> InputAndOutputWithHeadersOutput:
         """
         The example tests how requests and responses are serialized when there
@@ -1696,7 +1717,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def input_stream(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.InputStreamInputParams],
     ) -> AsyncInputEventStream[EventStream, InputStreamOutput]:
         """
         Invokes the InputStream operation.
@@ -1735,7 +1760,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def input_stream_with_initial_request(
-        self, /, *, initial_request_member: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.InputStreamWithInitialRequestInputParams],
     ) -> AsyncInputEventStream[EventStream, InputStreamWithInitialRequestOutput]:
         """
         Invokes the InputStreamWithInitialRequest operation.
@@ -1773,7 +1802,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def json_blobs(
-        self, /, *, data: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonBlobsInputParams],
     ) -> JsonBlobsOutput:
         """
         Blobs are base64 encoded
@@ -1813,13 +1846,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        foo_enum1: str | None = None,
-        foo_enum2: str | None = None,
-        foo_enum3: str | None = None,
-        foo_enum_list: Sequence[str] | None = None,
-        foo_enum_set: Sequence[str] | None = None,
-        foo_enum_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonEnumsInputParams],
     ) -> JsonEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -1860,13 +1888,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        integer_enum1: int | None = None,
-        integer_enum2: int | None = None,
-        integer_enum3: int | None = None,
-        integer_enum_list: Sequence[int] | None = None,
-        integer_enum_set: Sequence[int] | None = None,
-        integer_enum_map: Mapping[str, int] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonIntEnumsInputParams],
     ) -> JsonIntEnumsOutput:
         """
         This example serializes intEnums as top level properties, in lists,
@@ -1907,19 +1930,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        string_list: Sequence[str] | None = None,
-        string_set: Sequence[str] | None = None,
-        integer_list: Sequence[int] | None = None,
-        boolean_list: Sequence[bool] | None = None,
-        timestamp_list: Sequence[datetime] | None = None,
-        enum_list: Sequence[str] | None = None,
-        int_enum_list: Sequence[int] | None = None,
-        nested_string_list: Sequence[Sequence[str]] | None = None,
-        structure_list: Sequence[
-            _models.StructureListMember | _models.StructureListMemberParams
-        ]
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonListsInputParams],
     ) -> JsonListsOutput:
         """
         This test case serializes JSON lists for the following cases for both
@@ -1927,7 +1939,6 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         lists of lists. 4. Lists of structures.
 
         Args:
-            nested_string_list: A list of lists of strings.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1962,15 +1973,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        dense_struct_map: Mapping[
-            str, _models.GreetingStruct | _models.GreetingStructParams
-        ]
-        | None = None,
-        dense_number_map: Mapping[str, int] | None = None,
-        dense_boolean_map: Mapping[str, bool] | None = None,
-        dense_string_map: Mapping[str, str] | None = None,
-        dense_set_map: Mapping[str, Sequence[str]] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonMapsInputParams],
     ) -> JsonMapsOutput:
         """
         The example tests basic map serialization.
@@ -2010,14 +2014,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        normal: datetime | None = None,
-        date_time: datetime | None = None,
-        date_time_on_target: datetime | None = None,
-        epoch_seconds: datetime | None = None,
-        epoch_seconds_on_target: datetime | None = None,
-        http_date: datetime | None = None,
-        http_date_on_target: datetime | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonTimestampsInputParams],
     ) -> JsonTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
@@ -2058,14 +2056,13 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        contents: _models.MyUnion | _models.MyUnionParams | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonUnionsInputParams],
     ) -> JsonUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
 
         Args:
-            contents: A union with a representative set of types for members.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2098,7 +2095,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_accept_with_body(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedAcceptWithBodyInputParams],
     ) -> MalformedAcceptWithBodyOutput:
         """
         Invokes the MalformedAcceptWithBody operation.
@@ -2136,7 +2137,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_accept_with_generic_string(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedAcceptWithGenericStringInputParams],
     ) -> MalformedAcceptWithGenericStringOutput:
         """
         Invokes the MalformedAcceptWithGenericString operation.
@@ -2176,7 +2181,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_accept_with_payload(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedAcceptWithPayloadInputParams],
     ) -> MalformedAcceptWithPayloadOutput:
         """
         Invokes the MalformedAcceptWithPayload operation.
@@ -2213,7 +2222,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_blob(
-        self, /, *, blob: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedBlobInputParams],
     ) -> MalformedBlobOutput:
         """
         Invokes the MalformedBlob operation.
@@ -2253,11 +2266,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        boolean_in_body: bool | None = None,
-        boolean_in_path: bool,
-        boolean_in_query: bool | None = None,
-        boolean_in_header: bool | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedBooleanInputParams],
     ) -> MalformedBooleanOutput:
         """
         Invokes the MalformedBoolean operation.
@@ -2297,11 +2307,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        byte_in_body: int | None = None,
-        byte_in_path: int,
-        byte_in_query: int | None = None,
-        byte_in_header: int | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedByteInputParams],
     ) -> MalformedByteOutput:
         """
         Invokes the MalformedByte operation.
@@ -2339,7 +2346,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_content_type_with_body(
-        self, /, *, hi: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedContentTypeWithBodyInputParams],
     ) -> MalformedContentTypeWithBodyOutput:
         """
         Invokes the MalformedContentTypeWithBody operation.
@@ -2377,7 +2388,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_content_type_with_generic_string(
-        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedContentTypeWithGenericStringInputParams],
     ) -> MalformedContentTypeWithGenericStringOutput:
         """
         Invokes the MalformedContentTypeWithGenericString operation.
@@ -2417,7 +2432,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_content_type_without_body(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedContentTypeWithoutBodyInputParams],
     ) -> MalformedContentTypeWithoutBodyOutput:
         """
         Invokes the MalformedContentTypeWithoutBody operation.
@@ -2457,7 +2476,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_content_type_without_body_empty_input(
-        self, /, *, header: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedContentTypeWithoutBodyEmptyInputInputParams],
     ) -> MalformedContentTypeWithoutBodyEmptyInputOutput:
         """
         Invokes the MalformedContentTypeWithoutBodyEmptyInput operation.
@@ -2497,7 +2520,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_content_type_with_payload(
-        self, /, *, payload: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedContentTypeWithPayloadInputParams],
     ) -> MalformedContentTypeWithPayloadOutput:
         """
         Invokes the MalformedContentTypeWithPayload operation.
@@ -2539,11 +2566,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        double_in_body: float | None = None,
-        double_in_path: float,
-        double_in_query: float | None = None,
-        double_in_header: float | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedDoubleInputParams],
     ) -> MalformedDoubleOutput:
         """
         Invokes the MalformedDouble operation.
@@ -2583,11 +2607,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        float_in_body: float | None = None,
-        float_in_path: float,
-        float_in_query: float | None = None,
-        float_in_header: float | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedFloatInputParams],
     ) -> MalformedFloatOutput:
         """
         Invokes the MalformedFloat operation.
@@ -2627,11 +2648,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        integer_in_body: int | None = None,
-        integer_in_path: int,
-        integer_in_query: int | None = None,
-        integer_in_header: int | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedIntegerInputParams],
     ) -> MalformedIntegerOutput:
         """
         Invokes the MalformedInteger operation.
@@ -2671,8 +2689,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        body_list: Sequence[str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedListInputParams],
     ) -> MalformedListOutput:
         """
         Invokes the MalformedList operation.
@@ -2712,11 +2730,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        long_in_body: int | None = None,
-        long_in_path: int,
-        long_in_query: int | None = None,
-        long_in_header: int | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedLongInputParams],
     ) -> MalformedLongOutput:
         """
         Invokes the MalformedLong operation.
@@ -2756,8 +2771,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        body_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedMapInputParams],
     ) -> MalformedMapOutput:
         """
         Invokes the MalformedMap operation.
@@ -2798,9 +2813,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        int_: int | None = None,
-        float_: float | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedRequestBodyInputParams],
     ) -> MalformedRequestBodyOutput:
         """
         Invokes the MalformedRequestBody operation.
@@ -2840,11 +2854,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        short_in_body: int | None = None,
-        short_in_path: int,
-        short_in_query: int | None = None,
-        short_in_header: int | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedShortInputParams],
     ) -> MalformedShortOutput:
         """
         Invokes the MalformedShort operation.
@@ -2884,8 +2895,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        blob: str | JsonString | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedStringInputParams],
     ) -> MalformedStringOutput:
         """
         Invokes the MalformedString operation.
@@ -2923,7 +2934,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_body_date_time(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampBodyDateTimeInputParams],
     ) -> MalformedTimestampBodyDateTimeOutput:
         """
         Invokes the MalformedTimestampBodyDateTime operation.
@@ -2963,7 +2978,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_body_default(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampBodyDefaultInputParams],
     ) -> MalformedTimestampBodyDefaultOutput:
         """
         Invokes the MalformedTimestampBodyDefault operation.
@@ -3001,7 +3020,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_body_http_date(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampBodyHttpDateInputParams],
     ) -> MalformedTimestampBodyHttpDateOutput:
         """
         Invokes the MalformedTimestampBodyHttpDate operation.
@@ -3041,7 +3064,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_header_date_time(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampHeaderDateTimeInputParams],
     ) -> MalformedTimestampHeaderDateTimeOutput:
         """
         Invokes the MalformedTimestampHeaderDateTime operation.
@@ -3081,7 +3108,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_header_default(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampHeaderDefaultInputParams],
     ) -> MalformedTimestampHeaderDefaultOutput:
         """
         Invokes the MalformedTimestampHeaderDefault operation.
@@ -3121,7 +3152,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_header_epoch(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampHeaderEpochInputParams],
     ) -> MalformedTimestampHeaderEpochOutput:
         """
         Invokes the MalformedTimestampHeaderEpoch operation.
@@ -3159,7 +3194,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_path_default(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampPathDefaultInputParams],
     ) -> MalformedTimestampPathDefaultOutput:
         """
         Invokes the MalformedTimestampPathDefault operation.
@@ -3197,7 +3236,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_path_epoch(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampPathEpochInputParams],
     ) -> MalformedTimestampPathEpochOutput:
         """
         Invokes the MalformedTimestampPathEpoch operation.
@@ -3235,7 +3278,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_path_http_date(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampPathHttpDateInputParams],
     ) -> MalformedTimestampPathHttpDateOutput:
         """
         Invokes the MalformedTimestampPathHttpDate operation.
@@ -3275,7 +3322,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_query_default(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampQueryDefaultInputParams],
     ) -> MalformedTimestampQueryDefaultOutput:
         """
         Invokes the MalformedTimestampQueryDefault operation.
@@ -3313,7 +3364,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_query_epoch(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampQueryEpochInputParams],
     ) -> MalformedTimestampQueryEpochOutput:
         """
         Invokes the MalformedTimestampQueryEpoch operation.
@@ -3351,7 +3406,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def malformed_timestamp_query_http_date(
-        self, /, *, timestamp: datetime, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedTimestampQueryHttpDateInputParams],
     ) -> MalformedTimestampQueryHttpDateOutput:
         """
         Invokes the MalformedTimestampQueryHttpDate operation.
@@ -3393,8 +3452,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        union: _models.SimpleUnion | _models.SimpleUnionParams | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MalformedUnionInputParams],
     ) -> MalformedUnionOutput:
         """
         Invokes the MalformedUnion operation.
@@ -3434,8 +3493,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        json: str | JsonString | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.MediaTypeHeaderInputParams],
     ) -> MediaTypeHeaderOutput:
         """
         This example ensures that mediaType strings are base64 encoded in
@@ -3474,7 +3533,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def no_input_and_no_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndNoOutputInputParams],
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -3514,7 +3577,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def no_input_and_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndOutputInputParams],
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -3558,10 +3625,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        a: str | None = None,
-        b: str | None = None,
-        c: Sequence[str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NullAndEmptyHeadersClientInputParams],
     ) -> NullAndEmptyHeadersClientOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
@@ -3603,10 +3668,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        a: str | None = None,
-        b: str | None = None,
-        c: Sequence[str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NullAndEmptyHeadersServerInputParams],
     ) -> NullAndEmptyHeadersServerOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
@@ -3648,9 +3711,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        null_value: str | None = None,
-        empty_string: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OmitsNullSerializesEmptyStringInputParams],
     ) -> OmitsNullSerializesEmptyStringOutput:
         """
         Omits null, but serializes empty string value.
@@ -3693,14 +3755,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        query_string_list: Sequence[str] | None = None,
-        query_integer_list: Sequence[int] | None = None,
-        query_double_list: Sequence[float] | None = None,
-        query_boolean_list: Sequence[bool] | None = None,
-        query_timestamp_list: Sequence[datetime] | None = None,
-        query_enum_list: Sequence[str] | None = None,
-        query_integer_enum_list: Sequence[int] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OmitsSerializingEmptyListsInputParams],
     ) -> OmitsSerializingEmptyListsOutput:
         """
         Omits serializing empty lists. Because empty strings are serilized as
@@ -3743,13 +3799,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        defaults: _models.Defaults | _models.DefaultsParams | None = None,
-        client_optional_defaults: _models.ClientOptionalDefaults
-        | _models.ClientOptionalDefaultsParams
-        | None = None,
-        top_level_default: str | None = None,
-        other_top_level_default: int | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithDefaultsInputParams],
     ) -> OperationWithDefaultsOutput:
         """
         Invokes the OperationWithDefaults operation.
@@ -3790,8 +3841,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        top_level: _models.TopLevel | _models.TopLevelParams,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithNestedStructureInputParams],
     ) -> OperationWithNestedStructureOutput:
         """
         Invokes the OperationWithNestedStructure operation.
@@ -3828,7 +3879,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def output_stream(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OutputStreamInputParams],
     ) -> AsyncOutputEventStream[EventStream, OutputStreamOutput]:
         """
         Invokes the OutputStream operation.
@@ -3869,7 +3924,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def output_stream_with_initial_response(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OutputStreamWithInitialResponseInputParams],
     ) -> AsyncOutputEventStream[EventStream, OutputStreamWithInitialResponseOutput]:
         """
         Invokes the OutputStreamWithInitialResponse operation.
@@ -3914,8 +3973,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        action: _models.PlayerAction | _models.PlayerActionParams | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.PostPlayerActionInputParams],
     ) -> PostPlayerActionOutput:
         """
         This operation defines a union with a Unit member.
@@ -3956,10 +4015,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        value: _models.UnionWithJsonName
-        | _models.UnionWithJsonNameParams
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.PostUnionWithJsonNameInputParams],
     ) -> PostUnionWithJsonNameOutput:
         """
         This operation defines a union that uses jsonName on some members.
@@ -4000,9 +4057,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        encoding: str | None = None,
-        data: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.PutWithContentEncodingInputParams],
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
@@ -4040,13 +4096,16 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def query_idempotency_token_auto_fill(
-        self, /, *, token: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryIdempotencyTokenAutoFillInputParams],
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
 
         Args:
-            token: This field is autopopulated if not provided.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -4082,9 +4141,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        qux: str | None = None,
-        foo: Mapping[str, Sequence[str]] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryParamsAsStringListMapInputParams],
     ) -> QueryParamsAsStringListMapOutput:
         """
         Invokes the QueryParamsAsStringListMap operation.
@@ -4124,9 +4182,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        baz: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryPrecedenceInputParams],
     ) -> QueryPrecedenceOutput:
         """
         Invokes the QueryPrecedence operation.
@@ -4166,10 +4223,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.RecursiveShapesInputOutputNested1
-        | _models.RecursiveShapesInputOutputNested1Params
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RecursiveShapesInputParams],
     ) -> RecursiveShapesOutput:
         """
         Recursive shapes
@@ -4207,7 +4262,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def response_code_http_fallback(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ResponseCodeHttpFallbackInputParams],
     ) -> ResponseCodeHttpFallbackOutput:
         """
         Invokes the ResponseCodeHttpFallback operation.
@@ -4245,7 +4304,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def response_code_required(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ResponseCodeRequiredInputParams],
     ) -> ResponseCodeRequiredOutput:
         """
         Invokes the ResponseCodeRequired operation.
@@ -4286,17 +4349,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        string_value: str | None = None,
-        true_boolean_value: bool | None = None,
-        false_boolean_value: bool | None = None,
-        byte_value: int | None = None,
-        short_value: int | None = None,
-        integer_value: int | None = None,
-        long_value: int | None = None,
-        float_value: float | None = None,
-        double_value: float | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputParams],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
@@ -4336,9 +4390,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        sparse_string_list: Sequence[str | None] | None = None,
-        sparse_short_list: Sequence[int | None] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SparseJsonListsInputParams],
     ) -> SparseJsonListsOutput:
         """
         Invokes the SparseJsonLists operation.
@@ -4378,15 +4431,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        sparse_struct_map: Mapping[
-            str, _models.GreetingStruct | _models.GreetingStructParams | None
-        ]
-        | None = None,
-        sparse_number_map: Mapping[str, int | None] | None = None,
-        sparse_boolean_map: Mapping[str, bool | None] | None = None,
-        sparse_string_map: Mapping[str, str | None] | None = None,
-        sparse_set_map: Mapping[str, Sequence[str] | None] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SparseJsonMapsInputParams],
     ) -> SparseJsonMapsOutput:
         """
         This example tests sparse map serialization.
@@ -4428,9 +4474,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        blob: StreamingBlob | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.AsyncStreamingTraitsInputParams],
     ) -> StreamingTraitsOutput:
         """
         This examples serializes a streaming blob shape in the request body. In
@@ -4474,9 +4519,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        blob: StreamingBlob | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.AsyncStreamingTraitsRequireLengthInputParams],
     ) -> StreamingTraitsRequireLengthOutput:
         """
         This examples serializes a streaming blob shape with a required content
@@ -4520,9 +4564,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        blob: StreamingBlob | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.AsyncStreamingTraitsWithMediaTypeInputParams],
     ) -> StreamingTraitsWithMediaTypeOutput:
         """
         This examples serializes a streaming media-typed blob shape in the
@@ -4564,9 +4607,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        test_id: str | None = None,
-        test_config: _models.TestConfig | _models.TestConfigParams | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TestBodyStructureInputParams],
     ) -> TestBodyStructureOutput:
         """
         This example operation serializes a structure in the HTTP body. It
@@ -4606,7 +4648,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def test_get_no_input_no_payload(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TestGetNoInputNoPayloadInputParams],
     ) -> TestGetNoInputNoPayloadOutput:
         """
         This example GET operation has no input and serializes a request without
@@ -4646,7 +4692,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def test_get_no_payload(
-        self, /, *, test_id: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TestGetNoPayloadInputParams],
     ) -> TestGetNoPayloadOutput:
         """
         This example GET operation serializes a request without a modeled HTTP
@@ -4689,9 +4739,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        content_type: str | None = None,
-        data: bytes | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TestPayloadBlobInputParams],
     ) -> TestPayloadBlobOutput:
         """
         This example operation serializes a payload targeting a blob. The Blob
@@ -4736,11 +4785,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        test_id: str | None = None,
-        payload_config: _models.PayloadConfig
-        | _models.PayloadConfigParams
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TestPayloadStructureInputParams],
     ) -> TestPayloadStructureOutput:
         """
         This example operation serializes a payload targeting a structure. This
@@ -4780,7 +4826,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def test_post_no_input_no_payload(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TestPostNoInputNoPayloadInputParams],
     ) -> TestPostNoInputNoPayloadOutput:
         """
         This example POST operation has no input and serializes a request
@@ -4820,7 +4870,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def test_post_no_payload(
-        self, /, *, test_id: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TestPostNoPayloadInputParams],
     ) -> TestPostNoPayloadOutput:
         """
         This example POST operation serializes a request without a modeled HTTP
@@ -4863,14 +4917,8 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
         self,
         /,
         *,
-        member_epoch_seconds: datetime | None = None,
-        member_http_date: datetime | None = None,
-        member_date_time: datetime | None = None,
-        default_format: datetime | None = None,
-        target_epoch_seconds: datetime | None = None,
-        target_http_date: datetime | None = None,
-        target_date_time: datetime | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TimestampFormatHeadersInputParams],
     ) -> TimestampFormatHeadersOutput:
         """
         This example tests how timestamp request and response headers are
@@ -4909,7 +4957,11 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     @_overload
     async def unit_input_and_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.UnitInputAndOutputInputParams],
     ) -> UnitInputAndOutputOutput:
         """
         This test is similar to NoInputAndNoOutput, but uses explicit Unit

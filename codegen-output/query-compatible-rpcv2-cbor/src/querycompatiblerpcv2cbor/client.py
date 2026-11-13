@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast, overload as _overload
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.chain.resolver import IdentityChain
@@ -42,7 +42,11 @@ class QueryCompatibleRpcV2ProtocolClient(Client[QueryCompatibleRpcV2ProtocolConf
 
     @_overload
     def query_compatible_operation(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryCompatibleOperationInputParams],
     ) -> QueryCompatibleOperationOutput:
         """
         Invokes the QueryCompatibleOperation operation.

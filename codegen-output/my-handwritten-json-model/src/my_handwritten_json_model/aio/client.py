@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import overload as _overload
+from typing import Unpack as _Unpack, overload as _overload
 
 from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.eventstream import AsyncDuplexEventStream
@@ -40,7 +40,11 @@ class AsyncMyHandwrittenJsonModel(AsyncClient[AsyncConfig]):
 
     @_overload
     async def trade_event_stream(
-        self, /, *, session_id: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TradeEventStreamInputParams],
     ) -> AsyncDuplexEventStream[TradeEvents, TradeEvents, TradeEventStreamOutput]:
         """
         Bidirectional (duplex) stream. The non-stream members (sessionId,

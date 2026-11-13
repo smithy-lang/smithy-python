@@ -11,6 +11,11 @@ compile is reported, and then no docs are read at all.
 Once the docs are read from the source, both clients are imported, which needs the
 runtime packages the generated client depends on. Importing a client defines its
 operation methods, and each must then have the docs of its keyword overload.
+
+A keyword overload takes its members as `**kwargs: Unpack[<input>Params]`, so an
+editor resolves each keyword's docs through the dictionary form's keys. The members
+are documented there, and on the model's fields, in full; the operation's docs keep
+their narrative, plugins and Returns, and do not repeat the members.
 """
 
 import ast
@@ -59,6 +64,22 @@ ADMIN_LEAD = (
     "The user or group that administers the migrated session. Acceptable formats "
     "include: `DOMAIN\\User1`, `user@domain`, `@group1`, and `@DOMAIN\\group1`."
 )
+MODE = "- `fast` skips the audit trail. - `safe` records every call."
+
+# The dictionary form each operation's keyword overload unpacks. A sync client
+# unpacks the plain form of an input with a streaming body; the async client unpacks
+# the form whose body may also be an async stream.
+SYNC_KEYWORDS = {
+    "assume_access": "_models.AssumeAccessInputParams",
+    "migrate_session": "_models.MigrateSessionInputParams",
+    "overload": "_models.OverloadInputParams",
+    "upload_document": "_models.UploadDocumentInputParams",
+}
+ASYNC_KEYWORDS = {
+    **SYNC_KEYWORDS,
+    "upload_document": "_models.AsyncUploadDocumentInputParams",
+    "watch_access": "_models.WatchAccessInputParams",
+}
 
 
 def check(condition, message):
@@ -158,15 +179,56 @@ def names(arguments):
     return [argument.arg for argument in arguments]
 
 
+def unpacked(annotation, tree):
+    """Returns the type an annotation unpacks, or None if it is not Unpack[...].
+
+    Unpack is recognized by what the module imports, whatever name it is bound to.
+    """
+    if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
+        annotation = ast.parse(annotation.value, mode="eval").body
+    if not isinstance(annotation, ast.Subscript):
+        return None
+    direct, modules = set(), set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and not node.level:
+            if node.module in ("typing", "typing_extensions"):
+                for alias in node.names:
+                    if alias.name == "Unpack":
+                        direct.add(alias.asname or alias.name)
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name in ("typing", "typing_extensions"):
+                    modules.add(alias.asname or alias.name)
+    value = annotation.value
+    if isinstance(value, ast.Name) and value.id in direct:
+        return ast.unparse(annotation.slice)
+    if (
+        isinstance(value, ast.Attribute)
+        and value.attr == "Unpack"
+        and isinstance(value.value, ast.Name)
+        and value.value.id in modules
+    ):
+        return ast.unparse(annotation.slice)
+    return None
+
+
+def plugins_type(node):
+    for argument in node.args.kwonlyargs:
+        if argument.arg == "plugins":
+            return ast.unparse(argument.annotation)
+    return None
+
+
 def methods(tree, client):
     """Reads each operation method of a client from its definitions.
 
     A method is two overloads and an implementation, in that order. The first
     overload takes the whole request, positionally; the second takes its members as
-    keyword arguments and is the only one with docs. The implementation takes either.
+    keyword arguments, `**kwargs: Unpack[...]` of the request's dictionary form, and
+    is the only one with docs. The implementation takes either.
 
-    Returns each method's keyword parameters and docs, which are the keyword
-    overload's, and the type of the request the first overload takes.
+    Returns the type each method's keyword overload unpacks and its docs, which are
+    the keyword overload's, and the type of the request the first overload takes.
     """
     definitions = {}
     for node in classes(tree)[client].body:
@@ -191,7 +253,35 @@ def methods(tree, client):
         equal(names(keyword.args.posonlyargs), ["self"], what + " keyword overload")
         check(not keyword.args.args, what + " keyword overload positional parameters")
         check(not keyword.args.vararg, what + " keyword overload *args")
-        check(not keyword.args.kwarg, what + " keyword overload **kwargs")
+        # The members are not spelled out one by one: plugins is the only keyword of
+        # the method's own, and the members are the keys of the unpacked form.
+        equal(
+            names(keyword.args.kwonlyargs),
+            ["plugins"],
+            what + " keyword overload keywords",
+        )
+        equal(
+            plugins_type(keyword),
+            plugins_type(whole),
+            what + " keyword overload plugins type",
+        )
+        equal(
+            [default and ast.unparse(default) for default in keyword.args.kw_defaults],
+            ["None"],
+            what + " keyword overload plugins default",
+        )
+        target = None
+        kwarg = keyword.args.kwarg
+        if kwarg is None:
+            FAILURES.append(what + " keyword overload has no **kwargs")
+        else:
+            equal(kwarg.arg, "kwargs", what + " keyword overload **kwargs name")
+            target = unpacked(kwarg.annotation, tree)
+            check(
+                target is not None,
+                "%s keyword overload **kwargs is not Unpack[...]: %r"
+                % (what, kwarg.annotation and ast.unparse(kwarg.annotation)),
+            )
 
         # Its docs are the keyword overload's, given to it at runtime, not repeated.
         equal(ast.get_docstring(implementation), None, what + " implementation docs")
@@ -206,9 +296,7 @@ def methods(tree, client):
             what + " implementation parameters",
         )
 
-        keywords = keyword.args.kwonlyargs
-        annotations = {arg.arg: ast.unparse(arg.annotation) for arg in keywords}
-        found[name] = (annotations, ast.get_docstring(keyword))
+        found[name] = (target, ast.get_docstring(keyword))
     return found, requests
 
 
@@ -243,8 +331,6 @@ class Entries(dict):
 
 
 def check_operations(models, sync, aio):
-    input_fields = fields(models["AssumeAccessInput"])
-
     # Sync clients have no event streams; everything else is documented alike.
     equal(
         sorted(sync),
@@ -265,112 +351,54 @@ def check_operations(models, sync, aio):
     for name in sync:
         equal(sync[name][1], aio[name][1], "sync and async docs of " + name)
 
-    for label, client in (("sync", sync), ("async", aio)):
-        annotations, doc = client["assume_access"]
-        narrative, entries, returns = sections(doc)
+    # Each keyword overload unpacks its input's dictionary form, named exactly. Only
+    # the async client unpacks the form whose body may be an async stream.
+    for label, client, expected in (
+        ("sync", sync, SYNC_KEYWORDS),
+        ("async", aio, ASYNC_KEYWORDS),
+    ):
+        equal(
+            {name: target for name, (target, _) in client.items()},
+            expected,
+            label + " keyword overload Unpack targets",
+        )
+    check(
+        sync["upload_document"][0] != aio["upload_document"][0],
+        "sync and async upload_document unpack the same form",
+    )
 
-        # The signature is unchanged, and so is everything already documented.
-        equal(
-            list(annotations),
-            [*DOCUMENTED, "undocumented", TOKEN, "plugins"],
-            label + " parameters",
-        )
-        equal(annotations["duration_seconds"], "int", label + " duration_seconds type")
-        equal(annotations[TOKEN], "str | None", label + " client_token type")
-        equal(
-            annotations["tag"],
-            "_models.SessionTag | _models.SessionTagParams | None",
-            label + " tag type",
-        )
+    for label, client in (("sync", sync), ("async", aio)):
+        for name, (target, doc) in client.items():
+            what = "%s %s" % (label, name)
+            _, entries, _ = sections(doc)
+
+            # The operation's Args document only its own plugins parameter, in full.
+            equal(list(entries), ["plugins"], what + " Args entries")
+            equal(entries["plugins"][0], "", what + " plugins first line")
+            equal(flat(" ".join(entries["plugins"])), PLUGINS, what + " plugins docs")
+
+            # The members are documented on the keys of the unpacked form, which is
+            # where an editor finds them, so the operation does not repeat them.
+            params = (target or "").removeprefix("_models.")
+            if params not in models:
+                FAILURES.append("%s unpacks an undeclared form: %r" % (what, target))
+                continue
+            for key, (_, docs) in fields(models[params]).items():
+                if docs:
+                    check(
+                        flat(docs) not in flat(doc),
+                        "%s docs repeat the docs of %s.%s" % (what, params, key),
+                    )
+
+        narrative, _, returns = sections(client["assume_access"][1])
         equal(narrative[: len(NARRATIVE)], NARRATIVE, label + " operation narrative")
         equal(returns, "An instance of `AssumeAccessOutput`.", label + " Returns")
-        equal(entries["plugins"][0], "", label + " plugins first line")
-        equal(flat(" ".join(entries["plugins"])), PLUGINS, label + " plugins docs")
-
-        # Every documented member is documented under the name of its parameter. A
-        # member named like the method's own `plugins` parameter has its escaped name.
-        equal(list(entries), [*DOCUMENTED, TOKEN, "plugins"], label + " Args entries")
-        check(set(entries) <= set(annotations), label + " Args entries are parameters")
-        equal(entries[TOKEN], [TOKEN_DOCS], label + " client_token docs")
-        equal(
-            entries["plugins_"],
-            ["The names of the plugins to enable for the session."],
-            label + " plugins_ docs",
-        )
-        equal(entries["tag"], ["A tag to attach to the session."], label + " tag docs")
-        equal(
-            entries["source"],
-            ["Where the caller's credentials come from."],
-            label + " source docs",
-        )
-
-        # The lead paragraph is one complete physical line; the rest follows it whole.
-        duration = entries["duration_seconds"]
-        equal(duration[0], DURATION_LEAD, label + " duration_seconds first line")
-        equal(duration[1:2], [""], label + " duration_seconds paragraph break")
-        check(
-            "        Warning:" in duration,
-            label + " duration_seconds warning: %r" % duration,
-        )
-        check(
-            "        - Compute the default as 2 * 3 * 600 seconds." in duration,
-            label + " duration_seconds list: %r" % duration,
-        )
-        equal(
-            flat(" ".join(duration)),
-            flat(input_fields["duration_seconds"][1]),
-            label + " duration_seconds docs match the model's",
-        )
-
-        # Docs that don't open with a paragraph are not reflowed.
-        equal(
-            entries["mode"],
-            [
-                "",
-                "        - `fast` skips the audit trail.",
-                "        - `safe` records every call.",
-            ],
-            label + " mode docs",
-        )
-
-        _, entries, _ = sections(client["upload_document"][1])
-        equal(
-            entries["name"] + entries["body"],
-            ["The name of the document.", "The bytes of the document."],
-            label + " upload_document docs",
-        )
-
-        # A member named `input` is a keyword like any other: the whole request is
-        # positional, so it takes no keyword's name.
-        annotations, doc = client["overload"]
-        _, entries, returns = sections(doc)
-        expected = ["input", "tag", "plugins"]
-        equal(list(annotations), expected, label + " overload parameters")
-        equal(annotations["input"], "str | None", label + " overload input type")
-        equal(list(entries), expected, label + " overload Args entries")
-        equal(
-            entries["input"],
-            ["The text to check, which is not the request itself."],
-            label + " overload input docs",
-        )
-        equal(
-            entries["tag"],
-            ["A tag to check the text against."],
-            label + " overload tag docs",
-        )
+        _, _, returns = sections(client["overload"][1])
         equal(returns, "An instance of `OverloadOutput`.", label + " overload Returns")
 
-    # The initial request of an event stream operation is documented too; its
-    # events are sent through the stream, so they are not a parameter.
-    annotations, doc = aio["watch_access"]
-    _, entries, returns = sections(doc)
-    equal(list(annotations), ["session_id", "plugins"], "watch_access parameters")
-    equal(list(entries), ["session_id", "plugins"], "watch_access Args entries")
-    equal(
-        entries["session_id"],
-        ["The session to watch."],
-        "watch_access session_id docs",
-    )
+    # The initial request of an event stream operation is unpacked too; its events
+    # are sent through the stream, so they are not a key of its form.
+    _, _, returns = sections(aio["watch_access"][1])
     equal(
         returns,
         "An `AsyncInputEventStream` for client-to-server streaming.",
@@ -380,28 +408,29 @@ def check_operations(models, sync, aio):
 
 def check_literals(models, sync, aio):
     # Windows paths and account names decode to what the model says in the model's
-    # docs, in the Args entry, and in the operation's own narrative, which is also
-    # where a dollar sign is easiest to double.
+    # docs, on the dictionary form's key, and in the operation's own narrative, which
+    # is also where a dollar sign is easiest to double.
     admin = fields(models["MigrateSessionInput"])["admin"][1]
     equal(flat(admin)[: len(ADMIN_LEAD)], ADMIN_LEAD, "model admin docs")
     check(
         "\n\nWarning:\n    Use this option very carefully, because" in admin,
         "model admin docs lack the warning: %r" % admin,
     )
+    check(
+        "regardless of its permissions." in flat(admin),
+        "model admin docs lack the end of the warning: %r" % admin,
+    )
+    equal(
+        fields(models["MigrateSessionInputParams"])["admin"][1],
+        admin,
+        "MigrateSessionInputParams.admin docs",
+    )
     for label, client in (("sync", sync), ("async", aio)):
-        narrative, entries, _ = sections(client["migrate_session"][1])
+        narrative, _, _ = sections(client["migrate_session"][1])
         equal(
             flat(narrative)[: len(MIGRATE_NARRATIVE)],
             MIGRATE_NARRATIVE,
             label + " migrate_session narrative",
-        )
-        entry = entries["admin"]
-        equal(entry[0], ADMIN_LEAD, label + " admin first line")
-        check("        Warning:" in entry, label + " admin warning: %r" % entry)
-        equal(
-            flat(" ".join(entry)),
-            flat(admin),
-            label + " admin docs match the model's",
         )
 
 
@@ -446,11 +475,94 @@ def check_params(models):
         ("UploadDocumentInputParams", "UploadDocumentInput"),
         ("AsyncUploadDocumentInputParams", "UploadDocumentInput"),
         ("WatchAccessInputParams", "WatchAccessInput"),
+        ("OverloadInputParams", "OverloadInput"),
     ):
         keys, attributes = fields(models[params]), fields(models[model])
         equal(list(keys), list(attributes), params + " keys")
         for key in keys:
             equal(keys[key][1], attributes[key][1], "%s.%s docs" % (params, key))
+
+    # The full prose of every member, which the operations no longer repeat, is on
+    # the model's field and on the dictionary form's key alike.
+    for model, params, key, expected in (
+        (
+            "AssumeAccessInput",
+            "AssumeAccessInputParams",
+            "plugins_",
+            "The names of the plugins to enable for the session.",
+        ),
+        (
+            "AssumeAccessInput",
+            "AssumeAccessInputParams",
+            "tag",
+            "A tag to attach to the session.",
+        ),
+        (
+            "AssumeAccessInput",
+            "AssumeAccessInputParams",
+            "source",
+            "Where the caller's credentials come from.",
+        ),
+        ("AssumeAccessInput", "AssumeAccessInputParams", TOKEN, TOKEN_DOCS),
+        (
+            "OverloadInput",
+            "OverloadInputParams",
+            "input",
+            "The text to check, which is not the request itself.",
+        ),
+        (
+            "OverloadInput",
+            "OverloadInputParams",
+            "tag",
+            "A tag to check the text against.",
+        ),
+        (
+            "UploadDocumentInput",
+            "UploadDocumentInputParams",
+            "name",
+            "The name of the document.",
+        ),
+        (
+            "UploadDocumentInput",
+            "AsyncUploadDocumentInputParams",
+            "name",
+            "The name of the document.",
+        ),
+        (
+            "UploadDocumentInput",
+            "UploadDocumentInputParams",
+            "body",
+            "The bytes of the document.",
+        ),
+        (
+            "WatchAccessInput",
+            "WatchAccessInputParams",
+            "session_id",
+            "The session to watch.",
+        ),
+    ):
+        for owner in (model, params):
+            documented = fields(models[owner]).get(key, (None, None))[1]
+            equal(documented, expected, "%s.%s docs" % (owner, key))
+
+    # A member's docs that open with a list keep each item on its own line.
+    for owner in ("AssumeAccessInput", "AssumeAccessInputParams"):
+        mode = fields(models[owner])["mode"][1] or ""
+        equal(flat(mode), MODE, owner + ".mode docs")
+        check(
+            "\n- `safe` records every call." in mode,
+            "%s.mode docs lose the list: %r" % (owner, mode),
+        )
+        duration = fields(models[owner])["duration_seconds"][1] or ""
+        equal(
+            flat(duration)[: len(DURATION_LEAD)],
+            DURATION_LEAD,
+            owner + ".duration_seconds lead",
+        )
+
+    overload_keys = fields(models["OverloadInputParams"])
+    equal(list(overload_keys), ["input", "tag"], "OverloadInputParams keys")
+    equal(overload_keys["input"][0], "str | None", "OverloadInputParams.input type")
     keys = fields(models["AssumeAccessInputParams"])
     equal(
         list(keys),
@@ -570,13 +682,16 @@ def main():
     trees = [load(name) for name in ("client.py", "aio/client.py", "models.py")]
     # Docs can only be read from modules that compile, so every module is tried first.
     if not FAILURES:
+        # The models and their dictionary forms are read from the stubs alone, so
+        # they are checked whatever shape the operation methods have.
+        check_params(models)
+        before = len(FAILURES)
         sync, sync_requests = methods(trees[0], "DocsService")
         aio, aio_requests = methods(trees[1], "AsyncDocsService")
         # Every method must have been read before its docs can be checked.
-        if not FAILURES:
+        if len(FAILURES) == before:
             check_operations(models, sync, aio)
             check_literals(models, sync, aio)
-            check_params(models)
             check_requests(sync_requests, aio_requests)
             check_runtime(sync, aio)
     if FAILURES:

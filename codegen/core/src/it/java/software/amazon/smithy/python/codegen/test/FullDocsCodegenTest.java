@@ -24,8 +24,10 @@ import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.python.codegen.PythonClientCodegenPlugin;
 
 /**
- * Input members are documented where callers write them: in the Args of both clients'
- * operations and on the keys of the dictionary forms.
+ * Input members are documented where callers write them: each client operation's
+ * keyword overload unpacks the input's dictionary form ({@code Unpack[...Params]}),
+ * whose keys carry the members' full docs, as the model's fields still do. Operation
+ * docs keep their narrative, plugins and Returns, without repeating the members.
  */
 public class FullDocsCodegenTest {
 

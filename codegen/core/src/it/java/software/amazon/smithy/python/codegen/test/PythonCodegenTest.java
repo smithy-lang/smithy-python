@@ -69,8 +69,10 @@ public class PythonCodegenTest {
 
         // Each method of both clients has two overloads: one takes the whole request,
         // positional-only, as the input model or its dictionary form; the other takes
-        // the modeled input members as keyword-only parameters. One implementation
-        // takes either and hands them to _select_input.
+        // the modeled input members as keyword arguments, typed by unpacking that
+        // dictionary form. One implementation takes either and hands them to
+        // _select_input. The members' names, types and requiredness are the keys of
+        // the dictionary forms, asserted against the model stub below.
         for (var generated : new String[] {client, syncClient}) {
             assertFalse(generated.contains("input: "));
             assertGenerated(generated, """
@@ -87,8 +89,8 @@ public class PythonCodegenTest {
                             self,
                             /,
                             *,
-                            city_id: str,
                             plugins: list[Plugin] | None = None,
+                            **kwargs: _Unpack[_models.GetCityInputParams],
                         ) -> GetCityOutput:
                     """);
             assertGenerated(generated, """
@@ -105,42 +107,21 @@ public class PythonCodegenTest {
                             self._select_input(_models.GET_CITY, args, kwargs),
                             _models.GET_CITY,
                     """);
-            // An operation without input members is called with no arguments.
-            assertGenerated(generated, """
-                        def get_current_time(
-                            self,
-                            /,
-                            *,
-                            plugins: list[Plugin] | None = None,
-                        ) -> GetCurrentTimeOutput:
-                    """);
-            // Required members have no default; defaulted members and the idempotency
-            // token may be omitted. Members named like the method's own parameters are
-            // escaped, past a modeled member that already has the escaped name.
+            // An operation without input members takes only plugins of its own, and
+            // unpacks its (empty) dictionary form, so it is called with no arguments.
+            assertGeneratedMatches(generated,
+                    "defget_current_time\\(self,/,\\*,plugins:list\\[Plugin\\]\\|None=None,"
+                            + "\\*\\*kwargs:_Unpack\\[_models\\.\\w+Params\\]\\)->GetCurrentTimeOutput:");
+            // Members with escaped names, required members and defaulted members are
+            // keys of the unpacked form; see CreateConnectorInputParams below.
             assertGenerated(generated,
                     """
                                 def create_connector(
                                     self,
                                     /,
                                     *,
-                                    name: str,
-                                    plugins__: Sequence[str],
-                                    plugins_: str | None = None,
-                                    self_: str | None = None,
-                                    client_token: str | None = None,
-                                    page_size: int | None = None,
-                                    connector: _models.Connector | _models.Connector_Params | None = None,
-                                    connectors: Sequence[_models.Connector | _models.Connector_Params] | None = None,
-                                    sparse_connectors: Sequence[_models.Connector | _models.Connector_Params | None] | None = None,
-                                    connectors_by_name: Mapping[str, _models.Connector | _models.Connector_Params] | None = None,
-                                    image: _models.ImageType | _models.ImageTypeParams | None = None,
-                                    recursive: _models.RecursiveUnion | _models.RecursiveUnionParams | None = None,
-                                    mutual: _models.MutuallyRecursiveA | _models.MutuallyRecursiveAParams | None = None,
-                                    connector_params: _models.ConnectorParams | _models.ConnectorParamsParams | None = None,
-                                    settings: Document | None = None,
-                                    kind: str | None = None,
-                                    created_after: datetime | None = None,
                                     plugins: list[Plugin] | None = None,
+                                    **kwargs: _Unpack[_models.CreateConnectorInputParams],
                                 ) -> CreateConnectorOutput:
                             """);
             // The members reach the runtime as the implementation's keyword arguments,
@@ -149,13 +130,21 @@ public class PythonCodegenTest {
                                 self._select_input(_models.CREATE_CONNECTOR, args, kwargs),
                                 _models.CREATE_CONNECTOR,
                     """);
-            // Types used only in annotations are never imported at runtime.
-            assertTrue(generated.contains("    from collections.abc import Mapping, Sequence\n"));
-            assertTrue(generated.contains("    from datetime import datetime\n"));
-            assertTrue(generated.contains("    from smithy_core.documents import Document\n"));
+            // Unpack is aliased, like overload, so no method name can shadow it. Member
+            // types are spelled only by the dictionary forms, so the client imports
+            // none of them.
+            assertTrue(Pattern.compile("from typing import \\(?[^()]*?\\bUnpack as _Unpack\\b")
+                    .matcher(generated)
+                    .find());
+            assertFalse(Pattern.compile("from collections\\.abc import [^\\n]*\\b(Mapping|Sequence)\\b")
+                    .matcher(generated)
+                    .find());
+            assertFalse(generated.contains("from datetime import datetime"));
+            assertFalse(generated.contains("from smithy_core.documents import Document"));
         }
         // The initial request of an event stream operation takes the same two forms;
-        // the event stream member is sent through the returned stream.
+        // the event stream member is sent through the returned stream, so it is not a
+        // key of the unpacked form.
         assertGenerated(client, """
                 async def stream_atmospheric_conditions(
                     self,
@@ -170,8 +159,8 @@ public class PythonCodegenTest {
                     self,
                     /,
                     *,
-                    city_id: str,
                     plugins: list[Plugin] | None = None,
+                    **kwargs: _Unpack[_models.StreamAtmosphericConditionsInputParams],
                 ) -> AsyncDuplexEventStream[""");
         assertGenerated(client, """
                 async def stream_atmospheric_conditions(
@@ -221,6 +210,31 @@ public class PythonCodegenTest {
                     page_size: int | None
                     connector: Connector | Connector_Params | None
                 """);
+        // Every key the keyword overload unpacks, in model order. Required members
+        // are Required; defaulted members and the idempotency token may be omitted.
+        // Members named like the method's own parameters are escaped, past a modeled
+        // member that already has the escaped name.
+        assertKeys(models,
+                "CreateConnectorInputParams",
+                "name: Required[str]",
+                "plugins__: Required[Sequence[str]]",
+                "plugins_: str | None",
+                "self_: str | None",
+                "client_token: str | None",
+                "page_size: int | None",
+                "connector: Connector | Connector_Params | None",
+                "connectors: Sequence[Connector | Connector_Params] | None",
+                "sparse_connectors: Sequence[Connector | Connector_Params | None] | None",
+                "connectors_by_name: Mapping[str, Connector | Connector_Params] | None",
+                "image: ImageType | ImageTypeParams | None",
+                "recursive: RecursiveUnion | RecursiveUnionParams | None",
+                "mutual: MutuallyRecursiveA | MutuallyRecursiveAParams | None",
+                "connector_params: ConnectorParams | ConnectorParamsParams | None",
+                "settings: Document | None",
+                "kind: str | None",
+                "created_after: datetime | None");
+        assertKeys(models, "GetCityInputParams", "city_id: Required[str]");
+        assertKeys(models, "StreamAtmosphericConditionsInputParams", "city_id: Required[str]");
         // Members of nested structures are not parameters, so they are not escaped.
         // The plain name of Connector's dictionary form is taken by a modeled shape.
         assertGenerated(models, """
@@ -265,21 +279,32 @@ public class PythonCodegenTest {
                 """);
         assertTrue(models.contains("class UploadCityImageInputParams(TypedDict, total=False):"));
         assertFalse(models.contains("AsyncCreateConnectorInputParams"));
-        // Each client's method takes the body its mode can send.
-        assertTrue(client.contains("    from smithy_core.aio.interfaces import StreamingBlob\n"));
-        assertTrue(syncClient.contains("    from smithy_core.interfaces import StreamingBlob\n"));
+        // Each client's method takes the body its mode can send: the sync client
+        // unpacks the plain form, the async client the form that also takes async
+        // streams. The body type is spelled only by those forms.
         for (var generated : new String[] {client, syncClient}) {
-            assertGenerated(generated, """
-                        def upload_city_image(
-                            self,
-                            /,
-                            *,
-                            name: str,
-                            image: StreamingBlob,
-                            plugins: list[Plugin] | None = None,
-                        ) -> UploadCityImageOutput:
-                    """);
+            assertFalse(generated.contains("import StreamingBlob"));
         }
+        assertGenerated(syncClient, """
+                    def upload_city_image(
+                        self,
+                        /,
+                        *,
+                        plugins: list[Plugin] | None = None,
+                        **kwargs: _Unpack[_models.UploadCityImageInputParams],
+                    ) -> UploadCityImageOutput:
+                """);
+        assertGenerated(client, """
+                    def upload_city_image(
+                        self,
+                        /,
+                        *,
+                        plugins: list[Plugin] | None = None,
+                        **kwargs: _Unpack[_models.AsyncUploadCityImageInputParams],
+                    ) -> UploadCityImageOutput:
+                """);
+        assertKeys(models, "UploadCityImageInputParams", "name: Required[str]", "image: Required[SyncStreamingBlob]");
+        assertKeys(models, "AsyncUploadCityImageInputParams", "name: Required[str]", "image: Required[StreamingBlob]");
         // The package is marked as typed, so the stub is used once it is installed.
         assertEquals("", Files.readString(tempDir.resolve("src/weather/py.typed")));
 
@@ -429,9 +454,12 @@ public class PythonCodegenTest {
                 .matcher(partitions)
                 .find());
 
-        // The client refers to both forms through the public models module.
+        // The client refers to the input's model and dictionary form through the public
+        // models module, and its keyword overload unpacks that form, whose root key is
+        // asserted in the partitions above.
         var client = Files.readString(tempDir.resolve("src/large/aio/client.py"));
-        assertGenerated(client, "root: _models.Shape0 | _models.Shape0Params | None = None,");
+        assertGenerated(client, "request: _models.GetLargeInput | _models.GetLargeInputParams,");
+        assertGenerated(client, "**kwargs: _Unpack[_models.GetLargeInputParams]");
 
         assumeTrue(!knownPyrightCrash,
                 "Known Pyright limitation: type checking the synthetic 251-deep TypedDict chain hit"
@@ -547,6 +575,27 @@ public class PythonCodegenTest {
     // was available to the generator.
     private static void assertGenerated(String generated, String expected) {
         assertTrue(compact(generated).contains(compact(expected)), () -> "missing from generated code:\n" + expected);
+    }
+
+    private static void assertGeneratedMatches(String generated, String compactRegex) {
+        assertTrue(Pattern.compile(compactRegex).matcher(compact(generated)).find(),
+                () -> "no match in generated code:\n" + compactRegex);
+    }
+
+    // Asserts that a stub's class declares these keys, in this order, ignoring layout
+    // and any docs between them. Only the class's own body is searched.
+    private static void assertKeys(String stub, String className, String... keys) {
+        var start = stub.indexOf("class " + className + "(");
+        assertTrue(start >= 0, () -> className + " is not declared");
+        var end = stub.indexOf("\nclass ", start + 1);
+        var body = compact(end < 0 ? stub.substring(start) : stub.substring(start, end));
+        var from = 0;
+        for (var key : keys) {
+            var expected = compact(key);
+            var at = body.indexOf(expected, from);
+            assertTrue(at >= 0, () -> className + " lacks, in order: " + key);
+            from = at + expected.length();
+        }
     }
 
     private static String compact(String code) {

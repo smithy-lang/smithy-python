@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast, overload as _overload
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.chain.resolver import IdentityChain
@@ -86,8 +86,6 @@ if TYPE_CHECKING:
         XmlTimestampsOutput,
         XmlUnionsOutput,
     )
-    from collections.abc import Mapping, Sequence
-    from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
@@ -113,28 +111,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        query_string: str | None = None,
-        query_string_list: Sequence[str] | None = None,
-        query_string_set: Sequence[str] | None = None,
-        query_byte: int | None = None,
-        query_short: int | None = None,
-        query_integer: int | None = None,
-        query_integer_list: Sequence[int] | None = None,
-        query_integer_set: Sequence[int] | None = None,
-        query_long: int | None = None,
-        query_float: float | None = None,
-        query_double: float | None = None,
-        query_double_list: Sequence[float] | None = None,
-        query_boolean: bool | None = None,
-        query_boolean_list: Sequence[bool] | None = None,
-        query_timestamp: datetime | None = None,
-        query_timestamp_list: Sequence[datetime] | None = None,
-        query_enum: str | None = None,
-        query_enum_list: Sequence[str] | None = None,
-        query_integer_enum: int | None = None,
-        query_integer_enum_list: Sequence[int] | None = None,
-        query_params_map_of_strings: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.AllQueryStringTypesInputParams],
     ) -> AllQueryStringTypesOutput:
         """
         This example uses all query string types.
@@ -174,10 +152,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.PayloadWithXmlName
-        | _models.PayloadWithXmlNameParams
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.BodyWithXmlNameInputParams],
     ) -> BodyWithXmlNameOutput:
         """
         The following example serializes a body that uses an XML name, changing
@@ -219,9 +195,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        baz: str | None = None,
-        maybe_set: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ConstantAndVariableQueryStringInputParams],
     ) -> ConstantAndVariableQueryStringOutput:
         """
         This example uses fixed query string params and variable query string
@@ -263,7 +238,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def constant_query_string(
-        self, /, *, hello: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ConstantQueryStringInputParams],
     ) -> ConstantQueryStringOutput:
         """
         This example uses a constant query string parameters and a label. This
@@ -304,7 +283,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def content_type_parameters(
-        self, /, *, value: int | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ContentTypeParametersInputParams],
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -342,7 +325,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def datetime_offsets(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DatetimeOffsetsInputParams],
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -380,7 +367,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def empty_input_and_empty_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EmptyInputAndEmptyOutputInputParams],
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -420,7 +411,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def endpoint_operation(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointOperationInputParams],
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -458,7 +453,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def endpoint_with_host_label_header_operation(
-        self, /, *, account_id: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointWithHostLabelHeaderOperationInputParams],
     ) -> EndpointWithHostLabelHeaderOperationOutput:
         """
         Invokes the EndpointWithHostLabelHeaderOperation operation.
@@ -498,7 +497,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def endpoint_with_host_label_operation(
-        self, /, *, label: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputParams],
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -540,8 +543,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FlattenedXmlMapInputParams],
     ) -> FlattenedXmlMapOutput:
         """
         Flattened maps
@@ -582,8 +585,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FlattenedXmlMapWithXmlNameInputParams],
     ) -> FlattenedXmlMapWithXmlNameOutput:
         """
         Flattened maps with @xmlName
@@ -621,7 +624,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def flattened_xml_map_with_xml_namespace(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FlattenedXmlMapWithXmlNamespaceInputParams],
     ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         """
         Flattened maps with @xmlNamespace and @xmlName
@@ -660,7 +667,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def fractional_seconds(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FractionalSecondsInputParams],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -698,7 +709,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def greeting_with_errors(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputParams],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -743,9 +758,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        prefix_headers: Mapping[str, str] | None = None,
-        specific_header: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpEmptyPrefixHeadersInputParams],
     ) -> HttpEmptyPrefixHeadersOutput:
         """
         Clients that perform this test extract all headers from the response.
@@ -782,7 +796,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def http_enum_payload(
-        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpEnumPayloadInputParams],
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
@@ -822,9 +840,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        blob: bytes | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadTraitsInputParams],
     ) -> HttpPayloadTraitsOutput:
         """
         This example serializes a blob shape in the payload. In this example, no
@@ -867,9 +884,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        blob: bytes | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadTraitsWithMediaTypeInputParams],
     ) -> HttpPayloadTraitsWithMediaTypeOutput:
         """
         This example uses a `@mediaType` trait on the payload to force a
@@ -913,10 +929,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.PayloadWithXmlName
-        | _models.PayloadWithXmlNameParams
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithMemberXmlNameInputParams],
     ) -> HttpPayloadWithMemberXmlNameOutput:
         """
         The following example serializes a payload that uses an XML name on the
@@ -958,8 +972,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.NestedPayload | _models.NestedPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithStructureInputParams],
     ) -> HttpPayloadWithStructureOutput:
         """
         This example serializes a structure in the payload. Note that
@@ -1002,8 +1016,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.UnionPayload | _models.UnionPayloadParams | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithUnionInputParams],
     ) -> HttpPayloadWithUnionOutput:
         """
         This example serializes a union in the payload.
@@ -1044,10 +1058,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.PayloadWithXmlName
-        | _models.PayloadWithXmlNameParams
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithXmlNameInputParams],
     ) -> HttpPayloadWithXmlNameOutput:
         """
         The following example serializes a payload that uses an XML name,
@@ -1089,10 +1101,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.PayloadWithXmlNamespace
-        | _models.PayloadWithXmlNamespaceParams
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithXmlNamespaceInputParams],
     ) -> HttpPayloadWithXmlNamespaceOutput:
         """
         The following example serializes a payload that uses an XML namespace.
@@ -1133,10 +1143,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.PayloadWithXmlNamespaceAndPrefix
-        | _models.PayloadWithXmlNamespaceAndPrefixParams
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPayloadWithXmlNamespaceAndPrefixInputParams],
     ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput:
         """
         The following example serializes a payload that uses an XML namespace.
@@ -1178,9 +1186,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        foo_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpPrefixHeadersInputParams],
     ) -> HttpPrefixHeadersOutput:
         """
         This examples adds headers to the input of a request and response by
@@ -1219,7 +1226,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def http_request_with_float_labels(
-        self, /, *, float_: float, double: float, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithFloatLabelsInputParams],
     ) -> HttpRequestWithFloatLabelsOutput:
         """
         Invokes the HttpRequestWithFloatLabels operation.
@@ -1257,7 +1268,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def http_request_with_greedy_label_in_path(
-        self, /, *, foo: str, baz: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithGreedyLabelInPathInputParams],
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
@@ -1300,23 +1315,14 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        string: str,
-        short: int,
-        integer: int,
-        long: int,
-        float_: float,
-        double: float,
-        boolean: bool,
-        timestamp: datetime,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithLabelsInputParams],
     ) -> HttpRequestWithLabelsOutput:
         """
         The example tests how requests are serialized when there's no input
         payload but there are HTTP labels.
 
         Args:
-            boolean: Serialized in the path as true or false.
-            timestamp: Note that this member has no format, so it's serialized as an RFC 3399 date-time.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1352,14 +1358,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        member_epoch_seconds: datetime,
-        member_http_date: datetime,
-        member_date_time: datetime,
-        default_format: datetime,
-        target_epoch_seconds: datetime,
-        target_http_date: datetime,
-        target_date_time: datetime,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpRequestWithLabelsAndTimestampFormatInputParams],
     ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
         """
         The example tests how requests serialize different timestamp formats in
@@ -1399,7 +1399,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def http_response_code(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpResponseCodeInputParams],
     ) -> HttpResponseCodeOutput:
         """
         Invokes the HttpResponseCode operation.
@@ -1436,7 +1440,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def http_string_payload(
-        self, /, *, payload: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HttpStringPayloadInputParams],
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
@@ -1474,7 +1482,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def ignore_query_params_in_response(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.IgnoreQueryParamsInResponseInputParams],
     ) -> IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
@@ -1517,23 +1529,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        header_string: str | None = None,
-        header_byte: int | None = None,
-        header_short: int | None = None,
-        header_integer: int | None = None,
-        header_long: int | None = None,
-        header_float: float | None = None,
-        header_double: float | None = None,
-        header_true_bool: bool | None = None,
-        header_false_bool: bool | None = None,
-        header_string_list: Sequence[str] | None = None,
-        header_string_set: Sequence[str] | None = None,
-        header_integer_list: Sequence[int] | None = None,
-        header_boolean_list: Sequence[bool] | None = None,
-        header_timestamp_list: Sequence[datetime] | None = None,
-        header_enum: str | None = None,
-        header_enum_list: Sequence[str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.InputAndOutputWithHeadersInputParams],
     ) -> InputAndOutputWithHeadersOutput:
         """
         The example tests how requests and responses are serialized when there
@@ -1574,9 +1571,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        nested_map: Mapping[str, Mapping[str, str]] | None = None,
-        flat_nested_map: Mapping[str, Mapping[str, str]] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NestedXmlMapsInputParams],
     ) -> NestedXmlMapsOutput:
         """
         Invokes the NestedXmlMaps operation.
@@ -1617,8 +1613,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        nested_xml_map_with_xml_name_map: Mapping[str, Mapping[str, str]] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NestedXmlMapWithXmlNameInputParams],
     ) -> NestedXmlMapWithXmlNameOutput:
         """
         Nested Xml Maps with key/values with @xmlName
@@ -1656,7 +1652,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def no_input_and_no_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndNoOutputInputParams],
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1696,7 +1696,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def no_input_and_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndOutputInputParams],
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1740,10 +1744,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        a: str | None = None,
-        b: str | None = None,
-        c: Sequence[str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NullAndEmptyHeadersClientInputParams],
     ) -> NullAndEmptyHeadersClientOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
@@ -1785,10 +1787,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        a: str | None = None,
-        b: str | None = None,
-        c: Sequence[str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NullAndEmptyHeadersServerInputParams],
     ) -> NullAndEmptyHeadersServerOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
@@ -1830,9 +1830,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        null_value: str | None = None,
-        empty_string: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OmitsNullSerializesEmptyStringInputParams],
     ) -> OmitsNullSerializesEmptyStringOutput:
         """
         Omits null, but serializes empty string value.
@@ -1875,9 +1874,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        encoding: str | None = None,
-        data: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.PutWithContentEncodingInputParams],
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
@@ -1915,13 +1913,16 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def query_idempotency_token_auto_fill(
-        self, /, *, token: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryIdempotencyTokenAutoFillInputParams],
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
 
         Args:
-            token: This field is autopopulated if not provided.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -1957,9 +1958,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        qux: str | None = None,
-        foo: Mapping[str, Sequence[str]] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryParamsAsStringListMapInputParams],
     ) -> QueryParamsAsStringListMapOutput:
         """
         Invokes the QueryParamsAsStringListMap operation.
@@ -1999,9 +1999,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        baz: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryPrecedenceInputParams],
     ) -> QueryPrecedenceOutput:
         """
         Invokes the QueryPrecedence operation.
@@ -2041,10 +2040,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.RecursiveShapesInputOutputNested1
-        | _models.RecursiveShapesInputOutputNested1Params
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RecursiveShapesInputParams],
     ) -> RecursiveShapesOutput:
         """
         Recursive shapes
@@ -2085,17 +2082,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        string_value: str | None = None,
-        true_boolean_value: bool | None = None,
-        false_boolean_value: bool | None = None,
-        byte_value: int | None = None,
-        short_value: int | None = None,
-        integer_value: int | None = None,
-        long_value: int | None = None,
-        float_value: float | None = None,
-        double_value: float | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputParams],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
@@ -2136,14 +2124,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        member_epoch_seconds: datetime | None = None,
-        member_http_date: datetime | None = None,
-        member_date_time: datetime | None = None,
-        default_format: datetime | None = None,
-        target_epoch_seconds: datetime | None = None,
-        target_http_date: datetime | None = None,
-        target_date_time: datetime | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TimestampFormatHeadersInputParams],
     ) -> TimestampFormatHeadersOutput:
         """
         The example tests how timestamp request and response headers are
@@ -2184,9 +2166,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        attr: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlAttributesInputParams],
     ) -> XmlAttributesOutput:
         """
         This example serializes an XML attributes on synthesized document.
@@ -2227,10 +2208,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        payload: _models.XmlAttributesInMiddlePayloadRequest
-        | _models.XmlAttributesInMiddlePayloadRequestParams
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlAttributesInMiddleInputParams],
     ) -> XmlAttributesInMiddleOutput:
         """
         This example serializes an XML attribute on a payload when it's defined
@@ -2275,10 +2254,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        payload: _models.XmlAttributesPayloadRequest
-        | _models.XmlAttributesPayloadRequestParams
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlAttributesOnPayloadInputParams],
     ) -> XmlAttributesOnPayloadOutput:
         """
         This example serializes an XML attributes on a document targeted by
@@ -2316,7 +2293,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def xml_blobs(
-        self, /, *, data: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlBlobsInputParams],
     ) -> XmlBlobsOutput:
         """
         Blobs are base64 encoded
@@ -2353,7 +2334,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def xml_empty_blobs(
-        self, /, *, data: bytes | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyBlobsInputParams],
     ) -> XmlEmptyBlobsOutput:
         """
         Blobs are base64 encoded
@@ -2393,34 +2378,13 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        string_list: Sequence[str] | None = None,
-        string_set: Sequence[str] | None = None,
-        integer_list: Sequence[int] | None = None,
-        boolean_list: Sequence[bool] | None = None,
-        timestamp_list: Sequence[datetime] | None = None,
-        enum_list: Sequence[str] | None = None,
-        int_enum_list: Sequence[int] | None = None,
-        nested_string_list: Sequence[Sequence[str]] | None = None,
-        renamed_list_members: Sequence[str] | None = None,
-        flattened_list: Sequence[str] | None = None,
-        flattened_list2: Sequence[str] | None = None,
-        flattened_list_with_member_namespace: Sequence[str] | None = None,
-        flattened_list_with_namespace: Sequence[str] | None = None,
-        structure_list: Sequence[
-            _models.StructureListMember | _models.StructureListMemberParams
-        ]
-        | None = None,
-        flattened_structure_list: Sequence[
-            _models.StructureListMember | _models.StructureListMemberParams
-        ]
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyListsInputParams],
     ) -> XmlEmptyListsOutput:
         """
         Invokes the XmlEmptyLists operation.
 
         Args:
-            nested_string_list: A list of lists of strings.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2455,9 +2419,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyMapsInputParams],
     ) -> XmlEmptyMapsOutput:
         """
         Invokes the XmlEmptyMaps operation.
@@ -2494,7 +2457,11 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
 
     @_overload
     def xml_empty_strings(
-        self, /, *, empty_string: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyStringsInputParams],
     ) -> XmlEmptyStringsOutput:
         """
         Invokes the XmlEmptyStrings operation.
@@ -2534,13 +2501,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        foo_enum1: str | None = None,
-        foo_enum2: str | None = None,
-        foo_enum3: str | None = None,
-        foo_enum_list: Sequence[str] | None = None,
-        foo_enum_set: Sequence[str] | None = None,
-        foo_enum_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEnumsInputParams],
     ) -> XmlEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -2581,13 +2543,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        int_enum1: int | None = None,
-        int_enum2: int | None = None,
-        int_enum3: int | None = None,
-        int_enum_list: Sequence[int] | None = None,
-        int_enum_set: Sequence[int] | None = None,
-        int_enum_map: Mapping[str, int] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlIntEnumsInputParams],
     ) -> XmlIntEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -2628,28 +2585,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        string_list: Sequence[str] | None = None,
-        string_set: Sequence[str] | None = None,
-        integer_list: Sequence[int] | None = None,
-        boolean_list: Sequence[bool] | None = None,
-        timestamp_list: Sequence[datetime] | None = None,
-        enum_list: Sequence[str] | None = None,
-        int_enum_list: Sequence[int] | None = None,
-        nested_string_list: Sequence[Sequence[str]] | None = None,
-        renamed_list_members: Sequence[str] | None = None,
-        flattened_list: Sequence[str] | None = None,
-        flattened_list2: Sequence[str] | None = None,
-        flattened_list_with_member_namespace: Sequence[str] | None = None,
-        flattened_list_with_namespace: Sequence[str] | None = None,
-        structure_list: Sequence[
-            _models.StructureListMember | _models.StructureListMemberParams
-        ]
-        | None = None,
-        flattened_structure_list: Sequence[
-            _models.StructureListMember | _models.StructureListMemberParams
-        ]
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlListsInputParams],
     ) -> XmlListsOutput:
         """
         This test case serializes XML lists for the following cases for both
@@ -2660,7 +2597,6 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         structures
 
         Args:
-            nested_string_list: A list of lists of strings.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -2695,9 +2631,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlMapsInputParams],
     ) -> XmlMapsOutput:
         """
         The example tests basic map serialization.
@@ -2737,9 +2672,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        my_map: Mapping[str, _models.GreetingStruct | _models.GreetingStructParams]
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlMapsXmlNameInputParams],
     ) -> XmlMapsXmlNameOutput:
         """
         Invokes the XmlMapsXmlName operation.
@@ -2780,8 +2714,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        my_map: Mapping[str, str] | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlMapWithXmlNamespaceInputParams],
     ) -> XmlMapWithXmlNamespaceOutput:
         """
         Maps with @xmlNamespace and @xmlName
@@ -2821,10 +2755,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.XmlNamespaceNested
-        | _models.XmlNamespaceNestedParams
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlNamespacesInputParams],
     ) -> XmlNamespacesOutput:
         """
         Invokes the XmlNamespaces operation.
@@ -2864,14 +2796,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        normal: datetime | None = None,
-        date_time: datetime | None = None,
-        date_time_on_target: datetime | None = None,
-        epoch_seconds: datetime | None = None,
-        epoch_seconds_on_target: datetime | None = None,
-        http_date: datetime | None = None,
-        http_date_on_target: datetime | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlTimestampsInputParams],
     ) -> XmlTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
@@ -2912,8 +2838,8 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         self,
         /,
         *,
-        union_value: _models.XmlUnionShape | _models.XmlUnionShapeParams | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlUnionsInputParams],
     ) -> XmlUnionsOutput:
         """
         Invokes the XmlUnions operation.

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast, overload as _overload
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -53,20 +53,8 @@ class AsyncRestXmlProtocolNamespaceClient(
         self,
         /,
         *,
-        foo: str | None = None,
-        string_value: str | None = None,
-        true_boolean_value: bool | None = None,
-        false_boolean_value: bool | None = None,
-        byte_value: int | None = None,
-        short_value: int | None = None,
-        integer_value: int | None = None,
-        long_value: int | None = None,
-        float_value: float | None = None,
-        nested: _models.NestedWithNamespace
-        | _models.NestedWithNamespaceParams
-        | None = None,
-        double_value: float | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputParams],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.

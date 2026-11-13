@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast, overload as _overload
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -46,8 +46,6 @@ if TYPE_CHECKING:
         XmlNamespacesOutput,
         XmlTimestampsOutput,
     )
-    from collections.abc import Sequence
-    from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
@@ -69,7 +67,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def datetime_offsets(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DatetimeOffsetsInputParams],
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -107,7 +109,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def empty_input_and_empty_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EmptyInputAndEmptyOutputInputParams],
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -146,7 +152,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def endpoint_operation(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointOperationInputParams],
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -184,7 +194,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def endpoint_with_host_label_operation(
-        self, /, *, label: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputParams],
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -223,7 +237,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def fractional_seconds(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FractionalSecondsInputParams],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -261,7 +279,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def greeting_with_errors(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputParams],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -301,7 +323,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def host_with_path_operation(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HostWithPathOperationInputParams],
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
@@ -339,7 +365,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def ignores_wrapping_xml_name(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.IgnoresWrappingXmlNameInputParams],
     ) -> IgnoresWrappingXmlNameOutput:
         """
         The xmlName trait on the output structure is ignored in AWS Query. The
@@ -380,8 +410,8 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         self,
         /,
         *,
-        nested: _models.StructArg | _models.StructArgParams | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NestedStructuresInputParams],
     ) -> NestedStructuresOutput:
         """
         This test serializes nested and recursive structure members.
@@ -418,7 +448,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def no_input_and_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndOutputInputParams],
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -461,9 +495,8 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         self,
         /,
         *,
-        encoding: str | None = None,
-        data: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.PutWithContentEncodingInputParams],
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
@@ -501,13 +534,16 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def query_idempotency_token_auto_fill(
-        self, /, *, token: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryIdempotencyTokenAutoFillInputParams],
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
 
         Args:
-            token: This field is autopopulated if not provided.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -542,17 +578,8 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         self,
         /,
         *,
-        list_arg: Sequence[str] | None = None,
-        complex_list_arg: Sequence[
-            _models.GreetingStruct | _models.GreetingStructParams
-        ]
-        | None = None,
-        list_arg_with_xml_name_member: Sequence[str] | None = None,
-        list_arg_with_xml_name: Sequence[str] | None = None,
-        nested_with_list: _models.NestedStructWithList
-        | _models.NestedStructWithListParams
-        | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryListsInputParams],
     ) -> QueryListsOutput:
         """
         This test serializes simple and complex lists.
@@ -592,10 +619,8 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         self,
         /,
         *,
-        normal_format: datetime | None = None,
-        epoch_member: datetime | None = None,
-        epoch_target: datetime | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryTimestampsInputParams],
     ) -> QueryTimestampsOutput:
         """
         This test serializes timestamps. 1. Timestamps are serialized as RFC
@@ -636,7 +661,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def recursive_xml_shapes(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RecursiveXmlShapesInputParams],
     ) -> RecursiveXmlShapesOutput:
         """
         Recursive shapes
@@ -676,21 +705,8 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         self,
         /,
         *,
-        foo: str | None = None,
-        bar: str | None = None,
-        baz: bool | None = None,
-        bam: int | None = None,
-        float_value: float | None = None,
-        boo: float | None = None,
-        qux: bytes | None = None,
-        foo_enum: str | None = None,
-        has_query_name: str | None = None,
-        has_query_and_xml_name: str | None = None,
-        uses_xml_name: str | None = None,
-        distinct_query_name: str | None = None,
-        distinct_query_and_xml_name: str | None = None,
-        distinct_xml_name: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleInputParamsInputParams],
     ) -> SimpleInputParamsOutput:
         """
         This test serializes strings, numbers, and boolean values.
@@ -728,7 +744,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def simple_scalar_xml_properties(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarXmlPropertiesInputParams],
     ) -> SimpleScalarXmlPropertiesOutput:
         """
         Invokes the SimpleScalarXmlProperties operation.
@@ -765,7 +785,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def xml_blobs(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlBlobsInputParams],
     ) -> XmlBlobsOperationOutput:
         """
         Blobs are base64 encoded
@@ -802,7 +826,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def xml_empty_blobs(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyBlobsInputParams],
     ) -> XmlEmptyBlobsOutput:
         """
         Invokes the XmlEmptyBlobs operation.
@@ -839,7 +867,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def xml_empty_lists(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyListsInputParams],
     ) -> XmlEmptyListsOutput:
         """
         Invokes the XmlEmptyLists operation.
@@ -876,7 +908,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def xml_enums(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEnumsInputParams],
     ) -> XmlEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -914,7 +950,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def xml_int_enums(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlIntEnumsInputParams],
     ) -> XmlIntEnumsOutput:
         """
         This example serializes intEnums as top level properties, in lists,
@@ -952,7 +992,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def xml_lists(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlListsInputParams],
     ) -> XmlListsOperationOutput:
         """
         This test case serializes XML lists for the following cases for both
@@ -993,7 +1037,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def xml_namespaces(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlNamespacesInputParams],
     ) -> XmlNamespacesOutput:
         """
         Invokes the XmlNamespaces operation.
@@ -1030,7 +1078,11 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
     @_overload
     async def xml_timestamps(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlTimestampsInputParams],
     ) -> XmlTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default

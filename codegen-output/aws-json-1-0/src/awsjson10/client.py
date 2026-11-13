@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast, overload as _overload
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.chain.resolver import IdentityChain
@@ -59,7 +59,11 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
 
     @_overload
     def content_type_parameters(
-        self, /, *, value: int | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ContentTypeParametersInputParams],
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -98,7 +102,11 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
 
     @_overload
     def empty_input_and_empty_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EmptyInputAndEmptyOutputInputParams],
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -138,7 +146,11 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
 
     @_overload
     def endpoint_operation(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointOperationInputParams],
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -176,7 +188,11 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
 
     @_overload
     def endpoint_with_host_label_operation(
-        self, /, *, label: str, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputParams],
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -216,7 +232,11 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
 
     @_overload
     def greeting_with_errors(
-        self, /, *, greeting: str | None = None, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputParams],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -258,7 +278,11 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
 
     @_overload
     def host_with_path_operation(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HostWithPathOperationInputParams],
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
@@ -298,14 +322,13 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         self,
         /,
         *,
-        contents: _models.MyUnion | _models.MyUnionParams | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonUnionsInputParams],
     ) -> JsonUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
 
         Args:
-            contents: A union with a representative set of types for members.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -338,7 +361,11 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
 
     @_overload
     def no_input_and_no_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndNoOutputInputParams],
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -378,7 +405,11 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
 
     @_overload
     def no_input_and_output(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndOutputInputParams],
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -422,13 +453,8 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         self,
         /,
         *,
-        defaults: _models.Defaults | _models.DefaultsParams | None = None,
-        client_optional_defaults: _models.ClientOptionalDefaults
-        | _models.ClientOptionalDefaultsParams
-        | None = None,
-        top_level_default: str | None = None,
-        other_top_level_default: int | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithDefaultsInputParams],
     ) -> OperationWithDefaultsOutput:
         """
         Invokes the OperationWithDefaults operation.
@@ -469,8 +495,8 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         self,
         /,
         *,
-        top_level: _models.TopLevel | _models.TopLevelParams,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithNestedStructureInputParams],
     ) -> OperationWithNestedStructureOutput:
         """
         Invokes the OperationWithNestedStructure operation.
@@ -508,7 +534,11 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
 
     @_overload
     def operation_with_required_members(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithRequiredMembersInputParams],
     ) -> OperationWithRequiredMembersOutput:
         """
         Invokes the OperationWithRequiredMembers operation.
@@ -546,7 +576,11 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
 
     @_overload
     def operation_with_required_members_with_defaults(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithRequiredMembersWithDefaultsInputParams],
     ) -> OperationWithRequiredMembersWithDefaultsOutput:
         """
         Invokes the OperationWithRequiredMembersWithDefaults operation.
@@ -589,9 +623,8 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         self,
         /,
         *,
-        encoding: str | None = None,
-        data: str | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.PutWithContentEncodingInputParams],
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
@@ -629,7 +662,11 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
 
     @_overload
     def query_incompatible_operation(
-        self, /, *, plugins: list[Plugin] | None = None
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryIncompatibleOperationInputParams],
     ) -> QueryIncompatibleOperationOutput:
         """
         Invokes the QueryIncompatibleOperation operation.
@@ -670,9 +707,8 @@ class JSONRPC10Client(Client[JSONRPC10Config]):
         self,
         /,
         *,
-        float_value: float | None = None,
-        double_value: float | None = None,
         plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputParams],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
