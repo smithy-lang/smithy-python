@@ -21,9 +21,12 @@ from .model import (
     ShapeId,
     ShapeType,
 )
+from .model import (
+    OperationShape as _OperationShape,
+)
 from .selection import Selection
 
-__all__ = ["SymbolProvider", "TypeReference"]
+__all__ = ["ClientSymbolProvider", "SymbolProvider", "TypeReference"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -276,6 +279,148 @@ class SymbolProvider:
         ):
             raise ModelError(f"No data symbol for {shape.id} ({shape.type})")
         return shape
+
+
+class ClientSymbolProvider(SymbolProvider):
+    """Data symbols plus service, operation, and dedicated I/O names.
+
+    Control schemas share the data schema namespace. Client methods share the
+    inherited runtime method namespace. Neither changes Smithy wire identifiers.
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        selection: Selection,
+        *,
+        package: str,
+        operations: tuple[_OperationShape, ...],
+        reserved_member_names: Callable[[Shape], Collection[str]] | None = None,
+    ) -> None:
+        if selection.service is None:
+            raise ModelError("Client symbols require a selected service")
+        super().__init__(
+            model,
+            selection,
+            package=package,
+            reserved_member_names=reserved_member_names,
+        )
+        service = selection.service
+        self._service_name = _name(
+            service.id.name,
+            pascal=True,
+            reserved={"Client", "AsyncClient", "Config", "AsyncConfig"},
+        )
+        self._operation_names: dict[ShapeId, str] = {}
+        self._io_names: dict[ShapeId, tuple[str, str]] = {}
+        candidates: dict[str, ShapeId] = {}
+        for operation in operations:
+            context_name = service.rename.get(operation.id, operation.id.name)
+            name = _name(context_name, preserve_underscores=True)
+            self._check_collision(candidates, name, operation.id)
+            stem = _name(context_name, pascal=True)
+            self._io_names[operation.id] = (stem + "Input", stem + "Output")
+        used = set(candidates) | _CLIENT_METHOD_NAMES
+        for name, shape_id in candidates.items():
+            if name in _CLIENT_METHOD_NAMES:
+                while name in used:
+                    name += "_"
+            self._operation_names[shape_id] = name
+            used.add(name)
+
+        used_schemas = set(_plan_schema_names(selection).values())
+        used_schemas.update(self.model_names())
+        self._control_schemas: dict[ShapeId, str] = {}
+        for shape in (service, *operations):
+            base = _name(service.rename.get(shape.id, shape.id.name), constant=True)
+            name = base
+            suffix = 2
+            while name in used_schemas:
+                name = f"{base}_{suffix}"
+                suffix += 1
+            self._control_schemas[shape.id] = name
+            used_schemas.add(name)
+
+    @property
+    def service_name(self) -> str:
+        """The sync client class name."""
+        return self._service_name
+
+    @property
+    def aio_service_name(self) -> str:
+        """The async client class name."""
+        return "Async" + self._service_name
+
+    def operation_name(self, shape_id: ShapeId | str) -> str:
+        """The public method name for a contained operation."""
+        operation = self._model.expect_shape(shape_id, _OperationShape)
+        try:
+            return self._operation_names[operation.id]
+        except KeyError as error:
+            raise ModelError(f"Operation {operation.id} is not selected") from error
+
+    def operation_io_names(self, shape_id: ShapeId | str) -> tuple[str, str]:
+        """Preferred dedicated input/output names for a contained operation."""
+        operation = self._model.expect_shape(shape_id, _OperationShape)
+        try:
+            return self._io_names[operation.id]
+        except KeyError as error:
+            raise ModelError(f"Operation {operation.id} is not selected") from error
+
+    def schema_name(self, shape_id: ShapeId | str) -> str:
+        """A data, service, or operation compact schema constant."""
+        shape = self._model.get_shape(shape_id)
+        if shape.id in self._control_schemas:
+            return self._control_schemas[shape.id]
+        return super().schema_name(shape.id)
+
+    def model_names(self) -> frozenset[str]:
+        """Names reserved by public model declarations and generated variants."""
+        names = set(self._reserved_declarations)
+        for shape in self._selection.shapes:
+            if shape.type not in DECLARATION_TYPES:
+                continue
+            names.add(self.declaration_name(shape.id))
+            if shape.type is ShapeType.UNION:
+                names.add(self.union_unknown_name(shape.id))
+                names.update(
+                    self.union_variant_name(member.id)
+                    for member in shape.members.values()
+                )
+        return frozenset(names)
+
+
+_CLIENT_METHOD_NAMES = frozenset(
+    {
+        "close",
+        "__init__",
+        "__enter__",
+        "__exit__",
+        "__aenter__",
+        "__aexit__",
+        "_invoke",
+        "_prepare_call",
+        "_ensure_setup",
+        "_new_config",
+        "_post_setup",
+        "_client_plugins",
+        "_pipeline_type",
+        "_call_type",
+        "_config",
+        "_plugins",
+        "_setup_done",
+        "_closed",
+        "_transport",
+        "_derive_lock",
+        "_retry_strategy_resolver",
+        "_resolve_retry_strategy",
+        "_build_call",
+        "_raise_if_closed",
+        "_close",
+        "_setup",
+        "_prepare",
+    }
+)
 
 
 # Union of Python 3.12-3.15 hard keywords, independent of the host interpreter.

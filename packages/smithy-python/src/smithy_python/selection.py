@@ -24,6 +24,7 @@ from .model import (
 __all__ = [
     "Selection",
     "Selector",
+    "contained_operations",
     "resolve_service",
     "select_shapes",
     "select_type_shapes",
@@ -76,6 +77,40 @@ def resolve_service(
     if require_service:
         raise InvalidInvocationError("Client generation requires a service")
     return None
+
+
+def contained_operations(
+    model: Model, service: ServiceShape
+) -> tuple[OperationShape, ...]:
+    """Return service and resource operations once each, in model order.
+
+    Only operation and resource relationships are followed. Resource depth and
+    cycles do not consume the Python stack.
+    """
+    visited: set[ShapeId] = set()
+    operations: set[ShapeId] = set()
+    pending = [*service.operations, *service.resources]
+    while pending:
+        shape_id = pending.pop()
+        if shape_id in visited:
+            continue
+        visited.add(shape_id)
+        shape = model.get_shape(shape_id)
+        if isinstance(shape, OperationShape):
+            operations.add(shape.id)
+        elif isinstance(shape, ResourceShape):
+            pending.extend(_resource_operations(shape))
+            pending.extend(shape.resources)
+        else:
+            raise ModelError(
+                f"Expected an operation or resource in service {service.id}; "
+                f"found {shape.id} ({shape.type})"
+            )
+    return tuple(
+        operation
+        for operation in model.iter_shapes(OperationShape)
+        if operation.id in operations and not operation.is_mixin
+    )
 
 
 def select_shapes(
@@ -233,19 +268,23 @@ def _references(shape: Shape) -> Iterator[ShapeId]:
     elif isinstance(shape, ResourceShape):
         yield from shape.identifiers.values()
         yield from shape.properties.values()
-        for operation in (
-            shape.create,
-            shape.put,
-            shape.read,
-            shape.update,
-            shape.delete,
-            shape.list,
-        ):
-            if operation is not None:
-                yield operation
-        yield from shape.operations
-        yield from shape.collection_operations
+        yield from _resource_operations(shape)
         yield from shape.resources
+
+
+def _resource_operations(resource: ResourceShape) -> Iterator[ShapeId]:
+    for operation in (
+        resource.create,
+        resource.put,
+        resource.read,
+        resource.update,
+        resource.delete,
+        resource.list,
+    ):
+        if operation is not None:
+            yield operation
+    yield from resource.operations
+    yield from resource.collection_operations
 
 
 def _check_names(

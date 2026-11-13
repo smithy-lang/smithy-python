@@ -15,6 +15,13 @@ require_service=False)` returns a frozen `Selection` containing the resolved
 `require_service=True`. The API has no I/O and reuses the loaded shape objects.
 `resolve_service` is also available for consumers needing only resolution.
 
+Client planning uses `contained_operations(model, service)` to discover service
+and resource operations independently of data selection. It follows every
+resource lifecycle, instance, collection, and child-resource relationship,
+deduplicates operation IDs, and returns operations in model order. Cycles and
+deep resource graphs are handled iteratively. See
+[Python Client Generation](client.md) for I/O normalization and planning.
+
 Standalone types use:
 
 ```python

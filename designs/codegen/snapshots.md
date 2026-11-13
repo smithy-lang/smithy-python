@@ -1,7 +1,7 @@
-# Native Python Codegen Snapshots
+# Python Codegen Snapshots
 
 `codegen-output-py` records the model and schema surface currently supported by
-`smithy-python generate types`. It gives the native generator the same model
+`smithy-python generate types`. It gives the Python generator the same model
 families as the Java-generated `codegen-output` tree without making the Python
 workflow depend on Java, Gradle, Maven, or the Smithy CLI.
 
@@ -34,11 +34,11 @@ service IDs, and package versions from
 The fourteen reference projections contribute 725 data schemas. The original
 example adds service renames, string and integer enums, unknown enum and union
 values, a Unit union member, collections, a modeled error, and streaming
-members. The native partition stress fixture extends that example with 260
+members. The Python partition stress fixture extends that example with 260
 linked structures, including a recursive pair. Default partition settings
 produce three schema partitions and two private stub partitions for it.
 
-Protocol names identify the source models; the native artifacts do not generate
+Protocol names identify the source models; the Python artifacts do not generate
 protocol implementations or AWS integrations. The non-query-compatible RPCv2
 CBOR service has no standalone declaration roots, so its snapshot contains an
 empty schema module and the `ServiceError` base. Java's synthetic operation
@@ -49,7 +49,7 @@ Each snapshot contains only:
 * `models.py` and `models.pyi`, with private model stub partitions when needed;
 * `_private/schemas.py`, with private schema partitions when needed;
 * package initialization, `py.typed`, package metadata, and a README;
-* the native generator's file ownership and content hash manifest.
+* the Python generator's file ownership and content hash manifest.
 
 No client, config, auth, endpoint, protocol implementation, user agent, or
 generated protocol tests are included.
@@ -62,7 +62,7 @@ protocol-test projections using Smithy 1.74.1. They retain the original model
 order, mixins, model documentation, traits, and operation references.
 `smithy.test#httpRequestTests` and `smithy.test#httpResponseTests` vectors and
 their trait definitions are removed because they exercise client protocols.
-Native model loading flattens mixins before generation.
+Python model loading flattens mixins before generation.
 
 `models/provenance.json` records hashes of both the original assembled ASTs and
 the checked-in fixtures. Regeneration reads only checked-in files. It neither
@@ -81,11 +81,11 @@ make test-codegen-output-py
 
 The maintenance command expects `<projection>/model/model.json` for each
 reference projection. It reads the projection settings as ordinary JSON and
-also rebuilds the native partition stress input. It does not assemble Smithy
+also rebuilds the Python partition stress input. It does not assemble Smithy
 IDL or invoke a build system. Review fixture and provenance changes together.
 
 Generated files must never be edited directly. Update model inputs, generation
-settings, the generation script, or the native generator, then regenerate.
+settings, the generation script, or the Python generator, then regenerate.
 
 ## Determinism and validation
 
@@ -104,7 +104,7 @@ Separating generation from checking allows intentional, uncommitted snapshot
 updates to be validated. In a clean CI checkout, the same comparison checks the
 committed snapshots. These commands use only Python and Python tools.
 `make static-analysis` runs the snapshot check; `make test-integration` runs the
-check and native conformance suite alongside the existing Java checks.
+check and Python conformance suite alongside the existing Java checks.
 
 The conformance suite checks:
 
@@ -131,7 +131,7 @@ The Java tree is a behavioral reference, not a byte-for-byte template. These
 differences are explicit:
 
 * Java client generation creates dedicated operation input/output structures,
-  including empty structures for operations without modeled I/O. Native types
+  including empty structures for operations without modeled I/O. Python types
   use the original selected data shapes. Shared structures retain their
   input/output markers and resulting standalone constructor and response
   metadata behavior.
@@ -140,7 +140,7 @@ differences are explicit:
   artifacts omit operation schemas, and their partition boundaries may differ
   from Java clients.
 * Java AWS integrations retain provider-specific metadata such as
-  `aws.protocols#awsQueryError`. Native snapshots do not claim parity for this
+  `aws.protocols#awsQueryError`. Python snapshots do not claim parity for this
   metadata or implement AWS behavior.
 * Java still produces clients, sync/async configs, auth, endpoints, user agents,
   protocol serializers/deserializers, and operation-level protocol tests.
