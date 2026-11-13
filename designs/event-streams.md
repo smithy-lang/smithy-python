@@ -15,7 +15,7 @@ that they can write or read to.
 An `AsyncEventPublisher` is used to send events to a service.
 
 ```python
-class AsyncEventPublisher[E: SerializableShape](Protocol):
+class AsyncEventPublisher[E: SerializeableShape](Protocol):
     async def send(self, event: E) -> None:
         ...
 
@@ -30,13 +30,13 @@ class AsyncEventPublisher[E: SerializableShape](Protocol):
 ```
 
 Publishers expose a `send` method that takes an event class which implements
-`SerializableShape`. It then passes that shape to an internal `ShapeSerializer`
+`SerializeableShape`. It then passes that shape to an internal `ShapeSerializer`
 and sends it over the connection. (Note that these `ShapeSerializer`s and
 connection types are internal, and so are not part of the interface shown
 above.)
 
 The `ShapeSerializer`s work in exactly the same way as they do for other use
-cases. They are ultimately driven by each `SerializableShape`'s `serialize`
+cases. They are ultimately driven by each `SerializeableShape`'s `serialize`
 method.
 
 Publishers also expose a few Python standard methods. `close` can be used to
@@ -60,7 +60,7 @@ Protocol implementations will be responsible for creating publishers.
 An `AsyncEventReceiver` is used to receive events from a service.
 
 ```python
-class AsyncEventReceiver[E: DeserializableShape](Protocol):
+class AsyncEventReceiver[E: DeserializeableShape](Protocol):
 
     async def receive(self) -> E | None:
         ...
@@ -78,10 +78,10 @@ class AsyncEventReceiver[E: DeserializableShape](Protocol):
     def __aiter__(self) -> Self:
         return self
 
-    async def __enter__(self) -> Self:
+    async def __aenter__(self) -> Self:
         return self
 
-    async def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
         await self.close()
 ```
 
@@ -91,11 +91,11 @@ event types. These events are read from the connection and then deserialized
 with `ShapeDeserializer`s.
 
 The `ShapeDeserializer`s work in mostly the same way as they do for other use
-cases. They are ultimately driven by each `DeserializableShape`'s `deserialize`
-method. Since the shape on the wire might be one of several types, a
-`TypeRegistry` SHOULD be used to access the correct event shape. Protocols MUST
-have some sort of discriminator on the wire that can be used to match the wire
-event to the ID of the shape it represents.
+cases. They are ultimately driven by each `DeserializeableShape`'s `deserialize`
+method. Since the shape on the wire might be one of several types, the
+deserializer selects the event union member whose name matches the discriminator
+on the wire. Protocols MUST have some sort of discriminator on the wire that can
+be used to match the wire event to the member it represents.
 
 Receivers also expose a few standard Python methods. `close` can be used to
 clean up any long-running resources, such as an HTTP connection or open file
@@ -148,17 +148,14 @@ unknown error on the service side that would result in a 500-level error in a
 standard HTTP request lifecycle. These errors MUST be parsed by receiver
 implementations into a generic exception class.
 
-All errors received over the stream MUST be raised by the receiver. All errors
-are considered terminal, so the receiver MUST close any open resources after
-receiving an error.
+All errors received over the stream MUST be raised by the receiver. The
+receiver closes its resources when it fails to decode an event. Errors
+deserialized from the stream are raised without closing the receiver.
 
 ### Unknown and Malformed Events
 
-If a receiver encounters an unknown event, it MUST treat it as an error and
-raise an exception. If an identifier was able to be parsed from the event, it
-MUST be included in the exception message. Like any other error, receiving an
-unknown event is considered to be terminal, so the receiver MUST close any open
-resources after receiving it.
+If a receiver encounters an unknown event member, it logs it at debug level and
+deserializes it as the union's unknown variant, and the stream continues.
 
 ## Operation Return Types
 
@@ -167,32 +164,32 @@ both. Each of these cases deserves to be handled separately, and so each has a
 different return type that encapsulates a publisher and/or receiver. These cases
 are handled by the following classes:
 
-* `DuplexEventStream` is returned when the operation has both input and output
+* `AsyncDuplexEventStream` is returned when the operation has both input and output
   streams.
-* `InputEventStream` is returned when the operation only has an input stream.
-* `OutputEventStream` is returned when the operation only has an output stream.
+* `AsyncInputEventStream` is returned when the operation only has an input stream.
+* `AsyncOutputEventStream` is returned when the operation only has an output stream.
 
 ```python
-class DuplexEventStream[
+class AsyncDuplexEventStream[
     IE: SerializeableShape,
     OE: DeserializeableShape,
     O: DeserializeableShape,
 ]:
 
-    input_stream: EventPublisher[IE]
-    output_stream: EventReceiver[OE] | None = None
+    input_stream: AsyncEventPublisher[IE]
+    output_stream: AsyncEventReceiver[OE] | None = None
     output: O | None = None
 
     def __init__(
         self,
         *,
-        input_stream: EventPublisher[IE],
-        output_future: Future[tuple[O, EventReceiver[OE]]],
+        input_stream: AsyncEventPublisher[IE],
+        output_future: Future[tuple[O, AsyncEventReceiver[OE]]],
     ) -> None:
         self.input_stream = input_stream
         self._output_future = output_future
 
-    async def await_output(self) -> tuple[O, EventReceiver[OE]]:
+    async def await_output(self) -> tuple[O, AsyncEventReceiver[OE]]:
         ...
 
     async def close(self) -> None:
@@ -205,15 +202,15 @@ class DuplexEventStream[
         await self.close()
 
 
-class InputEventStream[IE: SerializeableShape, O]:
+class AsyncInputEventStream[IE: SerializeableShape, O]:
 
-    input_stream: EventPublisher[IE]
+    input_stream: AsyncEventPublisher[IE]
     output: O | None = None
 
     def __init__(
         self,
         *,
-        input_stream: EventPublisher[IE],
+        input_stream: AsyncEventPublisher[IE],
         output_future: Future[O],
     ) -> None:
         self.input_stream = input_stream
@@ -232,12 +229,12 @@ class InputEventStream[IE: SerializeableShape, O]:
         await self.close()
 
 
-class OutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
+class AsyncOutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
 
-    output_stream: EventReceiver[OE]
+    output_stream: AsyncEventReceiver[OE]
     output: O
     
-    def __init__(self, output_stream: EventReceiver[OE], output: O) -> None:
+    def __init__(self, output_stream: AsyncEventReceiver[OE], output: O) -> None:
         self.output_stream = output_stream
         self.output = output
 
@@ -255,7 +252,7 @@ All three classes share certain functionality. They all implement `close` and
 the async context manager magic methods. By default these just call close on
 the underlying publisher and/or receiver.
 
-Both `InputEventStream` and `DuplexEventStream` have an `await_output` method
+Both `AsyncInputEventStream` and `AsyncDuplexEventStream` have an `await_output` method
 that waits for the initial request to be received, returning that and the output
 stream. Their `output` and `output_stream` properties will not be set until
 then. This is important because clients MUST be able to start sending events to
@@ -277,7 +274,7 @@ with await client.input_operation() as stream:
     stream.input_stream.send(FooEvent(foo="bar"))
 ```
 
-The `OutputEventStream`'s `output` and `output_stream` will never be `None`,
+The `AsyncOutputEventStream`'s `output` and `output_stream` will never be `None`,
 however. Instead, the `ClientProtocol` MUST set values for these when
 constructing the object. This differs from the other stream types because the
 lack of an input stream means that the service has nothing to wait on from the
@@ -299,11 +296,14 @@ of headers alongside a binary payload. Unlike HTTP messages, headers can be one
 of a number of different types.
 
 ```python
-type HEADER_VALUE = bool | int | bytes | str | datetime.datetime
+type HEADER_VALUE = bool | int | bytes | str | datetime.datetime | uuid.UUID
 
 class EventMessage(Protocol):
     headers: Mapping[str, HEADER_VALUE]
     payload: bytes
+
+    def encode(self) -> bytes:
+        ...
 ```
 
 This structure MUST NOT be exposed as the response type for a receiver or input
@@ -322,6 +322,7 @@ and doesn't force properties that will never be `None` to be declared optional.
 
 ### How are events signed?
 
-The signer interface will need to be updated to expose a `sign_event` method
-similar to the current `sign` method, but which takes an `EventMessage` instead
-of an `HTTPRequest` or other request type.
+Events are signed by an `EventSigner`, a protocol separate from the request
+signer, defined in `smithy_core.interfaces.auth`. It exposes
+`sign(*, event, identity, properties)` and `sign_empty(...)`. `SigV4EventSigner`
+in `aws_sdk_signers` implements it.

@@ -183,5 +183,4 @@ The vertical slice should generate and exercise a minimal RPCv2 CBOR operation
 end to end, covering public client/config surfaces, operation metadata,
 request serialization, transport dispatch, response deserialization, modeled
 errors, and strict typing. AWS-specific integrations remain a subsequent
-milestone. `smithy-python generate client` remains explicitly unimplemented in
-this snapshot task.
+milestone.

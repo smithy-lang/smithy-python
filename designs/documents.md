@@ -19,7 +19,7 @@ smithy-python.
 ## Specification
 
 The `Document` type in Python is a class with typed accessors for Smithy
-data types that implements `SerializableStruct` and `DeserializableShape`.
+data types that implements `SerializeableStruct`.
 Below is an example of what the base `Document` type will look like at the high
 level, subsequent sections will discuss details of each component.
 
@@ -60,19 +60,19 @@ class Document:
     def is_none(self) -> bool:
         ...
 
-    def as_bytes(self) -> bytes:
+    def as_blob(self) -> bytes:
         ...
 
-    def as_bool(self) -> bool:
+    def as_boolean(self) -> bool:
         ...
 
     def as_string(self) -> str:
         ...
 
-    def as_datetime(self) -> datetime.datetime:
+    def as_timestamp(self) -> datetime.datetime:
         ...
 
-    def as_int(self) -> int:
+    def as_integer(self) -> int:
         ...
 
     def as_float(self) -> float:
@@ -90,7 +90,7 @@ class Document:
     def as_value(self) -> DocumentValue:
         ...
 
-    def as_shape[S: DeserializableShape](self, shape_class: type[S]) -> S:
+    def as_shape[S: DeserializeableShape](self, shape_class: type[S]) -> S:
         ...
 
     def serialize(self, serializer: ShapeSerializer) -> None:
@@ -119,7 +119,7 @@ class Document:
         ...
 
     @classmethod
-    def from_shape(cls, shape: SerializableShape) -> "Document":
+    def from_shape(cls, shape: SerializeableShape) -> "Document":
         ...
 ```
 
@@ -164,9 +164,8 @@ As a simple example, a `Document` that contains a timestamp may include a schema
 that contains the `@timestampFormat` trait. This would be serialized in exactly
 the same way as a modeled timestamp with the same trait.
 
-By default, the document's schema is a generic schema from the Smithy prelude,
-based on the underlying type. A string shape takes on the base `String` for
-example. Lists and maps by default use a schema with the shape type `DOCUMENT`.
+By default, the document's schema is the generic `smithy.api#Document` schema,
+and the shape type is inferred from the underlying Python value.
 Since it is not possible to determine whether a given `dict` is a map,
 structure, or union, they are treated as maps by default. See
 [structures and unions](#structures-and-unions) for more information on how
@@ -184,9 +183,7 @@ different integer or float sizes, the `shape_type` can be used.
 
 When any of the accessor methods are called, the underlying data is asserted to
 be of the requested type before it is returned, raising an exception if it is
-not. In some cases these types are coerced where they're compatible. For
-example, attempting to access a `Decimal` from a document that contains a
-`float` will return a `Decimal` representation of that float.
+not.
 
 The following example shows how accessors may be used:
 
@@ -227,7 +224,7 @@ and MAY be changed without backwards compatibility implications.
 ```python
 >>> document = Document({"foo": "bar"})
 >>> document.shape_type
-ShapeType.DOCUMENT
+ShapeType.MAP
 >>> document.as_value()
 {"foo": "bar"}
 >>> document["foo"]
@@ -239,10 +236,10 @@ Document(value="bar")
 Smithy structures and unions are generated into their own individual classes in
 Python, and so it isn't possible to have a unique accessor for each of them.
 Instead, `Document`s have a generic `as_shape` method that supports converting
-the `Document` to any `DeserializableShape`. If the document does not
+the `Document` to any `DeserializeableShape`. If the document does not
 structurally match the target shape, an error will be raised.
 
-Similarly, a `from_shape` method allows for converting any `SerializableShape`
+Similarly, a `from_shape` method allows for converting any `SerializeableShape`
 into a document. When a `Document` is constructed this way, it will retain the
 schema of the shape it was constructed from.
 
@@ -275,23 +272,18 @@ heavy lifting.
 ### Container Methods
 
 `Document`s are often containers, and so to make `Document` usage as natural as
-possible, most of Python's built-in
+possible, some of Python's built-in
 [container methods](https://docs.python.org/3/reference/datamodel.html#emulating-container-types)
 will be supported. If the underlying type cannot support that method, an
 exception will be raised. The following list specifies which container methods
 specifically will be supported and what shape types they apply to.
 
-* `__len__` - Valid for lists, maps, structures, and unions.
 * `__getitem__` - Valid for lists, maps, structures, and unions.
 * `get` - Valid for maps, structures, and unions. This is equivalent to `dict`'s
   `get` method which allows for a default value to be specified.
-* `__setitem__` - Valid for lists, maps, and structures, and unions. Unions and
-  structures may only use keys representing members that are in their schema.
-  Unions may only replace the current value.
-* `__delitem__` - Valid for lists, maps, and structures. Notably not valid for
-  unions as a union MUST contain exactly one member.
-* `__iter__` - Valid for lists, maps, structures, and unions.
-* `__contains__` - Valid for lists, maps, structures, and unions.
+* `__setitem__` - Valid for lists, maps, and structures, and unions. Structures
+  may only use keys representing members that are in their schema.
+* `__delitem__` - Valid for lists, maps, structures, and unions.
 
 Notably none of these methods are supported for strings or blobs, though some of
 them could be. This is because the intent of implementing these methods is to
@@ -306,9 +298,9 @@ date in a backwards-compatible way.
 
 The major advantage of the `Document` type over just using `DocumentValue`
 directly is that it integrates with schema-based serialization and
-deserialization. Since `Document` implements `SerializableShape` and
-`DeserializableShape` it can be directly used with any `ShapeSerializer` or
-`ShapeDeserializer` without any additional effort. The same `Document` can be
+deserialization. Since `Document` implements `SerializeableShape` and every
+`ShapeDeserializer` has `read_document`, it can be directly used with any
+`ShapeSerializer` or `ShapeDeserializer` without any additional effort. The same `Document` can be
 serialized to and from XML, JSON, CBOR, etc. without any loss of information.
 
 #### Protocol-Specific Documents
@@ -317,16 +309,13 @@ Some media types may not support all of the Smithy data model. JSON, for
 example, does not have a native capability to store blobs. In current AWS
 protocols that use JSON, blobs are stored as base64-encoded strings. The base
 `Document` class is unaware of this, but a `JSONDocument` subclass can smooth
-over the issue by attempting to coerce a string into a blob when `as_blob`
-is called.
+over the issue by decoding a base64 string into a blob when `as_blob` is
+called.
 
 ```python
 class JSONDocument(Document):
-    @override
     def as_blob(self) -> bytes:
-        if self.shape_type is ShapeType.STRING:
-            return b64decode(self.as_string())
-        return super().as_blob()
+        return b64decode(expect_type(str, self._value))
 ```
 
 This same strategy can be used to support timestamps based on the
@@ -348,15 +337,14 @@ converted to that shape.
 If the specific shape is known ahead of time with external knowledge, then
 `as_shape` can be used directly. But there are cases where the `Document` may
 represent one of several shapes. For this reason, `Document`s have a
-`discriminator` property that delclares what shape it represents. By default
-this is the id of the document's schema, but that schema itself will be a
-default schema from the prelude unless the document is specifically constructed
-with one.
+`discriminator` property that delclares what shape it represents. For structure
+documents this is the id of the document's schema. For any other shape type it
+raises a `DiscriminatorError`.
 
 To reliably communicate the discriminator, it needs to be embedded in the
-document itself. How this is done is protocol-specific, and thus is the domain
-of protocol-specific documents. A JSON-based protocol could, for example,
-embed the shape id as the value of a top-level `__type` property.
+document itself. How this is done is protocol-specific. `JSONDocument` does not
+read an embedded discriminator. The HTTP protocol layer reads the shape id from
+a top-level `__type` property in error responses only.
 
 ```json
 {
@@ -376,23 +364,23 @@ to convert the `Document` into the target class.
 ##### Type Registries
 
 A `TypeRegistry` is essentially a nestable mapping of `ShapeID` to
-`DeserializableShape`. If a given shape ID can't be found within the local set
+`DeserializeableShape`. If a given shape ID can't be found within the local set
 of known shapes, it delegates to a sub-registry.
 
 ```python
 class TypeRegistry:
     def __init__(
         self,
-        types: dict[ShapeID, DeserializableShape],
+        types: dict[ShapeID, type[DeserializeableShape]],
         sub_registry: "TypeRegistry | None" = None
     ):
         self._types = types
         self._sub_registry = sub_registry
 
-    def get(self, shape: ShapeID) -> type[DeserializableShape]:
+    def get(self, shape: ShapeID) -> type[DeserializeableShape]:
         ...
 
-    def deserialize(self, document: Document) -> DeserializableShape:
+    def deserialize(self, document: Document) -> DeserializeableShape:
         return document.as_shape(self.get(document.discriminator))
 ```
 

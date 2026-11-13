@@ -105,7 +105,8 @@ class Schema:
 ```
 
 Below is an example Smithy `structure` shape, followed by the `Schema` it would
-generate.
+generate. Generated schemas are compact tuples that `hydrate()` (from
+`smithy_core._schema_compact`) builds into a cached `Schema` on first use.
 
 ```smithy
 namespace com.example
@@ -116,16 +117,13 @@ structure ExampleStructure {
 ```
 
 ```python
-EXAMPLE_STRUCTURE_SCHEMA = Schema.collection(
-    id=ShapeID("com.example#ExampleStructure"),
-    members={
-        "member": {
-            "target": INTEGER,
-            "traits": [
-                DefaultTrait(0),
-            ],
-        },
-    },
+EXAMPLE_STRUCTURE: StaticSchema = (
+    18,  # ShapeType.STRUCTURE
+    "com.example",
+    "ExampleStructure",
+    0,
+    ("member",),
+    ((7, {"smithy.api#default": 0}),),  # 7 is the prelude Integer
 )
 ```
 
@@ -317,7 +315,9 @@ class ShapeSerializer(Protocol):
         ...
 
     def write_data_stream(self, schema: "Schema", value: StreamingBlob) -> None:
-        raise NotImplementedError()
+        if isinstance(value, bytes | bytearray):
+            self.write_blob(schema, bytes(value))
+        raise UnsupportedStreamError()
 
 
 @runtime_checkable
@@ -355,12 +355,11 @@ class ExampleStructure:
     member: int = 0
 
     def serialize(self, serializer: ShapeSerializer):
-        serializer.write_struct(EXAMPLE_STRUCTURE_SCHEMA, self)
+        serializer.write_struct(hydrate(EXAMPLE_STRUCTURE), self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_integer(
-            EXAMPLE_STRUCTURE_SCHEMA.members["member"], self.member
-        )
+        members = hydrate(EXAMPLE_STRUCTURE).members_by_index
+        serializer.write_integer(members[0], self.member)
 ```
 
 ### Performing Serialization
@@ -370,9 +369,11 @@ serializer. The following shows how one might serialize a shape to JSON bytes:
 
 ```python
 >>> shape = ExampleStructure(member=9)
->>> serializer = JSONShapeSerializer()
+>>> sink = BytesIO()
+>>> serializer = JSONCodec().create_serializer(sink)
 >>> shape.serialize(serializer)
->>> print(serializer.get_result())
+>>> serializer.flush()
+>>> print(sink.getvalue())
 b'{"member":9}'
 ```
 
@@ -419,15 +420,17 @@ shape is bound to an HTTP header or query string, for example.
 
 ```python
 class HTTPBindingSerializer(InterceptingSerializer):
-    _header_serializer: ShapeSerializer
-    _query_serializer: ShapeSerializer
+    header_serializer: HTTPHeaderSerializer
+    query_serializer: HTTPQuerySerializer
 
     def before(self, schema: Schema) -> ShapeSerializer:
-        if HTTP_HEADER_TRAIT in schema.traits:
-            return _header_serializer
-        elif HTTP_QUERY_TRAIT in schema.traits:
-            return _query_serializer
-        ...
+        metadata = self._binding_metadata.members[schema.expect_member_index()]
+        match metadata.request_binding:
+            case Binding.HEADER | Binding.PREFIX_HEADERS:
+                return self.header_serializer
+            case Binding.QUERY | Binding.QUERY_PARAMS:
+                return self.query_serializer
+            ...
 ```
 
 Since each of these sub-serializers may only be able to handle shapes of a
@@ -467,24 +470,21 @@ class ShapeDeserializer(Protocol):
     def read_struct(
         self,
         schema: "Schema",
-        state: dict[str, Any],
-        consumer: Callable[["Schema", "ShapeDeserializer", dict[str, Any]], None],
+        consumer: Callable[["Schema", "ShapeDeserializer"], None],
     ) -> None:
         ...
 
     def read_list(
         self,
         schema: "Schema",
-        state: list[Any],
-        consumer: Callable[["ShapeDeserializer", list[Any]], None],
+        consumer: Callable[["ShapeDeserializer"], None],
     ) -> None:
         ...
 
     def read_map(
         self,
         schema: "Schema",
-        state: dict[str, Any],
-        consumer: Callable[["ShapeDeserializer", dict[str, Any]], None],
+        consumer: Callable[[str, "ShapeDeserializer"], None],
     ) -> None:
         ...
 
@@ -534,7 +534,7 @@ class ShapeDeserializer(Protocol):
         ...
 
     def read_data_stream(self, schema: "Schema") -> StreamingBlob:
-        raise NotImplementedError()
+        raise UnsupportedStreamError()
 
 
 @runtime_checkable
@@ -562,27 +562,24 @@ class ExampleStructure:
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
-        kwargs: dict[str, Any] = {}
-        deserializer.read_struct(
-            _SCHEMA_CLIENT_OPTIONAL_DEFAULTS,
-            consumer=cls._deserialize_kwargs,
-        )
-        return cls(**kwargs)
+        return cls(**cls.deserialize_kwargs(deserializer))
 
     @classmethod
-    def _deserialize_kwargs(
-        schema: Schema,
-        de: ShapeDeserializer,
-        kwargs: dict[str, Any],
-    ) -> None:
-        match schema.expect_member_index():
-            case 0:
-                kwargs["member"] = de.read_integer(
-                    _SCHEMA_CLIENT_OPTIONAL_DEFAULTS.members["member"]
-                )
+    def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
+        kwargs: dict[str, Any] = {}
+        schema = hydrate(EXAMPLE_STRUCTURE)
+        members = schema.members_by_index
 
-            case _:
-                logger.debug(f"Unexpected member schema: {schema}")
+        def _consumer(member_schema: Schema, de: ShapeDeserializer) -> None:
+            match member_schema.expect_member_index():
+                case 0:
+                    kwargs["member"] = de.read_integer(members[0])
+
+                case _:
+                    logger.debug("Unexpected member schema: %s", member_schema)
+
+        deserializer.read_struct(schema, consumer=_consumer)
+        return kwargs
 ```
 
 For structures, arguments are built up in a `kwargs` dictionary, which is later
@@ -590,16 +587,12 @@ expanded to construct the final type. Other languages might use a builder
 pattern instead, but builders are atypical in Python, so this is a midway
 approach that should be familiar to Python users.
 
-The `kwargs` dictionary is passed through the serializer in order to avoid
-having to allocate an anonymous function or use `functools.partial` (which would
-need to allocate a `Partial` object). Lists and maps pass in pre-constructed
-containers for the same reason.
+The `kwargs` dictionary is captured by the nested `_consumer` closure that is
+passed to `read_struct`. Lists and maps capture their result containers the
+same way.
 
 Member dispatch is currently based on the "member index", which is a
 representation of the member's position on the shape in the Smithy model itself.
-(Note that this is not always the same as the ordering of the members in the
-members dictionary. Recursive members are added at the end, regardless of where
-they appear in the model.)
 
 Doing member dispatch this way is an optimization, which uses relatively simple
 integer comparison instead of the comparatively more expensive string
@@ -624,7 +617,7 @@ deserializer and a class to deserialize into. The following shows how one might
 deserialize a shape from JSON bytes:
 
 ```python
->>> deserializer = JSONShapeDeserializer(b'{"member":9}')
+>>> deserializer = JSONCodec().create_deserializer(b'{"member":9}')
 >>> print(ExampleStructure.deserialize(deserializer))
 ExampleStructure(member=9)
 ```
@@ -704,45 +697,58 @@ string, the response code, etc. Such transports generally operate by interacting
 interfaces of `Codec` aren't sufficient by themselves.
 
 ```python
-class ClientProtocol[Request, Response](Protocol):
+class ClientProtocol[I, O](Protocol):
 
     @property
     def id(self) -> ShapeID:
         ...
 
-    def serialize_request[I: SerializeableShape, O: DeserializeableShape](
+    def serialize_request[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
         self,
-        operation: ApiOperation[I, O],
-        input: I,
+        *,
+        operation: APIOperation[OperationInput, OperationOutput],
+        input: OperationInput,
         endpoint: URI,
-        context: dict[str, Any],
-    ) -> Request:
+        context: TypedProperties,
+    ) -> I:
         ...
 
-    def set_service_endpoint(
-        self,
-        request: Request,
-        endpoint: Endpoint,
-    ) -> Request:
+    def set_service_endpoint(self, *, request: I, endpoint: Endpoint) -> I:
         ...
 
-    async def deserialize_response[I: SerializeableShape, O: DeserializeableShape](
+    def deserialize_response_program[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
         self,
-        operation: ApiOperation[I, O],
+        *,
+        operation: APIOperation[OperationInput, OperationOutput],
+        request: I,
+        response: O,
         error_registry: TypeRegistry,
-        request: Request,
-        response: Response,
-        context: dict[str, Any],
-    ) -> O:
+        context: TypedProperties,
+        read_body: Callable[[AnyStreamingBlob], Any],
+    ) -> Program[OperationOutput]:
+        ...
+
+    def extract_response_metadata(
+        self, *, response: O, context: TypedProperties
+    ) -> ResponseMetadata:
         ...
 ```
 
 The `ClientProtocol` incorporates much more context than a `Codec` does.
-Serialization takes the operation's schema via `ApiOperation`, the endpoint to
+Serialization takes the operation's schema via `APIOperation`, the endpoint to
 send the request to, and a general context bag that is passed through the
 request pipeline. Deserialization takes much of the same as well as a
 `TypeRegistry` that allows it to map errors it encounters to the generated
-exception classes.
+exception classes. It returns a `Program` that reads the response body through
+`read_body`, so the same implementation runs under sync and async clients. The
+sync `ClientProtocol` is in `smithy_core.interfaces`; `AsyncClientProtocol` in
+`smithy_core.aio.interfaces` adds event stream methods.
 
 In most cases these `ClientProtocol`s will be constructed with a `Codec` used to
 (de)serialize part of the request, such as the HTTP message body. Since that
@@ -755,10 +761,15 @@ A `ClientProtocol` will need to be used alongside a `ClientTransport` that takes
 the same request and response types to handle sending the request.
 
 ```python
-class ClientTransport[Request, Response](Protocol):
-    async def send(self, request: Request) -> Response:
+class ClientTransport[I, O](Protocol):
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
+
+    def send(self, request: I) -> O:
         ...
 ```
+
+The async variant, `AsyncClientTransport` in `smithy_core.aio.interfaces`,
+declares `async def send`.
 
 Below is an example of what a very simplistic use of a `ClientProtocol` could
 look like. (The actual request pipeline in generated clients will be more
@@ -775,23 +786,26 @@ class ExampleClient:
         self.protocol = protocol
         self.transport = transport
 
-    async def example_operation(
+    def example_operation(
         self, input: ExampleOperationInput
     ) -> ExampleOperationOutput:
-        context = {}
+        context = TypedProperties()
         transport_request = self.protocol.serialize_request(
-            operation=EXAMPLE_OPERATION_SCHEMA,
+            operation=EXAMPLE_OPERATION,
             input=input,
             endpoint=BASE_ENDPOINT,
             context=context,
         )
-        transport_response = await self.transport.send(transport_request)
-        return self.protocol.deserialize_response(
-            operation=EXAMPLE_OPERATION_SCHEMA,
-            error_registry=EXAMPLE_OPERATION_REGISTRY,
-            request=transport_request,
-            response=transport_response,
-            context=context,
+        transport_response = self.transport.send(transport_request)
+        return run_program(
+            self.protocol.deserialize_response_program(
+                operation=EXAMPLE_OPERATION,
+                request=transport_request,
+                response=transport_response,
+                error_registry=EXAMPLE_OPERATION.error_registry,
+                context=context,
+                read_body=lambda body: body.read(),
+            )
         )
 ```
 
