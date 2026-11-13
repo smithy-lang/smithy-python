@@ -53,6 +53,10 @@ enableExperimentalFeatures = true
 exclude = [
     "**/__pycache__",
     "packages/smithy-aws-core/tests/integration",
+    # Import generated clients, which static-analysis runs before installing.
+    "packages/smithy-aws-core/tests/functional",
+    "packages/smithy-http/tests/functional",
+    "packages/smithy-test/tests/functional",
 ]
 
 [tool.pytest.ini_options]

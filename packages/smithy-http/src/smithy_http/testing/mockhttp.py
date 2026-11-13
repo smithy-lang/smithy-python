@@ -6,6 +6,8 @@ from copy import copy
 from io import BytesIO
 from typing import Any, Self
 
+from smithy_core.interfaces import AnyStreamingBlob
+
 from smithy_http import HTTPResponse, tuples_to_fields
 from smithy_http.interfaces import (
     Fields,
@@ -37,7 +39,7 @@ class MockHTTPClientBase:
         client.
         """
         self._client_config = client_config
-        self._responses: deque[tuple[int, Fields, bytes]] = deque()
+        self._responses: deque[tuple[int, Fields, AnyStreamingBlob]] = deque()
         self._captured_requests: list[HTTPRequest] = []
 
     def __deepcopy__(self, memo: Any) -> Self:
@@ -57,17 +59,19 @@ class MockHTTPClientBase:
         self,
         status: int = 200,
         headers: list[tuple[str, str]] | None = None,
-        body: bytes = b"",
+        body: AnyStreamingBlob = b"",
     ) -> None:
         """Queue a response for the next request.
 
         :param status: HTTP status code.
         :param headers: HTTP response headers as list of (name, value) tuples.
-        :param body: Response body as bytes.
+        :param body: Response body as bytes, or a stream the client can read.
         """
         self._responses.append((status, tuples_to_fields(headers or []), body))
 
-    def _pop_response(self, request: HTTPRequest) -> tuple[int, Fields, bytes]:
+    def _pop_response(
+        self, request: HTTPRequest
+    ) -> tuple[int, Fields, AnyStreamingBlob]:
         """Capture the request and return the next queued status, fields and body.
 
         :raises MockHTTPClientError: If no responses are queued.
@@ -101,7 +105,9 @@ class MockHTTPClient(MockHTTPClientBase, HTTPClient):
         :raises MockHTTPClientError: If no responses are queued.
         """
         status, fields, body = self._pop_response(request)
-        return HTTPResponse(status=status, fields=fields, body=BytesIO(body))
+        if isinstance(body, bytes | bytearray):
+            body = BytesIO(body)
+        return HTTPResponse(status=status, fields=fields, body=body)
 
 
 class MockHTTPClientError(Exception):
