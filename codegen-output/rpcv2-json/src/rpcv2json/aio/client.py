@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Unpack as _Unpack, overload as _overload
 
 from smithy_core.aio.client import AsyncClient
 from smithy_http.plugins import user_agent_plugin
@@ -15,35 +16,20 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..models import (
-        BigDecimalOperationInput,
         BigDecimalOperationOutput,
-        BigIntegerOperationInput,
         BigIntegerOperationOutput,
-        EmptyInputOutputInput,
         EmptyInputOutputOutput,
-        FractionalSecondsInput,
         FractionalSecondsOutput,
-        GreetingWithErrorsInput,
         GreetingWithErrorsOutput,
-        NoInputOutputInput,
         NoInputOutputOutput,
-        OperationWithDefaultsInput,
         OperationWithDefaultsOutput,
-        OptionalInputOutputInput,
         OptionalInputOutputOutput,
-        RecursiveShapesInput,
         RecursiveShapesOutput,
-        RpcV2JsonDenseMapsInput,
         RpcV2JsonDenseMapsOutput,
-        RpcV2JsonListsInput,
         RpcV2JsonListsOutput,
-        RpcV2JsonSparseMapsInput,
         RpcV2JsonSparseMapsOutput,
-        SimpleScalarPropertiesInput,
         SimpleScalarPropertiesOutput,
-        SparseNullsOperationInput,
         SparseNullsOperationOutput,
-        TimestampFormatIgnoredInput,
         TimestampFormatIgnoredOutput,
     )
 
@@ -56,15 +42,28 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def big_decimal_operation(
-        self, input: BigDecimalOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.BigDecimalOperationInput
+        | _models.BigDecimalOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> BigDecimalOperationOutput: ...
+
+    @_overload
+    async def big_decimal_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.BigDecimalOperationInputDict],
     ) -> BigDecimalOperationOutput:
         """
         Invokes the BigDecimalOperation operation.
 
         Args:
-            input:
-                An instance of `BigDecimalOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -74,17 +73,39 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `BigDecimalOperationOutput`.
         """
-        return await self._invoke(input, _models.BIG_DECIMAL_OPERATION, [], plugins)
 
+    async def big_decimal_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> BigDecimalOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.BIG_DECIMAL_OPERATION, args, kwargs),
+            _models.BIG_DECIMAL_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def big_integer_operation(
-        self, input: BigIntegerOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.BigIntegerOperationInput
+        | _models.BigIntegerOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> BigIntegerOperationOutput: ...
+
+    @_overload
+    async def big_integer_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.BigIntegerOperationInputDict],
     ) -> BigIntegerOperationOutput:
         """
         Invokes the BigIntegerOperation operation.
 
         Args:
-            input:
-                An instance of `BigIntegerOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -94,17 +115,38 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `BigIntegerOperationOutput`.
         """
-        return await self._invoke(input, _models.BIG_INTEGER_OPERATION, [], plugins)
 
+    async def big_integer_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> BigIntegerOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.BIG_INTEGER_OPERATION, args, kwargs),
+            _models.BIG_INTEGER_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def empty_input_output(
-        self, input: EmptyInputOutputInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyInputOutputInput | _models.EmptyInputOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyInputOutputOutput: ...
+
+    @_overload
+    async def empty_input_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EmptyInputOutputInputDict],
     ) -> EmptyInputOutputOutput:
         """
         Invokes the EmptyInputOutput operation.
 
         Args:
-            input:
-                An instance of `EmptyInputOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -114,17 +156,38 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `EmptyInputOutputOutput`.
         """
-        return await self._invoke(input, _models.EMPTY_INPUT_OUTPUT, [], plugins)
 
+    async def empty_input_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyInputOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.EMPTY_INPUT_OUTPUT, args, kwargs),
+            _models.EMPTY_INPUT_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def fractional_seconds(
-        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FractionalSecondsOutput: ...
+
+    @_overload
+    async def fractional_seconds(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FractionalSecondsInputDict],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
 
         Args:
-            input:
-                An instance of `FractionalSecondsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -134,10 +197,33 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return await self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
 
+    async def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FractionalSecondsOutput:
+        return await self._invoke(
+            self._select_input(_models.FRACTIONAL_SECONDS, args, kwargs),
+            _models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput | _models.GreetingWithErrorsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    async def greeting_with_errors(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputDict],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values:
@@ -150,8 +236,6 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         properly deserialize successful and error responses.
 
         Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -161,17 +245,38 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return await self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    async def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return await self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def no_input_output(
-        self, input: NoInputOutputInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputOutputInput | _models.NoInputOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputOutputOutput: ...
+
+    @_overload
+    async def no_input_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputOutputInputDict],
     ) -> NoInputOutputOutput:
         """
         Invokes the NoInputOutput operation.
 
         Args:
-            input:
-                An instance of `NoInputOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -181,17 +286,39 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `NoInputOutputOutput`.
         """
-        return await self._invoke(input, _models.NO_INPUT_OUTPUT, [], plugins)
 
+    async def no_input_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_OUTPUT, args, kwargs),
+            _models.NO_INPUT_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def operation_with_defaults(
-        self, input: OperationWithDefaultsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.OperationWithDefaultsInput
+        | _models.OperationWithDefaultsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OperationWithDefaultsOutput: ...
+
+    @_overload
+    async def operation_with_defaults(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithDefaultsInputDict],
     ) -> OperationWithDefaultsOutput:
         """
         Invokes the OperationWithDefaults operation.
 
         Args:
-            input:
-                An instance of `OperationWithDefaultsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -201,17 +328,39 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `OperationWithDefaultsOutput`.
         """
-        return await self._invoke(input, _models.OPERATION_WITH_DEFAULTS, [], plugins)
 
+    async def operation_with_defaults(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithDefaultsOutput:
+        return await self._invoke(
+            self._select_input(_models.OPERATION_WITH_DEFAULTS, args, kwargs),
+            _models.OPERATION_WITH_DEFAULTS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def optional_input_output(
-        self, input: OptionalInputOutputInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.OptionalInputOutputInput
+        | _models.OptionalInputOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OptionalInputOutputOutput: ...
+
+    @_overload
+    async def optional_input_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OptionalInputOutputInputDict],
     ) -> OptionalInputOutputOutput:
         """
         Invokes the OptionalInputOutput operation.
 
         Args:
-            input:
-                An instance of `OptionalInputOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -221,17 +370,38 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `OptionalInputOutputOutput`.
         """
-        return await self._invoke(input, _models.OPTIONAL_INPUT_OUTPUT, [], plugins)
 
+    async def optional_input_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OptionalInputOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.OPTIONAL_INPUT_OUTPUT, args, kwargs),
+            _models.OPTIONAL_INPUT_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def recursive_shapes(
-        self, input: RecursiveShapesInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RecursiveShapesOutput: ...
+
+    @_overload
+    async def recursive_shapes(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RecursiveShapesInputDict],
     ) -> RecursiveShapesOutput:
         """
         Invokes the RecursiveShapes operation.
 
         Args:
-            input:
-                An instance of `RecursiveShapesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -241,17 +411,38 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `RecursiveShapesOutput`.
         """
-        return await self._invoke(input, _models.RECURSIVE_SHAPES, [], plugins)
 
+    async def recursive_shapes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RecursiveShapesOutput:
+        return await self._invoke(
+            self._select_input(_models.RECURSIVE_SHAPES, args, kwargs),
+            _models.RECURSIVE_SHAPES,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def rpc_v2_json_dense_maps(
-        self, input: RpcV2JsonDenseMapsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.RpcV2JsonDenseMapsInput | _models.RpcV2JsonDenseMapsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RpcV2JsonDenseMapsOutput: ...
+
+    @_overload
+    async def rpc_v2_json_dense_maps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RpcV2JsonDenseMapsInputDict],
     ) -> RpcV2JsonDenseMapsOutput:
         """
         The example tests basic map serialization.
 
         Args:
-            input:
-                An instance of `RpcV2JsonDenseMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -261,10 +452,33 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `RpcV2JsonDenseMapsOutput`.
         """
-        return await self._invoke(input, _models.RPC_V2_JSON_DENSE_MAPS, [], plugins)
 
+    async def rpc_v2_json_dense_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RpcV2JsonDenseMapsOutput:
+        return await self._invoke(
+            self._select_input(_models.RPC_V2_JSON_DENSE_MAPS, args, kwargs),
+            _models.RPC_V2_JSON_DENSE_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def rpc_v2_json_lists(
-        self, input: RpcV2JsonListsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.RpcV2JsonListsInput | _models.RpcV2JsonListsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RpcV2JsonListsOutput: ...
+
+    @_overload
+    async def rpc_v2_json_lists(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RpcV2JsonListsInputDict],
     ) -> RpcV2JsonListsOutput:
         """
         This test case serializes JSON lists for the following cases for both
@@ -276,8 +490,6 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         4.  Lists of structures.
 
         Args:
-            input:
-                An instance of `RpcV2JsonListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -287,17 +499,39 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `RpcV2JsonListsOutput`.
         """
-        return await self._invoke(input, _models.RPC_V2_JSON_LISTS, [], plugins)
 
+    async def rpc_v2_json_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RpcV2JsonListsOutput:
+        return await self._invoke(
+            self._select_input(_models.RPC_V2_JSON_LISTS, args, kwargs),
+            _models.RPC_V2_JSON_LISTS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def rpc_v2_json_sparse_maps(
-        self, input: RpcV2JsonSparseMapsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.RpcV2JsonSparseMapsInput
+        | _models.RpcV2JsonSparseMapsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> RpcV2JsonSparseMapsOutput: ...
+
+    @_overload
+    async def rpc_v2_json_sparse_maps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RpcV2JsonSparseMapsInputDict],
     ) -> RpcV2JsonSparseMapsOutput:
         """
         Invokes the RpcV2JsonSparseMaps operation.
 
         Args:
-            input:
-                An instance of `RpcV2JsonSparseMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -307,17 +541,39 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `RpcV2JsonSparseMapsOutput`.
         """
-        return await self._invoke(input, _models.RPC_V2_JSON_SPARSE_MAPS, [], plugins)
 
+    async def rpc_v2_json_sparse_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RpcV2JsonSparseMapsOutput:
+        return await self._invoke(
+            self._select_input(_models.RPC_V2_JSON_SPARSE_MAPS, args, kwargs),
+            _models.RPC_V2_JSON_SPARSE_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    async def simple_scalar_properties(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputDict],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
 
         Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -327,17 +583,39 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        return await self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
 
+    async def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
+        return await self._invoke(
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
+            _models.SIMPLE_SCALAR_PROPERTIES,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def sparse_nulls_operation(
-        self, input: SparseNullsOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.SparseNullsOperationInput
+        | _models.SparseNullsOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SparseNullsOperationOutput: ...
+
+    @_overload
+    async def sparse_nulls_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SparseNullsOperationInputDict],
     ) -> SparseNullsOperationOutput:
         """
         Invokes the SparseNullsOperation operation.
 
         Args:
-            input:
-                An instance of `SparseNullsOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -347,10 +625,34 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `SparseNullsOperationOutput`.
         """
-        return await self._invoke(input, _models.SPARSE_NULLS_OPERATION, [], plugins)
 
+    async def sparse_nulls_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SparseNullsOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.SPARSE_NULLS_OPERATION, args, kwargs),
+            _models.SPARSE_NULLS_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def timestamp_format_ignored(
-        self, input: TimestampFormatIgnoredInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.TimestampFormatIgnoredInput
+        | _models.TimestampFormatIgnoredInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> TimestampFormatIgnoredOutput: ...
+
+    @_overload
+    async def timestamp_format_ignored(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.TimestampFormatIgnoredInputDict],
     ) -> TimestampFormatIgnoredOutput:
         """
         This operation tests that the rpcv2Json protocol always uses
@@ -360,8 +662,6 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         serialize as JSON numbers.
 
         Args:
-            input:
-                An instance of `TimestampFormatIgnoredInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -371,7 +671,16 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Returns:
             An instance of `TimestampFormatIgnoredOutput`.
         """
-        return await self._invoke(input, _models.TIMESTAMP_FORMAT_IGNORED, [], plugins)
+
+    async def timestamp_format_ignored(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> TimestampFormatIgnoredOutput:
+        return await self._invoke(
+            self._select_input(_models.TIMESTAMP_FORMAT_IGNORED, args, kwargs),
+            _models.TIMESTAMP_FORMAT_IGNORED,
+            [],
+            plugins,
+        )
 
     async def _new_config(self) -> AsyncConfig:
         return AsyncConfig()

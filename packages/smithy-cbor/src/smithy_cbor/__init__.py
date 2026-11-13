@@ -12,7 +12,7 @@ from ._private.generic import loads as loads
 from ._private.serializers import CBORShapeSerializer as _CBORShapeSerializer
 from .settings import CBORSettings
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __all__ = ("CBORCodec", "CBORSettings", "loads")
 
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -20,37 +20,21 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..models import (
-        ContentTypeParametersInput,
         ContentTypeParametersOutput,
-        EmptyInputAndEmptyOutputInput,
         EmptyInputAndEmptyOutputOutput,
-        EndpointOperationInput,
         EndpointOperationOutput,
-        EndpointWithHostLabelOperationInput,
         EndpointWithHostLabelOperationOutput,
-        GreetingWithErrorsInput,
         GreetingWithErrorsOutput,
-        HostWithPathOperationInput,
         HostWithPathOperationOutput,
-        JsonUnionsInput,
         JsonUnionsOutput,
-        NoInputAndNoOutputInput,
         NoInputAndNoOutputOutput,
-        NoInputAndOutputInput,
         NoInputAndOutputOutput,
-        OperationWithDefaultsInput,
         OperationWithDefaultsOutput,
-        OperationWithNestedStructureInput,
         OperationWithNestedStructureOutput,
-        OperationWithRequiredMembersInput,
         OperationWithRequiredMembersOutput,
-        OperationWithRequiredMembersWithDefaultsInput,
         OperationWithRequiredMembersWithDefaultsOutput,
-        PutWithContentEncodingInput,
         PutWithContentEncodingOutput,
-        QueryIncompatibleOperationInput,
         QueryIncompatibleOperationOutput,
-        SimpleScalarPropertiesInput,
         SimpleScalarPropertiesOutput,
     )
 
@@ -63,16 +47,29 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def content_type_parameters(
-        self, input: ContentTypeParametersInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ContentTypeParametersInput
+        | _models.ContentTypeParametersInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ContentTypeParametersOutput: ...
+
+    @_overload
+    async def content_type_parameters(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ContentTypeParametersInputDict],
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
         `Content-Type` header with parameters.
 
         Args:
-            input:
-                An instance of `ContentTypeParametersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -82,10 +79,34 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
-        return await self._invoke(input, _models.CONTENT_TYPE_PARAMETERS, [], plugins)
 
+    async def content_type_parameters(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ContentTypeParametersOutput:
+        return await self._invoke(
+            self._select_input(_models.CONTENT_TYPE_PARAMETERS, args, kwargs),
+            _models.CONTENT_TYPE_PARAMETERS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def empty_input_and_empty_output(
-        self, input: EmptyInputAndEmptyOutputInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyInputAndEmptyOutputInput
+        | _models.EmptyInputAndEmptyOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyInputAndEmptyOutputOutput: ...
+
+    @_overload
+    async def empty_input_and_empty_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EmptyInputAndEmptyOutputInputDict],
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -94,8 +115,6 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         this should be rare, code generators must support this.
 
         Args:
-            input:
-                An instance of `EmptyInputAndEmptyOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -105,19 +124,38 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
+
+    async def empty_input_and_empty_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyInputAndEmptyOutputOutput:
         return await self._invoke(
-            input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins
+            self._select_input(_models.EMPTY_INPUT_AND_EMPTY_OUTPUT, args, kwargs),
+            _models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            [],
+            plugins,
         )
 
+    @_overload
     async def endpoint_operation(
-        self, input: EndpointOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointOperationOutput: ...
+
+    @_overload
+    async def endpoint_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointOperationInputDict],
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -127,19 +165,39 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return await self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
 
+    async def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.ENDPOINT_OPERATION, args, kwargs),
+            _models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def endpoint_with_host_label_operation(
         self,
-        input: EndpointWithHostLabelOperationInput,
+        request: _models.EndpointWithHostLabelOperationInput
+        | _models.EndpointWithHostLabelOperationInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput: ...
+
+    @_overload
+    async def endpoint_with_host_label_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputDict],
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointWithHostLabelOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -149,12 +207,35 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
+
+    async def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelOperationOutput:
         return await self._invoke(
-            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput | _models.GreetingWithErrorsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    async def greeting_with_errors(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputDict],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -164,8 +245,6 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         error responses.
 
         Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -175,17 +254,39 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return await self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    async def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return await self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def host_with_path_operation(
-        self, input: HostWithPathOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HostWithPathOperationInput
+        | _models.HostWithPathOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HostWithPathOperationOutput: ...
+
+    @_overload
+    async def host_with_path_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HostWithPathOperationInputDict],
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
 
         Args:
-            input:
-                An instance of `HostWithPathOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -195,17 +296,38 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        return await self._invoke(input, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
+    async def host_with_path_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HostWithPathOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.HOST_WITH_PATH_OPERATION, args, kwargs),
+            _models.HOST_WITH_PATH_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def json_unions(
-        self, input: JsonUnionsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.JsonUnionsInput | _models.JsonUnionsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonUnionsOutput: ...
+
+    @_overload
+    async def json_unions(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonUnionsInputDict],
     ) -> JsonUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
 
         Args:
-            input:
-                An instance of `JsonUnionsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -215,10 +337,33 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
-        return await self._invoke(input, _models.JSON_UNIONS, [], plugins)
 
+    async def json_unions(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonUnionsOutput:
+        return await self._invoke(
+            self._select_input(_models.JSON_UNIONS, args, kwargs),
+            _models.JSON_UNIONS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def no_input_and_no_output(
-        self, input: NoInputAndNoOutputInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndNoOutputInput | _models.NoInputAndNoOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndNoOutputOutput: ...
+
+    @_overload
+    async def no_input_and_no_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndNoOutputInputDict],
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -227,8 +372,6 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         this.
 
         Args:
-            input:
-                An instance of `NoInputAndNoOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -238,10 +381,33 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        return await self._invoke(input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
+    async def no_input_and_no_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndNoOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_NO_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_NO_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def no_input_and_output(
-        self, input: NoInputAndOutputInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NoInputAndOutputOutput: ...
+
+    @_overload
+    async def no_input_and_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndOutputInputDict],
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -250,8 +416,6 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         generators must support this.
 
         Args:
-            input:
-                An instance of `NoInputAndOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -261,17 +425,39 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return await self._invoke(input, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
+    async def no_input_and_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndOutputOutput:
+        return await self._invoke(
+            self._select_input(_models.NO_INPUT_AND_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def operation_with_defaults(
-        self, input: OperationWithDefaultsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.OperationWithDefaultsInput
+        | _models.OperationWithDefaultsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> OperationWithDefaultsOutput: ...
+
+    @_overload
+    async def operation_with_defaults(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithDefaultsInputDict],
     ) -> OperationWithDefaultsOutput:
         """
         Invokes the OperationWithDefaults operation.
 
         Args:
-            input:
-                An instance of `OperationWithDefaultsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -281,19 +467,39 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `OperationWithDefaultsOutput`.
         """
-        return await self._invoke(input, _models.OPERATION_WITH_DEFAULTS, [], plugins)
 
+    async def operation_with_defaults(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithDefaultsOutput:
+        return await self._invoke(
+            self._select_input(_models.OPERATION_WITH_DEFAULTS, args, kwargs),
+            _models.OPERATION_WITH_DEFAULTS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def operation_with_nested_structure(
         self,
-        input: OperationWithNestedStructureInput,
+        request: _models.OperationWithNestedStructureInput
+        | _models.OperationWithNestedStructureInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> OperationWithNestedStructureOutput: ...
+
+    @_overload
+    async def operation_with_nested_structure(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithNestedStructureInputDict],
     ) -> OperationWithNestedStructureOutput:
         """
         Invokes the OperationWithNestedStructure operation.
 
         Args:
-            input:
-                An instance of `OperationWithNestedStructureInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -303,21 +509,39 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `OperationWithNestedStructureOutput`.
         """
+
+    async def operation_with_nested_structure(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithNestedStructureOutput:
         return await self._invoke(
-            input, _models.OPERATION_WITH_NESTED_STRUCTURE, [], plugins
+            self._select_input(_models.OPERATION_WITH_NESTED_STRUCTURE, args, kwargs),
+            _models.OPERATION_WITH_NESTED_STRUCTURE,
+            [],
+            plugins,
         )
 
+    @_overload
     async def operation_with_required_members(
         self,
-        input: OperationWithRequiredMembersInput,
+        request: _models.OperationWithRequiredMembersInput
+        | _models.OperationWithRequiredMembersInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> OperationWithRequiredMembersOutput: ...
+
+    @_overload
+    async def operation_with_required_members(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithRequiredMembersInputDict],
     ) -> OperationWithRequiredMembersOutput:
         """
         Invokes the OperationWithRequiredMembers operation.
 
         Args:
-            input:
-                An instance of `OperationWithRequiredMembersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -327,21 +551,39 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `OperationWithRequiredMembersOutput`.
         """
+
+    async def operation_with_required_members(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithRequiredMembersOutput:
         return await self._invoke(
-            input, _models.OPERATION_WITH_REQUIRED_MEMBERS, [], plugins
+            self._select_input(_models.OPERATION_WITH_REQUIRED_MEMBERS, args, kwargs),
+            _models.OPERATION_WITH_REQUIRED_MEMBERS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def operation_with_required_members_with_defaults(
         self,
-        input: OperationWithRequiredMembersWithDefaultsInput,
+        request: _models.OperationWithRequiredMembersWithDefaultsInput
+        | _models.OperationWithRequiredMembersWithDefaultsInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> OperationWithRequiredMembersWithDefaultsOutput: ...
+
+    @_overload
+    async def operation_with_required_members_with_defaults(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithRequiredMembersWithDefaultsInputDict],
     ) -> OperationWithRequiredMembersWithDefaultsOutput:
         """
         Invokes the OperationWithRequiredMembersWithDefaults operation.
 
         Args:
-            input:
-                An instance of `OperationWithRequiredMembersWithDefaultsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -351,19 +593,41 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `OperationWithRequiredMembersWithDefaultsOutput`.
         """
+
+    async def operation_with_required_members_with_defaults(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithRequiredMembersWithDefaultsOutput:
         return await self._invoke(
-            input, _models.OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS, [], plugins
+            self._select_input(
+                _models.OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS, args, kwargs
+            ),
+            _models.OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def put_with_content_encoding(
-        self, input: PutWithContentEncodingInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.PutWithContentEncodingInput
+        | _models.PutWithContentEncodingInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutWithContentEncodingOutput: ...
+
+    @_overload
+    async def put_with_content_encoding(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.PutWithContentEncodingInputDict],
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
 
         Args:
-            input:
-                An instance of `PutWithContentEncodingInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -373,19 +637,39 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        return await self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
 
+    async def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutWithContentEncodingOutput:
+        return await self._invoke(
+            self._select_input(_models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
+            _models.PUT_WITH_CONTENT_ENCODING,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def query_incompatible_operation(
         self,
-        input: QueryIncompatibleOperationInput,
+        request: _models.QueryIncompatibleOperationInput
+        | _models.QueryIncompatibleOperationInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> QueryIncompatibleOperationOutput: ...
+
+    @_overload
+    async def query_incompatible_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryIncompatibleOperationInputDict],
     ) -> QueryIncompatibleOperationOutput:
         """
         Invokes the QueryIncompatibleOperation operation.
 
         Args:
-            input:
-                An instance of `QueryIncompatibleOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -395,19 +679,39 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `QueryIncompatibleOperationOutput`.
         """
+
+    async def query_incompatible_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryIncompatibleOperationOutput:
         return await self._invoke(
-            input, _models.QUERY_INCOMPATIBLE_OPERATION, [], plugins
+            self._select_input(_models.QUERY_INCOMPATIBLE_OPERATION, args, kwargs),
+            _models.QUERY_INCOMPATIBLE_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    async def simple_scalar_properties(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputDict],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
 
         Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -417,7 +721,16 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        return await self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
+
+    async def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
+        return await self._invoke(
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
+            _models.SIMPLE_SCALAR_PROPERTIES,
+            [],
+            plugins,
+        )
 
     async def _new_config(self) -> AsyncJSONRPC10Config:
         return await AsyncJSONRPC10Config.resolve()

@@ -109,6 +109,7 @@ class SchemaGenerator:
             return
 
         partitions = _schema_partitions(plan, size)
+        width = len(str(len(partitions) - 1))
         _write_schema_facade(
             context.files.python_module(
                 f"src/{directory}/_private/schemas.py",
@@ -118,10 +119,11 @@ class SchemaGenerator:
             partitions,
         )
         for index, shapes in enumerate(partitions):
+            module = f"schemas_{index:0{width}d}"
             _write_schema_module(
                 context.files.python_module(
-                    f"src/{directory}/_private/schemas_{index}.py",
-                    f"{package}._private.schemas_{index}",
+                    f"src/{directory}/_private/{module}.py",
+                    f"{package}._private.{module}",
                 ),
                 plan,
                 shapes,
@@ -137,6 +139,7 @@ def _write_schema_facade(
     plan: SchemaPlan,
     partitions: tuple[tuple[_model.Shape, ...], ...],
 ) -> None:
+    width = len(str(len(partitions) - 1))
     writer.line("_PARTITION_NAMES: tuple[tuple[str, ...], ...] = (")
     with writer.indent():
         for shapes in partitions:
@@ -164,7 +167,7 @@ def _write_schema_facade(
         writer.line(
             "module = ",
             _IMPORT_MODULE,
-            '(f".schemas_{partition}", __package__)',
+            f'(f".schemas_{{partition:0{width}d}}", __package__)',
         )
         writer.line("value = getattr(module, name)")
         writer.line("globals()[name] = value")

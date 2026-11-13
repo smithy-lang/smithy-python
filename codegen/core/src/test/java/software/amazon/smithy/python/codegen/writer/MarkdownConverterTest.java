@@ -4,6 +4,7 @@
  */
 package software.amazon.smithy.python.codegen.writer;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -82,11 +83,14 @@ public class MarkdownConverterTest {
 
     @Test
     public void testConvertHtmlToMarkdownWithFormatSpecifierCharacters() {
-        // Test that Smithy format specifier characters ($) are properly escaped
+        // Smithy format specifier characters ($) are left as they are. Converted
+        // documentation is literal text that writers pass with $L, so escaping it
+        // here would double the dollar signs of anything not used as a format string.
         String html = "<p>Testing $placeholderOne and $placeholderTwo</p>";
-        String result = MarkdownConverter.convert(html, createMockContext(true));
-        // $ should be escaped to $$
-        assertEquals("Testing $$placeholderOne and $$placeholderTwo", result);
+        assertEquals("Testing $placeholderOne and $placeholderTwo",
+                MarkdownConverter.convert(html, createMockContext(true)));
+        assertEquals("Testing $placeholderOne and $placeholderTwo",
+                MarkdownConverter.convertForDocstring(html, createMockContext(true)));
     }
 
     @Test
@@ -128,42 +132,80 @@ public class MarkdownConverterTest {
         assertEquals("Text with [brackets] and {braces} and (parens)", result.trim());
     }
 
+    // Code is verbatim in Markdown, so the four tests below expect every backslash
+    // of the model in the plain Markdown, and twice in a docstring, where it then
+    // decodes to itself whatever follows it.
+
     @Test
     public void testConvertPreservesLiteralDoubleBackslash() {
-        // A literal "\\" is a valid Python escape (e.g. a password charset like
-        // "[\\]") and must be preserved.
+        // A literal "\\" (e.g. a password charset like "[\\]") is two backslashes.
         String html = "<code>@[\\\\]^</code>";
-        String result = MarkdownConverter.convert(html, createMockContext(true)).trim();
-        assertEquals("`@[\\\\]^`", result);
+        assertEquals("`@[\\\\]^`", MarkdownConverter.convert(html, createMockContext(true)));
+        assertEquals("`@[\\\\\\\\]^`", MarkdownConverter.convertForDocstring(html, createMockContext(true)));
     }
 
     @Test
     public void testConvertEscapesLoneBackslash() {
         // A lone backslash that is not part of a recognized Python escape (here a
         // backslash followed by a space) must be doubled so the docstring is a
-        // valid Python string.
+        // valid Python string. Markdown has nothing to escape.
         String html = "<code>[ \\ ]</code>";
-        String result = MarkdownConverter.convert(html, createMockContext(true)).trim();
-        assertEquals("`[ \\\\ ]`", result);
+        assertEquals("`[ \\ ]`", MarkdownConverter.convert(html, createMockContext(true)));
+        assertEquals("`[ \\\\ ]`", MarkdownConverter.convertForDocstring(html, createMockContext(true)));
     }
 
     @Test
-    public void testConvertPreservesValidPythonEscapes() {
-        // A backslash that already forms a valid Python escape (e.g. \") must be
-        // left untouched rather than doubled.
+    public void testConvertEscapesBackslashesThatLookLikePythonEscapes() {
+        // A backslash of code that happens to form a valid Python escape (e.g. \")
+        // is still a backslash. Left untouched, it would decode to something else.
         String html = "<code>!\\\"#</code>";
-        String result = MarkdownConverter.convert(html, createMockContext(true)).trim();
-        assertEquals("`!\\\"#`", result);
+        assertEquals("`!\\\"#`", MarkdownConverter.convert(html, createMockContext(true)));
+        assertEquals("`!\\\\\"#`", MarkdownConverter.convertForDocstring(html, createMockContext(true)));
     }
 
     @Test
     public void testConvertHandlesBackslashBeforeMarkdownChar() {
-        // A backslash followed by a Markdown-significant character (here "*") makes
-        // pandoc emit an odd-length backslash run. The spurious escape must be
-        // dropped so the result is valid Python.
+        // A backslash of code followed by a Markdown-significant character (here
+        // "*") is not one of pandoc's escapes, so it is not dropped as they are.
         String html = "<code>arn:aws:iam::\\*:user/\\*</code>";
-        String result = MarkdownConverter.convert(html, createMockContext(true)).trim();
-        assertEquals("`arn:aws:iam::*:user/*`", result);
+        assertEquals("`arn:aws:iam::\\*:user/\\*`", MarkdownConverter.convert(html, createMockContext(true)));
+        assertEquals("`arn:aws:iam::\\\\*:user/\\\\*`",
+                MarkdownConverter.convertForDocstring(html, createMockContext(true)));
+    }
+
+    // U+E05C stands in for the backslashes of code while pandoc runs. Documentation
+    // may contain that character itself, and there it is not a backslash.
+
+    @Test
+    public void testConvertKeepsLiteralPrivateUseCharacter() {
+        assertPrivateUseCharacterIsKept(String.valueOf((char) 0xE05C));
+    }
+
+    @Test
+    public void testConvertKeepsEntityEncodedPrivateUseCharacter() {
+        // Pandoc decodes the entity, so the character first appears in its output.
+        assertPrivateUseCharacterIsKept("&#xE05C;");
+    }
+
+    private void assertPrivateUseCharacterIsKept(String written) {
+        String glyph = String.valueOf((char) 0xE05C);
+        // Without a backslash of code nothing needs a stand-in. With one, the
+        // character sits in prose and right after a backslash that does.
+        String prose = "<p>Glyph " + written + " is literal.</p>";
+        String withCode = "<p>Glyph " + written + " is literal, as in <code>D:\\Users\\" + written + "</code>.</p>";
+        assertAll(
+                () -> assertEquals("Glyph " + glyph + " is literal.",
+                        MarkdownConverter.convert(prose, createMockContext(true)),
+                        "Markdown without a code backslash"),
+                () -> assertEquals("Glyph " + glyph + " is literal.",
+                        MarkdownConverter.convertForDocstring(prose, createMockContext(true)),
+                        "docstring without a code backslash"),
+                () -> assertEquals("Glyph " + glyph + " is literal, as in `D:\\Users\\" + glyph + "`.",
+                        MarkdownConverter.convert(withCode, createMockContext(true)),
+                        "Markdown with code backslashes"),
+                () -> assertEquals("Glyph " + glyph + " is literal, as in `D:\\\\Users\\\\" + glyph + "`.",
+                        MarkdownConverter.convertForDocstring(withCode, createMockContext(true)),
+                        "docstring with code backslashes"));
     }
 
     @Test
@@ -188,11 +230,11 @@ public class MarkdownConverterTest {
 
     @Test
     public void testConvertEscapesQuoteRunsNextToBackslashes() {
-        // Only unescaped quotes count toward a run: an already-escaped quote is
-        // not escaped twice, while a literal "\\" does not escape the next quote.
+        // The backslashes of code are literal, so they are doubled and never escape
+        // the quote after them: every quote of each of these runs is escaped.
         String html = "<code>\"\"\"\"</code> <code>\\\"\"\"\"</code> <code>\\\\\"\"\"</code>";
         String result = MarkdownConverter.convertForDocstring(html, createMockContext(true)).trim();
-        assertEquals("`\\\"\\\"\\\"\\\"` `\\\"\\\"\\\"\\\"` `\\\\\\\"\\\"\\\"`", result);
+        assertEquals("`\\\"\\\"\\\"\\\"` `\\\\\\\"\\\"\\\"\\\"` `\\\\\\\\\\\"\\\"\\\"`", result);
     }
 
     @Test
@@ -325,6 +367,43 @@ public class MarkdownConverterTest {
         String html = "<code><a>Link</a></code>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         assertEquals("`Link`", result);
+    }
+
+    @Test
+    public void testLeadParagraphEndsAtTheFirstBlankLine() {
+        String wrapped = "The value can\nrange from 900 seconds.";
+        assertEquals(wrapped.length(), MarkdownConverter.leadParagraphEnd(wrapped));
+        assertEquals(wrapped.length(), MarkdownConverter.leadParagraphEnd(wrapped + "\n\n- A list.\n"));
+        assertEquals(wrapped.length(), MarkdownConverter.leadParagraphEnd(wrapped + "\n\n    code\n"));
+        // An autolink is text; other raw HTML may be a block.
+        String link = "<https://example.com> describes\nthe value.";
+        assertEquals(link.length(), MarkdownConverter.leadParagraphEnd(link));
+    }
+
+    @Test
+    public void testLeadParagraphIsOnlyEverAParagraph() {
+        // Joining the lines of any of these would change what they mean.
+        for (String notAParagraph : new String[] {
+                "",
+                "- One.\n- Two.",
+                "1. One.\n2. Two.",
+                "    code\n    more code",
+                "```python\ncode\n```",
+                "# Heading",
+                "Heading\n-------",
+                "> A quote\n> continues.",
+                "| a | b |\n|---|---|",
+                "Term\n:   Definition",
+                "Note:\n    An admonition.",
+                "Text with a note. Note:\n    An admonition.",
+                "<div>\nraw HTML\n</div>",
+                "A hard line break\\\nends this line.",
+        }) {
+            assertEquals(-1, MarkdownConverter.leadParagraphEnd(notAParagraph), notAParagraph);
+        }
+        // A doubled backslash at the end of a line is a literal one, not a line break.
+        String literal = "Ends with a backslash \\\\\nand goes on.";
+        assertEquals(literal.length(), MarkdownConverter.leadParagraphEnd(literal));
     }
 
     private GenerationContext createMockContext(boolean isAwsService) {

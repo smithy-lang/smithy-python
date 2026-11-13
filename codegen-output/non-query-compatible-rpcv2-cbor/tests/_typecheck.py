@@ -2,16 +2,53 @@
 
 from typing import Any
 
+from nonquerycompatiblerpcv2cbor.aio.client import (
+    AsyncNonQueryCompatibleRpcV2ProtocolClient,
+)
+from nonquerycompatiblerpcv2cbor.client import NonQueryCompatibleRpcV2ProtocolClient
 from nonquerycompatiblerpcv2cbor.models import (
     NonQueryCompatibleOperationInput,
+    NonQueryCompatibleOperationInputDict,
     NonQueryCompatibleOperationOutput,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check.
 
 _: Any = ...
 
 NonQueryCompatibleOperationInput()
 NonQueryCompatibleOperationOutput()
+_params_0: NonQueryCompatibleOperationInputDict = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncNonQueryCompatibleRpcV2ProtocolClient) -> None:
+    pass
+    await client.non_query_compatible_operation()
+    await client.non_query_compatible_operation(
+        **_request(NonQueryCompatibleOperationInputDict)
+    )
+    await client.non_query_compatible_operation(
+        _request(NonQueryCompatibleOperationInput)
+    )
+    await client.non_query_compatible_operation(
+        _request(NonQueryCompatibleOperationInputDict)
+    )
+
+
+def check_sync_calls(client: NonQueryCompatibleRpcV2ProtocolClient) -> None:
+    pass
+    client.non_query_compatible_operation()
+    client.non_query_compatible_operation(
+        **_request(NonQueryCompatibleOperationInputDict)
+    )
+    client.non_query_compatible_operation(_request(NonQueryCompatibleOperationInput))
+    client.non_query_compatible_operation(
+        _request(NonQueryCompatibleOperationInputDict)
+    )

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -19,7 +19,7 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..models import SimpleScalarPropertiesInput, SimpleScalarPropertiesOutput
+    from ..models import SimpleScalarPropertiesOutput
 
 
 logger = logging.getLogger(__name__)
@@ -38,15 +38,28 @@ class AsyncRestXmlProtocolNamespaceClient(
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    async def simple_scalar_properties(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputDict],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
 
         Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -56,7 +69,16 @@ class AsyncRestXmlProtocolNamespaceClient(
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        return await self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
+
+    async def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
+        return await self._invoke(
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
+            _models.SIMPLE_SCALAR_PROPERTIES,
+            [],
+            plugins,
+        )
 
     async def _new_config(self) -> AsyncRestXmlProtocolNamespaceConfig:
         return await AsyncRestXmlProtocolNamespaceConfig.resolve()

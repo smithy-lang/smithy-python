@@ -2,19 +2,23 @@
 
 from typing import Any
 
+from my_handwritten_json_model.aio.client import AsyncMyHandwrittenJsonModel
+from my_handwritten_json_model.client import MyHandwrittenJsonModel
 from my_handwritten_json_model.models import (
     Alpha,
     DifferentShapeName,
     Gamma,
     GammaPayload,
     TradeEventStreamInput,
+    TradeEventStreamInputDict,
     TradeEventStreamOutput,
     Unit,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check.
 
 _: Any = ...
 
@@ -25,3 +29,20 @@ Gamma()
 GammaPayload()
 TradeEventStreamInput()
 TradeEventStreamOutput()
+_params_0: TradeEventStreamInputDict = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncMyHandwrittenJsonModel) -> None:
+    pass
+    await client.trade_event_stream()
+    await client.trade_event_stream(**_request(TradeEventStreamInputDict))
+    await client.trade_event_stream(_request(TradeEventStreamInput))
+    await client.trade_event_stream(_request(TradeEventStreamInputDict))
+
+
+def check_sync_calls(client: MyHandwrittenJsonModel) -> None:
+    pass

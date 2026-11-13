@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.0
+
+### Dependencies
+* Bump `smithy-core` from `~=0.11.0` to `~=0.12.0`.
+* Bump `smithy-cbor` from `~=0.3.0` to `~=0.4.0`.
+* Bump `smithy-json` from `~=0.5.0` to `~=0.6.0`.
+* Bump `smithy-aws-event-stream` from `~=0.5.0` to `~=0.6.0`.
+
 ## v0.8.0
 
 ### Breaking Changes

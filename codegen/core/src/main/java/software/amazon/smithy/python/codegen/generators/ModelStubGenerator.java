@@ -6,6 +6,7 @@ package software.amazon.smithy.python.codegen.generators;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import software.amazon.smithy.codegen.core.Symbol;
@@ -25,6 +26,7 @@ import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.InputParams;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SymbolProperties;
@@ -41,12 +43,22 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 public final class ModelStubGenerator implements Runnable {
 
     private static final int STUB_PARTITION_SIZE = 250;
+    private static final Symbol TYPED_DICT = typingSymbol("TypedDict");
+    private static final Symbol REQUIRED = typingSymbol("Required");
+    // Models type a streaming body as the async client's StreamingBlob, which is a
+    // superset of this one of the same name, so this one is imported under an alias.
+    private static final Symbol SYNC_STREAMING_BLOB = Symbol.builder()
+            .name("StreamingBlob")
+            .namespace("smithy_core.interfaces", ".")
+            .build();
+    private static final String SYNC_STREAMING_BLOB_ALIAS = "SyncStreamingBlob";
 
     private final GenerationContext context;
     private final PythonSettings settings;
     private final Model model;
     private final SymbolProvider symbolProvider;
     private final List<Shape> shapes;
+    private final InputParams inputParams;
 
     public ModelStubGenerator(GenerationContext context, List<Shape> shapes) {
         this.context = context;
@@ -54,6 +66,7 @@ public final class ModelStubGenerator implements Runnable {
         this.model = context.model();
         this.symbolProvider = context.symbolProvider();
         this.shapes = shapes;
+        this.inputParams = new InputParams(context);
     }
 
     @Override
@@ -78,11 +91,12 @@ public final class ModelStubGenerator implements Runnable {
         for (int start = 0; start < modelShapes.size(); start += STUB_PARTITION_SIZE) {
             partitions.add(modelShapes.subList(start, Math.min(start + STUB_PARTITION_SIZE, modelShapes.size())));
         }
+        int width = Integer.toString(partitions.size() - 1).length();
         context.writerDelegator().useFileWriter(filename, namespace, writer -> {
             for (int i = 0; i < partitions.size(); i++) {
                 var partition = partitions.get(i);
                 writer.openBlock(
-                        String.format("from ._private.models_%d import (", i),
+                        String.format(Locale.ROOT, "from ._private.models_%0" + width + "d import (", i),
                         ")",
                         () -> {
                             for (var shape : partition) {
@@ -98,8 +112,9 @@ public final class ModelStubGenerator implements Runnable {
         });
 
         for (int i = 0; i < partitions.size(); i++) {
-            var partitionFilename = String.format("src/%s/_private/models_%d.pyi", module, i);
-            var partitionNamespace = String.format("%s._private.models_%d", module, i);
+            var partitionModule = String.format(Locale.ROOT, "models_%0" + width + "d", i);
+            var partitionFilename = String.format("src/%s/_private/%s.pyi", module, partitionModule);
+            var partitionNamespace = String.format("%s._private.%s", module, partitionModule);
             var partition = partitions.get(i);
             context.writerDelegator().useFileWriter(partitionFilename, partitionNamespace, writer -> {
                 writer.addImport(module + ".models", "_SerdeShape");
@@ -169,6 +184,10 @@ public final class ModelStubGenerator implements Runnable {
         }
     }
 
+    // Every name a shape declares in the stub. The public stub re-exports each of them
+    // from the shape's partition, and a reference to one from inside that partition is
+    // local. A shape's dictionary forms are declared beside its model, so they are
+    // among its names: left out, they would exist only in the private partition.
     private List<String> stubNames(Shape shape) {
         if (shape.isUnionShape()) {
             var symbol = symbolProvider.toSymbol(shape);
@@ -179,6 +198,12 @@ public final class ModelStubGenerator implements Runnable {
             names.add(symbol.expectProperty(SymbolProperties.UNION_UNKNOWN).getName());
             names.add(symbol.getName());
             names.add(symbol.expectProperty(SymbolProperties.DESERIALIZER).getName());
+            if (inputParams.hasParams(shape)) {
+                for (var member : shape.asUnionShape().get().members()) {
+                    names.add(inputParams.paramsSymbol(member).getName());
+                }
+                names.add(inputParams.paramsSymbol(shape).getName());
+            }
             return names;
         }
         if (shape.isEnumShape() || shape.isIntEnumShape()) {
@@ -186,7 +211,15 @@ public final class ModelStubGenerator implements Runnable {
                     .expectProperty(SymbolProperties.ENUM_SYMBOL)
                     .getName());
         }
-        return List.of(symbolProvider.toSymbol(shape).getName());
+        var names = new ArrayList<String>();
+        names.add(symbolProvider.toSymbol(shape).getName());
+        if (inputParams.hasParams(shape)) {
+            names.add(inputParams.paramsSymbol(shape).getName());
+            if (inputParams.hasAsyncParams(shape)) {
+                names.add(inputParams.asyncParamsSymbol(shape).getName());
+            }
+        }
+        return names;
     }
 
     private boolean isModelShape(Shape shape) {
@@ -244,6 +277,125 @@ public final class ModelStubGenerator implements Runnable {
             }
         });
         writer.write("");
+        if (inputParams.hasParams(shape)) {
+            writeStructParams(writer, shape, name, typeResolver);
+        }
+    }
+
+    // The dictionary a caller may pass in place of the model. It exists only here:
+    // at runtime the name resolves to plain `dict`, so importing it builds nothing.
+    // Each key is documented as the model's field is: an editor shows a key's
+    // documentation from the dictionary form being written, not from the model. The
+    // class itself only says what it is the dictionary form of.
+    //
+    // It is declared right after its model, so in a partitioned stub the two share a
+    // partition and the public stub re-exports both (see stubNames).
+    //
+    // The two clients accept different streaming bodies, so an input with one has
+    // two forms. The plain form takes what the sync client accepts, which the async
+    // client accepts too. The async form also takes async streams.
+    private void writeStructParams(
+            PythonWriter writer,
+            StructureShape shape,
+            String modelName,
+            UnaryOperator<Symbol> typeResolver
+    ) {
+        var paramsSymbol = inputParams.paramsSymbol(shape);
+        if (!inputParams.hasAsyncParams(shape)) {
+            writeStructParams(writer,
+                    shape,
+                    paramsSymbol,
+                    false,
+                    String.format("Dictionary form of `%s`.", modelName),
+                    typeResolver);
+            return;
+        }
+        var asyncSymbol = inputParams.asyncParamsSymbol(shape);
+        writer.addImport(SYNC_STREAMING_BLOB.getNamespace(), SYNC_STREAMING_BLOB.getName(), SYNC_STREAMING_BLOB_ALIAS);
+        writeStructParams(writer,
+                shape,
+                paramsSymbol,
+                true,
+                "Dictionary form of `" + modelName + "` that either client accepts.\n\n"
+                        + "Its streaming body is one a sync client can send. Use `" + asyncSymbol.getName()
+                        + "` for an async stream.",
+                typeResolver);
+        writeStructParams(writer,
+                shape,
+                asyncSymbol,
+                false,
+                "Dictionary form of `" + modelName + "` for the async client.\n\n"
+                        + "Its streaming body may also be an async stream.",
+                typeResolver);
+    }
+
+    private void writeStructParams(
+            PythonWriter writer,
+            StructureShape shape,
+            Symbol paramsSymbol,
+            boolean syncBody,
+            String docs,
+            UnaryOperator<Symbol> typeResolver
+    ) {
+        writer.addLocallyDefinedSymbol(paramsSymbol);
+        writer.openBlock("class $L($T, total=False):", "", paramsSymbol.getName(), TYPED_DICT, () -> {
+            if (docs.contains("\n")) {
+                writer.writeDocs(docs, context);
+            } else {
+                writer.write("\"\"\"$L\"\"\"", docs);
+            }
+            for (var member : shape.members()) {
+                if (CodegenUtils.isErrorMessage(model, member) || !inputParams.isParameter(member)) {
+                    continue;
+                }
+                var memberName = symbolProvider.toMemberName(member);
+                var type = syncBody && inputParams.isStreamingBlob(member)
+                        ? SYNC_STREAMING_BLOB_ALIAS
+                        : paramType(writer, member, typeResolver);
+                if (inputParams.mustBeSet(member)) {
+                    writer.write("$L: $T[$L]", memberName, REQUIRED, type);
+                } else {
+                    writer.write("$L: $L | None", memberName, type);
+                }
+                writeMemberDocs(writer, member);
+            }
+        });
+        writer.write("");
+    }
+
+    // A union's dictionary form sets exactly one variant, so it is the union of one
+    // single-key dictionary per variant: a type checker then rejects a dictionary
+    // that sets none or more than one. Each key carries its variant's documentation.
+    private void writeUnionParams(PythonWriter writer, UnionShape shape, UnaryOperator<Symbol> typeResolver) {
+        var variantNames = new ArrayList<String>();
+        for (var member : shape.members()) {
+            var variantSymbol = inputParams.paramsSymbol(member);
+            writer.addLocallyDefinedSymbol(variantSymbol);
+            variantNames.add(variantSymbol.getName());
+            writer.openBlock("class $L($T):", "", variantSymbol.getName(), TYPED_DICT, () -> {
+                writer.write("$L: $L",
+                        symbolProvider.toMemberName(member),
+                        paramType(writer, member, typeResolver));
+                writeMemberDocs(writer, member);
+            });
+            writer.write("");
+        }
+        var paramsSymbol = inputParams.paramsSymbol(shape);
+        writer.addLocallyDefinedSymbol(paramsSymbol);
+        writer.write("$L = Union[$L]", paramsSymbol.getName(), String.join(" | ", variantNames));
+        writer.writeDocs(
+                String.format("Dictionary form of `%s`, setting exactly one variant.",
+                        symbolProvider.toSymbol(shape).getName()),
+                context);
+        writer.write("");
+    }
+
+    // Spells the type a dictionary form accepts for a member. Every symbol in it, a
+    // model's and a dictionary form's alike, goes through the resolver, so that in a
+    // partitioned stub one declared in the same partition is referred to locally and
+    // any other is imported from the public models module, which re-exports it.
+    private String paramType(PythonWriter writer, MemberShape member, UnaryOperator<Symbol> typeResolver) {
+        return inputParams.typeOf(member, symbol -> writer.format("$T", typeResolver.apply(symbol)));
     }
 
     // Must agree with StructureGenerator: a defaulted member is never None at runtime,
@@ -338,6 +490,17 @@ public final class ModelStubGenerator implements Runnable {
                         "def deserialize(self, deserializer: ShapeDeserializer) -> $L: ...",
                         parentName));
         writer.write("");
+        if (inputParams.hasParams(shape)) {
+            writeUnionParams(writer, shape, typeResolver);
+        }
+    }
+
+    private static Symbol typingSymbol(String name) {
+        return Symbol.builder()
+                .name(name)
+                .namespace("typing", ".")
+                .putProperty(SymbolProperties.STDLIB, true)
+                .build();
     }
 
     private software.amazon.smithy.codegen.core.Symbol valueTypeSymbol(Shape target) {

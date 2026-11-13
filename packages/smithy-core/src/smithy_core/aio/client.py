@@ -326,7 +326,7 @@ class AsyncClient[C](_ClientBase[C]):
 
     async def _invoke[I: SerializeableShape, O: DeserializeableShape](
         self,
-        input: I | None,
+        input: I | dict[str, Any] | None,
         operation: APIOperation[I, O],
         default_plugins: list[Callable[[C], None]],
         plugins: list[Callable[[C], None]] | None,
@@ -338,13 +338,14 @@ class AsyncClient[C](_ClientBase[C]):
 
     async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
         self,
-        input: I | None,
+        input: I | dict[str, Any] | None,
         operation: APIOperation[I, O],
         default_plugins: list[Callable[[C], None]],
         plugins: list[Callable[[C], None]] | None,
     ) -> tuple[AsyncRequestPipeline[Any, Any], ClientCall[I, O]]:
+        model = self._build_input(input, operation)
         self._raise_if_closed()
         config = await self._ensure_setup()
         return await run_program_async(
-            self._prepare(config, input, operation, default_plugins, plugins)
+            self._prepare(config, model, operation, default_plugins, plugins)
         )

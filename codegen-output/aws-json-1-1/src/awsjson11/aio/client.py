@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -20,41 +20,23 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..models import (
-        ContentTypeParametersInput,
         ContentTypeParametersOutput,
-        DatetimeOffsetsInput,
         DatetimeOffsetsOutput,
-        EmptyOperationInput,
         EmptyOperationOutput,
-        EndpointOperationInput,
         EndpointOperationOutput,
-        EndpointWithHostLabelOperationInput,
         EndpointWithHostLabelOperationOutput,
-        FractionalSecondsInput,
         FractionalSecondsOutput,
-        GreetingWithErrorsInput,
         GreetingWithErrorsOutput,
-        HostWithPathOperationInput,
         HostWithPathOperationOutput,
-        JsonEnumsInput,
         JsonEnumsOutput,
-        JsonIntEnumsInput,
         JsonIntEnumsOutput,
-        JsonUnionsInput,
         JsonUnionsOutput,
-        KitchenSinkOperationInput,
         KitchenSinkOperationOutput,
-        NullOperationInput,
         NullOperationOutput,
-        OperationWithOptionalInputOutputInput,
         OperationWithOptionalInputOutputOutput,
-        PutAndGetInlineDocumentsInput,
         PutAndGetInlineDocumentsOutput,
-        PutWithContentEncodingInput,
         PutWithContentEncodingOutput,
-        SimpleScalarPropertiesInput,
         SimpleScalarPropertiesOutput,
-        SparseNullsOperationInput,
         SparseNullsOperationOutput,
     )
 
@@ -67,16 +49,29 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def content_type_parameters(
-        self, input: ContentTypeParametersInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.ContentTypeParametersInput
+        | _models.ContentTypeParametersInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ContentTypeParametersOutput: ...
+
+    @_overload
+    async def content_type_parameters(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ContentTypeParametersInputDict],
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
         `Content-Type` header with parameters.
 
         Args:
-            input:
-                An instance of `ContentTypeParametersInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -86,17 +81,38 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `ContentTypeParametersOutput`.
         """
-        return await self._invoke(input, _models.CONTENT_TYPE_PARAMETERS, [], plugins)
 
+    async def content_type_parameters(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ContentTypeParametersOutput:
+        return await self._invoke(
+            self._select_input(_models.CONTENT_TYPE_PARAMETERS, args, kwargs),
+            _models.CONTENT_TYPE_PARAMETERS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def datetime_offsets(
-        self, input: DatetimeOffsetsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DatetimeOffsetsOutput: ...
+
+    @_overload
+    async def datetime_offsets(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DatetimeOffsetsInputDict],
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
 
         Args:
-            input:
-                An instance of `DatetimeOffsetsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -106,17 +122,38 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return await self._invoke(input, _models.DATETIME_OFFSETS, [], plugins)
 
+    async def datetime_offsets(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DatetimeOffsetsOutput:
+        return await self._invoke(
+            self._select_input(_models.DATETIME_OFFSETS, args, kwargs),
+            _models.DATETIME_OFFSETS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def empty_operation(
-        self, input: EmptyOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EmptyOperationInput | _models.EmptyOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EmptyOperationOutput: ...
+
+    @_overload
+    async def empty_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EmptyOperationInputDict],
     ) -> EmptyOperationOutput:
         """
         Invokes the EmptyOperation operation.
 
         Args:
-            input:
-                An instance of `EmptyOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -126,17 +163,38 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `EmptyOperationOutput`.
         """
-        return await self._invoke(input, _models.EMPTY_OPERATION, [], plugins)
 
+    async def empty_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.EMPTY_OPERATION, args, kwargs),
+            _models.EMPTY_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def endpoint_operation(
-        self, input: EndpointOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointOperationOutput: ...
+
+    @_overload
+    async def endpoint_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointOperationInputDict],
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -146,19 +204,39 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return await self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
 
+    async def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.ENDPOINT_OPERATION, args, kwargs),
+            _models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def endpoint_with_host_label_operation(
         self,
-        input: EndpointWithHostLabelOperationInput,
+        request: _models.EndpointWithHostLabelOperationInput
+        | _models.EndpointWithHostLabelOperationInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput: ...
+
+    @_overload
+    async def endpoint_with_host_label_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputDict],
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointWithHostLabelOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -168,19 +246,40 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
+
+    async def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelOperationOutput:
         return await self._invoke(
-            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     async def fractional_seconds(
-        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> FractionalSecondsOutput: ...
+
+    @_overload
+    async def fractional_seconds(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FractionalSecondsInputDict],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
 
         Args:
-            input:
-                An instance of `FractionalSecondsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -190,10 +289,33 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return await self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
 
+    async def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FractionalSecondsOutput:
+        return await self._invoke(
+            self._select_input(_models.FRACTIONAL_SECONDS, args, kwargs),
+            _models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def greeting_with_errors(
-        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.GreetingWithErrorsInput | _models.GreetingWithErrorsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    async def greeting_with_errors(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputDict],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -203,8 +325,6 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         error responses.
 
         Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -214,17 +334,39 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return await self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    async def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return await self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def host_with_path_operation(
-        self, input: HostWithPathOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.HostWithPathOperationInput
+        | _models.HostWithPathOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> HostWithPathOperationOutput: ...
+
+    @_overload
+    async def host_with_path_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HostWithPathOperationInputDict],
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
 
         Args:
-            input:
-                An instance of `HostWithPathOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -234,18 +376,39 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        return await self._invoke(input, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
+    async def host_with_path_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HostWithPathOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.HOST_WITH_PATH_OPERATION, args, kwargs),
+            _models.HOST_WITH_PATH_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def json_enums(
-        self, input: JsonEnumsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.JsonEnumsInput | _models.JsonEnumsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonEnumsOutput: ...
+
+    @_overload
+    async def json_enums(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonEnumsInputDict],
     ) -> JsonEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
         Args:
-            input:
-                An instance of `JsonEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -255,18 +418,39 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `JsonEnumsOutput`.
         """
-        return await self._invoke(input, _models.JSON_ENUMS, [], plugins)
 
+    async def json_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonEnumsOutput:
+        return await self._invoke(
+            self._select_input(_models.JSON_ENUMS, args, kwargs),
+            _models.JSON_ENUMS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def json_int_enums(
-        self, input: JsonIntEnumsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.JsonIntEnumsInput | _models.JsonIntEnumsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonIntEnumsOutput: ...
+
+    @_overload
+    async def json_int_enums(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonIntEnumsInputDict],
     ) -> JsonIntEnumsOutput:
         """
         This example serializes intEnums as top level properties, in lists,
         sets, and maps.
 
         Args:
-            input:
-                An instance of `JsonIntEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -276,17 +460,38 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `JsonIntEnumsOutput`.
         """
-        return await self._invoke(input, _models.JSON_INT_ENUMS, [], plugins)
 
+    async def json_int_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonIntEnumsOutput:
+        return await self._invoke(
+            self._select_input(_models.JSON_INT_ENUMS, args, kwargs),
+            _models.JSON_INT_ENUMS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def json_unions(
-        self, input: JsonUnionsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.JsonUnionsInput | _models.JsonUnionsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> JsonUnionsOutput: ...
+
+    @_overload
+    async def json_unions(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.JsonUnionsInputDict],
     ) -> JsonUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
 
         Args:
-            input:
-                An instance of `JsonUnionsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -296,17 +501,39 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `JsonUnionsOutput`.
         """
-        return await self._invoke(input, _models.JSON_UNIONS, [], plugins)
 
+    async def json_unions(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> JsonUnionsOutput:
+        return await self._invoke(
+            self._select_input(_models.JSON_UNIONS, args, kwargs),
+            _models.JSON_UNIONS,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def kitchen_sink_operation(
-        self, input: KitchenSinkOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.KitchenSinkOperationInput
+        | _models.KitchenSinkOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> KitchenSinkOperationOutput: ...
+
+    @_overload
+    async def kitchen_sink_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.KitchenSinkOperationInputDict],
     ) -> KitchenSinkOperationOutput:
         """
         Invokes the KitchenSinkOperation operation.
 
         Args:
-            input:
-                An instance of `KitchenSinkOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -316,17 +543,38 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `KitchenSinkOperationOutput`.
         """
-        return await self._invoke(input, _models.KITCHEN_SINK_OPERATION, [], plugins)
 
+    async def kitchen_sink_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> KitchenSinkOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.KITCHEN_SINK_OPERATION, args, kwargs),
+            _models.KITCHEN_SINK_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def null_operation(
-        self, input: NullOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.NullOperationInput | _models.NullOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> NullOperationOutput: ...
+
+    @_overload
+    async def null_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NullOperationInputDict],
     ) -> NullOperationOutput:
         """
         Invokes the NullOperation operation.
 
         Args:
-            input:
-                An instance of `NullOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -336,19 +584,39 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `NullOperationOutput`.
         """
-        return await self._invoke(input, _models.NULL_OPERATION, [], plugins)
 
+    async def null_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NullOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.NULL_OPERATION, args, kwargs),
+            _models.NULL_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def operation_with_optional_input_output(
         self,
-        input: OperationWithOptionalInputOutputInput,
+        request: _models.OperationWithOptionalInputOutputInput
+        | _models.OperationWithOptionalInputOutputInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> OperationWithOptionalInputOutputOutput: ...
+
+    @_overload
+    async def operation_with_optional_input_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.OperationWithOptionalInputOutputInputDict],
     ) -> OperationWithOptionalInputOutputOutput:
         """
         Invokes the OperationWithOptionalInputOutput operation.
 
         Args:
-            input:
-                An instance of `OperationWithOptionalInputOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -358,19 +626,41 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `OperationWithOptionalInputOutputOutput`.
         """
+
+    async def operation_with_optional_input_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> OperationWithOptionalInputOutputOutput:
         return await self._invoke(
-            input, _models.OPERATION_WITH_OPTIONAL_INPUT_OUTPUT, [], plugins
+            self._select_input(
+                _models.OPERATION_WITH_OPTIONAL_INPUT_OUTPUT, args, kwargs
+            ),
+            _models.OPERATION_WITH_OPTIONAL_INPUT_OUTPUT,
+            [],
+            plugins,
         )
 
+    @_overload
     async def put_and_get_inline_documents(
-        self, input: PutAndGetInlineDocumentsInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.PutAndGetInlineDocumentsInput
+        | _models.PutAndGetInlineDocumentsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutAndGetInlineDocumentsOutput: ...
+
+    @_overload
+    async def put_and_get_inline_documents(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.PutAndGetInlineDocumentsInputDict],
     ) -> PutAndGetInlineDocumentsOutput:
         """
         This example serializes an inline document as part of the payload.
 
         Args:
-            input:
-                An instance of `PutAndGetInlineDocumentsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -380,19 +670,39 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `PutAndGetInlineDocumentsOutput`.
         """
+
+    async def put_and_get_inline_documents(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutAndGetInlineDocumentsOutput:
         return await self._invoke(
-            input, _models.PUT_AND_GET_INLINE_DOCUMENTS, [], plugins
+            self._select_input(_models.PUT_AND_GET_INLINE_DOCUMENTS, args, kwargs),
+            _models.PUT_AND_GET_INLINE_DOCUMENTS,
+            [],
+            plugins,
         )
 
+    @_overload
     async def put_with_content_encoding(
-        self, input: PutWithContentEncodingInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.PutWithContentEncodingInput
+        | _models.PutWithContentEncodingInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> PutWithContentEncodingOutput: ...
+
+    @_overload
+    async def put_with_content_encoding(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.PutWithContentEncodingInputDict],
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
 
         Args:
-            input:
-                An instance of `PutWithContentEncodingInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -402,17 +712,39 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        return await self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
 
+    async def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutWithContentEncodingOutput:
+        return await self._invoke(
+            self._select_input(_models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
+            _models.PUT_WITH_CONTENT_ENCODING,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def simple_scalar_properties(
-        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.SimpleScalarPropertiesInput
+        | _models.SimpleScalarPropertiesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarPropertiesOutput: ...
+
+    @_overload
+    async def simple_scalar_properties(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputDict],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
 
         Args:
-            input:
-                An instance of `SimpleScalarPropertiesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -422,17 +754,39 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `SimpleScalarPropertiesOutput`.
         """
-        return await self._invoke(input, _models.SIMPLE_SCALAR_PROPERTIES, [], plugins)
 
+    async def simple_scalar_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarPropertiesOutput:
+        return await self._invoke(
+            self._select_input(_models.SIMPLE_SCALAR_PROPERTIES, args, kwargs),
+            _models.SIMPLE_SCALAR_PROPERTIES,
+            [],
+            plugins,
+        )
+
+    @_overload
     async def sparse_nulls_operation(
-        self, input: SparseNullsOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.SparseNullsOperationInput
+        | _models.SparseNullsOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> SparseNullsOperationOutput: ...
+
+    @_overload
+    async def sparse_nulls_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SparseNullsOperationInputDict],
     ) -> SparseNullsOperationOutput:
         """
         Invokes the SparseNullsOperation operation.
 
         Args:
-            input:
-                An instance of `SparseNullsOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -442,7 +796,16 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Returns:
             An instance of `SparseNullsOperationOutput`.
         """
-        return await self._invoke(input, _models.SPARSE_NULLS_OPERATION, [], plugins)
+
+    async def sparse_nulls_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SparseNullsOperationOutput:
+        return await self._invoke(
+            self._select_input(_models.SPARSE_NULLS_OPERATION, args, kwargs),
+            _models.SPARSE_NULLS_OPERATION,
+            [],
+            plugins,
+        )
 
     async def _new_config(self) -> AsyncJsonProtocolConfig:
         return await AsyncJsonProtocolConfig.resolve()

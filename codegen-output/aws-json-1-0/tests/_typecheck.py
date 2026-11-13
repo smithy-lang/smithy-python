@@ -2,51 +2,77 @@
 
 from typing import Any
 
+from awsjson10.aio.client import AsyncJSONRPC10Client
+from awsjson10.client import JSONRPC10Client
 from awsjson10.models import (
     ClientOptionalDefaults,
+    ClientOptionalDefaultsDict,
     ComplexNestedErrorData,
     ContentTypeParametersInput,
+    ContentTypeParametersInputDict,
     ContentTypeParametersOutput,
     Defaults,
+    DefaultsDict,
     Dialog,
+    DialogDict,
     EmptyInputAndEmptyOutputInput,
+    EmptyInputAndEmptyOutputInputDict,
     EmptyInputAndEmptyOutputOutput,
     EndpointOperationInput,
+    EndpointOperationInputDict,
     EndpointOperationOutput,
     EndpointWithHostLabelOperationInput,
+    EndpointWithHostLabelOperationInputDict,
     EndpointWithHostLabelOperationOutput,
     Farewell,
+    FarewellDict,
     GreetingStruct,
+    GreetingStructDict,
     GreetingWithErrorsInput,
+    GreetingWithErrorsInputDict,
     GreetingWithErrorsOutput,
     HostWithPathOperationInput,
+    HostWithPathOperationInputDict,
     HostWithPathOperationOutput,
     JsonUnionsInput,
+    JsonUnionsInputDict,
     JsonUnionsOutput,
+    MyUnionDict,
     NoInputAndNoOutputInput,
+    NoInputAndNoOutputInputDict,
     NoInputAndNoOutputOutput,
     NoInputAndOutputInput,
+    NoInputAndOutputInputDict,
     NoInputAndOutputOutput,
     OperationWithDefaultsInput,
+    OperationWithDefaultsInputDict,
     OperationWithDefaultsOutput,
     OperationWithNestedStructureInput,
+    OperationWithNestedStructureInputDict,
     OperationWithNestedStructureOutput,
     OperationWithRequiredMembersInput,
+    OperationWithRequiredMembersInputDict,
     OperationWithRequiredMembersOutput,
     OperationWithRequiredMembersWithDefaultsInput,
+    OperationWithRequiredMembersWithDefaultsInputDict,
     OperationWithRequiredMembersWithDefaultsOutput,
     PutWithContentEncodingInput,
+    PutWithContentEncodingInputDict,
     PutWithContentEncodingOutput,
     QueryIncompatibleOperationInput,
+    QueryIncompatibleOperationInputDict,
     QueryIncompatibleOperationOutput,
     SimpleScalarPropertiesInput,
+    SimpleScalarPropertiesInputDict,
     SimpleScalarPropertiesOutput,
     TopLevel,
+    TopLevelDict,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check.
 
 _: Any = ...
 
@@ -102,3 +128,218 @@ SimpleScalarPropertiesInput()
 SimpleScalarPropertiesOutput()
 TopLevel(dialog=_)
 GreetingStruct()
+_params_0: ClientOptionalDefaultsDict = {}
+_params_1: ContentTypeParametersInputDict = {}
+_params_2: DefaultsDict = {}
+_params_3: DialogDict = {}
+_params_4: EmptyInputAndEmptyOutputInputDict = {}
+_params_5: EndpointOperationInputDict = {}
+_params_6: EndpointWithHostLabelOperationInputDict = {"label": _}
+_params_7: FarewellDict = {}
+_params_8: GreetingWithErrorsInputDict = {}
+_params_9: HostWithPathOperationInputDict = {}
+_params_10: JsonUnionsInputDict = {}
+_params_11: MyUnionDict = {"string_value": _}
+_params_12: NoInputAndNoOutputInputDict = {}
+_params_13: NoInputAndOutputInputDict = {}
+_params_14: OperationWithDefaultsInputDict = {}
+_params_15: OperationWithNestedStructureInputDict = {"top_level": _}
+_params_16: OperationWithRequiredMembersInputDict = {}
+_params_17: OperationWithRequiredMembersWithDefaultsInputDict = {}
+_params_18: PutWithContentEncodingInputDict = {}
+_params_19: QueryIncompatibleOperationInputDict = {}
+_params_20: SimpleScalarPropertiesInputDict = {}
+_params_21: TopLevelDict = {"dialog": _}
+_params_22: GreetingStructDict = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncJSONRPC10Client) -> None:
+    pass
+    await client.content_type_parameters()
+    await client.content_type_parameters(**_request(ContentTypeParametersInputDict))
+    await client.content_type_parameters(_request(ContentTypeParametersInput))
+    await client.content_type_parameters(_request(ContentTypeParametersInputDict))
+    await client.empty_input_and_empty_output()
+    await client.empty_input_and_empty_output(
+        **_request(EmptyInputAndEmptyOutputInputDict)
+    )
+    await client.empty_input_and_empty_output(_request(EmptyInputAndEmptyOutputInput))
+    await client.empty_input_and_empty_output(
+        _request(EmptyInputAndEmptyOutputInputDict)
+    )
+    await client.endpoint_operation()
+    await client.endpoint_operation(**_request(EndpointOperationInputDict))
+    await client.endpoint_operation(_request(EndpointOperationInput))
+    await client.endpoint_operation(_request(EndpointOperationInputDict))
+    await client.endpoint_with_host_label_operation(label=_)
+    await client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputDict)
+    )
+    await client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInput)
+    )
+    await client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInputDict)
+    )
+    await client.greeting_with_errors()
+    await client.greeting_with_errors(**_request(GreetingWithErrorsInputDict))
+    await client.greeting_with_errors(_request(GreetingWithErrorsInput))
+    await client.greeting_with_errors(_request(GreetingWithErrorsInputDict))
+    await client.host_with_path_operation()
+    await client.host_with_path_operation(**_request(HostWithPathOperationInputDict))
+    await client.host_with_path_operation(_request(HostWithPathOperationInput))
+    await client.host_with_path_operation(_request(HostWithPathOperationInputDict))
+    await client.json_unions()
+    await client.json_unions(**_request(JsonUnionsInputDict))
+    await client.json_unions(_request(JsonUnionsInput))
+    await client.json_unions(_request(JsonUnionsInputDict))
+    await client.no_input_and_no_output()
+    await client.no_input_and_no_output(**_request(NoInputAndNoOutputInputDict))
+    await client.no_input_and_no_output(_request(NoInputAndNoOutputInput))
+    await client.no_input_and_no_output(_request(NoInputAndNoOutputInputDict))
+    await client.no_input_and_output()
+    await client.no_input_and_output(**_request(NoInputAndOutputInputDict))
+    await client.no_input_and_output(_request(NoInputAndOutputInput))
+    await client.no_input_and_output(_request(NoInputAndOutputInputDict))
+    await client.operation_with_defaults()
+    await client.operation_with_defaults(**_request(OperationWithDefaultsInputDict))
+    await client.operation_with_defaults(_request(OperationWithDefaultsInput))
+    await client.operation_with_defaults(_request(OperationWithDefaultsInputDict))
+    await client.operation_with_nested_structure(top_level=_)
+    await client.operation_with_nested_structure(
+        **_request(OperationWithNestedStructureInputDict)
+    )
+    await client.operation_with_nested_structure(
+        _request(OperationWithNestedStructureInput)
+    )
+    await client.operation_with_nested_structure(
+        _request(OperationWithNestedStructureInputDict)
+    )
+    await client.operation_with_required_members()
+    await client.operation_with_required_members(
+        **_request(OperationWithRequiredMembersInputDict)
+    )
+    await client.operation_with_required_members(
+        _request(OperationWithRequiredMembersInput)
+    )
+    await client.operation_with_required_members(
+        _request(OperationWithRequiredMembersInputDict)
+    )
+    await client.operation_with_required_members_with_defaults()
+    await client.operation_with_required_members_with_defaults(
+        **_request(OperationWithRequiredMembersWithDefaultsInputDict)
+    )
+    await client.operation_with_required_members_with_defaults(
+        _request(OperationWithRequiredMembersWithDefaultsInput)
+    )
+    await client.operation_with_required_members_with_defaults(
+        _request(OperationWithRequiredMembersWithDefaultsInputDict)
+    )
+    await client.put_with_content_encoding()
+    await client.put_with_content_encoding(**_request(PutWithContentEncodingInputDict))
+    await client.put_with_content_encoding(_request(PutWithContentEncodingInput))
+    await client.put_with_content_encoding(_request(PutWithContentEncodingInputDict))
+    await client.query_incompatible_operation()
+    await client.query_incompatible_operation(
+        **_request(QueryIncompatibleOperationInputDict)
+    )
+    await client.query_incompatible_operation(_request(QueryIncompatibleOperationInput))
+    await client.query_incompatible_operation(
+        _request(QueryIncompatibleOperationInputDict)
+    )
+    await client.simple_scalar_properties()
+    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))
+
+
+def check_sync_calls(client: JSONRPC10Client) -> None:
+    pass
+    client.content_type_parameters()
+    client.content_type_parameters(**_request(ContentTypeParametersInputDict))
+    client.content_type_parameters(_request(ContentTypeParametersInput))
+    client.content_type_parameters(_request(ContentTypeParametersInputDict))
+    client.empty_input_and_empty_output()
+    client.empty_input_and_empty_output(**_request(EmptyInputAndEmptyOutputInputDict))
+    client.empty_input_and_empty_output(_request(EmptyInputAndEmptyOutputInput))
+    client.empty_input_and_empty_output(_request(EmptyInputAndEmptyOutputInputDict))
+    client.endpoint_operation()
+    client.endpoint_operation(**_request(EndpointOperationInputDict))
+    client.endpoint_operation(_request(EndpointOperationInput))
+    client.endpoint_operation(_request(EndpointOperationInputDict))
+    client.endpoint_with_host_label_operation(label=_)
+    client.endpoint_with_host_label_operation(
+        **_request(EndpointWithHostLabelOperationInputDict)
+    )
+    client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInput)
+    )
+    client.endpoint_with_host_label_operation(
+        _request(EndpointWithHostLabelOperationInputDict)
+    )
+    client.greeting_with_errors()
+    client.greeting_with_errors(**_request(GreetingWithErrorsInputDict))
+    client.greeting_with_errors(_request(GreetingWithErrorsInput))
+    client.greeting_with_errors(_request(GreetingWithErrorsInputDict))
+    client.host_with_path_operation()
+    client.host_with_path_operation(**_request(HostWithPathOperationInputDict))
+    client.host_with_path_operation(_request(HostWithPathOperationInput))
+    client.host_with_path_operation(_request(HostWithPathOperationInputDict))
+    client.json_unions()
+    client.json_unions(**_request(JsonUnionsInputDict))
+    client.json_unions(_request(JsonUnionsInput))
+    client.json_unions(_request(JsonUnionsInputDict))
+    client.no_input_and_no_output()
+    client.no_input_and_no_output(**_request(NoInputAndNoOutputInputDict))
+    client.no_input_and_no_output(_request(NoInputAndNoOutputInput))
+    client.no_input_and_no_output(_request(NoInputAndNoOutputInputDict))
+    client.no_input_and_output()
+    client.no_input_and_output(**_request(NoInputAndOutputInputDict))
+    client.no_input_and_output(_request(NoInputAndOutputInput))
+    client.no_input_and_output(_request(NoInputAndOutputInputDict))
+    client.operation_with_defaults()
+    client.operation_with_defaults(**_request(OperationWithDefaultsInputDict))
+    client.operation_with_defaults(_request(OperationWithDefaultsInput))
+    client.operation_with_defaults(_request(OperationWithDefaultsInputDict))
+    client.operation_with_nested_structure(top_level=_)
+    client.operation_with_nested_structure(
+        **_request(OperationWithNestedStructureInputDict)
+    )
+    client.operation_with_nested_structure(_request(OperationWithNestedStructureInput))
+    client.operation_with_nested_structure(
+        _request(OperationWithNestedStructureInputDict)
+    )
+    client.operation_with_required_members()
+    client.operation_with_required_members(
+        **_request(OperationWithRequiredMembersInputDict)
+    )
+    client.operation_with_required_members(_request(OperationWithRequiredMembersInput))
+    client.operation_with_required_members(
+        _request(OperationWithRequiredMembersInputDict)
+    )
+    client.operation_with_required_members_with_defaults()
+    client.operation_with_required_members_with_defaults(
+        **_request(OperationWithRequiredMembersWithDefaultsInputDict)
+    )
+    client.operation_with_required_members_with_defaults(
+        _request(OperationWithRequiredMembersWithDefaultsInput)
+    )
+    client.operation_with_required_members_with_defaults(
+        _request(OperationWithRequiredMembersWithDefaultsInputDict)
+    )
+    client.put_with_content_encoding()
+    client.put_with_content_encoding(**_request(PutWithContentEncodingInputDict))
+    client.put_with_content_encoding(_request(PutWithContentEncodingInput))
+    client.put_with_content_encoding(_request(PutWithContentEncodingInputDict))
+    client.query_incompatible_operation()
+    client.query_incompatible_operation(**_request(QueryIncompatibleOperationInputDict))
+    client.query_incompatible_operation(_request(QueryIncompatibleOperationInput))
+    client.query_incompatible_operation(_request(QueryIncompatibleOperationInputDict))
+    client.simple_scalar_properties()
+    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))

@@ -2,48 +2,73 @@
 
 from typing import Any
 
+from rpcv2cbor.aio.client import AsyncRpcV2Protocol
+from rpcv2cbor.client import RpcV2Protocol
 from rpcv2cbor.models import (
     ClientOptionalDefaults,
+    ClientOptionalDefaultsDict,
     ComplexNestedErrorData,
     Defaults,
+    DefaultsDict,
     EmptyInputOutputInput,
+    EmptyInputOutputInputDict,
     EmptyInputOutputOutput,
     Float16Input,
+    Float16InputDict,
     Float16Output,
     FractionalSecondsInput,
+    FractionalSecondsInputDict,
     FractionalSecondsOutput,
     GreetingStruct,
+    GreetingStructDict,
     GreetingWithErrorsInput,
+    GreetingWithErrorsInputDict,
     GreetingWithErrorsOutput,
     NoInputOutputInput,
+    NoInputOutputInputDict,
     NoInputOutputOutput,
     OperationWithDefaultsInput,
+    OperationWithDefaultsInputDict,
     OperationWithDefaultsOutput,
     OptionalInputOutputInput,
+    OptionalInputOutputInputDict,
     OptionalInputOutputOutput,
     RecursiveShapesInput,
+    RecursiveShapesInputDict,
     RecursiveShapesInputOutputNested1,
+    RecursiveShapesInputOutputNested1Dict,
     RecursiveShapesInputOutputNested2,
+    RecursiveShapesInputOutputNested2Dict,
     RecursiveShapesOutput,
     RpcV2CborDenseMapsInput,
+    RpcV2CborDenseMapsInputDict,
     RpcV2CborDenseMapsOutput,
     RpcV2CborListsInput,
+    RpcV2CborListsInputDict,
     RpcV2CborListsOutput,
+    RpcV2CborNestedUnionDict,
     RpcV2CborSparseMapsInput,
+    RpcV2CborSparseMapsInputDict,
     RpcV2CborSparseMapsOutput,
+    RpcV2CborUnionDict,
     RpcV2CborUnionsInput,
+    RpcV2CborUnionsInputDict,
     RpcV2CborUnionsOutput,
     SimpleScalarPropertiesInput,
+    SimpleScalarPropertiesInputDict,
     SimpleScalarPropertiesOutput,
     SparseNullsOperationInput,
+    SparseNullsOperationInputDict,
     SparseNullsOperationOutput,
     StructureListMember,
+    StructureListMemberDict,
     ValidationExceptionField,
 )
 
 
-# Static type fixture: pyright over this validates models.pyi.
-# Not executed as a test; it only needs to type-check.
+# Static type fixture: pyright over this validates models.pyi and the
+# client method signatures. Not executed as a test; it only needs to
+# type-check.
 
 _: Any = ...
 
@@ -83,3 +108,149 @@ SparseNullsOperationInput()
 SparseNullsOperationOutput()
 StructureListMember()
 GreetingStruct()
+_params_0: ClientOptionalDefaultsDict = {}
+_params_1: DefaultsDict = {}
+_params_2: EmptyInputOutputInputDict = {}
+_params_3: Float16InputDict = {}
+_params_4: FractionalSecondsInputDict = {}
+_params_5: GreetingWithErrorsInputDict = {}
+_params_6: NoInputOutputInputDict = {}
+_params_7: OperationWithDefaultsInputDict = {}
+_params_8: OptionalInputOutputInputDict = {}
+_params_9: RecursiveShapesInputDict = {}
+_params_10: RecursiveShapesInputOutputNested1Dict = {}
+_params_11: RecursiveShapesInputOutputNested2Dict = {}
+_params_12: RpcV2CborDenseMapsInputDict = {}
+_params_13: RpcV2CborListsInputDict = {}
+_params_14: RpcV2CborNestedUnionDict = {"string_value": _}
+_params_15: RpcV2CborSparseMapsInputDict = {}
+_params_16: RpcV2CborUnionDict = {"string_value": _}
+_params_17: RpcV2CborUnionsInputDict = {}
+_params_18: SimpleScalarPropertiesInputDict = {}
+_params_19: SparseNullsOperationInputDict = {}
+_params_20: StructureListMemberDict = {}
+_params_21: GreetingStructDict = {}
+
+
+def _request[T](form: type[T]) -> T:
+    raise NotImplementedError
+
+
+async def check_async_calls(client: AsyncRpcV2Protocol) -> None:
+    pass
+    await client.empty_input_output()
+    await client.empty_input_output(**_request(EmptyInputOutputInputDict))
+    await client.empty_input_output(_request(EmptyInputOutputInput))
+    await client.empty_input_output(_request(EmptyInputOutputInputDict))
+    await client.float16()
+    await client.float16(**_request(Float16InputDict))
+    await client.float16(_request(Float16Input))
+    await client.float16(_request(Float16InputDict))
+    await client.fractional_seconds()
+    await client.fractional_seconds(**_request(FractionalSecondsInputDict))
+    await client.fractional_seconds(_request(FractionalSecondsInput))
+    await client.fractional_seconds(_request(FractionalSecondsInputDict))
+    await client.greeting_with_errors()
+    await client.greeting_with_errors(**_request(GreetingWithErrorsInputDict))
+    await client.greeting_with_errors(_request(GreetingWithErrorsInput))
+    await client.greeting_with_errors(_request(GreetingWithErrorsInputDict))
+    await client.no_input_output()
+    await client.no_input_output(**_request(NoInputOutputInputDict))
+    await client.no_input_output(_request(NoInputOutputInput))
+    await client.no_input_output(_request(NoInputOutputInputDict))
+    await client.operation_with_defaults()
+    await client.operation_with_defaults(**_request(OperationWithDefaultsInputDict))
+    await client.operation_with_defaults(_request(OperationWithDefaultsInput))
+    await client.operation_with_defaults(_request(OperationWithDefaultsInputDict))
+    await client.optional_input_output()
+    await client.optional_input_output(**_request(OptionalInputOutputInputDict))
+    await client.optional_input_output(_request(OptionalInputOutputInput))
+    await client.optional_input_output(_request(OptionalInputOutputInputDict))
+    await client.recursive_shapes()
+    await client.recursive_shapes(**_request(RecursiveShapesInputDict))
+    await client.recursive_shapes(_request(RecursiveShapesInput))
+    await client.recursive_shapes(_request(RecursiveShapesInputDict))
+    await client.rpc_v2_cbor_dense_maps()
+    await client.rpc_v2_cbor_dense_maps(**_request(RpcV2CborDenseMapsInputDict))
+    await client.rpc_v2_cbor_dense_maps(_request(RpcV2CborDenseMapsInput))
+    await client.rpc_v2_cbor_dense_maps(_request(RpcV2CborDenseMapsInputDict))
+    await client.rpc_v2_cbor_lists()
+    await client.rpc_v2_cbor_lists(**_request(RpcV2CborListsInputDict))
+    await client.rpc_v2_cbor_lists(_request(RpcV2CborListsInput))
+    await client.rpc_v2_cbor_lists(_request(RpcV2CborListsInputDict))
+    await client.rpc_v2_cbor_sparse_maps()
+    await client.rpc_v2_cbor_sparse_maps(**_request(RpcV2CborSparseMapsInputDict))
+    await client.rpc_v2_cbor_sparse_maps(_request(RpcV2CborSparseMapsInput))
+    await client.rpc_v2_cbor_sparse_maps(_request(RpcV2CborSparseMapsInputDict))
+    await client.rpc_v2_cbor_unions()
+    await client.rpc_v2_cbor_unions(**_request(RpcV2CborUnionsInputDict))
+    await client.rpc_v2_cbor_unions(_request(RpcV2CborUnionsInput))
+    await client.rpc_v2_cbor_unions(_request(RpcV2CborUnionsInputDict))
+    await client.simple_scalar_properties()
+    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))
+    await client.sparse_nulls_operation()
+    await client.sparse_nulls_operation(**_request(SparseNullsOperationInputDict))
+    await client.sparse_nulls_operation(_request(SparseNullsOperationInput))
+    await client.sparse_nulls_operation(_request(SparseNullsOperationInputDict))
+
+
+def check_sync_calls(client: RpcV2Protocol) -> None:
+    pass
+    client.empty_input_output()
+    client.empty_input_output(**_request(EmptyInputOutputInputDict))
+    client.empty_input_output(_request(EmptyInputOutputInput))
+    client.empty_input_output(_request(EmptyInputOutputInputDict))
+    client.float16()
+    client.float16(**_request(Float16InputDict))
+    client.float16(_request(Float16Input))
+    client.float16(_request(Float16InputDict))
+    client.fractional_seconds()
+    client.fractional_seconds(**_request(FractionalSecondsInputDict))
+    client.fractional_seconds(_request(FractionalSecondsInput))
+    client.fractional_seconds(_request(FractionalSecondsInputDict))
+    client.greeting_with_errors()
+    client.greeting_with_errors(**_request(GreetingWithErrorsInputDict))
+    client.greeting_with_errors(_request(GreetingWithErrorsInput))
+    client.greeting_with_errors(_request(GreetingWithErrorsInputDict))
+    client.no_input_output()
+    client.no_input_output(**_request(NoInputOutputInputDict))
+    client.no_input_output(_request(NoInputOutputInput))
+    client.no_input_output(_request(NoInputOutputInputDict))
+    client.operation_with_defaults()
+    client.operation_with_defaults(**_request(OperationWithDefaultsInputDict))
+    client.operation_with_defaults(_request(OperationWithDefaultsInput))
+    client.operation_with_defaults(_request(OperationWithDefaultsInputDict))
+    client.optional_input_output()
+    client.optional_input_output(**_request(OptionalInputOutputInputDict))
+    client.optional_input_output(_request(OptionalInputOutputInput))
+    client.optional_input_output(_request(OptionalInputOutputInputDict))
+    client.recursive_shapes()
+    client.recursive_shapes(**_request(RecursiveShapesInputDict))
+    client.recursive_shapes(_request(RecursiveShapesInput))
+    client.recursive_shapes(_request(RecursiveShapesInputDict))
+    client.rpc_v2_cbor_dense_maps()
+    client.rpc_v2_cbor_dense_maps(**_request(RpcV2CborDenseMapsInputDict))
+    client.rpc_v2_cbor_dense_maps(_request(RpcV2CborDenseMapsInput))
+    client.rpc_v2_cbor_dense_maps(_request(RpcV2CborDenseMapsInputDict))
+    client.rpc_v2_cbor_lists()
+    client.rpc_v2_cbor_lists(**_request(RpcV2CborListsInputDict))
+    client.rpc_v2_cbor_lists(_request(RpcV2CborListsInput))
+    client.rpc_v2_cbor_lists(_request(RpcV2CborListsInputDict))
+    client.rpc_v2_cbor_sparse_maps()
+    client.rpc_v2_cbor_sparse_maps(**_request(RpcV2CborSparseMapsInputDict))
+    client.rpc_v2_cbor_sparse_maps(_request(RpcV2CborSparseMapsInput))
+    client.rpc_v2_cbor_sparse_maps(_request(RpcV2CborSparseMapsInputDict))
+    client.rpc_v2_cbor_unions()
+    client.rpc_v2_cbor_unions(**_request(RpcV2CborUnionsInputDict))
+    client.rpc_v2_cbor_unions(_request(RpcV2CborUnionsInput))
+    client.rpc_v2_cbor_unions(_request(RpcV2CborUnionsInputDict))
+    client.simple_scalar_properties()
+    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))
+    client.sparse_nulls_operation()
+    client.sparse_nulls_operation(**_request(SparseNullsOperationInputDict))
+    client.sparse_nulls_operation(_request(SparseNullsOperationInput))
+    client.sparse_nulls_operation(_request(SparseNullsOperationInputDict))

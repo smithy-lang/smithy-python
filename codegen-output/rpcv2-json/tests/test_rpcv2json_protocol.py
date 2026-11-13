@@ -20,41 +20,26 @@ from smithy_test import deep_equal
 from rpcv2json.aio.client import AsyncRpcV2JsonProtocol
 from rpcv2json.aio.config import AsyncConfig
 from rpcv2json.models import (
-    BigDecimalOperationInput,
     BigDecimalOperationOutput,
-    BigIntegerOperationInput,
     BigIntegerOperationOutput,
     ClientOptionalDefaults,
     Defaults,
-    EmptyInputOutputInput,
     EmptyInputOutputOutput,
-    FractionalSecondsInput,
     FractionalSecondsOutput,
     GreetingStruct,
-    GreetingWithErrorsInput,
-    NoInputOutputInput,
     NoInputOutputOutput,
-    OperationWithDefaultsInput,
     OperationWithDefaultsOutput,
-    OptionalInputOutputInput,
     OptionalInputOutputOutput,
-    RecursiveShapesInput,
     RecursiveShapesInputOutputNested1,
     RecursiveShapesInputOutputNested2,
     RecursiveShapesOutput,
-    RpcV2JsonDenseMapsInput,
     RpcV2JsonDenseMapsOutput,
-    RpcV2JsonListsInput,
     RpcV2JsonListsOutput,
-    RpcV2JsonSparseMapsInput,
     RpcV2JsonSparseMapsOutput,
     ServiceError,
-    SimpleScalarPropertiesInput,
     SimpleScalarPropertiesOutput,
-    SparseNullsOperationInput,
     SparseNullsOperationOutput,
     StructureListMember,
-    TimestampFormatIgnoredInput,
     TimestampFormatIgnoredOutput,
 )
 
@@ -74,10 +59,8 @@ async def test_rpc_v2_json_request_big_decimal_simple_value_request_big_decimal_
         )
     )
 
-    input_ = BigDecimalOperationInput(value=Decimal("1.5"))
-
     try:
-        await client.big_decimal_operation(input_)
+        await client.big_decimal_operation(value=Decimal("1.5"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -155,10 +138,8 @@ async def test_rpc_v2_json_request_big_decimal_high_precision_request_big_decima
         )
     )
 
-    input_ = BigDecimalOperationInput(value=Decimal("0.100000000000000000000001"))
-
     try:
-        await client.big_decimal_operation(input_)
+        await client.big_decimal_operation(value=Decimal("0.100000000000000000000001"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -236,10 +217,8 @@ async def test_rpc_v2_json_request_big_decimal_negative_high_precision_request_b
         )
     )
 
-    input_ = BigDecimalOperationInput(value=Decimal("-0.100000000000000000000001"))
-
     try:
-        await client.big_decimal_operation(input_)
+        await client.big_decimal_operation(value=Decimal("-0.100000000000000000000001"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -317,10 +296,8 @@ async def test_rpc_v2_json_request_big_decimal_large_with_fraction_request_big_d
         )
     )
 
-    input_ = BigDecimalOperationInput(value=Decimal("100000000000000000000001.0"))
-
     try:
-        await client.big_decimal_operation(input_)
+        await client.big_decimal_operation(value=Decimal("100000000000000000000001.0"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -403,10 +380,8 @@ async def test_rpc_v2_json_response_big_decimal_simple_value_response_big_decima
         )
     )
 
-    input_ = BigDecimalOperationInput()
-
     try:
-        actual = await client.big_decimal_operation(input_)
+        actual = await client.big_decimal_operation()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -437,10 +412,8 @@ async def test_rpc_v2_json_response_big_decimal_high_precision_response_big_deci
         )
     )
 
-    input_ = BigDecimalOperationInput()
-
     try:
-        actual = await client.big_decimal_operation(input_)
+        actual = await client.big_decimal_operation()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -473,10 +446,8 @@ async def test_rpc_v2_json_response_big_decimal_negative_high_precision_response
         )
     )
 
-    input_ = BigDecimalOperationInput()
-
     try:
-        actual = await client.big_decimal_operation(input_)
+        actual = await client.big_decimal_operation()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -509,10 +480,8 @@ async def test_rpc_v2_json_response_big_decimal_large_with_fraction_response_big
         )
     )
 
-    input_ = BigDecimalOperationInput()
-
     try:
-        actual = await client.big_decimal_operation(input_)
+        actual = await client.big_decimal_operation()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -538,10 +507,8 @@ async def test_rpc_v2_json_request_big_integer_simple_value_request_big_integer_
         )
     )
 
-    input_ = BigIntegerOperationInput(value=42)
-
     try:
-        await client.big_integer_operation(input_)
+        await client.big_integer_operation(value=42)
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -618,10 +585,8 @@ async def test_rpc_v2_json_request_big_integer_exceeding_long_range_request_big_
         )
     )
 
-    input_ = BigIntegerOperationInput(value=9223372036854775808)
-
     try:
-        await client.big_integer_operation(input_)
+        await client.big_integer_operation(value=9223372036854775808)
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -698,10 +663,8 @@ async def test_rpc_v2_json_request_big_integer_negative_large_value_request_big_
         )
     )
 
-    input_ = BigIntegerOperationInput(value=-9223372036854775809)
-
     try:
-        await client.big_integer_operation(input_)
+        await client.big_integer_operation(value=-9223372036854775809)
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -784,10 +747,8 @@ async def test_rpc_v2_json_response_big_integer_simple_value_response_big_intege
         )
     )
 
-    input_ = BigIntegerOperationInput()
-
     try:
-        actual = await client.big_integer_operation(input_)
+        actual = await client.big_integer_operation()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -817,10 +778,8 @@ async def test_rpc_v2_json_response_big_integer_exceeding_long_range_response_bi
         )
     )
 
-    input_ = BigIntegerOperationInput()
-
     try:
-        actual = await client.big_integer_operation(input_)
+        actual = await client.big_integer_operation()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -850,10 +809,8 @@ async def test_rpc_v2_json_response_big_integer_negative_large_value_response_bi
         )
     )
 
-    input_ = BigIntegerOperationInput()
-
     try:
-        actual = await client.big_integer_operation(input_)
+        actual = await client.big_integer_operation()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -872,10 +829,8 @@ async def test_rpc_v2_json_request_empty_input_request_empty_input_output() -> N
         )
     )
 
-    input_ = EmptyInputOutputInput()
-
     try:
-        await client.empty_input_output(input_)
+        await client.empty_input_output()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -953,10 +908,8 @@ async def test_rpc_v2_json_response_empty_output_response_empty_input_output() -
         )
     )
 
-    input_ = EmptyInputOutputInput()
-
     try:
-        actual = await client.empty_input_output(input_)
+        actual = await client.empty_input_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -983,10 +936,8 @@ async def test_rpc_v2_json_response_empty_output_no_body_response_empty_input_ou
         )
     )
 
-    input_ = EmptyInputOutputInput()
-
     try:
-        actual = await client.empty_input_output(input_)
+        actual = await client.empty_input_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1016,10 +967,8 @@ async def test_rpc_v2_json_response_date_time_with_fractional_seconds_response_f
         )
     )
 
-    input_ = FractionalSecondsInput()
-
     try:
-        actual = await client.fractional_seconds(input_)
+        actual = await client.fractional_seconds()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1048,10 +997,8 @@ async def test_rpc_v2_json_response_invalid_greeting_error_error_greeting_with_e
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'InvalidGreeting' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "InvalidGreeting":
@@ -1076,10 +1023,8 @@ async def test_rpc_v2_json_response_complex_error_error_greeting_with_errors() -
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'ComplexError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "ComplexError":
@@ -1105,10 +1050,8 @@ async def test_rpc_v2_json_response_empty_complex_error_error_greeting_with_erro
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'ComplexError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "ComplexError":
@@ -1127,10 +1070,8 @@ async def test_rpc_v2_json_request_no_input_request_no_input_output() -> None:
         )
     )
 
-    input_ = NoInputOutputInput()
-
     try:
-        await client.no_input_output(input_)
+        await client.no_input_output()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1200,10 +1141,8 @@ async def test_rpc_v2_json_response_no_output_response_no_input_output() -> None
         )
     )
 
-    input_ = NoInputOutputInput()
-
     try:
-        actual = await client.no_input_output(input_)
+        actual = await client.no_input_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1230,10 +1169,8 @@ async def test_rpc_v2_json_response_no_output_client_allows_empty_json_object_re
         )
     )
 
-    input_ = NoInputOutputInput()
-
     try:
-        actual = await client.no_input_output(input_)
+        actual = await client.no_input_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1263,10 +1200,8 @@ async def test_rpc_v2_json_response_no_output_client_allows_empty_body_response_
         )
     )
 
-    input_ = NoInputOutputInput()
-
     try:
-        actual = await client.no_input_output(input_)
+        actual = await client.no_input_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1288,10 +1223,8 @@ async def test_rpc_v2_json_request_client_populates_default_values_in_input_requ
         )
     )
 
-    input_ = OperationWithDefaultsInput(defaults=Defaults())
-
     try:
-        await client.operation_with_defaults(input_)
+        await client.operation_with_defaults(defaults=Defaults())
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1366,10 +1299,8 @@ async def test_rpc_v2_json_request_client_skips_top_level_default_values_in_inpu
         )
     )
 
-    input_ = OperationWithDefaultsInput()
-
     try:
-        await client.operation_with_defaults(input_)
+        await client.operation_with_defaults()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1444,36 +1375,34 @@ async def test_rpc_v2_json_request_client_uses_explicitly_provided_member_values
         )
     )
 
-    input_ = OperationWithDefaultsInput(
-        defaults=Defaults(
-            default_string="bye",
-            default_boolean=True,
-            default_list=["a"],
-            default_timestamp=datetime(1970, 1, 1, 0, 0, 1, 0, timezone.utc),
-            default_blob=b"hi",
-            default_byte=2,
-            default_short=2,
-            default_integer=20,
-            default_long=200,
-            default_float=float(2.0),
-            default_double=float(2.0),
-            default_map={"name": "Jack"},
-            default_enum="BAR",
-            default_int_enum=2,
-            empty_string="foo",
-            false_boolean=True,
-            empty_blob=b"hi",
-            zero_byte=1,
-            zero_short=1,
-            zero_integer=1,
-            zero_long=1,
-            zero_float=float(1.0),
-            zero_double=float(1.0),
-        )
-    )
-
     try:
-        await client.operation_with_defaults(input_)
+        await client.operation_with_defaults(
+            defaults=Defaults(
+                default_string="bye",
+                default_boolean=True,
+                default_list=["a"],
+                default_timestamp=datetime(1970, 1, 1, 0, 0, 1, 0, timezone.utc),
+                default_blob=b"hi",
+                default_byte=2,
+                default_short=2,
+                default_integer=20,
+                default_long=200,
+                default_float=float(2.0),
+                default_double=float(2.0),
+                default_map={"name": "Jack"},
+                default_enum="BAR",
+                default_int_enum=2,
+                empty_string="foo",
+                false_boolean=True,
+                empty_blob=b"hi",
+                zero_byte=1,
+                zero_short=1,
+                zero_integer=1,
+                zero_long=1,
+                zero_float=float(1.0),
+                zero_double=float(1.0),
+            )
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1550,12 +1479,10 @@ async def test_rpc_v2_json_request_client_uses_explicitly_provided_values_in_top
         )
     )
 
-    input_ = OperationWithDefaultsInput(
-        top_level_default="hi", other_top_level_default=0
-    )
-
     try:
-        await client.operation_with_defaults(input_)
+        await client.operation_with_defaults(
+            top_level_default="hi", other_top_level_default=0
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1635,12 +1562,10 @@ async def test_rpc_v2_json_request_client_ignores_non_top_level_defaults_on_memb
         )
     )
 
-    input_ = OperationWithDefaultsInput(
-        client_optional_defaults=ClientOptionalDefaults()
-    )
-
     try:
-        await client.operation_with_defaults(input_)
+        await client.operation_with_defaults(
+            client_optional_defaults=ClientOptionalDefaults()
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1720,10 +1645,8 @@ async def test_rpc_v2_json_response_client_populates_defaults_values_when_missin
         )
     )
 
-    input_ = OperationWithDefaultsInput()
-
     try:
-        actual = await client.operation_with_defaults(input_)
+        actual = await client.operation_with_defaults()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1777,10 +1700,8 @@ async def test_rpc_v2_json_response_client_ignores_default_values_if_member_valu
         )
     )
 
-    input_ = OperationWithDefaultsInput()
-
     try:
-        actual = await client.operation_with_defaults(input_)
+        actual = await client.operation_with_defaults()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1825,10 +1746,8 @@ async def test_rpc_v2_json_request_optional_input_request_optional_input_output(
         )
     )
 
-    input_ = OptionalInputOutputInput()
-
     try:
-        await client.optional_input_output(input_)
+        await client.optional_input_output()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1908,10 +1827,8 @@ async def test_rpc_v2_json_response_optional_output_response_optional_input_outp
         )
     )
 
-    input_ = OptionalInputOutputInput()
-
     try:
-        actual = await client.optional_input_output(input_)
+        actual = await client.optional_input_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1930,20 +1847,18 @@ async def test_rpc_v2_json_request_recursive_shapes_request_recursive_shapes() -
         )
     )
 
-    input_ = RecursiveShapesInput(
-        nested=RecursiveShapesInputOutputNested1(
-            foo="Foo1",
-            nested=RecursiveShapesInputOutputNested2(
-                bar="Bar1",
-                recursive_member=RecursiveShapesInputOutputNested1(
-                    foo="Foo2", nested=RecursiveShapesInputOutputNested2(bar="Bar2")
-                ),
-            ),
-        )
-    )
-
     try:
-        await client.recursive_shapes(input_)
+        await client.recursive_shapes(
+            nested=RecursiveShapesInputOutputNested1(
+                foo="Foo1",
+                nested=RecursiveShapesInputOutputNested2(
+                    bar="Bar1",
+                    recursive_member=RecursiveShapesInputOutputNested1(
+                        foo="Foo2", nested=RecursiveShapesInputOutputNested2(bar="Bar2")
+                    ),
+                ),
+            )
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2023,10 +1938,8 @@ async def test_rpc_v2_json_response_recursive_shapes_response_recursive_shapes()
         )
     )
 
-    input_ = RecursiveShapesInput()
-
     try:
-        actual = await client.recursive_shapes(input_)
+        actual = await client.recursive_shapes()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -2055,15 +1968,13 @@ async def test_rpc_v2_json_request_maps_request_rpc_v2_json_dense_maps() -> None
         )
     )
 
-    input_ = RpcV2JsonDenseMapsInput(
-        dense_struct_map={
-            "foo": GreetingStruct(hi="there"),
-            "baz": GreetingStruct(hi="bye"),
-        }
-    )
-
     try:
-        await client.rpc_v2_json_dense_maps(input_)
+        await client.rpc_v2_json_dense_maps(
+            dense_struct_map={
+                "foo": GreetingStruct(hi="there"),
+                "baz": GreetingStruct(hi="bye"),
+            }
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2137,12 +2048,10 @@ async def test_rpc_v2_json_request_serializes_zero_values_in_maps_request_rpc_v2
         )
     )
 
-    input_ = RpcV2JsonDenseMapsInput(
-        dense_number_map={"x": 0}, dense_boolean_map={"x": False}
-    )
-
     try:
-        await client.rpc_v2_json_dense_maps(input_)
+        await client.rpc_v2_json_dense_maps(
+            dense_number_map={"x": 0}, dense_boolean_map={"x": False}
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2216,10 +2125,8 @@ async def test_rpc_v2_json_request_serializes_dense_set_map_request_rpc_v2_json_
         )
     )
 
-    input_ = RpcV2JsonDenseMapsInput(dense_set_map={"x": [], "y": ["a", "b"]})
-
     try:
-        await client.rpc_v2_json_dense_maps(input_)
+        await client.rpc_v2_json_dense_maps(dense_set_map={"x": [], "y": ["a", "b"]})
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2297,10 +2204,8 @@ async def test_rpc_v2_json_response_maps_response_rpc_v2_json_dense_maps() -> No
         )
     )
 
-    input_ = RpcV2JsonDenseMapsInput()
-
     try:
-        actual = await client.rpc_v2_json_dense_maps(input_)
+        actual = await client.rpc_v2_json_dense_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -2332,10 +2237,8 @@ async def test_rpc_v2_json_response_deserializes_zero_values_in_maps_response_rp
         )
     )
 
-    input_ = RpcV2JsonDenseMapsInput()
-
     try:
-        actual = await client.rpc_v2_json_dense_maps(input_)
+        actual = await client.rpc_v2_json_dense_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -2364,10 +2267,8 @@ async def test_rpc_v2_json_response_deserializes_dense_set_map_response_rpc_v2_j
         )
     )
 
-    input_ = RpcV2JsonDenseMapsInput()
-
     try:
-        actual = await client.rpc_v2_json_dense_maps(input_)
+        actual = await client.rpc_v2_json_dense_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -2386,27 +2287,25 @@ async def test_rpc_v2_json_request_lists_request_rpc_v2_json_lists() -> None:
         )
     )
 
-    input_ = RpcV2JsonListsInput(
-        string_list=["foo", "bar"],
-        string_set=["foo", "bar"],
-        integer_list=[1, 2],
-        boolean_list=[True, False],
-        timestamp_list=[
-            datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
-            datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
-        ],
-        enum_list=["Foo", "0"],
-        int_enum_list=[1, 2],
-        nested_string_list=[["foo", "bar"], ["baz", "qux"]],
-        structure_list=[
-            StructureListMember(a="1", b="2"),
-            StructureListMember(a="3", b="4"),
-        ],
-        blob_list=[b"foo", b"bar"],
-    )
-
     try:
-        await client.rpc_v2_json_lists(input_)
+        await client.rpc_v2_json_lists(
+            string_list=["foo", "bar"],
+            string_set=["foo", "bar"],
+            integer_list=[1, 2],
+            boolean_list=[True, False],
+            timestamp_list=[
+                datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
+                datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
+            ],
+            enum_list=["Foo", "0"],
+            int_enum_list=[1, 2],
+            nested_string_list=[["foo", "bar"], ["baz", "qux"]],
+            structure_list=[
+                StructureListMember(a="1", b="2"),
+                StructureListMember(a="3", b="4"),
+            ],
+            blob_list=[b"foo", b"bar"],
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2478,10 +2377,8 @@ async def test_rpc_v2_json_request_lists_empty_request_rpc_v2_json_lists() -> No
         )
     )
 
-    input_ = RpcV2JsonListsInput(string_list=[])
-
     try:
-        await client.rpc_v2_json_lists(input_)
+        await client.rpc_v2_json_lists(string_list=[])
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2559,10 +2456,8 @@ async def test_rpc_v2_json_response_lists_response_rpc_v2_json_lists() -> None:
         )
     )
 
-    input_ = RpcV2JsonListsInput()
-
     try:
-        actual = await client.rpc_v2_json_lists(input_)
+        actual = await client.rpc_v2_json_lists()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -2604,10 +2499,8 @@ async def test_rpc_v2_json_response_lists_empty_response_rpc_v2_json_lists() -> 
         )
     )
 
-    input_ = RpcV2JsonListsInput()
-
     try:
-        actual = await client.rpc_v2_json_lists(input_)
+        actual = await client.rpc_v2_json_lists()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -2628,15 +2521,13 @@ async def test_rpc_v2_json_request_sparse_maps_request_rpc_v2_json_sparse_maps()
         )
     )
 
-    input_ = RpcV2JsonSparseMapsInput(
-        sparse_struct_map={
-            "foo": GreetingStruct(hi="there"),
-            "baz": GreetingStruct(hi="bye"),
-        }
-    )
-
     try:
-        await client.rpc_v2_json_sparse_maps(input_)
+        await client.rpc_v2_json_sparse_maps(
+            sparse_struct_map={
+                "foo": GreetingStruct(hi="there"),
+                "baz": GreetingStruct(hi="bye"),
+            }
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2710,15 +2601,13 @@ async def test_rpc_v2_json_request_serializes_null_map_values_request_rpc_v2_jso
         )
     )
 
-    input_ = RpcV2JsonSparseMapsInput(
-        sparse_struct_map={"x": None},
-        sparse_number_map={"x": None},
-        sparse_boolean_map={"x": None},
-        sparse_string_map={"x": None},
-    )
-
     try:
-        await client.rpc_v2_json_sparse_maps(input_)
+        await client.rpc_v2_json_sparse_maps(
+            sparse_struct_map={"x": None},
+            sparse_number_map={"x": None},
+            sparse_boolean_map={"x": None},
+            sparse_string_map={"x": None},
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2792,10 +2681,8 @@ async def test_rpc_v2_json_request_serializes_sparse_set_map_request_rpc_v2_json
         )
     )
 
-    input_ = RpcV2JsonSparseMapsInput(sparse_set_map={"x": [], "y": ["a", "b"]})
-
     try:
-        await client.rpc_v2_json_sparse_maps(input_)
+        await client.rpc_v2_json_sparse_maps(sparse_set_map={"x": [], "y": ["a", "b"]})
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2869,12 +2756,10 @@ async def test_rpc_v2_json_request_serializes_sparse_set_map_and_retains_null_re
         )
     )
 
-    input_ = RpcV2JsonSparseMapsInput(
-        sparse_set_map={"x": [], "y": ["a", "b"], "z": None}
-    )
-
     try:
-        await client.rpc_v2_json_sparse_maps(input_)
+        await client.rpc_v2_json_sparse_maps(
+            sparse_set_map={"x": [], "y": ["a", "b"], "z": None}
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2948,12 +2833,10 @@ async def test_rpc_v2_json_request_serializes_zero_values_in_sparse_maps_request
         )
     )
 
-    input_ = RpcV2JsonSparseMapsInput(
-        sparse_number_map={"x": 0}, sparse_boolean_map={"x": False}
-    )
-
     try:
-        await client.rpc_v2_json_sparse_maps(input_)
+        await client.rpc_v2_json_sparse_maps(
+            sparse_number_map={"x": 0}, sparse_boolean_map={"x": False}
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3033,10 +2916,8 @@ async def test_rpc_v2_json_response_sparse_json_maps_response_rpc_v2_json_sparse
         )
     )
 
-    input_ = RpcV2JsonSparseMapsInput()
-
     try:
-        actual = await client.rpc_v2_json_sparse_maps(input_)
+        actual = await client.rpc_v2_json_sparse_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3068,10 +2949,8 @@ async def test_rpc_v2_json_response_deserializes_null_map_values_response_rpc_v2
         )
     )
 
-    input_ = RpcV2JsonSparseMapsInput()
-
     try:
-        actual = await client.rpc_v2_json_sparse_maps(input_)
+        actual = await client.rpc_v2_json_sparse_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3103,10 +2982,8 @@ async def test_rpc_v2_json_response_deserializes_sparse_set_map_response_rpc_v2_
         )
     )
 
-    input_ = RpcV2JsonSparseMapsInput()
-
     try:
-        actual = await client.rpc_v2_json_sparse_maps(input_)
+        actual = await client.rpc_v2_json_sparse_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3133,10 +3010,8 @@ async def test_rpc_v2_json_response_deserializes_sparse_set_map_and_retains_null
         )
     )
 
-    input_ = RpcV2JsonSparseMapsInput()
-
     try:
-        actual = await client.rpc_v2_json_sparse_maps(input_)
+        actual = await client.rpc_v2_json_sparse_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3165,10 +3040,8 @@ async def test_rpc_v2_json_response_deserializes_zero_values_in_sparse_maps_resp
         )
     )
 
-    input_ = RpcV2JsonSparseMapsInput()
-
     try:
-        actual = await client.rpc_v2_json_sparse_maps(input_)
+        actual = await client.rpc_v2_json_sparse_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3191,21 +3064,19 @@ async def test_rpc_v2_json_request_simple_scalar_properties_request_simple_scala
         )
     )
 
-    input_ = SimpleScalarPropertiesInput(
-        true_boolean_value=True,
-        false_boolean_value=False,
-        byte_value=5,
-        double_value=float(1.889),
-        float_value=float(7.625),
-        integer_value=256,
-        long_value=9873,
-        short_value=9898,
-        string_value="simple",
-        blob_value=b"foo",
-    )
-
     try:
-        await client.simple_scalar_properties(input_)
+        await client.simple_scalar_properties(
+            true_boolean_value=True,
+            false_boolean_value=False,
+            byte_value=5,
+            double_value=float(1.889),
+            float_value=float(7.625),
+            integer_value=256,
+            long_value=9873,
+            short_value=9898,
+            string_value="simple",
+            blob_value=b"foo",
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3279,10 +3150,8 @@ async def test_rpc_v2_json_request_client_doesnt_serialize_null_structure_values
         )
     )
 
-    input_ = SimpleScalarPropertiesInput(string_value=None)
-
     try:
-        await client.simple_scalar_properties(input_)
+        await client.simple_scalar_properties(string_value=None)
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3356,12 +3225,10 @@ async def test_rpc_v2_json_request_supports_na_n_float_inputs_request_simple_sca
         )
     )
 
-    input_ = SimpleScalarPropertiesInput(
-        double_value=float("nan"), float_value=float("nan")
-    )
-
     try:
-        await client.simple_scalar_properties(input_)
+        await client.simple_scalar_properties(
+            double_value=float("nan"), float_value=float("nan")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3437,12 +3304,10 @@ async def test_rpc_v2_json_request_supports_infinity_float_inputs_request_simple
         )
     )
 
-    input_ = SimpleScalarPropertiesInput(
-        double_value=float("inf"), float_value=float("inf")
-    )
-
     try:
-        await client.simple_scalar_properties(input_)
+        await client.simple_scalar_properties(
+            double_value=float("inf"), float_value=float("inf")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3518,12 +3383,10 @@ async def test_rpc_v2_json_request_supports_negative_infinity_float_inputs_reque
         )
     )
 
-    input_ = SimpleScalarPropertiesInput(
-        double_value=float("-inf"), float_value=float("-inf")
-    )
-
     try:
-        await client.simple_scalar_properties(input_)
+        await client.simple_scalar_properties(
+            double_value=float("-inf"), float_value=float("-inf")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3605,10 +3468,8 @@ async def test_rpc_v2_json_response_simple_scalar_properties_response_simple_sca
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3645,10 +3506,8 @@ async def test_rpc_v2_json_response_client_doesnt_deserialize_null_structure_val
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3675,10 +3534,8 @@ async def test_rpc_v2_json_response_supports_na_n_float_outputs_response_simple_
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3707,10 +3564,8 @@ async def test_rpc_v2_json_response_supports_infinity_float_outputs_response_sim
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3739,10 +3594,8 @@ async def test_rpc_v2_json_response_supports_negative_infinity_float_outputs_res
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3776,10 +3629,8 @@ async def test_rpc_v2_json_response_extra_fields_in_the_body_should_be_skipped_b
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3811,10 +3662,8 @@ async def test_rpc_v2_json_request_sparse_maps_serialize_null_values_request_spa
         )
     )
 
-    input_ = SparseNullsOperationInput(sparse_string_map={"foo": None})
-
     try:
-        await client.sparse_nulls_operation(input_)
+        await client.sparse_nulls_operation(sparse_string_map={"foo": None})
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3890,10 +3739,8 @@ async def test_rpc_v2_json_request_sparse_lists_serialize_null_request_sparse_nu
         )
     )
 
-    input_ = SparseNullsOperationInput(sparse_string_list=[None])
-
     try:
-        await client.sparse_nulls_operation(input_)
+        await client.sparse_nulls_operation(sparse_string_list=[None])
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3973,10 +3820,8 @@ async def test_rpc_v2_json_response_sparse_maps_deserialize_null_values_response
         )
     )
 
-    input_ = SparseNullsOperationInput()
-
     try:
-        actual = await client.sparse_nulls_operation(input_)
+        actual = await client.sparse_nulls_operation()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -4003,10 +3848,8 @@ async def test_rpc_v2_json_response_sparse_lists_deserialize_null_response_spars
         )
     )
 
-    input_ = SparseNullsOperationInput()
-
     try:
-        actual = await client.sparse_nulls_operation(input_)
+        actual = await client.sparse_nulls_operation()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -4030,15 +3873,13 @@ async def test_rpc_v2_json_request_timestamp_format_ignored_request_timestamp_fo
         )
     )
 
-    input_ = TimestampFormatIgnoredInput(
-        date_time=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc),
-        http_date=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc),
-        epoch_seconds=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc),
-        normal=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc),
-    )
-
     try:
-        await client.timestamp_format_ignored(input_)
+        await client.timestamp_format_ignored(
+            date_time=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc),
+            http_date=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc),
+            epoch_seconds=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc),
+            normal=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc),
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4121,10 +3962,8 @@ async def test_rpc_v2_json_response_timestamp_format_ignored_response_timestamp_
         )
     )
 
-    input_ = TimestampFormatIgnoredInput()
-
     try:
-        actual = await client.timestamp_format_ignored(input_)
+        actual = await client.timestamp_format_ignored()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:

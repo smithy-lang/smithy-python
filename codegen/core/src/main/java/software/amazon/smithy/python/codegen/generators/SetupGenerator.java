@@ -44,6 +44,20 @@ public final class SetupGenerator {
         var description = resolveDescription(settings, context);
         writePyproject(settings, description, context.writerDelegator(), dependencies);
         writeReadme(settings, description, context);
+        writeTypeMarker(settings, context);
+    }
+
+    /**
+     * Write the PEP 561 marker that tells type checkers an installed package carries
+     * its own types. Without it they ignore the client's inline annotations and its
+     * {@code models.pyi}, and report the package as untyped.
+     *
+     * <p>The build backend packages every file in the module directory, so the marker
+     * needs no entry in pyproject.toml. It is an empty file, not Python source, so it
+     * is written directly rather than through a writer that would add a header.
+     */
+    private static void writeTypeMarker(PythonSettings settings, GenerationContext context) {
+        context.fileManifest().writeFile("src/" + settings.moduleName() + "/py.typed", "");
     }
 
     /**

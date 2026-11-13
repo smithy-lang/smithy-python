@@ -28,8 +28,8 @@ classifiers = [
   "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
-    "smithy-core~=0.11.0",
-    "smithy-http~=0.8.0",
+    "smithy-core~=0.12.0",
+    "smithy-http~=0.9.0",
     "aws-sdk-signers~=0.6.0"
 ]
 
@@ -65,13 +65,13 @@ checksums = [
     "smithy-aws-checksums~=0.1.0"
 ]
 eventstream = [
-    "smithy-aws-event-stream~=0.5.0"
+    "smithy-aws-event-stream~=0.6.0"
 ]
 json = [
-    "smithy-json~=0.5.0"
+    "smithy-json~=0.6.0"
 ]
 xml = [
-    "smithy-xml~=0.4.0"
+    "smithy-xml~=0.5.0"
 ]
 
 [tool.hatch.build]

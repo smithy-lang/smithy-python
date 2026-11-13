@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.chain.resolver import IdentityChain
@@ -20,71 +20,38 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .models import (
-        DatetimeOffsetsInput,
         DatetimeOffsetsOutput,
-        EmptyInputAndEmptyOutputInput,
         EmptyInputAndEmptyOutputOutput,
-        EndpointOperationInput,
         EndpointOperationOutput,
-        EndpointWithHostLabelOperationInput,
         EndpointWithHostLabelOperationOutput,
-        FlattenedXmlMapInput,
         FlattenedXmlMapOutput,
-        FlattenedXmlMapWithXmlNameInput,
         FlattenedXmlMapWithXmlNameOutput,
-        FlattenedXmlMapWithXmlNamespaceInput,
         FlattenedXmlMapWithXmlNamespaceOutput,
-        FractionalSecondsInput,
         FractionalSecondsOutput,
-        GreetingWithErrorsInput,
         GreetingWithErrorsOutput,
-        HostWithPathOperationInput,
         HostWithPathOperationOutput,
-        IgnoresWrappingXmlNameInput,
         IgnoresWrappingXmlNameOutput,
-        NestedStructuresInput,
         NestedStructuresOutput,
-        NoInputAndNoOutputInput,
         NoInputAndNoOutputOutput,
-        NoInputAndOutputInput,
         NoInputAndOutputOutput,
-        PutWithContentEncodingInput,
         PutWithContentEncodingOutput,
-        QueryIdempotencyTokenAutoFillInput,
         QueryIdempotencyTokenAutoFillOutput,
-        QueryListsInput,
         QueryListsOutput,
-        QueryMapsInput,
         QueryMapsOutput,
-        QueryTimestampsInput,
         QueryTimestampsOutput,
-        RecursiveXmlShapesInput,
         RecursiveXmlShapesOutput,
-        SimpleInputParamsInput,
         SimpleInputParamsOutput,
-        SimpleScalarXmlPropertiesInput,
         SimpleScalarXmlPropertiesOutput,
-        XmlBlobsInput,
         XmlBlobsOperationOutput,
-        XmlEmptyBlobsInput,
         XmlEmptyBlobsOutput,
-        XmlEmptyListsInput,
         XmlEmptyListsOutput,
-        XmlEmptyMapsInput,
         XmlEmptyMapsOutput,
-        XmlEnumsInput,
         XmlEnumsOutput,
-        XmlIntEnumsInput,
         XmlIntEnumsOutput,
-        XmlListsInput,
         XmlListsOperationOutput,
-        XmlMapsInput,
         XmlMapsOperationOutput,
-        XmlMapsXmlNameInput,
         XmlMapsXmlNameOutput,
-        XmlNamespacesInput,
         XmlNamespacesOutput,
-        XmlTimestampsInput,
         XmlTimestampsOutput,
     )
 
@@ -97,17 +64,27 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     def datetime_offsets(
         self,
-        input: DatetimeOffsetsInput | None = None,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> DatetimeOffsetsOutput: ...
+
+    @_overload
+    def datetime_offsets(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DatetimeOffsetsInputDict],
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
 
         Args:
-            input:
-                An instance of `DatetimeOffsetsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -117,12 +94,34 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `DatetimeOffsetsOutput`.
         """
-        return self._invoke(input, _models.DATETIME_OFFSETS, [], plugins)
 
+    def datetime_offsets(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DatetimeOffsetsOutput:
+        return self._invoke(
+            self._select_input(_models.DATETIME_OFFSETS, args, kwargs),
+            _models.DATETIME_OFFSETS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def empty_input_and_empty_output(
         self,
-        input: EmptyInputAndEmptyOutputInput | None = None,
+        request: _models.EmptyInputAndEmptyOutputInput
+        | _models.EmptyInputAndEmptyOutputInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> EmptyInputAndEmptyOutputOutput: ...
+
+    @_overload
+    def empty_input_and_empty_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EmptyInputAndEmptyOutputInputDict],
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -130,8 +129,6 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         generators must support this.
 
         Args:
-            input:
-                An instance of `EmptyInputAndEmptyOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -141,19 +138,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `EmptyInputAndEmptyOutputOutput`.
         """
-        return self._invoke(input, _models.EMPTY_INPUT_AND_EMPTY_OUTPUT, [], plugins)
 
+    def empty_input_and_empty_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EmptyInputAndEmptyOutputOutput:
+        return self._invoke(
+            self._select_input(_models.EMPTY_INPUT_AND_EMPTY_OUTPUT, args, kwargs),
+            _models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     def endpoint_operation(
         self,
-        input: EndpointOperationInput | None = None,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> EndpointOperationOutput: ...
+
+    @_overload
+    def endpoint_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointOperationInputDict],
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -163,19 +179,39 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `EndpointOperationOutput`.
         """
-        return self._invoke(input, _models.ENDPOINT_OPERATION, [], plugins)
 
+    def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointOperationOutput:
+        return self._invoke(
+            self._select_input(_models.ENDPOINT_OPERATION, args, kwargs),
+            _models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     def endpoint_with_host_label_operation(
         self,
-        input: EndpointWithHostLabelOperationInput,
+        request: _models.EndpointWithHostLabelOperationInput
+        | _models.EndpointWithHostLabelOperationInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput: ...
+
+    @_overload
+    def endpoint_with_host_label_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputDict],
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
         Args:
-            input:
-                An instance of `EndpointWithHostLabelOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -185,21 +221,40 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `EndpointWithHostLabelOperationOutput`.
         """
+
+    def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> EndpointWithHostLabelOperationOutput:
         return self._invoke(
-            input, _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, [], plugins
+            self._select_input(
+                _models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs
+            ),
+            _models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
         )
 
+    @_overload
     def flattened_xml_map(
         self,
-        input: FlattenedXmlMapInput | None = None,
+        request: _models.FlattenedXmlMapInput | _models.FlattenedXmlMapInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapOutput: ...
+
+    @_overload
+    def flattened_xml_map(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FlattenedXmlMapInputDict],
     ) -> FlattenedXmlMapOutput:
         """
         Flattened maps
 
         Args:
-            input:
-                An instance of `FlattenedXmlMapInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -209,19 +264,39 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapOutput`.
         """
-        return self._invoke(input, _models.FLATTENED_XML_MAP, [], plugins)
 
+    def flattened_xml_map(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapOutput:
+        return self._invoke(
+            self._select_input(_models.FLATTENED_XML_MAP, args, kwargs),
+            _models.FLATTENED_XML_MAP,
+            [],
+            plugins,
+        )
+
+    @_overload
     def flattened_xml_map_with_xml_name(
         self,
-        input: FlattenedXmlMapWithXmlNameInput | None = None,
+        request: _models.FlattenedXmlMapWithXmlNameInput
+        | _models.FlattenedXmlMapWithXmlNameInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNameOutput: ...
+
+    @_overload
+    def flattened_xml_map_with_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FlattenedXmlMapWithXmlNameInputDict],
     ) -> FlattenedXmlMapWithXmlNameOutput:
         """
         Flattened maps with @xmlName
 
         Args:
-            input:
-                An instance of `FlattenedXmlMapWithXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -231,19 +306,39 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
-        return self._invoke(input, _models.FLATTENED_XML_MAP_WITH_XML_NAME, [], plugins)
 
+    def flattened_xml_map_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapWithXmlNameOutput:
+        return self._invoke(
+            self._select_input(_models.FLATTENED_XML_MAP_WITH_XML_NAME, args, kwargs),
+            _models.FLATTENED_XML_MAP_WITH_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @_overload
     def flattened_xml_map_with_xml_namespace(
         self,
-        input: FlattenedXmlMapWithXmlNamespaceInput | None = None,
+        request: _models.FlattenedXmlMapWithXmlNamespaceInput
+        | _models.FlattenedXmlMapWithXmlNamespaceInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNamespaceOutput: ...
+
+    @_overload
+    def flattened_xml_map_with_xml_namespace(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FlattenedXmlMapWithXmlNamespaceInputDict],
     ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         """
         Flattened maps with @xmlNamespace and @xmlName
 
         Args:
-            input:
-                An instance of `FlattenedXmlMapWithXmlNamespaceInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -253,21 +348,40 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
+
+    def flattened_xml_map_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         return self._invoke(
-            input, _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, [], plugins
+            self._select_input(
+                _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, args, kwargs
+            ),
+            _models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
+            [],
+            plugins,
         )
 
+    @_overload
     def fractional_seconds(
         self,
-        input: FractionalSecondsInput | None = None,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> FractionalSecondsOutput: ...
+
+    @_overload
+    def fractional_seconds(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.FractionalSecondsInputDict],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
 
         Args:
-            input:
-                An instance of `FractionalSecondsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -277,12 +391,33 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `FractionalSecondsOutput`.
         """
-        return self._invoke(input, _models.FRACTIONAL_SECONDS, [], plugins)
 
+    def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> FractionalSecondsOutput:
+        return self._invoke(
+            self._select_input(_models.FRACTIONAL_SECONDS, args, kwargs),
+            _models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def greeting_with_errors(
         self,
-        input: GreetingWithErrorsInput | None = None,
+        request: _models.GreetingWithErrorsInput | _models.GreetingWithErrorsInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> GreetingWithErrorsOutput: ...
+
+    @_overload
+    def greeting_with_errors(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputDict],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -290,8 +425,6 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         error. 3. A BadRequest error.
 
         Args:
-            input:
-                An instance of `GreetingWithErrorsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -301,19 +434,39 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `GreetingWithErrorsOutput`.
         """
-        return self._invoke(input, _models.GREETING_WITH_ERRORS, [], plugins)
 
+    def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GreetingWithErrorsOutput:
+        return self._invoke(
+            self._select_input(_models.GREETING_WITH_ERRORS, args, kwargs),
+            _models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def host_with_path_operation(
         self,
-        input: HostWithPathOperationInput | None = None,
+        request: _models.HostWithPathOperationInput
+        | _models.HostWithPathOperationInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> HostWithPathOperationOutput: ...
+
+    @_overload
+    def host_with_path_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.HostWithPathOperationInputDict],
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
 
         Args:
-            input:
-                An instance of `HostWithPathOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -323,12 +476,34 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `HostWithPathOperationOutput`.
         """
-        return self._invoke(input, _models.HOST_WITH_PATH_OPERATION, [], plugins)
 
+    def host_with_path_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> HostWithPathOperationOutput:
+        return self._invoke(
+            self._select_input(_models.HOST_WITH_PATH_OPERATION, args, kwargs),
+            _models.HOST_WITH_PATH_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
     def ignores_wrapping_xml_name(
         self,
-        input: IgnoresWrappingXmlNameInput | None = None,
+        request: _models.IgnoresWrappingXmlNameInput
+        | _models.IgnoresWrappingXmlNameInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> IgnoresWrappingXmlNameOutput: ...
+
+    @_overload
+    def ignores_wrapping_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.IgnoresWrappingXmlNameInputDict],
     ) -> IgnoresWrappingXmlNameOutput:
         """
         The xmlName trait on the output structure is ignored in AWS Query. The
@@ -336,8 +511,6 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         that wrapper is another wrapper named operation name + \"Result\".
 
         Args:
-            input:
-                An instance of `IgnoresWrappingXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -347,19 +520,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `IgnoresWrappingXmlNameOutput`.
         """
-        return self._invoke(input, _models.IGNORES_WRAPPING_XML_NAME, [], plugins)
 
+    def ignores_wrapping_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> IgnoresWrappingXmlNameOutput:
+        return self._invoke(
+            self._select_input(_models.IGNORES_WRAPPING_XML_NAME, args, kwargs),
+            _models.IGNORES_WRAPPING_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @_overload
     def nested_structures(
         self,
-        input: NestedStructuresInput | None = None,
+        request: _models.NestedStructuresInput | _models.NestedStructuresInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> NestedStructuresOutput: ...
+
+    @_overload
+    def nested_structures(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NestedStructuresInputDict],
     ) -> NestedStructuresOutput:
         """
         This test serializes nested and recursive structure members.
 
         Args:
-            input:
-                An instance of `NestedStructuresInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -369,12 +561,33 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `NestedStructuresOutput`.
         """
-        return self._invoke(input, _models.NESTED_STRUCTURES, [], plugins)
 
+    def nested_structures(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NestedStructuresOutput:
+        return self._invoke(
+            self._select_input(_models.NESTED_STRUCTURES, args, kwargs),
+            _models.NESTED_STRUCTURES,
+            [],
+            plugins,
+        )
+
+    @_overload
     def no_input_and_no_output(
         self,
-        input: NoInputAndNoOutputInput | None = None,
+        request: _models.NoInputAndNoOutputInput | _models.NoInputAndNoOutputInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> NoInputAndNoOutputOutput: ...
+
+    @_overload
+    def no_input_and_no_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndNoOutputInputDict],
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -383,8 +596,6 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         this.
 
         Args:
-            input:
-                An instance of `NoInputAndNoOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -394,12 +605,33 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `NoInputAndNoOutputOutput`.
         """
-        return self._invoke(input, _models.NO_INPUT_AND_NO_OUTPUT, [], plugins)
 
+    def no_input_and_no_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndNoOutputOutput:
+        return self._invoke(
+            self._select_input(_models.NO_INPUT_AND_NO_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_NO_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     def no_input_and_output(
         self,
-        input: NoInputAndOutputInput | None = None,
+        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> NoInputAndOutputOutput: ...
+
+    @_overload
+    def no_input_and_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.NoInputAndOutputInputDict],
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -407,8 +639,6 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         rare, code generators must support this.
 
         Args:
-            input:
-                An instance of `NoInputAndOutputInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -418,19 +648,39 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `NoInputAndOutputOutput`.
         """
-        return self._invoke(input, _models.NO_INPUT_AND_OUTPUT, [], plugins)
 
+    def no_input_and_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> NoInputAndOutputOutput:
+        return self._invoke(
+            self._select_input(_models.NO_INPUT_AND_OUTPUT, args, kwargs),
+            _models.NO_INPUT_AND_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @_overload
     def put_with_content_encoding(
         self,
-        input: PutWithContentEncodingInput | None = None,
+        request: _models.PutWithContentEncodingInput
+        | _models.PutWithContentEncodingInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> PutWithContentEncodingOutput: ...
+
+    @_overload
+    def put_with_content_encoding(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.PutWithContentEncodingInputDict],
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
 
         Args:
-            input:
-                An instance of `PutWithContentEncodingInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -440,19 +690,39 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `PutWithContentEncodingOutput`.
         """
-        return self._invoke(input, _models.PUT_WITH_CONTENT_ENCODING, [], plugins)
 
+    def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> PutWithContentEncodingOutput:
+        return self._invoke(
+            self._select_input(_models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
+            _models.PUT_WITH_CONTENT_ENCODING,
+            [],
+            plugins,
+        )
+
+    @_overload
     def query_idempotency_token_auto_fill(
         self,
-        input: QueryIdempotencyTokenAutoFillInput | None = None,
+        request: _models.QueryIdempotencyTokenAutoFillInput
+        | _models.QueryIdempotencyTokenAutoFillInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> QueryIdempotencyTokenAutoFillOutput: ...
+
+    @_overload
+    def query_idempotency_token_auto_fill(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryIdempotencyTokenAutoFillInputDict],
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
 
         Args:
-            input:
-                An instance of `QueryIdempotencyTokenAutoFillInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -462,19 +732,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
+
+    def query_idempotency_token_auto_fill(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryIdempotencyTokenAutoFillOutput:
         return self._invoke(
-            input, _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, [], plugins
+            self._select_input(_models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, args, kwargs),
+            _models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
+            [],
+            plugins,
         )
 
+    @_overload
     def query_lists(
-        self, input: QueryListsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.QueryListsInput | _models.QueryListsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryListsOutput: ...
+
+    @_overload
+    def query_lists(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryListsInputDict],
     ) -> QueryListsOutput:
         """
         This test serializes simple and complex lists.
 
         Args:
-            input:
-                An instance of `QueryListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -484,17 +773,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `QueryListsOutput`.
         """
-        return self._invoke(input, _models.QUERY_LISTS, [], plugins)
 
+    def query_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryListsOutput:
+        return self._invoke(
+            self._select_input(_models.QUERY_LISTS, args, kwargs),
+            _models.QUERY_LISTS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def query_maps(
-        self, input: QueryMapsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.QueryMapsInput | _models.QueryMapsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryMapsOutput: ...
+
+    @_overload
+    def query_maps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryMapsInputDict],
     ) -> QueryMapsOutput:
         """
         This test serializes simple and complex maps.
 
         Args:
-            input:
-                An instance of `QueryMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -504,12 +814,33 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `QueryMapsOutput`.
         """
-        return self._invoke(input, _models.QUERY_MAPS, [], plugins)
 
+    def query_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryMapsOutput:
+        return self._invoke(
+            self._select_input(_models.QUERY_MAPS, args, kwargs),
+            _models.QUERY_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def query_timestamps(
         self,
-        input: QueryTimestampsInput | None = None,
+        request: _models.QueryTimestampsInput | _models.QueryTimestampsInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> QueryTimestampsOutput: ...
+
+    @_overload
+    def query_timestamps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryTimestampsInputDict],
     ) -> QueryTimestampsOutput:
         """
         This test serializes timestamps. 1. Timestamps are serialized as RFC
@@ -518,8 +849,6 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         the member changes the format.
 
         Args:
-            input:
-                An instance of `QueryTimestampsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -529,19 +858,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `QueryTimestampsOutput`.
         """
-        return self._invoke(input, _models.QUERY_TIMESTAMPS, [], plugins)
 
+    def query_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryTimestampsOutput:
+        return self._invoke(
+            self._select_input(_models.QUERY_TIMESTAMPS, args, kwargs),
+            _models.QUERY_TIMESTAMPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def recursive_xml_shapes(
         self,
-        input: RecursiveXmlShapesInput | None = None,
+        request: _models.RecursiveXmlShapesInput | _models.RecursiveXmlShapesInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> RecursiveXmlShapesOutput: ...
+
+    @_overload
+    def recursive_xml_shapes(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.RecursiveXmlShapesInputDict],
     ) -> RecursiveXmlShapesOutput:
         """
         Recursive shapes
 
         Args:
-            input:
-                An instance of `RecursiveXmlShapesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -551,19 +899,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `RecursiveXmlShapesOutput`.
         """
-        return self._invoke(input, _models.RECURSIVE_XML_SHAPES, [], plugins)
 
+    def recursive_xml_shapes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> RecursiveXmlShapesOutput:
+        return self._invoke(
+            self._select_input(_models.RECURSIVE_XML_SHAPES, args, kwargs),
+            _models.RECURSIVE_XML_SHAPES,
+            [],
+            plugins,
+        )
+
+    @_overload
     def simple_input_params(
         self,
-        input: SimpleInputParamsInput | None = None,
+        request: _models.SimpleInputParamsInput | _models.SimpleInputParamsInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> SimpleInputParamsOutput: ...
+
+    @_overload
+    def simple_input_params(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleInputParamsInputDict],
     ) -> SimpleInputParamsOutput:
         """
         This test serializes strings, numbers, and boolean values.
 
         Args:
-            input:
-                An instance of `SimpleInputParamsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -573,19 +940,39 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `SimpleInputParamsOutput`.
         """
-        return self._invoke(input, _models.SIMPLE_INPUT_PARAMS, [], plugins)
 
+    def simple_input_params(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleInputParamsOutput:
+        return self._invoke(
+            self._select_input(_models.SIMPLE_INPUT_PARAMS, args, kwargs),
+            _models.SIMPLE_INPUT_PARAMS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def simple_scalar_xml_properties(
         self,
-        input: SimpleScalarXmlPropertiesInput | None = None,
+        request: _models.SimpleScalarXmlPropertiesInput
+        | _models.SimpleScalarXmlPropertiesInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> SimpleScalarXmlPropertiesOutput: ...
+
+    @_overload
+    def simple_scalar_xml_properties(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.SimpleScalarXmlPropertiesInputDict],
     ) -> SimpleScalarXmlPropertiesOutput:
         """
         Invokes the SimpleScalarXmlProperties operation.
 
         Args:
-            input:
-                An instance of `SimpleScalarXmlPropertiesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -595,17 +982,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `SimpleScalarXmlPropertiesOutput`.
         """
-        return self._invoke(input, _models.SIMPLE_SCALAR_XML_PROPERTIES, [], plugins)
 
+    def simple_scalar_xml_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> SimpleScalarXmlPropertiesOutput:
+        return self._invoke(
+            self._select_input(_models.SIMPLE_SCALAR_XML_PROPERTIES, args, kwargs),
+            _models.SIMPLE_SCALAR_XML_PROPERTIES,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_blobs(
-        self, input: XmlBlobsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlBlobsInput | _models.XmlBlobsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlBlobsOperationOutput: ...
+
+    @_overload
+    def xml_blobs(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlBlobsInputDict],
     ) -> XmlBlobsOperationOutput:
         """
         Blobs are base64 encoded
 
         Args:
-            input:
-                An instance of `XmlBlobsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -615,19 +1023,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `XmlBlobsOperationOutput`.
         """
-        return self._invoke(input, _models.XML_BLOBS, [], plugins)
 
+    def xml_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlBlobsOperationOutput:
+        return self._invoke(
+            self._select_input(_models.XML_BLOBS, args, kwargs),
+            _models.XML_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_empty_blobs(
         self,
-        input: XmlEmptyBlobsInput | None = None,
+        request: _models.XmlEmptyBlobsInput | _models.XmlEmptyBlobsInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyBlobsOutput: ...
+
+    @_overload
+    def xml_empty_blobs(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyBlobsInputDict],
     ) -> XmlEmptyBlobsOutput:
         """
         Invokes the XmlEmptyBlobs operation.
 
         Args:
-            input:
-                An instance of `XmlEmptyBlobsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -637,19 +1064,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `XmlEmptyBlobsOutput`.
         """
-        return self._invoke(input, _models.XML_EMPTY_BLOBS, [], plugins)
 
+    def xml_empty_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyBlobsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_EMPTY_BLOBS, args, kwargs),
+            _models.XML_EMPTY_BLOBS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_empty_lists(
         self,
-        input: XmlEmptyListsInput | None = None,
+        request: _models.XmlEmptyListsInput | _models.XmlEmptyListsInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyListsOutput: ...
+
+    @_overload
+    def xml_empty_lists(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyListsInputDict],
     ) -> XmlEmptyListsOutput:
         """
         Invokes the XmlEmptyLists operation.
 
         Args:
-            input:
-                An instance of `XmlEmptyListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -659,19 +1105,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `XmlEmptyListsOutput`.
         """
-        return self._invoke(input, _models.XML_EMPTY_LISTS, [], plugins)
 
+    def xml_empty_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyListsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_EMPTY_LISTS, args, kwargs),
+            _models.XML_EMPTY_LISTS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_empty_maps(
         self,
-        input: XmlEmptyMapsInput | None = None,
+        request: _models.XmlEmptyMapsInput | _models.XmlEmptyMapsInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> XmlEmptyMapsOutput: ...
+
+    @_overload
+    def xml_empty_maps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEmptyMapsInputDict],
     ) -> XmlEmptyMapsOutput:
         """
         Invokes the XmlEmptyMaps operation.
 
         Args:
-            input:
-                An instance of `XmlEmptyMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -681,18 +1146,39 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `XmlEmptyMapsOutput`.
         """
-        return self._invoke(input, _models.XML_EMPTY_MAPS, [], plugins)
 
+    def xml_empty_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEmptyMapsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_EMPTY_MAPS, args, kwargs),
+            _models.XML_EMPTY_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_enums(
-        self, input: XmlEnumsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlEnumsInput | _models.XmlEnumsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlEnumsOutput: ...
+
+    @_overload
+    def xml_enums(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlEnumsInputDict],
     ) -> XmlEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
         Args:
-            input:
-                An instance of `XmlEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -702,18 +1188,39 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `XmlEnumsOutput`.
         """
-        return self._invoke(input, _models.XML_ENUMS, [], plugins)
 
+    def xml_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlEnumsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_ENUMS, args, kwargs),
+            _models.XML_ENUMS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_int_enums(
-        self, input: XmlIntEnumsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlIntEnumsInput | _models.XmlIntEnumsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlIntEnumsOutput: ...
+
+    @_overload
+    def xml_int_enums(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlIntEnumsInputDict],
     ) -> XmlIntEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
         Args:
-            input:
-                An instance of `XmlIntEnumsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -723,10 +1230,33 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `XmlIntEnumsOutput`.
         """
-        return self._invoke(input, _models.XML_INT_ENUMS, [], plugins)
 
+    def xml_int_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlIntEnumsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_INT_ENUMS, args, kwargs),
+            _models.XML_INT_ENUMS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_lists(
-        self, input: XmlListsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlListsInput | _models.XmlListsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlListsOperationOutput: ...
+
+    @_overload
+    def xml_lists(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlListsInputDict],
     ) -> XmlListsOperationOutput:
         """
         This test case serializes XML lists for the following cases for both
@@ -735,8 +1265,6 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         lists. 6. Flattened XML lists with @xmlName. 7. Lists of structures.
 
         Args:
-            input:
-                An instance of `XmlListsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -746,17 +1274,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `XmlListsOperationOutput`.
         """
-        return self._invoke(input, _models.XML_LISTS, [], plugins)
 
+    def xml_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlListsOperationOutput:
+        return self._invoke(
+            self._select_input(_models.XML_LISTS, args, kwargs),
+            _models.XML_LISTS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_maps(
-        self, input: XmlMapsInput | None = None, plugins: list[Plugin] | None = None
+        self,
+        request: _models.XmlMapsInput | _models.XmlMapsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> XmlMapsOperationOutput: ...
+
+    @_overload
+    def xml_maps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlMapsInputDict],
     ) -> XmlMapsOperationOutput:
         """
         The example tests basic map serialization.
 
         Args:
-            input:
-                An instance of `XmlMapsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -766,19 +1315,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `XmlMapsOperationOutput`.
         """
-        return self._invoke(input, _models.XML_MAPS, [], plugins)
 
+    def xml_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapsOperationOutput:
+        return self._invoke(
+            self._select_input(_models.XML_MAPS, args, kwargs),
+            _models.XML_MAPS,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_maps_xml_name(
         self,
-        input: XmlMapsXmlNameInput | None = None,
+        request: _models.XmlMapsXmlNameInput | _models.XmlMapsXmlNameInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> XmlMapsXmlNameOutput: ...
+
+    @_overload
+    def xml_maps_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlMapsXmlNameInputDict],
     ) -> XmlMapsXmlNameOutput:
         """
         Invokes the XmlMapsXmlName operation.
 
         Args:
-            input:
-                An instance of `XmlMapsXmlNameInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -788,19 +1356,38 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `XmlMapsXmlNameOutput`.
         """
-        return self._invoke(input, _models.XML_MAPS_XML_NAME, [], plugins)
 
+    def xml_maps_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlMapsXmlNameOutput:
+        return self._invoke(
+            self._select_input(_models.XML_MAPS_XML_NAME, args, kwargs),
+            _models.XML_MAPS_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_namespaces(
         self,
-        input: XmlNamespacesInput | None = None,
+        request: _models.XmlNamespacesInput | _models.XmlNamespacesInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> XmlNamespacesOutput: ...
+
+    @_overload
+    def xml_namespaces(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlNamespacesInputDict],
     ) -> XmlNamespacesOutput:
         """
         Invokes the XmlNamespaces operation.
 
         Args:
-            input:
-                An instance of `XmlNamespacesInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -810,20 +1397,39 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `XmlNamespacesOutput`.
         """
-        return self._invoke(input, _models.XML_NAMESPACES, [], plugins)
 
+    def xml_namespaces(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlNamespacesOutput:
+        return self._invoke(
+            self._select_input(_models.XML_NAMESPACES, args, kwargs),
+            _models.XML_NAMESPACES,
+            [],
+            plugins,
+        )
+
+    @_overload
     def xml_timestamps(
         self,
-        input: XmlTimestampsInput | None = None,
+        request: _models.XmlTimestampsInput | _models.XmlTimestampsInputDict,
+        /,
+        *,
         plugins: list[Plugin] | None = None,
+    ) -> XmlTimestampsOutput: ...
+
+    @_overload
+    def xml_timestamps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.XmlTimestampsInputDict],
     ) -> XmlTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
         format of date-time and various @timestampFormat trait values.
 
         Args:
-            input:
-                An instance of `XmlTimestampsInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -833,7 +1439,16 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         Returns:
             An instance of `XmlTimestampsOutput`.
         """
-        return self._invoke(input, _models.XML_TIMESTAMPS, [], plugins)
+
+    def xml_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> XmlTimestampsOutput:
+        return self._invoke(
+            self._select_input(_models.XML_TIMESTAMPS, args, kwargs),
+            _models.XML_TIMESTAMPS,
+            [],
+            plugins,
+        )
 
     def _new_config(self) -> QueryProtocolConfig:
         return QueryProtocolConfig.resolve()

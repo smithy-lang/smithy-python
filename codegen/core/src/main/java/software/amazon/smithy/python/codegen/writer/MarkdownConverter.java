@@ -44,11 +44,37 @@ public final class MarkdownConverter {
      * For generic services, documentation is in CommonMark format which can
      * include embedded HTML.
      *
+     * <p>The result is plain Markdown, for files such as the README. Nothing in it
+     * is escaped for a Python string, and nothing is escaped for a writer either:
+     * it is literal text, to be written with {@code $L} and not as a format string.
+     *
      * @param input The input string (HTML or CommonMark)
      * @param context The generation context to determine service type
      * @return Markdown formatted string
      */
     public static String convert(String input, GenerationContext context) {
+        return convert(input, context, false);
+    }
+
+    /**
+     * Converts documentation like {@link #convert}, but to the contents of a
+     * triple-quoted Python docstring: backslashes are escaped so that the string
+     * compiles and decodes to the documentation, and so are quotes that would close
+     * the docstring.
+     *
+     * <p>Use this for docstrings and {@link #convert} for plain Markdown output
+     * such as the README, where the escaping would show up as literal backslashes.
+     * Like that of {@link #convert}, the result is not escaped for a writer.
+     *
+     * @param input The input string (HTML or CommonMark)
+     * @param context The generation context to determine service type
+     * @return Markdown formatted string that is safe to embed in a docstring
+     */
+    public static String convertForDocstring(String input, GenerationContext context) {
+        return escapeDocstringQuotes(convert(input, context, true));
+    }
+
+    private static String convert(String input, GenerationContext context, boolean forDocstring) {
         if (input == null || input.isEmpty()) {
             return "";
         }
@@ -61,29 +87,85 @@ public final class MarkdownConverter {
                 input = convertWithPandoc(input, "commonmark", "html");
             }
 
+            // Null if there is no backslash to protect, and then none is put back.
+            String codeBackslash = input.indexOf('\\') < 0 ? null : unusedPrivateUseCharacter(input);
+            if (codeBackslash != null) {
+                input = protectCodeBackslashes(input, codeBackslash);
+            }
+
             // The "html+raw_html" format preserves unrecognized html tags (e.g. <note>, <important>)
             // in Markdown output. We convert these tags to admonitions in postProcressPandocOutput()
             String output = convertWithPandoc(input, "html+raw_html", "markdown");
 
-            return postProcessPandocOutput(output);
+            return postProcessPandocOutput(output, codeBackslash, forDocstring);
         } catch (IOException | InterruptedException e) {
             throw new CodegenException("Failed to convert documentation using pandoc: " + e.getMessage(), e);
         }
     }
 
+    // The private-use characters that may stand in for a backslash of code while
+    // the documentation goes through pandoc. They mean nothing to pandoc.
+    private static final char FIRST_CODE_BACKSLASH = 0xE05C;
+    private static final char LAST_CODE_BACKSLASH = 0xF8FF;
+    private static final Pattern CODE_ELEMENT = Pattern.compile(
+            "<(code|pre)\\b[^>]*>.*?</\\1\\s*>",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    private static final Pattern TAG_OR_BACKSLASH = Pattern.compile("</?[A-Za-z][^>]*>|\\\\");
+
     /**
-     * Converts documentation like {@link #convert}, then escapes quotes that would
-     * close a surrounding triple-quoted Python docstring.
+     * Picks the character that stands in for the backslashes of code in some HTML.
      *
-     * <p>Use this for docstrings and {@link #convert} for plain Markdown output
-     * such as the README, where the escaping would show up as literal backslashes.
+     * <p>It must not be a character of the documentation, or putting the
+     * backslashes back would make a backslash of that character too. Documentation
+     * can write a character out or give it as a numeric character reference, which
+     * pandoc decodes, so both are looked for. No named reference is a private-use
+     * character. The choice depends on the HTML alone: it is the first such
+     * character from U+E05C on that the HTML does not have.
      *
-     * @param input The input string (HTML or CommonMark)
-     * @param context The generation context to determine service type
-     * @return Markdown formatted string that is safe to embed in a docstring
+     * @param html The HTML to be converted by pandoc
+     * @return The character, or null if the HTML has every one of them
      */
-    public static String convertForDocstring(String input, GenerationContext context) {
-        return escapeDocstringQuotes(convert(input, context));
+    private static String unusedPrivateUseCharacter(String html) {
+        for (char candidate = FIRST_CODE_BACKSLASH; candidate <= LAST_CODE_BACKSLASH; candidate++) {
+            if (html.indexOf(candidate) < 0 && !hasCharacterReference(html, candidate)) {
+                return String.valueOf(candidate);
+            }
+        }
+        return null;
+    }
+
+    private static boolean hasCharacterReference(String html, char character) {
+        // Hexadecimal or decimal, with any leading zeros and with or without the
+        // semicolon, but not the start of the reference to some larger number.
+        return html.contains("&#") && Pattern.compile(
+                "&#(?:x0*" + Integer.toHexString(character) + "(?![0-9a-f])|0*" + (int) character + "(?![0-9]))",
+                Pattern.CASE_INSENSITIVE).matcher(html).find();
+    }
+
+    /**
+     * Marks the backslashes of code so they can be told apart in pandoc's output.
+     *
+     * <p>Pandoc writes code verbatim, so a backslash in it is a literal one: of a
+     * Windows path, a regular expression, an escape in some other language. Every
+     * other backslash in its output is part of a Markdown escape. Once both are
+     * Markdown the two look the same, and {@code \U} or a backslash before a closing
+     * backtick cannot be read correctly. In the HTML that pandoc is given, code is
+     * still marked up, so its backslashes are replaced here and put back, escaped
+     * for where they are going, in {@link #postProcessPandocOutput}.
+     *
+     * @param html The HTML to be converted by pandoc
+     * @param codeBackslash The character to replace them with, which the HTML does
+     *     not have (see {@link #unusedPrivateUseCharacter})
+     * @return The HTML with the backslashes in the text of code elements replaced
+     */
+    private static String protectCodeBackslashes(String html, String codeBackslash) {
+        return CODE_ELEMENT.matcher(html)
+                .replaceAll(element -> Matcher.quoteReplacement(
+                        // Tags are matched so that they are skipped: only text is code.
+                        TAG_OR_BACKSLASH.matcher(element.group())
+                                .replaceAll(match -> match.group().equals("\\")
+                                        ? codeBackslash
+                                        : Matcher.quoteReplacement(match.group()))));
     }
 
     /**
@@ -174,45 +256,53 @@ public final class MarkdownConverter {
     }
 
     /**
-     * Post-processes pandoc output for Python docstrings.
+     * Post-processes pandoc output into plain Markdown or the contents of a docstring.
      *
      * @param output The raw output from pandoc
-     * @return Post-processed Markdown suitable for Python docstrings
+     * @param codeBackslash The character that stands in for the backslashes of
+     *     code, or null if none were replaced
+     * @param forDocstring Whether backslashes are escaped for a Python string
+     * @return Post-processed Markdown
      */
-    private static String postProcessPandocOutput(String output) {
+    private static String postProcessPandocOutput(String output, String codeBackslash, boolean forDocstring) {
         // Remove empty lines at the start and end
         output = output.trim();
 
-        // Fix up the backslash escapes pandoc adds for Markdown so the result is
-        // a valid Python string literal (see normalizeBackslashEscapes).
-        output = normalizeBackslashEscapes(output);
+        // Fix up the backslash escapes pandoc adds for Markdown (see
+        // normalizeBackslashEscapes). The backslashes of code are not among them yet.
+        output = normalizeBackslashEscapes(output, forDocstring);
+
+        // Put the backslashes of code back. Markdown code is verbatim; in a Python
+        // string each one is doubled, so that it decodes to itself whatever follows.
+        if (codeBackslash != null) {
+            output = output.replace(codeBackslash, forDocstring ? "\\\\" : "\\");
+        }
 
         // Replace <note> and <important> tags with admonitions for mkdocstrings
         output = replaceAdmonitionTags(output, "note", "Note");
-        output = replaceAdmonitionTags(output, "important", "Warning");
-
-        // Escape Smithy format specifiers
-        return output.replace("$", "$$");
+        return replaceAdmonitionTags(output, "important", "Warning");
     }
 
     // A lone backslash before one of these is dropped: pandoc adds it for Markdown
-    // but it needs no escaping in a Python docstring.
+    // but the documentation reads better without it.
     private static final String MARKDOWN_ONLY_CHARS = "[](){}<>`@_*|!~$#^'.";
-    // A lone backslash before one of these is kept: together they form a valid
-    // Python escape. (' is intentionally left out; it lives in MARKDOWN_ONLY_CHARS.)
+    // In a docstring, a lone backslash before one of these is kept: together they
+    // form a valid Python escape. (' is intentionally left out; it lives in
+    // MARKDOWN_ONLY_CHARS.)
     private static final String VALID_ESCAPE_CHARS = "\\\"abfnrtv01234567xNuU\r\n";
     private static final Pattern BACKSLASH_RUN = Pattern.compile("(\\\\+)([^\\\\]|$)", Pattern.DOTALL);
 
     /**
-     * Fixes pandoc's backslash escaping so the docstring is a valid Python literal.
+     * Fixes the backslash escaping that pandoc adds for Markdown.
      *
-     * <p>Backslashes must come in pairs, but pandoc can leave an odd-length run
-     * (it escapes literal backslashes and Markdown characters separately, and
-     * adjacent escapes pile up). For each run we keep the pairs; a leftover
-     * backslash is then kept if it forms a valid escape, dropped if it is only
-     * there for Markdown, or doubled otherwise.
+     * <p>Pandoc escapes literal backslashes and Markdown characters separately,
+     * and adjacent escapes pile up into runs. For each run we keep the pairs. A
+     * leftover backslash is dropped if it is only there for a Markdown character.
+     * Otherwise plain Markdown keeps it as pandoc wrote it. A docstring must also
+     * be a valid Python literal, so there it is kept only if it forms a valid
+     * escape and is doubled if it does not.
      */
-    private static String normalizeBackslashEscapes(String output) {
+    private static String normalizeBackslashEscapes(String output, boolean forDocstring) {
         Matcher m = BACKSLASH_RUN.matcher(output);
         StringBuilder sb = new StringBuilder();
         while (m.find()) {
@@ -221,10 +311,10 @@ public final class MarkdownConverter {
             int backslashes = (runLength / 2) * 2;
             if (runLength % 2 != 0) {
                 char c = next.isEmpty() ? '\0' : next.charAt(0);
-                if (!next.isEmpty() && VALID_ESCAPE_CHARS.indexOf(c) >= 0) {
+                if (forDocstring && !next.isEmpty() && VALID_ESCAPE_CHARS.indexOf(c) >= 0) {
                     backslashes += 1;
                 } else if (next.isEmpty() || MARKDOWN_ONLY_CHARS.indexOf(c) < 0) {
-                    backslashes += 2;
+                    backslashes += forDocstring ? 2 : 1;
                 }
                 // else: Markdown-only char, drop the spurious backslash
             }
@@ -262,6 +352,59 @@ public final class MarkdownConverter {
         }
         m.appendTail(sb);
         return sb.toString();
+    }
+
+    // A line that is not the text of a paragraph: it is indented (code, or the body
+    // of an admonition), or opens or rules off some other block (a list item, heading,
+    // quote, table, definition, fence, reference, or raw HTML that is not an autolink).
+    private static final Pattern NOT_PARAGRAPH_TEXT = Pattern.compile("^(?:"
+            + "[ \\t]"
+            + "|[-+*](?:\\s|$)"
+            + "|\\(?(?:\\d+|[A-Za-z]|[ivx]+|[IVX]+|#|@\\w*)[.)](?:\\s|$)"
+            + "|#{1,6}(?:\\s|$)"
+            + "|[>|:]"
+            + "|```|~~~"
+            + "|\\[[^\\]]*\\]:"
+            + "|<(?![A-Za-z][A-Za-z0-9+.-]*:)"
+            + "|[-=+|:*_~`\\s]+$"
+            + ")");
+    // A backslash that ends a line is a hard line break, and escapes the newline in
+    // a docstring.
+    private static final Pattern ENDS_WITH_LINE_BREAK = Pattern.compile("(?<!\\\\)(?:\\\\\\\\)*\\\\$");
+
+    /**
+     * Finds the paragraph that opens converted documentation.
+     *
+     * <p>Pandoc hard-wraps paragraphs, so the first line of converted documentation
+     * usually ends mid-sentence. A caller that needs the whole paragraph on one line
+     * may join the lines up to the returned index with spaces, which does not change
+     * what the Markdown means. That holds for a paragraph only, so anything else that
+     * opens the documentation (a list, code, a table, an admonition, raw HTML) is
+     * reported as not being one, as is a paragraph with a hard line break in it.
+     *
+     * @param markdown Documentation converted by {@link #convert} or
+     *     {@link #convertForDocstring}.
+     * @return The index of the end of the opening paragraph, exclusive of its final
+     *     newline, or -1 if the documentation does not open with a paragraph.
+     */
+    public static int leadParagraphEnd(String markdown) {
+        int end = 0;
+        while (end < markdown.length()) {
+            int newline = markdown.indexOf('\n', end);
+            String line = markdown.substring(end, newline < 0 ? markdown.length() : newline);
+            if (line.isBlank()) {
+                break;
+            }
+            if (NOT_PARAGRAPH_TEXT.matcher(line).find() || ENDS_WITH_LINE_BREAK.matcher(line).find()) {
+                return -1;
+            }
+            if (newline < 0) {
+                return markdown.length();
+            }
+            end = newline + 1;
+        }
+        // Up to, and not including, the newline that ends the paragraph's last line.
+        return end == 0 ? -1 : end - 1;
     }
 
     /**

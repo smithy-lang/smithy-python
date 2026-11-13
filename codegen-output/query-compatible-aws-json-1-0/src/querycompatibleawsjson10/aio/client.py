@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import Unpack as _Unpack, cast, overload as _overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.types import ConfigSource
@@ -19,7 +19,7 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..models import QueryCompatibleOperationInput, QueryCompatibleOperationOutput
+    from ..models import QueryCompatibleOperationOutput
 
 
 logger = logging.getLogger(__name__)
@@ -32,15 +32,28 @@ class AsyncQueryCompatibleJSONRPC10Client(
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
 
+    @_overload
     async def query_compatible_operation(
-        self, input: QueryCompatibleOperationInput, plugins: list[Plugin] | None = None
+        self,
+        request: _models.QueryCompatibleOperationInput
+        | _models.QueryCompatibleOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryCompatibleOperationOutput: ...
+
+    @_overload
+    async def query_compatible_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.QueryCompatibleOperationInputDict],
     ) -> QueryCompatibleOperationOutput:
         """
         Invokes the QueryCompatibleOperation operation.
 
         Args:
-            input:
-                An instance of `QueryCompatibleOperationInput`.
             plugins:
                 A list of callables that modify the configuration dynamically.
                 Changes made by these plugins only apply for the duration of the
@@ -50,8 +63,15 @@ class AsyncQueryCompatibleJSONRPC10Client(
         Returns:
             An instance of `QueryCompatibleOperationOutput`.
         """
+
+    async def query_compatible_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> QueryCompatibleOperationOutput:
         return await self._invoke(
-            input, _models.QUERY_COMPATIBLE_OPERATION, [], plugins
+            self._select_input(_models.QUERY_COMPATIBLE_OPERATION, args, kwargs),
+            _models.QUERY_COMPATIBLE_OPERATION,
+            [],
+            plugins,
         )
 
     async def _new_config(self) -> AsyncQueryCompatibleJSONRPC10Config:
