@@ -22,8 +22,9 @@ the following process options:
 * `--output PATH` selects the output directory. It defaults to the Smithy run
   plugin's output directory (`SMITHY_PLUGIN_DIR`) when invoked by Smithy.
 
-Settings specific to each artifact will be added with the functionality that
-consumes them.
+`types` also requires `--package NAME` and `--package-version VERSION`, and
+accepts `--package-description TEXT`, `--selector SELECTOR` and
+`--include-operation-io`.
 
 ### Service Selection
 
@@ -44,11 +45,14 @@ The CLI MUST NOT synthesize a placeholder service to satisfy generation.
 
 ### Generated Shapes
 
-When a service is resolved, both artifacts generate the data shapes in the
+When a service is resolved, both artifacts select the data shapes in the
 service closure: every shape reachable from the service through its operations,
 resources, errors, and members. This matches the surface produced by the other
 Smithy code generators. Data shapes in the model that are not connected to the
-service are not generated, and the CLI reports how many were left out.
+service are not selected, and the CLI reports how many were left out. `client`
+then exits 1 because client generation is not implemented yet. `types` uses
+operation input and output structures as roots only with
+`--include-operation-io`, and never uses `@private` declarations as roots.
 
 When no service is resolved, the `types` artifact starts with eligible
 declaration shapes across the model. Its selector and input/output settings
@@ -91,10 +95,9 @@ command identifies the artifact to generate:
 }
 ```
 
-Artifact-specific options will be appended to `command` after they are defined.
-The `run` plugin can also pass settings through its `env` property, so an option
-MAY additionally be read from an environment variable. A command-line option
-takes precedence over its environment variable.
+Artifact-specific options are appended to `command`; `types` fails without
+`--package` and `--package-version`. The CLI reads no options from environment
+variables; it reads only the `SMITHY_*` variables listed below.
 
 The `smithy-python` executable MUST be installed or otherwise available on the
 Smithy process's `PATH`. Smithy passes no arguments other than those in
@@ -127,8 +130,8 @@ The `run` plugin provides the following environment variables:
 | `SMITHY_ARTIFACT_NAME` | Custom artifact name from the plugin ID. |
 | `SMITHY_INCLUDES_PRELUDE` | Whether the JSON AST includes prelude shapes. |
 
-The CLI uses this context to interpret the model. Protocol and platform
-integrations MAY also use it while generating files.
+The CLI uses only `SMITHY_PLUGIN_DIR` from this context. Protocol and platform
+integrations MAY use the rest while generating files.
 
 Smithy omits prelude shapes by default. A build MAY set `sendPrelude` to `true`
 in the `run` plugin configuration when those shapes are needed.

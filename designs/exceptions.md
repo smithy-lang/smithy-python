@@ -92,9 +92,16 @@ class HasFault(Protocol):
 
 
 @dataclass(kw_only=True)
-class CallError(SmithyError, ErrorRetryInfo):
+class CallError(SmithyError):
     fault: Fault = None
     message: str = field(default="", kw_only=False)
+    is_retry_safe: bool | None = None
+    retry_after: float | None = None
+    is_throttling_error: bool = False
+    is_timeout_error: bool = False
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
 ```
 
 #### Modeled Errors
