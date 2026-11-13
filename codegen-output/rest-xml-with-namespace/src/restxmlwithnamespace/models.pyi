@@ -29,7 +29,7 @@ class NestedWithNamespace(_SerdeShape):
 
     attr_field: str | None = ...
 
-class NestedWithNamespaceParams(TypedDict, total=False):
+class NestedWithNamespaceDict(TypedDict, total=False):
     """Dictionary form of `NestedWithNamespace`."""
 
     attr_field: str | None
@@ -50,7 +50,7 @@ class SimpleScalarPropertiesInput(_SerdeShape):
     nested: NestedWithNamespace | None = ...
     double_value: float | None = ...
 
-class SimpleScalarPropertiesInputParams(TypedDict, total=False):
+class SimpleScalarPropertiesInputDict(TypedDict, total=False):
     """Dictionary form of `SimpleScalarPropertiesInput`."""
 
     foo: str | None
@@ -62,7 +62,7 @@ class SimpleScalarPropertiesInputParams(TypedDict, total=False):
     integer_value: int | None
     long_value: int | None
     float_value: float | None
-    nested: NestedWithNamespace | NestedWithNamespaceParams | None
+    nested: NestedWithNamespace | NestedWithNamespaceDict | None
     double_value: float | None
 
 @dataclass(kw_only=True)

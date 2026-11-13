@@ -34,7 +34,7 @@ class ClientOptionalDefaults(_SerdeShape):
 
     member: int = ...
 
-class ClientOptionalDefaultsParams(TypedDict, total=False):
+class ClientOptionalDefaultsDict(TypedDict, total=False):
     """Dictionary form of `ClientOptionalDefaults`."""
 
     member: int | None
@@ -65,7 +65,7 @@ class ContentTypeParametersInput(_SerdeShape):
 
     value: int | None = ...
 
-class ContentTypeParametersInputParams(TypedDict, total=False):
+class ContentTypeParametersInputDict(TypedDict, total=False):
     """Dictionary form of `ContentTypeParametersInput`."""
 
     value: int | None
@@ -115,7 +115,7 @@ class Defaults(_SerdeShape):
     zero_float: float = ...
     zero_double: float = ...
 
-class DefaultsParams(TypedDict, total=False):
+class DefaultsDict(TypedDict, total=False):
     """Dictionary form of `Defaults`."""
 
     default_string: str | None
@@ -155,18 +155,18 @@ class Dialog(_SerdeShape):
     greeting: str = ...
     farewell: Farewell | None = ...
 
-class DialogParams(TypedDict, total=False):
+class DialogDict(TypedDict, total=False):
     """Dictionary form of `Dialog`."""
 
     language: str | None
     greeting: str | None
-    farewell: Farewell | FarewellParams | None
+    farewell: Farewell | FarewellDict | None
 
 @dataclass(kw_only=True)
 class EmptyInputAndEmptyOutputInput(_SerdeShape):
     """Dataclass for EmptyInputAndEmptyOutputInput structure."""
 
-class EmptyInputAndEmptyOutputInputParams(TypedDict, total=False):
+class EmptyInputAndEmptyOutputInputDict(TypedDict, total=False):
     """Dictionary form of `EmptyInputAndEmptyOutputInput`."""
 
 @dataclass(kw_only=True)
@@ -185,7 +185,7 @@ class EmptyInputAndEmptyOutputOutput(_SerdeShape):
 class EndpointOperationInput(_SerdeShape):
     """Dataclass for EndpointOperationInput structure."""
 
-class EndpointOperationInputParams(TypedDict, total=False):
+class EndpointOperationInputDict(TypedDict, total=False):
     """Dictionary form of `EndpointOperationInput`."""
 
 @dataclass(kw_only=True)
@@ -206,7 +206,7 @@ class EndpointWithHostLabelOperationInput(_SerdeShape):
 
     label: str | None = ...
 
-class EndpointWithHostLabelOperationInputParams(TypedDict, total=False):
+class EndpointWithHostLabelOperationInputDict(TypedDict, total=False):
     """Dictionary form of `EndpointWithHostLabelOperationInput`."""
 
     label: Required[str]
@@ -229,7 +229,7 @@ class Farewell(_SerdeShape):
 
     phrase: str = ...
 
-class FarewellParams(TypedDict, total=False):
+class FarewellDict(TypedDict, total=False):
     """Dictionary form of `Farewell`."""
 
     phrase: str | None
@@ -255,7 +255,7 @@ class GreetingWithErrorsInput(_SerdeShape):
 
     greeting: str | None = ...
 
-class GreetingWithErrorsInputParams(TypedDict, total=False):
+class GreetingWithErrorsInputDict(TypedDict, total=False):
     """Dictionary form of `GreetingWithErrorsInput`."""
 
     greeting: str | None
@@ -277,7 +277,7 @@ class GreetingWithErrorsOutput(_SerdeShape):
 class HostWithPathOperationInput(_SerdeShape):
     """Dataclass for HostWithPathOperationInput structure."""
 
-class HostWithPathOperationInputParams(TypedDict, total=False):
+class HostWithPathOperationInputDict(TypedDict, total=False):
     """Dictionary form of `HostWithPathOperationInput`."""
 
 @dataclass(kw_only=True)
@@ -311,10 +311,10 @@ class JsonUnionsInput(_SerdeShape):
     contents: MyUnion | None = ...
     """A union with a representative set of types for members."""
 
-class JsonUnionsInputParams(TypedDict, total=False):
+class JsonUnionsInputDict(TypedDict, total=False):
     """Dictionary form of `JsonUnionsInput`."""
 
-    contents: MyUnion | MyUnionParams | None
+    contents: MyUnion | MyUnionDict | None
     """A union with a representative set of types for members."""
 
 @dataclass(kw_only=True)
@@ -399,47 +399,47 @@ MyUnion = Union[
 class _MyUnionDeserializer:
     def deserialize(self, deserializer: ShapeDeserializer) -> MyUnion: ...
 
-class MyUnionStringValueParams(TypedDict):
+class MyUnionStringValueDict(TypedDict):
     string_value: str
 
-class MyUnionBooleanValueParams(TypedDict):
+class MyUnionBooleanValueDict(TypedDict):
     boolean_value: bool
 
-class MyUnionNumberValueParams(TypedDict):
+class MyUnionNumberValueDict(TypedDict):
     number_value: int
 
-class MyUnionBlobValueParams(TypedDict):
+class MyUnionBlobValueDict(TypedDict):
     blob_value: bytes
 
-class MyUnionTimestampValueParams(TypedDict):
+class MyUnionTimestampValueDict(TypedDict):
     timestamp_value: datetime
 
-class MyUnionEnumValueParams(TypedDict):
+class MyUnionEnumValueDict(TypedDict):
     enum_value: str
 
-class MyUnionIntEnumValueParams(TypedDict):
+class MyUnionIntEnumValueDict(TypedDict):
     int_enum_value: int
 
-class MyUnionListValueParams(TypedDict):
+class MyUnionListValueDict(TypedDict):
     list_value: Sequence[str]
 
-class MyUnionMapValueParams(TypedDict):
+class MyUnionMapValueDict(TypedDict):
     map_value: Mapping[str, str]
 
-class MyUnionStructureValueParams(TypedDict):
-    structure_value: GreetingStruct | GreetingStructParams
+class MyUnionStructureValueDict(TypedDict):
+    structure_value: GreetingStruct | GreetingStructDict
 
-MyUnionParams = Union[
-    MyUnionStringValueParams
-    | MyUnionBooleanValueParams
-    | MyUnionNumberValueParams
-    | MyUnionBlobValueParams
-    | MyUnionTimestampValueParams
-    | MyUnionEnumValueParams
-    | MyUnionIntEnumValueParams
-    | MyUnionListValueParams
-    | MyUnionMapValueParams
-    | MyUnionStructureValueParams
+MyUnionDict = Union[
+    MyUnionStringValueDict
+    | MyUnionBooleanValueDict
+    | MyUnionNumberValueDict
+    | MyUnionBlobValueDict
+    | MyUnionTimestampValueDict
+    | MyUnionEnumValueDict
+    | MyUnionIntEnumValueDict
+    | MyUnionListValueDict
+    | MyUnionMapValueDict
+    | MyUnionStructureValueDict
 ]
 """Dictionary form of `MyUnion`, setting exactly one variant."""
 
@@ -447,7 +447,7 @@ MyUnionParams = Union[
 class NoInputAndNoOutputInput(_SerdeShape):
     """Dataclass for NoInputAndNoOutputInput structure."""
 
-class NoInputAndNoOutputInputParams(TypedDict, total=False):
+class NoInputAndNoOutputInputDict(TypedDict, total=False):
     """Dictionary form of `NoInputAndNoOutputInput`."""
 
 @dataclass(kw_only=True)
@@ -466,7 +466,7 @@ class NoInputAndNoOutputOutput(_SerdeShape):
 class NoInputAndOutputInput(_SerdeShape):
     """Dataclass for NoInputAndOutputInput structure."""
 
-class NoInputAndOutputInputParams(TypedDict, total=False):
+class NoInputAndOutputInputDict(TypedDict, total=False):
     """Dictionary form of `NoInputAndOutputInput`."""
 
 @dataclass(kw_only=True)
@@ -490,13 +490,11 @@ class OperationWithDefaultsInput(_SerdeShape):
     top_level_default: str = ...
     other_top_level_default: int = ...
 
-class OperationWithDefaultsInputParams(TypedDict, total=False):
+class OperationWithDefaultsInputDict(TypedDict, total=False):
     """Dictionary form of `OperationWithDefaultsInput`."""
 
-    defaults: Defaults | DefaultsParams | None
-    client_optional_defaults: (
-        ClientOptionalDefaults | ClientOptionalDefaultsParams | None
-    )
+    defaults: Defaults | DefaultsDict | None
+    client_optional_defaults: ClientOptionalDefaults | ClientOptionalDefaultsDict | None
     top_level_default: str | None
     other_top_level_default: int | None
 
@@ -546,10 +544,10 @@ class OperationWithNestedStructureInput(_SerdeShape):
 
     top_level: TopLevel | None = ...
 
-class OperationWithNestedStructureInputParams(TypedDict, total=False):
+class OperationWithNestedStructureInputDict(TypedDict, total=False):
     """Dictionary form of `OperationWithNestedStructureInput`."""
 
-    top_level: Required[TopLevel | TopLevelParams]
+    top_level: Required[TopLevel | TopLevelDict]
 
 @dataclass(kw_only=True)
 class OperationWithNestedStructureOutput(_SerdeShape):
@@ -570,7 +568,7 @@ class OperationWithNestedStructureOutput(_SerdeShape):
 class OperationWithRequiredMembersInput(_SerdeShape):
     """Dataclass for OperationWithRequiredMembersInput structure."""
 
-class OperationWithRequiredMembersInputParams(TypedDict, total=False):
+class OperationWithRequiredMembersInputDict(TypedDict, total=False):
     """Dictionary form of `OperationWithRequiredMembersInput`."""
 
 @dataclass(kw_only=True)
@@ -601,7 +599,7 @@ class OperationWithRequiredMembersOutput(_SerdeShape):
 class OperationWithRequiredMembersWithDefaultsInput(_SerdeShape):
     """Dataclass for OperationWithRequiredMembersWithDefaultsInput structure."""
 
-class OperationWithRequiredMembersWithDefaultsInputParams(TypedDict, total=False):
+class OperationWithRequiredMembersWithDefaultsInputDict(TypedDict, total=False):
     """Dictionary form of `OperationWithRequiredMembersWithDefaultsInput`."""
 
 @dataclass(kw_only=True)
@@ -637,7 +635,7 @@ class PutWithContentEncodingInput(_SerdeShape):
     encoding: str | None = ...
     data: str | None = ...
 
-class PutWithContentEncodingInputParams(TypedDict, total=False):
+class PutWithContentEncodingInputDict(TypedDict, total=False):
     """Dictionary form of `PutWithContentEncodingInput`."""
 
     encoding: str | None
@@ -659,7 +657,7 @@ class PutWithContentEncodingOutput(_SerdeShape):
 class QueryIncompatibleOperationInput(_SerdeShape):
     """Dataclass for QueryIncompatibleOperationInput structure."""
 
-class QueryIncompatibleOperationInputParams(TypedDict, total=False):
+class QueryIncompatibleOperationInputDict(TypedDict, total=False):
     """Dictionary form of `QueryIncompatibleOperationInput`."""
 
 @dataclass(kw_only=True)
@@ -690,7 +688,7 @@ class SimpleScalarPropertiesInput(_SerdeShape):
     float_value: float | None = ...
     double_value: float | None = ...
 
-class SimpleScalarPropertiesInputParams(TypedDict, total=False):
+class SimpleScalarPropertiesInputDict(TypedDict, total=False):
     """Dictionary form of `SimpleScalarPropertiesInput`."""
 
     float_value: float | None
@@ -727,12 +725,12 @@ class TopLevel(_SerdeShape):
     dialog_list: list[Dialog] = ...
     dialog_map: dict[str, Dialog] = ...
 
-class TopLevelParams(TypedDict, total=False):
+class TopLevelDict(TypedDict, total=False):
     """Dictionary form of `TopLevel`."""
 
-    dialog: Required[Dialog | DialogParams]
-    dialog_list: Sequence[Dialog | DialogParams] | None
-    dialog_map: Mapping[str, Dialog | DialogParams] | None
+    dialog: Required[Dialog | DialogDict]
+    dialog_list: Sequence[Dialog | DialogDict] | None
+    dialog_map: Mapping[str, Dialog | DialogDict] | None
 
 class FooEnum(UnknownEnumMixin, StrEnum):
     FOO = "Foo"
@@ -747,7 +745,7 @@ class GreetingStruct(_SerdeShape):
 
     hi: str | None = ...
 
-class GreetingStructParams(TypedDict, total=False):
+class GreetingStructDict(TypedDict, total=False):
     """Dictionary form of `GreetingStruct`."""
 
     hi: str | None

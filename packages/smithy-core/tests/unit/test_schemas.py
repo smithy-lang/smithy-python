@@ -352,8 +352,12 @@ def _token_operation(
         ),
         pytest.param(("self",), "self", True, "self_", id="self"),
         pytest.param(("plugins",), "plugins", True, "plugins_", id="plugins"),
+        pytest.param(("_models",), "_models", True, "_models_", id="models"),
         # Only a structure with the input trait has its members escaped.
         pytest.param(("plugins",), "plugins", False, "plugins", id="not-an-input"),
+        pytest.param(
+            ("_models",), "_models", False, "_models", id="models-not-an-input"
+        ),
         # Escaped past a sibling that already has the underscore-suffixed name.
         pytest.param(
             ("self", "self_"), "self", True, "self__", id="self-beside-sibling"
@@ -371,6 +375,13 @@ def _token_operation(
             True,
             "self___",
             id="self-beside-siblings",
+        ),
+        pytest.param(
+            ("_models", "_models_"),
+            "_models",
+            True,
+            "_models__",
+            id="models-beside-sibling",
         ),
         # The sibling that already has the suffixed name keeps it.
         pytest.param(

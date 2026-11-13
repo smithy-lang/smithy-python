@@ -133,7 +133,7 @@ class TradeEventStreamInput(_SerdeShape):
 
     session_id: str | None = ...
 
-class TradeEventStreamInputParams(TypedDict, total=False):
+class TradeEventStreamInputDict(TypedDict, total=False):
     """Dictionary form of `TradeEventStreamInput`."""
 
     session_id: str | None

@@ -51,7 +51,7 @@ class NoCustomCodeError(ServiceError, _SerdeShape):
 class QueryCompatibleOperationInput(_SerdeShape):
     """Dataclass for QueryCompatibleOperationInput structure."""
 
-class QueryCompatibleOperationInputParams(TypedDict, total=False):
+class QueryCompatibleOperationInputDict(TypedDict, total=False):
     """Dictionary form of `QueryCompatibleOperationInput`."""
 
 @dataclass(kw_only=True)

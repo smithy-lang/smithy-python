@@ -39,7 +39,7 @@ class AsyncMyHandwrittenModel(AsyncClient[AsyncConfig]):
     @_overload
     async def publish_events(
         self,
-        request: _models.PublishEventsInput | _models.PublishEventsInputParams,
+        request: _models.PublishEventsInput | _models.PublishEventsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -51,7 +51,7 @@ class AsyncMyHandwrittenModel(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.PublishEventsInputParams],
+        **kwargs: _Unpack[_models.PublishEventsInputDict],
     ) -> AsyncInputEventStream[PublishEventStream, PublishEventsOutput]:
         """
         Input-only stream: the client sends events, the server returns a
@@ -82,7 +82,7 @@ class AsyncMyHandwrittenModel(AsyncClient[AsyncConfig]):
     @_overload
     async def subscribe_to_events(
         self,
-        request: _models.SubscribeToEventsInput | _models.SubscribeToEventsInputParams,
+        request: _models.SubscribeToEventsInput | _models.SubscribeToEventsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -94,7 +94,7 @@ class AsyncMyHandwrittenModel(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.SubscribeToEventsInputParams],
+        **kwargs: _Unpack[_models.SubscribeToEventsInputDict],
     ) -> AsyncOutputEventStream[SubscribeEventStream, SubscribeToEventsOutput]:
         """
         Output-only stream: the client subscribes, the server streams events.
@@ -126,7 +126,7 @@ class AsyncMyHandwrittenModel(AsyncClient[AsyncConfig]):
     @_overload
     async def trade_event_stream(
         self,
-        request: _models.TradeEventStreamInput | _models.TradeEventStreamInputParams,
+        request: _models.TradeEventStreamInput | _models.TradeEventStreamInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -138,7 +138,7 @@ class AsyncMyHandwrittenModel(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TradeEventStreamInputParams],
+        **kwargs: _Unpack[_models.TradeEventStreamInputDict],
     ) -> AsyncDuplexEventStream[TradeEvents, TradeEvents, TradeEventStreamOutput]:
         """
         Bidirectional (duplex) stream. The non-stream members (sessionId,

@@ -67,7 +67,7 @@ _NOT_A_LIST = (str, bytes, bytearray, memoryview)
 
 # The dictionary form of a shape is named with this suffix, and the form an async
 # client takes for an input with a streaming body also with this prefix.
-_PARAMS_SUFFIX = "Params"
+_DICT_SUFFIX = "Dict"
 _ASYNC_PREFIX = "Async"
 
 # Path segments shown for a value nested too deeply to be converted.
@@ -168,7 +168,7 @@ class ModelRegistry:
                     return built
                 # The dictionary form of an input shape is a TypedDict in the stub
                 # and a plain dict at runtime, so it costs nothing to import.
-                if self._is_params_name(name):
+                if self._is_dict_name(name):
                     self._classes[name] = dict
                     return dict
                 raise AttributeError(name)
@@ -318,17 +318,17 @@ class ModelRegistry:
         )
         return escape_input_member_names(names) if self._is_input(schema) else names
 
-    def _is_params_name(self, name: str) -> bool:
+    def _is_dict_name(self, name: str) -> bool:
         """Whether a name is the dictionary form of a modeled shape.
 
         CAUTION: InputParams in the code generator assigns these names. A form is
         named after its shape, then as many underscores as it takes to not be the
-        name of a modeled shape, then ``Params``. A shape's own name may end in
+        name of a modeled shape, then ``Dict``. A shape's own name may end in
         underscores too, so they are taken off one at a time until a shape matches.
         """
-        if not name.endswith(_PARAMS_SUFFIX):
+        if not name.endswith(_DICT_SUFFIX):
             return False
-        shape = name[: -len(_PARAMS_SUFFIX)]
+        shape = name[: -len(_DICT_SUFFIX)]
         while True:
             # smithy.api#Unit has no schema constant; see build().
             if self._const(shape) is not None or shape == "Unit":

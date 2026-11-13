@@ -842,59 +842,70 @@ def test_escaped_input_member_does_not_collide_with_an_existing_name() -> None:
     assert (built.plugins__, built.plugins_) == ("escaped", "modeled")
 
 
-def test_params_names_resolve_to_dict_at_runtime() -> None:
+def test_dict_names_resolve_to_dict_at_runtime() -> None:
     registry = _nested_registry()
 
-    assert registry.build("PolicyParams") is dict
-    assert registry.build("NestedInputParams") is dict
-    assert registry.build("BlockParams") is dict
-    assert registry.build("BlockTextParams") is dict
+    assert registry.build("PolicyDict") is dict
+    assert registry.build("NestedInputDict") is dict
+    assert registry.build("BlockDict") is dict
+    assert registry.build("BlockTextDict") is dict
     with pytest.raises(AttributeError):
-        registry.build("MissingParams")
+        registry.build("MissingDict")
     with pytest.raises(AttributeError):
-        registry.build("Params")
+        registry.build("Dict")
+    # The former Params suffix is not kept as an alias.
+    with pytest.raises(AttributeError):
+        registry.build("PolicyParams")
 
 
-def test_params_name_never_shadows_a_modeled_shape() -> None:
+def test_dict_name_never_shadows_a_modeled_shape() -> None:
     thing = _struct("Thing", ("Name", STRING))
+    thing_dict = _struct("ThingDict", ("Name", STRING))
+    registry = _registry(THING=thing, THING_DICT=thing_dict)
+
+    assert registry.build("ThingDict").__name__ == "ThingDict"
+    # The generator disambiguates the dictionary form of Thing with an underscore.
+    assert registry.build("Thing_Dict") is dict
+    assert registry.build("ThingDictDict") is dict
+
+
+def test_modeled_shape_named_like_old_params_form_stays_a_model() -> None:
     thing_params = _struct("ThingParams", ("Name", STRING))
-    registry = _registry(THING=thing, THING_PARAMS=thing_params)
+    registry = _registry(THING_PARAMS=thing_params)
 
     assert registry.build("ThingParams").__name__ == "ThingParams"
-    # The generator disambiguates the dictionary form of Thing with an underscore.
-    assert registry.build("Thing_Params") is dict
-    assert registry.build("ThingParamsParams") is dict
+    assert registry.build("ThingParamsDict") is dict
 
 
-def test_params_name_keeps_the_underscores_of_its_shape() -> None:
+def test_dict_name_keeps_the_underscores_of_its_shape() -> None:
     bar = _struct("Bar_", ("Name", STRING))
     registry = _registry(BAR_=bar)
 
     assert registry.build("Bar_").__name__ == "Bar_"
-    assert registry.build("Bar_Params") is dict
-    # Disambiguated from a modeled Bar_Params shape by one more underscore.
-    assert registry.build("Bar__Params") is dict
+    assert registry.build("Bar_Dict") is dict
+    # Disambiguated from a modeled Bar_Dict shape by one more underscore.
+    assert registry.build("Bar__Dict") is dict
     with pytest.raises(AttributeError):
-        registry.build("BarParams")
+        registry.build("BarDict")
 
 
-def test_params_name_of_the_prelude_unit_shape_resolves() -> None:
+def test_dict_name_of_the_prelude_unit_shape_resolves() -> None:
     registry = _nested_registry()
 
-    assert registry.build("UnitParams") is dict
+    assert registry.build("UnitDict") is dict
     assert registry.build("Unit").__name__ == "Unit"
 
 
-def test_async_params_name_resolves_for_an_input_with_a_streaming_body() -> None:
+def test_async_dict_name_resolves_for_an_input_with_a_streaming_body() -> None:
     stream = (ShapeType.BLOB.value, NS, "Stream", {"smithy.api#streaming": None})
     upload = _input("UploadInput", ("Name", STRING), ("Body", stream))
     registry = _registry(UPLOAD_INPUT=upload, POLICY=POLICY)
 
-    assert registry.build("UploadInputParams") is dict
-    assert registry.build("AsyncUploadInputParams") is dict
+    assert registry.build("UploadInputDict") is dict
+    assert registry.build("AsyncUploadInputDict") is dict
     # Only an input with a streaming body has a form for each client.
     with pytest.raises(AttributeError):
-        registry.build("AsyncPolicyParams")
+        registry.build("AsyncPolicyDict")
 
 
 def test_member_of_a_renamed_shape_takes_the_renamed_model() -> None:

@@ -44,7 +44,7 @@ class RpcV2Protocol(Client[Config]):
     @_overload
     def empty_input_output(
         self,
-        request: _models.EmptyInputOutputInput | _models.EmptyInputOutputInputParams,
+        request: _models.EmptyInputOutputInput | _models.EmptyInputOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -56,7 +56,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EmptyInputOutputInputParams],
+        **kwargs: _Unpack[_models.EmptyInputOutputInputDict],
     ) -> EmptyInputOutputOutput:
         """
         Invokes the EmptyInputOutput operation.
@@ -85,7 +85,7 @@ class RpcV2Protocol(Client[Config]):
     @_overload
     def float16(
         self,
-        request: _models.Float16Input | _models.Float16InputParams,
+        request: _models.Float16Input | _models.Float16InputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -97,7 +97,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.Float16InputParams],
+        **kwargs: _Unpack[_models.Float16InputDict],
     ) -> Float16Output:
         """
         Invokes the Float16 operation.
@@ -126,7 +126,7 @@ class RpcV2Protocol(Client[Config]):
     @_overload
     def fractional_seconds(
         self,
-        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -138,7 +138,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.FractionalSecondsInputParams],
+        **kwargs: _Unpack[_models.FractionalSecondsInputDict],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -167,8 +167,7 @@ class RpcV2Protocol(Client[Config]):
     @_overload
     def greeting_with_errors(
         self,
-        request: _models.GreetingWithErrorsInput
-        | _models.GreetingWithErrorsInputParams,
+        request: _models.GreetingWithErrorsInput | _models.GreetingWithErrorsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -180,7 +179,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.GreetingWithErrorsInputParams],
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputDict],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values:
@@ -216,7 +215,7 @@ class RpcV2Protocol(Client[Config]):
     @_overload
     def no_input_output(
         self,
-        request: _models.NoInputOutputInput | _models.NoInputOutputInputParams,
+        request: _models.NoInputOutputInput | _models.NoInputOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -228,7 +227,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NoInputOutputInputParams],
+        **kwargs: _Unpack[_models.NoInputOutputInputDict],
     ) -> NoInputOutputOutput:
         """
         Invokes the NoInputOutput operation.
@@ -258,7 +257,7 @@ class RpcV2Protocol(Client[Config]):
     def operation_with_defaults(
         self,
         request: _models.OperationWithDefaultsInput
-        | _models.OperationWithDefaultsInputParams,
+        | _models.OperationWithDefaultsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -270,7 +269,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.OperationWithDefaultsInputParams],
+        **kwargs: _Unpack[_models.OperationWithDefaultsInputDict],
     ) -> OperationWithDefaultsOutput:
         """
         Invokes the OperationWithDefaults operation.
@@ -300,7 +299,7 @@ class RpcV2Protocol(Client[Config]):
     def optional_input_output(
         self,
         request: _models.OptionalInputOutputInput
-        | _models.OptionalInputOutputInputParams,
+        | _models.OptionalInputOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -312,7 +311,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.OptionalInputOutputInputParams],
+        **kwargs: _Unpack[_models.OptionalInputOutputInputDict],
     ) -> OptionalInputOutputOutput:
         """
         Invokes the OptionalInputOutput operation.
@@ -341,7 +340,7 @@ class RpcV2Protocol(Client[Config]):
     @_overload
     def recursive_shapes(
         self,
-        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputParams,
+        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -353,7 +352,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.RecursiveShapesInputParams],
+        **kwargs: _Unpack[_models.RecursiveShapesInputDict],
     ) -> RecursiveShapesOutput:
         """
         Invokes the RecursiveShapes operation.
@@ -382,8 +381,7 @@ class RpcV2Protocol(Client[Config]):
     @_overload
     def rpc_v2_cbor_dense_maps(
         self,
-        request: _models.RpcV2CborDenseMapsInput
-        | _models.RpcV2CborDenseMapsInputParams,
+        request: _models.RpcV2CborDenseMapsInput | _models.RpcV2CborDenseMapsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -395,7 +393,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.RpcV2CborDenseMapsInputParams],
+        **kwargs: _Unpack[_models.RpcV2CborDenseMapsInputDict],
     ) -> RpcV2CborDenseMapsOutput:
         """
         The example tests basic map serialization.
@@ -424,7 +422,7 @@ class RpcV2Protocol(Client[Config]):
     @_overload
     def rpc_v2_cbor_lists(
         self,
-        request: _models.RpcV2CborListsInput | _models.RpcV2CborListsInputParams,
+        request: _models.RpcV2CborListsInput | _models.RpcV2CborListsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -436,7 +434,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.RpcV2CborListsInputParams],
+        **kwargs: _Unpack[_models.RpcV2CborListsInputDict],
     ) -> RpcV2CborListsOutput:
         """
         This test case serializes JSON lists for the following cases for both
@@ -472,7 +470,7 @@ class RpcV2Protocol(Client[Config]):
     def rpc_v2_cbor_sparse_maps(
         self,
         request: _models.RpcV2CborSparseMapsInput
-        | _models.RpcV2CborSparseMapsInputParams,
+        | _models.RpcV2CborSparseMapsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -484,7 +482,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.RpcV2CborSparseMapsInputParams],
+        **kwargs: _Unpack[_models.RpcV2CborSparseMapsInputDict],
     ) -> RpcV2CborSparseMapsOutput:
         """
         Invokes the RpcV2CborSparseMaps operation.
@@ -513,7 +511,7 @@ class RpcV2Protocol(Client[Config]):
     @_overload
     def rpc_v2_cbor_unions(
         self,
-        request: _models.RpcV2CborUnionsInput | _models.RpcV2CborUnionsInputParams,
+        request: _models.RpcV2CborUnionsInput | _models.RpcV2CborUnionsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -525,7 +523,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.RpcV2CborUnionsInputParams],
+        **kwargs: _Unpack[_models.RpcV2CborUnionsInputDict],
     ) -> RpcV2CborUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
@@ -555,7 +553,7 @@ class RpcV2Protocol(Client[Config]):
     def simple_scalar_properties(
         self,
         request: _models.SimpleScalarPropertiesInput
-        | _models.SimpleScalarPropertiesInputParams,
+        | _models.SimpleScalarPropertiesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -567,7 +565,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputParams],
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputDict],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
@@ -597,7 +595,7 @@ class RpcV2Protocol(Client[Config]):
     def sparse_nulls_operation(
         self,
         request: _models.SparseNullsOperationInput
-        | _models.SparseNullsOperationInputParams,
+        | _models.SparseNullsOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -609,7 +607,7 @@ class RpcV2Protocol(Client[Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.SparseNullsOperationInputParams],
+        **kwargs: _Unpack[_models.SparseNullsOperationInputDict],
     ) -> SparseNullsOperationOutput:
         """
         Invokes the SparseNullsOperation operation.

@@ -46,7 +46,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     async def big_decimal_operation(
         self,
         request: _models.BigDecimalOperationInput
-        | _models.BigDecimalOperationInputParams,
+        | _models.BigDecimalOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -58,7 +58,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.BigDecimalOperationInputParams],
+        **kwargs: _Unpack[_models.BigDecimalOperationInputDict],
     ) -> BigDecimalOperationOutput:
         """
         Invokes the BigDecimalOperation operation.
@@ -88,7 +88,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     async def big_integer_operation(
         self,
         request: _models.BigIntegerOperationInput
-        | _models.BigIntegerOperationInputParams,
+        | _models.BigIntegerOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -100,7 +100,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.BigIntegerOperationInputParams],
+        **kwargs: _Unpack[_models.BigIntegerOperationInputDict],
     ) -> BigIntegerOperationOutput:
         """
         Invokes the BigIntegerOperation operation.
@@ -129,7 +129,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     @_overload
     async def empty_input_output(
         self,
-        request: _models.EmptyInputOutputInput | _models.EmptyInputOutputInputParams,
+        request: _models.EmptyInputOutputInput | _models.EmptyInputOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -141,7 +141,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EmptyInputOutputInputParams],
+        **kwargs: _Unpack[_models.EmptyInputOutputInputDict],
     ) -> EmptyInputOutputOutput:
         """
         Invokes the EmptyInputOutput operation.
@@ -170,7 +170,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     @_overload
     async def fractional_seconds(
         self,
-        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -182,7 +182,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.FractionalSecondsInputParams],
+        **kwargs: _Unpack[_models.FractionalSecondsInputDict],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -211,8 +211,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     @_overload
     async def greeting_with_errors(
         self,
-        request: _models.GreetingWithErrorsInput
-        | _models.GreetingWithErrorsInputParams,
+        request: _models.GreetingWithErrorsInput | _models.GreetingWithErrorsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -224,7 +223,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.GreetingWithErrorsInputParams],
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputDict],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values:
@@ -260,7 +259,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     @_overload
     async def no_input_output(
         self,
-        request: _models.NoInputOutputInput | _models.NoInputOutputInputParams,
+        request: _models.NoInputOutputInput | _models.NoInputOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -272,7 +271,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NoInputOutputInputParams],
+        **kwargs: _Unpack[_models.NoInputOutputInputDict],
     ) -> NoInputOutputOutput:
         """
         Invokes the NoInputOutput operation.
@@ -302,7 +301,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     async def operation_with_defaults(
         self,
         request: _models.OperationWithDefaultsInput
-        | _models.OperationWithDefaultsInputParams,
+        | _models.OperationWithDefaultsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -314,7 +313,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.OperationWithDefaultsInputParams],
+        **kwargs: _Unpack[_models.OperationWithDefaultsInputDict],
     ) -> OperationWithDefaultsOutput:
         """
         Invokes the OperationWithDefaults operation.
@@ -344,7 +343,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     async def optional_input_output(
         self,
         request: _models.OptionalInputOutputInput
-        | _models.OptionalInputOutputInputParams,
+        | _models.OptionalInputOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -356,7 +355,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.OptionalInputOutputInputParams],
+        **kwargs: _Unpack[_models.OptionalInputOutputInputDict],
     ) -> OptionalInputOutputOutput:
         """
         Invokes the OptionalInputOutput operation.
@@ -385,7 +384,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     @_overload
     async def recursive_shapes(
         self,
-        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputParams,
+        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -397,7 +396,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.RecursiveShapesInputParams],
+        **kwargs: _Unpack[_models.RecursiveShapesInputDict],
     ) -> RecursiveShapesOutput:
         """
         Invokes the RecursiveShapes operation.
@@ -426,8 +425,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     @_overload
     async def rpc_v2_json_dense_maps(
         self,
-        request: _models.RpcV2JsonDenseMapsInput
-        | _models.RpcV2JsonDenseMapsInputParams,
+        request: _models.RpcV2JsonDenseMapsInput | _models.RpcV2JsonDenseMapsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -439,7 +437,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.RpcV2JsonDenseMapsInputParams],
+        **kwargs: _Unpack[_models.RpcV2JsonDenseMapsInputDict],
     ) -> RpcV2JsonDenseMapsOutput:
         """
         The example tests basic map serialization.
@@ -468,7 +466,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     @_overload
     async def rpc_v2_json_lists(
         self,
-        request: _models.RpcV2JsonListsInput | _models.RpcV2JsonListsInputParams,
+        request: _models.RpcV2JsonListsInput | _models.RpcV2JsonListsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -480,7 +478,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.RpcV2JsonListsInputParams],
+        **kwargs: _Unpack[_models.RpcV2JsonListsInputDict],
     ) -> RpcV2JsonListsOutput:
         """
         This test case serializes JSON lists for the following cases for both
@@ -516,7 +514,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     async def rpc_v2_json_sparse_maps(
         self,
         request: _models.RpcV2JsonSparseMapsInput
-        | _models.RpcV2JsonSparseMapsInputParams,
+        | _models.RpcV2JsonSparseMapsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -528,7 +526,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.RpcV2JsonSparseMapsInputParams],
+        **kwargs: _Unpack[_models.RpcV2JsonSparseMapsInputDict],
     ) -> RpcV2JsonSparseMapsOutput:
         """
         Invokes the RpcV2JsonSparseMaps operation.
@@ -558,7 +556,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     async def simple_scalar_properties(
         self,
         request: _models.SimpleScalarPropertiesInput
-        | _models.SimpleScalarPropertiesInputParams,
+        | _models.SimpleScalarPropertiesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -570,7 +568,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputParams],
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputDict],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
@@ -600,7 +598,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     async def sparse_nulls_operation(
         self,
         request: _models.SparseNullsOperationInput
-        | _models.SparseNullsOperationInputParams,
+        | _models.SparseNullsOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -612,7 +610,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.SparseNullsOperationInputParams],
+        **kwargs: _Unpack[_models.SparseNullsOperationInputDict],
     ) -> SparseNullsOperationOutput:
         """
         Invokes the SparseNullsOperation operation.
@@ -642,7 +640,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
     async def timestamp_format_ignored(
         self,
         request: _models.TimestampFormatIgnoredInput
-        | _models.TimestampFormatIgnoredInputParams,
+        | _models.TimestampFormatIgnoredInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -654,7 +652,7 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TimestampFormatIgnoredInputParams],
+        **kwargs: _Unpack[_models.TimestampFormatIgnoredInputDict],
     ) -> TimestampFormatIgnoredOutput:
         """
         This operation tests that the rpcv2Json protocol always uses

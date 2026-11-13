@@ -69,7 +69,7 @@ class BigDecimalOperationInput(_SerdeShape):
 
     value: Decimal | None = ...
 
-class BigDecimalOperationInputParams(TypedDict, total=False):
+class BigDecimalOperationInputDict(TypedDict, total=False):
     """Dictionary form of `BigDecimalOperationInput`."""
 
     value: Decimal | None
@@ -94,7 +94,7 @@ class BigIntegerOperationInput(_SerdeShape):
 
     value: int | None = ...
 
-class BigIntegerOperationInputParams(TypedDict, total=False):
+class BigIntegerOperationInputDict(TypedDict, total=False):
     """Dictionary form of `BigIntegerOperationInput`."""
 
     value: int | None
@@ -119,7 +119,7 @@ class ClientOptionalDefaults(_SerdeShape):
 
     member: int = ...
 
-class ClientOptionalDefaultsParams(TypedDict, total=False):
+class ClientOptionalDefaultsDict(TypedDict, total=False):
     """Dictionary form of `ClientOptionalDefaults`."""
 
     member: int | None
@@ -173,7 +173,7 @@ class Defaults(_SerdeShape):
     zero_float: float = ...
     zero_double: float = ...
 
-class DefaultsParams(TypedDict, total=False):
+class DefaultsDict(TypedDict, total=False):
     """Dictionary form of `Defaults`."""
 
     default_string: str | None
@@ -204,7 +204,7 @@ class DefaultsParams(TypedDict, total=False):
 class EmptyInputOutputInput(_SerdeShape):
     """Dataclass for EmptyInputOutputInput structure."""
 
-class EmptyInputOutputInputParams(TypedDict, total=False):
+class EmptyInputOutputInputDict(TypedDict, total=False):
     """Dictionary form of `EmptyInputOutputInput`."""
 
 @dataclass(kw_only=True)
@@ -224,7 +224,7 @@ class EmptyInputOutputOutput(_SerdeShape):
 class FractionalSecondsInput(_SerdeShape):
     """Dataclass for FractionalSecondsInput structure."""
 
-class FractionalSecondsInputParams(TypedDict, total=False):
+class FractionalSecondsInputDict(TypedDict, total=False):
     """Dictionary form of `FractionalSecondsInput`."""
 
 @dataclass(kw_only=True)
@@ -245,7 +245,7 @@ class FractionalSecondsOutput(_SerdeShape):
 class GreetingWithErrorsInput(_SerdeShape):
     """Dataclass for GreetingWithErrorsInput structure."""
 
-class GreetingWithErrorsInputParams(TypedDict, total=False):
+class GreetingWithErrorsInputDict(TypedDict, total=False):
     """Dictionary form of `GreetingWithErrorsInput`."""
 
 @dataclass(kw_only=True)
@@ -279,7 +279,7 @@ class InvalidGreeting(ServiceError, _SerdeShape):
 class NoInputOutputInput(_SerdeShape):
     """Dataclass for NoInputOutputInput structure."""
 
-class NoInputOutputInputParams(TypedDict, total=False):
+class NoInputOutputInputDict(TypedDict, total=False):
     """Dictionary form of `NoInputOutputInput`."""
 
 @dataclass(kw_only=True)
@@ -304,13 +304,11 @@ class OperationWithDefaultsInput(_SerdeShape):
     top_level_default: str = ...
     other_top_level_default: int = ...
 
-class OperationWithDefaultsInputParams(TypedDict, total=False):
+class OperationWithDefaultsInputDict(TypedDict, total=False):
     """Dictionary form of `OperationWithDefaultsInput`."""
 
-    defaults: Defaults | DefaultsParams | None
-    client_optional_defaults: (
-        ClientOptionalDefaults | ClientOptionalDefaultsParams | None
-    )
+    defaults: Defaults | DefaultsDict | None
+    client_optional_defaults: ClientOptionalDefaults | ClientOptionalDefaultsDict | None
     top_level_default: str | None
     other_top_level_default: int | None
 
@@ -356,7 +354,7 @@ class OptionalInputOutputInput(_SerdeShape):
 
     value: str | None = ...
 
-class OptionalInputOutputInputParams(TypedDict, total=False):
+class OptionalInputOutputInputDict(TypedDict, total=False):
     """Dictionary form of `OptionalInputOutputInput`."""
 
     value: str | None
@@ -381,13 +379,11 @@ class RecursiveShapesInput(_SerdeShape):
 
     nested: RecursiveShapesInputOutputNested1 | None = ...
 
-class RecursiveShapesInputParams(TypedDict, total=False):
+class RecursiveShapesInputDict(TypedDict, total=False):
     """Dictionary form of `RecursiveShapesInput`."""
 
     nested: (
-        RecursiveShapesInputOutputNested1
-        | RecursiveShapesInputOutputNested1Params
-        | None
+        RecursiveShapesInputOutputNested1 | RecursiveShapesInputOutputNested1Dict | None
     )
 
 @dataclass(kw_only=True)
@@ -397,14 +393,12 @@ class RecursiveShapesInputOutputNested1(_SerdeShape):
     foo: str | None = ...
     nested: RecursiveShapesInputOutputNested2 | None = ...
 
-class RecursiveShapesInputOutputNested1Params(TypedDict, total=False):
+class RecursiveShapesInputOutputNested1Dict(TypedDict, total=False):
     """Dictionary form of `RecursiveShapesInputOutputNested1`."""
 
     foo: str | None
     nested: (
-        RecursiveShapesInputOutputNested2
-        | RecursiveShapesInputOutputNested2Params
-        | None
+        RecursiveShapesInputOutputNested2 | RecursiveShapesInputOutputNested2Dict | None
     )
 
 @dataclass(kw_only=True)
@@ -414,14 +408,12 @@ class RecursiveShapesInputOutputNested2(_SerdeShape):
     bar: str | None = ...
     recursive_member: RecursiveShapesInputOutputNested1 | None = ...
 
-class RecursiveShapesInputOutputNested2Params(TypedDict, total=False):
+class RecursiveShapesInputOutputNested2Dict(TypedDict, total=False):
     """Dictionary form of `RecursiveShapesInputOutputNested2`."""
 
     bar: str | None
     recursive_member: (
-        RecursiveShapesInputOutputNested1
-        | RecursiveShapesInputOutputNested1Params
-        | None
+        RecursiveShapesInputOutputNested1 | RecursiveShapesInputOutputNested1Dict | None
     )
 
 @dataclass(kw_only=True)
@@ -448,10 +440,10 @@ class RpcV2JsonDenseMapsInput(_SerdeShape):
     dense_string_map: dict[str, str] | None = ...
     dense_set_map: dict[str, list[str]] | None = ...
 
-class RpcV2JsonDenseMapsInputParams(TypedDict, total=False):
+class RpcV2JsonDenseMapsInputDict(TypedDict, total=False):
     """Dictionary form of `RpcV2JsonDenseMapsInput`."""
 
-    dense_struct_map: Mapping[str, GreetingStruct | GreetingStructParams] | None
+    dense_struct_map: Mapping[str, GreetingStruct | GreetingStructDict] | None
     dense_number_map: Mapping[str, int] | None
     dense_boolean_map: Mapping[str, bool] | None
     dense_string_map: Mapping[str, str] | None
@@ -491,7 +483,7 @@ class RpcV2JsonListsInput(_SerdeShape):
     structure_list: list[StructureListMember] | None = ...
     blob_list: list[bytes] | None = ...
 
-class RpcV2JsonListsInputParams(TypedDict, total=False):
+class RpcV2JsonListsInputDict(TypedDict, total=False):
     """Dictionary form of `RpcV2JsonListsInput`."""
 
     string_list: Sequence[str] | None
@@ -503,7 +495,7 @@ class RpcV2JsonListsInputParams(TypedDict, total=False):
     int_enum_list: Sequence[int] | None
     nested_string_list: Sequence[Sequence[str]] | None
     """A list of lists of strings."""
-    structure_list: Sequence[StructureListMember | StructureListMemberParams] | None
+    structure_list: Sequence[StructureListMember | StructureListMemberDict] | None
     blob_list: Sequence[bytes] | None
 
 @dataclass(kw_only=True)
@@ -540,10 +532,10 @@ class RpcV2JsonSparseMapsInput(_SerdeShape):
     sparse_string_map: dict[str, str | None] | None = ...
     sparse_set_map: dict[str, list[str] | None] | None = ...
 
-class RpcV2JsonSparseMapsInputParams(TypedDict, total=False):
+class RpcV2JsonSparseMapsInputDict(TypedDict, total=False):
     """Dictionary form of `RpcV2JsonSparseMapsInput`."""
 
-    sparse_struct_map: Mapping[str, GreetingStruct | GreetingStructParams | None] | None
+    sparse_struct_map: Mapping[str, GreetingStruct | GreetingStructDict | None] | None
     sparse_number_map: Mapping[str, int | None] | None
     sparse_boolean_map: Mapping[str, bool | None] | None
     sparse_string_map: Mapping[str, str | None] | None
@@ -582,7 +574,7 @@ class SimpleScalarPropertiesInput(_SerdeShape):
     string_value: str | None = ...
     blob_value: bytes | None = ...
 
-class SimpleScalarPropertiesInputParams(TypedDict, total=False):
+class SimpleScalarPropertiesInputDict(TypedDict, total=False):
     """Dictionary form of `SimpleScalarPropertiesInput`."""
 
     true_boolean_value: bool | None
@@ -626,7 +618,7 @@ class SparseNullsOperationInput(_SerdeShape):
     sparse_string_list: list[str | None] | None = ...
     sparse_string_map: dict[str, str | None] | None = ...
 
-class SparseNullsOperationInputParams(TypedDict, total=False):
+class SparseNullsOperationInputDict(TypedDict, total=False):
     """Dictionary form of `SparseNullsOperationInput`."""
 
     sparse_string_list: Sequence[str | None] | None
@@ -654,7 +646,7 @@ class StructureListMember(_SerdeShape):
     a: str | None = ...
     b: str | None = ...
 
-class StructureListMemberParams(TypedDict, total=False):
+class StructureListMemberDict(TypedDict, total=False):
     """Dictionary form of `StructureListMember`."""
 
     a: str | None
@@ -678,7 +670,7 @@ class TimestampFormatIgnoredInput(_SerdeShape):
     epoch_seconds: datetime | None = ...
     normal: datetime | None = ...
 
-class TimestampFormatIgnoredInputParams(TypedDict, total=False):
+class TimestampFormatIgnoredInputDict(TypedDict, total=False):
     """Dictionary form of `TimestampFormatIgnoredInput`."""
 
     date_time: datetime | None
@@ -716,7 +708,7 @@ class GreetingStruct(_SerdeShape):
 
     hi: str | None = ...
 
-class GreetingStructParams(TypedDict, total=False):
+class GreetingStructDict(TypedDict, total=False):
     """Dictionary form of `GreetingStruct`."""
 
     hi: str | None

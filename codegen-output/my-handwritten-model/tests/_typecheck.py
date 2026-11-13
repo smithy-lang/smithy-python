@@ -14,13 +14,13 @@ from my_handwritten_model.models import (
     MetricEvent,
     NotificationEvent,
     PublishEventsInput,
-    PublishEventsInputParams,
+    PublishEventsInputDict,
     PublishEventsOutput,
     SubscribeToEventsInput,
-    SubscribeToEventsInputParams,
+    SubscribeToEventsInputDict,
     SubscribeToEventsOutput,
     TradeEventStreamInput,
-    TradeEventStreamInputParams,
+    TradeEventStreamInputDict,
     TradeEventStreamOutput,
     Unit,
 )
@@ -47,9 +47,9 @@ SubscribeToEventsInput()
 SubscribeToEventsOutput()
 TradeEventStreamInput()
 TradeEventStreamOutput()
-_params_0: PublishEventsInputParams = {}
-_params_1: SubscribeToEventsInputParams = {}
-_params_2: TradeEventStreamInputParams = {}
+_params_0: PublishEventsInputDict = {}
+_params_1: SubscribeToEventsInputDict = {}
+_params_2: TradeEventStreamInputDict = {}
 
 
 def _request[T](form: type[T]) -> T:
@@ -59,17 +59,17 @@ def _request[T](form: type[T]) -> T:
 async def check_async_calls(client: AsyncMyHandwrittenModel) -> None:
     pass
     await client.publish_events()
-    await client.publish_events(**_request(PublishEventsInputParams))
+    await client.publish_events(**_request(PublishEventsInputDict))
     await client.publish_events(_request(PublishEventsInput))
-    await client.publish_events(_request(PublishEventsInputParams))
+    await client.publish_events(_request(PublishEventsInputDict))
     await client.subscribe_to_events()
-    await client.subscribe_to_events(**_request(SubscribeToEventsInputParams))
+    await client.subscribe_to_events(**_request(SubscribeToEventsInputDict))
     await client.subscribe_to_events(_request(SubscribeToEventsInput))
-    await client.subscribe_to_events(_request(SubscribeToEventsInputParams))
+    await client.subscribe_to_events(_request(SubscribeToEventsInputDict))
     await client.trade_event_stream()
-    await client.trade_event_stream(**_request(TradeEventStreamInputParams))
+    await client.trade_event_stream(**_request(TradeEventStreamInputDict))
     await client.trade_event_stream(_request(TradeEventStreamInput))
-    await client.trade_event_stream(_request(TradeEventStreamInputParams))
+    await client.trade_event_stream(_request(TradeEventStreamInputDict))
 
 
 def check_sync_calls(client: MyHandwrittenModel) -> None:

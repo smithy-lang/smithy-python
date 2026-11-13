@@ -33,7 +33,7 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  * nested structures and unions are either generated models or dictionaries.
  *
  * <p>Every structure and union reachable from an operation's input has a
- * {@code TypedDict} form, named with a {@code Params} suffix, that the model stub
+ * {@code TypedDict} form, named with a {@code Dict} suffix, that the model stub
  * declares and client method signatures refer to. This class decides which shapes
  * have one, what it is called, and how a member's accepted type is spelled, so the
  * stub and the client cannot disagree.
@@ -47,7 +47,7 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public final class InputParams {
 
-    private static final String SUFFIX = "Params";
+    private static final String SUFFIX = "Dict";
     private static final String ASYNC_PREFIX = "Async";
 
     private static final Symbol SEQUENCE = Symbol.builder()

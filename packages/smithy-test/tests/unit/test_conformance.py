@@ -87,18 +87,18 @@ from typing import TypedDict
 class Thing:
     name: str
 
-class ThingParams(TypedDict, total=False):
+class ThingDict(TypedDict, total=False):
     name: str | None
 """
 _CHOICE_STUB = """
 from typing import TypedDict, Union
 
-class ChoiceTextParams(TypedDict):
+class ChoiceTextDict(TypedDict):
     text: str
 
-ChoiceParams = Union[ChoiceTextParams]
+ChoiceDict = Union[ChoiceTextDict]
 """
-_PARAMS_NAMES = frozenset({"ThingParams", "ChoiceTextParams", "ChoiceParams"})
+_PARAMS_NAMES = frozenset({"ThingDict", "ChoiceTextDict", "ChoiceDict"})
 
 
 def _write_params_stub(tmp_path: Path, partitioned: bool) -> Path:
@@ -112,19 +112,19 @@ def _write_params_stub(tmp_path: Path, partitioned: bool) -> Path:
     # A partition imports what another declares through the facade, as generated
     # partitions do, so following the stub's imports has to stop at the cycle.
     (private / "models_0.pyi").write_text(
-        "from ..models import ChoiceParams as ChoiceParams\n" + _THING_STUB
+        "from ..models import ChoiceDict as ChoiceDict\n" + _THING_STUB
     )
     (private / "models_1.pyi").write_text(
-        "from ..models import ThingParams as ThingParams\n" + _CHOICE_STUB
+        "from ..models import ThingDict as ThingDict\n" + _CHOICE_STUB
     )
     stub.write_text(
         "from ._private.models_0 import (\n"
         "    Thing as Thing,\n"
-        "    ThingParams as ThingParams,\n"
+        "    ThingDict as ThingDict,\n"
         ")\n"
         "from ._private.models_1 import (\n"
-        "    ChoiceParams as ChoiceParams,\n"
-        "    ChoiceTextParams as ChoiceTextParams,\n"
+        "    ChoiceDict as ChoiceDict,\n"
+        "    ChoiceTextDict as ChoiceTextDict,\n"
         ")\n"
     )
     return stub

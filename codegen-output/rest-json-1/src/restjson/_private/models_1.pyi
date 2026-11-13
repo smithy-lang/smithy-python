@@ -12,9 +12,9 @@ from smithy_core.types import UnknownEnumMixin
 
 from ..models import (
     Dialog,
-    DialogParams,
+    DialogDict,
     PayloadConfig,
-    PayloadConfigParams,
+    PayloadConfigDict,
     PayloadUnion,
     _SerdeShape,
 )
@@ -26,11 +26,11 @@ class TestPayloadStructureInput(_SerdeShape):
     test_id: str | None = ...
     payload_config: PayloadConfig | None = ...
 
-class TestPayloadStructureInputParams(TypedDict, total=False):
+class TestPayloadStructureInputDict(TypedDict, total=False):
     """Dictionary form of `TestPayloadStructureInput`."""
 
     test_id: str | None
-    payload_config: PayloadConfig | PayloadConfigParams | None
+    payload_config: PayloadConfig | PayloadConfigDict | None
 
 @dataclass(kw_only=True)
 class TestPayloadStructureOutput(_SerdeShape):
@@ -50,7 +50,7 @@ class TestPayloadStructureOutput(_SerdeShape):
 class TestPostNoInputNoPayloadInput(_SerdeShape):
     """Dataclass for TestPostNoInputNoPayloadInput structure."""
 
-class TestPostNoInputNoPayloadInputParams(TypedDict, total=False):
+class TestPostNoInputNoPayloadInputDict(TypedDict, total=False):
     """Dictionary form of `TestPostNoInputNoPayloadInput`."""
 
 @dataclass(kw_only=True)
@@ -72,7 +72,7 @@ class TestPostNoPayloadInput(_SerdeShape):
 
     test_id: str | None = ...
 
-class TestPostNoPayloadInputParams(TypedDict, total=False):
+class TestPostNoPayloadInputDict(TypedDict, total=False):
     """Dictionary form of `TestPostNoPayloadInput`."""
 
     test_id: str | None
@@ -102,7 +102,7 @@ class TimestampFormatHeadersInput(_SerdeShape):
     target_http_date: datetime | None = ...
     target_date_time: datetime | None = ...
 
-class TimestampFormatHeadersInputParams(TypedDict, total=False):
+class TimestampFormatHeadersInputDict(TypedDict, total=False):
     """Dictionary form of `TimestampFormatHeadersInput`."""
 
     member_epoch_seconds: datetime | None
@@ -140,12 +140,12 @@ class TopLevel(_SerdeShape):
     dialog_list: list[Dialog] = ...
     dialog_map: dict[str, Dialog] = ...
 
-class TopLevelParams(TypedDict, total=False):
+class TopLevelDict(TypedDict, total=False):
     """Dictionary form of `TopLevel`."""
 
-    dialog: Required[Dialog | DialogParams]
-    dialog_list: Sequence[Dialog | DialogParams] | None
-    dialog_map: Mapping[str, Dialog | DialogParams] | None
+    dialog: Required[Dialog | DialogDict]
+    dialog_list: Sequence[Dialog | DialogDict] | None
+    dialog_map: Mapping[str, Dialog | DialogDict] | None
 
 @dataclass
 class UnionPayloadGreeting(_SerdeShape):
@@ -166,10 +166,10 @@ UnionPayload = Union[UnionPayloadGreeting | UnionPayloadUnknown]
 class _UnionPayloadDeserializer:
     def deserialize(self, deserializer: ShapeDeserializer) -> UnionPayload: ...
 
-class UnionPayloadGreetingParams(TypedDict):
+class UnionPayloadGreetingDict(TypedDict):
     greeting: str
 
-UnionPayloadParams = Union[UnionPayloadGreetingParams]
+UnionPayloadDict = Union[UnionPayloadGreetingDict]
 """Dictionary form of `UnionPayload`, setting exactly one variant."""
 
 @dataclass(kw_only=True)
@@ -210,17 +210,17 @@ UnionWithJsonName = Union[
 class _UnionWithJsonNameDeserializer:
     def deserialize(self, deserializer: ShapeDeserializer) -> UnionWithJsonName: ...
 
-class UnionWithJsonNameFooParams(TypedDict):
+class UnionWithJsonNameFooDict(TypedDict):
     foo: str
 
-class UnionWithJsonNameBarParams(TypedDict):
+class UnionWithJsonNameBarDict(TypedDict):
     bar: str
 
-class UnionWithJsonNameBazParams(TypedDict):
+class UnionWithJsonNameBazDict(TypedDict):
     baz: str
 
-UnionWithJsonNameParams = Union[
-    UnionWithJsonNameFooParams | UnionWithJsonNameBarParams | UnionWithJsonNameBazParams
+UnionWithJsonNameDict = Union[
+    UnionWithJsonNameFooDict | UnionWithJsonNameBarDict | UnionWithJsonNameBazDict
 ]
 """Dictionary form of `UnionWithJsonName`, setting exactly one variant."""
 
@@ -228,7 +228,7 @@ UnionWithJsonNameParams = Union[
 class UnitInputAndOutputInput(_SerdeShape):
     """Dataclass for UnitInputAndOutputInput structure."""
 
-class UnitInputAndOutputInputParams(TypedDict, total=False):
+class UnitInputAndOutputInputDict(TypedDict, total=False):
     """Dictionary form of `UnitInputAndOutputInput`."""
 
 @dataclass(kw_only=True)
@@ -249,7 +249,7 @@ class RenamedGreeting(_SerdeShape):
 
     salutation: str | None = ...
 
-class RenamedGreetingParams(TypedDict, total=False):
+class RenamedGreetingDict(TypedDict, total=False):
     """Dictionary form of `RenamedGreeting`."""
 
     salutation: str | None
@@ -267,7 +267,7 @@ class GreetingStruct(_SerdeShape):
 
     hi: str | None = ...
 
-class GreetingStructParams(TypedDict, total=False):
+class GreetingStructDict(TypedDict, total=False):
     """Dictionary form of `GreetingStruct`."""
 
     hi: str | None
@@ -281,5 +281,5 @@ class IntegerEnum(UnknownEnumMixin, IntEnum):
 class Unit(_SerdeShape):
     """Dataclass for Unit structure."""
 
-class UnitParams(TypedDict, total=False):
+class UnitDict(TypedDict, total=False):
     """Dictionary form of `Unit`."""

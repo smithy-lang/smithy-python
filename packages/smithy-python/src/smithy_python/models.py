@@ -107,11 +107,12 @@ _MODEL_MEMBER_NAMES: Final = frozenset(
 _ERROR_MEMBER_NAMES: Final = frozenset(
     {"is_retry_safe", "retry_after", "is_throttling_error", "fault"}
 )
-# The parameters every generated client method declares besides its input members.
+# The names every generated client method uses besides its input members: the
+# parameters it declares, and the models module alias its body references.
 # The runtime escapes them on operation inputs, whose members are that method's
 # keyword parameters, so the generated stub has to as well.
 # CAUTION: mirrors smithy_core._model_naming._RESERVED_INPUT_MEMBERS.
-_OPERATION_PARAMETER_NAMES: Final = frozenset({"self", "plugins"})
+_OPERATION_PARAMETER_NAMES: Final = frozenset({"self", "plugins", "_models"})
 _RESPONSE_METADATA_DOC: Final = (
     "Metadata about the response that produced this output.\n\n"
     "Use this to recover the request identifiers a service's support team needs "

@@ -36,7 +36,7 @@ class NonQueryCompatibleRpcV2ProtocolClient(
     def non_query_compatible_operation(
         self,
         request: _models.NonQueryCompatibleOperationInput
-        | _models.NonQueryCompatibleOperationInputParams,
+        | _models.NonQueryCompatibleOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -48,7 +48,7 @@ class NonQueryCompatibleRpcV2ProtocolClient(
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NonQueryCompatibleOperationInputParams],
+        **kwargs: _Unpack[_models.NonQueryCompatibleOperationInputDict],
     ) -> NonQueryCompatibleOperationOutput:
         """
         Invokes the NonQueryCompatibleOperation operation.

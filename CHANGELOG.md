@@ -46,15 +46,15 @@
   serialized, so every retry sends the same token. A token the caller passes is
   sent unchanged, even an empty one.
 * Every structure and union reachable from an operation input has a `TypedDict`
-  form named with a `Params` suffix, such as `AssumeRoleInputParams`, declared in
+  form named with a `Dict` suffix, such as `AssumeRoleInputDict`, declared in
   the generated model stubs. At runtime the name is plain `dict`, so importing it
   builds nothing. List and map members are typed `Sequence` and `Mapping`, which
   accept a collection of models, of dictionaries, or of both.
 * An operation input with a streaming body has two dictionary forms, because the
   sync and async clients accept different bodies. The plain form, such as
-  `PutObjectInputParams`, takes the bodies a sync client can send, so it can be
+  `PutObjectInputDict`, takes the bodies a sync client can send, so it can be
   unpacked into either client. The form with an `Async` prefix, such as
-  `AsyncPutObjectInputParams`, also takes async streams, and only the async
+  `AsyncPutObjectInputDict`, also takes async streams, and only the async
   client accepts it.
 * Generated client packages include a `py.typed` marker, so type checkers use
   the types of an installed client.

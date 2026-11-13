@@ -100,7 +100,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def all_query_string_types(
         self,
         request: _models.AllQueryStringTypesInput
-        | _models.AllQueryStringTypesInputParams,
+        | _models.AllQueryStringTypesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -112,7 +112,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.AllQueryStringTypesInputParams],
+        **kwargs: _Unpack[_models.AllQueryStringTypesInputDict],
     ) -> AllQueryStringTypesOutput:
         """
         This example uses all query string types.
@@ -141,7 +141,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def body_with_xml_name(
         self,
-        request: _models.BodyWithXmlNameInput | _models.BodyWithXmlNameInputParams,
+        request: _models.BodyWithXmlNameInput | _models.BodyWithXmlNameInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -153,7 +153,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.BodyWithXmlNameInputParams],
+        **kwargs: _Unpack[_models.BodyWithXmlNameInputDict],
     ) -> BodyWithXmlNameOutput:
         """
         The following example serializes a body that uses an XML name, changing
@@ -184,7 +184,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def constant_and_variable_query_string(
         self,
         request: _models.ConstantAndVariableQueryStringInput
-        | _models.ConstantAndVariableQueryStringInputParams,
+        | _models.ConstantAndVariableQueryStringInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -196,7 +196,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.ConstantAndVariableQueryStringInputParams],
+        **kwargs: _Unpack[_models.ConstantAndVariableQueryStringInputDict],
     ) -> ConstantAndVariableQueryStringOutput:
         """
         This example uses fixed query string params and variable query string
@@ -230,7 +230,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def constant_query_string(
         self,
         request: _models.ConstantQueryStringInput
-        | _models.ConstantQueryStringInputParams,
+        | _models.ConstantQueryStringInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -242,7 +242,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.ConstantQueryStringInputParams],
+        **kwargs: _Unpack[_models.ConstantQueryStringInputDict],
     ) -> ConstantQueryStringOutput:
         """
         This example uses a constant query string parameters and a label. This
@@ -275,7 +275,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def content_type_parameters(
         self,
         request: _models.ContentTypeParametersInput
-        | _models.ContentTypeParametersInputParams,
+        | _models.ContentTypeParametersInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -287,7 +287,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.ContentTypeParametersInputParams],
+        **kwargs: _Unpack[_models.ContentTypeParametersInputDict],
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -317,7 +317,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def datetime_offsets(
         self,
-        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputParams,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -329,7 +329,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.DatetimeOffsetsInputParams],
+        **kwargs: _Unpack[_models.DatetimeOffsetsInputDict],
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -359,7 +359,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def empty_input_and_empty_output(
         self,
         request: _models.EmptyInputAndEmptyOutputInput
-        | _models.EmptyInputAndEmptyOutputInputParams,
+        | _models.EmptyInputAndEmptyOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -371,7 +371,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EmptyInputAndEmptyOutputInputParams],
+        **kwargs: _Unpack[_models.EmptyInputAndEmptyOutputInputDict],
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -403,7 +403,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def endpoint_operation(
         self,
-        request: _models.EndpointOperationInput | _models.EndpointOperationInputParams,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -415,7 +415,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EndpointOperationInputParams],
+        **kwargs: _Unpack[_models.EndpointOperationInputDict],
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -445,7 +445,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def endpoint_with_host_label_header_operation(
         self,
         request: _models.EndpointWithHostLabelHeaderOperationInput
-        | _models.EndpointWithHostLabelHeaderOperationInputParams,
+        | _models.EndpointWithHostLabelHeaderOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -457,7 +457,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EndpointWithHostLabelHeaderOperationInputParams],
+        **kwargs: _Unpack[_models.EndpointWithHostLabelHeaderOperationInputDict],
     ) -> EndpointWithHostLabelHeaderOperationOutput:
         """
         Invokes the EndpointWithHostLabelHeaderOperation operation.
@@ -489,7 +489,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def endpoint_with_host_label_operation(
         self,
         request: _models.EndpointWithHostLabelOperationInput
-        | _models.EndpointWithHostLabelOperationInputParams,
+        | _models.EndpointWithHostLabelOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -501,7 +501,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputParams],
+        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputDict],
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -532,7 +532,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def flattened_xml_map(
         self,
-        request: _models.FlattenedXmlMapInput | _models.FlattenedXmlMapInputParams,
+        request: _models.FlattenedXmlMapInput | _models.FlattenedXmlMapInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -544,7 +544,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.FlattenedXmlMapInputParams],
+        **kwargs: _Unpack[_models.FlattenedXmlMapInputDict],
     ) -> FlattenedXmlMapOutput:
         """
         Flattened maps
@@ -574,7 +574,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def flattened_xml_map_with_xml_name(
         self,
         request: _models.FlattenedXmlMapWithXmlNameInput
-        | _models.FlattenedXmlMapWithXmlNameInputParams,
+        | _models.FlattenedXmlMapWithXmlNameInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -586,7 +586,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.FlattenedXmlMapWithXmlNameInputParams],
+        **kwargs: _Unpack[_models.FlattenedXmlMapWithXmlNameInputDict],
     ) -> FlattenedXmlMapWithXmlNameOutput:
         """
         Flattened maps with @xmlName
@@ -616,7 +616,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def flattened_xml_map_with_xml_namespace(
         self,
         request: _models.FlattenedXmlMapWithXmlNamespaceInput
-        | _models.FlattenedXmlMapWithXmlNamespaceInputParams,
+        | _models.FlattenedXmlMapWithXmlNamespaceInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -628,7 +628,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.FlattenedXmlMapWithXmlNamespaceInputParams],
+        **kwargs: _Unpack[_models.FlattenedXmlMapWithXmlNamespaceInputDict],
     ) -> FlattenedXmlMapWithXmlNamespaceOutput:
         """
         Flattened maps with @xmlNamespace and @xmlName
@@ -659,7 +659,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def fractional_seconds(
         self,
-        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -671,7 +671,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.FractionalSecondsInputParams],
+        **kwargs: _Unpack[_models.FractionalSecondsInputDict],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -700,8 +700,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def greeting_with_errors(
         self,
-        request: _models.GreetingWithErrorsInput
-        | _models.GreetingWithErrorsInputParams,
+        request: _models.GreetingWithErrorsInput | _models.GreetingWithErrorsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -713,7 +712,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.GreetingWithErrorsInputParams],
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputDict],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -747,7 +746,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_empty_prefix_headers(
         self,
         request: _models.HttpEmptyPrefixHeadersInput
-        | _models.HttpEmptyPrefixHeadersInputParams,
+        | _models.HttpEmptyPrefixHeadersInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -759,7 +758,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpEmptyPrefixHeadersInputParams],
+        **kwargs: _Unpack[_models.HttpEmptyPrefixHeadersInputDict],
     ) -> HttpEmptyPrefixHeadersOutput:
         """
         Clients that perform this test extract all headers from the response.
@@ -788,7 +787,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def http_enum_payload(
         self,
-        request: _models.HttpEnumPayloadInput | _models.HttpEnumPayloadInputParams,
+        request: _models.HttpEnumPayloadInput | _models.HttpEnumPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -800,7 +799,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpEnumPayloadInputParams],
+        **kwargs: _Unpack[_models.HttpEnumPayloadInputDict],
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
@@ -829,7 +828,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def http_payload_traits(
         self,
-        request: _models.HttpPayloadTraitsInput | _models.HttpPayloadTraitsInputParams,
+        request: _models.HttpPayloadTraitsInput | _models.HttpPayloadTraitsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -841,7 +840,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadTraitsInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadTraitsInputDict],
     ) -> HttpPayloadTraitsOutput:
         """
         This example serializes a blob shape in the payload. In this example, no
@@ -873,7 +872,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_payload_traits_with_media_type(
         self,
         request: _models.HttpPayloadTraitsWithMediaTypeInput
-        | _models.HttpPayloadTraitsWithMediaTypeInputParams,
+        | _models.HttpPayloadTraitsWithMediaTypeInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -885,7 +884,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadTraitsWithMediaTypeInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadTraitsWithMediaTypeInputDict],
     ) -> HttpPayloadTraitsWithMediaTypeOutput:
         """
         This example uses a `@mediaType` trait on the payload to force a
@@ -918,7 +917,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_payload_with_member_xml_name(
         self,
         request: _models.HttpPayloadWithMemberXmlNameInput
-        | _models.HttpPayloadWithMemberXmlNameInputParams,
+        | _models.HttpPayloadWithMemberXmlNameInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -930,7 +929,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadWithMemberXmlNameInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadWithMemberXmlNameInputDict],
     ) -> HttpPayloadWithMemberXmlNameOutput:
         """
         The following example serializes a payload that uses an XML name on the
@@ -961,7 +960,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_payload_with_structure(
         self,
         request: _models.HttpPayloadWithStructureInput
-        | _models.HttpPayloadWithStructureInputParams,
+        | _models.HttpPayloadWithStructureInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -973,7 +972,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadWithStructureInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadWithStructureInputDict],
     ) -> HttpPayloadWithStructureOutput:
         """
         This example serializes a structure in the payload. Note that
@@ -1005,7 +1004,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_payload_with_union(
         self,
         request: _models.HttpPayloadWithUnionInput
-        | _models.HttpPayloadWithUnionInputParams,
+        | _models.HttpPayloadWithUnionInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1017,7 +1016,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadWithUnionInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadWithUnionInputDict],
     ) -> HttpPayloadWithUnionOutput:
         """
         This example serializes a union in the payload.
@@ -1047,7 +1046,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_payload_with_xml_name(
         self,
         request: _models.HttpPayloadWithXmlNameInput
-        | _models.HttpPayloadWithXmlNameInputParams,
+        | _models.HttpPayloadWithXmlNameInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1059,7 +1058,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadWithXmlNameInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadWithXmlNameInputDict],
     ) -> HttpPayloadWithXmlNameOutput:
         """
         The following example serializes a payload that uses an XML name,
@@ -1090,7 +1089,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_payload_with_xml_namespace(
         self,
         request: _models.HttpPayloadWithXmlNamespaceInput
-        | _models.HttpPayloadWithXmlNamespaceInputParams,
+        | _models.HttpPayloadWithXmlNamespaceInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1102,7 +1101,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadWithXmlNamespaceInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadWithXmlNamespaceInputDict],
     ) -> HttpPayloadWithXmlNamespaceOutput:
         """
         The following example serializes a payload that uses an XML namespace.
@@ -1132,7 +1131,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_payload_with_xml_namespace_and_prefix(
         self,
         request: _models.HttpPayloadWithXmlNamespaceAndPrefixInput
-        | _models.HttpPayloadWithXmlNamespaceAndPrefixInputParams,
+        | _models.HttpPayloadWithXmlNamespaceAndPrefixInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1144,7 +1143,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadWithXmlNamespaceAndPrefixInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadWithXmlNamespaceAndPrefixInputDict],
     ) -> HttpPayloadWithXmlNamespaceAndPrefixOutput:
         """
         The following example serializes a payload that uses an XML namespace.
@@ -1175,7 +1174,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def http_prefix_headers(
         self,
-        request: _models.HttpPrefixHeadersInput | _models.HttpPrefixHeadersInputParams,
+        request: _models.HttpPrefixHeadersInput | _models.HttpPrefixHeadersInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1187,7 +1186,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPrefixHeadersInputParams],
+        **kwargs: _Unpack[_models.HttpPrefixHeadersInputDict],
     ) -> HttpPrefixHeadersOutput:
         """
         This examples adds headers to the input of a request and response by
@@ -1218,7 +1217,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_request_with_float_labels(
         self,
         request: _models.HttpRequestWithFloatLabelsInput
-        | _models.HttpRequestWithFloatLabelsInputParams,
+        | _models.HttpRequestWithFloatLabelsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1230,7 +1229,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpRequestWithFloatLabelsInputParams],
+        **kwargs: _Unpack[_models.HttpRequestWithFloatLabelsInputDict],
     ) -> HttpRequestWithFloatLabelsOutput:
         """
         Invokes the HttpRequestWithFloatLabels operation.
@@ -1260,7 +1259,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_request_with_greedy_label_in_path(
         self,
         request: _models.HttpRequestWithGreedyLabelInPathInput
-        | _models.HttpRequestWithGreedyLabelInPathInputParams,
+        | _models.HttpRequestWithGreedyLabelInPathInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1272,7 +1271,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpRequestWithGreedyLabelInPathInputParams],
+        **kwargs: _Unpack[_models.HttpRequestWithGreedyLabelInPathInputDict],
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
@@ -1304,7 +1303,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_request_with_labels(
         self,
         request: _models.HttpRequestWithLabelsInput
-        | _models.HttpRequestWithLabelsInputParams,
+        | _models.HttpRequestWithLabelsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1316,7 +1315,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpRequestWithLabelsInputParams],
+        **kwargs: _Unpack[_models.HttpRequestWithLabelsInputDict],
     ) -> HttpRequestWithLabelsOutput:
         """
         The example tests how requests are serialized when there's no input
@@ -1347,7 +1346,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def http_request_with_labels_and_timestamp_format(
         self,
         request: _models.HttpRequestWithLabelsAndTimestampFormatInput
-        | _models.HttpRequestWithLabelsAndTimestampFormatInputParams,
+        | _models.HttpRequestWithLabelsAndTimestampFormatInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1359,7 +1358,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpRequestWithLabelsAndTimestampFormatInputParams],
+        **kwargs: _Unpack[_models.HttpRequestWithLabelsAndTimestampFormatInputDict],
     ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
         """
         The example tests how requests serialize different timestamp formats in
@@ -1391,7 +1390,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def http_response_code(
         self,
-        request: _models.HttpResponseCodeInput | _models.HttpResponseCodeInputParams,
+        request: _models.HttpResponseCodeInput | _models.HttpResponseCodeInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1403,7 +1402,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpResponseCodeInputParams],
+        **kwargs: _Unpack[_models.HttpResponseCodeInputDict],
     ) -> HttpResponseCodeOutput:
         """
         Invokes the HttpResponseCode operation.
@@ -1432,7 +1431,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def http_string_payload(
         self,
-        request: _models.HttpStringPayloadInput | _models.HttpStringPayloadInputParams,
+        request: _models.HttpStringPayloadInput | _models.HttpStringPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1444,7 +1443,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpStringPayloadInputParams],
+        **kwargs: _Unpack[_models.HttpStringPayloadInputDict],
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
@@ -1474,7 +1473,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def ignore_query_params_in_response(
         self,
         request: _models.IgnoreQueryParamsInResponseInput
-        | _models.IgnoreQueryParamsInResponseInputParams,
+        | _models.IgnoreQueryParamsInResponseInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1486,7 +1485,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.IgnoreQueryParamsInResponseInputParams],
+        **kwargs: _Unpack[_models.IgnoreQueryParamsInResponseInputDict],
     ) -> IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
@@ -1518,7 +1517,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def input_and_output_with_headers(
         self,
         request: _models.InputAndOutputWithHeadersInput
-        | _models.InputAndOutputWithHeadersInputParams,
+        | _models.InputAndOutputWithHeadersInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1530,7 +1529,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.InputAndOutputWithHeadersInputParams],
+        **kwargs: _Unpack[_models.InputAndOutputWithHeadersInputDict],
     ) -> InputAndOutputWithHeadersOutput:
         """
         The example tests how requests and responses are serialized when there
@@ -1560,7 +1559,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def nested_xml_maps(
         self,
-        request: _models.NestedXmlMapsInput | _models.NestedXmlMapsInputParams,
+        request: _models.NestedXmlMapsInput | _models.NestedXmlMapsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1572,7 +1571,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NestedXmlMapsInputParams],
+        **kwargs: _Unpack[_models.NestedXmlMapsInputDict],
     ) -> NestedXmlMapsOutput:
         """
         Invokes the NestedXmlMaps operation.
@@ -1602,7 +1601,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def nested_xml_map_with_xml_name(
         self,
         request: _models.NestedXmlMapWithXmlNameInput
-        | _models.NestedXmlMapWithXmlNameInputParams,
+        | _models.NestedXmlMapWithXmlNameInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1614,7 +1613,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NestedXmlMapWithXmlNameInputParams],
+        **kwargs: _Unpack[_models.NestedXmlMapWithXmlNameInputDict],
     ) -> NestedXmlMapWithXmlNameOutput:
         """
         Nested Xml Maps with key/values with @xmlName
@@ -1643,8 +1642,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def no_input_and_no_output(
         self,
-        request: _models.NoInputAndNoOutputInput
-        | _models.NoInputAndNoOutputInputParams,
+        request: _models.NoInputAndNoOutputInput | _models.NoInputAndNoOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1656,7 +1654,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NoInputAndNoOutputInputParams],
+        **kwargs: _Unpack[_models.NoInputAndNoOutputInputDict],
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1688,7 +1686,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def no_input_and_output(
         self,
-        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputParams,
+        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1700,7 +1698,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NoInputAndOutputInputParams],
+        **kwargs: _Unpack[_models.NoInputAndOutputInputDict],
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -1733,7 +1731,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def null_and_empty_headers_client(
         self,
         request: _models.NullAndEmptyHeadersClientInput
-        | _models.NullAndEmptyHeadersClientInputParams,
+        | _models.NullAndEmptyHeadersClientInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1745,7 +1743,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NullAndEmptyHeadersClientInputParams],
+        **kwargs: _Unpack[_models.NullAndEmptyHeadersClientInputDict],
     ) -> NullAndEmptyHeadersClientOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
@@ -1776,7 +1774,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def null_and_empty_headers_server(
         self,
         request: _models.NullAndEmptyHeadersServerInput
-        | _models.NullAndEmptyHeadersServerInputParams,
+        | _models.NullAndEmptyHeadersServerInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1788,7 +1786,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NullAndEmptyHeadersServerInputParams],
+        **kwargs: _Unpack[_models.NullAndEmptyHeadersServerInputDict],
     ) -> NullAndEmptyHeadersServerOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
@@ -1819,7 +1817,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def omits_null_serializes_empty_string(
         self,
         request: _models.OmitsNullSerializesEmptyStringInput
-        | _models.OmitsNullSerializesEmptyStringInputParams,
+        | _models.OmitsNullSerializesEmptyStringInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1831,7 +1829,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.OmitsNullSerializesEmptyStringInputParams],
+        **kwargs: _Unpack[_models.OmitsNullSerializesEmptyStringInputDict],
     ) -> OmitsNullSerializesEmptyStringOutput:
         """
         Omits null, but serializes empty string value.
@@ -1863,7 +1861,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def put_with_content_encoding(
         self,
         request: _models.PutWithContentEncodingInput
-        | _models.PutWithContentEncodingInputParams,
+        | _models.PutWithContentEncodingInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1875,7 +1873,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.PutWithContentEncodingInputParams],
+        **kwargs: _Unpack[_models.PutWithContentEncodingInputDict],
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
@@ -1905,7 +1903,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def query_idempotency_token_auto_fill(
         self,
         request: _models.QueryIdempotencyTokenAutoFillInput
-        | _models.QueryIdempotencyTokenAutoFillInputParams,
+        | _models.QueryIdempotencyTokenAutoFillInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1917,7 +1915,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.QueryIdempotencyTokenAutoFillInputParams],
+        **kwargs: _Unpack[_models.QueryIdempotencyTokenAutoFillInputDict],
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
@@ -1947,7 +1945,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def query_params_as_string_list_map(
         self,
         request: _models.QueryParamsAsStringListMapInput
-        | _models.QueryParamsAsStringListMapInputParams,
+        | _models.QueryParamsAsStringListMapInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1959,7 +1957,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.QueryParamsAsStringListMapInputParams],
+        **kwargs: _Unpack[_models.QueryParamsAsStringListMapInputDict],
     ) -> QueryParamsAsStringListMapOutput:
         """
         Invokes the QueryParamsAsStringListMap operation.
@@ -1988,7 +1986,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def query_precedence(
         self,
-        request: _models.QueryPrecedenceInput | _models.QueryPrecedenceInputParams,
+        request: _models.QueryPrecedenceInput | _models.QueryPrecedenceInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2000,7 +1998,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.QueryPrecedenceInputParams],
+        **kwargs: _Unpack[_models.QueryPrecedenceInputDict],
     ) -> QueryPrecedenceOutput:
         """
         Invokes the QueryPrecedence operation.
@@ -2029,7 +2027,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def recursive_shapes(
         self,
-        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputParams,
+        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2041,7 +2039,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.RecursiveShapesInputParams],
+        **kwargs: _Unpack[_models.RecursiveShapesInputDict],
     ) -> RecursiveShapesOutput:
         """
         Recursive shapes
@@ -2071,7 +2069,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def simple_scalar_properties(
         self,
         request: _models.SimpleScalarPropertiesInput
-        | _models.SimpleScalarPropertiesInputParams,
+        | _models.SimpleScalarPropertiesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2083,7 +2081,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputParams],
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputDict],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
@@ -2113,7 +2111,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def timestamp_format_headers(
         self,
         request: _models.TimestampFormatHeadersInput
-        | _models.TimestampFormatHeadersInputParams,
+        | _models.TimestampFormatHeadersInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2125,7 +2123,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TimestampFormatHeadersInputParams],
+        **kwargs: _Unpack[_models.TimestampFormatHeadersInputDict],
     ) -> TimestampFormatHeadersOutput:
         """
         The example tests how timestamp request and response headers are
@@ -2155,7 +2153,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_attributes(
         self,
-        request: _models.XmlAttributesInput | _models.XmlAttributesInputParams,
+        request: _models.XmlAttributesInput | _models.XmlAttributesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2167,7 +2165,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlAttributesInputParams],
+        **kwargs: _Unpack[_models.XmlAttributesInputDict],
     ) -> XmlAttributesOutput:
         """
         This example serializes an XML attributes on synthesized document.
@@ -2197,7 +2195,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def xml_attributes_in_middle(
         self,
         request: _models.XmlAttributesInMiddleInput
-        | _models.XmlAttributesInMiddleInputParams,
+        | _models.XmlAttributesInMiddleInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2209,7 +2207,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlAttributesInMiddleInputParams],
+        **kwargs: _Unpack[_models.XmlAttributesInMiddleInputDict],
     ) -> XmlAttributesInMiddleOutput:
         """
         This example serializes an XML attribute on a payload when it's defined
@@ -2243,7 +2241,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def xml_attributes_on_payload(
         self,
         request: _models.XmlAttributesOnPayloadInput
-        | _models.XmlAttributesOnPayloadInputParams,
+        | _models.XmlAttributesOnPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2255,7 +2253,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlAttributesOnPayloadInputParams],
+        **kwargs: _Unpack[_models.XmlAttributesOnPayloadInputDict],
     ) -> XmlAttributesOnPayloadOutput:
         """
         This example serializes an XML attributes on a document targeted by
@@ -2285,7 +2283,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_blobs(
         self,
-        request: _models.XmlBlobsInput | _models.XmlBlobsInputParams,
+        request: _models.XmlBlobsInput | _models.XmlBlobsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2297,7 +2295,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlBlobsInputParams],
+        **kwargs: _Unpack[_models.XmlBlobsInputDict],
     ) -> XmlBlobsOutput:
         """
         Blobs are base64 encoded
@@ -2326,7 +2324,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_empty_blobs(
         self,
-        request: _models.XmlEmptyBlobsInput | _models.XmlEmptyBlobsInputParams,
+        request: _models.XmlEmptyBlobsInput | _models.XmlEmptyBlobsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2338,7 +2336,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlEmptyBlobsInputParams],
+        **kwargs: _Unpack[_models.XmlEmptyBlobsInputDict],
     ) -> XmlEmptyBlobsOutput:
         """
         Blobs are base64 encoded
@@ -2367,7 +2365,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_empty_lists(
         self,
-        request: _models.XmlEmptyListsInput | _models.XmlEmptyListsInputParams,
+        request: _models.XmlEmptyListsInput | _models.XmlEmptyListsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2379,7 +2377,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlEmptyListsInputParams],
+        **kwargs: _Unpack[_models.XmlEmptyListsInputDict],
     ) -> XmlEmptyListsOutput:
         """
         Invokes the XmlEmptyLists operation.
@@ -2408,7 +2406,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_empty_maps(
         self,
-        request: _models.XmlEmptyMapsInput | _models.XmlEmptyMapsInputParams,
+        request: _models.XmlEmptyMapsInput | _models.XmlEmptyMapsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2420,7 +2418,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlEmptyMapsInputParams],
+        **kwargs: _Unpack[_models.XmlEmptyMapsInputDict],
     ) -> XmlEmptyMapsOutput:
         """
         Invokes the XmlEmptyMaps operation.
@@ -2449,7 +2447,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_empty_strings(
         self,
-        request: _models.XmlEmptyStringsInput | _models.XmlEmptyStringsInputParams,
+        request: _models.XmlEmptyStringsInput | _models.XmlEmptyStringsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2461,7 +2459,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlEmptyStringsInputParams],
+        **kwargs: _Unpack[_models.XmlEmptyStringsInputDict],
     ) -> XmlEmptyStringsOutput:
         """
         Invokes the XmlEmptyStrings operation.
@@ -2490,7 +2488,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_enums(
         self,
-        request: _models.XmlEnumsInput | _models.XmlEnumsInputParams,
+        request: _models.XmlEnumsInput | _models.XmlEnumsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2502,7 +2500,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlEnumsInputParams],
+        **kwargs: _Unpack[_models.XmlEnumsInputDict],
     ) -> XmlEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -2532,7 +2530,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_int_enums(
         self,
-        request: _models.XmlIntEnumsInput | _models.XmlIntEnumsInputParams,
+        request: _models.XmlIntEnumsInput | _models.XmlIntEnumsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2544,7 +2542,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlIntEnumsInputParams],
+        **kwargs: _Unpack[_models.XmlIntEnumsInputDict],
     ) -> XmlIntEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -2574,7 +2572,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_lists(
         self,
-        request: _models.XmlListsInput | _models.XmlListsInputParams,
+        request: _models.XmlListsInput | _models.XmlListsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2586,7 +2584,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlListsInputParams],
+        **kwargs: _Unpack[_models.XmlListsInputDict],
     ) -> XmlListsOutput:
         """
         This test case serializes XML lists for the following cases for both
@@ -2620,7 +2618,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_maps(
         self,
-        request: _models.XmlMapsInput | _models.XmlMapsInputParams,
+        request: _models.XmlMapsInput | _models.XmlMapsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2632,7 +2630,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlMapsInputParams],
+        **kwargs: _Unpack[_models.XmlMapsInputDict],
     ) -> XmlMapsOutput:
         """
         The example tests basic map serialization.
@@ -2661,7 +2659,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_maps_xml_name(
         self,
-        request: _models.XmlMapsXmlNameInput | _models.XmlMapsXmlNameInputParams,
+        request: _models.XmlMapsXmlNameInput | _models.XmlMapsXmlNameInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2673,7 +2671,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlMapsXmlNameInputParams],
+        **kwargs: _Unpack[_models.XmlMapsXmlNameInputDict],
     ) -> XmlMapsXmlNameOutput:
         """
         Invokes the XmlMapsXmlName operation.
@@ -2703,7 +2701,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     async def xml_map_with_xml_namespace(
         self,
         request: _models.XmlMapWithXmlNamespaceInput
-        | _models.XmlMapWithXmlNamespaceInputParams,
+        | _models.XmlMapWithXmlNamespaceInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2715,7 +2713,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlMapWithXmlNamespaceInputParams],
+        **kwargs: _Unpack[_models.XmlMapWithXmlNamespaceInputDict],
     ) -> XmlMapWithXmlNamespaceOutput:
         """
         Maps with @xmlNamespace and @xmlName
@@ -2744,7 +2742,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_namespaces(
         self,
-        request: _models.XmlNamespacesInput | _models.XmlNamespacesInputParams,
+        request: _models.XmlNamespacesInput | _models.XmlNamespacesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2756,7 +2754,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlNamespacesInputParams],
+        **kwargs: _Unpack[_models.XmlNamespacesInputDict],
     ) -> XmlNamespacesOutput:
         """
         Invokes the XmlNamespaces operation.
@@ -2785,7 +2783,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_timestamps(
         self,
-        request: _models.XmlTimestampsInput | _models.XmlTimestampsInputParams,
+        request: _models.XmlTimestampsInput | _models.XmlTimestampsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2797,7 +2795,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlTimestampsInputParams],
+        **kwargs: _Unpack[_models.XmlTimestampsInputDict],
     ) -> XmlTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
@@ -2827,7 +2825,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     @_overload
     async def xml_unions(
         self,
-        request: _models.XmlUnionsInput | _models.XmlUnionsInputParams,
+        request: _models.XmlUnionsInput | _models.XmlUnionsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2839,7 +2837,7 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.XmlUnionsInputParams],
+        **kwargs: _Unpack[_models.XmlUnionsInputDict],
     ) -> XmlUnionsOutput:
         """
         Invokes the XmlUnions operation.

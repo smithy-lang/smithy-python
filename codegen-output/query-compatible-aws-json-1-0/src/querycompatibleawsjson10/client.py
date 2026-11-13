@@ -34,7 +34,7 @@ class QueryCompatibleJSONRPC10Client(Client[QueryCompatibleJSONRPC10Config]):
     def query_compatible_operation(
         self,
         request: _models.QueryCompatibleOperationInput
-        | _models.QueryCompatibleOperationInputParams,
+        | _models.QueryCompatibleOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -46,7 +46,7 @@ class QueryCompatibleJSONRPC10Client(Client[QueryCompatibleJSONRPC10Config]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.QueryCompatibleOperationInputParams],
+        **kwargs: _Unpack[_models.QueryCompatibleOperationInputDict],
     ) -> QueryCompatibleOperationOutput:
         """
         Invokes the QueryCompatibleOperation operation.

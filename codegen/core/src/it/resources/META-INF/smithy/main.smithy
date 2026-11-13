@@ -86,7 +86,7 @@ operation CreateConnector {
         mutual: MutuallyRecursiveA
 
         // A shape whose name already ends in the dictionary-form suffix.
-        connectorParams: ConnectorParams
+        connectorParams: ConnectorDict
 
         settings: Document
 
@@ -112,7 +112,7 @@ structure Connector {
     image: ImageType
 }
 
-structure ConnectorParams {
+structure ConnectorDict {
     value: String
 }
 

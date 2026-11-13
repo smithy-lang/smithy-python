@@ -6,9 +6,9 @@ from restxmlwithnamespace.aio.client import AsyncRestXmlProtocolNamespaceClient
 from restxmlwithnamespace.client import RestXmlProtocolNamespaceClient
 from restxmlwithnamespace.models import (
     NestedWithNamespace,
-    NestedWithNamespaceParams,
+    NestedWithNamespaceDict,
     SimpleScalarPropertiesInput,
-    SimpleScalarPropertiesInputParams,
+    SimpleScalarPropertiesInputDict,
     SimpleScalarPropertiesOutput,
 )
 
@@ -22,8 +22,8 @@ _: Any = ...
 NestedWithNamespace()
 SimpleScalarPropertiesInput()
 SimpleScalarPropertiesOutput()
-_params_0: NestedWithNamespaceParams = {}
-_params_1: SimpleScalarPropertiesInputParams = {}
+_params_0: NestedWithNamespaceDict = {}
+_params_1: SimpleScalarPropertiesInputDict = {}
 
 
 def _request[T](form: type[T]) -> T:
@@ -33,14 +33,14 @@ def _request[T](form: type[T]) -> T:
 async def check_async_calls(client: AsyncRestXmlProtocolNamespaceClient) -> None:
     pass
     await client.simple_scalar_properties()
-    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
     await client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
-    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInputParams))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))
 
 
 def check_sync_calls(client: RestXmlProtocolNamespaceClient) -> None:
     pass
     client.simple_scalar_properties()
-    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
     client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
-    client.simple_scalar_properties(_request(SimpleScalarPropertiesInputParams))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))

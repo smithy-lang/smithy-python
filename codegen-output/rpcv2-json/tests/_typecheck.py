@@ -6,62 +6,62 @@ from rpcv2json.aio.client import AsyncRpcV2JsonProtocol
 from rpcv2json.client import RpcV2JsonProtocol
 from rpcv2json.models import (
     BigDecimalOperationInput,
-    BigDecimalOperationInputParams,
+    BigDecimalOperationInputDict,
     BigDecimalOperationOutput,
     BigIntegerOperationInput,
-    BigIntegerOperationInputParams,
+    BigIntegerOperationInputDict,
     BigIntegerOperationOutput,
     ClientOptionalDefaults,
-    ClientOptionalDefaultsParams,
+    ClientOptionalDefaultsDict,
     ComplexNestedErrorData,
     Defaults,
-    DefaultsParams,
+    DefaultsDict,
     EmptyInputOutputInput,
-    EmptyInputOutputInputParams,
+    EmptyInputOutputInputDict,
     EmptyInputOutputOutput,
     FractionalSecondsInput,
-    FractionalSecondsInputParams,
+    FractionalSecondsInputDict,
     FractionalSecondsOutput,
     GreetingStruct,
-    GreetingStructParams,
+    GreetingStructDict,
     GreetingWithErrorsInput,
-    GreetingWithErrorsInputParams,
+    GreetingWithErrorsInputDict,
     GreetingWithErrorsOutput,
     NoInputOutputInput,
-    NoInputOutputInputParams,
+    NoInputOutputInputDict,
     NoInputOutputOutput,
     OperationWithDefaultsInput,
-    OperationWithDefaultsInputParams,
+    OperationWithDefaultsInputDict,
     OperationWithDefaultsOutput,
     OptionalInputOutputInput,
-    OptionalInputOutputInputParams,
+    OptionalInputOutputInputDict,
     OptionalInputOutputOutput,
     RecursiveShapesInput,
+    RecursiveShapesInputDict,
     RecursiveShapesInputOutputNested1,
-    RecursiveShapesInputOutputNested1Params,
+    RecursiveShapesInputOutputNested1Dict,
     RecursiveShapesInputOutputNested2,
-    RecursiveShapesInputOutputNested2Params,
-    RecursiveShapesInputParams,
+    RecursiveShapesInputOutputNested2Dict,
     RecursiveShapesOutput,
     RpcV2JsonDenseMapsInput,
-    RpcV2JsonDenseMapsInputParams,
+    RpcV2JsonDenseMapsInputDict,
     RpcV2JsonDenseMapsOutput,
     RpcV2JsonListsInput,
-    RpcV2JsonListsInputParams,
+    RpcV2JsonListsInputDict,
     RpcV2JsonListsOutput,
     RpcV2JsonSparseMapsInput,
-    RpcV2JsonSparseMapsInputParams,
+    RpcV2JsonSparseMapsInputDict,
     RpcV2JsonSparseMapsOutput,
     SimpleScalarPropertiesInput,
-    SimpleScalarPropertiesInputParams,
+    SimpleScalarPropertiesInputDict,
     SimpleScalarPropertiesOutput,
     SparseNullsOperationInput,
-    SparseNullsOperationInputParams,
+    SparseNullsOperationInputDict,
     SparseNullsOperationOutput,
     StructureListMember,
-    StructureListMemberParams,
+    StructureListMemberDict,
     TimestampFormatIgnoredInput,
-    TimestampFormatIgnoredInputParams,
+    TimestampFormatIgnoredInputDict,
     TimestampFormatIgnoredOutput,
     ValidationExceptionField,
 )
@@ -111,27 +111,27 @@ StructureListMember()
 TimestampFormatIgnoredInput()
 TimestampFormatIgnoredOutput()
 GreetingStruct()
-_params_0: BigDecimalOperationInputParams = {}
-_params_1: BigIntegerOperationInputParams = {}
-_params_2: ClientOptionalDefaultsParams = {}
-_params_3: DefaultsParams = {}
-_params_4: EmptyInputOutputInputParams = {}
-_params_5: FractionalSecondsInputParams = {}
-_params_6: GreetingWithErrorsInputParams = {}
-_params_7: NoInputOutputInputParams = {}
-_params_8: OperationWithDefaultsInputParams = {}
-_params_9: OptionalInputOutputInputParams = {}
-_params_10: RecursiveShapesInputParams = {}
-_params_11: RecursiveShapesInputOutputNested1Params = {}
-_params_12: RecursiveShapesInputOutputNested2Params = {}
-_params_13: RpcV2JsonDenseMapsInputParams = {}
-_params_14: RpcV2JsonListsInputParams = {}
-_params_15: RpcV2JsonSparseMapsInputParams = {}
-_params_16: SimpleScalarPropertiesInputParams = {}
-_params_17: SparseNullsOperationInputParams = {}
-_params_18: StructureListMemberParams = {}
-_params_19: TimestampFormatIgnoredInputParams = {}
-_params_20: GreetingStructParams = {}
+_params_0: BigDecimalOperationInputDict = {}
+_params_1: BigIntegerOperationInputDict = {}
+_params_2: ClientOptionalDefaultsDict = {}
+_params_3: DefaultsDict = {}
+_params_4: EmptyInputOutputInputDict = {}
+_params_5: FractionalSecondsInputDict = {}
+_params_6: GreetingWithErrorsInputDict = {}
+_params_7: NoInputOutputInputDict = {}
+_params_8: OperationWithDefaultsInputDict = {}
+_params_9: OptionalInputOutputInputDict = {}
+_params_10: RecursiveShapesInputDict = {}
+_params_11: RecursiveShapesInputOutputNested1Dict = {}
+_params_12: RecursiveShapesInputOutputNested2Dict = {}
+_params_13: RpcV2JsonDenseMapsInputDict = {}
+_params_14: RpcV2JsonListsInputDict = {}
+_params_15: RpcV2JsonSparseMapsInputDict = {}
+_params_16: SimpleScalarPropertiesInputDict = {}
+_params_17: SparseNullsOperationInputDict = {}
+_params_18: StructureListMemberDict = {}
+_params_19: TimestampFormatIgnoredInputDict = {}
+_params_20: GreetingStructDict = {}
 
 
 def _request[T](form: type[T]) -> T:
@@ -141,126 +141,126 @@ def _request[T](form: type[T]) -> T:
 async def check_async_calls(client: AsyncRpcV2JsonProtocol) -> None:
     pass
     await client.big_decimal_operation()
-    await client.big_decimal_operation(**_request(BigDecimalOperationInputParams))
+    await client.big_decimal_operation(**_request(BigDecimalOperationInputDict))
     await client.big_decimal_operation(_request(BigDecimalOperationInput))
-    await client.big_decimal_operation(_request(BigDecimalOperationInputParams))
+    await client.big_decimal_operation(_request(BigDecimalOperationInputDict))
     await client.big_integer_operation()
-    await client.big_integer_operation(**_request(BigIntegerOperationInputParams))
+    await client.big_integer_operation(**_request(BigIntegerOperationInputDict))
     await client.big_integer_operation(_request(BigIntegerOperationInput))
-    await client.big_integer_operation(_request(BigIntegerOperationInputParams))
+    await client.big_integer_operation(_request(BigIntegerOperationInputDict))
     await client.empty_input_output()
-    await client.empty_input_output(**_request(EmptyInputOutputInputParams))
+    await client.empty_input_output(**_request(EmptyInputOutputInputDict))
     await client.empty_input_output(_request(EmptyInputOutputInput))
-    await client.empty_input_output(_request(EmptyInputOutputInputParams))
+    await client.empty_input_output(_request(EmptyInputOutputInputDict))
     await client.fractional_seconds()
-    await client.fractional_seconds(**_request(FractionalSecondsInputParams))
+    await client.fractional_seconds(**_request(FractionalSecondsInputDict))
     await client.fractional_seconds(_request(FractionalSecondsInput))
-    await client.fractional_seconds(_request(FractionalSecondsInputParams))
+    await client.fractional_seconds(_request(FractionalSecondsInputDict))
     await client.greeting_with_errors()
-    await client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    await client.greeting_with_errors(**_request(GreetingWithErrorsInputDict))
     await client.greeting_with_errors(_request(GreetingWithErrorsInput))
-    await client.greeting_with_errors(_request(GreetingWithErrorsInputParams))
+    await client.greeting_with_errors(_request(GreetingWithErrorsInputDict))
     await client.no_input_output()
-    await client.no_input_output(**_request(NoInputOutputInputParams))
+    await client.no_input_output(**_request(NoInputOutputInputDict))
     await client.no_input_output(_request(NoInputOutputInput))
-    await client.no_input_output(_request(NoInputOutputInputParams))
+    await client.no_input_output(_request(NoInputOutputInputDict))
     await client.operation_with_defaults()
-    await client.operation_with_defaults(**_request(OperationWithDefaultsInputParams))
+    await client.operation_with_defaults(**_request(OperationWithDefaultsInputDict))
     await client.operation_with_defaults(_request(OperationWithDefaultsInput))
-    await client.operation_with_defaults(_request(OperationWithDefaultsInputParams))
+    await client.operation_with_defaults(_request(OperationWithDefaultsInputDict))
     await client.optional_input_output()
-    await client.optional_input_output(**_request(OptionalInputOutputInputParams))
+    await client.optional_input_output(**_request(OptionalInputOutputInputDict))
     await client.optional_input_output(_request(OptionalInputOutputInput))
-    await client.optional_input_output(_request(OptionalInputOutputInputParams))
+    await client.optional_input_output(_request(OptionalInputOutputInputDict))
     await client.recursive_shapes()
-    await client.recursive_shapes(**_request(RecursiveShapesInputParams))
+    await client.recursive_shapes(**_request(RecursiveShapesInputDict))
     await client.recursive_shapes(_request(RecursiveShapesInput))
-    await client.recursive_shapes(_request(RecursiveShapesInputParams))
+    await client.recursive_shapes(_request(RecursiveShapesInputDict))
     await client.rpc_v2_json_dense_maps()
-    await client.rpc_v2_json_dense_maps(**_request(RpcV2JsonDenseMapsInputParams))
+    await client.rpc_v2_json_dense_maps(**_request(RpcV2JsonDenseMapsInputDict))
     await client.rpc_v2_json_dense_maps(_request(RpcV2JsonDenseMapsInput))
-    await client.rpc_v2_json_dense_maps(_request(RpcV2JsonDenseMapsInputParams))
+    await client.rpc_v2_json_dense_maps(_request(RpcV2JsonDenseMapsInputDict))
     await client.rpc_v2_json_lists()
-    await client.rpc_v2_json_lists(**_request(RpcV2JsonListsInputParams))
+    await client.rpc_v2_json_lists(**_request(RpcV2JsonListsInputDict))
     await client.rpc_v2_json_lists(_request(RpcV2JsonListsInput))
-    await client.rpc_v2_json_lists(_request(RpcV2JsonListsInputParams))
+    await client.rpc_v2_json_lists(_request(RpcV2JsonListsInputDict))
     await client.rpc_v2_json_sparse_maps()
-    await client.rpc_v2_json_sparse_maps(**_request(RpcV2JsonSparseMapsInputParams))
+    await client.rpc_v2_json_sparse_maps(**_request(RpcV2JsonSparseMapsInputDict))
     await client.rpc_v2_json_sparse_maps(_request(RpcV2JsonSparseMapsInput))
-    await client.rpc_v2_json_sparse_maps(_request(RpcV2JsonSparseMapsInputParams))
+    await client.rpc_v2_json_sparse_maps(_request(RpcV2JsonSparseMapsInputDict))
     await client.simple_scalar_properties()
-    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    await client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
     await client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
-    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInputParams))
+    await client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))
     await client.sparse_nulls_operation()
-    await client.sparse_nulls_operation(**_request(SparseNullsOperationInputParams))
+    await client.sparse_nulls_operation(**_request(SparseNullsOperationInputDict))
     await client.sparse_nulls_operation(_request(SparseNullsOperationInput))
-    await client.sparse_nulls_operation(_request(SparseNullsOperationInputParams))
+    await client.sparse_nulls_operation(_request(SparseNullsOperationInputDict))
     await client.timestamp_format_ignored()
-    await client.timestamp_format_ignored(**_request(TimestampFormatIgnoredInputParams))
+    await client.timestamp_format_ignored(**_request(TimestampFormatIgnoredInputDict))
     await client.timestamp_format_ignored(_request(TimestampFormatIgnoredInput))
-    await client.timestamp_format_ignored(_request(TimestampFormatIgnoredInputParams))
+    await client.timestamp_format_ignored(_request(TimestampFormatIgnoredInputDict))
 
 
 def check_sync_calls(client: RpcV2JsonProtocol) -> None:
     pass
     client.big_decimal_operation()
-    client.big_decimal_operation(**_request(BigDecimalOperationInputParams))
+    client.big_decimal_operation(**_request(BigDecimalOperationInputDict))
     client.big_decimal_operation(_request(BigDecimalOperationInput))
-    client.big_decimal_operation(_request(BigDecimalOperationInputParams))
+    client.big_decimal_operation(_request(BigDecimalOperationInputDict))
     client.big_integer_operation()
-    client.big_integer_operation(**_request(BigIntegerOperationInputParams))
+    client.big_integer_operation(**_request(BigIntegerOperationInputDict))
     client.big_integer_operation(_request(BigIntegerOperationInput))
-    client.big_integer_operation(_request(BigIntegerOperationInputParams))
+    client.big_integer_operation(_request(BigIntegerOperationInputDict))
     client.empty_input_output()
-    client.empty_input_output(**_request(EmptyInputOutputInputParams))
+    client.empty_input_output(**_request(EmptyInputOutputInputDict))
     client.empty_input_output(_request(EmptyInputOutputInput))
-    client.empty_input_output(_request(EmptyInputOutputInputParams))
+    client.empty_input_output(_request(EmptyInputOutputInputDict))
     client.fractional_seconds()
-    client.fractional_seconds(**_request(FractionalSecondsInputParams))
+    client.fractional_seconds(**_request(FractionalSecondsInputDict))
     client.fractional_seconds(_request(FractionalSecondsInput))
-    client.fractional_seconds(_request(FractionalSecondsInputParams))
+    client.fractional_seconds(_request(FractionalSecondsInputDict))
     client.greeting_with_errors()
-    client.greeting_with_errors(**_request(GreetingWithErrorsInputParams))
+    client.greeting_with_errors(**_request(GreetingWithErrorsInputDict))
     client.greeting_with_errors(_request(GreetingWithErrorsInput))
-    client.greeting_with_errors(_request(GreetingWithErrorsInputParams))
+    client.greeting_with_errors(_request(GreetingWithErrorsInputDict))
     client.no_input_output()
-    client.no_input_output(**_request(NoInputOutputInputParams))
+    client.no_input_output(**_request(NoInputOutputInputDict))
     client.no_input_output(_request(NoInputOutputInput))
-    client.no_input_output(_request(NoInputOutputInputParams))
+    client.no_input_output(_request(NoInputOutputInputDict))
     client.operation_with_defaults()
-    client.operation_with_defaults(**_request(OperationWithDefaultsInputParams))
+    client.operation_with_defaults(**_request(OperationWithDefaultsInputDict))
     client.operation_with_defaults(_request(OperationWithDefaultsInput))
-    client.operation_with_defaults(_request(OperationWithDefaultsInputParams))
+    client.operation_with_defaults(_request(OperationWithDefaultsInputDict))
     client.optional_input_output()
-    client.optional_input_output(**_request(OptionalInputOutputInputParams))
+    client.optional_input_output(**_request(OptionalInputOutputInputDict))
     client.optional_input_output(_request(OptionalInputOutputInput))
-    client.optional_input_output(_request(OptionalInputOutputInputParams))
+    client.optional_input_output(_request(OptionalInputOutputInputDict))
     client.recursive_shapes()
-    client.recursive_shapes(**_request(RecursiveShapesInputParams))
+    client.recursive_shapes(**_request(RecursiveShapesInputDict))
     client.recursive_shapes(_request(RecursiveShapesInput))
-    client.recursive_shapes(_request(RecursiveShapesInputParams))
+    client.recursive_shapes(_request(RecursiveShapesInputDict))
     client.rpc_v2_json_dense_maps()
-    client.rpc_v2_json_dense_maps(**_request(RpcV2JsonDenseMapsInputParams))
+    client.rpc_v2_json_dense_maps(**_request(RpcV2JsonDenseMapsInputDict))
     client.rpc_v2_json_dense_maps(_request(RpcV2JsonDenseMapsInput))
-    client.rpc_v2_json_dense_maps(_request(RpcV2JsonDenseMapsInputParams))
+    client.rpc_v2_json_dense_maps(_request(RpcV2JsonDenseMapsInputDict))
     client.rpc_v2_json_lists()
-    client.rpc_v2_json_lists(**_request(RpcV2JsonListsInputParams))
+    client.rpc_v2_json_lists(**_request(RpcV2JsonListsInputDict))
     client.rpc_v2_json_lists(_request(RpcV2JsonListsInput))
-    client.rpc_v2_json_lists(_request(RpcV2JsonListsInputParams))
+    client.rpc_v2_json_lists(_request(RpcV2JsonListsInputDict))
     client.rpc_v2_json_sparse_maps()
-    client.rpc_v2_json_sparse_maps(**_request(RpcV2JsonSparseMapsInputParams))
+    client.rpc_v2_json_sparse_maps(**_request(RpcV2JsonSparseMapsInputDict))
     client.rpc_v2_json_sparse_maps(_request(RpcV2JsonSparseMapsInput))
-    client.rpc_v2_json_sparse_maps(_request(RpcV2JsonSparseMapsInputParams))
+    client.rpc_v2_json_sparse_maps(_request(RpcV2JsonSparseMapsInputDict))
     client.simple_scalar_properties()
-    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputParams))
+    client.simple_scalar_properties(**_request(SimpleScalarPropertiesInputDict))
     client.simple_scalar_properties(_request(SimpleScalarPropertiesInput))
-    client.simple_scalar_properties(_request(SimpleScalarPropertiesInputParams))
+    client.simple_scalar_properties(_request(SimpleScalarPropertiesInputDict))
     client.sparse_nulls_operation()
-    client.sparse_nulls_operation(**_request(SparseNullsOperationInputParams))
+    client.sparse_nulls_operation(**_request(SparseNullsOperationInputDict))
     client.sparse_nulls_operation(_request(SparseNullsOperationInput))
-    client.sparse_nulls_operation(_request(SparseNullsOperationInputParams))
+    client.sparse_nulls_operation(_request(SparseNullsOperationInputDict))
     client.timestamp_format_ignored()
-    client.timestamp_format_ignored(**_request(TimestampFormatIgnoredInputParams))
+    client.timestamp_format_ignored(**_request(TimestampFormatIgnoredInputDict))
     client.timestamp_format_ignored(_request(TimestampFormatIgnoredInput))
-    client.timestamp_format_ignored(_request(TimestampFormatIgnoredInputParams))
+    client.timestamp_format_ignored(_request(TimestampFormatIgnoredInputDict))

@@ -15,19 +15,19 @@ from smithy_core.types import JsonString, UnknownEnumMixin
 
 from ..models import (
     GreetingStruct,
-    GreetingStructParams,
+    GreetingStructDict,
     RenamedGreeting,
-    RenamedGreetingParams,
+    RenamedGreetingDict,
     ServiceError,
     TopLevel,
-    TopLevelParams,
+    TopLevelDict,
     UnionPayload,
+    UnionPayloadDict,
     UnionPayloadEvent,
-    UnionPayloadParams,
     UnionWithJsonName,
-    UnionWithJsonNameParams,
+    UnionWithJsonNameDict,
     Unit,
-    UnitParams,
+    UnitDict,
     _SerdeShape,
 )
 
@@ -57,7 +57,7 @@ class AllQueryStringTypesInput(_SerdeShape):
     query_integer_enum_list: list[int] | None = ...
     query_params_map_of_string_list: dict[str, list[str]] | None = ...
 
-class AllQueryStringTypesInputParams(TypedDict, total=False):
+class AllQueryStringTypesInputDict(TypedDict, total=False):
     """Dictionary form of `AllQueryStringTypesInput`."""
 
     query_string: str | None
@@ -106,7 +106,7 @@ class ClientOptionalDefaults(_SerdeShape):
 
     member: int = ...
 
-class ClientOptionalDefaultsParams(TypedDict, total=False):
+class ClientOptionalDefaultsDict(TypedDict, total=False):
     """Dictionary form of `ClientOptionalDefaults`."""
 
     member: int | None
@@ -139,7 +139,7 @@ class ConstantAndVariableQueryStringInput(_SerdeShape):
     baz: str | None = ...
     maybe_set: str | None = ...
 
-class ConstantAndVariableQueryStringInputParams(TypedDict, total=False):
+class ConstantAndVariableQueryStringInputDict(TypedDict, total=False):
     """Dictionary form of `ConstantAndVariableQueryStringInput`."""
 
     baz: str | None
@@ -163,7 +163,7 @@ class ConstantQueryStringInput(_SerdeShape):
 
     hello: str | None = ...
 
-class ConstantQueryStringInputParams(TypedDict, total=False):
+class ConstantQueryStringInputDict(TypedDict, total=False):
     """Dictionary form of `ConstantQueryStringInput`."""
 
     hello: Required[str]
@@ -186,7 +186,7 @@ class ContentTypeParametersInput(_SerdeShape):
 
     value: int | None = ...
 
-class ContentTypeParametersInputParams(TypedDict, total=False):
+class ContentTypeParametersInputDict(TypedDict, total=False):
     """Dictionary form of `ContentTypeParametersInput`."""
 
     value: int | None
@@ -207,7 +207,7 @@ class ContentTypeParametersOutput(_SerdeShape):
 class DatetimeOffsetsInput(_SerdeShape):
     """Dataclass for DatetimeOffsetsInput structure."""
 
-class DatetimeOffsetsInputParams(TypedDict, total=False):
+class DatetimeOffsetsInputDict(TypedDict, total=False):
     """Dictionary form of `DatetimeOffsetsInput`."""
 
 @dataclass(kw_only=True)
@@ -256,7 +256,7 @@ class Defaults(_SerdeShape):
     zero_float: float = ...
     zero_double: float = ...
 
-class DefaultsParams(TypedDict, total=False):
+class DefaultsDict(TypedDict, total=False):
     """Dictionary form of `Defaults`."""
 
     default_string: str | None
@@ -296,12 +296,12 @@ class Dialog(_SerdeShape):
     greeting: str = ...
     farewell: Farewell | None = ...
 
-class DialogParams(TypedDict, total=False):
+class DialogDict(TypedDict, total=False):
     """Dictionary form of `Dialog`."""
 
     language: str | None
     greeting: str | None
-    farewell: Farewell | FarewellParams | None
+    farewell: Farewell | FarewellDict | None
 
 @dataclass(kw_only=True)
 class DocumentTypeAsMapValueInput(_SerdeShape):
@@ -309,7 +309,7 @@ class DocumentTypeAsMapValueInput(_SerdeShape):
 
     doc_valued_map: dict[str, Document] | None = ...
 
-class DocumentTypeAsMapValueInputParams(TypedDict, total=False):
+class DocumentTypeAsMapValueInputDict(TypedDict, total=False):
     """Dictionary form of `DocumentTypeAsMapValueInput`."""
 
     doc_valued_map: Mapping[str, Document] | None
@@ -333,7 +333,7 @@ class DocumentTypeAsPayloadInput(_SerdeShape):
 
     document_value: Document | None = ...
 
-class DocumentTypeAsPayloadInputParams(TypedDict, total=False):
+class DocumentTypeAsPayloadInputDict(TypedDict, total=False):
     """Dictionary form of `DocumentTypeAsPayloadInput`."""
 
     document_value: Document | None
@@ -358,7 +358,7 @@ class DocumentTypeInput(_SerdeShape):
     string_value: str | None = ...
     document_value: Document | None = ...
 
-class DocumentTypeInputParams(TypedDict, total=False):
+class DocumentTypeInputDict(TypedDict, total=False):
     """Dictionary form of `DocumentTypeInput`."""
 
     string_value: str | None
@@ -382,7 +382,7 @@ class DocumentTypeOutput(_SerdeShape):
 class DuplexStreamInput(_SerdeShape):
     """Dataclass for DuplexStreamInput structure."""
 
-class DuplexStreamInputParams(TypedDict, total=False):
+class DuplexStreamInputDict(TypedDict, total=False):
     """Dictionary form of `DuplexStreamInput`."""
 
 @dataclass(kw_only=True)
@@ -401,7 +401,7 @@ class DuplexStreamOutput(_SerdeShape):
 class DuplexStreamWithDistinctStreamsInput(_SerdeShape):
     """Dataclass for DuplexStreamWithDistinctStreamsInput structure."""
 
-class DuplexStreamWithDistinctStreamsInputParams(TypedDict, total=False):
+class DuplexStreamWithDistinctStreamsInputDict(TypedDict, total=False):
     """Dictionary form of `DuplexStreamWithDistinctStreamsInput`."""
 
 @dataclass(kw_only=True)
@@ -423,7 +423,7 @@ class DuplexStreamWithInitialMessagesInput(_SerdeShape):
 
     initial_request_member: str | None = ...
 
-class DuplexStreamWithInitialMessagesInputParams(TypedDict, total=False):
+class DuplexStreamWithInitialMessagesInputDict(TypedDict, total=False):
     """Dictionary form of `DuplexStreamWithInitialMessagesInput`."""
 
     initial_request_member: Required[str]
@@ -445,7 +445,7 @@ class DuplexStreamWithInitialMessagesOutput(_SerdeShape):
 class EmptyInputAndEmptyOutputInput(_SerdeShape):
     """Dataclass for EmptyInputAndEmptyOutputInput structure."""
 
-class EmptyInputAndEmptyOutputInputParams(TypedDict, total=False):
+class EmptyInputAndEmptyOutputInputDict(TypedDict, total=False):
     """Dictionary form of `EmptyInputAndEmptyOutputInput`."""
 
 @dataclass(kw_only=True)
@@ -464,7 +464,7 @@ class EmptyInputAndEmptyOutputOutput(_SerdeShape):
 class EndpointOperationInput(_SerdeShape):
     """Dataclass for EndpointOperationInput structure."""
 
-class EndpointOperationInputParams(TypedDict, total=False):
+class EndpointOperationInputDict(TypedDict, total=False):
     """Dictionary form of `EndpointOperationInput`."""
 
 @dataclass(kw_only=True)
@@ -485,7 +485,7 @@ class EndpointWithHostLabelOperationInput(_SerdeShape):
 
     label: str | None = ...
 
-class EndpointWithHostLabelOperationInputParams(TypedDict, total=False):
+class EndpointWithHostLabelOperationInputDict(TypedDict, total=False):
     """Dictionary form of `EndpointWithHostLabelOperationInput`."""
 
     label: Required[str]
@@ -577,7 +577,7 @@ class Farewell(_SerdeShape):
 
     phrase: str = ...
 
-class FarewellParams(TypedDict, total=False):
+class FarewellDict(TypedDict, total=False):
     """Dictionary form of `Farewell`."""
 
     phrase: str | None
@@ -601,7 +601,7 @@ class FooError(ServiceError, _SerdeShape):
 class FractionalSecondsInput(_SerdeShape):
     """Dataclass for FractionalSecondsInput structure."""
 
-class FractionalSecondsInputParams(TypedDict, total=False):
+class FractionalSecondsInputDict(TypedDict, total=False):
     """Dictionary form of `FractionalSecondsInput`."""
 
 @dataclass(kw_only=True)
@@ -621,7 +621,7 @@ class FractionalSecondsOutput(_SerdeShape):
 class GreetingWithErrorsInput(_SerdeShape):
     """Dataclass for GreetingWithErrorsInput structure."""
 
-class GreetingWithErrorsInputParams(TypedDict, total=False):
+class GreetingWithErrorsInputDict(TypedDict, total=False):
     """Dictionary form of `GreetingWithErrorsInput`."""
 
 @dataclass(kw_only=True)
@@ -668,7 +668,7 @@ class HeadersEvent(_SerdeShape):
 class HostWithPathOperationInput(_SerdeShape):
     """Dataclass for HostWithPathOperationInput structure."""
 
-class HostWithPathOperationInputParams(TypedDict, total=False):
+class HostWithPathOperationInputDict(TypedDict, total=False):
     """Dictionary form of `HostWithPathOperationInput`."""
 
 @dataclass(kw_only=True)
@@ -689,7 +689,7 @@ class HttpChecksumRequiredInput(_SerdeShape):
 
     foo: str | None = ...
 
-class HttpChecksumRequiredInputParams(TypedDict, total=False):
+class HttpChecksumRequiredInputDict(TypedDict, total=False):
     """Dictionary form of `HttpChecksumRequiredInput`."""
 
     foo: str | None
@@ -714,7 +714,7 @@ class HttpEmptyPrefixHeadersInput(_SerdeShape):
     prefix_headers: dict[str, str] | None = ...
     specific_header: str | None = ...
 
-class HttpEmptyPrefixHeadersInputParams(TypedDict, total=False):
+class HttpEmptyPrefixHeadersInputDict(TypedDict, total=False):
     """Dictionary form of `HttpEmptyPrefixHeadersInput`."""
 
     prefix_headers: Mapping[str, str] | None
@@ -740,7 +740,7 @@ class HttpEnumPayloadInput(_SerdeShape):
 
     payload: str | None = ...
 
-class HttpEnumPayloadInputParams(TypedDict, total=False):
+class HttpEnumPayloadInputDict(TypedDict, total=False):
     """Dictionary form of `HttpEnumPayloadInput`."""
 
     payload: str | None
@@ -765,7 +765,7 @@ class HttpPayloadTraitsInput(_SerdeShape):
     foo: str | None = ...
     blob: bytes | None = ...
 
-class HttpPayloadTraitsInputParams(TypedDict, total=False):
+class HttpPayloadTraitsInputDict(TypedDict, total=False):
     """Dictionary form of `HttpPayloadTraitsInput`."""
 
     foo: str | None
@@ -792,7 +792,7 @@ class HttpPayloadTraitsWithMediaTypeInput(_SerdeShape):
     foo: str | None = ...
     blob: bytes | None = ...
 
-class HttpPayloadTraitsWithMediaTypeInputParams(TypedDict, total=False):
+class HttpPayloadTraitsWithMediaTypeInputDict(TypedDict, total=False):
     """Dictionary form of `HttpPayloadTraitsWithMediaTypeInput`."""
 
     foo: str | None
@@ -818,10 +818,10 @@ class HttpPayloadWithStructureInput(_SerdeShape):
 
     nested: NestedPayload | None = ...
 
-class HttpPayloadWithStructureInputParams(TypedDict, total=False):
+class HttpPayloadWithStructureInputDict(TypedDict, total=False):
     """Dictionary form of `HttpPayloadWithStructureInput`."""
 
-    nested: NestedPayload | NestedPayloadParams | None
+    nested: NestedPayload | NestedPayloadDict | None
 
 @dataclass(kw_only=True)
 class HttpPayloadWithStructureOutput(_SerdeShape):
@@ -842,10 +842,10 @@ class HttpPayloadWithUnionInput(_SerdeShape):
 
     nested: UnionPayload | None = ...
 
-class HttpPayloadWithUnionInputParams(TypedDict, total=False):
+class HttpPayloadWithUnionInputDict(TypedDict, total=False):
     """Dictionary form of `HttpPayloadWithUnionInput`."""
 
-    nested: UnionPayload | UnionPayloadParams | None
+    nested: UnionPayload | UnionPayloadDict | None
 
 @dataclass(kw_only=True)
 class HttpPayloadWithUnionOutput(_SerdeShape):
@@ -867,7 +867,7 @@ class HttpPrefixHeadersInput(_SerdeShape):
     foo: str | None = ...
     foo_map: dict[str, str] | None = ...
 
-class HttpPrefixHeadersInputParams(TypedDict, total=False):
+class HttpPrefixHeadersInputDict(TypedDict, total=False):
     """Dictionary form of `HttpPrefixHeadersInput`."""
 
     foo: str | None
@@ -877,7 +877,7 @@ class HttpPrefixHeadersInputParams(TypedDict, total=False):
 class HttpPrefixHeadersInResponseInput(_SerdeShape):
     """Dataclass for HttpPrefixHeadersInResponseInput structure."""
 
-class HttpPrefixHeadersInResponseInputParams(TypedDict, total=False):
+class HttpPrefixHeadersInResponseInputDict(TypedDict, total=False):
     """Dictionary form of `HttpPrefixHeadersInResponseInput`."""
 
 @dataclass(kw_only=True)
@@ -913,7 +913,7 @@ class HttpQueryParamsOnlyOperationInput(_SerdeShape):
 
     query_map: dict[str, str] | None = ...
 
-class HttpQueryParamsOnlyOperationInputParams(TypedDict, total=False):
+class HttpQueryParamsOnlyOperationInputDict(TypedDict, total=False):
     """Dictionary form of `HttpQueryParamsOnlyOperationInput`."""
 
     query_map: Mapping[str, str] | None
@@ -937,7 +937,7 @@ class HttpRequestWithFloatLabelsInput(_SerdeShape):
     float_: float | None = ...
     double: float | None = ...
 
-class HttpRequestWithFloatLabelsInputParams(TypedDict, total=False):
+class HttpRequestWithFloatLabelsInputDict(TypedDict, total=False):
     """Dictionary form of `HttpRequestWithFloatLabelsInput`."""
 
     float_: Required[float]
@@ -962,7 +962,7 @@ class HttpRequestWithGreedyLabelInPathInput(_SerdeShape):
     foo: str | None = ...
     baz: str | None = ...
 
-class HttpRequestWithGreedyLabelInPathInputParams(TypedDict, total=False):
+class HttpRequestWithGreedyLabelInPathInputDict(TypedDict, total=False):
     """Dictionary form of `HttpRequestWithGreedyLabelInPathInput`."""
 
     foo: Required[str]
@@ -992,7 +992,7 @@ class HttpRequestWithLabelsAndTimestampFormatInput(_SerdeShape):
     target_http_date: datetime | None = ...
     target_date_time: datetime | None = ...
 
-class HttpRequestWithLabelsAndTimestampFormatInputParams(TypedDict, total=False):
+class HttpRequestWithLabelsAndTimestampFormatInputDict(TypedDict, total=False):
     """Dictionary form of `HttpRequestWithLabelsAndTimestampFormatInput`."""
 
     member_epoch_seconds: Required[datetime]
@@ -1033,7 +1033,7 @@ class HttpRequestWithLabelsInput(_SerdeShape):
     date-time.
     """
 
-class HttpRequestWithLabelsInputParams(TypedDict, total=False):
+class HttpRequestWithLabelsInputDict(TypedDict, total=False):
     """Dictionary form of `HttpRequestWithLabelsInput`."""
 
     string: Required[str]
@@ -1068,7 +1068,7 @@ class HttpRequestWithRegexLiteralInput(_SerdeShape):
 
     str_: str | None = ...
 
-class HttpRequestWithRegexLiteralInputParams(TypedDict, total=False):
+class HttpRequestWithRegexLiteralInputDict(TypedDict, total=False):
     """Dictionary form of `HttpRequestWithRegexLiteralInput`."""
 
     str_: Required[str]
@@ -1089,7 +1089,7 @@ class HttpRequestWithRegexLiteralOutput(_SerdeShape):
 class HttpResponseCodeInput(_SerdeShape):
     """Dataclass for HttpResponseCodeInput structure."""
 
-class HttpResponseCodeInputParams(TypedDict, total=False):
+class HttpResponseCodeInputDict(TypedDict, total=False):
     """Dictionary form of `HttpResponseCodeInput`."""
 
 @dataclass(kw_only=True)
@@ -1111,7 +1111,7 @@ class HttpStringPayloadInput(_SerdeShape):
 
     payload: str | None = ...
 
-class HttpStringPayloadInputParams(TypedDict, total=False):
+class HttpStringPayloadInputDict(TypedDict, total=False):
     """Dictionary form of `HttpStringPayloadInput`."""
 
     payload: str | None
@@ -1133,7 +1133,7 @@ class HttpStringPayloadOutput(_SerdeShape):
 class IgnoreQueryParamsInResponseInput(_SerdeShape):
     """Dataclass for IgnoreQueryParamsInResponseInput structure."""
 
-class IgnoreQueryParamsInResponseInputParams(TypedDict, total=False):
+class IgnoreQueryParamsInResponseInputDict(TypedDict, total=False):
     """Dictionary form of `IgnoreQueryParamsInResponseInput`."""
 
 @dataclass(kw_only=True)
@@ -1172,7 +1172,7 @@ class InputAndOutputWithHeadersInput(_SerdeShape):
     header_integer_enum: int | None = ...
     header_integer_enum_list: list[int] | None = ...
 
-class InputAndOutputWithHeadersInputParams(TypedDict, total=False):
+class InputAndOutputWithHeadersInputDict(TypedDict, total=False):
     """Dictionary form of `InputAndOutputWithHeadersInput`."""
 
     header_string: str | None
@@ -1228,7 +1228,7 @@ class InputAndOutputWithHeadersOutput(_SerdeShape):
 class InputStreamInput(_SerdeShape):
     """Dataclass for InputStreamInput structure."""
 
-class InputStreamInputParams(TypedDict, total=False):
+class InputStreamInputDict(TypedDict, total=False):
     """Dictionary form of `InputStreamInput`."""
 
 @dataclass(kw_only=True)
@@ -1249,7 +1249,7 @@ class InputStreamWithInitialRequestInput(_SerdeShape):
 
     initial_request_member: str | None = ...
 
-class InputStreamWithInitialRequestInputParams(TypedDict, total=False):
+class InputStreamWithInitialRequestInputDict(TypedDict, total=False):
     """Dictionary form of `InputStreamWithInitialRequestInput`."""
 
     initial_request_member: Required[str]
@@ -1284,7 +1284,7 @@ class JsonBlobsInput(_SerdeShape):
 
     data: bytes | None = ...
 
-class JsonBlobsInputParams(TypedDict, total=False):
+class JsonBlobsInputDict(TypedDict, total=False):
     """Dictionary form of `JsonBlobsInput`."""
 
     data: bytes | None
@@ -1313,7 +1313,7 @@ class JsonEnumsInput(_SerdeShape):
     foo_enum_set: list[str] | None = ...
     foo_enum_map: dict[str, str] | None = ...
 
-class JsonEnumsInputParams(TypedDict, total=False):
+class JsonEnumsInputDict(TypedDict, total=False):
     """Dictionary form of `JsonEnumsInput`."""
 
     foo_enum1: str | None
@@ -1352,7 +1352,7 @@ class JsonIntEnumsInput(_SerdeShape):
     integer_enum_set: list[int] | None = ...
     integer_enum_map: dict[str, int] | None = ...
 
-class JsonIntEnumsInputParams(TypedDict, total=False):
+class JsonIntEnumsInputDict(TypedDict, total=False):
     """Dictionary form of `JsonIntEnumsInput`."""
 
     integer_enum1: int | None
@@ -1395,7 +1395,7 @@ class JsonListsInput(_SerdeShape):
     """A list of lists of strings."""
     structure_list: list[StructureListMember] | None = ...
 
-class JsonListsInputParams(TypedDict, total=False):
+class JsonListsInputDict(TypedDict, total=False):
     """Dictionary form of `JsonListsInput`."""
 
     string_list: Sequence[str] | None
@@ -1407,7 +1407,7 @@ class JsonListsInputParams(TypedDict, total=False):
     int_enum_list: Sequence[int] | None
     nested_string_list: Sequence[Sequence[str]] | None
     """A list of lists of strings."""
-    structure_list: Sequence[StructureListMember | StructureListMemberParams] | None
+    structure_list: Sequence[StructureListMember | StructureListMemberDict] | None
 
 @dataclass(kw_only=True)
 class JsonListsOutput(_SerdeShape):
@@ -1441,10 +1441,10 @@ class JsonMapsInput(_SerdeShape):
     dense_string_map: dict[str, str] | None = ...
     dense_set_map: dict[str, list[str]] | None = ...
 
-class JsonMapsInputParams(TypedDict, total=False):
+class JsonMapsInputDict(TypedDict, total=False):
     """Dictionary form of `JsonMapsInput`."""
 
-    dense_struct_map: Mapping[str, GreetingStruct | GreetingStructParams] | None
+    dense_struct_map: Mapping[str, GreetingStruct | GreetingStructDict] | None
     dense_number_map: Mapping[str, int] | None
     dense_boolean_map: Mapping[str, bool] | None
     dense_string_map: Mapping[str, str] | None
@@ -1479,7 +1479,7 @@ class JsonTimestampsInput(_SerdeShape):
     http_date: datetime | None = ...
     http_date_on_target: datetime | None = ...
 
-class JsonTimestampsInputParams(TypedDict, total=False):
+class JsonTimestampsInputDict(TypedDict, total=False):
     """Dictionary form of `JsonTimestampsInput`."""
 
     normal: datetime | None
@@ -1516,10 +1516,10 @@ class JsonUnionsInput(_SerdeShape):
     contents: MyUnion | None = ...
     """A union with a representative set of types for members."""
 
-class JsonUnionsInputParams(TypedDict, total=False):
+class JsonUnionsInputDict(TypedDict, total=False):
     """Dictionary form of `JsonUnionsInput`."""
 
-    contents: MyUnion | MyUnionParams | None
+    contents: MyUnion | MyUnionDict | None
     """A union with a representative set of types for members."""
 
 @dataclass(kw_only=True)
@@ -1540,7 +1540,7 @@ class JsonUnionsOutput(_SerdeShape):
 class MalformedAcceptWithBodyInput(_SerdeShape):
     """Dataclass for MalformedAcceptWithBodyInput structure."""
 
-class MalformedAcceptWithBodyInputParams(TypedDict, total=False):
+class MalformedAcceptWithBodyInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedAcceptWithBodyInput`."""
 
 @dataclass(kw_only=True)
@@ -1560,7 +1560,7 @@ class MalformedAcceptWithBodyOutput(_SerdeShape):
 class MalformedAcceptWithGenericStringInput(_SerdeShape):
     """Dataclass for MalformedAcceptWithGenericStringInput structure."""
 
-class MalformedAcceptWithGenericStringInputParams(TypedDict, total=False):
+class MalformedAcceptWithGenericStringInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedAcceptWithGenericStringInput`."""
 
 @dataclass(kw_only=True)
@@ -1580,7 +1580,7 @@ class MalformedAcceptWithGenericStringOutput(_SerdeShape):
 class MalformedAcceptWithPayloadInput(_SerdeShape):
     """Dataclass for MalformedAcceptWithPayloadInput structure."""
 
-class MalformedAcceptWithPayloadInputParams(TypedDict, total=False):
+class MalformedAcceptWithPayloadInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedAcceptWithPayloadInput`."""
 
 @dataclass(kw_only=True)
@@ -1602,7 +1602,7 @@ class MalformedBlobInput(_SerdeShape):
 
     blob: bytes | None = ...
 
-class MalformedBlobInputParams(TypedDict, total=False):
+class MalformedBlobInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedBlobInput`."""
 
     blob: bytes | None
@@ -1628,7 +1628,7 @@ class MalformedBooleanInput(_SerdeShape):
     boolean_in_query: bool | None = ...
     boolean_in_header: bool | None = ...
 
-class MalformedBooleanInputParams(TypedDict, total=False):
+class MalformedBooleanInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedBooleanInput`."""
 
     boolean_in_body: bool | None
@@ -1657,7 +1657,7 @@ class MalformedByteInput(_SerdeShape):
     byte_in_query: int | None = ...
     byte_in_header: int | None = ...
 
-class MalformedByteInputParams(TypedDict, total=False):
+class MalformedByteInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedByteInput`."""
 
     byte_in_body: int | None
@@ -1683,7 +1683,7 @@ class MalformedContentTypeWithBodyInput(_SerdeShape):
 
     hi: str | None = ...
 
-class MalformedContentTypeWithBodyInputParams(TypedDict, total=False):
+class MalformedContentTypeWithBodyInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedContentTypeWithBodyInput`."""
 
     hi: str | None
@@ -1706,7 +1706,7 @@ class MalformedContentTypeWithGenericStringInput(_SerdeShape):
 
     payload: str | None = ...
 
-class MalformedContentTypeWithGenericStringInputParams(TypedDict, total=False):
+class MalformedContentTypeWithGenericStringInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedContentTypeWithGenericStringInput`."""
 
     payload: str | None
@@ -1729,7 +1729,7 @@ class MalformedContentTypeWithoutBodyEmptyInputInput(_SerdeShape):
 
     header: str | None = ...
 
-class MalformedContentTypeWithoutBodyEmptyInputInputParams(TypedDict, total=False):
+class MalformedContentTypeWithoutBodyEmptyInputInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedContentTypeWithoutBodyEmptyInputInput`."""
 
     header: str | None
@@ -1750,7 +1750,7 @@ class MalformedContentTypeWithoutBodyEmptyInputOutput(_SerdeShape):
 class MalformedContentTypeWithoutBodyInput(_SerdeShape):
     """Dataclass for MalformedContentTypeWithoutBodyInput structure."""
 
-class MalformedContentTypeWithoutBodyInputParams(TypedDict, total=False):
+class MalformedContentTypeWithoutBodyInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedContentTypeWithoutBodyInput`."""
 
 @dataclass(kw_only=True)
@@ -1771,7 +1771,7 @@ class MalformedContentTypeWithPayloadInput(_SerdeShape):
 
     payload: bytes | None = ...
 
-class MalformedContentTypeWithPayloadInputParams(TypedDict, total=False):
+class MalformedContentTypeWithPayloadInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedContentTypeWithPayloadInput`."""
 
     payload: bytes | None
@@ -1797,7 +1797,7 @@ class MalformedDoubleInput(_SerdeShape):
     double_in_query: float | None = ...
     double_in_header: float | None = ...
 
-class MalformedDoubleInputParams(TypedDict, total=False):
+class MalformedDoubleInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedDoubleInput`."""
 
     double_in_body: float | None
@@ -1826,7 +1826,7 @@ class MalformedFloatInput(_SerdeShape):
     float_in_query: float | None = ...
     float_in_header: float | None = ...
 
-class MalformedFloatInputParams(TypedDict, total=False):
+class MalformedFloatInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedFloatInput`."""
 
     float_in_body: float | None
@@ -1855,7 +1855,7 @@ class MalformedIntegerInput(_SerdeShape):
     integer_in_query: int | None = ...
     integer_in_header: int | None = ...
 
-class MalformedIntegerInputParams(TypedDict, total=False):
+class MalformedIntegerInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedIntegerInput`."""
 
     integer_in_body: int | None
@@ -1881,7 +1881,7 @@ class MalformedListInput(_SerdeShape):
 
     body_list: list[str] | None = ...
 
-class MalformedListInputParams(TypedDict, total=False):
+class MalformedListInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedListInput`."""
 
     body_list: Sequence[str] | None
@@ -1907,7 +1907,7 @@ class MalformedLongInput(_SerdeShape):
     long_in_query: int | None = ...
     long_in_header: int | None = ...
 
-class MalformedLongInputParams(TypedDict, total=False):
+class MalformedLongInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedLongInput`."""
 
     long_in_body: int | None
@@ -1933,7 +1933,7 @@ class MalformedMapInput(_SerdeShape):
 
     body_map: dict[str, str] | None = ...
 
-class MalformedMapInputParams(TypedDict, total=False):
+class MalformedMapInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedMapInput`."""
 
     body_map: Mapping[str, str] | None
@@ -1957,7 +1957,7 @@ class MalformedRequestBodyInput(_SerdeShape):
     int_: int | None = ...
     float_: float | None = ...
 
-class MalformedRequestBodyInputParams(TypedDict, total=False):
+class MalformedRequestBodyInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedRequestBodyInput`."""
 
     int_: int | None
@@ -1984,7 +1984,7 @@ class MalformedShortInput(_SerdeShape):
     short_in_query: int | None = ...
     short_in_header: int | None = ...
 
-class MalformedShortInputParams(TypedDict, total=False):
+class MalformedShortInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedShortInput`."""
 
     short_in_body: int | None
@@ -2010,7 +2010,7 @@ class MalformedStringInput(_SerdeShape):
 
     blob: str | JsonString | None = ...
 
-class MalformedStringInputParams(TypedDict, total=False):
+class MalformedStringInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedStringInput`."""
 
     blob: str | JsonString | None
@@ -2033,7 +2033,7 @@ class MalformedTimestampBodyDateTimeInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampBodyDateTimeInputParams(TypedDict, total=False):
+class MalformedTimestampBodyDateTimeInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampBodyDateTimeInput`."""
 
     timestamp: Required[datetime]
@@ -2056,7 +2056,7 @@ class MalformedTimestampBodyDefaultInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampBodyDefaultInputParams(TypedDict, total=False):
+class MalformedTimestampBodyDefaultInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampBodyDefaultInput`."""
 
     timestamp: Required[datetime]
@@ -2079,7 +2079,7 @@ class MalformedTimestampBodyHttpDateInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampBodyHttpDateInputParams(TypedDict, total=False):
+class MalformedTimestampBodyHttpDateInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampBodyHttpDateInput`."""
 
     timestamp: Required[datetime]
@@ -2102,7 +2102,7 @@ class MalformedTimestampHeaderDateTimeInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampHeaderDateTimeInputParams(TypedDict, total=False):
+class MalformedTimestampHeaderDateTimeInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampHeaderDateTimeInput`."""
 
     timestamp: Required[datetime]
@@ -2125,7 +2125,7 @@ class MalformedTimestampHeaderDefaultInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampHeaderDefaultInputParams(TypedDict, total=False):
+class MalformedTimestampHeaderDefaultInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampHeaderDefaultInput`."""
 
     timestamp: Required[datetime]
@@ -2148,7 +2148,7 @@ class MalformedTimestampHeaderEpochInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampHeaderEpochInputParams(TypedDict, total=False):
+class MalformedTimestampHeaderEpochInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampHeaderEpochInput`."""
 
     timestamp: Required[datetime]
@@ -2171,7 +2171,7 @@ class MalformedTimestampPathDefaultInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampPathDefaultInputParams(TypedDict, total=False):
+class MalformedTimestampPathDefaultInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampPathDefaultInput`."""
 
     timestamp: Required[datetime]
@@ -2194,7 +2194,7 @@ class MalformedTimestampPathEpochInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampPathEpochInputParams(TypedDict, total=False):
+class MalformedTimestampPathEpochInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampPathEpochInput`."""
 
     timestamp: Required[datetime]
@@ -2217,7 +2217,7 @@ class MalformedTimestampPathHttpDateInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampPathHttpDateInputParams(TypedDict, total=False):
+class MalformedTimestampPathHttpDateInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampPathHttpDateInput`."""
 
     timestamp: Required[datetime]
@@ -2240,7 +2240,7 @@ class MalformedTimestampQueryDefaultInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampQueryDefaultInputParams(TypedDict, total=False):
+class MalformedTimestampQueryDefaultInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampQueryDefaultInput`."""
 
     timestamp: Required[datetime]
@@ -2263,7 +2263,7 @@ class MalformedTimestampQueryEpochInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampQueryEpochInputParams(TypedDict, total=False):
+class MalformedTimestampQueryEpochInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampQueryEpochInput`."""
 
     timestamp: Required[datetime]
@@ -2286,7 +2286,7 @@ class MalformedTimestampQueryHttpDateInput(_SerdeShape):
 
     timestamp: datetime | None = ...
 
-class MalformedTimestampQueryHttpDateInputParams(TypedDict, total=False):
+class MalformedTimestampQueryHttpDateInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedTimestampQueryHttpDateInput`."""
 
     timestamp: Required[datetime]
@@ -2309,10 +2309,10 @@ class MalformedUnionInput(_SerdeShape):
 
     union: SimpleUnion | None = ...
 
-class MalformedUnionInputParams(TypedDict, total=False):
+class MalformedUnionInputDict(TypedDict, total=False):
     """Dictionary form of `MalformedUnionInput`."""
 
-    union: SimpleUnion | SimpleUnionParams | None
+    union: SimpleUnion | SimpleUnionDict | None
 
 @dataclass(kw_only=True)
 class MalformedUnionOutput(_SerdeShape):
@@ -2332,7 +2332,7 @@ class MediaTypeHeaderInput(_SerdeShape):
 
     json: str | JsonString | None = ...
 
-class MediaTypeHeaderInputParams(TypedDict, total=False):
+class MediaTypeHeaderInputDict(TypedDict, total=False):
     """Dictionary form of `MediaTypeHeaderInput`."""
 
     json: str | JsonString | None
@@ -2425,52 +2425,52 @@ MyUnion = Union[
 class _MyUnionDeserializer:
     def deserialize(self, deserializer: ShapeDeserializer) -> MyUnion: ...
 
-class MyUnionStringValueParams(TypedDict):
+class MyUnionStringValueDict(TypedDict):
     string_value: str
 
-class MyUnionBooleanValueParams(TypedDict):
+class MyUnionBooleanValueDict(TypedDict):
     boolean_value: bool
 
-class MyUnionNumberValueParams(TypedDict):
+class MyUnionNumberValueDict(TypedDict):
     number_value: int
 
-class MyUnionBlobValueParams(TypedDict):
+class MyUnionBlobValueDict(TypedDict):
     blob_value: bytes
 
-class MyUnionTimestampValueParams(TypedDict):
+class MyUnionTimestampValueDict(TypedDict):
     timestamp_value: datetime
 
-class MyUnionEnumValueParams(TypedDict):
+class MyUnionEnumValueDict(TypedDict):
     enum_value: str
 
-class MyUnionListValueParams(TypedDict):
+class MyUnionListValueDict(TypedDict):
     list_value: Sequence[str]
 
-class MyUnionMapValueParams(TypedDict):
+class MyUnionMapValueDict(TypedDict):
     map_value: Mapping[str, str]
 
-class MyUnionStructureValueParams(TypedDict):
-    structure_value: GreetingStruct | GreetingStructParams
+class MyUnionStructureValueDict(TypedDict):
+    structure_value: GreetingStruct | GreetingStructDict
 
-class MyUnionRenamedStructureValueParams(TypedDict):
-    renamed_structure_value: RenamedGreeting | RenamedGreetingParams
+class MyUnionRenamedStructureValueDict(TypedDict):
+    renamed_structure_value: RenamedGreeting | RenamedGreetingDict
 
-class MyUnionUnionValueParams(TypedDict):
-    union_value: NestedUnion | NestedUnionParams
+class MyUnionUnionValueDict(TypedDict):
+    union_value: NestedUnion | NestedUnionDict
     """A union used to test unions nested inside unions."""
 
-MyUnionParams = Union[
-    MyUnionStringValueParams
-    | MyUnionBooleanValueParams
-    | MyUnionNumberValueParams
-    | MyUnionBlobValueParams
-    | MyUnionTimestampValueParams
-    | MyUnionEnumValueParams
-    | MyUnionListValueParams
-    | MyUnionMapValueParams
-    | MyUnionStructureValueParams
-    | MyUnionRenamedStructureValueParams
-    | MyUnionUnionValueParams
+MyUnionDict = Union[
+    MyUnionStringValueDict
+    | MyUnionBooleanValueDict
+    | MyUnionNumberValueDict
+    | MyUnionBlobValueDict
+    | MyUnionTimestampValueDict
+    | MyUnionEnumValueDict
+    | MyUnionListValueDict
+    | MyUnionMapValueDict
+    | MyUnionStructureValueDict
+    | MyUnionRenamedStructureValueDict
+    | MyUnionUnionValueDict
 ]
 """Dictionary form of `MyUnion`, setting exactly one variant."""
 
@@ -2481,7 +2481,7 @@ class NestedPayload(_SerdeShape):
     greeting: str | None = ...
     name: str | None = ...
 
-class NestedPayloadParams(TypedDict, total=False):
+class NestedPayloadDict(TypedDict, total=False):
     """Dictionary form of `NestedPayload`."""
 
     greeting: str | None
@@ -2507,17 +2507,17 @@ NestedUnion = Union[NestedUnionStringValue | NestedUnionUnknown]
 class _NestedUnionDeserializer:
     def deserialize(self, deserializer: ShapeDeserializer) -> NestedUnion: ...
 
-class NestedUnionStringValueParams(TypedDict):
+class NestedUnionStringValueDict(TypedDict):
     string_value: str
 
-NestedUnionParams = Union[NestedUnionStringValueParams]
+NestedUnionDict = Union[NestedUnionStringValueDict]
 """Dictionary form of `NestedUnion`, setting exactly one variant."""
 
 @dataclass(kw_only=True)
 class NoInputAndNoOutputInput(_SerdeShape):
     """Dataclass for NoInputAndNoOutputInput structure."""
 
-class NoInputAndNoOutputInputParams(TypedDict, total=False):
+class NoInputAndNoOutputInputDict(TypedDict, total=False):
     """Dictionary form of `NoInputAndNoOutputInput`."""
 
 @dataclass(kw_only=True)
@@ -2536,7 +2536,7 @@ class NoInputAndNoOutputOutput(_SerdeShape):
 class NoInputAndOutputInput(_SerdeShape):
     """Dataclass for NoInputAndOutputInput structure."""
 
-class NoInputAndOutputInputParams(TypedDict, total=False):
+class NoInputAndOutputInputDict(TypedDict, total=False):
     """Dictionary form of `NoInputAndOutputInput`."""
 
 @dataclass(kw_only=True)
@@ -2559,7 +2559,7 @@ class NullAndEmptyHeadersClientInput(_SerdeShape):
     b: str | None = ...
     c: list[str] | None = ...
 
-class NullAndEmptyHeadersClientInputParams(TypedDict, total=False):
+class NullAndEmptyHeadersClientInputDict(TypedDict, total=False):
     """Dictionary form of `NullAndEmptyHeadersClientInput`."""
 
     a: str | None
@@ -2589,7 +2589,7 @@ class NullAndEmptyHeadersServerInput(_SerdeShape):
     b: str | None = ...
     c: list[str] | None = ...
 
-class NullAndEmptyHeadersServerInputParams(TypedDict, total=False):
+class NullAndEmptyHeadersServerInputDict(TypedDict, total=False):
     """Dictionary form of `NullAndEmptyHeadersServerInput`."""
 
     a: str | None
@@ -2618,7 +2618,7 @@ class OmitsNullSerializesEmptyStringInput(_SerdeShape):
     null_value: str | None = ...
     empty_string: str | None = ...
 
-class OmitsNullSerializesEmptyStringInputParams(TypedDict, total=False):
+class OmitsNullSerializesEmptyStringInputDict(TypedDict, total=False):
     """Dictionary form of `OmitsNullSerializesEmptyStringInput`."""
 
     null_value: str | None
@@ -2648,7 +2648,7 @@ class OmitsSerializingEmptyListsInput(_SerdeShape):
     query_enum_list: list[str] | None = ...
     query_integer_enum_list: list[int] | None = ...
 
-class OmitsSerializingEmptyListsInputParams(TypedDict, total=False):
+class OmitsSerializingEmptyListsInputDict(TypedDict, total=False):
     """Dictionary form of `OmitsSerializingEmptyListsInput`."""
 
     query_string_list: Sequence[str] | None
@@ -2680,13 +2680,11 @@ class OperationWithDefaultsInput(_SerdeShape):
     top_level_default: str = ...
     other_top_level_default: int = ...
 
-class OperationWithDefaultsInputParams(TypedDict, total=False):
+class OperationWithDefaultsInputDict(TypedDict, total=False):
     """Dictionary form of `OperationWithDefaultsInput`."""
 
-    defaults: Defaults | DefaultsParams | None
-    client_optional_defaults: (
-        ClientOptionalDefaults | ClientOptionalDefaultsParams | None
-    )
+    defaults: Defaults | DefaultsDict | None
+    client_optional_defaults: ClientOptionalDefaults | ClientOptionalDefaultsDict | None
     top_level_default: str | None
     other_top_level_default: int | None
 
@@ -2736,10 +2734,10 @@ class OperationWithNestedStructureInput(_SerdeShape):
 
     top_level: TopLevel | None = ...
 
-class OperationWithNestedStructureInputParams(TypedDict, total=False):
+class OperationWithNestedStructureInputDict(TypedDict, total=False):
     """Dictionary form of `OperationWithNestedStructureInput`."""
 
-    top_level: Required[TopLevel | TopLevelParams]
+    top_level: Required[TopLevel | TopLevelDict]
 
 @dataclass(kw_only=True)
 class OperationWithNestedStructureOutput(_SerdeShape):
@@ -2760,7 +2758,7 @@ class OperationWithNestedStructureOutput(_SerdeShape):
 class OutputStreamInput(_SerdeShape):
     """Dataclass for OutputStreamInput structure."""
 
-class OutputStreamInputParams(TypedDict, total=False):
+class OutputStreamInputDict(TypedDict, total=False):
     """Dictionary form of `OutputStreamInput`."""
 
 @dataclass(kw_only=True)
@@ -2779,7 +2777,7 @@ class OutputStreamOutput(_SerdeShape):
 class OutputStreamWithInitialResponseInput(_SerdeShape):
     """Dataclass for OutputStreamWithInitialResponseInput structure."""
 
-class OutputStreamWithInitialResponseInputParams(TypedDict, total=False):
+class OutputStreamWithInitialResponseInputDict(TypedDict, total=False):
     """Dictionary form of `OutputStreamWithInitialResponseInput`."""
 
 @dataclass(kw_only=True)
@@ -2801,7 +2799,7 @@ class PayloadConfig(_SerdeShape):
 
     data: int | None = ...
 
-class PayloadConfigParams(TypedDict, total=False):
+class PayloadConfigDict(TypedDict, total=False):
     """Dictionary form of `PayloadConfig`."""
 
     data: int | None
@@ -2852,11 +2850,11 @@ PlayerAction = Union[PlayerActionQuit | PlayerActionUnknown]
 class _PlayerActionDeserializer:
     def deserialize(self, deserializer: ShapeDeserializer) -> PlayerAction: ...
 
-class PlayerActionQuitParams(TypedDict):
-    quit: Unit | UnitParams
+class PlayerActionQuitDict(TypedDict):
+    quit: Unit | UnitDict
     """Quit the game."""
 
-PlayerActionParams = Union[PlayerActionQuitParams]
+PlayerActionDict = Union[PlayerActionQuitDict]
 """Dictionary form of `PlayerAction`, setting exactly one variant."""
 
 @dataclass(kw_only=True)
@@ -2865,10 +2863,10 @@ class PostPlayerActionInput(_SerdeShape):
 
     action: PlayerAction | None = ...
 
-class PostPlayerActionInputParams(TypedDict, total=False):
+class PostPlayerActionInputDict(TypedDict, total=False):
     """Dictionary form of `PostPlayerActionInput`."""
 
-    action: PlayerAction | PlayerActionParams | None
+    action: PlayerAction | PlayerActionDict | None
 
 @dataclass(kw_only=True)
 class PostPlayerActionOutput(_SerdeShape):
@@ -2889,10 +2887,10 @@ class PostUnionWithJsonNameInput(_SerdeShape):
 
     value: UnionWithJsonName | None = ...
 
-class PostUnionWithJsonNameInputParams(TypedDict, total=False):
+class PostUnionWithJsonNameInputDict(TypedDict, total=False):
     """Dictionary form of `PostUnionWithJsonNameInput`."""
 
-    value: UnionWithJsonName | UnionWithJsonNameParams | None
+    value: UnionWithJsonName | UnionWithJsonNameDict | None
 
 @dataclass(kw_only=True)
 class PostUnionWithJsonNameOutput(_SerdeShape):
@@ -2914,7 +2912,7 @@ class PutWithContentEncodingInput(_SerdeShape):
     encoding: str | None = ...
     data: str | None = ...
 
-class PutWithContentEncodingInputParams(TypedDict, total=False):
+class PutWithContentEncodingInputDict(TypedDict, total=False):
     """Dictionary form of `PutWithContentEncodingInput`."""
 
     encoding: str | None
@@ -2939,7 +2937,7 @@ class QueryIdempotencyTokenAutoFillInput(_SerdeShape):
     token: str | None = ...
     """This field is autopopulated if not provided."""
 
-class QueryIdempotencyTokenAutoFillInputParams(TypedDict, total=False):
+class QueryIdempotencyTokenAutoFillInputDict(TypedDict, total=False):
     """Dictionary form of `QueryIdempotencyTokenAutoFillInput`."""
 
     token: str | None
@@ -2964,7 +2962,7 @@ class QueryParamsAsStringListMapInput(_SerdeShape):
     qux: str | None = ...
     foo: dict[str, list[str]] | None = ...
 
-class QueryParamsAsStringListMapInputParams(TypedDict, total=False):
+class QueryParamsAsStringListMapInputDict(TypedDict, total=False):
     """Dictionary form of `QueryParamsAsStringListMapInput`."""
 
     qux: str | None
@@ -2989,7 +2987,7 @@ class QueryPrecedenceInput(_SerdeShape):
     foo: str | None = ...
     baz: dict[str, str] | None = ...
 
-class QueryPrecedenceInputParams(TypedDict, total=False):
+class QueryPrecedenceInputDict(TypedDict, total=False):
     """Dictionary form of `QueryPrecedenceInput`."""
 
     foo: str | None
@@ -3013,13 +3011,11 @@ class RecursiveShapesInput(_SerdeShape):
 
     nested: RecursiveShapesInputOutputNested1 | None = ...
 
-class RecursiveShapesInputParams(TypedDict, total=False):
+class RecursiveShapesInputDict(TypedDict, total=False):
     """Dictionary form of `RecursiveShapesInput`."""
 
     nested: (
-        RecursiveShapesInputOutputNested1
-        | RecursiveShapesInputOutputNested1Params
-        | None
+        RecursiveShapesInputOutputNested1 | RecursiveShapesInputOutputNested1Dict | None
     )
 
 @dataclass(kw_only=True)
@@ -3029,14 +3025,12 @@ class RecursiveShapesInputOutputNested1(_SerdeShape):
     foo: str | None = ...
     nested: RecursiveShapesInputOutputNested2 | None = ...
 
-class RecursiveShapesInputOutputNested1Params(TypedDict, total=False):
+class RecursiveShapesInputOutputNested1Dict(TypedDict, total=False):
     """Dictionary form of `RecursiveShapesInputOutputNested1`."""
 
     foo: str | None
     nested: (
-        RecursiveShapesInputOutputNested2
-        | RecursiveShapesInputOutputNested2Params
-        | None
+        RecursiveShapesInputOutputNested2 | RecursiveShapesInputOutputNested2Dict | None
     )
 
 @dataclass(kw_only=True)
@@ -3046,14 +3040,12 @@ class RecursiveShapesInputOutputNested2(_SerdeShape):
     bar: str | None = ...
     recursive_member: RecursiveShapesInputOutputNested1 | None = ...
 
-class RecursiveShapesInputOutputNested2Params(TypedDict, total=False):
+class RecursiveShapesInputOutputNested2Dict(TypedDict, total=False):
     """Dictionary form of `RecursiveShapesInputOutputNested2`."""
 
     bar: str | None
     recursive_member: (
-        RecursiveShapesInputOutputNested1
-        | RecursiveShapesInputOutputNested1Params
-        | None
+        RecursiveShapesInputOutputNested1 | RecursiveShapesInputOutputNested1Dict | None
     )
 
 @dataclass(kw_only=True)
@@ -3073,7 +3065,7 @@ class RecursiveShapesOutput(_SerdeShape):
 class ResponseCodeHttpFallbackInput(_SerdeShape):
     """Dataclass for ResponseCodeHttpFallbackInput structure."""
 
-class ResponseCodeHttpFallbackInputParams(TypedDict, total=False):
+class ResponseCodeHttpFallbackInputDict(TypedDict, total=False):
     """Dictionary form of `ResponseCodeHttpFallbackInput`."""
 
 @dataclass(kw_only=True)
@@ -3092,7 +3084,7 @@ class ResponseCodeHttpFallbackOutput(_SerdeShape):
 class ResponseCodeRequiredInput(_SerdeShape):
     """Dataclass for ResponseCodeRequiredInput structure."""
 
-class ResponseCodeRequiredInputParams(TypedDict, total=False):
+class ResponseCodeRequiredInputDict(TypedDict, total=False):
     """Dictionary form of `ResponseCodeRequiredInput`."""
 
 @dataclass(kw_only=True)
@@ -3135,7 +3127,7 @@ class SimpleScalarPropertiesInput(_SerdeShape):
     float_value: float | None = ...
     double_value: float | None = ...
 
-class SimpleScalarPropertiesInputParams(TypedDict, total=False):
+class SimpleScalarPropertiesInputDict(TypedDict, total=False):
     """Dictionary form of `SimpleScalarPropertiesInput`."""
 
     foo: str | None
@@ -3194,13 +3186,13 @@ SimpleUnion = Union[SimpleUnionInt | SimpleUnionString | SimpleUnionUnknown]
 class _SimpleUnionDeserializer:
     def deserialize(self, deserializer: ShapeDeserializer) -> SimpleUnion: ...
 
-class SimpleUnionIntParams(TypedDict):
+class SimpleUnionIntDict(TypedDict):
     int_: int
 
-class SimpleUnionStringParams(TypedDict):
+class SimpleUnionStringDict(TypedDict):
     string: str
 
-SimpleUnionParams = Union[SimpleUnionIntParams | SimpleUnionStringParams]
+SimpleUnionDict = Union[SimpleUnionIntDict | SimpleUnionStringDict]
 """Dictionary form of `SimpleUnion`, setting exactly one variant."""
 
 @dataclass(kw_only=True)
@@ -3237,7 +3229,7 @@ class SparseJsonListsInput(_SerdeShape):
     sparse_string_list: list[str | None] | None = ...
     sparse_short_list: list[int | None] | None = ...
 
-class SparseJsonListsInputParams(TypedDict, total=False):
+class SparseJsonListsInputDict(TypedDict, total=False):
     """Dictionary form of `SparseJsonListsInput`."""
 
     sparse_string_list: Sequence[str | None] | None
@@ -3267,10 +3259,10 @@ class SparseJsonMapsInput(_SerdeShape):
     sparse_string_map: dict[str, str | None] | None = ...
     sparse_set_map: dict[str, list[str] | None] | None = ...
 
-class SparseJsonMapsInputParams(TypedDict, total=False):
+class SparseJsonMapsInputDict(TypedDict, total=False):
     """Dictionary form of `SparseJsonMapsInput`."""
 
-    sparse_struct_map: Mapping[str, GreetingStruct | GreetingStructParams | None] | None
+    sparse_struct_map: Mapping[str, GreetingStruct | GreetingStructDict | None] | None
     sparse_number_map: Mapping[str, int | None] | None
     sparse_boolean_map: Mapping[str, bool | None] | None
     sparse_string_map: Mapping[str, str | None] | None
@@ -3300,17 +3292,17 @@ class StreamingTraitsInput(_SerdeShape):
     foo: str | None = ...
     blob: StreamingBlob = ...
 
-class StreamingTraitsInputParams(TypedDict, total=False):
+class StreamingTraitsInputDict(TypedDict, total=False):
     """
     Dictionary form of `StreamingTraitsInput` that either client accepts.
     Its streaming body is one a sync client can send. Use
-    `AsyncStreamingTraitsInputParams` for an async stream.
+    `AsyncStreamingTraitsInputDict` for an async stream.
     """
 
     foo: str | None
     blob: SyncStreamingBlob | None
 
-class AsyncStreamingTraitsInputParams(TypedDict, total=False):
+class AsyncStreamingTraitsInputDict(TypedDict, total=False):
     """
     Dictionary form of `StreamingTraitsInput` for the async client. Its
     streaming body may also be an async stream.
@@ -3340,17 +3332,17 @@ class StreamingTraitsRequireLengthInput(_SerdeShape):
     foo: str | None = ...
     blob: StreamingBlob = ...
 
-class StreamingTraitsRequireLengthInputParams(TypedDict, total=False):
+class StreamingTraitsRequireLengthInputDict(TypedDict, total=False):
     """
     Dictionary form of `StreamingTraitsRequireLengthInput` that either
     client accepts. Its streaming body is one a sync client can send. Use
-    `AsyncStreamingTraitsRequireLengthInputParams` for an async stream.
+    `AsyncStreamingTraitsRequireLengthInputDict` for an async stream.
     """
 
     foo: str | None
     blob: SyncStreamingBlob | None
 
-class AsyncStreamingTraitsRequireLengthInputParams(TypedDict, total=False):
+class AsyncStreamingTraitsRequireLengthInputDict(TypedDict, total=False):
     """
     Dictionary form of `StreamingTraitsRequireLengthInput` for the async
     client. Its streaming body may also be an async stream.
@@ -3378,17 +3370,17 @@ class StreamingTraitsWithMediaTypeInput(_SerdeShape):
     foo: str | None = ...
     blob: StreamingBlob = ...
 
-class StreamingTraitsWithMediaTypeInputParams(TypedDict, total=False):
+class StreamingTraitsWithMediaTypeInputDict(TypedDict, total=False):
     """
     Dictionary form of `StreamingTraitsWithMediaTypeInput` that either
     client accepts. Its streaming body is one a sync client can send. Use
-    `AsyncStreamingTraitsWithMediaTypeInputParams` for an async stream.
+    `AsyncStreamingTraitsWithMediaTypeInputDict` for an async stream.
     """
 
     foo: str | None
     blob: SyncStreamingBlob | None
 
-class AsyncStreamingTraitsWithMediaTypeInputParams(TypedDict, total=False):
+class AsyncStreamingTraitsWithMediaTypeInputDict(TypedDict, total=False):
     """
     Dictionary form of `StreamingTraitsWithMediaTypeInput` for the async
     client. Its streaming body may also be an async stream.
@@ -3427,7 +3419,7 @@ class StructureListMember(_SerdeShape):
     a: str | None = ...
     b: str | None = ...
 
-class StructureListMemberParams(TypedDict, total=False):
+class StructureListMemberDict(TypedDict, total=False):
     """Dictionary form of `StructureListMember`."""
 
     a: str | None
@@ -3446,11 +3438,11 @@ class TestBodyStructureInput(_SerdeShape):
     test_id: str | None = ...
     test_config: TestConfig | None = ...
 
-class TestBodyStructureInputParams(TypedDict, total=False):
+class TestBodyStructureInputDict(TypedDict, total=False):
     """Dictionary form of `TestBodyStructureInput`."""
 
     test_id: str | None
-    test_config: TestConfig | TestConfigParams | None
+    test_config: TestConfig | TestConfigDict | None
 
 @dataclass(kw_only=True)
 class TestBodyStructureOutput(_SerdeShape):
@@ -3472,7 +3464,7 @@ class TestConfig(_SerdeShape):
 
     timeout: int | None = ...
 
-class TestConfigParams(TypedDict, total=False):
+class TestConfigDict(TypedDict, total=False):
     """Dictionary form of `TestConfig`."""
 
     timeout: int | None
@@ -3486,7 +3478,7 @@ class TestEnum(UnknownEnumMixin, StrEnum):
 class TestGetNoInputNoPayloadInput(_SerdeShape):
     """Dataclass for TestGetNoInputNoPayloadInput structure."""
 
-class TestGetNoInputNoPayloadInputParams(TypedDict, total=False):
+class TestGetNoInputNoPayloadInputDict(TypedDict, total=False):
     """Dictionary form of `TestGetNoInputNoPayloadInput`."""
 
 @dataclass(kw_only=True)
@@ -3508,7 +3500,7 @@ class TestGetNoPayloadInput(_SerdeShape):
 
     test_id: str | None = ...
 
-class TestGetNoPayloadInputParams(TypedDict, total=False):
+class TestGetNoPayloadInputDict(TypedDict, total=False):
     """Dictionary form of `TestGetNoPayloadInput`."""
 
     test_id: str | None
@@ -3537,7 +3529,7 @@ class TestPayloadBlobInput(_SerdeShape):
     content_type: str | None = ...
     data: bytes | None = ...
 
-class TestPayloadBlobInputParams(TypedDict, total=False):
+class TestPayloadBlobInputDict(TypedDict, total=False):
     """Dictionary form of `TestPayloadBlobInput`."""
 
     content_type: str | None

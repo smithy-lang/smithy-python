@@ -141,7 +141,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def all_query_string_types(
         self,
         request: _models.AllQueryStringTypesInput
-        | _models.AllQueryStringTypesInputParams,
+        | _models.AllQueryStringTypesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -153,7 +153,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.AllQueryStringTypesInputParams],
+        **kwargs: _Unpack[_models.AllQueryStringTypesInputDict],
     ) -> AllQueryStringTypesOutput:
         """
         This example uses all query string types.
@@ -183,7 +183,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def constant_and_variable_query_string(
         self,
         request: _models.ConstantAndVariableQueryStringInput
-        | _models.ConstantAndVariableQueryStringInputParams,
+        | _models.ConstantAndVariableQueryStringInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -195,7 +195,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.ConstantAndVariableQueryStringInputParams],
+        **kwargs: _Unpack[_models.ConstantAndVariableQueryStringInputDict],
     ) -> ConstantAndVariableQueryStringOutput:
         """
         This example uses fixed query string params and variable query string
@@ -229,7 +229,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def constant_query_string(
         self,
         request: _models.ConstantQueryStringInput
-        | _models.ConstantQueryStringInputParams,
+        | _models.ConstantQueryStringInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -241,7 +241,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.ConstantQueryStringInputParams],
+        **kwargs: _Unpack[_models.ConstantQueryStringInputDict],
     ) -> ConstantQueryStringOutput:
         """
         This example uses a constant query string parameters and a label. This
@@ -274,7 +274,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def content_type_parameters(
         self,
         request: _models.ContentTypeParametersInput
-        | _models.ContentTypeParametersInputParams,
+        | _models.ContentTypeParametersInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -286,7 +286,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.ContentTypeParametersInputParams],
+        **kwargs: _Unpack[_models.ContentTypeParametersInputDict],
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -316,7 +316,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def datetime_offsets(
         self,
-        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputParams,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -328,7 +328,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.DatetimeOffsetsInputParams],
+        **kwargs: _Unpack[_models.DatetimeOffsetsInputDict],
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -357,7 +357,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def document_type(
         self,
-        request: _models.DocumentTypeInput | _models.DocumentTypeInputParams,
+        request: _models.DocumentTypeInput | _models.DocumentTypeInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -369,7 +369,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.DocumentTypeInputParams],
+        **kwargs: _Unpack[_models.DocumentTypeInputDict],
     ) -> DocumentTypeOutput:
         """
         This example serializes a document as part of the payload.
@@ -399,7 +399,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def document_type_as_map_value(
         self,
         request: _models.DocumentTypeAsMapValueInput
-        | _models.DocumentTypeAsMapValueInputParams,
+        | _models.DocumentTypeAsMapValueInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -411,7 +411,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.DocumentTypeAsMapValueInputParams],
+        **kwargs: _Unpack[_models.DocumentTypeAsMapValueInputDict],
     ) -> DocumentTypeAsMapValueOutput:
         """
         This example serializes documents as the value of maps.
@@ -441,7 +441,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def document_type_as_payload(
         self,
         request: _models.DocumentTypeAsPayloadInput
-        | _models.DocumentTypeAsPayloadInputParams,
+        | _models.DocumentTypeAsPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -453,7 +453,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.DocumentTypeAsPayloadInputParams],
+        **kwargs: _Unpack[_models.DocumentTypeAsPayloadInputDict],
     ) -> DocumentTypeAsPayloadOutput:
         """
         This example serializes a document as the entire HTTP payload.
@@ -483,7 +483,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def empty_input_and_empty_output(
         self,
         request: _models.EmptyInputAndEmptyOutputInput
-        | _models.EmptyInputAndEmptyOutputInputParams,
+        | _models.EmptyInputAndEmptyOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -495,7 +495,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EmptyInputAndEmptyOutputInputParams],
+        **kwargs: _Unpack[_models.EmptyInputAndEmptyOutputInputDict],
     ) -> EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -527,7 +527,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def endpoint_operation(
         self,
-        request: _models.EndpointOperationInput | _models.EndpointOperationInputParams,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -539,7 +539,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EndpointOperationInputParams],
+        **kwargs: _Unpack[_models.EndpointOperationInputDict],
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -569,7 +569,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def endpoint_with_host_label_operation(
         self,
         request: _models.EndpointWithHostLabelOperationInput
-        | _models.EndpointWithHostLabelOperationInputParams,
+        | _models.EndpointWithHostLabelOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -581,7 +581,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputParams],
+        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputDict],
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -612,7 +612,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def fractional_seconds(
         self,
-        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -624,7 +624,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.FractionalSecondsInputParams],
+        **kwargs: _Unpack[_models.FractionalSecondsInputDict],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -653,8 +653,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def greeting_with_errors(
         self,
-        request: _models.GreetingWithErrorsInput
-        | _models.GreetingWithErrorsInputParams,
+        request: _models.GreetingWithErrorsInput | _models.GreetingWithErrorsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -666,7 +665,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.GreetingWithErrorsInputParams],
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputDict],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has four possible return values: 1. A successful response
@@ -700,7 +699,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def host_with_path_operation(
         self,
         request: _models.HostWithPathOperationInput
-        | _models.HostWithPathOperationInputParams,
+        | _models.HostWithPathOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -712,7 +711,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HostWithPathOperationInputParams],
+        **kwargs: _Unpack[_models.HostWithPathOperationInputDict],
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
@@ -742,7 +741,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_checksum_required(
         self,
         request: _models.HttpChecksumRequiredInput
-        | _models.HttpChecksumRequiredInputParams,
+        | _models.HttpChecksumRequiredInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -754,7 +753,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpChecksumRequiredInputParams],
+        **kwargs: _Unpack[_models.HttpChecksumRequiredInputDict],
     ) -> HttpChecksumRequiredOutput:
         """
         This example tests httpChecksumRequired trait
@@ -784,7 +783,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_empty_prefix_headers(
         self,
         request: _models.HttpEmptyPrefixHeadersInput
-        | _models.HttpEmptyPrefixHeadersInputParams,
+        | _models.HttpEmptyPrefixHeadersInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -796,7 +795,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpEmptyPrefixHeadersInputParams],
+        **kwargs: _Unpack[_models.HttpEmptyPrefixHeadersInputDict],
     ) -> HttpEmptyPrefixHeadersOutput:
         """
         Clients that perform this test extract all headers from the response.
@@ -825,7 +824,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def http_enum_payload(
         self,
-        request: _models.HttpEnumPayloadInput | _models.HttpEnumPayloadInputParams,
+        request: _models.HttpEnumPayloadInput | _models.HttpEnumPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -837,7 +836,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpEnumPayloadInputParams],
+        **kwargs: _Unpack[_models.HttpEnumPayloadInputDict],
     ) -> HttpEnumPayloadOutput:
         """
         Invokes the HttpEnumPayload operation.
@@ -866,7 +865,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def http_payload_traits(
         self,
-        request: _models.HttpPayloadTraitsInput | _models.HttpPayloadTraitsInputParams,
+        request: _models.HttpPayloadTraitsInput | _models.HttpPayloadTraitsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -878,7 +877,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadTraitsInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadTraitsInputDict],
     ) -> HttpPayloadTraitsOutput:
         """
         This example serializes a blob shape in the payload. In this example, no
@@ -910,7 +909,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_payload_traits_with_media_type(
         self,
         request: _models.HttpPayloadTraitsWithMediaTypeInput
-        | _models.HttpPayloadTraitsWithMediaTypeInputParams,
+        | _models.HttpPayloadTraitsWithMediaTypeInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -922,7 +921,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadTraitsWithMediaTypeInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadTraitsWithMediaTypeInputDict],
     ) -> HttpPayloadTraitsWithMediaTypeOutput:
         """
         This example uses a `@mediaType` trait on the payload to force a
@@ -955,7 +954,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_payload_with_structure(
         self,
         request: _models.HttpPayloadWithStructureInput
-        | _models.HttpPayloadWithStructureInputParams,
+        | _models.HttpPayloadWithStructureInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -967,7 +966,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadWithStructureInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadWithStructureInputDict],
     ) -> HttpPayloadWithStructureOutput:
         """
         This example serializes a structure in the payload. Note that
@@ -999,7 +998,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_payload_with_union(
         self,
         request: _models.HttpPayloadWithUnionInput
-        | _models.HttpPayloadWithUnionInputParams,
+        | _models.HttpPayloadWithUnionInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1011,7 +1010,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPayloadWithUnionInputParams],
+        **kwargs: _Unpack[_models.HttpPayloadWithUnionInputDict],
     ) -> HttpPayloadWithUnionOutput:
         """
         This example serializes a union in the payload.
@@ -1040,7 +1039,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def http_prefix_headers(
         self,
-        request: _models.HttpPrefixHeadersInput | _models.HttpPrefixHeadersInputParams,
+        request: _models.HttpPrefixHeadersInput | _models.HttpPrefixHeadersInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1052,7 +1051,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPrefixHeadersInputParams],
+        **kwargs: _Unpack[_models.HttpPrefixHeadersInputDict],
     ) -> HttpPrefixHeadersOutput:
         """
         This examples adds headers to the input of a request and response by
@@ -1083,7 +1082,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_prefix_headers_in_response(
         self,
         request: _models.HttpPrefixHeadersInResponseInput
-        | _models.HttpPrefixHeadersInResponseInputParams,
+        | _models.HttpPrefixHeadersInResponseInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1095,7 +1094,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpPrefixHeadersInResponseInputParams],
+        **kwargs: _Unpack[_models.HttpPrefixHeadersInResponseInputDict],
     ) -> HttpPrefixHeadersInResponseOutput:
         """
         Clients that perform this test extract all headers from the response.
@@ -1125,7 +1124,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_query_params_only_operation(
         self,
         request: _models.HttpQueryParamsOnlyOperationInput
-        | _models.HttpQueryParamsOnlyOperationInputParams,
+        | _models.HttpQueryParamsOnlyOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1137,7 +1136,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpQueryParamsOnlyOperationInputParams],
+        **kwargs: _Unpack[_models.HttpQueryParamsOnlyOperationInputDict],
     ) -> HttpQueryParamsOnlyOperationOutput:
         """
         This example tests httpQueryParams when no other query parameters exist.
@@ -1167,7 +1166,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_request_with_float_labels(
         self,
         request: _models.HttpRequestWithFloatLabelsInput
-        | _models.HttpRequestWithFloatLabelsInputParams,
+        | _models.HttpRequestWithFloatLabelsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1179,7 +1178,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpRequestWithFloatLabelsInputParams],
+        **kwargs: _Unpack[_models.HttpRequestWithFloatLabelsInputDict],
     ) -> HttpRequestWithFloatLabelsOutput:
         """
         Invokes the HttpRequestWithFloatLabels operation.
@@ -1209,7 +1208,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_request_with_greedy_label_in_path(
         self,
         request: _models.HttpRequestWithGreedyLabelInPathInput
-        | _models.HttpRequestWithGreedyLabelInPathInputParams,
+        | _models.HttpRequestWithGreedyLabelInPathInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1221,7 +1220,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpRequestWithGreedyLabelInPathInputParams],
+        **kwargs: _Unpack[_models.HttpRequestWithGreedyLabelInPathInputDict],
     ) -> HttpRequestWithGreedyLabelInPathOutput:
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
@@ -1253,7 +1252,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_request_with_labels(
         self,
         request: _models.HttpRequestWithLabelsInput
-        | _models.HttpRequestWithLabelsInputParams,
+        | _models.HttpRequestWithLabelsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1265,7 +1264,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpRequestWithLabelsInputParams],
+        **kwargs: _Unpack[_models.HttpRequestWithLabelsInputDict],
     ) -> HttpRequestWithLabelsOutput:
         """
         The example tests how requests are serialized when there's no input
@@ -1296,7 +1295,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_request_with_labels_and_timestamp_format(
         self,
         request: _models.HttpRequestWithLabelsAndTimestampFormatInput
-        | _models.HttpRequestWithLabelsAndTimestampFormatInputParams,
+        | _models.HttpRequestWithLabelsAndTimestampFormatInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1308,7 +1307,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpRequestWithLabelsAndTimestampFormatInputParams],
+        **kwargs: _Unpack[_models.HttpRequestWithLabelsAndTimestampFormatInputDict],
     ) -> HttpRequestWithLabelsAndTimestampFormatOutput:
         """
         The example tests how requests serialize different timestamp formats in
@@ -1341,7 +1340,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def http_request_with_regex_literal(
         self,
         request: _models.HttpRequestWithRegexLiteralInput
-        | _models.HttpRequestWithRegexLiteralInputParams,
+        | _models.HttpRequestWithRegexLiteralInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1353,7 +1352,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpRequestWithRegexLiteralInputParams],
+        **kwargs: _Unpack[_models.HttpRequestWithRegexLiteralInputDict],
     ) -> HttpRequestWithRegexLiteralOutput:
         """
         Invokes the HttpRequestWithRegexLiteral operation.
@@ -1382,7 +1381,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def http_response_code(
         self,
-        request: _models.HttpResponseCodeInput | _models.HttpResponseCodeInputParams,
+        request: _models.HttpResponseCodeInput | _models.HttpResponseCodeInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1394,7 +1393,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpResponseCodeInputParams],
+        **kwargs: _Unpack[_models.HttpResponseCodeInputDict],
     ) -> HttpResponseCodeOutput:
         """
         Invokes the HttpResponseCode operation.
@@ -1423,7 +1422,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def http_string_payload(
         self,
-        request: _models.HttpStringPayloadInput | _models.HttpStringPayloadInputParams,
+        request: _models.HttpStringPayloadInput | _models.HttpStringPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1435,7 +1434,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HttpStringPayloadInputParams],
+        **kwargs: _Unpack[_models.HttpStringPayloadInputDict],
     ) -> HttpStringPayloadOutput:
         """
         Invokes the HttpStringPayload operation.
@@ -1465,7 +1464,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def ignore_query_params_in_response(
         self,
         request: _models.IgnoreQueryParamsInResponseInput
-        | _models.IgnoreQueryParamsInResponseInputParams,
+        | _models.IgnoreQueryParamsInResponseInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1477,7 +1476,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.IgnoreQueryParamsInResponseInputParams],
+        **kwargs: _Unpack[_models.IgnoreQueryParamsInResponseInputDict],
     ) -> IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
@@ -1509,7 +1508,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def input_and_output_with_headers(
         self,
         request: _models.InputAndOutputWithHeadersInput
-        | _models.InputAndOutputWithHeadersInputParams,
+        | _models.InputAndOutputWithHeadersInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1521,7 +1520,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.InputAndOutputWithHeadersInputParams],
+        **kwargs: _Unpack[_models.InputAndOutputWithHeadersInputDict],
     ) -> InputAndOutputWithHeadersOutput:
         """
         The example tests how requests and responses are serialized when there
@@ -1551,7 +1550,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def json_blobs(
         self,
-        request: _models.JsonBlobsInput | _models.JsonBlobsInputParams,
+        request: _models.JsonBlobsInput | _models.JsonBlobsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1563,7 +1562,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.JsonBlobsInputParams],
+        **kwargs: _Unpack[_models.JsonBlobsInputDict],
     ) -> JsonBlobsOutput:
         """
         Blobs are base64 encoded
@@ -1592,7 +1591,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def json_enums(
         self,
-        request: _models.JsonEnumsInput | _models.JsonEnumsInputParams,
+        request: _models.JsonEnumsInput | _models.JsonEnumsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1604,7 +1603,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.JsonEnumsInputParams],
+        **kwargs: _Unpack[_models.JsonEnumsInputDict],
     ) -> JsonEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -1634,7 +1633,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def json_int_enums(
         self,
-        request: _models.JsonIntEnumsInput | _models.JsonIntEnumsInputParams,
+        request: _models.JsonIntEnumsInput | _models.JsonIntEnumsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1646,7 +1645,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.JsonIntEnumsInputParams],
+        **kwargs: _Unpack[_models.JsonIntEnumsInputDict],
     ) -> JsonIntEnumsOutput:
         """
         This example serializes intEnums as top level properties, in lists,
@@ -1676,7 +1675,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def json_lists(
         self,
-        request: _models.JsonListsInput | _models.JsonListsInputParams,
+        request: _models.JsonListsInput | _models.JsonListsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1688,7 +1687,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.JsonListsInputParams],
+        **kwargs: _Unpack[_models.JsonListsInputDict],
     ) -> JsonListsOutput:
         """
         This test case serializes JSON lists for the following cases for both
@@ -1719,7 +1718,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def json_maps(
         self,
-        request: _models.JsonMapsInput | _models.JsonMapsInputParams,
+        request: _models.JsonMapsInput | _models.JsonMapsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1731,7 +1730,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.JsonMapsInputParams],
+        **kwargs: _Unpack[_models.JsonMapsInputDict],
     ) -> JsonMapsOutput:
         """
         The example tests basic map serialization.
@@ -1760,7 +1759,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def json_timestamps(
         self,
-        request: _models.JsonTimestampsInput | _models.JsonTimestampsInputParams,
+        request: _models.JsonTimestampsInput | _models.JsonTimestampsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1772,7 +1771,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.JsonTimestampsInputParams],
+        **kwargs: _Unpack[_models.JsonTimestampsInputDict],
     ) -> JsonTimestampsOutput:
         """
         This tests how timestamps are serialized, including using the default
@@ -1802,7 +1801,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def json_unions(
         self,
-        request: _models.JsonUnionsInput | _models.JsonUnionsInputParams,
+        request: _models.JsonUnionsInput | _models.JsonUnionsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1814,7 +1813,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.JsonUnionsInputParams],
+        **kwargs: _Unpack[_models.JsonUnionsInputDict],
     ) -> JsonUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
@@ -1844,7 +1843,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_accept_with_body(
         self,
         request: _models.MalformedAcceptWithBodyInput
-        | _models.MalformedAcceptWithBodyInputParams,
+        | _models.MalformedAcceptWithBodyInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1856,7 +1855,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedAcceptWithBodyInputParams],
+        **kwargs: _Unpack[_models.MalformedAcceptWithBodyInputDict],
     ) -> MalformedAcceptWithBodyOutput:
         """
         Invokes the MalformedAcceptWithBody operation.
@@ -1886,7 +1885,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_accept_with_generic_string(
         self,
         request: _models.MalformedAcceptWithGenericStringInput
-        | _models.MalformedAcceptWithGenericStringInputParams,
+        | _models.MalformedAcceptWithGenericStringInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1898,7 +1897,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedAcceptWithGenericStringInputParams],
+        **kwargs: _Unpack[_models.MalformedAcceptWithGenericStringInputDict],
     ) -> MalformedAcceptWithGenericStringOutput:
         """
         Invokes the MalformedAcceptWithGenericString operation.
@@ -1930,7 +1929,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_accept_with_payload(
         self,
         request: _models.MalformedAcceptWithPayloadInput
-        | _models.MalformedAcceptWithPayloadInputParams,
+        | _models.MalformedAcceptWithPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1942,7 +1941,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedAcceptWithPayloadInputParams],
+        **kwargs: _Unpack[_models.MalformedAcceptWithPayloadInputDict],
     ) -> MalformedAcceptWithPayloadOutput:
         """
         Invokes the MalformedAcceptWithPayload operation.
@@ -1971,7 +1970,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_blob(
         self,
-        request: _models.MalformedBlobInput | _models.MalformedBlobInputParams,
+        request: _models.MalformedBlobInput | _models.MalformedBlobInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -1983,7 +1982,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedBlobInputParams],
+        **kwargs: _Unpack[_models.MalformedBlobInputDict],
     ) -> MalformedBlobOutput:
         """
         Invokes the MalformedBlob operation.
@@ -2012,7 +2011,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_boolean(
         self,
-        request: _models.MalformedBooleanInput | _models.MalformedBooleanInputParams,
+        request: _models.MalformedBooleanInput | _models.MalformedBooleanInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2024,7 +2023,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedBooleanInputParams],
+        **kwargs: _Unpack[_models.MalformedBooleanInputDict],
     ) -> MalformedBooleanOutput:
         """
         Invokes the MalformedBoolean operation.
@@ -2053,7 +2052,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_byte(
         self,
-        request: _models.MalformedByteInput | _models.MalformedByteInputParams,
+        request: _models.MalformedByteInput | _models.MalformedByteInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2065,7 +2064,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedByteInputParams],
+        **kwargs: _Unpack[_models.MalformedByteInputDict],
     ) -> MalformedByteOutput:
         """
         Invokes the MalformedByte operation.
@@ -2095,7 +2094,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_content_type_with_body(
         self,
         request: _models.MalformedContentTypeWithBodyInput
-        | _models.MalformedContentTypeWithBodyInputParams,
+        | _models.MalformedContentTypeWithBodyInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2107,7 +2106,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedContentTypeWithBodyInputParams],
+        **kwargs: _Unpack[_models.MalformedContentTypeWithBodyInputDict],
     ) -> MalformedContentTypeWithBodyOutput:
         """
         Invokes the MalformedContentTypeWithBody operation.
@@ -2137,7 +2136,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_content_type_with_generic_string(
         self,
         request: _models.MalformedContentTypeWithGenericStringInput
-        | _models.MalformedContentTypeWithGenericStringInputParams,
+        | _models.MalformedContentTypeWithGenericStringInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2149,7 +2148,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedContentTypeWithGenericStringInputParams],
+        **kwargs: _Unpack[_models.MalformedContentTypeWithGenericStringInputDict],
     ) -> MalformedContentTypeWithGenericStringOutput:
         """
         Invokes the MalformedContentTypeWithGenericString operation.
@@ -2181,7 +2180,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_content_type_without_body(
         self,
         request: _models.MalformedContentTypeWithoutBodyInput
-        | _models.MalformedContentTypeWithoutBodyInputParams,
+        | _models.MalformedContentTypeWithoutBodyInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2193,7 +2192,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedContentTypeWithoutBodyInputParams],
+        **kwargs: _Unpack[_models.MalformedContentTypeWithoutBodyInputDict],
     ) -> MalformedContentTypeWithoutBodyOutput:
         """
         Invokes the MalformedContentTypeWithoutBody operation.
@@ -2225,7 +2224,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_content_type_without_body_empty_input(
         self,
         request: _models.MalformedContentTypeWithoutBodyEmptyInputInput
-        | _models.MalformedContentTypeWithoutBodyEmptyInputInputParams,
+        | _models.MalformedContentTypeWithoutBodyEmptyInputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2237,7 +2236,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedContentTypeWithoutBodyEmptyInputInputParams],
+        **kwargs: _Unpack[_models.MalformedContentTypeWithoutBodyEmptyInputInputDict],
     ) -> MalformedContentTypeWithoutBodyEmptyInputOutput:
         """
         Invokes the MalformedContentTypeWithoutBodyEmptyInput operation.
@@ -2269,7 +2268,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_content_type_with_payload(
         self,
         request: _models.MalformedContentTypeWithPayloadInput
-        | _models.MalformedContentTypeWithPayloadInputParams,
+        | _models.MalformedContentTypeWithPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2281,7 +2280,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedContentTypeWithPayloadInputParams],
+        **kwargs: _Unpack[_models.MalformedContentTypeWithPayloadInputDict],
     ) -> MalformedContentTypeWithPayloadOutput:
         """
         Invokes the MalformedContentTypeWithPayload operation.
@@ -2312,7 +2311,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_double(
         self,
-        request: _models.MalformedDoubleInput | _models.MalformedDoubleInputParams,
+        request: _models.MalformedDoubleInput | _models.MalformedDoubleInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2324,7 +2323,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedDoubleInputParams],
+        **kwargs: _Unpack[_models.MalformedDoubleInputDict],
     ) -> MalformedDoubleOutput:
         """
         Invokes the MalformedDouble operation.
@@ -2353,7 +2352,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_float(
         self,
-        request: _models.MalformedFloatInput | _models.MalformedFloatInputParams,
+        request: _models.MalformedFloatInput | _models.MalformedFloatInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2365,7 +2364,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedFloatInputParams],
+        **kwargs: _Unpack[_models.MalformedFloatInputDict],
     ) -> MalformedFloatOutput:
         """
         Invokes the MalformedFloat operation.
@@ -2394,7 +2393,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_integer(
         self,
-        request: _models.MalformedIntegerInput | _models.MalformedIntegerInputParams,
+        request: _models.MalformedIntegerInput | _models.MalformedIntegerInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2406,7 +2405,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedIntegerInputParams],
+        **kwargs: _Unpack[_models.MalformedIntegerInputDict],
     ) -> MalformedIntegerOutput:
         """
         Invokes the MalformedInteger operation.
@@ -2435,7 +2434,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_list(
         self,
-        request: _models.MalformedListInput | _models.MalformedListInputParams,
+        request: _models.MalformedListInput | _models.MalformedListInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2447,7 +2446,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedListInputParams],
+        **kwargs: _Unpack[_models.MalformedListInputDict],
     ) -> MalformedListOutput:
         """
         Invokes the MalformedList operation.
@@ -2476,7 +2475,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_long(
         self,
-        request: _models.MalformedLongInput | _models.MalformedLongInputParams,
+        request: _models.MalformedLongInput | _models.MalformedLongInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2488,7 +2487,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedLongInputParams],
+        **kwargs: _Unpack[_models.MalformedLongInputDict],
     ) -> MalformedLongOutput:
         """
         Invokes the MalformedLong operation.
@@ -2517,7 +2516,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_map(
         self,
-        request: _models.MalformedMapInput | _models.MalformedMapInputParams,
+        request: _models.MalformedMapInput | _models.MalformedMapInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2529,7 +2528,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedMapInputParams],
+        **kwargs: _Unpack[_models.MalformedMapInputDict],
     ) -> MalformedMapOutput:
         """
         Invokes the MalformedMap operation.
@@ -2559,7 +2558,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_request_body(
         self,
         request: _models.MalformedRequestBodyInput
-        | _models.MalformedRequestBodyInputParams,
+        | _models.MalformedRequestBodyInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2571,7 +2570,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedRequestBodyInputParams],
+        **kwargs: _Unpack[_models.MalformedRequestBodyInputDict],
     ) -> MalformedRequestBodyOutput:
         """
         Invokes the MalformedRequestBody operation.
@@ -2600,7 +2599,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_short(
         self,
-        request: _models.MalformedShortInput | _models.MalformedShortInputParams,
+        request: _models.MalformedShortInput | _models.MalformedShortInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2612,7 +2611,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedShortInputParams],
+        **kwargs: _Unpack[_models.MalformedShortInputDict],
     ) -> MalformedShortOutput:
         """
         Invokes the MalformedShort operation.
@@ -2641,7 +2640,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_string(
         self,
-        request: _models.MalformedStringInput | _models.MalformedStringInputParams,
+        request: _models.MalformedStringInput | _models.MalformedStringInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2653,7 +2652,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedStringInputParams],
+        **kwargs: _Unpack[_models.MalformedStringInputDict],
     ) -> MalformedStringOutput:
         """
         Invokes the MalformedString operation.
@@ -2683,7 +2682,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_body_date_time(
         self,
         request: _models.MalformedTimestampBodyDateTimeInput
-        | _models.MalformedTimestampBodyDateTimeInputParams,
+        | _models.MalformedTimestampBodyDateTimeInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2695,7 +2694,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampBodyDateTimeInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampBodyDateTimeInputDict],
     ) -> MalformedTimestampBodyDateTimeOutput:
         """
         Invokes the MalformedTimestampBodyDateTime operation.
@@ -2727,7 +2726,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_body_default(
         self,
         request: _models.MalformedTimestampBodyDefaultInput
-        | _models.MalformedTimestampBodyDefaultInputParams,
+        | _models.MalformedTimestampBodyDefaultInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2739,7 +2738,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampBodyDefaultInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampBodyDefaultInputDict],
     ) -> MalformedTimestampBodyDefaultOutput:
         """
         Invokes the MalformedTimestampBodyDefault operation.
@@ -2769,7 +2768,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_body_http_date(
         self,
         request: _models.MalformedTimestampBodyHttpDateInput
-        | _models.MalformedTimestampBodyHttpDateInputParams,
+        | _models.MalformedTimestampBodyHttpDateInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2781,7 +2780,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampBodyHttpDateInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampBodyHttpDateInputDict],
     ) -> MalformedTimestampBodyHttpDateOutput:
         """
         Invokes the MalformedTimestampBodyHttpDate operation.
@@ -2813,7 +2812,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_header_date_time(
         self,
         request: _models.MalformedTimestampHeaderDateTimeInput
-        | _models.MalformedTimestampHeaderDateTimeInputParams,
+        | _models.MalformedTimestampHeaderDateTimeInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2825,7 +2824,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampHeaderDateTimeInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampHeaderDateTimeInputDict],
     ) -> MalformedTimestampHeaderDateTimeOutput:
         """
         Invokes the MalformedTimestampHeaderDateTime operation.
@@ -2857,7 +2856,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_header_default(
         self,
         request: _models.MalformedTimestampHeaderDefaultInput
-        | _models.MalformedTimestampHeaderDefaultInputParams,
+        | _models.MalformedTimestampHeaderDefaultInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2869,7 +2868,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampHeaderDefaultInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampHeaderDefaultInputDict],
     ) -> MalformedTimestampHeaderDefaultOutput:
         """
         Invokes the MalformedTimestampHeaderDefault operation.
@@ -2901,7 +2900,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_header_epoch(
         self,
         request: _models.MalformedTimestampHeaderEpochInput
-        | _models.MalformedTimestampHeaderEpochInputParams,
+        | _models.MalformedTimestampHeaderEpochInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2913,7 +2912,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampHeaderEpochInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampHeaderEpochInputDict],
     ) -> MalformedTimestampHeaderEpochOutput:
         """
         Invokes the MalformedTimestampHeaderEpoch operation.
@@ -2943,7 +2942,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_path_default(
         self,
         request: _models.MalformedTimestampPathDefaultInput
-        | _models.MalformedTimestampPathDefaultInputParams,
+        | _models.MalformedTimestampPathDefaultInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2955,7 +2954,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampPathDefaultInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampPathDefaultInputDict],
     ) -> MalformedTimestampPathDefaultOutput:
         """
         Invokes the MalformedTimestampPathDefault operation.
@@ -2985,7 +2984,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_path_epoch(
         self,
         request: _models.MalformedTimestampPathEpochInput
-        | _models.MalformedTimestampPathEpochInputParams,
+        | _models.MalformedTimestampPathEpochInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -2997,7 +2996,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampPathEpochInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampPathEpochInputDict],
     ) -> MalformedTimestampPathEpochOutput:
         """
         Invokes the MalformedTimestampPathEpoch operation.
@@ -3027,7 +3026,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_path_http_date(
         self,
         request: _models.MalformedTimestampPathHttpDateInput
-        | _models.MalformedTimestampPathHttpDateInputParams,
+        | _models.MalformedTimestampPathHttpDateInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3039,7 +3038,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampPathHttpDateInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampPathHttpDateInputDict],
     ) -> MalformedTimestampPathHttpDateOutput:
         """
         Invokes the MalformedTimestampPathHttpDate operation.
@@ -3071,7 +3070,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_query_default(
         self,
         request: _models.MalformedTimestampQueryDefaultInput
-        | _models.MalformedTimestampQueryDefaultInputParams,
+        | _models.MalformedTimestampQueryDefaultInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3083,7 +3082,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampQueryDefaultInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampQueryDefaultInputDict],
     ) -> MalformedTimestampQueryDefaultOutput:
         """
         Invokes the MalformedTimestampQueryDefault operation.
@@ -3113,7 +3112,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_query_epoch(
         self,
         request: _models.MalformedTimestampQueryEpochInput
-        | _models.MalformedTimestampQueryEpochInputParams,
+        | _models.MalformedTimestampQueryEpochInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3125,7 +3124,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampQueryEpochInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampQueryEpochInputDict],
     ) -> MalformedTimestampQueryEpochOutput:
         """
         Invokes the MalformedTimestampQueryEpoch operation.
@@ -3155,7 +3154,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def malformed_timestamp_query_http_date(
         self,
         request: _models.MalformedTimestampQueryHttpDateInput
-        | _models.MalformedTimestampQueryHttpDateInputParams,
+        | _models.MalformedTimestampQueryHttpDateInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3167,7 +3166,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedTimestampQueryHttpDateInputParams],
+        **kwargs: _Unpack[_models.MalformedTimestampQueryHttpDateInputDict],
     ) -> MalformedTimestampQueryHttpDateOutput:
         """
         Invokes the MalformedTimestampQueryHttpDate operation.
@@ -3198,7 +3197,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def malformed_union(
         self,
-        request: _models.MalformedUnionInput | _models.MalformedUnionInputParams,
+        request: _models.MalformedUnionInput | _models.MalformedUnionInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3210,7 +3209,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MalformedUnionInputParams],
+        **kwargs: _Unpack[_models.MalformedUnionInputDict],
     ) -> MalformedUnionOutput:
         """
         Invokes the MalformedUnion operation.
@@ -3239,7 +3238,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def media_type_header(
         self,
-        request: _models.MediaTypeHeaderInput | _models.MediaTypeHeaderInputParams,
+        request: _models.MediaTypeHeaderInput | _models.MediaTypeHeaderInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3251,7 +3250,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.MediaTypeHeaderInputParams],
+        **kwargs: _Unpack[_models.MediaTypeHeaderInputDict],
     ) -> MediaTypeHeaderOutput:
         """
         This example ensures that mediaType strings are base64 encoded in
@@ -3281,8 +3280,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def no_input_and_no_output(
         self,
-        request: _models.NoInputAndNoOutputInput
-        | _models.NoInputAndNoOutputInputParams,
+        request: _models.NoInputAndNoOutputInput | _models.NoInputAndNoOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3294,7 +3292,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NoInputAndNoOutputInputParams],
+        **kwargs: _Unpack[_models.NoInputAndNoOutputInputDict],
     ) -> NoInputAndNoOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -3326,7 +3324,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def no_input_and_output(
         self,
-        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputParams,
+        request: _models.NoInputAndOutputInput | _models.NoInputAndOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3338,7 +3336,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NoInputAndOutputInputParams],
+        **kwargs: _Unpack[_models.NoInputAndOutputInputDict],
     ) -> NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when
@@ -3371,7 +3369,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def null_and_empty_headers_client(
         self,
         request: _models.NullAndEmptyHeadersClientInput
-        | _models.NullAndEmptyHeadersClientInputParams,
+        | _models.NullAndEmptyHeadersClientInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3383,7 +3381,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NullAndEmptyHeadersClientInputParams],
+        **kwargs: _Unpack[_models.NullAndEmptyHeadersClientInputDict],
     ) -> NullAndEmptyHeadersClientOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
@@ -3414,7 +3412,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def null_and_empty_headers_server(
         self,
         request: _models.NullAndEmptyHeadersServerInput
-        | _models.NullAndEmptyHeadersServerInputParams,
+        | _models.NullAndEmptyHeadersServerInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3426,7 +3424,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NullAndEmptyHeadersServerInputParams],
+        **kwargs: _Unpack[_models.NullAndEmptyHeadersServerInputDict],
     ) -> NullAndEmptyHeadersServerOutput:
         """
         Null headers are not sent over the wire, empty headers are serialized to
@@ -3457,7 +3455,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def omits_null_serializes_empty_string(
         self,
         request: _models.OmitsNullSerializesEmptyStringInput
-        | _models.OmitsNullSerializesEmptyStringInputParams,
+        | _models.OmitsNullSerializesEmptyStringInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3469,7 +3467,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.OmitsNullSerializesEmptyStringInputParams],
+        **kwargs: _Unpack[_models.OmitsNullSerializesEmptyStringInputDict],
     ) -> OmitsNullSerializesEmptyStringOutput:
         """
         Omits null, but serializes empty string value.
@@ -3501,7 +3499,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def omits_serializing_empty_lists(
         self,
         request: _models.OmitsSerializingEmptyListsInput
-        | _models.OmitsSerializingEmptyListsInputParams,
+        | _models.OmitsSerializingEmptyListsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3513,7 +3511,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.OmitsSerializingEmptyListsInputParams],
+        **kwargs: _Unpack[_models.OmitsSerializingEmptyListsInputDict],
     ) -> OmitsSerializingEmptyListsOutput:
         """
         Omits serializing empty lists. Because empty strings are serilized as
@@ -3545,7 +3543,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def operation_with_defaults(
         self,
         request: _models.OperationWithDefaultsInput
-        | _models.OperationWithDefaultsInputParams,
+        | _models.OperationWithDefaultsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3557,7 +3555,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.OperationWithDefaultsInputParams],
+        **kwargs: _Unpack[_models.OperationWithDefaultsInputDict],
     ) -> OperationWithDefaultsOutput:
         """
         Invokes the OperationWithDefaults operation.
@@ -3587,7 +3585,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def operation_with_nested_structure(
         self,
         request: _models.OperationWithNestedStructureInput
-        | _models.OperationWithNestedStructureInputParams,
+        | _models.OperationWithNestedStructureInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3599,7 +3597,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.OperationWithNestedStructureInputParams],
+        **kwargs: _Unpack[_models.OperationWithNestedStructureInputDict],
     ) -> OperationWithNestedStructureOutput:
         """
         Invokes the OperationWithNestedStructure operation.
@@ -3628,7 +3626,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def post_player_action(
         self,
-        request: _models.PostPlayerActionInput | _models.PostPlayerActionInputParams,
+        request: _models.PostPlayerActionInput | _models.PostPlayerActionInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3640,7 +3638,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.PostPlayerActionInputParams],
+        **kwargs: _Unpack[_models.PostPlayerActionInputDict],
     ) -> PostPlayerActionOutput:
         """
         This operation defines a union with a Unit member.
@@ -3670,7 +3668,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def post_union_with_json_name(
         self,
         request: _models.PostUnionWithJsonNameInput
-        | _models.PostUnionWithJsonNameInputParams,
+        | _models.PostUnionWithJsonNameInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3682,7 +3680,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.PostUnionWithJsonNameInputParams],
+        **kwargs: _Unpack[_models.PostUnionWithJsonNameInputDict],
     ) -> PostUnionWithJsonNameOutput:
         """
         This operation defines a union that uses jsonName on some members.
@@ -3712,7 +3710,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def put_with_content_encoding(
         self,
         request: _models.PutWithContentEncodingInput
-        | _models.PutWithContentEncodingInputParams,
+        | _models.PutWithContentEncodingInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3724,7 +3722,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.PutWithContentEncodingInputParams],
+        **kwargs: _Unpack[_models.PutWithContentEncodingInputDict],
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
@@ -3754,7 +3752,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def query_idempotency_token_auto_fill(
         self,
         request: _models.QueryIdempotencyTokenAutoFillInput
-        | _models.QueryIdempotencyTokenAutoFillInputParams,
+        | _models.QueryIdempotencyTokenAutoFillInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3766,7 +3764,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.QueryIdempotencyTokenAutoFillInputParams],
+        **kwargs: _Unpack[_models.QueryIdempotencyTokenAutoFillInputDict],
     ) -> QueryIdempotencyTokenAutoFillOutput:
         """
         Automatically adds idempotency tokens.
@@ -3796,7 +3794,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def query_params_as_string_list_map(
         self,
         request: _models.QueryParamsAsStringListMapInput
-        | _models.QueryParamsAsStringListMapInputParams,
+        | _models.QueryParamsAsStringListMapInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3808,7 +3806,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.QueryParamsAsStringListMapInputParams],
+        **kwargs: _Unpack[_models.QueryParamsAsStringListMapInputDict],
     ) -> QueryParamsAsStringListMapOutput:
         """
         Invokes the QueryParamsAsStringListMap operation.
@@ -3837,7 +3835,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def query_precedence(
         self,
-        request: _models.QueryPrecedenceInput | _models.QueryPrecedenceInputParams,
+        request: _models.QueryPrecedenceInput | _models.QueryPrecedenceInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3849,7 +3847,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.QueryPrecedenceInputParams],
+        **kwargs: _Unpack[_models.QueryPrecedenceInputDict],
     ) -> QueryPrecedenceOutput:
         """
         Invokes the QueryPrecedence operation.
@@ -3878,7 +3876,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def recursive_shapes(
         self,
-        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputParams,
+        request: _models.RecursiveShapesInput | _models.RecursiveShapesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3890,7 +3888,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.RecursiveShapesInputParams],
+        **kwargs: _Unpack[_models.RecursiveShapesInputDict],
     ) -> RecursiveShapesOutput:
         """
         Recursive shapes
@@ -3920,7 +3918,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def response_code_http_fallback(
         self,
         request: _models.ResponseCodeHttpFallbackInput
-        | _models.ResponseCodeHttpFallbackInputParams,
+        | _models.ResponseCodeHttpFallbackInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3932,7 +3930,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.ResponseCodeHttpFallbackInputParams],
+        **kwargs: _Unpack[_models.ResponseCodeHttpFallbackInputDict],
     ) -> ResponseCodeHttpFallbackOutput:
         """
         Invokes the ResponseCodeHttpFallback operation.
@@ -3962,7 +3960,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def response_code_required(
         self,
         request: _models.ResponseCodeRequiredInput
-        | _models.ResponseCodeRequiredInputParams,
+        | _models.ResponseCodeRequiredInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -3974,7 +3972,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.ResponseCodeRequiredInputParams],
+        **kwargs: _Unpack[_models.ResponseCodeRequiredInputDict],
     ) -> ResponseCodeRequiredOutput:
         """
         Invokes the ResponseCodeRequired operation.
@@ -4004,7 +4002,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def simple_scalar_properties(
         self,
         request: _models.SimpleScalarPropertiesInput
-        | _models.SimpleScalarPropertiesInputParams,
+        | _models.SimpleScalarPropertiesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4016,7 +4014,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputParams],
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputDict],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
@@ -4045,7 +4043,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def sparse_json_lists(
         self,
-        request: _models.SparseJsonListsInput | _models.SparseJsonListsInputParams,
+        request: _models.SparseJsonListsInput | _models.SparseJsonListsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4057,7 +4055,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.SparseJsonListsInputParams],
+        **kwargs: _Unpack[_models.SparseJsonListsInputDict],
     ) -> SparseJsonListsOutput:
         """
         Invokes the SparseJsonLists operation.
@@ -4086,7 +4084,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def sparse_json_maps(
         self,
-        request: _models.SparseJsonMapsInput | _models.SparseJsonMapsInputParams,
+        request: _models.SparseJsonMapsInput | _models.SparseJsonMapsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4098,7 +4096,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.SparseJsonMapsInputParams],
+        **kwargs: _Unpack[_models.SparseJsonMapsInputDict],
     ) -> SparseJsonMapsOutput:
         """
         This example tests sparse map serialization.
@@ -4127,7 +4125,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def streaming_traits(
         self,
-        request: _models.StreamingTraitsInput | _models.StreamingTraitsInputParams,
+        request: _models.StreamingTraitsInput | _models.StreamingTraitsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4139,7 +4137,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.StreamingTraitsInputParams],
+        **kwargs: _Unpack[_models.StreamingTraitsInputDict],
     ) -> StreamingTraitsOutput:
         """
         This examples serializes a streaming blob shape in the request body. In
@@ -4171,7 +4169,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def streaming_traits_require_length(
         self,
         request: _models.StreamingTraitsRequireLengthInput
-        | _models.StreamingTraitsRequireLengthInputParams,
+        | _models.StreamingTraitsRequireLengthInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4183,7 +4181,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.StreamingTraitsRequireLengthInputParams],
+        **kwargs: _Unpack[_models.StreamingTraitsRequireLengthInputDict],
     ) -> StreamingTraitsRequireLengthOutput:
         """
         This examples serializes a streaming blob shape with a required content
@@ -4215,7 +4213,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def streaming_traits_with_media_type(
         self,
         request: _models.StreamingTraitsWithMediaTypeInput
-        | _models.StreamingTraitsWithMediaTypeInputParams,
+        | _models.StreamingTraitsWithMediaTypeInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4227,7 +4225,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.StreamingTraitsWithMediaTypeInputParams],
+        **kwargs: _Unpack[_models.StreamingTraitsWithMediaTypeInputDict],
     ) -> StreamingTraitsWithMediaTypeOutput:
         """
         This examples serializes a streaming media-typed blob shape in the
@@ -4258,7 +4256,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def test_body_structure(
         self,
-        request: _models.TestBodyStructureInput | _models.TestBodyStructureInputParams,
+        request: _models.TestBodyStructureInput | _models.TestBodyStructureInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4270,7 +4268,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TestBodyStructureInputParams],
+        **kwargs: _Unpack[_models.TestBodyStructureInputDict],
     ) -> TestBodyStructureOutput:
         """
         This example operation serializes a structure in the HTTP body. It
@@ -4302,7 +4300,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def test_get_no_input_no_payload(
         self,
         request: _models.TestGetNoInputNoPayloadInput
-        | _models.TestGetNoInputNoPayloadInputParams,
+        | _models.TestGetNoInputNoPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4314,7 +4312,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TestGetNoInputNoPayloadInputParams],
+        **kwargs: _Unpack[_models.TestGetNoInputNoPayloadInputDict],
     ) -> TestGetNoInputNoPayloadOutput:
         """
         This example GET operation has no input and serializes a request without
@@ -4346,7 +4344,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def test_get_no_payload(
         self,
-        request: _models.TestGetNoPayloadInput | _models.TestGetNoPayloadInputParams,
+        request: _models.TestGetNoPayloadInput | _models.TestGetNoPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4358,7 +4356,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TestGetNoPayloadInputParams],
+        **kwargs: _Unpack[_models.TestGetNoPayloadInputDict],
     ) -> TestGetNoPayloadOutput:
         """
         This example GET operation serializes a request without a modeled HTTP
@@ -4390,7 +4388,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def test_payload_blob(
         self,
-        request: _models.TestPayloadBlobInput | _models.TestPayloadBlobInputParams,
+        request: _models.TestPayloadBlobInput | _models.TestPayloadBlobInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4402,7 +4400,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TestPayloadBlobInputParams],
+        **kwargs: _Unpack[_models.TestPayloadBlobInputDict],
     ) -> TestPayloadBlobOutput:
         """
         This example operation serializes a payload targeting a blob. The Blob
@@ -4436,7 +4434,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def test_payload_structure(
         self,
         request: _models.TestPayloadStructureInput
-        | _models.TestPayloadStructureInputParams,
+        | _models.TestPayloadStructureInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4448,7 +4446,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TestPayloadStructureInputParams],
+        **kwargs: _Unpack[_models.TestPayloadStructureInputDict],
     ) -> TestPayloadStructureOutput:
         """
         This example operation serializes a payload targeting a structure. This
@@ -4480,7 +4478,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def test_post_no_input_no_payload(
         self,
         request: _models.TestPostNoInputNoPayloadInput
-        | _models.TestPostNoInputNoPayloadInputParams,
+        | _models.TestPostNoInputNoPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4492,7 +4490,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TestPostNoInputNoPayloadInputParams],
+        **kwargs: _Unpack[_models.TestPostNoInputNoPayloadInputDict],
     ) -> TestPostNoInputNoPayloadOutput:
         """
         This example POST operation has no input and serializes a request
@@ -4524,7 +4522,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def test_post_no_payload(
         self,
-        request: _models.TestPostNoPayloadInput | _models.TestPostNoPayloadInputParams,
+        request: _models.TestPostNoPayloadInput | _models.TestPostNoPayloadInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4536,7 +4534,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TestPostNoPayloadInputParams],
+        **kwargs: _Unpack[_models.TestPostNoPayloadInputDict],
     ) -> TestPostNoPayloadOutput:
         """
         This example POST operation serializes a request without a modeled HTTP
@@ -4568,7 +4566,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     def timestamp_format_headers(
         self,
         request: _models.TimestampFormatHeadersInput
-        | _models.TimestampFormatHeadersInputParams,
+        | _models.TimestampFormatHeadersInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4580,7 +4578,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TimestampFormatHeadersInputParams],
+        **kwargs: _Unpack[_models.TimestampFormatHeadersInputDict],
     ) -> TimestampFormatHeadersOutput:
         """
         This example tests how timestamp request and response headers are
@@ -4610,8 +4608,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     @_overload
     def unit_input_and_output(
         self,
-        request: _models.UnitInputAndOutputInput
-        | _models.UnitInputAndOutputInputParams,
+        request: _models.UnitInputAndOutputInput | _models.UnitInputAndOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -4623,7 +4620,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.UnitInputAndOutputInputParams],
+        **kwargs: _Unpack[_models.UnitInputAndOutputInputDict],
     ) -> UnitInputAndOutputOutput:
         """
         This test is similar to NoInputAndNoOutput, but uses explicit Unit

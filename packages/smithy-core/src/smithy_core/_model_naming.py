@@ -27,9 +27,10 @@ _RESERVED_ERROR_MEMBERS = frozenset(
 )
 _ERROR_MESSAGE_MEMBER_NAMES = frozenset({"errormessage", "error_message", "message"})
 _RESPONSE_METADATA_MEMBER = "response_metadata"
-# The parameters every generated client method declares besides its input members.
+# The names every generated client method uses besides its input members: the
+# parameters it declares, and the models module alias its body references.
 # CAUTION: mirrors PythonSymbolProvider.OPERATION_PARAMETER_NAMES.
-_RESERVED_INPUT_MEMBERS = frozenset({"self", "plugins"})
+_RESERVED_INPUT_MEMBERS = frozenset({"self", "plugins", "_models"})
 
 
 def to_snake_case(word: str) -> str:
@@ -75,8 +76,9 @@ def escape_input_member_names(names: Sequence[str]) -> tuple[str, ...]:
     """Escape the member names of an operation input that a client method reserves.
 
     An operation's input members are the keyword parameters of its client method,
-    so a member named like one of the method's own parameters gets a trailing
-    underscore, and more of them while that collides with another member.
+    so a member named like one of the method's own parameters, or like a module
+    alias its body uses, gets a trailing underscore, and more of them while that
+    collides with another member.
 
     CAUTION: mirrors PythonSymbolProvider.escapeOperationParameter.
 

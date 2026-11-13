@@ -78,7 +78,7 @@ public class PythonCodegenTest {
             assertGenerated(generated, """
                         def get_city(
                             self,
-                            request: _models.GetCityInput | _models.GetCityInputParams,
+                            request: _models.GetCityInput | _models.GetCityInputDict,
                             /,
                             *,
                             plugins: list[Plugin] | None = None,
@@ -90,7 +90,7 @@ public class PythonCodegenTest {
                             /,
                             *,
                             plugins: list[Plugin] | None = None,
-                            **kwargs: _Unpack[_models.GetCityInputParams],
+                            **kwargs: _Unpack[_models.GetCityInputDict],
                         ) -> GetCityOutput:
                     """);
             assertGenerated(generated, """
@@ -111,9 +111,9 @@ public class PythonCodegenTest {
             // unpacks its (empty) dictionary form, so it is called with no arguments.
             assertGeneratedMatches(generated,
                     "defget_current_time\\(self,/,\\*,plugins:list\\[Plugin\\]\\|None=None,"
-                            + "\\*\\*kwargs:_Unpack\\[_models\\.\\w+Params\\]\\)->GetCurrentTimeOutput:");
+                            + "\\*\\*kwargs:_Unpack\\[_models\\.\\w+Dict\\]\\)->GetCurrentTimeOutput:");
             // Members with escaped names, required members and defaulted members are
-            // keys of the unpacked form; see CreateConnectorInputParams below.
+            // keys of the unpacked form; see CreateConnectorInputDict below.
             assertGenerated(generated,
                     """
                                 def create_connector(
@@ -121,7 +121,7 @@ public class PythonCodegenTest {
                                     /,
                                     *,
                                     plugins: list[Plugin] | None = None,
-                                    **kwargs: _Unpack[_models.CreateConnectorInputParams],
+                                    **kwargs: _Unpack[_models.CreateConnectorInputDict],
                                 ) -> CreateConnectorOutput:
                             """);
             // The members reach the runtime as the implementation's keyword arguments,
@@ -149,7 +149,7 @@ public class PythonCodegenTest {
                 async def stream_atmospheric_conditions(
                     self,
                     request: _models.StreamAtmosphericConditionsInput
-                        | _models.StreamAtmosphericConditionsInputParams,
+                        | _models.StreamAtmosphericConditionsInputDict,
                     /,
                     *,
                     plugins: list[Plugin] | None = None,
@@ -160,7 +160,7 @@ public class PythonCodegenTest {
                     /,
                     *,
                     plugins: list[Plugin] | None = None,
-                    **kwargs: _Unpack[_models.StreamAtmosphericConditionsInputParams],
+                    **kwargs: _Unpack[_models.StreamAtmosphericConditionsInputDict],
                 ) -> AsyncDuplexEventStream[""");
         assertGenerated(client, """
                 async def stream_atmospheric_conditions(
@@ -199,7 +199,7 @@ public class PythonCodegenTest {
         // Every structure reachable from an operation input has a TypedDict form whose
         // keys are the generated member names. Members that must be set are Required.
         assertGenerated(models, """
-                class CreateConnectorInputParams(TypedDict, total=False):
+                class CreateConnectorInputDict(TypedDict, total=False):
                     ""\"Dictionary form of `CreateConnectorInput`.""\"
                     name: Required[str]
                     plugins__: Required[Sequence[str]]
@@ -208,60 +208,60 @@ public class PythonCodegenTest {
                     client_token: str | None
                     ""\"This field is autopopulated if not provided.""\"
                     page_size: int | None
-                    connector: Connector | Connector_Params | None
+                    connector: Connector | Connector_Dict | None
                 """);
         // Every key the keyword overload unpacks, in model order. Required members
         // are Required; defaulted members and the idempotency token may be omitted.
         // Members named like the method's own parameters are escaped, past a modeled
         // member that already has the escaped name.
         assertKeys(models,
-                "CreateConnectorInputParams",
+                "CreateConnectorInputDict",
                 "name: Required[str]",
                 "plugins__: Required[Sequence[str]]",
                 "plugins_: str | None",
                 "self_: str | None",
                 "client_token: str | None",
                 "page_size: int | None",
-                "connector: Connector | Connector_Params | None",
-                "connectors: Sequence[Connector | Connector_Params] | None",
-                "sparse_connectors: Sequence[Connector | Connector_Params | None] | None",
-                "connectors_by_name: Mapping[str, Connector | Connector_Params] | None",
-                "image: ImageType | ImageTypeParams | None",
-                "recursive: RecursiveUnion | RecursiveUnionParams | None",
-                "mutual: MutuallyRecursiveA | MutuallyRecursiveAParams | None",
-                "connector_params: ConnectorParams | ConnectorParamsParams | None",
+                "connector: Connector | Connector_Dict | None",
+                "connectors: Sequence[Connector | Connector_Dict] | None",
+                "sparse_connectors: Sequence[Connector | Connector_Dict | None] | None",
+                "connectors_by_name: Mapping[str, Connector | Connector_Dict] | None",
+                "image: ImageType | ImageTypeDict | None",
+                "recursive: RecursiveUnion | RecursiveUnionDict | None",
+                "mutual: MutuallyRecursiveA | MutuallyRecursiveADict | None",
+                "connector_params: ConnectorDict | ConnectorDictDict | None",
                 "settings: Document | None",
                 "kind: str | None",
                 "created_after: datetime | None");
-        assertKeys(models, "GetCityInputParams", "city_id: Required[str]");
-        assertKeys(models, "StreamAtmosphericConditionsInputParams", "city_id: Required[str]");
+        assertKeys(models, "GetCityInputDict", "city_id: Required[str]");
+        assertKeys(models, "StreamAtmosphericConditionsInputDict", "city_id: Required[str]");
         // Members of nested structures are not parameters, so they are not escaped.
         // The plain name of Connector's dictionary form is taken by a modeled shape.
         assertGenerated(models, """
-                class Connector_Params(TypedDict, total=False):
+                class Connector_Dict(TypedDict, total=False):
                     ""\"Dictionary form of `Connector`.""\"
                     name: Required[str]
                     version: int | None
                     plugins: Sequence[str] | None
-                    image: ImageType | ImageTypeParams | None
+                    image: ImageType | ImageTypeDict | None
                 """);
-        assertTrue(models.contains("class ConnectorParamsParams(TypedDict, total=False):"));
+        assertTrue(models.contains("class ConnectorDictDict(TypedDict, total=False):"));
         // A union's dictionary form sets exactly one variant.
         assertGenerated(models, """
-                class ImageTypeRawParams(TypedDict):
+                class ImageTypeRawDict(TypedDict):
                     raw: bool
 
-                class ImageTypePngParams(TypedDict):
-                    png: PNGImage | PNGImageParams
+                class ImageTypePngDict(TypedDict):
+                    png: PNGImage | PNGImageDict
 
-                ImageTypeParams = Union[ImageTypeRawParams | ImageTypePngParams]
+                ImageTypeDict = Union[ImageTypeRawDict | ImageTypePngDict]
                 """);
         // Recursive shapes refer to their own dictionary forms.
         assertGenerated(models, """
-                class RecursiveUnionNestedParams(TypedDict):
-                    nested: Mapping[str, RecursiveUnion | RecursiveUnionParams]
+                class RecursiveUnionNestedDict(TypedDict):
+                    nested: Mapping[str, RecursiveUnion | RecursiveUnionDict]
                 """);
-        assertTrue(models.contains("mutual: MutuallyRecursiveB | MutuallyRecursiveBParams | None"));
+        assertTrue(models.contains("mutual: MutuallyRecursiveB | MutuallyRecursiveBDict | None"));
         // An input with a streaming body has two forms. The plain one takes the bodies
         // a sync client can send, so it unpacks into either client. The async one
         // also takes async streams, as the model and the async client do.
@@ -271,14 +271,14 @@ public class PythonCodegenTest {
                     name: Required[str]
                     image: Required[SyncStreamingBlob]
 
-                class AsyncUploadCityImageInputParams(TypedDict, total=False):
+                class AsyncUploadCityImageInputDict(TypedDict, total=False):
                 """);
         assertGenerated(models, """
                     name: Required[str]
                     image: Required[StreamingBlob]
                 """);
-        assertTrue(models.contains("class UploadCityImageInputParams(TypedDict, total=False):"));
-        assertFalse(models.contains("AsyncCreateConnectorInputParams"));
+        assertTrue(models.contains("class UploadCityImageInputDict(TypedDict, total=False):"));
+        assertFalse(models.contains("AsyncCreateConnectorInputDict"));
         // Each client's method takes the body its mode can send: the sync client
         // unpacks the plain form, the async client the form that also takes async
         // streams. The body type is spelled only by those forms.
@@ -291,7 +291,7 @@ public class PythonCodegenTest {
                         /,
                         *,
                         plugins: list[Plugin] | None = None,
-                        **kwargs: _Unpack[_models.UploadCityImageInputParams],
+                        **kwargs: _Unpack[_models.UploadCityImageInputDict],
                     ) -> UploadCityImageOutput:
                 """);
         assertGenerated(client, """
@@ -300,20 +300,20 @@ public class PythonCodegenTest {
                         /,
                         *,
                         plugins: list[Plugin] | None = None,
-                        **kwargs: _Unpack[_models.AsyncUploadCityImageInputParams],
+                        **kwargs: _Unpack[_models.AsyncUploadCityImageInputDict],
                     ) -> UploadCityImageOutput:
                 """);
-        assertKeys(models, "UploadCityImageInputParams", "name: Required[str]", "image: Required[SyncStreamingBlob]");
-        assertKeys(models, "AsyncUploadCityImageInputParams", "name: Required[str]", "image: Required[StreamingBlob]");
+        assertKeys(models, "UploadCityImageInputDict", "name: Required[str]", "image: Required[SyncStreamingBlob]");
+        assertKeys(models, "AsyncUploadCityImageInputDict", "name: Required[str]", "image: Required[StreamingBlob]");
         // The package is marked as typed, so the stub is used once it is installed.
         assertEquals("", Files.readString(tempDir.resolve("src/weather/py.typed")));
 
         // Dictionary forms are for input only: shapes that are only ever returned, and
         // events, have none.
-        assertFalse(models.contains("class GetCityOutputParams"));
-        assertFalse(models.contains("class CitySummaryParams"));
-        assertFalse(models.contains("class HumiditySampleParams"));
-        assertFalse(models.contains("AtmosphericConditionsParams"));
+        assertFalse(models.contains("class GetCityOutputDict"));
+        assertFalse(models.contains("class CitySummaryDict"));
+        assertFalse(models.contains("class HumiditySampleDict"));
+        assertFalse(models.contains("AtmosphericConditionsDict"));
 
         var runtimeModels = Files.readString(tempDir.resolve("src/weather/models.py"));
         assertTrue(runtimeModels.contains("_operation_names = ("));
@@ -431,26 +431,26 @@ public class PythonCodegenTest {
 
         // A shape's dictionary form is declared in its partition and re-exported with
         // it, so it is still imported from the public models module.
-        assertTrue(models.contains("GetLargeInputParams as GetLargeInputParams,"));
-        assertTrue(models.contains("Shape0Params as Shape0Params,"));
-        assertTrue(models.contains("Shape250Params as Shape250Params,"));
-        assertFalse(models.contains("class Shape0Params"));
+        assertTrue(models.contains("GetLargeInputDict as GetLargeInputDict,"));
+        assertTrue(models.contains("Shape0Dict as Shape0Dict,"));
+        assertTrue(models.contains("Shape250Dict as Shape250Dict,"));
+        assertFalse(models.contains("class Shape0Dict"));
         // Only shapes reachable from an operation input have one.
-        assertFalse(models.contains("GetLargeOutputParams"));
+        assertFalse(models.contains("GetLargeOutputDict"));
 
         var partitions = readFiles(tempDir.resolve("src/large/_private"), "models_*.pyi");
-        assertGenerated(partitions, "class GetLargeInputParams(TypedDict, total=False):");
-        assertGenerated(partitions, "root: Shape0 | Shape0Params | None");
-        assertGenerated(partitions, "class Shape250Params(TypedDict, total=False):");
+        assertGenerated(partitions, "class GetLargeInputDict(TypedDict, total=False):");
+        assertGenerated(partitions, "root: Shape0 | Shape0Dict | None");
+        assertGenerated(partitions, "class Shape250Dict(TypedDict, total=False):");
         // A member refers to its target's model and dictionary form by their own
         // names, whether the target is declared in the same partition or another.
         for (int i = 0; i < 250; i++) {
-            assertGenerated(partitions, String.format("next: Shape%1$d | Shape%1$dParams | None", i + 1));
+            assertGenerated(partitions, String.format("next: Shape%1$d | Shape%1$dDict | None", i + 1));
         }
         assertFalse(partitions.contains(" as _Shape"));
         // The chain of shapes crosses the partition boundary, and the dictionary form
         // on the far side is imported through the public module, as its model is.
-        assertTrue(Pattern.compile("from \\.\\.models import \\(?[^()]*?\\bShape\\d+Params\\b")
+        assertTrue(Pattern.compile("from \\.\\.models import \\(?[^()]*?\\bShape\\d+Dict\\b")
                 .matcher(partitions)
                 .find());
 
@@ -458,8 +458,8 @@ public class PythonCodegenTest {
         // models module, and its keyword overload unpacks that form, whose root key is
         // asserted in the partitions above.
         var client = Files.readString(tempDir.resolve("src/large/aio/client.py"));
-        assertGenerated(client, "request: _models.GetLargeInput | _models.GetLargeInputParams,");
-        assertGenerated(client, "**kwargs: _Unpack[_models.GetLargeInputParams]");
+        assertGenerated(client, "request: _models.GetLargeInput | _models.GetLargeInputDict,");
+        assertGenerated(client, "**kwargs: _Unpack[_models.GetLargeInputDict]");
 
         assumeTrue(!knownPyrightCrash,
                 "Known Pyright limitation: type checking the synthetic 251-deep TypedDict chain hit"

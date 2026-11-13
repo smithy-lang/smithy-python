@@ -54,7 +54,7 @@ class ContentTypeParametersInput(_SerdeShape):
 
     value: int | None = ...
 
-class ContentTypeParametersInputParams(TypedDict, total=False):
+class ContentTypeParametersInputDict(TypedDict, total=False):
     """Dictionary form of `ContentTypeParametersInput`."""
 
     value: int | None
@@ -75,7 +75,7 @@ class ContentTypeParametersOutput(_SerdeShape):
 class DatetimeOffsetsInput(_SerdeShape):
     """Dataclass for DatetimeOffsetsInput structure."""
 
-class DatetimeOffsetsInputParams(TypedDict, total=False):
+class DatetimeOffsetsInputDict(TypedDict, total=False):
     """Dictionary form of `DatetimeOffsetsInput`."""
 
 @dataclass(kw_only=True)
@@ -95,7 +95,7 @@ class DatetimeOffsetsOutput(_SerdeShape):
 class EmptyOperationInput(_SerdeShape):
     """Dataclass for EmptyOperationInput structure."""
 
-class EmptyOperationInputParams(TypedDict, total=False):
+class EmptyOperationInputDict(TypedDict, total=False):
     """Dictionary form of `EmptyOperationInput`."""
 
 @dataclass(kw_only=True)
@@ -114,14 +114,14 @@ class EmptyOperationOutput(_SerdeShape):
 class EmptyStruct(_SerdeShape):
     """Dataclass for EmptyStruct structure."""
 
-class EmptyStructParams(TypedDict, total=False):
+class EmptyStructDict(TypedDict, total=False):
     """Dictionary form of `EmptyStruct`."""
 
 @dataclass(kw_only=True)
 class EndpointOperationInput(_SerdeShape):
     """Dataclass for EndpointOperationInput structure."""
 
-class EndpointOperationInputParams(TypedDict, total=False):
+class EndpointOperationInputDict(TypedDict, total=False):
     """Dictionary form of `EndpointOperationInput`."""
 
 @dataclass(kw_only=True)
@@ -142,7 +142,7 @@ class EndpointWithHostLabelOperationInput(_SerdeShape):
 
     label: str | None = ...
 
-class EndpointWithHostLabelOperationInputParams(TypedDict, total=False):
+class EndpointWithHostLabelOperationInputDict(TypedDict, total=False):
     """Dictionary form of `EndpointWithHostLabelOperationInput`."""
 
     label: Required[str]
@@ -209,7 +209,7 @@ class FooError(ServiceError, _SerdeShape):
 class FractionalSecondsInput(_SerdeShape):
     """Dataclass for FractionalSecondsInput structure."""
 
-class FractionalSecondsInputParams(TypedDict, total=False):
+class FractionalSecondsInputDict(TypedDict, total=False):
     """Dictionary form of `FractionalSecondsInput`."""
 
 @dataclass(kw_only=True)
@@ -229,7 +229,7 @@ class FractionalSecondsOutput(_SerdeShape):
 class GreetingWithErrorsInput(_SerdeShape):
     """Dataclass for GreetingWithErrorsInput structure."""
 
-class GreetingWithErrorsInputParams(TypedDict, total=False):
+class GreetingWithErrorsInputDict(TypedDict, total=False):
     """Dictionary form of `GreetingWithErrorsInput`."""
 
 @dataclass(kw_only=True)
@@ -249,7 +249,7 @@ class GreetingWithErrorsOutput(_SerdeShape):
 class HostWithPathOperationInput(_SerdeShape):
     """Dataclass for HostWithPathOperationInput structure."""
 
-class HostWithPathOperationInputParams(TypedDict, total=False):
+class HostWithPathOperationInputDict(TypedDict, total=False):
     """Dictionary form of `HostWithPathOperationInput`."""
 
 @dataclass(kw_only=True)
@@ -287,7 +287,7 @@ class JsonEnumsInput(_SerdeShape):
     foo_enum_set: list[str] | None = ...
     foo_enum_map: dict[str, str] | None = ...
 
-class JsonEnumsInputParams(TypedDict, total=False):
+class JsonEnumsInputDict(TypedDict, total=False):
     """Dictionary form of `JsonEnumsInput`."""
 
     foo_enum1: str | None
@@ -326,7 +326,7 @@ class JsonIntEnumsInput(_SerdeShape):
     int_enum_set: list[int] | None = ...
     int_enum_map: dict[str, int] | None = ...
 
-class JsonIntEnumsInputParams(TypedDict, total=False):
+class JsonIntEnumsInputDict(TypedDict, total=False):
     """Dictionary form of `JsonIntEnumsInput`."""
 
     int_enum1: int | None
@@ -361,10 +361,10 @@ class JsonUnionsInput(_SerdeShape):
     contents: MyUnion | None = ...
     """A union with a representative set of types for members."""
 
-class JsonUnionsInputParams(TypedDict, total=False):
+class JsonUnionsInputDict(TypedDict, total=False):
     """Dictionary form of `JsonUnionsInput`."""
 
-    contents: MyUnion | MyUnionParams | None
+    contents: MyUnion | MyUnionDict | None
     """A union with a representative set of types for members."""
 
 @dataclass(kw_only=True)
@@ -412,13 +412,13 @@ class KitchenSink(_SerdeShape):
     timestamp: datetime | None = ...
     unix_timestamp: datetime | None = ...
 
-class KitchenSinkParams(TypedDict, total=False):
+class KitchenSinkDict(TypedDict, total=False):
     """Dictionary form of `KitchenSink`."""
 
     blob: bytes | None
     boolean: bool | None
     double: float | None
-    empty_struct: EmptyStruct | EmptyStructParams | None
+    empty_struct: EmptyStruct | EmptyStructDict | None
     float_: float | None
     httpdate_timestamp: datetime | None
     integer: int | None
@@ -427,18 +427,18 @@ class KitchenSinkParams(TypedDict, total=False):
     list_of_lists: Sequence[Sequence[str]] | None
     list_of_maps_of_strings: Sequence[Mapping[str, str]] | None
     list_of_strings: Sequence[str] | None
-    list_of_structs: Sequence[SimpleStruct | SimpleStructParams] | None
+    list_of_structs: Sequence[SimpleStruct | SimpleStructDict] | None
     long: int | None
     map_of_lists_of_strings: Mapping[str, Sequence[str]] | None
     map_of_maps: Mapping[str, Mapping[str, str]] | None
     map_of_strings: Mapping[str, str] | None
-    map_of_structs: Mapping[str, SimpleStruct | SimpleStructParams] | None
-    recursive_list: Sequence[KitchenSink | KitchenSinkParams] | None
-    recursive_map: Mapping[str, KitchenSink | KitchenSinkParams] | None
-    recursive_struct: KitchenSink | KitchenSinkParams | None
-    simple_struct: SimpleStruct | SimpleStructParams | None
+    map_of_structs: Mapping[str, SimpleStruct | SimpleStructDict] | None
+    recursive_list: Sequence[KitchenSink | KitchenSinkDict] | None
+    recursive_map: Mapping[str, KitchenSink | KitchenSinkDict] | None
+    recursive_struct: KitchenSink | KitchenSinkDict | None
+    simple_struct: SimpleStruct | SimpleStructDict | None
     string: str | None
-    struct_with_json_name: StructWithJsonName | StructWithJsonNameParams | None
+    struct_with_json_name: StructWithJsonName | StructWithJsonNameDict | None
     timestamp: datetime | None
     unix_timestamp: datetime | None
 
@@ -473,13 +473,13 @@ class KitchenSinkOperationInput(_SerdeShape):
     timestamp: datetime | None = ...
     unix_timestamp: datetime | None = ...
 
-class KitchenSinkOperationInputParams(TypedDict, total=False):
+class KitchenSinkOperationInputDict(TypedDict, total=False):
     """Dictionary form of `KitchenSinkOperationInput`."""
 
     blob: bytes | None
     boolean: bool | None
     double: float | None
-    empty_struct: EmptyStruct | EmptyStructParams | None
+    empty_struct: EmptyStruct | EmptyStructDict | None
     float_: float | None
     httpdate_timestamp: datetime | None
     integer: int | None
@@ -488,18 +488,18 @@ class KitchenSinkOperationInputParams(TypedDict, total=False):
     list_of_lists: Sequence[Sequence[str]] | None
     list_of_maps_of_strings: Sequence[Mapping[str, str]] | None
     list_of_strings: Sequence[str] | None
-    list_of_structs: Sequence[SimpleStruct | SimpleStructParams] | None
+    list_of_structs: Sequence[SimpleStruct | SimpleStructDict] | None
     long: int | None
     map_of_lists_of_strings: Mapping[str, Sequence[str]] | None
     map_of_maps: Mapping[str, Mapping[str, str]] | None
     map_of_strings: Mapping[str, str] | None
-    map_of_structs: Mapping[str, SimpleStruct | SimpleStructParams] | None
-    recursive_list: Sequence[KitchenSink | KitchenSinkParams] | None
-    recursive_map: Mapping[str, KitchenSink | KitchenSinkParams] | None
-    recursive_struct: KitchenSink | KitchenSinkParams | None
-    simple_struct: SimpleStruct | SimpleStructParams | None
+    map_of_structs: Mapping[str, SimpleStruct | SimpleStructDict] | None
+    recursive_list: Sequence[KitchenSink | KitchenSinkDict] | None
+    recursive_map: Mapping[str, KitchenSink | KitchenSinkDict] | None
+    recursive_struct: KitchenSink | KitchenSinkDict | None
+    simple_struct: SimpleStruct | SimpleStructDict | None
     string: str | None
-    struct_with_json_name: StructWithJsonName | StructWithJsonNameParams | None
+    struct_with_json_name: StructWithJsonName | StructWithJsonNameDict | None
     timestamp: datetime | None
     unix_timestamp: datetime | None
 
@@ -604,43 +604,43 @@ MyUnion = Union[
 class _MyUnionDeserializer:
     def deserialize(self, deserializer: ShapeDeserializer) -> MyUnion: ...
 
-class MyUnionStringValueParams(TypedDict):
+class MyUnionStringValueDict(TypedDict):
     string_value: str
 
-class MyUnionBooleanValueParams(TypedDict):
+class MyUnionBooleanValueDict(TypedDict):
     boolean_value: bool
 
-class MyUnionNumberValueParams(TypedDict):
+class MyUnionNumberValueDict(TypedDict):
     number_value: int
 
-class MyUnionBlobValueParams(TypedDict):
+class MyUnionBlobValueDict(TypedDict):
     blob_value: bytes
 
-class MyUnionTimestampValueParams(TypedDict):
+class MyUnionTimestampValueDict(TypedDict):
     timestamp_value: datetime
 
-class MyUnionEnumValueParams(TypedDict):
+class MyUnionEnumValueDict(TypedDict):
     enum_value: str
 
-class MyUnionListValueParams(TypedDict):
+class MyUnionListValueDict(TypedDict):
     list_value: Sequence[str]
 
-class MyUnionMapValueParams(TypedDict):
+class MyUnionMapValueDict(TypedDict):
     map_value: Mapping[str, str]
 
-class MyUnionStructureValueParams(TypedDict):
-    structure_value: GreetingStruct | GreetingStructParams
+class MyUnionStructureValueDict(TypedDict):
+    structure_value: GreetingStruct | GreetingStructDict
 
-MyUnionParams = Union[
-    MyUnionStringValueParams
-    | MyUnionBooleanValueParams
-    | MyUnionNumberValueParams
-    | MyUnionBlobValueParams
-    | MyUnionTimestampValueParams
-    | MyUnionEnumValueParams
-    | MyUnionListValueParams
-    | MyUnionMapValueParams
-    | MyUnionStructureValueParams
+MyUnionDict = Union[
+    MyUnionStringValueDict
+    | MyUnionBooleanValueDict
+    | MyUnionNumberValueDict
+    | MyUnionBlobValueDict
+    | MyUnionTimestampValueDict
+    | MyUnionEnumValueDict
+    | MyUnionListValueDict
+    | MyUnionMapValueDict
+    | MyUnionStructureValueDict
 ]
 """Dictionary form of `MyUnion`, setting exactly one variant."""
 
@@ -650,7 +650,7 @@ class NullOperationInput(_SerdeShape):
 
     string: str | None = ...
 
-class NullOperationInputParams(TypedDict, total=False):
+class NullOperationInputDict(TypedDict, total=False):
     """Dictionary form of `NullOperationInput`."""
 
     string: str | None
@@ -674,7 +674,7 @@ class OperationWithOptionalInputOutputInput(_SerdeShape):
 
     value: str | None = ...
 
-class OperationWithOptionalInputOutputInputParams(TypedDict, total=False):
+class OperationWithOptionalInputOutputInputDict(TypedDict, total=False):
     """Dictionary form of `OperationWithOptionalInputOutputInput`."""
 
     value: str | None
@@ -698,7 +698,7 @@ class PutAndGetInlineDocumentsInput(_SerdeShape):
 
     inline_document: Document | None = ...
 
-class PutAndGetInlineDocumentsInputParams(TypedDict, total=False):
+class PutAndGetInlineDocumentsInputDict(TypedDict, total=False):
     """Dictionary form of `PutAndGetInlineDocumentsInput`."""
 
     inline_document: Document | None
@@ -723,7 +723,7 @@ class PutWithContentEncodingInput(_SerdeShape):
     encoding: str | None = ...
     data: str | None = ...
 
-class PutWithContentEncodingInputParams(TypedDict, total=False):
+class PutWithContentEncodingInputDict(TypedDict, total=False):
     """Dictionary form of `PutWithContentEncodingInput`."""
 
     encoding: str | None
@@ -748,7 +748,7 @@ class SimpleScalarPropertiesInput(_SerdeShape):
     float_value: float | None = ...
     double_value: float | None = ...
 
-class SimpleScalarPropertiesInputParams(TypedDict, total=False):
+class SimpleScalarPropertiesInputDict(TypedDict, total=False):
     """Dictionary form of `SimpleScalarPropertiesInput`."""
 
     float_value: float | None
@@ -774,7 +774,7 @@ class SimpleStruct(_SerdeShape):
 
     value: str | None = ...
 
-class SimpleStructParams(TypedDict, total=False):
+class SimpleStructDict(TypedDict, total=False):
     """Dictionary form of `SimpleStruct`."""
 
     value: str | None
@@ -786,7 +786,7 @@ class SparseNullsOperationInput(_SerdeShape):
     sparse_string_list: list[str | None] | None = ...
     sparse_string_map: dict[str, str | None] | None = ...
 
-class SparseNullsOperationInputParams(TypedDict, total=False):
+class SparseNullsOperationInputDict(TypedDict, total=False):
     """Dictionary form of `SparseNullsOperationInput`."""
 
     sparse_string_list: Sequence[str | None] | None
@@ -812,7 +812,7 @@ class StructWithJsonName(_SerdeShape):
 
     value: str | None = ...
 
-class StructWithJsonNameParams(TypedDict, total=False):
+class StructWithJsonNameDict(TypedDict, total=False):
     """Dictionary form of `StructWithJsonName`."""
 
     value: str | None
@@ -830,7 +830,7 @@ class GreetingStruct(_SerdeShape):
 
     hi: str | None = ...
 
-class GreetingStructParams(TypedDict, total=False):
+class GreetingStructDict(TypedDict, total=False):
     """Dictionary form of `GreetingStruct`."""
 
     hi: str | None

@@ -89,7 +89,7 @@ class PublishEventsInput(_SerdeShape):
 
     channel: str | None = ...
 
-class PublishEventsInputParams(TypedDict, total=False):
+class PublishEventsInputDict(TypedDict, total=False):
     """Dictionary form of `PublishEventsInput`."""
 
     channel: str | None
@@ -187,7 +187,7 @@ class SubscribeToEventsInput(_SerdeShape):
     channel: str | None = ...
     max_events: int | None = ...
 
-class SubscribeToEventsInputParams(TypedDict, total=False):
+class SubscribeToEventsInputDict(TypedDict, total=False):
     """Dictionary form of `SubscribeToEventsInput`."""
 
     channel: str | None
@@ -271,7 +271,7 @@ class TradeEventStreamInput(_SerdeShape):
 
     session_id: str | None = ...
 
-class TradeEventStreamInputParams(TypedDict, total=False):
+class TradeEventStreamInputDict(TypedDict, total=False):
     """Dictionary form of `TradeEventStreamInput`."""
 
     session_id: str | None

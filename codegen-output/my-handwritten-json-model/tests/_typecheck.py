@@ -10,7 +10,7 @@ from my_handwritten_json_model.models import (
     Gamma,
     GammaPayload,
     TradeEventStreamInput,
-    TradeEventStreamInputParams,
+    TradeEventStreamInputDict,
     TradeEventStreamOutput,
     Unit,
 )
@@ -29,7 +29,7 @@ Gamma()
 GammaPayload()
 TradeEventStreamInput()
 TradeEventStreamOutput()
-_params_0: TradeEventStreamInputParams = {}
+_params_0: TradeEventStreamInputDict = {}
 
 
 def _request[T](form: type[T]) -> T:
@@ -39,9 +39,9 @@ def _request[T](form: type[T]) -> T:
 async def check_async_calls(client: AsyncMyHandwrittenJsonModel) -> None:
     pass
     await client.trade_event_stream()
-    await client.trade_event_stream(**_request(TradeEventStreamInputParams))
+    await client.trade_event_stream(**_request(TradeEventStreamInputDict))
     await client.trade_event_stream(_request(TradeEventStreamInput))
-    await client.trade_event_stream(_request(TradeEventStreamInputParams))
+    await client.trade_event_stream(_request(TradeEventStreamInputDict))
 
 
 def check_sync_calls(client: MyHandwrittenJsonModel) -> None:

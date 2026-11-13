@@ -53,7 +53,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     def content_type_parameters(
         self,
         request: _models.ContentTypeParametersInput
-        | _models.ContentTypeParametersInputParams,
+        | _models.ContentTypeParametersInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -65,7 +65,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.ContentTypeParametersInputParams],
+        **kwargs: _Unpack[_models.ContentTypeParametersInputDict],
     ) -> ContentTypeParametersOutput:
         """
         The example tests how servers must support requests containing a
@@ -95,7 +95,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     @_overload
     def datetime_offsets(
         self,
-        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputParams,
+        request: _models.DatetimeOffsetsInput | _models.DatetimeOffsetsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -107,7 +107,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.DatetimeOffsetsInputParams],
+        **kwargs: _Unpack[_models.DatetimeOffsetsInputDict],
     ) -> DatetimeOffsetsOutput:
         """
         Invokes the DatetimeOffsets operation.
@@ -136,7 +136,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     @_overload
     def empty_operation(
         self,
-        request: _models.EmptyOperationInput | _models.EmptyOperationInputParams,
+        request: _models.EmptyOperationInput | _models.EmptyOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -148,7 +148,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EmptyOperationInputParams],
+        **kwargs: _Unpack[_models.EmptyOperationInputDict],
     ) -> EmptyOperationOutput:
         """
         Invokes the EmptyOperation operation.
@@ -177,7 +177,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     @_overload
     def endpoint_operation(
         self,
-        request: _models.EndpointOperationInput | _models.EndpointOperationInputParams,
+        request: _models.EndpointOperationInput | _models.EndpointOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -189,7 +189,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EndpointOperationInputParams],
+        **kwargs: _Unpack[_models.EndpointOperationInputDict],
     ) -> EndpointOperationOutput:
         """
         Invokes the EndpointOperation operation.
@@ -219,7 +219,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     def endpoint_with_host_label_operation(
         self,
         request: _models.EndpointWithHostLabelOperationInput
-        | _models.EndpointWithHostLabelOperationInputParams,
+        | _models.EndpointWithHostLabelOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -231,7 +231,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputParams],
+        **kwargs: _Unpack[_models.EndpointWithHostLabelOperationInputDict],
     ) -> EndpointWithHostLabelOperationOutput:
         """
         Invokes the EndpointWithHostLabelOperation operation.
@@ -262,7 +262,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     @_overload
     def fractional_seconds(
         self,
-        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputParams,
+        request: _models.FractionalSecondsInput | _models.FractionalSecondsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -274,7 +274,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.FractionalSecondsInputParams],
+        **kwargs: _Unpack[_models.FractionalSecondsInputDict],
     ) -> FractionalSecondsOutput:
         """
         Invokes the FractionalSeconds operation.
@@ -303,8 +303,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     @_overload
     def greeting_with_errors(
         self,
-        request: _models.GreetingWithErrorsInput
-        | _models.GreetingWithErrorsInputParams,
+        request: _models.GreetingWithErrorsInput | _models.GreetingWithErrorsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -316,7 +315,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.GreetingWithErrorsInputParams],
+        **kwargs: _Unpack[_models.GreetingWithErrorsInputDict],
     ) -> GreetingWithErrorsOutput:
         """
         This operation has three possible return values: 1. A successful
@@ -350,7 +349,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     def host_with_path_operation(
         self,
         request: _models.HostWithPathOperationInput
-        | _models.HostWithPathOperationInputParams,
+        | _models.HostWithPathOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -362,7 +361,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.HostWithPathOperationInputParams],
+        **kwargs: _Unpack[_models.HostWithPathOperationInputDict],
     ) -> HostWithPathOperationOutput:
         """
         Invokes the HostWithPathOperation operation.
@@ -391,7 +390,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     @_overload
     def json_enums(
         self,
-        request: _models.JsonEnumsInput | _models.JsonEnumsInputParams,
+        request: _models.JsonEnumsInput | _models.JsonEnumsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -403,7 +402,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.JsonEnumsInputParams],
+        **kwargs: _Unpack[_models.JsonEnumsInputDict],
     ) -> JsonEnumsOutput:
         """
         This example serializes enums as top level properties, in lists, sets,
@@ -433,7 +432,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     @_overload
     def json_int_enums(
         self,
-        request: _models.JsonIntEnumsInput | _models.JsonIntEnumsInputParams,
+        request: _models.JsonIntEnumsInput | _models.JsonIntEnumsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -445,7 +444,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.JsonIntEnumsInputParams],
+        **kwargs: _Unpack[_models.JsonIntEnumsInputDict],
     ) -> JsonIntEnumsOutput:
         """
         This example serializes intEnums as top level properties, in lists,
@@ -475,7 +474,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     @_overload
     def json_unions(
         self,
-        request: _models.JsonUnionsInput | _models.JsonUnionsInputParams,
+        request: _models.JsonUnionsInput | _models.JsonUnionsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -487,7 +486,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.JsonUnionsInputParams],
+        **kwargs: _Unpack[_models.JsonUnionsInputDict],
     ) -> JsonUnionsOutput:
         """
         This operation uses unions for inputs and outputs.
@@ -517,7 +516,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     def kitchen_sink_operation(
         self,
         request: _models.KitchenSinkOperationInput
-        | _models.KitchenSinkOperationInputParams,
+        | _models.KitchenSinkOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -529,7 +528,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.KitchenSinkOperationInputParams],
+        **kwargs: _Unpack[_models.KitchenSinkOperationInputDict],
     ) -> KitchenSinkOperationOutput:
         """
         Invokes the KitchenSinkOperation operation.
@@ -558,7 +557,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     @_overload
     def null_operation(
         self,
-        request: _models.NullOperationInput | _models.NullOperationInputParams,
+        request: _models.NullOperationInput | _models.NullOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -570,7 +569,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.NullOperationInputParams],
+        **kwargs: _Unpack[_models.NullOperationInputDict],
     ) -> NullOperationOutput:
         """
         Invokes the NullOperation operation.
@@ -600,7 +599,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     def operation_with_optional_input_output(
         self,
         request: _models.OperationWithOptionalInputOutputInput
-        | _models.OperationWithOptionalInputOutputInputParams,
+        | _models.OperationWithOptionalInputOutputInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -612,7 +611,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.OperationWithOptionalInputOutputInputParams],
+        **kwargs: _Unpack[_models.OperationWithOptionalInputOutputInputDict],
     ) -> OperationWithOptionalInputOutputOutput:
         """
         Invokes the OperationWithOptionalInputOutput operation.
@@ -644,7 +643,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     def put_and_get_inline_documents(
         self,
         request: _models.PutAndGetInlineDocumentsInput
-        | _models.PutAndGetInlineDocumentsInputParams,
+        | _models.PutAndGetInlineDocumentsInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -656,7 +655,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.PutAndGetInlineDocumentsInputParams],
+        **kwargs: _Unpack[_models.PutAndGetInlineDocumentsInputDict],
     ) -> PutAndGetInlineDocumentsOutput:
         """
         This example serializes an inline document as part of the payload.
@@ -686,7 +685,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     def put_with_content_encoding(
         self,
         request: _models.PutWithContentEncodingInput
-        | _models.PutWithContentEncodingInputParams,
+        | _models.PutWithContentEncodingInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -698,7 +697,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.PutWithContentEncodingInputParams],
+        **kwargs: _Unpack[_models.PutWithContentEncodingInputDict],
     ) -> PutWithContentEncodingOutput:
         """
         Invokes the PutWithContentEncoding operation.
@@ -728,7 +727,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     def simple_scalar_properties(
         self,
         request: _models.SimpleScalarPropertiesInput
-        | _models.SimpleScalarPropertiesInputParams,
+        | _models.SimpleScalarPropertiesInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -740,7 +739,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputParams],
+        **kwargs: _Unpack[_models.SimpleScalarPropertiesInputDict],
     ) -> SimpleScalarPropertiesOutput:
         """
         Invokes the SimpleScalarProperties operation.
@@ -770,7 +769,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
     def sparse_nulls_operation(
         self,
         request: _models.SparseNullsOperationInput
-        | _models.SparseNullsOperationInputParams,
+        | _models.SparseNullsOperationInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -782,7 +781,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.SparseNullsOperationInputParams],
+        **kwargs: _Unpack[_models.SparseNullsOperationInputDict],
     ) -> SparseNullsOperationOutput:
         """
         Invokes the SparseNullsOperation operation.

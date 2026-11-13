@@ -32,7 +32,7 @@ class AsyncMyHandwrittenJsonModel(AsyncClient[AsyncConfig]):
     @_overload
     async def trade_event_stream(
         self,
-        request: _models.TradeEventStreamInput | _models.TradeEventStreamInputParams,
+        request: _models.TradeEventStreamInput | _models.TradeEventStreamInputDict,
         /,
         *,
         plugins: list[Plugin] | None = None,
@@ -44,7 +44,7 @@ class AsyncMyHandwrittenJsonModel(AsyncClient[AsyncConfig]):
         /,
         *,
         plugins: list[Plugin] | None = None,
-        **kwargs: _Unpack[_models.TradeEventStreamInputParams],
+        **kwargs: _Unpack[_models.TradeEventStreamInputDict],
     ) -> AsyncDuplexEventStream[TradeEvents, TradeEvents, TradeEventStreamOutput]:
         """
         Bidirectional (duplex) stream. The non-stream members (sessionId,

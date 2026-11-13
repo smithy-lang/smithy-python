@@ -12,7 +12,7 @@ Once the docs are read from the source, both clients are imported, which needs t
 runtime packages the generated client depends on. Importing a client defines its
 operation methods, and each must then have the docs of its keyword overload.
 
-A keyword overload takes its members as `**kwargs: Unpack[<input>Params]`, so an
+A keyword overload takes its members as `**kwargs: Unpack[<input>Dict]`, so an
 editor resolves each keyword's docs through the dictionary form's keys. The members
 are documented there, and on the model's fields, in full; the operation's docs keep
 their narrative, plugins and Returns, and do not repeat the members.
@@ -70,15 +70,15 @@ MODE = "- `fast` skips the audit trail. - `safe` records every call."
 # unpacks the plain form of an input with a streaming body; the async client unpacks
 # the form whose body may also be an async stream.
 SYNC_KEYWORDS = {
-    "assume_access": "_models.AssumeAccessInputParams",
-    "migrate_session": "_models.MigrateSessionInputParams",
-    "overload": "_models.OverloadInputParams",
-    "upload_document": "_models.UploadDocumentInputParams",
+    "assume_access": "_models.AssumeAccessInputDict",
+    "migrate_session": "_models.MigrateSessionInputDict",
+    "overload": "_models.OverloadInputDict",
+    "upload_document": "_models.UploadDocumentInputDict",
 }
 ASYNC_KEYWORDS = {
     **SYNC_KEYWORDS,
-    "upload_document": "_models.AsyncUploadDocumentInputParams",
-    "watch_access": "_models.WatchAccessInputParams",
+    "upload_document": "_models.AsyncUploadDocumentInputDict",
+    "watch_access": "_models.WatchAccessInputDict",
 }
 
 
@@ -421,9 +421,9 @@ def check_literals(models, sync, aio):
         "model admin docs lack the end of the warning: %r" % admin,
     )
     equal(
-        fields(models["MigrateSessionInputParams"])["admin"][1],
+        fields(models["MigrateSessionInputDict"])["admin"][1],
         admin,
-        "MigrateSessionInputParams.admin docs",
+        "MigrateSessionInputDict.admin docs",
     )
     for label, client in (("sync", sync), ("async", aio)):
         narrative, _, _ = sections(client["migrate_session"][1])
@@ -462,20 +462,20 @@ def check_params(models):
 
     # A dictionary form says what it is; it does not repeat the operation's docs.
     equal(
-        ast.get_docstring(models["AssumeAccessInputParams"]),
+        ast.get_docstring(models["AssumeAccessInputDict"]),
         "Dictionary form of `AssumeAccessInput`.",
-        "AssumeAccessInputParams docs",
+        "AssumeAccessInputDict docs",
     )
 
     # Each key is documented exactly as the model's field is, and typed as before.
     for params, model in (
-        ("AssumeAccessInputParams", "AssumeAccessInput"),
-        ("MigrateSessionInputParams", "MigrateSessionInput"),
-        ("SessionTagParams", "SessionTag"),
-        ("UploadDocumentInputParams", "UploadDocumentInput"),
-        ("AsyncUploadDocumentInputParams", "UploadDocumentInput"),
-        ("WatchAccessInputParams", "WatchAccessInput"),
-        ("OverloadInputParams", "OverloadInput"),
+        ("AssumeAccessInputDict", "AssumeAccessInput"),
+        ("MigrateSessionInputDict", "MigrateSessionInput"),
+        ("SessionTagDict", "SessionTag"),
+        ("UploadDocumentInputDict", "UploadDocumentInput"),
+        ("AsyncUploadDocumentInputDict", "UploadDocumentInput"),
+        ("WatchAccessInputDict", "WatchAccessInput"),
+        ("OverloadInputDict", "OverloadInput"),
     ):
         keys, attributes = fields(models[params]), fields(models[model])
         equal(list(keys), list(attributes), params + " keys")
@@ -487,56 +487,56 @@ def check_params(models):
     for model, params, key, expected in (
         (
             "AssumeAccessInput",
-            "AssumeAccessInputParams",
+            "AssumeAccessInputDict",
             "plugins_",
             "The names of the plugins to enable for the session.",
         ),
         (
             "AssumeAccessInput",
-            "AssumeAccessInputParams",
+            "AssumeAccessInputDict",
             "tag",
             "A tag to attach to the session.",
         ),
         (
             "AssumeAccessInput",
-            "AssumeAccessInputParams",
+            "AssumeAccessInputDict",
             "source",
             "Where the caller's credentials come from.",
         ),
-        ("AssumeAccessInput", "AssumeAccessInputParams", TOKEN, TOKEN_DOCS),
+        ("AssumeAccessInput", "AssumeAccessInputDict", TOKEN, TOKEN_DOCS),
         (
             "OverloadInput",
-            "OverloadInputParams",
+            "OverloadInputDict",
             "input",
             "The text to check, which is not the request itself.",
         ),
         (
             "OverloadInput",
-            "OverloadInputParams",
+            "OverloadInputDict",
             "tag",
             "A tag to check the text against.",
         ),
         (
             "UploadDocumentInput",
-            "UploadDocumentInputParams",
+            "UploadDocumentInputDict",
             "name",
             "The name of the document.",
         ),
         (
             "UploadDocumentInput",
-            "AsyncUploadDocumentInputParams",
+            "AsyncUploadDocumentInputDict",
             "name",
             "The name of the document.",
         ),
         (
             "UploadDocumentInput",
-            "UploadDocumentInputParams",
+            "UploadDocumentInputDict",
             "body",
             "The bytes of the document.",
         ),
         (
             "WatchAccessInput",
-            "WatchAccessInputParams",
+            "WatchAccessInputDict",
             "session_id",
             "The session to watch.",
         ),
@@ -546,7 +546,7 @@ def check_params(models):
             equal(documented, expected, "%s.%s docs" % (owner, key))
 
     # A member's docs that open with a list keep each item on its own line.
-    for owner in ("AssumeAccessInput", "AssumeAccessInputParams"):
+    for owner in ("AssumeAccessInput", "AssumeAccessInputDict"):
         mode = fields(models[owner])["mode"][1] or ""
         equal(flat(mode), MODE, owner + ".mode docs")
         check(
@@ -560,17 +560,17 @@ def check_params(models):
             owner + ".duration_seconds lead",
         )
 
-    overload_keys = fields(models["OverloadInputParams"])
-    equal(list(overload_keys), ["input", "tag"], "OverloadInputParams keys")
-    equal(overload_keys["input"][0], "str | None", "OverloadInputParams.input type")
-    keys = fields(models["AssumeAccessInputParams"])
+    overload_keys = fields(models["OverloadInputDict"])
+    equal(list(overload_keys), ["input", "tag"], "OverloadInputDict keys")
+    equal(overload_keys["input"][0], "str | None", "OverloadInputDict.input type")
+    keys = fields(models["AssumeAccessInputDict"])
     equal(
         list(keys),
         [*DOCUMENTED, "undocumented", TOKEN],
-        "AssumeAccessInputParams keys",
+        "AssumeAccessInputDict keys",
     )
     equal(keys["duration_seconds"][0], "Required[int]", "duration_seconds key type")
-    equal(keys["tag"][0], "SessionTag | SessionTagParams | None", "tag key type")
+    equal(keys["tag"][0], "SessionTag | SessionTagDict | None", "tag key type")
     equal(
         keys["plugins_"][1],
         "The names of the plugins to enable for the session.",
@@ -585,41 +585,41 @@ def check_params(models):
     )
     equal(keys[TOKEN], ("str | None", TOKEN_DOCS), "client_token key")
     equal(
-        fields(models["SessionTagParams"])["key"],
+        fields(models["SessionTagDict"])["key"],
         ("Required[str]", TAG_KEY),
-        "SessionTagParams.key",
+        "SessionTagDict.key",
     )
     equal(
-        list(fields(models["WatchAccessInputParams"])),
+        list(fields(models["WatchAccessInputDict"])),
         ["session_id"],
-        "WatchAccessInputParams keys",
+        "WatchAccessInputDict keys",
     )
     equal(
-        fields(models["UploadDocumentInputParams"])["body"],
+        fields(models["UploadDocumentInputDict"])["body"],
         ("Required[SyncStreamingBlob]", "The bytes of the document."),
-        "UploadDocumentInputParams.body",
+        "UploadDocumentInputDict.body",
     )
     equal(
-        fields(models["AsyncUploadDocumentInputParams"])["body"],
+        fields(models["AsyncUploadDocumentInputDict"])["body"],
         ("Required[StreamingBlob]", "The bytes of the document."),
-        "AsyncUploadDocumentInputParams.body",
+        "AsyncUploadDocumentInputDict.body",
     )
 
     # The single key of a union alternative carries its own variant's docs.
     equal(
-        fields(models["CredentialSourceWebTokenParams"]),
+        fields(models["CredentialSourceWebTokenDict"]),
         {"web_token": ("str", "A web identity token issued by the provider.")},
-        "CredentialSourceWebTokenParams",
+        "CredentialSourceWebTokenDict",
     )
     equal(
-        fields(models["CredentialSourceProfileParams"]),
+        fields(models["CredentialSourceProfileDict"]),
         {
             "profile": (
-                "SessionTag | SessionTagParams",
+                "SessionTag | SessionTagDict",
                 "A stored profile to read credentials from.",
             ),
         },
-        "CredentialSourceProfileParams",
+        "CredentialSourceProfileDict",
     )
 
 
@@ -633,10 +633,10 @@ def check_requests(sync, aio):
             aio,
             {
                 "upload_document": "_models.UploadDocumentInput"
-                " | _models.UploadDocumentInputParams"
-                " | _models.AsyncUploadDocumentInputParams",
+                " | _models.UploadDocumentInputDict"
+                " | _models.AsyncUploadDocumentInputDict",
                 "watch_access": "_models.WatchAccessInput"
-                " | _models.WatchAccessInputParams",
+                " | _models.WatchAccessInputDict",
             },
         ),
     ):
@@ -644,7 +644,7 @@ def check_requests(sync, aio):
             if name not in client:
                 continue
             shape = "".join(part.title() for part in name.split("_"))
-            plain = "_models.%sInput | _models.%sInputParams" % (shape, shape)
+            plain = "_models.%sInput | _models.%sInputDict" % (shape, shape)
             equal(
                 client[name],
                 expected.get(name, plain),

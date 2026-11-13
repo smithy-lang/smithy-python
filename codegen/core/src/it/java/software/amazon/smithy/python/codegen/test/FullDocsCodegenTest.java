@@ -25,7 +25,7 @@ import software.amazon.smithy.python.codegen.PythonClientCodegenPlugin;
 
 /**
  * Input members are documented where callers write them: each client operation's
- * keyword overload unpacks the input's dictionary form ({@code Unpack[...Params]}),
+ * keyword overload unpacks the input's dictionary form ({@code Unpack[...Dict]}),
  * whose keys carry the members' full docs, as the model's fields still do. Operation
  * docs keep their narrative, plugins and Returns, without repeating the members.
  */
@@ -65,17 +65,17 @@ public class FullDocsCodegenTest {
         var stub = Files.readString(tempDir.resolve(PACKAGE + "/models.pyi"));
         for (var name : List.of(
                 "AssumeAccessInput",
-                "AssumeAccessInputParams",
+                "AssumeAccessInputDict",
                 "MigrateSessionInput",
-                "MigrateSessionInputParams",
+                "MigrateSessionInputDict",
                 "SessionTag",
-                "SessionTagParams",
+                "SessionTagDict",
                 "CredentialSourceWebToken",
-                "CredentialSourceWebTokenParams",
-                "CredentialSourceProfileParams",
-                "UploadDocumentInputParams",
-                "AsyncUploadDocumentInputParams",
-                "WatchAccessInputParams")) {
+                "CredentialSourceWebTokenDict",
+                "CredentialSourceProfileDict",
+                "UploadDocumentInputDict",
+                "AsyncUploadDocumentInputDict",
+                "WatchAccessInputDict")) {
             assertFalse(stub.contains("class " + name + "("), name + " is declared in the public stub");
             assertTrue(stub.contains(name + " as " + name + ","), name + " is not re-exported");
             assertTrue(partitions.toString().contains("class " + name + "("), name + " is in no partition");

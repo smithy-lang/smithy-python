@@ -27,7 +27,7 @@ class ServiceError(ModeledError):
 class NonQueryCompatibleOperationInput(_SerdeShape):
     """Dataclass for NonQueryCompatibleOperationInput structure."""
 
-class NonQueryCompatibleOperationInputParams(TypedDict, total=False):
+class NonQueryCompatibleOperationInputDict(TypedDict, total=False):
     """Dictionary form of `NonQueryCompatibleOperationInput`."""
 
 @dataclass(kw_only=True)

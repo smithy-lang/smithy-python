@@ -8,7 +8,7 @@ from nonquerycompatiblerpcv2cbor.aio.client import (
 from nonquerycompatiblerpcv2cbor.client import NonQueryCompatibleRpcV2ProtocolClient
 from nonquerycompatiblerpcv2cbor.models import (
     NonQueryCompatibleOperationInput,
-    NonQueryCompatibleOperationInputParams,
+    NonQueryCompatibleOperationInputDict,
     NonQueryCompatibleOperationOutput,
 )
 
@@ -21,7 +21,7 @@ _: Any = ...
 
 NonQueryCompatibleOperationInput()
 NonQueryCompatibleOperationOutput()
-_params_0: NonQueryCompatibleOperationInputParams = {}
+_params_0: NonQueryCompatibleOperationInputDict = {}
 
 
 def _request[T](form: type[T]) -> T:
@@ -32,13 +32,13 @@ async def check_async_calls(client: AsyncNonQueryCompatibleRpcV2ProtocolClient) 
     pass
     await client.non_query_compatible_operation()
     await client.non_query_compatible_operation(
-        **_request(NonQueryCompatibleOperationInputParams)
+        **_request(NonQueryCompatibleOperationInputDict)
     )
     await client.non_query_compatible_operation(
         _request(NonQueryCompatibleOperationInput)
     )
     await client.non_query_compatible_operation(
-        _request(NonQueryCompatibleOperationInputParams)
+        _request(NonQueryCompatibleOperationInputDict)
     )
 
 
@@ -46,9 +46,9 @@ def check_sync_calls(client: NonQueryCompatibleRpcV2ProtocolClient) -> None:
     pass
     client.non_query_compatible_operation()
     client.non_query_compatible_operation(
-        **_request(NonQueryCompatibleOperationInputParams)
+        **_request(NonQueryCompatibleOperationInputDict)
     )
     client.non_query_compatible_operation(_request(NonQueryCompatibleOperationInput))
     client.non_query_compatible_operation(
-        _request(NonQueryCompatibleOperationInputParams)
+        _request(NonQueryCompatibleOperationInputDict)
     )

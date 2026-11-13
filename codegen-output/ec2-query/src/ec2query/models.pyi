@@ -51,7 +51,7 @@ class ComplexNestedErrorData(_SerdeShape):
 class DatetimeOffsetsInput(_SerdeShape):
     """Dataclass for DatetimeOffsetsInput structure."""
 
-class DatetimeOffsetsInputParams(TypedDict, total=False):
+class DatetimeOffsetsInputDict(TypedDict, total=False):
     """Dictionary form of `DatetimeOffsetsInput`."""
 
 @dataclass(kw_only=True)
@@ -71,7 +71,7 @@ class DatetimeOffsetsOutput(_SerdeShape):
 class EmptyInputAndEmptyOutputInput(_SerdeShape):
     """Dataclass for EmptyInputAndEmptyOutputInput structure."""
 
-class EmptyInputAndEmptyOutputInputParams(TypedDict, total=False):
+class EmptyInputAndEmptyOutputInputDict(TypedDict, total=False):
     """Dictionary form of `EmptyInputAndEmptyOutputInput`."""
 
 @dataclass(kw_only=True)
@@ -90,7 +90,7 @@ class EmptyInputAndEmptyOutputOutput(_SerdeShape):
 class EndpointOperationInput(_SerdeShape):
     """Dataclass for EndpointOperationInput structure."""
 
-class EndpointOperationInputParams(TypedDict, total=False):
+class EndpointOperationInputDict(TypedDict, total=False):
     """Dictionary form of `EndpointOperationInput`."""
 
 @dataclass(kw_only=True)
@@ -111,7 +111,7 @@ class EndpointWithHostLabelOperationInput(_SerdeShape):
 
     label: str | None = ...
 
-class EndpointWithHostLabelOperationInputParams(TypedDict, total=False):
+class EndpointWithHostLabelOperationInputDict(TypedDict, total=False):
     """Dictionary form of `EndpointWithHostLabelOperationInput`."""
 
     label: Required[str]
@@ -132,7 +132,7 @@ class EndpointWithHostLabelOperationOutput(_SerdeShape):
 class FractionalSecondsInput(_SerdeShape):
     """Dataclass for FractionalSecondsInput structure."""
 
-class FractionalSecondsInputParams(TypedDict, total=False):
+class FractionalSecondsInputDict(TypedDict, total=False):
     """Dictionary form of `FractionalSecondsInput`."""
 
 @dataclass(kw_only=True)
@@ -152,7 +152,7 @@ class FractionalSecondsOutput(_SerdeShape):
 class GreetingWithErrorsInput(_SerdeShape):
     """Dataclass for GreetingWithErrorsInput structure."""
 
-class GreetingWithErrorsInputParams(TypedDict, total=False):
+class GreetingWithErrorsInputDict(TypedDict, total=False):
     """Dictionary form of `GreetingWithErrorsInput`."""
 
 @dataclass(kw_only=True)
@@ -172,7 +172,7 @@ class GreetingWithErrorsOutput(_SerdeShape):
 class HostWithPathOperationInput(_SerdeShape):
     """Dataclass for HostWithPathOperationInput structure."""
 
-class HostWithPathOperationInputParams(TypedDict, total=False):
+class HostWithPathOperationInputDict(TypedDict, total=False):
     """Dictionary form of `HostWithPathOperationInput`."""
 
 @dataclass(kw_only=True)
@@ -191,7 +191,7 @@ class HostWithPathOperationOutput(_SerdeShape):
 class IgnoresWrappingXmlNameInput(_SerdeShape):
     """Dataclass for IgnoresWrappingXmlNameInput structure."""
 
-class IgnoresWrappingXmlNameInputParams(TypedDict, total=False):
+class IgnoresWrappingXmlNameInputDict(TypedDict, total=False):
     """Dictionary form of `IgnoresWrappingXmlNameInput`."""
 
 @dataclass(kw_only=True)
@@ -225,10 +225,10 @@ class NestedStructuresInput(_SerdeShape):
 
     nested: StructArg | None = ...
 
-class NestedStructuresInputParams(TypedDict, total=False):
+class NestedStructuresInputDict(TypedDict, total=False):
     """Dictionary form of `NestedStructuresInput`."""
 
-    nested: StructArg | StructArgParams | None
+    nested: StructArg | StructArgDict | None
 
 @dataclass(kw_only=True)
 class NestedStructuresOutput(_SerdeShape):
@@ -248,7 +248,7 @@ class NestedStructWithList(_SerdeShape):
 
     list_arg: list[str] | None = ...
 
-class NestedStructWithListParams(TypedDict, total=False):
+class NestedStructWithListDict(TypedDict, total=False):
     """Dictionary form of `NestedStructWithList`."""
 
     list_arg: Sequence[str] | None
@@ -257,7 +257,7 @@ class NestedStructWithListParams(TypedDict, total=False):
 class NoInputAndOutputInput(_SerdeShape):
     """Dataclass for NoInputAndOutputInput structure."""
 
-class NoInputAndOutputInputParams(TypedDict, total=False):
+class NoInputAndOutputInputDict(TypedDict, total=False):
     """Dictionary form of `NoInputAndOutputInput`."""
 
 @dataclass(kw_only=True)
@@ -279,7 +279,7 @@ class PutWithContentEncodingInput(_SerdeShape):
     encoding: str | None = ...
     data: str | None = ...
 
-class PutWithContentEncodingInputParams(TypedDict, total=False):
+class PutWithContentEncodingInputDict(TypedDict, total=False):
     """Dictionary form of `PutWithContentEncodingInput`."""
 
     encoding: str | None
@@ -304,7 +304,7 @@ class QueryIdempotencyTokenAutoFillInput(_SerdeShape):
     token: str | None = ...
     """This field is autopopulated if not provided."""
 
-class QueryIdempotencyTokenAutoFillInputParams(TypedDict, total=False):
+class QueryIdempotencyTokenAutoFillInputDict(TypedDict, total=False):
     """Dictionary form of `QueryIdempotencyTokenAutoFillInput`."""
 
     token: str | None
@@ -332,14 +332,14 @@ class QueryListsInput(_SerdeShape):
     list_arg_with_xml_name: list[str] | None = ...
     nested_with_list: NestedStructWithList | None = ...
 
-class QueryListsInputParams(TypedDict, total=False):
+class QueryListsInputDict(TypedDict, total=False):
     """Dictionary form of `QueryListsInput`."""
 
     list_arg: Sequence[str] | None
-    complex_list_arg: Sequence[GreetingStruct | GreetingStructParams] | None
+    complex_list_arg: Sequence[GreetingStruct | GreetingStructDict] | None
     list_arg_with_xml_name_member: Sequence[str] | None
     list_arg_with_xml_name: Sequence[str] | None
-    nested_with_list: NestedStructWithList | NestedStructWithListParams | None
+    nested_with_list: NestedStructWithList | NestedStructWithListDict | None
 
 @dataclass(kw_only=True)
 class QueryListsOutput(_SerdeShape):
@@ -361,7 +361,7 @@ class QueryTimestampsInput(_SerdeShape):
     epoch_member: datetime | None = ...
     epoch_target: datetime | None = ...
 
-class QueryTimestampsInputParams(TypedDict, total=False):
+class QueryTimestampsInputDict(TypedDict, total=False):
     """Dictionary form of `QueryTimestampsInput`."""
 
     normal_format: datetime | None
@@ -384,7 +384,7 @@ class QueryTimestampsOutput(_SerdeShape):
 class RecursiveXmlShapesInput(_SerdeShape):
     """Dataclass for RecursiveXmlShapesInput structure."""
 
-class RecursiveXmlShapesInputParams(TypedDict, total=False):
+class RecursiveXmlShapesInputDict(TypedDict, total=False):
     """Dictionary form of `RecursiveXmlShapesInput`."""
 
 @dataclass(kw_only=True)
@@ -433,7 +433,7 @@ class SimpleInputParamsInput(_SerdeShape):
     distinct_query_and_xml_name: str | None = ...
     distinct_xml_name: str | None = ...
 
-class SimpleInputParamsInputParams(TypedDict, total=False):
+class SimpleInputParamsInputDict(TypedDict, total=False):
     """Dictionary form of `SimpleInputParamsInput`."""
 
     foo: str | None
@@ -467,7 +467,7 @@ class SimpleInputParamsOutput(_SerdeShape):
 class SimpleScalarXmlPropertiesInput(_SerdeShape):
     """Dataclass for SimpleScalarXmlPropertiesInput structure."""
 
-class SimpleScalarXmlPropertiesInputParams(TypedDict, total=False):
+class SimpleScalarXmlPropertiesInputDict(TypedDict, total=False):
     """Dictionary form of `SimpleScalarXmlPropertiesInput`."""
 
 @dataclass(kw_only=True)
@@ -500,12 +500,12 @@ class StructArg(_SerdeShape):
     other_arg: bool | None = ...
     recursive_arg: StructArg | None = ...
 
-class StructArgParams(TypedDict, total=False):
+class StructArgDict(TypedDict, total=False):
     """Dictionary form of `StructArg`."""
 
     string_arg: str | None
     other_arg: bool | None
-    recursive_arg: StructArg | StructArgParams | None
+    recursive_arg: StructArg | StructArgDict | None
 
 @dataclass(kw_only=True)
 class StructureListMember(_SerdeShape):
@@ -518,7 +518,7 @@ class StructureListMember(_SerdeShape):
 class XmlBlobsInput(_SerdeShape):
     """Dataclass for XmlBlobsInput structure."""
 
-class XmlBlobsInputParams(TypedDict, total=False):
+class XmlBlobsInputDict(TypedDict, total=False):
     """Dictionary form of `XmlBlobsInput`."""
 
 @dataclass(kw_only=True)
@@ -538,7 +538,7 @@ class XmlBlobsOperationOutput(_SerdeShape):
 class XmlEmptyBlobsInput(_SerdeShape):
     """Dataclass for XmlEmptyBlobsInput structure."""
 
-class XmlEmptyBlobsInputParams(TypedDict, total=False):
+class XmlEmptyBlobsInputDict(TypedDict, total=False):
     """Dictionary form of `XmlEmptyBlobsInput`."""
 
 @dataclass(kw_only=True)
@@ -558,7 +558,7 @@ class XmlEmptyBlobsOutput(_SerdeShape):
 class XmlEmptyListsInput(_SerdeShape):
     """Dataclass for XmlEmptyListsInput structure."""
 
-class XmlEmptyListsInputParams(TypedDict, total=False):
+class XmlEmptyListsInputDict(TypedDict, total=False):
     """Dictionary form of `XmlEmptyListsInput`."""
 
 @dataclass(kw_only=True)
@@ -592,7 +592,7 @@ class XmlEmptyListsOutput(_SerdeShape):
 class XmlEnumsInput(_SerdeShape):
     """Dataclass for XmlEnumsInput structure."""
 
-class XmlEnumsInputParams(TypedDict, total=False):
+class XmlEnumsInputDict(TypedDict, total=False):
     """Dictionary form of `XmlEnumsInput`."""
 
 @dataclass(kw_only=True)
@@ -617,7 +617,7 @@ class XmlEnumsOutput(_SerdeShape):
 class XmlIntEnumsInput(_SerdeShape):
     """Dataclass for XmlIntEnumsInput structure."""
 
-class XmlIntEnumsInputParams(TypedDict, total=False):
+class XmlIntEnumsInputDict(TypedDict, total=False):
     """Dictionary form of `XmlIntEnumsInput`."""
 
 @dataclass(kw_only=True)
@@ -642,7 +642,7 @@ class XmlIntEnumsOutput(_SerdeShape):
 class XmlListsInput(_SerdeShape):
     """Dataclass for XmlListsInput structure."""
 
-class XmlListsInputParams(TypedDict, total=False):
+class XmlListsInputDict(TypedDict, total=False):
     """Dictionary form of `XmlListsInput`."""
 
 @dataclass(kw_only=True)
@@ -683,7 +683,7 @@ class XmlNamespaceNested(_SerdeShape):
 class XmlNamespacesInput(_SerdeShape):
     """Dataclass for XmlNamespacesInput structure."""
 
-class XmlNamespacesInputParams(TypedDict, total=False):
+class XmlNamespacesInputDict(TypedDict, total=False):
     """Dictionary form of `XmlNamespacesInput`."""
 
 @dataclass(kw_only=True)
@@ -703,7 +703,7 @@ class XmlNamespacesOutput(_SerdeShape):
 class XmlTimestampsInput(_SerdeShape):
     """Dataclass for XmlTimestampsInput structure."""
 
-class XmlTimestampsInputParams(TypedDict, total=False):
+class XmlTimestampsInputDict(TypedDict, total=False):
     """Dictionary form of `XmlTimestampsInput`."""
 
 @dataclass(kw_only=True)
@@ -738,7 +738,7 @@ class GreetingStruct(_SerdeShape):
 
     hi: str | None = ...
 
-class GreetingStructParams(TypedDict, total=False):
+class GreetingStructDict(TypedDict, total=False):
     """Dictionary form of `GreetingStruct`."""
 
     hi: str | None

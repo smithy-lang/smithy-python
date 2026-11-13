@@ -6,7 +6,7 @@ from querycompatibleawsjson10.aio.client import AsyncQueryCompatibleJSONRPC10Cli
 from querycompatibleawsjson10.client import QueryCompatibleJSONRPC10Client
 from querycompatibleawsjson10.models import (
     QueryCompatibleOperationInput,
-    QueryCompatibleOperationInputParams,
+    QueryCompatibleOperationInputDict,
     QueryCompatibleOperationOutput,
 )
 
@@ -19,7 +19,7 @@ _: Any = ...
 
 QueryCompatibleOperationInput()
 QueryCompatibleOperationOutput()
-_params_0: QueryCompatibleOperationInputParams = {}
+_params_0: QueryCompatibleOperationInputDict = {}
 
 
 def _request[T](form: type[T]) -> T:
@@ -30,17 +30,15 @@ async def check_async_calls(client: AsyncQueryCompatibleJSONRPC10Client) -> None
     pass
     await client.query_compatible_operation()
     await client.query_compatible_operation(
-        **_request(QueryCompatibleOperationInputParams)
+        **_request(QueryCompatibleOperationInputDict)
     )
     await client.query_compatible_operation(_request(QueryCompatibleOperationInput))
-    await client.query_compatible_operation(
-        _request(QueryCompatibleOperationInputParams)
-    )
+    await client.query_compatible_operation(_request(QueryCompatibleOperationInputDict))
 
 
 def check_sync_calls(client: QueryCompatibleJSONRPC10Client) -> None:
     pass
     client.query_compatible_operation()
-    client.query_compatible_operation(**_request(QueryCompatibleOperationInputParams))
+    client.query_compatible_operation(**_request(QueryCompatibleOperationInputDict))
     client.query_compatible_operation(_request(QueryCompatibleOperationInput))
-    client.query_compatible_operation(_request(QueryCompatibleOperationInputParams))
+    client.query_compatible_operation(_request(QueryCompatibleOperationInputDict))

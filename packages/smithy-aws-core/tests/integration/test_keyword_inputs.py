@@ -27,13 +27,13 @@ from restjson.aio.config import AsyncRestJsonProtocolConfig
 from restjson.client import RestJsonProtocolClient
 from restjson.config import RestJsonProtocolConfig
 from restjson.models import (
-    AsyncStreamingTraitsInputParams,
+    AsyncStreamingTraitsInputDict,
     JsonListsInput,
-    JsonListsInputParams,
+    JsonListsInputDict,
     JsonUnionsInput,
     MyUnionStructureValue,
     MyUnionUnknown,
-    StreamingTraitsInputParams,
+    StreamingTraitsInputDict,
     StructureListMember,
     TopLevel,
 )
@@ -226,8 +226,8 @@ async def test_params_dictionary_unpacks_into_the_call(
 ) -> None:
     client, transport, _ = await _client(sync, tmp_path)
     # At runtime the dictionary form is plain dict.
-    assert JsonListsInputParams is dict
-    params: JsonListsInputParams = {"string_list": ["a"], "integer_list": [1]}
+    assert JsonListsInputDict is dict
+    params: JsonListsInputDict = {"string_list": ["a"], "integer_list": [1]}
 
     await _result(client.json_lists(**params))
 
@@ -321,7 +321,7 @@ async def test_streaming_request_unpacks_from_the_form_each_client_accepts(
     async_client, async_transport, _ = await _client(False, tmp_path)
 
     # The plain form holds a body a sync client can send, so either client takes it.
-    request: StreamingTraitsInputParams = {"foo": "Foo", "blob": b"body"}
+    request: StreamingTraitsInputDict = {"foo": "Foo", "blob": b"body"}
     sync_client.streaming_traits(**request)
     await async_client.streaming_traits(**request)
 
@@ -330,8 +330,8 @@ async def test_streaming_request_unpacks_from_the_form_each_client_accepts(
         yield b"body"
 
     # Only the async client can send an async stream, and only its form holds one.
-    assert AsyncStreamingTraitsInputParams is dict
-    async_request: AsyncStreamingTraitsInputParams = {"foo": "Foo", "blob": chunks()}
+    assert AsyncStreamingTraitsInputDict is dict
+    async_request: AsyncStreamingTraitsInputDict = {"foo": "Foo", "blob": chunks()}
     await async_client.streaming_traits(**async_request)
 
     assert sync_transport.bodies == [b"body"]
@@ -344,7 +344,7 @@ async def test_whole_request_is_accepted_positionally(
 ) -> None:
     client, transport, recorder = await _client(sync, tmp_path)
     member = StructureListMember(a="1", b="2")
-    request: JsonListsInput | JsonListsInputParams
+    request: JsonListsInput | JsonListsInputDict
     if form == "model":
         request = JsonListsInput(string_list=["a"], structure_list=[member])
     else:
@@ -379,7 +379,7 @@ async def test_whole_dictionary_treats_none_as_omitted(
     sync: bool, tmp_path: Path
 ) -> None:
     client, transport, _ = await _client(sync, tmp_path)
-    request: JsonListsInputParams = {
+    request: JsonListsInputDict = {
         "string_list": None,
         "structure_list": [{"a": None}],
     }
@@ -583,10 +583,10 @@ async def test_model_holding_a_dictionary_is_left_as_the_caller_built_it(
 
 
 def test_dictionary_forms_are_importable_without_building_models() -> None:
-    assert models.StructureListMemberParams is dict
-    assert models.MyUnionParams is dict
-    assert models.MyUnionStructureValueParams is dict
+    assert models.StructureListMemberDict is dict
+    assert models.MyUnionDict is dict
+    assert models.MyUnionStructureValueDict is dict
     # The prelude's Unit is a union variant here, and has no schema of its own.
-    assert models.UnitParams is dict
+    assert models.UnitDict is dict
     with pytest.raises(AttributeError):
-        models.NotAShapeParams
+        models.NotAShapeDict
