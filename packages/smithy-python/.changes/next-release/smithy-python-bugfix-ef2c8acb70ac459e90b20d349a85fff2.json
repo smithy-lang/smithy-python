@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Zero-pad schema and model stub partition filenames so alphabetical listings follow numerical order, with matching facade imports and cleanup of obsolete partition files."
+}

@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -169,10 +170,12 @@ public final class SchemaGenerator implements Consumer<Shape> {
         }
 
         var partitions = partitionSchemas(shapes);
+        int width = Integer.toString(partitions.size() - 1).length();
         context.writerDelegator().useFileWriter(filename, namespace, writer -> writeFacade(writer, partitions));
         for (int i = 0; i < partitions.size(); i++) {
-            var partitionFilename = String.format("src/%s/_private/schemas_%d.py", module, i);
-            var partitionNamespace = String.format("%s._private.schemas_%d", module, i);
+            var partitionModule = String.format(Locale.ROOT, "schemas_%0" + width + "d", i);
+            var partitionFilename = String.format("src/%s/_private/%s.py", module, partitionModule);
+            var partitionNamespace = String.format("%s._private.%s", module, partitionModule);
             writeSchemaModule(partitionFilename, partitionNamespace, partitions.get(i), true);
         }
     }
@@ -205,6 +208,7 @@ public final class SchemaGenerator implements Consumer<Shape> {
     }
 
     private void writeFacade(PythonWriter writer, List<List<Shape>> partitions) {
+        int width = Integer.toString(partitions.size() - 1).length();
         writer.addStdlibImport("importlib", "import_module");
         writer.openBlock("_PARTITION_NAMES: tuple[tuple[str, ...], ...] = (", ")", () -> {
             for (var shapes : partitions) {
@@ -230,7 +234,7 @@ public final class SchemaGenerator implements Consumer<Shape> {
                         partition = _PARTITIONS[name]
                     except KeyError as error:
                         raise AttributeError(name) from error
-                    module = import_module(f".schemas_{partition}", __package__)
+                    module = import_module(f".schemas_{partition:0$Ld}", __package__)
                     value = getattr(module, name)
                     globals()[name] = value
                     return value
@@ -238,7 +242,7 @@ public final class SchemaGenerator implements Consumer<Shape> {
 
                 def __dir__() -> list[str]:
                     return sorted({*globals(), *__all__})
-                """);
+                """, width);
     }
 
     private List<List<Shape>> partitionSchemas(List<Shape> shapes) {

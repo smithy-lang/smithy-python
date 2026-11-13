@@ -91,6 +91,14 @@ shrinks or a target changes.
 
 Files under `<package>._private` remain private implementation details.
 
+Both the native Python and Java generators zero-pad partition indexes to the
+width of the highest index for that surface. For example, 11 schema partitions
+are named `schemas_00.py` through `schemas_10.py`; 101 stub partitions are named
+`models_000.pyi` through `models_100.pyi`. Alphabetical filename order therefore
+matches numeric partition order. Up to 10 partitions retain single-digit names.
+Facades use the same padding, and regenerating native output removes obsolete
+owned files when the width changes.
+
 ## Schema Partitions
 
 `SchemaPlan` provides schema shapes in deterministic emission order. Recursive
