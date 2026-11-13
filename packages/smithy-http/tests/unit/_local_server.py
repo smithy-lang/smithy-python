@@ -56,6 +56,9 @@ class LocalHTTPServer:
         self.ports: list[int] = []
         """The client port of each request received."""
 
+        self.paths: list[str] = []
+        """The request target of each request received."""
+
         self.bodies: list[tuple[int, str]] = []
         """The length and SHA-256 of each request body received with a length.
 
@@ -81,6 +84,7 @@ class LocalHTTPServer:
                 self._handle()
 
             def _handle(self) -> None:
+                server.paths.append(self.path)
                 if length := int(self.headers.get("Content-Length", 0)):
                     digest, received = sha256(), 0
                     while received < length:

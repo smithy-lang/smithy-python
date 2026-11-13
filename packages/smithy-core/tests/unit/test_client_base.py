@@ -9,6 +9,7 @@ import pytest
 from smithy_core.aio.client import AsyncClient
 from smithy_core.client import Client
 from smithy_core.exceptions import ExpectationNotMetError, ResourceLifecycleError
+from smithy_core.interceptors import Interceptor
 from smithy_core.retries import RetryStrategyOptions
 
 
@@ -101,6 +102,72 @@ def test_operation_plugins_are_scoped_to_the_call() -> None:
 
     assert call.context["config"].applied[-2:] == ["default", "operation"]
     assert next_call.context["config"].applied == ["client", "post_setup"]
+
+
+@pytest.mark.parametrize("plugins", [[], [_plugin("default")]])
+def test_configured_interceptors_run_as_the_same_instances(
+    plugins: list[Callable[[_Config], None]],
+) -> None:
+    recorder = _Recorder()
+    client = _SyncClient(_Config(interceptors=[recorder]))
+
+    for _ in range(2):
+        _, call = client._prepare_call(Mock(), _operation(), plugins, None)  # pyright: ignore[reportPrivateUsage]
+        call.interceptor.read_before_execution(Mock())
+
+    assert recorder.calls == 2
+
+
+async def test_async_configured_interceptors_run_as_the_same_instances() -> None:
+    recorder = _Recorder()
+    client = _AsyncClient(_Config(interceptors=[recorder]))
+
+    for plugins in ([], [_plugin("default")]):
+        _, call = await client._prepare_call(Mock(), _operation(), plugins, None)  # pyright: ignore[reportPrivateUsage]
+        call.interceptor.read_before_execution(Mock())
+
+    assert recorder.calls == 2
+
+
+def test_configured_components_are_shared_with_every_call() -> None:
+    caller_config = _Config(retry_strategy=RetryStrategyOptions(max_attempts=2))
+    client = _SyncClient(caller_config)
+
+    _, call = client._prepare_call(Mock(), _operation(), [_plugin("default")], None)  # pyright: ignore[reportPrivateUsage]
+
+    config = call.context["config"]
+    for name in ("protocol", "transport", "endpoint_resolver", "retry_strategy"):
+        assert getattr(config, name) is getattr(caller_config, name)
+
+
+def test_operation_plugin_interceptors_do_not_persist() -> None:
+    recorder = _Recorder()
+    caller_config = _Config(interceptors=[recorder])
+    client = _SyncClient(caller_config)
+
+    _, call = client._prepare_call(  # pyright: ignore[reportPrivateUsage]
+        Mock(), _operation(), [_add_interceptor], None
+    )
+    _, next_call = client._prepare_call(Mock(), _operation(), [], None)  # pyright: ignore[reportPrivateUsage]
+
+    assert len(call.context["config"].interceptors) == 2
+    assert next_call.context["config"].interceptors == [recorder]
+    assert caller_config.interceptors == [recorder]
+
+
+async def test_async_operation_plugin_interceptors_do_not_persist() -> None:
+    recorder = _Recorder()
+    caller_config = _Config(interceptors=[recorder])
+    client = _AsyncClient(caller_config, plugins=[_add_interceptor])
+
+    _, call = await client._prepare_call(  # pyright: ignore[reportPrivateUsage]
+        Mock(), _operation(), [_add_interceptor], None
+    )
+    _, next_call = await client._prepare_call(Mock(), _operation(), [], None)  # pyright: ignore[reportPrivateUsage]
+
+    assert len(call.context["config"].interceptors) == 3
+    assert len(next_call.context["config"].interceptors) == 2
+    assert caller_config.interceptors == [recorder]
 
 
 def test_incomplete_config_is_rejected() -> None:
@@ -256,3 +323,15 @@ async def test_async_invoke_awaits_the_prepared_pipeline() -> None:
 
     pipeline.assert_awaited_once_with(call)
     assert result is pipeline.return_value
+
+
+class _Recorder(Interceptor[Any, Any, Any, Any]):
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def read_before_execution(self, context: Any) -> None:
+        self.calls += 1
+
+
+def _add_interceptor(config: _Config) -> None:
+    config.interceptors.append(_Recorder())

@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Clients now call the interceptors, resolvers, retry strategies and other components in their config rather than copies of them."
+}

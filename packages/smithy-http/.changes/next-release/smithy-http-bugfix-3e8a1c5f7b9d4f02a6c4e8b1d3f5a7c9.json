@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Urllib3HTTPClient now sends request paths with `.` and `..` segments as they were signed, rather than removing the segments."
+}
