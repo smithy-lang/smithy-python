@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.4.0
+
+### Breaking Changes
+* `smithy_test.aio.check_client_case_async` takes a case's operation input as a mapping of keyword arguments and calls the operation with them. Endpoint tests must be regenerated with a code generator that writes the input this way.
+
+### Enhancements
+* `verify_models` checks that every dictionary form a model stub declares, a `TypedDict` or a union of them, is `dict` at runtime.
+* `verify_models` expects operation input members named `plugins` or `self` under their escaped names.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.11.0` to `~=0.12.0`.
+* Bump `smithy-http` from `~=0.8.0` to `~=0.9.0`.
+* Bump `smithy-aws-core` from `~=0.14.0` to `~=0.15.0`.
+
 ## v0.3.0
 
 ### Features

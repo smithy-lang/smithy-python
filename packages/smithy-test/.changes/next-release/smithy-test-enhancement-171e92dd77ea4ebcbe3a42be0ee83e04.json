@@ -1,4 +1,0 @@
-{
-  "type": "enhancement",
-  "description": "`verify_models` checks that every dictionary form a model stub declares, a `TypedDict` or a union of them, is `dict` at runtime."
-}

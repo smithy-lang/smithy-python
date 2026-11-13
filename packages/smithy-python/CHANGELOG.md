@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.0
+
+### Breaking Changes
+* Generated types escape a member of an operation input whose Python name is `plugins`, `self`, or `_models` to `plugins_`, `self_`, or `_models_`, adding more underscores if a sibling already uses that name, matching the names the runtime builds.
+
+### Bug fixes
+* Zero-pad schema and model stub partition filenames so alphabetical listings follow numerical order, with matching facade imports and cleanup of obsolete partition files.
+
 ## v0.3.0
 
 ### Features

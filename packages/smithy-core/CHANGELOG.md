@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.12.0
+
+### Breaking Changes
+* A member of an operation input whose Python name is `plugins` or `self` is now built as `plugins_` or `self_`, because input members are the keyword parameters of the client method, which already declares parameters with those names. Clients must be regenerated with a code generator that escapes the same names.
+
+### Features
+* Generated clients take an operation's input members as keyword arguments, or its whole request as one positional argument, either the input model or its dictionary form, but not both in one call. The client builds the input model from them before any other setup, converting dictionaries to the structures and unions they stand for at any depth. Models are passed through as they are, never copied or changed, but are checked like dictionaries, and a dictionary inside a model is rejected rather than converted. In keyword arguments and dictionaries, `None` is the same as omitting a member, which takes the member's default if it has one; a member that an existing model sets to `None` is left as the model has it, and stays unset even if it has a default. A union dictionary has exactly one key, whose value is not `None`. An idempotency token left unset is generated once per call, so retries send the same one. Unknown keys, missing required members, malformed unions, unknown union variants, and a `str` passed for a list raise a `TypeError` that gives the path to the problem and never includes a value, nor, under a sensitive shape, a key the caller wrote. Keyword arguments are typed as `**kwargs: Unpack[...]` of the input's dictionary form, a `TypedDict` named `<ModelName>Dict`, whose keys carry each member's documentation, so operation docs no longer repeat the members, and the models keep their full member documentation.
+
+### Bug fixes
+* Fixed a member that targets a renamed shape being built as another shape that has the same name in a different namespace.
+
 ## v0.11.0
 
 ### Features
