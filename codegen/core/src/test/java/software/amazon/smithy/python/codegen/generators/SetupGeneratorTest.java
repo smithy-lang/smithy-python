@@ -105,7 +105,11 @@ public class SetupGeneratorTest {
                 .writerDelegator(delegator)
                 .build();
 
-        SetupGenerator.generateSetup(settings, context);
+        try {
+            SetupGenerator.generateSetup(settings, context);
+        } finally {
+            context.pandocWorker().close();
+        }
         delegator.flushWriters();
         return manifest;
     }

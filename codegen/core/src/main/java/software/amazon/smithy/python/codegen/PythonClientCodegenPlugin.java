@@ -28,13 +28,18 @@ public final class PythonClientCodegenPlugin implements SmithyBuildPlugin {
 
         PythonSettings settings = PythonSettings.fromNode(context.getSettings());
         runner.settings(settings);
-        runner.directedCodegen(new DirectedPythonClientCodegen());
+        var directedCodegen = new DirectedPythonClientCodegen();
+        runner.directedCodegen(directedCodegen);
         runner.fileManifest(context.getFileManifest());
         runner.service(settings.service());
         runner.model(context.getModel());
         runner.integrationClass(PythonIntegration.class);
         runner.performDefaultCodegenTransforms();
         runner.createDedicatedInputsAndOutputs();
-        runner.run();
+        try {
+            runner.run();
+        } finally {
+            directedCodegen.close();
+        }
     }
 }
