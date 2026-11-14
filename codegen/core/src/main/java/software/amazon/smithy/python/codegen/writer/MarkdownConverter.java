@@ -7,9 +7,19 @@ package software.amazon.smithy.python.codegen.writer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import software.amazon.smithy.codegen.core.CodegenException;
@@ -22,6 +32,7 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  *
  * This converter uses the pandoc CLI tool to convert documentation from CommonMark/HTML
  * format to Markdown suitable for Python docstrings with Google-style formatting.
+ * Conversions share the generation's {@link PandocWorker} when it is available.
  *
  * Pandoc must be installed and available.
  */
@@ -78,13 +89,33 @@ public final class MarkdownConverter {
         if (input == null || input.isEmpty()) {
             return "";
         }
+        return convert(input, context, forDocstring, context.pandocWorker());
+    }
+
+    /**
+     * Converts documentation like {@link #convert(String, GenerationContext)} with the
+     * given worker, or with a separate pandoc process per conversion if it is null.
+     */
+    static String convert(String input, GenerationContext context, PandocWorker worker) {
+        return convert(input, context, false, worker);
+    }
+
+    private static String convert(
+            String input,
+            GenerationContext context,
+            boolean forDocstring,
+            PandocWorker worker
+    ) {
+        if (input == null || input.isEmpty()) {
+            return "";
+        }
 
         try {
             input = preProcessPandocInput(input);
 
             if (!CodegenUtils.isAwsService(context)) {
                 // Commonmark may include embedded HTML so we first normalize the input to HTML format
-                input = convertWithPandoc(input, "commonmark", "html");
+                input = convertWithPandoc(input, "commonmark", "html", worker);
             }
 
             // Null if there is no backslash to protect, and then none is put back.
@@ -95,10 +126,13 @@ public final class MarkdownConverter {
 
             // The "html+raw_html" format preserves unrecognized html tags (e.g. <note>, <important>)
             // in Markdown output. We convert these tags to admonitions in postProcressPandocOutput()
-            String output = convertWithPandoc(input, "html+raw_html", "markdown");
+            String output = convertWithPandoc(input, "html+raw_html", "markdown", worker);
 
             return postProcessPandocOutput(output, codeBackslash, forDocstring);
         } catch (IOException | InterruptedException e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             throw new CodegenException("Failed to convert documentation using pandoc: " + e.getMessage(), e);
         }
     }
@@ -202,6 +236,29 @@ public final class MarkdownConverter {
     }
 
     /**
+     * Converts documentation with the generation's pandoc worker, falling back to the
+     * pandoc CLI when there is no worker or the worker cannot reproduce the CLI's result.
+     *
+     * @param input The input string
+     * @param fromFormat The input format (e.g., "html+raw_html" or "commonmark")
+     * @param toFormat The output format (e.g., "markdown")
+     * @param worker The generation's pandoc worker, or null
+     * @return Converted string, with lines read the same way for either path
+     * @throws IOException if process I/O fails
+     * @throws InterruptedException if process is interrupted
+     */
+    private static String convertWithPandoc(String input, String fromFormat, String toFormat, PandocWorker worker)
+            throws IOException, InterruptedException {
+        if (worker != null) {
+            Optional<String> output = worker.convert(input, fromFormat, toFormat);
+            if (output.isPresent()) {
+                return readLines(new StringReader(output.get()));
+            }
+        }
+        return convertWithPandocCli(input, fromFormat, toFormat);
+    }
+
+    /**
      * Calls pandoc CLI to convert documentation.
      *
      * @param input The input string
@@ -211,47 +268,107 @@ public final class MarkdownConverter {
      * @throws IOException if process I/O fails
      * @throws InterruptedException if process is interrupted
      */
-    private static String convertWithPandoc(String input, String fromFormat, String toFormat)
+    private static String convertWithPandocCli(String input, String fromFormat, String toFormat)
             throws IOException, InterruptedException {
-        ProcessBuilder processBuilder = new ProcessBuilder(
+        List<String> command = List.of(
                 "pandoc",
                 "--from=" + fromFormat,
                 "--to=" + toFormat,
                 "--wrap=auto",
                 "--columns=" + PANDOC_WRAP_COLUMNS);
-        processBuilder.redirectErrorStream(true);
+        return convertWithPandocCli(command, input, Duration.ofSeconds(TIMEOUT_SECONDS));
+    }
 
-        Process process = processBuilder.start();
+    /**
+     * Runs one pandoc command line conversion under a deadline.
+     *
+     * <p>The deadline covers the whole exchange: writing stdin, reading stdout and
+     * stderr, and waiting for the exit. Input is written while output is read, so
+     * neither can fill its pipe and stall the other. The process is stopped whenever
+     * this returns without it having exited.
+     *
+     * @param command The command to run.
+     * @param input The document to write to its stdin.
+     * @param timeout The deadline for the whole exchange.
+     * @return Its merged stdout and stderr, read line by line.
+     * @throws IOException if process I/O fails
+     * @throws InterruptedException if interrupted while waiting for the process
+     */
+    static String convertWithPandocCli(List<String> command, String input, Duration timeout)
+            throws IOException, InterruptedException {
+        long deadline = System.nanoTime() + timeout.toNanos();
+        Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
+        ExecutorService io = Executors.newFixedThreadPool(2, MarkdownConverter::newDaemonThread);
+        try {
+            byte[] bytes = input.getBytes(StandardCharsets.UTF_8);
+            Future<Void> writer = io.submit(() -> {
+                try (OutputStream stdin = process.getOutputStream()) {
+                    stdin.write(bytes);
+                }
+                return null;
+            });
+            Future<String> reader = io.submit(
+                    () -> readLines(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)));
 
-        // Write input to pandoc's stdin
-        try (var outputStream = process.getOutputStream()) {
-            outputStream.write(input.getBytes(StandardCharsets.UTF_8));
-            outputStream.flush();
+            String output = await(reader, deadline);
+            if (!process.waitFor(remaining(deadline), TimeUnit.NANOSECONDS)) {
+                throw new TimeoutException();
+            }
+            int exitCode = process.exitValue();
+            if (exitCode != 0) {
+                // Reported before any write failure: pandoc may exit without reading all of its input.
+                throw new CodegenException(
+                        "Pandoc failed with exit code " + exitCode + ": " + output.trim());
+            }
+            await(writer, deadline);
+            return output;
+        } catch (TimeoutException e) {
+            throw new CodegenException("Pandoc process timed out after " + timeout.toSeconds() + " seconds");
+        } finally {
+            if (process.isAlive()) {
+                // Kill without closing the pipes, whose locks a blocked helper may hold.
+                // Killing the process and anything it started breaks the pipes, which
+                // ends both helpers.
+                process.descendants().forEach(ProcessHandle::destroyForcibly);
+                process.toHandle().destroyForcibly();
+            }
+            io.shutdownNow();
         }
+    }
 
-        // Read output from pandoc's stdout
+    private static <T> T await(Future<T> future, long deadline)
+            throws IOException, InterruptedException, TimeoutException {
+        try {
+            return future.get(remaining(deadline), TimeUnit.NANOSECONDS);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof IOException) {
+                throw (IOException) e.getCause();
+            }
+            throw new CodegenException("Pandoc process I/O failed: " + e.getCause(), e.getCause());
+        }
+    }
+
+    private static long remaining(long deadline) {
+        return Math.max(0, deadline - System.nanoTime());
+    }
+
+    private static Thread newDaemonThread(Runnable runnable) {
+        Thread thread = new Thread(runnable, "smithy-python-pandoc-cli");
+        thread.setDaemon(true);
+        return thread;
+    }
+
+    /**
+     * Reads text line by line, ending every line with "\n".
+     */
+    private static String readLines(Reader source) throws IOException {
         StringBuilder output = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(source)) {
             String line;
             while ((line = reader.readLine()) != null) {
                 output.append(line).append("\n");
             }
         }
-
-        // Wait for process to complete
-        boolean finished = process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        if (!finished) {
-            process.destroyForcibly();
-            throw new CodegenException("Pandoc process timed out after " + TIMEOUT_SECONDS + " seconds");
-        }
-
-        int exitCode = process.exitValue();
-        if (exitCode != 0) {
-            throw new CodegenException(
-                    "Pandoc failed with exit code " + exitCode + ": " + output.toString().trim());
-        }
-
         return output.toString();
     }
 
