@@ -869,7 +869,9 @@
     "ClientSettings": "class",
     "GenerationContext": "class",
     "GenerationPlan": "class",
+    "ModelArtifactSettings": "class",
     "ModelPlan": "class",
+    "OperationModel": "class",
     "TypesSettings": "class"
   },
   "smithy_python.model": {},

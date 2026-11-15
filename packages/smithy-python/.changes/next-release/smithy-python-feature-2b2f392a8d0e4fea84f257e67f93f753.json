@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Client plans include service and operation schemas and lazy `APIOperation` exports. Client generation is still unavailable."
+}

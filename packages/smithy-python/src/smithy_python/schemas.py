@@ -16,7 +16,7 @@ from . import model as _model
 from . import symbols as _symbols
 
 if TYPE_CHECKING:
-    from .generation import GenerationContext, TypesSettings
+    from .generation import GenerationContext, ModelArtifactSettings
     from .writer import PythonWriter
 
 __all__ = ["SchemaGenerator", "SchemaPlan"]
@@ -43,8 +43,13 @@ class SchemaPlan:
         model: _model.Model,
         shapes: tuple[_model.Shape, ...],
         symbols: _symbols.SymbolProvider,
+        *,
+        retained_traits: Collection[_model.ShapeId] = (),
     ) -> SchemaPlan:
-        """Plan schema order, filtered traits, names, and interned strings."""
+        """Plan schema order, filtered traits, names, and interned strings.
+
+        ``retained_traits`` are kept even when the model omits their definitions.
+        """
         emitted, recursive_groups = _schema_order(shapes)
         operations = _partition_operations(model, emitted)
         partition_groups = _merge_operation_groups(operations, recursive_groups)
@@ -52,7 +57,7 @@ class SchemaPlan:
             partition_groups,
             _operation_closures(emitted, operations),
         )
-        included = _included_traits(model)
+        included = _included_traits(model) | frozenset(retained_traits)
         inputs = {
             operation.input for operation in model.iter_shapes(_model.OperationShape)
         }
@@ -94,7 +99,7 @@ class SchemaPlan:
 class SchemaGenerator:
     """Emit the compact schema module for a standalone types package."""
 
-    def generate(self, context: GenerationContext[TypesSettings]) -> None:
+    def generate(self, context: GenerationContext[ModelArtifactSettings]) -> None:
         """Register ``<package>._private.schemas`` with the file manifest."""
         package = context.settings.package
         directory = package.replace(".", "/")
@@ -355,6 +360,11 @@ _STATIC_SCHEMA: Final = _symbols.TypeReference(
     "smithy_core._schema_compact",
     dependencies=(_dependencies.SMITHY_CORE,),
 )
+_STATIC_OPERATION_SCHEMA: Final = _symbols.TypeReference(
+    "StaticOperationSchema",
+    "smithy_core._schema_compact",
+    dependencies=(_dependencies.SMITHY_CORE,),
+)
 _MAPPING_PROXY: Final = _symbols.TypeReference("MappingProxyType", "types")
 _TYPED_MAPPING_PROXY: Final = _symbols.TypeReference(
     "MappingProxyType",
@@ -378,7 +388,9 @@ def _write_shape(
     local: Collection[_model.ShapeId],
     facade: str | None,
 ) -> None:
-    writer.line(plan.names[shape.id], ": ", _STATIC_SCHEMA, " = (")
+    is_operation = isinstance(shape, _model.OperationShape)
+    annotation = _STATIC_OPERATION_SCHEMA if is_operation else _STATIC_SCHEMA
+    writer.line(plan.names[shape.id], ": ", annotation, " = (")
     with writer.indent():
         writer.line(f"{_TYPE_INTS[shape.type]},")
         writer.line(plan.strings[shape.id.namespace], ",")
@@ -409,6 +421,17 @@ def _write_shape(
                         "),",
                     )
             writer.line("),")
+        if isinstance(shape, _model.OperationShape):
+
+            def ref(target: _model.ShapeId) -> tuple[_SourcePart, ...]:
+                return _schema_ref(plan, target, written, local=local, facade=facade)
+
+            writer.line(*ref(shape.input), ",")
+            writer.line(*ref(shape.output), ",")
+            errors: list[_SourcePart] = ["("]
+            for index, error in enumerate(shape.errors):
+                errors.extend((", " if index else "", *ref(error)))
+            writer.line(*errors, "," if len(shape.errors) == 1 else "", "),")
     writer.line(")")
     writer.line()
 

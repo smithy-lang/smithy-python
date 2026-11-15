@@ -13,7 +13,6 @@ from smithy_python.model import (
     OperationShape,
     ServiceShape,
     ShapeId,
-    ShapeType,
     StructureShape,
     load_model,
 )
@@ -463,10 +462,16 @@ def test_plan_composes_existing_data_plans_and_excludes_unreachable_source_io() 
     old_plan = GenerationPlan.from_selection(model, standalone, old_symbols)
     plan = ClientPlan.from_model(model, _SETTINGS)
     assert [shape.id.name for shape in plan.selection.shapes] == ["OpInput", "OpOutput"]
-    assert all(shape.type is ShapeType.STRUCTURE for shape in plan.schemas.shapes)
+    assert [shape.id.name for shape in plan.schemas.shapes] == [
+        "OpInput",
+        "OpOutput",
+        "Op",
+        "Service",
+    ]
     shared = GenerationPlan.from_selection(plan.model, plan.selection, plan.symbols)
-    assert plan.schemas == shared.schemas
-    assert plan.models == shared.models
+    assert plan.models.shapes == shared.models.shapes
+    assert plan.models.declaration_names == shared.models.declaration_names
+    assert [operation.name for operation in plan.models.operations] == ["OP"]
     assert old_plan == GenerationPlan.from_selection(model, standalone, old_symbols)
     assert not model.get_shape("example#Shared").has_trait(_ORIGINAL)
     assert plan.model.get_shape("example#Shared") is model.get_shape("example#Shared")
@@ -581,7 +586,7 @@ def test_empty_service_is_a_valid_plan_and_missing_service_is_an_invocation_erro
     )
     assert not plan.operations
     assert not plan.models.shapes
-    assert not plan.schemas.shapes
+    assert [shape.id.name for shape in plan.schemas.shapes] == ["Service"]
     with pytest.raises(InvalidInvocationError, match="requires a service"):
         ClientPlan.from_model(_model({}), _SETTINGS)
 
