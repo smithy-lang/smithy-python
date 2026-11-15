@@ -163,14 +163,8 @@ COMPLEX_ERROR: StaticSchema = (
     n0,
     _s4,
     {_s5: _s6},
-    (
-        _s7,
-        _s8,
-    ),
-    (
-        (3, 0),
-        (COMPLEX_NESTED_ERROR_DATA, 0),
-    ),
+    (_s7, _s8),
+    ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
 CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (
@@ -249,14 +243,8 @@ MAP_OF_STRINGS: StaticSchema = (
     n0,
     _s27,
     0,
-    (
-        _s28,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s28, _s11),
+    ((3, 0), (3, 0)),
 )
 
 LIST_OF_MAPS_OF_STRINGS: StaticSchema = (
@@ -291,14 +279,8 @@ MAP_OF_LISTS_OF_STRINGS: StaticSchema = (
     n0,
     _s33,
     0,
-    (
-        _s28,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (LIST_OF_STRINGS, 0),
-    ),
+    (_s28, _s11),
+    ((3, 0), (LIST_OF_STRINGS, 0)),
 )
 
 MAP_OF_MAP_OF_STRINGS: StaticSchema = (
@@ -306,14 +288,8 @@ MAP_OF_MAP_OF_STRINGS: StaticSchema = (
     n0,
     _s34,
     0,
-    (
-        _s28,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (MAP_OF_STRINGS, 0),
-    ),
+    (_s28, _s11),
+    ((3, 0), (MAP_OF_STRINGS, 0)),
 )
 
 MAP_OF_STRUCTS: StaticSchema = (
@@ -321,14 +297,8 @@ MAP_OF_STRUCTS: StaticSchema = (
     n0,
     _s35,
     0,
-    (
-        _s28,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (SIMPLE_STRUCT, 0),
-    ),
+    (_s28, _s11),
+    ((3, 0), (SIMPLE_STRUCT, 0)),
 )
 
 STRUCT_WITH_JSON_NAME: StaticSchema = (
@@ -345,15 +315,7 @@ ERROR_WITH_MEMBERS: StaticSchema = (
     n0,
     _s38,
     {_s5: _s6},
-    (
-        _s39,
-        _s40,
-        _s41,
-        _s42,
-        _s43,
-        _s44,
-        _s45,
-    ),
+    (_s39, _s40, _s41, _s42, _s43, _s44, _s45),
     (
         (3, 0),
         (lambda: KITCHEN_SINK, 0),
@@ -420,13 +382,7 @@ FOO_ENUM: StaticSchema = (
     n1,
     _s55,
     0,
-    (
-        _s56,
-        _s58,
-        _s60,
-        _s62,
-        _s64,
-    ),
+    (_s56, _s58, _s60, _s62, _s64),
     (
         (-1, {_s57: _s1}),
         (-1, {_s57: _s59}),
@@ -459,14 +415,8 @@ FOO_ENUM_MAP: StaticSchema = (
     n1,
     _s68,
     0,
-    (
-        _s28,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (FOO_ENUM, 0),
-    ),
+    (_s28, _s11),
+    ((3, 0), (FOO_ENUM, 0)),
 )
 
 JSON_ENUMS_INPUT_OUTPUT: StaticSchema = (
@@ -474,14 +424,7 @@ JSON_ENUMS_INPUT_OUTPUT: StaticSchema = (
     n0,
     _s69,
     {_s10: None, _s13: None},
-    (
-        _s70,
-        _s71,
-        _s72,
-        _s73,
-        _s74,
-        _s75,
-    ),
+    (_s70, _s71, _s72, _s73, _s74, _s75),
     (
         (FOO_ENUM, 0),
         (FOO_ENUM, 0),
@@ -497,16 +440,8 @@ INTEGER_ENUM: StaticSchema = (
     n1,
     _s76,
     0,
-    (
-        _s77,
-        _s78,
-        _s79,
-    ),
-    (
-        (-1, {_s57: 1}),
-        (-1, {_s57: 2}),
-        (-1, {_s57: 3}),
-    ),
+    (_s77, _s78, _s79),
+    ((-1, {_s57: 1}), (-1, {_s57: 2}), (-1, {_s57: 3})),
 )
 
 INTEGER_ENUM_LIST: StaticSchema = (
@@ -532,14 +467,8 @@ INTEGER_ENUM_MAP: StaticSchema = (
     n1,
     _s82,
     0,
-    (
-        _s28,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (INTEGER_ENUM, 0),
-    ),
+    (_s28, _s11),
+    ((3, 0), (INTEGER_ENUM, 0)),
 )
 
 JSON_INT_ENUMS_INPUT_OUTPUT: StaticSchema = (
@@ -547,14 +476,7 @@ JSON_INT_ENUMS_INPUT_OUTPUT: StaticSchema = (
     n0,
     _s83,
     {_s10: None, _s13: None},
-    (
-        _s84,
-        _s85,
-        _s86,
-        _s87,
-        _s88,
-        _s89,
-    ),
+    (_s84, _s85, _s86, _s87, _s88, _s89),
     (
         (INTEGER_ENUM, 0),
         (INTEGER_ENUM, 0),
@@ -579,14 +501,8 @@ STRING_MAP: StaticSchema = (
     n1,
     _s91,
     0,
-    (
-        _s28,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s28, _s11),
+    ((3, 0), (3, 0)),
 )
 
 GREETING_STRUCT: StaticSchema = (
@@ -603,17 +519,7 @@ MY_UNION: StaticSchema = (
     n0,
     _s94,
     0,
-    (
-        _s95,
-        _s96,
-        _s97,
-        _s98,
-        _s99,
-        _s100,
-        _s101,
-        _s102,
-        _s103,
-    ),
+    (_s95, _s96, _s97, _s98, _s99, _s100, _s101, _s102, _s103),
     (
         (3, 0),
         (2, 0),
@@ -668,14 +574,8 @@ PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     n0,
     _s110,
     {_s10: None},
-    (
-        _s111,
-        _s114,
-    ),
-    (
-        (3, {_s112: _s113}),
-        (3, 0),
-    ),
+    (_s111, _s114),
+    ((3, {_s112: _s113}), (3, 0)),
 )
 
 SIMPLE_SCALAR_PROPERTIES_INPUT_OUTPUT: StaticSchema = (
@@ -683,14 +583,8 @@ SIMPLE_SCALAR_PROPERTIES_INPUT_OUTPUT: StaticSchema = (
     n0,
     _s115,
     {_s10: None, _s13: None},
-    (
-        _s116,
-        _s117,
-    ),
-    (
-        (9, 0),
-        (10, 0),
-    ),
+    (_s116, _s117),
+    ((9, 0), (10, 0)),
 )
 
 SPARSE_STRING_LIST: StaticSchema = (
@@ -707,14 +601,8 @@ SPARSE_STRING_MAP: StaticSchema = (
     n1,
     _s119,
     64,
-    (
-        _s28,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s28, _s11),
+    ((3, 0), (3, 0)),
 )
 
 SPARSE_NULLS_OPERATION_INPUT_OUTPUT: StaticSchema = (
@@ -722,14 +610,8 @@ SPARSE_NULLS_OPERATION_INPUT_OUTPUT: StaticSchema = (
     n0,
     _s120,
     {_s10: None, _s13: None},
-    (
-        _s121,
-        _s122,
-    ),
-    (
-        (SPARSE_STRING_LIST, 0),
-        (SPARSE_STRING_MAP, 0),
-    ),
+    (_s121, _s122),
+    ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
 )
 
 UNION_INPUT_OUTPUT: StaticSchema = (
@@ -818,12 +700,6 @@ MAP_OF_KITCHEN_SINKS: StaticSchema = (
     n0,
     _s145,
     0,
-    (
-        _s28,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (KITCHEN_SINK, 0),
-    ),
+    (_s28, _s11),
+    ((3, 0), (KITCHEN_SINK, 0)),
 )

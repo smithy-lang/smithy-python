@@ -216,14 +216,8 @@ VALIDATION_EXCEPTION_FIELD: StaticSchema = (
     n0,
     _s0,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 1),
-        (3, 1),
-    ),
+    (_s1, _s2),
+    ((3, 1), (3, 1)),
 )
 
 VALIDATION_EXCEPTION_FIELD_LIST: StaticSchema = (
@@ -240,14 +234,8 @@ VALIDATION_EXCEPTION: StaticSchema = (
     n0,
     _s5,
     {_s6: _s7},
-    (
-        _s2,
-        _s8,
-    ),
-    (
-        (3, 1),
-        (VALIDATION_EXCEPTION_FIELD_LIST, 0),
-    ),
+    (_s2, _s8),
+    ((3, 1), (VALIDATION_EXCEPTION_FIELD_LIST, 0)),
 )
 
 CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (
@@ -273,14 +261,8 @@ COMPLEX_ERROR: StaticSchema = (
     n1,
     _s13,
     {_s6: _s7},
-    (
-        _s14,
-        _s15,
-    ),
-    (
-        (3, 0),
-        (COMPLEX_NESTED_ERROR_DATA, 0),
-    ),
+    (_s14, _s15),
+    ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
 TEST_STRING_LIST: StaticSchema = (
@@ -297,14 +279,8 @@ TEST_STRING_MAP: StaticSchema = (
     n1,
     _s17,
     0,
-    (
-        _s18,
-        _s19,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s18, _s19),
+    ((3, 0), (3, 0)),
 )
 
 TEST_ENUM: StaticSchema = (
@@ -312,16 +288,8 @@ TEST_ENUM: StaticSchema = (
     n1,
     _s20,
     0,
-    (
-        _s21,
-        _s23,
-        _s24,
-    ),
-    (
-        (-1, {_s22: _s21}),
-        (-1, {_s22: _s23}),
-        (-1, {_s22: _s24}),
-    ),
+    (_s21, _s23, _s24),
+    ((-1, {_s22: _s21}), (-1, {_s22: _s23}), (-1, {_s22: _s24})),
 )
 
 TEST_INT_ENUM: StaticSchema = (
@@ -329,14 +297,8 @@ TEST_INT_ENUM: StaticSchema = (
     n1,
     _s25,
     0,
-    (
-        _s26,
-        _s27,
-    ),
-    (
-        (-1, {_s22: 1}),
-        (-1, {_s22: 2}),
-    ),
+    (_s26, _s27),
+    ((-1, {_s22: 1}), (-1, {_s22: 2})),
 )
 
 DEFAULTS: StaticSchema = (
@@ -401,14 +363,8 @@ DENSE_BOOLEAN_MAP: StaticSchema = (
     n1,
     _s55,
     0,
-    (
-        _s18,
-        _s19,
-    ),
-    (
-        (3, 0),
-        (2, 0),
-    ),
+    (_s18, _s19),
+    ((3, 0), (2, 0)),
 )
 
 DENSE_NUMBER_MAP: StaticSchema = (
@@ -416,14 +372,8 @@ DENSE_NUMBER_MAP: StaticSchema = (
     n1,
     _s56,
     0,
-    (
-        _s18,
-        _s19,
-    ),
-    (
-        (3, 0),
-        (7, 0),
-    ),
+    (_s18, _s19),
+    ((3, 0), (7, 0)),
 )
 
 STRING_SET: StaticSchema = (
@@ -440,14 +390,8 @@ DENSE_SET_MAP: StaticSchema = (
     n1,
     _s58,
     0,
-    (
-        _s18,
-        _s19,
-    ),
-    (
-        (3, 0),
-        (STRING_SET, 0),
-    ),
+    (_s18, _s19),
+    ((3, 0), (STRING_SET, 0)),
 )
 
 DENSE_STRING_MAP: StaticSchema = (
@@ -455,14 +399,8 @@ DENSE_STRING_MAP: StaticSchema = (
     n1,
     _s59,
     0,
-    (
-        _s18,
-        _s19,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s18, _s19),
+    ((3, 0), (3, 0)),
 )
 
 GREETING_STRUCT: StaticSchema = (
@@ -479,14 +417,8 @@ DENSE_STRUCT_MAP: StaticSchema = (
     n1,
     _s61,
     0,
-    (
-        _s18,
-        _s19,
-    ),
-    (
-        (3, 0),
-        (GREETING_STRUCT, 0),
-    ),
+    (_s18, _s19),
+    ((3, 0), (GREETING_STRUCT, 0)),
 )
 
 FLOAT16_OUTPUT: StaticSchema = (
@@ -537,18 +469,8 @@ OPERATION_WITH_DEFAULTS_INPUT: StaticSchema = (
     n1,
     _s77,
     {_s63: _s78, _s79: None},
-    (
-        _s80,
-        _s81,
-        _s82,
-        _s83,
-    ),
-    (
-        (DEFAULTS, 0),
-        (CLIENT_OPTIONAL_DEFAULTS, 0),
-        (3, {_s10: _s30}),
-        (7, {_s10: 0}),
-    ),
+    (_s80, _s81, _s82, _s83),
+    ((DEFAULTS, 0), (CLIENT_OPTIONAL_DEFAULTS, 0), (3, {_s10: _s30}), (7, {_s10: 0})),
 )
 
 OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
@@ -622,14 +544,8 @@ RPC_V2_CBOR_UNION: StaticSchema = (
     n1,
     _s88,
     0,
-    (
-        _s87,
-        _s89,
-    ),
-    (
-        (3, 0),
-        (RPC_V2_CBOR_NESTED_UNION, 0),
-    ),
+    (_s87, _s89),
+    ((3, 0), (RPC_V2_CBOR_NESTED_UNION, 0)),
 )
 
 SPARSE_BOOLEAN_MAP: StaticSchema = (
@@ -637,14 +553,8 @@ SPARSE_BOOLEAN_MAP: StaticSchema = (
     n1,
     _s90,
     64,
-    (
-        _s18,
-        _s19,
-    ),
-    (
-        (3, 0),
-        (2, 0),
-    ),
+    (_s18, _s19),
+    ((3, 0), (2, 0)),
 )
 
 SPARSE_NUMBER_MAP: StaticSchema = (
@@ -652,14 +562,8 @@ SPARSE_NUMBER_MAP: StaticSchema = (
     n1,
     _s91,
     64,
-    (
-        _s18,
-        _s19,
-    ),
-    (
-        (3, 0),
-        (7, 0),
-    ),
+    (_s18, _s19),
+    ((3, 0), (7, 0)),
 )
 
 SPARSE_SET_MAP: StaticSchema = (
@@ -667,14 +571,8 @@ SPARSE_SET_MAP: StaticSchema = (
     n1,
     _s92,
     64,
-    (
-        _s18,
-        _s19,
-    ),
-    (
-        (3, 0),
-        (STRING_SET, 0),
-    ),
+    (_s18, _s19),
+    ((3, 0), (STRING_SET, 0)),
 )
 
 SPARSE_STRUCT_MAP: StaticSchema = (
@@ -682,14 +580,8 @@ SPARSE_STRUCT_MAP: StaticSchema = (
     n1,
     _s93,
     64,
-    (
-        _s18,
-        _s19,
-    ),
-    (
-        (3, 0),
-        (GREETING_STRUCT, 0),
-    ),
+    (_s18, _s19),
+    ((3, 0), (GREETING_STRUCT, 0)),
 )
 
 STRUCTURE_LIST_MEMBER: StaticSchema = (
@@ -697,14 +589,8 @@ STRUCTURE_LIST_MEMBER: StaticSchema = (
     n1,
     _s94,
     0,
-    (
-        _s95,
-        _s96,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s95, _s96),
+    ((3, 0), (3, 0)),
 )
 
 STRUCTURE_LIST: StaticSchema = (
@@ -739,13 +625,7 @@ FOO_ENUM: StaticSchema = (
     n2,
     _s100,
     0,
-    (
-        _s21,
-        _s24,
-        _s23,
-        _s26,
-        _s104,
-    ),
+    (_s21, _s24, _s23, _s26, _s104),
     (
         (-1, {_s22: _s12}),
         (-1, {_s22: _s101}),
@@ -769,16 +649,8 @@ INTEGER_ENUM: StaticSchema = (
     n2,
     _s107,
     0,
-    (
-        _s108,
-        _s109,
-        _s110,
-    ),
-    (
-        (-1, {_s22: 1}),
-        (-1, {_s22: 2}),
-        (-1, {_s22: 3}),
-    ),
+    (_s108, _s109, _s110),
+    ((-1, {_s22: 1}), (-1, {_s22: 2}), (-1, {_s22: 3})),
 )
 
 INTEGER_ENUM_LIST: StaticSchema = (
@@ -831,14 +703,8 @@ SPARSE_STRING_MAP: StaticSchema = (
     n2,
     _s116,
     64,
-    (
-        _s18,
-        _s19,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s18, _s19),
+    ((3, 0), (3, 0)),
 )
 
 TIMESTAMP_LIST: StaticSchema = (
@@ -940,13 +806,7 @@ RPC_V2_CBOR_DENSE_MAPS_INPUT: StaticSchema = (
     n1,
     _s134,
     {_s63: _s135, _s79: None},
-    (
-        _s136,
-        _s137,
-        _s138,
-        _s139,
-        _s140,
-    ),
+    (_s136, _s137, _s138, _s139, _s140),
     (
         (DENSE_STRUCT_MAP, 0),
         (DENSE_NUMBER_MAP, 0),
@@ -961,13 +821,7 @@ RPC_V2_CBOR_DENSE_MAPS_OUTPUT: StaticSchema = (
     n1,
     _s141,
     {_s63: _s135, _s65: None},
-    (
-        _s136,
-        _s137,
-        _s138,
-        _s139,
-        _s140,
-    ),
+    (_s136, _s137, _s138, _s139, _s140),
     (
         (DENSE_STRUCT_MAP, 0),
         (DENSE_NUMBER_MAP, 0),
@@ -982,18 +836,7 @@ RPC_V2_CBOR_LISTS_INPUT: StaticSchema = (
     n1,
     _s142,
     {_s63: _s143, _s79: None},
-    (
-        _s144,
-        _s145,
-        _s146,
-        _s147,
-        _s148,
-        _s149,
-        _s150,
-        _s151,
-        _s152,
-        _s153,
-    ),
+    (_s144, _s145, _s146, _s147, _s148, _s149, _s150, _s151, _s152, _s153),
     (
         (STRING_LIST, 0),
         (STRING_SET, 0),
@@ -1013,18 +856,7 @@ RPC_V2_CBOR_LISTS_OUTPUT: StaticSchema = (
     n1,
     _s154,
     {_s63: _s143, _s65: None},
-    (
-        _s144,
-        _s145,
-        _s146,
-        _s147,
-        _s148,
-        _s149,
-        _s150,
-        _s151,
-        _s152,
-        _s153,
-    ),
+    (_s144, _s145, _s146, _s147, _s148, _s149, _s150, _s151, _s152, _s153),
     (
         (STRING_LIST, 0),
         (STRING_SET, 0),
@@ -1044,13 +876,7 @@ RPC_V2_CBOR_SPARSE_MAPS_INPUT: StaticSchema = (
     n1,
     _s155,
     {_s63: _s156, _s79: None},
-    (
-        _s157,
-        _s158,
-        _s159,
-        _s160,
-        _s161,
-    ),
+    (_s157, _s158, _s159, _s160, _s161),
     (
         (SPARSE_STRUCT_MAP, 0),
         (SPARSE_NUMBER_MAP, 0),
@@ -1065,13 +891,7 @@ RPC_V2_CBOR_SPARSE_MAPS_OUTPUT: StaticSchema = (
     n1,
     _s162,
     {_s63: _s156, _s65: None},
-    (
-        _s157,
-        _s158,
-        _s159,
-        _s160,
-        _s161,
-    ),
+    (_s157, _s158, _s159, _s160, _s161),
     (
         (SPARSE_STRUCT_MAP, 0),
         (SPARSE_NUMBER_MAP, 0),
@@ -1086,14 +906,8 @@ RPC_V2_CBOR_UNIONS_INPUT: StaticSchema = (
     n1,
     _s163,
     {_s63: _s164, _s79: None},
-    (
-        _s165,
-        _s166,
-    ),
-    (
-        (RPC_V2_CBOR_UNION, 0),
-        (3, 0),
-    ),
+    (_s165, _s166),
+    ((RPC_V2_CBOR_UNION, 0), (3, 0)),
 )
 
 RPC_V2_CBOR_UNIONS_OUTPUT: StaticSchema = (
@@ -1101,14 +915,8 @@ RPC_V2_CBOR_UNIONS_OUTPUT: StaticSchema = (
     n1,
     _s167,
     {_s63: _s164, _s65: None},
-    (
-        _s165,
-        _s166,
-    ),
-    (
-        (RPC_V2_CBOR_UNION, 0),
-        (3, 0),
-    ),
+    (_s165, _s166),
+    ((RPC_V2_CBOR_UNION, 0), (3, 0)),
 )
 
 SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
@@ -1116,30 +924,8 @@ SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     n1,
     _s168,
     {_s63: _s169, _s79: None},
-    (
-        _s170,
-        _s171,
-        _s172,
-        _s173,
-        _s174,
-        _s175,
-        _s176,
-        _s177,
-        _s87,
-        _s178,
-    ),
-    (
-        (2, 0),
-        (2, 0),
-        (5, 0),
-        (10, 0),
-        (9, 0),
-        (7, 0),
-        (8, 0),
-        (6, 0),
-        (3, 0),
-        (1, 0),
-    ),
+    (_s170, _s171, _s172, _s173, _s174, _s175, _s176, _s177, _s87, _s178),
+    ((2, 0), (2, 0), (5, 0), (10, 0), (9, 0), (7, 0), (8, 0), (6, 0), (3, 0), (1, 0)),
 )
 
 SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
@@ -1147,30 +933,8 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     n1,
     _s179,
     {_s63: _s169, _s65: None},
-    (
-        _s170,
-        _s171,
-        _s172,
-        _s173,
-        _s174,
-        _s175,
-        _s176,
-        _s177,
-        _s87,
-        _s178,
-    ),
-    (
-        (2, 0),
-        (2, 0),
-        (5, 0),
-        (10, 0),
-        (9, 0),
-        (7, 0),
-        (8, 0),
-        (6, 0),
-        (3, 0),
-        (1, 0),
-    ),
+    (_s170, _s171, _s172, _s173, _s174, _s175, _s176, _s177, _s87, _s178),
+    ((2, 0), (2, 0), (5, 0), (10, 0), (9, 0), (7, 0), (8, 0), (6, 0), (3, 0), (1, 0)),
 )
 
 SPARSE_NULLS_OPERATION_INPUT: StaticSchema = (
@@ -1178,14 +942,8 @@ SPARSE_NULLS_OPERATION_INPUT: StaticSchema = (
     n1,
     _s180,
     {_s63: _s181, _s79: None},
-    (
-        _s182,
-        _s160,
-    ),
-    (
-        (SPARSE_STRING_LIST, 0),
-        (SPARSE_STRING_MAP, 0),
-    ),
+    (_s182, _s160),
+    ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
 )
 
 SPARSE_NULLS_OPERATION_OUTPUT: StaticSchema = (
@@ -1193,14 +951,8 @@ SPARSE_NULLS_OPERATION_OUTPUT: StaticSchema = (
     n1,
     _s183,
     {_s63: _s181, _s65: None},
-    (
-        _s182,
-        _s160,
-    ),
-    (
-        (SPARSE_STRING_LIST, 0),
-        (SPARSE_STRING_MAP, 0),
-    ),
+    (_s182, _s160),
+    ((SPARSE_STRING_LIST, 0), (SPARSE_STRING_MAP, 0)),
 )
 
 EMPTY_INPUT_OUTPUT: StaticOperationSchema = (
@@ -1355,14 +1107,8 @@ RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1: StaticSchema = (
     n1,
     _s200,
     0,
-    (
-        _s201,
-        _s132,
-    ),
-    (
-        (3, 0),
-        (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0),
-    ),
+    (_s201, _s132),
+    ((3, 0), (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0)),
 )
 
 RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2: StaticSchema = (
@@ -1370,12 +1116,6 @@ RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2: StaticSchema = (
     n1,
     _s202,
     0,
-    (
-        _s203,
-        _s204,
-    ),
-    (
-        (3, 0),
-        (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),
-    ),
+    (_s203, _s204),
+    ((3, 0), (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0)),
 )
