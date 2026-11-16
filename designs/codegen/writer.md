@@ -39,9 +39,11 @@ class Node:
 
 ## Writing a module
 
-`PythonWriter(module, dependencies=None)` takes the destination module name and
-an optional shared `DependencySet`. `render()` finds the names bound by the
-written lines and follows Python's scoping rules.
+`PythonWriter(module, *, dependencies=None, stub=False)` takes the destination
+module name, an optional shared `DependencySet`, and whether the module is a
+`.pyi` stub, which puts one blank line after the imports instead of two.
+`FileManifest.python_module()` sets `stub` for `.pyi` paths. `render()` finds
+the names bound by the written lines and follows Python's scoping rules.
 Module-level names, such as classes, functions, assignments, imports and
 `global` assignments, apply to every reference. A local name, such as a field,
 parameter or local variable, applies only to references that can see it. A
@@ -116,8 +118,11 @@ classes defined later.
 * Types in the current module use their bare names without imports.
 * Other types normally use `from module import Name`.
 
-Imports are deduplicated by module and name, then sorted by module, name and
-alias. Referenced packages don't have to be installed in the generator's environment.
+Imports are deduplicated by module and name, then grouped into standard-library,
+third-party and relative sections separated by blank lines. A module is
+third-party when a reference to its top-level package carries dependencies.
+Within a section, imports are sorted by module, name and alias. Referenced
+packages don't have to be installed in the generator's environment.
 For example, rendering a reference to `smithy_core.documents.Document` does not
 import `smithy_core`.
 
@@ -165,5 +170,6 @@ A same-module reference whose name is a local name visible where it is
 referenced raises `CodegenError`. The writer does not add self-imports or aliases
 for local declarations.
 
-The writer returns source in memory. File output, documentation conversion and
-actual declaration generation remain separate follow-ups.
+The writer returns source in memory. `FileManifest.commit()` writes files, and
+`ModelGenerator`, `SchemaGenerator` and `TypesGenerator` generate declarations.
+Documentation conversion remains a separate follow-up.

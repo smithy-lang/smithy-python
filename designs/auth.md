@@ -15,23 +15,51 @@ Each `AuthScheme` has a `scheme_id`, which is the Smithy shape ID of the auth
 scheme.
 
 ```python
-class AuthScheme[R: Request, I: Identity, IP: Mapping[str, Any], SP: Mapping[str, Any]](
+# smithy_core.interfaces.auth
+class AuthScheme[R, I: Identity, IP: Mapping[str, Any], SP: Mapping[str, Any]](
     Protocol
 ):
     scheme_id: ShapeID
 
-    def identity_properties(self, *, context: _TypedProperties) -> IP:
+    def identity_properties(self, *, context: TypedProperties) -> IP:
         ...
 
     def identity_resolver(
-        self, *, context: _TypedProperties
+        self, *, context: TypedProperties
     ) -> IdentityResolver[I, IP]:
         ...
 
-    def signer_properties(self, *, context: _TypedProperties) -> SP:
+    def signer_properties(self, *, context: TypedProperties) -> SP:
         ...
 
     def signer(self) -> Signer[R, I, SP]:
+        ...
+
+    def event_signer(self, *, request: R) -> EventSigner[I, SP] | None:
+        return None
+
+
+# smithy_core.aio.interfaces.auth
+class AsyncAuthScheme[
+    R: Request,
+    I: Identity,
+    IP: Mapping[str, Any],
+    SP: Mapping[str, Any],
+](Protocol):
+    scheme_id: ShapeID
+
+    def identity_properties(self, *, context: TypedProperties) -> IP:
+        ...
+
+    def identity_resolver(
+        self, *, context: TypedProperties
+    ) -> AsyncIdentityResolver[I, IP]:
+        ...
+
+    def signer_properties(self, *, context: TypedProperties) -> SP:
+        ...
+
+    def signer(self) -> AsyncSigner[R, I, SP] | Signer[R, I, SP]:
         ...
 
     def event_signer(self, *, request: R) -> EventSigner[I, SP] | None:
@@ -73,8 +101,7 @@ returns a priority-ordered list of auth schemes to pick from, along with
 optional overrides for identity and signer properties.
 
 The client will pick the first auth scheme in the list that has an entry in the
-`auth_schemes` [configuration](#configuration) dict and which is able to resolve
-an identity.
+`auth_schemes` [configuration](#configuration) dict.
 
 The resolver itself is stored in the service's [configuration](#configuration)
 object, and may be replaced with a custom implemenatation. Default
@@ -113,10 +140,24 @@ properties or environement variables. These different sources are loaded by an
 Identity resolvers are responsible for contructiong an `Identity` for a request.
 
 ```python
+# smithy_core.interfaces.identity
 class IdentityResolver[I: Identity, IP: Mapping[str, Any]](Protocol):
+
+    def get_identity(self, *, properties: IP) -> I:
+        ...
+
+    def invalidate(self) -> None:
+        return None
+
+
+# smithy_core.aio.interfaces.identity
+class AsyncIdentityResolver[I: Identity, IP: Mapping[str, Any]](Protocol):
 
     async def get_identity(self, *, properties: IP) -> I:
         ...
+
+    async def invalidate(self) -> None:
+        return None
 ```
 
 Each identity source SHOULD have its own identity resolver implementation. If an
@@ -141,7 +182,14 @@ configuration needed. The signing properties are constructed by the
 `AuthScheme`'s `signer_properties` method.
 
 ```python
-class Signer[R: Request, I, SP: Mapping[str, Any]](Protocol):
+# smithy_core.interfaces.auth
+class Signer[R, I, SP: Mapping[str, Any]](Protocol):
+    def sign(self, *, request: R, identity: I, properties: SP) -> R:
+        ...
+
+
+# smithy_core.aio.interfaces.auth
+class AsyncSigner[R: Request, I, SP: Mapping[str, Any]](Protocol):
     async def sign(self, *, request: R, identity: I, properties: SP) -> R:
         ...
 ```
@@ -161,18 +209,20 @@ signing method are identical to those pased to the request signer.
 ```python
 class EventSigner[I, SP: Mapping[str, Any]](Protocol):
 
-    # TODO: add a protocol type for events
-    async def sign(self, *, event: Any, identity: I, properties: SP) -> Any:
+    def sign(self, *, event: Any, identity: I, properties: SP) -> Any:
+        ...
+
+    def sign_empty(self, *, event: Any, identity: I, properties: SP) -> Any:
         ...
 ```
 
 ## Configuration
 
-All services with at least one auth trait will have the following properites on
-their configuration object.
+All services will have the following properites on their configuration object.
+Services without an auth trait default to an empty `auth_schemes` dict and
+`smithy_core.auth.DefaultAuthResolver`.
 
 ```python
-class AuthConfig[R: Request](Protocol):
-    auth_scheme_resolver: AuthSchemeResolver
-    auth_schemes: dict[ShapeID, AuthScheme[R, Any, Any, Any]]
+auth_scheme_resolver: AuthSchemeResolver
+auth_schemes: dict[ShapeID, AsyncAuthScheme[Any, Any, Any, Any]]
 ```

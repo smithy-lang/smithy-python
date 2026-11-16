@@ -57,6 +57,9 @@ class EventDeserializer(SpecificShapeDeserializer):
                     consumer(member_schema, message_deserializer)
             case "exception":
                 member_name = expect_type(str, headers[":exception-type"])
+                # TODO: An exception member that isn't in the schema must not fail
+                # the client. Resolve it like unknown event members, as the union's
+                # unknown variant, instead of raising a KeyError here.
                 member_schema = schema.members[member_name]
                 message_deserializer = self._create_deserializer(member_schema, headers)
                 consumer(member_schema, message_deserializer)
