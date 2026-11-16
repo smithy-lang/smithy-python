@@ -411,10 +411,14 @@ class _StubEmitter:
         return (self._type_reference(target.id),)
 
     def _must_be_set(self, shape: _model.Shape, member: _model.MemberShape) -> bool:
-        # Keyword inputs enforce @required, unlike input models. A defaulted
-        # member and an input's idempotency token may be omitted.
+        # Keyword inputs enforce @required, unlike input models. A defaulted or
+        # @clientOptional member and an input's idempotency token may be omitted.
         # CAUTION: smithy_core._dynamic_models.ModelRegistry enforces the same rule.
-        if not member.has_trait("required") or member.has_trait("default"):
+        if (
+            not member.has_trait("required")
+            or member.has_trait("default")
+            or member.has_trait("clientOptional")
+        ):
             return False
         return not (member.has_trait("idempotencyToken") and shape.id in self.inputs)
 

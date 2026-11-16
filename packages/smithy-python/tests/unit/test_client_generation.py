@@ -333,3 +333,25 @@ def test_protocol_selection_must_be_modeled_and_supported() -> None:
         else:
             with pytest.raises(CodegenError, match=message):
                 generator.generate(context)
+
+
+def test_client_optional_input_members_may_be_omitted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    shapes = _shapes()
+    shapes["example#GreetInput"]["members"]["name"]["traits"][
+        "smithy.api#clientOptional"
+    ] = {}
+    _generate(tmp_path, "greeter_client_optional", shapes)
+    stub = (tmp_path / "src/greeter_client_optional/models.pyi").read_text()
+    assert "name: str | None\n" in stub
+    assert "Required[" not in stub
+
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module("greeter_client_optional")
+    transport = _Transport(body=_cbor_map({}))
+    package.Greeter(_config(package, transport, aio=False)).greet()
+    (request,) = transport.requests
+    assert loads(_body(request)) == {}

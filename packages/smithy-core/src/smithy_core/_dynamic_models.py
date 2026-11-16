@@ -793,10 +793,7 @@ class ModelRegistry:
             members[field_names[i]] = member
             if own_token and member.get_trait(IdempotencyTokenTrait) is not None:
                 continue
-            if (
-                member.get_trait(RequiredTrait) is not None
-                and member.get_trait(DefaultTrait) is None
-            ):
+            if _non_nullable(member):
                 required.append(field_names[i])
         cls = self.build(self._target_name(schema))
         return members, tuple(required), cls

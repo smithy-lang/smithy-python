@@ -345,6 +345,53 @@ public class PythonCodegenTest {
     }
 
     @Test
+    public void clientOptionalInputMembersMayBeOmitted(@TempDir Path tempDir) throws IOException {
+        var model = Model.assembler(PythonCodegenTest.class.getClassLoader())
+                .discoverModels(PythonCodegenTest.class.getClassLoader())
+                .addUnparsedModel("optional.smithy", """
+                        $version: "2"
+                        namespace example.optional
+
+                        use aws.protocols#restJson1
+
+                        @restJson1
+                        service Optional {
+                            version: "1",
+                            operations: [CreateAccount]
+                        }
+
+                        @http(method: "POST", uri: "/", code: 200)
+                        operation CreateAccount {
+                            input := {
+                                @required
+                                @clientOptional
+                                uid: String
+
+                                @required
+                                name: String
+                            }
+                        }
+                        """)
+                .assemble()
+                .unwrap();
+        var context = PluginContext.builder()
+                .fileManifest(FileManifest.create(tempDir))
+                .settings(
+                        ObjectNode.builder()
+                                .withMember("service", "example.optional#Optional")
+                                .withMember("module", "optional")
+                                .withMember("moduleVersion", "0.0.1")
+                                .build())
+                .model(model)
+                .build();
+        new PythonClientCodegenPlugin().execute(context);
+
+        // Like a model, a keyword input may omit a @required @clientOptional member.
+        var models = Files.readString(tempDir.resolve("src/optional/models.pyi"));
+        assertKeys(models, "CreateAccountInputDict", "uid: str | None", "name: Required[str]");
+    }
+
+    @Test
     public void partitionsLargeModels(@TempDir Path tempDir) throws IOException {
         var source = new StringBuilder("""
                 $version: "2"
