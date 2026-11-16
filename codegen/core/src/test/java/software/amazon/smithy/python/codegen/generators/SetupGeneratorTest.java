@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import software.amazon.smithy.build.MockManifest;
 import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.model.Model;
@@ -83,16 +84,23 @@ public class SetupGeneratorTest {
         assertEquals("", manifest.expectFileString("src/test_client/py.typed"));
     }
 
-    @Test
-    public void distributionNameUsesDashes() {
-        var manifest = generateSetup();
+    @ParameterizedTest
+    @ValueSource(strings = {"test_client", "test-client"})
+    public void projectNameKeepsTheConfiguredModule(String module) {
+        var manifest = generateSetup(module);
         String pyproject = manifest.expectFileString("pyproject.toml");
 
-        assertTrue(pyproject.contains("name = \"test-client\""), pyproject);
-        assertTrue(pyproject.contains("keywords = [\"smithy\", \"test_client\"]"), pyproject);
+        assertAll(
+                () -> assertTrue(pyproject.contains("name = \"" + module + "\"\n"), pyproject),
+                () -> assertTrue(pyproject.contains("keywords = [\"smithy\", \"test_client\"]"), pyproject),
+                () -> assertEquals("", manifest.expectFileString("src/test_client/py.typed")));
     }
 
     private static MockManifest generateSetup() {
+        return generateSetup("test_client");
+    }
+
+    private static MockManifest generateSetup(String module) {
         var service = ServiceShape.builder()
                 .id("smithy.example#TestService")
                 .version("2024-01-01")
@@ -102,7 +110,7 @@ public class SetupGeneratorTest {
         var model = Model.builder().addShape(service).build();
         var settings = PythonSettings.builder()
                 .service(service.getId())
-                .moduleName("test_client")
+                .moduleName(module)
                 .moduleVersion("0.0.1")
                 .build();
         var manifest = new MockManifest();

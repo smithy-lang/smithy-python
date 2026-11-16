@@ -25,6 +25,7 @@ import software.amazon.smithy.utils.ToSmithyBuilder;
  * @param moduleVersion The version of the module to generate.
  * @param moduleDescription The optional module description for the module that will be generated.
  * @param artifactType The type of artifact being generated (e.g. client/shapes/server)
+ * @param packageName The project name for pyproject.toml, which is the configured module as given.
  */
 @SmithyUnstableApi
 public record PythonSettings(
@@ -32,7 +33,8 @@ public record PythonSettings(
         String moduleName,
         String moduleVersion,
         String moduleDescription,
-        ArtifactType artifactType) implements ToSmithyBuilder<PythonSettings> {
+        ArtifactType artifactType,
+        String packageName) implements ToSmithyBuilder<PythonSettings> {
 
     private static final String SERVICE = "service";
     private static final String MODULE_NAME = "module";
@@ -44,20 +46,22 @@ public record PythonSettings(
         Objects.requireNonNull(moduleName);
         Objects.requireNonNull(moduleDescription);
         Objects.requireNonNull(moduleVersion);
-        if (!moduleName.matches("[a-z_\\d]+")) {
+        Objects.requireNonNull(packageName);
+        if (!packageName.matches("[a-z_\\d-]+")) {
             throw new CodegenException(
-                    "Python package names may only consist of lowercase letters, numbers, and underscores.");
+                    "Python package names may only consist of lowercase letters, numbers, underscores, and dashes.");
         }
     }
 
     private PythonSettings(Builder builder) {
         this(
                 builder.service,
-                builder.moduleName,
+                builder.moduleName.replace('-', '_'),
                 builder.moduleVersion,
                 // Unset descriptions stay empty; SetupGenerator resolves them from the service.
                 StringUtils.isBlank(builder.moduleDescription) ? "" : builder.moduleDescription,
-                builder.artifactType);
+                builder.artifactType,
+                builder.moduleName);
     }
 
     /**
@@ -105,7 +109,7 @@ public record PythonSettings(
     public Builder toBuilder() {
         return builder()
                 .service(service)
-                .moduleName(moduleName)
+                .moduleName(packageName)
                 .moduleVersion(moduleVersion)
                 .moduleDescription(moduleDescription)
                 .artifactType(artifactType);

@@ -174,7 +174,7 @@ public final class SetupGenerator {
                     settings.moduleName(),
                     settings.moduleVersion(),
                     description,
-                    settings.moduleName().replace('_', '-'));
+                    settings.packageName());
 
             Optional.ofNullable(dependencies.get(PythonDependency.Type.DEPENDENCY.getType())).ifPresent(deps -> {
                 writer.openBlock("dependencies = [", "]\n", () -> writeDependencyList(writer, deps.values()));

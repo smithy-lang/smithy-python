@@ -282,7 +282,7 @@
             "plugins": {
                 "python-client-codegen": {
                     "service": "smithy.python.tests.handwritten#MyHandwrittenModel",
-                    "module": "my_handwritten_model",
+                    "module": "my-handwritten-model",
                     "moduleVersion": "0.0.1"
                 }
             }
@@ -304,7 +304,7 @@
             "plugins": {
                 "python-client-codegen": {
                     "service": "smithy.python.tests.handwritten.json#MyHandwrittenJsonModel",
-                    "module": "my_handwritten_json_model",
+                    "module": "my-handwritten-json-model",
                     "moduleVersion": "0.0.1"
                 }
             }
