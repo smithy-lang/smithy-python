@@ -20,12 +20,15 @@ from types import ModuleType
 from typing import Any, cast
 
 from smithy_core._schema_compact import hydrate
-from smithy_core.shapes import ShapeType
+from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import DefaultTrait, RequiredTrait, StreamingTrait
 
 _SHAPE_CONSTS = ("STRUCTURE", "UNION", "ENUM", "INT_ENUM")
 
 _INPUT = "smithy.api#input"
+# Read by ID so smithy-test works with smithy-core releases that predate the
+# ClientOptionalTrait class.
+_CLIENT_OPTIONAL = ShapeID("smithy.api#clientOptional")
 
 
 class ConformanceError(AssertionError):
@@ -131,7 +134,8 @@ def _build_instance(cls: type, schema: Any, models: ModuleType) -> Any:
             continue
         required = member.get_trait(RequiredTrait) is not None
         has_default = member.get_trait(DefaultTrait) is not None
-        if not required or has_default or _is_input(schema):
+        client_optional = member.get_trait(_CLIENT_OPTIONAL) is not None
+        if not required or has_default or client_optional or _is_input(schema):
             continue
         kwargs[fname] = _trivial_value(member, models)
     return cls(**kwargs)

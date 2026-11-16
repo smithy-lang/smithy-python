@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Model conformance checks now treat `@required` members marked `@clientOptional` as optional."
+}

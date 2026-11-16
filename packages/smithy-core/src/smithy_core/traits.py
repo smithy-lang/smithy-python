@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 __all__ = [
     "ORIGINAL_SHAPE_ID",
     "APIKeyLocation",
+    "ClientOptionalTrait",
     "ContextParamTrait",
     "DefaultTrait",
     "DynamicTrait",
@@ -196,6 +197,14 @@ class ErrorTrait(Trait, id=ShapeID("smithy.api#error")):
 @dataclass(init=False, frozen=True)
 class RequiredTrait(Trait, id=ShapeID("smithy.api#required")):
     """Marks a member as required."""
+
+    def __post_init__(self) -> None:
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class ClientOptionalTrait(Trait, id=ShapeID("smithy.api#clientOptional")):
+    """Marks a member as optional to clients even if it is ``@required``."""
 
     def __post_init__(self) -> None:
         assert self.document_value is None

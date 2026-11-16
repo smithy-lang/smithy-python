@@ -41,6 +41,7 @@ from .schemas import APIOperation, Schema, SchemaExtension
 from .serializers import ShapeSerializer
 from .shapes import ShapeID, ShapeType
 from .traits import (
+    ClientOptionalTrait,
     DefaultTrait,
     EnumValueTrait,
     ErrorTrait,
@@ -405,9 +406,7 @@ class ModelRegistry:
             fname = field_names[i]
             if fname in kwargs:
                 continue
-            if member.get_trait(RequiredTrait) is None:
-                continue
-            if member.get_trait(DefaultTrait) is not None:
+            if not _non_nullable(member):
                 continue
             kwargs[fname] = self._correction_default(member)
 
@@ -503,17 +502,17 @@ class ModelRegistry:
         """The dataclass default for a member.
 
         A member is mandatory (no default) only when its container is NOT an input
-        structure, it is @required, and it has no @default. Input-structure members
-        are always nullable (``| None = None``) per the Smithy @input constraints.
-        Sensitive members get repr=False; @default values are typed; list/map/document
-        defaults use default_factory.
+        structure, it is @required, it is not @clientOptional, and it has no
+        @default. Input-structure and @clientOptional members are nullable
+        (``| None = None``), as a client must treat them under Smithy's nullability
+        rules. Sensitive members get repr=False; @default values are typed;
+        list/map/document defaults use default_factory.
         """
         sensitive = member.get_trait(SensitiveTrait) is not None
         default_trait = member.get_trait(DefaultTrait)
-        required = member.get_trait(RequiredTrait) is not None
 
         if default_trait is None:
-            if required and not input_nullable:
+            if not input_nullable and _non_nullable(member):
                 return _field(repr=False) if sensitive else _MANDATORY
             return _field(default=None, repr=False) if sensitive else None
 
@@ -1328,6 +1327,20 @@ def _missing_members(names: list[str]) -> str:
 
 def _py_type(member: Schema) -> Any:
     return _PY_SCALAR.get(member.shape_type, Any)
+
+
+def _non_nullable(member: Schema) -> bool:
+    """Whether a client must always see a value for a member, wherever it is.
+
+    Mirrors CodegenUtils.isRequiredMember: @required without @default or
+    @clientOptional. The caller handles @input structures, whose members are all
+    nullable.
+    """
+    return (
+        member.get_trait(RequiredTrait) is not None
+        and member.get_trait(DefaultTrait) is None
+        and member.get_trait(ClientOptionalTrait) is None
+    )
 
 
 def _parse_timestamp(member: Schema, raw: Any) -> datetime.datetime:

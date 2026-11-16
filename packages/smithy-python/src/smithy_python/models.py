@@ -489,6 +489,7 @@ class _StubEmitter:
                 mandatory = (
                     shape.id not in self.inputs
                     and member.has_trait("required")
+                    and not member.has_trait("clientOptional")
                     and not has_default
                 )
                 if not mandatory:
