@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.16.0
+
+### Features
+* Added support for the aws.customizations#s3UnwrappedXmlOutput trait, which restXml uses to read an output's member from the response's root element, such as S3 GetBucketLocation.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.12.0` to `~=0.13.0`.
+* Bump `smithy-http` from `~=0.9.0` to `~=0.10.0`.
+* Bump `smithy-aws-event-stream` from `~=0.6.0` to `~=0.7.0`.
+* Bump `smithy-json` from `~=0.6.0` to `~=0.7.0`.
+* Bump `smithy-xml` from `~=0.5.0` to `~=0.6.0`.
+
 ## v0.15.0
 
 ### Dependencies

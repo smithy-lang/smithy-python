@@ -1,0 +1,12 @@
+{
+  "changes": [
+    {
+      "type": "enhancement",
+      "description": "Flag source code issue for unknown event stream members"
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-core` from `~=0.12.0` to `~=0.13.0`."
+    }
+  ]
+}

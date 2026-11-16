@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added support for the aws.customizations#s3UnwrappedXmlOutput trait, which restXml uses to read an output's member from the response's root element, such as S3 GetBucketLocation."
-}

@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.13.0
+
+### Features
+* Added `APIOperation.type_names`, which maps input, output, and error shape IDs to the model names an operation builds.
+* Added `ClientOptionalTrait`.
+
+### Bug fixes
+* Models built from schemas now leave `@required` members marked `@clientOptional` optional and no longer fill them during client error correction.
+* Clients now call the interceptors, resolvers, retry strategies and other components in their config rather than copies of them.
+* Fixed `ShapeSerializer.write_data_stream` raising `UnsupportedStreamError` after writing a `bytes` or `bytearray` value.
+
 ## v0.12.0
 
 ### Breaking Changes

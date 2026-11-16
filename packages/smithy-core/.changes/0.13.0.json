@@ -1,0 +1,24 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added `APIOperation.type_names`, which maps input, output, and error shape IDs to the model names an operation builds."
+    },
+    {
+      "type": "feature",
+      "description": "Added `ClientOptionalTrait`."
+    },
+    {
+      "type": "bugfix",
+      "description": "Models built from schemas now leave `@required` members marked `@clientOptional` optional and no longer fill them during client error correction."
+    },
+    {
+      "type": "bugfix",
+      "description": "Clients now call the interceptors, resolvers, retry strategies and other components in their config rather than copies of them."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed `ShapeSerializer.write_data_stream` raising `UnsupportedStreamError` after writing a `bytes` or `bytearray` value."
+    }
+  ]
+}

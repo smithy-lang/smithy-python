@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.0
+
+### Dependencies
+* Bump `smithy-core` from `~=0.12.0` to `~=0.13.0`.
+
 ## v0.4.0
 
 ### Dependencies

@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Add Python client planning with operation discovery, dedicated input/output normalization, and collision-safe service and operation symbols. Client generation remains unavailable."
-}

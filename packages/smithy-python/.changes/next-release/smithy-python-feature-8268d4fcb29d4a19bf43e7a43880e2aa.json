@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "`smithy-python generate client` generates sync and async RPCv2 CBOR clients for unsigned, non-streaming operations with a static endpoint."
-}

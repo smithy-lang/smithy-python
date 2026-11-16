@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.0
+
+### Bug fixes
+* Model conformance checks now treat `@required` members marked `@clientOptional` as optional.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.12.0` to `~=0.13.0`.
+* Bump `smithy-http` from `~=0.9.0` to `~=0.10.0`.
+* Bump `smithy-aws-core` from `~=0.15.0` to `~=0.16.0`.
+
 ## v0.4.0
 
 ### Breaking Changes
