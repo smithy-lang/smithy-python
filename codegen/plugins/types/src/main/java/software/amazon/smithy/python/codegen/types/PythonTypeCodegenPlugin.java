@@ -39,7 +39,7 @@ public final class PythonTypeCodegenPlugin implements SmithyBuildPlugin {
         }
 
         runner.settings(pythonSettings);
-        var directedCodegen = new DirectedPythonTypeCodegen();
+        var directedCodegen = new DirectedPythonTypeCodegen(typeSettings.generateInputsAndOutputs());
         runner.directedCodegen(directedCodegen);
         runner.fileManifest(context.getFileManifest());
         runner.service(pythonSettings.service());
