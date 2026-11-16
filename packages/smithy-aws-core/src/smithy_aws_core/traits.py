@@ -24,6 +24,7 @@ __all__ = [
     "HTTPChecksumTrait",
     "RestJson1Trait",
     "RestXmlTrait",
+    "S3UnwrappedXmlOutputTrait",
     "SigV4Trait",
 ]
 
@@ -49,6 +50,13 @@ class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
 @dataclass(init=False, frozen=True)
 class RestXmlTrait(Trait, id=ShapeID("aws.protocols#restXml")):
     """The ``aws.protocols#restXml`` protocol trait."""
+
+
+@dataclass(init=False, frozen=True)
+class S3UnwrappedXmlOutputTrait(
+    Trait, id=ShapeID("aws.customizations#s3UnwrappedXmlOutput")
+):
+    """Marks an operation whose XML response root is its output's only member."""
 
 
 @dataclass(init=False, frozen=True)
