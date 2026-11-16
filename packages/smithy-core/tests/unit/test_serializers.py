@@ -5,10 +5,13 @@ from typing import Any
 import pytest
 from smithy_core.exceptions import UnsupportedStreamError
 from smithy_core.prelude import BLOB
-from smithy_core.serializers import ShapeSerializer
+from smithy_core.serializers import ShapeSerializer, SpecificShapeSerializer
 
 
-class _BlobRecorder(ShapeSerializer):
+class _BlobRecorder(SpecificShapeSerializer):
+    # SpecificShapeSerializer rejects data streams; the protocol default is under test.
+    write_data_stream = ShapeSerializer.write_data_stream
+
     def __init__(self) -> None:
         self.blobs: list[bytes] = []
 
