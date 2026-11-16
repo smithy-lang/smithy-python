@@ -521,6 +521,8 @@
     "Field": "rex-class",
     "HTTPRequest": "rex-protocol",
     "Interceptor": "rex-class",
+    "PropertyKey": "rex-class",
+    "RETRY_STRATEGY": "rex-PropertyKey",
     "RequestContext": "rex-class"
   },
   "smithy_aws_core.interceptors.user_agent": {

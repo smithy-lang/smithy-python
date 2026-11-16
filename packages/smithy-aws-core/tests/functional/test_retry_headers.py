@@ -88,6 +88,19 @@ async def test_sends_same_invocation_id_on_every_attempt(
     assert len(invocation_ids) == 1
 
 
-async def test_signs_invocation_id(sync: bool, tmp_path: Path) -> None:
+async def test_sends_attempt_number_and_max_attempts(
+    sync: bool, tmp_path: Path
+) -> None:
+    attempts = await _call(sync, tmp_path, throttles=2)
+    assert [headers["amz-sdk-request"] for headers in attempts] == [
+        "attempt=1; max=3",
+        "attempt=2; max=3",
+        "attempt=3; max=3",
+    ]
+
+
+async def test_signs_retry_headers(sync: bool, tmp_path: Path) -> None:
     (headers,) = await _call(sync, tmp_path)
-    assert "amz-sdk-invocation-id" in headers["authorization"]
+    signed = headers["authorization"]
+    assert "amz-sdk-invocation-id" in signed
+    assert "amz-sdk-request" in signed
