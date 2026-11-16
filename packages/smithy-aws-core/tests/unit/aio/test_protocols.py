@@ -968,6 +968,107 @@ async def test_rest_xml_modeled_error_falls_back_to_message_element() -> None:
     parse.assert_called_once()
 
 
+_LOCATION_OUTPUT_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#LocationOutput"),
+    members={"LocationConstraint": {"target": STRING}},
+)
+
+
+@dataclass
+class _LocationOutput:
+    location_constraint: str | None = None
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> "_LocationOutput":
+        kwargs: dict[str, Any] = {}
+
+        def consumer(schema: Schema, de: ShapeDeserializer) -> None:
+            kwargs["location_constraint"] = de.read_string(schema)
+
+        deserializer.read_struct(_LOCATION_OUTPUT_SCHEMA, consumer)
+        return cls(**kwargs)
+
+
+def _unwrapped_operation(*, unwrapped: bool) -> APIOperation[Any, Any]:
+    traits: dict[str, Any] = {
+        "smithy.api#http": {"method": "GET", "code": 200, "uri": "/"}
+    }
+    if unwrapped:
+        traits["aws.customizations#s3UnwrappedXmlOutput"] = None
+    return APIOperation(
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "com.test",
+            "GetLocation",
+            traits,
+            _EMPTY_INPUT_SCHEMA,
+            _LOCATION_OUTPUT_SCHEMA,
+            (),
+        ),
+        model_registry=_StubRegistry(
+            {"EmptyInput": _EmptyInput, "LocationOutput": _LocationOutput}
+        ),
+        effective_auth_schemes=[],
+    )
+
+
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        (
+            b'<?xml version="1.0" encoding="UTF-8"?>'
+            b'<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">'
+            b"us-west-2</LocationConstraint>",
+            "us-west-2",
+        ),
+        (b"<LocationConstraint/>", None),
+    ],
+)
+async def test_rest_xml_unwrapped_output_reads_the_root_element_text(
+    body: bytes, expected: str | None
+) -> None:
+    output = await _deserialize_response(
+        _rest_xml_protocol(),
+        operation=_unwrapped_operation(unwrapped=True),
+        request=cast(HTTPRequest, Mock()),
+        response=HTTPResponse(status=200, fields=tuples_to_fields([]), body=body),
+        error_registry=TypeRegistry({}),
+        context=TypedProperties(),
+    )
+
+    assert output.location_constraint == expected
+
+
+async def test_rest_xml_output_without_the_trait_reads_a_child_element() -> None:
+    output = await _deserialize_response(
+        _rest_xml_protocol(),
+        operation=_unwrapped_operation(unwrapped=False),
+        request=cast(HTTPRequest, Mock()),
+        response=HTTPResponse(
+            status=200,
+            fields=tuples_to_fields([]),
+            body=b"<LocationOutput><LocationConstraint>x</LocationConstraint></LocationOutput>",
+        ),
+        error_registry=TypeRegistry({}),
+        context=TypedProperties(),
+    )
+    bare = await _deserialize_response(
+        _rest_xml_protocol(),
+        operation=_unwrapped_operation(unwrapped=False),
+        request=cast(HTTPRequest, Mock()),
+        response=HTTPResponse(
+            status=200,
+            fields=tuples_to_fields([]),
+            body=b"<LocationConstraint>x</LocationConstraint>",
+        ),
+        error_registry=TypeRegistry({}),
+        context=TypedProperties(),
+    )
+
+    assert output.location_constraint == "x"
+    assert bare.location_constraint is None
+
+
 _STATS_SCHEMA = Schema.collection(
     id=ShapeID("com.test#Stats"),
     members={"BytesScanned": {"target": INTEGER}},

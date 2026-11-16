@@ -1,5 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, ClassVar, Final
@@ -7,7 +8,11 @@ from xml.etree.ElementTree import Element
 
 from smithy_core import URI as _URI
 from smithy_core.codecs import Codec
-from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
+from smithy_core.deserializers import (
+    DeserializeableShape,
+    ShapeDeserializer,
+    SpecificShapeDeserializer,
+)
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import (
     CallError,
@@ -26,7 +31,7 @@ from smithy_core.interfaces import (
 from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 from smithy_core.prelude import DOCUMENT
 from smithy_core.response import ResponseMetadata
-from smithy_core.schemas import APIOperation
+from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import SerializeableShape, ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import HTTPTrait
@@ -36,6 +41,7 @@ from smithy_http import tuples_to_fields
 from smithy_http.deserializers import HTTPResponseDeserializer
 from smithy_http.interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 from smithy_http.protocols import HttpBindingClientProtocol, RpcClientProtocol
+from smithy_http.schema_extensions import HTTP_BINDING_SCHEMA_EXTENSION
 
 from ._private.query._xml import parse_xml_root
 from ._private.query.errors import create_aws_query_error
@@ -49,6 +55,7 @@ from .traits import (
     Ec2QueryTrait,
     RestJson1Trait,
     RestXmlTrait,
+    S3UnwrappedXmlOutputTrait,
 )
 from .utils import (
     parse_document_discriminator,
@@ -193,6 +200,38 @@ class RestXmlClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol
     @property
     def content_type(self) -> str:
         return self._content_type
+
+    def _deserialize_output[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self,
+        operation: APIOperation[OperationInput, OperationOutput],
+        response: HTTPResponse,
+        body: SyncStreamingBlob | None,
+    ) -> OperationOutput:
+        if operation.schema.get_trait(S3UnwrappedXmlOutputTrait) is None:
+            return super()._deserialize_output(operation, response, body)
+        output_schema = operation.output_schema
+        body_members = output_schema.get_extension(
+            HTTP_BINDING_SCHEMA_EXTENSION
+        ).response.body_members
+        members = [
+            m
+            for m in output_schema.members.values()
+            if body_members[m.expect_member_index()]
+        ]
+        if len(members) != 1:
+            raise ExpectationNotMetError(
+                f"{operation.schema.id} is marked s3UnwrappedXmlOutput, which needs "
+                f"exactly one body member in its output, but it has {len(members)}."
+            )
+        deserializer = HTTPResponseDeserializer(
+            payload_codec=_XMLUnwrappedCodec(self._codec, members[0]),
+            response=response,
+            body=body,
+        )
+        return operation.output.deserialize(deserializer)
 
     def _create_error(
         self,
@@ -799,6 +838,51 @@ def _assert_xml() -> None:
         raise MissingDependencyError(
             "Attempted to use XML codec, but smithy-xml is not installed."
         )
+
+
+@dataclass(frozen=True)
+class _XMLUnwrappedCodec(Codec):
+    """Reads an output's only body member from the text of the response's root element."""
+
+    codec: "XMLCodec"
+    member: Schema
+
+    @property
+    def media_type(self) -> str:
+        return self.codec.media_type
+
+    def create_serializer(self, sink: BytesWriter) -> ShapeSerializer:
+        return self.codec.create_serializer(sink)
+
+    def create_deserializer(self, source: bytes | BytesReader) -> ShapeDeserializer:
+        data = source if isinstance(source, bytes) else source.read()
+        root = parse_xml_root(data)
+        if root is None:
+            raise ExpectationNotMetError("Expected an XML response body.")
+        return _UnwrappedOutputDeserializer(
+            self.member,
+            root.text,
+            self.codec.create_deserializer_from_element(root),
+        )
+
+
+class _UnwrappedOutputDeserializer(SpecificShapeDeserializer):
+    def __init__(
+        self, member: Schema, text: str | None, root: ShapeDeserializer
+    ) -> None:
+        self._member = member
+        self._text = text
+        self._root = root
+
+    def read_struct(
+        self,
+        schema: Schema,
+        consumer: Callable[[Schema, ShapeDeserializer], None],
+    ) -> None:
+        # CAUTION: an empty root, such as S3 returns for us-east-1, leaves the member
+        # unset, matching the model's documentation of that value as null.
+        if self._text:
+            consumer(self._member, self._root)
 
 
 @dataclass(frozen=True)

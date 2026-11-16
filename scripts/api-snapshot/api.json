@@ -299,6 +299,7 @@
     "HTTPChecksumTrait": "class",
     "RestJson1Trait": "class",
     "RestXmlTrait": "class",
+    "S3UnwrappedXmlOutputTrait": "class",
     "SigV4Trait": "class"
   },
   "smithy_aws_core.utils": {

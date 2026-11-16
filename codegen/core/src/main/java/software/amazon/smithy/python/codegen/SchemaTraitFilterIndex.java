@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import software.amazon.smithy.aws.traits.ServiceTrait;
+import software.amazon.smithy.aws.traits.customizations.S3UnwrappedXmlOutputTrait;
 import software.amazon.smithy.aws.traits.protocols.AwsQueryCompatibleTrait;
 import software.amazon.smithy.aws.traits.protocols.AwsQueryErrorTrait;
 import software.amazon.smithy.model.Model;
@@ -130,7 +131,9 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     // awsJson1_0 and rpcv2 read these at runtime for query compatibility;
                     // their protocol definitions don't reference them.
                     AwsQueryCompatibleTrait.ID,
-                    AwsQueryErrorTrait.ID));
+                    AwsQueryErrorTrait.ID,
+                    // restXml reads this at runtime to take an output from its root element's text.
+                    S3UnwrappedXmlOutputTrait.ID));
 
     private final Map<Shape, Boolean> cache = new HashMap<>();
     private final Model model;
