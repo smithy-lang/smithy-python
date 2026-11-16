@@ -63,11 +63,15 @@ class PythonWriter:
         *,
         dependencies: _dependencies.DependencySet | None = None,
         stub: bool = False,
+        future_annotations: bool = False,
     ) -> None:
         _validate_module(module, relative=False)
         self._module = _binding(module)
         self._dependencies = dependencies
         self._stub = stub
+        # Postponed annotations let a module annotate with lazy model attributes,
+        # such as ``models.Output``, without building the model at import.
+        self._future_annotations = future_annotations
         self._depth = 0
         self._lines: list[tuple[int, tuple[str | TypeReference, ...]]] = []
 
@@ -95,6 +99,8 @@ class PythonWriter:
         """Return complete source without changing the recorded lines."""
         names, imports = self._plan_imports(*self._names())
         header = _render_imports(imports) + "\n" if imports else ""
+        if self._future_annotations:
+            header = "from __future__ import annotations\n\n" + header
         body = self._body(lambda reference: self._annotation(reference, names))
         separator = "\n" if self._stub else "\n\n"
         return header + (

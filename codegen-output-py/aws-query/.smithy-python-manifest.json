@@ -4,7 +4,7 @@
     "pyproject.toml": "04b2c6dac767c5836984b1769937d35d1f551de92f0682753366a15c65d0c6cb",
     "src/awsquery/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
     "src/awsquery/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "src/awsquery/_private/schemas.py": "af76a042201a3bc8b255631ff9c38edf639475d1b982529c67926e3f933d6101",
+    "src/awsquery/_private/schemas.py": "c38f4206d96ebbbb13b43fb9de87fc8f210e49b2ebb5936213bc1586faaa5f4f",
     "src/awsquery/models.py": "8eb878202479e21d06d267007600d1628630ca2840c09197d8b8a12cd26c9739",
     "src/awsquery/models.pyi": "b38cf3c8aa8e62a815e2bfc2c9a75cc2d4731f580697588e614921fae4c6372f",
     "src/awsquery/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"

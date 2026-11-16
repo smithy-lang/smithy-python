@@ -583,6 +583,49 @@ def test_explicit_input_and_output_traits_match_runtime_and_stub(
     assert output.response_metadata is not None
 
 
+def test_required_client_optional_members_are_optional_in_runtime_and_stub(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    package = "generated_client_optional"
+    source_root = _generate_custom(
+        tmp_path,
+        {
+            "smithy": "2.0",
+            "shapes": {
+                "example#Account": {
+                    "type": "structure",
+                    "members": {
+                        "uid": {
+                            "target": "smithy.api#String",
+                            "traits": {
+                                "smithy.api#required": {},
+                                "smithy.api#clientOptional": {},
+                            },
+                        },
+                        "name": {
+                            "target": "smithy.api#String",
+                            "traits": {"smithy.api#required": {}},
+                        },
+                    },
+                },
+            },
+        },
+        package,
+    )
+    stub = (source_root / package / "models.pyi").read_text()
+    assert "uid: str | None = ..." in stub
+    assert "name: str\n" in stub
+
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(source_root)
+    )
+    models = importlib.import_module(f"{package}.models")
+    assert models.Account(name="n").uid is None
+    with pytest.raises(TypeError, match="name"):
+        models.Account(uid="u")
+
+
 def test_idempotency_token_members_of_inputs_are_documented_as_autopopulated(
     tmp_path: Path,
 ) -> None:

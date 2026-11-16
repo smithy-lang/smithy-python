@@ -1,8 +1,7 @@
 # smithy-python
 
 `smithy-python` provides Python-native code generation for Smithy models.
-Standalone types generation is available; client generation remains under
-development.
+Standalone types generation and RPCv2 CBOR client generation are available.
 
 ```console
 smithy-python generate client [OPTIONS]
@@ -13,5 +12,5 @@ smithy-python generate types [OPTIONS]
 runtime models, and a complete static typing surface. Run
 `smithy-python generate types --help` for artifact settings.
 
-`generate client` currently exits with an error explaining that client generation
-has not been implemented.
+`generate client` produces an importable client package for one service. Run
+`smithy-python generate client --help` for artifact settings.

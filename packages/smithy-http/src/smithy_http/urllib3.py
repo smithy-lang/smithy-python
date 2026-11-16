@@ -125,9 +125,17 @@ class Urllib3HTTPClient(HTTPClient):
         ):
             headers.add(name, value)
 
-        raw = self._pool.request(
+        destination = request.destination
+        # CAUTION: PoolManager.request removes "." and ".." path segments from a full
+        # URL after the request is signed, so the pool is sent the target as-is.
+        pool = self._pool.connection_from_url(destination.build())
+        target = destination.path or "/"
+        if destination.query is not None:
+            target += f"?{destination.query}"
+        raw = pool.request(
             method=request.method,
-            url=request.destination.build(),
+            url=target,
+            assert_same_host=False,
             body=_request_body(request),
             headers=headers,
             redirect=False,

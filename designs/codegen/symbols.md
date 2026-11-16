@@ -69,21 +69,25 @@ of each nonempty part, preserving its remaining capitals. Fields use snake_case;
 enum constants use UPPER_SNAKE_CASE. Split words at lowercase-or-digit to uppercase
 boundaries, and before the last capital of an uppercase run followed by lowercase.
 
-| Input            | Class or enum | Field          | Enum constant  |
-| ---------------- | ------------- | -------------- | -------------- |
-| `HTTPServer`     | HTTPServer    | http_server    | HTTP_SERVER    |
-| `http_server`    | HttpServer    | http_server    | HTTP_SERVER    |
-| `getURL`         | GetURL        | get_url        | GET_URL        |
-| `HTTP2Server`    | HTTP2Server   | http2_server   | HTTP2_SERVER   |
-| `getURL2Value`   | GetURL2Value  | get_url2_value | GET_URL2_VALUE |
-| `__some__name__` | SomeName      | some_name      | SOME_NAME      |
-| `__init__`       | Init          | init           | INIT           |
-| `class`          | Class         | class_         | CLASS          |
-| `None`           | None_         | none           | NONE           |
-| `match`          | Match         | match          | MATCH          |
+| Input            | Class or enum | Field            | Enum constant     |
+| ---------------- | ------------- | ---------------- | ----------------- |
+| `HTTPServer`     | HTTPServer    | http_server      | HTTP_SERVER       |
+| `http_server`    | HttpServer    | http_server      | HTTP_SERVER       |
+| `getURL`         | GetURL        | get_url          | GET_URL           |
+| `HTTP2Server`    | HTTP2Server   | http2_server     | HTTP2_SERVER      |
+| `getURL2Value`   | GetURL2Value  | get_url2_value   | GET_URL2_VALUE    |
+| `__some__name__` | SomeName      | `__some__name__` | `__SOME__NAME___` |
+| `__init__`       | Init          | `__init__`       | `__INIT___`       |
+| `__private`      | Private       | `__private___`   | `__PRIVATE___`    |
+| `class`          | Class         | class_           | CLASS_            |
+| `None`           | None_         | none             | NONE              |
+| `match`          | Match         | match            | MATCH             |
 
-Discard empty underscore-separated parts, including leading/trailing underscores.
-This avoids Python's special treatment of names such as `__init__` and `__private`.
+Class and enum names discard empty underscore-separated parts, including
+leading/trailing underscores. Fields and enum constants keep their underscores.
+A field or constant that starts with `__` but does not end with `__` gets `___`
+appended so Python does not mangle it. Enum constants that would be dunder or
+sunder names get a trailing `_`, because `Enum` does not treat those as members.
 Append `_` if the result is a reserved Python word. The reserved-word list combines
 Python 3.12 through 3.15 so results do not depend on the Python version running
 codegen. Update it when adding support for another Python version. Names such as
@@ -109,12 +113,14 @@ cannot have the same name within one declaration. A collision raises `ModelError
 with both Smithy IDs and the conflicting name. The first conflict follows model
 selection and member order. No numbered suffixes are added to hide collisions.
 
-Union members are currently named only as fields. If unions are generated with a
-class for each member or for unknown variants, those classes are declarations in
-the models module. The provider must name them and include them in the
-declaration collision check. Combining the union and member names is not enough
-on its own: Bedrock Agent Runtime defines a `Memory` union with a
-`sessionSummary` member and a separate `MemorySessionSummary` structure.
+Each union member also gets a variant class, and each union gets an unknown-variant
+class. These are declarations in the models module, named by `union_variant_name`
+and `union_unknown_name` and included in the declaration collision check. The
+variant name combines the union and member names. If that matches another
+declaration name, the provider inserts `_` between the parts: Bedrock Agent
+Runtime defines a `Memory` union with a `sessionSummary` member and a separate
+`MemorySessionSummary` structure, so the variant is `Memory_SessionSummary`.
+Unknown-variant names work the same way with `Unknown`.
 
 Builtin names such as `list` are allowed unless the generator reserves them. A
 field named `list` does not prevent annotations from referring to the builtin;
@@ -161,7 +167,7 @@ arguments.
 | structure, union                                | `<package>.models.<Declaration>` |
 | list                                            | list[T]                          |
 | map                                             | dict[K, V]                       |
-| smithy.api#Unit                                 | None                             |
+| smithy.api#Unit                                 | `<package>.models.Unit`          |
 
 `T`, `K` and `V` stand for element, key and value types. References to Python's
 built-in types record `"builtins"` as their module; generated annotations can
@@ -181,7 +187,7 @@ list. The provider uses `nullable` only for these collection entries, not to
 decide whether structure fields are optional.
 
 Module names are recorded without importing anything. `Unit`, which represents
-no value, is the only result without a module: `TypeReference("None")`.
+no value, resolves to `TypeReference("Unit", "<package>.models")`.
 
 ## Recursion and unsupported shapes
 

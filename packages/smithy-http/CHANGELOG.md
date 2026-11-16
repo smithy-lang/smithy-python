@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.10.0
+
+### Bug fixes
+* Urllib3HTTPClient now sends request paths with `.` and `..` segments as they were signed, rather than removing the segments.
+* An event stream output no longer requires an `initial-response` when its only `@required` members are marked `@clientOptional`.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.12.0` to `~=0.13.0`.
+* Bump `smithy-cbor` from `~=0.4.0` to `~=0.5.0`.
+* Bump `smithy-json` from `~=0.6.0` to `~=0.7.0`.
+* Bump `smithy-aws-event-stream` from `~=0.6.0` to `~=0.7.0`.
+
 ## v0.9.0
 
 ### Dependencies

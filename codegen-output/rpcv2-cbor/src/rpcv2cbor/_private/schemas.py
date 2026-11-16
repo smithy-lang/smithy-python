@@ -19,6 +19,7 @@ _fL = "fieldList"
 n1 = "smithy.protocoltests.rpcv2Cbor"
 _COD = "ClientOptionalDefaults"
 _smi = "smithy.api#default"
+_sO = "smithy.api#clientOptional"
 _CNED = "ComplexNestedErrorData"
 _F = "Foo"
 _CE = "ComplexError"
@@ -231,7 +232,14 @@ VALIDATION_EXCEPTION: StaticSchema = (
     ((3, 1), (VALIDATION_EXCEPTION_FIELD_LIST, 0)),
 )
 
-CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (18, n1, _COD, 0, (_me,), ((7, {_smi: 0}),))
+CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (
+    18,
+    n1,
+    _COD,
+    0,
+    (_me,),
+    ((7, {_smi: 0, _sO: None}),),
+)
 
 COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n1, _CNED, 0, (_F,), ((3, 0),))
 

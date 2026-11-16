@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.0
+
+### Features
+* `smithy-python generate client` generates sync and async RPCv2 CBOR clients for unsigned, non-streaming operations with a static endpoint.
+* Add Python client planning with operation discovery, dedicated input/output normalization, and collision-safe service and operation symbols. Client generation remains unavailable.
+* Client plans include service and operation schemas and lazy `APIOperation` exports. Client generation is still unavailable.
+
+### Bug fixes
+* Generated schemas now carry `@clientOptional`, and generated stubs declare `@required` members marked `@clientOptional` as optional.
+
 ## v0.4.0
 
 ### Breaking Changes

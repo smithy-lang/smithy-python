@@ -16,7 +16,7 @@ from . import model as _model
 from . import symbols as _symbols
 
 if TYPE_CHECKING:
-    from .generation import GenerationContext, TypesSettings
+    from .generation import GenerationContext, ModelArtifactSettings
     from .writer import PythonWriter
 
 __all__ = ["SchemaGenerator", "SchemaPlan"]
@@ -43,8 +43,13 @@ class SchemaPlan:
         model: _model.Model,
         shapes: tuple[_model.Shape, ...],
         symbols: _symbols.SymbolProvider,
+        *,
+        retained_traits: Collection[_model.ShapeId] = (),
     ) -> SchemaPlan:
-        """Plan schema order, filtered traits, names, and interned strings."""
+        """Plan schema order, filtered traits, names, and interned strings.
+
+        ``retained_traits`` are kept even when the model omits their definitions.
+        """
         emitted, recursive_groups = _schema_order(shapes)
         operations = _partition_operations(model, emitted)
         partition_groups = _merge_operation_groups(operations, recursive_groups)
@@ -52,7 +57,7 @@ class SchemaPlan:
             partition_groups,
             _operation_closures(emitted, operations),
         )
-        included = _included_traits(model)
+        included = _included_traits(model) | frozenset(retained_traits)
         inputs = {
             operation.input for operation in model.iter_shapes(_model.OperationShape)
         }
@@ -94,7 +99,7 @@ class SchemaPlan:
 class SchemaGenerator:
     """Emit the compact schema module for a standalone types package."""
 
-    def generate(self, context: GenerationContext[TypesSettings]) -> None:
+    def generate(self, context: GenerationContext[ModelArtifactSettings]) -> None:
         """Register ``<package>._private.schemas`` with the file manifest."""
         package = context.settings.package
         directory = package.replace(".", "/")
@@ -309,6 +314,7 @@ _INCLUDED_TRAITS: Final = frozenset(
             "smithy.api#default",
             "smithy.api#enumValue",
             "smithy.api#required",
+            "smithy.api#clientOptional",
             "smithy.api#input",
             "smithy.api#output",
             "smithy.api#timestampFormat",
@@ -355,6 +361,11 @@ _STATIC_SCHEMA: Final = _symbols.TypeReference(
     "smithy_core._schema_compact",
     dependencies=(_dependencies.SMITHY_CORE,),
 )
+_STATIC_OPERATION_SCHEMA: Final = _symbols.TypeReference(
+    "StaticOperationSchema",
+    "smithy_core._schema_compact",
+    dependencies=(_dependencies.SMITHY_CORE,),
+)
 _MAPPING_PROXY: Final = _symbols.TypeReference("MappingProxyType", "types")
 _TYPED_MAPPING_PROXY: Final = _symbols.TypeReference(
     "MappingProxyType",
@@ -378,39 +389,50 @@ def _write_shape(
     local: Collection[_model.ShapeId],
     facade: str | None,
 ) -> None:
-    writer.line(plan.names[shape.id], ": ", _STATIC_SCHEMA, " = (")
+    is_operation = isinstance(shape, _model.OperationShape)
+    annotation = _STATIC_OPERATION_SCHEMA if is_operation else _STATIC_SCHEMA
+    writer.line(plan.names[shape.id], ": ", annotation, " = (")
     with writer.indent():
         writer.line(f"{_TYPE_INTS[shape.type]},")
         writer.line(plan.strings[shape.id.namespace], ",")
         writer.line(plan.strings[shape.id.name], ",")
         writer.line(*_trait_parts(plan, plan.traits[shape.id]), ",")
         if shape.members:
-            writer.line(
-                "(",
-                ", ".join(
-                    plan.strings[member.name] for member in shape.members.values()
-                ),
-                ",),",
-            )
-            writer.line("(")
-            with writer.indent():
-                for member in shape.members.values():
-                    writer.line(
-                        "(",
-                        *_schema_ref(
-                            plan,
-                            member.target,
-                            written,
-                            local=local,
-                            facade=facade,
-                        ),
-                        ", ",
-                        *_trait_parts(plan, plan.traits[member.id]),
-                        "),",
-                    )
-            writer.line("),")
+            # Tuples are written inline, without a trailing comma unless they hold
+            # one item, so a formatter packs them instead of one item per line.
+            names = [plan.strings[member.name] for member in shape.members.values()]
+            writer.line(*_inline_tuple([[name] for name in names]), ",")
+            targets = [
+                [
+                    "(",
+                    *_schema_ref(
+                        plan, member.target, written, local=local, facade=facade
+                    ),
+                    ", ",
+                    *_trait_parts(plan, plan.traits[member.id]),
+                    ")",
+                ]
+                for member in shape.members.values()
+            ]
+            writer.line(*_inline_tuple(targets), ",")
+        if isinstance(shape, _model.OperationShape):
+
+            def ref(target: _model.ShapeId) -> tuple[_SourcePart, ...]:
+                return _schema_ref(plan, target, written, local=local, facade=facade)
+
+            writer.line(*ref(shape.input), ",")
+            writer.line(*ref(shape.output), ",")
+            writer.line(*_inline_tuple([list(ref(e)) for e in shape.errors]), ",")
     writer.line(")")
     writer.line()
+
+
+def _inline_tuple(items: list[list[_SourcePart]]) -> tuple[_SourcePart, ...]:
+    parts: list[_SourcePart] = ["("]
+    for index, item in enumerate(items):
+        parts.extend((", " if index else "", *item))
+    parts.append(",)" if len(items) == 1 else ")")
+    return tuple(parts)
 
 
 def _included_traits(model: _model.Model) -> frozenset[_model.ShapeId]:

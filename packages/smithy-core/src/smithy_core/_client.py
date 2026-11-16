@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import Callable
-from copy import deepcopy
+from copy import copy
 from types import FunctionType
 from typing import Any, ClassVar, cast, get_overloads
 
@@ -189,7 +189,7 @@ class ClientBase[C]:
                 config = yield self._new_config
             else:
                 # Copy so plugins don't mutate the caller's config.
-                config = deepcopy(self._config)
+                config = _copy_config(self._config)
             for plugin in self._client_plugins:
                 plugin(config)
             for plugin in self._plugins or ():
@@ -213,7 +213,7 @@ class ClientBase[C]:
     ) -> Program[Any]:
         if default_plugins or plugins:
             # Keep operation-plugin mutations scoped to this call.
-            config = deepcopy(config)
+            config = _copy_config(config)
             for plugin in default_plugins:
                 plugin(config)
             for plugin in plugins or ():
@@ -233,3 +233,21 @@ class ClientBase[C]:
         return self._build_call(
             input, operation, config=config, retry_strategy=retry_strategy
         )
+
+
+def _copy_config[T](config: T) -> T:
+    """Copy a config and its container fields, sharing the components they hold.
+
+    Configured components such as interceptors, resolvers and retry strategies
+    carry state the caller expects to observe, so they must not be copied.
+
+    CAUTION: a plugin that mutates a component in place, rather than replacing
+    it, changes the caller's component.
+    """
+    new = copy(config)
+    for name, value in list(vars(new).items()):
+        if isinstance(value, list | dict | set):
+            # CAUTION: object.__setattr__ skips AwsConfig.__setattr__, which would
+            # record the copy as a plugin override and reject credential fields.
+            object.__setattr__(new, name, copy(cast(Any, value)))
+    return new

@@ -299,6 +299,7 @@
     "HTTPChecksumTrait": "class",
     "RestJson1Trait": "class",
     "RestXmlTrait": "class",
+    "S3UnwrappedXmlOutputTrait": "class",
     "SigV4Trait": "class"
   },
   "smithy_aws_core.utils": {
@@ -597,6 +598,7 @@
   },
   "smithy_core.traits": {
     "APIKeyLocation": "class",
+    "ClientOptionalTrait": "class",
     "ContextParamTrait": "class",
     "DefaultTrait": "class",
     "DynamicTrait": "class",
@@ -837,11 +839,18 @@
   "smithy_python.cli": {
     "main": "function"
   },
+  "smithy_python.clients": {
+    "ClientGenerator": "class",
+    "ClientPlan": "class",
+    "OperationPlan": "class",
+    "normalize_client_model": "function"
+  },
   "smithy_python.dependencies": {
     "Dependency": "class",
     "DependencySet": "class",
     "HATCHLING": "Dependency",
-    "SMITHY_CORE": "Dependency"
+    "SMITHY_CORE": "Dependency",
+    "SMITHY_HTTP": "Dependency"
   },
   "smithy_python.environment": {
     "PluginEnvironment": "class"
@@ -861,14 +870,23 @@
   "smithy_python.generation": {
     "ArtifactGenerator": "protocol",
     "ArtifactSettings": "class",
+    "ClientSettings": "class",
     "GenerationContext": "class",
     "GenerationPlan": "class",
+    "ModelArtifactSettings": "class",
     "ModelPlan": "class",
+    "OperationModel": "class",
     "TypesSettings": "class"
   },
   "smithy_python.model": {},
   "smithy_python.models": {
     "ModelGenerator": "class"
+  },
+  "smithy_python.protocols": {
+    "DEFAULT_PROTOCOLS": "mappingproxy",
+    "ProtocolContribution": "class",
+    "RPCV2_CBOR": "ProtocolContribution",
+    "select_protocol": "function"
   },
   "smithy_python.schemas": {
     "SchemaGenerator": "class",
@@ -876,11 +894,13 @@
   },
   "smithy_python.selection": {
     "Selection": "class",
+    "contained_operations": "function",
     "resolve_service": "function",
     "select_shapes": "function",
     "select_type_shapes": "function"
   },
   "smithy_python.symbols": {
+    "ClientSymbolProvider": "class",
     "SymbolProvider": "class",
     "TypeReference": "class"
   },

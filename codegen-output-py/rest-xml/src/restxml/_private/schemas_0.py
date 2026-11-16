@@ -323,13 +323,7 @@ FOO_ENUM: StaticSchema = (
     n0,
     _s8,
     0,
-    (
-        _s9,
-        _s12,
-        _s14,
-        _s16,
-        _s18,
-    ),
+    (_s9, _s12, _s14, _s16, _s18),
     (
         (-1, {_s10: _s11}),
         (-1, {_s10: _s13}),
@@ -353,16 +347,8 @@ INTEGER_ENUM: StaticSchema = (
     n0,
     _s21,
     0,
-    (
-        _s22,
-        _s23,
-        _s24,
-    ),
-    (
-        (-1, {_s10: 1}),
-        (-1, {_s10: 2}),
-        (-1, {_s10: 3}),
-    ),
+    (_s22, _s23, _s24),
+    ((-1, {_s10: 1}), (-1, {_s10: 2}), (-1, {_s10: 3})),
 )
 
 INTEGER_ENUM_LIST: StaticSchema = (
@@ -379,14 +365,8 @@ STRING_MAP: StaticSchema = (
     n0,
     _s26,
     0,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s27, _s28),
+    ((3, 0), (3, 0)),
 )
 
 ALL_QUERY_STRING_TYPES_INPUT: StaticSchema = (
@@ -474,16 +454,8 @@ COMPLEX_ERROR: StaticSchema = (
     n1,
     _s73,
     {_s74: _s75, _s76: 403},
-    (
-        _s77,
-        _s80,
-        _s81,
-    ),
-    (
-        (3, {_s78: _s79}),
-        (3, 0),
-        (COMPLEX_NESTED_ERROR_DATA, 0),
-    ),
+    (_s77, _s80, _s81),
+    ((3, {_s78: _s79}), (3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
 CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT: StaticSchema = (
@@ -491,14 +463,8 @@ CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT: StaticSchema = (
     n1,
     _s82,
     {_s30: None},
-    (
-        _s83,
-        _s84,
-    ),
-    (
-        (3, {_s32: _s83}),
-        (3, {_s32: _s84}),
-    ),
+    (_s83, _s84),
+    ((3, {_s32: _s83}), (3, {_s32: _s84})),
 )
 
 CONSTANT_QUERY_STRING_INPUT: StaticSchema = (
@@ -588,14 +554,8 @@ FOO_ENUM_MAP: StaticSchema = (
     n0,
     _s103,
     0,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, 0),
-        (FOO_ENUM, 0),
-    ),
+    (_s27, _s28),
+    ((3, 0), (FOO_ENUM, 0)),
 )
 
 FLATTENED_XML_MAP_REQUEST: StaticSchema = (
@@ -621,14 +581,8 @@ FLATTENED_XML_MAP_WITH_XML_NAME_INPUT_OUTPUT_MAP: StaticSchema = (
     n1,
     _s108,
     0,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, {_s65: _s109}),
-        (3, {_s65: _s99}),
-    ),
+    (_s27, _s28),
+    ((3, {_s65: _s109}), (3, {_s65: _s99})),
 )
 
 FLATTENED_XML_MAP_WITH_XML_NAME_REQUEST: StaticSchema = (
@@ -654,10 +608,7 @@ FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT_MAP: StaticSchema = (
     n1,
     _s113,
     0,
-    (
-        _s27,
-        _s28,
-    ),
+    (_s27, _s28),
     (
         (
             3,
@@ -699,14 +650,8 @@ FOO_PREFIX_HEADERS: StaticSchema = (
     n1,
     _s116,
     0,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s27, _s28),
+    ((3, 0), (3, 0)),
 )
 
 FRACTIONAL_SECONDS_OUTPUT: StaticSchema = (
@@ -741,14 +686,8 @@ HTTP_EMPTY_PREFIX_HEADERS_INPUT: StaticSchema = (
     n1,
     _s126,
     {_s30: None},
-    (
-        _s127,
-        _s130,
-    ),
-    (
-        (STRING_MAP, {_s128: _s129}),
-        (3, {_s78: _s86}),
-    ),
+    (_s127, _s130),
+    ((STRING_MAP, {_s128: _s129}), (3, {_s78: _s86})),
 )
 
 HTTP_EMPTY_PREFIX_HEADERS_OUTPUT: StaticSchema = (
@@ -756,14 +695,8 @@ HTTP_EMPTY_PREFIX_HEADERS_OUTPUT: StaticSchema = (
     n1,
     _s131,
     {_s70: None},
-    (
-        _s127,
-        _s130,
-    ),
-    (
-        (STRING_MAP, {_s128: _s129}),
-        (3, {_s78: _s86}),
-    ),
+    (_s127, _s130),
+    ((STRING_MAP, {_s128: _s129}), (3, {_s78: _s86})),
 )
 
 HTTP_PAYLOAD_TRAITS_INPUT_OUTPUT: StaticSchema = (
@@ -771,14 +704,8 @@ HTTP_PAYLOAD_TRAITS_INPUT_OUTPUT: StaticSchema = (
     n1,
     _s132,
     {_s30: None, _s70: None},
-    (
-        _s133,
-        _s135,
-    ),
-    (
-        (3, {_s78: _s134}),
-        (1, 16),
-    ),
+    (_s133, _s135),
+    ((3, {_s78: _s134}), (1, 16)),
 )
 
 TEXT_PLAIN_BLOB: StaticSchema = (
@@ -793,14 +720,8 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT_OUTPUT: StaticSchema = (
     n1,
     _s139,
     {_s30: None, _s70: None},
-    (
-        _s133,
-        _s135,
-    ),
-    (
-        (3, {_s78: _s134}),
-        (TEXT_PLAIN_BLOB, 16),
-    ),
+    (_s133, _s135),
+    ((3, {_s78: _s134}), (TEXT_PLAIN_BLOB, 16)),
 )
 
 HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT_OUTPUT: StaticSchema = (
@@ -817,14 +738,8 @@ NESTED_PAYLOAD: StaticSchema = (
     n1,
     _s143,
     0,
-    (
-        _s119,
-        _s67,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s119, _s67),
+    ((3, 0), (3, 0)),
 )
 
 HTTP_PAYLOAD_WITH_STRUCTURE_INPUT_OUTPUT: StaticSchema = (
@@ -904,14 +819,8 @@ HTTP_PREFIX_HEADERS_INPUT_OUTPUT: StaticSchema = (
     n1,
     _s152,
     {_s30: None, _s70: None},
-    (
-        _s133,
-        _s154,
-    ),
-    (
-        (3, {_s78: _s153}),
-        (FOO_PREFIX_HEADERS, {_s128: _s155}),
-    ),
+    (_s133, _s154),
+    ((3, {_s78: _s153}), (FOO_PREFIX_HEADERS, {_s128: _s155})),
 )
 
 HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT: StaticSchema = (
@@ -919,14 +828,8 @@ HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT: StaticSchema = (
     n1,
     _s156,
     {_s30: None},
-    (
-        _s157,
-        _s158,
-    ),
-    (
-        (9, 9),
-        (10, 9),
-    ),
+    (_s157, _s158),
+    ((9, 9), (10, 9)),
 )
 
 HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT: StaticSchema = (
@@ -934,14 +837,8 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT: StaticSchema = (
     n1,
     _s159,
     {_s30: None},
-    (
-        _s133,
-        _s83,
-    ),
-    (
-        (3, 9),
-        (3, 9),
-    ),
+    (_s133, _s83),
+    ((3, 9), (3, 9)),
 )
 
 EPOCH_SECONDS: StaticSchema = (
@@ -963,15 +860,7 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT: StaticSchema = (
     n1,
     _s164,
     {_s30: None},
-    (
-        _s165,
-        _s167,
-        _s168,
-        _s169,
-        _s170,
-        _s171,
-        _s172,
-    ),
+    (_s165, _s167, _s168, _s169, _s170, _s171, _s172),
     (
         (4, {_s90: _s161, _s166: None, _s125: None}),
         (4, {_s90: _s163, _s166: None, _s125: None}),
@@ -988,26 +877,8 @@ HTTP_REQUEST_WITH_LABELS_INPUT: StaticSchema = (
     n1,
     _s173,
     {_s30: None},
-    (
-        _s174,
-        _s175,
-        _s176,
-        _s177,
-        _s157,
-        _s158,
-        _s178,
-        _s179,
-    ),
-    (
-        (3, 9),
-        (6, 9),
-        (7, 9),
-        (8, 9),
-        (9, 9),
-        (10, 9),
-        (2, 9),
-        (4, 9),
-    ),
+    (_s174, _s175, _s176, _s177, _s157, _s158, _s178, _s179),
+    ((3, 9), (6, 9), (7, 9), (8, 9), (9, 9), (10, 9), (2, 9), (4, 9)),
 )
 
 HTTP_RESPONSE_CODE_OUTPUT: StaticSchema = (
@@ -1103,14 +974,8 @@ NESTED_MAP: StaticSchema = (
     n1,
     _s220,
     0,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, 0),
-        (FOO_ENUM_MAP, 0),
-    ),
+    (_s27, _s28),
+    ((3, 0), (FOO_ENUM_MAP, 0)),
 )
 
 NESTED_XML_MAP_WITH_XML_NAME_INNER_MAP: StaticSchema = (
@@ -1118,14 +983,8 @@ NESTED_XML_MAP_WITH_XML_NAME_INNER_MAP: StaticSchema = (
     n1,
     _s221,
     0,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, {_s65: _s222}),
-        (3, {_s65: _s223}),
-    ),
+    (_s27, _s28),
+    ((3, {_s65: _s222}), (3, {_s65: _s223})),
 )
 
 NESTED_XML_MAP_WITH_XML_NAME_MAP: StaticSchema = (
@@ -1133,14 +992,8 @@ NESTED_XML_MAP_WITH_XML_NAME_MAP: StaticSchema = (
     n1,
     _s224,
     0,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, {_s65: _s225}),
-        (NESTED_XML_MAP_WITH_XML_NAME_INNER_MAP, 0),
-    ),
+    (_s27, _s28),
+    ((3, {_s65: _s225}), (NESTED_XML_MAP_WITH_XML_NAME_INNER_MAP, 0)),
 )
 
 NESTED_XML_MAP_WITH_XML_NAME_REQUEST: StaticSchema = (
@@ -1166,14 +1019,8 @@ NESTED_XML_MAPS_REQUEST: StaticSchema = (
     n1,
     _s229,
     {_s30: None},
-    (
-        _s230,
-        _s231,
-    ),
-    (
-        (NESTED_MAP, 0),
-        (NESTED_MAP, {_s106: None}),
-    ),
+    (_s230, _s231),
+    ((NESTED_MAP, 0), (NESTED_MAP, {_s106: None})),
 )
 
 NESTED_XML_MAPS_RESPONSE: StaticSchema = (
@@ -1181,14 +1028,8 @@ NESTED_XML_MAPS_RESPONSE: StaticSchema = (
     n1,
     _s232,
     {_s70: None},
-    (
-        _s230,
-        _s231,
-    ),
-    (
-        (NESTED_MAP, 0),
-        (NESTED_MAP, {_s106: None}),
-    ),
+    (_s230, _s231),
+    ((NESTED_MAP, 0), (NESTED_MAP, {_s106: None})),
 )
 
 NO_INPUT_AND_OUTPUT_OUTPUT: StaticSchema = (
@@ -1203,16 +1044,8 @@ NULL_AND_EMPTY_HEADERS_IO: StaticSchema = (
     n1,
     _s234,
     {_s30: None, _s70: None},
-    (
-        _s235,
-        _s237,
-        _s239,
-    ),
-    (
-        (3, {_s78: _s236}),
-        (3, {_s78: _s238}),
-        (STRING_LIST, {_s78: _s240}),
-    ),
+    (_s235, _s237, _s239),
+    ((3, {_s78: _s236}), (3, {_s78: _s238}), (STRING_LIST, {_s78: _s240})),
 )
 
 OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT: StaticSchema = (
@@ -1220,14 +1053,8 @@ OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT: StaticSchema = (
     n1,
     _s241,
     {_s30: None},
-    (
-        _s242,
-        _s244,
-    ),
-    (
-        (3, {_s32: _s243}),
-        (3, {_s32: _s245}),
-    ),
+    (_s242, _s244),
+    ((3, {_s32: _s243}), (3, {_s32: _s245})),
 )
 
 PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
@@ -1235,12 +1062,6 @@ PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     n1,
     _s246,
     {_s30: None},
-    (
-        _s247,
-        _s249,
-    ),
-    (
-        (3, {_s78: _s248}),
-        (3, 0),
-    ),
+    (_s247, _s249),
+    ((3, {_s78: _s248}), (3, 0)),
 )

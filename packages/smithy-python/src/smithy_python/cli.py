@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import BinaryIO, Final
 
 from . import __version__
+from . import clients as _clients
 from . import dependencies as _dependencies
 from . import exceptions as _exceptions
 from . import files as _files
@@ -29,9 +30,6 @@ from .selection import select_shapes
 
 __all__ = ["main"]
 
-_GENERATION_NOT_IMPLEMENTED: Final = (
-    "smithy-python: error: {artifact} generation is not implemented yet\n"
-)
 _PACKAGE_VERSION: Final = re.compile(
     r"v?[0-9]+(?:\.[0-9]+)*"
     r"(?:(?:a|b|rc)[0-9]+)?"
@@ -62,11 +60,7 @@ def main(
         if args.artifact == "types":
             selection = _generate_types(args, invocation.output_dir, model)
         else:
-            selection = select_shapes(
-                model,
-                service_id=args.service,
-                require_service=True,
-            )
+            selection = _generate_client(args, invocation.output_dir, model)
     except InvalidInvocationError as error:
         sys.stderr.write(f"smithy-python: error: {error}\n")
         return 2
@@ -79,10 +73,7 @@ def main(
             f"smithy-python: excluded {selection.excluded_count} eligible data shape(s) "
             f"outside the closure of service {selection.service.id}\n"
         )
-    if args.artifact == "types":
-        return 0
-    sys.stderr.write(_GENERATION_NOT_IMPLEMENTED.format(artifact=args.artifact))
-    return 1
+    return 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,25 +97,20 @@ def _create_parser() -> argparse.ArgumentParser:
     generate = commands.add_parser("generate", help="Generate Python source")
     artifacts = generate.add_subparsers(dest="artifact", required=True)
     common = _common_artifact_options()
-    artifacts.add_parser("client", help="Generate a client package", parents=[common])
+    client = artifacts.add_parser(
+        "client", help="Generate a client package", parents=[common]
+    )
+    _add_package_options(client, "client")
+    client.add_argument(
+        "--protocol",
+        metavar="SHAPE_ID",
+        type=_protocol_id,
+        help="Protocol trait to use when the service has more than one.",
+    )
     types = artifacts.add_parser(
         "types", help="Generate a standalone types package", parents=[common]
     )
-    types.add_argument(
-        "--package",
-        required=True,
-        help="Import package and distribution name for the generated artifact.",
-    )
-    types.add_argument(
-        "--package-version",
-        required=True,
-        type=_package_version,
-        help="Version for the generated package.",
-    )
-    types.add_argument(
-        "--package-description",
-        help='Package description; defaults to "<package> types package".',
-    )
+    _add_package_options(types, "types")
     types.add_argument(
         "--selector",
         type=_parse_selector,
@@ -139,6 +125,24 @@ def _create_parser() -> argparse.ArgumentParser:
     )
 
     return parser
+
+
+def _add_package_options(parser: argparse.ArgumentParser, artifact: str) -> None:
+    parser.add_argument(
+        "--package",
+        required=True,
+        help="Import package and distribution name for the generated artifact.",
+    )
+    parser.add_argument(
+        "--package-version",
+        required=True,
+        type=_package_version,
+        help="Version for the generated package.",
+    )
+    parser.add_argument(
+        "--package-description",
+        help=f'Package description; defaults to "<package> {artifact} package".',
+    )
 
 
 def _common_artifact_options() -> argparse.ArgumentParser:
@@ -263,6 +267,39 @@ def _generate_types(
     _types.TypesGenerator().generate(context)
     context.files.commit(output_dir)
     return selection
+
+
+def _generate_client(
+    args: argparse.Namespace,
+    output_dir: Path,
+    model: _model.Model,
+) -> _selection.Selection:
+    settings = _generation.ClientSettings(
+        package=args.package,
+        package_version=args.package_version,
+        package_description=args.package_description,
+        protocol=args.protocol,
+    )
+    try:
+        plan = _clients.ClientPlan.from_model(model, settings, service_id=args.service)
+    except ValueError as error:
+        raise InvalidInvocationError(str(error)) from error
+    generator = _clients.ClientGenerator(plan)
+    context = generator.context()
+    generator.generate(context)
+    context.files.commit(output_dir)
+    # The excluded count describes the source model, not the normalized one.
+    return select_shapes(model, service_id=args.service, require_service=True)
+
+
+def _protocol_id(value: str) -> _model.ShapeId:
+    try:
+        shape_id = _model.ShapeId.from_string(value)
+    except _exceptions.InvalidShapeIdError as error:
+        raise argparse.ArgumentTypeError(str(error)) from error
+    if shape_id.is_member:
+        raise argparse.ArgumentTypeError(f"Expected a shape ID, not member {value!r}")
+    return shape_id
 
 
 def _parse_selector(value: str) -> _selection.Selector:

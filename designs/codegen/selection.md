@@ -15,6 +15,13 @@ require_service=False)` returns a frozen `Selection` containing the resolved
 `require_service=True`. The API has no I/O and reuses the loaded shape objects.
 `resolve_service` is also available for consumers needing only resolution.
 
+Client planning uses `contained_operations(model, service)` to discover service
+and resource operations independently of data selection. It follows every
+resource lifecycle, instance, collection, and child-resource relationship,
+deduplicates operation IDs, and returns operations in model order. Cycles and
+deep resource graphs are handled iteratively. See
+[Python Client Generation](client.md) for I/O normalization and planning.
+
 Standalone types use:
 
 ```python
@@ -22,7 +29,7 @@ select_type_shapes(
     model,
     *,
     service_id=None,
-    selector=Selector.identity(),
+    selector=None,
     generate_inputs_and_outputs=False,
 )
 ```
@@ -69,8 +76,8 @@ ineligible. Dependency closure may add simple and collection shapes needed by
 schemas and serde. Final shapes retain model order.
 
 Final declaration names are grouped case-insensitively. A conflicting group
-produces a `ModelError` listing every conflicting ID (exit 1). Dependency-only
-shapes do not participate in this check.
+produces a `ModelError` listing every conflicting ID (exit 1). Declarations
+added by the dependency closure are included in this check.
 
 ## Selectors
 
@@ -78,9 +85,6 @@ shapes do not participate in this check.
 language. Evaluation uses the loaded semantic model and returns shape IDs.
 Parsing occurs once while resolving `TypesSettings`. Selection intersects the
 result with eligible declaration candidates and does not reorder either set.
-
-Selector conformance fixtures run the same expressions and models through the
-Java and Python implementations. The selected shape ID sets must match.
 
 Selection has no output side effects. It returns model objects for generation
 and does not construct symbols, schemas, or writers.

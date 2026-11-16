@@ -61,6 +61,7 @@
 
 * Generated AWS clients validate the checksums of response payloads for operations with the `aws.protocols#httpChecksum` trait, such as Amazon S3's `GetObject`. These clients depend on the `checksums` extra of `smithy-aws-core`.
 * Generated AWS clients calculate checksums of request payloads for operations with the `aws.protocols#httpChecksum` trait, which fixes Amazon S3 operations that require one, such as `PutBucketPolicy` and `DeleteObjects`.
+* The code generator converts documentation with one Pandoc process per generation instead of starting Pandoc for every documentation string, which makes generation faster. This needs Pandoc 3.2 or later. On Windows, with older Pandoc versions, and for any document Pandoc logs a message about, it starts Pandoc per conversion as before.
 
 ## v0.6.0
 

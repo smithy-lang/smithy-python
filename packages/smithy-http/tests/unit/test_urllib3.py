@@ -27,7 +27,7 @@ def _send(
     request_config: HTTPRequestConfiguration | None = None,
 ) -> Any:
     pool = Mock()
-    pool.request.return_value = Mock(
+    pool.connection_from_url.return_value.request.return_value = Mock(
         status=200, headers=urllib3.HTTPHeaderDict(), data=b"", reason="OK"
     )
     client = Urllib3HTTPClient(client_config=config, _pool=pool)
@@ -35,7 +35,7 @@ def _send(
         destination=URI(host="example.com"), method="GET", fields=Fields()
     )
     client.send(request, request_config=request_config)
-    return pool.request.call_args.kwargs["timeout"]
+    return pool.connection_from_url.return_value.request.call_args.kwargs["timeout"]
 
 
 def test_requests_time_out_by_default() -> None:
@@ -80,7 +80,7 @@ def test_repeated_response_headers_are_merged_case_insensitively() -> None:
     raw_headers = urllib3.HTTPHeaderDict()
     raw_headers.add("X-Values", "a")
     raw_headers.add("x-values", "b")
-    pool.request.return_value = Mock(
+    pool.connection_from_url.return_value.request.return_value = Mock(
         status=200, headers=raw_headers, data=b"", reason="OK"
     )
     client = Urllib3HTTPClient(_pool=pool)
@@ -96,7 +96,7 @@ def test_repeated_response_headers_are_merged_case_insensitively() -> None:
 
 def test_trailer_fields_are_not_sent_as_headers() -> None:
     pool = Mock()
-    pool.request.return_value = Mock(
+    pool.connection_from_url.return_value.request.return_value = Mock(
         status=200, headers=urllib3.HTTPHeaderDict(), data=b"", reason="OK"
     )
     client = Urllib3HTTPClient(_pool=pool)
@@ -113,12 +113,29 @@ def test_trailer_fields_are_not_sent_as_headers() -> None:
 
     client.send(request)
 
-    headers = pool.request.call_args.kwargs["headers"]
+    headers = pool.connection_from_url.return_value.request.call_args.kwargs["headers"]
     assert list(headers.items()) == [("x-amz-meta-a", "1")]
 
 
 # The tests below send real requests to a local server, so they exercise urllib3's
 # connection pooling rather than a mock of it.
+
+
+@pytest.mark.parametrize("path", ["/a/../b", "/a/./b", "/a//b"])
+def test_path_is_sent_unnormalized(server: LocalHTTPServer, path: str) -> None:
+    client = Urllib3HTTPClient()
+    request = HTTPRequest(
+        destination=URI(
+            scheme="http", host="127.0.0.1", port=server.port, path=path, query="x=1"
+        ),
+        method="GET",
+        fields=Fields(),
+    )
+
+    read_streaming_blob(client.send(request).body)
+    client.close()
+
+    assert server.paths == [f"{path}?x=1"]
 
 
 @pytest.fixture
@@ -338,11 +355,11 @@ def test_large_body_is_not_buffered(server: LocalHTTPServer) -> None:
 def _sent_body(request: HTTPRequest) -> Any:
     """The body the client gives urllib3 for a request."""
     pool = Mock()
-    pool.request.return_value = Mock(
+    pool.connection_from_url.return_value.request.return_value = Mock(
         status=200, headers=urllib3.HTTPHeaderDict(), data=b"", reason="OK"
     )
     Urllib3HTTPClient(_pool=pool).send(request)
-    return pool.request.call_args.kwargs["body"]
+    return pool.connection_from_url.return_value.request.call_args.kwargs["body"]
 
 
 def _upload(body: Any, fields: list[Field], port: int = 443) -> HTTPRequest:

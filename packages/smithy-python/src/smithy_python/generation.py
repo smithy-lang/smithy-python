@@ -19,9 +19,12 @@ from . import symbols as _symbols
 __all__ = [
     "ArtifactGenerator",
     "ArtifactSettings",
+    "ClientSettings",
     "GenerationContext",
     "GenerationPlan",
+    "ModelArtifactSettings",
     "ModelPlan",
+    "OperationModel",
     "TypesSettings",
 ]
 
@@ -39,13 +42,11 @@ class ArtifactSettings:
 
 
 @dataclass(frozen=True, slots=True)
-class TypesSettings(ArtifactSettings):
-    """Settings for a standalone types package."""
+class ModelArtifactSettings(ArtifactSettings):
+    """Settings for artifacts that emit schemas and models."""
 
-    selector: _selection.Selector = field(default_factory=_selection.Selector.identity)
-    generate_inputs_and_outputs: bool = False
-    schema_partition_size: int | None = 100
-    stub_partition_size: int | None = 250
+    schema_partition_size: int | None = field(default=100, kw_only=True)
+    stub_partition_size: int | None = field(default=250, kw_only=True)
 
     def __post_init__(self) -> None:
         if any(
@@ -53,6 +54,44 @@ class TypesSettings(ArtifactSettings):
             for size in (self.schema_partition_size, self.stub_partition_size)
         ):
             raise ValueError("Partition sizes must be positive")
+
+
+@dataclass(frozen=True, slots=True)
+class TypesSettings(ModelArtifactSettings):
+    """Settings for a standalone types package."""
+
+    selector: _selection.Selector = field(default_factory=_selection.Selector.identity)
+    generate_inputs_and_outputs: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class ClientSettings(ModelArtifactSettings):
+    """Settings for a service client package.
+
+    Protocol selection is interpreted by the client protocol contribution, not
+    by model normalization. Partition targets match standalone types defaults.
+    """
+
+    protocol: _model.ShapeId | None = None
+
+    def __post_init__(self) -> None:
+        ModelArtifactSettings.__post_init__(self)
+        if self.protocol is not None and self.protocol.is_member:
+            raise ValueError("A protocol must be a non-member shape ID")
+
+
+@dataclass(frozen=True, slots=True)
+class OperationModel:
+    """Data needed to construct one lazy ``APIOperation`` export.
+
+    ``name`` is both the exported constant and its compact schema constant.
+    """
+
+    name: str
+    input_name: str
+    output_name: str
+    error_ids: tuple[_model.ShapeId, ...]
+    auth_scheme_ids: tuple[_model.ShapeId, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +107,12 @@ class ModelPlan:
     target_names: Mapping[str, str]
     shape_names: frozenset[str]
     includes_unit: bool
+    operations: tuple[OperationModel, ...] = ()
+    input_dict_names: Mapping[_model.ShapeId, str] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
+    """``TypedDict`` names for structures, unions, and union members that callers
+    may pass as dictionaries. Only client plans have them."""
 
     @classmethod
     def from_shapes(
@@ -75,6 +120,8 @@ class ModelPlan:
         shapes: tuple[_model.Shape, ...],
         symbols: _symbols.SymbolProvider,
         schema_names: Mapping[_model.ShapeId, str],
+        operations: tuple[OperationModel, ...] = (),
+        input_dict_names: Mapping[_model.ShapeId, str] | None = None,
     ) -> ModelPlan:
         """Plan declaration and union names in stable shape order."""
         model_shapes: list[_model.Shape] = []
@@ -124,6 +171,8 @@ class ModelPlan:
                 )
             ),
             includes_unit=includes_unit,
+            operations=operations,
+            input_dict_names=MappingProxyType(dict(input_dict_names or {})),
         )
 
 
