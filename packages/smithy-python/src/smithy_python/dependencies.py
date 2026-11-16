@@ -110,7 +110,6 @@ SMITHY_CORE = Dependency(
 """Compatible smithy-core runtime for generated artifacts.
 
 CAUTION: Keep each runtime specifier at its package's current minor version.
-``test_runtime_specifiers_match_workspace_versions`` fails when they differ.
 """
 
 SMITHY_HTTP = Dependency(

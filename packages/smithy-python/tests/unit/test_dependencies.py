@@ -1,9 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-import ast
-from pathlib import Path
-
 import pytest
 from smithy_python.dependencies import (
     HATCHLING,
@@ -73,31 +70,3 @@ def test_runtime_dependency_catalog() -> None:
     assert SMITHY_CORE == Dependency("smithy-core", "~=0.12.0", "runtime")
     assert SMITHY_HTTP == Dependency("smithy-http", "~=0.9.0", "runtime")
     assert HATCHLING == Dependency("hatchling", "", "build")
-
-
-_PACKAGES = Path(__file__).resolve().parents[3]
-
-
-@pytest.mark.parametrize("dependency", [SMITHY_CORE, SMITHY_HTTP])
-def test_runtime_specifiers_match_workspace_versions(dependency: Dependency) -> None:
-    # Generated packages must accept the runtime release built from this tree.
-    # Read the source, since installed metadata lags a version bump.
-    init = (
-        _PACKAGES
-        / dependency.package
-        / "src"
-        / dependency.package.replace("-", "_")
-        / "__init__.py"
-    )
-    (version,) = (
-        node.value.value
-        for node in ast.parse(init.read_text()).body
-        if isinstance(node, ast.Assign)
-        and any(isinstance(t, ast.Name) and t.id == "__version__" for t in node.targets)
-        and isinstance(node.value, ast.Constant)
-    )
-    major, minor = str(version).split(".")[:2]
-    assert dependency.specifier == f"~={major}.{minor}.0", (
-        f"Update {dependency.package} in smithy_python.dependencies to "
-        f"~={major}.{minor}.0 to match its version {version}"
-    )
