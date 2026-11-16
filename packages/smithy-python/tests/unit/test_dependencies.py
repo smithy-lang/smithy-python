@@ -5,6 +5,7 @@ import pytest
 from smithy_python.dependencies import (
     HATCHLING,
     SMITHY_CORE,
+    SMITHY_HTTP,
     Dependency,
     DependencySet,
 )
@@ -66,5 +67,6 @@ def test_dependency_set_rejects_specifier_conflicts() -> None:
 
 
 def test_runtime_dependency_catalog() -> None:
-    assert SMITHY_CORE == Dependency("smithy-core", "~=0.10.0", "runtime")
+    assert SMITHY_CORE == Dependency("smithy-core", "~=0.12.0", "runtime")
+    assert SMITHY_HTTP == Dependency("smithy-http", "~=0.9.0", "runtime")
     assert HATCHLING == Dependency("hatchling", "", "build")

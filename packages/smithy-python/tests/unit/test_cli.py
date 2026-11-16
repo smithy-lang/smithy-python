@@ -101,7 +101,7 @@ def test_client_generation_writes_complete_package(
     project = tomllib.loads((output / "pyproject.toml").read_text())
     assert project["project"]["description"] == "example_client client package"
     assert project["project"]["dependencies"] == [
-        "smithy-core~=0.10.0",
+        "smithy-core~=0.12.0",
         "smithy-http[aiohttp,cbor,urllib3]~=0.9.0",
     ]
     monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
@@ -178,7 +178,7 @@ def test_types_generation_writes_complete_package(
         "requires-python": ">=3.12",
         "keywords": ["smithy", "example_types"],
         "license": {"text": "Apache-2.0"},
-        "dependencies": ["smithy-core~=0.10.0"],
+        "dependencies": ["smithy-core~=0.12.0"],
     }
     assert project["build-system"] == {
         "requires": ["hatchling"],
