@@ -342,6 +342,8 @@ public class PythonCodegenTest {
         assertTrue(syncConfig.contains("from ._private.endpoints import BDD"));
         assertTrue(schemas.contains("smithy.api#longPoll"));
         assertTrue(schemas.contains("\"timeoutMillis\": 20000"));
+        assertTrue(schemas.contains("smithy.api#retryable"));
+        assertTrue(schemas.contains("\"throttling\": True"));
     }
 
     @Test

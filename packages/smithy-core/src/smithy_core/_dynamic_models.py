@@ -47,6 +47,7 @@ from .traits import (
     ErrorTrait,
     IdempotencyTokenTrait,
     RequiredTrait,
+    RetryableTrait,
     SensitiveTrait,
     SparseTrait,
     StreamingTrait,
@@ -451,6 +452,11 @@ class ModelRegistry:
             fields.append(
                 ("fault", str | None, _field(default=error_trait.fault.value))
             )
+            retryable_trait = schema.get_trait(RetryableTrait)
+            if retryable_trait is not None:
+                fields.append(("is_retry_safe", bool | None, _field(default=True)))
+                if retryable_trait.throttling:
+                    fields.append(("is_throttling_error", bool, _field(default=True)))
         bases: tuple[type, ...] = (self._error_base(),) if is_error else ()
         # Operation outputs carry a non-modeled response_metadata attribute, excluded
         # from eq and repr. Errors inherit it from ModeledError instead.

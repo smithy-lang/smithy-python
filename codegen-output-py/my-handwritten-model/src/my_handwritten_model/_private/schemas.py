@@ -1,3 +1,5 @@
+from types import MappingProxyType
+
 from smithy_core._schema_compact import StaticSchema
 
 n0 = "smithy.python.tests.handwritten"
@@ -47,16 +49,17 @@ _s42 = "SubscribeToEventsOutput"
 _s43 = "subscriptionId"
 _s44 = "ThrottlingEvent"
 _s45 = "client"
-_s46 = "TradeEvents"
-_s47 = "alpha"
-_s48 = "beta"
-_s49 = "gamma"
-_s50 = "delta"
-_s51 = "throttle"
-_s52 = "TradeEventStreamInput"
-_s53 = "sessionId"
-_s54 = "TradeEventStreamOutput"
-_s55 = "greeting"
+_s46 = "smithy.api#retryable"
+_s47 = "TradeEvents"
+_s48 = "alpha"
+_s49 = "beta"
+_s50 = "gamma"
+_s51 = "delta"
+_s52 = "throttle"
+_s53 = "TradeEventStreamInput"
+_s54 = "sessionId"
+_s55 = "TradeEventStreamOutput"
+_s56 = "greeting"
 
 ALPHA: StaticSchema = (
     18,
@@ -206,7 +209,7 @@ THROTTLING_EVENT: StaticSchema = (
     18,
     n0,
     _s44,
-    {_s35: _s45},
+    {_s35: _s45, _s46: MappingProxyType({"throttling": True})},
     (_s9,),
     ((3, 0),),
 )
@@ -214,26 +217,26 @@ THROTTLING_EVENT: StaticSchema = (
 TRADE_EVENTS: StaticSchema = (
     19,
     n0,
-    _s46,
+    _s47,
     {_s24: None},
-    (_s47, _s48, _s49, _s50, _s51),
+    (_s48, _s49, _s50, _s51, _s52),
     ((ALPHA, 0), (-1, 0), (GAMMA, 0), (DIFFERENT_SHAPE_NAME, 0), (THROTTLING_EVENT, 0)),
 )
 
 TRADE_EVENT_STREAM_INPUT: StaticSchema = (
     18,
     n0,
-    _s52,
+    _s53,
     {_s28: None},
-    (_s53, _s30),
+    (_s54, _s30),
     ((3, 0), (TRADE_EVENTS, 0)),
 )
 
 TRADE_EVENT_STREAM_OUTPUT: StaticSchema = (
     18,
     n0,
-    _s54,
+    _s55,
     {_s32: None},
-    (_s55, _s30),
+    (_s56, _s30),
     ((3, 0), (TRADE_EVENTS, 0)),
 )

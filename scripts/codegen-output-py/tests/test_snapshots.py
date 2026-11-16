@@ -64,6 +64,7 @@ _SOURCE_TRAITS = {
     "smithy.api#xmlNamespace",
     "smithy.api#streaming",
     "smithy.api#error",
+    "smithy.api#retryable",
     "smithy.api#httpError",
     "smithy.api#httpHeader",
     "smithy.api#httpQuery",
@@ -419,6 +420,17 @@ def _model_surface(models: ModuleType) -> dict[str, Any]:
         elif is_dataclass(value):
             surface[name] = tuple(field.name for field in fields(value))
     return surface
+
+
+@pytest.mark.parametrize("tree", ["codegen-output", "codegen-output-py"])
+def test_retryable_error_classes_carry_retry_info(tree: str) -> None:
+    with _import_package(
+        _ROOT / tree / "my-handwritten-model/src", "my_handwritten_model"
+    ) as (models, _):
+        throttling = models.ThrottlingEvent()
+        assert throttling.is_retry_safe is True
+        assert throttling.is_throttling_error is True
+        assert models.StreamServiceError().is_retry_safe is None
 
 
 def test_rpcv2_cbor_models_round_trip_without_a_client() -> None:

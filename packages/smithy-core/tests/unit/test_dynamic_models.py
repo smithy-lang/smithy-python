@@ -61,6 +61,7 @@ def _struct(name: str, members: tuple[tuple[str, object], ...]) -> StaticSchema:
 
 
 _ERROR_TRAIT = "smithy.api#error"
+_RETRYABLE_TRAIT = "smithy.api#retryable"
 
 
 def _error_struct(
@@ -68,12 +69,13 @@ def _error_struct(
     members: tuple[tuple[str, object], ...],
     *,
     fault: str = "client",
+    traits: dict[str, object] | None = None,
 ) -> StaticSchema:
     return (
         ShapeType.STRUCTURE.value,
         NS,
         name,
-        {_ERROR_TRAIT: fault},
+        {_ERROR_TRAIT: fault, **(traits or {})},
         tuple(m[0] for m in members),
         tuple((m[1], 0) for m in members),
     )
@@ -576,6 +578,32 @@ def test_modeled_error_uses_modeled_fault() -> None:
 
     assert cls().fault == "server"
     assert cls.deserialize(cast(ShapeDeserializer, _De())).fault == "server"
+
+
+@pytest.mark.parametrize(
+    "traits, is_retry_safe, is_throttling_error",
+    [
+        ({}, None, False),
+        ({_RETRYABLE_TRAIT: None}, True, False),
+        ({_RETRYABLE_TRAIT: {"throttling": True}}, True, True),
+        ({_RETRYABLE_TRAIT: {"throttling": False}}, True, False),
+    ],
+)
+def test_modeled_error_uses_modeled_retry_info(
+    traits: dict[str, object], is_retry_safe: bool | None, is_throttling_error: bool
+) -> None:
+    _schema_compact._cache.clear()
+    mod = _module(BOOM=_error_struct("Boom", (), traits=traits))
+    registry = ModelRegistry(mod, index={"Boom": "BOOM"}, shape_names={"Boom"})
+    cls = cast(_ModeledErrorClass, registry.build("Boom"))
+
+    class _De:
+        def read_struct(self, schema: Schema, consumer: Any) -> None:
+            pass
+
+    for error in (cls(), cls.deserialize(cast(ShapeDeserializer, _De()))):
+        assert error.is_retry_safe is is_retry_safe
+        assert error.is_throttling_error is is_throttling_error
 
 
 def test_enum_member_deserialize_coerces_to_enum_class() -> None:

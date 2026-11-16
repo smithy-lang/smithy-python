@@ -49,6 +49,7 @@ import software.amazon.smithy.model.traits.RangeTrait;
 import software.amazon.smithy.model.traits.RequestCompressionTrait;
 import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.RequiresLengthTrait;
+import software.amazon.smithy.model.traits.RetryableTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
 import software.amazon.smithy.model.traits.SparseTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
@@ -117,6 +118,7 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     StreamingTrait.ID,
                     EndpointTrait.ID,
                     ErrorTrait.ID,
+                    RetryableTrait.ID, // runtime sets the retry defaults of the error class
                     RequiresLengthTrait.ID,
                     EventHeaderTrait.ID,
                     EventPayloadTrait.ID,

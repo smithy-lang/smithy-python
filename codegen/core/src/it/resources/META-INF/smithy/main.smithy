@@ -255,6 +255,7 @@ operation GetCity {
     errors: [
         NoSuchResource
         EmptyError
+        ThrottlingError
     ]
 }
 
@@ -347,6 +348,13 @@ apply NoSuchResource @httpResponseTests([
 @error("client")
 @httpError(400)
 structure EmptyError {}
+
+@error("client")
+@retryable(throttling: true)
+@httpError(429)
+structure ThrottlingError {
+    message: String
+}
 
 // The paginated trait indicates that the operation may
 // return truncated results.
