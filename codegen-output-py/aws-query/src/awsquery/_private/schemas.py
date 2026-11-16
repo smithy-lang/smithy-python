@@ -218,14 +218,8 @@ COMPLEX_ERROR: StaticSchema = (
     n0,
     _s2,
     {_s3: _s4},
-    (
-        _s5,
-        _s6,
-    ),
-    (
-        (3, 0),
-        (COMPLEX_NESTED_ERROR_DATA, 0),
-    ),
+    (_s5, _s6),
+    ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
 GREETING_STRUCT: StaticSchema = (
@@ -242,14 +236,8 @@ COMPLEX_MAP: StaticSchema = (
     n0,
     _s9,
     0,
-    (
-        _s10,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (GREETING_STRUCT, 0),
-    ),
+    (_s10, _s11),
+    ((3, 0), (GREETING_STRUCT, 0)),
 )
 
 CUSTOM_CODE_ERROR: StaticSchema = (
@@ -296,13 +284,7 @@ FOO_ENUM: StaticSchema = (
     n1,
     _s24,
     0,
-    (
-        _s25,
-        _s27,
-        _s29,
-        _s31,
-        _s33,
-    ),
+    (_s25, _s27, _s29, _s31, _s33),
     (
         (-1, {_s26: _s1}),
         (-1, {_s26: _s28}),
@@ -317,14 +299,8 @@ FOO_ENUM_MAP: StaticSchema = (
     n1,
     _s35,
     0,
-    (
-        _s10,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (FOO_ENUM, 0),
-    ),
+    (_s10, _s11),
+    ((3, 0), (FOO_ENUM, 0)),
 )
 
 FLATTENED_XML_MAP_OUTPUT: StaticSchema = (
@@ -341,14 +317,8 @@ FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT_MAP: StaticSchema = (
     n0,
     _s39,
     0,
-    (
-        _s10,
-        _s11,
-    ),
-    (
-        (3, {_s40: _s41}),
-        (3, {_s40: _s42}),
-    ),
+    (_s10, _s11),
+    ((3, {_s40: _s41}), (3, {_s40: _s42})),
 )
 
 FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT: StaticSchema = (
@@ -365,10 +335,7 @@ FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT_MAP: StaticSchema = (
     n0,
     _s45,
     0,
-    (
-        _s10,
-        _s11,
-    ),
+    (_s10, _s11),
     (
         (
             3,
@@ -491,14 +458,8 @@ MAP_OF_LISTS: StaticSchema = (
     n0,
     _s63,
     0,
-    (
-        _s10,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (STRING_LIST, 0),
-    ),
+    (_s10, _s11),
+    ((3, 0), (STRING_LIST, 0)),
 )
 
 MAP_WITH_XML_NAME: StaticSchema = (
@@ -506,14 +467,8 @@ MAP_WITH_XML_NAME: StaticSchema = (
     n0,
     _s64,
     0,
-    (
-        _s10,
-        _s11,
-    ),
-    (
-        (3, {_s40: _s41}),
-        (3, {_s40: _s42}),
-    ),
+    (_s10, _s11),
+    ((3, {_s40: _s41}), (3, {_s40: _s42})),
 )
 
 NESTED_STRUCT_WITH_LIST: StaticSchema = (
@@ -530,14 +485,8 @@ STRING_MAP: StaticSchema = (
     n1,
     _s67,
     0,
-    (
-        _s10,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s10, _s11),
+    ((3, 0), (3, 0)),
 )
 
 NESTED_STRUCT_WITH_MAP: StaticSchema = (
@@ -577,14 +526,8 @@ PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     n0,
     _s73,
     {_s22: None},
-    (
-        _s74,
-        _s77,
-    ),
-    (
-        (3, {_s75: _s76}),
-        (3, 0),
-    ),
+    (_s74, _s77),
+    ((3, {_s75: _s76}), (3, 0)),
 )
 
 QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT: StaticSchema = (
@@ -610,14 +553,7 @@ QUERY_LISTS_INPUT: StaticSchema = (
     n0,
     _s81,
     {_s22: None},
-    (
-        _s66,
-        _s82,
-        _s83,
-        _s84,
-        _s85,
-        _s87,
-    ),
+    (_s66, _s82, _s83, _s84, _s85, _s87),
     (
         (STRING_LIST, 0),
         (GREETING_LIST, 0),
@@ -633,16 +569,7 @@ QUERY_MAPS_INPUT: StaticSchema = (
     n0,
     _s88,
     {_s22: None},
-    (
-        _s69,
-        _s89,
-        _s90,
-        _s91,
-        _s92,
-        _s93,
-        _s63,
-        _s68,
-    ),
+    (_s69, _s89, _s90, _s91, _s92, _s93, _s63, _s68),
     (
         (STRING_MAP, 0),
         (STRING_MAP, {_s40: _s1}),
@@ -667,16 +594,8 @@ QUERY_TIMESTAMPS_INPUT: StaticSchema = (
     n0,
     _s96,
     {_s22: None},
-    (
-        _s97,
-        _s98,
-        _s99,
-    ),
-    (
-        (4, 0),
-        (4, {_s16: _s95}),
-        (EPOCH_SECONDS, 0),
-    ),
+    (_s97, _s98, _s99),
+    ((4, 0), (4, {_s16: _s95}), (EPOCH_SECONDS, 0)),
 )
 
 RECURSIVE_XML_SHAPES_OUTPUT: StaticSchema = (
@@ -702,16 +621,8 @@ INTEGER_ENUM: StaticSchema = (
     n1,
     _s103,
     0,
-    (
-        _s104,
-        _s105,
-        _s106,
-    ),
-    (
-        (-1, {_s26: 1}),
-        (-1, {_s26: 2}),
-        (-1, {_s26: 3}),
-    ),
+    (_s104, _s105, _s106),
+    ((-1, {_s26: 1}), (-1, {_s26: 2}), (-1, {_s26: 3})),
 )
 
 SIMPLE_INPUT_PARAMS_INPUT: StaticSchema = (
@@ -719,17 +630,7 @@ SIMPLE_INPUT_PARAMS_INPUT: StaticSchema = (
     n0,
     _s107,
     {_s22: None},
-    (
-        _s1,
-        _s30,
-        _s28,
-        _s108,
-        _s109,
-        _s110,
-        _s111,
-        _s24,
-        _s103,
-    ),
+    (_s1, _s30, _s28, _s108, _s109, _s110, _s111, _s24, _s103),
     (
         (3, 0),
         (3, 0),
@@ -748,18 +649,7 @@ SIMPLE_SCALAR_XML_PROPERTIES_OUTPUT: StaticSchema = (
     n0,
     _s112,
     {_s19: None},
-    (
-        _s113,
-        _s114,
-        _s115,
-        _s116,
-        _s117,
-        _s118,
-        _s119,
-        _s120,
-        _s121,
-        _s122,
-    ),
+    (_s113, _s114, _s115, _s116, _s117, _s118, _s119, _s120, _s121, _s122),
     (
         (3, 0),
         (3, 0),
@@ -779,14 +669,8 @@ STRUCTURE_LIST_MEMBER: StaticSchema = (
     n0,
     _s124,
     0,
-    (
-        _s125,
-        _s126,
-    ),
-    (
-        (3, {_s40: _s11}),
-        (3, {_s40: _s127}),
-    ),
+    (_s125, _s126),
+    ((3, {_s40: _s11}), (3, {_s40: _s127})),
 )
 
 STRUCTURE_LIST: StaticSchema = (
@@ -830,14 +714,7 @@ XML_ENUMS_OUTPUT: StaticSchema = (
     n0,
     _s132,
     {_s19: None},
-    (
-        _s133,
-        _s134,
-        _s135,
-        _s136,
-        _s137,
-        _s138,
-    ),
+    (_s133, _s134, _s135, _s136, _s137, _s138),
     (
         (FOO_ENUM, 0),
         (FOO_ENUM, 0),
@@ -871,14 +748,8 @@ INTEGER_ENUM_MAP: StaticSchema = (
     n1,
     _s141,
     0,
-    (
-        _s10,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (INTEGER_ENUM, 0),
-    ),
+    (_s10, _s11),
+    ((3, 0), (INTEGER_ENUM, 0)),
 )
 
 XML_INT_ENUMS_OUTPUT: StaticSchema = (
@@ -886,14 +757,7 @@ XML_INT_ENUMS_OUTPUT: StaticSchema = (
     n0,
     _s142,
     {_s19: None},
-    (
-        _s143,
-        _s144,
-        _s145,
-        _s146,
-        _s147,
-        _s148,
-    ),
+    (_s143, _s144, _s145, _s146, _s147, _s148),
     (
         (INTEGER_ENUM, 0),
         (INTEGER_ENUM, 0),
@@ -993,14 +857,8 @@ XML_MAPS_OUTPUT_MAP: StaticSchema = (
     n0,
     _s171,
     0,
-    (
-        _s10,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (GREETING_STRUCT, 0),
-    ),
+    (_s10, _s11),
+    ((3, 0), (GREETING_STRUCT, 0)),
 )
 
 XML_MAPS_OUTPUT: StaticSchema = (
@@ -1017,14 +875,8 @@ XML_MAPS_XML_NAME_OUTPUT_MAP: StaticSchema = (
     n0,
     _s173,
     0,
-    (
-        _s10,
-        _s11,
-    ),
-    (
-        (3, {_s40: _s174}),
-        (GREETING_STRUCT, {_s40: _s175}),
-    ),
+    (_s10, _s11),
+    ((3, {_s40: _s174}), (GREETING_STRUCT, {_s40: _s175})),
 )
 
 XML_MAPS_XML_NAME_OUTPUT: StaticSchema = (
@@ -1050,10 +902,7 @@ XML_NAMESPACE_NESTED: StaticSchema = (
     n0,
     _s178,
     {_s46: MappingProxyType({"uri": "http://boo.com"})},
-    (
-        _s55,
-        _s179,
-    ),
+    (_s55, _s179),
     (
         (3, {_s46: MappingProxyType({"uri": "http://baz.com", "prefix": "baz"})}),
         (XML_NAMESPACED_LIST, {_s46: MappingProxyType({"uri": "http://qux.com"})}),
@@ -1081,15 +930,7 @@ XML_TIMESTAMPS_OUTPUT: StaticSchema = (
     n0,
     _s183,
     {_s19: None},
-    (
-        _s184,
-        _s185,
-        _s186,
-        _s187,
-        _s188,
-        _s189,
-        _s190,
-    ),
+    (_s184, _s185, _s186, _s187, _s188, _s189, _s190),
     (
         (4, 0),
         (4, {_s16: _s17}),
@@ -1106,14 +947,8 @@ RECURSIVE_XML_SHAPES_OUTPUT_NESTED1: StaticSchema = (
     n0,
     _s191,
     0,
-    (
-        _s55,
-        _s101,
-    ),
-    (
-        (3, 0),
-        (lambda: RECURSIVE_XML_SHAPES_OUTPUT_NESTED2, 0),
-    ),
+    (_s55, _s101),
+    ((3, 0), (lambda: RECURSIVE_XML_SHAPES_OUTPUT_NESTED2, 0)),
 )
 
 RECURSIVE_XML_SHAPES_OUTPUT_NESTED2: StaticSchema = (
@@ -1121,14 +956,8 @@ RECURSIVE_XML_SHAPES_OUTPUT_NESTED2: StaticSchema = (
     n0,
     _s192,
     0,
-    (
-        _s193,
-        _s194,
-    ),
-    (
-        (3, 0),
-        (RECURSIVE_XML_SHAPES_OUTPUT_NESTED1, 0),
-    ),
+    (_s193, _s194),
+    ((3, 0), (RECURSIVE_XML_SHAPES_OUTPUT_NESTED1, 0)),
 )
 
 STRUCT_ARG: StaticSchema = (
@@ -1136,14 +965,6 @@ STRUCT_ARG: StaticSchema = (
     n0,
     _s195,
     0,
-    (
-        _s196,
-        _s197,
-        _s198,
-    ),
-    (
-        (3, 0),
-        (2, 0),
-        (lambda: STRUCT_ARG, 0),
-    ),
+    (_s196, _s197, _s198),
+    ((3, 0), (2, 0), (lambda: STRUCT_ARG, 0)),
 )

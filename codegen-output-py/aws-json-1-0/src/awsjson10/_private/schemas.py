@@ -178,14 +178,8 @@ COMPLEX_ERROR: StaticSchema = (
     n0,
     _s7,
     {_s8: _s9},
-    (
-        _s10,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (COMPLEX_NESTED_ERROR_DATA, 0),
-    ),
+    (_s10, _s11),
+    ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
 CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (
@@ -218,14 +212,8 @@ TEST_STRING_MAP: StaticSchema = (
     n0,
     _s18,
     0,
-    (
-        _s19,
-        _s14,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s19, _s14),
+    ((3, 0), (3, 0)),
 )
 
 TEST_ENUM: StaticSchema = (
@@ -233,16 +221,8 @@ TEST_ENUM: StaticSchema = (
     n0,
     _s20,
     0,
-    (
-        _s21,
-        _s23,
-        _s24,
-    ),
-    (
-        (-1, {_s22: _s21}),
-        (-1, {_s22: _s23}),
-        (-1, {_s22: _s24}),
-    ),
+    (_s21, _s23, _s24),
+    ((-1, {_s22: _s21}), (-1, {_s22: _s23}), (-1, {_s22: _s24})),
 )
 
 TEST_INT_ENUM: StaticSchema = (
@@ -250,14 +230,8 @@ TEST_INT_ENUM: StaticSchema = (
     n0,
     _s25,
     0,
-    (
-        _s26,
-        _s27,
-    ),
-    (
-        (-1, {_s22: 1}),
-        (-1, {_s22: 2}),
-    ),
+    (_s26, _s27),
+    ((-1, {_s22: 1}), (-1, {_s22: 2})),
 )
 
 DEFAULTS: StaticSchema = (
@@ -341,16 +315,8 @@ DIALOG: StaticSchema = (
     n0,
     _s63,
     0,
-    (
-        _s64,
-        _s65,
-        _s66,
-    ),
-    (
-        (3, 0),
-        (3, {_s2: _s30}),
-        (FAREWELL, 0),
-    ),
+    (_s64, _s65, _s66),
+    ((3, 0), (3, {_s2: _s30}), (FAREWELL, 0)),
 )
 
 DIALOG_LIST: StaticSchema = (
@@ -367,14 +333,8 @@ DIALOG_MAP: StaticSchema = (
     n0,
     _s68,
     0,
-    (
-        _s19,
-        _s14,
-    ),
-    (
-        (3, 0),
-        (DIALOG, 0),
-    ),
+    (_s19, _s14),
+    ((3, 0), (DIALOG, 0)),
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT: StaticSchema = (
@@ -439,13 +399,7 @@ FOO_ENUM: StaticSchema = (
     n1,
     _s79,
     0,
-    (
-        _s21,
-        _s24,
-        _s23,
-        _s26,
-        _s83,
-    ),
+    (_s21, _s24, _s23, _s26, _s83),
     (
         (-1, {_s22: _s4}),
         (-1, {_s22: _s80}),
@@ -460,16 +414,8 @@ INTEGER_ENUM: StaticSchema = (
     n1,
     _s85,
     0,
-    (
-        _s86,
-        _s87,
-        _s88,
-    ),
-    (
-        (-1, {_s22: 1}),
-        (-1, {_s22: 2}),
-        (-1, {_s22: 3}),
-    ),
+    (_s86, _s87, _s88),
+    ((-1, {_s22: 1}), (-1, {_s22: 2}), (-1, {_s22: 3})),
 )
 
 STRING_LIST: StaticSchema = (
@@ -486,14 +432,8 @@ STRING_MAP: StaticSchema = (
     n1,
     _s90,
     0,
-    (
-        _s19,
-        _s14,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s19, _s14),
+    ((3, 0), (3, 0)),
 )
 
 GREETING_STRUCT: StaticSchema = (
@@ -510,18 +450,7 @@ MY_UNION: StaticSchema = (
     n0,
     _s92,
     0,
-    (
-        _s93,
-        _s94,
-        _s95,
-        _s96,
-        _s97,
-        _s98,
-        _s99,
-        _s100,
-        _s101,
-        _s102,
-    ),
+    (_s93, _s94, _s95, _s96, _s97, _s98, _s99, _s100, _s101, _s102),
     (
         (3, 0),
         (2, 0),
@@ -566,18 +495,8 @@ OPERATION_WITH_DEFAULTS_INPUT: StaticSchema = (
     n0,
     _s107,
     {_s13: None},
-    (
-        _s108,
-        _s109,
-        _s110,
-        _s111,
-    ),
-    (
-        (DEFAULTS, 0),
-        (CLIENT_OPTIONAL_DEFAULTS, 0),
-        (3, {_s2: _s30}),
-        (7, {_s2: 0}),
-    ),
+    (_s108, _s109, _s110, _s111),
+    ((DEFAULTS, 0), (CLIENT_OPTIONAL_DEFAULTS, 0), (3, {_s2: _s30}), (7, {_s2: 0})),
 )
 
 OPERATION_WITH_DEFAULTS_OUTPUT: StaticSchema = (
@@ -652,11 +571,7 @@ TOP_LEVEL: StaticSchema = (
     n0,
     _s10,
     0,
-    (
-        _s113,
-        _s114,
-        _s115,
-    ),
+    (_s113, _s114, _s115),
     (
         (DIALOG, 1),
         (DIALOG_LIST, {_s2: ()}),
@@ -678,11 +593,7 @@ OPERATION_WITH_NESTED_STRUCTURE_OUTPUT: StaticSchema = (
     n0,
     _s118,
     {_s16: None},
-    (
-        _s113,
-        _s114,
-        _s115,
-    ),
+    (_s113, _s114, _s115),
     (
         (DIALOG, 1),
         (DIALOG_LIST, {_s2: ()}),
@@ -704,14 +615,8 @@ REQUIRED_STRING_MAP: StaticSchema = (
     n0,
     _s120,
     0,
-    (
-        _s19,
-        _s14,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s19, _s14),
+    ((3, 0), (3, 0)),
 )
 
 OPERATION_WITH_REQUIRED_MEMBERS_OUTPUT: StaticSchema = (
@@ -754,16 +659,8 @@ REQUIRED_ENUM: StaticSchema = (
     n0,
     _s134,
     0,
-    (
-        _s21,
-        _s23,
-        _s24,
-    ),
-    (
-        (-1, {_s22: _s21}),
-        (-1, {_s22: _s23}),
-        (-1, {_s22: _s24}),
-    ),
+    (_s21, _s23, _s24),
+    ((-1, {_s22: _s21}), (-1, {_s22: _s23}), (-1, {_s22: _s24})),
 )
 
 REQUIRED_INT_ENUM: StaticSchema = (
@@ -771,14 +668,8 @@ REQUIRED_INT_ENUM: StaticSchema = (
     n0,
     _s135,
     0,
-    (
-        _s26,
-        _s27,
-    ),
-    (
-        (-1, {_s22: 1}),
-        (-1, {_s22: 2}),
-    ),
+    (_s26, _s27),
+    ((-1, {_s22: 1}), (-1, {_s22: 2})),
 )
 
 OPERATION_WITH_REQUIRED_MEMBERS_WITH_DEFAULTS_OUTPUT: StaticSchema = (
@@ -825,14 +716,8 @@ PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     n0,
     _s141,
     {_s13: None},
-    (
-        _s142,
-        _s145,
-    ),
-    (
-        (3, {_s143: _s144}),
-        (3, 0),
-    ),
+    (_s142, _s145),
+    ((3, {_s143: _s144}), (3, 0)),
 )
 
 SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
@@ -840,14 +725,8 @@ SIMPLE_SCALAR_PROPERTIES_INPUT: StaticSchema = (
     n0,
     _s146,
     {_s13: None},
-    (
-        _s147,
-        _s148,
-    ),
-    (
-        (9, 0),
-        (10, 0),
-    ),
+    (_s147, _s148),
+    ((9, 0), (10, 0)),
 )
 
 SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
@@ -855,12 +734,6 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT: StaticSchema = (
     n0,
     _s149,
     {_s16: None},
-    (
-        _s147,
-        _s148,
-    ),
-    (
-        (9, 0),
-        (10, 0),
-    ),
+    (_s147, _s148),
+    ((9, 0), (10, 0)),
 )

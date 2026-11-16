@@ -108,6 +108,11 @@ class ModelPlan:
     shape_names: frozenset[str]
     includes_unit: bool
     operations: tuple[OperationModel, ...] = ()
+    input_dict_names: Mapping[_model.ShapeId, str] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
+    """``TypedDict`` names for structures, unions, and union members that callers
+    may pass as dictionaries. Only client plans have them."""
 
     @classmethod
     def from_shapes(
@@ -116,6 +121,7 @@ class ModelPlan:
         symbols: _symbols.SymbolProvider,
         schema_names: Mapping[_model.ShapeId, str],
         operations: tuple[OperationModel, ...] = (),
+        input_dict_names: Mapping[_model.ShapeId, str] | None = None,
     ) -> ModelPlan:
         """Plan declaration and union names in stable shape order."""
         model_shapes: list[_model.Shape] = []
@@ -166,6 +172,7 @@ class ModelPlan:
             ),
             includes_unit=includes_unit,
             operations=operations,
+            input_dict_names=MappingProxyType(dict(input_dict_names or {})),
         )
 
 

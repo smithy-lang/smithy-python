@@ -129,14 +129,8 @@ PARTITION_ITEM076: StaticSchema = (
     n0,
     _s183,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (lambda: schemas.PARTITION_ITEM077, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (lambda: schemas.PARTITION_ITEM077, 0)),
 )
 
 PARTITION_ITEM075: StaticSchema = (
@@ -144,14 +138,8 @@ PARTITION_ITEM075: StaticSchema = (
     n0,
     _s184,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM076, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM076, 0)),
 )
 
 PARTITION_ITEM074: StaticSchema = (
@@ -159,14 +147,8 @@ PARTITION_ITEM074: StaticSchema = (
     n0,
     _s185,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM075, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM075, 0)),
 )
 
 PARTITION_ITEM073: StaticSchema = (
@@ -174,14 +156,8 @@ PARTITION_ITEM073: StaticSchema = (
     n0,
     _s186,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM074, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM074, 0)),
 )
 
 PARTITION_ITEM072: StaticSchema = (
@@ -189,14 +165,8 @@ PARTITION_ITEM072: StaticSchema = (
     n0,
     _s187,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM073, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM073, 0)),
 )
 
 PARTITION_ITEM071: StaticSchema = (
@@ -204,14 +174,8 @@ PARTITION_ITEM071: StaticSchema = (
     n0,
     _s188,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM072, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM072, 0)),
 )
 
 PARTITION_ITEM070: StaticSchema = (
@@ -219,14 +183,8 @@ PARTITION_ITEM070: StaticSchema = (
     n0,
     _s189,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM071, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM071, 0)),
 )
 
 PARTITION_ITEM069: StaticSchema = (
@@ -234,14 +192,8 @@ PARTITION_ITEM069: StaticSchema = (
     n0,
     _s190,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM070, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM070, 0)),
 )
 
 PARTITION_ITEM068: StaticSchema = (
@@ -249,14 +201,8 @@ PARTITION_ITEM068: StaticSchema = (
     n0,
     _s191,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM069, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM069, 0)),
 )
 
 PARTITION_ITEM067: StaticSchema = (
@@ -264,14 +210,8 @@ PARTITION_ITEM067: StaticSchema = (
     n0,
     _s192,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM068, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM068, 0)),
 )
 
 PARTITION_ITEM066: StaticSchema = (
@@ -279,14 +219,8 @@ PARTITION_ITEM066: StaticSchema = (
     n0,
     _s193,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM067, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM067, 0)),
 )
 
 PARTITION_ITEM065: StaticSchema = (
@@ -294,14 +228,8 @@ PARTITION_ITEM065: StaticSchema = (
     n0,
     _s194,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM066, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM066, 0)),
 )
 
 PARTITION_ITEM064: StaticSchema = (
@@ -309,14 +237,8 @@ PARTITION_ITEM064: StaticSchema = (
     n0,
     _s195,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM065, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM065, 0)),
 )
 
 PARTITION_ITEM063: StaticSchema = (
@@ -324,14 +246,8 @@ PARTITION_ITEM063: StaticSchema = (
     n0,
     _s196,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM064, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM064, 0)),
 )
 
 PARTITION_ITEM062: StaticSchema = (
@@ -339,14 +255,8 @@ PARTITION_ITEM062: StaticSchema = (
     n0,
     _s197,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM063, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM063, 0)),
 )
 
 PARTITION_ITEM061: StaticSchema = (
@@ -354,14 +264,8 @@ PARTITION_ITEM061: StaticSchema = (
     n0,
     _s198,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM062, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM062, 0)),
 )
 
 PARTITION_ITEM060: StaticSchema = (
@@ -369,14 +273,8 @@ PARTITION_ITEM060: StaticSchema = (
     n0,
     _s199,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM061, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM061, 0)),
 )
 
 PARTITION_ITEM059: StaticSchema = (
@@ -384,14 +282,8 @@ PARTITION_ITEM059: StaticSchema = (
     n0,
     _s200,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM060, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM060, 0)),
 )
 
 PARTITION_ITEM058: StaticSchema = (
@@ -399,14 +291,8 @@ PARTITION_ITEM058: StaticSchema = (
     n0,
     _s201,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM059, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM059, 0)),
 )
 
 PARTITION_ITEM057: StaticSchema = (
@@ -414,14 +300,8 @@ PARTITION_ITEM057: StaticSchema = (
     n0,
     _s202,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM058, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM058, 0)),
 )
 
 PARTITION_ITEM056: StaticSchema = (
@@ -429,14 +309,8 @@ PARTITION_ITEM056: StaticSchema = (
     n0,
     _s203,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM057, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM057, 0)),
 )
 
 PARTITION_ITEM055: StaticSchema = (
@@ -444,14 +318,8 @@ PARTITION_ITEM055: StaticSchema = (
     n0,
     _s204,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM056, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM056, 0)),
 )
 
 PARTITION_ITEM054: StaticSchema = (
@@ -459,14 +327,8 @@ PARTITION_ITEM054: StaticSchema = (
     n0,
     _s205,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM055, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM055, 0)),
 )
 
 PARTITION_ITEM053: StaticSchema = (
@@ -474,14 +336,8 @@ PARTITION_ITEM053: StaticSchema = (
     n0,
     _s206,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM054, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM054, 0)),
 )
 
 PARTITION_ITEM052: StaticSchema = (
@@ -489,14 +345,8 @@ PARTITION_ITEM052: StaticSchema = (
     n0,
     _s207,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM053, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM053, 0)),
 )
 
 PARTITION_ITEM051: StaticSchema = (
@@ -504,14 +354,8 @@ PARTITION_ITEM051: StaticSchema = (
     n0,
     _s208,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM052, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM052, 0)),
 )
 
 PARTITION_ITEM050: StaticSchema = (
@@ -519,14 +363,8 @@ PARTITION_ITEM050: StaticSchema = (
     n0,
     _s209,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM051, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM051, 0)),
 )
 
 PARTITION_ITEM049: StaticSchema = (
@@ -534,14 +372,8 @@ PARTITION_ITEM049: StaticSchema = (
     n0,
     _s210,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM050, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM050, 0)),
 )
 
 PARTITION_ITEM048: StaticSchema = (
@@ -549,14 +381,8 @@ PARTITION_ITEM048: StaticSchema = (
     n0,
     _s211,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM049, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM049, 0)),
 )
 
 PARTITION_ITEM047: StaticSchema = (
@@ -564,14 +390,8 @@ PARTITION_ITEM047: StaticSchema = (
     n0,
     _s212,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM048, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM048, 0)),
 )
 
 PARTITION_ITEM046: StaticSchema = (
@@ -579,14 +399,8 @@ PARTITION_ITEM046: StaticSchema = (
     n0,
     _s213,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM047, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM047, 0)),
 )
 
 PARTITION_ITEM045: StaticSchema = (
@@ -594,14 +408,8 @@ PARTITION_ITEM045: StaticSchema = (
     n0,
     _s214,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM046, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM046, 0)),
 )
 
 PARTITION_ITEM044: StaticSchema = (
@@ -609,14 +417,8 @@ PARTITION_ITEM044: StaticSchema = (
     n0,
     _s215,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM045, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM045, 0)),
 )
 
 PARTITION_ITEM043: StaticSchema = (
@@ -624,14 +426,8 @@ PARTITION_ITEM043: StaticSchema = (
     n0,
     _s216,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM044, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM044, 0)),
 )
 
 PARTITION_ITEM042: StaticSchema = (
@@ -639,14 +435,8 @@ PARTITION_ITEM042: StaticSchema = (
     n0,
     _s217,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM043, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM043, 0)),
 )
 
 PARTITION_ITEM041: StaticSchema = (
@@ -654,14 +444,8 @@ PARTITION_ITEM041: StaticSchema = (
     n0,
     _s218,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM042, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM042, 0)),
 )
 
 PARTITION_ITEM040: StaticSchema = (
@@ -669,14 +453,8 @@ PARTITION_ITEM040: StaticSchema = (
     n0,
     _s219,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM041, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM041, 0)),
 )
 
 PARTITION_ITEM039: StaticSchema = (
@@ -684,14 +462,8 @@ PARTITION_ITEM039: StaticSchema = (
     n0,
     _s220,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM040, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM040, 0)),
 )
 
 PARTITION_ITEM038: StaticSchema = (
@@ -699,14 +471,8 @@ PARTITION_ITEM038: StaticSchema = (
     n0,
     _s221,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM039, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM039, 0)),
 )
 
 PARTITION_ITEM037: StaticSchema = (
@@ -714,14 +480,8 @@ PARTITION_ITEM037: StaticSchema = (
     n0,
     _s222,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM038, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM038, 0)),
 )
 
 PARTITION_ITEM036: StaticSchema = (
@@ -729,14 +489,8 @@ PARTITION_ITEM036: StaticSchema = (
     n0,
     _s223,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM037, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM037, 0)),
 )
 
 PARTITION_ITEM035: StaticSchema = (
@@ -744,14 +498,8 @@ PARTITION_ITEM035: StaticSchema = (
     n0,
     _s224,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM036, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM036, 0)),
 )
 
 PARTITION_ITEM034: StaticSchema = (
@@ -759,14 +507,8 @@ PARTITION_ITEM034: StaticSchema = (
     n0,
     _s225,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM035, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM035, 0)),
 )
 
 PARTITION_ITEM033: StaticSchema = (
@@ -774,14 +516,8 @@ PARTITION_ITEM033: StaticSchema = (
     n0,
     _s226,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM034, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM034, 0)),
 )
 
 PARTITION_ITEM032: StaticSchema = (
@@ -789,14 +525,8 @@ PARTITION_ITEM032: StaticSchema = (
     n0,
     _s227,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM033, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM033, 0)),
 )
 
 PARTITION_ITEM031: StaticSchema = (
@@ -804,14 +534,8 @@ PARTITION_ITEM031: StaticSchema = (
     n0,
     _s228,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM032, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM032, 0)),
 )
 
 PARTITION_ITEM030: StaticSchema = (
@@ -819,14 +543,8 @@ PARTITION_ITEM030: StaticSchema = (
     n0,
     _s229,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM031, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM031, 0)),
 )
 
 PARTITION_ITEM029: StaticSchema = (
@@ -834,14 +552,8 @@ PARTITION_ITEM029: StaticSchema = (
     n0,
     _s230,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM030, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM030, 0)),
 )
 
 PARTITION_ITEM028: StaticSchema = (
@@ -849,14 +561,8 @@ PARTITION_ITEM028: StaticSchema = (
     n0,
     _s231,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM029, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM029, 0)),
 )
 
 PARTITION_ITEM027: StaticSchema = (
@@ -864,14 +570,8 @@ PARTITION_ITEM027: StaticSchema = (
     n0,
     _s232,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM028, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM028, 0)),
 )
 
 PARTITION_ITEM026: StaticSchema = (
@@ -879,14 +579,8 @@ PARTITION_ITEM026: StaticSchema = (
     n0,
     _s233,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM027, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM027, 0)),
 )
 
 PARTITION_ITEM025: StaticSchema = (
@@ -894,14 +588,8 @@ PARTITION_ITEM025: StaticSchema = (
     n0,
     _s234,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM026, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM026, 0)),
 )
 
 PARTITION_ITEM024: StaticSchema = (
@@ -909,14 +597,8 @@ PARTITION_ITEM024: StaticSchema = (
     n0,
     _s235,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM025, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM025, 0)),
 )
 
 PARTITION_ITEM023: StaticSchema = (
@@ -924,14 +606,8 @@ PARTITION_ITEM023: StaticSchema = (
     n0,
     _s236,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM024, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM024, 0)),
 )
 
 PARTITION_ITEM022: StaticSchema = (
@@ -939,14 +615,8 @@ PARTITION_ITEM022: StaticSchema = (
     n0,
     _s237,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM023, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM023, 0)),
 )
 
 PARTITION_ITEM021: StaticSchema = (
@@ -954,14 +624,8 @@ PARTITION_ITEM021: StaticSchema = (
     n0,
     _s238,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM022, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM022, 0)),
 )
 
 PARTITION_ITEM020: StaticSchema = (
@@ -969,14 +633,8 @@ PARTITION_ITEM020: StaticSchema = (
     n0,
     _s239,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM021, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM021, 0)),
 )
 
 PARTITION_ITEM019: StaticSchema = (
@@ -984,14 +642,8 @@ PARTITION_ITEM019: StaticSchema = (
     n0,
     _s240,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM020, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM020, 0)),
 )
 
 PARTITION_ITEM018: StaticSchema = (
@@ -999,14 +651,8 @@ PARTITION_ITEM018: StaticSchema = (
     n0,
     _s241,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM019, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM019, 0)),
 )
 
 PARTITION_ITEM017: StaticSchema = (
@@ -1014,14 +660,8 @@ PARTITION_ITEM017: StaticSchema = (
     n0,
     _s242,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM018, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM018, 0)),
 )
 
 PARTITION_ITEM016: StaticSchema = (
@@ -1029,14 +669,8 @@ PARTITION_ITEM016: StaticSchema = (
     n0,
     _s243,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM017, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM017, 0)),
 )
 
 PARTITION_ITEM015: StaticSchema = (
@@ -1044,14 +678,8 @@ PARTITION_ITEM015: StaticSchema = (
     n0,
     _s244,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM016, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM016, 0)),
 )
 
 PARTITION_ITEM014: StaticSchema = (
@@ -1059,14 +687,8 @@ PARTITION_ITEM014: StaticSchema = (
     n0,
     _s245,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM015, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM015, 0)),
 )
 
 PARTITION_ITEM013: StaticSchema = (
@@ -1074,14 +696,8 @@ PARTITION_ITEM013: StaticSchema = (
     n0,
     _s246,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM014, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM014, 0)),
 )
 
 PARTITION_ITEM012: StaticSchema = (
@@ -1089,14 +705,8 @@ PARTITION_ITEM012: StaticSchema = (
     n0,
     _s247,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM013, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM013, 0)),
 )
 
 PARTITION_ITEM011: StaticSchema = (
@@ -1104,14 +714,8 @@ PARTITION_ITEM011: StaticSchema = (
     n0,
     _s248,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM012, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM012, 0)),
 )
 
 PARTITION_ITEM010: StaticSchema = (
@@ -1119,14 +723,8 @@ PARTITION_ITEM010: StaticSchema = (
     n0,
     _s249,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM011, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM011, 0)),
 )
 
 PARTITION_ITEM009: StaticSchema = (
@@ -1134,14 +732,8 @@ PARTITION_ITEM009: StaticSchema = (
     n0,
     _s250,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM010, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM010, 0)),
 )
 
 PARTITION_ITEM008: StaticSchema = (
@@ -1149,14 +741,8 @@ PARTITION_ITEM008: StaticSchema = (
     n0,
     _s251,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM009, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM009, 0)),
 )
 
 PARTITION_ITEM007: StaticSchema = (
@@ -1164,14 +750,8 @@ PARTITION_ITEM007: StaticSchema = (
     n0,
     _s252,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM008, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM008, 0)),
 )
 
 PARTITION_ITEM006: StaticSchema = (
@@ -1179,14 +759,8 @@ PARTITION_ITEM006: StaticSchema = (
     n0,
     _s253,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM007, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM007, 0)),
 )
 
 PARTITION_ITEM005: StaticSchema = (
@@ -1194,14 +768,8 @@ PARTITION_ITEM005: StaticSchema = (
     n0,
     _s254,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM006, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM006, 0)),
 )
 
 PARTITION_ITEM004: StaticSchema = (
@@ -1209,14 +777,8 @@ PARTITION_ITEM004: StaticSchema = (
     n0,
     _s255,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM005, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM005, 0)),
 )
 
 PARTITION_ITEM003: StaticSchema = (
@@ -1224,14 +786,8 @@ PARTITION_ITEM003: StaticSchema = (
     n0,
     _s256,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM004, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM004, 0)),
 )
 
 PARTITION_ITEM002: StaticSchema = (
@@ -1239,14 +795,8 @@ PARTITION_ITEM002: StaticSchema = (
     n0,
     _s257,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM003, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM003, 0)),
 )
 
 PARTITION_ITEM001: StaticSchema = (
@@ -1254,14 +804,8 @@ PARTITION_ITEM001: StaticSchema = (
     n0,
     _s258,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM002, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM002, 0)),
 )
 
 PARTITION_ITEM000: StaticSchema = (
@@ -1269,14 +813,8 @@ PARTITION_ITEM000: StaticSchema = (
     n0,
     _s259,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM001, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM001, 0)),
 )
 
 GET_EXAMPLE_INPUT: StaticSchema = (
@@ -1284,14 +822,8 @@ GET_EXAMPLE_INPUT: StaticSchema = (
     n0,
     _s260,
     {_s261: None},
-    (
-        _s262,
-        _s263,
-    ),
-    (
-        (3, 1),
-        (PARTITION_ITEM000, 0),
-    ),
+    (_s262, _s263),
+    ((3, 1), (PARTITION_ITEM000, 0)),
 )
 
 GET_EXAMPLE_OUTPUT: StaticSchema = (
@@ -1299,11 +831,7 @@ GET_EXAMPLE_OUTPUT: StaticSchema = (
     n0,
     _s291,
     {_s292: None},
-    (
-        n0,
-        _s1,
-        _s293,
-    ),
+    (n0, _s1, _s293),
     (
         (lambda: RENAMED_EXAMPLE, 0),
         (lambda: EXAMPLE_VALUE, 0),
@@ -1325,14 +853,8 @@ ATTRIBUTES: StaticSchema = (
     n0,
     _s266,
     0,
-    (
-        _s267,
-        _s1,
-    ),
-    (
-        (3, 0),
-        (13, 0),
-    ),
+    (_s267, _s1),
+    ((3, 0), (13, 0)),
 )
 
 EXAMPLE_VALUE: StaticSchema = (
@@ -1340,16 +862,8 @@ EXAMPLE_VALUE: StaticSchema = (
     n0,
     _s268,
     0,
-    (
-        _s269,
-        _s270,
-        _s271,
-    ),
-    (
-        (3, 0),
-        (7, 0),
-        (-1, 0),
-    ),
+    (_s269, _s270, _s271),
+    ((3, 0), (7, 0), (-1, 0)),
 )
 
 STATUS: StaticSchema = (
@@ -1357,14 +871,8 @@ STATUS: StaticSchema = (
     n0,
     _s272,
     0,
-    (
-        _s273,
-        _s276,
-    ),
-    (
-        (-1, {_s274: _s275}),
-        (-1, {_s274: _s277}),
-    ),
+    (_s273, _s276),
+    ((-1, {_s274: _s275}), (-1, {_s274: _s277})),
 )
 
 CODE: StaticSchema = (
@@ -1372,14 +880,8 @@ CODE: StaticSchema = (
     n0,
     _s278,
     0,
-    (
-        _s279,
-        _s280,
-    ),
-    (
-        (-1, {_s274: 200}),
-        (-1, {_s274: 404}),
-    ),
+    (_s279, _s280),
+    ((-1, {_s274: 200}), (-1, {_s274: 404})),
 )
 
 RENAMED_EXAMPLE: StaticSchema = (
@@ -1387,15 +889,7 @@ RENAMED_EXAMPLE: StaticSchema = (
     n0,
     _s281,
     0,
-    (
-        _s282,
-        _s283,
-        _s284,
-        _s285,
-        _s286,
-        _s287,
-        _s288,
-    ),
+    (_s282, _s283, _s284, _s285, _s286, _s287, _s288),
     (
         (3, 1),
         (-5, 0),
@@ -1421,14 +915,8 @@ EXAMPLE_ERROR: StaticSchema = (
     n0,
     _s294,
     {_s295: _s296},
-    (
-        _s297,
-        _s298,
-    ),
-    (
-        (3, 0),
-        (7, 0),
-    ),
+    (_s297, _s298),
+    ((3, 0), (7, 0)),
 )
 
 PARTITION_ITEM258: StaticSchema = (
@@ -1436,14 +924,8 @@ PARTITION_ITEM258: StaticSchema = (
     n0,
     _s299,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (lambda: PARTITION_ITEM259, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (lambda: PARTITION_ITEM259, 0)),
 )
 
 PARTITION_ITEM259: StaticSchema = (
@@ -1451,12 +933,6 @@ PARTITION_ITEM259: StaticSchema = (
     n0,
     _s300,
     0,
-    (
-        _s1,
-        _s2,
-    ),
-    (
-        (3, 0),
-        (PARTITION_ITEM258, 0),
-    ),
+    (_s1, _s2),
+    ((3, 0), (PARTITION_ITEM258, 0)),
 )

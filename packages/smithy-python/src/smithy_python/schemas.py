@@ -397,30 +397,23 @@ def _write_shape(
         writer.line(plan.strings[shape.id.name], ",")
         writer.line(*_trait_parts(plan, plan.traits[shape.id]), ",")
         if shape.members:
-            writer.line(
-                "(",
-                ", ".join(
-                    plan.strings[member.name] for member in shape.members.values()
-                ),
-                ",),",
-            )
-            writer.line("(")
-            with writer.indent():
-                for member in shape.members.values():
-                    writer.line(
-                        "(",
-                        *_schema_ref(
-                            plan,
-                            member.target,
-                            written,
-                            local=local,
-                            facade=facade,
-                        ),
-                        ", ",
-                        *_trait_parts(plan, plan.traits[member.id]),
-                        "),",
-                    )
-            writer.line("),")
+            # Tuples are written inline, without a trailing comma unless they hold
+            # one item, so a formatter packs them instead of one item per line.
+            names = [plan.strings[member.name] for member in shape.members.values()]
+            writer.line(*_inline_tuple([[name] for name in names]), ",")
+            targets = [
+                [
+                    "(",
+                    *_schema_ref(
+                        plan, member.target, written, local=local, facade=facade
+                    ),
+                    ", ",
+                    *_trait_parts(plan, plan.traits[member.id]),
+                    ")",
+                ]
+                for member in shape.members.values()
+            ]
+            writer.line(*_inline_tuple(targets), ",")
         if isinstance(shape, _model.OperationShape):
 
             def ref(target: _model.ShapeId) -> tuple[_SourcePart, ...]:
@@ -428,12 +421,17 @@ def _write_shape(
 
             writer.line(*ref(shape.input), ",")
             writer.line(*ref(shape.output), ",")
-            errors: list[_SourcePart] = ["("]
-            for index, error in enumerate(shape.errors):
-                errors.extend((", " if index else "", *ref(error)))
-            writer.line(*errors, "," if len(shape.errors) == 1 else "", "),")
+            writer.line(*_inline_tuple([list(ref(e)) for e in shape.errors]), ",")
     writer.line(")")
     writer.line()
+
+
+def _inline_tuple(items: list[list[_SourcePart]]) -> tuple[_SourcePart, ...]:
+    parts: list[_SourcePart] = ["("]
+    for index, item in enumerate(items):
+        parts.extend((", " if index else "", *item))
+    parts.append(",)" if len(items) == 1 else ")")
+    return tuple(parts)
 
 
 def _included_traits(model: _model.Model) -> frozenset[_model.ShapeId]:

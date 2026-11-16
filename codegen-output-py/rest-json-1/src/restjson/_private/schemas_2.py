@@ -274,14 +274,8 @@ SIMPLE_UNION: StaticSchema = (
     n1,
     _s436,
     0,
-    (
-        _s416,
-        _s265,
-    ),
-    (
-        (7, 0),
-        (3, 0),
-    ),
+    (_s416, _s265),
+    ((7, 0), (3, 0)),
 )
 
 MALFORMED_UNION_INPUT: StaticSchema = (
@@ -334,19 +328,7 @@ MY_UNION: StaticSchema = (
     n1,
     _s445,
     0,
-    (
-        _s153,
-        _s446,
-        _s447,
-        _s448,
-        _s449,
-        _s450,
-        _s451,
-        _s452,
-        _s453,
-        _s454,
-        _s455,
-    ),
+    (_s153, _s446, _s447, _s448, _s449, _s450, _s451, _s452, _s453, _s454, _s455),
     (
         (3, 0),
         (2, 0),
@@ -374,14 +356,8 @@ OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT: StaticSchema = (
     n1,
     _s462,
     {_s30: None},
-    (
-        _s463,
-        _s122,
-    ),
-    (
-        (3, {_s32: _s464}),
-        (3, {_s32: _s465}),
-    ),
+    (_s463, _s122),
+    ((3, {_s32: _s464}), (3, {_s32: _s465})),
 )
 
 OMITS_SERIALIZING_EMPTY_LISTS_INPUT: StaticSchema = (
@@ -389,15 +365,7 @@ OMITS_SERIALIZING_EMPTY_LISTS_INPUT: StaticSchema = (
     n1,
     _s466,
     {_s30: None},
-    (
-        _s34,
-        _s42,
-        _s50,
-        _s53,
-        _s56,
-        _s59,
-        _s62,
-    ),
+    (_s34, _s42, _s50, _s53, _s56, _s59, _s62),
     (
         (lambda: schemas.STRING_LIST, {_s32: _s0}),
         (lambda: schemas.INTEGER_LIST, {_s32: _s3}),
@@ -414,12 +382,7 @@ OPERATION_WITH_DEFAULTS_INPUT: StaticSchema = (
     n1,
     _s467,
     {_s30: None},
-    (
-        _s468,
-        _s469,
-        _s470,
-        _s471,
-    ),
+    (_s468, _s469, _s470, _s471),
     (
         (lambda: schemas.DEFAULTS, 0),
         (lambda: schemas.CLIENT_OPTIONAL_DEFAULTS, 0),
@@ -500,11 +463,7 @@ TOP_LEVEL: StaticSchema = (
     n1,
     _s79,
     0,
-    (
-        _s473,
-        _s474,
-        _s475,
-    ),
+    (_s473, _s474, _s475),
     (
         (lambda: schemas.DIALOG, 1),
         (lambda: schemas.DIALOG_LIST, {_s68: ()}),
@@ -526,11 +485,7 @@ OPERATION_WITH_NESTED_STRUCTURE_OUTPUT: StaticSchema = (
     n1,
     _s478,
     {_s88: None},
-    (
-        _s473,
-        _s474,
-        _s475,
-    ),
+    (_s473, _s474, _s475),
     (
         (lambda: schemas.DIALOG, 1),
         (lambda: schemas.DIALOG_LIST, {_s68: ()}),
@@ -552,14 +507,8 @@ OUTPUT_STREAM_WITH_INITIAL_RESPONSE_OUTPUT: StaticSchema = (
     n1,
     _s480,
     {_s88: None},
-    (
-        _s199,
-        _s187,
-    ),
-    (
-        (3, {_s77: _s200, _s197: None}),
-        (lambda: schemas.EVENT_STREAM, 16),
-    ),
+    (_s199, _s187),
+    ((3, {_s77: _s200, _s197: None}), (lambda: schemas.EVENT_STREAM, 16)),
 )
 
 PAYLOAD_CONFIG: StaticSchema = (
@@ -603,16 +552,8 @@ UNION_WITH_JSON_NAME: StaticSchema = (
     n1,
     _s487,
     0,
-    (
-        _s217,
-        _s488,
-        _s82,
-    ),
-    (
-        (3, {_s70: _s9}),
-        (3, 0),
-        (3, {_s70: _s489}),
-    ),
+    (_s217, _s488, _s82),
+    ((3, {_s70: _s9}), (3, 0), (3, {_s70: _s489})),
 )
 
 POST_UNION_WITH_JSON_NAME_INPUT: StaticSchema = (
@@ -638,14 +579,8 @@ PUT_WITH_CONTENT_ENCODING_INPUT: StaticSchema = (
     n1,
     _s492,
     {_s30: None},
-    (
-        _s493,
-        _s318,
-    ),
-    (
-        (3, {_s77: _s494}),
-        (3, 0),
-    ),
+    (_s493, _s318),
+    ((3, {_s77: _s494}), (3, 0)),
 )
 
 QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT: StaticSchema = (
@@ -662,14 +597,8 @@ QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT: StaticSchema = (
     n1,
     _s498,
     {_s30: None},
-    (
-        _s499,
-        _s217,
-    ),
-    (
-        (3, {_s32: _s500}),
-        (lambda: schemas.STRING_LIST_MAP, 1024),
-    ),
+    (_s499, _s217),
+    ((3, {_s32: _s500}), (lambda: schemas.STRING_LIST_MAP, 1024)),
 )
 
 QUERY_PRECEDENCE_INPUT: StaticSchema = (
@@ -677,14 +606,8 @@ QUERY_PRECEDENCE_INPUT: StaticSchema = (
     n1,
     _s501,
     {_s30: None},
-    (
-        _s217,
-        _s82,
-    ),
-    (
-        (3, {_s32: _s488}),
-        (lambda: schemas.STRING_MAP, 1024),
-    ),
+    (_s217, _s82),
+    ((3, {_s32: _s488}), (lambda: schemas.STRING_MAP, 1024)),
 )
 
 RECURSIVE_SHAPES_INPUT_OUTPUT: StaticSchema = (
@@ -717,18 +640,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT_OUTPUT: StaticSchema = (
     n1,
     _s507,
     {_s30: None, _s88: None},
-    (
-        _s217,
-        _s153,
-        _s508,
-        _s509,
-        _s510,
-        _s511,
-        _s512,
-        _s513,
-        _s514,
-        _s515,
-    ),
+    (_s217, _s153, _s508, _s509, _s510, _s511, _s512, _s513, _s514, _s515),
     (
         (3, {_s77: _s225}),
         (3, 0),
@@ -748,14 +660,8 @@ SPARSE_BOOLEAN_MAP: StaticSchema = (
     n1,
     _s517,
     64,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, 0),
-        (2, 0),
-    ),
+    (_s27, _s28),
+    ((3, 0), (2, 0)),
 )
 
 SPARSE_STRING_LIST: StaticSchema = (
@@ -781,14 +687,8 @@ SPARSE_JSON_LISTS_INPUT_OUTPUT: StaticSchema = (
     n1,
     _s520,
     {_s30: None, _s88: None},
-    (
-        _s521,
-        _s522,
-    ),
-    (
-        (SPARSE_STRING_LIST, 0),
-        (SPARSE_SHORT_LIST, 0),
-    ),
+    (_s521, _s522),
+    ((SPARSE_STRING_LIST, 0), (SPARSE_SHORT_LIST, 0)),
 )
 
 SPARSE_STRUCT_MAP: StaticSchema = (
@@ -796,14 +696,8 @@ SPARSE_STRUCT_MAP: StaticSchema = (
     n1,
     _s523,
     64,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, 0),
-        (lambda: schemas.GREETING_STRUCT, 0),
-    ),
+    (_s27, _s28),
+    ((3, 0), (lambda: schemas.GREETING_STRUCT, 0)),
 )
 
 SPARSE_NUMBER_MAP: StaticSchema = (
@@ -811,14 +705,8 @@ SPARSE_NUMBER_MAP: StaticSchema = (
     n1,
     _s524,
     64,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, 0),
-        (7, 0),
-    ),
+    (_s27, _s28),
+    ((3, 0), (7, 0)),
 )
 
 SPARSE_STRING_MAP: StaticSchema = (
@@ -826,14 +714,8 @@ SPARSE_STRING_MAP: StaticSchema = (
     n0,
     _s525,
     64,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, 0),
-        (3, 0),
-    ),
+    (_s27, _s28),
+    ((3, 0), (3, 0)),
 )
 
 SPARSE_SET_MAP: StaticSchema = (
@@ -841,14 +723,8 @@ SPARSE_SET_MAP: StaticSchema = (
     n1,
     _s526,
     64,
-    (
-        _s27,
-        _s28,
-    ),
-    (
-        (3, 0),
-        (lambda: schemas.STRING_SET, 0),
-    ),
+    (_s27, _s28),
+    ((3, 0), (lambda: schemas.STRING_SET, 0)),
 )
 
 SPARSE_JSON_MAPS_INPUT_OUTPUT: StaticSchema = (
@@ -856,13 +732,7 @@ SPARSE_JSON_MAPS_INPUT_OUTPUT: StaticSchema = (
     n1,
     _s527,
     {_s30: None, _s88: None},
-    (
-        _s528,
-        _s529,
-        _s530,
-        _s531,
-        _s532,
-    ),
+    (_s528, _s529, _s530, _s531, _s532),
     (
         (SPARSE_STRUCT_MAP, 0),
         (SPARSE_NUMBER_MAP, 0),
@@ -891,14 +761,8 @@ STREAMING_TRAITS_INPUT_OUTPUT: StaticSchema = (
     n1,
     _s535,
     {_s30: None, _s88: None},
-    (
-        _s217,
-        _s226,
-    ),
-    (
-        (3, {_s77: _s225}),
-        (STREAMING_BLOB, {_s68: _s123, _s536: None}),
-    ),
+    (_s217, _s226),
+    ((3, {_s77: _s225}), (STREAMING_BLOB, {_s68: _s123, _s536: None})),
 )
 
 STREAMING_TRAITS_REQUIRE_LENGTH_INPUT: StaticSchema = (
@@ -906,10 +770,7 @@ STREAMING_TRAITS_REQUIRE_LENGTH_INPUT: StaticSchema = (
     n1,
     _s537,
     {_s30: None},
-    (
-        _s217,
-        _s226,
-    ),
+    (_s217, _s226),
     (
         (3, {_s77: _s225}),
         (lambda: schemas.FINITE_STREAMING_BLOB, {_s68: _s123, _s536: None}),
@@ -921,14 +782,8 @@ STREAMING_TRAITS_WITH_MEDIA_TYPE_INPUT_OUTPUT: StaticSchema = (
     n1,
     _s538,
     {_s30: None, _s88: None},
-    (
-        _s217,
-        _s226,
-    ),
-    (
-        (3, {_s77: _s225}),
-        (STREAMING_TEXT_PLAIN_BLOB, {_s68: _s123, _s536: None}),
-    ),
+    (_s217, _s226),
+    ((3, {_s77: _s225}), (STREAMING_TEXT_PLAIN_BLOB, {_s68: _s123, _s536: None})),
 )
 
 STRING_PAYLOAD_INPUT: StaticSchema = (
@@ -954,14 +809,8 @@ TEST_BODY_STRUCTURE_INPUT_OUTPUT: StaticSchema = (
     n1,
     _s542,
     {_s30: None, _s88: None},
-    (
-        _s543,
-        _s545,
-    ),
-    (
-        (3, {_s77: _s544}),
-        (TEST_CONFIG, 0),
-    ),
+    (_s543, _s545),
+    ((3, {_s77: _s544}), (TEST_CONFIG, 0)),
 )
 
 TEST_NO_PAYLOAD_INPUT_OUTPUT: StaticSchema = (
@@ -978,14 +827,8 @@ TEST_PAYLOAD_BLOB_INPUT_OUTPUT: StaticSchema = (
     n1,
     _s548,
     {_s30: None, _s88: None},
-    (
-        _s549,
-        _s318,
-    ),
-    (
-        (3, {_s77: _s550}),
-        (1, 16),
-    ),
+    (_s549, _s318),
+    ((3, {_s77: _s550}), (1, 16)),
 )
 
 TEST_PAYLOAD_STRUCTURE_INPUT_OUTPUT: StaticSchema = (
@@ -993,14 +836,8 @@ TEST_PAYLOAD_STRUCTURE_INPUT_OUTPUT: StaticSchema = (
     n1,
     _s551,
     {_s30: None, _s88: None},
-    (
-        _s543,
-        _s552,
-    ),
-    (
-        (3, {_s77: _s544}),
-        (PAYLOAD_CONFIG, 16),
-    ),
+    (_s543, _s552),
+    ((3, {_s77: _s544}), (PAYLOAD_CONFIG, 16)),
 )
 
 TIMESTAMP_FORMAT_HEADERS_IO: StaticSchema = (
@@ -1008,15 +845,7 @@ TIMESTAMP_FORMAT_HEADERS_IO: StaticSchema = (
     n1,
     _s553,
     {_s30: None, _s88: None},
-    (
-        _s256,
-        _s258,
-        _s259,
-        _s260,
-        _s261,
-        _s262,
-        _s263,
-    ),
+    (_s256, _s258, _s259, _s260, _s261, _s262, _s263),
     (
         (4, {_s77: _s554, _s90: _s252}),
         (4, {_s77: _s555, _s90: _s254}),
@@ -1042,14 +871,8 @@ RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1: StaticSchema = (
     n1,
     _s563,
     0,
-    (
-        _s217,
-        _s234,
-    ),
-    (
-        (3, 0),
-        (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0),
-    ),
+    (_s217, _s234),
+    ((3, 0), (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0)),
 )
 
 RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2: StaticSchema = (
@@ -1057,12 +880,6 @@ RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2: StaticSchema = (
     n1,
     _s564,
     0,
-    (
-        _s488,
-        _s565,
-    ),
-    (
-        (3, 0),
-        (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),
-    ),
+    (_s488, _s565),
+    ((3, 0), (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0)),
 )

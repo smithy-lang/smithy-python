@@ -13,6 +13,7 @@ from . import exceptions as _exceptions
 __all__ = [
     "HATCHLING",
     "SMITHY_CORE",
+    "SMITHY_HTTP",
     "Dependency",
     "DependencyGroup",
     "DependencySet",
@@ -107,6 +108,13 @@ SMITHY_CORE = Dependency(
     group="runtime",
 )
 """Compatible smithy-core runtime for generated artifacts."""
+
+SMITHY_HTTP = Dependency(
+    package="smithy-http",
+    specifier="~=0.9.0",
+    group="runtime",
+)
+"""Compatible smithy-http runtime for generated HTTP clients."""
 
 HATCHLING = Dependency(
     package="hatchling",

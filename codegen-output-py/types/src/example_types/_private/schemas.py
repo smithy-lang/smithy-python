@@ -64,14 +64,8 @@ ATTRIBUTES: StaticSchema = (
     n0,
     _s5,
     0,
-    (
-        _s6,
-        _s7,
-    ),
-    (
-        (3, 0),
-        (13, 0),
-    ),
+    (_s6, _s7),
+    ((3, 0), (13, 0)),
 )
 
 EXAMPLE_VALUE: StaticSchema = (
@@ -79,16 +73,8 @@ EXAMPLE_VALUE: StaticSchema = (
     n0,
     _s8,
     0,
-    (
-        _s9,
-        _s10,
-        _s11,
-    ),
-    (
-        (3, 0),
-        (7, 0),
-        (-1, 0),
-    ),
+    (_s9, _s10, _s11),
+    ((3, 0), (7, 0), (-1, 0)),
 )
 
 STATUS: StaticSchema = (
@@ -96,14 +82,8 @@ STATUS: StaticSchema = (
     n0,
     _s12,
     0,
-    (
-        _s13,
-        _s16,
-    ),
-    (
-        (-1, {_s14: _s15}),
-        (-1, {_s14: _s17}),
-    ),
+    (_s13, _s16),
+    ((-1, {_s14: _s15}), (-1, {_s14: _s17})),
 )
 
 CODE: StaticSchema = (
@@ -111,14 +91,8 @@ CODE: StaticSchema = (
     n0,
     _s18,
     0,
-    (
-        _s19,
-        _s20,
-    ),
-    (
-        (-1, {_s14: 200}),
-        (-1, {_s14: 404}),
-    ),
+    (_s19, _s20),
+    ((-1, {_s14: 200}), (-1, {_s14: 404})),
 )
 
 RENAMED_EXAMPLE: StaticSchema = (
@@ -126,15 +100,7 @@ RENAMED_EXAMPLE: StaticSchema = (
     n0,
     _s21,
     0,
-    (
-        _s22,
-        _s23,
-        _s24,
-        _s25,
-        _s26,
-        _s27,
-        _s28,
-    ),
+    (_s22, _s23, _s24, _s25, _s26, _s27, _s28),
     (
         (3, 1),
         (-5, 0),
@@ -160,16 +126,8 @@ GET_EXAMPLE_OUTPUT: StaticSchema = (
     n0,
     _s31,
     {_s32: None},
-    (
-        n0,
-        _s7,
-        _s33,
-    ),
-    (
-        (RENAMED_EXAMPLE, 0),
-        (EXAMPLE_VALUE, 0),
-        (EVENT_STREAM, 0),
-    ),
+    (n0, _s7, _s33),
+    ((RENAMED_EXAMPLE, 0), (EXAMPLE_VALUE, 0), (EVENT_STREAM, 0)),
 )
 
 EXAMPLE_ERROR: StaticSchema = (
@@ -177,12 +135,6 @@ EXAMPLE_ERROR: StaticSchema = (
     n0,
     _s34,
     {_s35: _s36},
-    (
-        _s37,
-        _s38,
-    ),
-    (
-        (3, 0),
-        (7, 0),
-    ),
+    (_s37, _s38),
+    ((3, 0), (7, 0)),
 )

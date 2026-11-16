@@ -5,9 +5,9 @@
     "src/restjson/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
     "src/restjson/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/restjson/_private/schemas.py": "133535695424fa890dd8cefb8f7f9957138813ae689c7d168e79763296813bcb",
-    "src/restjson/_private/schemas_0.py": "182604613d3df3c24bc70da886afd1095e14e18d39bc5fd508439a1721db13b3",
-    "src/restjson/_private/schemas_1.py": "87d9ecab54acafdfa40e9633036e3944e61aef924a0766a576d7d7287d24647d",
-    "src/restjson/_private/schemas_2.py": "dc8532ce2dd4734ec88e61d6a26e0f6c45156aeb977f23855b2be53b5f882160",
+    "src/restjson/_private/schemas_0.py": "0aa02a7845dd4200c3f2949396096fb713409acf6a1ff03d5f8d7cb94f0c4a64",
+    "src/restjson/_private/schemas_1.py": "b8ea8887a4bb6a33467ee9449b36c6eeda70b9d49cc59d2845e4ca3d30efc722",
+    "src/restjson/_private/schemas_2.py": "422b85ed74ca7d9995e846af3ed60cdd2b0a07c1f0b01839cec96a172daff912",
     "src/restjson/models.py": "06afe8074a8c93594e0d9a6899057c3afaf39ede3d7e709f452e3a984b2056f7",
     "src/restjson/models.pyi": "c9bd690eb56c23e9a86d9409040a16cefa4423b4e74bb0076e23cd3a42c5ff8f",
     "src/restjson/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
