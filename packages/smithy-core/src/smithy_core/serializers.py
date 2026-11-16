@@ -227,6 +227,7 @@ class ShapeSerializer(Protocol):
         """
         if isinstance(value, bytes | bytearray):
             self.write_blob(schema, bytes(value))
+            return
         raise UnsupportedStreamError()
 
     def flush(self) -> None:

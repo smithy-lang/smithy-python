@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed `ShapeSerializer.write_data_stream` raising `UnsupportedStreamError` after writing a `bytes` or `bytearray` value."
+}

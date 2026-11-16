@@ -154,8 +154,10 @@ deserialized from the stream are raised without closing the receiver.
 
 ### Unknown and Malformed Events
 
-If a receiver encounters an unknown event member, it logs it at debug level and
-deserializes it as the union's unknown variant, and the stream continues.
+An unknown member of the event union MUST NOT fail the client. This applies to
+exception members as well as event members. If a receiver encounters an unknown
+member, it logs it at debug level and deserializes it as the union's unknown
+variant, and the stream continues.
 
 ## Operation Return Types
 

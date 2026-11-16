@@ -317,6 +317,7 @@ class ShapeSerializer(Protocol):
     def write_data_stream(self, schema: "Schema", value: StreamingBlob) -> None:
         if isinstance(value, bytes | bytearray):
             self.write_blob(schema, bytes(value))
+            return
         raise UnsupportedStreamError()
 
 
