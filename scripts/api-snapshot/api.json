@@ -597,6 +597,7 @@
   },
   "smithy_core.traits": {
     "APIKeyLocation": "class",
+    "ClientOptionalTrait": "class",
     "ContextParamTrait": "class",
     "DefaultTrait": "class",
     "DynamicTrait": "class",

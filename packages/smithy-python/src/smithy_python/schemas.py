@@ -314,6 +314,7 @@ _INCLUDED_TRAITS: Final = frozenset(
             "smithy.api#default",
             "smithy.api#enumValue",
             "smithy.api#required",
+            "smithy.api#clientOptional",
             "smithy.api#input",
             "smithy.api#output",
             "smithy.api#timestampFormat",

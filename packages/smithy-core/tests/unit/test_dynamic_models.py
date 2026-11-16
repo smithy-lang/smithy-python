@@ -610,6 +610,46 @@ def test_enum_member_deserialize_coerces_to_enum_class() -> None:
     assert result is lang["EN_US"]
 
 
+_REQUIRED = {"smithy.api#required": None}
+_CLIENT_OPTIONAL = {"smithy.api#required": None, "smithy.api#clientOptional": None}
+
+
+def _nullability_struct() -> StaticSchema:
+    return (
+        ShapeType.STRUCTURE.value,
+        NS,
+        "Account",
+        0,
+        ("uid", "name"),
+        (
+            (ShapeType.STRING.value, _CLIENT_OPTIONAL),
+            (ShapeType.STRING.value, _REQUIRED),
+        ),
+    )
+
+
+def test_required_client_optional_member_is_optional() -> None:
+    # A client treats a @required @clientOptional member as nullable, so it may be
+    # left unset; a @required member alone stays mandatory.
+    cls = ModelRegistry(_module(ACCOUNT=_nullability_struct())).build("Account")
+
+    instance = cls(name="n")
+
+    assert instance.uid is None
+    with pytest.raises(TypeError, match="name"):
+        cls(uid="u")
+
+
+def test_error_correction_skips_client_optional_member() -> None:
+    # Client error correction fills only members a client can't treat as null.
+    cls = ModelRegistry(_module(ACCOUNT=_nullability_struct())).build("Account")
+
+    corrected: Any = getattr(cls, "_smithy_default")()
+
+    assert corrected.uid is None
+    assert corrected.name == ""
+
+
 def test_union_classes_report_models_module() -> None:
     # The union parent, each variant, and the Unknown class must carry the client
     # models module, not smithy_core._dynamic_models.

@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Models built from schemas now leave `@required` members marked `@clientOptional` optional and no longer fill them during client error correction."
+}

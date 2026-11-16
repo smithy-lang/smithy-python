@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "An event stream output no longer requires an `initial-response` when its only `@required` members are marked `@clientOptional`."
+}

@@ -83,6 +83,7 @@ _p = "payload"
 _sP = "smithy.api#eventPayload"
 _COD = "ClientOptionalDefaults"
 _smit = "smithy.api#default"
+_sO = "smithy.api#clientOptional"
 _CNED = "ComplexNestedErrorData"
 _sN = "smithy.api#jsonName"
 _Fo = "Fooooo"
@@ -356,7 +357,14 @@ ALL_QUERY_STRING_TYPES: StaticOperationSchema = (
 
 BLOB_PAYLOAD_EVENT: StaticSchema = (18, n1, _BPE, 0, (_p,), ((1, {_sP: None}),))
 
-CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (18, n1, _COD, 0, (_m,), ((7, {_smit: 0}),))
+CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (
+    18,
+    n1,
+    _COD,
+    0,
+    (_m,),
+    ((7, {_smit: 0, _sO: None}),),
+)
 
 COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n1, _CNED, 0, (_F,), ((3, {_sN: _Fo}),))
 

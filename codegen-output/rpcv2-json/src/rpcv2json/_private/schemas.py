@@ -31,6 +31,7 @@ _BIOO = "BigIntegerOperationOutput"
 _BIO = "BigIntegerOperation"
 _COD = "ClientOptionalDefaults"
 _smith = "smithy.api#default"
+_sO = "smithy.api#clientOptional"
 _CNED = "ComplexNestedErrorData"
 _F = "Foo"
 _CE = "ComplexError"
@@ -295,7 +296,14 @@ BIG_INTEGER_OPERATION: StaticOperationSchema = (
     (),
 )
 
-CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (18, n1, _COD, 0, (_me,), ((7, {_smith: 0}),))
+CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (
+    18,
+    n1,
+    _COD,
+    0,
+    (_me,),
+    ((7, {_smith: 0, _sO: None}),),
+)
 
 COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n1, _CNED, 0, (_F,), ((3, 0),))
 

@@ -9,6 +9,7 @@ n0 = "aws.protocoltests.json10"
 _COD = "ClientOptionalDefaults"
 _m = "member"
 _s = "smithy.api#default"
+_sO = "smithy.api#clientOptional"
 _CNED = "ComplexNestedErrorData"
 _F = "Foo"
 _sN = "smithy.api#jsonName"
@@ -196,7 +197,14 @@ _a = "aws.auth#sigv4"
 _a_ = "aws.protocols#awsJson1_0"
 _aw = "aws.api#service"
 
-CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (18, n0, _COD, 0, (_m,), ((7, {_s: 0}),))
+CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (
+    18,
+    n0,
+    _COD,
+    0,
+    (_m,),
+    ((7, {_s: 0, _sO: None}),),
+)
 
 COMPLEX_NESTED_ERROR_DATA: StaticSchema = (18, n0, _CNED, 0, (_F,), ((3, {_sN: _Fo}),))
 

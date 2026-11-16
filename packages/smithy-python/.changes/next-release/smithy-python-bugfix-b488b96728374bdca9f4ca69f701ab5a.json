@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Generated schemas now carry `@clientOptional`, and generated stubs declare `@required` members marked `@clientOptional` as optional."
+}

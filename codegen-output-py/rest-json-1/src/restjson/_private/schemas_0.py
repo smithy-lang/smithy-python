@@ -72,176 +72,177 @@ _s64 = "BlobPayloadEvent"
 _s65 = "payload"
 _s66 = "smithy.api#eventPayload"
 _s67 = "ClientOptionalDefaults"
-_s68 = "smithy.api#default"
-_s69 = "ComplexNestedErrorData"
-_s70 = "smithy.api#jsonName"
-_s71 = "Fooooo"
-_s72 = "ComplexError"
-_s73 = "smithy.api#error"
-_s74 = "client"
-_s75 = "smithy.api#httpError"
-_s76 = "Header"
-_s77 = "smithy.api#httpHeader"
-_s78 = "X-Header"
-_s79 = "TopLevel"
-_s80 = "Nested"
-_s81 = "ConstantAndVariableQueryStringInput"
-_s82 = "baz"
-_s83 = "maybeSet"
-_s84 = "ConstantQueryStringInput"
-_s85 = "hello"
-_s86 = "ContentTypeParametersInput"
-_s87 = "ContentTypeParametersOutput"
-_s88 = "smithy.api#output"
-_s89 = "DateTime"
-_s90 = "smithy.api#timestampFormat"
-_s91 = "date-time"
-_s92 = "DatetimeOffsetsOutput"
-_s93 = "datetime"
-_s94 = "TestStringList"
-_s95 = "Document"
-_s96 = "TestStringMap"
-_s97 = "TestEnum"
-_s98 = "TestIntEnum"
-_s99 = "TWO"
-_s100 = "Defaults"
-_s101 = "defaultString"
-_s102 = "hi"
-_s103 = "defaultBoolean"
-_s104 = "defaultList"
-_s105 = "defaultDocumentMap"
-_s106 = "defaultDocumentString"
-_s107 = "defaultDocumentBoolean"
-_s108 = "defaultDocumentList"
-_s109 = "defaultNullDocument"
-_s110 = "defaultTimestamp"
-_s111 = "defaultBlob"
-_s112 = "YWJj"
-_s113 = "defaultByte"
-_s114 = "defaultShort"
-_s115 = "defaultInteger"
-_s116 = "defaultLong"
-_s117 = "defaultFloat"
-_s118 = "defaultDouble"
-_s119 = "defaultMap"
-_s120 = "defaultEnum"
-_s121 = "defaultIntEnum"
-_s122 = "emptyString"
-_s123 = ""
-_s124 = "falseBoolean"
-_s125 = "emptyBlob"
-_s126 = "zeroByte"
-_s127 = "zeroShort"
-_s128 = "zeroInteger"
-_s129 = "zeroLong"
-_s130 = "zeroFloat"
-_s131 = "zeroDouble"
-_s132 = "DenseBooleanMap"
-_s133 = "DenseNumberMap"
-_s134 = "DenseSetMap"
-_s135 = "DenseStringMap"
-_s136 = "GreetingStruct"
-_s137 = "DenseStructMap"
-_s138 = "Farewell"
-_s139 = "phrase"
-_s140 = "bye"
-_s141 = "Dialog"
-_s142 = "language"
-_s143 = "greeting"
-_s144 = "farewell"
-_s145 = "DialogList"
-_s146 = "DialogMap"
-_s147 = "DocumentValuedMap"
-_s148 = "DocumentTypeAsMapValueInputOutput"
-_s149 = "docValuedMap"
-_s150 = "DocumentTypeAsPayloadInputOutput"
-_s151 = "documentValue"
-_s152 = "DocumentTypeInputOutput"
-_s153 = "stringValue"
-_s154 = "HeadersEvent"
-_s155 = "booleanHeader"
-_s156 = "smithy.api#eventHeader"
-_s157 = "byteHeader"
-_s158 = "shortHeader"
-_s159 = "intHeader"
-_s160 = "longHeader"
-_s161 = "blobHeader"
-_s162 = "stringHeader"
-_s163 = "timestampHeader"
-_s164 = "StringPayloadEvent"
-_s165 = "PayloadStructure"
-_s166 = "structureMember"
-_s167 = "StructurePayloadEvent"
-_s168 = "PayloadUnion"
-_s169 = "unionMember"
-_s170 = "UnionPayloadEvent"
-_s171 = "HeadersAndExplicitPayloadEvent"
-_s172 = "header"
-_s173 = "HeadersAndImplicitPayloadEvent"
-_s174 = "ErrorEvent"
-_s175 = "message"
-_s176 = "EventStream"
-_s177 = "smithy.api#streaming"
-_s178 = "headers"
-_s179 = "blobPayload"
-_s180 = "stringPayload"
-_s181 = "structurePayload"
-_s182 = "unionPayload"
-_s183 = "headersAndExplicitPayload"
-_s184 = "headersAndImplicitPayload"
-_s185 = "error"
-_s186 = "DuplexStreamInput"
-_s187 = "stream"
-_s188 = "DuplexStreamOutput"
-_s189 = "DuplexStreamWithDistinctStreamsInput"
-_s190 = "SingletonEvent"
-_s191 = "SingletonEventStream"
-_s192 = "singleton"
-_s193 = "DuplexStreamWithDistinctStreamsOutput"
-_s194 = "DuplexStreamWithInitialMessagesInput"
-_s195 = "initialRequestMember"
-_s196 = "initial-request-member"
-_s197 = "smithy.api#required"
-_s198 = "DuplexStreamWithInitialMessagesOutput"
-_s199 = "initialResponseMember"
-_s200 = "initial-response-member"
-_s201 = "EmptyInputAndEmptyOutputInput"
-_s202 = "EmptyInputAndEmptyOutputOutput"
-_s203 = "StringEnum"
-_s204 = "V"
-_s205 = "enumvalue"
-_s206 = "EnumPayloadInput"
-_s207 = "FiniteStreamingBlob"
-_s208 = "smithy.api#requiresLength"
-_s209 = "FooError"
-_s210 = "server"
-_s211 = "FractionalSecondsOutput"
-_s212 = "GreetingWithErrorsOutput"
-_s213 = "X-Greeting"
-_s214 = "HostLabelInput"
-_s215 = "label"
-_s216 = "HttpChecksumRequiredInputOutput"
-_s217 = "foo"
-_s218 = "StringMap"
-_s219 = "HttpEmptyPrefixHeadersInput"
-_s220 = "prefixHeaders"
-_s221 = "smithy.api#httpPrefixHeaders"
-_s222 = "specificHeader"
-_s223 = "HttpEmptyPrefixHeadersOutput"
-_s224 = "HttpPayloadTraitsInputOutput"
-_s225 = "X-Foo"
-_s226 = "blob"
-_s227 = "TextPlainBlob"
-_s228 = "smithy.api#mediaType"
-_s229 = "text/plain"
-_s341 = "a"
-_s342 = "b"
-_s457 = "NullAndEmptyHeadersIO"
-_s458 = "X-A"
-_s459 = "X-B"
-_s460 = "c"
-_s461 = "X-C"
-_s506 = "ServiceUnavailableError"
+_s68 = "smithy.api#clientOptional"
+_s69 = "smithy.api#default"
+_s70 = "ComplexNestedErrorData"
+_s71 = "smithy.api#jsonName"
+_s72 = "Fooooo"
+_s73 = "ComplexError"
+_s74 = "smithy.api#error"
+_s75 = "client"
+_s76 = "smithy.api#httpError"
+_s77 = "Header"
+_s78 = "smithy.api#httpHeader"
+_s79 = "X-Header"
+_s80 = "TopLevel"
+_s81 = "Nested"
+_s82 = "ConstantAndVariableQueryStringInput"
+_s83 = "baz"
+_s84 = "maybeSet"
+_s85 = "ConstantQueryStringInput"
+_s86 = "hello"
+_s87 = "ContentTypeParametersInput"
+_s88 = "ContentTypeParametersOutput"
+_s89 = "smithy.api#output"
+_s90 = "DateTime"
+_s91 = "smithy.api#timestampFormat"
+_s92 = "date-time"
+_s93 = "DatetimeOffsetsOutput"
+_s94 = "datetime"
+_s95 = "TestStringList"
+_s96 = "Document"
+_s97 = "TestStringMap"
+_s98 = "TestEnum"
+_s99 = "TestIntEnum"
+_s100 = "TWO"
+_s101 = "Defaults"
+_s102 = "defaultString"
+_s103 = "hi"
+_s104 = "defaultBoolean"
+_s105 = "defaultList"
+_s106 = "defaultDocumentMap"
+_s107 = "defaultDocumentString"
+_s108 = "defaultDocumentBoolean"
+_s109 = "defaultDocumentList"
+_s110 = "defaultNullDocument"
+_s111 = "defaultTimestamp"
+_s112 = "defaultBlob"
+_s113 = "YWJj"
+_s114 = "defaultByte"
+_s115 = "defaultShort"
+_s116 = "defaultInteger"
+_s117 = "defaultLong"
+_s118 = "defaultFloat"
+_s119 = "defaultDouble"
+_s120 = "defaultMap"
+_s121 = "defaultEnum"
+_s122 = "defaultIntEnum"
+_s123 = "emptyString"
+_s124 = ""
+_s125 = "falseBoolean"
+_s126 = "emptyBlob"
+_s127 = "zeroByte"
+_s128 = "zeroShort"
+_s129 = "zeroInteger"
+_s130 = "zeroLong"
+_s131 = "zeroFloat"
+_s132 = "zeroDouble"
+_s133 = "DenseBooleanMap"
+_s134 = "DenseNumberMap"
+_s135 = "DenseSetMap"
+_s136 = "DenseStringMap"
+_s137 = "GreetingStruct"
+_s138 = "DenseStructMap"
+_s139 = "Farewell"
+_s140 = "phrase"
+_s141 = "bye"
+_s142 = "Dialog"
+_s143 = "language"
+_s144 = "greeting"
+_s145 = "farewell"
+_s146 = "DialogList"
+_s147 = "DialogMap"
+_s148 = "DocumentValuedMap"
+_s149 = "DocumentTypeAsMapValueInputOutput"
+_s150 = "docValuedMap"
+_s151 = "DocumentTypeAsPayloadInputOutput"
+_s152 = "documentValue"
+_s153 = "DocumentTypeInputOutput"
+_s154 = "stringValue"
+_s155 = "HeadersEvent"
+_s156 = "booleanHeader"
+_s157 = "smithy.api#eventHeader"
+_s158 = "byteHeader"
+_s159 = "shortHeader"
+_s160 = "intHeader"
+_s161 = "longHeader"
+_s162 = "blobHeader"
+_s163 = "stringHeader"
+_s164 = "timestampHeader"
+_s165 = "StringPayloadEvent"
+_s166 = "PayloadStructure"
+_s167 = "structureMember"
+_s168 = "StructurePayloadEvent"
+_s169 = "PayloadUnion"
+_s170 = "unionMember"
+_s171 = "UnionPayloadEvent"
+_s172 = "HeadersAndExplicitPayloadEvent"
+_s173 = "header"
+_s174 = "HeadersAndImplicitPayloadEvent"
+_s175 = "ErrorEvent"
+_s176 = "message"
+_s177 = "EventStream"
+_s178 = "smithy.api#streaming"
+_s179 = "headers"
+_s180 = "blobPayload"
+_s181 = "stringPayload"
+_s182 = "structurePayload"
+_s183 = "unionPayload"
+_s184 = "headersAndExplicitPayload"
+_s185 = "headersAndImplicitPayload"
+_s186 = "error"
+_s187 = "DuplexStreamInput"
+_s188 = "stream"
+_s189 = "DuplexStreamOutput"
+_s190 = "DuplexStreamWithDistinctStreamsInput"
+_s191 = "SingletonEvent"
+_s192 = "SingletonEventStream"
+_s193 = "singleton"
+_s194 = "DuplexStreamWithDistinctStreamsOutput"
+_s195 = "DuplexStreamWithInitialMessagesInput"
+_s196 = "initialRequestMember"
+_s197 = "initial-request-member"
+_s198 = "smithy.api#required"
+_s199 = "DuplexStreamWithInitialMessagesOutput"
+_s200 = "initialResponseMember"
+_s201 = "initial-response-member"
+_s202 = "EmptyInputAndEmptyOutputInput"
+_s203 = "EmptyInputAndEmptyOutputOutput"
+_s204 = "StringEnum"
+_s205 = "V"
+_s206 = "enumvalue"
+_s207 = "EnumPayloadInput"
+_s208 = "FiniteStreamingBlob"
+_s209 = "smithy.api#requiresLength"
+_s210 = "FooError"
+_s211 = "server"
+_s212 = "FractionalSecondsOutput"
+_s213 = "GreetingWithErrorsOutput"
+_s214 = "X-Greeting"
+_s215 = "HostLabelInput"
+_s216 = "label"
+_s217 = "HttpChecksumRequiredInputOutput"
+_s218 = "foo"
+_s219 = "StringMap"
+_s220 = "HttpEmptyPrefixHeadersInput"
+_s221 = "prefixHeaders"
+_s222 = "smithy.api#httpPrefixHeaders"
+_s223 = "specificHeader"
+_s224 = "HttpEmptyPrefixHeadersOutput"
+_s225 = "HttpPayloadTraitsInputOutput"
+_s226 = "X-Foo"
+_s227 = "blob"
+_s228 = "TextPlainBlob"
+_s229 = "smithy.api#mediaType"
+_s230 = "text/plain"
+_s342 = "a"
+_s343 = "b"
+_s458 = "NullAndEmptyHeadersIO"
+_s459 = "X-A"
+_s460 = "X-B"
+_s461 = "c"
+_s462 = "X-C"
+_s507 = "ServiceUnavailableError"
 
 STRING_LIST: StaticSchema = (
     16,
@@ -425,49 +426,49 @@ CLIENT_OPTIONAL_DEFAULTS: StaticSchema = (
     _s67,
     0,
     (_s1,),
-    ((7, {_s68: 0}),),
+    ((7, {_s68: None, _s69: 0}),),
 )
 
 COMPLEX_NESTED_ERROR_DATA: StaticSchema = (
     18,
     n1,
-    _s69,
+    _s70,
     0,
     (_s11,),
-    ((3, {_s70: _s71}),),
+    ((3, {_s71: _s72}),),
 )
 
 COMPLEX_ERROR: StaticSchema = (
     18,
     n1,
-    _s72,
-    {_s73: _s74, _s75: 403},
-    (_s76, _s79, _s80),
-    ((3, {_s77: _s78}), (3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
+    _s73,
+    {_s74: _s75, _s76: 403},
+    (_s77, _s80, _s81),
+    ((3, {_s78: _s79}), (3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
 )
 
 CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT: StaticSchema = (
     18,
     n1,
-    _s81,
+    _s82,
     {_s30: None},
-    (_s82, _s83),
-    ((3, {_s32: _s82}), (3, {_s32: _s83})),
+    (_s83, _s84),
+    ((3, {_s32: _s83}), (3, {_s32: _s84})),
 )
 
 CONSTANT_QUERY_STRING_INPUT: StaticSchema = (
     18,
     n1,
-    _s84,
+    _s85,
     {_s30: None},
-    (_s85,),
+    (_s86,),
     ((3, 9),),
 )
 
 CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (
     18,
     n1,
-    _s86,
+    _s87,
     {_s30: None},
     (_s28,),
     ((7, 0),),
@@ -476,30 +477,30 @@ CONTENT_TYPE_PARAMETERS_INPUT: StaticSchema = (
 CONTENT_TYPE_PARAMETERS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s87,
-    {_s88: None},
+    _s88,
+    {_s89: None},
 )
 
 DATE_TIME: StaticSchema = (
     4,
     n0,
-    _s89,
-    {_s90: _s91},
+    _s90,
+    {_s91: _s92},
 )
 
 DATETIME_OFFSETS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s92,
-    {_s88: None},
-    (_s93,),
+    _s93,
+    {_s89: None},
+    (_s94,),
     ((DATE_TIME, 0),),
 )
 
 TEST_STRING_LIST: StaticSchema = (
     16,
     n1,
-    _s94,
+    _s95,
     0,
     (_s1,),
     ((3, 0),),
@@ -508,14 +509,14 @@ TEST_STRING_LIST: StaticSchema = (
 DOCUMENT: StaticSchema = (
     13,
     n1,
-    _s95,
+    _s96,
     0,
 )
 
 TEST_STRING_MAP: StaticSchema = (
     17,
     n1,
-    _s96,
+    _s97,
     0,
     (_s27, _s28),
     ((3, 0), (3, 0)),
@@ -524,7 +525,7 @@ TEST_STRING_MAP: StaticSchema = (
 TEST_ENUM: StaticSchema = (
     14,
     n1,
-    _s97,
+    _s98,
     0,
     (_s9, _s14, _s12),
     ((-1, {_s10: _s9}), (-1, {_s10: _s14}), (-1, {_s10: _s12})),
@@ -533,20 +534,19 @@ TEST_ENUM: StaticSchema = (
 TEST_INT_ENUM: StaticSchema = (
     15,
     n1,
-    _s98,
+    _s99,
     0,
-    (_s16, _s99),
+    (_s16, _s100),
     ((-1, {_s10: 1}), (-1, {_s10: 2})),
 )
 
 DEFAULTS: StaticSchema = (
     18,
     n1,
-    _s100,
+    _s101,
     0,
     (
-        _s101,
-        _s103,
+        _s102,
         _s104,
         _s105,
         _s106,
@@ -555,7 +555,7 @@ DEFAULTS: StaticSchema = (
         _s109,
         _s110,
         _s111,
-        _s113,
+        _s112,
         _s114,
         _s115,
         _s116,
@@ -565,7 +565,7 @@ DEFAULTS: StaticSchema = (
         _s120,
         _s121,
         _s122,
-        _s124,
+        _s123,
         _s125,
         _s126,
         _s127,
@@ -573,43 +573,44 @@ DEFAULTS: StaticSchema = (
         _s129,
         _s130,
         _s131,
+        _s132,
     ),
     (
-        (3, {_s68: _s102}),
-        (2, {_s68: True}),
-        (TEST_STRING_LIST, {_s68: ()}),
-        (DOCUMENT, {_s68: MappingProxyType[str, object]({})}),
-        (DOCUMENT, {_s68: _s102}),
-        (DOCUMENT, {_s68: True}),
-        (DOCUMENT, {_s68: ()}),
-        (DOCUMENT, {_s68: None}),
-        (4, {_s68: 0}),
-        (1, {_s68: _s112}),
-        (5, {_s68: 1}),
-        (6, {_s68: 1}),
-        (7, {_s68: 10}),
-        (8, {_s68: 100}),
-        (9, {_s68: 1.0}),
-        (10, {_s68: 1.0}),
-        (TEST_STRING_MAP, {_s68: MappingProxyType[str, object]({})}),
-        (TEST_ENUM, {_s68: _s9}),
-        (TEST_INT_ENUM, {_s68: 1}),
-        (3, {_s68: _s123}),
-        (2, {_s68: False}),
-        (1, {_s68: _s123}),
-        (5, {_s68: 0}),
-        (6, {_s68: 0}),
-        (7, {_s68: 0}),
-        (8, {_s68: 0}),
-        (9, {_s68: 0.0}),
-        (10, {_s68: 0.0}),
+        (3, {_s69: _s103}),
+        (2, {_s69: True}),
+        (TEST_STRING_LIST, {_s69: ()}),
+        (DOCUMENT, {_s69: MappingProxyType[str, object]({})}),
+        (DOCUMENT, {_s69: _s103}),
+        (DOCUMENT, {_s69: True}),
+        (DOCUMENT, {_s69: ()}),
+        (DOCUMENT, {_s69: None}),
+        (4, {_s69: 0}),
+        (1, {_s69: _s113}),
+        (5, {_s69: 1}),
+        (6, {_s69: 1}),
+        (7, {_s69: 10}),
+        (8, {_s69: 100}),
+        (9, {_s69: 1.0}),
+        (10, {_s69: 1.0}),
+        (TEST_STRING_MAP, {_s69: MappingProxyType[str, object]({})}),
+        (TEST_ENUM, {_s69: _s9}),
+        (TEST_INT_ENUM, {_s69: 1}),
+        (3, {_s69: _s124}),
+        (2, {_s69: False}),
+        (1, {_s69: _s124}),
+        (5, {_s69: 0}),
+        (6, {_s69: 0}),
+        (7, {_s69: 0}),
+        (8, {_s69: 0}),
+        (9, {_s69: 0.0}),
+        (10, {_s69: 0.0}),
     ),
 )
 
 DENSE_BOOLEAN_MAP: StaticSchema = (
     17,
     n1,
-    _s132,
+    _s133,
     0,
     (_s27, _s28),
     ((3, 0), (2, 0)),
@@ -618,7 +619,7 @@ DENSE_BOOLEAN_MAP: StaticSchema = (
 DENSE_NUMBER_MAP: StaticSchema = (
     17,
     n1,
-    _s133,
+    _s134,
     0,
     (_s27, _s28),
     ((3, 0), (7, 0)),
@@ -627,7 +628,7 @@ DENSE_NUMBER_MAP: StaticSchema = (
 DENSE_SET_MAP: StaticSchema = (
     17,
     n1,
-    _s134,
+    _s135,
     0,
     (_s27, _s28),
     ((3, 0), (STRING_SET, 0)),
@@ -636,7 +637,7 @@ DENSE_SET_MAP: StaticSchema = (
 DENSE_STRING_MAP: StaticSchema = (
     17,
     n1,
-    _s135,
+    _s136,
     0,
     (_s27, _s28),
     ((3, 0), (3, 0)),
@@ -645,16 +646,16 @@ DENSE_STRING_MAP: StaticSchema = (
 GREETING_STRUCT: StaticSchema = (
     18,
     n0,
-    _s136,
-    {_s30: None, _s88: None},
-    (_s102,),
+    _s137,
+    {_s30: None, _s89: None},
+    (_s103,),
     ((3, 0),),
 )
 
 DENSE_STRUCT_MAP: StaticSchema = (
     17,
     n1,
-    _s137,
+    _s138,
     0,
     (_s27, _s28),
     ((3, 0), (GREETING_STRUCT, 0)),
@@ -663,25 +664,25 @@ DENSE_STRUCT_MAP: StaticSchema = (
 FAREWELL: StaticSchema = (
     18,
     n1,
-    _s138,
+    _s139,
     0,
-    (_s139,),
-    ((3, {_s68: _s140}),),
+    (_s140,),
+    ((3, {_s69: _s141}),),
 )
 
 DIALOG: StaticSchema = (
     18,
     n1,
-    _s141,
+    _s142,
     0,
-    (_s142, _s143, _s144),
-    ((3, 0), (3, {_s68: _s102}), (FAREWELL, 0)),
+    (_s143, _s144, _s145),
+    ((3, 0), (3, {_s69: _s103}), (FAREWELL, 0)),
 )
 
 DIALOG_LIST: StaticSchema = (
     16,
     n1,
-    _s145,
+    _s146,
     0,
     (_s1,),
     ((DIALOG, 0),),
@@ -690,7 +691,7 @@ DIALOG_LIST: StaticSchema = (
 DIALOG_MAP: StaticSchema = (
     17,
     n1,
-    _s146,
+    _s147,
     0,
     (_s27, _s28),
     ((3, 0), (DIALOG, 0)),
@@ -699,7 +700,7 @@ DIALOG_MAP: StaticSchema = (
 DOCUMENT_VALUED_MAP: StaticSchema = (
     17,
     n1,
-    _s147,
+    _s148,
     0,
     (_s27, _s28),
     ((3, 0), (DOCUMENT, 0)),
@@ -708,52 +709,52 @@ DOCUMENT_VALUED_MAP: StaticSchema = (
 DOCUMENT_TYPE_AS_MAP_VALUE_INPUT_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s148,
-    {_s30: None, _s88: None},
-    (_s149,),
+    _s149,
+    {_s30: None, _s89: None},
+    (_s150,),
     ((DOCUMENT_VALUED_MAP, 0),),
 )
 
 DOCUMENT_TYPE_AS_PAYLOAD_INPUT_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s150,
-    {_s30: None, _s88: None},
-    (_s151,),
+    _s151,
+    {_s30: None, _s89: None},
+    (_s152,),
     ((DOCUMENT, 16),),
 )
 
 DOCUMENT_TYPE_INPUT_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s152,
-    {_s30: None, _s88: None},
-    (_s153, _s151),
+    _s153,
+    {_s30: None, _s89: None},
+    (_s154, _s152),
     ((3, 0), (DOCUMENT, 0)),
 )
 
 HEADERS_EVENT: StaticSchema = (
     18,
     n1,
-    _s154,
+    _s155,
     0,
-    (_s155, _s157, _s158, _s159, _s160, _s161, _s162, _s163),
+    (_s156, _s158, _s159, _s160, _s161, _s162, _s163, _s164),
     (
-        (2, {_s156: None}),
-        (5, {_s156: None}),
-        (6, {_s156: None}),
-        (7, {_s156: None}),
-        (8, {_s156: None}),
-        (1, {_s156: None}),
-        (3, {_s156: None}),
-        (DATE_TIME, {_s156: None}),
+        (2, {_s157: None}),
+        (5, {_s157: None}),
+        (6, {_s157: None}),
+        (7, {_s157: None}),
+        (8, {_s157: None}),
+        (1, {_s157: None}),
+        (3, {_s157: None}),
+        (DATE_TIME, {_s157: None}),
     ),
 )
 
 STRING_PAYLOAD_EVENT: StaticSchema = (
     18,
     n1,
-    _s164,
+    _s165,
     0,
     (_s65,),
     ((3, {_s66: None}),),
@@ -762,16 +763,16 @@ STRING_PAYLOAD_EVENT: StaticSchema = (
 PAYLOAD_STRUCTURE: StaticSchema = (
     18,
     n1,
-    _s165,
+    _s166,
     0,
-    (_s166,),
+    (_s167,),
     ((3, 0),),
 )
 
 STRUCTURE_PAYLOAD_EVENT: StaticSchema = (
     18,
     n1,
-    _s167,
+    _s168,
     0,
     (_s65,),
     ((PAYLOAD_STRUCTURE, {_s66: None}),),
@@ -780,16 +781,16 @@ STRUCTURE_PAYLOAD_EVENT: StaticSchema = (
 PAYLOAD_UNION: StaticSchema = (
     19,
     n1,
-    _s168,
+    _s169,
     0,
-    (_s169,),
+    (_s170,),
     ((3, 0),),
 )
 
 UNION_PAYLOAD_EVENT: StaticSchema = (
     18,
     n1,
-    _s170,
+    _s171,
     0,
     (_s65,),
     ((PAYLOAD_UNION, {_s66: None}),),
@@ -798,36 +799,36 @@ UNION_PAYLOAD_EVENT: StaticSchema = (
 HEADERS_AND_EXPLICIT_PAYLOAD_EVENT: StaticSchema = (
     18,
     n1,
-    _s171,
+    _s172,
     0,
-    (_s172, _s65),
-    ((3, {_s156: None}), (PAYLOAD_STRUCTURE, {_s66: None})),
+    (_s173, _s65),
+    ((3, {_s157: None}), (PAYLOAD_STRUCTURE, {_s66: None})),
 )
 
 HEADERS_AND_IMPLICIT_PAYLOAD_EVENT: StaticSchema = (
     18,
     n1,
-    _s173,
+    _s174,
     0,
-    (_s172, _s65),
-    ((3, {_s156: None}), (3, 0)),
+    (_s173, _s65),
+    ((3, {_s157: None}), (3, 0)),
 )
 
 ERROR_EVENT: StaticSchema = (
     18,
     n1,
-    _s174,
-    {_s73: _s74},
-    (_s175,),
+    _s175,
+    {_s74: _s75},
+    (_s176,),
     ((3, 0),),
 )
 
 EVENT_STREAM: StaticSchema = (
     19,
     n1,
-    _s176,
-    {_s177: None},
-    (_s178, _s179, _s180, _s181, _s182, _s183, _s184, _s185),
+    _s177,
+    {_s178: None},
+    (_s179, _s180, _s181, _s182, _s183, _s184, _s185, _s186),
     (
         (HEADERS_EVENT, 0),
         (BLOB_PAYLOAD_EVENT, 0),
@@ -843,43 +844,43 @@ EVENT_STREAM: StaticSchema = (
 DUPLEX_STREAM_INPUT: StaticSchema = (
     18,
     n1,
-    _s186,
+    _s187,
     {_s30: None},
-    (_s187,),
+    (_s188,),
     ((EVENT_STREAM, 16),),
 )
 
 DUPLEX_STREAM_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s188,
-    {_s88: None},
-    (_s187,),
+    _s189,
+    {_s89: None},
+    (_s188,),
     ((EVENT_STREAM, 16),),
 )
 
 DUPLEX_STREAM_WITH_DISTINCT_STREAMS_INPUT: StaticSchema = (
     18,
     n1,
-    _s189,
+    _s190,
     {_s30: None},
-    (_s187,),
+    (_s188,),
     ((EVENT_STREAM, 16),),
 )
 
 DUPLEX_STREAM_WITH_DISTINCT_STREAMS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s193,
-    {_s88: None},
-    (_s187,),
+    _s194,
+    {_s89: None},
+    (_s188,),
     ((lambda: SINGLETON_EVENT_STREAM, 16),),
 )
 
 SINGLETON_EVENT: StaticSchema = (
     18,
     n1,
-    _s190,
+    _s191,
     0,
     (_s28,),
     ((3, 0),),
@@ -888,58 +889,58 @@ SINGLETON_EVENT: StaticSchema = (
 SINGLETON_EVENT_STREAM: StaticSchema = (
     19,
     n1,
-    _s191,
+    _s192,
     0,
-    (_s192,),
+    (_s193,),
     ((SINGLETON_EVENT, 0),),
 )
 
 DUPLEX_STREAM_WITH_INITIAL_MESSAGES_INPUT: StaticSchema = (
     18,
     n1,
-    _s194,
+    _s195,
     {_s30: None},
-    (_s195, _s187),
-    ((3, {_s77: _s196, _s197: None}), (EVENT_STREAM, 16)),
+    (_s196, _s188),
+    ((3, {_s78: _s197, _s198: None}), (EVENT_STREAM, 16)),
 )
 
 DUPLEX_STREAM_WITH_INITIAL_MESSAGES_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s198,
-    {_s88: None},
-    (_s199, _s187),
-    ((3, {_s77: _s200, _s197: None}), (EVENT_STREAM, 16)),
+    _s199,
+    {_s89: None},
+    (_s200, _s188),
+    ((3, {_s78: _s201, _s198: None}), (EVENT_STREAM, 16)),
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT: StaticSchema = (
     18,
     n1,
-    _s201,
+    _s202,
     {_s30: None},
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s202,
-    {_s88: None},
+    _s203,
+    {_s89: None},
 )
 
 STRING_ENUM: StaticSchema = (
     14,
     n1,
-    _s203,
+    _s204,
     0,
-    (_s204,),
-    ((-1, {_s10: _s205}),),
+    (_s205,),
+    ((-1, {_s10: _s206}),),
 )
 
 ENUM_PAYLOAD_INPUT: StaticSchema = (
     18,
     n1,
-    _s206,
-    {_s30: None, _s88: None},
+    _s207,
+    {_s30: None, _s89: None},
     (_s65,),
     ((STRING_ENUM, 16),),
 )
@@ -947,57 +948,57 @@ ENUM_PAYLOAD_INPUT: StaticSchema = (
 FINITE_STREAMING_BLOB: StaticSchema = (
     1,
     n1,
-    _s207,
-    {_s177: None, _s208: None},
+    _s208,
+    {_s178: None, _s209: None},
 )
 
 FOO_ERROR: StaticSchema = (
     18,
     n1,
-    _s209,
-    {_s73: _s210, _s75: 500},
+    _s210,
+    {_s74: _s211, _s76: 500},
 )
 
 FRACTIONAL_SECONDS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s211,
-    {_s88: None},
-    (_s93,),
+    _s212,
+    {_s89: None},
+    (_s94,),
     ((DATE_TIME, 0),),
 )
 
 GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s212,
-    {_s88: None},
-    (_s143,),
-    ((3, {_s77: _s213}),),
+    _s213,
+    {_s89: None},
+    (_s144,),
+    ((3, {_s78: _s214}),),
 )
 
 HOST_LABEL_INPUT: StaticSchema = (
     18,
     n1,
-    _s214,
+    _s215,
     {_s30: None},
-    (_s215,),
+    (_s216,),
     ((3, 257),),
 )
 
 HTTP_CHECKSUM_REQUIRED_INPUT_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s216,
-    {_s30: None, _s88: None},
-    (_s217,),
+    _s217,
+    {_s30: None, _s89: None},
+    (_s218,),
     ((3, 0),),
 )
 
 STRING_MAP: StaticSchema = (
     17,
     n0,
-    _s218,
+    _s219,
     0,
     (_s27, _s28),
     ((3, 0), (3, 0)),
@@ -1006,51 +1007,51 @@ STRING_MAP: StaticSchema = (
 HTTP_EMPTY_PREFIX_HEADERS_INPUT: StaticSchema = (
     18,
     n1,
-    _s219,
+    _s220,
     {_s30: None},
-    (_s220, _s222),
-    ((STRING_MAP, {_s221: _s123}), (3, {_s77: _s85})),
+    (_s221, _s223),
+    ((STRING_MAP, {_s222: _s124}), (3, {_s78: _s86})),
 )
 
 HTTP_EMPTY_PREFIX_HEADERS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s223,
-    {_s88: None},
-    (_s220, _s222),
-    ((STRING_MAP, {_s221: _s123}), (3, {_s77: _s85})),
+    _s224,
+    {_s89: None},
+    (_s221, _s223),
+    ((STRING_MAP, {_s222: _s124}), (3, {_s78: _s86})),
 )
 
 HTTP_PAYLOAD_TRAITS_INPUT_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s224,
-    {_s30: None, _s88: None},
-    (_s217, _s226),
-    ((3, {_s77: _s225}), (1, 16)),
+    _s225,
+    {_s30: None, _s89: None},
+    (_s218, _s227),
+    ((3, {_s78: _s226}), (1, 16)),
 )
 
 TEXT_PLAIN_BLOB: StaticSchema = (
     1,
     n0,
-    _s227,
-    {_s228: _s229},
+    _s228,
+    {_s229: _s230},
 )
 
 NULL_AND_EMPTY_HEADERS_IO: StaticSchema = (
     18,
     n1,
-    _s457,
-    {_s30: None, _s88: None},
-    (_s341, _s342, _s460),
-    ((3, {_s77: _s458}), (3, {_s77: _s459}), (STRING_LIST, {_s77: _s461})),
+    _s458,
+    {_s30: None, _s89: None},
+    (_s342, _s343, _s461),
+    ((3, {_s78: _s459}), (3, {_s78: _s460}), (STRING_LIST, {_s78: _s462})),
 )
 
 SERVICE_UNAVAILABLE_ERROR: StaticSchema = (
     18,
     n1,
-    _s506,
-    {_s73: _s210, _s75: 500},
-    (_s175,),
+    _s507,
+    {_s74: _s211, _s76: 500},
+    (_s176,),
     ((3, 0),),
 )

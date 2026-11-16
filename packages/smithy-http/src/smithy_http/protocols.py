@@ -78,6 +78,9 @@ _AWS_QUERY_ERROR = ShapeID("aws.protocols#awsQueryError")
 _QUERY_MODE_HEADER = "x-amzn-query-mode"
 _QUERY_ERROR_HEADER = "x-amzn-query-error"
 _QUERY_ERROR_FAULTS: dict[str, _Fault] = {"Sender": "client", "Receiver": "server"}
+# Read by ID so smithy-http works with smithy-core releases that predate the
+# ClientOptionalTrait class.
+_CLIENT_OPTIONAL = ShapeID("smithy.api#clientOptional")
 
 try:
     from smithy_cbor import CBORCodec
@@ -584,11 +587,13 @@ class RpcClientProtocol(HttpClientProtocol):
 
         An empty document satisfies any member that is optional or has a default
         (clients fill defaults), so only a ``@required`` member without a ``@default``
-        forces an initial-response.
+        or ``@clientOptional`` forces an initial-response.
         """
         for member in output.members.values():
-            if member.get_trait(RequiredTrait) is not None and (
-                member.get_trait(DefaultTrait) is None
+            if (
+                member.get_trait(RequiredTrait) is not None
+                and member.get_trait(DefaultTrait) is None
+                and member.get_trait(_CLIENT_OPTIONAL) is None
             ):
                 return True
         return False
