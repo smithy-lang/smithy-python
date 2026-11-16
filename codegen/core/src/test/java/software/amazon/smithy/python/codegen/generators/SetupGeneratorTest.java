@@ -92,14 +92,6 @@ public class SetupGeneratorTest {
         assertTrue(pyproject.contains("keywords = [\"smithy\", \"test_client\"]"), pyproject);
     }
 
-    @Test
-    public void sdistLeavesOutTests() {
-        var manifest = generateSetup();
-        String pyproject = manifest.expectFileString("pyproject.toml");
-
-        assertTrue(pyproject.contains("[tool.hatch.build.targets.sdist]\nexclude = [\"/tests\"]"), pyproject);
-    }
-
     private static MockManifest generateSetup() {
         var service = ServiceShape.builder()
                 .id("smithy.example#TestService")
