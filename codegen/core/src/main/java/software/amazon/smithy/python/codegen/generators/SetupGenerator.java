@@ -149,7 +149,7 @@ public final class SetupGenerator {
             writer.pushState(new PyprojectSection(dependencies));
             writer.write("""
                     [project]
-                    name = $1S
+                    name = $4S
                     version = $2S
                     description = $3S
                     readme = "README.md"
@@ -170,7 +170,11 @@ public final class SetupGenerator {
                         "Programming Language :: Python :: 3.14",
                         "Programming Language :: Python :: 3.15"
                     ]
-                    """, settings.moduleName(), settings.moduleVersion(), description);
+                    """,
+                    settings.moduleName(),
+                    settings.moduleVersion(),
+                    description,
+                    settings.moduleName().replace('_', '-'));
 
             Optional.ofNullable(dependencies.get(PythonDependency.Type.DEPENDENCY.getType())).ifPresent(deps -> {
                 writer.openBlock("dependencies = [", "]\n", () -> writeDependencyList(writer, deps.values()));
@@ -194,6 +198,9 @@ public final class SetupGenerator {
                     [build-system]
                     requires = ["hatchling"]
                     build-backend = "hatchling.build"
+
+                    [tool.hatch.build.targets.sdist]
+                    exclude = ["/tests"]
 
                     [tool.pyright]
                     typeCheckingMode = "strict"
