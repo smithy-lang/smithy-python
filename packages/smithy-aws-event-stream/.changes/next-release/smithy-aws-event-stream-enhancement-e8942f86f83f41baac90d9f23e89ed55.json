@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Flag source code issue for unknown event stream members"
+}
