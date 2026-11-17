@@ -849,8 +849,11 @@
     "Dependency": "class",
     "DependencySet": "class",
     "HATCHLING": "Dependency",
+    "PYTEST": "Dependency",
+    "PYTEST_ASYNCIO": "Dependency",
     "SMITHY_CORE": "Dependency",
-    "SMITHY_HTTP": "Dependency"
+    "SMITHY_HTTP": "Dependency",
+    "SMITHY_TEST": "Dependency"
   },
   "smithy_python.environment": {
     "PluginEnvironment": "class"

@@ -5,7 +5,7 @@
 This document describes how the Python generator produces client packages. It
 defines client settings, operation discovery, I/O normalization, client
 symbols, the client plan, operation and schema emission, protocol selection,
-endpoint rules, and the generated client and config modules.
+endpoint rules, endpoint tests, and the generated client and config modules.
 
 ## Goals
 
@@ -229,6 +229,34 @@ Schemas retain `smithy.rules#contextParam`, `smithy.rules#staticContextParams`,
 and `smithy.rules#operationContextParams`, which the runtime parameter plan
 reads to bind input members and operation values.
 
+## Endpoint Tests
+
+A service with an endpointBdd trait and `smithy.rules#endpointTests` cases gets
+`tests/test_endpoints.py`. Its layout follows the Java generator's:
+
+* Every case becomes a rules test. `smithy_test.check_rules_case` resolves the
+  case's `params` with the default endpoint resolver of the async config. All
+  rules tests share one resolver, so its caches see changing parameters.
+* Every operation input of a case becomes a client test.
+  `smithy_test.aio.check_client_case_async` calls the operation through the
+  async client and checks the endpoint it resolves and the request it sends.
+* A client test's config sets the client context fields from `clientParams`.
+  `SDK::Endpoint` sets `endpoint_uri`, and a built-in that is also a client
+  context parameter sets its field.
+* `operationParams` become the call's keyword arguments, keyed by member field
+  name. Nested structures and unions are written in their dictionary forms.
+* Cases keep the trait's `params` and `expect` objects. Test IDs come from the
+  case documentation, numbered when one repeats.
+
+A client test the client can't express is generated as skipped, with the
+reasons. These are a built-in with no config field set to a value other than its
+default, a client parameter that is not a client context parameter, and a blob,
+timestamp, big decimal, or document value. An input that names an operation the
+service lacks, or a member its input lacks, fails generation.
+
+The module marks its tests with `pytest.mark.asyncio`. The package's `test`
+dependency group adds `pytest`, `pytest-asyncio`, and `smithy-test`.
+
 ## Clients and Configuration
 
 Service classes are thin subclasses of `Client[Config]` and
@@ -245,6 +273,7 @@ Generated packages use this layout:
 <package>/models.py and models.pyi
 <package>/_private/schemas.py and partitions
 <package>/_private/endpoints.py
+tests/test_endpoints.py, for services with endpoint tests
 ```
 
 Package initialization lazily exports both clients and configs. Each config
@@ -303,7 +332,13 @@ decoded CBOR payload, response models, and error types. An endpoint test
 resolves a host from a client context field, an input context parameter, and
 a static context parameter.
 
-Lowering tests port the Java generator's tests.
+Lowering tests port the Java generator's tests. The `endpoint-rules-client`
+snapshot is generated from a fixture whose endpoint rules read client context
+fields, `SDK::Endpoint`, an input context parameter, and static context
+parameters. `models/endpoint-rules.smithy` is its source, and
+`models/endpoint-rules.json` is that model assembled by Smithy with its ruleset
+compiled by `CompileBdd`. The snapshot tests run the snapshot's generated
+endpoint tests.
 
 Client snapshots sit alongside the types snapshots and cover the
 provider-neutral RPCv2 CBOR and RPCv2 JSON projections. Checks cover deterministic

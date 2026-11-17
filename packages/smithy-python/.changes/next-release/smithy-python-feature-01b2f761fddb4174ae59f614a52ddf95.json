@@ -1,4 +1,4 @@
 {
   "type": "feature",
-  "description": "Generate clients that resolve endpoints from the service's endpointBdd trait. Client context parameters become config fields, and a service with no endpoint rules requires `endpoint_uri`."
+  "description": "Generate clients that resolve endpoints from the service's endpointBdd trait. Client context parameters become config fields, and a service with no endpoint rules requires `endpoint_uri`. A service's endpointTests cases become `tests/test_endpoints.py`."
 }

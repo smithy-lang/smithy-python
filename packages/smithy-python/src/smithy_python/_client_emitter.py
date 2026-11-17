@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final
 
-from . import _endpoints, _package
+from . import _endpoint_tests, _endpoints, _package
 from . import dependencies as _dependencies
 from . import exceptions as _exceptions
 from . import model as _model
@@ -96,6 +96,13 @@ def write_client(
             f"{module}config",
             service,
         )
+    _endpoint_tests.write_endpoint_tests(
+        context,
+        plan,
+        endpoints,
+        TypeReference(aio.client, f"{package}.aio.client"),
+        TypeReference(aio.config, f"{package}.aio.config"),
+    )
     aio_init = context.files.python_module(
         f"src/{directory}/aio/__init__.py", f"{package}.aio"
     )

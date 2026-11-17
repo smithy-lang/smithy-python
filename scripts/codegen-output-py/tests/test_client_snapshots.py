@@ -7,6 +7,8 @@ import ast
 import asyncio
 import importlib
 import json
+import os
+import subprocess
 import sys
 from collections.abc import Iterator
 from pathlib import Path
@@ -133,3 +135,27 @@ def test_snapshot_client_round_trips_through_the_runtime(
         if asyncio.iscoroutine(body):
             body = asyncio.run(body)
     assert loads(body) == {"stringValue": "in", "integerValue": 3}
+
+
+def test_generated_endpoint_tests_pass() -> None:
+    projection = _ROOT / "codegen-output-py/endpoint-rules-client"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "tests",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "-o",
+            "addopts=",
+        ],
+        cwd=projection,
+        env={**os.environ, "PYTHONPATH": str(projection / "src")},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "14 passed, 1 skipped" in result.stdout

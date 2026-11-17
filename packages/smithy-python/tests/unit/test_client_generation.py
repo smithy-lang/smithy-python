@@ -485,3 +485,99 @@ def test_a_service_without_rules_requires_an_endpoint_uri(
     with pytest.raises(EndpointResolutionError, match="must configure an endpoint"):
         client.ping()
     assert not transport.requests
+
+
+def _add_endpoint_tests(shapes: dict[str, Any], *inputs: dict[str, Any]) -> None:
+    _add_endpoint_rules(shapes)
+    traits = shapes["example#Greeter"]["traits"]
+    traits["smithy.rules#endpointBdd"]["parameters"]["Region"] = {
+        "type": "string",
+        "builtIn": "AWS::Region",
+        "default": "us-east-1",
+        "required": True,
+    }
+    traits["smithy.rules#endpointTests"] = {
+        "version": "1.0",
+        "testCases": [
+            {
+                "documentation": "A case",
+                "params": {"Stage": "beta"},
+                "expect": {"endpoint": {"url": "https://beta.example.com"}},
+                "operationInputs": list(inputs),
+            }
+        ],
+    }
+
+
+def _endpoint_tests(tmp_path: Path, shapes: dict[str, Any]) -> str:
+    _generate(tmp_path, "greeter_endpoint_tests", shapes)
+    return (tmp_path / "tests/test_endpoints.py").read_text()
+
+
+def test_endpoint_tests_set_config_and_keyword_arguments(tmp_path: Path) -> None:
+    shapes = _shapes()
+    _add_endpoint_tests(
+        shapes,
+        {
+            "operationName": "Greet",
+            "builtInParams": {"AWS::Region": "us-east-1"},
+            "clientParams": {"Stage": "beta"},
+            "operationParams": {"name": "ana", "friends": [{"name": "bo"}]},
+        },
+    )
+    tests = _endpoint_tests(tmp_path, shapes)
+    assert '    {"stage": "beta"},\n' in tests
+    assert "AsyncGreeter.greet,\n" in tests
+    assert '{"name": "ana", "friends": [{"name": "bo"}]},' in tests
+    # A built-in at its default needs no config field.
+    assert "mark.skip" not in tests
+    project = (tmp_path / "pyproject.toml").read_text()
+    assert '"smithy-test~=0.5.0",' in project
+    assert '"pytest-asyncio>=1.3.0,<1.4.0",' in project
+
+
+def test_endpoint_tests_skip_inputs_the_client_cannot_express(tmp_path: Path) -> None:
+    shapes = _shapes()
+    shapes["example#GreetInput"]["members"]["photo"] = {"target": "smithy.api#Blob"}
+    _add_endpoint_tests(
+        shapes,
+        {
+            "operationName": "Greet",
+            "builtInParams": {"AWS::Region": "us-west-2"},
+            "clientParams": {"Other": "x"},
+            "operationParams": {"name": "ana", "photo": "abc"},
+        },
+    )
+    tests = _endpoint_tests(tmp_path, shapes)
+    assert (
+        'marks=mark.skip(reason="No config field sets the built-in AWS::Region; '
+        "Other is not a client context parameter; "
+        "Endpoint tests can't set blob values\"),"
+    ) in tests
+
+
+@pytest.mark.parametrize(
+    ("operation_input", "message"),
+    [
+        ({"operationName": "Missing"}, "operation Missing is not in service"),
+        (
+            {"operationName": "Greet", "operationParams": {"nope": 1}},
+            "sets nope, which it doesn't have",
+        ),
+    ],
+)
+def test_endpoint_tests_reject_unknown_operations_and_members(
+    tmp_path: Path, operation_input: dict[str, Any], message: str
+) -> None:
+    shapes = _shapes()
+    _add_endpoint_tests(shapes, operation_input)
+    with pytest.raises(CodegenError, match=message):
+        _generate(tmp_path, "greeter_bad_endpoint_tests", shapes)
+
+
+def test_services_without_endpoint_tests_get_no_test_module(tmp_path: Path) -> None:
+    shapes = _shapes()
+    _add_endpoint_rules(shapes)
+    _generate(tmp_path, "greeter_no_endpoint_tests", shapes)
+    assert not (tmp_path / "tests").exists()
+    assert "[dependency-groups]" not in (tmp_path / "pyproject.toml").read_text()
