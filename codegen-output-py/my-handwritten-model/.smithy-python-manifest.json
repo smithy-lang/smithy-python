@@ -1,7 +1,7 @@
 {
   "files": {
     "README.md": "47dc0fb73aa8673141f1fcde44fa3ba3995be83953b41c4f26e3ceb5c5b3ffda",
-    "pyproject.toml": "88e01463cc0d24fd7ab8bf99d96f0fe3b3f031f3348fc1c371c533c891184053",
+    "pyproject.toml": "7f629f025f463d2e7dc967cab569cc3c0e61c16738eeb1ac5ec0c97561487c10",
     "src/my_handwritten_model/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
     "src/my_handwritten_model/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/my_handwritten_model/_private/schemas.py": "dc76275b338c278172c30166e40c964952fdb5e9ae06f49dff33a37a58a39ff7",

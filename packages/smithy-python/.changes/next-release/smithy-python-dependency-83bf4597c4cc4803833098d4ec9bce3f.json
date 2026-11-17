@@ -1,0 +1,4 @@
+{
+  "type": "dependency",
+  "description": "Pin generated packages to smithy-core 0.13 and smithy-http 0.10."
+}

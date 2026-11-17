@@ -1,7 +1,7 @@
 {
   "files": {
     "README.md": "45e418df185f3c97645bb27cde96c23d25862660c4efb7e07daa6f2f4e541833",
-    "pyproject.toml": "347f20c1040a5efdf94ec4759b126867f8e62b2baa8790b8cec9c3c2a18ee315",
+    "pyproject.toml": "1e092d69b0fb9a1dc14899c713abb013b2a5580725aebcf3c945fc3121baecf7",
     "src/rpcv2json_client/__init__.py": "fa3fa16a23aaa1ad8d7a87a8c5475ac6b82cfeeabb83625ab4d28d3c3f6a0fbe",
     "src/rpcv2json_client/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/rpcv2json_client/_private/schemas.py": "b52400dc7e9af25614f09ee4efe1e3ac3fe344436901b62109c94724ee0f0fa2",

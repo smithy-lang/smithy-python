@@ -104,7 +104,7 @@ class DependencySet(Collection[Dependency]):
 
 SMITHY_CORE = Dependency(
     package="smithy-core",
-    specifier="~=0.12.0",
+    specifier="~=0.13.0",
     group="runtime",
 )
 """Compatible smithy-core runtime for generated artifacts.
@@ -114,7 +114,7 @@ CAUTION: Keep each runtime specifier at its package's current minor version.
 
 SMITHY_HTTP = Dependency(
     package="smithy-http",
-    specifier="~=0.9.0",
+    specifier="~=0.10.0",
     group="runtime",
 )
 """Compatible smithy-http runtime for generated HTTP clients."""
