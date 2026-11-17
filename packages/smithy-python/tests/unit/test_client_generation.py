@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import asyncio
+import base64
 import importlib
 import json
+import struct
 import subprocess
 import sys
 from collections.abc import Callable
@@ -14,6 +16,7 @@ from typing import Any
 import pytest
 from smithy_cbor import loads
 from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.exceptions import EndpointResolutionError
 from smithy_core.retries import SimpleRetryStrategy
 from smithy_http import HTTPResponse, tuples_to_fields
 from smithy_http.interfaces import HTTPRequest, HTTPRequestConfiguration
@@ -404,3 +407,81 @@ def test_a_service_with_both_protocols_needs_a_protocol_selection() -> None:
     model = load_model({"smithy": "2.0", "shapes": shapes})
     generator = ClientGenerator(ClientPlan.from_model(model, settings))
     generator.generate(generator.context())
+
+
+def _add_endpoint_rules(shapes: dict[str, Any]) -> None:
+    nodes = (-1, 1, -1, 0, 100_000_001, 100_000_002)
+    traits = shapes["example#Greeter"]["traits"]
+    traits["smithy.rules#clientContextParams"] = {
+        "Stage": {"type": "string", "documentation": "The deployment stage."}
+    }
+    traits["smithy.rules#endpointBdd"] = {
+        "version": "1.1",
+        "parameters": {
+            "Stage": {"type": "string"},
+            "Name": {"type": "string"},
+            "Op": {"type": "string"},
+        },
+        "conditions": [{"fn": "isSet", "argv": [{"ref": "Stage"}]}],
+        "results": [
+            {
+                "conditions": [],
+                "type": "endpoint",
+                "endpoint": {"url": "https://{Name}-{Op}.{Stage}.example.com"},
+            },
+            {"conditions": [], "type": "error", "error": "Stage is not set"},
+        ],
+        "root": 2,
+        "nodeCount": 2,
+        "nodes": base64.b64encode(struct.pack(">6i", *nodes)).decode(),
+    }
+    shapes["example#GreetInput"]["members"]["name"]["traits"][
+        "smithy.rules#contextParam"
+    ] = {"name": "Name"}
+    shapes["example#Greet"]["traits"]["smithy.rules#staticContextParams"] = {
+        "Op": {"value": "greet"}
+    }
+
+
+def test_endpoint_rules_read_config_input_and_operation_parameters(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    shapes = _shapes()
+    _add_endpoint_rules(shapes)
+    _generate(tmp_path, "greeter_rules", shapes)
+    config_source = (tmp_path / "src/greeter_rules/config.py").read_text()
+    assert "stage: str | None\n" in config_source
+    assert '"The deployment stage."' in config_source
+
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module("greeter_rules")
+    transport = _Transport(body=_cbor_map({"greeting": "Hi"}))
+    retry = SimpleRetryStrategy(max_attempts=1)
+    client = package.Greeter(
+        package.Config(stage="beta", transport=transport, retry_strategy=retry)
+    )
+    client.greet(name="ana")
+    (request,) = transport.requests
+    assert request.destination.host == "ana-greet.beta.example.com"
+
+    unstaged = package.Greeter(
+        package.Config(transport=transport, retry_strategy=retry)
+    )
+    with pytest.raises(EndpointResolutionError, match="Stage is not set"):
+        unstaged.greet(name="ana")
+
+
+def test_a_service_without_rules_requires_an_endpoint_uri(
+    package: ModuleType,
+) -> None:
+    transport = _Transport()
+    client = package.Greeter(
+        package.Config(
+            transport=transport, retry_strategy=SimpleRetryStrategy(max_attempts=1)
+        )
+    )
+    with pytest.raises(EndpointResolutionError, match="must configure an endpoint"):
+        client.ping()
+    assert not transport.requests

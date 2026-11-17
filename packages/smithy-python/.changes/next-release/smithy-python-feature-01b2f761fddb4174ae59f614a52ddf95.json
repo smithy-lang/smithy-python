@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Generate clients that resolve endpoints from the service's endpointBdd trait. Client context parameters become config fields, and a service with no endpoint rules requires `endpoint_uri`."
+}

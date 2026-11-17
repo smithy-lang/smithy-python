@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final
 
-from . import _package
+from . import _endpoints, _package
 from . import dependencies as _dependencies
 from . import exceptions as _exceptions
 from . import model as _model
@@ -26,14 +26,6 @@ def check_supported(plan: ClientPlan) -> None:
 
     :raises CodegenError: Naming the first unsupported operation and feature.
     """
-    service = plan.selection.service
-    assert service is not None  # noqa: S101 - ClientPlan requires a service
-    for trait_id in _RULE_TRAITS:
-        if service.has_trait(trait_id):
-            raise _exceptions.CodegenError(
-                f"Service {service.id} uses {trait_id}, which client generation "
-                "does not support yet. Use a static endpoint."
-            )
     for operation, exports in zip(plan.operations, plan.models.operations, strict=True):
         shape = operation.operation
         if _NO_AUTH not in exports.auth_scheme_ids:
@@ -51,16 +43,35 @@ def check_supported(plan: ClientPlan) -> None:
                     )
 
 
+def plan_endpoints(plan: ClientPlan) -> _endpoints.EndpointPlan:
+    """Lower the service's endpoint rules for its client.
+
+    :raises CodegenError: If the rules are unsupported, or a client context
+        parameter's config field collides with another config field.
+    """
+    service = plan.selection.service
+    assert service is not None  # noqa: S101 - ClientPlan requires a service
+    return _endpoints.plan_endpoints(service, reserved=_CONFIG_FIELDS)
+
+
 def write_client(
     context: GenerationContext[ClientSettings],
     plan: ClientPlan,
     protocol: _protocols.ProtocolContribution,
+    endpoints: _endpoints.EndpointPlan,
 ) -> None:
-    """Register client, config, and package modules for both modes."""
+    """Register client, config, endpoints, and package modules for both modes."""
     package = context.settings.package
     directory = package.replace(".", "/")
     service = plan.selection.service
     assert service is not None  # noqa: S101 - ClientPlan requires a service
+    endpoints_module = f"{package}._private.endpoints"
+    _endpoints.write_endpoints(
+        context.files.python_module(
+            f"src/{directory}/_private/endpoints.py", endpoints_module
+        ),
+        endpoints,
+    )
     sync, aio = _modes(plan, protocol)
     for mode in (sync, aio):
         module = f"{package}.{mode.directory.replace('/', '.')}"
@@ -71,6 +82,8 @@ def write_client(
             plan,
             mode,
             service,
+            endpoints,
+            TypeReference("BDD", endpoints_module),
         )
         _write_client(
             context.files.python_module(
@@ -127,7 +140,7 @@ _PROTOCOL_CONSTRUCTOR: Final = _core("ProtocolConstructor", "interfaces")
 _URI: Final = _core("URI", "interfaces")
 _AUTH_SCHEME_RESOLVER: Final = _core("AuthSchemeResolver", "interfaces.auth")
 _DEFAULT_AUTH_RESOLVER: Final = _core("DefaultAuthResolver", "auth")
-_STATIC_ENDPOINT_RESOLVER: Final = _core("StaticEndpointResolver", "endpoints")
+_BDD_ENDPOINT_RESOLVER: Final = _core("BddEndpointResolver", "endpoints")
 _RETRY_STRATEGY: Final = _core("RetryStrategy", "interfaces.retries")
 _RETRY_STRATEGY_OPTIONS: Final = _core("RetryStrategyOptions", "retries")
 _SHAPE_ID: Final = _core("ShapeID", "shapes")
@@ -203,10 +216,19 @@ def _modes(
 
 
 _NO_AUTH: Final = _model.ShapeId("smithy.api", "noAuth")
-_RULE_TRAITS: Final = (
-    _model.ShapeId("smithy.rules", "endpointRuleSet"),
-    _model.ShapeId("smithy.rules", "endpointBdd"),
+_CONFIG_FIELDS: Final = frozenset(
+    {
+        "auth_scheme_resolver",
+        "auth_schemes",
+        "endpoint_resolver",
+        "endpoint_uri",
+        "interceptors",
+        "protocol",
+        "retry_strategy",
+        "transport",
+    }
 )
+"""The config fields every client has, which a client context field must not take."""
 
 
 def _write_exports(writer: PythonWriter, exports: dict[str, str]) -> None:
@@ -243,6 +265,8 @@ def _write_config(
     plan: ClientPlan,
     mode: _Mode,
     service: _model.ServiceShape,
+    endpoints: _endpoints.EndpointPlan,
+    bdd: TypeReference,
 ) -> None:
     client_protocol = _generic(_core("ClientProtocol", "interfaces"), _ANY, _ANY)
     interceptor = _generic(_core("Interceptor", "interceptors"), *_ANY4)
@@ -279,7 +303,7 @@ def _write_config(
         (
             "endpoint_uri",
             ("str | ", _URI, " | None"),
-            "The static URI requests are sent to.",
+            "The endpoint URI, read by the endpoint rules as ``SDK::Endpoint``.",
         ),
         (
             "interceptors",
@@ -300,6 +324,10 @@ def _write_config(
             "transport",
             (mode.transport_type,),
             "Sends requests, such as an HTTP client.",
+        ),
+        *(
+            (field.attribute, (field.type, " | None"), field.documentation)
+            for field in endpoints.client_context_fields
         ),
     )
     writer.line("@", _DATACLASS, "(init=False)")
@@ -331,6 +359,8 @@ def _write_config(
             )
             writer.line("retry_strategy: ", *retry, " | None = None,")
             writer.line("transport: ", mode.transport_type, " | None = None,")
+            for field in endpoints.client_context_fields:
+                writer.line(field.attribute, ": ", field.type, " | None = None,")
         writer.line(") -> None:")
         with writer.indent():
             writer.line(
@@ -341,8 +371,10 @@ def _write_config(
             writer.line("self.auth_schemes = auth_schemes or {}")
             writer.line(
                 "self.endpoint_resolver = endpoint_resolver or ",
-                _STATIC_ENDPOINT_RESOLVER,
-                "()",
+                _BDD_ENDPOINT_RESOLVER,
+                "(",
+                bdd,
+                ")",
             )
             writer.line("self.endpoint_uri = endpoint_uri")
             writer.line("self.interceptors = interceptors or []")
@@ -360,6 +392,8 @@ def _write_config(
             )
             writer.line("self.retry_strategy = retry_strategy")
             writer.line("self.transport = transport or ", mode.transport, "()")
+            for field in endpoints.client_context_fields:
+                writer.line("self.", field.attribute, " = ", field.attribute)
     writer.line()
     writer.line()
     writer.line("type Plugin = ", _CALLABLE, "[[", mode.config, "], None]")

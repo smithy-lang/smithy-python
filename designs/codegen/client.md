@@ -5,7 +5,7 @@
 This document describes how the Python generator produces client packages. It
 defines client settings, operation discovery, I/O normalization, client
 symbols, the client plan, operation and schema emission, protocol selection,
-and the generated client and config modules.
+endpoint rules, and the generated client and config modules.
 
 ## Goals
 
@@ -186,7 +186,48 @@ Both also use:
 * `ProtocolSettings` with the service namespace, target, version, and schema.
 * `Urllib3HTTPClient` and `AIOHTTPClient` as default sync/async transports,
   which add the `urllib3` and `aiohttp` extras.
-* `StaticEndpointResolver` with a configured endpoint URI.
+* `BddEndpointResolver` over the generated endpoint BDD.
+
+## Endpoints
+
+Endpoint resolution has one runtime representation, the endpoint BDD. The
+generator lowers the service's `smithy.rules#endpointBdd` trait into a
+`smithy_core.endpoints.EndpointBdd` of Python literals in
+`<package>/_private/endpoints.py`. The module source matches the Java
+generator's for the same trait.
+
+Lowering re-encodes the trait and makes no engine decisions:
+
+* Parameters become `(name, type, required, default, builtin,
+  client_context_attribute)` tuples in trait order. Optional parameters no
+  condition or result reads are dropped.
+* Expressions and results become tuples led by small integer tags. Function
+  names stay names, and `getAttr` becomes an attribute expression.
+* Templates are parsed as Smithy parses them and written back from their parts,
+  so escapes and `getAttr` paths take one canonical form.
+* Nodes are decoded from the trait's big-endian `int32` triples and copied
+  verbatim. Node 0 must be the `(-1, 1, -1)` terminal, and no edge may
+  complement a result reference.
+
+Only trait version 1.1 is accepted. A service with no endpoint rules gets the
+BDD compiled from the default ruleset of smithy-typescript, which reads
+`SDK::Endpoint` and fails when it is unset. A service with
+`smithy.rules#endpointRuleSet` alone fails generation, because compiling a
+ruleset into a BDD is Smithy's `CompileBdd` transform.
+
+The generated client calls rules functions from the `smithy_core.endpoints`
+standard library only. Rules that call any other function fail generation with
+a diagnostic naming the functions.
+
+Each `smithy.rules#clientContextParams` entry becomes a config field typed `bool
+| None` or `str | None` and defaulting to None. Its name is the snake-case form
+of the parameter name, and its docstring is the entry's documentation. The BDD
+records the field name as the parameter's config attribute. A field name that
+matches a standard config field or another entry's field fails generation.
+
+Schemas retain `smithy.rules#contextParam`, `smithy.rules#staticContextParams`,
+and `smithy.rules#operationContextParams`, which the runtime parameter plan
+reads to bind input members and operation values.
 
 ## Clients and Configuration
 
@@ -203,12 +244,14 @@ Generated packages use this layout:
 <package>/aio/config.py
 <package>/models.py and models.pyi
 <package>/_private/schemas.py and partitions
+<package>/_private/endpoints.py
 ```
 
 Package initialization lazily exports both clients and configs. Each config
 exposes protocol/transport overrides, endpoint URI/resolver, auth
-resolver/schemes, retries, and interceptors. Both configs default to
-`DefaultAuthResolver`, `StaticEndpointResolver`, the contribution's protocol,
+resolver/schemes, retries, interceptors, and client context fields. Both
+configs default to `DefaultAuthResolver`, `BddEndpointResolver(BDD)`, the
+contribution's protocol,
 and its transport: `Urllib3HTTPClient` for sync and `AIOHTTPClient` for async.
 Client and types artifacts share package metadata emission, dependency
 tracking, README generation, and manifest ownership.
@@ -243,9 +286,9 @@ runtime metadata. It covers `self`, `plugins`, defaults, and idempotency tokens.
 ## Supported Features
 
 The generator supports unsigned, non-streaming RPCv2 CBOR and RPCv2 JSON
-operations with a static endpoint. Models that require auth schemes, event or data streams, or
-modeled endpoint rules fail generation with a diagnostic naming the operation
-and feature.
+operations whose endpoint rules use the standard library. Models that require
+auth schemes or event or data streams fail generation with a diagnostic naming
+the operation and feature.
 
 Authentication and endpoint extension points are provider-neutral. AWS
 credentials, region defaults, SigV4, query compatibility, AWS endpoint
@@ -256,7 +299,11 @@ functions, and AWS user agents are separate integrations.
 Tests generate a checked-in JSON service fixture. They exercise nested
 input/output models, a modeled error, Unit I/O, and explicit empty I/O through
 fake sync/async transports. They assert the request method, URI, headers,
-decoded CBOR payload, response models, and error types.
+decoded CBOR payload, response models, and error types. An endpoint test
+resolves a host from a client context field, an input context parameter, and
+a static context parameter.
+
+Lowering tests port the Java generator's tests.
 
 Client snapshots sit alongside the types snapshots and cover the
 provider-neutral RPCv2 CBOR and RPCv2 JSON projections. Checks cover deterministic
