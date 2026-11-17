@@ -1,18 +1,11 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import sys
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 from ..shapes import ShapeID
 from . import TypedProperties
 from .identity import Identity
-
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
 
 if TYPE_CHECKING:
     from ..auth import AuthParams
@@ -27,11 +20,12 @@ __all__ = [
     "Signer",
 ]
 
-_I = TypeVar("_I", infer_variance=True)
-_AuthIdentity = TypeVar("_AuthIdentity", bound=Identity, infer_variance=True)
-_IP = TypeVar("_IP", bound=Mapping[str, Any], infer_variance=True)
-_R = TypeVar("_R", infer_variance=True)
-_SP = TypeVar("_SP", bound=Mapping[str, Any], infer_variance=True)
+_I_contra = TypeVar("_I_contra", contravariant=True)
+_AuthIdentity = TypeVar("_AuthIdentity", bound=Identity)
+_IP = TypeVar("_IP", bound=Mapping[str, Any])
+_R = TypeVar("_R")
+_SP = TypeVar("_SP", bound=Mapping[str, Any])
+_SP_contra = TypeVar("_SP_contra", bound=Mapping[str, Any], contravariant=True)
 
 
 class AuthOption(Protocol):
@@ -61,10 +55,10 @@ class AuthSchemeResolver(Protocol):
         ...
 
 
-class Signer(Protocol[_R, _I, _SP]):
+class Signer(Protocol[_R, _I_contra, _SP_contra]):
     """A class that signs requests before they are sent."""
 
-    def sign(self, *, request: _R, identity: _I, properties: _SP) -> _R:
+    def sign(self, *, request: _R, identity: _I_contra, properties: _SP_contra) -> _R:
         """Get a signed version of the request.
 
         :param request: The request to be signed.
@@ -74,10 +68,10 @@ class Signer(Protocol[_R, _I, _SP]):
         ...
 
 
-class EventSigner(Protocol[_I, _SP]):
+class EventSigner(Protocol[_I_contra, _SP_contra]):
     """A class that signs event stream events before they are sent."""
 
-    def sign(self, *, event: Any, identity: _I, properties: _SP) -> Any:
+    def sign(self, *, event: Any, identity: _I_contra, properties: _SP_contra) -> Any:
         """Get a signed version of the event.
 
         :param event: The event to be signed.
@@ -86,7 +80,9 @@ class EventSigner(Protocol[_I, _SP]):
         """
         ...
 
-    def sign_empty(self, *, event: Any, identity: _I, properties: _SP) -> Any:
+    def sign_empty(
+        self, *, event: Any, identity: _I_contra, properties: _SP_contra
+    ) -> Any:
         """Get a signed version of an empty event.
 
         :param event: The empty event to be signed.

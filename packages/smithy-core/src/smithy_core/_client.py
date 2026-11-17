@@ -1,10 +1,9 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import sys
 from collections.abc import Callable
 from copy import copy
 from types import FunctionType
-from typing import Any, ClassVar, Generic, cast, get_overloads
+from typing import Any, ClassVar, Generic, TypeVar, cast, get_overloads
 
 from .deserializers import DeserializeableShape
 from .exceptions import ExpectationNotMetError, ResourceLifecycleError
@@ -15,15 +14,9 @@ from .schemas import APIOperation
 from .serializers import SerializeableShape
 from .types import PropertyKey, TypedProperties
 
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
-
 __all__ = ["OPERATION", "ClientBase"]
 
-_C = TypeVar("_C", infer_variance=True)
+_C = TypeVar("_C")
 _I = TypeVar("_I", bound=SerializeableShape)
 _O = TypeVar("_O", bound=DeserializeableShape)
 _T = TypeVar("_T")

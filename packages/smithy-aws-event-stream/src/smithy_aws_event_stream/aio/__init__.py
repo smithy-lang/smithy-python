@@ -4,7 +4,7 @@ import contextlib
 import logging
 import sys
 from collections.abc import Callable, Mapping
-from typing import Any, Generic
+from typing import Any, Generic, TypeVar
 
 from smithy_core.aio.interfaces import AsyncByteStream, AsyncWriter
 from smithy_core.aio.interfaces.eventstream import (
@@ -27,15 +27,15 @@ from ..exceptions import EventError
 from ..signing import SigningConfig
 
 if sys.version_info >= (3, 12):
-    from typing import TypeAliasType, TypeVar
+    from typing import TypeAliasType
 else:
-    from typing_extensions import TypeAliasType, TypeVar
+    from typing_extensions import TypeAliasType
 
 
 __all__ = ["AsyncAWSEventPublisher", "AsyncAWSEventReceiver", "decode_event_async"]
 
-_IE = TypeVar("_IE", bound=SerializeableShape, infer_variance=True)
-_OE = TypeVar("_OE", bound=DeserializeableShape, infer_variance=True)
+_IE_contra = TypeVar("_IE_contra", bound=SerializeableShape, contravariant=True)
+_OE_co = TypeVar("_OE_co", bound=DeserializeableShape, covariant=True)
 _I = TypeVar("_I", bound=Identity)
 _IP = TypeVar("_IP", bound=Mapping[str, Any])
 _SP = TypeVar("_SP", bound=Mapping[str, Any])
@@ -56,7 +56,7 @@ async def decode_event_async(source: AsyncByteStream) -> Event | None:
     return await run_program_async(Event._decode(source.read))  # pyright: ignore[reportPrivateUsage]
 
 
-class AsyncAWSEventPublisher(AsyncEventPublisher[_IE], Generic[_IE]):
+class AsyncAWSEventPublisher(AsyncEventPublisher[_IE_contra], Generic[_IE_contra]):
     """Publishes events to an AWS event stream."""
 
     def __init__(
@@ -85,7 +85,7 @@ class AsyncAWSEventPublisher(AsyncEventPublisher[_IE], Generic[_IE]):
         """
         await self._write_initial()
 
-    async def send(self, event: _IE) -> None:
+    async def send(self, event: _IE_contra) -> None:
         if self._closed:
             raise OSError("Attempted to write to closed stream.")
         await self._write_initial()
@@ -163,14 +163,14 @@ class AsyncAWSEventPublisher(AsyncEventPublisher[_IE], Generic[_IE]):
             raise OSError("Failed to write to stream.") from e
 
 
-class AsyncAWSEventReceiver(AsyncEventReceiver[_OE], Generic[_OE]):
+class AsyncAWSEventReceiver(AsyncEventReceiver[_OE_co], Generic[_OE_co]):
     """Receives events from an AWS event stream."""
 
     def __init__(
         self,
         payload_codec: Codec,
         source: AsyncByteStream,
-        deserializer: Callable[[ShapeDeserializer], _OE],
+        deserializer: Callable[[ShapeDeserializer], _OE_co],
         is_client_mode: bool = True,
     ) -> None:
         self._payload_codec = payload_codec
@@ -179,7 +179,7 @@ class AsyncAWSEventReceiver(AsyncEventReceiver[_OE], Generic[_OE]):
         self._deserializer = deserializer
         self._closed = False
 
-    async def receive(self) -> _OE | None:
+    async def receive(self) -> _OE_co | None:
         if self._closed:
             return None
 

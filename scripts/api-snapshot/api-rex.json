@@ -809,6 +809,7 @@
   "smithy_core.documents": {
     "DeserializeableShape": "rex-protocol",
     "DiscriminatorError": "rex-exception",
+    "DocumentValue": "rex-type_alias",
     "ExpectationNotMetError": "rex-exception",
     "InterceptingSerializer": "rex-class",
     "MapSerializer": "rex-protocol",
@@ -917,6 +918,7 @@
     "TimestampFormat": "rex-class"
   },
   "smithy_core.types": {
+    "Document": "rex-type_alias",
     "ExpectationNotMetError": "rex-exception",
     "ensure_utc": "rex-function",
     "epoch_seconds_to_datetime": "rex-function",

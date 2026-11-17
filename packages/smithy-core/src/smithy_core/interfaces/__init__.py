@@ -18,14 +18,15 @@ from typing import (
     Any,
     Protocol,
     TypeGuard,
+    TypeVar,
     overload,
     runtime_checkable,
 )
 
 if sys.version_info >= (3, 12):
-    from typing import TypeAliasType, TypeVar
+    from typing import TypeAliasType
 else:
-    from typing_extensions import TypeAliasType, TypeVar
+    from typing_extensions import TypeAliasType
 
 
 __all__ = [
@@ -64,11 +65,13 @@ if TYPE_CHECKING:
     from ..shapes import ShapeID
 
 _DT = TypeVar("_DT")
-_I = TypeVar("_I", infer_variance=True)
-_O = TypeVar("_O", infer_variance=True)
+_I = TypeVar("_I")
+_I_contra = TypeVar("_I_contra", contravariant=True)
+_O_co = TypeVar("_O_co", covariant=True)
+_O_contra = TypeVar("_O_contra", contravariant=True)
 _OperationInput = TypeVar("_OperationInput", bound="SerializeableShape")
 _OperationOutput = TypeVar("_OperationOutput", bound="DeserializeableShape")
-_T = TypeVar("_T", infer_variance=True)
+_T = TypeVar("_T")
 
 
 class URI(Protocol):
@@ -416,18 +419,18 @@ class EndpointResolver(Protocol):
         ...
 
 
-class ClientTransport(Protocol[_I, _O]):
+class ClientTransport(Protocol[_I_contra, _O_co]):
     """Protocol-agnostic representation of a synchronous client transport (e.g. an
     HTTP client)."""
 
     TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
 
-    def send(self, request: _I) -> _O:
+    def send(self, request: _I_contra) -> _O_co:
         """Send a request over the transport and receive the response."""
         ...
 
 
-class ClientProtocol(Protocol[_I, _O]):
+class ClientProtocol(Protocol[_I, _O_contra]):
     """A protocol used by a synchronous client to communicate with a server."""
 
     @property
@@ -465,7 +468,7 @@ class ClientProtocol(Protocol[_I, _O]):
         *,
         operation: "APIOperation[_OperationInput, _OperationOutput]",
         request: _I,
-        response: _O,
+        response: _O_contra,
         error_registry: "TypeRegistry",
         context: TypedProperties,
         read_body: Callable[[AnyStreamingBlob], Any],
@@ -486,7 +489,7 @@ class ClientProtocol(Protocol[_I, _O]):
         ...
 
     def extract_response_metadata(
-        self, *, response: _O, context: TypedProperties
+        self, *, response: _O_contra, context: TypedProperties
     ) -> "ResponseMetadata":
         """Extract metadata about a transport response.
 

@@ -1,8 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import sys
 from collections.abc import Mapping
-from typing import Any, Protocol
+from typing import Any, Protocol, TypeVar
 
 from smithy_core.interfaces import Request
 
@@ -12,23 +11,20 @@ from ...interfaces.identity import Identity
 from ...shapes import ShapeID
 from .identity import AsyncIdentityResolver
 
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
+_I_contra = TypeVar("_I_contra", contravariant=True)
+_AuthIdentity = TypeVar("_AuthIdentity", bound=Identity)
+_IP = TypeVar("_IP", bound=Mapping[str, Any])
+_R = TypeVar("_R", bound=Request)
+_SP = TypeVar("_SP", bound=Mapping[str, Any])
+_SP_contra = TypeVar("_SP_contra", bound=Mapping[str, Any], contravariant=True)
 
 
-_I = TypeVar("_I", infer_variance=True)
-_AuthIdentity = TypeVar("_AuthIdentity", bound=Identity, infer_variance=True)
-_IP = TypeVar("_IP", bound=Mapping[str, Any], infer_variance=True)
-_R = TypeVar("_R", bound=Request, infer_variance=True)
-_SP = TypeVar("_SP", bound=Mapping[str, Any], infer_variance=True)
-
-
-class AsyncSigner(Protocol[_R, _I, _SP]):
+class AsyncSigner(Protocol[_R, _I_contra, _SP_contra]):
     """A class that signs requests before they are sent."""
 
-    async def sign(self, *, request: _R, identity: _I, properties: _SP) -> _R:
+    async def sign(
+        self, *, request: _R, identity: _I_contra, properties: _SP_contra
+    ) -> _R:
         """Get a signed version of the request.
 
         :param request: The request to be signed.

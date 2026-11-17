@@ -9,7 +9,16 @@ from dataclasses import dataclass
 from datetime import datetime
 from email.utils import format_datetime, parsedate_to_datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Self, TypeAlias, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Generic,
+    Self,
+    TypeAlias,
+    TypeVar,
+    overload,
+)
 
 from .exceptions import ExpectationNotMetError
 from .interfaces import PropertyKey as _PropertyKey
@@ -23,10 +32,9 @@ from .utils import (
 )
 
 if sys.version_info >= (3, 12):
-    from typing import TypeVar
+    from typing import TypeAliasType
 else:
-    from typing_extensions import TypeVar
-
+    from typing_extensions import TypeAliasType
 
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
@@ -43,14 +51,35 @@ __all__ = [
 ]
 
 _DT = TypeVar("_DT")
-_T = TypeVar("_T", infer_variance=True)
+_T = TypeVar("_T")
 
 
 _GREEDY_LABEL_RE = re.compile(r"\{(\w+)\+\}")
 
-Document: TypeAlias = (
-    Mapping[str, "Document"] | Sequence["Document"] | str | int | float | bool | None
-)
+# Type checkers read the recursive TypeAlias; at runtime the alias is a named
+# TypeAliasType, so annotations that use it resolve without the caller's globals.
+# Keep both values identical.
+if TYPE_CHECKING:
+    Document: TypeAlias = (
+        Mapping[str, "Document"]
+        | Sequence["Document"]
+        | str
+        | int
+        | float
+        | bool
+        | None
+    )
+else:
+    Document = TypeAliasType(
+        "Document",
+        Mapping[str, "Document"]
+        | Sequence["Document"]
+        | str
+        | int
+        | float
+        | bool
+        | None,
+    )
 
 
 class JsonString(str):

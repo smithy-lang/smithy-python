@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import sys
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Literal, Protocol, TypeVar, runtime_checkable
 
 from ...exceptions import UnsupportedStreamError
 from ...interfaces import (
@@ -17,9 +17,9 @@ from ...interfaces import ProtocolSettings as ProtocolSettings
 from .eventstream import AsyncEventPublisher, AsyncEventReceiver
 
 if sys.version_info >= (3, 12):
-    from typing import TypeAliasType, TypeVar
+    from typing import TypeAliasType
 else:
-    from typing_extensions import TypeAliasType, TypeVar
+    from typing_extensions import TypeAliasType
 
 
 if TYPE_CHECKING:
@@ -34,8 +34,10 @@ if TYPE_CHECKING:
 
 _IE = TypeVar("_IE", bound="SerializeableShape")
 _OE = TypeVar("_OE", bound="DeserializeableShape")
-_I = TypeVar("_I", bound=Request, infer_variance=True)
-_O = TypeVar("_O", bound=Response, infer_variance=True)
+_I = TypeVar("_I", bound=Request)
+_I_contra = TypeVar("_I_contra", bound=Request, contravariant=True)
+_O_co = TypeVar("_O_co", bound=Response, covariant=True)
+_O_contra = TypeVar("_O_contra", bound=Response, contravariant=True)
 _OperationInput = TypeVar("_OperationInput", bound="SerializeableShape")
 _OperationOutput = TypeVar("_OperationOutput", bound="DeserializeableShape")
 
@@ -77,7 +79,7 @@ class AsyncEndpointResolver(Protocol):
         ...
 
 
-class AsyncClientTransport(Protocol[_I, _O]):
+class AsyncClientTransport(Protocol[_I_contra, _O_co]):
     """Protocol-agnostic representation of a client transport (e.g. an HTTP client).
 
     Transports that support duplex (bidirectional) event streaming can implement
@@ -86,12 +88,14 @@ class AsyncClientTransport(Protocol[_I, _O]):
 
     TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
 
-    async def send(self, request: _I) -> _O:
+    async def send(self, request: _I_contra) -> _O_co:
         """Send a request over the transport and receive the response."""
         ...
 
 
-class AsyncDuplexClientTransport(AsyncClientTransport[_I, _O], Protocol[_I, _O]):
+class AsyncDuplexClientTransport(
+    AsyncClientTransport[_I_contra, _O_co], Protocol[_I_contra, _O_co]
+):
     """A client transport that supports duplex (bidirectional) event streaming.
 
     Duplex transports can read response data while the request body is still being
@@ -102,7 +106,7 @@ class AsyncDuplexClientTransport(AsyncClientTransport[_I, _O], Protocol[_I, _O])
 
 
 @runtime_checkable
-class AsyncClientProtocol(ClientProtocol[_I, _O], Protocol[_I, _O]):
+class AsyncClientProtocol(ClientProtocol[_I, _O_contra], Protocol[_I, _O_contra]):
     """A client protocol that also supports event streams for async clients."""
 
     async def create_event_publisher(
@@ -129,7 +133,7 @@ class AsyncClientProtocol(ClientProtocol[_I, _O], Protocol[_I, _O]):
         *,
         operation: "APIOperation[_OperationInput, _OperationOutput]",
         request: _I,
-        response: _O,
+        response: _O_contra,
         event_type: "TypeForm[_OE]",
         event_deserializer: Callable[["ShapeDeserializer"], _OE],
         context: TypedProperties,

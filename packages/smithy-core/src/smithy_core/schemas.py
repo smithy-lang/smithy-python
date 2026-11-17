@@ -1,6 +1,5 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from functools import cached_property
@@ -13,6 +12,7 @@ from typing import (
     Required,
     Self,
     TypedDict,
+    TypeVar,
     overload,
 )
 
@@ -27,12 +27,6 @@ from .traits import (
     Trait,
 )
 
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
-
 if TYPE_CHECKING:
     from ._schema_compact import StaticOperationSchema
     from .deserializers import DeserializeableShape
@@ -42,9 +36,10 @@ if TYPE_CHECKING:
 
 __all__ = ["APIOperation", "MemberSchema", "Schema", "SchemaExtension"]
 
-_I = TypeVar("_I", bound="SerializeableShape", infer_variance=True)
-_O = TypeVar("_O", bound="DeserializeableShape", infer_variance=True)
-_T = TypeVar("_T", infer_variance=True)
+_I_co = TypeVar("_I_co", bound="SerializeableShape", covariant=True)
+_O_co = TypeVar("_O_co", bound="DeserializeableShape", covariant=True)
+_T = TypeVar("_T")
+_T_co = TypeVar("_T_co", covariant=True)
 _TraitT = TypeVar("_TraitT", bound=Trait)
 
 
@@ -371,10 +366,10 @@ _EMPTY_SCHEMA_EXTENSIONS: tuple[Any, ...] = ()
 
 
 @dataclass(frozen=True, slots=True, eq=False)
-class SchemaExtension(Generic[_T]):
+class SchemaExtension(Generic[_T_co]):
     """An integer-indexed provider of lazily cached schema metadata."""
 
-    provider: Callable[[Schema], _T]
+    provider: Callable[[Schema], _T_co]
     """Build the extension value for a schema."""
 
     id: int = field(init=False)
@@ -398,7 +393,7 @@ class MemberSchema(TypedDict):
 
 
 @dataclass(kw_only=True, frozen=True)
-class APIOperation(Generic[_I, _O]):
+class APIOperation(Generic[_I_co, _O_co]):
     """A modeled Smithy operation.
 
     Input, output, and error types are resolved lazily from ``static_schema`` via
@@ -439,12 +434,12 @@ class APIOperation(Generic[_I, _O]):
     """
 
     @cached_property
-    def input(self) -> type[_I]:
+    def input(self) -> type[_I_co]:
         """The input type of the operation (built on first access)."""
         return self._build(self.input_schema.id)
 
     @cached_property
-    def output(self) -> type[_O]:
+    def output(self) -> type[_O_co]:
         """The output type of the operation (built on first access)."""
         return self._build(self.output_schema.id)
 

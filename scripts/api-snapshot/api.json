@@ -442,7 +442,6 @@
   },
   "smithy_core.documents": {
     "Document": "class",
-    "DocumentValue": "type_alias",
     "TypeRegistry": "class"
   },
   "smithy_core.endpoints": {},
@@ -666,7 +665,6 @@
     "XMLNamespaceTrait": "class"
   },
   "smithy_core.types": {
-    "Document": "type_alias",
     "JsonBlob": "class",
     "JsonString": "class",
     "PathPattern": "class",

@@ -4,11 +4,10 @@
 
 from __future__ import annotations
 
-import sys
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Generic, Protocol
+from typing import Generic, Protocol, TypeVar
 
 from . import dependencies as _dependencies
 from . import files as _files
@@ -16,12 +15,6 @@ from . import model as _model
 from . import schemas as _schemas
 from . import selection as _selection
 from . import symbols as _symbols
-
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
 
 __all__ = [
     "ArtifactGenerator",
@@ -35,7 +28,10 @@ __all__ = [
     "TypesSettings",
 ]
 
-_SettingsT = TypeVar("_SettingsT", bound="ArtifactSettings", infer_variance=True)
+_SettingsT_co = TypeVar("_SettingsT_co", bound="ArtifactSettings", covariant=True)
+_SettingsT_contra = TypeVar(
+    "_SettingsT_contra", bound="ArtifactSettings", contravariant=True
+)
 
 
 _SERVICE_ERROR = "ServiceError"
@@ -219,12 +215,12 @@ class GenerationPlan:
 
 
 @dataclass(frozen=True, slots=True)
-class GenerationContext(Generic[_SettingsT]):
+class GenerationContext(Generic[_SettingsT_co]):
     """State shared by one artifact generation."""
 
     model: _model.Model
     selection: _selection.Selection
-    settings: _SettingsT
+    settings: _SettingsT_co
     symbols: _symbols.SymbolProvider
     plan: GenerationPlan
     dependencies: _dependencies.DependencySet
@@ -237,9 +233,9 @@ class GenerationContext(Generic[_SettingsT]):
             )
 
 
-class ArtifactGenerator(Protocol[_SettingsT]):
+class ArtifactGenerator(Protocol[_SettingsT_contra]):
     """Generate one artifact into the context's file manifest."""
 
-    def generate(self, context: GenerationContext[_SettingsT]) -> None:
+    def generate(self, context: GenerationContext[_SettingsT_contra]) -> None:
         """Register every generated file and dependency."""
         ...

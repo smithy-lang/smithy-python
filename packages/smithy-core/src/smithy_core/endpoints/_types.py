@@ -7,7 +7,7 @@ carry them."""
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Final, Generic, NamedTuple, Protocol
+from typing import Any, Final, Generic, NamedTuple, Protocol, TypeVar
 
 from .. import URI
 from ..interfaces import Endpoint as _Endpoint
@@ -19,12 +19,12 @@ from ..shapes import ShapeID
 from ..types import PropertyKey, TypedProperties
 
 if sys.version_info >= (3, 12):
-    from typing import TypeAliasType, TypeVar
+    from typing import TypeAliasType
 else:
-    from typing_extensions import TypeAliasType, TypeVar
+    from typing_extensions import TypeAliasType
 
 
-_I = TypeVar("_I", bound=SerializeableShape, infer_variance=True)
+_I = TypeVar("_I", bound=SerializeableShape)
 
 
 @dataclass(slots=True)

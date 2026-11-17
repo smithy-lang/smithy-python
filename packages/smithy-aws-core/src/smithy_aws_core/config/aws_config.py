@@ -1,6 +1,5 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import sys
 from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
@@ -13,18 +12,13 @@ from typing import (
     Self,
     TypeAlias,
     TypedDict,
+    TypeVar,
     Unpack,
     cast,
 )
 
 from smithy_core.program import Program, run_program
 from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
-
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
 
 if TYPE_CHECKING:
     from smithy_core.interfaces import ClientTransport, URI
@@ -61,9 +55,9 @@ from .validators import (
     validate_sdk_ua_app_id,
 )
 
-_TContext = TypeVar("_TContext", infer_variance=True)
-_TCredentialsResolver = TypeVar("_TCredentialsResolver", infer_variance=True)
-_TTransport = TypeVar("_TTransport", infer_variance=True)
+_TContext_co = TypeVar("_TContext_co", covariant=True)
+_TCredentialsResolver = TypeVar("_TCredentialsResolver")
+_TTransport = TypeVar("_TTransport")
 
 __all__ = [
     "AwsConfig",
@@ -401,7 +395,7 @@ class AwsConfigOverrides(
 
 @dataclass(kw_only=True, init=False, repr=False)
 class _AwsConfigFields(
-    _AwsConfigBase, Generic[_TTransport, _TCredentialsResolver, _TContext]
+    _AwsConfigBase, Generic[_TTransport, _TCredentialsResolver, _TContext_co]
 ):
     """The fields shared by the sync and async AWS configs."""
 
@@ -472,7 +466,7 @@ class _AwsConfigFields(
     """The retry strategy or options for configuring retry behavior.
     """
 
-    _ctx: _TContext | None = field(default=None, repr=False, compare=False)
+    _ctx: _TContext_co | None = field(default=None, repr=False, compare=False)
     _sources: dict[str, ConfigSource] = field(  # type: ignore[assignment]
         default_factory=dict,
         repr=False,
@@ -481,7 +475,7 @@ class _AwsConfigFields(
 
     _FIELDS: ClassVar[dict[str, FieldSpec]] = _BASE_FIELDS
 
-    def resolution_context(self) -> _TContext | None:
+    def resolution_context(self) -> _TContext_co | None:
         """Get the resolution context used to create this config.
 
         :returns: The resolution context, or None if not available.

@@ -5,7 +5,7 @@ import sys
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from decimal import Decimal
-from typing import TypeAlias, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, TypeAlias, TypeGuard, TypeVar
 
 from .deserializers import DeserializeableShape, ShapeDeserializer
 from .exceptions import DiscriminatorError, ExpectationNotMetError, SmithyError
@@ -20,9 +20,9 @@ from .shapes import ShapeID, ShapeType
 from .utils import expect_type
 
 if sys.version_info >= (3, 12):
-    from typing import override
+    from typing import TypeAliasType, override
 else:
-    from typing_extensions import override
+    from typing_extensions import TypeAliasType, override
 
 
 __all__ = ["Document", "DocumentValue", "TypeRegistry"]
@@ -33,19 +33,37 @@ _S = TypeVar("_S", bound=DeserializeableShape)
 _DOCUMENT = Schema(id=ShapeID("smithy.api#Document"), shape_type=ShapeType.DOCUMENT)
 
 
-DocumentValue: TypeAlias = (
-    Mapping[str, "DocumentValue"]
-    | Sequence["DocumentValue"]
-    | str
-    | int
-    | float
-    | Decimal
-    | bool
-    | None
-    | bytes
-    | datetime.datetime
-)
-"""Protocol-agnostic open content."""
+# Type checkers read the recursive TypeAlias; at runtime the alias is a named
+# TypeAliasType, so annotations that use it resolve without the caller's globals.
+# Keep both values identical.
+if TYPE_CHECKING:
+    DocumentValue: TypeAlias = (
+        Mapping[str, "DocumentValue"]
+        | Sequence["DocumentValue"]
+        | str
+        | int
+        | float
+        | Decimal
+        | bool
+        | None
+        | bytes
+        | datetime.datetime
+    )
+    """Protocol-agnostic open content."""
+else:
+    DocumentValue = TypeAliasType(
+        "DocumentValue",
+        Mapping[str, "DocumentValue"]
+        | Sequence["DocumentValue"]
+        | str
+        | int
+        | float
+        | Decimal
+        | bool
+        | None
+        | bytes
+        | datetime.datetime,
+    )
 
 
 _InnerDocumentValue: TypeAlias = (

@@ -1,9 +1,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Generic
+from typing import Any, Generic, TypeVar
 
 from .deserializers import DeserializeableShape
 from .interfaces import TypedProperties as _TypedProperties
@@ -13,12 +12,6 @@ from .serializers import SerializeableShape
 from .shapes import ShapeID
 from .types import PropertyKey, TypedProperties
 
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
-
 __all__ = [
     "RESOLVED_IDENTITY",
     "AuthOption",
@@ -27,8 +20,8 @@ __all__ = [
     "NoAuthResolver",
 ]
 
-_I = TypeVar("_I", bound=SerializeableShape, infer_variance=True)
-_O = TypeVar("_O", bound=DeserializeableShape, infer_variance=True)
+_I_co = TypeVar("_I_co", bound=SerializeableShape, covariant=True)
+_O_co = TypeVar("_O_co", bound=DeserializeableShape, covariant=True)
 
 
 RESOLVED_IDENTITY: PropertyKey[_Identity] = PropertyKey(
@@ -38,13 +31,13 @@ RESOLVED_IDENTITY: PropertyKey[_Identity] = PropertyKey(
 
 
 @dataclass(kw_only=True, frozen=True)
-class AuthParams(Generic[_I, _O]):
+class AuthParams(Generic[_I_co, _O_co]):
     """Parameters passed to an AuthSchemeResolver's ``resolve_auth_scheme`` method."""
 
     protocol_id: ShapeID
     """The ID of the protocol being used for the operation invocation."""
 
-    operation: APIOperation[_I, _O] = field(repr=False)
+    operation: APIOperation[_I_co, _O_co] = field(repr=False)
     """The schema and associated information about the operation being invoked."""
 
     context: _TypedProperties

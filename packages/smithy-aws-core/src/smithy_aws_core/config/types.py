@@ -6,12 +6,12 @@ import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Generic, Literal
+from typing import Any, Generic, Literal, TypeVar
 
 if sys.version_info >= (3, 12):
-    from typing import TypeAliasType, TypeVar
+    from typing import TypeAliasType
 else:
-    from typing_extensions import TypeAliasType, TypeVar
+    from typing_extensions import TypeAliasType
 
 
 __all__ = [
@@ -23,7 +23,7 @@ __all__ = [
     "ResponseChecksumValidation",
 ]
 
-_T = TypeVar("_T", infer_variance=True)
+_T_co = TypeVar("_T_co", covariant=True)
 
 
 class _UnsetType:
@@ -48,10 +48,10 @@ class ConfigSource(StrEnum):
 
 
 @dataclass(frozen=True, kw_only=True)
-class Resolved(Generic[_T]):
+class Resolved(Generic[_T_co]):
     """A resolved config value paired with its provenance source."""
 
-    value: _T
+    value: _T_co
     source: ConfigSource
 
 

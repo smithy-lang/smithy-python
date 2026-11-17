@@ -1,12 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import logging
-import sys
 import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, ClassVar, Generic, Self
+from typing import Any, ClassVar, Generic, Self, TypeVar
 
 from ._client import OPERATION
 from ._client import ClientBase as _ClientBase
@@ -29,19 +28,13 @@ from .shapes import ShapeID
 from .types import PropertyKey
 from .utils import read_streaming_blob
 
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
-
 __all__ = ["AUTH_SCHEME", "OPERATION", "Client", "ClientCall", "RequestPipeline"]
 
-_C = TypeVar("_C", infer_variance=True)
-_I = TypeVar("_I", bound=SerializeableShape, infer_variance=True)
-_O = TypeVar("_O", bound=DeserializeableShape, infer_variance=True)
-_TRequest = TypeVar("_TRequest", infer_variance=True)
-_TResponse = TypeVar("_TResponse", infer_variance=True)
+_C = TypeVar("_C")
+_I = TypeVar("_I", bound=SerializeableShape)
+_O = TypeVar("_O", bound=DeserializeableShape)
+_TRequest = TypeVar("_TRequest")
+_TResponse = TypeVar("_TResponse")
 
 
 AUTH_SCHEME = PropertyKey(key="auth_scheme", value_type=AuthScheme[Any, Any, Any, Any])

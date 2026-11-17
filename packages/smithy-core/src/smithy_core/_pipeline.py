@@ -8,13 +8,12 @@ the few hooks below.
 """
 
 import logging
-import sys
 import uuid
 from collections.abc import Mapping, Sequence
 from copy import copy
 from dataclasses import replace
 from functools import partial
-from typing import Any, ClassVar, Generic, Protocol
+from typing import Any, ClassVar, Generic, Protocol, TypeVar
 
 from . import URI
 from .auth import RESOLVED_IDENTITY, AuthParams
@@ -52,18 +51,12 @@ from .serializers import SerializeableShape
 from .shapes import ShapeID, ShapeType
 from .types import PropertyKey
 
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
-
 __all__ = ["AUTH_SCHEME", "CallLike", "RequestPipelineBase", "is_retryable"]
 
-_I = TypeVar("_I", bound=SerializeableShape, infer_variance=True)
-_O = TypeVar("_O", bound=DeserializeableShape, infer_variance=True)
-_TRequest = TypeVar("_TRequest", infer_variance=True)
-_TResponse = TypeVar("_TResponse", infer_variance=True)
+_I = TypeVar("_I", bound=SerializeableShape)
+_O = TypeVar("_O", bound=DeserializeableShape)
+_TRequest = TypeVar("_TRequest")
+_TResponse = TypeVar("_TResponse")
 
 
 AUTH_SCHEME = PropertyKey(key="auth_scheme", value_type=object)

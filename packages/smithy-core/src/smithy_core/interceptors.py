@@ -1,20 +1,13 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import logging
-import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
-from typing import Any, Generic
+from typing import Any, Generic, TypeVar
 
 from .deserializers import DeserializeableShape
 from .interfaces import TypedProperties
 from .serializers import SerializeableShape
-
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
 
 __all__ = [
     "AnyInterceptor",
@@ -27,20 +20,24 @@ __all__ = [
 ]
 
 _C = TypeVar("_C", bound="OutputContext[Any, Any, Any, Any]")
-_Request = TypeVar("_Request", bound=SerializeableShape, infer_variance=True)
-_Response = TypeVar("_Response", bound=DeserializeableShape, infer_variance=True)
-_TransportRequest = TypeVar("_TransportRequest", infer_variance=True)
-_TransportResponse = TypeVar("_TransportResponse", infer_variance=True)
+_Request = TypeVar("_Request", bound=SerializeableShape)
+_Request_co = TypeVar("_Request_co", bound=SerializeableShape, covariant=True)
+_Response = TypeVar("_Response", bound=DeserializeableShape)
+_Response_co = TypeVar("_Response_co", bound=DeserializeableShape, covariant=True)
+_TransportRequest = TypeVar("_TransportRequest")
+_TransportRequest_co = TypeVar("_TransportRequest_co", covariant=True)
+_TransportResponse = TypeVar("_TransportResponse")
+_TransportResponse_co = TypeVar("_TransportResponse_co", covariant=True)
 
 
 _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
-class InputContext(Generic[_Request]):
+class InputContext(Generic[_Request_co]):
     """Context available before the request is serialized."""
 
-    request: _Request
+    request: _Request_co
     """The modeled request for the operation being invoked."""
 
     properties: TypedProperties
@@ -48,32 +45,34 @@ class InputContext(Generic[_Request]):
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
-class RequestContext(InputContext[_Request], Generic[_Request, _TransportRequest]):
+class RequestContext(
+    InputContext[_Request_co], Generic[_Request_co, _TransportRequest_co]
+):
     """Context available once the transport request exists."""
 
-    transport_request: _TransportRequest
+    transport_request: _TransportRequest_co
     """The transmittable request for the operation being invoked."""
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
 class ResponseContext(
-    RequestContext[_Request, _TransportRequest],
-    Generic[_Request, _TransportRequest, _TransportResponse],
+    RequestContext[_Request_co, _TransportRequest_co],
+    Generic[_Request_co, _TransportRequest_co, _TransportResponse_co],
 ):
     """Context available once the transport response has arrived."""
 
-    transport_response: _TransportResponse
+    transport_response: _TransportResponse_co
     """The transmitted response for the operation being invoked."""
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
 class OutputContext(
-    ResponseContext[_Request, _TransportRequest, _TransportResponse],
-    Generic[_Request, _Response, _TransportRequest, _TransportResponse],
+    ResponseContext[_Request_co, _TransportRequest_co, _TransportResponse_co],
+    Generic[_Request_co, _Response_co, _TransportRequest_co, _TransportResponse_co],
 ):
     """Context available once the response has been deserialized."""
 
-    response: _Response | Exception
+    response: _Response_co | Exception
     """The modeled response for the operation being invoked."""
 
 

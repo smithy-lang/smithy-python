@@ -1,25 +1,18 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Generic
+from typing import Any, Generic, TypeVar
 
 from smithy_core.interfaces.auth import EventSigner
 from smithy_core.interfaces.identity import Identity
 
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
-
 __all__ = ["SigningConfig"]
 
-_I = TypeVar("_I", bound=Identity, infer_variance=True)
-_IP = TypeVar("_IP", bound=Mapping[str, Any], infer_variance=True)
-_R = TypeVar("_R", infer_variance=True)
-_SP = TypeVar("_SP", bound=Mapping[str, Any], infer_variance=True)
+_I = TypeVar("_I", bound=Identity)
+_IP = TypeVar("_IP", bound=Mapping[str, Any])
+_R = TypeVar("_R")
+_SP = TypeVar("_SP", bound=Mapping[str, Any])
 
 
 @dataclass

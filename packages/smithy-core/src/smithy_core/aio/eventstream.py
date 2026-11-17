@@ -1,18 +1,11 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import sys
 from asyncio import Future
-from typing import Any, Generic, Self
+from typing import Any, Generic, Self, TypeVar
 
 from ..deserializers import DeserializeableShape
 from ..serializers import SerializeableShape
 from .interfaces.eventstream import AsyncEventPublisher, AsyncEventReceiver
-
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
 
 __all__ = [
     "AsyncDuplexEventStream",
@@ -20,10 +13,10 @@ __all__ = [
     "AsyncOutputEventStream",
 ]
 
-_IE = TypeVar("_IE", bound=SerializeableShape, infer_variance=True)
-_O = TypeVar("_O", bound=DeserializeableShape, infer_variance=True)
-_Output = TypeVar("_Output", infer_variance=True)
-_OE = TypeVar("_OE", bound=DeserializeableShape, infer_variance=True)
+_IE = TypeVar("_IE", bound=SerializeableShape)
+_O = TypeVar("_O", bound=DeserializeableShape)
+_Output = TypeVar("_Output")
+_OE = TypeVar("_OE", bound=DeserializeableShape)
 
 
 class AsyncDuplexEventStream(Generic[_IE, _OE, _O]):

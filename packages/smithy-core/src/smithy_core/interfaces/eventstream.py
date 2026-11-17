@@ -1,24 +1,17 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import sys
-from typing import Any, Protocol, Self
+from typing import Any, Protocol, Self, TypeVar
 
 from ..deserializers import DeserializeableShape
 from ..serializers import SerializeableShape
 
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
-
 __all__ = ["EventPublisher", "EventReceiver"]
 
-_IE = TypeVar("_IE", bound=SerializeableShape, infer_variance=True)
-_OE = TypeVar("_OE", bound=DeserializeableShape, infer_variance=True)
+_IE_contra = TypeVar("_IE_contra", bound=SerializeableShape, contravariant=True)
+_OE_co = TypeVar("_OE_co", bound=DeserializeableShape, covariant=True)
 
 
-class EventPublisher(Protocol[_IE]):
+class EventPublisher(Protocol[_IE_contra]):
     """Sends events to a service.
 
     This may be used as a context manager to ensure the stream is closed before exiting.
@@ -30,7 +23,7 @@ class EventPublisher(Protocol[_IE]):
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.close()
 
-    def send(self, event: _IE) -> None:
+    def send(self, event: _IE_contra) -> None:
         """Sends an event to the service.
 
         :param event: The event to send.
@@ -42,7 +35,7 @@ class EventPublisher(Protocol[_IE]):
         ...
 
 
-class EventReceiver(Protocol[_OE]):
+class EventReceiver(Protocol[_OE_co]):
     """Receives events from a service.
 
     Events may be received via the ``receive`` method or by using this class as an
@@ -50,7 +43,7 @@ class EventReceiver(Protocol[_OE]):
     before exiting.
     """
 
-    def __next__(self) -> _OE:
+    def __next__(self) -> _OE_co:
         result = self.receive()
         if result is None:
             self.close()
@@ -66,7 +59,7 @@ class EventReceiver(Protocol[_OE]):
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.close()
 
-    def receive(self) -> _OE | None:
+    def receive(self) -> _OE_co | None:
         """Receive a single event from the service.
 
         :returns: An event or None. None indicates that no more events will be sent by

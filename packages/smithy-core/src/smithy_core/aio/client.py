@@ -3,10 +3,9 @@
 import asyncio
 import contextlib
 import logging
-import sys
 from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Self, TypeVar
 
 from smithy_core.interfaces import ClientProtocol, Request, Response
 
@@ -37,24 +36,18 @@ from .interfaces.eventstream import AsyncEventReceiver
 from .program import run_program_async
 from .utils import read_streaming_blob_async
 
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
-
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
     from .interfaces.eventstream import AsyncEventPublisher
 
-_C = TypeVar("_C", infer_variance=True)
+_C = TypeVar("_C")
 _I = TypeVar("_I", bound=SerializeableShape)
 _IE = TypeVar("_IE", bound=SerializeableShape)
 _O = TypeVar("_O", bound=DeserializeableShape)
 _OE = TypeVar("_OE", bound=DeserializeableShape)
-_TRequest = TypeVar("_TRequest", bound=Request, infer_variance=True)
-_TResponse = TypeVar("_TResponse", bound=Response, infer_variance=True)
+_TRequest = TypeVar("_TRequest", bound=Request)
+_TResponse = TypeVar("_TResponse", bound=Response)
 
 
 AUTH_SCHEME = PropertyKey(

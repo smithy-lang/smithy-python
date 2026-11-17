@@ -1,37 +1,33 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import logging
-import sys
 import threading
 from collections.abc import Callable, Mapping, Sequence
 from functools import partial
-from typing import Any, Final, Generic
+from typing import Any, Final, Generic, TypeVar
 
 from .exceptions import SmithyIdentityError
 from .interfaces.identity import Identity, IdentityResolver
 from .program import Program, run_program
 
-if sys.version_info >= (3, 12):
-    from typing import TypeVar
-else:
-    from typing_extensions import TypeVar
-
-
 __all__ = ["CachingIdentityResolver", "ChainedIdentityResolver"]
 
-_I = TypeVar("_I", bound=Identity, infer_variance=True)
+_I = TypeVar("_I", bound=Identity)
+_I_co = TypeVar("_I_co", bound=Identity, covariant=True)
 _ChainIdentity = TypeVar("_ChainIdentity")
-_IP = TypeVar("_IP", bound=Mapping[str, Any], infer_variance=True)
+_IP_contra = TypeVar("_IP_contra", bound=Mapping[str, Any], contravariant=True)
 
 
 logger: Final = logging.getLogger(__name__)
 
 
-class CachingIdentityResolver(IdentityResolver[_I, _IP], Generic[_I, _IP]):
+class CachingIdentityResolver(
+    IdentityResolver[_I_co, _IP_contra], Generic[_I_co, _IP_contra]
+):
     """An identity resolver that caches an identity until it expires."""
 
     def __init__(self) -> None:
-        self._cached: _I | None = None
+        self._cached: _I_co | None = None
         self._lock = threading.Lock()
 
     def __getstate__(self) -> dict[str, Any]:
@@ -44,7 +40,7 @@ class CachingIdentityResolver(IdentityResolver[_I, _IP], Generic[_I, _IP]):
         self.__dict__.update(state)
         self._lock = threading.Lock()
 
-    def get_identity(self, *, properties: _IP) -> _I:
+    def get_identity(self, *, properties: _IP_contra) -> _I_co:
         cached = self._cached
         if cached is not None and not cached.is_expired:
             return cached
@@ -60,18 +56,22 @@ class CachingIdentityResolver(IdentityResolver[_I, _IP], Generic[_I, _IP]):
         """Discard the cached identity so the next resolution re-reads its source."""
         self._cached = None
 
-    def _get_identity(self, *, properties: _IP) -> _I:
+    def _get_identity(self, *, properties: _IP_contra) -> _I_co:
         raise NotImplementedError
 
 
-class ChainedIdentityResolver(CachingIdentityResolver[_I, _IP], Generic[_I, _IP]):
+class ChainedIdentityResolver(
+    CachingIdentityResolver[_I_co, _IP_contra], Generic[_I_co, _IP_contra]
+):
     """Attempts to resolve an identity by checking a sequence of sub-resolvers.
 
     If a nested resolver raises a :py:class:`SmithyIdentityError`, the next resolver in
     the chain will be attempted.
     """
 
-    def __init__(self, resolvers: Sequence[IdentityResolver[_I, _IP]]) -> None:
+    def __init__(
+        self, resolvers: Sequence[IdentityResolver[_I_co, _IP_contra]]
+    ) -> None:
         """Construct a ChainedIdentityResolver.
 
         :param resolvers: The sequence of resolvers to resolve identity from.
@@ -84,7 +84,7 @@ class ChainedIdentityResolver(CachingIdentityResolver[_I, _IP], Generic[_I, _IP]
         super().invalidate()
         run_program(_invalidate_all(self._resolvers))
 
-    def _get_identity(self, *, properties: _IP) -> _I:
+    def _get_identity(self, *, properties: _IP_contra) -> _I_co:
         return run_program(_resolve_from_chain(self._resolvers, properties))
 
 

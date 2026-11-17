@@ -4,23 +4,44 @@
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Final, TypeAlias
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 from ._shape_id import PRELUDE_NAMESPACE, ShapeId, as_shape_id
 
-Node: TypeAlias = (
-    None | bool | int | float | str | tuple["Node", ...] | Mapping[str, "Node"]
-)
-"""A deeply immutable JSON value: arrays are tuples, objects read-only mappings."""
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
 
-JsonValue: TypeAlias = (
-    None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
-)
-"""A mutable JSON value, as produced by :func:`to_json`."""
+# Type checkers read the recursive TypeAliases; at runtime each alias is a named
+# TypeAliasType, so annotations that use it resolve without the caller's globals.
+# Keep both values of each alias identical.
+if TYPE_CHECKING:
+    Node: TypeAlias = (
+        None | bool | int | float | str | tuple["Node", ...] | Mapping[str, "Node"]
+    )
+    """A deeply immutable JSON value: arrays are tuples, objects read-only mappings."""
+else:
+    Node = TypeAliasType(
+        "Node",
+        None | bool | int | float | str | tuple["Node", ...] | Mapping[str, "Node"],
+    )
+
+if TYPE_CHECKING:
+    JsonValue: TypeAlias = (
+        None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
+    )
+    """A mutable JSON value, as produced by :func:`to_json`."""
+else:
+    JsonValue = TypeAliasType(
+        "JsonValue",
+        None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"],
+    )
 
 
 def to_json(node: Node) -> JsonValue:
