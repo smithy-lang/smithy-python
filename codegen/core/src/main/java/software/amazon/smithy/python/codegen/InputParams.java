@@ -21,6 +21,7 @@ import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.ToShapeId;
+import software.amazon.smithy.model.traits.ClientOptionalTrait;
 import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.IdempotencyTokenTrait;
 import software.amazon.smithy.model.traits.RequiredTrait;
@@ -222,9 +223,9 @@ public final class InputParams {
      * Whether a member must be set by the caller.
      *
      * <p>Unlike the generated models, which follow Smithy in keeping members of
-     * input structures and {@code @clientOptional} members optional, keyword inputs
-     * enforce {@code @required}. A member with a default may be omitted, and so may
-     * an operation's idempotency token, which the client fills in.
+     * input structures optional, keyword inputs enforce {@code @required}. A member
+     * with a default or {@code @clientOptional} may be omitted, as it may be from a
+     * model, and so may an operation's idempotency token, which the client fills in.
      *
      * <p>CAUTION: smithy_core._dynamic_models.ModelRegistry enforces the same rule
      * at runtime.
@@ -234,7 +235,8 @@ public final class InputParams {
      */
     public boolean mustBeSet(MemberShape member) {
         if (!member.hasTrait(RequiredTrait.class)
-                || member.getMemberTrait(model, DefaultTrait.class).isPresent()) {
+                || member.getMemberTrait(model, DefaultTrait.class).isPresent()
+                || member.hasTrait(ClientOptionalTrait.class)) {
             return false;
         }
         return !(member.getMemberTrait(model, IdempotencyTokenTrait.class).isPresent()

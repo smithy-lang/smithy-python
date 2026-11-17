@@ -177,6 +177,26 @@ def test_required_member_with_a_default_may_be_omitted() -> None:
     assert built.page_size == 25
 
 
+def test_required_client_optional_member_may_be_omitted() -> None:
+    # A client treats @required @clientOptional members as optional, in keyword
+    # inputs as in models. Nested structures follow the same rule.
+    client_optional = {_REQUIRED: None, "smithy.api#clientOptional": None}
+    account = _struct(
+        "Account", ("Uid", STRING, client_optional), ("Name", STRING, REQUIRED)
+    )
+    schema = _input(
+        "CreateInput", ("Uid", STRING, client_optional), ("Account", account)
+    )
+    registry = _registry(CREATE_INPUT=schema, ACCOUNT=account)
+
+    built = _build(schema, registry, account={"name": "n"})
+
+    assert built.uid is None
+    assert built.account.uid is None
+    with pytest.raises(TypeError, match=r"at account: missing required member 'name'"):
+        _build(schema, registry, account={"uid": "u"})
+
+
 @pytest.mark.parametrize(
     "members", [{}, {"client_token": None}], ids=["omitted", "none"]
 )

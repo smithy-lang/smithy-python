@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Generated input dictionary forms no longer mark `@required` members with `@clientOptional` as `Required`."
+}
