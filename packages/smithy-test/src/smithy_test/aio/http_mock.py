@@ -7,7 +7,7 @@ from collections.abc import Callable
 from copy import copy
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Any, Self
+from typing import Any, Self, TypeVar
 
 from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.types import AsyncBytesProvider
@@ -22,8 +22,10 @@ from ..http_mock import HTTPMockController, HTTPMockError
 
 __all__ = ["AsyncHTTPMockController", "mock_async"]
 
+_C = TypeVar("_C")
 
-async def mock_async[C](client: AsyncClient[C]) -> "AsyncHTTPMockController":
+
+async def mock_async(client: AsyncClient[_C]) -> "AsyncHTTPMockController":
     """Take over a client so its requests are matched and answered, never sent.
 
     :raises TypeError: If the client isn't an async client this mock can take over.

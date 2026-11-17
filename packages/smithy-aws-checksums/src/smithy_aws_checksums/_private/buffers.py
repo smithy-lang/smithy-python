@@ -1,6 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import Buffer
+import sys
+
+if sys.version_info >= (3, 12):
+    from collections.abc import Buffer
+else:
+    from typing_extensions import Buffer
 
 
 def as_byte_view(data: Buffer) -> bytes | bytearray | memoryview:

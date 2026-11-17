@@ -3,7 +3,7 @@
 from asyncio import iscoroutine, sleep
 from collections.abc import AsyncIterable, Iterable
 from inspect import isawaitable
-from typing import Any
+from typing import Any, TypeVar
 
 from .._pipeline import _seek  # pyright: ignore[reportPrivateUsage]
 from ..utils import read_streaming_blob
@@ -17,8 +17,10 @@ __all__ = [
     "seek_async",
 ]
 
+_E = TypeVar("_E")
 
-async def list_async[E](lst: Iterable[E]) -> AsyncIterable[E]:
+
+async def list_async(lst: Iterable[_E]) -> AsyncIterable[_E]:
     """Turn an Iterable into an AsyncIterable."""
     for x in lst:
         await sleep(0)

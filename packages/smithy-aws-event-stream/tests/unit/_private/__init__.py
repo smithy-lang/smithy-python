@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import datetime
 from dataclasses import dataclass
-from typing import Any, ClassVar, Literal, Self
+from typing import Any, ClassVar, Literal, Self, TypeAlias
 
 from smithy_aws_event_stream.events import Byte, EventMessage, Long, Short
 from smithy_core.deserializers import ShapeDeserializer
@@ -391,7 +391,7 @@ class EventStreamUnknown:
         raise SmithyError("Unknown union variants may not be serialized.")
 
 
-type EventStream = (
+EventStream: TypeAlias = (
     EventStreamMessageEvent
     | EventStreamPayloadEvent
     | EventStreamBlobPayloadEvent

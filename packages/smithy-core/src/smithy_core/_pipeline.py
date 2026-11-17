@@ -8,12 +8,13 @@ the few hooks below.
 """
 
 import logging
+import sys
 import uuid
 from collections.abc import Mapping, Sequence
 from copy import copy
 from dataclasses import replace
 from functools import partial
-from typing import Any, ClassVar, Protocol
+from typing import Any, ClassVar, Generic, Protocol
 
 from . import URI
 from .auth import RESOLVED_IDENTITY, AuthParams
@@ -51,7 +52,19 @@ from .serializers import SerializeableShape
 from .shapes import ShapeID, ShapeType
 from .types import PropertyKey
 
+if sys.version_info >= (3, 12):
+    from typing import TypeVar
+else:
+    from typing_extensions import TypeVar
+
+
 __all__ = ["AUTH_SCHEME", "CallLike", "RequestPipelineBase", "is_retryable"]
+
+_I = TypeVar("_I", bound=SerializeableShape, infer_variance=True)
+_O = TypeVar("_O", bound=DeserializeableShape, infer_variance=True)
+_TRequest = TypeVar("_TRequest", infer_variance=True)
+_TResponse = TypeVar("_TResponse", infer_variance=True)
+
 
 AUTH_SCHEME = PropertyKey(key="auth_scheme", value_type=object)
 """The auth scheme selected for a call. Exposed with a mode-specific type by each
@@ -60,17 +73,17 @@ client module."""
 _UNRESOLVED = URI(host="", path="/")
 
 
-class CallLike[I: SerializeableShape, O: DeserializeableShape](Protocol):
+class CallLike(Protocol[_I, _O]):
     """The fields of a client call that the shared pipeline reads."""
 
     @property
-    def input(self) -> I: ...
+    def input(self) -> _I: ...
     @property
-    def operation(self) -> APIOperation[I, O]: ...
+    def operation(self) -> APIOperation[_I, _O]: ...
     @property
     def context(self) -> TypedProperties: ...
     @property
-    def interceptor(self) -> Interceptor[I, O, Any, Any]: ...
+    def interceptor(self) -> Interceptor[_I, _O, Any, Any]: ...
     @property
     def auth_scheme_resolver(self) -> AuthSchemeResolver: ...
     @property
@@ -94,7 +107,7 @@ def is_retryable(operation: APIOperation[Any, Any]) -> bool:
     return member is None or member.shape_type is not ShapeType.UNION
 
 
-class RequestPipelineBase[TRequest, TResponse]:
+class RequestPipelineBase(Generic[_TRequest, _TResponse]):
     """Mode-neutral request pipeline.
 
     Subclasses supply the protocol and transport and implement the hooks that
@@ -115,7 +128,7 @@ class RequestPipelineBase[TRequest, TResponse]:
         raise NotImplementedError
 
     def _transmit(
-        self, request_context: RequestContext[Any, TRequest], request_future: Any
+        self, request_context: RequestContext[Any, _TRequest], request_future: Any
     ) -> Any:
         """Effect: send a request over the transport."""
         raise NotImplementedError
@@ -123,9 +136,9 @@ class RequestPipelineBase[TRequest, TResponse]:
     def _fail_request_future(self, request_future: Any, error: Exception) -> None:
         """Report a failure that happened before the request was sent."""
 
-    def _execute[I: SerializeableShape, O: DeserializeableShape](
-        self, call: CallLike[I, O], request_future: Any
-    ) -> Program[tuple[O, OutputContext[I, O, TRequest, TResponse]]]:
+    def _execute(
+        self, call: CallLike[_I, _O], request_future: Any
+    ) -> Program[tuple[_O, OutputContext[_I, _O, _TRequest, _TResponse]]]:
         self._logger.debug(
             'Making request for operation "%s" with parameters: %s',
             call.operation.schema.id.name,
@@ -147,9 +160,9 @@ class RequestPipelineBase[TRequest, TResponse]:
 
         return output_context.response, output_context  # type: ignore
 
-    def _attach_response_metadata[I: SerializeableShape, O: DeserializeableShape](
+    def _attach_response_metadata(
         self,
-        output_context: OutputContext[I, O, TRequest | None, TResponse | None],
+        output_context: OutputContext[_I, _O, _TRequest | None, _TResponse | None],
     ) -> None:
         """Attach metadata about the transport response to the result or error.
 
@@ -183,9 +196,9 @@ class RequestPipelineBase[TRequest, TResponse]:
             # output shape is frozen.
             self._logger.debug("Unable to attach response metadata: %s", e)
 
-    def _handle_execution[I: SerializeableShape, O: DeserializeableShape](
-        self, call: CallLike[I, O], request_future: Any
-    ) -> Program[OutputContext[I, O, TRequest | None, TResponse | None]]:
+    def _handle_execution(
+        self, call: CallLike[_I, _O], request_future: Any
+    ) -> Program[OutputContext[_I, _O, _TRequest | None, _TResponse | None]]:
         interceptor = call.interceptor
         input_context = InputContext(request=call.input, properties=call.context)
         try:
@@ -207,7 +220,7 @@ class RequestPipelineBase[TRequest, TResponse]:
             interceptor.read_before_serialization(input_context)
             self._logger.debug("Serializing request for: %s", input_context.request)
 
-            transport_request: TRequest = self.protocol.serialize_request(
+            transport_request: _TRequest = self.protocol.serialize_request(
                 operation=call.operation,
                 input=input_context.request,
                 endpoint=_UNRESOLVED,
@@ -253,12 +266,12 @@ class RequestPipelineBase[TRequest, TResponse]:
                 properties=request_context.properties,
             )
 
-    def _retry[I: SerializeableShape, O: DeserializeableShape](
+    def _retry(
         self,
-        call: CallLike[I, O],
-        request_context: RequestContext[I, TRequest],
+        call: CallLike[_I, _O],
+        request_context: RequestContext[_I, _TRequest],
         request_future: Any,
-    ) -> Program[OutputContext[I, O, TRequest | None, TResponse | None]]:
+    ) -> Program[OutputContext[_I, _O, _TRequest | None, _TResponse | None]]:
         body = getattr(request_context.transport_request, "body", None)
         if (
             not call.retryable()
@@ -275,9 +288,9 @@ class RequestPipelineBase[TRequest, TResponse]:
             token_scope=call.retry_scope
         )
 
-        last_output_context: OutputContext[I, O, TRequest, TResponse | None] | None = (
-            None
-        )
+        last_output_context: (
+            OutputContext[_I, _O, _TRequest, _TResponse | None] | None
+        ) = None
         while True:
             if retry_token.retry_delay:
                 yield partial(self._sleep, retry_token.retry_delay)
@@ -338,12 +351,12 @@ class RequestPipelineBase[TRequest, TResponse]:
                 yield partial(retry_strategy.record_success, token=retry_token)
                 return output_context
 
-    def _send_with_rate_limiting[I: SerializeableShape, O: DeserializeableShape](
+    def _send_with_rate_limiting(
         self,
-        call: CallLike[I, O],
-        request_context: RequestContext[I, TRequest],
+        call: CallLike[_I, _O],
+        request_context: RequestContext[_I, _TRequest],
         request_future: Any,
-    ) -> Program[OutputContext[I, O, TRequest, TResponse | None]]:
+    ) -> Program[OutputContext[_I, _O, _TRequest, _TResponse | None]]:
         """Send a single attempt, applying client-side rate limiting (adaptive only).
 
         Every attempt, retryable or not, acquires a send token before it is sent. Once a
@@ -381,23 +394,23 @@ class RequestPipelineBase[TRequest, TResponse]:
             )
         return output_context
 
-    def _handle_attempt[I: SerializeableShape, O: DeserializeableShape](
+    def _handle_attempt(
         self,
-        call: CallLike[I, O],
-        request_context: RequestContext[I, TRequest],
+        call: CallLike[_I, _O],
+        request_context: RequestContext[_I, _TRequest],
         request_future: Any,
-    ) -> Program[OutputContext[I, O, TRequest, TResponse | None]]:
-        output_context: OutputContext[I, O, TRequest, TResponse | None]
+    ) -> Program[OutputContext[_I, _O, _TRequest, _TResponse | None]]:
+        output_context: OutputContext[_I, _O, _TRequest, _TResponse | None]
         # A modeled error arrives after the response does, so the response is kept
         # here to report alongside it. Stays None if nothing came back.
-        transport_response: TResponse | None = None
+        transport_response: _TResponse | None = None
         try:
             interceptor = call.interceptor
             interceptor.read_before_attempt(request_context)
 
             # The auth scheme and identity resolve before the endpoint, so endpoint
             # rules can read the identity.
-            auth_params = AuthParams[I, O](
+            auth_params = AuthParams[_I, _O](
                 protocol_id=self.protocol.id,
                 operation=call.operation,
                 context=request_context.properties,
@@ -468,7 +481,7 @@ class RequestPipelineBase[TRequest, TResponse]:
 
                 signer = scheme.signer()
                 unsigned = request_context.transport_request
-                signed: TRequest = yield lambda: signer.sign(
+                signed: _TRequest = yield lambda: signer.sign(
                     request=unsigned,
                     identity=identity,
                     properties=signer_properties,
@@ -519,7 +532,7 @@ class RequestPipelineBase[TRequest, TResponse]:
                 "Deserializing response: %s", response_context.transport_response
             )
 
-            deserialize: Program[O] = self.protocol.deserialize_response_program(
+            deserialize: Program[_O] = self.protocol.deserialize_response_program(
                 operation=call.operation,
                 request=response_context.transport_request,
                 response=response_context.transport_response,
@@ -570,8 +583,8 @@ class RequestPipelineBase[TRequest, TResponse]:
         except Exception as e:
             self._logger.debug("Unable to close response body: %s", e)
 
-    def _resolve_auth[I: SerializeableShape, O: DeserializeableShape](
-        self, call: CallLike[Any, Any], params: AuthParams[I, O]
+    def _resolve_auth(
+        self, call: CallLike[Any, Any], params: AuthParams[_I, _O]
     ) -> tuple[AuthOption, Any] | None:
         auth_options: Sequence[AuthOption] = (
             call.auth_scheme_resolver.resolve_auth_scheme(auth_parameters=params)
@@ -607,11 +620,11 @@ class RequestPipelineBase[TRequest, TResponse]:
             f"signed with {scheme_id}. The client supports {supported}."
         )
 
-    def _finalize_attempt[I: SerializeableShape, O: DeserializeableShape](
+    def _finalize_attempt(
         self,
-        call: CallLike[I, O],
-        output_context: OutputContext[I, O, TRequest, TResponse | None],
-    ) -> OutputContext[I, O, TRequest, TResponse | None]:
+        call: CallLike[_I, _O],
+        output_context: OutputContext[_I, _O, _TRequest, _TResponse | None],
+    ) -> OutputContext[_I, _O, _TRequest, _TResponse | None]:
         interceptor = call.interceptor
         try:
             output_context = replace(
@@ -628,11 +641,11 @@ class RequestPipelineBase[TRequest, TResponse]:
 
         return output_context
 
-    def _finalize_execution[I: SerializeableShape, O: DeserializeableShape](
+    def _finalize_execution(
         self,
-        call: CallLike[I, O],
-        output_context: OutputContext[I, O, TRequest | None, TResponse | None],
-    ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
+        call: CallLike[_I, _O],
+        output_context: OutputContext[_I, _O, _TRequest | None, _TResponse | None],
+    ) -> OutputContext[_I, _O, _TRequest | None, _TResponse | None]:
         interceptor = call.interceptor
         try:
             output_context = replace(
@@ -694,9 +707,9 @@ def _default_idempotency_token() -> str:
     return str(uuid.uuid4())
 
 
-def _fill_idempotency_token[I: SerializeableShape](
-    input: I, operation: APIOperation[I, Any], logger: logging.Logger
-) -> I:
+def _fill_idempotency_token(
+    input: _I, operation: APIOperation[_I, Any], logger: logging.Logger
+) -> _I:
     """Return the input with its idempotency token set, if the caller left it unset.
 
     A token set by the caller or by an interceptor is sent as-is. The caller's input

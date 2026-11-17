@@ -1,9 +1,16 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import sys
 from dataclasses import dataclass, field
 from typing import Literal
 
 from .response import EMPTY_RESPONSE_METADATA, ResponseMetadata
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 __all__ = [
     "AsyncBodyError",
@@ -30,7 +37,7 @@ class SmithyError(Exception):
     """Base exception type for all exceptions raised by smithy-python."""
 
 
-type Fault = Literal["client", "server"] | None
+Fault = TypeAliasType("Fault", Literal["client", "server"] | None)
 """Whether the client or server is at fault.
 
 If None, then there was not enough information to determine fault.

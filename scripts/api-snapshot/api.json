@@ -18,7 +18,9 @@
   "aws_sdk_signers.interfaces": {},
   "aws_sdk_signers.interfaces.events": {
     "EventHeaderEncoder": "protocol",
-    "EventMessage": "protocol"
+    "EventMessage": "protocol",
+    "HEADERS_DICT": "type_alias",
+    "HEADER_VALUE": "type_alias"
   },
   "aws_sdk_signers.interfaces.http": {
     "Field": "protocol",
@@ -58,7 +60,8 @@
   "smithy_aws_core.aio.auth.sigv4": {
     "AsyncSigV4AuthScheme": "class",
     "AsyncSigV4Config": "protocol",
-    "SIGV4_CONFIG": "PropertyKey"
+    "SIGV4_CONFIG": "PropertyKey",
+    "SigV4Signer": "type_alias"
   },
   "smithy_aws_core.aio.checksums": {
     "AsyncChecksumStream": "class[async]"
@@ -79,7 +82,9 @@
     "AsyncDefaultFileSystem": "class[async]",
     "AsyncFileSystem": "protocol[async]"
   },
-  "smithy_aws_core.aio.identity": {},
+  "smithy_aws_core.aio.identity": {
+    "AsyncAWSCredentialsResolver": "type_alias"
+  },
   "smithy_aws_core.aio.identity.chain": {
     "AsyncIdentityChain": "class[async]",
     "logger": "Logger"
@@ -156,7 +161,9 @@
   },
   "smithy_aws_core.config.file_parser": {
     "FileType": "class",
+    "RawParsedSections": "type_alias",
     "Section": "class",
+    "SectionMap": "type_alias",
     "StandardizedOutput": "class",
     "logger": "Logger",
     "parse_config_file": "function",
@@ -193,7 +200,9 @@
   "smithy_aws_core.config.types": {
     "ConfigSource": "class",
     "FieldSpec": "class",
+    "RequestChecksumCalculation": "type_alias",
     "Resolved": "class",
+    "ResponseChecksumValidation": "type_alias",
     "UNSET": "_UnsetType"
   },
   "smithy_aws_core.config.validators": {
@@ -221,6 +230,7 @@
   "smithy_aws_core.identity.chain.ordering": {
     "After": "class",
     "Before": "class",
+    "OrderingConstraint": "type_alias",
     "Standard": "class",
     "StandardProvider": "class"
   },
@@ -250,6 +260,7 @@
   },
   "smithy_aws_core.identity.components": {
     "AWSCredentialsIdentity": "class",
+    "AWSCredentialsResolver": "type_alias",
     "AWSIdentityConfig": "protocol",
     "AWSIdentityProperties": "class"
   },
@@ -317,17 +328,20 @@
   },
   "smithy_aws_event_stream.events": {
     "Byte": "class",
-    "BytesLike": "UnionType",
+    "BytesLike": "type_alias",
     "Event": "class",
     "EventHeaderDecoder": "class",
     "EventHeaderEncoder": "class",
     "EventMessage": "class",
     "EventPrelude": "class",
+    "HEADERS_DICT": "type_alias",
+    "HEADER_VALUE": "type_alias",
     "Long": "class",
     "MAX_HEADERS_LENGTH": "int",
     "MAX_HEADER_VALUE_BYTE_LENGTH": "int",
     "MAX_PAYLOAD_LENGTH": "int",
-    "Short": "class"
+    "Short": "class",
+    "SizedInt": "type_alias"
   },
   "smithy_aws_event_stream.exceptions": {
     "ChecksumMismatch": "exception",
@@ -377,7 +391,8 @@
     "AsyncClientTransport": "protocol[async]",
     "AsyncDuplexClientTransport": "protocol[async]",
     "AsyncEndpointResolver": "protocol[async]",
-    "AsyncWriter": "protocol[async]"
+    "AsyncWriter": "protocol[async]",
+    "StreamingBlob": "type_alias"
   },
   "smithy_core.aio.interfaces.auth": {
     "AsyncAuthScheme": "protocol",
@@ -427,6 +442,7 @@
   },
   "smithy_core.documents": {
     "Document": "class",
+    "DocumentValue": "type_alias",
     "TypeRegistry": "class"
   },
   "smithy_core.endpoints": {},
@@ -437,6 +453,7 @@
     "DiscriminatorError": "exception",
     "EndpointResolutionError": "exception",
     "ExpectationNotMetError": "exception",
+    "Fault": "type_alias",
     "MissingDependencyError": "exception",
     "ModeledError": "exception",
     "ResourceLifecycleError": "exception",
@@ -463,6 +480,7 @@
     "ResponseContext": "class"
   },
   "smithy_core.interfaces": {
+    "AnyStreamingBlob": "type_alias",
     "AwaitableBytesReader": "protocol",
     "BytesReader": "protocol",
     "BytesWriter": "protocol",
@@ -471,10 +489,12 @@
     "Endpoint": "protocol",
     "EndpointResolver": "protocol",
     "PropertyKey": "protocol",
+    "ProtocolConstructor": "type_alias",
     "ProtocolSettings": "class",
     "Request": "protocol",
     "Response": "protocol",
     "SeekableBytesReader": "protocol",
+    "StreamingBlob": "type_alias",
     "TypedProperties": "protocol",
     "URI": "protocol",
     "is_bytes_reader": "function",
@@ -528,6 +548,8 @@
     "UNIT": "Schema"
   },
   "smithy_core.program": {
+    "Effect": "type_alias",
+    "Program": "type_alias",
     "run_program": "function"
   },
   "smithy_core.response": {
@@ -644,6 +666,7 @@
     "XMLNamespaceTrait": "class"
   },
   "smithy_core.types": {
+    "Document": "type_alias",
     "JsonBlob": "class",
     "JsonString": "class",
     "PathPattern": "class",
@@ -786,6 +809,7 @@
     "HTTPOperationSchemaMetadata": "class",
     "HTTPPayloadMetadata": "class",
     "HTTPRequestBindingMetadata": "class",
+    "HTTPResponseBindingDispatch": "type_alias",
     "HTTPResponseBindingMetadata": "class",
     "HTTP_BINDING_SCHEMA_EXTENSION": "SchemaExtension",
     "HTTP_OPERATION_SCHEMA_EXTENSION": "SchemaExtension"
@@ -847,6 +871,7 @@
   },
   "smithy_python.dependencies": {
     "Dependency": "class",
+    "DependencyGroup": "type_alias",
     "DependencySet": "class",
     "HATCHLING": "Dependency",
     "PYTEST": "Dependency",

@@ -112,6 +112,7 @@ def _public_module_paths(src: Path) -> list[str]:
 def _module_surface(modname: str) -> dict[str, str]:
     module = importlib.import_module(modname)
     defined = _defined_here(modname)
+    imported = _imported_from_owned(modname)
     surface: dict[str, str] = {}
     for name in dir(module):
         if name.startswith("_"):
@@ -120,11 +121,13 @@ def _module_surface(modname: str) -> dict[str, str]:
         if name in defined:
             # Defined in this module's own source: our surface, plain kind.
             surface[name] = _kind(obj)
-        elif _is_owned(obj):
+        elif _is_owned(obj) or (name in imported and _is_type_alias(obj)):
             # Reachable here but defined in another of our packages: we own and
             # must track it, but mark it rex (re-export) so the defining module
             # and the re-export are distinguishable.
             surface[name] = f"rex-{_kind(obj)}"
+            # A PEP 604 union alias has no __module__, so it is attributed by
+            # the import that brought it here.
         # else: re-exported third-party/stdlib (Protocol, os, TYPE_CHECKING) --
         # reachable, but not ours to keep stable, so excluded from the surface.
     return surface
@@ -147,6 +150,20 @@ def _defined_here(modname: str) -> set[str]:
             names.update(t.id for t in node.targets if isinstance(t, ast.Name))
         elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
             names.add(node.target.id)
+    return names
+
+
+def _imported_from_owned(modname: str) -> set[str]:
+    """Names this module's source imports from one of our modules."""
+    path = _source_path(modname)
+    if path is None:
+        return set()
+    names: set[str] = set()
+    for node in ast.parse(path.read_text()).body:
+        if isinstance(node, ast.ImportFrom) and (
+            node.level or (node.module or "").split(".")[0] in _OWNED_ROOTS
+        ):
+            names.update(a.asname or a.name for a in node.names)
     return names
 
 
@@ -207,7 +224,8 @@ def _is_type_alias(obj: object) -> bool:
     # as type aliases, not runtime values.
     if isinstance(obj, typing.TypeAliasType):
         return True
-    if type(obj) is types.GenericAlias:
+    if type(obj) is types.GenericAlias or type(obj) is types.UnionType:
+        # PEP 585 builtin generics (`list[int]`) and PEP 604 unions (`A | B`).
         return True
     return getattr(obj, "__module__", None) == "typing" and hasattr(obj, "__origin__")
 

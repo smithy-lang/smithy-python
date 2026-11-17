@@ -5,7 +5,7 @@ name = "partitioned_types"
 version = "1.0.0"
 description = "Native schema and model stub partition stress fixture"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 keywords = ["smithy", "partitioned_types"]
 license = {text = "Apache-2.0"}
 dependencies = [
@@ -27,7 +27,7 @@ packages = [
 typeCheckingMode = "strict"
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 
 [tool.ruff.lint]
 ignore = ["F841"]

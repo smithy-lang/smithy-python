@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from functools import cached_property
@@ -7,6 +8,7 @@ from itertools import count
 from typing import (
     TYPE_CHECKING,
     Any,
+    Generic,
     NotRequired,
     Required,
     Self,
@@ -25,6 +27,12 @@ from .traits import (
     Trait,
 )
 
+if sys.version_info >= (3, 12):
+    from typing import TypeVar
+else:
+    from typing_extensions import TypeVar
+
+
 if TYPE_CHECKING:
     from ._schema_compact import StaticOperationSchema
     from .deserializers import DeserializeableShape
@@ -33,6 +41,11 @@ if TYPE_CHECKING:
 
 
 __all__ = ["APIOperation", "MemberSchema", "Schema", "SchemaExtension"]
+
+_I = TypeVar("_I", bound="SerializeableShape", infer_variance=True)
+_O = TypeVar("_O", bound="DeserializeableShape", infer_variance=True)
+_T = TypeVar("_T", infer_variance=True)
+_TraitT = TypeVar("_TraitT", bound=Trait)
 
 
 @dataclass(kw_only=True, frozen=True, init=False)
@@ -199,7 +212,7 @@ class Schema:
         return self.member_index
 
     @overload
-    def get_trait[T: "Trait"](self, t: type[T]) -> T | None: ...
+    def get_trait(self, t: type[_TraitT]) -> _TraitT | None: ...
 
     @overload
     def get_trait(self, t: ShapeID) -> "Trait | DynamicTrait | None": ...
@@ -224,7 +237,7 @@ class Schema:
         return result
 
     @overload
-    def expect_trait[T: "Trait"](self, t: type[T]) -> T: ...
+    def expect_trait(self, t: type[_TraitT]) -> _TraitT: ...
 
     @overload
     def expect_trait(self, t: ShapeID) -> "Trait | DynamicTrait": ...
@@ -237,7 +250,7 @@ class Schema:
         id = t if isinstance(t, ShapeID) else t.id
         return self.traits[id]
 
-    def get_extension[T](self, extension: "SchemaExtension[T]") -> T:
+    def get_extension(self, extension: "SchemaExtension[_T]") -> _T:
         """Get or lazily build metadata associated with this schema.
 
         Extension descriptors are intended to be shared across all codec and protocol
@@ -335,7 +348,7 @@ class Schema:
             member_index=index,
         )
 
-    def _compute_extension[T](self, extension: "SchemaExtension[T]") -> T:
+    def _compute_extension(self, extension: "SchemaExtension[_T]") -> _T:
         """Grow an extension array or populate an uncomputed extension slot."""
         extensions = self._extensions
         extension_id = extension.id
@@ -358,10 +371,10 @@ _EMPTY_SCHEMA_EXTENSIONS: tuple[Any, ...] = ()
 
 
 @dataclass(frozen=True, slots=True, eq=False)
-class SchemaExtension[T]:
+class SchemaExtension(Generic[_T]):
     """An integer-indexed provider of lazily cached schema metadata."""
 
-    provider: Callable[[Schema], T]
+    provider: Callable[[Schema], _T]
     """Build the extension value for a schema."""
 
     id: int = field(init=False)
@@ -385,7 +398,7 @@ class MemberSchema(TypedDict):
 
 
 @dataclass(kw_only=True, frozen=True)
-class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
+class APIOperation(Generic[_I, _O]):
     """A modeled Smithy operation.
 
     Input, output, and error types are resolved lazily from ``static_schema`` via
@@ -426,12 +439,12 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
     """
 
     @cached_property
-    def input(self) -> type[I]:
+    def input(self) -> type[_I]:
         """The input type of the operation (built on first access)."""
         return self._build(self.input_schema.id)
 
     @cached_property
-    def output(self) -> type[O]:
+    def output(self) -> type[_O]:
         """The output type of the operation (built on first access)."""
         return self._build(self.output_schema.id)
 

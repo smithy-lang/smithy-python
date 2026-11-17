@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import re
+import sys
 from typing import TYPE_CHECKING, Protocol
 
 from aws_sdk_signers import SigV4EventSigner, SigV4SigningProperties
@@ -17,6 +18,12 @@ from smithy_http.interfaces import HTTPRequest
 from ...auth.sigv4 import _SigV4AuthSchemeBase  # pyright: ignore[reportPrivateUsage]
 from ...identity.components import AWSCredentialsIdentity, AWSIdentityProperties
 from ..identity import AsyncAWSCredentialsResolver
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 if TYPE_CHECKING:
     from smithy_aws_event_stream.events import EventHeaderEncoder
@@ -39,9 +46,10 @@ class AsyncSigV4Config(Protocol):
 SIGV4_CONFIG = PropertyKey(key="config", value_type=AsyncSigV4Config)
 """Property key for the client config the SigV4 auth scheme reads."""
 
-type SigV4Signer = AsyncSigner[
-    HTTPRequest, AWSCredentialsIdentity, SigV4SigningProperties
-]
+SigV4Signer = TypeAliasType(
+    "SigV4Signer",
+    AsyncSigner[HTTPRequest, AWSCredentialsIdentity, SigV4SigningProperties],
+)
 
 
 class AsyncSigV4AuthScheme(

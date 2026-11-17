@@ -4,10 +4,11 @@
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Protocol
+from typing import Generic, Protocol
 
 from . import dependencies as _dependencies
 from . import files as _files
@@ -15,6 +16,12 @@ from . import model as _model
 from . import schemas as _schemas
 from . import selection as _selection
 from . import symbols as _symbols
+
+if sys.version_info >= (3, 12):
+    from typing import TypeVar
+else:
+    from typing_extensions import TypeVar
+
 
 __all__ = [
     "ArtifactGenerator",
@@ -27,6 +34,9 @@ __all__ = [
     "OperationModel",
     "TypesSettings",
 ]
+
+_SettingsT = TypeVar("_SettingsT", bound="ArtifactSettings", infer_variance=True)
+
 
 _SERVICE_ERROR = "ServiceError"
 _UNIT = _model.ShapeId("smithy.api", "Unit")
@@ -209,12 +219,12 @@ class GenerationPlan:
 
 
 @dataclass(frozen=True, slots=True)
-class GenerationContext[SettingsT: ArtifactSettings]:
+class GenerationContext(Generic[_SettingsT]):
     """State shared by one artifact generation."""
 
     model: _model.Model
     selection: _selection.Selection
-    settings: SettingsT
+    settings: _SettingsT
     symbols: _symbols.SymbolProvider
     plan: GenerationPlan
     dependencies: _dependencies.DependencySet
@@ -227,9 +237,9 @@ class GenerationContext[SettingsT: ArtifactSettings]:
             )
 
 
-class ArtifactGenerator[SettingsT: ArtifactSettings](Protocol):
+class ArtifactGenerator(Protocol[_SettingsT]):
     """Generate one artifact into the context's file manifest."""
 
-    def generate(self, context: GenerationContext[SettingsT]) -> None:
+    def generate(self, context: GenerationContext[_SettingsT]) -> None:
         """Register every generated file and dependency."""
         ...

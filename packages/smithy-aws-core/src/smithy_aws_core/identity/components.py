@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Protocol, TypedDict
@@ -7,6 +8,12 @@ from typing import Protocol, TypedDict
 from smithy_core.interfaces.identity import Identity, IdentityResolver
 
 from ..business_metrics import AwsFeatureId
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 __all__ = [
     "AWSCredentialsIdentity",
@@ -50,9 +57,10 @@ class AWSIdentityProperties(TypedDict, total=False):
     _feature_ids: dict[AwsFeatureId, None]
 
 
-type AWSCredentialsResolver = IdentityResolver[
-    AWSCredentialsIdentity, AWSIdentityProperties
-]
+AWSCredentialsResolver = TypeAliasType(
+    "AWSCredentialsResolver",
+    IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties],
+)
 
 
 class AWSIdentityConfig(Protocol):

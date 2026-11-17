@@ -1,5 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -22,6 +23,12 @@ from smithy_core.types import PathPattern, TimestampFormat
 
 from .bindings import Binding, RequestBindingMatcher, ResponseBindingMatcher
 
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
+
 __all__ = [
     "HTTP_BINDING_SCHEMA_EXTENSION",
     "HTTP_OPERATION_SCHEMA_EXTENSION",
@@ -34,15 +41,18 @@ __all__ = [
     "HTTPResponseBindingMetadata",
 ]
 
-type HTTPResponseBindingDispatch = tuple[
-    Schema,
-    Binding,
-    str | None,
-    bool,
-    TimestampFormat | None,
-    ShapeType,
-    bool,
-]
+HTTPResponseBindingDispatch = TypeAliasType(
+    "HTTPResponseBindingDispatch",
+    tuple[
+        Schema,
+        Binding,
+        str | None,
+        bool,
+        TimestampFormat | None,
+        ShapeType,
+        bool,
+    ],
+)
 """Compact response binding entry used by the deserialization hot path."""
 
 

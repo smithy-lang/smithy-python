@@ -1,13 +1,30 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import sys
 from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
 from inspect import isgenerator
-from typing import TYPE_CHECKING, Any, ClassVar, Self, TypedDict, Unpack, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Generic,
+    Self,
+    TypeAlias,
+    TypedDict,
+    Unpack,
+    cast,
+)
 
 from smithy_core.program import Program, run_program
 from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
+
+if sys.version_info >= (3, 12):
+    from typing import TypeVar
+else:
+    from typing_extensions import TypeVar
+
 
 if TYPE_CHECKING:
     from smithy_core.interfaces import ClientTransport, URI
@@ -20,8 +37,8 @@ if TYPE_CHECKING:
         AWSIdentityProperties,
     )
 
-    type _Transport = ClientTransport[Any, Any]
-    type _CredentialsResolver = IdentityResolver[
+    _Transport: TypeAlias = ClientTransport[Any, Any]
+    _CredentialsResolver: TypeAlias = IdentityResolver[
         AWSCredentialsIdentity, AWSIdentityProperties
     ]
 
@@ -43,6 +60,10 @@ from .validators import (
     validate_retry_mode,
     validate_sdk_ua_app_id,
 )
+
+_TContext = TypeVar("_TContext", infer_variance=True)
+_TCredentialsResolver = TypeVar("_TCredentialsResolver", infer_variance=True)
+_TTransport = TypeVar("_TTransport", infer_variance=True)
 
 __all__ = [
     "AwsConfig",
@@ -347,7 +368,9 @@ class _AwsConfigBase:
             )
 
 
-class _AwsConfigOverridesBase[TTransport, TCredentialsResolver](TypedDict, total=False):
+class _AwsConfigOverridesBase(
+    TypedDict, Generic[_TTransport, _TCredentialsResolver], total=False
+):
     """Common keyword overrides accepted by AWS config resolution."""
 
     region: str | None
@@ -357,12 +380,12 @@ class _AwsConfigOverridesBase[TTransport, TCredentialsResolver](TypedDict, total
     aws_access_key_id: str | None
     aws_secret_access_key: str | None
     aws_session_token: str | None
-    aws_credentials_identity_resolver: TCredentialsResolver | None
+    aws_credentials_identity_resolver: _TCredentialsResolver | None
     sdk_ua_app_id: str | None
     user_agent_extra: str | None
     interceptors: list[Any]
     http_request_config: "HTTPRequestConfiguration | None"
-    transport: TTransport | None
+    transport: _TTransport | None
     retry_strategy: "RetryStrategy | RetryStrategyOptions | None"
 
 
@@ -377,7 +400,9 @@ class AwsConfigOverrides(
 
 
 @dataclass(kw_only=True, init=False, repr=False)
-class _AwsConfigFields[TTransport, TCredentialsResolver, TContext](_AwsConfigBase):
+class _AwsConfigFields(
+    _AwsConfigBase, Generic[_TTransport, _TCredentialsResolver, _TContext]
+):
     """The fields shared by the sync and async AWS configs."""
 
     region: str | None = None
@@ -419,7 +444,7 @@ class _AwsConfigFields[TTransport, TCredentialsResolver, TContext](_AwsConfigBas
     when supplying temporary credentials in code.
     """
 
-    aws_credentials_identity_resolver: TCredentialsResolver | None = None
+    aws_credentials_identity_resolver: _TCredentialsResolver | None = None
     """Resolves AWS Credentials.
 
     Set automatically to a ``StaticCredentialsResolver`` when
@@ -440,14 +465,14 @@ class _AwsConfigFields[TTransport, TCredentialsResolver, TContext](_AwsConfigBas
     http_request_config: "HTTPRequestConfiguration | None" = None
     """Configuration for individual HTTP requests."""
 
-    transport: TTransport | None = None
+    transport: _TTransport | None = None
     """The transport to use to send requests"""
 
     retry_strategy: Any | None = None
     """The retry strategy or options for configuring retry behavior.
     """
 
-    _ctx: TContext | None = field(default=None, repr=False, compare=False)
+    _ctx: _TContext | None = field(default=None, repr=False, compare=False)
     _sources: dict[str, ConfigSource] = field(  # type: ignore[assignment]
         default_factory=dict,
         repr=False,
@@ -456,7 +481,7 @@ class _AwsConfigFields[TTransport, TCredentialsResolver, TContext](_AwsConfigBas
 
     _FIELDS: ClassVar[dict[str, FieldSpec]] = _BASE_FIELDS
 
-    def resolution_context(self) -> TContext | None:
+    def resolution_context(self) -> _TContext | None:
         """Get the resolution context used to create this config.
 
         :returns: The resolution context, or None if not available.

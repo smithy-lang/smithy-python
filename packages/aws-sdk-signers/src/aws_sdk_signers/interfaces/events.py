@@ -4,9 +4,16 @@
 from __future__ import annotations
 
 import datetime
+import sys
 import uuid
 from collections.abc import Mapping
 from typing import Protocol
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 __all__ = (
     "HEADERS_DICT",
@@ -15,11 +22,13 @@ __all__ = (
     "EventMessage",
 )
 
-type HEADER_VALUE = bool | int | bytes | str | datetime.datetime | uuid.UUID
+HEADER_VALUE = TypeAliasType(
+    "HEADER_VALUE", bool | int | bytes | str | datetime.datetime | uuid.UUID
+)
 """A union of valid value types for event headers."""
 
 
-type HEADERS_DICT = Mapping[str, HEADER_VALUE]
+HEADERS_DICT = TypeAliasType("HEADERS_DICT", Mapping[str, HEADER_VALUE])
 """A dictionary of event headers."""
 
 

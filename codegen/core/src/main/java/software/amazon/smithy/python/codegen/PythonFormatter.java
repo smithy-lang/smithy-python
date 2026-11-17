@@ -14,7 +14,7 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public final class PythonFormatter implements Runnable {
     private static final Logger LOGGER = Logger.getLogger(PythonFormatter.class.getName());
-    private static final int PYTHON_MINOR_VERSION = 12; // 3.12
+    private static final int PYTHON_MINOR_VERSION = 11; // 3.11
 
     private final GenerationContext context;
 
@@ -46,7 +46,7 @@ public final class PythonFormatter implements Runnable {
         int minorVersion = Integer.parseInt(matcher.group("minor"));
         if (minorVersion < PYTHON_MINOR_VERSION) {
             LOGGER.warning(String.format("""
-                    Found incompatible python version 3.%s.%s, expected 3.12.0 or greater. \
+                    Found incompatible python version 3.%s.%s, expected 3.11.0 or greater. \
                     Skipping formatting and type checking.""",
                     matcher.group("minor"),
                     matcher.group("patch")));

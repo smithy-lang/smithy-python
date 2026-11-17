@@ -1,11 +1,12 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import logging
+import sys
 import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, ClassVar, Self
+from typing import Any, ClassVar, Generic, Self
 
 from ._client import OPERATION
 from ._client import ClientBase as _ClientBase
@@ -28,27 +29,40 @@ from .shapes import ShapeID
 from .types import PropertyKey
 from .utils import read_streaming_blob
 
+if sys.version_info >= (3, 12):
+    from typing import TypeVar
+else:
+    from typing_extensions import TypeVar
+
+
 __all__ = ["AUTH_SCHEME", "OPERATION", "Client", "ClientCall", "RequestPipeline"]
+
+_C = TypeVar("_C", infer_variance=True)
+_I = TypeVar("_I", bound=SerializeableShape, infer_variance=True)
+_O = TypeVar("_O", bound=DeserializeableShape, infer_variance=True)
+_TRequest = TypeVar("_TRequest", infer_variance=True)
+_TResponse = TypeVar("_TResponse", infer_variance=True)
+
 
 AUTH_SCHEME = PropertyKey(key="auth_scheme", value_type=AuthScheme[Any, Any, Any, Any])
 """Property key for the auth scheme selected for the call."""
 
 
 @dataclass(kw_only=True, frozen=True)
-class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
+class ClientCall(Generic[_I, _O]):
     """A data class containing all the initial information about an operation
     invocation."""
 
-    input: I
+    input: _I
     """The input of the operation."""
 
-    operation: APIOperation[I, O] = field(repr=False)
+    operation: APIOperation[_I, _O] = field(repr=False)
     """The schema of the operation."""
 
     context: TypedProperties
     """The initial context of the operation."""
 
-    interceptor: Interceptor[I, O, Any, Any]
+    interceptor: Interceptor[_I, _O, Any, Any]
     """The interceptor to use in the course of the operation invocation.
 
     This SHOULD be an InterceptorChain.
@@ -80,28 +94,28 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
         return is_retryable(self.operation)
 
 
-class RequestPipeline[TRequest, TResponse](RequestPipelineBase[TRequest, TResponse]):
+class RequestPipeline(
+    RequestPipelineBase[_TRequest, _TResponse], Generic[_TRequest, _TResponse]
+):
     """Invokes client operations synchronously."""
 
-    protocol: ClientProtocol[TRequest, TResponse]
+    protocol: ClientProtocol[_TRequest, _TResponse]
     """The protocol to use to serialize the request and deserialize the response."""
 
-    transport: ClientTransport[TRequest, TResponse]
+    transport: ClientTransport[_TRequest, _TResponse]
     """The transport to use to send the request and receive the response."""
 
     _logger: ClassVar[logging.Logger] = logging.getLogger("smithy_core.client")
 
     def __init__(
         self,
-        protocol: ClientProtocol[TRequest, TResponse],
-        transport: ClientTransport[TRequest, TResponse],
+        protocol: ClientProtocol[_TRequest, _TResponse],
+        transport: ClientTransport[_TRequest, _TResponse],
     ) -> None:
         self.protocol = protocol
         self.transport = transport
 
-    def __call__[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[I, O], /
-    ) -> O:
+    def __call__(self, call: ClientCall[_I, _O], /) -> _O:
         """Invoke an operation synchronously.
 
         :param call: The operation to invoke and associated context.
@@ -116,12 +130,12 @@ class RequestPipeline[TRequest, TResponse](RequestPipelineBase[TRequest, TRespon
         time.sleep(delay)
 
     def _transmit(
-        self, request_context: RequestContext[Any, TRequest], request_future: None
-    ) -> TResponse:
+        self, request_context: RequestContext[Any, _TRequest], request_future: None
+    ) -> _TResponse:
         return self.transport.send(request_context.transport_request)
 
 
-class Client[C](_ClientBase[C]):
+class Client(_ClientBase[_C], Generic[_C]):
     """Shared sync client machinery: lifecycle, setup gating, and call dispatch.
 
     Generated clients subclass this with their config type and supply
@@ -133,8 +147,8 @@ class Client[C](_ClientBase[C]):
 
     def __init__(
         self,
-        config: C | None = None,
-        plugins: list[Callable[[C], None]] | None = None,
+        config: _C | None = None,
+        plugins: list[Callable[[_C], None]] | None = None,
     ) -> None:
         super().__init__(config, plugins)
         self._derive_lock = threading.Lock()
@@ -154,29 +168,29 @@ class Client[C](_ClientBase[C]):
         with self._derive_lock:
             run_program(self._close())
 
-    def _ensure_setup(self) -> C:
+    def _ensure_setup(self) -> _C:
         if not self._setup_done:
             with self._derive_lock:
                 return run_program(self._setup())
         return self._config
 
-    def _invoke[I: SerializeableShape, O: DeserializeableShape](
+    def _invoke(
         self,
-        input: I | dict[str, Any] | None,
-        operation: APIOperation[I, O],
-        default_plugins: list[Callable[[C], None]],
-        plugins: list[Callable[[C], None]] | None,
-    ) -> O:
+        input: _I | dict[str, Any] | None,
+        operation: APIOperation[_I, _O],
+        default_plugins: list[Callable[[_C], None]],
+        plugins: list[Callable[[_C], None]] | None,
+    ) -> _O:
         pipeline, call = self._prepare_call(input, operation, default_plugins, plugins)
         return pipeline(call)
 
-    def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
+    def _prepare_call(
         self,
-        input: I | dict[str, Any] | None,
-        operation: APIOperation[I, O],
-        default_plugins: list[Callable[[C], None]],
-        plugins: list[Callable[[C], None]] | None,
-    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+        input: _I | dict[str, Any] | None,
+        operation: APIOperation[_I, _O],
+        default_plugins: list[Callable[[_C], None]],
+        plugins: list[Callable[[_C], None]] | None,
+    ) -> tuple[RequestPipeline[Any, Any], ClientCall[_I, _O]]:
         model = self._build_input(input, operation)
         self._raise_if_closed()
         config = self._ensure_setup()

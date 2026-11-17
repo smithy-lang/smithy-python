@@ -152,6 +152,7 @@ _CAST: Final = _typing("cast")
 _OVERLOAD: Final = _typing("overload")
 _UNPACK: Final = _typing("Unpack")
 _TYPE_CHECKING: Final = _typing("TYPE_CHECKING")
+_TYPE_ALIAS: Final = _typing("TypeAlias")
 _CALLABLE: Final = TypeReference("Callable", "collections.abc")
 _DATACLASS: Final = TypeReference("dataclass", "dataclasses")
 _IMPORT_MODULE: Final = TypeReference("import_module", "importlib")
@@ -470,7 +471,9 @@ def _write_config(
                 writer.line("self.auth_schemes[scheme.scheme_id] = scheme")
     writer.line()
     writer.line()
-    writer.line("type Plugin = ", _CALLABLE, "[[", mode.config, "], None]")
+    writer.line(
+        "Plugin: ", _TYPE_ALIAS, " = ", _CALLABLE, "[[", mode.config, "], None]"
+    )
     writer.line(
         _models._quote(  # pyright: ignore[reportPrivateUsage]
             "A callable that customizes the client configuration."

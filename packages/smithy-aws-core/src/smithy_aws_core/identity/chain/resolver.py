@@ -1,10 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import logging
+import sys
 from collections.abc import Callable, Mapping, Sequence
 from functools import partial
 from importlib import metadata
-from typing import Any, cast
+from typing import Any, Generic, cast
 
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import Identity, IdentityResolver
@@ -25,24 +26,34 @@ from .provider import (
     _NamedResolverBase,  # pyright: ignore[reportPrivateUsage]
 )
 
+if sys.version_info >= (3, 12):
+    from typing import TypeVar
+else:
+    from typing_extensions import TypeVar
+
+
 __all__ = ("IdentityChain",)
+
+_ChainIdentity = TypeVar("_ChainIdentity", bound=Identity)
+_I = TypeVar("_I", bound=Identity, infer_variance=True)
+
 
 _CHAIN_PROVIDER_ENTRY_POINT_GROUP = "smithy_aws_core.identity.chain_providers"
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class _IdentityChainBase[I: Identity]:
+class _IdentityChainBase(Generic[_I]):
     """Identity chain logic shared by the sync and async chains."""
 
     _resolvers: tuple[Any, ...]
-    _identity_type: type[I] | None
+    _identity_type: type[_I] | None
     _unclaimed_sources: tuple[UnclaimedSource, ...]
 
     def __init__(
         self,
         resolvers: Sequence[Any],
         *,
-        identity_type: type[I] | None = None,
+        identity_type: type[_I] | None = None,
         unclaimed_sources: Sequence[UnclaimedSource] = (),
     ) -> None:
         """Initialize the chain with resolvers in precedence order.
@@ -59,11 +70,11 @@ class _IdentityChainBase[I: Identity]:
         self._unclaimed_sources = tuple(unclaimed_sources)
 
     @property
-    def identity_type(self) -> type[I] | None:
+    def identity_type(self) -> type[_I] | None:
         """The identity type this chain resolves, or None if not declared."""
         return self._identity_type
 
-    def _get_identity(self, properties: Mapping[str, Any]) -> Program[I]:
+    def _get_identity(self, properties: Mapping[str, Any]) -> Program[_I]:
         failures: list[IdentityResolverFailure] = []
         for resolver in self._resolvers:
             try:
@@ -90,16 +101,16 @@ class _IdentityChainBase[I: Identity]:
             yield resolver.invalidate
 
 
-class IdentityChain[I: Identity](
-    _IdentityChainBase[I], IdentityResolver[I, Mapping[str, Any]]
+class IdentityChain(
+    _IdentityChainBase[_I], IdentityResolver[_I, Mapping[str, Any]], Generic[_I]
 ):
     """Resolves identities from an assembled sequence of resolvers."""
 
     def __init__(
         self,
-        resolvers: Sequence[IdentityResolver[I, Any]],
+        resolvers: Sequence[IdentityResolver[_I, Any]],
         *,
-        identity_type: type[I] | None = None,
+        identity_type: type[_I] | None = None,
         unclaimed_sources: Sequence[UnclaimedSource] = (),
     ) -> None:
         """Initialize the chain with resolvers in precedence order.
@@ -115,14 +126,14 @@ class IdentityChain[I: Identity](
         )
 
     @staticmethod
-    def create[ChainIdentity: Identity](
-        identity_type: type[ChainIdentity],
+    def create(
+        identity_type: type[_ChainIdentity],
         *,
         config_file: MergedConfig | None = None,
         profile_name: str | None = None,
         region_override: str | None = None,
         http_client: HTTPClient | None = None,
-    ) -> "IdentityChain[ChainIdentity]":
+    ) -> "IdentityChain[_ChainIdentity]":
         """Create an identity chain from discovered providers.
 
         :param identity_type: The identity type to resolve.
@@ -153,7 +164,7 @@ class IdentityChain[I: Identity](
             unclaimed_sources=unclaimed_sources,
         )
 
-    def get_identity(self, *, properties: Mapping[str, Any]) -> I:
+    def get_identity(self, *, properties: Mapping[str, Any]) -> _I:
         """Return the first identity resolved by the chain."""
         return run_program(self._get_identity(properties))
 

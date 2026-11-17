@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Collection, Mapping
 from dataclasses import dataclass
 from math import ceil, isfinite, sqrt
@@ -14,6 +15,12 @@ from . import dependencies as _dependencies
 from . import exceptions as _exceptions
 from . import model as _model
 from . import symbols as _symbols
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 if TYPE_CHECKING:
     from .generation import GenerationContext, ModelArtifactSettings
@@ -379,8 +386,8 @@ _TYPED_MAPPING_PROXY: Final = _symbols.TypeReference(
     ),
 )
 
-type _SourcePart = str | _symbols.TypeReference
-type _TraitPlan = int | Mapping[_model.ShapeId, _model.Node]
+_SourcePart = TypeAliasType("_SourcePart", str | _symbols.TypeReference)
+_TraitPlan = TypeAliasType("_TraitPlan", int | Mapping[_model.ShapeId, _model.Node])
 
 
 def _write_shape(

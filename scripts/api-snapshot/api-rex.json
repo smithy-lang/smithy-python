@@ -38,10 +38,6 @@
     "identity": "rex-module",
     "io": "rex-module"
   },
-  "aws_sdk_signers.interfaces.events": {
-    "HEADERS_DICT": "rex-type_alias",
-    "HEADER_VALUE": "rex-type_alias"
-  },
   "aws_sdk_signers.signers": {
     "AWSRequest": "rex-class",
     "ResourceLifecycleError": "rex-exception",
@@ -64,7 +60,6 @@
     "HTTPRequest": "rex-protocol",
     "PropertyKey": "rex-class",
     "SigV4EventSigner": "rex-class",
-    "SigV4Signer": "rex-type_alias",
     "SigV4SigningProperties": "rex-class"
   },
   "smithy_aws_core.aio.checksums": {
@@ -105,7 +100,6 @@
   "smithy_aws_core.aio.identity": {
     "AWSCredentialsIdentity": "rex-class",
     "AWSIdentityProperties": "rex-class",
-    "AsyncAWSCredentialsResolver": "rex-type_alias",
     "AsyncContainerCredentialsResolver": "rex-class[async]",
     "AsyncEnvironmentCredentialsResolver": "rex-class[async]",
     "AsyncIMDSCredentialsResolver": "rex-class[async]",
@@ -265,6 +259,7 @@
     "Program": "rex-type_alias",
     "Resolved": "rex-class",
     "RetryStrategyOptions": "rex-class",
+    "RetryStrategyType": "rex-type_alias",
     "SharedConfigContext": "rex-class",
     "UNSET": "rex-_UnsetType",
     "run_program": "rex-function",
@@ -290,8 +285,6 @@
   "smithy_aws_core.config.file_parser": {
     "ConfigParseError": "rex-exception",
     "Program": "rex-type_alias",
-    "RawParsedSections": "rex-type_alias",
-    "SectionMap": "rex-type_alias",
     "run_program": "rex-function"
   },
   "smithy_aws_core.config.merged_config": {
@@ -309,16 +302,13 @@
     "UNSET": "rex-_UnsetType",
     "run_program": "rex-function"
   },
-  "smithy_aws_core.config.types": {
-    "RequestChecksumCalculation": "rex-type_alias",
-    "ResponseChecksumValidation": "rex-type_alias"
-  },
   "smithy_aws_core.config.validators": {
     "ConfigSource": "rex-class",
     "ConfigValidationError": "rex-exception",
     "ProfileNotFoundError": "rex-exception",
     "RequestChecksumCalculation": "rex-type_alias",
-    "ResponseChecksumValidation": "rex-type_alias"
+    "ResponseChecksumValidation": "rex-type_alias",
+    "RetryStrategyType": "rex-type_alias"
   },
   "smithy_aws_core.endpoints": {
     "AWS_RULES_EXTENSION": "rex-RulesExtension"
@@ -363,7 +353,6 @@
     "SmithyIdentityError": "rex-exception"
   },
   "smithy_aws_core.identity.chain.ordering": {
-    "OrderingConstraint": "rex-type_alias",
     "shared_config_files_exist": "rex-function"
   },
   "smithy_aws_core.identity.chain.provider": {
@@ -441,7 +430,6 @@
     "run_program": "rex-function"
   },
   "smithy_aws_core.identity.components": {
-    "AWSCredentialsResolver": "rex-type_alias",
     "AwsFeatureId": "rex-class",
     "Identity": "rex-protocol",
     "IdentityResolver": "rex-protocol"
@@ -639,8 +627,6 @@
     "BytesReader": "rex-protocol",
     "ChecksumMismatch": "rex-exception",
     "DuplicateHeader": "rex-exception",
-    "HEADERS_DICT": "rex-type_alias",
-    "HEADER_VALUE": "rex-type_alias",
     "InvalidEventBytes": "rex-exception",
     "InvalidHeaderValue": "rex-exception",
     "InvalidHeaderValueLength": "rex-exception",
@@ -648,7 +634,6 @@
     "InvalidIntegerValue": "rex-exception",
     "InvalidPayloadLength": "rex-exception",
     "Program": "rex-type_alias",
-    "SizedInt": "rex-type_alias",
     "TimestampFormat": "rex-class",
     "run_program": "rex-function"
   },
@@ -745,7 +730,6 @@
     "ProtocolSettings": "rex-class",
     "Request": "rex-protocol",
     "Response": "rex-protocol",
-    "StreamingBlob": "rex-type_alias",
     "TypedProperties": "rex-protocol",
     "UnsupportedStreamError": "rex-exception",
     "auth": "rex-module",
@@ -825,7 +809,6 @@
   "smithy_core.documents": {
     "DeserializeableShape": "rex-protocol",
     "DiscriminatorError": "rex-exception",
-    "DocumentValue": "rex-type_alias",
     "ExpectationNotMetError": "rex-exception",
     "InterceptingSerializer": "rex-class",
     "MapSerializer": "rex-protocol",
@@ -859,7 +842,6 @@
   },
   "smithy_core.exceptions": {
     "EMPTY_RESPONSE_METADATA": "rex-ResponseMetadata",
-    "Fault": "rex-type_alias",
     "ResponseMetadata": "rex-class"
   },
   "smithy_core.identity": {
@@ -875,9 +857,6 @@
     "TypedProperties": "rex-protocol"
   },
   "smithy_core.interfaces": {
-    "AnyStreamingBlob": "rex-type_alias",
-    "ProtocolConstructor": "rex-type_alias",
-    "StreamingBlob": "rex-type_alias",
     "auth": "rex-module",
     "identity": "rex-module",
     "retries": "rex-module"
@@ -905,9 +884,7 @@
     "UnitTypeTrait": "rex-class"
   },
   "smithy_core.program": {
-    "AsyncBodyError": "rex-exception",
-    "Effect": "rex-type_alias",
-    "Program": "rex-type_alias"
+    "AsyncBodyError": "rex-exception"
   },
   "smithy_core.retries": {
     "PropertyKey": "rex-class",
@@ -940,7 +917,6 @@
     "TimestampFormat": "rex-class"
   },
   "smithy_core.types": {
-    "Document": "rex-type_alias",
     "ExpectationNotMetError": "rex-exception",
     "ensure_utc": "rex-function",
     "epoch_seconds_to_datetime": "rex-function",
@@ -958,6 +934,7 @@
   },
   "smithy_http": {
     "AnyStreamingBlob": "rex-type_alias",
+    "FieldPosition": "rex-type_alias",
     "URI": "rex-protocol",
     "aio": "rex-module",
     "bindings": "rex-module",
@@ -1230,7 +1207,6 @@
     "HTTPLabelTrait": "rex-class",
     "HTTPPrefixHeadersTrait": "rex-class",
     "HTTPQueryTrait": "rex-class",
-    "HTTPResponseBindingDispatch": "rex-type_alias",
     "HTTPTrait": "rex-class",
     "MediaTypeTrait": "rex-class",
     "PathPattern": "rex-class",
@@ -1334,9 +1310,6 @@
     "PluginEnvironment": "rex-class",
     "load_model": "rex-function",
     "select_shapes": "rex-function"
-  },
-  "smithy_python.dependencies": {
-    "DependencyGroup": "rex-type_alias"
   },
   "smithy_python.model": {
     "EnumShape": "rex-class",

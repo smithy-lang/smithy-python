@@ -4,9 +4,10 @@
 extensions its rules call, what it is given and returns, and the properties that
 carry them."""
 
+import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Final, NamedTuple, Protocol
+from typing import Any, Final, Generic, NamedTuple, Protocol
 
 from .. import URI
 from ..interfaces import Endpoint as _Endpoint
@@ -16,6 +17,14 @@ from ..schemas import APIOperation
 from ..serializers import SerializeableShape
 from ..shapes import ShapeID
 from ..types import PropertyKey, TypedProperties
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType, TypeVar
+else:
+    from typing_extensions import TypeAliasType, TypeVar
+
+
+_I = TypeVar("_I", bound=SerializeableShape, infer_variance=True)
 
 
 @dataclass(slots=True)
@@ -85,13 +94,13 @@ ignored.
 
 
 @dataclass(kw_only=True)
-class EndpointResolverParams[I: SerializeableShape]:
+class EndpointResolverParams(Generic[_I]):
     """Parameters passed into an Endpoint Resolver's resolve_endpoint method."""
 
-    operation: APIOperation[I, Any] = field(repr=False)
+    operation: APIOperation[_I, Any] = field(repr=False)
     """The operation to resolve an endpoint for."""
 
-    input: I
+    input: _I
     """The input to the operation."""
 
     context: _TypedProperties
@@ -169,13 +178,15 @@ class EndpointBdd(NamedTuple):
     """The trait's nodes, three ints per node."""
 
 
-type BuiltinGetter = Callable[[Any, _TypedProperties], Any]
+BuiltinGetter = TypeAliasType("BuiltinGetter", Callable[[Any, _TypedProperties], Any])
 """Computes a built-in parameter's value from the config and the call context."""
 
-type BuiltinBinding = str | BuiltinGetter
+BuiltinBinding = TypeAliasType("BuiltinBinding", str | BuiltinGetter)
 """How a built-in parameter gets its value: a config attribute name, or a getter."""
 
-type EndpointAuthSchemeFactory = Callable[[Mapping[str, Any]], EndpointAuthScheme]
+EndpointAuthSchemeFactory = TypeAliasType(
+    "EndpointAuthSchemeFactory", Callable[[Mapping[str, Any]], EndpointAuthScheme]
+)
 """Builds an endpoint's auth scheme from an ``authSchemes`` entry of its rules."""
 
 

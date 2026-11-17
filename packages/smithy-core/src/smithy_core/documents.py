@@ -1,10 +1,11 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import datetime
+import sys
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from decimal import Decimal
-from typing import TypeGuard, override
+from typing import TypeAlias, TypeGuard, TypeVar
 
 from .deserializers import DeserializeableShape, ShapeDeserializer
 from .exceptions import DiscriminatorError, ExpectationNotMetError, SmithyError
@@ -18,14 +19,23 @@ from .serializers import (
 from .shapes import ShapeID, ShapeType
 from .utils import expect_type
 
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+    from typing_extensions import override
+
+
 __all__ = ["Document", "DocumentValue", "TypeRegistry"]
+
+_S = TypeVar("_S", bound=DeserializeableShape)
+
 
 _DOCUMENT = Schema(id=ShapeID("smithy.api#Document"), shape_type=ShapeType.DOCUMENT)
 
 
-type DocumentValue = (
-    Mapping[str, DocumentValue]
-    | Sequence[DocumentValue]
+DocumentValue: TypeAlias = (
+    Mapping[str, "DocumentValue"]
+    | Sequence["DocumentValue"]
     | str
     | int
     | float
@@ -38,7 +48,7 @@ type DocumentValue = (
 """Protocol-agnostic open content."""
 
 
-type _InnerDocumentValue = (
+_InnerDocumentValue: TypeAlias = (
     dict[str, "Document"]
     | list["Document"]
     | str
@@ -290,7 +300,7 @@ class Document:
                     return self._value
         return self._raw_value
 
-    def as_shape[S: DeserializeableShape](self, shape_class: type[S]) -> S:
+    def as_shape(self, shape_class: type[_S]) -> _S:
         """Converts the document to an instance of the given shape type.
 
         :param shape_class: A class that implements the DeserializeableShape protocol.

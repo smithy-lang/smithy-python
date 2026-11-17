@@ -13,7 +13,7 @@ from collections import Counter
 from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Literal, TypeAlias
 from unicodedata import normalize
 
 from . import dependencies as _dependencies
@@ -22,7 +22,7 @@ from .symbols import TypeReference
 
 __all__ = ["PythonWriter"]
 
-# Union of Python 3.12-3.15 builtins, including platform-specific names.
+# Union of Python 3.11-3.15 builtins, including platform-specific names.
 # Keep this fixed so import planning does not depend on the generator host.
 _BUILTINS = frozenset(
     "ArithmeticError AssertionError AttributeError BaseException BaseExceptionGroup "
@@ -50,7 +50,7 @@ _BUILTINS = frozenset(
 )
 
 
-type _Kind = Literal["module", "class", "function", "comprehension", "annotation"]
+_Kind: TypeAlias = Literal["module", "class", "function", "comprehension"]
 _COMPREHENSIONS = (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
 
 
@@ -129,18 +129,26 @@ class PythonWriter:
         prefix = _placeholder_prefix("".join(self._body(lambda _: "")))
         numbers = itertools.count()
         source = "\n".join(self._body(lambda _: f"{prefix}{next(numbers)}_"))
+        # The 3.11 grammar reports what 3.12+ reports as SyntaxWarning, such as
+        # invalid escape sequences, as DeprecationWarning.
+        categories = (SyntaxWarning, DeprecationWarning)
         with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always", SyntaxWarning)
+            for category in categories:
+                warnings.simplefilter("always", category)
             try:
-                tree = ast.parse(source, feature_version=(3, 12))
+                # Generated code must run on the oldest supported Python. Python
+                # 3.12+ hosts reject newer statements such as PEP 695 type
+                # parameters here, but only a 3.11 host also rejects PEP 701
+                # f-strings, which CI covers.
+                tree = ast.parse(source, feature_version=(3, 11))
             except SyntaxError as error:
                 raise CodegenError(
-                    f"Written lines are not valid Python 3.12 (line {error.lineno}): "
+                    f"Written lines are not valid Python 3.11 (line {error.lineno}): "
                     f"{error.msg}"
                 ) from error
         for warning in caught:
             # Invalid escape sequences become errors in future Python versions.
-            if issubclass(warning.category, SyntaxWarning):
+            if issubclass(warning.category, categories):
                 raise CodegenError(
                     f"Written lines raise SyntaxWarning (line {warning.lineno}): "
                     f"{warning.message}"
@@ -306,9 +314,8 @@ class _Import:
 class _Scope:
     """A Python scope found in the written lines.
 
-    Class names are visible only to code directly in the class body and to its
-    annotation scopes (type parameters). Functions, lambdas and comprehensions
-    nested in a class cannot see them.
+    Class names are visible only to code directly in the class body. Functions,
+    lambdas and comprehensions nested in a class cannot see them.
     """
 
     kind: _Kind
@@ -329,7 +336,7 @@ class _Scope:
         names: set[str] = set()
         scope, child = self, None
         while scope.parent is not None:
-            if scope.kind != "class" or child is None or child.kind == "annotation":
+            if scope.kind != "class" or child is None:
                 names |= scope.names
             scope, child = scope.parent, scope
         return names
@@ -421,15 +428,13 @@ def _placeholder_prefix(text: str) -> str:
 
 
 def _bound_name(node: ast.AST) -> str | None:
-    """Return the name that a pattern, handler, import or type parameter binds."""
+    """Return the name that a pattern, handler or import binds."""
     if isinstance(node, ast.alias):
         return None if node.name == "*" else node.asname or node.name.split(".")[0]
     if isinstance(node, (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)):
         return node.name
     if isinstance(node, ast.MatchMapping):
         return node.rest
-    if isinstance(node, (ast.TypeVar, ast.ParamSpec, ast.TypeVarTuple)):
-        return node.name
     return None
 
 
@@ -453,16 +458,6 @@ def _analyze(
         (node, module, False) for node in tree.body
     ]
 
-    def type_scope(
-        node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef | ast.TypeAlias,
-        scope: _Scope,
-    ) -> _Scope:
-        if not node.type_params:
-            return scope
-        inner = _Scope("annotation", scope)
-        pending.extend((param, inner, True) for param in node.type_params)
-        return inner
-
     while pending:
         node, scope, lazy = pending.pop()
         if node is None:
@@ -473,7 +468,7 @@ def _analyze(
             elif prefix in node.id:
                 pass  # A reference joined to raw text; its scope is unknown.
             elif isinstance(node.ctx, ast.Load):
-                if scope.kind in ("class", "annotation"):
+                if scope.kind == "class":
                     position = (node.lineno, node.col_offset)
                     loads.append((scope, node.id, lazy, position))
             else:
@@ -501,29 +496,24 @@ def _analyze(
             else:
                 bindings.append((scope, node.name, False))
                 pending.extend((item, scope, False) for item in node.decorator_list)
-                outer = type_scope(node, scope)
                 pending.extend(
-                    (annotation, outer, True)
+                    (annotation, scope, True)
                     for annotation in (
                         *(parameter.annotation for parameter in parameters),
                         node.returns,
                     )
                 )
-                inner = _Scope("function", outer)
+                inner = _Scope("function", scope)
                 pending.extend((item, inner, False) for item in node.body)
             bindings.extend((inner, parameter.arg, False) for parameter in parameters)
         elif isinstance(node, ast.ClassDef):
             bindings.append((scope, node.name, True))
             pending.extend((item, scope, False) for item in node.decorator_list)
-            outer = type_scope(node, scope)
             pending.extend(
-                (item, outer, False) for item in (*node.bases, *node.keywords)
+                (item, scope, False) for item in (*node.bases, *node.keywords)
             )
-            inner = _Scope("class", outer, node.name)
+            inner = _Scope("class", scope, node.name)
             pending.extend((item, inner, False) for item in node.body)
-        elif isinstance(node, ast.TypeAlias):
-            bindings.append((scope, node.name.id, False))
-            pending.append((node.value, type_scope(node, scope), True))
         elif isinstance(node, _COMPREHENSIONS):
             # Only the first iterable is evaluated in the enclosing scope.
             first, *rest = node.generators
@@ -584,13 +574,6 @@ def _analyze(
     outside = module.names | _BUILTINS
     shadowed: list[tuple[tuple[int, int], str, str]] = []
     for scope, name, lazy, position in loads:
-        if scope.kind == "annotation":
-            # Type parameter scopes see the names of a directly enclosing class.
-            if scope.parent is None or scope.parent.kind != "class":
-                continue
-            if name in scope.names:
-                continue
-            scope = scope.parent
         if name not in outside:
             continue
         # Annotations are evaluated later, against the finished class. Other

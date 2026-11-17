@@ -4,7 +4,7 @@
 """Keyword operation inputs: building input models from keyword arguments."""
 
 from types import ModuleType
-from typing import Any
+from typing import Any, TypeAlias
 
 import pytest
 from smithy_core._dynamic_models import ModelRegistry
@@ -26,7 +26,7 @@ _INPUT = "smithy.api#input"
 _DEFAULT = "smithy.api#default"
 _REQUIRED = "smithy.api#required"
 
-type _Member = tuple[str, object] | tuple[str, object, object]
+_Member: TypeAlias = tuple[str, object] | tuple[str, object, object]
 
 
 def _collection(

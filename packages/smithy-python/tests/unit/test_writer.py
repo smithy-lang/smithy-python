@@ -127,7 +127,7 @@ def test_nested_same_module_annotations(
         "__lazy_import__",  # Added in Python 3.15.
         "frozendict",  # Added in Python 3.15.
         "sentinel",  # Added in Python 3.15.
-        "WindowsError",  # Windows-only, present throughout Python 3.12-3.15.
+        "WindowsError",  # Windows-only, present throughout Python 3.11-3.15.
     ],
 )
 def test_imports_reserve_builtins_across_supported_versions(
@@ -402,8 +402,6 @@ def test_module_names_can_be_rebound(
         "values = [{ref} for list in ()]",
         "match None:\n    case list:\n        pass\nvalue: {ref}",
         "match {}:\n    case {**list}:\n        pass\nvalue: {ref}",
-        "type Alias[list] = {ref}",
-        "def build[list](value: {ref}) -> None: ...",
         "class Holder:\n    list = None\n    def build(self) -> {ref}: ...",
     ],
 )
@@ -506,10 +504,6 @@ def test_placeholder_spelling_cannot_hide_a_name() -> None:
         ),
         ("class Node:\n    list: int = 0\n    def build(self, kind=list): ...", "list"),
         ("class Node:\n    list = None\n    def build(self) -> list: ...", "list"),
-        (
-            "class Node:\n    list = None\n    def build[T](self) -> list[T]: ...",
-            "list",
-        ),
         ("class Node:\n    def list(self): ...\n    items: list[int]", "list"),
         ("class Node:\n    list: int = 0\n    class Inner(list): ...", "list"),
         (
@@ -552,11 +546,6 @@ def test_raw_names_shadowed_in_class_fail(source: str, name: str) -> None:
         "class Config: ...\nclass Node:\n    class Config: ...\n    config: Config",
         # Class bodies do not see an enclosing class's members.
         "class Node:\n    list = None\n    class Inner:\n        items = list",
-        # Type parameters are not class members.
-        "class Node:\n    def build[T](self, value: T) -> T: ...",
-        "def build[T](value: T) -> T: ...",
-        # Base classes run in order, including those of generic classes.
-        "class Node:\n    list = None\n    class Inner[T](list): ...",
         "class Node:\n    values = [list for list in ()]",
     ],
 )
@@ -571,12 +560,16 @@ def test_raw_names_not_shadowed_in_class_pass(source: str) -> None:
     [
         "class Node",  # Missing colon.
         "value = t'text'",  # Template strings need Python 3.14.
+        # Generated code must run on Python 3.11, which predates PEP 695.
+        "type Alias = int",
+        "def build[T](value: T) -> T: ...",
+        "class Node[T]: ...",
     ],
 )
 def test_invalid_python_fails_at_render(line: str) -> None:
     writer = PythonWriter("models")
     writer.line(line)
-    message = "Written lines are not valid Python 3.12"
+    message = "Written lines are not valid Python 3.11"
     with pytest.raises(CodegenError, match="^" + re.escape(message)):
         writer.render()
 
@@ -739,13 +732,20 @@ def test_relative_reference_modules_are_valid(module: str) -> None:
     compile(writer.render(), "<generated>", "exec")
 
 
-def test_generation_without_runtime_packages() -> None:
+def test_generation_without_runtime_packages(tmp_path: Path) -> None:
+    import shutil
     import subprocess
 
-    source_path = Path(__file__).resolve().parents[2] / "src"
+    paths = [str(Path(__file__).resolve().parents[2] / "src")]
+    if sys.version_info < (3, 12):
+        # The generator's only dependency, and only on Python 3.11.
+        import typing_extensions
+
+        shutil.copy(typing_extensions.__file__, tmp_path)
+        paths.append(str(tmp_path))
     program = (
         "import sys, importlib.util\n"
-        f"sys.path.insert(0, {str(source_path)!r})\n"
+        f"sys.path[:0] = {paths!r}\n"
         "assert importlib.util.find_spec('smithy_core') is None\n"
         "from smithy_python.writer import PythonWriter\n"
         "from smithy_python.symbols import TypeReference\n"

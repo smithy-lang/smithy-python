@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import sys
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
 
@@ -15,6 +16,12 @@ from ...interfaces import ProtocolConstructor as ProtocolConstructor
 from ...interfaces import ProtocolSettings as ProtocolSettings
 from .eventstream import AsyncEventPublisher, AsyncEventReceiver
 
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType, TypeVar
+else:
+    from typing_extensions import TypeAliasType, TypeVar
+
+
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
@@ -24,6 +31,13 @@ if TYPE_CHECKING:
     from ...schemas import APIOperation
     from ...serializers import SerializeableShape
     from .auth import AsyncAuthScheme
+
+_IE = TypeVar("_IE", bound="SerializeableShape")
+_OE = TypeVar("_OE", bound="DeserializeableShape")
+_I = TypeVar("_I", bound=Request, infer_variance=True)
+_O = TypeVar("_O", bound=Response, infer_variance=True)
+_OperationInput = TypeVar("_OperationInput", bound="SerializeableShape")
+_OperationOutput = TypeVar("_OperationOutput", bound="DeserializeableShape")
 
 
 @runtime_checkable
@@ -44,7 +58,7 @@ class AsyncWriter(Protocol):
         ...
 
 
-type StreamingBlob = AnyStreamingBlob
+StreamingBlob = TypeAliasType("StreamingBlob", AnyStreamingBlob)
 
 
 class AsyncEndpointResolver(Protocol):
@@ -63,7 +77,7 @@ class AsyncEndpointResolver(Protocol):
         ...
 
 
-class AsyncClientTransport[I: Request, O: Response](Protocol):
+class AsyncClientTransport(Protocol[_I, _O]):
     """Protocol-agnostic representation of a client transport (e.g. an HTTP client).
 
     Transports that support duplex (bidirectional) event streaming can implement
@@ -72,14 +86,12 @@ class AsyncClientTransport[I: Request, O: Response](Protocol):
 
     TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
 
-    async def send(self, request: I) -> O:
+    async def send(self, request: _I) -> _O:
         """Send a request over the transport and receive the response."""
         ...
 
 
-class AsyncDuplexClientTransport[I: Request, O: Response](
-    AsyncClientTransport[I, O], Protocol
-):
+class AsyncDuplexClientTransport(AsyncClientTransport[_I, _O], Protocol[_I, _O]):
     """A client transport that supports duplex (bidirectional) event streaming.
 
     Duplex transports can read response data while the request body is still being
@@ -90,22 +102,18 @@ class AsyncDuplexClientTransport[I: Request, O: Response](
 
 
 @runtime_checkable
-class AsyncClientProtocol[I: Request, O: Response](ClientProtocol[I, O], Protocol):
+class AsyncClientProtocol(ClientProtocol[_I, _O], Protocol[_I, _O]):
     """A client protocol that also supports event streams for async clients."""
 
-    async def create_event_publisher[
-        OperationInput: "SerializeableShape",
-        OperationOutput: "DeserializeableShape",
-        Event: "SerializeableShape",
-    ](
+    async def create_event_publisher(
         self,
         *,
-        operation: "APIOperation[OperationInput, OperationOutput]",
-        request: I,
-        event_type: "TypeForm[Event]",
+        operation: "APIOperation[_OperationInput, _OperationOutput]",
+        request: _I,
+        event_type: "TypeForm[_IE]",
         context: TypedProperties,
         auth_scheme: "AsyncAuthScheme[Any, Any, Any, Any] | None" = None,
-    ) -> AsyncEventPublisher[Event]:
+    ) -> AsyncEventPublisher[_IE]:
         """Creates an event publisher for a protocol event stream.
 
         :param operation: The event stream operation.
@@ -116,20 +124,16 @@ class AsyncClientProtocol[I: Request, O: Response](ClientProtocol[I, O], Protoco
         """
         raise UnsupportedStreamError()
 
-    def create_event_receiver[
-        OperationInput: "SerializeableShape",
-        OperationOutput: "DeserializeableShape",
-        Event: "DeserializeableShape",
-    ](
+    def create_event_receiver(
         self,
         *,
-        operation: "APIOperation[OperationInput, OperationOutput]",
-        request: I,
-        response: O,
-        event_type: "TypeForm[Event]",
-        event_deserializer: Callable[["ShapeDeserializer"], Event],
+        operation: "APIOperation[_OperationInput, _OperationOutput]",
+        request: _I,
+        response: _O,
+        event_type: "TypeForm[_OE]",
+        event_deserializer: Callable[["ShapeDeserializer"], _OE],
         context: TypedProperties,
-    ) -> AsyncEventReceiver[Event]:
+    ) -> AsyncEventReceiver[_OE]:
         """Creates an event receiver for a protocol event stream.
 
         :param operation: The event stream operation.

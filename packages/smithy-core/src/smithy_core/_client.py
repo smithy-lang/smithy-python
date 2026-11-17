@@ -1,9 +1,10 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import sys
 from collections.abc import Callable
 from copy import copy
 from types import FunctionType
-from typing import Any, ClassVar, cast, get_overloads
+from typing import Any, ClassVar, Generic, cast, get_overloads
 
 from .deserializers import DeserializeableShape
 from .exceptions import ExpectationNotMetError, ResourceLifecycleError
@@ -14,7 +15,19 @@ from .schemas import APIOperation
 from .serializers import SerializeableShape
 from .types import PropertyKey, TypedProperties
 
+if sys.version_info >= (3, 12):
+    from typing import TypeVar
+else:
+    from typing_extensions import TypeVar
+
+
 __all__ = ["OPERATION", "ClientBase"]
+
+_C = TypeVar("_C", infer_variance=True)
+_I = TypeVar("_I", bound=SerializeableShape)
+_O = TypeVar("_O", bound=DeserializeableShape)
+_T = TypeVar("_T")
+
 
 OPERATION = PropertyKey(key="operation", value_type=APIOperation[Any, Any])
 """The operation being invoked by the call."""
@@ -22,7 +35,7 @@ OPERATION = PropertyKey(key="operation", value_type=APIOperation[Any, Any])
 _CLOSED_MESSAGE = "Cannot invoke an operation on a client that has been closed."
 
 
-class ClientBase[C]:
+class ClientBase(Generic[_C]):
     """Client machinery shared by the sync and async clients.
 
     Setup and call preparation are programs (see ``smithy_core.program``) whose
@@ -49,8 +62,8 @@ class ClientBase[C]:
 
     def __init__(
         self,
-        config: C | None = None,
-        plugins: list[Callable[[C], None]] | None = None,
+        config: _C | None = None,
+        plugins: list[Callable[[_C], None]] | None = None,
     ) -> None:
         """
         :param config: Optional configuration for the client. Here you can set things
@@ -69,7 +82,7 @@ class ClientBase[C]:
         """Effect: create the config used when none is passed to the constructor."""
         raise NotImplementedError
 
-    def _post_setup(self, config: C) -> Any:
+    def _post_setup(self, config: _C) -> Any:
         """Effect: finish setup that depends on the plugin-applied config."""
         return None
 
@@ -81,10 +94,10 @@ class ClientBase[C]:
             max_attempts=getattr(config, "max_attempts", None),
         )
 
-    def _build_call[I: SerializeableShape, O: DeserializeableShape](
+    def _build_call(
         self,
-        input: I,
-        operation: APIOperation[I, O],
+        input: _I,
+        operation: APIOperation[_I, _O],
         *,
         config: Any,
         retry_strategy: Any,
@@ -108,12 +121,12 @@ class ClientBase[C]:
         )
         return pipeline, call
 
-    def _select_input[I: SerializeableShape, O: DeserializeableShape](
+    def _select_input(
         self,
-        operation: APIOperation[I, O],
+        operation: APIOperation[_I, _O],
         args: tuple[object, ...],
         members: dict[str, object],
-    ) -> I | dict[str, Any]:
+    ) -> _I | dict[str, Any]:
         """Choose what a generated operation method's input is built from.
 
         The method takes either its whole request, positionally, as the input model
@@ -150,9 +163,9 @@ class ClientBase[C]:
             f"got {'None' if request is None else type(request).__name__}"
         )
 
-    def _build_input[I: SerializeableShape, O: DeserializeableShape](
-        self, input: I | dict[str, Any] | None, operation: APIOperation[I, O]
-    ) -> I:
+    def _build_input(
+        self, input: _I | dict[str, Any] | None, operation: APIOperation[_I, _O]
+    ) -> _I:
         """Build the input model from the keyword arguments of an operation call.
 
         Runs before any client setup, so a call with invalid arguments fails without
@@ -181,7 +194,7 @@ class ClientBase[C]:
             if (close := getattr(self._transport, "close", None)) is not None:
                 yield close
 
-    def _setup(self) -> Program[C]:
+    def _setup(self) -> Program[_C]:
         """Resolve the client's base config once; callers hold the setup lock."""
         self._raise_if_closed()
         if not self._setup_done:
@@ -203,13 +216,13 @@ class ClientBase[C]:
             self._setup_done = True
         return self._config
 
-    def _prepare[I: SerializeableShape, O: DeserializeableShape](
+    def _prepare(
         self,
         config: Any,
-        input: I,
-        operation: APIOperation[I, O],
-        default_plugins: list[Callable[[C], None]],
-        plugins: list[Callable[[C], None]] | None,
+        input: _I,
+        operation: APIOperation[_I, _O],
+        default_plugins: list[Callable[[_C], None]],
+        plugins: list[Callable[[_C], None]] | None,
     ) -> Program[Any]:
         if default_plugins or plugins:
             # Keep operation-plugin mutations scoped to this call.
@@ -235,7 +248,7 @@ class ClientBase[C]:
         )
 
 
-def _copy_config[T](config: T) -> T:
+def _copy_config(config: _T) -> _T:
     """Copy a config and its container fields, sharing the components they hold.
 
     Configured components such as interceptors, resolvers and retry strategies

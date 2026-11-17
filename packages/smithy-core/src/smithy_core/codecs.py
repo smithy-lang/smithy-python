@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from io import BytesIO
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, TypeVar, runtime_checkable
 
 from .interfaces import BytesReader, BytesWriter
 
@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 
 __all__ = ["Codec"]
+
+_S = TypeVar("_S", bound="DeserializeableShape")
 
 
 @runtime_checkable
@@ -55,9 +57,7 @@ class Codec(Protocol):
         stream.seek(0)
         return stream.read()
 
-    def deserialize[S: DeserializeableShape](
-        self, source: bytes | BytesReader, shape: type[S]
-    ) -> S:
+    def deserialize(self, source: bytes | BytesReader, shape: type[_S]) -> _S:
         """Deserialize bytes into a shape.
 
         :param source: The bytes to deserialize.

@@ -1,11 +1,18 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import sys
 from asyncio import Future
-from typing import Any, Self
+from typing import Any, Generic, Self
 
 from ..deserializers import DeserializeableShape
 from ..serializers import SerializeableShape
 from .interfaces.eventstream import AsyncEventPublisher, AsyncEventReceiver
+
+if sys.version_info >= (3, 12):
+    from typing import TypeVar
+else:
+    from typing_extensions import TypeVar
+
 
 __all__ = [
     "AsyncDuplexEventStream",
@@ -13,12 +20,13 @@ __all__ = [
     "AsyncOutputEventStream",
 ]
 
+_IE = TypeVar("_IE", bound=SerializeableShape, infer_variance=True)
+_O = TypeVar("_O", bound=DeserializeableShape, infer_variance=True)
+_Output = TypeVar("_Output", infer_variance=True)
+_OE = TypeVar("_OE", bound=DeserializeableShape, infer_variance=True)
 
-class AsyncDuplexEventStream[
-    IE: SerializeableShape,
-    OE: DeserializeableShape,
-    O: DeserializeableShape,
-]:
+
+class AsyncDuplexEventStream(Generic[_IE, _OE, _O]):
     """An event stream that both sends and receives messages.
 
     To ensure that streams are closed upon exiting, this class may be used as an async
@@ -55,10 +63,10 @@ class AsyncDuplexEventStream[
                             return
     """
 
-    input_stream: AsyncEventPublisher[IE]
+    input_stream: AsyncEventPublisher[_IE]
     """An event stream that sends events to the service."""
 
-    output_stream: AsyncEventReceiver[OE] | None = None
+    output_stream: AsyncEventReceiver[_OE] | None = None
     """An event stream that receives events from the service.
 
     This value may be None until ``await_output`` has been called.
@@ -66,7 +74,7 @@ class AsyncDuplexEventStream[
     This value will also be None if the operation has no output stream.
     """
 
-    output: O | None = None
+    output: _O | None = None
     """The initial response from the service.
 
     This value may be None until ``await_output`` has been called.
@@ -78,8 +86,8 @@ class AsyncDuplexEventStream[
     def __init__(
         self,
         *,
-        input_stream: AsyncEventPublisher[IE],
-        output_future: Future[tuple[O, AsyncEventReceiver[OE]]],
+        input_stream: AsyncEventPublisher[_IE],
+        output_future: Future[tuple[_O, AsyncEventReceiver[_OE]]],
     ) -> None:
         self.input_stream = input_stream
         self._output_future = output_future
@@ -90,7 +98,7 @@ class AsyncDuplexEventStream[
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         await self.close()
 
-    async def await_output(self) -> tuple[O, AsyncEventReceiver[OE]]:
+    async def await_output(self) -> tuple[_O, AsyncEventReceiver[_OE]]:
         """Await the operation's output.
 
         The EventStream will be returned as soon as the input stream is ready to
@@ -124,7 +132,7 @@ class AsyncDuplexEventStream[
         await self.output_stream.close()
 
 
-class AsyncInputEventStream[IE: SerializeableShape, O]:
+class AsyncInputEventStream(Generic[_IE, _Output]):
     """An event stream that streams messages to the service.
 
     To ensure that streams are closed upon exiting, this class may be used as an async
@@ -143,10 +151,10 @@ class AsyncInputEventStream[IE: SerializeableShape, O]:
                 await stream.await_output()
     """
 
-    input_stream: AsyncEventPublisher[IE]
+    input_stream: AsyncEventPublisher[_IE]
     """An event stream that sends events to the service."""
 
-    output: O | None = None
+    output: _Output | None = None
     """The initial response from the service.
 
     This value may be None until ``await_output`` has been called.
@@ -158,8 +166,8 @@ class AsyncInputEventStream[IE: SerializeableShape, O]:
     def __init__(
         self,
         *,
-        input_stream: AsyncEventPublisher[IE],
-        output_future: Future[O],
+        input_stream: AsyncEventPublisher[_IE],
+        output_future: Future[_Output],
     ) -> None:
         self.input_stream = input_stream
         self._output_future = output_future
@@ -170,7 +178,7 @@ class AsyncInputEventStream[IE: SerializeableShape, O]:
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         await self.close()
 
-    async def await_output(self) -> O:
+    async def await_output(self) -> _Output:
         """Await the operation's initial response.
 
         The EventStream will be returned as soon as the input stream is ready to receive
@@ -190,7 +198,7 @@ class AsyncInputEventStream[IE: SerializeableShape, O]:
         await self.input_stream.close()
 
 
-class AsyncOutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
+class AsyncOutputEventStream(Generic[_OE, _O]):
     """An event stream that streams messages from the service.
 
     To ensure that streams are closed upon exiting, this class may be used as an async
@@ -211,20 +219,20 @@ class AsyncOutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
                             return
     """
 
-    output_stream: AsyncEventReceiver[OE]
+    output_stream: AsyncEventReceiver[_OE]
     """An event stream that receives events from the service.
 
     This value will also be None if the operation has no output stream.
     """
 
-    output: O
+    output: _O
     """The initial response from the service.
 
     This may include context necessary to interpret output events or prepare input
     events. It will always be available before any events.
     """
 
-    def __init__(self, output_stream: AsyncEventReceiver[OE], output: O) -> None:
+    def __init__(self, output_stream: AsyncEventReceiver[_OE], output: _O) -> None:
         self.output_stream = output_stream
         self.output = output
 

@@ -175,7 +175,7 @@ def test_types_generation_writes_complete_package(
         "version": "1.2.3",
         "description": "example_types types package",
         "readme": "README.md",
-        "requires-python": ">=3.12",
+        "requires-python": ">=3.11",
         "keywords": ["smithy", "example_types"],
         "license": {"text": "Apache-2.0"},
         "dependencies": ["smithy-core~=0.13.0"],
@@ -184,6 +184,7 @@ def test_types_generation_writes_complete_package(
         "requires": ["hatchling"],
         "build-backend": "hatchling.build",
     }
+    assert project["tool"]["ruff"]["target-version"] == "py311"
     monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
         str(output / "src")
     )

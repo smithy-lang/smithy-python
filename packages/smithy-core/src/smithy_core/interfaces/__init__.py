@@ -1,5 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import sys
 from collections.abc import (
     AsyncIterable,
     Awaitable,
@@ -20,6 +21,12 @@ from typing import (
     overload,
     runtime_checkable,
 )
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType, TypeVar
+else:
+    from typing_extensions import TypeAliasType, TypeVar
+
 
 __all__ = [
     "URI",
@@ -55,6 +62,13 @@ if TYPE_CHECKING:
     from ..schemas import APIOperation, Schema
     from ..serializers import SerializeableShape
     from ..shapes import ShapeID
+
+_DT = TypeVar("_DT")
+_I = TypeVar("_I", infer_variance=True)
+_O = TypeVar("_O", infer_variance=True)
+_OperationInput = TypeVar("_OperationInput", bound="SerializeableShape")
+_OperationOutput = TypeVar("_OperationOutput", bound="DeserializeableShape")
+_T = TypeVar("_T", infer_variance=True)
 
 
 class URI(Protocol):
@@ -142,7 +156,7 @@ class SeekableBytesReader(BytesReader, Protocol):
 
 # A union of all acceptable streaming blob types. Deserialized payloads will
 # always return a ByteStream, or AsyncByteStream if async is enabled.
-type StreamingBlob = BytesReader | bytes | bytearray
+StreamingBlob = TypeAliasType("StreamingBlob", BytesReader | bytes | bytearray)
 
 
 def is_streaming_blob(obj: Any) -> TypeGuard[StreamingBlob]:
@@ -164,7 +178,9 @@ class AwaitableBytesReader(Protocol):
 
 # CAUTION: matches smithy_core.aio.interfaces.StreamingBlob structurally; message
 # types carry either mode's body, so they can't name the aio alias.
-type AnyStreamingBlob = StreamingBlob | AwaitableBytesReader | AsyncIterable[bytes]
+AnyStreamingBlob = TypeAliasType(
+    "AnyStreamingBlob", StreamingBlob | AwaitableBytesReader | AsyncIterable[bytes]
+)
 
 
 class Request(Protocol):
@@ -215,7 +231,7 @@ class Endpoint(Protocol):
 
 
 @runtime_checkable
-class PropertyKey[T](Protocol):
+class PropertyKey(Protocol[_T]):
     """A typed properties key.
 
     Used with :py:class:`Context` to set and get typed values.
@@ -233,7 +249,7 @@ class PropertyKey[T](Protocol):
     key: str
     """The string key used to access the value."""
 
-    value_type: "TypeForm[T]"
+    value_type: "TypeForm[_T]"
     """The type of the associated value in the properties bag."""
 
     def __str__(self) -> str:
@@ -288,13 +304,13 @@ class TypedProperties(Protocol):
     """
 
     @overload
-    def __getitem__[T](self, key: PropertyKey[T]) -> T: ...
+    def __getitem__(self, key: PropertyKey[_T]) -> _T: ...
 
     @overload
     def __getitem__(self, key: str) -> Any: ...
 
     @overload
-    def __setitem__[T](self, key: PropertyKey[T], value: T) -> None: ...
+    def __setitem__(self, key: PropertyKey[_T], value: _T) -> None: ...
 
     @overload
     def __setitem__(self, key: str, value: Any) -> None: ...
@@ -306,34 +322,34 @@ class TypedProperties(Protocol):
     def __contains__(self, key: object) -> bool: ...
 
     @overload
-    def get[T](self, key: PropertyKey[T], default: None = None) -> T | None: ...
+    def get(self, key: PropertyKey[_T], default: None = None) -> _T | None: ...
 
     @overload
-    def get[T](self, key: PropertyKey[T], default: T) -> T: ...
+    def get(self, key: PropertyKey[_T], default: _T) -> _T: ...
 
     @overload
-    def get[T, DT](self, key: PropertyKey[T], default: DT) -> T | DT: ...
+    def get(self, key: PropertyKey[_T], default: _DT) -> _T | _DT: ...
 
     @overload
     def get(self, key: str, default: None = None) -> Any | None: ...
 
     @overload
-    def get[T](self, key: str, default: T) -> Any | T: ...
+    def get(self, key: str, default: _T) -> Any | _T: ...
 
     @overload
-    def pop[T](self, key: PropertyKey[T], default: None = None) -> T | None: ...
+    def pop(self, key: PropertyKey[_T], default: None = None) -> _T | None: ...
 
     @overload
-    def pop[T](self, key: PropertyKey[T], default: T) -> T: ...
+    def pop(self, key: PropertyKey[_T], default: _T) -> _T: ...
 
     @overload
-    def pop[T, DT](self, key: PropertyKey[T], default: DT) -> T | DT: ...
+    def pop(self, key: PropertyKey[_T], default: _DT) -> _T | _DT: ...
 
     @overload
     def pop(self, key: str, default: None = None) -> Any | None: ...
 
     @overload
-    def pop[T](self, key: str, default: T) -> Any | T: ...
+    def pop(self, key: str, default: _T) -> Any | _T: ...
 
     def items(self) -> ItemsView[str, Any]:
         """Return a view of the property keys and values."""
@@ -380,7 +396,9 @@ class ProtocolSettings:
     """
 
 
-type ProtocolConstructor[T] = Callable[[ProtocolSettings], T]
+ProtocolConstructor = TypeAliasType(
+    "ProtocolConstructor", Callable[[ProtocolSettings], _T], type_params=(_T,)
+)
 """A callable that builds a protocol instance from ``ProtocolSettings``.
 
 A protocol class satisfies this, since calling the class constructs an instance.
@@ -398,18 +416,18 @@ class EndpointResolver(Protocol):
         ...
 
 
-class ClientTransport[I, O](Protocol):
+class ClientTransport(Protocol[_I, _O]):
     """Protocol-agnostic representation of a synchronous client transport (e.g. an
     HTTP client)."""
 
     TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
 
-    def send(self, request: I) -> O:
+    def send(self, request: _I) -> _O:
         """Send a request over the transport and receive the response."""
         ...
 
 
-class ClientProtocol[I, O](Protocol):
+class ClientProtocol(Protocol[_I, _O]):
     """A protocol used by a synchronous client to communicate with a server."""
 
     @property
@@ -417,17 +435,14 @@ class ClientProtocol[I, O](Protocol):
         """The ID of the protocol."""
         ...
 
-    def serialize_request[
-        OperationInput: "SerializeableShape",
-        OperationOutput: "DeserializeableShape",
-    ](
+    def serialize_request(
         self,
         *,
-        operation: "APIOperation[OperationInput, OperationOutput]",
-        input: OperationInput,
+        operation: "APIOperation[_OperationInput, _OperationOutput]",
+        input: _OperationInput,
         endpoint: URI,
         context: TypedProperties,
-    ) -> I:
+    ) -> _I:
         """Serialize an operation input into a transport request.
 
         :param operation: The operation whose request is being serialized.
@@ -437,7 +452,7 @@ class ClientProtocol[I, O](Protocol):
         """
         ...
 
-    def set_service_endpoint(self, *, request: I, endpoint: Endpoint) -> I:
+    def set_service_endpoint(self, *, request: _I, endpoint: Endpoint) -> _I:
         """Update the endpoint of a transport request.
 
         :param request: The request whose endpoint should be updated.
@@ -445,19 +460,16 @@ class ClientProtocol[I, O](Protocol):
         """
         ...
 
-    def deserialize_response_program[
-        OperationInput: "SerializeableShape",
-        OperationOutput: "DeserializeableShape",
-    ](
+    def deserialize_response_program(
         self,
         *,
-        operation: "APIOperation[OperationInput, OperationOutput]",
-        request: I,
-        response: O,
+        operation: "APIOperation[_OperationInput, _OperationOutput]",
+        request: _I,
+        response: _O,
         error_registry: "TypeRegistry",
         context: TypedProperties,
         read_body: Callable[[AnyStreamingBlob], Any],
-    ) -> "Program[OperationOutput]":
+    ) -> "Program[_OperationOutput]":
         """Deserialize the output from the transport response or raise its error.
 
         The returned program runs under both the sync and async clients. It reads
@@ -474,7 +486,7 @@ class ClientProtocol[I, O](Protocol):
         ...
 
     def extract_response_metadata(
-        self, *, response: O, context: TypedProperties
+        self, *, response: _O, context: TypedProperties
     ) -> "ResponseMetadata":
         """Extract metadata about a transport response.
 

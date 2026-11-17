@@ -26,29 +26,38 @@ is a prelude integer (see ``_PRELUDE``), a sibling shape's tuple, or a
 id -> value for valued/unknown traits (also carrying any valueless ones present).
 """
 
+import sys
 import threading
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final, TypeAlias, cast
 
 from . import prelude
 from .schemas import Schema
 from .shapes import ShapeID, ShapeType
 from .traits import DynamicTrait, Trait
 
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
+
 if TYPE_CHECKING:
     from .documents import DocumentValue
 
 _ENCODING_VERSION: Final = 2
 
-type StaticSchema = tuple[Any, ...]
+StaticSchema = TypeAliasType("StaticSchema", tuple[Any, ...])
 # A member target: a prelude int, a sibling tuple, or a lambda returning one. A built
 # Schema is also accepted so an operation can be hand-initialized with real schemas.
-type StaticSchemaRef = int | StaticSchema | Schema | Callable[[], "StaticSchemaRef"]
-type StaticSchemaTraits = int | dict[str, "DocumentValue"]
+StaticSchemaRef: TypeAlias = (
+    int | StaticSchema | Schema | Callable[[], "StaticSchemaRef"]
+)
+StaticSchemaTraits: TypeAlias = int | dict[str, "DocumentValue"]
 # Permissive (not a fixed-arity tuple) so a generated operation literal -- whose
 # nested refs and valued-trait dicts have partially-inferred element types -- still
 # assigns under strict type checking.
-type StaticOperationSchema = tuple[Any, ...]
+StaticOperationSchema = TypeAliasType("StaticOperationSchema", tuple[Any, ...])
 
 # Prelude integer substitutes. Index == the prelude shape's ShapeType value, so a
 # bare simple-shape type int doubles as its prelude reference.

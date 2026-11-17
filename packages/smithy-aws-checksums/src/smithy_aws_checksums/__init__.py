@@ -10,7 +10,7 @@ through :func:`new` and always use :mod:`hashlib`.
 """
 
 import hashlib
-from collections.abc import Buffer
+import sys
 from importlib.metadata import version
 from typing import ClassVar, Final, Protocol, Self, runtime_checkable
 
@@ -18,6 +18,11 @@ from ._private.buffers import as_byte_view as _as_byte_view
 from ._private.selection import IMPLEMENTATIONS as _IMPLEMENTATIONS
 from ._private.selection import NATIVE as _NATIVE
 from ._private.selection import ChecksumImpl as _ChecksumImpl
+
+if sys.version_info >= (3, 12):
+    from collections.abc import Buffer
+else:
+    from typing_extensions import Buffer
 
 __version__ = version("smithy-aws-checksums")
 __all__ = (

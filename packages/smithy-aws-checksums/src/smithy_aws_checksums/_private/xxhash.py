@@ -9,11 +9,16 @@ These follow the reference implementation (https://github.com/Cyan4973/xxHash) w
 a seed of zero and the default secret, which is all that checksums need.
 """
 
-from collections.abc import Buffer
+import sys
 from struct import Struct
 from typing import Self
 
 from .pure import PureChecksum
+
+if sys.version_info >= (3, 12):
+    from collections.abc import Buffer
+else:
+    from typing_extensions import Buffer
 
 _MASK64 = 0xFFFFFFFFFFFFFFFF
 
