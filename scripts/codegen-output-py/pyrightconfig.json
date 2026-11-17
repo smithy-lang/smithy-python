@@ -24,6 +24,7 @@
     "../../codegen-output-py/rpcv2-cbor/src",
     "../../codegen-output-py/rpcv2-cbor-client/src",
     "../../codegen-output-py/rpcv2-json/src",
+    "../../codegen-output-py/rpcv2-json-client/src",
     "../../codegen-output-py/types/src"
   ]
 }

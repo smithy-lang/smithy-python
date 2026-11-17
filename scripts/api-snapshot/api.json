@@ -886,6 +886,7 @@
     "DEFAULT_PROTOCOLS": "mappingproxy",
     "ProtocolContribution": "class",
     "RPCV2_CBOR": "ProtocolContribution",
+    "RPCV2_JSON": "ProtocolContribution",
     "select_protocol": "function"
   },
   "smithy_python.schemas": {

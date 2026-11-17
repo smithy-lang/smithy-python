@@ -17,6 +17,7 @@ from . import symbols as _symbols
 __all__ = [
     "DEFAULT_PROTOCOLS",
     "RPCV2_CBOR",
+    "RPCV2_JSON",
     "ProtocolContribution",
     "select_protocol",
 ]
@@ -33,7 +34,7 @@ class ProtocolContribution:
     async_transport: _symbols.TypeReference
 
 
-def _http(name: str, module: str) -> _symbols.TypeReference:
+def _http(name: str, module: str, extra: str) -> _symbols.TypeReference:
     return _symbols.TypeReference(
         name,
         f"smithy_http.{module}",
@@ -42,23 +43,42 @@ def _http(name: str, module: str) -> _symbols.TypeReference:
                 package=_dependencies.SMITHY_HTTP.package,
                 specifier=_dependencies.SMITHY_HTTP.specifier,
                 group="runtime",
-                extras=("aiohttp", "cbor", "urllib3"),
+                extras=(extra,),
             ),
         ),
     )
 
 
+# Each reference records the smithy-http extra it needs, so a client's package
+# requires its protocol's codec extra and both default transports' extras.
+_URLLIB3: Final = _http("Urllib3HTTPClient", "urllib3", "urllib3")
+_AIOHTTP: Final = _http("AIOHTTPClient", "aio.aiohttp", "aiohttp")
+
 RPCV2_CBOR: Final = ProtocolContribution(
     protocol_id=_model.ShapeId("smithy.protocols", "rpcv2Cbor"),
-    protocol=_http("RpcV2CborClientProtocol", "protocols"),
-    async_protocol=_http("AsyncRpcV2CborClientProtocol", "aio.protocols"),
-    transport=_http("Urllib3HTTPClient", "urllib3"),
-    async_transport=_http("AIOHTTPClient", "aio.aiohttp"),
+    protocol=_http("RpcV2CborClientProtocol", "protocols", "cbor"),
+    async_protocol=_http("AsyncRpcV2CborClientProtocol", "aio.protocols", "cbor"),
+    transport=_URLLIB3,
+    async_transport=_AIOHTTP,
 )
 """The built-in ``smithy.protocols#rpcv2Cbor`` contribution."""
 
+RPCV2_JSON: Final = ProtocolContribution(
+    protocol_id=_model.ShapeId("smithy.protocols", "rpcv2Json"),
+    protocol=_http("RpcV2JsonClientProtocol", "protocols", "json"),
+    async_protocol=_http("AsyncRpcV2JsonClientProtocol", "aio.protocols", "json"),
+    transport=_URLLIB3,
+    async_transport=_AIOHTTP,
+)
+"""The built-in ``smithy.protocols#rpcv2Json`` contribution."""
+
 DEFAULT_PROTOCOLS: Final[Mapping[_model.ShapeId, ProtocolContribution]] = (
-    MappingProxyType({RPCV2_CBOR.protocol_id: RPCV2_CBOR})
+    MappingProxyType(
+        {
+            contribution.protocol_id: contribution
+            for contribution in (RPCV2_CBOR, RPCV2_JSON)
+        }
+    )
 )
 """Protocols supported by client generation."""
 

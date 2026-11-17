@@ -20,12 +20,13 @@ import sys
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
 
 import pytest
-from smithy_cbor import loads
+from smithy_cbor import loads as cbor_loads
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.retries import SimpleRetryStrategy
 from smithy_core.schemas import Schema
@@ -52,8 +53,27 @@ _EXPECTED_FAILURES = frozenset(
         "RpcV2CborClientSkipsTopLevelDefaultValuesInInput",
         "RpcV2CborClientUsesExplicitlyProvidedMemberValuesOverDefaults",
         "RpcV2CborClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
+        "RpcV2JsonRequestClientPopulatesDefaultValuesInInput",
+        "RpcV2JsonRequestClientSkipsTopLevelDefaultValuesInInput",
+        "RpcV2JsonRequestClientUsesExplicitlyProvidedMemberValuesOverDefaults",
+        "RpcV2JsonRequestClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
     }
 )
+
+# How each protocol's request bodies are decoded for comparison. JSON numbers are
+# read as Decimal, so big numbers compare exactly.
+_BODY_DECODERS: dict[str, Any] = {
+    "smithy.protocols#rpcv2Cbor": cbor_loads,
+    "smithy.protocols#rpcv2Json": lambda body: json.loads(body, parse_float=Decimal),
+}
+
+
+def _vector_body(case: dict[str, Any]) -> bytes:
+    """A vector's body as bytes. Binary media types are written in base64."""
+    body = case.get("body", "")
+    if case.get("bodyMediaType") == "application/cbor":
+        return base64.b64decode(body)
+    return body.encode()
 
 
 @dataclass(frozen=True)
@@ -69,7 +89,8 @@ def _vectors() -> Iterator[Any]:
         path = _INPUTS / "models/vectors" / Path(settings["model"]).name
         if not path.exists():
             continue
-        for shape_id, kinds in json.loads(path.read_text()).items():
+        vectors = json.loads(path.read_text(), parse_float=Decimal)
+        for shape_id, kinds in vectors.items():
             for kind, cases in sorted(kinds.items()):
                 for case in cases:
                     marks = (
@@ -203,9 +224,15 @@ def _scalar(schema: Schema, value: Any) -> Any:
         case ShapeType.BLOB:
             return value.encode() if isinstance(value, str) else value
         case ShapeType.TIMESTAMP:
-            return datetime.fromtimestamp(value, UTC)
+            # Split exactly, so fractional seconds don't round through a float.
+            seconds = Decimal(value)
+            whole = int(seconds)
+            micros = int((seconds - whole) * 1_000_000)
+            return datetime.fromtimestamp(whole, UTC).replace(microsecond=micros)
         case ShapeType.FLOAT | ShapeType.DOUBLE:
             return float(value)
+        case ShapeType.BIG_DECIMAL:
+            return Decimal(value)
         case _:
             return value
 
@@ -282,8 +309,8 @@ def _body(request: HTTPRequest) -> bytes:
     return asyncio.run(data) if asyncio.iscoroutine(data) else data
 
 
-def _decoded(body: bytes) -> Any:
-    return loads(body) if body else {}
+def _decoded(protocol: str, body: bytes) -> Any:
+    return _BODY_DECODERS[protocol](body) if body else {}
 
 
 @pytest.mark.parametrize("aio", [False, True], ids=["sync-client", "async-client"])
@@ -321,14 +348,17 @@ def _check_request(
     for key in case.get("requireHeaders", ()):
         assert actual.fields[key].values
     if "body" in case:
-        expected = base64.b64decode(case["body"])
-        assert deep_equal(_decoded(_body(actual)), _decoded(expected))
+        expected = _vector_body(case)
+        protocol = case["protocol"]
+        assert deep_equal(
+            _decoded(protocol, _body(actual)), _decoded(protocol, expected)
+        )
 
 
 def _check_response(
     client: _Client, shape_id: str, case: dict[str, Any], *, aio: bool
 ) -> None:
-    body = base64.b64decode(case["body"]) if case.get("body") else b""
+    body = _vector_body(case)
     response = HTTPResponse(
         status=case["code"],
         fields=tuples_to_fields(list(case.get("headers", {}).items())),
@@ -368,5 +398,6 @@ def test_vectors_match_their_provenance() -> None:
 
 
 def test_every_client_vector_is_collected() -> None:
-    # 29 request and 43 response vectors; the Java client runs the same 72.
-    assert len(list(_vectors())) == 72
+    # The Java clients run the same vectors: rpcv2Cbor has 29 request and 43
+    # response vectors, and rpcv2Json has 34 and 39.
+    assert len(list(_vectors())) == 72 + 73

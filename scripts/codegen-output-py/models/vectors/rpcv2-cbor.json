@@ -161,7 +161,7 @@
         },
         "id": "RpcV2CborFloat16Subnormal",
         "params": {
-          "value": 4.76837158203125e-06
+          "value": 0.00000476837158203125
         },
         "protocol": "smithy.protocols#rpcv2Cbor"
       }
