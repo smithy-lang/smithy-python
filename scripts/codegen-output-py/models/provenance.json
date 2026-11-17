@@ -50,10 +50,11 @@
   "rpcv2-cbor": {
     "assembled_sha256": "68d4c622bfa0ac01065fb563cbfa6c232668ac8ba09bbbb7dae71c1c4475d529",
     "fixture_sha256": "04f97ce5fbed181e811a5210ae18005b5d9e3175bedf7ef53f03356dcbe47a38",
-    "vectors_sha256": "ca533bf1ff4a736bd295b23be1c319b98d6e09a6238e60bd1a0be44876e382cb"
+    "vectors_sha256": "87dd1af15d6d624a836a7bc45fca44d5d3cdd6a776e86cbdcb1b1111fbd9c6f5"
   },
   "rpcv2-json": {
     "assembled_sha256": "39446e1f8b195e069632f5e95f6d4b44605f0e99a9df5a2d30b9f94321d3cb1c",
-    "fixture_sha256": "698c563eece76205e384984e4ea4a4cbe0ce0415d7663b2dbb2e20f6892e09e5"
+    "fixture_sha256": "698c563eece76205e384984e4ea4a4cbe0ce0415d7663b2dbb2e20f6892e09e5",
+    "vectors_sha256": "7d3c938768f3dccab0978855990f5708ad124e1eaf1634f090b6f1987ebf590b"
   }
 }

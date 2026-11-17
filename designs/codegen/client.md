@@ -167,26 +167,32 @@ the operation has `optionalAuth`.
 
 A protocol registry maps modeled protocol IDs to protocol contributions. A
 contribution provides sync/async protocol and transport references and their
-dependencies. RPCv2 CBOR is built in. Tests can inject a registry.
+dependencies. RPCv2 CBOR and RPCv2 JSON are built in. Tests can inject a registry.
 
 An explicit protocol selection must be modeled on the service and present in
 the registry. Without one, the generator selects the sole supported modeled
 protocol. Ambiguous or unsupported selections fail before publication.
 Selection is independent of hash and discovery order.
 
-The RPCv2 CBOR contribution uses:
+The built-in contributions use these runtime protocols:
 
-* `smithy_http.protocols.RpcV2CborClientProtocol`.
-* `smithy_http.aio.protocols.AsyncRpcV2CborClientProtocol`.
+| Protocol | Sync | Async | `smithy-http` extra |
+| --- | --- | --- | --- |
+| `smithy.protocols#rpcv2Cbor` | `RpcV2CborClientProtocol` | `AsyncRpcV2CborClientProtocol` | `cbor` |
+| `smithy.protocols#rpcv2Json` | `RpcV2JsonClientProtocol` | `AsyncRpcV2JsonClientProtocol` | `json` |
+
+Both also use:
+
 * `ProtocolSettings` with the service namespace, target, version, and schema.
-* `Urllib3HTTPClient` and `AIOHTTPClient` as default sync/async transports.
+* `Urllib3HTTPClient` and `AIOHTTPClient` as default sync/async transports,
+  which add the `urllib3` and `aiohttp` extras.
 * `StaticEndpointResolver` with a configured endpoint URI.
 
 ## Clients and Configuration
 
 Service classes are thin subclasses of `Client[Config]` and
 `AsyncClient[AsyncConfig]`. Their methods invoke the runtime pipeline, which
-owns retries, interceptors, HTTP framing, and CBOR serde.
+owns retries, interceptors, HTTP framing, and serde.
 
 Generated packages use this layout:
 
@@ -236,8 +242,8 @@ runtime metadata. It covers `self`, `plugins`, defaults, and idempotency tokens.
 
 ## Supported Features
 
-The generator supports unsigned, non-streaming RPCv2 CBOR operations with a
-static endpoint. Models that require auth schemes, event or data streams, or
+The generator supports unsigned, non-streaming RPCv2 CBOR and RPCv2 JSON
+operations with a static endpoint. Models that require auth schemes, event or data streams, or
 modeled endpoint rules fail generation with a diagnostic naming the operation
 and feature.
 
@@ -253,7 +259,7 @@ fake sync/async transports. They assert the request method, URI, headers,
 decoded CBOR payload, response models, and error types.
 
 Client snapshots sit alongside the types snapshots and cover the
-provider-neutral RPCv2 CBOR projection. Checks cover deterministic
+provider-neutral RPCv2 CBOR and RPCv2 JSON projections. Checks cover deterministic
 regeneration, Ruff, strict Pyright consumer usage, lazy imports,
 plugins/interceptors, retries, response metadata, and transport lifecycle.
 

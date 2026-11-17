@@ -3,6 +3,7 @@
 
 import asyncio
 import importlib
+import json
 import subprocess
 import sys
 from collections.abc import Callable
@@ -111,9 +112,15 @@ _HEADERS = [("Content-Type", "application/cbor"), ("smithy-protocol", "rpc-v2-cb
 class _Transport:
     TIMEOUT_EXCEPTIONS = ()
 
-    def __init__(self, status: int = 200, body: bytes = b"") -> None:
+    def __init__(
+        self,
+        status: int = 200,
+        body: bytes = b"",
+        headers: list[tuple[str, str]] = _HEADERS,
+    ) -> None:
         self.status = status
         self.body = body
+        self.headers = headers
         self.requests: list[HTTPRequest] = []
 
     def __deepcopy__(self, memo: dict[int, Any]) -> "_Transport":
@@ -123,7 +130,7 @@ class _Transport:
     def _respond(self, request: HTTPRequest, body: Any) -> HTTPResponse:
         self.requests.append(request)
         return HTTPResponse(
-            status=self.status, fields=tuples_to_fields(_HEADERS), body=body
+            status=self.status, fields=tuples_to_fields(self.headers), body=body
         )
 
     def send(
@@ -355,3 +362,45 @@ def test_client_optional_input_members_may_be_omitted(
     package.Greeter(_config(package, transport, aio=False)).greet()
     (request,) = transport.requests
     assert loads(_body(request)) == {}
+
+
+def test_rpcv2_json_service_sends_json_and_requires_the_json_extra(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    shapes = _shapes()
+    shapes["example#Greeter"]["traits"] = {"smithy.protocols#rpcv2Json": {}}
+    _generate(tmp_path, "greeter_json", shapes)
+    project = (tmp_path / "pyproject.toml").read_text()
+    assert '"smithy-http[aiohttp,json,urllib3]~=' in project
+    assert "cbor" not in project
+
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module("greeter_json")
+    transport = _Transport(
+        body=b'{"greeting": "Hello, Ana"}',
+        headers=[
+            ("Content-Type", "application/json"),
+            ("smithy-protocol", "rpc-v2-json"),
+        ],
+    )
+    output = package.Greeter(_config(package, transport, aio=False)).greet(name="Ana")
+    assert output.greeting == "Hello, Ana"
+    (request,) = transport.requests
+    assert request.fields["smithy-protocol"].values == ["rpc-v2-json"]
+    assert json.loads(_body(request)) == {"name": "Ana"}
+
+
+def test_a_service_with_both_protocols_needs_a_protocol_selection() -> None:
+    shapes = _shapes()
+    shapes["example#Greeter"]["traits"]["smithy.protocols#rpcv2Json"] = {}
+    with pytest.raises(CodegenError, match="more than one supported protocol"):
+        generator = ClientGenerator(_plan(shapes))
+        generator.generate(generator.context())
+    settings = ClientSettings(
+        "greeter", "1.0.0", None, protocol=ShapeId("smithy.protocols", "rpcv2Json")
+    )
+    model = load_model({"smithy": "2.0", "shapes": shapes})
+    generator = ClientGenerator(ClientPlan.from_model(model, settings))
+    generator.generate(generator.context())

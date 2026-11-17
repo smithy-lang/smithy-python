@@ -9,6 +9,8 @@ command does not assemble Smithy IDL or invoke a build system.
 import argparse
 import hashlib
 import json
+import re
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -53,9 +55,10 @@ def main() -> None:
         model = json.loads(source)
         vector_content: str | None = None
         if name in vector_models:
-            vectors = _protocol_vectors(model)
+            # Decimal keeps vector numbers exact, such as big decimal params.
+            vectors = _protocol_vectors(json.loads(source, parse_float=Decimal))
             (destination / "vectors").mkdir(exist_ok=True)
-            vector_content = json.dumps(vectors, indent=2, sort_keys=True) + "\n"
+            vector_content = _dumps_exact(vectors)
             (destination / f"vectors/{name}.json").write_text(vector_content)
         # Protocol vectors exercise the client artifact; model traits, documentation,
         # operation references, and member order remain intact.
@@ -101,6 +104,21 @@ def _protocol_vectors(model: dict[str, Any]) -> dict[str, Any]:
             if cases:
                 vectors.setdefault(shape_id, {})[kind] = cases
     return vectors
+
+
+_DECIMAL = re.compile(r'"\\u0000decimal:([^"]*)"')
+
+
+def _dumps_exact(value: object) -> str:
+    """JSON with each Decimal written as the number literal it was parsed from."""
+
+    def default(item: object) -> str:
+        if isinstance(item, Decimal):
+            return f"\u0000decimal:{item}"
+        raise TypeError(f"Cannot encode {type(item).__name__}")
+
+    text = json.dumps(value, indent=2, sort_keys=True, default=default)
+    return _DECIMAL.sub(r"\1", text) + "\n"
 
 
 def _remove_protocol_vectors(model: dict[str, Any]) -> None:
