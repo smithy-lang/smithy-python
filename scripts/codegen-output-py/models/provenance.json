@@ -49,7 +49,8 @@
   },
   "rpcv2-cbor": {
     "assembled_sha256": "68d4c622bfa0ac01065fb563cbfa6c232668ac8ba09bbbb7dae71c1c4475d529",
-    "fixture_sha256": "04f97ce5fbed181e811a5210ae18005b5d9e3175bedf7ef53f03356dcbe47a38"
+    "fixture_sha256": "04f97ce5fbed181e811a5210ae18005b5d9e3175bedf7ef53f03356dcbe47a38",
+    "vectors_sha256": "ca533bf1ff4a736bd295b23be1c319b98d6e09a6238e60bd1a0be44876e382cb"
   },
   "rpcv2-json": {
     "assembled_sha256": "39446e1f8b195e069632f5e95f6d4b44605f0e99a9df5a2d30b9f94321d3cb1c",

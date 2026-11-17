@@ -258,6 +258,7 @@ regeneration, Ruff, strict Pyright consumer usage, lazy imports,
 plugins/interceptors, retries, response metadata, and transport lifecycle.
 
 The Python AST fixtures omit HTTP request/response test traits. Protocol-vector
-coverage uses a separate checked-in client input that keeps those vectors and
-their provenance. Tests read only checked-in inputs and never depend on Java
+coverage reads them from a separate checked-in file per client projection, with
+its provenance hash, and runs each vector against the client snapshot. Tests read
+only checked-in inputs and never depend on Java
 output.
