@@ -4,8 +4,11 @@
 import pytest
 from smithy_python.dependencies import (
     HATCHLING,
+    PYTEST,
+    PYTEST_ASYNCIO,
     SMITHY_CORE,
     SMITHY_HTTP,
+    SMITHY_TEST,
     Dependency,
     DependencySet,
 )
@@ -67,6 +70,9 @@ def test_dependency_set_rejects_specifier_conflicts() -> None:
 
 
 def test_runtime_dependency_catalog() -> None:
-    assert SMITHY_CORE == Dependency("smithy-core", "~=0.12.0", "runtime")
-    assert SMITHY_HTTP == Dependency("smithy-http", "~=0.9.0", "runtime")
+    assert SMITHY_CORE == Dependency("smithy-core", "~=0.13.0", "runtime")
+    assert SMITHY_HTTP == Dependency("smithy-http", "~=0.10.0", "runtime")
     assert HATCHLING == Dependency("hatchling", "", "build")
+    assert SMITHY_TEST == Dependency("smithy-test", "~=0.5.0", "test")
+    assert PYTEST == Dependency("pytest", ">=9.0.3,<10.0.0", "test")
+    assert PYTEST_ASYNCIO == Dependency("pytest-asyncio", ">=1.3.0,<1.4.0", "test")

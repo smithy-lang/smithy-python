@@ -42,8 +42,9 @@ class ClientGenerator:
     ) -> None:
         """Register every file and dependency in the generation context.
 
-        :raises CodegenError: If no supported protocol can be selected, or the
-            service needs a feature client generation does not support yet.
+        :raises CodegenError: If no supported protocol can be selected, the
+            service's endpoint rules are unsupported, or the service needs another
+            feature client generation does not support yet.
         """
         plan = self._plan
         service = plan.selection.service
@@ -52,9 +53,10 @@ class ClientGenerator:
             service, context.settings.protocol, self._protocols
         )
         _client_emitter.check_supported(plan)
+        endpoints = _client_emitter.plan_endpoints(plan)
         _schemas.SchemaGenerator().generate(context)
         _models.ModelGenerator().generate(context)
-        _client_emitter.write_client(context, plan, protocol)
+        _client_emitter.write_client(context, plan, protocol, endpoints)
 
     def context(
         self,

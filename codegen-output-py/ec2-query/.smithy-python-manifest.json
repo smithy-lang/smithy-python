@@ -1,7 +1,7 @@
 {
   "files": {
     "README.md": "88060523405669e4b71bf32d9f2888d510765cf5d1aa0514b652de95144609a1",
-    "pyproject.toml": "358fdd421084b9ee092ab914fc88d6c7ccd49845076c9f8022714a8862784707",
+    "pyproject.toml": "e0809d90933a2cb59f46fb11358c808d44caf077317a0761a4f81c797fc99fde",
     "src/ec2query/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
     "src/ec2query/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/ec2query/_private/schemas.py": "d5aed93dfd4bcd0e2352724f6390abe866531874f9e6b74ca01c71fc06b99ad1",

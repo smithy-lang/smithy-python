@@ -12,8 +12,11 @@ from . import exceptions as _exceptions
 
 __all__ = [
     "HATCHLING",
+    "PYTEST",
+    "PYTEST_ASYNCIO",
     "SMITHY_CORE",
     "SMITHY_HTTP",
+    "SMITHY_TEST",
     "Dependency",
     "DependencyGroup",
     "DependencySet",
@@ -104,7 +107,7 @@ class DependencySet(Collection[Dependency]):
 
 SMITHY_CORE = Dependency(
     package="smithy-core",
-    specifier="~=0.12.0",
+    specifier="~=0.13.0",
     group="runtime",
 )
 """Compatible smithy-core runtime for generated artifacts.
@@ -114,10 +117,31 @@ CAUTION: Keep each runtime specifier at its package's current minor version.
 
 SMITHY_HTTP = Dependency(
     package="smithy-http",
-    specifier="~=0.9.0",
+    specifier="~=0.10.0",
     group="runtime",
 )
 """Compatible smithy-http runtime for generated HTTP clients."""
+
+SMITHY_TEST = Dependency(
+    package="smithy-test",
+    specifier="~=0.5.0",
+    group="test",
+)
+"""Endpoint test checks for generated client tests."""
+
+PYTEST = Dependency(
+    package="pytest",
+    specifier=">=9.0.3,<10.0.0",
+    group="test",
+)
+"""Test runner for generated client tests."""
+
+PYTEST_ASYNCIO = Dependency(
+    package="pytest-asyncio",
+    specifier=">=1.3.0,<1.4.0",
+    group="test",
+)
+"""Async test support for generated client tests."""
 
 HATCHLING = Dependency(
     package="hatchling",

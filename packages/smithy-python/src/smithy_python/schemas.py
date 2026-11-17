@@ -320,7 +320,10 @@ _INCLUDED_TRAITS: Final = frozenset(
             "smithy.api#timestampFormat",
             "smithy.synthetic#originalShapeId",
             "aws.api#service",
-            "smithy.rules#endpointBdd",
+            # Endpoint parameter plans read these at runtime.
+            "smithy.rules#contextParam",
+            "smithy.rules#staticContextParams",
+            "smithy.rules#operationContextParams",
             "smithy.api#longPoll",
             "smithy.api#requestCompression",
             "smithy.api#jsonName",

@@ -1,4 +1,11 @@
 {
+  "endpoint-rules-client": {
+    "description": "Python client for the endpoint rules fixture",
+    "model": "models/endpoint-rules.json",
+    "package": "endpoint_rules_client",
+    "service": "example.endpoints#EndpointService",
+    "version": "0.0.1"
+  },
   "rpcv2-cbor-client": {
     "description": "Python client for the rpcv2-cbor projection",
     "model": "models/rpcv2-cbor.json",

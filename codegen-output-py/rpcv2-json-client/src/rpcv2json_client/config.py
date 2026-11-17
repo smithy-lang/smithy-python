@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 from smithy_core.auth import DefaultAuthResolver
-from smithy_core.endpoints import StaticEndpointResolver
+from smithy_core.endpoints import BddEndpointResolver
 from smithy_core.interceptors import Interceptor
 from smithy_core.interfaces import (
     ClientProtocol,
@@ -20,6 +20,7 @@ from smithy_core.shapes import ShapeID
 from smithy_http.protocols import RpcV2JsonClientProtocol
 from smithy_http.urllib3 import Urllib3HTTPClient
 
+from rpcv2json_client._private.endpoints import BDD
 from rpcv2json_client._private.schemas import RPC_V2_JSON_PROTOCOL
 
 _PROTOCOL_SETTINGS = ProtocolSettings(
@@ -44,7 +45,7 @@ class Config:
     "Resolves the endpoint of each operation."
 
     endpoint_uri: str | URI | None
-    "The static URI requests are sent to."
+    "The endpoint URI, read by the endpoint rules as ``SDK::Endpoint``."
 
     interceptors: list[Interceptor[Any, Any, Any, Any]]
     "Hooks called during the execution of a request."
@@ -74,7 +75,7 @@ class Config:
     ) -> None:
         self.auth_scheme_resolver = auth_scheme_resolver or DefaultAuthResolver()
         self.auth_schemes = auth_schemes or {}
-        self.endpoint_resolver = endpoint_resolver or StaticEndpointResolver()
+        self.endpoint_resolver = endpoint_resolver or BddEndpointResolver(BDD)
         self.endpoint_uri = endpoint_uri
         self.interceptors = interceptors or []
         if isinstance(protocol, type):
