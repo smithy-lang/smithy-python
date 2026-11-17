@@ -1,0 +1,1728 @@
+{
+  "smithy.protocoltests.rpcv2Cbor#ComplexError": {
+    "responses": [
+      {
+        "body": "v2ZfX3R5cGV4K3NtaXRoeS5wcm90b2NvbHRlc3RzLnJwY3YyQ2JvciNDb21wbGV4RXJyb3JoVG9wTGV2ZWxpVG9wIGxldmVsZk5lc3RlZL9jRm9vY2Jhcv//",
+        "bodyMediaType": "application/cbor",
+        "code": 400,
+        "documentation": "Parses a complex error with no message member",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborComplexError",
+        "params": {
+          "Nested": {
+            "Foo": "bar"
+          },
+          "TopLevel": "Top level"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "v2ZfX3R5cGV4K3NtaXRoeS5wcm90b2NvbHRlc3RzLnJwY3YyQ2JvciNDb21wbGV4RXJyb3L/",
+        "bodyMediaType": "application/cbor",
+        "code": 400,
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborEmptyComplexError",
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#EmptyInputOutput": {
+    "requests": [
+      {
+        "body": "v/8=",
+        "bodyMediaType": "application/cbor",
+        "documentation": "When Input structure is empty we write CBOR equivalent of {}",
+        "forbidHeaders": [
+          "X-Amz-Target"
+        ],
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "empty_input",
+        "method": "POST",
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/EmptyInputOutput"
+      }
+    ],
+    "responses": [
+      {
+        "body": "v/8=",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "When output structure is empty we write CBOR equivalent of {}",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "empty_output",
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "When output structure is empty the client should accept an empty body",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "empty_output_no_body",
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#Float16": {
+    "responses": [
+      {
+        "appliesTo": "client",
+        "body": "oWV2YWx1Zfl8AA==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Ensures that clients can correctly parse float16 +Inf.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborFloat16Inf",
+        "params": {
+          "value": "Infinity"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "oWV2YWx1Zfn8AA==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Ensures that clients can correctly parse float16 -Inf.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborFloat16NegInf",
+        "params": {
+          "value": "-Infinity"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "oWV2YWx1Zfl8AQ==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Ensures that clients can correctly parse float16 NaN with high LSB.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborFloat16LSBNaN",
+        "params": {
+          "value": "NaN"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "oWV2YWx1Zfl+AA==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Ensures that clients can correctly parse float16 NaN with high MSB.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborFloat16MSBNaN",
+        "params": {
+          "value": "NaN"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "oWV2YWx1ZfkAUA==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Ensures that clients can correctly parse a subnormal float16.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborFloat16Subnormal",
+        "params": {
+          "value": 4.76837158203125e-06
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#FractionalSeconds": {
+    "responses": [
+      {
+        "appliesTo": "client",
+        "body": "v2hkYXRldGltZcH7Qcw32zgPvnf/",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Ensures that clients can correctly parse timestamps with fractional seconds",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborDateTimeWithFractionalSeconds",
+        "params": {
+          "datetime": 946845296.123
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#InvalidGreeting": {
+    "responses": [
+      {
+        "body": "v2ZfX3R5cGV4LnNtaXRoeS5wcm90b2NvbHRlc3RzLnJwY3YyQ2JvciNJbnZhbGlkR3JlZXRpbmdnTWVzc2FnZWJIaf8=",
+        "bodyMediaType": "application/cbor",
+        "code": 400,
+        "documentation": "Parses simple RpcV2 Cbor errors",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborInvalidGreetingError",
+        "params": {
+          "Message": "Hi"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#NoInputOutput": {
+    "requests": [
+      {
+        "body": "",
+        "documentation": "Body is empty and no Content-Type header if no input",
+        "forbidHeaders": [
+          "Content-Type",
+          "X-Amz-Target"
+        ],
+        "headers": {
+          "Accept": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "no_input",
+        "method": "POST",
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "uri": "/service/RpcV2Protocol/operation/NoInputOutput"
+      }
+    ],
+    "responses": [
+      {
+        "body": "",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "A `Content-Type` header should not be set if the response body is empty.",
+        "forbidHeaders": [
+          "Content-Type"
+        ],
+        "headers": {
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "no_output",
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "v/8=",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Clients should accept a CBOR empty struct if there is no output.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "NoOutputClientAllowsEmptyCbor",
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Clients should accept an empty body if there is no output and\nshould not raise an error if the `Content-Type` header is set.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "NoOutputClientAllowsEmptyBody",
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#OperationWithDefaults": {
+    "requests": [
+      {
+        "appliesTo": "client",
+        "body": "v2hkZWZhdWx0c79tZGVmYXVsdFN0cmluZ2JoaW5kZWZhdWx0Qm9vbGVhbvVrZGVmYXVsdExpc3Sf/3BkZWZhdWx0VGltZXN0YW1wwQBrZGVmYXVsdEJsb2JDYWJja2RlZmF1bHRCeXRlAWxkZWZhdWx0U2hvcnQBbmRlZmF1bHRJbnRlZ2VyCmtkZWZhdWx0TG9uZxhkbGRlZmF1bHRGbG9hdPo/gAAAbWRlZmF1bHREb3VibGX6P4AAAGpkZWZhdWx0TWFwv/9rZGVmYXVsdEVudW1jRk9PbmRlZmF1bHRJbnRFbnVtAWtlbXB0eVN0cmluZ2BsZmFsc2VCb29sZWFu9GllbXB0eUJsb2JAaHplcm9CeXRlAGl6ZXJvU2hvcnQAa3plcm9JbnRlZ2VyAGh6ZXJvTG9uZwBpemVyb0Zsb2F0+gAAAABqemVyb0RvdWJsZfoAAAAA//8=",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Client populates default values in input.",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborClientPopulatesDefaultValuesInInput",
+        "method": "POST",
+        "params": {
+          "defaults": {}
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "tags": [
+          "defaults"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/OperationWithDefaults"
+      },
+      {
+        "appliesTo": "client",
+        "body": "v/8=",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Client skips top level default values in input.",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborClientSkipsTopLevelDefaultValuesInInput",
+        "method": "POST",
+        "params": {},
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "tags": [
+          "defaults"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/OperationWithDefaults"
+      },
+      {
+        "appliesTo": "client",
+        "body": "v2hkZWZhdWx0c7dtZGVmYXVsdFN0cmluZ2NieWVuZGVmYXVsdEJvb2xlYW71a2RlZmF1bHRMaXN0gWFhcGRlZmF1bHRUaW1lc3RhbXDB+z/wAAAAAAAAa2RlZmF1bHRCbG9iQmhpa2RlZmF1bHRCeXRlAmxkZWZhdWx0U2hvcnQCbmRlZmF1bHRJbnRlZ2VyFGtkZWZhdWx0TG9uZxjIbGRlZmF1bHRGbG9hdPpAAAAAbWRlZmF1bHREb3VibGX7QAAAAAAAAABqZGVmYXVsdE1hcKFkbmFtZWRKYWNra2RlZmF1bHRFbnVtY0JBUm5kZWZhdWx0SW50RW51bQJrZW1wdHlTdHJpbmdjZm9vbGZhbHNlQm9vbGVhbvVpZW1wdHlCbG9iQmhpaHplcm9CeXRlAWl6ZXJvU2hvcnQBa3plcm9JbnRlZ2VyAWh6ZXJvTG9uZwFpemVyb0Zsb2F0+j+AAABqemVyb0RvdWJsZfs/8AAAAAAAAP8=",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Client uses explicitly provided member values over defaults",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborClientUsesExplicitlyProvidedMemberValuesOverDefaults",
+        "method": "POST",
+        "params": {
+          "defaults": {
+            "defaultBlob": "hi",
+            "defaultBoolean": true,
+            "defaultByte": 2,
+            "defaultDouble": 2.0,
+            "defaultEnum": "BAR",
+            "defaultFloat": 2.0,
+            "defaultIntEnum": 2,
+            "defaultInteger": 20,
+            "defaultList": [
+              "a"
+            ],
+            "defaultLong": 200,
+            "defaultMap": {
+              "name": "Jack"
+            },
+            "defaultShort": 2,
+            "defaultString": "bye",
+            "defaultTimestamp": 1,
+            "emptyBlob": "hi",
+            "emptyString": "foo",
+            "falseBoolean": true,
+            "zeroByte": 1,
+            "zeroDouble": 1.0,
+            "zeroFloat": 1.0,
+            "zeroInteger": 1,
+            "zeroLong": 1,
+            "zeroShort": 1
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "tags": [
+          "defaults"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/OperationWithDefaults"
+      },
+      {
+        "appliesTo": "client",
+        "body": "v290b3BMZXZlbERlZmF1bHRiaGl0b3RoZXJUb3BMZXZlbERlZmF1bHQA/w==",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Any time a value is provided for a member in the top level of input, it is used, regardless of if its the default.",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborClientUsesExplicitlyProvidedValuesInTopLevel",
+        "method": "POST",
+        "params": {
+          "otherTopLevelDefault": 0,
+          "topLevelDefault": "hi"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "tags": [
+          "defaults"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/OperationWithDefaults"
+      },
+      {
+        "appliesTo": "client",
+        "body": "v3ZjbGllbnRPcHRpb25hbERlZmF1bHRzoP8=",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Typically, non top-level members would have defaults filled in, but if they have the clientOptional trait, the defaults should be ignored.",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
+        "method": "POST",
+        "params": {
+          "clientOptionalDefaults": {}
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "tags": [
+          "defaults"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/OperationWithDefaults"
+      }
+    ],
+    "responses": [
+      {
+        "appliesTo": "client",
+        "body": "v/8=",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Client populates default values when missing in response.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborClientPopulatesDefaultsValuesWhenMissingInResponse",
+        "params": {
+          "defaultBlob": "abc",
+          "defaultBoolean": true,
+          "defaultByte": 1,
+          "defaultDouble": 1.0,
+          "defaultEnum": "FOO",
+          "defaultFloat": 1.0,
+          "defaultIntEnum": 1,
+          "defaultInteger": 10,
+          "defaultList": [],
+          "defaultLong": 100,
+          "defaultMap": {},
+          "defaultShort": 1,
+          "defaultString": "hi",
+          "defaultTimestamp": 0,
+          "emptyBlob": "",
+          "emptyString": "",
+          "falseBoolean": false,
+          "zeroByte": 0,
+          "zeroDouble": 0.0,
+          "zeroFloat": 0.0,
+          "zeroInteger": 0,
+          "zeroLong": 0,
+          "zeroShort": 0
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "tags": [
+          "defaults"
+        ]
+      },
+      {
+        "appliesTo": "client",
+        "body": "v21kZWZhdWx0U3RyaW5nY2J5ZW5kZWZhdWx0Qm9vbGVhbvRrZGVmYXVsdExpc3SBYWFwZGVmYXVsdFRpbWVzdGFtcMH7QAAAAAAAAABrZGVmYXVsdEJsb2JCaGlrZGVmYXVsdEJ5dGUCbGRlZmF1bHRTaG9ydAJuZGVmYXVsdEludGVnZXIUa2RlZmF1bHRMb25nGMhsZGVmYXVsdEZsb2F0+kAAAABtZGVmYXVsdERvdWJsZftAAAAAAAAAAGpkZWZhdWx0TWFwoWRuYW1lZEphY2trZGVmYXVsdEVudW1jQkFSbmRlZmF1bHRJbnRFbnVtAmtlbXB0eVN0cmluZ2Nmb29sZmFsc2VCb29sZWFu9WllbXB0eUJsb2JCaGloemVyb0J5dGUBaXplcm9TaG9ydAFremVyb0ludGVnZXIBaHplcm9Mb25nAWl6ZXJvRmxvYXT6P4AAAGp6ZXJvRG91Ymxl+z/wAAAAAAAA/w==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Client ignores default values if member values are present in the response.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborClientIgnoresDefaultValuesIfMemberValuesArePresentInResponse",
+        "params": {
+          "defaultBlob": "hi",
+          "defaultBoolean": false,
+          "defaultByte": 2,
+          "defaultDouble": 2.0,
+          "defaultEnum": "BAR",
+          "defaultFloat": 2.0,
+          "defaultIntEnum": 2,
+          "defaultInteger": 20,
+          "defaultList": [
+            "a"
+          ],
+          "defaultLong": 200,
+          "defaultMap": {
+            "name": "Jack"
+          },
+          "defaultShort": 2,
+          "defaultString": "bye",
+          "defaultTimestamp": 2,
+          "emptyBlob": "hi",
+          "emptyString": "foo",
+          "falseBoolean": true,
+          "zeroByte": 1,
+          "zeroDouble": 1.0,
+          "zeroFloat": 1.0,
+          "zeroInteger": 1,
+          "zeroLong": 1,
+          "zeroShort": 1
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "tags": [
+          "defaults"
+        ]
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#OptionalInputOutput": {
+    "requests": [
+      {
+        "body": "v/8=",
+        "bodyMediaType": "application/cbor",
+        "documentation": "When input is empty we write CBOR equivalent of {}",
+        "forbidHeaders": [
+          "X-Amz-Target"
+        ],
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "optional_input",
+        "method": "POST",
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "uri": "/service/RpcV2Protocol/operation/OptionalInputOutput"
+      }
+    ],
+    "responses": [
+      {
+        "body": "v/8=",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "When output is empty we write CBOR equivalent of {}",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "optional_output",
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#RecursiveShapes": {
+    "requests": [
+      {
+        "body": "v2ZuZXN0ZWS/Y2Zvb2RGb28xZm5lc3RlZL9jYmFyZEJhcjFvcmVjdXJzaXZlTWVtYmVyv2Nmb29kRm9vMmZuZXN0ZWS/Y2JhcmRCYXIy//////8=",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes recursive structures",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborRecursiveShapes",
+        "method": "POST",
+        "params": {
+          "nested": {
+            "foo": "Foo1",
+            "nested": {
+              "bar": "Bar1",
+              "recursiveMember": {
+                "foo": "Foo2",
+                "nested": {
+                  "bar": "Bar2"
+                }
+              }
+            }
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RecursiveShapes"
+      }
+    ],
+    "responses": [
+      {
+        "body": "v2ZuZXN0ZWS/Y2Zvb2RGb28xZm5lc3RlZL9jYmFyZEJhcjFvcmVjdXJzaXZlTWVtYmVyv2Nmb29kRm9vMmZuZXN0ZWS/Y2JhcmRCYXIy//////8=",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Serializes recursive structures",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborRecursiveShapes",
+        "params": {
+          "nested": {
+            "foo": "Foo1",
+            "nested": {
+              "bar": "Bar1",
+              "recursiveMember": {
+                "foo": "Foo2",
+                "nested": {
+                  "bar": "Bar2"
+                }
+              }
+            }
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "oWZuZXN0ZWSiY2Zvb2RGb28xZm5lc3RlZKJjYmFyZEJhcjFvcmVjdXJzaXZlTWVtYmVyomNmb29kRm9vMmZuZXN0ZWShY2JhcmRCYXIy",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Deserializes recursive structures encoded using a map with definite length",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborRecursiveShapesUsingDefiniteLength",
+        "params": {
+          "nested": {
+            "foo": "Foo1",
+            "nested": {
+              "bar": "Bar1",
+              "recursiveMember": {
+                "foo": "Foo2",
+                "nested": {
+                  "bar": "Bar2"
+                }
+              }
+            }
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#RpcV2CborDenseMaps": {
+    "requests": [
+      {
+        "body": "oW5kZW5zZVN0cnVjdE1hcKJjZm9voWJoaWV0aGVyZWNiYXqhYmhpY2J5ZQ==",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes maps",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborMaps",
+        "method": "POST",
+        "params": {
+          "denseStructMap": {
+            "baz": {
+              "hi": "bye"
+            },
+            "foo": {
+              "hi": "there"
+            }
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborDenseMaps"
+      },
+      {
+        "body": "om5kZW5zZU51bWJlck1hcKFheABvZGVuc2VCb29sZWFuTWFwoWF49A==",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSerializesZeroValuesInMaps",
+        "method": "POST",
+        "params": {
+          "denseBooleanMap": {
+            "x": false
+          },
+          "denseNumberMap": {
+            "x": 0
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborDenseMaps"
+      },
+      {
+        "body": "oWtkZW5zZVNldE1hcKJheIBheYJhYWFi",
+        "bodyMediaType": "application/cbor",
+        "documentation": "A request that contains a dense map of sets.",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSerializesDenseSetMap",
+        "method": "POST",
+        "params": {
+          "denseSetMap": {
+            "x": [],
+            "y": [
+              "a",
+              "b"
+            ]
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborDenseMaps"
+      }
+    ],
+    "responses": [
+      {
+        "body": "oW5kZW5zZVN0cnVjdE1hcKJjZm9voWJoaWV0aGVyZWNiYXqhYmhpY2J5ZQ==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Deserializes maps",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborMaps",
+        "params": {
+          "denseStructMap": {
+            "baz": {
+              "hi": "bye"
+            },
+            "foo": {
+              "hi": "there"
+            }
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "om5kZW5zZU51bWJlck1hcKFheABvZGVuc2VCb29sZWFuTWFwoWF49A==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborDeserializesZeroValuesInMaps",
+        "params": {
+          "denseBooleanMap": {
+            "x": false
+          },
+          "denseNumberMap": {
+            "x": 0
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "oWtkZW5zZVNldE1hcKJheIBheYJhYWFi",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "A response that contains a dense map of sets",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborDeserializesDenseSetMap",
+        "params": {
+          "denseSetMap": {
+            "x": [],
+            "y": [
+              "a",
+              "b"
+            ]
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#RpcV2CborLists": {
+    "requests": [
+      {
+        "body": "v2pzdHJpbmdMaXN0gmNmb29jYmFyaXN0cmluZ1NldIJjZm9vY2JhcmtpbnRlZ2VyTGlzdIIBAmtib29sZWFuTGlzdIL19G10aW1lc3RhbXBMaXN0gsH7QdTX+/OAAADB+0HU1/vzgAAAaGVudW1MaXN0gmNGb29hMGtpbnRFbnVtTGlzdIIBAnBuZXN0ZWRTdHJpbmdMaXN0goJjZm9vY2JhcoJjYmF6Y3F1eG1zdHJ1Y3R1cmVMaXN0gqJhYWExYWJhMqJhYWEzYWJhNGhibG9iTGlzdIJDZm9vQ2Jhcv8=",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes RpcV2 Cbor lists",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborLists",
+        "method": "POST",
+        "params": {
+          "blobList": [
+            "foo",
+            "bar"
+          ],
+          "booleanList": [
+            true,
+            false
+          ],
+          "enumList": [
+            "Foo",
+            "0"
+          ],
+          "intEnumList": [
+            1,
+            2
+          ],
+          "integerList": [
+            1,
+            2
+          ],
+          "nestedStringList": [
+            [
+              "foo",
+              "bar"
+            ],
+            [
+              "baz",
+              "qux"
+            ]
+          ],
+          "stringList": [
+            "foo",
+            "bar"
+          ],
+          "stringSet": [
+            "foo",
+            "bar"
+          ],
+          "structureList": [
+            {
+              "a": "1",
+              "b": "2"
+            },
+            {
+              "a": "3",
+              "b": "4"
+            }
+          ],
+          "timestampList": [
+            1398796238,
+            1398796238
+          ]
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborLists"
+      },
+      {
+        "body": "v2pzdHJpbmdMaXN0n///",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes empty JSON lists",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborListsEmpty",
+        "method": "POST",
+        "params": {
+          "stringList": []
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "tags": [
+          "client-indefinite"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborLists"
+      },
+      {
+        "body": "oWpzdHJpbmdMaXN0gA==",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes empty JSON definite length lists",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborListsEmptyUsingDefiniteLength",
+        "method": "POST",
+        "params": {
+          "stringList": []
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "tags": [
+          "client-definite"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborLists"
+      }
+    ],
+    "responses": [
+      {
+        "body": "v2pzdHJpbmdMaXN0n2Nmb29jYmFy/2lzdHJpbmdTZXSfY2Zvb2NiYXL/a2ludGVnZXJMaXN0nwEC/2tib29sZWFuTGlzdJ/19P9tdGltZXN0YW1wTGlzdJ/B+0HU1/vzgAAAwftB1Nf784AAAP9oZW51bUxpc3SfY0Zvb2Ew/2tpbnRFbnVtTGlzdJ8BAv9wbmVzdGVkU3RyaW5nTGlzdJ+fY2Zvb2NiYXL/n2NiYXpjcXV4//9tc3RydWN0dXJlTGlzdJ+/YWFhMWFiYTL/v2FhYTNhYmE0//9oYmxvYkxpc3SfQ2Zvb0NiYXL//w==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Serializes RpcV2 Cbor lists",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborLists",
+        "params": {
+          "blobList": [
+            "foo",
+            "bar"
+          ],
+          "booleanList": [
+            true,
+            false
+          ],
+          "enumList": [
+            "Foo",
+            "0"
+          ],
+          "intEnumList": [
+            1,
+            2
+          ],
+          "integerList": [
+            1,
+            2
+          ],
+          "nestedStringList": [
+            [
+              "foo",
+              "bar"
+            ],
+            [
+              "baz",
+              "qux"
+            ]
+          ],
+          "stringList": [
+            "foo",
+            "bar"
+          ],
+          "stringSet": [
+            "foo",
+            "bar"
+          ],
+          "structureList": [
+            {
+              "a": "1",
+              "b": "2"
+            },
+            {
+              "a": "3",
+              "b": "4"
+            }
+          ],
+          "timestampList": [
+            1398796238,
+            1398796238
+          ]
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "v2pzdHJpbmdMaXN0n///",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Serializes empty RpcV2 Cbor lists",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborListsEmpty",
+        "params": {
+          "stringList": []
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "v2pzdHJpbmdMaXN0n394HUFuIGV4YW1wbGUgaW5kZWZpbml0ZSBzdHJpbmcsdyB3aGljaCB3aWxsIGJlIGNodW5rZWQsbiBvbiBlYWNoIGNvbW1h/394NUFub3RoZXIgZXhhbXBsZSBpbmRlZmluaXRlIHN0cmluZyB3aXRoIG9ubHkgb25lIGNodW5r/3ZUaGlzIGlzIGEgcGxhaW4gc3RyaW5n//8=",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Can deserialize indefinite length text strings inside an indefinite length list",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborIndefiniteStringInsideIndefiniteListCanDeserialize",
+        "params": {
+          "stringList": [
+            "An example indefinite string, which will be chunked, on each comma",
+            "Another example indefinite string with only one chunk",
+            "This is a plain string"
+          ]
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "oWpzdHJpbmdMaXN0g394HUFuIGV4YW1wbGUgaW5kZWZpbml0ZSBzdHJpbmcsdyB3aGljaCB3aWxsIGJlIGNodW5rZWQsbiBvbiBlYWNoIGNvbW1h/394NUFub3RoZXIgZXhhbXBsZSBpbmRlZmluaXRlIHN0cmluZyB3aXRoIG9ubHkgb25lIGNodW5r/3ZUaGlzIGlzIGEgcGxhaW4gc3RyaW5n",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Can deserialize indefinite length text strings inside a definite length list",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborIndefiniteStringInsideDefiniteListCanDeserialize",
+        "params": {
+          "stringList": [
+            "An example indefinite string, which will be chunked, on each comma",
+            "Another example indefinite string with only one chunk",
+            "This is a plain string"
+          ]
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#RpcV2CborSparseMaps": {
+    "requests": [
+      {
+        "body": "v29zcGFyc2VTdHJ1Y3RNYXC/Y2Zvb79iaGlldGhlcmX/Y2Jher9iaGljYnll////",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes sparse maps",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSparseMaps",
+        "method": "POST",
+        "params": {
+          "sparseStructMap": {
+            "baz": {
+              "hi": "bye"
+            },
+            "foo": {
+              "hi": "there"
+            }
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborSparseMaps"
+      },
+      {
+        "body": "v3BzcGFyc2VCb29sZWFuTWFwv2F49v9vc3BhcnNlTnVtYmVyTWFwv2F49v9vc3BhcnNlU3RyaW5nTWFwv2F49v9vc3BhcnNlU3RydWN0TWFwv2F49v//",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes null map values in sparse maps",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSerializesNullMapValues",
+        "method": "POST",
+        "params": {
+          "sparseBooleanMap": {
+            "x": null
+          },
+          "sparseNumberMap": {
+            "x": null
+          },
+          "sparseStringMap": {
+            "x": null
+          },
+          "sparseStructMap": {
+            "x": null
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborSparseMaps"
+      },
+      {
+        "body": "v2xzcGFyc2VTZXRNYXC/YXif/2F5n2FhYWL///8=",
+        "bodyMediaType": "application/cbor",
+        "documentation": "A request that contains a sparse map of sets",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSerializesSparseSetMap",
+        "method": "POST",
+        "params": {
+          "sparseSetMap": {
+            "x": [],
+            "y": [
+              "a",
+              "b"
+            ]
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborSparseMaps"
+      },
+      {
+        "body": "v2xzcGFyc2VTZXRNYXC/YXif/2F5n2FhYWL/YXr2//8=",
+        "bodyMediaType": "application/cbor",
+        "documentation": "A request that contains a sparse map of sets.",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSerializesSparseSetMapAndRetainsNull",
+        "method": "POST",
+        "params": {
+          "sparseSetMap": {
+            "x": [],
+            "y": [
+              "a",
+              "b"
+            ],
+            "z": null
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborSparseMaps"
+      },
+      {
+        "body": "v29zcGFyc2VOdW1iZXJNYXC/YXgA/3BzcGFyc2VCb29sZWFuTWFwv2F49P//",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSerializesZeroValuesInSparseMaps",
+        "method": "POST",
+        "params": {
+          "sparseBooleanMap": {
+            "x": false
+          },
+          "sparseNumberMap": {
+            "x": 0
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborSparseMaps"
+      }
+    ],
+    "responses": [
+      {
+        "body": "v29zcGFyc2VTdHJ1Y3RNYXC/Y2Zvb79iaGlldGhlcmX/Y2Jher9iaGljYnll////",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Deserializes sparse maps",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSparseJsonMaps",
+        "params": {
+          "sparseStructMap": {
+            "baz": {
+              "hi": "bye"
+            },
+            "foo": {
+              "hi": "there"
+            }
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "v3BzcGFyc2VCb29sZWFuTWFwv2F49v9vc3BhcnNlTnVtYmVyTWFwv2F49v9vc3BhcnNlU3RyaW5nTWFwv2F49v9vc3BhcnNlU3RydWN0TWFwv2F49v//",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Deserializes null map values",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborDeserializesNullMapValues",
+        "params": {
+          "sparseBooleanMap": {
+            "x": null
+          },
+          "sparseNumberMap": {
+            "x": null
+          },
+          "sparseStringMap": {
+            "x": null
+          },
+          "sparseStructMap": {
+            "x": null
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "v2xzcGFyc2VTZXRNYXC/YXmfYWFhYv9heJ////8=",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "A response that contains a sparse map of sets",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborDeserializesSparseSetMap",
+        "params": {
+          "sparseSetMap": {
+            "x": [],
+            "y": [
+              "a",
+              "b"
+            ]
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "v2xzcGFyc2VTZXRNYXC/YXif/2F5n2FhYWL/YXr2//8=",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "A response that contains a sparse map of sets with a null",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborDeserializesSparseSetMapAndRetainsNull",
+        "params": {
+          "sparseSetMap": {
+            "x": [],
+            "y": [
+              "a",
+              "b"
+            ],
+            "z": null
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "v29zcGFyc2VOdW1iZXJNYXC/YXgA/3BzcGFyc2VCb29sZWFuTWFwv2F49P//",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborDeserializesZeroValuesInSparseMaps",
+        "params": {
+          "sparseBooleanMap": {
+            "x": false
+          },
+          "sparseNumberMap": {
+            "x": 0
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#RpcV2CborUnions": {
+    "requests": [
+      {
+        "body": "omhjb250ZW50c6Frc3RyaW5nVmFsdWVjZm9vam90aGVyVmFsdWVjYmFy",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes a union followed by another structure member",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSerializesUnionValue",
+        "method": "POST",
+        "params": {
+          "contents": {
+            "stringValue": "foo"
+          },
+          "otherValue": "bar"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborUnions"
+      },
+      {
+        "body": "omhjb250ZW50c6FqdW5pb25WYWx1ZaFrc3RyaW5nVmFsdWVjZm9vam90aGVyVmFsdWVjYmFy",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes a nested union followed by another structure member",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSerializesNestedUnionValue",
+        "method": "POST",
+        "params": {
+          "contents": {
+            "unionValue": {
+              "stringValue": "foo"
+            }
+          },
+          "otherValue": "bar"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/RpcV2CborUnions"
+      }
+    ],
+    "responses": [
+      {
+        "body": "omhjb250ZW50c6Frc3RyaW5nVmFsdWVjZm9vam90aGVyVmFsdWVjYmFy",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Deserializes a tagged union followed by another structure member",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborDeserializesUnionValue",
+        "params": {
+          "contents": {
+            "stringValue": "foo"
+          },
+          "otherValue": "bar"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "omhjb250ZW50c6FqdW5pb25WYWx1ZaFrc3RyaW5nVmFsdWVjZm9vam90aGVyVmFsdWVjYmFy",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Deserializes a nested union followed by another structure member",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborDeserializesNestedUnionValue",
+        "params": {
+          "contents": {
+            "unionValue": {
+              "stringValue": "foo"
+            }
+          },
+          "otherValue": "bar"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#SimpleScalarProperties": {
+    "requests": [
+      {
+        "body": "v2lieXRlVmFsdWUFa2RvdWJsZVZhbHVl+z/+OVgQYk3TcWZhbHNlQm9vbGVhblZhbHVl9GpmbG9hdFZhbHVl+kD0AABsaW50ZWdlclZhbHVlGQEAaWxvbmdWYWx1ZRkmkWpzaG9ydFZhbHVlGSaqa3N0cmluZ1ZhbHVlZnNpbXBsZXB0cnVlQm9vbGVhblZhbHVl9WlibG9iVmFsdWVDZm9v/w==",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes simple scalar properties",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSimpleScalarProperties",
+        "method": "POST",
+        "params": {
+          "blobValue": "foo",
+          "byteValue": 5,
+          "doubleValue": 1.889,
+          "falseBooleanValue": false,
+          "floatValue": 7.625,
+          "integerValue": 256,
+          "longValue": 9873,
+          "shortValue": 9898,
+          "stringValue": "simple",
+          "trueBooleanValue": true
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/SimpleScalarProperties"
+      },
+      {
+        "appliesTo": "client",
+        "body": "v/8=",
+        "bodyMediaType": "application/cbor",
+        "documentation": "RpcV2 Cbor should not serialize null structure values",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborClientDoesntSerializeNullStructureValues",
+        "method": "POST",
+        "params": {
+          "stringValue": null
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/SimpleScalarProperties"
+      },
+      {
+        "body": "v2tkb3VibGVWYWx1Zft/+AAAAAAAAGpmbG9hdFZhbHVl+n/AAAD/",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Supports handling NaN float values.",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSupportsNaNFloatInputs",
+        "method": "POST",
+        "params": {
+          "doubleValue": "NaN",
+          "floatValue": "NaN"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/SimpleScalarProperties"
+      },
+      {
+        "body": "v2tkb3VibGVWYWx1Zft/8AAAAAAAAGpmbG9hdFZhbHVl+n+AAAD/",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Supports handling Infinity float values.",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSupportsInfinityFloatInputs",
+        "method": "POST",
+        "params": {
+          "doubleValue": "Infinity",
+          "floatValue": "Infinity"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/SimpleScalarProperties"
+      },
+      {
+        "body": "v2tkb3VibGVWYWx1Zfv/8AAAAAAAAGpmbG9hdFZhbHVl+v+AAAD/",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Supports handling Infinity float values.",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSupportsNegativeInfinityFloatInputs",
+        "method": "POST",
+        "params": {
+          "doubleValue": "-Infinity",
+          "floatValue": "-Infinity"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/SimpleScalarProperties"
+      }
+    ],
+    "responses": [
+      {
+        "body": "v3B0cnVlQm9vbGVhblZhbHVl9XFmYWxzZUJvb2xlYW5WYWx1ZfRpYnl0ZVZhbHVlBWtkb3VibGVWYWx1Zfs//jlYEGJN02pmbG9hdFZhbHVl+kD0AABsaW50ZWdlclZhbHVlGQEAanNob3J0VmFsdWUZJqprc3RyaW5nVmFsdWVmc2ltcGxlaWJsb2JWYWx1ZUNmb2//",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Serializes simple scalar properties",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSimpleScalarProperties",
+        "params": {
+          "blobValue": "foo",
+          "byteValue": 5,
+          "doubleValue": 1.889,
+          "falseBooleanValue": false,
+          "floatValue": 7.625,
+          "integerValue": 256,
+          "shortValue": 9898,
+          "stringValue": "simple",
+          "trueBooleanValue": true
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "qXB0cnVlQm9vbGVhblZhbHVl9XFmYWxzZUJvb2xlYW5WYWx1ZfRpYnl0ZVZhbHVlBWtkb3VibGVWYWx1Zfs//jlYEGJN02pmbG9hdFZhbHVl+kD0AABsaW50ZWdlclZhbHVlGQEAanNob3J0VmFsdWUZJqprc3RyaW5nVmFsdWVmc2ltcGxlaWJsb2JWYWx1ZUNmb28=",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Deserializes simple scalar properties encoded using a map with definite length",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSimpleScalarPropertiesUsingDefiniteLength",
+        "params": {
+          "blobValue": "foo",
+          "byteValue": 5,
+          "doubleValue": 1.889,
+          "falseBooleanValue": false,
+          "floatValue": 7.625,
+          "integerValue": 256,
+          "shortValue": 9898,
+          "stringValue": "simple",
+          "trueBooleanValue": true
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "v2tzdHJpbmdWYWx1Zfb/",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "RpcV2 Cbor should not deserialize null structure values",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborClientDoesntDeserializeNullStructureValues",
+        "params": {},
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "v2tkb3VibGVWYWx1Zft/+AAAAAAAAGpmbG9hdFZhbHVl+n/AAAD/",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Supports handling NaN float values.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSupportsNaNFloatOutputs",
+        "params": {
+          "doubleValue": "NaN",
+          "floatValue": "NaN"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "v2tkb3VibGVWYWx1Zft/8AAAAAAAAGpmbG9hdFZhbHVl+n+AAAD/",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Supports handling Infinity float values.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSupportsInfinityFloatOutputs",
+        "params": {
+          "doubleValue": "Infinity",
+          "floatValue": "Infinity"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "v2tkb3VibGVWYWx1Zfv/8AAAAAAAAGpmbG9hdFZhbHVl+v+AAAD/",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Supports handling Negative Infinity float values.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSupportsNegativeInfinityFloatOutputs",
+        "params": {
+          "doubleValue": "-Infinity",
+          "floatValue": "-Infinity"
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "v2tkb3VibGVWYWx1Zfk+AGpmbG9hdFZhbHVl+UegbGludGVnZXJWYWx1ZRg4aWxvbmdWYWx1ZRkBAGpzaG9ydFZhbHVlCv8=",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Supports upcasting from a smaller byte representation of the same data type.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSupportsUpcastingDataOnDeserialize",
+        "params": {
+          "doubleValue": 1.5,
+          "floatValue": 7.625,
+          "integerValue": 56,
+          "longValue": 256,
+          "shortValue": 10
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "appliesTo": "client",
+        "body": "v2lieXRlVmFsdWUFa2RvdWJsZVZhbHVl+z/+OVgQYk3TcWZhbHNlQm9vbGVhblZhbHVl9GpmbG9hdFZhbHVl+kD0AABrZXh0cmFPYmplY3S/c2luZGVmaW5pdGVMZW5ndGhNYXC/a3dpdGhBbkFycmF5nwECA///cWRlZmluaXRlTGVuZ3RoTWFwo3J3aXRoQURlZmluaXRlQXJyYXmDAQIDeB1hbmRTb21lSW5kZWZpbml0ZUxlbmd0aFN0cmluZ3gfdGhhdCBoYXMsIGJlZW4gY2h1bmtlZCBvbiBjb21tYWxub3JtYWxTdHJpbmdjZm9vanNob3J0VmFsdWUZJw9uc29tZU90aGVyRmllbGR2dGhpcyBzaG91bGQgYmUgc2tpcHBlZP9saW50ZWdlclZhbHVlGQEAaWxvbmdWYWx1ZRkmkWpzaG9ydFZhbHVlGSaqa3N0cmluZ1ZhbHVlZnNpbXBsZXB0cnVlQm9vbGVhblZhbHVl9WlibG9iVmFsdWVDZm9v/w==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "The client should skip over additional fields that are not part of the structure. This allows a\nclient generated against an older Smithy model to be able to communicate with a server that is\ngenerated against a newer Smithy model.",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborExtraFieldsInTheBodyShouldBeSkippedByClients",
+        "params": {
+          "blobValue": "foo",
+          "byteValue": 5,
+          "doubleValue": 1.889,
+          "falseBooleanValue": false,
+          "floatValue": 7.625,
+          "integerValue": 256,
+          "longValue": 9873,
+          "shortValue": 9898,
+          "stringValue": "simple",
+          "trueBooleanValue": true
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  },
+  "smithy.protocoltests.rpcv2Cbor#SparseNullsOperation": {
+    "requests": [
+      {
+        "body": "v29zcGFyc2VTdHJpbmdNYXC/Y2Zvb/b//w==",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes null values in maps",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSparseMapsSerializeNullValues",
+        "method": "POST",
+        "params": {
+          "sparseStringMap": {
+            "foo": null
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/SparseNullsOperation"
+      },
+      {
+        "body": "v3BzcGFyc2VTdHJpbmdMaXN0n/b//w==",
+        "bodyMediaType": "application/cbor",
+        "documentation": "Serializes null values in lists",
+        "headers": {
+          "Accept": "application/cbor",
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSparseListsSerializeNull",
+        "method": "POST",
+        "params": {
+          "sparseStringList": [
+            null
+          ]
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor",
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "uri": "/service/RpcV2Protocol/operation/SparseNullsOperation"
+      }
+    ],
+    "responses": [
+      {
+        "body": "v29zcGFyc2VTdHJpbmdNYXC/Y2Zvb/b//w==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Deserializes null values in maps",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSparseMapsDeserializeNullValues",
+        "params": {
+          "sparseStringMap": {
+            "foo": null
+          }
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      },
+      {
+        "body": "v3BzcGFyc2VTdHJpbmdMaXN0n/b//w==",
+        "bodyMediaType": "application/cbor",
+        "code": 200,
+        "documentation": "Deserializes null values in lists",
+        "headers": {
+          "Content-Type": "application/cbor",
+          "smithy-protocol": "rpc-v2-cbor"
+        },
+        "id": "RpcV2CborSparseListsDeserializeNull",
+        "params": {
+          "sparseStringList": [
+            null
+          ]
+        },
+        "protocol": "smithy.protocols#rpcv2Cbor"
+      }
+    ]
+  }
+}

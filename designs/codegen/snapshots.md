@@ -85,6 +85,15 @@ Python model loading flattens mixins before generation.
 the checked-in fixtures. Regeneration reads only checked-in files. It neither
 reads a build directory nor installs or invokes a JVM tool.
 
+The models used by client projections also keep their client protocol vectors in
+`models/vectors/<projection>.json`, keyed by the operation or error shape that
+declares them. Server-only vectors are left out. `models/provenance.json` records
+each file's hash. `tests/test_client_protocol_vectors.py` runs every vector
+through the sync and async clients of the matching snapshot. A request vector
+checks the method, path, headers, and decoded body the client sends. A response
+vector checks the output model or error it returns. Vectors that the Java client
+also fails are marked as strict expected failures.
+
 To refresh reference inputs when their models change, obtain assembled JSON ASTs
 and run:
 
