@@ -132,10 +132,13 @@ class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
     :param trust_store_path: Path to a PEM CA bundle that overrides the default system
         trust store when verifying TLS peers. Enables connecting to a server whose
         certificate chains to a private CA.
+    :param proxy: The HTTP proxy to send requests through. When not set, the client
+        reads HTTP_PROXY, HTTPS_PROXY and NO_PROXY from the environment
     """
 
     read_buffer_size: int = DEFAULT_READ_BUFFER_SIZE
     trust_store_path: str | None = None
+    proxy: http_interfaces.HTTPProxyConfig | None = None
 
     def __post_init__(self) -> None:
         _assert_crt()
@@ -164,7 +167,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
         client.
         """
         _assert_crt()
-        self._init(_AWSCRTEventLoop(), client_config)
+        config = client_config or AWSCRTHTTPClientConfig()
+        proxy = config.proxy or http_interfaces.HTTPProxyConfig.from_environment()
+        self._init(_AWSCRTEventLoop(), config, proxy)
 
     async def __aenter__(self) -> Self:
         if self._closed:
@@ -177,7 +182,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
         # Config is copied per operation, so copies share the event loop's thread.
         copied = AWSCRTHTTPClient.__new__(AWSCRTHTTPClient)
-        copied._init(self._eventloop, deepcopy(self._config))
+        copied._init(self._eventloop, deepcopy(self._config), proxy=self._proxy)
         return copied
 
     async def send(
@@ -239,7 +244,8 @@ class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
     def _init(
         self,
         eventloop: _AWSCRTEventLoop,
-        client_config: AWSCRTHTTPClientConfig | None,
+        client_config: AWSCRTHTTPClientConfig,
+        proxy: http_interfaces.HTTPProxyConfig,
     ) -> None:
         self._config = client_config or AWSCRTHTTPClientConfig()
         self._eventloop = eventloop
@@ -250,6 +256,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
                 None, self._config.trust_store_path
             )
         self._tls_ctx = crt_io.ClientTlsContext(tls_ctx_options)
+        self._proxy = proxy
         self._socket_options = crt_io.SocketOptions()
         self._connections: ConnectionPoolDict = {}
         self._closed = False
@@ -313,12 +320,45 @@ class AWSCRTHTTPClient(http_aio_interfaces.AsyncHTTPClient):
         if url.port is not None:
             port = url.port
 
+        proxy = self._proxy.proxy_for(url)
         return await AIOHttpClientConnectionUnified.new(
             bootstrap=self._client_bootstrap,
             host_name=url.host,
             port=port,
             socket_options=self._socket_options,
             tls_connection_options=tls_connection_options,
+            proxy_options=(
+                self._build_proxy_options(proxy, url) if proxy is not None else None
+            ),
+        )
+
+    def _build_proxy_options(
+        self, proxy: http_interfaces.ProxyURI, url: core_interfaces.URI
+    ) -> crt_http.HttpProxyOptions:
+        proxy_tls_options = None
+        if proxy.scheme == "https":
+            proxy_tls_options = self._tls_ctx.new_connection_options()
+            proxy_tls_options.set_server_name(proxy.host)
+
+        auth_username = auth_password = None
+        auth_type = crt_http.HttpProxyAuthenticationType.Nothing
+        if proxy.username is not None:
+            auth_type = crt_http.HttpProxyAuthenticationType.Basic
+            auth_username = proxy.username
+            auth_password = proxy.password or ""
+
+        connection_type = crt_http.HttpProxyConnectionType.Forwarding
+        if url.scheme == "https":
+            connection_type = crt_http.HttpProxyConnectionType.Tunneling
+
+        return crt_http.HttpProxyOptions(
+            host_name=proxy.host,
+            port=proxy.port,
+            tls_connection_options=proxy_tls_options,
+            auth_type=auth_type,
+            auth_username=auth_username,
+            auth_password=auth_password,
+            connection_type=connection_type,
         )
 
     async def _validate_connection(
