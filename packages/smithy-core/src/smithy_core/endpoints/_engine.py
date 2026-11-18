@@ -443,9 +443,13 @@ def _is_literal(expr: Any) -> bool:
 def _to_uri(url: str) -> URI:
     """The URI of a rendered URL."""
     try:
-        return parse_uri(url)
+        uri = parse_uri(url)
     except ExpectationNotMetError as e:
         raise EndpointResolutionError(f"Invalid endpoint URI: {url}") from e
+    # Userinfo or a fragment can move the host a request goes to.
+    if uri.username is not None or uri.password is not None or uri.fragment is not None:
+        raise EndpointResolutionError(f"Invalid endpoint URI: {url}")
+    return uri
 
 
 def _literal(value: Any) -> _Closure:
