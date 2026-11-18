@@ -5,7 +5,8 @@
 This document describes how the Python generator produces client packages. It
 defines client settings, operation discovery, I/O normalization, client
 symbols, the client plan, operation and schema emission, protocol selection,
-endpoint rules, endpoint tests, and the generated client and config modules.
+endpoint rules, endpoint tests, auth, and the generated client and config
+modules.
 
 ## Goals
 
@@ -257,6 +258,31 @@ service lacks, or a member its input lacks, fails generation.
 The module marks its tests with `pytest.mark.asyncio`. The package's `test`
 dependency group adds `pytest`, `pytest-asyncio`, and `smithy-test`.
 
+## Auth
+
+An auth registry maps auth trait IDs to auth contributions. A contribution
+provides the sync and async runtime auth schemes, builds each from the service's
+auth trait value, and declares the config fields its identity resolver reads.
+`smithy.api#httpApiKeyAuth` is built in:
+
+| Part | Sync | Async |
+| --- | --- | --- |
+| Scheme | `APIKeyAuthScheme` | `AsyncAPIKeyAuthScheme` |
+| `api_key_identity_resolver` default | `APIKeyIdentityResolver` | `AsyncAPIKeyIdentityResolver` |
+
+The scheme takes the trait's `name`, `in`, and `scheme`. Both configs also get
+an `api_key` field. The fields, the `auth_schemes` default, and a
+`set_auth_scheme` method match the Java generator's.
+
+Both configs keep `DefaultAuthResolver`. It returns each operation's effective
+auth scheme IDs in order, and the runtime signs with the first one in
+`auth_schemes`. An operation whose schemes are only `noAuth`, such as one with
+`@auth([])`, is sent unsigned. An operation with `@optionalAuth` is signed with
+its first supported scheme.
+
+Generation fails for an operation whose effective schemes include neither
+`noAuth` nor a supported scheme.
+
 ## Clients and Configuration
 
 Service classes are thin subclasses of `Client[Config]` and
@@ -314,10 +340,10 @@ runtime metadata. It covers `self`, `plugins`, defaults, and idempotency tokens.
 
 ## Supported Features
 
-The generator supports unsigned, non-streaming RPCv2 CBOR and RPCv2 JSON
-operations whose endpoint rules use the standard library. Models that require
-auth schemes or event or data streams fail generation with a diagnostic naming
-the operation and feature.
+The generator supports non-streaming RPCv2 CBOR and RPCv2 JSON operations that
+are unsigned or use API key auth, and whose endpoint rules use the standard
+library. Models that require other auth schemes or event or data streams fail
+generation with a diagnostic naming the operation and feature.
 
 Authentication and endpoint extension points are provider-neutral. AWS
 credentials, region defaults, SigV4, query compatibility, AWS endpoint
@@ -339,6 +365,11 @@ parameters. `models/endpoint-rules.smithy` is its source, and
 `models/endpoint-rules.json` is that model assembled by Smithy with its ruleset
 compiled by `CompileBdd`. The snapshot tests run the snapshot's generated
 endpoint tests.
+
+The `api-key-auth-client` snapshot comes from `models/api-key-auth.smithy`,
+assembled by Smithy into `models/api-key-auth.json`. Its operations use the
+service's API key auth, `@auth([])`, and `@optionalAuth`. Tests check which
+requests carry the key and that a missing key fails the call.
 
 Client snapshots sit alongside the types snapshots and cover the
 provider-neutral RPCv2 CBOR and RPCv2 JSON projections. Checks cover deterministic

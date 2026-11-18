@@ -581,3 +581,50 @@ def test_services_without_endpoint_tests_get_no_test_module(tmp_path: Path) -> N
     _generate(tmp_path, "greeter_no_endpoint_tests", shapes)
     assert not (tmp_path / "tests").exists()
     assert "[dependency-groups]" not in (tmp_path / "pyproject.toml").read_text()
+
+
+def _add_api_key(shapes: dict[str, Any], **trait: Any) -> None:
+    shapes["example#Greeter"]["traits"]["smithy.api#httpApiKeyAuth"] = trait or {
+        "name": "key",
+        "in": "query",
+    }
+
+
+def test_api_key_auth_signs_requests_in_the_query(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    shapes = _shapes()
+    _add_api_key(shapes)
+    _generate(tmp_path, "greeter_api_key", shapes)
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module("greeter_api_key")
+    transport = _Transport(body=_cbor_map({}))
+    config = package.Config(
+        api_key="s3cret",
+        endpoint_uri="https://example.com",
+        transport=transport,
+        retry_strategy=SimpleRetryStrategy(max_attempts=1),
+    )
+    package.Greeter(config).greet(name="Ana")
+    (request,) = transport.requests
+    assert request.destination.query == "key=s3cret"
+
+
+def test_an_operation_needs_one_supported_auth_scheme(tmp_path: Path) -> None:
+    shapes = _shapes()
+    _add_api_key(shapes)
+    _add_auth(shapes)
+    # Bearer auth is unsupported, but API key auth is a fallback.
+    _generate(tmp_path / "fallback", "greeter_fallback", shapes)
+    shapes["example#Greet"]["traits"]["smithy.api#auth"] = ["smithy.api#httpBearerAuth"]
+    with pytest.raises(CodegenError, match="Operation example#Greet requires auth"):
+        _generate(tmp_path / "bearer", "greeter_bearer", shapes)
+
+
+def test_api_key_auth_trait_must_name_a_location(tmp_path: Path) -> None:
+    shapes = _shapes()
+    _add_api_key(shapes, name="key", **{"in": "body"})
+    with pytest.raises(CodegenError, match="Invalid httpApiKeyAuth trait"):
+        _generate(tmp_path, "greeter_bad_api_key", shapes)

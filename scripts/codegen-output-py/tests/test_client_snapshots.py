@@ -18,6 +18,7 @@ from typing import Any
 import pytest
 from smithy_cbor import loads
 from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.retries import SimpleRetryStrategy
 from smithy_http import HTTPResponse, tuples_to_fields
 from smithy_http.interfaces import HTTPRequest, HTTPRequestConfiguration
@@ -159,3 +160,58 @@ def test_generated_endpoint_tests_pass() -> None:
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "14 passed, 1 skipped" in result.stdout
+
+
+@pytest.fixture(scope="module")
+def api_key_package() -> Iterator[ModuleType]:
+    source = _ROOT / "codegen-output-py/api-key-auth-client/src"
+    name = _PROJECTIONS["api-key-auth-client"]["package"]
+    sys.path.insert(0, str(source))
+    try:
+        yield importlib.import_module(name)
+    finally:
+        sys.path.remove(str(source))
+        for module in tuple(sys.modules):
+            if module == name or module.startswith(name + "."):
+                del sys.modules[module]
+
+
+def _api_key_client(package: ModuleType, aio: bool, **config: Any) -> Any:
+    transport = (_AsyncTransport if aio else _Transport)(b"\xa0")
+    client = (package.AsyncApiKeyService if aio else package.ApiKeyService)(
+        (package.AsyncConfig if aio else package.Config)(
+            endpoint_uri="https://example.com",
+            transport=transport,
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            **config,
+        )
+    )
+    return client, transport
+
+
+def _call(aio: bool, call: Any) -> Any:
+    return asyncio.run(call) if aio else call
+
+
+@pytest.mark.parametrize("aio", [False, True])
+def test_api_key_auth_signs_by_operation(
+    api_key_package: ModuleType, aio: bool
+) -> None:
+    client, transport = _api_key_client(api_key_package, aio, api_key="secret")
+    _call(aio, client.get_thing(name="a"))
+    _call(aio, client.ping())
+    _call(aio, client.health())
+    get_thing, ping, health = transport.requests
+    assert get_thing.fields["Authorization"].values == ["ApiKey secret"]
+    assert ping.fields["Authorization"].values == ["ApiKey secret"]
+    # @auth([]) leaves only noAuth, so the request is unsigned.
+    assert "Authorization" not in health.fields
+
+
+@pytest.mark.parametrize("aio", [False, True])
+def test_api_key_auth_requires_a_key(api_key_package: ModuleType, aio: bool) -> None:
+    client, transport = _api_key_client(api_key_package, aio)
+    with pytest.raises(SmithyIdentityError, match="api_key was not set"):
+        _call(aio, client.get_thing(name="a"))
+    _call(aio, client.health())
+    assert len(transport.requests) == 1

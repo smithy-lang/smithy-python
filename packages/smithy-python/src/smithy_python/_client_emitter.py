@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final
 
-from . import _endpoint_tests, _endpoints, _package
+from . import _auth, _endpoint_tests, _endpoints, _package
 from . import dependencies as _dependencies
 from . import exceptions as _exceptions
 from . import model as _model
@@ -26,9 +26,16 @@ def check_supported(plan: ClientPlan) -> None:
 
     :raises CodegenError: Naming the first unsupported operation and feature.
     """
+    service = plan.selection.service
+    assert service is not None  # noqa: S101 - ClientPlan requires a service
+    supported = {_NO_AUTH} | {
+        scheme.scheme_id for scheme in _auth.supported_schemes(service)
+    }
     for operation, exports in zip(plan.operations, plan.models.operations, strict=True):
         shape = operation.operation
-        if _NO_AUTH not in exports.auth_scheme_ids:
+        # The runtime signs with the first scheme the config supports, so an
+        # operation needs one, or noAuth, to send a request.
+        if not supported.intersection(exports.auth_scheme_ids):
             schemes = ", ".join(map(str, exports.auth_scheme_ids))
             raise _exceptions.CodegenError(
                 f"Operation {shape.id} requires auth ({schemes}), which client "
@@ -51,7 +58,12 @@ def plan_endpoints(plan: ClientPlan) -> _endpoints.EndpointPlan:
     """
     service = plan.selection.service
     assert service is not None  # noqa: S101 - ClientPlan requires a service
-    return _endpoints.plan_endpoints(service, reserved=_CONFIG_FIELDS)
+    auth_fields = {
+        field.name
+        for scheme in _auth.supported_schemes(service)
+        for field in scheme.fields
+    }
+    return _endpoints.plan_endpoints(service, reserved=_CONFIG_FIELDS | auth_fields)
 
 
 def write_client(
@@ -294,8 +306,18 @@ def _write_config(
     writer.line()
     endpoint_resolver = _join(mode.endpoint_resolver)
     auth_schemes = ("dict[", _SHAPE_ID, ", ", mode.auth_scheme, "]")
+    schemes = _auth.supported_schemes(service)
+    auth_fields = [field for scheme in schemes for field in scheme.fields]
     retry = (_RETRY_STRATEGY, " | ", _RETRY_STRATEGY_OPTIONS)
     fields: tuple[tuple[str, tuple[str | TypeReference, ...], str], ...] = (
+        *(
+            (
+                field.name,
+                field.async_annotation if mode.is_async else field.annotation,
+                field.documentation,
+            )
+            for field in auth_fields
+        ),
         (
             "auth_scheme_resolver",
             (_AUTH_SCHEME_RESOLVER,),
@@ -350,6 +372,11 @@ def _write_config(
         with writer.indent():
             writer.line("self,")
             writer.line("*,")
+            for field in auth_fields:
+                annotation = (
+                    field.async_annotation if mode.is_async else field.annotation
+                )
+                writer.line(field.name, ": ", *annotation, " = None,")
             writer.line(
                 "auth_scheme_resolver: ", _AUTH_SCHEME_RESOLVER, " | None = None,"
             )
@@ -370,12 +397,39 @@ def _write_config(
                 writer.line(field.attribute, ": ", field.type, " | None = None,")
         writer.line(") -> None:")
         with writer.indent():
+            for field in auth_fields:
+                default = field.async_default if mode.is_async else field.default
+                writer.line(
+                    "self.",
+                    field.name,
+                    " = ",
+                    field.name,
+                    *((" or ", *default) if default else ()),
+                )
+            # The default resolver orders each operation's effective auth schemes,
+            # so an operation with noAuth first, such as one with @auth([]), is
+            # sent unsigned.
             writer.line(
                 "self.auth_scheme_resolver = auth_scheme_resolver or ",
                 _DEFAULT_AUTH_RESOLVER,
                 "()",
             )
-            writer.line("self.auth_schemes = auth_schemes or {}")
+            if not schemes:
+                writer.line("self.auth_schemes = auth_schemes or {}")
+            else:
+                writer.line("self.auth_schemes = auth_schemes or {")
+                with writer.indent():
+                    for scheme in schemes:
+                        build = scheme.async_scheme if mode.is_async else scheme.scheme
+                        writer.line(
+                            _SHAPE_ID,
+                            "(",
+                            _models._quote(str(scheme.scheme_id)),  # pyright: ignore[reportPrivateUsage]
+                            "): ",
+                            *build(service.get_trait(scheme.scheme_id)),
+                            ",",
+                        )
+                writer.line("}")
             writer.line(
                 "self.endpoint_resolver = endpoint_resolver or ",
                 _BDD_ENDPOINT_RESOLVER,
@@ -401,6 +455,18 @@ def _write_config(
             writer.line("self.transport = transport or ", mode.transport, "()")
             for field in endpoints.client_context_fields:
                 writer.line("self.", field.attribute, " = ", field.attribute)
+        if schemes:
+            writer.line()
+            writer.line(
+                "def set_auth_scheme(self, scheme: ", mode.auth_scheme, ") -> None:"
+            )
+            with writer.indent():
+                writer.line(
+                    _models._quote(  # pyright: ignore[reportPrivateUsage]
+                        "Set an auth scheme under its scheme ID."
+                    )
+                )
+                writer.line("self.auth_schemes[scheme.scheme_id] = scheme")
     writer.line()
     writer.line()
     writer.line("type Plugin = ", _CALLABLE, "[[", mode.config, "], None]")
