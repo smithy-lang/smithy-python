@@ -9,6 +9,8 @@ command does not assemble Smithy IDL or invoke a build system.
 import argparse
 import hashlib
 import json
+import re
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +41,9 @@ def main() -> None:
         },
     }
     provenance: dict[str, Any] = {}
+    # Client projections keep their source model's protocol vectors.
+    clients = json.loads((_INPUTS / "client-projections.json").read_text())
+    vector_models = {Path(settings["model"]).stem for settings in clients.values()}
     destination = _INPUTS / "models"
     destination.mkdir(exist_ok=True)
     (destination / "partitioned-types.json").write_text(
@@ -48,6 +53,13 @@ def main() -> None:
         settings = projection["plugins"]["python-client-codegen"]
         source = (args.models / name / "model/model.json").read_bytes()
         model = json.loads(source)
+        vector_content: str | None = None
+        if name in vector_models:
+            # Decimal keeps vector numbers exact, such as big decimal params.
+            vectors = _protocol_vectors(json.loads(source, parse_float=Decimal))
+            (destination / "vectors").mkdir(exist_ok=True)
+            vector_content = _dumps_exact(vectors)
+            (destination / f"vectors/{name}.json").write_text(vector_content)
         # Protocol vectors exercise the client artifact; model traits, documentation,
         # operation references, and member order remain intact.
         _remove_protocol_vectors(model)
@@ -64,11 +76,49 @@ def main() -> None:
             "assembled_sha256": hashlib.sha256(source).hexdigest(),
             "fixture_sha256": hashlib.sha256(content.encode()).hexdigest(),
         }
+        if vector_content is not None:
+            provenance[name]["vectors_sha256"] = hashlib.sha256(
+                vector_content.encode()
+            ).hexdigest()
     for name, data in (
         ("projections.json", projections),
         ("models/provenance.json", provenance),
     ):
         (_INPUTS / name).write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
+
+
+def _protocol_vectors(model: dict[str, Any]) -> dict[str, Any]:
+    """Client protocol vectors by the shape that declares them.
+
+    Server-only vectors are left out. Each kind keeps its cases in model order.
+    """
+    vectors: dict[str, Any] = {}
+    for shape_id, shape in model["shapes"].items():
+        traits: dict[str, Any] = shape.get("traits", {})
+        for trait, kind in zip(_VECTOR_TRAITS, ("requests", "responses"), strict=True):
+            cases = [
+                case
+                for case in traits.get(trait, ())
+                if case.get("appliesTo", "client") == "client"
+            ]
+            if cases:
+                vectors.setdefault(shape_id, {})[kind] = cases
+    return vectors
+
+
+_DECIMAL = re.compile(r'"\\u0000decimal:([^"]*)"')
+
+
+def _dumps_exact(value: object) -> str:
+    """JSON with each Decimal written as the number literal it was parsed from."""
+
+    def default(item: object) -> str:
+        if isinstance(item, Decimal):
+            return f"\u0000decimal:{item}"
+        raise TypeError(f"Cannot encode {type(item).__name__}")
+
+    text = json.dumps(value, indent=2, sort_keys=True, default=default)
+    return _DECIMAL.sub(r"\1", text) + "\n"
 
 
 def _remove_protocol_vectors(model: dict[str, Any]) -> None:

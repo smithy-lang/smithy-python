@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.6.0
+
+### Features
+* `smithy-python generate client` also generates RPCv2 JSON clients.
+* Generate clients that resolve endpoints from the service's endpointBdd trait. Client context parameters become config fields, and a service with no endpoint rules requires `endpoint_uri`. A service's endpointTests cases become `tests/test_endpoints.py`.
+
+### Bug fixes
+* Generated packages require `smithy-core~=0.12.0` instead of the outdated `~=0.10.0`.
+* Generated input dictionary forms no longer mark `@required` members with `@clientOptional` as `Required`.
+
+### Dependencies
+* Pin generated packages to smithy-core 0.13 and smithy-http 0.10.
+
 ## v0.5.0
 
 ### Features

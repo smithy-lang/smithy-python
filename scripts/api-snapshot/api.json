@@ -849,8 +849,11 @@
     "Dependency": "class",
     "DependencySet": "class",
     "HATCHLING": "Dependency",
+    "PYTEST": "Dependency",
+    "PYTEST_ASYNCIO": "Dependency",
     "SMITHY_CORE": "Dependency",
-    "SMITHY_HTTP": "Dependency"
+    "SMITHY_HTTP": "Dependency",
+    "SMITHY_TEST": "Dependency"
   },
   "smithy_python.environment": {
     "PluginEnvironment": "class"
@@ -886,6 +889,7 @@
     "DEFAULT_PROTOCOLS": "mappingproxy",
     "ProtocolContribution": "class",
     "RPCV2_CBOR": "ProtocolContribution",
+    "RPCV2_JSON": "ProtocolContribution",
     "select_protocol": "function"
   },
   "smithy_python.schemas": {

@@ -9,7 +9,7 @@ requires-python = ">=3.12"
 keywords = ["smithy", "rpcv2cbor"]
 license = {text = "Apache-2.0"}
 dependencies = [
-    "smithy-core~=0.10.0",
+    "smithy-core~=0.13.0",
 ]
 
 [build-system]

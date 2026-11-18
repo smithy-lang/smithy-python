@@ -60,16 +60,17 @@ implementation, user agent, or generated protocol tests.
 `scripts/codegen-output-py/client-projections.json` declares client
 projections, generated with the public `client` command.
 
-| Projection | Import package | Operations |
-| --- | --- | ---: |
-| `rpcv2-cbor-client` | `rpcv2cbor_client` | 14 |
+| Projection | Import package | Operations | Protocol vectors |
+| --- | --- | ---: | ---: |
+| `rpcv2-cbor-client` | `rpcv2cbor_client` | 14 | 72 |
+| `rpcv2-json-client` | `rpcv2json_client` | 15 | 73 |
 
-It reuses the `rpcv2-cbor` model input. Its import package differs from the
-types snapshot's, so both resolve in one Pyright project. Each client snapshot
-adds `client.py`, `config.py`, and their `aio` counterparts to the types files,
-plus service and operation schemas and lazy operation exports. Tests compare its
-operation methods with the Java client and send one call through fake sync and
-async transports.
+Each reuses the model input of the types projection with the same base name. Its
+import package differs from the types snapshot's, so both resolve in one Pyright
+project. Each client snapshot adds `client.py`, `config.py`, and their `aio`
+counterparts to the types files, plus service and operation schemas and lazy
+operation exports. Tests compare the RPCv2 CBOR client's operation methods with
+the Java client and send one call through fake sync and async transports.
 
 ## Inputs and maintenance
 
@@ -84,6 +85,15 @@ Python model loading flattens mixins before generation.
 `models/provenance.json` records hashes of both the original assembled ASTs and
 the checked-in fixtures. Regeneration reads only checked-in files. It neither
 reads a build directory nor installs or invokes a JVM tool.
+
+The models used by client projections also keep their client protocol vectors in
+`models/vectors/<projection>.json`, keyed by the operation or error shape that
+declares them. Server-only vectors are left out. `models/provenance.json` records
+each file's hash. `tests/test_client_protocol_vectors.py` runs every vector
+through the sync and async clients of the matching snapshot. A request vector
+checks the method, path, headers, and decoded body the client sends. A response
+vector checks the output model or error it returns. Vectors that the Java client
+also fails are marked as strict expected failures.
 
 To refresh reference inputs when their models change, obtain assembled JSON ASTs
 and run:

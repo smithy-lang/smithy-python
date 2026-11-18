@@ -1,9 +1,23 @@
 {
+  "endpoint-rules-client": {
+    "description": "Python client for the endpoint rules fixture",
+    "model": "models/endpoint-rules.json",
+    "package": "endpoint_rules_client",
+    "service": "example.endpoints#EndpointService",
+    "version": "0.0.1"
+  },
   "rpcv2-cbor-client": {
     "description": "Python client for the rpcv2-cbor projection",
     "model": "models/rpcv2-cbor.json",
     "package": "rpcv2cbor_client",
     "service": "smithy.protocoltests.rpcv2Cbor#RpcV2Protocol",
+    "version": "0.0.1"
+  },
+  "rpcv2-json-client": {
+    "description": "Python client for the rpcv2-json projection",
+    "model": "models/rpcv2-json.json",
+    "package": "rpcv2json_client",
+    "service": "smithy.protocoltests.rpcv2Json#RpcV2JsonProtocol",
     "version": "0.0.1"
   }
 }

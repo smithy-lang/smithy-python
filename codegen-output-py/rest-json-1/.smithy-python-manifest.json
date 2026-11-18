@@ -1,7 +1,7 @@
 {
   "files": {
     "README.md": "ab6bb388bf358acca8bbf97c7dc3d54def01226a5e189d2b4ab762072b82c2c6",
-    "pyproject.toml": "bcd2a9ccdcf9626c5ef3825e24d9b2a112bc9d9b74746ab3afd713e031e915c7",
+    "pyproject.toml": "21cf8a6cea8de2f645dc1edbb6adf5d5efefef76f930060da2c307e40efd5084",
     "src/restjson/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
     "src/restjson/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/restjson/_private/schemas.py": "133535695424fa890dd8cefb8f7f9957138813ae689c7d168e79763296813bcb",
