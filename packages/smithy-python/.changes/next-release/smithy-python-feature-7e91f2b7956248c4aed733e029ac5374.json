@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "`smithy-python generate client` also generates RPCv2 JSON clients."
-}

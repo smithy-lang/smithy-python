@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Generated packages require `smithy-core~=0.12.0` instead of the outdated `~=0.10.0`."
-}

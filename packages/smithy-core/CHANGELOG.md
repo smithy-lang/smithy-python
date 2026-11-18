@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.13.1
+
+### Bug fixes
+* Keyword and dictionary inputs no longer require `@required` members marked `@clientOptional`.
+
 ## v0.13.0
 
 ### Features

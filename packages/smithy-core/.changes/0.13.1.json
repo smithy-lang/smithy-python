@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "bugfix",
+      "description": "Keyword and dictionary inputs no longer require `@required` members marked `@clientOptional`."
+    }
+  ]
+}
