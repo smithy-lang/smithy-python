@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Reject endpoint URLs resolved from endpoint rules that contain userinfo or a fragment."
+}

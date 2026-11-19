@@ -231,6 +231,20 @@ def test_rendered_urls_must_be_uris() -> None:
         resolve(_one(endpoint((Tag.REF, "S"))), parameters={"S": "example.com"})
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://user@127.0.0.1/",
+        "https://user:pass@example.com/",
+        "https://example.com/#fragment",
+        "https://aaaa@127.0.0.1:4443/#.example.com",
+    ],
+)
+def test_rendered_urls_must_not_have_userinfo_or_fragments(url: str) -> None:
+    with pytest.raises(EndpointResolutionError, match="Invalid endpoint URI"):
+        resolve(_one(endpoint((Tag.REF, "S"))), parameters={"S": url})
+
+
 def test_auth_schemes_no_extension_maps_fail() -> None:
     properties = (Tag.MAP, ("authSchemes",), (Tag.LIST, (Tag.MAP, ("name",), "token")))
     with pytest.raises(EndpointResolutionError, match="no extension provides: token"):
