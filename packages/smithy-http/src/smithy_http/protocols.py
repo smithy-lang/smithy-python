@@ -9,9 +9,10 @@ from typing import TYPE_CHECKING, Any, cast
 from smithy_core import URI as _URI
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape
-from smithy_core.documents import TypeRegistry
+from smithy_core.documents import Document, TypeRegistry
 from smithy_core.exceptions import (
     CallError,
+    DiscriminatorError,
     ExpectationNotMetError,
     MissingDependencyError,
     ModeledError,
@@ -81,6 +82,31 @@ _QUERY_ERROR_FAULTS: dict[str, _Fault] = {"Sender": "client", "Receiver": "serve
 # Read by ID so smithy-http works with smithy-core releases that predate the
 # ClientOptionalTrait class.
 _CLIENT_OPTIONAL = ShapeID("smithy.api#clientOptional")
+
+# Known throttling and transient error codes
+_THROTTLING_ERROR_CODES = frozenset(
+    {
+        "Throttling",
+        "ThrottlingException",
+        "ThrottledException",
+        "RequestThrottledException",
+        "TooManyRequestsException",
+        "ProvisionedThroughputExceededException",
+        "TransactionInProgressException",
+        "RequestLimitExceeded",
+        "BandwidthLimitExceeded",
+        "LimitExceededException",
+        "RequestThrottled",
+        "SlowDown",
+        "PriorRequestNotComplete",
+        "EC2ThrottledException",
+    }
+)
+_TRANSIENT_ERROR_CODES = frozenset(
+    {"RequestTimeout", "InternalError", "RequestTimeoutException"}
+)
+# Known transient status codes
+_TRANSIENT_STATUS_CODES = frozenset({500, 502, 503, 504})
 
 try:
     from smithy_cbor import CBORCodec
@@ -158,6 +184,34 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         that define them are expected to override this and add them.
         """
         return ResponseMetadata(http_status_code=response.status)
+
+    def _document_error_id(self, document: Document) -> ShapeID | None:
+        """The error shape ID in the document's discriminator, if it has one.
+
+        A body without one, such as a load balancer's, is an unmodeled error.
+        """
+        try:
+            return document.discriminator
+        except DiscriminatorError:
+            return None
+
+    def _classify_error_for_retry[E: CallError](
+        self, error: E, response: HTTPResponse, code: str | None
+    ) -> E:
+        """Mark the error as retryable if it's a throttling, timeout or transient error."""
+        if error.is_retry_safe is False:
+            return error
+        status = response.status
+        modeled = isinstance(error, ModeledError)
+        if _is_throttling_error(status, code, modeled=modeled):
+            error.is_retry_safe = True
+            error.is_throttling_error = True
+        elif _is_timeout_error(status, modeled=modeled):
+            error.is_retry_safe = True
+            error.is_timeout_error = True
+        elif _is_transient_error(status, code):
+            error.is_retry_safe = True
+        return error
 
 
 class HttpBindingClientProtocol(HttpClientProtocol):
@@ -303,23 +357,27 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             )
 
         retry_after = self._retry_after(response)
+        code = error_id.name if error_id is not None else None
 
-        if error_id is None and self._matches_content_type(response):
+        # An empty body has no error type to read.
+        is_empty = isinstance(response_body, bytes | bytearray) and not response_body
+        if error_id is None and not is_empty and self._matches_content_type(response):
             if isinstance(response_body, bytearray):
                 response_body = bytes(response_body)
             deserializer = self.payload_codec.create_deserializer(source=response_body)
             document = deserializer.read_document(schema=DOCUMENT)
-            document_error_id = document.discriminator
-            if document_error_id not in error_registry:
-                document_error_id = self._resolve_error_id(
-                    operation=operation,
-                    error_id=document_error_id,
-                )
+            if (document_error_id := self._document_error_id(document)) is not None:
+                code = document_error_id.name
+                if document_error_id not in error_registry:
+                    document_error_id = self._resolve_error_id(
+                        operation=operation,
+                        error_id=document_error_id,
+                    )
 
-            if document_error_id in error_registry:
-                error_id = document_error_id
-                if isinstance(response_body, SeekableBytesReader):
-                    response_body.seek(0)
+                if document_error_id in error_registry:
+                    error_id = document_error_id
+                    if isinstance(response_body, SeekableBytesReader):
+                        response_body.seek(0)
 
         if error_id is not None and error_id in error_registry:
             error_shape = error_registry.get(error_id)
@@ -339,7 +397,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             modeled_error = error_shape.deserialize(deserializer)
             if retry_after is not None:
                 modeled_error.retry_after = retry_after
-            return modeled_error
+            return self._classify_error_for_retry(modeled_error, response, code)
 
         message = (
             f"Unknown error for operation {operation.schema.id} "
@@ -350,18 +408,12 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         if response.reason is not None:
             message += f" - reason: {response.status}"
 
-        is_timeout = response.status == 408
-        is_throttle = response.status == 429
-        fault = "client" if response.status < 500 else "server"
-
-        return CallError(
+        error = CallError(
             message=message,
-            fault=fault,
-            is_throttling_error=is_throttle,
-            is_timeout_error=is_timeout,
-            is_retry_safe=is_throttle or is_timeout or None,
+            fault="client" if response.status < 500 else "server",
             retry_after=retry_after,
         )
+        return self._classify_error_for_retry(error, response, code)
 
     def _retry_after(self, response: HTTPResponse) -> float | None:
         """The retry delay in seconds requested by the server, if the response carries one."""
@@ -717,7 +769,7 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
         )
         if actual_protocol != self._smithy_protocol:
             yield from self._discard_body(operation, response, read_body)
-            raise CallError(
+            error = CallError(
                 message=(
                     f"Malformed response for operation {operation.schema.id}: "
                     f"expected Smithy-Protocol header {self._smithy_protocol!r}, "
@@ -725,6 +777,8 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
                 ),
                 fault="client" if response.status < 500 else "server",
             )
+            # The body isn't read, so only the status code classifies the error.
+            raise self._classify_error_for_retry(error, response, code=None)
         return (
             yield from super().deserialize_response_program(
                 operation=operation,
@@ -814,6 +868,7 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
         if error_id is None or error_id not in error_registry:
             error_id = self._resolve_query_error_id(operation, response) or error_id
 
+        code = self._rpc_error_code(response, raw_type)
         if error_id is not None and error_id in error_registry:
             error_shape = error_registry.get(error_id)
             if not issubclass(error_shape, ModeledError):
@@ -821,7 +876,8 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
                     f"Modeled errors must derive from 'ModeledError', got {error_shape}"
                 )
             deserializer = self._codec.create_deserializer(body or self._empty_document)
-            return error_shape.deserialize(deserializer)
+            modeled_error = error_shape.deserialize(deserializer)
+            return self._classify_error_for_retry(modeled_error, response, code)
 
         message = (
             f"Unknown error for operation {operation.schema.id} "
@@ -831,11 +887,20 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
             message += f" - id: {error_id}"
         elif isinstance(raw_type, str):
             message += f" - id: {raw_type}"
-        return CallError(
+        error = CallError(
             message=message,
             fault=self._query_error_fault(response)
             or ("client" if response.status < 500 else "server"),
         )
+        return self._classify_error_for_retry(error, response, code)
+
+    def _rpc_error_code(self, response: HTTPResponse, raw_type: object) -> str | None:
+        """The error code, preferring a query-compatible service's awsQuery code."""
+        if (query_error := self._query_error(response)) is not None:
+            return query_error[0]
+        if isinstance(raw_type, str):
+            return raw_type.split(":", 1)[0].rpartition("#")[2] or None
+        return None
 
     @staticmethod
     def _normalize_error_id(
@@ -920,6 +985,21 @@ def _assert_json() -> None:
         raise MissingDependencyError(
             "Attempted to use JSON codec, but smithy-json is not installed."
         )
+
+
+def _is_throttling_error(status: int, code: str | None, *, modeled: bool) -> bool:
+    """Whether the error has a known throttling error code or an unmodeled 429."""
+    return code in _THROTTLING_ERROR_CODES or (status == 429 and not modeled)
+
+
+def _is_timeout_error(status: int, *, modeled: bool) -> bool:
+    """Whether the error is an unmodeled 408."""
+    return status == 408 and not modeled
+
+
+def _is_transient_error(status: int, code: str | None) -> bool:
+    """Whether the error has a 500, 502, 503 or 504 status or a known transient code."""
+    return status in _TRANSIENT_STATUS_CODES or code in _TRANSIENT_ERROR_CODES
 
 
 def _close(stream: Any) -> Any:

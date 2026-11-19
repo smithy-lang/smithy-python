@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Protocols now retry errors with a known throttling or transient error code, such as `ThrottlingException`, and errors with a 500, 502, 503 or 504 status code. RPCv2 protocols now also retry unmodeled 408 and 429 errors, as the other protocols do."
+}

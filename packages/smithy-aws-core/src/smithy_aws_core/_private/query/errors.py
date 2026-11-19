@@ -10,12 +10,11 @@ from smithy_core.exceptions import (
     MissingDependencyError,
     ModeledError,
 )
-from smithy_core.interfaces import TypedProperties
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
 
 from ...traits import AwsQueryErrorTrait
-from ._xml import find_child, local_name, parse_xml_root
+from ._xml import find_child, local_name
 
 try:
     from smithy_xml import XMLCodec
@@ -30,18 +29,16 @@ if TYPE_CHECKING:
 
 def create_aws_query_error(
     *,
-    body: bytes | Element | None,
+    root: Element | None,
+    code: str | None,
     operation: APIOperation[Any, Any],
     error_registry: TypeRegistry,
     default_namespace: str,
     wrapper_elements: tuple[str, ...],
     status: int,
-    context: TypedProperties,
     retry_after: float | None = None,
 ) -> CallError:
     """Create a modeled or generic CallError from an awsQuery error response."""
-    root = parse_xml_root(body) if isinstance(body, bytes) else body
-    code = _parse_aws_query_error_code(root, wrapper_elements)
     if code is not None:
         shape_id = _resolve_aws_query_error_shape_id(
             code=code,
@@ -70,28 +67,14 @@ def create_aws_query_error(
     if code is not None:
         message += f", code: {code}"
 
-    is_timeout = status == 408
-    is_throttle = status == 429
-    fault = "client" if status < 500 else "server"
-
     return CallError(
         message=message,
-        fault=fault,
-        is_throttling_error=is_throttle,
-        is_timeout_error=is_timeout,
-        is_retry_safe=is_throttle or is_timeout or None,
+        fault="client" if status < 500 else "server",
         retry_after=retry_after,
     )
 
 
-def _assert_xml() -> None:
-    if not _HAS_XML:
-        raise MissingDependencyError(
-            "Attempted to use XML codec, but smithy-xml is not installed."
-        )
-
-
-def _parse_aws_query_error_code(
+def parse_aws_query_error_code(
     element: Element | None, wrapper_elements: tuple[str, ...]
 ) -> str | None:
     """Parse the ``Code`` field from a wrapped awsQuery error response."""
@@ -109,6 +92,13 @@ def _parse_aws_query_error_code(
 
     code_element = find_child(element, "Code")
     return code_element.text if code_element is not None else None
+
+
+def _assert_xml() -> None:
+    if not _HAS_XML:
+        raise MissingDependencyError(
+            "Attempted to use XML codec, but smithy-xml is not installed."
+        )
 
 
 def _resolve_aws_query_error_shape_id(
