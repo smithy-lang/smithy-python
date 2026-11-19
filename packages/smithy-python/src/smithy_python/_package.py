@@ -87,7 +87,7 @@ version = {_toml_string(settings.package_version)}
 description = {_toml_string(description)}
 readme = "README.md"
 requires-python = ">=3.12"
-keywords = ["smithy", {_toml_string(settings.import_name)}]
+keywords = ["smithy", {_toml_string(settings.package)}]
 license = {{text = "Apache-2.0"}}
 dependencies = {_toml_array(map(_requirement, dependencies.for_group("runtime")))}{groups}
 

@@ -290,7 +290,7 @@ def test_types_generation_keeps_dashes_in_the_distribution_name(
     assert _run_types(output, source=source, package="dashed-types") == 0
     project = tomllib.loads((output / "pyproject.toml").read_text())
     assert project["project"]["name"] == "dashed-types"
-    assert project["project"]["keywords"] == ["smithy", "dashed_types"]
+    assert project["project"]["keywords"] == ["smithy", "dashed-types"]
     wheel = project["tool"]["hatch"]["build"]["targets"]["wheel"]
     assert wheel["packages"] == ["src/dashed_types"]
 
