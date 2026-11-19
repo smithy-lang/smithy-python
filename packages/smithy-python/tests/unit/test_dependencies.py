@@ -75,4 +75,4 @@ def test_runtime_dependency_catalog() -> None:
     assert HATCHLING == Dependency("hatchling", "", "build")
     assert SMITHY_TEST == Dependency("smithy-test", "~=0.5.0", "test")
     assert PYTEST == Dependency("pytest", ">=9.0.3,<10.0.0", "test")
-    assert PYTEST_ASYNCIO == Dependency("pytest-asyncio", ">=1.3.0,<1.4.0", "test")
+    assert PYTEST_ASYNCIO == Dependency("pytest-asyncio", ">=1.3.0,<2.0.0", "test")

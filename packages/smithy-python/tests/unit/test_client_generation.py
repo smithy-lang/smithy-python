@@ -533,7 +533,7 @@ def test_endpoint_tests_set_config_and_keyword_arguments(tmp_path: Path) -> None
     assert "mark.skip" not in tests
     project = (tmp_path / "pyproject.toml").read_text()
     assert '"smithy-test~=0.5.0",' in project
-    assert '"pytest-asyncio>=1.3.0,<1.4.0",' in project
+    assert '"pytest-asyncio>=1.3.0,<2.0.0",' in project
 
 
 def test_endpoint_tests_skip_inputs_the_client_cannot_express(tmp_path: Path) -> None:

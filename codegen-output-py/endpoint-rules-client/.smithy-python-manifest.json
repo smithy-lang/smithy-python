@@ -1,7 +1,7 @@
 {
   "files": {
     "README.md": "21b6af5d2c11ca92be799a611365291e00be66fee36e0e94876c35ff323358ec",
-    "pyproject.toml": "41e367adbc95e6d6198626246c8645aa2d156325785209e97f64267a712c5b75",
+    "pyproject.toml": "0d9158aab01dd1a034aa2bca0a69aa2d247433509c1ebd153b837c95ae79606b",
     "src/endpoint_rules_client/__init__.py": "f85901beed783e493475b1ccde6669b030eafa7a9b98f796d9a62e3d584e5286",
     "src/endpoint_rules_client/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/endpoint_rules_client/_private/endpoints.py": "f5bec5c0c17f9ec3fab86ea81c1472b1771118e6064f52cbb58cf85d89e09b20",
