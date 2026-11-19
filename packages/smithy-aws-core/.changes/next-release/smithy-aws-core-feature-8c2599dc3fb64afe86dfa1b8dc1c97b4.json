@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "AWS protocols now retry errors with a known throttling or transient error code, such as EC2's `RequestLimitExceeded`, and errors with a 500, 502, 503 or 504 status code."
+}

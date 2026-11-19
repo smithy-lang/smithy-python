@@ -15,7 +15,6 @@ from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import XMLFlattenedTrait, XMLNameTrait
-from smithy_core.types import TypedProperties
 
 
 def test_query_list_serialization() -> None:
@@ -300,13 +299,13 @@ def _error_test_operation() -> APIOperation[Any, Any]:
 
 def test_aws_query_error_sets_retry_after_on_generic_error() -> None:
     error = create_aws_query_error(
-        body=b"",
+        root=None,
+        code=None,
         operation=_error_test_operation(),
         error_registry=TypeRegistry({}),
         default_namespace="com.example",
         wrapper_elements=("ErrorResponse", "Error"),
         status=503,
-        context=TypedProperties(),
         retry_after=1.5,
     )
     assert error.retry_after == 1.5
@@ -314,13 +313,13 @@ def test_aws_query_error_sets_retry_after_on_generic_error() -> None:
 
 def test_aws_query_error_retry_after_none_by_default() -> None:
     error = create_aws_query_error(
-        body=b"",
+        root=None,
+        code=None,
         operation=_error_test_operation(),
         error_registry=TypeRegistry({}),
         default_namespace="com.example",
         wrapper_elements=("ErrorResponse", "Error"),
         status=503,
-        context=TypedProperties(),
     )
     assert error.retry_after is None
 

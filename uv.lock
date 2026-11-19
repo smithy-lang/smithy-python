@@ -667,7 +667,7 @@ wheels = [
 
 [[package]]
 name = "smithy-aws-checksums"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/smithy-aws-checksums" }
 
 [[package]]

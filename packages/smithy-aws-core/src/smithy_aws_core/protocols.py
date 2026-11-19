@@ -44,7 +44,7 @@ from smithy_http.protocols import HttpBindingClientProtocol, RpcClientProtocol
 from smithy_http.schema_extensions import HTTP_BINDING_SCHEMA_EXTENSION
 
 from ._private.query._xml import parse_xml_root
-from ._private.query.errors import create_aws_query_error
+from ._private.query.errors import create_aws_query_error, parse_aws_query_error_code
 from ._private.query.metadata import parse_aws_query_request_id
 from ._private.query.serializers import Ec2QueryShapeSerializer, QueryShapeSerializer
 from ._private.restxml import parse_rest_xml_error
@@ -285,7 +285,7 @@ class RestXmlClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol
                 modeled_error.args = (error_info.message,)
             if retry_after is not None:
                 modeled_error.retry_after = retry_after
-            return modeled_error
+            return self._classify_error_for_retry(modeled_error, response, code)
 
         message = (
             f"Unknown error for operation {operation.schema.id} "
@@ -298,16 +298,12 @@ class RestXmlClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol
         if response.reason is not None:
             message += f" - reason: {response.reason}"
 
-        is_timeout = response.status == 408
-        is_throttle = response.status == 429
-        return CallError(
+        error = CallError(
             message=message,
             fault="client" if response.status < 500 else "server",
-            is_throttling_error=is_throttle,
-            is_timeout_error=is_timeout,
-            is_retry_safe=is_throttle or is_timeout or None,
             retry_after=retry_after,
         )
+        return self._classify_error_for_retry(error, response, code)
 
 
 class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
@@ -451,6 +447,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
             error_id = self._resolve_error_id(operation=operation, error_id=error_id)
 
         retry_after = parse_retry_after(response)
+        code = error_id.name if error_id is not None else None
 
         if (
             error_id is None
@@ -459,17 +456,22 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
         ):
             deserializer = self.payload_codec.create_deserializer(response_body)
             document = deserializer.read_document(schema=DOCUMENT)
-            document_error_id = document.discriminator
-            if document_error_id not in error_registry:
-                document_error_id = self._resolve_error_id(
-                    operation=operation, error_id=document_error_id
-                )
+            if (document_error_id := self._document_error_id(document)) is not None:
+                code = document_error_id.name
+                if document_error_id not in error_registry:
+                    document_error_id = self._resolve_error_id(
+                        operation=operation, error_id=document_error_id
+                    )
 
-            if document_error_id in error_registry:
-                error_id = document_error_id
+                if document_error_id in error_registry:
+                    error_id = document_error_id
 
         if error_id is None or error_id not in error_registry:
             error_id = self._resolve_query_error_id(operation, response) or error_id
+
+        # A query-compatible service's awsQuery code takes precedence.
+        if (query_error := self._query_error(response)) is not None:
+            code = query_error[0]
 
         if error_id is not None and error_id in error_registry:
             error_shape = error_registry.get(error_id)
@@ -486,7 +488,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
             modeled_error = error_shape.deserialize(deserializer)
             if retry_after is not None:
                 modeled_error.retry_after = retry_after
-            return modeled_error
+            return self._classify_error_for_retry(modeled_error, response, code)
 
         message = (
             f"Unknown error for operation {operation.schema.id} "
@@ -497,20 +499,12 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
         if response.reason is not None:
             message += f" - reason: {response.reason}"
 
-        is_timeout = response.status == 408
-        is_throttle = response.status == 429
         fault = self._query_error_fault(response) or (
             "client" if response.status < 500 else "server"
         )
 
-        return CallError(
-            message=message,
-            fault=fault,
-            is_throttling_error=is_throttle,
-            is_timeout_error=is_timeout,
-            is_retry_safe=is_throttle or is_timeout or None,
-            retry_after=retry_after,
-        )
+        error = CallError(message=message, fault=fault, retry_after=retry_after)
+        return self._classify_error_for_retry(error, response, code)
 
     def _matches_content_type(self, response: HTTPResponse) -> bool:
         if "content-type" not in response.fields:
@@ -687,16 +681,19 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
         context: TypedProperties,
         root: Element | None,
     ) -> CallError:
-        return create_aws_query_error(
-            body=root,
+        wrapper_elements = self._error_wrapper_elements()
+        code = parse_aws_query_error_code(root, wrapper_elements)
+        error = create_aws_query_error(
+            root=root,
+            code=code,
             operation=operation,
             error_registry=error_registry,
             default_namespace=self._default_namespace,
-            wrapper_elements=self._error_wrapper_elements(),
+            wrapper_elements=wrapper_elements,
             status=response.status,
-            context=context,
             retry_after=parse_retry_after(response),
         )
+        return self._classify_error_for_retry(error, response, code)
 
     def _create_serializer(
         self,

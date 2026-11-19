@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "JSON error bodies with no error type are now unmodeled errors instead of parse failures."
+}
