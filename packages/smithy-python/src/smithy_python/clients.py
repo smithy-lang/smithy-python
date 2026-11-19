@@ -118,7 +118,7 @@ class ClientPlan:
         )
         service = selection.service
         assert service is not None  # noqa: S101 - required service invariant
-        model = normalize_client_model(model, service, package=settings.package)
+        model = normalize_client_model(model, service, package=settings.import_name)
         selection = _selection.select_shapes(
             model, service_id=str(service.id), require_service=True
         )
@@ -127,7 +127,7 @@ class ClientPlan:
         symbols = _symbols.ClientSymbolProvider(
             model,
             selection,
-            package=settings.package,
+            package=settings.import_name,
             operations=operations,
             reserved_member_names=_models._model_reserved_member_names(model),  # pyright: ignore[reportPrivateUsage]
         )

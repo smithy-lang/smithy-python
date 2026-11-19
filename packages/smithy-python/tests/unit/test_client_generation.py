@@ -8,6 +8,7 @@ import json
 import struct
 import subprocess
 import sys
+import tomllib
 from collections.abc import Callable
 from pathlib import Path
 from types import ModuleType
@@ -198,6 +199,20 @@ def test_package_loads_no_clients_or_models_until_used(
     assert "greeter_lazy.aio.client" not in sys.modules
     models: Any = sys.modules["greeter_lazy.models"]
     assert not models._registry._classes  # pyright: ignore[reportPrivateUsage]
+
+
+def test_dashed_package_names_the_distribution_and_imports_with_underscores(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _generate(tmp_path, "greeter-dashed")
+    project = tomllib.loads((tmp_path / "pyproject.toml").read_text())["project"]
+    assert project["name"] == "greeter-dashed"
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module("greeter_dashed")
+    assert package.Greeter.__module__ == "greeter_dashed.client"
+    assert package.AsyncGreeter.__module__ == "greeter_dashed.aio.client"
 
 
 @pytest.mark.parametrize("aio", [False, True])

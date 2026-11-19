@@ -131,7 +131,10 @@ def _add_package_options(parser: argparse.ArgumentParser, artifact: str) -> None
     parser.add_argument(
         "--package",
         required=True,
-        help="Import package and distribution name for the generated artifact.",
+        help=(
+            "Package name for the generated artifact. The distribution name "
+            "uses it as given. The import name replaces dashes with underscores."
+        ),
     )
     parser.add_argument(
         "--package-version",
@@ -246,7 +249,7 @@ def _generate_types(
         symbols = _symbols.SymbolProvider(
             model,
             selection,
-            package=settings.package,
+            package=settings.import_name,
             reserved_member_names=_models._model_reserved_member_names(  # pyright: ignore[reportPrivateUsage]
                 model
             ),

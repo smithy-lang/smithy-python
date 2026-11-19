@@ -28,17 +28,17 @@ class ModelGenerator:
     def generate(self, context: GenerationContext[ModelArtifactSettings]) -> None:
         """Register ``models.py`` and ``models.pyi`` with the file manifest."""
         _validate_member_names(context)
-        package = context.settings.package
-        directory = package.replace(".", "/")
+        import_name = context.settings.import_name
+        directory = import_name.replace(".", "/")
         _write_runtime(
             context.files.python_module(
-                f"src/{directory}/models.py", f"{package}.models"
+                f"src/{directory}/models.py", f"{import_name}.models"
             ),
             context.plan.models,
         )
         facade = _StubEmitter(
             context.files.python_module(
-                f"src/{directory}/models.pyi", f"{package}.models"
+                f"src/{directory}/models.pyi", f"{import_name}.models"
             ),
             context,
         )
@@ -58,7 +58,7 @@ class ModelGenerator:
             _StubEmitter(
                 context.files.python_module(
                     f"src/{directory}/_private/{module}.pyi",
-                    f"{package}._private.{module}",
+                    f"{import_name}._private.{module}",
                 ),
                 context,
                 external_bases=True,
@@ -232,7 +232,7 @@ class _StubEmitter:
         self.model = context.model
         self.plan = context.plan.models
         self.symbols = context.symbols
-        self.module = f"{context.settings.package}.models"
+        self.module = f"{context.settings.import_name}.models"
         self.external_bases = external_bases
         self.serde_shape = "_SerdeShape"
         self.service_error: str | _symbols.TypeReference = (
