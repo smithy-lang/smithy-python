@@ -138,7 +138,7 @@ PYTEST = Dependency(
 
 PYTEST_ASYNCIO = Dependency(
     package="pytest-asyncio",
-    specifier=">=1.3.0,<1.4.0",
+    specifier=">=1.3.0,<2.0.0",
     group="test",
 )
 """Async test support for generated client tests."""

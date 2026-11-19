@@ -1,0 +1,4 @@
+{
+  "type": "dependency",
+  "description": "Allow pytest-asyncio 1.x releases up to 2.0 in generated packages' test dependencies."
+}
