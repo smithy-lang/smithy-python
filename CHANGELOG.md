@@ -1,5 +1,13 @@
 # Change Log
 
+## Unreleased
+
+### Features
+
+* Generated clients support the `smithy.api#httpBearerAuth` trait. A service that
+  models it gets `token` and `token_identity_resolver` configuration settings,
+  and its requests carry an `Authorization: Bearer` header.
+
 ## v0.7.0
 
 ### Breaking Changes

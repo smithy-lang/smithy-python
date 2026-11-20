@@ -15,6 +15,7 @@ use smithy.waiters#waitable
 @fakeProtocol
 @paginated(inputToken: "nextToken", outputToken: "nextToken", pageSize: "pageSize")
 @httpApiKeyAuth(name: "weather-auth", in: "header")
+@httpBearerAuth
 service Weather {
     version: "2006-03-01"
     resources: [

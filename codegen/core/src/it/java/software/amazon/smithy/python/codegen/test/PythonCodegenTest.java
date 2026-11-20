@@ -61,6 +61,25 @@ public class PythonCodegenTest {
         assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
         assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));
 
+        // The service models both @httpApiKeyAuth and @httpBearerAuth, so the config
+        // carries each scheme's identity settings and the resolver offers both.
+        assertTrue(config.contains("api_key: str | None"));
+        assertTrue(config.contains("api_key_identity_resolver or AsyncAPIKeyIdentityResolver()"));
+        assertTrue(config.contains("token: str | None"));
+        assertTrue(config.contains("token_identity_resolver or AsyncStaticTokenResolver()"));
+        assertTrue(config.contains("AsyncBearerAuthScheme()"));
+
+        var auth = Files.readString(tempDir.resolve("src/weather/auth.py"));
+        assertTrue(auth.contains("def _generate_api_key_option("));
+        assertTrue(auth.contains("def _generate_bearer_option("));
+        assertTrue(auth.contains("ShapeID(\"smithy.api#httpBearerAuth\")"));
+        // Without an @auth trait the effective schemes are ordered by shape ID.
+        var apiKeyOption = auth.indexOf("_generate_api_key_option(auth_parameters)");
+        var bearerOption = auth.indexOf("_generate_bearer_option(auth_parameters)");
+        assertTrue(apiKeyOption >= 0);
+        assertTrue(bearerOption >= 0);
+        assertTrue(apiKeyOption < bearerOption);
+
         var syncClient = Files.readString(tempDir.resolve("src/weather/client.py"));
         assertTrue(syncClient.contains("class Weather(Client[Config]):"));
         assertTrue(syncClient.contains("return self._invoke("));
@@ -187,6 +206,9 @@ public class PythonCodegenTest {
 
         var syncConfig = Files.readString(tempDir.resolve("src/weather/config.py"));
         assertTrue(syncConfig.contains("self.transport = transport or Urllib3HTTPClient()"));
+        // The sync config maps the bearer scheme and resolver to their sync twins.
+        assertTrue(syncConfig.contains("token_identity_resolver or StaticTokenResolver()"));
+        assertTrue(syncConfig.contains("BearerAuthScheme()"));
 
         // An output that models a "responseMetadata" member gets both the SDK-reserved
         // response_metadata attribute and the escaped modeled member, so neither shadows
@@ -331,6 +353,7 @@ public class PythonCodegenTest {
         assertTrue(schemas.contains("aws.protocols#restJson1"));
         assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
         assertTrue(schemas.contains("\"name\": \"weather-auth\""));
+        assertTrue(schemas.contains("smithy.api#httpBearerAuth"));
         // Lowering consumes the endpoint rules; the schemas no longer carry them.
         assertFalse(schemas.contains("smithy.rules#endpointBdd"));
 

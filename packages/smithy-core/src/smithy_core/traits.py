@@ -33,6 +33,7 @@ __all__ = [
     "EventHeaderTrait",
     "EventPayloadTrait",
     "HTTPAPIKeyAuthTrait",
+    "HTTPBearerAuthTrait",
     "HTTPChecksumRequiredTrait",
     "HTTPErrorTrait",
     "HTTPHeaderTrait",
@@ -506,6 +507,14 @@ class HTTPAPIKeyAuthTrait(Trait, id=ShapeID("smithy.api#httpApiKeyAuth")):
     def scheme(self) -> str | None:
         """The scheme the key is prefixed with in the header, if any."""
         return self.document_value.get("scheme")  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class HTTPBearerAuthTrait(Trait, id=ShapeID("smithy.api#httpBearerAuth")):
+    """Configures bearer token auth for a service."""
+
+    def __post_init__(self) -> None:
+        assert self.document_value is None
 
 
 @dataclass(init=False, frozen=True)

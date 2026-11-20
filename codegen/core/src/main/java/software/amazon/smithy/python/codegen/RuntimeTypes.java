@@ -183,6 +183,10 @@ public final class RuntimeTypes {
     public static final Symbol API_KEY_IDENTITY_RESOLVER =
             createSymbol("aio.identity.apikey", "AsyncAPIKeyIdentityResolver", SmithyPythonDependency.SMITHY_HTTP);
 
+    // smithy_http.aio.identity.token
+    public static final Symbol TOKEN_IDENTITY_RESOLVER =
+            createSymbol("aio.identity.token", "AsyncStaticTokenResolver", SmithyPythonDependency.SMITHY_HTTP);
+
     // smithy_aws_core.aio.protocols 
     public static final Symbol REST_JSON_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",

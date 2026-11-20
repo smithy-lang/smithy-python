@@ -999,6 +999,14 @@
     "HTTPRequest": "rex-protocol",
     "PropertyKey": "rex-class"
   },
+  "smithy_http.aio.auth.bearer": {
+    "AsyncAuthScheme": "rex-protocol",
+    "AsyncIdentityResolver": "rex-protocol[async]",
+    "HTTPRequest": "rex-protocol",
+    "PropertyKey": "rex-class",
+    "TokenIdentity": "rex-class",
+    "TokenIdentityProperties": "rex-class"
+  },
   "smithy_http.aio.crt": {
     "AsyncBytesReader": "rex-class[async]",
     "Field": "rex-class",
@@ -1077,7 +1085,8 @@
     "list_async": "rex-function"
   },
   "smithy_http.auth": {
-    "apikey": "rex-module"
+    "apikey": "rex-module",
+    "bearer": "rex-module"
   },
   "smithy_http.auth.apikey": {
     "APIKeyIdentity": "rex-class",
@@ -1092,6 +1101,19 @@
     "Signer": "rex-protocol",
     "SmithyIdentityError": "rex-exception",
     "URI": "rex-class"
+  },
+  "smithy_http.auth.bearer": {
+    "AuthScheme": "rex-protocol",
+    "Field": "rex-class",
+    "HTTPBearerAuthTrait": "rex-class",
+    "HTTPRequest": "rex-protocol",
+    "IdentityResolver": "rex-protocol",
+    "ShapeID": "rex-class",
+    "Signer": "rex-protocol",
+    "SmithyHTTPError": "rex-exception",
+    "SmithyIdentityError": "rex-exception",
+    "TokenIdentity": "rex-class",
+    "TokenIdentityProperties": "rex-class"
   },
   "smithy_http.bindings": {
     "ErrorFault": "rex-class",
