@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Generate AWS clients for services with the aws.api#service trait. Their configs resolve from the environment and shared config files, and their clients send the AWS user agent. Add ClientIntegration so integrations can change generated clients."
+}

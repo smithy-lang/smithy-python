@@ -1328,6 +1328,10 @@
   "smithy_json.settings": {
     "TimestampFormat": "rex-class"
   },
+  "smithy_python.aws": {
+    "AwsConfigIntegration": "rex-class",
+    "SMITHY_AWS_CORE": "rex-Dependency"
+  },
   "smithy_python.cli": {
     "CodegenError": "rex-exception",
     "InvalidInvocationError": "rex-exception",
@@ -1337,6 +1341,10 @@
   },
   "smithy_python.dependencies": {
     "DependencyGroup": "rex-type_alias"
+  },
+  "smithy_python.integrations": {
+    "Part": "rex-type_alias",
+    "TypeReference": "rex-class"
   },
   "smithy_python.model": {
     "EnumShape": "rex-class",

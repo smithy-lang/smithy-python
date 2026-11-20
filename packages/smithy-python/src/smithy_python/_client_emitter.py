@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Final
 
 from . import _auth, _endpoint_tests, _endpoints, _package
@@ -13,6 +13,7 @@ from . import exceptions as _exceptions
 from . import model as _model
 from . import models as _models
 from . import protocols as _protocols
+from .integrations import ClientIntegration, ClientMode, ClientNames, ConfigPlan
 from .symbols import TypeReference
 
 if TYPE_CHECKING:
@@ -50,20 +51,26 @@ def check_supported(plan: ClientPlan) -> None:
                     )
 
 
-def plan_endpoints(plan: ClientPlan) -> _endpoints.EndpointPlan:
+def plan_endpoints(
+    plan: ClientPlan, integrations: Sequence[ClientIntegration] = ()
+) -> _endpoints.EndpointPlan:
     """Lower the service's endpoint rules for its client.
 
+    :param integrations: The integrations that match the service.
     :raises CodegenError: If the rules are unsupported, or a client context
         parameter's config field collides with another config field.
     """
     service = plan.selection.service
     assert service is not None  # noqa: S101 - ClientPlan requires a service
-    auth_fields = {
+    reserved = set(_CONFIG_FIELDS)
+    reserved.update(
         field.name
         for scheme in _auth.supported_schemes(service)
         for field in scheme.fields
-    }
-    return _endpoints.plan_endpoints(service, reserved=_CONFIG_FIELDS | auth_fields)
+    )
+    for integration in integrations:
+        reserved.update(integration.config_fields(service))
+    return _endpoints.plan_endpoints(service, reserved=reserved)
 
 
 def write_client(
@@ -71,8 +78,12 @@ def write_client(
     plan: ClientPlan,
     protocol: _protocols.ProtocolContribution,
     endpoints: _endpoints.EndpointPlan,
+    integrations: Sequence[ClientIntegration] = (),
 ) -> None:
-    """Register client, config, endpoints, and package modules for both modes."""
+    """Register client, config, endpoints, and package modules for both modes.
+
+    :param integrations: The integrations that match the service.
+    """
     import_name = context.settings.import_name
     directory = import_name.replace(".", "/")
     service = plan.selection.service
@@ -84,18 +95,31 @@ def write_client(
         ),
         endpoints,
     )
-    sync, aio = _modes(plan, protocol)
+    names = ClientNames(
+        client=plan.symbols.service_name,
+        config="Config",
+        async_client=plan.symbols.aio_service_name,
+        async_config="AsyncConfig",
+    )
+    for integration in integrations:
+        names = integration.client_names(service, names)
+    sync, aio = _modes(names, protocol)
     for mode in (sync, aio):
         module = f"{import_name}.{mode.directory.replace('/', '.')}"
         _write_config(
             context.files.python_module(
                 f"src/{directory}/{mode.directory}config.py", f"{module}config"
             ),
-            plan,
-            mode,
-            service,
-            endpoints,
-            TypeReference("BDD", endpoints_module),
+            ConfigPlan(
+                plan=plan,
+                service=service,
+                mode=mode,
+                endpoints=endpoints,
+                bdd=TypeReference("BDD", endpoints_module),
+                auth_schemes=_auth.supported_schemes(service),
+                protocol_settings="_PROTOCOL_SETTINGS",
+            ),
+            integrations,
         )
         _write_client(
             context.files.python_module(
@@ -107,13 +131,18 @@ def write_client(
             mode,
             f"{module}config",
             service,
+            integrations,
         )
+    for integration in integrations:
+        integration.write_files(context, plan, (sync, aio))
+    aio_config = TypeReference(aio.config, f"{import_name}.aio.config")
     _endpoint_tests.write_endpoint_tests(
         context,
         plan,
         endpoints,
         TypeReference(aio.client, f"{import_name}.aio.client"),
-        TypeReference(aio.config, f"{import_name}.aio.config"),
+        aio_config,
+        _new_config(aio, aio_config, integrations),
     )
     aio_init = context.files.python_module(
         f"src/{directory}/aio/__init__.py", f"{import_name}.aio"
@@ -180,31 +209,26 @@ def _generic(reference: TypeReference, *arguments: TypeReference) -> TypeReferen
     )
 
 
-@dataclass(frozen=True, slots=True)
-class _Mode:
-    """Names and runtime types that differ between the sync and async client."""
-
-    directory: str
-    config: str
-    client: str
-    client_base: TypeReference
-    protocol: TypeReference
-    transport: TypeReference
-    transport_type: TypeReference
-    auth_scheme: TypeReference
-    endpoint_resolver: tuple[TypeReference, ...]
-    is_async: bool
+def _new_config(
+    mode: ClientMode,
+    config: TypeReference,
+    integrations: Sequence[ClientIntegration],
+) -> tuple[str | TypeReference, ...]:
+    parts: tuple[str | TypeReference, ...] = (config,)
+    for integration in integrations:
+        parts = integration.new_config(mode, config)
+    return parts
 
 
 def _modes(
-    plan: ClientPlan, protocol: _protocols.ProtocolContribution
-) -> tuple[_Mode, _Mode]:
+    names: ClientNames, protocol: _protocols.ProtocolContribution
+) -> tuple[ClientMode, ClientMode]:
     endpoint_resolver = _core("EndpointResolver", "interfaces")
     return (
-        _Mode(
+        ClientMode(
             directory="",
-            config="Config",
-            client=plan.symbols.service_name,
+            config=names.config,
+            client=names.client,
             client_base=_core("Client", "client"),
             protocol=protocol.protocol,
             transport=protocol.transport,
@@ -213,10 +237,10 @@ def _modes(
             endpoint_resolver=(endpoint_resolver,),
             is_async=False,
         ),
-        _Mode(
+        ClientMode(
             directory="aio/",
-            config="AsyncConfig",
-            client=plan.symbols.aio_service_name,
+            config=names.async_config,
+            client=names.async_client,
             client_base=_core("AsyncClient", "aio.client"),
             protocol=protocol.async_protocol,
             transport=protocol.async_transport,
@@ -282,16 +306,12 @@ def _write_exports(writer: PythonWriter, exports: dict[str, str]) -> None:
 
 def _write_config(
     writer: PythonWriter,
-    plan: ClientPlan,
-    mode: _Mode,
-    service: _model.ServiceShape,
-    endpoints: _endpoints.EndpointPlan,
-    bdd: TypeReference,
+    config: ConfigPlan,
+    integrations: Sequence[ClientIntegration],
 ) -> None:
-    client_protocol = _generic(_core("ClientProtocol", "interfaces"), _ANY, _ANY)
-    interceptor = _generic(_core("Interceptor", "interceptors"), *_ANY4)
+    plan, service, mode = config.plan, config.service, config.mode
     schemas = f"{plan.settings.import_name}._private.schemas"
-    writer.line("_PROTOCOL_SETTINGS = ", _PROTOCOL_SETTINGS, "(")
+    writer.line(config.protocol_settings, " = ", _PROTOCOL_SETTINGS, "(")
     with writer.indent():
         writer.line("namespace=", _models._quote(service.id.namespace), ",")  # pyright: ignore[reportPrivateUsage]
         writer.line("service_target=", _models._quote(service.id.name), ",")  # pyright: ignore[reportPrivateUsage]
@@ -305,9 +325,32 @@ def _write_config(
     writer.line(")")
     writer.line()
     writer.line()
+    if not any(
+        integration.write_config(writer, config) for integration in integrations
+    ):
+        _write_core_config(writer, config)
+    writer.line()
+    writer.line()
+    writer.line("type Plugin = ", _CALLABLE, "[[", mode.config, "], None]")
+    writer.line(
+        _models._quote(  # pyright: ignore[reportPrivateUsage]
+            "A callable that customizes the client configuration."
+        )
+    )
+
+
+def _write_core_config(writer: PythonWriter, config: ConfigPlan) -> None:
+    service, mode, endpoints, bdd = (
+        config.service,
+        config.mode,
+        config.endpoints,
+        config.bdd,
+    )
+    client_protocol = _generic(_core("ClientProtocol", "interfaces"), _ANY, _ANY)
+    interceptor = _generic(_core("Interceptor", "interceptors"), *_ANY4)
     endpoint_resolver = _join(mode.endpoint_resolver)
     auth_schemes = ("dict[", _SHAPE_ID, ", ", mode.auth_scheme, "]")
-    schemes = _auth.supported_schemes(service)
+    schemes = config.auth_schemes
     auth_fields = [field for scheme in schemes for field in scheme.fields]
     retry = (_RETRY_STRATEGY, " | ", _RETRY_STRATEGY_OPTIONS)
     fields: tuple[tuple[str, tuple[str | TypeReference, ...], str], ...] = (
@@ -468,14 +511,18 @@ def _write_config(
                     )
                 )
                 writer.line("self.auth_schemes[scheme.scheme_id] = scheme")
-    writer.line()
-    writer.line()
-    writer.line("type Plugin = ", _CALLABLE, "[[", mode.config, "], None]")
-    writer.line(
-        _models._quote(  # pyright: ignore[reportPrivateUsage]
-            "A callable that customizes the client configuration."
-        )
-    )
+
+
+def _items(references: tuple[TypeReference, ...]) -> tuple[str | TypeReference, ...]:
+    # The items of a tuple literal, with the trailing comma a single item needs.
+    parts: list[str | TypeReference] = []
+    for reference in references:
+        if parts:
+            parts.append(", ")
+        parts.append(reference)
+    if len(references) == 1:
+        parts.append(",")
+    return tuple(parts)
 
 
 def _join(references: tuple[TypeReference, ...]) -> tuple[str | TypeReference, ...]:
@@ -490,9 +537,10 @@ def _join(references: tuple[TypeReference, ...]) -> tuple[str | TypeReference, .
 def _write_client(
     writer: PythonWriter,
     plan: ClientPlan,
-    mode: _Mode,
+    mode: ClientMode,
     config_module: str,
     service: _model.ServiceShape,
+    integrations: Sequence[ClientIntegration],
 ) -> None:
     config = TypeReference(mode.config, config_module)
     plugin = TypeReference("Plugin", config_module)
@@ -505,21 +553,30 @@ def _write_client(
             or f"Client for {service.id.name}.",
         )
         writer.line()
-        writer.line("_client_plugins = (", _USER_AGENT_PLUGIN, ",)")
+        plugins = [
+            reference
+            for integration in integrations
+            for reference in integration.client_plugins(
+                plan, mode, plan.settings.import_name
+            )
+        ]
+        writer.line("_client_plugins = (", *_items((*plugins, _USER_AGENT_PLUGIN)), ")")
         for operation, export in zip(
             plan.operations, plan.models.operations, strict=True
         ):
             _write_operation(writer, plan, mode, operation, export.name, models, plugin)
         writer.line()
-        writer.line("def _new_config(self) -> ", config, ":")
+        create = _new_config(mode, config, integrations)
+        define = "async def " if create[0] == "await " else "def "
+        writer.line(define, "_new_config(self) -> ", config, ":")
         with writer.indent():
-            writer.line("return ", config, "()")
+            writer.line("return ", *create, "()")
 
 
 def _write_operation(
     writer: PythonWriter,
     plan: ClientPlan,
-    mode: _Mode,
+    mode: ClientMode,
     operation: OperationPlan,
     constant: str,
     models: TypeReference,

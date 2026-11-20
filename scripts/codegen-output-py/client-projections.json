@@ -6,6 +6,13 @@
     "service": "example.apikey#ApiKeyService",
     "version": "0.0.1"
   },
+  "aws-config-client": {
+    "description": "Python client for the AWS config fixture",
+    "model": "models/aws-config.json",
+    "package": "aws_config_client",
+    "service": "example.awsconfig#WeatherStation",
+    "version": "0.0.1"
+  },
   "endpoint-rules-client": {
     "description": "Python client for the endpoint rules fixture",
     "model": "models/endpoint-rules.json",

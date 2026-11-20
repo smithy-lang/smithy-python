@@ -836,6 +836,9 @@
     "JSONSettings": "class"
   },
   "smithy_python": {},
+  "smithy_python.aws": {
+    "AWS_INTEGRATIONS": "tuple"
+  },
   "smithy_python.cli": {
     "main": "function"
   },
@@ -880,6 +883,12 @@
     "ModelPlan": "class",
     "OperationModel": "class",
     "TypesSettings": "class"
+  },
+  "smithy_python.integrations": {
+    "ClientIntegration": "class",
+    "ClientMode": "class",
+    "ClientNames": "class",
+    "ConfigPlan": "class"
   },
   "smithy_python.model": {},
   "smithy_python.models": {

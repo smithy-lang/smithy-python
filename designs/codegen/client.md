@@ -5,8 +5,8 @@
 This document describes how the Python generator produces client packages. It
 defines client settings, operation discovery, I/O normalization, client
 symbols, the client plan, operation and schema emission, protocol selection,
-endpoint rules, endpoint tests, auth, and the generated client and config
-modules.
+endpoint rules, endpoint tests, auth, integrations, AWS clients, and the
+generated client and config modules.
 
 ## Goals
 
@@ -283,6 +283,51 @@ its first supported scheme.
 Generation fails for an operation whose effective schemes include neither
 `noAuth` nor a supported scheme.
 
+## Integrations
+
+A `ClientIntegration` changes the clients of the services it matches. The
+generator takes integrations in order and applies those that match. Each hook
+defaults to no change:
+
+| Hook | Changes |
+| --- | --- |
+| `client_names` | The client and config class names |
+| `config_fields` | Config fields a client context field must not take |
+| `write_config` | The config class, written in place of the core one |
+| `new_config` | The callable that creates a default config |
+| `client_plugins` | Plugins every client applies, before the core ones |
+| `write_files` | Extra modules |
+
+A hook gets a `ClientMode` for the sync or async variant and, for configs, a
+`ConfigPlan` with the endpoint plan, the `BDD` constant, and the supported auth
+schemes. The core generator imports no integration. The CLI passes
+`smithy_python.aws.AWS_INTEGRATIONS`.
+
+## AWS Clients
+
+`smithy_python.aws` holds the AWS integrations. `AwsConfigIntegration` matches a
+service with the `aws.api#service` trait and follows the Java generator's AWS
+config:
+
+* The clients are `<SdkId>Client` and `Async<SdkId>Client`, and the configs are
+  `<SdkId>Config` and `Async<SdkId>Config`, with spaces removed from the SDK
+  ID.
+* The configs subclass `AwsConfig` and `AsyncAwsConfig` from `smithy-aws-core`.
+  They resolve from overrides, environment variables, shared config files, and
+  defaults through `resolve()`, and direct construction fails. A client without
+  a config creates one with `resolve()`.
+* Each config adds the fields the base lacks, with a `FieldSpec` for each:
+  `endpoint_resolver`, `protocol`, `auth_schemes`, `auth_scheme_resolver`, auth
+  scheme fields, and client context fields. `endpoint_uri` also reads
+  `AWS_ENDPOINT_URL_<SDK_ID>` and the profile's service section.
+* A typed `Unpack` overrides dictionary covers the added fields.
+* Clients apply `aws_user_agent_plugin`, which adds `UserAgentInterceptor`
+  with the SDK ID, the package version, `sdk_ua_app_id`, and
+  `user_agent_extra`.
+
+The generated package depends on `smithy-aws-core`. A client context field may
+not take an `AwsConfig` field name.
+
 ## Clients and Configuration
 
 Service classes are thin subclasses of `Client[Config]` and
@@ -345,9 +390,9 @@ are unsigned or use API key auth, and whose endpoint rules use the standard
 library. Models that require other auth schemes or event or data streams fail
 generation with a diagnostic naming the operation and feature.
 
-Authentication and endpoint extension points are provider-neutral. AWS
-credentials, region defaults, SigV4, query compatibility, AWS endpoint
-functions, and AWS user agents are separate integrations.
+Authentication and endpoint extension points are provider-neutral. AWS config
+resolution and the AWS user agent are AWS integrations. SigV4, AWS endpoint
+functions, and AWS protocols are not supported yet.
 
 ## Validation
 
@@ -370,6 +415,12 @@ The `api-key-auth-client` snapshot comes from `models/api-key-auth.smithy`,
 assembled by Smithy into `models/api-key-auth.json`. Its operations use the
 service's API key auth, `@auth([])`, and `@optionalAuth`. Tests check which
 requests carry the key and that a missing key fails the call.
+
+The `aws-config-client` snapshot comes from `models/aws-config.smithy`,
+assembled by Smithy into `models/aws-config.json` with its ruleset compiled by
+`CompileBdd`. Its tests resolve the endpoint from `AWS_ENDPOINT_URL_<SDK_ID>`
+and from a profile, check the AWS user agent, and check that unknown fields and
+direct construction fail.
 
 Client snapshots sit alongside the types snapshots and cover the
 provider-neutral RPCv2 CBOR and RPCv2 JSON projections. Checks cover deterministic

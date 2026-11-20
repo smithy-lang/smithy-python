@@ -9,6 +9,7 @@
   ],
   "extraPaths": [
     "../../codegen-output-py/api-key-auth-client/src",
+    "../../codegen-output-py/aws-config-client/src",
     "../../codegen-output-py/aws-json-1-0/src",
     "../../codegen-output-py/aws-json-1-1/src",
     "../../codegen-output-py/aws-query/src",

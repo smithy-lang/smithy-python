@@ -21,6 +21,7 @@ from smithy_core.exceptions import EndpointResolutionError
 from smithy_core.retries import SimpleRetryStrategy
 from smithy_http import HTTPResponse, tuples_to_fields
 from smithy_http.interfaces import HTTPRequest, HTTPRequestConfiguration
+from smithy_python import aws as _aws
 from smithy_python.clients import ClientGenerator, ClientPlan
 from smithy_python.exceptions import CodegenError
 from smithy_python.generation import ClientSettings
@@ -643,3 +644,71 @@ def test_api_key_auth_trait_must_name_a_location(tmp_path: Path) -> None:
     _add_api_key(shapes, name="key", **{"in": "body"})
     with pytest.raises(CodegenError, match="Invalid httpApiKeyAuth trait"):
         _generate(tmp_path, "greeter_bad_api_key", shapes)
+
+
+def _aws_generate(output: Path, package: str, shapes: dict[str, Any]) -> None:
+    generator = ClientGenerator(
+        _plan(shapes, package), integrations=_aws.AWS_INTEGRATIONS
+    )
+    context = generator.context()
+    generator.generate(context)
+    context.files.commit(output)
+
+
+def test_aws_services_get_named_resolving_clients(tmp_path: Path) -> None:
+    shapes = _shapes()
+    shapes["example#Greeter"]["traits"]["aws.api#service"] = {"sdkId": "Hello World"}
+    _aws_generate(tmp_path, "greeter_aws", shapes)
+    source = tmp_path / "src/greeter_aws"
+    config = (source / "config.py").read_text()
+    assert "class HelloWorldConfig(AwsConfig):" in config
+    assert 'EndpointUriResolver("hello_world")' in config
+    client = (source / "aio/client.py").read_text()
+    assert "class AsyncHelloWorldClient(AsyncClient[AsyncHelloWorldConfig]):" in client
+    assert "return await AsyncHelloWorldConfig.resolve()" in client
+    assert "_client_plugins = (aws_user_agent_plugin, user_agent_plugin)" in client
+    assert 'service_id="Hello_World"' in (source / "user_agent.py").read_text()
+    assert '"smithy-aws-core~=0.16.0",' in (tmp_path / "pyproject.toml").read_text()
+
+
+def test_integrations_apply_only_to_services_they_match(tmp_path: Path) -> None:
+    _aws_generate(tmp_path, "greeter_plain", _shapes())
+    assert "class Config:" in (tmp_path / "src/greeter_plain/config.py").read_text()
+    assert not (tmp_path / "src/greeter_plain/user_agent.py").exists()
+
+
+def test_aws_services_need_an_sdk_id(tmp_path: Path) -> None:
+    shapes = _shapes()
+    shapes["example#Greeter"]["traits"]["aws.api#service"] = {}
+    with pytest.raises(CodegenError, match="without an sdkId"):
+        _aws_generate(tmp_path, "greeter_no_sdk_id", shapes)
+
+
+def test_client_context_fields_must_not_take_aws_config_fields(tmp_path: Path) -> None:
+    shapes = _shapes()
+    _add_endpoint_rules(shapes)
+    traits = shapes["example#Greeter"]["traits"]
+    traits["aws.api#service"] = {"sdkId": "Greeter"}
+    traits["smithy.rules#clientContextParams"] = {"Region": {"type": "string"}}
+    with pytest.raises(CodegenError, match="which the config already has"):
+        _aws_generate(tmp_path, "greeter_region", shapes)
+
+
+def test_aws_clients_with_dashed_package_names_import(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    shapes = _shapes()
+    shapes["example#Greeter"]["traits"]["aws.api#service"] = {"sdkId": "Greeter"}
+    _aws_generate(tmp_path, "aws-greeter-dashed", shapes)
+    source = tmp_path / "src/aws_greeter_dashed"
+    assert (
+        "from aws_greeter_dashed import __version__"
+        in (source / "user_agent.py").read_text()
+    )
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module("aws_greeter_dashed")
+    assert package.AsyncGreeterClient._client_plugins[0].__module__ == (
+        "aws_greeter_dashed.aio.user_agent"
+    )

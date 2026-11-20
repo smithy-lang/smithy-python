@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import BinaryIO, Final
 
 from . import __version__
+from . import aws as _aws
 from . import clients as _clients
 from . import dependencies as _dependencies
 from . import exceptions as _exceptions
@@ -287,7 +288,7 @@ def _generate_client(
         plan = _clients.ClientPlan.from_model(model, settings, service_id=args.service)
     except ValueError as error:
         raise InvalidInvocationError(str(error)) from error
-    generator = _clients.ClientGenerator(plan)
+    generator = _clients.ClientGenerator(plan, integrations=_aws.AWS_INTEGRATIONS)
     context = generator.context()
     generator.generate(context)
     context.files.commit(output_dir)

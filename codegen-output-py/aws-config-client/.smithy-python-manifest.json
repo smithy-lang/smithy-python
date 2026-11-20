@@ -1,0 +1,21 @@
+{
+  "files": {
+    "README.md": "fd9e871f95d184d149ce23c2a4cd0eb77dffebac24d83f19fd0333b38329f665",
+    "pyproject.toml": "2d25ffb28e4599769791f7453a05fd7665cd5544850add05903dd701516253ab",
+    "src/aws_config_client/__init__.py": "316c15daeb5ec5c2087ab41af28a36fa149a117ec0f145ed4f0f836bae84cfe6",
+    "src/aws_config_client/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/aws_config_client/_private/endpoints.py": "7b7fc7e93046c5849dadc9002eccd8a71dca2f0e194a2dbd1158ecca174f6d85",
+    "src/aws_config_client/_private/schemas.py": "c215a5e2bceb78db677a60e607358cd9e58ca68f379df23c7c2771733b6ee5b7",
+    "src/aws_config_client/aio/__init__.py": "0a179e5a12e1d0aa9e7d4307ac0c0c00526cebb5145cc9b0b35e69d41aaada67",
+    "src/aws_config_client/aio/client.py": "e0939941df6eef91aca4b5b33fbd84b9cf68b4bc903d786d96e1678e47abb796",
+    "src/aws_config_client/aio/config.py": "d17750691ea420996bb2ddfbb5f09d5bd8397346b0c0ceb7ea5bf6b14185bd10",
+    "src/aws_config_client/aio/user_agent.py": "36d50d3e1ef1b524f6c137eb377b7d7a6905e069b5f784074017664a3c65852e",
+    "src/aws_config_client/client.py": "6bff2d04a812609e3d12fc36a06fb80f4fb94686328b40ca88ba71694509f9e5",
+    "src/aws_config_client/config.py": "f652b5f8975bab09486a0d862d6c5c5d2df9b20816798f13c9e7f987d965e4c9",
+    "src/aws_config_client/models.py": "63766a511b14b4fdb2dba4a5db834016aa14001cde495a4960ac0ab6f4f601b0",
+    "src/aws_config_client/models.pyi": "a378f899f5dd91d9353081c0d312306b411c3e926b26ace7cdb46908f2af2b70",
+    "src/aws_config_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/aws_config_client/user_agent.py": "d07f98802cecab19abca8bde1853ff9d8fa8ce9ef471abf73b7b4d56abad7a36"
+  },
+  "version": 1
+}

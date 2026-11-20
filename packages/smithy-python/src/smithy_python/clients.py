@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from types import MappingProxyType
 
@@ -13,6 +13,7 @@ from . import _client_emitter
 from . import dependencies as _dependencies
 from . import files as _files
 from . import generation as _generation
+from . import integrations as _integrations
 from . import model as _model
 from . import models as _models
 from . import protocols as _protocols
@@ -33,9 +34,17 @@ class ClientGenerator:
         protocols: Mapping[
             _model.ShapeId, _protocols.ProtocolContribution
         ] = _protocols.DEFAULT_PROTOCOLS,
+        integrations: Sequence[_integrations.ClientIntegration] = (),
     ) -> None:
+        """Create a generator for a planned client.
+
+        :param protocols: The protocol contributions by protocol ID.
+        :param integrations: Integrations that may change the generated clients.
+            Those that match the service apply, in order.
+        """
         self._plan = plan
         self._protocols = protocols
+        self._integrations = tuple(integrations)
 
     def generate(
         self, context: _generation.GenerationContext[_generation.ClientSettings]
@@ -52,11 +61,16 @@ class ClientGenerator:
         protocol = _protocols.select_protocol(
             service, context.settings.protocol, self._protocols
         )
+        integrations = tuple(
+            integration
+            for integration in self._integrations
+            if integration.matches(service)
+        )
         _client_emitter.check_supported(plan)
-        endpoints = _client_emitter.plan_endpoints(plan)
+        endpoints = _client_emitter.plan_endpoints(plan, integrations)
         _schemas.SchemaGenerator().generate(context)
         _models.ModelGenerator().generate(context)
-        _client_emitter.write_client(context, plan, protocol, endpoints)
+        _client_emitter.write_client(context, plan, protocol, endpoints, integrations)
 
     def context(
         self,
