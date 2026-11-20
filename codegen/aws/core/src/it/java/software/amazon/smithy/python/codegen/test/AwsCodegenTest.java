@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import software.amazon.smithy.build.FileManifest;
@@ -68,6 +69,14 @@ public class AwsCodegenTest {
         assertFalse(client.contains("def __init__("));
         assertFalse(client.contains("def _ensure_setup("));
         assertFalse(client.contains("def _prepare_call["));
+
+        // The sync and async clients both add the retry headers interceptor.
+        for (var prefix : List.of("src/restjson/aio/", "src/restjson/")) {
+            assertTrue(Files.readString(tempDir.resolve(prefix + "client.py"))
+                    .contains("aws_retry_headers_plugin"));
+            assertTrue(Files.readString(tempDir.resolve(prefix + "retry_headers.py"))
+                    .contains("config.interceptors.append(RetryHeadersInterceptor())"));
+        }
 
         var schemas = Files.readString(tempDir.resolve("src/restjson/_private/schemas.py"));
         assertTrue(schemas.contains("aws.protocols#restJson1"));

@@ -14,6 +14,7 @@ from smithy_http.plugins import user_agent_plugin
 
 from . import models as _models
 from .config import EC2ProtocolConfig, Plugin
+from .retry_headers import aws_retry_headers_plugin
 from .user_agent import aws_user_agent_plugin
 
 from typing import TYPE_CHECKING
@@ -54,7 +55,11 @@ logger = logging.getLogger(__name__)
 class EC2ProtocolClient(Client[EC2ProtocolConfig]):
     """An EC2 query service that sends query requests and XML responses."""
 
-    _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
+    _client_plugins = (
+        aws_user_agent_plugin,
+        aws_retry_headers_plugin,
+        user_agent_plugin,
+    )
 
     @_overload
     def datetime_offsets(

@@ -517,6 +517,14 @@
     "register_feature_id": "rex-function",
     "response_validation_order": "rex-function"
   },
+  "smithy_aws_core.interceptors.retry_headers": {
+    "Field": "rex-class",
+    "HTTPRequest": "rex-protocol",
+    "Interceptor": "rex-class",
+    "PropertyKey": "rex-class",
+    "RETRY_STRATEGY": "rex-PropertyKey",
+    "RequestContext": "rex-class"
+  },
   "smithy_aws_core.interceptors.user_agent": {
     "AdaptiveRetryStrategy": "rex-class",
     "AwsFeatureId": "rex-class",

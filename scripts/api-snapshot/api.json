@@ -276,6 +276,9 @@
     "FlexibleChecksumsInterceptor": "class",
     "logger": "Logger"
   },
+  "smithy_aws_core.interceptors.retry_headers": {
+    "RetryHeadersInterceptor": "class"
+  },
   "smithy_aws_core.interceptors.user_agent": {
     "UserAgentInterceptor": "class"
   },
